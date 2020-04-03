@@ -1,0 +1,70 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.teamgannon.trips</groupId>
+    <artifactId>trips-install-panels</artifactId>
+    <version>1.0.0</version>
+    <name>izpack install panels for TRIPS</name>
+
+    <!-- seems like this needs to be "jar" to accomplish a build of java code too? a bit confused
+    on the difference between putting "pom" and "jar" here. -->
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <java.version>1.8</java.version>
+        <maven.build.timestamp.format>dd.MM.yyyy HH:mm</maven.build.timestamp.format>
+        <build-timestamp>${maven.build.timestamp}</build-timestamp>
+
+        <izpack-staging>${project.build.directory}/staging</izpack-staging>
+        <izpack.version>5.1.2</izpack.version>
+
+    </properties>
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.codehaus.izpack</groupId>
+            <artifactId>izpack-api</artifactId>
+            <version>${izpack.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.izpack</groupId>
+            <artifactId>izpack-installer</artifactId>
+            <version>${izpack.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.izpack</groupId>
+            <artifactId>izpack-panel</artifactId>
+            <version>${izpack.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <defaultGoal>install</defaultGoal>
+
+        <plugins>
+
+            <!-- compile plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+</project>

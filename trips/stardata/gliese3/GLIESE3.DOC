@@ -1,0 +1,152 @@
+V/70A               Nearby Stars, Preliminary 3rd Version  (Gliese+ 1991)
+================================================================================
+Preliminary Version of the Third Catalogue of Nearby Stars
+     GLIESE W., JAHREISS H.
+    <Astron. Rechen-Institut, Heidelberg (1991)>
+================================================================================
+
+Description:
+        The present version of the CNS3 contains all known stars within
+    25 parsecs of the Sun. It depends mainly on a preliminary version
+    (Spring 1989) of the new General Catalogue of Trigonometric
+    Parallaxes (YPC) prepared by Dr. William F. van Altena (Yale
+    University).
+        The catalogue contains every star with trigonometric parallax
+    greater than or equal to 0.0390 arcsec, even though it may be
+    evident from photometry or for other reasons that the star has a
+    larger distance. For red dwarf stars, new color-magnitude
+    calibrations for broad-band colors were carried out and applied.
+    For white dwarfs, the recipes of McCook and Sion in ApJS, 65, 603
+    (1987) were applied. Stroemgren photometry was used (not yet
+    systematically) for early-type stars and for late dwarfs, the
+    latter supplied by E. H. Olsen from Copenhagen Observatory
+    (private communication).
+        Contrary to the CNS2 (Gliese 1969) trigonometric parallaxes
+    and photometric or spectroscopic parallaxes were not combined.
+    The resulting parallax in the present version is always the
+    trigonometric parallax -- if the relative error of the
+    trigonometric parallax is smaller than 14 percent. The resulting
+    parallax is the photometric or spectroscopic parallax only if no
+    trigonometric parallax is available or if the standard error of
+    the trigonometric parallax is considerably larger.
+
+File Summary:
+--------------------------------------------------------------------------------
+ File Name   Lrecl    Records    Explanations
+--------------------------------------------------------------------------------
+ReadMe          80          .    This file
+catalog        257       3803    The Catalogue
+--------------------------------------------------------------------------------
+
+Byte-by-byte Description of file: catalog
+--------------------------------------------------------------------------------
+   1-  8  A8     ---     Ident    Identifier starting by:
+                              Gl  Gliese: CNS2,      Veroeff. ARI Nr. 22 (1969)
+                              GJ  Gliese & Jahreiss, A&AS, 38, 423 (1979)
+                              Wo  Woolley et al.,   Roy. Obs. Ann. No. 5 (1970)
+                              NN  newly added stars (not yet numbered)
+   9- 10  A2     ---     Comp     Components (A,B,C,... )
+      11  A1     ---     DistRel  [pqsx] Reliability of the distance (1)
+  13- 14  I2     h       RAh      Right Ascension B1950 (hours)
+  16- 17  I2     min     RAm      Right Ascension B1950 (minutes)
+  19- 20  I2     s       RAs      Right Ascension B1950 (seconds)
+      22  A1     ---     DE-      Declination B1950 (sign)
+  23- 24  I2     deg     DEd      Declination B1950 (degrees)
+  26- 29  F4.1   arcmin  DEm      Declination B1950 (minutes)
+  31- 36  F6.3 arcsec/yr pm       ? Total proper motion
+      37  A1     ---     u_pm     Uncertainty flag (:) on pm
+  38- 42  F5.1   deg     pmPA     ? Direction angle of proper motion
+  44- 49  F6.1   km/s    RV       ? Radial velocity
+  51- 53  A3     ---     n_RV     Remark on RV:
+                                  var  variable (?) radial velocity
+                                  SB?  suspected spectroscopic binary
+                                  SB   spectroscopic binary
+  55- 66  A12    ---     Sp       Spectral type or color class
+      67  A1     ---     r_Sp     Selected sources (2)
+  68- 73  F6.2   mag     V        Apparent magnitude
+      74  A1     ---     n_V      Note on origin of magnitude (3)
+      75  A1     ---     Joint_V  [J] joint magnitude
+  76- 80  F5.2   mag     B-V      ? color
+      81  A1     ---     n_B-V    Note on origin of magnitude (3)
+      82  A1     ---    Joint_B-V Joint color (4)
+  83- 87  F5.2   mag     U-B      ? color
+      88  A1     ---     n_U-B    Note on origin of magnitude (3)
+      89  A1     ---    Joint_U-B Joint color (4)
+  90- 94  F5.2   mag     R-I      ? color
+      95  A1     ---     n_R-I    Note on origin of magnitude (3)
+      96  A1     ---    Joint_R-I Joint color (4)
+  97-102  F6.1   mas     trplx    ? Trigonometric parallax
+ 103-107  F5.1   mas     e_trplx  ? Standard error of trig. parallax
+ 109-114  F6.1   mas     plx      Resulting parallax
+ 115-119  F5.1   mas     e_plx    Standard error of res.  parallax
+     120  A1     ---     n_plx    [rwsop] Code on plx (5)
+ 122-126  F5.2   mag     Mv       Absolute visual magnitude
+ 127-128  A2     ---     n_Mv     Note on Mv, copied from cols 74-75
+     129  A1     ---     q_Mv     [a-f] Quality of absolute magnitude (6)
+ 132-135  I4     km/s    U        ? U space velocity component in the galactic
+                                    plane and directed to the galactic center
+ 137-140  I4     km/s    V        ? V space velocity component in the galactic
+                                    plane and in the direction of galactic
+                                    rotation
+ 142-145  I4     km/s    W        ? W space velocity component in the galactic
+                                    plane and in the direction of the
+                                    North Galactic Pole
+ 147-152  I6     ---     HD       [15/352860]? designation
+ 154-165  A12    ---     DM       Durchmusterung number BD / CD / CP
+ 167-175  A9     ---     Giclas   number
+ 177-181  A5     ---     LHS      number
+ 183-187  A5     ---     Other    designations:
+                                  V :  Vyssotsky number
+                                  U :  UGPMF     number (see AJ, 77, 486, 1972)
+                                  W :  white dwarf  (EG or Gr number)
+ 189-257  A69    ---     Remarks  Additional identifications (LTT, LFT,
+                                   Wolf, Ross, etc.) and remarks
+--------------------------------------------------------------------------------
+Note (1): Reliability of the distance as:
+          s:  trig. parallax > 0.0390 and phot. parallax    <  0.0390
+          x:  trig. parallax > 0.0390 and phot. parallax    <  0.0190
+          p:  trig. parallax < 0.0390 and phot. parallax    >  0.0390
+          q:  trig. parallax < 0.0390 and phot. parallax(:) >  0.0390
+Note (2): Selected sources (list not complete) for Sp are:
+          K    Kuiper Type (see ApJS, 59, 197, 1985)
+          L    San-Gak Lee (AJ 89, 702, 1984)
+          O    objective prism MK type (but not Michigan type)
+          R    Robertson type (AJ, 89, 1229, 1984)
+          s    Stephenson type (AJ, 91, 144, 1985  and AJ, 92, 139, 1986)
+          S    Smethells type (IAU Coll. No 76, p. 421, 1983)
+          U    Upgren et al. (AJ, 77, 486, 1972)
+          W    Mount Wilson type
+Note (3): The following codes are used (list not complete):
+          P    photographic
+          *    photometric
+          C    from 'Cape refractor system'
+          c    calculated or transformed
+          v    variable
+          :    uncertain
+Note (4): This column should only contain a 'J', but some other letters
+          may also be found.
+Note (5): The following indicators are found:
+          r    parallax from spectral types and broad-band colors
+          w    photom. parallax for white dwarfs
+          s    photom. parallax from Stroemgren photometry
+          o    photom. parallax from Stroemgren photometry
+               calculated by E. H. Olsen
+          p    photom. parallax from other colors
+Note (6): Quality code for Mv is
+          a               s.e.  <  0.10 mag
+          b    0.11  <    s.e.  <  0.20
+          c    0.21  <    s.e.  <  0.30
+          d    0.31  <    s.e.  <  0.50
+          e    0.51  <    s.e.  <  0.75
+          f    0.76  <    s.e.
+--------------------------------------------------------------------------------
+
+Historical notes:
+   *Description initially prepared by Hartmut Jahreiss, Astronomisches
+    Rechen-Institut, Moenchhofstrasse 12-14, D-6900 Heidelberg 1, GERMANY.
+   *05-Sep-1994: reformatted according to CDS Standards (F. Ochsenbein)
+    The missing decimal points in the parallax columns (plx trplx e_plx e_trplx)
+    has been added, and the blanks between the sign and the number in
+    all numeric columns have been removed.
+================================================================================
+(End)                                                        [CDS]   05-Sep-1994
