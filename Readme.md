@@ -13,6 +13,12 @@ TRIPS (Terran Interstellar Plotter System) is intended to be a stellar cartograp
     b. unzip into a target direction of your choice
     c. acquire data files from one of the data pages (TBD) and unzip into the ./files directory
 
+## Building
+This project is configured as a spring boot application with a single jar to run.
+The tripsapplication subpackage holds all the code need to generate a trip-_version_.jar, where _version_ is the releaseable version.
+
+To build, simply run `mvn package`, which will put a compiled jar in the target subdirectory.
+To run simply form the command line, `java -jar target/trips-version.jar`
 
 ## Running
     a. Once installed, the install directory is complete and independent. Nothing else needs to be installed
