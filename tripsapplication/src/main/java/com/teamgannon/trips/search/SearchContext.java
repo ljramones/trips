@@ -46,6 +46,7 @@ public class SearchContext {
         // this ensures that we set a default if it is null
         if (currentDataSet == null) {
             currentDataSet = dataSetDescriptor.getDataSetName();
+            astroSearchQuery.setDataSetName(currentDataSet);
         }
         dataSetDescriptorMap.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
     }
@@ -54,6 +55,7 @@ public class SearchContext {
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
         if (currentDataSet.equals(dataSetDescriptor.getDataSetName())) {
             currentDataSet = null;
+            astroSearchQuery.setDataSetName(null);
         }
         dataSetDescriptorMap.remove(dataSetDescriptor.getDataSetName());
     }

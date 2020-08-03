@@ -311,6 +311,7 @@ public class MainPane implements
         if (dataSets.size()>0) {
             searchContext.addDataSets(dataSets);
         }
+        log.info("Application up and running");
     }
 
     private List<DataSetDescriptor> loadDataSetView() {
@@ -327,7 +328,7 @@ public class MainPane implements
         for (DataSetDescriptor descriptor : datasets) {
             Map<String, String> dataSetProps = new HashMap<>();
             String name = descriptor.getDataSetName();
-            dataSetProps.put("name", name);
+            dataSetProps.put("name", name+":: "+descriptor.getNumberStars()+ " stars");
             String count = Integer.toString(descriptor.getAstrographicDataList().size());
             dataSetProps.put("count", count);
             dataSetList.add(dataSetProps);

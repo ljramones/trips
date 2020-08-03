@@ -25,8 +25,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
+import static com.teamgannon.trips.support.AlertFactory.*;
 
 
 @Slf4j
@@ -310,8 +309,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         return processResult;
     }
 
-    private void showInfoMessage(String load_rb_excel_format, String s) {
-    }
+
 
     private FileProcessResult processCHViewFile(Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
