@@ -308,7 +308,7 @@ public class MainPane implements
 
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
-        if (dataSets.size()>0) {
+        if (dataSets.size() > 0) {
             searchContext.addDataSets(dataSets);
         }
         log.info("Application up and running");
@@ -328,7 +328,7 @@ public class MainPane implements
         for (DataSetDescriptor descriptor : datasets) {
             Map<String, String> dataSetProps = new HashMap<>();
             String name = descriptor.getDataSetName();
-            dataSetProps.put("name", name+":: "+descriptor.getNumberStars()+ " stars");
+            dataSetProps.put("name", name + ":: " + descriptor.getNumberStars() + " stars");
             String count = Integer.toString(descriptor.getAstrographicDataList().size());
             dataSetProps.put("count", count);
             dataSetList.add(dataSetProps);
@@ -564,9 +564,11 @@ public class MainPane implements
      * redisplay data based on the selected filter criteria
      *
      * @param searchQuery the search query to use
+     * @param showPlot    show a graphical plot
+     * @param showTable   show a table
      */
     @Override
-    public void showNewStellarData(AstroSearchQuery searchQuery) {
+    public void showNewStellarData(AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
@@ -574,11 +576,15 @@ public class MainPane implements
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
 
         if (!astrographicObjects.isEmpty()) {
-            astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates());
+            if (showPlot) {
+                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates());
+            }
+            if (showTable) {
+                showList(astrographicObjects);
+            }
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
-        showList(astrographicObjects);
     }
 
     @Override
@@ -623,7 +629,7 @@ public class MainPane implements
         if (searchQuery.isRecenter()) {
             astrographicObjects
                     = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
-                            searchQuery.getDataSetName(),
+                    searchQuery.getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
                     searchQuery.getYMinus(),
@@ -786,7 +792,7 @@ public class MainPane implements
         AstroSearchQuery query = searchContext.getAstroSearchQuery();
         query.setCenterRanging(starId, query.getDistanceFromCenterStar());
         log.info("New Center Range: {}", query.getCenterRangingCube());
-        showNewStellarData(query);
+        showNewStellarData(query, true, false);
     }
 
     @Override

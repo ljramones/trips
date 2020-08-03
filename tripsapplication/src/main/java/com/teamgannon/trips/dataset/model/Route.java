@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -60,7 +61,7 @@ public class Route {
             String routeStr = mapper.writeValueAsString(route);
             log.debug("serialized as:" + routeStr);
             return routeStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", route, e.getMessage());
             return "";
         }
@@ -71,7 +72,7 @@ public class Route {
             String routeListStr = mapper.writeValueAsString(routeList);
             log.debug("serialized as:" + routeListStr);
             return routeListStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", routeList, e.getMessage());
             return "";
         }
@@ -81,7 +82,7 @@ public class Route {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

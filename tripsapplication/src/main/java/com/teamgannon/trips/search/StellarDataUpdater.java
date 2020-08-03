@@ -11,8 +11,10 @@ public interface StellarDataUpdater {
      * do a plot update based on new search query
      *
      * @param searchQuery the search query
+     * @param showPlot show the grphical plot
+     * @param showTable show the table
      */
-    void showNewStellarData(AstroSearchQuery searchQuery);
+    void showNewStellarData(AstroSearchQuery searchQuery, boolean showPlot, boolean showTable);
 
     /**
      * add the data set descriptor

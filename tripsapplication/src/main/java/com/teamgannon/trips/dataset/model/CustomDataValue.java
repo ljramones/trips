@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class CustomDataValue {
             String customDataValueStr = mapper.writeValueAsString(customDataValue);
             log.debug("serialized as:" + customDataValueStr);
             return customDataValueStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValue, e.getMessage());
             return "";
         }
@@ -49,7 +50,7 @@ public class CustomDataValue {
             String customDataValueStr = mapper.writeValueAsString(customDataValues);
             log.debug("serialized as:" + customDataValueStr);
             return customDataValueStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValues, e.getMessage());
             return "";
         }
@@ -59,7 +60,7 @@ public class CustomDataValue {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

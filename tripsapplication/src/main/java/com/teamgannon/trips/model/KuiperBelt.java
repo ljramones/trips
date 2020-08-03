@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -49,7 +50,7 @@ public class KuiperBelt implements Serializable {
             String asteroidStr = mapper.writeValueAsString(kuiperBelt);
             log.debug("serialized as:" + asteroidStr);
             return asteroidStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelt, e.getMessage());
             return "";
         }
@@ -61,7 +62,7 @@ public class KuiperBelt implements Serializable {
             String kuiperStr = mapper.writeValueAsString(kuiperBelts);
             log.debug("serialized as:" + kuiperStr);
             return kuiperStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelts, e.getMessage());
             return "";
         }
@@ -70,7 +71,7 @@ public class KuiperBelt implements Serializable {
     public KuiperBelt toKuiperBelt(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, KuiperBelt.class);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }
