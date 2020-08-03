@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.3.2.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>com.teamgannon.trips</groupId>
+    <artifactId>trips</artifactId>
+    <version>0.1</version>
+
+    <name>Terran Republic Interstellar Plotter</name>
+    <description>
+        This is the main build file
+    </description>
+
+    <!-- *********************  IDENTIFICATION *******************************************  -->
+
+    <developers>
+        <developer>
+            <id>eviljinious1</id>
+            <name>Larry Mitchell</name>
+            <email>eviljinious1 at gmail.com</email>
+            <organization>Charles Gannon</organization>
+            <organizationUrl>http://www.charlesegannon.com</organizationUrl>
+            <timezone>America/Toronto</timezone>
+            <roles>
+                <role>Project Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <contributors>
+        <contributor>
+            <name>Charles Gannon</name>
+            <email>TBD</email>
+            <url>http://www.charlesegannon.com</url>
+            <organization>Charles Gannon</organization>
+            <organizationUrl>http://www.charlesegannon.com</organizationUrl>
+            <roles>
+                <role>Visionary</role>
+            </roles>
+            <timezone>America/Boston</timezone>
+            <properties>
+            </properties>
+        </contributor>
+        <contributor>
+            <name>Rick Boatwright</name>
+            <email>TBD</email>
+            <url>TBD</url>
+            <organization>TBD</organization>
+            <organizationUrl>TBD</organizationUrl>
+            <roles>
+                <role>Star Wrangler</role>
+            </roles>
+            <timezone>TBD</timezone>
+            <properties>
+            </properties>
+        </contributor>
+    </contributors>
+
+    <!-- this entire section needs to be figured out -->
+    <mailingLists>
+        <mailingList>
+            <name>User List</name>
+            <subscribe>user-subscribe@127.0.0.1</subscribe>
+            <unsubscribe>user-unsubscribe@127.0.0.1</unsubscribe>
+            <post>user@127.0.0.1</post>
+            <archive>http://127.0.0.1/user/</archive>
+            <otherArchives>
+                <otherArchive>http://base.google.com/base/1/127.0.0.1</otherArchive>
+            </otherArchives>
+        </mailingList>
+    </mailingLists>
+
+    <organization>
+        <name>Chuck Gannon's Terran Republic Viewer</name>
+        <url>http://www.charlesegannon.com</url>
+    </organization>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <java.version>14</java.version>
+        <maven.compiler.target>14</maven.compiler.target>
+        <maven.compiler.source>14</maven.compiler.source>
+
+        <javafx.version>14</javafx.version>
+        <fxweaver.version>1.3.0</fxweaver.version>
+
+        <jna.version>4.3.0</jna.version>
+
+        <lombok.version>1.18.4</lombok.version>
+
+        <commons.collections4.version>4.4</commons.collections4.version>
+        <commons.io.version>2.6</commons.io.version>
+        <commons.lang.version>2.6</commons.lang.version>
+        <commons.math.version>3.6.1</commons.math.version>
+        <commons-codec.version>1.14</commons-codec.version>
+
+        <org.jgrapht.core.version>1.0.1</org.jgrapht.core.version>
+        <org.jgrapht.ext.version>1.0.1</org.jgrapht.ext.version>
+
+        <controlsfx.version>11.0.2</controlsfx.version>
+
+        <kxml2.version>2.3.0</kxml2.version>
+        <jsofa.version>20160729</jsofa.version>
+        <orekit.version>8.0</orekit.version>
+        <opencsv.version>4.0</opencsv.version>
+        <poi.ooxml.version>4.1.2</poi.ooxml.version>
+        <jackson.annotations.version>2.8.7</jackson.annotations.version>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- the lombok library that makes life easier -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
+
+
+        <!-- Various apache commons libraries -->
+        <!-- Apache Commons Collections4 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${commons.collections4.version}</version>
+        </dependency>
+
+        <!-- Apache Commons language -->
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons.lang.version}</version>
+        </dependency>
+
+        <!-- Apache Commons Math -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${commons.math.version}</version>
+        </dependency>
+
+        <!-- Apache Commons Codec  -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.version}</version>
+        </dependency>
+
+        <!-- Commons project for IO -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
+        </dependency>
+
+        <!-- POI is used to read and write EXCEL Files -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.ooxml.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.ooxml.version}</version>
+        </dependency>
+
+
+        <!-- validation apis for database work-->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+        <!-- Hipster graph search algorithms -->
+<!--        <dependency>-->
+<!--            <groupId>es.usc.citius.hipster</groupId>-->
+<!--            <artifactId>hipster-all</artifactId>-->
+<!--            <version>1.0.1</version>-->
+<!--        </dependency>-->
+
+        <!-- file loaders and exporters -->
+        <!-- csvfile parser -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.ujmp</groupId>-->
+<!--            <artifactId>ujmp-core</artifactId>-->
+<!--            <version>0.3.0</version>-->
+<!--        </dependency>-->
+
+        <!-- Java FX support -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Java FX support third party -->
+<!--        <dependency>-->
+<!--            <groupId>org.controlsfx</groupId>-->
+<!--            <artifactId>controlsfx</artifactId>-->
+<!--            <version>8.40.17</version>-->
+<!--        </dependency>-->
+
+        <!-- Java FX Weaver dependencies -->
+        <dependency>
+            <groupId>net.rgielen</groupId>
+            <artifactId>javafx-weaver-spring</artifactId>
+            <version>${fxweaver.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.rgielen</groupId>
+            <artifactId>javafx-weaver-spring-boot-starter</artifactId>
+            <version>${fxweaver.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+<!--        <finalName>trips</finalName>-->
+
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

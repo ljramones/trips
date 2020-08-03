@@ -1,0 +1,40 @@
+spring:
+
+  application:
+    ui:
+      title: Terran Republic Interstellar Plotter (TRIPS)
+
+  # spring datasource requirements
+  datasource:
+    hikari:
+      connectionTimeout: 20000
+      maximumPoolSize: 5
+      poolName: HikariPoolZZZ
+    url: jdbc:h2:file:./data/tripsdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+
+  # spring data jpa settings
+  jpa:
+    databasePlatform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # spring default security
+  security:
+    user:
+      name: Caine
+      password: Mutiny
+
+  # Enabling H2 Console
+  h2:
+    console:
+      enabled: true
+
+      # Custom H2 Console URL
+      path: /h2
