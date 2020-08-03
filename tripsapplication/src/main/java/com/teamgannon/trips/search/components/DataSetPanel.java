@@ -3,6 +3,8 @@ package com.teamgannon.trips.search.components;
 import com.teamgannon.trips.dialogs.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.SearchContext;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -20,9 +22,12 @@ public class DataSetPanel extends BasePane {
     private final ChoiceBox<String> datasetChoiceBox = new ChoiceBox<>();
     private Map<String, DataSetDescriptor> datasets;
 
+    private SearchContext searchContext;
+
     private DataSetDescriptor currentDescriptor;
 
     public DataSetPanel(SearchContext searchContext) {
+        this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
         if (datasets.size() > 0) {
             if (searchContext.getCurrentDataSet() != null) {
@@ -66,6 +71,8 @@ public class DataSetPanel extends BasePane {
             if (name != null) {
                 DataSetDescriptor descriptor = datasets.get(name);
                 DataSetDescribeDialog dialog = new DataSetDescribeDialog(descriptor);
+                searchContext.setCurrentDataSet(name);
+                searchContext.getAstroSearchQuery().setDataSetName(name);
                 dialog.showAndWait();
             } else {
                 showErrorAlert("Add Dataset", "Dataset name cannot be empty!");
