@@ -47,6 +47,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         vBox.setSpacing(10.0);
 
         HBox hBox1 = new HBox();
+        hBox1.setAlignment(Pos.CENTER);
         hBox1.getChildren().add(plotDisplayCheckbox);
         hBox1.getChildren().add(tableDisplayCheckbox);
         vBox.getChildren().add(hBox1);
