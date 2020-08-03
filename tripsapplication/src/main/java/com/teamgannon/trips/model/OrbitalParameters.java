@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public class OrbitalParameters implements Serializable {
             String parameterStr = mapper.writeValueAsString(parameters);
             log.debug("serialized as:" + parameterStr);
             return parameterStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", parameters, e.getMessage());
             return "";
         }
@@ -114,7 +115,7 @@ public class OrbitalParameters implements Serializable {
             String parameterStr = mapper.writeValueAsString(parameters);
             log.debug("serialized as:" + parameterStr);
             return parameterStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", parameters, e.getMessage());
             return "";
         }
@@ -124,7 +125,7 @@ public class OrbitalParameters implements Serializable {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

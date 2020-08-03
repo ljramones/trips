@@ -7,6 +7,7 @@ import com.teamgannon.trips.dataset.enums.CustomFieldType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class CustomDataDefinition {
             String customDataDefinitionStr = mapper.writeValueAsString(customDataDefinition);
             log.debug("serialized as:" + customDataDefinitionStr);
             return customDataDefinitionStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", customDataDefinition, e.getMessage());
             return "";
         }
@@ -79,7 +80,7 @@ public class CustomDataDefinition {
             String customDataDefinitionStr = mapper.writeValueAsString(customDataDefinitionList);
             log.debug("serialized as:" + customDataDefinitionStr);
             return customDataDefinitionStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", customDataDefinitionList, e.getMessage());
             return "";
         }
@@ -89,7 +90,7 @@ public class CustomDataDefinition {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

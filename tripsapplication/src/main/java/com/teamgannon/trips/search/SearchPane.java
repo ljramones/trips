@@ -15,7 +15,6 @@ public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
     private final StellarDataUpdater updater;
-    private final boolean embedded;
 
     private DataSetPanel dataSetChoicePanel;
     private final DistanceSelectionPanel d2EarthSlider = new DistanceSelectionPanel();
@@ -34,14 +33,10 @@ public class SearchPane extends Pane {
 
     private final Button searchButton = new Button("New Search");
 
-    public SearchPane(SearchContext query, StellarDataUpdater updater) {
-        this(query, updater, true);
-    }
 
-    public SearchPane(SearchContext query, StellarDataUpdater updater, boolean embedded) {
+    public SearchPane(SearchContext query, StellarDataUpdater updater) {
         this.searchContext = query;
         this.updater = updater;
-        this.embedded = embedded;
         this.getChildren().add(createContent());
     }
 
@@ -74,7 +69,7 @@ public class SearchPane extends Pane {
         return vBox;
     }
 
-    public void handleButtonAction(ActionEvent event) {
+    public void runQuery(boolean showPlot, boolean showTable) {
 
         // pull derived query
         AstroSearchQuery newQuery = createSearchQuery();
@@ -82,7 +77,7 @@ public class SearchPane extends Pane {
 
         if (newQuery.getDataSetName() != null) {
             // update main screen
-            updater.showNewStellarData(newQuery);
+            updater.showNewStellarData(newQuery, showPlot, showTable);
         } else {
             showErrorAlert("Query Dialog", "You must specify a dataset!");
         }

@@ -7,6 +7,7 @@ import com.teamgannon.trips.dataset.enums.GridShape;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -283,7 +284,7 @@ public class Theme {
             String themeStr = mapper.writeValueAsString(theme);
             log.debug("serialized as:" + themeStr);
             return themeStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", theme, e.getMessage());
             return "";
         }
@@ -292,7 +293,7 @@ public class Theme {
     public Theme toTheme(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, Theme.class);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

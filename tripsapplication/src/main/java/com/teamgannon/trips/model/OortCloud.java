@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -48,7 +49,7 @@ public class OortCloud implements Serializable {
             String oortCloudStr = mapper.writeValueAsString(oortCloud);
             log.debug("serialized as:" + oortCloudStr);
             return oortCloudStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", oortCloud, e.getMessage());
             return "";
         }
@@ -57,7 +58,7 @@ public class OortCloud implements Serializable {
     public OortCloud toOortCloud(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, OortCloud.class);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

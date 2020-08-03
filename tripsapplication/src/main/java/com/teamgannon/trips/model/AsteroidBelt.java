@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +56,7 @@ public class AsteroidBelt implements Serializable {
             String asteroidStr = mapper.writeValueAsString(asteroidBelt);
             log.debug("serialized as:" + asteroidStr);
             return asteroidStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", asteroidBelt, e.getMessage());
             return "";
         }
@@ -66,7 +67,7 @@ public class AsteroidBelt implements Serializable {
             String asteroidStr = mapper.writeValueAsString(asteroidBelts);
             log.debug("serialized as:" + asteroidStr);
             return asteroidStr;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't serialize this {} because of {}:", asteroidBelts, e.getMessage());
             return "";
         }
@@ -75,7 +76,7 @@ public class AsteroidBelt implements Serializable {
     public AsteroidBelt toAsteroidBelt(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, AsteroidBelt.class);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }
