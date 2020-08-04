@@ -209,6 +209,7 @@ public class MainPane implements
      * the simulator
      */
     private Simulator simulator;
+
     // state settings for control positions
     private boolean gridOn = true;
     private boolean extensionsOn = true;
@@ -279,9 +280,7 @@ public class MainPane implements
     private void setupDataSetView() {
 
         SearchContext searchContext = tripsContext.getSearchContext();
-
         datasetsPane.setContent(dataSetsListView);
-
         dataSetsListView.setCellFactory(new Callback<>() {
 
             @Override
@@ -593,7 +592,7 @@ public class MainPane implements
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
-        DataSetTable dataSetTable = new DataSetTable(this, astrographicObjects);
+        new DataSetTable(this, astrographicObjects);
     }
 
     @Override
@@ -677,7 +676,8 @@ public class MainPane implements
             return;
         }
 
-        List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
+        List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName)
+                .collect(Collectors.toList());
 
         ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
         dialog.setTitle("Choice Data set to display");
@@ -719,9 +719,32 @@ public class MainPane implements
      * show the data in a spreadsheet
      */
     private void showTableData() {
-        List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-        DataSetTable dataSetTable = new DataSetTable(this, astrographicObjects);
+        List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
+        if (datasets.size() == 0) {
+            showErrorAlert("Plot Stars", "No datasets loaded, please load one");
+            return;
+        }
 
+        List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName)
+                .collect(Collectors.toList());
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
+        dialog.setTitle("Choice Data set to display");
+        dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
+
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent()) {
+            String selected = result.get();
+
+            DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
+            if (dataSetDescriptor == null) {
+                log.error("How the hell did this happen");
+                return;
+            }
+            List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
+            new DataSetTable(this, astrographicObjects);
+        }
     }
 
     /**
