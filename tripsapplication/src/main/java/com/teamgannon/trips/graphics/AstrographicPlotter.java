@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * This plots a chview file to the panes
+ * This plots a astrographic file to the panes
  * <p>
  * Created by larrymitchell on 2017-02-13.
  */
@@ -29,7 +29,7 @@ public class AstrographicPlotter {
     private final AstrographicTransformer astrographicTransformer;
 
     /**
-     * the drawing surface for the chview plotter
+     * the drawing surface for the astrographic plotter
      */
     private InterstellarSpacePane interstellarSpacePane;
 
@@ -40,11 +40,9 @@ public class AstrographicPlotter {
      */
     public AstrographicPlotter(
             StarBase starBase,
-            TripsContext tripsContext
-    ) {
+            TripsContext tripsContext) {
         this.starBase = starBase;
         this.searchContext = tripsContext.getSearchContext();
-
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
     }
 
