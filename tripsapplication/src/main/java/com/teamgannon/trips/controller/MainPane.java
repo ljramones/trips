@@ -103,8 +103,6 @@ public class MainPane implements
     @FXML
     public TitledPane viewPreferencesPane;
     @FXML
-    public TitledPane searchPane;
-    @FXML
     public TitledPane objectsViewPane;
     @FXML
     public TitledPane stellarObjectPane;
@@ -891,7 +889,6 @@ public class MainPane implements
             @Override
             public ListCell<Map<String, String>> call(ListView<Map<String, String>> p) {
                 objectsViewPane.setDisable(false);
-                searchPane.setDisable(false);
                 return new ListCell<>() {
                     @Override
                     protected void updateItem(Map<String, String> objectProperties, boolean bln) {
