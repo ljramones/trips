@@ -120,6 +120,9 @@ public class DataSetTable {
 
     private void moveForward() {
         log.info("move forward");
+        if (astrographicObjectMap.size() < PAGE_SIZE) {
+            return;
+        }
         if ((currentPosition + PAGE_SIZE) > astrographicObjectMap.size()) {
             currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
         } else {
@@ -131,6 +134,9 @@ public class DataSetTable {
 
     private void moveBack() {
         log.info("move back");
+        if (astrographicObjectMap.size() < PAGE_SIZE) {
+            return;
+        }
         if (currentPosition < PAGE_SIZE) {
             currentPosition = 0;
         } else {
