@@ -200,11 +200,6 @@ public class MainPane implements
     private ChViewFile chViewFile;
 
     /**
-     * the dialog for show table data
-     */
-    private DataSetTable dataSetTable;
-
-    /**
      * solar system panes for showing the details of various solar systems
      */
     private SolarSystemSpacePane solarSystemSpacePane;
@@ -600,11 +595,7 @@ public class MainPane implements
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
-        if (dataSetTable == null) {
-            dataSetTable = new DataSetTable(this, astrographicObjects);
-        } else {
-            dataSetTable.loadData(astrographicObjects);
-        }
+        DataSetTable dataSetTable = new DataSetTable(this, astrographicObjects);
     }
 
     @Override
@@ -731,11 +722,8 @@ public class MainPane implements
      */
     private void showTableData() {
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-        if (dataSetTable == null) {
-            dataSetTable = new DataSetTable(this, astrographicObjects);
-        } else {
-            dataSetTable.loadData(astrographicObjects);
-        }
+        DataSetTable dataSetTable = new DataSetTable(this, astrographicObjects);
+
     }
 
     /**
