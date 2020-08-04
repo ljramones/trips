@@ -849,7 +849,6 @@ public class MainPane implements
      * @param properties Astronomical object unique name.
      */
     private void displayProperties(Map<String, String> properties) {
-        String objectId = properties.get("name");
         String record = properties.get("recordNumber");
         UUID recordNumber = UUID.fromString(record);
         Map<String, String> characteristics = starBase.getRecordFields(recordNumber);
