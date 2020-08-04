@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -49,6 +50,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         HBox hBox1 = new HBox();
         hBox1.setAlignment(Pos.CENTER);
         hBox1.getChildren().add(plotDisplayCheckbox);
+        hBox1.getChildren().add(new Separator());
         hBox1.getChildren().add(tableDisplayCheckbox);
         vBox.getChildren().add(hBox1);
 
