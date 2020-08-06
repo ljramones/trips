@@ -1,6 +1,7 @@
 package com.teamgannon.trips.graphics.entities;
 
 
+import com.teamgannon.trips.config.application.ColorPalette;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
@@ -55,18 +56,18 @@ public class StellarEntityFactory {
     }
 
 
-    public static Node drawStellarObject(Map<String, String> customProperties, StarDisplayRecord record) {
+    public static Node drawStellarObject(Map<String, String> customProperties, StarDisplayRecord record, ColorPalette colorPalette) {
         Sphere sphere = createStellarShape(record);
-        Label label = createLabel(record, sphere);
+        Label label = createLabel(record, sphere, colorPalette);
         Group group = new Group(sphere, label);
         group.setUserData(customProperties);
         return group;
     }
 
 
-    public static Node drawCentralIndicator(Map<String, String> customProperties, StarDisplayRecord record) {
+    public static Node drawCentralIndicator(Map<String, String> customProperties, StarDisplayRecord record, ColorPalette colorPalette) {
         Box box = createBox(record);
-        Label label = createLabel(record, box);
+        Label label = createLabel(record, box, colorPalette);
         Group group = new Group(box, label);
         group.setUserData(customProperties);
         RotateTransition rotator = setRotationAnimation(group);
@@ -124,12 +125,13 @@ public class StellarEntityFactory {
      *
      * @param record the star record
      * @param sphere the star/shape
+     * @param colorPalette
      * @return the created object
      */
-    public static Label createLabel(StarDisplayRecord record, Shape3D sphere) {
+    public static Label createLabel(StarDisplayRecord record, Shape3D sphere, ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 8));
-        label.setTextFill(Color.BEIGE);
+        label.setTextFill(colorPalette.getLabelColor());
 //        label.setTextFill(record.getStarColor());
         Point3D point3D = record.getCoordinates();
         label.setTranslateX(point3D.getX());

@@ -2,12 +2,16 @@ package com.teamgannon.trips.controller;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controls.ApplicationPreferencesPane;
 import com.teamgannon.trips.controls.RoutingPanel;
 import com.teamgannon.trips.dialogs.DataSetManagerDialog;
+import com.teamgannon.trips.dialogs.GraphColorDialog;
 import com.teamgannon.trips.dialogs.PreferencesDialog;
 import com.teamgannon.trips.dialogs.QueryDialog;
+import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
+import com.teamgannon.trips.dialogs.support.ColorChangeResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.excel.ExcelReader;
@@ -19,7 +23,9 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.GraphColor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
+import com.teamgannon.trips.jpa.repository.GraphColorRepository;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -151,6 +157,11 @@ public class MainPane implements
      */
     private final AstrographicObjectRepository astrographicObjectRepository;
 
+    /**
+     * storage of graph colors in DB
+     */
+    private final GraphColorRepository graphColorRepository;
+
 
     /**
      * the current search context to display from
@@ -236,7 +247,8 @@ public class MainPane implements
                     AstrographicPlotter astrographicPlotter,
                     StarBase starBase,
                     TripsContext tripsContext,
-                    AstrographicObjectRepository astrographicObjectRepository) {
+                    AstrographicObjectRepository astrographicObjectRepository,
+                    GraphColorRepository graphColorRepository) {
 
         this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
@@ -247,6 +259,7 @@ public class MainPane implements
         this.starBase = starBase;
         this.tripsContext = tripsContext;
         this.astrographicObjectRepository = astrographicObjectRepository;
+        this.graphColorRepository = graphColorRepository;
         this.searchContext = tripsContext.getSearchContext();
 
         this.width = 1100;
@@ -259,6 +272,10 @@ public class MainPane implements
     @FXML
     public void initialize() {
         log.info("initialize view");
+
+
+        // get colors from DB
+        getColorFromDB();
 
         setSliderControl();
         setStatusPanel();
@@ -275,6 +292,50 @@ public class MainPane implements
         // create a data set pane for the database files present
         setupDataSetView();
 
+    }
+
+    /**
+     * get the color swatches from the DB
+     */
+    private void getColorFromDB() {
+        Iterable<GraphColor> graphColors = graphColorRepository.findAll();
+        GraphColor graphColor;
+        if (graphColors.iterator().hasNext()) {
+            graphColor = graphColors.iterator().next();
+        } else {
+            graphColor = new GraphColor();
+            graphColor.initColors();
+            graphColorRepository.save(graphColor);
+        }
+        ColorPalette colorPalette = new ColorPalette();
+        colorPalette.assignColors(graphColor);
+        tripsContext.setColorPallete(colorPalette);
+    }
+
+    public void changeGraphColors(ActionEvent actionEvent) {
+        GraphColorDialog dialog = new GraphColorDialog(tripsContext.getColorPallete());
+        Optional<ColorChangeResult> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            ColorChangeResult colorChangeResult = result.get();
+            if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.CHANGE)) {
+                tripsContext.setColorPallete(colorChangeResult.getColorPalette());
+            } else if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.RESET)) {
+                tripsContext.setColorPallete(ColorPalette.defaultColors());
+            } else {
+                return;
+            }
+
+            // colors changes so update db
+            updateColors(tripsContext.getColorPallete().getGraphColor());
+            astrographicPlotter.changeColors(tripsContext.getColorPallete());
+        }
+    }
+
+    private void updateColors(GraphColor graphColor) {
+        Iterable<GraphColor> graphColors = graphColorRepository.findAll();
+        GraphColor graphColorDB = graphColors.iterator().next();
+        graphColor.setId(graphColorDB.getId());
+        graphColorRepository.save(graphColor);
     }
 
     private void setupDataSetView() {
@@ -337,15 +398,17 @@ public class MainPane implements
         createSolarSystemSpace();
 
         // create the interstellar space
-        createInterstellarSpace();
+        createInterstellarSpace(tripsContext.getColorPallete());
     }
 
     /**
      * create a interstellar space drawing area
+     *
+     * @param colorPalette the colors to use in drawing
      */
-    private void createInterstellarSpace() {
+    private void createInterstellarSpace(ColorPalette colorPalette) {
         // create main graphics display pane
-        interstellarSpacePane = new InterstellarSpacePane(1080, 680, depth, spacing);
+        interstellarSpacePane = new InterstellarSpacePane(1080, 680, depth, spacing, colorPalette);
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
         // put the interstellar space on top and the solar system to the back
@@ -355,7 +418,7 @@ public class MainPane implements
         astrographicPlotter.setInterstellarPane(interstellarSpacePane);
 
         // setup simulator
-        simulator = new Simulator(interstellarSpacePane, width, height, depth);
+        simulator = new Simulator(interstellarSpacePane, width, height, depth, colorPalette);
 
         // setup event listeners
         interstellarSpacePane.setListUpdater(this);
@@ -569,7 +632,7 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates());
+                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getColorPallete());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -704,7 +767,7 @@ public class MainPane implements
                 astroSearchQuery.zeroCenter();
                 astrographicPlotter.drawAstrographicData(
                         astrographicObjects,
-                        astroSearchQuery.getCenterCoordinates());
+                        astroSearchQuery.getCenterCoordinates(), tripsContext.getColorPallete());
                 String data = String.format("%s records plotted from dataset %s.",
                         dataSetDescriptor.getAstrographicDataList().size(),
                         dataSetDescriptor.getDataSetName());
@@ -965,5 +1028,6 @@ public class MainPane implements
         // we throw away the result after returning
         dialog.showAndWait();
     }
+
 
 }

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search;
 
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 
@@ -11,8 +12,8 @@ public interface StellarDataUpdater {
      * do a plot update based on new search query
      *
      * @param searchQuery the search query
-     * @param showPlot show the grphical plot
-     * @param showTable show the table
+     * @param showPlot    show the grphical plot
+     * @param showTable   show the table
      */
     void showNewStellarData(AstroSearchQuery searchQuery, boolean showPlot, boolean showTable);
 

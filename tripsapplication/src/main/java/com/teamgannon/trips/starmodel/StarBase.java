@@ -1,6 +1,7 @@
 package com.teamgannon.trips.starmodel;
 
 import com.teamgannon.trips.algorithms.StarMath;
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.scene.paint.Color;
@@ -21,9 +22,13 @@ import java.util.UUID;
 @Data
 public class StarBase {
 
+    private ColorPalette colorPalette;
+
     private Map<UUID, AstrographicObject> database = new HashMap<>();
 
-    public void setRecords(List<AstrographicObject> astrographicObjectList) {
+    public void setRecords(List<AstrographicObject> astrographicObjectList, ColorPalette colorPalette) {
+        this.colorPalette = colorPalette;
+
         database.clear();
 
         for (AstrographicObject astrographicObject : astrographicObjectList) {

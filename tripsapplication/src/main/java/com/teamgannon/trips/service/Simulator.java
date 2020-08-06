@@ -1,5 +1,6 @@
 package com.teamgannon.trips.service;
 
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -42,11 +43,14 @@ public class Simulator {
     private final int height;
     private final int depth;
 
-    public Simulator(InterstellarSpacePane starPane, int width, int height, int depth) {
+    private final ColorPalette colorPalette;
+
+    public Simulator(InterstellarSpacePane starPane, int width, int height, int depth, ColorPalette colorPalette) {
         this.starPane = starPane;
         this.width = width;
         this.height = height;
         this.depth = depth;
+        this.colorPalette = colorPalette;
     }
 
 
@@ -64,7 +68,9 @@ public class Simulator {
         recordList.add(createSolNode());
         IntStream.range(0, 25).forEach(i -> recordList.add(createStarNode()));
 
-        starPane.drawStar(recordList, "Sol");
+
+
+        starPane.drawStar(recordList, "Sol" , colorPalette);
     }
 
 
