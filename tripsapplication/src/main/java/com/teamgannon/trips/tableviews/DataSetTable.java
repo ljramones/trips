@@ -1,8 +1,9 @@
 package com.teamgannon.trips.tableviews;
 
 import com.teamgannon.trips.dialogs.AddStarDialog;
+import com.teamgannon.trips.dialogs.support.EditTypeEnum;
+import com.teamgannon.trips.dialogs.support.TableEditResult;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -52,7 +53,6 @@ public class DataSetTable {
 
     private int currentPosition = 0;
     private StellarDataUpdater updater;
-    private DataSetDescriptor dataSetDescriptor;
 
     /**
      * the constructor that we use to show the data
@@ -62,7 +62,7 @@ public class DataSetTable {
      */
 
     public DataSetTable(StellarDataUpdater updater, List<AstrographicObject> astrographicObjects) {
-
+        this.updater = updater;
         this.astrographicObjects = astrographicObjects;
         if (!astrographicObjects.isEmpty()) {
             MapUtils.populateMap(astrographicObjectMap, astrographicObjects, AstrographicObject::getId);
@@ -152,12 +152,15 @@ public class DataSetTable {
      */
     private void addNewDataEntry() {
         AddStarDialog addStarDialog = new AddStarDialog();
-        Optional<StarEditRecord> optionalDataSet = addStarDialog.showAndWait();
+        Optional<TableEditResult> optionalDataSet = addStarDialog.showAndWait();
         if (optionalDataSet.isPresent()) {
-            StarEditRecord starEditRecord = optionalDataSet.get();
-            log.info("star created={}", starEditRecord);
-            tableView.getItems().add(starEditRecord);
-            addToDB(starEditRecord);
+            TableEditResult editResult = optionalDataSet.get();
+            if (editResult.getEditType().equals(EditTypeEnum.UPDATE)) {
+                StarEditRecord starEditRecord = editResult.getStarEditRecord();
+                log.info("star created={}", starEditRecord);
+                tableView.getItems().add(starEditRecord);
+                addToDB(starEditRecord);
+            }
         }
     }
 
@@ -183,12 +186,15 @@ public class DataSetTable {
         editSelectedMenuItem.setOnAction(event -> {
             final StarEditRecord selectedStarEditRecord = tableView.getSelectionModel().getSelectedItem();
             AddStarDialog addStarDialog = new AddStarDialog(selectedStarEditRecord);
-            Optional<StarEditRecord> optionalDataSet = addStarDialog.showAndWait();
+            Optional<TableEditResult> optionalDataSet = addStarDialog.showAndWait();
             if (optionalDataSet.isPresent()) {
-                StarEditRecord starEditRecord = optionalDataSet.get();
-                log.info("star created={}", starEditRecord);
-                tableView.getItems().add(starEditRecord);
-                updateEntry(starEditRecord);
+                TableEditResult editResult = optionalDataSet.get();
+                if (editResult.getEditType().equals(EditTypeEnum.UPDATE)) {
+                    StarEditRecord starEditRecord = editResult.getStarEditRecord();
+                    log.info("star created={}", starEditRecord);
+                    tableView.getItems().add(starEditRecord);
+                    updateEntry(starEditRecord);
+                }
             }
         });
 

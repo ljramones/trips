@@ -1,5 +1,7 @@
 package com.teamgannon.trips.dialogs;
 
+import com.teamgannon.trips.dialogs.support.EditTypeEnum;
+import com.teamgannon.trips.dialogs.support.TableEditResult;
 import com.teamgannon.trips.tableviews.StarEditRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -15,7 +17,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class AddStarDialog extends Dialog<StarEditRecord> {
+public class AddStarDialog extends Dialog<TableEditResult> {
 
     private StarEditRecord starEditRecord = new StarEditRecord();
 
@@ -119,7 +121,7 @@ public class AddStarDialog extends Dialog<StarEditRecord> {
         hBox5.getChildren().add(addStarButton);
 
         Button cancelDataSetButton = new Button("Cancel");
-        cancelDataSetButton.setOnAction(this::close);
+        cancelDataSetButton.setOnAction(this::cancel);
         hBox5.getChildren().add(cancelDataSetButton);
 
         // set the dialog as a utility
@@ -132,8 +134,8 @@ public class AddStarDialog extends Dialog<StarEditRecord> {
      *
      * @param actionEvent the action event
      */
-    private void close(ActionEvent actionEvent) {
-        setResult(new StarEditRecord());
+    private void cancel(ActionEvent actionEvent) {
+        setResult(new TableEditResult(EditTypeEnum.CANCEL, null));
     }
 
     /**
@@ -142,7 +144,7 @@ public class AddStarDialog extends Dialog<StarEditRecord> {
      * @param we the windows event
      */
     private void close(WindowEvent we) {
-        setResult(new StarEditRecord());
+        setResult(new TableEditResult(EditTypeEnum.CANCEL, null));
     }
 
     private void addDataSetClicked(ActionEvent actionEvent) {
@@ -162,7 +164,7 @@ public class AddStarDialog extends Dialog<StarEditRecord> {
             showErrorAlert("Add Star", "Notes field cannot be empty!");
         }
 
-        setResult(starEditRecord);
+        setResult(new TableEditResult(EditTypeEnum.UPDATE, starEditRecord));
     }
 
     private void getData() {

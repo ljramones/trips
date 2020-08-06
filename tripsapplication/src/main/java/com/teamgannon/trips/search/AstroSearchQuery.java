@@ -44,7 +44,7 @@ public class AstroSearchQuery {
 
     private boolean realStars = true;
 
-    private boolean fictionalStars = true;
+    private boolean fictionalStars = false;
 
     private Set<String> polities = new HashSet<>();
 
