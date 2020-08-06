@@ -15,13 +15,18 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * This plots a astrographic file to the panes
+ * This plots a astrographic list of object to the panes
  * <p>
  * Created by larrymitchell on 2017-02-13.
  */
 @Slf4j
 @Component
 public class AstrographicPlotter {
+
+    /**
+     * we do this to make the star size a constant size bigger x3
+     */
+    private final static int GRAPHICS_FUDGE_FACTOR = 3;
 
     private final StarBase starBase;
     private final SearchContext searchContext;
@@ -62,7 +67,7 @@ public class AstrographicPlotter {
     /**
      * draw the ch view file
      *
-     * @param astrographicObjects the file to draw
+     * @param astrographicObjects the list of objects to draw
      * @param centerCoordinates   the center of the plot
      */
     public void drawAstrographicData(List<AstrographicObject> astrographicObjects, double[] centerCoordinates) {
@@ -88,7 +93,7 @@ public class AstrographicPlotter {
                 Color starColor = astrographicObject.getStarColor();
 
                 // we create a 3x radius based on stars much smaller than Sol
-                double radius = astrographicObject.getRadius() * 3;
+                double radius = astrographicObject.getRadius() * GRAPHICS_FUDGE_FACTOR;
 
                 // draw the star
                 if (drawable(astrographicObject)) {
@@ -103,7 +108,7 @@ public class AstrographicPlotter {
                             .build();
                     interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar());
                 } else {
-                    log.info("star record is not drawable:" + astrographicObject);
+                    log.warn("star record is not drawable:{}", astrographicObject);
                 }
             } catch (IllegalArgumentException iae) {
                 log.error("Star color is invalid:{}", astrographicObject);

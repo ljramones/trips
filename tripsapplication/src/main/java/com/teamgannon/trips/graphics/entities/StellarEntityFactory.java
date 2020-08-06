@@ -129,7 +129,8 @@ public class StellarEntityFactory {
     public static Label createLabel(StarDisplayRecord record, Shape3D sphere) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 8));
-        label.setTextFill(record.getStarColor());
+        label.setTextFill(Color.BEIGE);
+//        label.setTextFill(record.getStarColor());
         Point3D point3D = record.getCoordinates();
         label.setTranslateX(point3D.getX());
         label.setTranslateY(point3D.getY());

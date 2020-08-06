@@ -498,7 +498,7 @@ public class InterstellarSpacePane extends Pane {
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         Cylinder lineSegment
                 = StellarEntityFactory.createLineSegment(
-                point3DFrom, point3DTo, lineWidth, Color.BLUEVIOLET
+                point3DFrom, point3DTo, lineWidth, Color.DARKSLATEBLUE
         );
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
@@ -520,7 +520,7 @@ public class InterstellarSpacePane extends Pane {
     private void createScaleLegend(int scaleValue) {
         Text scaleText = new Text(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
-        scaleText.setFill(Color.WHITE);
+        scaleText.setFill(Color.BEIGE);
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);
     }
@@ -997,7 +997,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.BLUE);
+            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.MEDIUMBLUE);
             grid.getChildren().add(lineSegment);
             x += gridIncrement;
         }
@@ -1008,7 +1008,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.BLUE);
+            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.MEDIUMBLUE);
             grid.getChildren().add(lineSegment);
             z += gridIncrement;
         }
