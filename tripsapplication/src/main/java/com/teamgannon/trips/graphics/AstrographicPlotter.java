@@ -1,6 +1,7 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -38,6 +39,8 @@ public class AstrographicPlotter {
      */
     private InterstellarSpacePane interstellarSpacePane;
 
+    private final ColorPalette colorPalette;
+
     /**
      * for dependency injection
      *
@@ -48,6 +51,7 @@ public class AstrographicPlotter {
             TripsContext tripsContext) {
         this.starBase = starBase;
         this.searchContext = tripsContext.getSearchContext();
+        this.colorPalette = tripsContext.getColorPallete();
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
     }
 
@@ -64,24 +68,29 @@ public class AstrographicPlotter {
         this.interstellarSpacePane = interstellarSpacePane;
     }
 
+    public void changeColors(ColorPalette colorPalette) {
+        log.info("Change colors");
+    }
+
     /**
      * draw the ch view file
      *
      * @param astrographicObjects the list of objects to draw
      * @param centerCoordinates   the center of the plot
+     * @param colorPalette        the color palette to draw
      */
-    public void drawAstrographicData(List<AstrographicObject> astrographicObjects, double[] centerCoordinates) {
+    public void drawAstrographicData(List<AstrographicObject> astrographicObjects, double[] centerCoordinates, ColorPalette colorPalette) {
 
         // clear old drawing
         interstellarSpacePane.clearStars();
 
         // set the records to the in memory cache for quick access
-        starBase.setRecords(astrographicObjects);
+        starBase.setRecords(astrographicObjects, colorPalette);
 
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
-        interstellarSpacePane.rebuildGrid(scalingParameters.getScaleIncrement(), scalingParameters.getGridScale());
+        interstellarSpacePane.rebuildGrid(scalingParameters.getScaleIncrement(), scalingParameters.getGridScale(), colorPalette);
 
         // plot all stars
         for (AstrographicObject astrographicObject : astrographicObjects) {
@@ -106,7 +115,7 @@ public class AstrographicPlotter {
                             .actualCoordinates(ords)
                             .coordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]))
                             .build();
-                    interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar());
+                    interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar(), colorPalette);
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
                 }

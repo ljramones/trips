@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
+import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.dialogs.RouteDialog;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -42,6 +43,7 @@ public class InterstellarSpacePane extends Pane {
     private static final double CAMERA_INITIAL_Y_ANGLE = -25; // 0
     private static final double CAMERA_NEAR_CLIP = 0.1;
     private static final double CAMERA_FAR_CLIP = 10000.0;
+
     // animations
     private static final double ROTATE_SECS = 60;
     private static final String scaleString = "Scale: 1 grid is %d ly square";
@@ -98,6 +100,7 @@ public class InterstellarSpacePane extends Pane {
      * whether there is a route being traced, true is yes
      */
     private boolean routingActive = false;
+
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
@@ -106,16 +109,19 @@ public class InterstellarSpacePane extends Pane {
     private final Xform stellarDisplayGroup = new Xform();
     private final Xform scaleGroup = new Xform();
     private final Xform routesGroup = new Xform();
+
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
     private final double CONTROL_MULTIPLIER = 0.1;
     private final double SHIFT_MULTIPLIER = 0.1;
     private final double ALT_MULTIPLIER = 0.5;
+
     // mose positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
     private final RotateTransition rotator;
+
     /////////////////
     // screen real estate
     private final int width;
@@ -124,6 +130,8 @@ public class InterstellarSpacePane extends Pane {
     private final int spacing;
     private final double lineWidth = 0.5;
 
+    private ColorPalette colorPalette;
+
 
     /**
      * constructor for the Graphics Pane
@@ -131,11 +139,12 @@ public class InterstellarSpacePane extends Pane {
      * @param width  the width
      * @param height the height
      */
-    public InterstellarSpacePane(int width, int height, int depth, int spacing) {
+    public InterstellarSpacePane(int width, int height, int depth, int spacing, ColorPalette colorPalette) {
         this.width = width;
         this.height = height;
         this.depth = depth;
         this.spacing = spacing;
+        this.colorPalette = colorPalette;
 
         this.setMinHeight(height);
         this.setMinWidth(width);
@@ -170,6 +179,7 @@ public class InterstellarSpacePane extends Pane {
         handleMouseEvents(this);
         handleKeyboard(this);
     }
+
 
     public double getDepth() {
         return depth;
@@ -399,7 +409,7 @@ public class InterstellarSpacePane extends Pane {
      * @param record     the star record
      * @param centerStar
      */
-    public void drawStar(StarDisplayRecord record, String centerStar) {
+    public void drawStar(StarDisplayRecord record, String centerStar, ColorPalette colorPalette) {
 
         starDisplayRecords.add(record);
 
@@ -407,21 +417,35 @@ public class InterstellarSpacePane extends Pane {
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
-            starNode = createCentralPoint(record);
+            starNode = createCentralPoint(record, colorPalette);
         } else {
             // otherwise draw a regular star
-            starNode = createStar(record);
-            createExtension(record);
+            starNode = createStar(record, colorPalette);
+            createExtension(record, colorPalette.getExtensionColor());
         }
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
     }
 
-    private Xform createCentralPoint(StarDisplayRecord record) {
+
+    /**
+     * draw a list of stars
+     *
+     * @param recordList the list of stars
+     */
+    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+        starDisplayRecords.addAll(recordList);
+        for (StarDisplayRecord star : recordList) {
+            drawStar(star, centerStar, colorPalette);
+        }
+        createExtensionGroup(recordList, colorPalette.getExtensionColor());
+    }
+
+    private Xform createCentralPoint(StarDisplayRecord record, ColorPalette colorPalette) {
         Map<String, String> customProperties = record.toProperties();
 
-        Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record);
+        Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record, colorPalette);
 
         starDisplayRecords.add(record);
 
@@ -443,18 +467,6 @@ public class InterstellarSpacePane extends Pane {
         return starNode;
     }
 
-    /**
-     * draw a list of stars
-     *
-     * @param recordList the list of stars
-     */
-    public void drawStar(List<StarDisplayRecord> recordList, String centerStar) {
-        starDisplayRecords.addAll(recordList);
-        for (StarDisplayRecord star : recordList) {
-            drawStar(star, centerStar);
-        }
-        createExtensionGroup(recordList);
-    }
 
     ////////////// Star creation helpers  //////////////
 
@@ -482,23 +494,24 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param recordList the list of stars
      */
-    private void createExtensionGroup(List<StarDisplayRecord> recordList) {
+    private void createExtensionGroup(List<StarDisplayRecord> recordList, Color extensionColor) {
         for (StarDisplayRecord record : recordList) {
-            createExtension(record);
+            createExtension(record, extensionColor);
         }
     }
 
     /**
      * create an extension for an added star
      *
-     * @param record the star
+     * @param record         the star
+     * @param extensionColor the color of the extensions from grid to star
      */
-    private void createExtension(StarDisplayRecord record) {
+    private void createExtension(StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         Cylinder lineSegment
                 = StellarEntityFactory.createLineSegment(
-                point3DFrom, point3DTo, lineWidth, Color.DARKSLATEBLUE
+                point3DFrom, point3DTo, lineWidth, extensionColor
         );
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
@@ -529,12 +542,13 @@ public class InterstellarSpacePane extends Pane {
      * create a star named with radius and color located at x,y,z
      *
      * @param record the star record
+     * @param colorPalette
      * @return the star to plot
      */
-    private Xform createStar(StarDisplayRecord record) {
+    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette) {
 
         Map<String, String> customProperties = record.toProperties();
-        Node star = StellarEntityFactory.drawStellarObject(customProperties, record);
+        Node star = StellarEntityFactory.drawStellarObject(customProperties, record, colorPalette);
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
@@ -971,23 +985,23 @@ public class InterstellarSpacePane extends Pane {
 
     }
 
+    public void rebuildGrid(double scaleIncrement, double gridScale, ColorPalette colorPalette) {
 
-    public void rebuildGrid(double scaleIncrement, double gridScale) {
         // clear old grid
         gridGroup.getChildren().clear();
 
         // rebuild grid
-        createGrid(gridGroup, (int) gridScale);
+        createGrid(gridGroup, (int) gridScale, colorPalette);
 
         // now rebuild scale legend
         rebuildScaleLegend((int) scaleIncrement);
     }
 
     private void buildGrid() {
-        createGrid(gridGroup, spacing);
+        createGrid(gridGroup, spacing, colorPalette);
     }
 
-    private void createGrid(Group grid, int gridIncrement) {
+    private void createGrid(Group grid, int gridIncrement, ColorPalette colorPalette) {
 
         gridGroup.setTranslate(-width / 2.0, 0, -depth / 2.0);
 
@@ -997,7 +1011,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.MEDIUMBLUE);
+            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
             grid.getChildren().add(lineSegment);
             x += gridIncrement;
         }
@@ -1008,7 +1022,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, Color.MEDIUMBLUE);
+            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
             grid.getChildren().add(lineSegment);
             z += gridIncrement;
         }

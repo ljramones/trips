@@ -10,4 +10,6 @@ public class TripsContext {
 
     private SearchContext searchContext = new SearchContext();
 
+    private ColorPalette colorPallete = new ColorPalette();
+
 }

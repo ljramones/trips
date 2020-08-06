@@ -27,6 +27,7 @@
             <MenuItem mnemonicParsing="false" onAction="#toggleToolbar" text="Toggle Toolbar"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleStatusBar" text="Toggle Status Bar"/>
             <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Show View Preferences"/>
+            <MenuItem mnemonicParsing="false" onAction="#changeGraphColors" text="Change graph colors..."/>
         </Menu>
         <Menu mnemonicParsing="false" text="Data Management">
             <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset Manager..."/>
