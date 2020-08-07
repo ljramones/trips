@@ -637,6 +637,7 @@ public class MainPane implements
             if (showTable) {
                 showList(astrographicObjects);
             }
+            databaseStatus.setText(searchQuery.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -771,7 +772,8 @@ public class MainPane implements
                 String data = String.format("%s records plotted from dataset %s.",
                         dataSetDescriptor.getAstrographicDataList().size(),
                         dataSetDescriptor.getDataSetName());
-                showInfoMessage("Load CHV Format", data);
+                showInfoMessage("Load Astrographic Format", data);
+                databaseStatus.setText(dataSetDescriptor.getDataSetName());
             } else {
                 showErrorAlert("Astronautic data view error", "No Astronautic data was loaded ");
             }
@@ -807,6 +809,7 @@ public class MainPane implements
             }
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(this, astrographicObjects);
+            databaseStatus.setText(dataSetDescriptor.getDataSetName());
         }
     }
 
