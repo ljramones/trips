@@ -6,10 +6,7 @@ import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controls.ApplicationPreferencesPane;
 import com.teamgannon.trips.controls.RoutingPanel;
-import com.teamgannon.trips.dialogs.DataSetManagerDialog;
-import com.teamgannon.trips.dialogs.GraphColorDialog;
-import com.teamgannon.trips.dialogs.PreferencesDialog;
-import com.teamgannon.trips.dialogs.QueryDialog;
+import com.teamgannon.trips.dialogs.*;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
@@ -141,6 +138,10 @@ public class MainPane implements
      */
     private final ExcelReader excelReader;
     /**
+     * the RB csv reader
+     */
+    private final RBCsvReader rbCsvReader;
+    /**
      * star plotter component
      */
     private final AstrographicPlotter astrographicPlotter;
@@ -244,6 +245,7 @@ public class MainPane implements
                     ApplicationContext appContext,
                     ChviewReader chviewReader,
                     ExcelReader excelReader,
+                    RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     StarBase starBase,
                     TripsContext tripsContext,
@@ -255,6 +257,7 @@ public class MainPane implements
         this.appContext = appContext;
         this.chviewReader = chviewReader;
         this.excelReader = excelReader;
+        this.rbCsvReader = rbCsvReader;
         this.astrographicPlotter = astrographicPlotter;
         this.starBase = starBase;
         this.tripsContext = tripsContext;
@@ -292,6 +295,8 @@ public class MainPane implements
         // create a data set pane for the database files present
         setupDataSetView();
 
+        // by deafult side panel should be off
+        toggleSidePane(false);
     }
 
     /**
@@ -537,7 +542,12 @@ public class MainPane implements
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {
-        if (toggleSettings.isSelected()) {
+        toggleSidePane(toggleSettings.isSelected());
+    }
+
+
+    public void toggleSidePane(boolean sidePanelOn) {
+        if (sidePanelOn) {
             mainSplitPane.setDividerPositions(0.76);
         } else {
             mainSplitPane.setDividerPositions(1.0);
@@ -637,7 +647,7 @@ public class MainPane implements
             if (showTable) {
                 showList(astrographicObjects);
             }
-            databaseStatus.setText(searchQuery.getDataSetName());
+            showStatus("Dataset loaded is: " + searchQuery.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -773,7 +783,7 @@ public class MainPane implements
                         dataSetDescriptor.getAstrographicDataList().size(),
                         dataSetDescriptor.getDataSetName());
                 showInfoMessage("Load Astrographic Format", data);
-                databaseStatus.setText(dataSetDescriptor.getDataSetName());
+                showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
             } else {
                 showErrorAlert("Astronautic data view error", "No Astronautic data was loaded ");
             }
@@ -809,7 +819,7 @@ public class MainPane implements
             }
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(this, astrographicObjects);
-            databaseStatus.setText(dataSetDescriptor.getDataSetName());
+            showStatus("Dataset loaded is: "+dataSetDescriptor.getDataSetName());
         }
     }
 
@@ -1026,7 +1036,8 @@ public class MainPane implements
                 this,
                 databaseManagementService,
                 chviewReader,
-                excelReader);
+                excelReader,
+                rbCsvReader);
 
         // we throw away the result after returning
         dialog.showAndWait();

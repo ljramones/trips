@@ -115,10 +115,11 @@ public class AddDataSetDialog extends Dialog<Dataset> {
 
     private void addChoices() {
         addFormat(DataFormatEnum.CH_VIEW, "chv");
+        addFormat(DataFormatEnum.RB_CSV, "csv");
         addFormat(DataFormatEnum.RB_EXCEL, "xlsv");
         addFormat(DataFormatEnum.EXPORT, "csv");
         addFormat(DataFormatEnum.SIMBAD, "simbad");
-        addFormat(DataFormatEnum.HIPPARCOS3, ".hpp3");
+        addFormat(DataFormatEnum.HIPPARCOS3, "hpp3");
     }
 
     private void addFormat(DataFormatEnum fileType, String suffix) {

@@ -106,9 +106,9 @@
         </AnchorPane>
     </SplitPane>
     <HBox fx:id="statusBar" layoutX="2.0" layoutY="659.0" prefHeight="39.0" prefWidth="1100.0">
-        <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#43d321">
+        <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#3333FF">
             <font>
-                <Font name="Arial" size="11.0"/>
+                <Font name="Arial" size="15.0"/>
             </font>
         </Label>
     </HBox>
