@@ -113,7 +113,7 @@
         <kxml2.version>2.3.0</kxml2.version>
         <jsofa.version>20160729</jsofa.version>
         <orekit.version>8.0</orekit.version>
-        <opencsv.version>4.0</opencsv.version>
+        <opencsv.version>5.2</opencsv.version>
         <poi.ooxml.version>4.1.2</poi.ooxml.version>
         <jackson.annotations.version>2.8.7</jackson.annotations.version>
     </properties>

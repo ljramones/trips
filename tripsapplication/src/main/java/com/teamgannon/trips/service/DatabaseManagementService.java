@@ -8,6 +8,7 @@ import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.RBCsvFile;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.excel.model.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -320,10 +321,20 @@ public class DatabaseManagementService {
         DataSetDescriptor dataSetDescriptor = DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 astrographicObjectRepository,
-                "anonymous",
+                excelFile.getAuthor(),
                 excelFile
         );
+    }
 
+
+    public void loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
+        // this method call actually saves the dataset in elasticsearch
+        DataSetDescriptor dataSetDescriptor = DataSetDescriptorFactory.createDataSetDescriptor(
+                dataSetDescriptorRepository,
+                astrographicObjectRepository,
+                rbCsvFile.getAuthor(),
+                rbCsvFile
+        );
     }
 
     /**
@@ -416,6 +427,5 @@ public class DatabaseManagementService {
     public void updateStar(AstrographicObject astrographicObject) {
         astrographicObjectRepository.save(astrographicObject);
     }
-
 
 }

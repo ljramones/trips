@@ -6,6 +6,7 @@ import com.teamgannon.trips.dataset.model.Polity;
 import com.teamgannon.trips.dataset.model.RouteDescriptor;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.RBCsvFile;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.excel.model.RBExcelFile;
@@ -87,6 +88,7 @@ public class DataSetDescriptorFactory {
         return dataSetDescriptor;
     }
 
+
     public static DataSetDescriptor createDataSetDescriptor(
             DataSetDescriptorRepository dataSetDescriptorRepository,
             AstrographicObjectRepository astrographicObjectRepository,
@@ -119,6 +121,43 @@ public class DataSetDescriptorFactory {
         dataSetDescriptorRepository.save(dataSetDescriptor);
 
         return dataSetDescriptor;
+    }
+
+
+    public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
+                                                            AstrographicObjectRepository astrographicObjectRepository,
+                                                            String author,
+                                                            RBCsvFile rbCsvFile) throws Exception {
+        DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
+
+        // parse excel file to create the basics for the data set to save
+        dataSetDescriptor.setDataSetName(rbCsvFile.getFileName());
+        dataSetDescriptor.setFileCreator(author);
+        dataSetDescriptor.setTheme(createTheme("csv", rbCsvFile));
+
+        // now validate whether the dataset actually exists already
+        if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
+            throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
+        }
+
+        astrographicObjectRepository.saveAll(rbCsvFile.getAstrographicObjects());
+        log.info("Number of records load for file:{} is {}",
+                rbCsvFile.getFileName(),
+                rbCsvFile.getAstrographicObjects().size());
+
+        Set<UUID> keySet = rbCsvFile.getAstrographicObjects().stream().map(AstrographicObject::getId).collect(Collectors.toSet());
+
+        // set the records for this
+        dataSetDescriptor.setAstrographicDataList(keySet);
+
+        // save the data set which is cross referenced to the star records
+        dataSetDescriptorRepository.save(dataSetDescriptor);
+
+        return null;
+    }
+
+    private static Theme createTheme(String themeName, RBCsvFile rbCsvFile) {
+        return extractTheme(themeName, null, CHViewPreferences.earthNormal());
     }
 
     /**
@@ -247,5 +286,6 @@ public class DataSetDescriptorFactory {
 
         return polities;
     }
+
 
 }

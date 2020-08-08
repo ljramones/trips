@@ -38,6 +38,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final DatabaseManagementService databaseManagementService;
     private final ChviewReader chviewReader;
     private final ExcelReader excelReader;
+    private final RBCsvReader rbCsvReader;
 
     private final TableView<DataSetDescriptor> tableView = new TableView<>();
 
@@ -49,12 +50,14 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     public DataSetManagerDialog(StellarDataUpdater dataUpdater,
                                 DatabaseManagementService databaseManagementService,
                                 ChviewReader chviewReader,
-                                ExcelReader excelReader) {
+                                ExcelReader excelReader,
+                                RBCsvReader rbCsvReader) {
         this.dataUpdater = dataUpdater;
 
         this.databaseManagementService = databaseManagementService;
         this.chviewReader = chviewReader;
         this.excelReader = excelReader;
+        this.rbCsvReader = rbCsvReader;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -252,6 +255,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                     result = processCSVFile(dataset);
                     if (result.isSuccess()) {
                         DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+                        this.dataUpdater.addDataSet(dataSetDescriptor);
                         updateTable();
                     } else {
                         showErrorAlert("load csv", result.getMessage());
@@ -282,7 +286,20 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private FileProcessResult processCSVFile(Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
-        processResult.setSuccess(true);
+
+        File file = new File(dataset.getFileSelected());
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file);
+        try {
+            databaseManagementService.loadRBCSVStarSet(rbCsvFile);
+            showInfoMessage(
+                    "Load RB CSV Format",
+                    "xx records loaded from dataset yy, Use plot to see data");
+            processResult.setSuccess(true);
+
+        } catch (Exception e) {
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            processResult.setSuccess(false);
+        }
 
         return processResult;
     }

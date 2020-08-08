@@ -5,6 +5,7 @@ import java.util.Arrays;
 public enum DataFormatEnum {
 
     CH_VIEW("chview import"),
+    RB_CSV("csv(RB) import"),
     RB_EXCEL("excel import"),
     EXPORT("export as csv"),
     SIMBAD("simbad import"),
