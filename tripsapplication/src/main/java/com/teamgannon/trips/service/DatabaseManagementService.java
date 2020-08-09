@@ -8,9 +8,9 @@ import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.Dataset;
-import com.teamgannon.trips.dialogs.RBCsvFile;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.excel.model.RBExcelFile;
+import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.Star;
@@ -315,10 +315,10 @@ public class DatabaseManagementService {
         );
     }
 
-    public void loadRBStarSet(RBExcelFile excelFile) throws Exception {
+    public DataSetDescriptor loadRBStarSet(RBExcelFile excelFile) throws Exception {
 
         // this method call actually saves the dataset in elasticsearch
-        DataSetDescriptor dataSetDescriptor = DataSetDescriptorFactory.createDataSetDescriptor(
+        return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 astrographicObjectRepository,
                 excelFile.getAuthor(),
@@ -327,9 +327,9 @@ public class DatabaseManagementService {
     }
 
 
-    public void loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
+    public DataSetDescriptor loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
         // this method call actually saves the dataset in elasticsearch
-        DataSetDescriptor dataSetDescriptor = DataSetDescriptorFactory.createDataSetDescriptor(
+       return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 astrographicObjectRepository,
                 rbCsvFile.getAuthor(),
@@ -338,7 +338,7 @@ public class DatabaseManagementService {
     }
 
     /**
-     * remove the data set and associated stars by nmae
+     * remove the data set and associated stars by name
      *
      * @param dataSetName the dataset to remove
      */

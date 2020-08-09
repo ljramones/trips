@@ -11,6 +11,7 @@ import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
+import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;

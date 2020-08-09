@@ -6,10 +6,10 @@ import com.teamgannon.trips.dataset.model.Polity;
 import com.teamgannon.trips.dataset.model.RouteDescriptor;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.Dataset;
-import com.teamgannon.trips.dialogs.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.excel.model.RBExcelFile;
+import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.filedata.model.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -133,27 +133,25 @@ public class DataSetDescriptorFactory {
         // parse excel file to create the basics for the data set to save
         dataSetDescriptor.setDataSetName(rbCsvFile.getFileName());
         dataSetDescriptor.setFileCreator(author);
-        dataSetDescriptor.setTheme(createTheme("csv", rbCsvFile));
+
+        Theme theme = new Theme();
+        theme.setThemeName("csv");
+        dataSetDescriptor.setTheme(theme);
 
         // now validate whether the dataset actually exists already
         if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
             throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
         }
 
-        astrographicObjectRepository.saveAll(rbCsvFile.getAstrographicObjects());
         log.info("Number of records load for file:{} is {}",
                 rbCsvFile.getFileName(),
-                rbCsvFile.getAstrographicObjects().size());
+                rbCsvFile.getSize());
 
-        Set<UUID> keySet = rbCsvFile.getAstrographicObjects().stream().map(AstrographicObject::getId).collect(Collectors.toSet());
-
-        // set the records for this
-        dataSetDescriptor.setAstrographicDataList(keySet);
 
         // save the data set which is cross referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);
 
-        return null;
+        return dataSetDescriptor;
     }
 
     private static Theme createTheme(String themeName, RBCsvFile rbCsvFile) {
@@ -186,57 +184,62 @@ public class DataSetDescriptorFactory {
     }
 
     private static Theme extractTheme(String themeName, ChViewFile chViewFile, CHViewPreferences vp) {
-        Theme theme = new Theme();
-        theme.setThemeName(themeName);
-        theme.setDispStarName(vp.isStarNameOn());
-        theme.setViewRadius(vp.getRadius());
-        theme.setDisplayScale(vp.isScaleOn());
-        theme.setXscale(vp.getXScale());
-        theme.setYscale(vp.getYScale());
-        theme.setBackColor(setColor(vp.getBackgroundColor()));
-        theme.setTextColor(setColor(vp.getTextColor()));
+        try {
+            Theme theme = new Theme();
+            theme.setThemeName(themeName);
+            theme.setDispStarName(vp.isStarNameOn());
+            theme.setViewRadius(vp.getRadius());
+            theme.setDisplayScale(vp.isScaleOn());
+            theme.setXscale(vp.getXScale());
+            theme.setYscale(vp.getYScale());
+            theme.setBackColor(setColor(vp.getBackgroundColor()));
+            theme.setTextColor(setColor(vp.getTextColor()));
 
-        theme.setCenterX(vp.getCentreOrdinates()[0]);
-        theme.setCenterY(vp.getCentreOrdinates()[1]);
-        theme.setCenterZ(vp.getCentreOrdinates()[2]);
-        theme.setTheta(vp.getTheta());
-        theme.setPhi(vp.getPhi());
-        theme.setRho(vp.getRho());
-        theme.setDisplayGrid(vp.isGridOn());
-        theme.setGridSize((int) vp.getGridSize());
+            theme.setCenterX(vp.getCentreOrdinates()[0]);
+            theme.setCenterY(vp.getCentreOrdinates()[1]);
+            theme.setCenterZ(vp.getCentreOrdinates()[2]);
+            theme.setTheta(vp.getTheta());
+            theme.setPhi(vp.getPhi());
+            theme.setRho(vp.getRho());
+            theme.setDisplayGrid(vp.isGridOn());
+            theme.setGridSize((int) vp.getGridSize());
 
-        theme.setGridLineColor(setColor(vp.getGridColor()));
-        theme.setStemColor(setColor(vp.getStemColor()));
-        theme.setStarOutline(vp.isStarOutlineOn());
+            theme.setGridLineColor(setColor(vp.getGridColor()));
+            theme.setStemColor(setColor(vp.getStemColor()));
+            theme.setStarOutline(vp.isStarOutlineOn());
 
-        theme.setOColor(setColor(vp.getOColor()));
-        theme.setBColor(setColor(vp.getBColor()));
-        theme.setAColor(setColor(vp.getAColor()));
-        theme.setFColor(setColor(vp.getFColor()));
-        theme.setGColor(setColor(vp.getGColor()));
-        theme.setKColor(setColor(vp.getKColor()));
-        theme.setMColor(setColor(vp.getMColor()));
-        theme.setXColor(setColor(vp.getXColor()));
+            theme.setOColor(setColor(vp.getOColor()));
+            theme.setBColor(setColor(vp.getBColor()));
+            theme.setAColor(setColor(vp.getAColor()));
+            theme.setFColor(setColor(vp.getFColor()));
+            theme.setGColor(setColor(vp.getGColor()));
+            theme.setKColor(setColor(vp.getKColor()));
+            theme.setMColor(setColor(vp.getMColor()));
+            theme.setXColor(setColor(vp.getXColor()));
 
-        theme.setORad(vp.getORadius());
-        theme.setBRad(vp.getBRadius());
-        theme.setARad(vp.getARadius());
-        theme.setFRad(vp.getFRadius());
-        theme.setGRad(vp.getGRadius());
-        theme.setKRad(vp.getKRadius());
-        theme.setMRad(vp.getMRadius());
-        theme.setXRad(vp.getXRadius());
-        theme.setDwarfRad(vp.getDwarfRadius());
-        theme.setGiantRad(vp.getGiantRadius());
-        theme.setSuperGiantRad(vp.getSuperGiantRadius());
+            theme.setORad(vp.getORadius());
+            theme.setBRad(vp.getBRadius());
+            theme.setARad(vp.getARadius());
+            theme.setFRad(vp.getFRadius());
+            theme.setGRad(vp.getGRadius());
+            theme.setKRad(vp.getKRadius());
+            theme.setMRad(vp.getMRadius());
+            theme.setXRad(vp.getXRadius());
+            theme.setDwarfRad(vp.getDwarfRadius());
+            theme.setGiantRad(vp.getGiantRadius());
+            theme.setSuperGiantRad(vp.getSuperGiantRadius());
 
-        theme.setLinkList(createLinks(chViewFile));
+            theme.setLinkList(createLinks(chViewFile));
 
-        theme.setRouteDescriptorList(createRouteDescriptorMap(chViewFile));
+            theme.setRouteDescriptorList(createRouteDescriptorMap(chViewFile));
 
-        theme.setPolities(createPolities(chViewFile));
+            theme.setPolities(createPolities(chViewFile));
 
-        return theme;
+            return theme;
+        }  catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
