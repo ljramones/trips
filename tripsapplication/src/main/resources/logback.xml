@@ -9,7 +9,6 @@
     <property name="MAX_HISTORY" value="7"/>
     <property name="MAX_FILE_SIZE" value="100MB"/>
 
-
     <!-- the specific loggers -->
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.springframework.security.oauth2" level="INFO"/>

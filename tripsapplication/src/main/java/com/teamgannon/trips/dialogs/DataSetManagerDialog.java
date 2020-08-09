@@ -3,8 +3,10 @@ package com.teamgannon.trips.dialogs;
 import com.teamgannon.trips.dialogs.support.FileProcessResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
+import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
-import com.teamgannon.trips.file.excel.model.RBExcelFile;
+import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -288,14 +290,15 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file);
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset.getName());
         try {
-            databaseManagementService.loadRBCSVStarSet(rbCsvFile);
-            showInfoMessage(
-                    "Load RB CSV Format",
-                    "xx records loaded from dataset yy, Use plot to see data");
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load CSV Format", data);
             processResult.setSuccess(true);
-
+            processResult.setDataSetDescriptor(dataSetDescriptor);
         } catch (Exception e) {
             showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
             processResult.setSuccess(false);
@@ -312,10 +315,11 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         // load RB excel file
         RBExcelFile excelFile = excelReader.loadFile(file);
         try {
-            databaseManagementService.loadRBStarSet(excelFile);
-            showInfoMessage(
-                    "Load RB Excel Format",
-                    "xx records loaded from dataset yy, Use plot to see data");
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load RB Excel Format", data);
             processResult.setSuccess(true);
 
         } catch (Exception e) {
@@ -325,8 +329,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         return processResult;
     }
-
-
 
     private FileProcessResult processCHViewFile(Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
@@ -373,10 +375,10 @@ public class DataSetManagerDialog extends Dialog<Integer> {
      * export the database as a CSV file
      *
      * @param dataSetDescriptor the descriptor
-     * @param file the file to export
+     * @param file              the file to export
      */
     private void exportDB(DataSetDescriptor dataSetDescriptor, File file) {
-        databaseManagementService.exportDatabase(dataSetDescriptor,file);
+        databaseManagementService.exportDatabase(dataSetDescriptor, file);
         log.info("File selection is:" + file.getAbsolutePath());
     }
 

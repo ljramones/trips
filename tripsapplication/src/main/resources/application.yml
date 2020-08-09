@@ -18,7 +18,7 @@ spring:
   # spring data jpa settings
   jpa:
     databasePlatform: org.hibernate.dialect.H2Dialect
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
     properties:

@@ -1,6 +1,5 @@
 package com.teamgannon.trips.file.excel;
 
-import com.teamgannon.trips.file.excel.model.RBExcelFile;
 import com.teamgannon.trips.file.excel.model.RBStar;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,7 @@ public class ExcelReader {
     /**
      * dependency injection
      *
-     * @param stellarFactory the stellar fatory used to create objects in the DB
+     * @param stellarFactory the stellar factory used to create objects in the DB
      */
     public ExcelReader(StellarFactory stellarFactory) {
         this.stellarFactory = stellarFactory;

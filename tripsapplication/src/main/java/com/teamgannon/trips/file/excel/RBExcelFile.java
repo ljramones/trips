@@ -1,5 +1,6 @@
-package com.teamgannon.trips.file.excel.model;
+package com.teamgannon.trips.file.excel;
 
+import com.teamgannon.trips.file.excel.model.RBStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

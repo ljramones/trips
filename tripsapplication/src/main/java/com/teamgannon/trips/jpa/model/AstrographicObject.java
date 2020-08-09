@@ -80,6 +80,19 @@ public class AstrographicObject implements Serializable {
     private String objectType;
 
     /**
+     * the class of object (Star,...)
+     */
+    @CsvBindByName(column = "nnclass")
+    private String nnClass;
+
+    /**
+     * the source catalog system used to hold this star
+     * where did it come from?
+     */
+    @CsvBindByName(column = "source")
+    private String source;
+
+    /**
      * Same story. One object has names in many catalogs. The catalogIDs go in an array which can have
      * one to many entries.
      */
@@ -125,16 +138,31 @@ public class AstrographicObject implements Serializable {
     private double ra;
 
     /**
+     * proper motion in right ascension)
+     */
+    @CsvBindByName(column = "pmra")
+    private double pmra;
+
+    /**
      * expressed Declination in DDMMSS
      */
     @CsvBindByName(column = "declination")
     private double declination;
+
+    /**
+     * proper motion in declination)
+     */
+    @CsvBindByName(column = "pmdec")
+    private double pmdec;
+
 
     @CsvBindByName(column = "dec_deg")
     private double dec_deg;
 
     @CsvBindByName(column = "rs_cdeg")
     private double rs_cdeg;
+
+
 
     /**
      * the parallax measurement
@@ -147,6 +175,12 @@ public class AstrographicObject implements Serializable {
      */
     @CsvBindByName(column = "distance")
     private double distance;
+
+    /**
+     * the star's radial velocity
+     */
+    @CsvBindByName(column = "radialvel")
+    private double radialVelocity;
 
     /**
      * From Simbad, We’re only storing ONE per object, and in reality we’re only interested in the first character
@@ -164,6 +198,12 @@ public class AstrographicObject implements Serializable {
     private String spectralClass;
 
     /**
+     * the temprature of the star in K
+     */
+    @CsvBindByName(column = "temp")
+    private double temperature;
+
+    /**
      * from the Simbad definitions
      */
     @CsvBindByName(column = "starClassType")
@@ -177,6 +217,15 @@ public class AstrographicObject implements Serializable {
     @CsvBindByName(column = "realStar")
     @NotNull
     private boolean realStar;
+
+    @CsvBindByName(column = "bprp")
+    private double bprp;
+
+    @CsvBindByName(column = "bpg")
+    private double bpg;
+
+    @CsvBindByName(column = "grp")
+    private double grp;
 
     /**
      * this is a generic marker that means that this is marked by other
