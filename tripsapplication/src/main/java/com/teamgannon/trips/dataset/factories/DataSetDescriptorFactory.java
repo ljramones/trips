@@ -136,6 +136,7 @@ public class DataSetDescriptorFactory {
         dataSetDescriptor.setFileCreator(dataset.getAuthor());
         dataSetDescriptor.setNumberStars(rbCsvFile.getSize());
         dataSetDescriptor.setFileNotes(dataset.getNotes());
+        dataSetDescriptor.setDatasetType(dataset.getDataType().getDataFormatEnum().getValue());
 
         Theme theme = new Theme();
         theme.setThemeName("csv");
