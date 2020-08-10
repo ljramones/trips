@@ -2,9 +2,11 @@ package com.teamgannon.trips.file.csvin;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import com.teamgannon.trips.dialogs.Dataset;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
+import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -27,15 +29,20 @@ public class RBCsvReader {
 
     private AstrographicObjectRepository repository;
 
-    public RBCsvReader(AstrographicObjectRepository repository) {
+    /**
+     * the stellar factory
+     */
+    private final StellarFactory stellarFactory;
+
+    public RBCsvReader(StellarFactory stellarFactory, AstrographicObjectRepository repository) {
+        this.stellarFactory = stellarFactory;
         this.repository = repository;
     }
 
-    public RBCsvFile loadFile(File file, String dataSetName) {
+    public RBCsvFile loadFile(File file, Dataset dataset) {
         RBCsvFile rbCsvFile = new RBCsvFile();
-        rbCsvFile.setFileName(file.getAbsolutePath());
-        rbCsvFile.setAuthor("anonymous");
-        rbCsvFile.setDatasetName(dataSetName);
+        rbCsvFile.setDataset(dataset);
+        dataset.setFileSelected(file.getAbsolutePath());
 
         boolean readComplete = false;
         try {
@@ -55,7 +62,7 @@ public class RBCsvReader {
                         break;
                     }
                     loopCounter++;
-                    RBCSVStar star = new RBCSVStar(
+                    RBCSVStar star = new RBCSVStar(stellarFactory,
                             lineRead[0], lineRead[1], lineRead[2],
                             lineRead[3], lineRead[4], lineRead[5],
                             lineRead[6], lineRead[7], lineRead[8],
@@ -65,8 +72,14 @@ public class RBCsvReader {
                             lineRead[18]);
                     try {
                         AstrographicObject astrographicObject = star.toAstrographicObject();
-                        astrographicObject.setDataSetName(dataSetName);
-                        starSet.add(astrographicObject);
+                        if (astrographicObject != null) {
+                            astrographicObject.setDataSetName(dataset.getName());
+                            starSet.add(astrographicObject);
+                            rbCsvFile.incAccepts();
+                        } else {
+                            rbCsvFile.incRejects();
+                        }
+                        rbCsvFile.incTotal();
                     } catch (Exception e) {
                         log.error("failed to parse star:{}, because of {}", star, e.getMessage());
                     }
@@ -74,9 +87,9 @@ public class RBCsvReader {
                 log.info("\n\nsaving {} entries\n\n", loopCounter);
                 // save all the stars we've read so far
                 repository.saveAll(starSet);
-                rbCsvFile.addSize(loopCounter);
             } while (!readComplete); // the moment readComplete turns true, we stop
 
+            log.info("File load report: total:{}, accepts:{}, rejects:{}", rbCsvFile.getSize(), rbCsvFile.getNumbAccepts(), rbCsvFile.getNumbRejects());
         } catch (IOException | CsvValidationException e) {
             log.error("failed to read file because: {}", e.getMessage());
         }

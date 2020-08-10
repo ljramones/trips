@@ -10,6 +10,7 @@ import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.stardata.StellarFactory;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -230,9 +231,12 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             }
 
             FileProcessResult result;
+            // this is a CH View import format
+            // this is Excel format that follows a specification from the Rick Boatwright format
+            // this is a database import
+            // this is Simbad database import format
             switch (dataset.getDataType().getSuffix()) {
-                case "chv":
-                    // this is a CH View import format
+                case "chv" -> {
                     result = processCHViewFile(dataset);
                     if (result.isSuccess()) {
                         DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
@@ -241,9 +245,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                     } else {
                         showErrorAlert("load CH View file", result.getMessage());
                     }
-                    break;
-                case "xlsv":
-                    // this is Excel format that follows a specification from the Rick Boatwright format
+                }
+                case "xlsv" -> {
                     result = processRBExcelFile(dataset);
                     if (result.isSuccess()) {
                         DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
@@ -251,9 +254,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                     } else {
                         showErrorAlert("load Excel file", result.getMessage());
                     }
-                    break;
-                case "csv":
-                    // this is a database import
+                }
+                case "csv" -> {
                     result = processCSVFile(dataset);
                     if (result.isSuccess()) {
                         DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
@@ -262,9 +264,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                     } else {
                         showErrorAlert("load csv", result.getMessage());
                     }
-                    break;
-                case "simbad":
-                    // this is Simbad database import format
+                }
+                case "simbad" -> {
                     result = processSimbadFile(dataset);
                     if (result.isSuccess()) {
                         DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
@@ -273,6 +274,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                     } else {
                         showErrorAlert("load simbad", result.getMessage());
                     }
+                }
             }
             log.info("New dataset {} added", dataset.getName());
         }
@@ -290,11 +292,11 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset.getName());
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());
             showInfoMessage("Load CSV Format", data);
             processResult.setSuccess(true);

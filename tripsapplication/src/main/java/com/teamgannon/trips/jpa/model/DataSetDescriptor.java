@@ -71,7 +71,7 @@ public class DataSetDescriptor implements Serializable {
     /**
      * number of entities in this dataset
      */
-    private Integer numberStars;
+    private Long numberStars;
 
     /**
      * number of routes in dataset
@@ -196,7 +196,7 @@ public class DataSetDescriptor implements Serializable {
     }
 
     public void setAstrographicDataList(Set<UUID> uuidList) {
-        numberStars = uuidList.size();
+        numberStars = (long) uuidList.size();
         astrographicDataList = uuidList.stream().map(uuid -> uuid.toString() + ",").collect(Collectors.joining());
     }
 
