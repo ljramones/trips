@@ -213,7 +213,9 @@ public enum StellarType {
      * zirconium and titanium may be indicated explicitly. Also occasionally seen is a number following an
      * asterisk, which represents the strength of the ZrO bands on a scale from 1 to 5.
      */
-    S("S");
+    S("S"),
+
+    Q("?");
 
     private final String className;
 

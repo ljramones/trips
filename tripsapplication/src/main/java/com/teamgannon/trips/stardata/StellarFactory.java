@@ -400,6 +400,33 @@ public class StellarFactory {
         return mClass;
     }
 
+    private static StellarClassification createQClass() {
+        StellarClassification qClass = new StellarClassification();
+        qClass.setStellarType(StellarType.Q);
+
+        qClass.setStarColor(StarColor.F);
+        qClass.setStellarChromaticity(StellarChromaticity.F);
+
+        qClass.setUpperTemperature(7500);
+        qClass.setLowerTemperature(6000);
+
+        qClass.setColor("yellow white");
+        qClass.setChromacity("white");
+
+        qClass.setUpperMass(1.4);
+        qClass.setLowerMass(1.04);
+
+        qClass.setUpperRadius(1.4);
+        qClass.setLowerRadius(1.15);
+
+        qClass.setUpperLuminosity(5);
+        qClass.setLowerLuminosity(1.5);
+
+        qClass.setLines(HydrogenLines.MEDIUM);
+        qClass.setSequenceFraction(3);
+        return qClass;
+    }
+
     /**
      * create the stellar types
      */
@@ -433,7 +460,12 @@ public class StellarFactory {
         stellarClassificationMap.put(mClass.getStellarType().toString(), mClass);
         stellarClasses.add(StellarType.M.toString());
 
+        StellarClassification qClass = createQClass();
+        stellarClassificationMap.put(qClass.getStellarType().toString(), qClass);
+        stellarClasses.add(StellarType.Q.toString());
+
     }
+
 
     /**
      * get the stellar class based on the type

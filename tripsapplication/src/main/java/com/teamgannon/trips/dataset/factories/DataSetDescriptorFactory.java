@@ -6,9 +6,9 @@ import com.teamgannon.trips.dataset.model.Polity;
 import com.teamgannon.trips.dataset.model.RouteDescriptor;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.Dataset;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
+import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.filedata.model.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -79,6 +79,7 @@ public class DataSetDescriptorFactory {
 
         // set the records for this
         dataSetDescriptor.setAstrographicDataList(astrographicObjectMap.keySet());
+        dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
 
         // save the data set which is cross referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);
@@ -125,14 +126,16 @@ public class DataSetDescriptorFactory {
 
 
     public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
-                                                            AstrographicObjectRepository astrographicObjectRepository,
-                                                            String author,
                                                             RBCsvFile rbCsvFile) throws Exception {
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
 
         // parse excel file to create the basics for the data set to save
-        dataSetDescriptor.setDataSetName(rbCsvFile.getFileName());
-        dataSetDescriptor.setFileCreator(author);
+        Dataset dataset = rbCsvFile.getDataset();
+        dataSetDescriptor.setDataSetName(dataset.getName());
+        dataSetDescriptor.setFilePath(dataset.getFileSelected());
+        dataSetDescriptor.setFileCreator(dataset.getAuthor());
+        dataSetDescriptor.setNumberStars(rbCsvFile.getSize());
+        dataSetDescriptor.setFileNotes(dataset.getNotes());
 
         Theme theme = new Theme();
         theme.setThemeName("csv");
@@ -144,7 +147,7 @@ public class DataSetDescriptorFactory {
         }
 
         log.info("Number of records load for file:{} is {}",
-                rbCsvFile.getFileName(),
+                dataset.getFileSelected(),
                 rbCsvFile.getSize());
 
 
@@ -236,7 +239,7 @@ public class DataSetDescriptorFactory {
             theme.setPolities(createPolities(chViewFile));
 
             return theme;
-        }  catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -258,8 +261,8 @@ public class DataSetDescriptorFactory {
     /**
      * initial loading
      *
-     * @param chViewFile
-     * @return
+     * @param chViewFile the file with CHView data
+     * @return a linked list of so sort of data
      */
     public static List<Link> createLinks(ChViewFile chViewFile) {
         List<Link> linkList = new ArrayList<>();

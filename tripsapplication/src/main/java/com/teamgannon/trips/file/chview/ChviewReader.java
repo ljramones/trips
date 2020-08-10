@@ -594,7 +594,6 @@ public class ChviewReader {
                 Double.parseDouble(ords3.getValue())
         );
 
-
         PseudoString constellation = readStarParameter(buffer, currentIndex);
         currentIndex += constellation.getLength();
         chViewRecord.setConstellation(constellation.getValue());

@@ -291,7 +291,7 @@ public class DatabaseManagementService {
 
         } catch (Exception e) {
             log.error("failed to parse csv record for incoming data file because of " + e);
-            log.error("stardefinition:" + star.toString());
+            log.error("star definition:" + star.toString());
         }
         return result;
     }
@@ -331,8 +331,6 @@ public class DatabaseManagementService {
         // this method call actually saves the dataset in elasticsearch
        return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
-                astrographicObjectRepository,
-                rbCsvFile.getAuthor(),
                 rbCsvFile
         );
     }
