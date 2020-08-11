@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs;
 
 import com.teamgannon.trips.dialogs.support.FileProcessResult;
+import com.teamgannon.trips.dialogs.test.WorkIndicatorDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
@@ -10,11 +11,11 @@ import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.stardata.StellarFactory;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
@@ -30,11 +31,10 @@ import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.*;
 
-
 @Slf4j
 public class DataSetManagerDialog extends Dialog<Integer> {
 
-    private StellarDataUpdater dataUpdater;
+    private final StellarDataUpdater dataUpdater;
     /**
      * the database management service used to manage datasets and databases
      */
@@ -64,7 +64,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
-        this.setHeight(400);
+        this.setHeight(500);
 
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
@@ -72,6 +72,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         createTable(vBox);
 
         createButtonPanel(vBox);
+
         updateTable();
 
         // set the dialog as a utility
@@ -218,6 +219,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private void addDataSet(ActionEvent actionEvent) {
 
+
         AddDataSetDialog dialog = new AddDataSetDialog();
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
@@ -230,55 +232,93 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 return;
             }
 
-            FileProcessResult result;
-            // this is a CH View import format
-            // this is Excel format that follows a specification from the Rick Boatwright format
-            // this is a database import
-            // this is Simbad database import format
-            switch (dataset.getDataType().getSuffix()) {
-                case "chv" -> {
-                    result = processCHViewFile(dataset);
-                    if (result.isSuccess()) {
-                        DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                        this.dataUpdater.addDataSet(dataSetDescriptor);
-                        updateTable();
-                    } else {
-                        showErrorAlert("load CH View file", result.getMessage());
-                    }
-                }
-                case "xlsv" -> {
-                    result = processRBExcelFile(dataset);
-                    if (result.isSuccess()) {
-                        DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                        updateTable();
-                    } else {
-                        showErrorAlert("load Excel file", result.getMessage());
-                    }
-                }
-                case "csv" -> {
-                    result = processCSVFile(dataset);
-                    if (result.isSuccess()) {
-                        DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                        this.dataUpdater.addDataSet(dataSetDescriptor);
-                        updateTable();
-                    } else {
-                        showErrorAlert("load csv", result.getMessage());
-                    }
-                }
-                case "simbad" -> {
-                    result = processSimbadFile(dataset);
-                    if (result.isSuccess()) {
-                        DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+//            showProgress(this.getDialogPane().getScene());
 
-                        updateTable();
-                    } else {
-                        showErrorAlert("load simbad", result.getMessage());
-                    }
-                }
-            }
-            log.info("New dataset {} added", dataset.getName());
+            processFileType(dataset);
         }
         log.info("loaded data set dialog");
+    }
+
+
+    /**
+     * process the file provided
+     *
+     * @param dataset the defined dataset
+     */
+    private void processFileType(Dataset dataset) {
+        FileProcessResult result;
+        // this is a CH View import format
+        // this is Excel format that follows a specification from the Rick Boatwright format
+        // this is a database import
+        // this is Simbad database import format
+        switch (dataset.getDataType().getSuffix()) {
+            case "chv" -> {
+                result = processCHViewFile(dataset);
+                if (result.isSuccess()) {
+                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+                    this.dataUpdater.addDataSet(dataSetDescriptor);
+                    updateTable();
+                } else {
+                    showErrorAlert("load CH View file", result.getMessage());
+                }
+            }
+            case "xlsv" -> {
+                result = processRBExcelFile(dataset);
+                if (result.isSuccess()) {
+                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+                    updateTable();
+                } else {
+                    showErrorAlert("load Excel file", result.getMessage());
+                }
+            }
+            case "csv" -> {
+
+                result = processCSVFile(dataset);
+                if (result.isSuccess()) {
+                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+                    this.dataUpdater.addDataSet(dataSetDescriptor);
+                    updateTable();
+                } else {
+                    showErrorAlert("load csv", result.getMessage());
+                }
+            }
+            case "simbad" -> {
+                result = processSimbadFile(dataset);
+                if (result.isSuccess()) {
+                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+
+                    updateTable();
+                } else {
+                    showErrorAlert("load simbad", result.getMessage());
+                }
+            }
+        }
+        log.info("New dataset {} added", dataset.getName());
+    }
+
+    private void showProgress(Scene scene) {
+        WorkIndicatorDialog wd = new WorkIndicatorDialog(
+                scene.getWindow(),
+                "Loading Project Files...");
+
+        wd.addTaskEndNotification(result -> {
+            System.out.println(result);
+//            wd=null; // don't keep the object, cleanup
+        });
+
+        wd.exec("123", inputParam -> {
+            // Thinks to do...
+            // NO ACCESS TO UI ELEMENTS!
+            for (int i = 0; i < 20; i++) {
+                System.out.println("Loading data... '123' =->" + inputParam);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return 1;
+        });
     }
 
     private FileProcessResult processSimbadFile(Dataset dataset) {

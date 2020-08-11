@@ -31,9 +31,10 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     public Button addDataSetButton = new Button("Add Dataset");
 
+
     public AddDataSetDialog() {
 
-        this.setHeight(300);
+        this.setHeight(400);
         this.setWidth(400);
 
         VBox vBox = new VBox();

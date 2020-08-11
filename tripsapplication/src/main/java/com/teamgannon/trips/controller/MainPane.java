@@ -9,6 +9,7 @@ import com.teamgannon.trips.controls.RoutingPanel;
 import com.teamgannon.trips.dialogs.*;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
+import com.teamgannon.trips.dialogs.test.WorkIndicatorDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
@@ -1043,6 +1044,5 @@ public class MainPane implements
         // we throw away the result after returning
         dialog.showAndWait();
     }
-
 
 }
