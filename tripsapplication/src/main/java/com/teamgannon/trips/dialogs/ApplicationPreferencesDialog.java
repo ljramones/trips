@@ -1,14 +1,13 @@
 package com.teamgannon.trips.dialogs;
 
+import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -19,9 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class GraphColorDialog extends Dialog<ColorChangeResult> {
+public class ApplicationPreferencesDialog extends Dialog<ColorChangeResult> {
 
     private final ColorPalette colorPalette;
+    private final TripsContext tripsContext;
+    private final ApplicationPreferences preferences;
 
     public Button changeColorsButton = new Button("Change colors");
 
@@ -32,8 +33,11 @@ public class GraphColorDialog extends Dialog<ColorChangeResult> {
     private final TextField extensionColorTextField = new TextField();
     private final TextField legendColorTextField = new TextField();
 
-    public GraphColorDialog(ColorPalette colorPalette) {
-        this.colorPalette = colorPalette;
+    public ApplicationPreferencesDialog(TripsContext tripsContext) {
+        this.tripsContext = tripsContext;
+        this.colorPalette = tripsContext.getColorPallete();
+        this.preferences = tripsContext.getAppPreferences();
+
         this.setTitle("Change Graph Colors Dialog");
         this.setHeight(300);
         this.setWidth(400);
@@ -43,26 +47,17 @@ public class GraphColorDialog extends Dialog<ColorChangeResult> {
         vBox.setSpacing(10.0);
         this.getDialogPane().setContent(vBox);
 
-        GridPane gridPane = new GridPane();
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-        vBox.getChildren().add(gridPane);
+        HBox prefsBox = new HBox();
 
-        Label starNameLabel = new Label("Label color:");
-        gridPane.add(starNameLabel, 0, 0);
-        gridPane.add(labelColorTextField, 1, 0);
+        TitledPane colorPane = createColorPane();
+        colorPane.setCollapsible(false);
+        prefsBox.getChildren().add(colorPane);
 
-        Label distanceToEarthLabel = new Label("Grid color:");
-        gridPane.add(distanceToEarthLabel, 0, 1);
-        gridPane.add(gridColorTextField, 1, 1);
+        TitledPane preferencesPane = createViewPreferences();
+        preferencesPane.setCollapsible(false);
+        prefsBox.getChildren().add(preferencesPane);
 
-        Label spectraLabel = new Label("Extension color:");
-        gridPane.add(spectraLabel, 0, 2);
-        gridPane.add(extensionColorTextField, 1, 2);
-
-        Label radiusLabel = new Label("Legend color");
-        gridPane.add(radiusLabel, 0, 3);
-        gridPane.add(legendColorTextField, 1, 3);
+        vBox.getChildren().add(prefsBox);
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
@@ -84,6 +79,70 @@ public class GraphColorDialog extends Dialog<ColorChangeResult> {
 
         setData();
     }
+
+    private TitledPane createColorPane() {
+        GridPane gridPane = new GridPane();
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+
+        Label starNameLabel = new Label("Label color:");
+        gridPane.add(starNameLabel, 0, 0);
+        gridPane.add(labelColorTextField, 1, 0);
+
+        Label distanceToEarthLabel = new Label("Grid color:");
+        gridPane.add(distanceToEarthLabel, 0, 1);
+        gridPane.add(gridColorTextField, 1, 1);
+
+        Label spectraLabel = new Label("Extension color:");
+        gridPane.add(spectraLabel, 0, 2);
+        gridPane.add(extensionColorTextField, 1, 2);
+
+        Label radiusLabel = new Label("Legend color");
+        gridPane.add(radiusLabel, 0, 3);
+        gridPane.add(legendColorTextField, 1, 3);
+        return new TitledPane("Change Graph Colors ", gridPane);
+    }
+
+    private TitledPane createViewPreferences() {
+        VBox mainPane = new VBox();
+        VBox gridBox = new VBox();
+        GridPane gridPane = new GridPane();
+
+        Label centerCoordLabel = new Label("Center Coordinates: ");
+        Label centerCoordValueLabel = new Label(preferences.currentCenterToString());
+        gridPane.addRow(0, centerCoordLabel, centerCoordValueLabel);
+
+        Label centerStarNameLabel = new Label("Center Star: ");
+        Label centerStarNameValueLabel = new Label(preferences.getCenterStarName());
+        gridPane.addRow(1, centerStarNameLabel, centerStarNameValueLabel);
+
+        Label centerStarIDLabel = new Label("Star Id: ");
+        Label centerStarIDValueLabel = new Label(preferences.centerStarIdAsString());
+        gridPane.addRow(2, centerStarIDLabel, centerStarIDValueLabel);
+
+        Label distanceCenterLabel = new Label("Distance Limit: ");
+        Label distanceCenterValueLabel = new Label(Integer.toString(preferences.getDistanceFromCenter()));
+        gridPane.addRow(3, distanceCenterLabel, distanceCenterValueLabel);
+
+        Label routeLengthLabel = new Label("Route Segment Length: ");
+        Label routeLengthValueLabel = new Label(Integer.toString(preferences.getRouteLength()));
+        gridPane.addRow(4, routeLengthLabel, routeLengthValueLabel);
+
+        Label routeColorLabel = new Label("Route Color: ");
+        Label routeColorValueLabel = preferences.getRouteColorAsLabel();
+        gridPane.addRow(5, routeColorLabel, routeColorValueLabel);
+
+        Label gridSizeLabel = new Label("Grid Size (ly): ");
+        Label gridSizeValueLabel = new Label(Integer.toString(preferences.getGridsize()));
+        gridPane.addRow(6, gridSizeLabel, gridSizeValueLabel);
+        gridBox.getChildren().add(gridPane);
+
+        gridBox.getChildren().add(new Separator());
+
+        mainPane.getChildren().add(gridBox);
+        return new TitledPane("Change View Preferences", mainPane);
+    }
+
 
     private void resetColorsClicked(ActionEvent actionEvent) {
         setResult(new ColorChangeResult(ChangeTypeEnum.RESET, null));

@@ -13,7 +13,7 @@
 
     <groupId>com.teamgannon.trips</groupId>
     <artifactId>trips</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
 
     <name>Terran Republic Interstellar Plotter</name>
     <description>

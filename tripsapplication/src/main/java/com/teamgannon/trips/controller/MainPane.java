@@ -4,12 +4,10 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.controls.ApplicationPreferencesPane;
 import com.teamgannon.trips.controls.RoutingPanel;
 import com.teamgannon.trips.dialogs.*;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
-import com.teamgannon.trips.dialogs.test.WorkIndicatorDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
@@ -105,18 +103,29 @@ public class MainPane implements
     public Pane mainPanel;
     @FXML
     public TitledPane datasetsPane;
-    @FXML
-    public TitledPane viewPreferencesPane;
+
+
+
+
+//    @FXML
+//    public TitledPane viewPreferencesPane;
+//    @FXML
+//    public GridPane tripsPropertiesPane;
+
+
+
+
     @FXML
     public TitledPane objectsViewPane;
     @FXML
     public TitledPane stellarObjectPane;
+
+
+
     @FXML
     public TitledPane routingPane;
     @FXML
     public GridPane propertiesPane;
-    @FXML
-    public GridPane tripsPropertiesPane;
 
 
     /**
@@ -319,8 +328,8 @@ public class MainPane implements
         tripsContext.setColorPallete(colorPalette);
     }
 
-    public void changeGraphColors(ActionEvent actionEvent) {
-        GraphColorDialog dialog = new GraphColorDialog(tripsContext.getColorPallete());
+    public void changeApplicationPreferences(ActionEvent actionEvent) {
+        ApplicationPreferencesDialog dialog = new ApplicationPreferencesDialog(tripsContext);
         Optional<ColorChangeResult> result = dialog.showAndWait();
         if (result.isPresent()) {
             ColorChangeResult colorChangeResult = result.get();
@@ -449,7 +458,6 @@ public class MainPane implements
      * create the right portion of the display
      */
     private void createRightDisplay() {
-        viewPreferencesPane.setContent(new ApplicationPreferencesPane(tripsContext));
         createRoutingPane();
     }
 
