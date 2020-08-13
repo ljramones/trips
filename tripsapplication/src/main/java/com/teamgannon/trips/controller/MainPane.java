@@ -1000,8 +1000,12 @@ public class MainPane implements
                 return new ListCell<>() {
                     @Override
                     protected void updateItem(Map<String, String> objectProperties, boolean bln) {
+                        final Tooltip tooltip = new Tooltip();
+
                         super.updateItem(objectProperties, bln);
                         if (objectProperties != null) {
+                            tooltip.setText("Please select a star to show it's properties");
+                            setTooltip(tooltip);
                             setText(objectProperties.get("name"));
                         }
                     }
