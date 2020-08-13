@@ -27,7 +27,7 @@
             <MenuItem mnemonicParsing="false" onAction="#toggleToolbar" text="Toggle Toolbar"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleStatusBar" text="Toggle Status Bar"/>
             <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Show View Preferences"/>
-            <MenuItem mnemonicParsing="false" onAction="#changeGraphColors" text="Change graph colors..."/>
+            <MenuItem mnemonicParsing="false" onAction="#changeApplicationPreferences" text="Change application preferences..."/>
         </Menu>
         <Menu mnemonicParsing="false" text="Data Management">
             <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset Manager..."/>
@@ -69,19 +69,6 @@
                 <Accordion fx:id="propertiesAccordion">
                     <panes>
                         <TitledPane fx:id="datasetsPane" prefHeight="200.0" prefWidth="200.0" text="DataSets Available">
-                        </TitledPane>
-                        <TitledPane fx:id="viewPreferencesPane" text="TRIPS Preferences">
-                            <GridPane fx:id="tripsPropertiesPane">
-                                <columnConstraints>
-                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                                </columnConstraints>
-                                <rowConstraints>
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                </rowConstraints>
-                            </GridPane>
                         </TitledPane>
                         <TitledPane fx:id="objectsViewPane" prefHeight="200.0" prefWidth="200.0"
                                     text="Objects in View"/>

@@ -44,6 +44,7 @@ public class RBCsvReader {
         rbCsvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
 
+        long totalCount = 0;
         boolean readComplete = false;
         try {
             Reader reader = Files.newBufferedReader(Paths.get(file.toURI()));
@@ -84,9 +85,11 @@ public class RBCsvReader {
                         log.error("failed to parse star:{}, because of {}", star, e.getMessage());
                     }
                 }
-                log.info("\n\nsaving {} entries\n\n", loopCounter);
+
                 // save all the stars we've read so far
                 repository.saveAll(starSet);
+                totalCount += loopCounter;
+                log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
             } while (!readComplete); // the moment readComplete turns true, we stop
 
             log.info("File load report: total:{}, accepts:{}, rejects:{}", rbCsvFile.getSize(), rbCsvFile.getNumbAccepts(), rbCsvFile.getNumbRejects());
