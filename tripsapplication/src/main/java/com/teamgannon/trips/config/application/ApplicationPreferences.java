@@ -9,11 +9,12 @@ import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Slf4j
 @Data
-public class ApplicationPreferences {
+public class ApplicationPreferences implements Serializable {
 
     // center settings
     /**

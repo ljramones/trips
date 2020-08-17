@@ -1,6 +1,6 @@
 package com.teamgannon.trips.file.csvin;
 
-import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import lombok.Data;
 
 @Data

@@ -1,18 +1,8 @@
 package com.teamgannon.trips.tasks;
 
-import com.teamgannon.trips.dialogs.Dataset;
-import com.teamgannon.trips.dialogs.support.FileProcessResult;
-import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
-import com.teamgannon.trips.file.excel.RBExcelFile;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.File;
-
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
 public class FileLoaderTask extends Task<Long> {

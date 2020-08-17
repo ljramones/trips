@@ -1,4 +1,4 @@
-package com.teamgannon.trips.dialogs;
+package com.teamgannon.trips.dialogs.support;
 
 import lombok.Data;
 

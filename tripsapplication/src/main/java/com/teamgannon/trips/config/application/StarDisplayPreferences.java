@@ -4,11 +4,14 @@ import com.teamgannon.trips.stardata.StellarType;
 import javafx.scene.paint.Color;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class StarDisplayPreferences {
+public class StarDisplayPreferences  implements Serializable {
+
+    private static final long serialVersionUID = 3420111848302502658L;
 
     /**
      * the radius to show stars

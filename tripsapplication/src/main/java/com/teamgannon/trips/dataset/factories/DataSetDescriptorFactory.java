@@ -5,7 +5,7 @@ import com.teamgannon.trips.dataset.model.Link;
 import com.teamgannon.trips.dataset.model.Polity;
 import com.teamgannon.trips.dataset.model.RouteDescriptor;
 import com.teamgannon.trips.dataset.model.Theme;
-import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;

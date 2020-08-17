@@ -5,9 +5,13 @@ import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controls.RoutingPanel;
-import com.teamgannon.trips.dialogs.*;
+import com.teamgannon.trips.dialogs.ApplicationPreferencesDialog;
+import com.teamgannon.trips.dialogs.DataSetManagerDialog;
+import com.teamgannon.trips.dialogs.PreferencesDialog;
+import com.teamgannon.trips.dialogs.QueryDialog;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
+import com.teamgannon.trips.dialogs.support.ViewPreferencesChange;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
@@ -34,6 +38,7 @@ import com.teamgannon.trips.starmodel.StarBase;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -105,21 +110,16 @@ public class MainPane implements
     public TitledPane datasetsPane;
 
 
-
-
 //    @FXML
 //    public TitledPane viewPreferencesPane;
 //    @FXML
 //    public GridPane tripsPropertiesPane;
 
 
-
-
     @FXML
     public TitledPane objectsViewPane;
     @FXML
     public TitledPane stellarObjectPane;
-
 
 
     @FXML
@@ -330,9 +330,10 @@ public class MainPane implements
 
     public void changeApplicationPreferences(ActionEvent actionEvent) {
         ApplicationPreferencesDialog dialog = new ApplicationPreferencesDialog(tripsContext);
-        Optional<ColorChangeResult> result = dialog.showAndWait();
+        Optional<ViewPreferencesChange> result = dialog.showAndWait();
         if (result.isPresent()) {
-            ColorChangeResult colorChangeResult = result.get();
+            ViewPreferencesChange viewPreferencesChange = result.get();
+            ColorChangeResult colorChangeResult = viewPreferencesChange.getColorChangeResult();
             if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.CHANGE)) {
                 tripsContext.setColorPallete(colorChangeResult.getColorPalette());
             } else if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.RESET)) {
@@ -381,6 +382,21 @@ public class MainPane implements
             searchContext.addDataSets(dataSets);
         }
         log.info("Application up and running");
+    }
+
+    /**
+     * select the dataset in use
+     *
+     * @param index the index to select
+     * @todo connect this code
+     */
+    private void selectDataSet(int index) {
+        Platform.runLater(() -> {
+            dataSetsListView.scrollTo(index);
+            dataSetsListView.getFocusModel().focus(index);
+            dataSetsListView.getSelectionModel().select(index);
+        });
+
     }
 
     private List<DataSetDescriptor> loadDataSetView() {
@@ -658,6 +674,10 @@ public class MainPane implements
                 showList(astrographicObjects);
             }
             showStatus("Dataset loaded is: " + searchQuery.getDataSetName());
+
+            // highlight the data set used
+            selectDataSet(1);
+
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -829,7 +849,7 @@ public class MainPane implements
             }
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(this, astrographicObjects);
-            showStatus("Dataset loaded is: "+dataSetDescriptor.getDataSetName());
+            showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
         }
     }
 

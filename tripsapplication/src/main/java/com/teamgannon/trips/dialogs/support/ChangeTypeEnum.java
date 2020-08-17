@@ -1,5 +1,5 @@
 package com.teamgannon.trips.dialogs.support;
 
 public enum ChangeTypeEnum {
-    CHANGE, RESET, CANCEL
+    CHANGE, RESET, CANCEL, ERROR
 }

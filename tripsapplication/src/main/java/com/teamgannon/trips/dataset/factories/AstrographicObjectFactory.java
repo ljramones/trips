@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dataset.factories;
 
-import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.filedata.model.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.scene.paint.Color;

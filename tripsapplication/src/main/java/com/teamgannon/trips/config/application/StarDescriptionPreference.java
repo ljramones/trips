@@ -5,9 +5,13 @@ import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
 @Builder
-public class StarDescriptionPreference {
+public class StarDescriptionPreference implements Serializable {
+
+    private static final long serialVersionUID = 477224322891821357L;
 
     private StellarType startClass;
 
