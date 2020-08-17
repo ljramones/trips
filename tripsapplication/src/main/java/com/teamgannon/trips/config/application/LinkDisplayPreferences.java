@@ -3,12 +3,14 @@ package com.teamgannon.trips.config.application;
 import javafx.scene.paint.Color;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class LinkDisplayPreferences {
+public class LinkDisplayPreferences implements Serializable {
 
+    private static final long serialVersionUID = -8669652139078807845L;
     private boolean showLinks = true;
 
     private boolean showDistances = false;

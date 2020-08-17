@@ -7,7 +7,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
-import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;

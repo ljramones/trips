@@ -2,7 +2,7 @@ package com.teamgannon.trips.file.csvin;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import com.teamgannon.trips.dialogs.Dataset;
+import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;

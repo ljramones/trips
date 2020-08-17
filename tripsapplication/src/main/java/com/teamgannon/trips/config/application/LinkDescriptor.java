@@ -4,10 +4,14 @@ import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
+
 
 @Data
 @Builder
-public class LinkDescriptor {
+public class LinkDescriptor  implements Serializable {
+
+    private static final long serialVersionUID = -2500991529523405863L;
 
     @Builder.Default
     private int linkNumber = 1;

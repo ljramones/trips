@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs;
 
+import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.dialogs.support.FileProcessResult;
 import com.teamgannon.trips.dialogs.test.WorkIndicatorDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
