@@ -18,14 +18,15 @@
             <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Display">
-            <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Show View Preferences"/>
             <MenuItem mnemonicParsing="false" onAction="#changeApplicationPreferences" text="Change application preferences..."/>
+            <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Change view preferences..."/>
             <SeparatorMenuItem/>
             <MenuItem mnemonicParsing="false" onAction="#toggleGrid" text="Toggle Grid"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleGridExtensions" text="Toggle Grid Extensions"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleStars" text="Toggle Stars"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleScale" text="Toggle Scale"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleRoutes" text="Toggle  Routes"/>
+            <SeparatorMenuItem/>
             <MenuItem mnemonicParsing="false" onAction="#toggleSidePane" text="Toggle Side Pane"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleToolbar" text="Toggle Toolbar"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleStatusBar" text="Toggle Status Bar"/>

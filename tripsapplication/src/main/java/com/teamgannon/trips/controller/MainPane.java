@@ -8,7 +8,7 @@ import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.controls.RoutingPanel;
 import com.teamgannon.trips.dialogs.ApplicationPreferencesDialog;
 import com.teamgannon.trips.dialogs.DataSetManagerDialog;
-import com.teamgannon.trips.dialogs.PreferencesDialog;
+import com.teamgannon.trips.dialogs.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.QueryDialog;
 import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
 import com.teamgannon.trips.dialogs.support.ColorChangeResult;
@@ -321,26 +321,6 @@ public class MainPane implements
         tripsContext.setColorPallete(colorPalette);
     }
 
-    public void changeApplicationPreferences(ActionEvent actionEvent) {
-        ApplicationPreferencesDialog dialog = new ApplicationPreferencesDialog(tripsContext);
-        Optional<ViewPreferencesChange> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            ViewPreferencesChange viewPreferencesChange = result.get();
-            ColorChangeResult colorChangeResult = viewPreferencesChange.getColorChangeResult();
-            if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.CHANGE)) {
-                tripsContext.setColorPallete(colorChangeResult.getColorPalette());
-            } else if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.RESET)) {
-                tripsContext.setColorPallete(ColorPalette.defaultColors());
-            } else {
-                return;
-            }
-
-            // colors changes so update db
-            updateColors(tripsContext.getColorPallete().getGraphColor());
-            astrographicPlotter.changeColors(tripsContext.getColorPallete());
-        }
-    }
-
     private void updateColors(GraphColor graphColor) {
         Iterable<GraphColor> graphColors = graphColorRepository.findAll();
         GraphColor graphColorDB = graphColors.iterator().next();
@@ -579,15 +559,39 @@ public class MainPane implements
         statusBar.setVisible(!statusBar.isVisible());
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     public void showViewPreferences(ActionEvent actionEvent) {
         ApplicationPreferences applicationPreferences = tripsContext.getAppPreferences();
-        PreferencesDialog preferencesDialog = new PreferencesDialog(applicationPreferences);
-        Optional<ApplicationPreferences> updatedApplicationOpt = preferencesDialog.showAndWait();
+        ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(applicationPreferences);
+        Optional<ApplicationPreferences> updatedApplicationOpt = viewPreferencesDialog.showAndWait();
         if (updatedApplicationOpt.isPresent()) {
             ApplicationPreferences updateAppPrefs = updatedApplicationOpt.get();
             log.info("show app prefs");
         }
     }
+
+
+    public void changeApplicationPreferences(ActionEvent actionEvent) {
+        ApplicationPreferencesDialog dialog = new ApplicationPreferencesDialog(tripsContext);
+        Optional<ViewPreferencesChange> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            ViewPreferencesChange viewPreferencesChange = result.get();
+            ColorChangeResult colorChangeResult = viewPreferencesChange.getColorChangeResult();
+            if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.CHANGE)) {
+                tripsContext.setColorPallete(colorChangeResult.getColorPalette());
+            } else if (colorChangeResult.getChangeType().equals(ChangeTypeEnum.RESET)) {
+                tripsContext.setColorPallete(ColorPalette.defaultColors());
+            } else {
+                return;
+            }
+
+            // colors changes so update db
+            updateColors(tripsContext.getColorPallete().getGraphColor());
+            astrographicPlotter.changeColors(tripsContext.getColorPallete());
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
 
     ////////// importer and exporters  //////////////////
 
