@@ -210,4 +210,11 @@ public class DataSetDescriptor implements Serializable {
         return fileNotes;
     }
 
+    public String getToolTipText() {
+        return "name:" + dataSetName + "\n"
+                + "creator: " + fileCreator + "\n"
+                + "type: " + datasetType + "\n"
+                + "notes: " + fileNotes;
+    }
+
 }

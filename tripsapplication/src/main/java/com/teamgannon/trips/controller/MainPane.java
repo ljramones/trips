@@ -4,6 +4,7 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.controls.RoutingPanel;
 import com.teamgannon.trips.dialogs.ApplicationPreferencesDialog;
 import com.teamgannon.trips.dialogs.DataSetManagerDialog;
@@ -109,13 +110,6 @@ public class MainPane implements
     @FXML
     public TitledPane datasetsPane;
 
-
-//    @FXML
-//    public TitledPane viewPreferencesPane;
-//    @FXML
-//    public GridPane tripsPropertiesPane;
-
-
     @FXML
     public TitledPane objectsViewPane;
     @FXML
@@ -208,10 +202,9 @@ public class MainPane implements
     private final List<Map<String, String>> dataSetsInView = new ArrayList<>();
 
     /**
-     * observable list that provides the C for the MVC of the ListView
+     * dataset lists
      */
-    private final ObservableList<Map<String, String>> dataSetList = FXCollections.observableArrayList(dataSetsInView);
-    private final ListView<Map<String, String>> dataSetsListView = new ListView<>(dataSetList);
+    private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
 
     ////////////////////////////////
 
@@ -359,22 +352,10 @@ public class MainPane implements
 
         SearchContext searchContext = tripsContext.getSearchContext();
         datasetsPane.setContent(dataSetsListView);
-        dataSetsListView.setCellFactory(new Callback<>() {
 
-            @Override
-            public ListCell<Map<String, String>> call(ListView<Map<String, String>> p) {
-                dataSetPane.setDisable(false);
-                return new ListCell<>() {
-                    @Override
-                    protected void updateItem(Map<String, String> objectProperties, boolean bln) {
-                        super.updateItem(objectProperties, bln);
-                        if (objectProperties != null) {
-                            setText(objectProperties.get("name"));
-                        }
-                    }
-                };
-            }
-        });
+        dataSetsListView.setPrefHeight(10);
+        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this));
+        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
 
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
@@ -382,6 +363,30 @@ public class MainPane implements
             searchContext.addDataSets(dataSets);
         }
         log.info("Application up and running");
+    }
+
+    public void addDataSetToList(List<DataSetDescriptor> list, boolean clear) {
+        if (clear) {
+            dataSetsListView.getItems().clear();
+        }
+        list.forEach(descriptor -> dataSetsListView.getItems().add(descriptor));
+        log.debug("update complete");
+    }
+
+    public void addDataSetToList(DataSetDescriptor descriptor) {
+        dataSetsListView.getItems().add(descriptor);
+    }
+
+    public void clearDataSetListView() {
+        dataSetsListView.getItems().clear();
+    }
+
+
+    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, DataSetDescriptor oldValue, DataSetDescriptor newValue) {
+        String oldText = oldValue == null ? "null" : oldValue.toString();
+        String newText = newValue == null ? "null" : newValue.toString();
+
+        log.info("Change: old = " + oldText + ", new = " + newText + "\n");
     }
 
     /**
@@ -401,24 +406,10 @@ public class MainPane implements
 
     private List<DataSetDescriptor> loadDataSetView() {
 
-        List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
-        updateDataListPane(datasets);
+        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSetIds();
+        addDataSetToList(dataSetDescriptorList, true);
         log.info("loaded DBs");
-        return datasets;
-    }
-
-    private void updateDataListPane(List<DataSetDescriptor> datasets) {
-        dataSetList.clear();
-        dataSetsInView.clear();
-        for (DataSetDescriptor descriptor : datasets) {
-            Map<String, String> dataSetProps = new HashMap<>();
-            String name = descriptor.getDataSetName();
-            dataSetProps.put("name", name + ":: " + descriptor.getNumberStars() + " stars");
-            String count = Integer.toString(descriptor.getAstrographicDataList().size());
-            dataSetProps.put("count", count);
-            dataSetList.add(dataSetProps);
-        }
-        log.debug("update complete");
+        return dataSetDescriptorList;
     }
 
     /**
@@ -683,16 +674,47 @@ public class MainPane implements
         }
     }
 
+    /**
+     * display plot or data based on default query
+     *
+     * @param showPlot  show the graphical plot
+     * @param showTable show the table
+     * @todo implement this
+     */
+    @Override
+    public void showNewStellarData(boolean showPlot, boolean showTable) {
+        AstroSearchQuery searchQuery = tripsContext.getSearchContext().getAstroSearchQuery();
+
+        // do a search and cause the plot to show it
+        List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
+
+        if (!astrographicObjects.isEmpty()) {
+            if (showPlot) {
+                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getColorPallete());
+            }
+            if (showTable) {
+                showList(astrographicObjects);
+            }
+            showStatus("Dataset loaded is: " + searchQuery.getDataSetName());
+
+            // highlight the data set used
+            selectDataSet(1);
+
+        } else {
+            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
+        }
+    }
+
     @Override
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
-        updateDataListPane(new ArrayList<>(searchContext.getDatasetMap().values()));
+        addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
     }
 
     @Override
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.removeDataSet(dataSetDescriptor);
-        updateDataListPane(new ArrayList<>(searchContext.getDatasetMap().values()));
+        addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
