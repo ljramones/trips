@@ -713,8 +713,19 @@ public class MainPane implements
 
     @Override
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
-        searchContext.removeDataSet(dataSetDescriptor);
-        addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+        Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
+                "Remove",
+                "Are you sure you want to remove: " + dataSetDescriptor.getDataSetName());
+
+        if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
+            searchContext.removeDataSet(dataSetDescriptor);
+
+            //
+            databaseManagementService.removeDataSet(dataSetDescriptor);
+
+            // redisplay the datasets
+            addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+        }
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {

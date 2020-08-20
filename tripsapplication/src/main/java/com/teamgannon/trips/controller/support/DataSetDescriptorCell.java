@@ -47,7 +47,6 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
-        deleteMenuItem.setDisable(true);
         deleteMenuItem.setOnAction((event) -> {
             log.info("delete star data!");
             updater.removeDataSet(descriptor);
