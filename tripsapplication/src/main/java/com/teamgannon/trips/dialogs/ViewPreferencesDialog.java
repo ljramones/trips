@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class PreferencesDialog extends Dialog<ApplicationPreferences> {
+public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
     private Pane displayPane;
 
@@ -30,10 +30,10 @@ public class PreferencesDialog extends Dialog<ApplicationPreferences> {
     private final ApplicationPreferences preferences;
 
 
-    public PreferencesDialog(ApplicationPreferences preferences) {
+    public ViewPreferencesDialog(ApplicationPreferences preferences) {
 
         this.preferences = preferences;
-        this.setTitle("Application Preferences");
+        this.setTitle("View Preferences - currently disabled");
 
         VBox vBox = new VBox();
         createTabPanes(vBox);
