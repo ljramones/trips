@@ -2,7 +2,7 @@ package com.teamgannon.trips.dialogs.preferencespanes;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.dialogs.preferencespanes.model.GraphEnables;
+import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,6 +32,8 @@ public class GraphPane extends Pane {
 
     private final ColorPalette colorPalette;
 
+    private final GraphEnablesPersist graphEnablesPersist;
+
     private final TitledPane colorPane = new TitledPane();
 
     // color change text fields
@@ -50,11 +52,12 @@ public class GraphPane extends Pane {
     private final CheckBox displayLabelCheckbox = new CheckBox();
     private final CheckBox displayLegendCheckbox = new CheckBox();
 
+
     public GraphPane(PreferencesUpdater updater, TripsContext tripsContext) {
         this.updater = updater;
 
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
-        GraphEnables graphEnables = tripsContext.getAppViewPreferences().getGraphEnables();
+        graphEnablesPersist = tripsContext.getAppViewPreferences().getGraphEnablesPersist();
 
         VBox vBox = new VBox();
 
@@ -62,7 +65,7 @@ public class GraphPane extends Pane {
         TitledPane titledPane1 = new TitledPane("Graph Colors", pane1);
         vBox.getChildren().add(titledPane1);
 
-        GridPane gridPane2 = createEnablePane(graphEnables);
+        GridPane gridPane2 = createEnablePane(graphEnablesPersist);
         TitledPane titledPane2 = new TitledPane("Graph Enables", gridPane2);
         gridPane2.add(titledPane2, 1, 2);
         vBox.getChildren().add(titledPane2);
@@ -294,31 +297,31 @@ public class GraphPane extends Pane {
 
     ///////////////////////////////////////////////////////////////////
 
-    private GridPane createEnablePane(GraphEnables graphEnables) {
+    private GridPane createEnablePane(GraphEnablesPersist graphEnablesPersist) {
         GridPane pane = createGridPane();
 
         Label lb1 = new Label("Display Grid:");
         lb1.setFont(font);
         pane.add(lb1, 1, 1);
-        displayGridCheckbox.setSelected(graphEnables.isDisplayGrid());
+        displayGridCheckbox.setSelected(graphEnablesPersist.isDisplayGrid());
         pane.add(displayGridCheckbox, 2, 1);
 
         Label lb2 = new Label("Display Stems:");
         lb2.setFont(font);
         pane.add(lb2, 1, 2);
-        displayStemCheckbox.setSelected(graphEnables.isDisplayStems());
+        displayStemCheckbox.setSelected(graphEnablesPersist.isDisplayStems());
         pane.add(displayStemCheckbox, 2, 2);
 
         Label lb3 = new Label("Display Label:");
         lb3.setFont(font);
         pane.add(lb3, 1, 3);
-        displayLabelCheckbox.setSelected(graphEnables.isDisplayLabels());
+        displayLabelCheckbox.setSelected(graphEnablesPersist.isDisplayLabels());
         pane.add(displayLabelCheckbox, 2, 3);
 
         Label lb4 = new Label("Display Legend:");
         lb4.setFont(font);
         pane.add(lb4, 1, 4);
-        displayLegendCheckbox.setSelected(graphEnables.isDisplayLegend());
+        displayLegendCheckbox.setSelected(graphEnablesPersist.isDisplayLegend());
         pane.add(displayLegendCheckbox, 2, 4);
 
         HBox hBox = new HBox();
@@ -335,20 +338,19 @@ public class GraphPane extends Pane {
     }
 
     private void resetEnablesClicked(ActionEvent actionEvent) {
-        GraphEnables graphEnables = GraphEnables.getDefaults();
-        displayGridCheckbox.setSelected(graphEnables.isDisplayGrid());
-        displayStemCheckbox.setSelected(graphEnables.isDisplayStems());
-        displayLabelCheckbox.setSelected(graphEnables.isDisplayLabels());
-        displayLegendCheckbox.setSelected(graphEnables.isDisplayLegend());
+        graphEnablesPersist.setDefault();
+        displayGridCheckbox.setSelected(graphEnablesPersist.isDisplayGrid());
+        displayStemCheckbox.setSelected(graphEnablesPersist.isDisplayStems());
+        displayLabelCheckbox.setSelected(graphEnablesPersist.isDisplayLabels());
+        displayLegendCheckbox.setSelected(graphEnablesPersist.isDisplayLegend());
     }
 
     private void changeEnablesClicked(ActionEvent actionEvent) {
-        GraphEnables graphEnables = new GraphEnables();
-        graphEnables.setDisplayGrid(displayGridCheckbox.isSelected());
-        graphEnables.setDisplayStems(displayStemCheckbox.isSelected());
-        graphEnables.setDisplayLabels(displayLabelCheckbox.isSelected());
-        graphEnables.setDisplayLegend(displayLegendCheckbox.isSelected());
-        updater.changesGraphEnables(graphEnables);
+        graphEnablesPersist.setDisplayGrid(displayGridCheckbox.isSelected());
+        graphEnablesPersist.setDisplayStems(displayStemCheckbox.isSelected());
+        graphEnablesPersist.setDisplayLabels(displayLabelCheckbox.isSelected());
+        graphEnablesPersist.setDisplayLegend(displayLegendCheckbox.isSelected());
+        updater.changesGraphEnables(graphEnablesPersist);
     }
 
 }

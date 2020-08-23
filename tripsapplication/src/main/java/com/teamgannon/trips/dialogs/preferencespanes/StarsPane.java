@@ -36,15 +36,6 @@ public class StarsPane extends Pane {
 
         pane.add(new Separator(), 1, 1, 1, starDisplayPreferences.getStarMap().size() + 1);
 
-        CheckBox showLinks = new CheckBox("Display Name");
-        showLinks.setSelected(starDisplayPreferences.isShowStarName());
-        pane.add(showLinks, 2, 1, 1, 1);
-
-        pane.add(new Label("View Radius: "), 2, 2);
-        TextField viewDistance = new TextField(Integer.toString(starDisplayPreferences.getViewRadius()));
-        viewDistance.setPrefWidth(20);
-        pane.add(viewDistance, 3, 2);
-
         int i = 0;
         for (StarDescriptionPreference star : starDisplayPreferences.getStarMap()) {
             createStarLine(pane, 3 + i, starDisplayPreferences.getStarMap().get(i++));

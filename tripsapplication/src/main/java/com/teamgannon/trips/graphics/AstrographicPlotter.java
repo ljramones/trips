@@ -3,7 +3,7 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.dialogs.preferencespanes.model.GraphEnables;
+import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -145,6 +145,6 @@ public class AstrographicPlotter {
         return !(ordinates[2] > Universe.boxDepth);
     }
 
-    public void changeGraphEnables(GraphEnables graphEnables) {
+    public void changeGraphEnables(GraphEnablesPersist graphEnablesPersist) {
     }
 }
