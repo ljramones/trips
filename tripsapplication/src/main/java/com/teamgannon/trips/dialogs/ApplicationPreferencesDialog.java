@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.support.*;
 import javafx.event.ActionEvent;
@@ -14,8 +14,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> {
@@ -53,7 +51,7 @@ public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> 
         HBox prefsBox = new HBox();
         vBox.getChildren().add(prefsBox);
 
-        colorPane = new GraphColorPane(tripsContext.getColorPallete());
+        colorPane = new GraphColorPane(tripsContext.getAppViewPreferences().getColorPallete());
         prefsBox.getChildren().add(colorPane);
 
         appPrefsPane = new AppPrefsPane(tripsContext.getAppPreferences());

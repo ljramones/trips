@@ -1,6 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.RouteDialog;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -387,6 +387,14 @@ public class InterstellarSpacePane extends Pane {
      */
     public void toggleRoutes(boolean routesOn) {
         routesGroup.setVisible(routesOn);
+    }
+
+    /**
+     * toggle the labels
+     * @param labelsOn true is labels should be on
+     */
+    public void toggleLabels(boolean labelsOn) {
+
     }
 
     /**

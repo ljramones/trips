@@ -1,7 +1,7 @@
 package com.teamgannon.trips.starmodel;
 
 import com.teamgannon.trips.algorithms.StarMath;
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.scene.paint.Color;

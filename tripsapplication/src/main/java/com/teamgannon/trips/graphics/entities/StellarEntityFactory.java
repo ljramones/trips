@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics.entities;
 
 
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;

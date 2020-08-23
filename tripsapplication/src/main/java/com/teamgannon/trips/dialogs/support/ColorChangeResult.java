@@ -1,7 +1,6 @@
 package com.teamgannon.trips.dialogs.support;
 
-import com.teamgannon.trips.config.application.ColorPalette;
-import com.teamgannon.trips.jpa.model.GraphColor;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

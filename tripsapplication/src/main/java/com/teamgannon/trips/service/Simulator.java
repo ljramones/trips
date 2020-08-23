@@ -1,6 +1,6 @@
 package com.teamgannon.trips.service;
 
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
