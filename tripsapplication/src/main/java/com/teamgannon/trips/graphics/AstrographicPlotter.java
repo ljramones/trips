@@ -1,8 +1,9 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.ColorPalette;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.dialogs.preferencespanes.model.GraphEnables;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -51,7 +52,7 @@ public class AstrographicPlotter {
             TripsContext tripsContext) {
         this.starBase = starBase;
         this.searchContext = tripsContext.getSearchContext();
-        this.colorPalette = tripsContext.getColorPallete();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
     }
 
@@ -144,4 +145,6 @@ public class AstrographicPlotter {
         return !(ordinates[2] > Universe.boxDepth);
     }
 
+    public void changeGraphEnables(GraphEnables graphEnables) {
+    }
 }

@@ -22,6 +22,7 @@
             <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Change view preferences..."/>
             <SeparatorMenuItem/>
             <MenuItem mnemonicParsing="false" onAction="#toggleGrid" text="Toggle Grid"/>
+            <MenuItem mnemonicParsing="false" onAction="#toggleLabels" text="Toggle Labels"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleGridExtensions" text="Toggle Grid Extensions"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleStars" text="Toggle Stars"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleScale" text="Toggle Scale"/>
@@ -51,13 +52,14 @@
     </MenuBar>
     <VBox layoutX="2.0" layoutY="29.0" prefHeight="39.0" prefWidth="1100.0">
         <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="856.0" VBox.vgrow="ALWAYS">
-            <Button mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>
-            <Button mnemonicParsing="false" onAction="#toggleGrid" text="Grid"/>
-            <Button mnemonicParsing="false" onAction="#toggleGridExtensions" text="Extensions"/>
-            <Button mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
+            <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>
+            <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false" onAction="#toggleGrid" text="Grid"/>
+            <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false" onAction="#toggleLabels" text="Labels"/>
+            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false" onAction="#toggleGridExtensions" text="Extensions"/>
+            <ToggleButton fx:id="toggleScaleBtn"  mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
             <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Settings"/>
-            <Button mnemonicParsing="false" onAction="#zoomIn" text="+"/>
-            <Button mnemonicParsing="false" onAction="#zoomOut" text="-"/>
+            <ToggleButton fx:id="toggleZoomInBtn"  mnemonicParsing="false" onAction="#zoomIn" text="+"/>
+            <ToggleButton fx:id="toggleZoomOutBtn"  mnemonicParsing="false" onAction="#zoomOut" text="-"/>
         </ToolBar>
     </VBox>
     <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0" prefHeight="588.0"
