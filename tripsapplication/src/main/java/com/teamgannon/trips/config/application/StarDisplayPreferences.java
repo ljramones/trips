@@ -13,15 +13,6 @@ public class StarDisplayPreferences  implements Serializable {
 
     private static final long serialVersionUID = 3420111848302502658L;
 
-    /**
-     * the radius to show stars
-     */
-    private int viewRadius = 25;
-
-    private boolean showStarName = true;
-
-    private String starFont;
-
     private List<StarDescriptionPreference> starMap = new ArrayList<>();
 
     public StarDisplayPreferences() {

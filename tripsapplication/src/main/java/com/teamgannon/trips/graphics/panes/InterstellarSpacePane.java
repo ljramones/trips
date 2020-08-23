@@ -55,47 +55,58 @@ public class InterstellarSpacePane extends Pane {
     HashMap<Shape3D, Label> shape3DToLabel = new HashMap<>();
     double modifier = 1.0;
     double modifierFactor = 0.1;
+
     /**
      * list of star display records
      */
     private final Set<StarDisplayRecord> starDisplayRecords = new HashSet<>();
+
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+
     /**
      * used to signal an update to the parent list view
      */
     private ListUpdater listUpdater;
+
     /**
      * used to signal an update to the parent property panes
      */
     private StellarPropertiesDisplayer displayer;
+
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
     private ContextSelector contextSelector;
+
     /**
      * the route updater listener
      */
     private RouteUpdater routeUpdater;
+
     /**
      * the redraw listener
      */
     private RedrawListener redrawListener;
+
     /**
      * the report generator
      */
     private ReportGenerator reportGenerator;
+
     /**
      * this is the descriptor of the current route
      */
     private RouteDescriptor currentRoute;
+
     /**
      * the graphic portion of the current route
      */
     private Xform currentRouteDisplay = new Xform();
+
     /**
      * whether there is a route being traced, true is yes
      */
@@ -109,6 +120,9 @@ public class InterstellarSpacePane extends Pane {
     private final Xform stellarDisplayGroup = new Xform();
     private final Xform scaleGroup = new Xform();
     private final Xform routesGroup = new Xform();
+
+    // used to control label visibility
+    private final Xform labelDisplayGroup = new Xform();
 
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
@@ -130,7 +144,7 @@ public class InterstellarSpacePane extends Pane {
     private final int spacing;
     private final double lineWidth = 0.5;
 
-    private ColorPalette colorPalette;
+    private final ColorPalette colorPalette;
 
 
     /**
@@ -160,6 +174,8 @@ public class InterstellarSpacePane extends Pane {
         world.getChildren().add(extensionsGroup);
         routesGroup.setWhatAmI("Star Routes");
         world.getChildren().add(routesGroup);
+        labelDisplayGroup.setWhatAmI("Labels");
+        world.getChildren().add(labelDisplayGroup);
 
         // we don't connect this into the world yet
         createCurrentRouteDisplay();
@@ -391,10 +407,15 @@ public class InterstellarSpacePane extends Pane {
 
     /**
      * toggle the labels
+     *
      * @param labelsOn true is labels should be on
      */
     public void toggleLabels(boolean labelsOn) {
-
+        labelDisplayGroup.setVisible(labelsOn);
+        List<Node> labelList = labelDisplayGroup.getChildren();
+        for (Node node:labelList) {
+            node.setVisible(labelsOn);
+        }
     }
 
     /**
@@ -415,7 +436,7 @@ public class InterstellarSpacePane extends Pane {
      * draw a star
      *
      * @param record     the star record
-     * @param centerStar
+     * @param centerStar the name of the center star
      */
     public void drawStar(StarDisplayRecord record, String centerStar, ColorPalette colorPalette) {
 
@@ -453,7 +474,7 @@ public class InterstellarSpacePane extends Pane {
     private Xform createCentralPoint(StarDisplayRecord record, ColorPalette colorPalette) {
         Map<String, String> customProperties = record.toProperties();
 
-        Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record, colorPalette);
+        Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record, colorPalette, labelDisplayGroup);
 
         starDisplayRecords.add(record);
 
@@ -549,14 +570,14 @@ public class InterstellarSpacePane extends Pane {
     /**
      * create a star named with radius and color located at x,y,z
      *
-     * @param record the star record
+     * @param record       the star record
      * @param colorPalette
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette) {
 
         Map<String, String> customProperties = record.toProperties();
-        Node star = StellarEntityFactory.drawStellarObject(customProperties, record, colorPalette);
+        Node star = StellarEntityFactory.drawStellarObject(customProperties, record, colorPalette, labelDisplayGroup);
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);

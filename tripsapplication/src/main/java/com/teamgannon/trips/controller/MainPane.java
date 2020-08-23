@@ -11,7 +11,6 @@ import com.teamgannon.trips.dialogs.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.QueryDialog;
 import com.teamgannon.trips.dialogs.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.preferencespanes.PreferencesUpdater;
-import com.teamgannon.trips.dialogs.preferencespanes.model.GraphEnables;
 import com.teamgannon.trips.dialogs.support.ViewPreferencesChange;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
@@ -23,11 +22,10 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.operators.*;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.GraphPersistValues;
+import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
-import com.teamgannon.trips.jpa.repository.GraphPresetsRepository;
+import com.teamgannon.trips.jpa.repository.GraphColorsRepository;
+import com.teamgannon.trips.jpa.repository.GraphEnablesRepository;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -165,7 +163,9 @@ public class MainPane implements
     /**
      * storage of graph colors in DB
      */
-    private final GraphPresetsRepository graphPresetsRepository;
+    private final GraphColorsRepository graphColorsRepository;
+
+    private final GraphEnablesRepository graphEnablesRepository;
 
 
     /**
@@ -236,6 +236,7 @@ public class MainPane implements
     // state settings for control positions
     private boolean gridOn = true;
     private boolean extensionsOn = true;
+    private boolean labelsOn = true;
     private boolean starsOn = true;
 
     /////// data objects ///////////
@@ -261,7 +262,8 @@ public class MainPane implements
                     StarBase starBase,
                     TripsContext tripsContext,
                     AstrographicObjectRepository astrographicObjectRepository,
-                    GraphPresetsRepository graphPresetsRepository) {
+                    GraphColorsRepository graphColorsRepository,
+                    GraphEnablesRepository graphEnablesRepository) {
 
         this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
@@ -273,7 +275,8 @@ public class MainPane implements
         this.starBase = starBase;
         this.tripsContext = tripsContext;
         this.astrographicObjectRepository = astrographicObjectRepository;
-        this.graphPresetsRepository = graphPresetsRepository;
+        this.graphColorsRepository = graphColorsRepository;
+        this.graphEnablesRepository = graphEnablesRepository;
         this.searchContext = tripsContext.getSearchContext();
 
         this.width = 1100;
@@ -312,70 +315,92 @@ public class MainPane implements
     private void loadDBPresets() {
 
         // get colors from DB
-        getGraphPresetsFromDB();
+        getGraphColorsFromDB();
+
+        // get graph enables from DB
+        getGraphEnablesFromDB();
+
+        // get Star definitions from DB
+        getStarDefinitionsFromDB();
 
     }
 
-    /**
-     * get the color swatches from the DB
-     */
-    private void getGraphPresetsFromDB() {
-        Iterable<GraphPersistValues> graphColors = graphPresetsRepository.findAll();
-        GraphPersistValues graphPersistValues;
+    private void getGraphColorsFromDB() {
+        Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
+        GraphColorsPersist graphColorsPersist;
 
         if (graphColors.iterator().hasNext()) {
-            graphPersistValues = graphColors.iterator().next();
+            graphColorsPersist = graphColors.iterator().next();
         } else {
-            graphPersistValues = new GraphPersistValues();
-            graphPersistValues.init();
-            graphPresetsRepository.save(graphPersistValues);
+            graphColorsPersist = new GraphColorsPersist();
+            graphColorsPersist.init();
+            graphColorsRepository.save(graphColorsPersist);
         }
+
         ColorPalette colorPalette = new ColorPalette();
-        colorPalette.assignColors(graphPersistValues);
+        colorPalette.assignColors(graphColorsPersist);
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
-
-        GraphEnables graphEnables = new GraphEnables();
-        graphEnables.assignEnables(graphPersistValues);
-        tripsContext.getAppViewPreferences().setGraphEnables(graphEnables);
-
-        updateToggles(graphEnables);
     }
 
-    private void updateToggles(GraphEnables graphEnables) {
-        if (graphEnables.isDisplayGrid()) {
-            interstellarSpacePane.toggleGrid(graphEnables.isDisplayGrid());
-            toggleGridBtn.setSelected(graphEnables.isDisplayGrid());
+
+    private void getGraphEnablesFromDB() {
+        Iterable<GraphEnablesPersist> graphEnables = graphEnablesRepository.findAll();
+        GraphEnablesPersist graphEnablesPersist;
+
+        if (graphEnables.iterator().hasNext()) {
+            graphEnablesPersist = graphEnables.iterator().next();
+        } else {
+            graphEnablesPersist = new GraphEnablesPersist();
+            graphEnablesPersist.setId(UUID.randomUUID().toString());
+            graphEnablesRepository.save(graphEnablesPersist);
         }
 
-        if (graphEnables.isDisplayLabels()) {
-            interstellarSpacePane.toggleLabels(graphEnables.isDisplayLabels());
-            toggleLabelsBtn.setSelected(graphEnables.isDisplayLabels());
+        tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
+
+        updateToggles(graphEnablesPersist);
+        gridOn = graphEnablesPersist.isDisplayGrid();
+        extensionsOn = graphEnablesPersist.isDisplayStems();
+        labelsOn = graphEnablesPersist.isDisplayLabels();
+        scaleOn = graphEnablesPersist.isDisplayLegend();
+    }
+
+    private void getStarDefinitionsFromDB() {
+
+    }
+
+
+    private void updateToggles(GraphEnablesPersist graphEnablesPersist) {
+        if (graphEnablesPersist.isDisplayGrid()) {
+            interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
+            toggleGridBtn.setSelected(graphEnablesPersist.isDisplayGrid());
         }
 
-        if (graphEnables.isDisplayStems()) {
-            interstellarSpacePane.toggleExtensions(graphEnables.isDisplayStems());
-            toggleStemBtn.setSelected(graphEnables.isDisplayStems());
+        if (graphEnablesPersist.isDisplayLabels()) {
+            interstellarSpacePane.toggleLabels(graphEnablesPersist.isDisplayLabels());
+            toggleLabelsBtn.setSelected(graphEnablesPersist.isDisplayLabels());
         }
 
-        if (graphEnables.isDisplayLegend()) {
-            interstellarSpacePane.toggleScale(graphEnables.isDisplayLegend());
-            toggleScaleBtn.setSelected(graphEnables.isDisplayLegend());
+        if (graphEnablesPersist.isDisplayStems()) {
+            interstellarSpacePane.toggleExtensions(graphEnablesPersist.isDisplayStems());
+            toggleStemBtn.setSelected(graphEnablesPersist.isDisplayStems());
+        }
+
+        if (graphEnablesPersist.isDisplayLegend()) {
+            interstellarSpacePane.toggleScale(graphEnablesPersist.isDisplayLegend());
+            toggleScaleBtn.setSelected(graphEnablesPersist.isDisplayLegend());
         }
     }
 
     private void updateColors(ColorPalette graphColors) {
-        Iterable<GraphPersistValues> graphPresets = graphPresetsRepository.findAll();
-        GraphPersistValues graphPersistValuesDB = graphPresets.iterator().next();
-        graphPersistValuesDB.setColors(graphColors);
-        graphPresetsRepository.save(graphPersistValuesDB);
+        Iterable<GraphColorsPersist> graphPresets = graphColorsRepository.findAll();
+        GraphColorsPersist graphColorsPersist = graphPresets.iterator().next();
+        graphColorsPersist.setGraphColors(graphColors);
+        graphColorsRepository.save(graphColorsPersist);
     }
 
 
-    private void updateGraphEnables(GraphEnables graphEnables) {
-        Iterable<GraphPersistValues> graphPresets = graphPresetsRepository.findAll();
-        GraphPersistValues graphPersistValuesDB = graphPresets.iterator().next();
-        graphPersistValuesDB.setEnables(graphEnables);
-        graphPresetsRepository.save(graphPersistValuesDB);
+    private void updateGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+        graphEnablesRepository.save(graphEnablesPersist);
     }
 
 
@@ -567,14 +592,21 @@ public class MainPane implements
 
     public void toggleGrid(ActionEvent actionEvent) {
         gridOn = !gridOn;
-        tripsContext.getAppViewPreferences().getGraphEnables().setDisplayGrid(gridOn);
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayGrid(gridOn);
         interstellarSpacePane.toggleGrid(gridOn);
     }
 
     public void toggleGridExtensions(ActionEvent actionEvent) {
         extensionsOn = !extensionsOn;
-        tripsContext.getAppViewPreferences().getGraphEnables().setDisplayStems(extensionsOn);
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayStems(extensionsOn);
         interstellarSpacePane.toggleExtensions(extensionsOn);
+    }
+
+
+    public void toggleLabels(ActionEvent actionEvent) {
+        labelsOn = !labelsOn;
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLabels(labelsOn);
+        interstellarSpacePane.toggleLabels(labelsOn);
     }
 
     public void toggleStars(ActionEvent actionEvent) {
@@ -584,7 +616,7 @@ public class MainPane implements
 
     public void toggleScale(ActionEvent actionEvent) {
         scaleOn = !scaleOn;
-        tripsContext.getAppViewPreferences().getGraphEnables().setDisplayLegend(scaleOn);
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLegend(scaleOn);
         interstellarSpacePane.toggleScale(scaleOn);
     }
 
@@ -1170,20 +1202,15 @@ public class MainPane implements
 
 
     @Override
-    public void changesGraphEnables(GraphEnables graphEnables) {
-        tripsContext.getAppViewPreferences().setGraphEnables(graphEnables);
+    public void changesGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+        tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
-        updateToggles(graphEnables);
+        updateToggles(graphEnablesPersist);
 
-        updateGraphEnables(graphEnables);
-        astrographicPlotter.changeGraphEnables(graphEnables);
+        updateGraphEnables(graphEnablesPersist);
+        astrographicPlotter.changeGraphEnables(graphEnablesPersist);
         log.info("UPDATE GRAPH ENABLES!!!");
     }
-
-    public void toggleLabels(ActionEvent actionEvent) {
-
-    }
-
 
     //////////////////
 

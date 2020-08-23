@@ -1,6 +1,6 @@
 package com.teamgannon.trips.config.application.model;
 
-import com.teamgannon.trips.jpa.model.GraphPersistValues;
+import com.teamgannon.trips.jpa.model.GraphColorsPersist;
 import javafx.scene.paint.Color;
 import lombok.Data;
 
@@ -15,17 +15,16 @@ public class ColorPalette {
 
     private Color legendColor;
 
-    public void assignColors(GraphPersistValues graphPersistValues) {
-        labelColor = Color.valueOf(graphPersistValues.getLabelColor());
-        gridColor = Color.valueOf(graphPersistValues.getGridColor());
-        extensionColor = Color.valueOf(graphPersistValues.getExtensionColor());
-        legendColor = Color.valueOf(graphPersistValues.getLegendColor());
+    public void assignColors(GraphColorsPersist graphColorsPersist) {
+        labelColor = Color.valueOf(graphColorsPersist.getLabelColor());
+        gridColor = Color.valueOf(graphColorsPersist.getGridColor());
+        extensionColor = Color.valueOf(graphColorsPersist.getExtensionColor());
+        legendColor = Color.valueOf(graphColorsPersist.getLegendColor());
     }
 
     public void setLabelColor(String color) {
         labelColor = Color.valueOf(color);
     }
-
 
     public void setGridColor(String color) {
         gridColor = Color.valueOf(color);
@@ -41,17 +40,8 @@ public class ColorPalette {
 
     public static ColorPalette defaultColors() {
         ColorPalette palette = new ColorPalette();
-        palette.assignColors(GraphPersistValues.defaults());
+        palette.assignColors(GraphColorsPersist.defaults());
         return palette;
-    }
-
-    public GraphPersistValues getGraphColor() {
-        GraphPersistValues graphPersistValues = new GraphPersistValues();
-        graphPersistValues.setLabelColor(labelColor.toString());
-        graphPersistValues.setGridColor(gridColor.toString());
-        graphPersistValues.setExtensionColor(extensionColor.toString());
-        graphPersistValues.setLegendColor(legendColor.toString());
-        return graphPersistValues;
     }
 
 }
