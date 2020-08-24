@@ -31,7 +31,10 @@ public class StellarEntityFactory {
      * @param color  the color of the line
      * @return the line as a cylinder
      */
-    public static Cylinder createLineSegment(Point3D origin, Point3D target, double width, Color color) {
+    public static Cylinder createLineSegment(Point3D origin,
+                                             Point3D target,
+                                             double width,
+                                             Color color) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -44,19 +47,27 @@ public class StellarEntityFactory {
         Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
 
         // create cylinder and color it with phong material
-        Cylinder line = new Cylinder(width, height);
-        final PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(color);
-        material.setSpecularColor(color);
-        line.setMaterial(material);
+        Cylinder line = createCylinder(width, color, height);
 
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
 
         return line;
     }
 
+    public static Cylinder createCylinder(double width, Color color, double height) {
+        Cylinder line = new Cylinder(width, height);
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(color);
+        material.setSpecularColor(color);
+        line.setMaterial(material);
+        return line;
+    }
 
-    public static Node drawStellarObject(Map<String, String> customProperties, StarDisplayRecord record, ColorPalette colorPalette, Xform labelGroup) {
+
+    public static Node drawStellarObject(Map<String, String> customProperties,
+                                         StarDisplayRecord record,
+                                         ColorPalette colorPalette,
+                                         Xform labelGroup) {
         Sphere sphere = createStellarShape(record);
         Label label = createLabel(record, sphere, colorPalette);
         labelGroup.getChildren().add(label);
@@ -66,7 +77,10 @@ public class StellarEntityFactory {
     }
 
 
-    public static Node drawCentralIndicator(Map<String, String> customProperties, StarDisplayRecord record, ColorPalette colorPalette, Xform labelGroup) {
+    public static Node drawCentralIndicator(Map<String, String> customProperties,
+                                            StarDisplayRecord record,
+                                            ColorPalette colorPalette,
+                                            Xform labelGroup) {
         Box box = createBox(record);
         Label label = createLabel(record, box, colorPalette);
         labelGroup.getChildren().add(label);
@@ -125,9 +139,9 @@ public class StellarEntityFactory {
     /**
      * create a label for a shape
      *
-     * @param record the star record
-     * @param sphere the star/shape
-     * @param colorPalette
+     * @param record       the star record
+     * @param sphere       the star/shape
+     * @param colorPalette the color palette to use
      * @return the created object
      */
     public static Label createLabel(StarDisplayRecord record, Shape3D sphere, ColorPalette colorPalette) {
@@ -161,8 +175,8 @@ public class StellarEntityFactory {
                 firstLink = false;
             } else {
                 // create the line segment
-                Cylinder lineSegment
-                        = StellarEntityFactory.createLineSegment(
+                Node lineSegment
+                        = CustomObjectFactory.createLineSegment(
                         previousPoint, point3D, 0.5, Color.GREEN
                 );
                 // step along the segment

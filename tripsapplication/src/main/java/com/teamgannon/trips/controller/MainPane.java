@@ -22,6 +22,7 @@ import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
+import com.teamgannon.trips.jpa.model.StarDisplayPrefsDB;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
@@ -277,11 +278,12 @@ public class MainPane implements
         // create a data set pane for the database files present
         setupDataSetView();
 
+        // by default side panel should be off
+        toggleSidePane(false);
+
         // load database preset values
         loadDBPresets();
 
-        // by deafult side panel should be off
-        toggleSidePane(false);
     }
 
     private void loadDBPresets() {
@@ -315,6 +317,7 @@ public class MainPane implements
     }
 
     private void getStarDefinitionsFromDB() {
+        StarDisplayPrefsDB starDisplayPrefs = databaseManagementService.getStarDisplayPrefs();
 
     }
 
@@ -1096,7 +1099,5 @@ public class MainPane implements
         astrographicPlotter.changeGraphEnables(graphEnablesPersist);
         log.info("UPDATE GRAPH ENABLES!!!");
     }
-
-    //////////////////
 
 }

@@ -5,17 +5,17 @@ import java.util.Set;
 
 public class Graph {
 
-    private Set<Node> nodes = new HashSet<>();
+    private Set<Vertex> vertices = new HashSet<>();
 
-    public void addNode(Node nodeA) {
-        nodes.add(nodeA);
+    public void addNode(Vertex vertexA) {
+        vertices.add(vertexA);
     }
 
-    public Set<Node> getNodes() {
-        return nodes;
+    public Set<Vertex> getVertices() {
+        return vertices;
     }
 
-    public void setNodes(Set<Node> nodes) {
-        this.nodes = nodes;
+    public void setVertices(Set<Vertex> vertices) {
+        this.vertices = vertices;
     }
 }

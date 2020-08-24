@@ -52,4 +52,5 @@ public class RouteDescriptor {
         color = Color.LIGHTCORAL;
         lineSegments.clear();
     }
+
 }

@@ -563,4 +563,8 @@ public class DatabaseManagementService {
     }
 
 
+    public StarDisplayPrefsDB getStarDisplayPrefs() {
+
+        return null;
+    }
 }
