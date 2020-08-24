@@ -266,18 +266,17 @@ public class GraphPane extends Pane {
 
     private void changeColorsClicked(ActionEvent actionEvent) {
 
-        ColorPalette palette = new ColorPalette();
-
-        palette.setLabelColor(labelColorPicker.getValue().toString());
-        palette.setGridColor(gridColorPicker.getValue().toString());
-        palette.setExtensionColor(extensionColorPicker.getValue().toString());
-        palette.setLabelColor(legendColorPicker.getValue().toString());
+        colorPalette.setLabelColor(labelColorPicker.getValue().toString());
+        colorPalette.setGridColor(gridColorPicker.getValue().toString());
+        colorPalette.setExtensionColor(extensionColorPicker.getValue().toString());
+        colorPalette.setLabelColor(legendColorPicker.getValue().toString());
 
         updater.updateGraphColors(colorPalette);
     }
 
 
     private void resetColorsClicked(ActionEvent actionEvent) {
+        colorPalette.setDefaults();
         labelColorTextField.setText(colorPalette.getLabelColor().toString());
         labelColorPicker.setValue(colorPalette.getLabelColor());
 

@@ -22,10 +22,11 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.operators.*;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
-import com.teamgannon.trips.jpa.model.*;
+import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.GraphColorsPersist;
+import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
-import com.teamgannon.trips.jpa.repository.GraphColorsRepository;
-import com.teamgannon.trips.jpa.repository.GraphEnablesRepository;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -162,11 +163,6 @@ public class MainPane implements
     private final AstrographicObjectRepository astrographicObjectRepository;
 
     /**
-     * storage of graph colors in DB
-     */
-    private final GraphColorsRepository graphColorsRepository;
-
-    /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
@@ -252,8 +248,7 @@ public class MainPane implements
                     AstrographicPlotter astrographicPlotter,
                     StarBase starBase,
                     TripsContext tripsContext,
-                    AstrographicObjectRepository astrographicObjectRepository,
-                    GraphColorsRepository graphColorsRepository) {
+                    AstrographicObjectRepository astrographicObjectRepository) {
 
         this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
@@ -265,7 +260,6 @@ public class MainPane implements
         this.starBase = starBase;
         this.tripsContext = tripsContext;
         this.astrographicObjectRepository = astrographicObjectRepository;
-        this.graphColorsRepository = graphColorsRepository;
         this.searchContext = tripsContext.getSearchContext();
 
         this.width = 1100;
@@ -315,19 +309,7 @@ public class MainPane implements
     }
 
     private void getGraphColorsFromDB() {
-        Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
-        GraphColorsPersist graphColorsPersist;
-
-        if (graphColors.iterator().hasNext()) {
-            graphColorsPersist = graphColors.iterator().next();
-        } else {
-            graphColorsPersist = new GraphColorsPersist();
-            graphColorsPersist.init();
-            graphColorsRepository.save(graphColorsPersist);
-        }
-
-        ColorPalette colorPalette = new ColorPalette();
-        colorPalette.assignColors(graphColorsPersist);
+        ColorPalette colorPalette = databaseManagementService.getGraphColorsFromDB();
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
 
@@ -368,13 +350,6 @@ public class MainPane implements
             interstellarSpacePane.toggleScale(graphEnablesPersist.isDisplayLegend());
             toggleScaleBtn.setSelected(graphEnablesPersist.isDisplayLegend());
         }
-    }
-
-    private void updateColors(ColorPalette graphColors) {
-        Iterable<GraphColorsPersist> graphPresets = graphColorsRepository.findAll();
-        GraphColorsPersist graphColorsPersist = graphPresets.iterator().next();
-        graphColorsPersist.setGraphColors(graphColors);
-        graphColorsRepository.save(graphColorsPersist);
     }
 
     private void setupDataSetView() {
@@ -1167,7 +1142,7 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
 
         // colors changes so update db
-        updateColors(colorPalette);
+        databaseManagementService.updateColors(colorPalette);
         astrographicPlotter.changeColors(colorPalette);
 
         log.info("UPDATE COLORS!!!");

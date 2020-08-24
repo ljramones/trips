@@ -6,6 +6,7 @@ import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
@@ -14,7 +15,6 @@ import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -350,7 +351,7 @@ public class DatabaseManagementService {
 
     public DataSetDescriptor loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
         // this method call actually saves the dataset in elasticsearch
-       return DataSetDescriptorFactory.createDataSetDescriptor(
+        return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 rbCsvFile
         );
@@ -466,6 +467,32 @@ public class DatabaseManagementService {
 
     public void updateGraphEnables(GraphEnablesPersist graphEnablesPersist) {
         graphEnablesRepository.save(graphEnablesPersist);
+    }
+
+    public ColorPalette getGraphColorsFromDB() {
+        Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
+        GraphColorsPersist graphColorsPersist;
+
+        if (graphColors.iterator().hasNext()) {
+            graphColorsPersist = graphColors.iterator().next();
+        } else {
+            graphColorsPersist = new GraphColorsPersist();
+            graphColorsPersist.init();
+            graphColorsRepository.save(graphColorsPersist);
+        }
+
+        ColorPalette colorPalette = new ColorPalette();
+        colorPalette.assignColors(graphColorsPersist);
+        return colorPalette;
+    }
+
+    public void updateColors(ColorPalette colorPalette) {
+        Optional<GraphColorsPersist> graphColorsPersistOptional = graphColorsRepository.findById(colorPalette.getId());
+        if (graphColorsPersistOptional.isPresent()) {
+            GraphColorsPersist graphColorsPersist = graphColorsPersistOptional.get();
+            graphColorsPersist.setGraphColors(colorPalette);
+            graphColorsRepository.save(graphColorsPersist);
+        }
     }
 
 

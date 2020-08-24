@@ -7,6 +7,8 @@ import lombok.Data;
 @Data
 public class ColorPalette {
 
+    private String id;
+
     private Color labelColor;
 
     private Color gridColor;
@@ -16,6 +18,7 @@ public class ColorPalette {
     private Color legendColor;
 
     public void assignColors(GraphColorsPersist graphColorsPersist) {
+        id = graphColorsPersist.getId();
         labelColor = Color.valueOf(graphColorsPersist.getLabelColor());
         gridColor = Color.valueOf(graphColorsPersist.getGridColor());
         extensionColor = Color.valueOf(graphColorsPersist.getExtensionColor());
@@ -44,4 +47,11 @@ public class ColorPalette {
         return palette;
     }
 
+
+    public void setDefaults() {
+        labelColor = Color.BEIGE;
+        gridColor = Color.MEDIUMBLUE;
+        extensionColor = Color.DARKSLATEBLUE;
+        legendColor = Color.BEIGE;
+    }
 }
