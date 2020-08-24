@@ -2,10 +2,7 @@ package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.RouteDialog;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
-import com.teamgannon.trips.graphics.entities.Xform;
+import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.operators.*;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
@@ -413,7 +410,7 @@ public class InterstellarSpacePane extends Pane {
     public void toggleLabels(boolean labelsOn) {
         labelDisplayGroup.setVisible(labelsOn);
         List<Node> labelList = labelDisplayGroup.getChildren();
-        for (Node node:labelList) {
+        for (Node node : labelList) {
             node.setVisible(labelsOn);
         }
     }
@@ -538,8 +535,8 @@ public class InterstellarSpacePane extends Pane {
     private void createExtension(StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
-        Cylinder lineSegment
-                = StellarEntityFactory.createLineSegment(
+        Node lineSegment
+                = CustomObjectFactory.createLineSegment(
                 point3DFrom, point3DTo, lineWidth, extensionColor
         );
         extensionsGroup.getChildren().add(lineSegment);
@@ -785,7 +782,7 @@ public class InterstellarSpacePane extends Pane {
             if (firstPoint) {
                 firstPoint = false;
             } else {
-                Cylinder lineSegment = StellarEntityFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
+                Node lineSegment = CustomObjectFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
                 route.getChildren().add(lineSegment);
             }
             previousPoint = point3D;
@@ -827,7 +824,7 @@ public class InterstellarSpacePane extends Pane {
             int size = currentRoute.getLineSegments().size();
             Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
             Point3D toPoint3D = new Point3D(x, y, z);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(
+            Node lineSegment = CustomObjectFactory.createLineSegment(
                     fromPoint, toPoint3D, 0.5, currentRoute.getColor()
             );
             currentRouteDisplay.getChildren().add(lineSegment);
@@ -1040,7 +1037,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
+            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
             grid.getChildren().add(lineSegment);
             x += gridIncrement;
         }
@@ -1051,7 +1048,7 @@ public class InterstellarSpacePane extends Pane {
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
-            Cylinder lineSegment = StellarEntityFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
+            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
             grid.getChildren().add(lineSegment);
             z += gridIncrement;
         }

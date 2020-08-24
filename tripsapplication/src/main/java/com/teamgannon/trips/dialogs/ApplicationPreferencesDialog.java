@@ -1,8 +1,8 @@
 package com.teamgannon.trips.dialogs;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
-import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.support.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -18,9 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> {
 
-    private GraphColorPane colorPane;
+    private final GraphColorPane colorPane;
 
-    private AppPrefsPane appPrefsPane;
+    private final AppPrefsPane appPrefsPane;
 
     private final ApplicationPreferences applicationPreferences;
 
@@ -109,7 +109,7 @@ public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> 
         }
 
         if (appPrefsPane.isChanged()) {
-           ApplicationPreferences applicationPreferences = appPrefsPane.getAppPrefs();
+            ApplicationPreferences applicationPreferences = appPrefsPane.getAppPrefs();
             ApplicationPreferencesChange applicationPreferencesChange = new ApplicationPreferencesChange(ChangeTypeEnum.CHANGE, applicationPreferences);
             viewPreferencesChange.setApplicationPreferencesChange(applicationPreferencesChange);
         }

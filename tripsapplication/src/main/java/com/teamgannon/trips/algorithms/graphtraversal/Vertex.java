@@ -5,21 +5,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class Node {
+public class Vertex {
 
     private String name;
 
-    private LinkedList<Node> shortestPath = new LinkedList<>();
+    private LinkedList<Vertex> shortestPath = new LinkedList<>();
 
     private Integer distance = Integer.MAX_VALUE;
 
-    private Map<Node, Integer> adjacentNodes = new HashMap<>();
+    private Map<Vertex, Integer> adjacentNodes = new HashMap<>();
 
-    public Node(String name) {
+    public Vertex(String name) {
         this.name = name;
     }
 
-    public void addDestination(Node destination, int distance) {
+    public void addDestination(Vertex destination, int distance) {
         adjacentNodes.put(destination, distance);
     }
 
@@ -31,11 +31,11 @@ public class Node {
         this.name = name;
     }
 
-    public Map<Node, Integer> getAdjacentNodes() {
+    public Map<Vertex, Integer> getAdjacentNodes() {
         return adjacentNodes;
     }
 
-    public void setAdjacentNodes(Map<Node, Integer> adjacentNodes) {
+    public void setAdjacentNodes(Map<Vertex, Integer> adjacentNodes) {
         this.adjacentNodes = adjacentNodes;
     }
 
@@ -47,11 +47,11 @@ public class Node {
         this.distance = distance;
     }
 
-    public List<Node> getShortestPath() {
+    public List<Vertex> getShortestPath() {
         return shortestPath;
     }
 
-    public void setShortestPath(LinkedList<Node> shortestPath) {
+    public void setShortestPath(LinkedList<Vertex> shortestPath) {
         this.shortestPath = shortestPath;
     }
 

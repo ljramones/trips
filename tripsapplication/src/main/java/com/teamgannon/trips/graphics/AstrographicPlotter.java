@@ -80,7 +80,9 @@ public class AstrographicPlotter {
      * @param centerCoordinates   the center of the plot
      * @param colorPalette        the color palette to draw
      */
-    public void drawAstrographicData(List<AstrographicObject> astrographicObjects, double[] centerCoordinates, ColorPalette colorPalette) {
+    public void drawAstrographicData(List<AstrographicObject> astrographicObjects,
+                                     double[] centerCoordinates,
+                                     ColorPalette colorPalette) {
 
         // clear old drawing
         interstellarSpacePane.clearStars();

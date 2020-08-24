@@ -38,24 +38,12 @@ public class Xform extends Group {
         super();
         // choose the order of rotations based on the rotateOrder
         switch (rotateOrder) {
-            case XYZ:
-                getTransforms().addAll(t, p, rz, ry, rx, s, ip);
-                break;
-            case XZY:
-                getTransforms().addAll(t, p, ry, rz, rx, s, ip);
-                break;
-            case YXZ:
-                getTransforms().addAll(t, p, rz, rx, ry, s, ip);
-                break;
-            case YZX:
-                getTransforms().addAll(t, p, rx, rz, ry, s, ip);  // For Camera
-                break;
-            case ZXY:
-                getTransforms().addAll(t, p, ry, rx, rz, s, ip);
-                break;
-            case ZYX:
-                getTransforms().addAll(t, p, rx, ry, rz, s, ip);
-                break;
+            case XYZ -> getTransforms().addAll(t, p, rz, ry, rx, s, ip);
+            case XZY -> getTransforms().addAll(t, p, ry, rz, rx, s, ip);
+            case YXZ -> getTransforms().addAll(t, p, rz, rx, ry, s, ip);
+            case YZX -> getTransforms().addAll(t, p, rx, rz, ry, s, ip);  // For Camera
+            case ZXY -> getTransforms().addAll(t, p, ry, rx, rz, s, ip);
+            case ZYX -> getTransforms().addAll(t, p, rx, ry, rz, s, ip);
         }
     }
 
