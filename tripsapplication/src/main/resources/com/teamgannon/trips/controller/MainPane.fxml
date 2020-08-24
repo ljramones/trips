@@ -18,8 +18,7 @@
             <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Display">
-            <MenuItem mnemonicParsing="false" onAction="#changeApplicationPreferences" text="Change application preferences..."/>
-            <MenuItem mnemonicParsing="false" onAction="#showViewPreferences" text="Change view preferences..."/>
+            <MenuItem mnemonicParsing="false" onAction="#showApplicationPreferences" text="Change Application Preferences..."/>
             <SeparatorMenuItem/>
             <MenuItem mnemonicParsing="false" onAction="#toggleGrid" text="Toggle Grid"/>
             <MenuItem mnemonicParsing="false" onAction="#toggleLabels" text="Toggle Labels"/>

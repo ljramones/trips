@@ -6,6 +6,7 @@ import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.support.Dataset;
@@ -14,6 +15,8 @@ import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
+import com.teamgannon.trips.search.AstroSearchQuery;
+import com.teamgannon.trips.search.SearchContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -356,6 +359,70 @@ public class DatabaseManagementService {
                 rbCsvFile
         );
     }
+
+    ///////////////////////////////////////
+
+    /**
+     * get a set of astrographic objects based on a query
+     *
+     * @param searchContext the search context
+     * @return the list of objects
+     */
+    public List<AstrographicObject> getAstrographicObjectsOnQuery(SearchContext searchContext) {
+        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
+        List<AstrographicObject> astrographicObjects;
+        if (searchQuery.isRecenter()) {
+            astrographicObjects
+                    = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
+                    searchQuery.getDataSetName(),
+                    searchQuery.getXMinus(),
+                    searchQuery.getXPlus(),
+                    searchQuery.getYMinus(),
+                    searchQuery.getYPlus(),
+                    searchQuery.getZMinus(),
+                    searchQuery.getZPlus()
+            );
+
+        } else {
+            astrographicObjects = astrographicObjectRepository.findBySearchQuery(searchQuery);
+        }
+        log.info("New DB Query returns {} stars", astrographicObjects.size());
+        astrographicObjects = filterByDistance(astrographicObjects, searchQuery.getCenterCoordinates(), searchQuery.getDistanceFromCenterStar());
+        log.info("Filtered by distance Query returns {} stars", astrographicObjects.size());
+        return astrographicObjects;
+    }
+
+    /**
+     * filter the list to distance by selected distance
+     *
+     * @param astrographicObjects    the astrogrpic objects to display
+     * @param centerCoordinates      the plot center coordinates
+     * @param distanceFromCenterStar the distance frm the centre star to display
+     * @return the fitlered list
+     */
+    private List<AstrographicObject> filterByDistance(
+            List<AstrographicObject> astrographicObjects,
+            double[] centerCoordinates,
+            double distanceFromCenterStar) {
+        List<AstrographicObject> filterList = new ArrayList<>();
+        astrographicObjects.forEach(object -> {
+            try {
+                double[] starPosition = new double[3];
+                starPosition[0] = object.getX();
+                starPosition[1] = object.getY();
+                starPosition[2] = object.getZ();
+                if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
+                    filterList.add(object);
+                }
+            } catch (Exception e) {
+                log.error("error in finding distance:", e);
+            }
+        });
+        return filterList;
+    }
+
+
+    //////////////////////////////////////
 
     /**
      * remove the data set and associated stars by name
