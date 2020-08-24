@@ -166,15 +166,10 @@ public class MainPane implements
      */
     private final GraphColorsRepository graphColorsRepository;
 
-    private final GraphEnablesRepository graphEnablesRepository;
-
-
     /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
-
-    private final GridPane dataSetPane = new GridPane();
 
     /**
      * list of routes
@@ -195,11 +190,6 @@ public class MainPane implements
      * the ListView UI control for displaying lists - the V for the MVC of Listview
      */
     private final ListView<Map<String, String>> stellarObjectsListView = new ListView<>(stellarObjectList);
-
-    /**
-     * backing array for listable datasets objects - the M for the MVC of Listview
-     */
-    private final List<Map<String, String>> dataSetsInView = new ArrayList<>();
 
     /**
      * dataset lists
@@ -263,8 +253,7 @@ public class MainPane implements
                     StarBase starBase,
                     TripsContext tripsContext,
                     AstrographicObjectRepository astrographicObjectRepository,
-                    GraphColorsRepository graphColorsRepository,
-                    GraphEnablesRepository graphEnablesRepository) {
+                    GraphColorsRepository graphColorsRepository) {
 
         this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
@@ -277,7 +266,6 @@ public class MainPane implements
         this.tripsContext = tripsContext;
         this.astrographicObjectRepository = astrographicObjectRepository;
         this.graphColorsRepository = graphColorsRepository;
-        this.graphEnablesRepository = graphEnablesRepository;
         this.searchContext = tripsContext.getSearchContext();
 
         this.width = 1100;
@@ -344,18 +332,8 @@ public class MainPane implements
     }
 
 
-    private void getGraphEnablesFromDB() {
-        Iterable<GraphEnablesPersist> graphEnables = graphEnablesRepository.findAll();
-        GraphEnablesPersist graphEnablesPersist;
-
-        if (graphEnables.iterator().hasNext()) {
-            graphEnablesPersist = graphEnables.iterator().next();
-        } else {
-            graphEnablesPersist = new GraphEnablesPersist();
-            graphEnablesPersist.setId(UUID.randomUUID().toString());
-            graphEnablesRepository.save(graphEnablesPersist);
-        }
-
+    public void getGraphEnablesFromDB() {
+        GraphEnablesPersist graphEnablesPersist = databaseManagementService.getGraphEnablesFromDB();
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
@@ -398,12 +376,6 @@ public class MainPane implements
         graphColorsPersist.setGraphColors(graphColors);
         graphColorsRepository.save(graphColorsPersist);
     }
-
-
-    private void updateGraphEnables(GraphEnablesPersist graphEnablesPersist) {
-        graphEnablesRepository.save(graphEnablesPersist);
-    }
-
 
     private void setupDataSetView() {
 
@@ -1208,7 +1180,7 @@ public class MainPane implements
 
         updateToggles(graphEnablesPersist);
 
-        updateGraphEnables(graphEnablesPersist);
+        databaseManagementService.updateGraphEnables(graphEnablesPersist);
         astrographicPlotter.changeGraphEnables(graphEnablesPersist);
         log.info("UPDATE GRAPH ENABLES!!!");
     }

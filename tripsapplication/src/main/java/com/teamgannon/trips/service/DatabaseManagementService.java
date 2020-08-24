@@ -11,10 +11,7 @@ import com.teamgannon.trips.dialogs.support.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.Star;
-import com.teamgannon.trips.jpa.model.StellarSystem;
+import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -449,5 +446,27 @@ public class DatabaseManagementService {
     public void updateStar(AstrographicObject astrographicObject) {
         astrographicObjectRepository.save(astrographicObject);
     }
+
+    //////////////////////////
+
+    public GraphEnablesPersist getGraphEnablesFromDB() {
+        Iterable<GraphEnablesPersist> graphEnables = graphEnablesRepository.findAll();
+        GraphEnablesPersist graphEnablesPersist;
+
+        if (graphEnables.iterator().hasNext()) {
+            graphEnablesPersist = graphEnables.iterator().next();
+        } else {
+            graphEnablesPersist = new GraphEnablesPersist();
+            graphEnablesPersist.setId(UUID.randomUUID().toString());
+            graphEnablesRepository.save(graphEnablesPersist);
+        }
+
+        return graphEnablesPersist;
+    }
+
+    public void updateGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+        graphEnablesRepository.save(graphEnablesPersist);
+    }
+
 
 }
