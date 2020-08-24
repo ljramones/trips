@@ -1,17 +1,14 @@
 package com.teamgannon.trips.controller;
 
-import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.controls.RoutingPanel;
-import com.teamgannon.trips.dialogs.ApplicationPreferencesDialog;
 import com.teamgannon.trips.dialogs.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.QueryDialog;
 import com.teamgannon.trips.dialogs.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.preferencespanes.PreferencesUpdater;
-import com.teamgannon.trips.dialogs.support.ViewPreferencesChange;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
@@ -24,7 +21,6 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.GraphColorsPersist;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.search.AstroSearchQuery;
@@ -158,11 +154,6 @@ public class MainPane implements
     private final TripsContext tripsContext;
 
     /**
-     * the main repo for querying stars
-     */
-    private final AstrographicObjectRepository astrographicObjectRepository;
-
-    /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
@@ -247,8 +238,7 @@ public class MainPane implements
                     RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     StarBase starBase,
-                    TripsContext tripsContext,
-                    AstrographicObjectRepository astrographicObjectRepository) {
+                    TripsContext tripsContext) {
 
         this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
@@ -259,7 +249,6 @@ public class MainPane implements
         this.astrographicPlotter = astrographicPlotter;
         this.starBase = starBase;
         this.tripsContext = tripsContext;
-        this.astrographicObjectRepository = astrographicObjectRepository;
         this.searchContext = tripsContext.getSearchContext();
 
         this.width = 1100;
@@ -595,22 +584,19 @@ public class MainPane implements
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    public void showViewPreferences(ActionEvent actionEvent) {
+
+    /**
+     * show view preferences
+     *
+     * @param actionEvent the event that triggere this - nor used
+     */
+    public void showApplicationPreferences(ActionEvent actionEvent) {
         ApplicationPreferences applicationPreferences = tripsContext.getAppPreferences();
         ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(this, tripsContext, applicationPreferences);
-        Optional<ApplicationPreferences> updatedApplicationOpt = viewPreferencesDialog.showAndWait();
-        if (updatedApplicationOpt.isPresent()) {
-            ApplicationPreferences updateAppPrefs = updatedApplicationOpt.get();
-            log.info("show app prefs");
-        }
+        viewPreferencesDialog.showAndWait();
     }
 
 
-    public void changeApplicationPreferences(ActionEvent actionEvent) {
-        ApplicationPreferencesDialog dialog = new ApplicationPreferencesDialog(tripsContext);
-        Optional<ViewPreferencesChange> result = dialog.showAndWait();
-
-    }
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -759,71 +745,22 @@ public class MainPane implements
 
     @Override
     public void addStar(AstrographicObject astrographicObject) {
-        astrographicObjectRepository.save(astrographicObject);
+        databaseManagementService.addStar(astrographicObject);
     }
 
     @Override
     public void updateStar(AstrographicObject astrographicObject) {
-        astrographicObjectRepository.save(astrographicObject);
+        databaseManagementService.updateStar(astrographicObject);
     }
 
     @Override
     public void removeStar(AstrographicObject astrographicObject) {
-        astrographicObjectRepository.delete(astrographicObject);
+        databaseManagementService.removeStar(astrographicObject);
     }
 
     @Override
     public List<AstrographicObject> getAstrographicObjectsOnQuery() {
-        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
-        List<AstrographicObject> astrographicObjects;
-        if (searchQuery.isRecenter()) {
-            astrographicObjects
-                    = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
-                    searchQuery.getDataSetName(),
-                    searchQuery.getXMinus(),
-                    searchQuery.getXPlus(),
-                    searchQuery.getYMinus(),
-                    searchQuery.getYPlus(),
-                    searchQuery.getZMinus(),
-                    searchQuery.getZPlus()
-            );
-
-        } else {
-            astrographicObjects = astrographicObjectRepository.findBySearchQuery(searchQuery);
-        }
-        log.info("New DB Query returns {} stars", astrographicObjects.size());
-        astrographicObjects = filterByDistance(astrographicObjects, searchQuery.getCenterCoordinates(), searchQuery.getDistanceFromCenterStar());
-        log.info("Filtered by distance Query returns {} stars", astrographicObjects.size());
-        return astrographicObjects;
-    }
-
-    /**
-     * filter the list to distance by selected distance
-     *
-     * @param astrographicObjects    the astrogrpic objects to display
-     * @param centerCoordinates      the plot center coordinates
-     * @param distanceFromCenterStar the distance frm the centre star to display
-     * @return the fitlered list
-     */
-    private List<AstrographicObject> filterByDistance(
-            List<AstrographicObject> astrographicObjects,
-            double[] centerCoordinates,
-            double distanceFromCenterStar) {
-        List<AstrographicObject> filterList = new ArrayList<>();
-        astrographicObjects.forEach(object -> {
-            try {
-                double[] starPosition = new double[3];
-                starPosition[0] = object.getX();
-                starPosition[1] = object.getY();
-                starPosition[2] = object.getZ();
-                if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
-                    filterList.add(object);
-                }
-            } catch (Exception e) {
-                log.error("error in finding distance:", e);
-            }
-        });
-        return filterList;
+        return databaseManagementService.getAstrographicObjectsOnQuery((searchContext));
     }
 
     //////////////
