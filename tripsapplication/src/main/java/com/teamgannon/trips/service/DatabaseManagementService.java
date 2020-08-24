@@ -15,10 +15,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.Star;
 import com.teamgannon.trips.jpa.model.StellarSystem;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
-import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
-import com.teamgannon.trips.jpa.repository.StarRepository;
-import com.teamgannon.trips.jpa.repository.StellarSystemRepository;
+import com.teamgannon.trips.jpa.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -45,17 +42,44 @@ public class DatabaseManagementService {
 
     private static final int MAX_REQUEST_SIZE = 9999;
 
-    @Autowired
-    private StellarSystemRepository stellarSystemRepository;
+    private final StellarSystemRepository stellarSystemRepository;
 
-    @Autowired
-    private StarRepository starRepository;
+    private final StarRepository starRepository;
 
-    @Autowired
+    /**
+     * storage of data sets in DB
+     */
     private DataSetDescriptorRepository dataSetDescriptorRepository;
 
-    @Autowired
+    /**
+     * storage of astrographic objects in DB
+     */
     private AstrographicObjectRepository astrographicObjectRepository;
+
+    /**
+     * storage of graph colors in DB
+     */
+    private final GraphColorsRepository graphColorsRepository;
+
+    /**
+     * storage of graph enables in DB
+     */
+    private final GraphEnablesRepository graphEnablesRepository;
+
+    public DatabaseManagementService(StellarSystemRepository stellarSystemRepository,
+                                     StarRepository starRepository,
+                                     DataSetDescriptorRepository dataSetDescriptorRepository,
+                                     AstrographicObjectRepository astrographicObjectRepository,
+                                     GraphColorsRepository graphColorsRepository,
+                                     GraphEnablesRepository graphEnablesRepository) {
+
+        this.stellarSystemRepository = stellarSystemRepository;
+        this.starRepository = starRepository;
+        this.dataSetDescriptorRepository = dataSetDescriptorRepository;
+        this.astrographicObjectRepository = astrographicObjectRepository;
+        this.graphColorsRepository = graphColorsRepository;
+        this.graphEnablesRepository = graphEnablesRepository;
+    }
 
     /**
      * drop all the tables

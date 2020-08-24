@@ -155,6 +155,7 @@ public class MainPane implements
      * the TRIPS context component
      */
     private final TripsContext tripsContext;
+
     /**
      * the main repo for querying stars
      */
