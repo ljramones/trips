@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.dialogs.preferences.GraphColorPane;
 import com.teamgannon.trips.dialogs.support.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;

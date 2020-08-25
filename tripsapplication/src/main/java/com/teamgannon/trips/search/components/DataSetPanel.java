@@ -1,10 +1,8 @@
 package com.teamgannon.trips.search.components;
 
-import com.teamgannon.trips.dialogs.DataSetDescribeDialog;
+import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.SearchContext;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;

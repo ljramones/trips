@@ -8,7 +8,6 @@ import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.chview.model.PseudoString;
 import com.teamgannon.trips.file.chview.model.StringResult;
-import com.teamgannon.trips.filedata.model.ChViewRecord;
 import com.teamgannon.trips.stardata.StarColor;
 import com.teamgannon.trips.stardata.StellarClassification;
 import com.teamgannon.trips.stardata.StellarFactory;
