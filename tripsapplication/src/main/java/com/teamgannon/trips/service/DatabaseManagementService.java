@@ -7,6 +7,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.teamgannon.trips.algorithms.StarMath;
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.support.Dataset;
@@ -30,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -50,12 +53,12 @@ public class DatabaseManagementService {
     /**
      * storage of data sets in DB
      */
-    private DataSetDescriptorRepository dataSetDescriptorRepository;
+    private final DataSetDescriptorRepository dataSetDescriptorRepository;
 
     /**
      * storage of astrographic objects in DB
      */
-    private AstrographicObjectRepository astrographicObjectRepository;
+    private final AstrographicObjectRepository astrographicObjectRepository;
 
     /**
      * storage of graph colors in DB
@@ -67,12 +70,19 @@ public class DatabaseManagementService {
      */
     private final GraphEnablesRepository graphEnablesRepository;
 
+    /**
+     * stores all teh star details
+     */
+    private final StarDetailsPersistRepository starDetailsPersistRepository;
+
+
     public DatabaseManagementService(StellarSystemRepository stellarSystemRepository,
                                      StarRepository starRepository,
                                      DataSetDescriptorRepository dataSetDescriptorRepository,
                                      AstrographicObjectRepository astrographicObjectRepository,
                                      GraphColorsRepository graphColorsRepository,
-                                     GraphEnablesRepository graphEnablesRepository) {
+                                     GraphEnablesRepository graphEnablesRepository,
+                                     StarDetailsPersistRepository starDetailsPersistRepository) {
 
         this.stellarSystemRepository = stellarSystemRepository;
         this.starRepository = starRepository;
@@ -80,6 +90,7 @@ public class DatabaseManagementService {
         this.astrographicObjectRepository = astrographicObjectRepository;
         this.graphColorsRepository = graphColorsRepository;
         this.graphEnablesRepository = graphEnablesRepository;
+        this.starDetailsPersistRepository = starDetailsPersistRepository;
     }
 
     /**
@@ -471,6 +482,35 @@ public class DatabaseManagementService {
     public DataSetDescriptor getDatasetFromName(String dataSetName) {
         return dataSetDescriptorRepository.findByDataSetName(dataSetName);
     }
+    ///////////////
+
+    /**
+     * get the star details
+     *
+     * @return the list of star details
+     */
+    public List<StarDetailsPersist> getStarDetails() {
+        Iterable<StarDetailsPersist> starDetailsPersists = starDetailsPersistRepository.findAll();
+        List<StarDetailsPersist> starDetailsPersistList = StreamSupport.stream(starDetailsPersists.spliterator(), false).collect(Collectors.toList());
+        if (starDetailsPersistList.size() == 0) {
+            StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+            starDisplayPreferences.setDefaults();
+            List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
+            starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
+            return starDetailsPersistListNew;
+        } else {
+            return starDetailsPersistList;
+        }
+    }
+
+    /**
+     * update the star details
+     *
+     * @param starDetailsPersists the list of star details
+     */
+    public void updateStarDetails(List<StarDetailsPersist> starDetailsPersists) {
+        starDetailsPersistRepository.saveAll(starDetailsPersists);
+    }
 
     //////////////
 
@@ -563,8 +603,7 @@ public class DatabaseManagementService {
     }
 
 
-    public StarDisplayPrefsDB getStarDisplayPrefs() {
+    public void updateStarPreferences(StarDisplayPreferences starDisplayPreferences) {
 
-        return null;
     }
 }
