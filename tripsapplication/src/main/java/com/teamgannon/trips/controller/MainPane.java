@@ -1,6 +1,7 @@
 package com.teamgannon.trips.controller;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
@@ -22,8 +23,7 @@ import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.jpa.model.StarDisplayPrefsDB;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
+import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -316,9 +316,14 @@ public class MainPane implements
         scaleOn = graphEnablesPersist.isDisplayLegend();
     }
 
+    /**
+     * get the star definitions from the db
+     */
     private void getStarDefinitionsFromDB() {
-        StarDisplayPrefsDB starDisplayPrefs = databaseManagementService.getStarDisplayPrefs();
-
+        List<StarDetailsPersist> starDetailsPersistList = databaseManagementService.getStarDetails();
+        StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+        starDisplayPreferences.setStars(starDetailsPersistList);
+        tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
     }
 
 
@@ -1098,6 +1103,11 @@ public class MainPane implements
         databaseManagementService.updateGraphEnables(graphEnablesPersist);
         astrographicPlotter.changeGraphEnables(graphEnablesPersist);
         log.info("UPDATE GRAPH ENABLES!!!");
+    }
+
+    @Override
+    public void changeStarPreferences(StarDisplayPreferences starDisplayPreferences) {
+        databaseManagementService.updateStarPreferences(starDisplayPreferences);
     }
 
 }

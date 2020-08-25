@@ -1,14 +1,11 @@
 package com.teamgannon.trips.dialogs;
 
-import com.teamgannon.trips.config.application.*;
+import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.preferencespanes.*;
-import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -59,7 +56,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         Tab starsTab = new Tab("Stars");
         String style3 = "-fx-background-color: aquamarine";
         starsTab.setStyle(style3);
-        starsTab.setContent(new StarsPane(preferences.getStarDisplayPreferences(), style3));
+        starsTab.setContent(new StarsPane(tripsContext.getAppViewPreferences().getStarDisplayPreferences(), updater));
         tabPane.getTabs().add(starsTab);
 
         Tab positionTab = new Tab("Position");
