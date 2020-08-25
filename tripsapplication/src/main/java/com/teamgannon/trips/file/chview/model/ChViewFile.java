@@ -1,6 +1,6 @@
 package com.teamgannon.trips.file.chview.model;
 
-import com.teamgannon.trips.filedata.model.ChViewRecord;
+import com.teamgannon.trips.file.chview.ChViewRecord;
 import lombok.Data;
 
 import java.io.Serializable;

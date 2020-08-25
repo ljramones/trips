@@ -1,8 +1,8 @@
 package com.teamgannon.trips.tableviews;
 
-import com.teamgannon.trips.dialogs.AddStarDialog;
+import com.teamgannon.trips.dataset.AddStarDialog;
 import com.teamgannon.trips.dialogs.support.EditTypeEnum;
-import com.teamgannon.trips.dialogs.support.TableEditResult;
+import com.teamgannon.trips.dialogs.dataset.TableEditResult;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import javafx.collections.ListChangeListener;
@@ -52,6 +52,7 @@ public class DataSetTable {
     private List<AstrographicObject> astrographicObjects;
 
     private int currentPosition = 0;
+
     private StellarDataUpdater updater;
 
     /**

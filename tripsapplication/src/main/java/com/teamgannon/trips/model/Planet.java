@@ -1,9 +1,9 @@
 package com.teamgannon.trips.model;
 
-import com.teamgannon.trips.filedata.model.enums.PlanetCompositionType;
-import com.teamgannon.trips.filedata.model.enums.PlanetMassRegimeEnum;
-import com.teamgannon.trips.filedata.model.enums.PlanetOrbitalRegimeEnum;
-import com.teamgannon.trips.filedata.model.enums.PlanetaryProductType;
+import com.teamgannon.trips.file.chview.enums.PlanetCompositionType;
+import com.teamgannon.trips.file.chview.enums.PlanetMassRegimeEnum;
+import com.teamgannon.trips.file.chview.enums.PlanetOrbitalRegimeEnum;
+import com.teamgannon.trips.file.chview.enums.PlanetaryProductType;
 import lombok.Data;
 
 import java.io.Serializable;

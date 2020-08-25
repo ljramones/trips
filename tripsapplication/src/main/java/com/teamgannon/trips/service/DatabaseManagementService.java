@@ -10,7 +10,7 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
-import com.teamgannon.trips.dialogs.support.Dataset;
+import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;

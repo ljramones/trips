@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.dialogs.RouteDialog;
+import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.operators.*;
 import javafx.animation.Interpolator;
@@ -15,7 +15,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Box;
-import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
