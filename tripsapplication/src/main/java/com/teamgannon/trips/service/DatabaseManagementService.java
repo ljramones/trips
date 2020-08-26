@@ -602,8 +602,13 @@ public class DatabaseManagementService {
         }
     }
 
-
+    /**
+     * update the star display preferences
+     *
+     * @param starDisplayPreferences the star preferences
+     */
     public void updateStarPreferences(StarDisplayPreferences starDisplayPreferences) {
-
+        List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
+        starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
     }
 }

@@ -22,16 +22,99 @@ public class StarDisplayPreferences implements Serializable {
      * the initial defaults if none exist
      */
     public void setDefaults() {
-        starMap.put(StellarType.O, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.O, Color.DARKBLUE, 10));
-        starMap.put(StellarType.B, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.B, Color.MEDIUMBLUE, 8));
-        starMap.put(StellarType.A, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.A, Color.LIGHTBLUE, 6));
-        starMap.put(StellarType.F, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.F, Color.LIGHTYELLOW, 1));
-        starMap.put(StellarType.G, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.G, Color.YELLOW, 1));
-        starMap.put(StellarType.K, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.K, Color.ORANGE, 0.8f));
-        starMap.put(StellarType.M, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.M, Color.RED, .5f));
-        starMap.put(StellarType.L, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.L, Color.DARKRED, .3f));
-        starMap.put(StellarType.T, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.T, Color.PURPLE, .2f));
-        starMap.put(StellarType.Y, StarDescriptionPreference.createStarDescription(UUID.randomUUID().toString(), StellarType.Y, Color.MEDIUMVIOLETRED, .2f));
+        starMap.put(StellarType.O, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.O,
+                Color.DARKBLUE,
+                10));
+        starMap.put(StellarType.B, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.B,
+                Color.MEDIUMBLUE,
+                8));
+        starMap.put(StellarType.A, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.A,
+                Color.LIGHTBLUE,
+                6));
+        starMap.put(StellarType.F, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.F,
+                Color.LIGHTYELLOW,
+                1));
+        starMap.put(StellarType.G, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.G,
+                Color.YELLOW,
+                1));
+        starMap.put(StellarType.K, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.K,
+                Color.ORANGE,
+                0.8f));
+        starMap.put(StellarType.M, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.M,
+                Color.RED,
+                .5f));
+        starMap.put(StellarType.L, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.L,
+                Color.DARKRED,
+                .3f));
+        starMap.put(StellarType.T, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.T,
+                Color.PURPLE,
+                .2f));
+        starMap.put(StellarType.Y, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.Y,
+                Color.MEDIUMVIOLETRED,
+                .2f));
+    }
+
+    public void reset() {
+        StarDescriptionPreference oStar = starMap.get(StellarType.O);
+        oStar.setColor(Color.DARKBLUE);
+        oStar.setSize(10f);
+
+        StarDescriptionPreference bStar = starMap.get(StellarType.B);
+        bStar.setColor(Color.MEDIUMBLUE);
+        bStar.setSize(8f);
+
+        StarDescriptionPreference aStar = starMap.get(StellarType.A);
+        aStar.setColor(Color.LIGHTBLUE);
+        aStar.setSize(6f);
+
+        StarDescriptionPreference fStar = starMap.get(StellarType.F);
+        fStar.setColor(Color.LIGHTYELLOW);
+        fStar.setSize(1f);
+
+        StarDescriptionPreference gStar = starMap.get(StellarType.G);
+        gStar.setColor(Color.YELLOW);
+        gStar.setSize(1f);
+
+        StarDescriptionPreference kStar = starMap.get(StellarType.K);
+        kStar.setColor(Color.ORANGE);
+        kStar.setSize(0.8f);
+
+        StarDescriptionPreference mStar = starMap.get(StellarType.M);
+        mStar.setColor(Color.RED);
+        mStar.setSize(0.5f);
+
+        StarDescriptionPreference lStar = starMap.get(StellarType.L);
+        lStar.setColor(Color.DARKRED);
+        lStar.setSize(0.3f);
+
+        StarDescriptionPreference tStar = starMap.get(StellarType.T);
+        tStar.setColor(Color.PURPLE);
+        tStar.setSize(0.2f);
+
+        StarDescriptionPreference yStar = starMap.get(StellarType.Y);
+        yStar.setColor(Color.MEDIUMVIOLETRED);
+        yStar.setSize(0.2f);
+
     }
 
 

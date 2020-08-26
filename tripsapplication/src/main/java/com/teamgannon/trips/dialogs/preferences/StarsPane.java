@@ -404,6 +404,67 @@ public class StarsPane extends Pane {
     }
 
     private void resetColorsClicked(ActionEvent actionEvent) {
+        starDisplayPreferences.reset();
+
+        // reset O class
+        StarDescriptionPreference oStar = starDisplayPreferences.getStarMap().get(StellarType.O);
+        oClassRadiusTextField.setText(Float.toString(oStar.getSize()));
+        oClassColorTextField.setText(oStar.getColor().toString());
+        oClassColorPicker.setValue(oStar.getColor());
+
+        // reset B class
+        StarDescriptionPreference bStar = starDisplayPreferences.getStarMap().get(StellarType.B);
+        bClassRadiusTextField.setText(Float.toString(bStar.getSize()));
+        bClassColorTextField.setText(bStar.getColor().toString());
+        bClassColorPicker.setValue(bStar.getColor());
+
+        // reset A class
+        StarDescriptionPreference aStar = starDisplayPreferences.getStarMap().get(StellarType.A);
+        aClassRadiusTextField.setText(Float.toString(aStar.getSize()));
+        aClassColorTextField.setText(aStar.getColor().toString());
+        aClassColorPicker.setValue(aStar.getColor());
+
+        // reset F class
+        StarDescriptionPreference fStar = starDisplayPreferences.getStarMap().get(StellarType.F);
+        fClassRadiusTextField.setText(Float.toString(fStar.getSize()));
+        fClassColorTextField.setText(fStar.getColor().toString());
+        fClassColorPicker.setValue(fStar.getColor());
+
+        // reset G class
+        StarDescriptionPreference gStar = starDisplayPreferences.getStarMap().get(StellarType.G);
+        gClassRadiusTextField.setText(Float.toString(gStar.getSize()));
+        gClassColorTextField.setText(gStar.getColor().toString());
+        gClassColorPicker.setValue(gStar.getColor());
+
+        // reset K class
+        StarDescriptionPreference kStar = starDisplayPreferences.getStarMap().get(StellarType.K);
+        kClassRadiusTextField.setText(Float.toString(kStar.getSize()));
+        kClassColorTextField.setText(kStar.getColor().toString());
+        kClassColorPicker.setValue(kStar.getColor());
+
+        // reset M class
+        StarDescriptionPreference mStar = starDisplayPreferences.getStarMap().get(StellarType.M);
+        mClassRadiusTextField.setText(Float.toString(mStar.getSize()));
+        mClassColorTextField.setText(mStar.getColor().toString());
+        mClassColorPicker.setValue(mStar.getColor());
+
+        // reset L class
+        StarDescriptionPreference lStar = starDisplayPreferences.getStarMap().get(StellarType.L);
+        lClassRadiusTextField.setText(Float.toString(lStar.getSize()));
+        lClassColorTextField.setText(lStar.getColor().toString());
+        lClassColorPicker.setValue(lStar.getColor());
+
+        // reset T class
+        StarDescriptionPreference tStar = starDisplayPreferences.getStarMap().get(StellarType.T);
+        tClassRadiusTextField.setText(Float.toString(tStar.getSize()));
+        tClassColorTextField.setText(tStar.getColor().toString());
+        tClassColorPicker.setValue(tStar.getColor());
+
+        // reset Y class
+        StarDescriptionPreference yStar = starDisplayPreferences.getStarMap().get(StellarType.Y);
+        yClassRadiusTextField.setText(Float.toString(yStar.getSize()));
+        yClassColorTextField.setText(yStar.getColor().toString());
+        yClassColorPicker.setValue(yStar.getColor());
 
     }
 
