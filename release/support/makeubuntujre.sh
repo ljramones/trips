@@ -1,0 +1,2 @@
+# Note that all the jdk 14 versions fail when using jlink so this does not currently work
+jlink --output jre --add-modules java.base,java.desktop,java.logging,java.naming,java.management,java.sql,java.security.jgss,java.instrument,java.scripting,jdk.unsupported
