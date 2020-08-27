@@ -1,8 +1,8 @@
 package com.teamgannon.trips.dataset;
 
+import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
-import com.teamgannon.trips.dialogs.dataset.Dataset;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

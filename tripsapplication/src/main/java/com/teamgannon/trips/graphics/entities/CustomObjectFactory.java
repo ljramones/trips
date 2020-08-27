@@ -12,9 +12,9 @@ public class CustomObjectFactory {
 
 
     public static Node createLineSegment(Point3D origin,
-                                               Point3D target,
-                                               double width,
-                                               Color color) {
+                                         Point3D target,
+                                         double width,
+                                         Color color) {
 
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);

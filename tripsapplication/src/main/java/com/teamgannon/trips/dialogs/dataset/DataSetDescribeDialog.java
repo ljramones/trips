@@ -1,7 +1,6 @@
 package com.teamgannon.trips.dialogs.dataset;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.search.AstroSearchQuery;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -20,10 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
 
     private final static float LABEL_PREF_WIDTH = 100;
-
-    private DataSetDescriptor descriptor;
-
     protected GridPane planGrid = new GridPane();
+    private DataSetDescriptor descriptor;
 
     public DataSetDescribeDialog(DataSetDescriptor descriptor) {
         this.descriptor = descriptor;
@@ -45,14 +42,14 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
 
         Separator mySep = new Separator();
         mySep.setMinHeight(10);
-        planGrid.add(mySep, 0,4,2, 1);
+        planGrid.add(mySep, 0, 4, 2, 1);
 
         Button cancelDataSetButton = new Button("Cancel");
         cancelDataSetButton.setOnAction(this::close);
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().add(cancelDataSetButton);
-        planGrid.add(hBox, 0,5,2, 1);
+        planGrid.add(hBox, 0, 5, 2, 1);
 
         this.getDialogPane().setContent(planGrid);
 

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.entities;
 
+import com.teamgannon.trips.dataset.model.Route;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Builder;
@@ -41,6 +42,11 @@ public class RouteDescriptor {
     private String startStar;
 
     /**
+     * the notes for the route
+     */
+    private String routeNotes;
+
+    /**
      * the list of line segments joined by 3D points
      */
     @Builder.Default
@@ -51,6 +57,16 @@ public class RouteDescriptor {
         routeList.clear();
         color = Color.LIGHTCORAL;
         lineSegments.clear();
+    }
+
+    public Route toRoute() {
+        Route route = new Route();
+        route.setRouteName(this.name);
+        route.getRouteStars().addAll(routeList);
+        route.setRouteNotes(this.routeNotes);
+        route.setStartingStar(this.startStar);
+        route.setRouteColor(this.color.toString());
+        return route;
     }
 
 }

@@ -16,34 +16,29 @@ import java.util.Map;
 public class ChViewFile implements Serializable {
 
     /**
+     * records in the files
+     * <p>
+     * fourth
+     */
+    private final Map<Integer, ChViewRecord> records = new HashMap<>();
+    /**
      * read as a long (4 bytes)
      * <p>
      * first element
      */
     private int fileVersion;
-
     /**
      * the view preferences
      * <p>
      * second element
      */
     private CHViewPreferences CHViewPreferences;
-
     /**
      * number of records in the file
      * <p>
      * third
      */
     private int numberOfRecords;
-
-    /**
-     * records in the files
-     * <p>
-     * fourth
-     */
-    private final Map<Integer, ChViewRecord> records = new HashMap<>();
-
-
     /**
      * the postamble of the file
      * comment

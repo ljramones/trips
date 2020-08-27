@@ -22,17 +22,13 @@ public class AppPrefsPane extends Pane {
     private final static String APP_PANE_TITLE_MODIFIED = "Change View Preferences - *modified*";
 
     private final ApplicationPreferences applicationPreferences;
-
-    private boolean appChangeDetected = false;
-
     private final TitledPane appPreferencesPane = new TitledPane();
-
     // app preferences
     private final TextField routeSegmentLengthTextField = new TextField();
     private final TextField routeColorTextField = new TextField();
     private final TextField gridSizeTextField = new TextField();
-
     private final ColorPicker routeColorPicker = new ColorPicker();
+    private boolean appChangeDetected = false;
 
 
     public AppPrefsPane(ApplicationPreferences applicationPreferences) {

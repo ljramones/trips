@@ -17,8 +17,7 @@ public class AstrographicObjectFactory {
     /**
      * create an astrographic object from a CH View record
      *
-     *
-     * @param dataset the data set
+     * @param dataset      the data set
      * @param chViewRecord the chview record
      * @return the astrographic object
      */

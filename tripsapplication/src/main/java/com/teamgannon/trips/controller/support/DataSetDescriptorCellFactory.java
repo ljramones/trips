@@ -11,7 +11,7 @@ public class DataSetDescriptorCellFactory implements Callback<ListView<DataSetDe
 
     private StellarDataUpdater updater;
 
-    public DataSetDescriptorCellFactory(StellarDataUpdater updater){
+    public DataSetDescriptorCellFactory(StellarDataUpdater updater) {
         this.updater = updater;
     }
 

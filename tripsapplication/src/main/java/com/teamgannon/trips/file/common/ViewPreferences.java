@@ -14,12 +14,12 @@ public class ViewPreferences {
     /**
      * Route Display or not
      */
-    private  boolean routeDisplayOn = true;
+    private boolean routeDisplayOn = true;
 
     /**
      * Display Star Names or not
      */
-    private  boolean starNameOn = false;
+    private boolean starNameOn = false;
 
     /**
      * Scale on or off
@@ -27,54 +27,54 @@ public class ViewPreferences {
     private boolean scaleOn;
 
     /**
-     * OColour 
+     * OColour
      * Colour of spectral type O stars
      */
     private Color oColor;
 
     /**
-     * BColour 
+     * BColour
      */
     private Color bColor;
 
 
     /**
-     * AColour 
+     * AColour
      */
     private Color aColor;
 
     /**
-     * FColour 
+     * FColour
      */
     private Color fColor;
 
     /**
-     * GColour 
+     * GColour
      */
     private Color gColor;
 
     /**
-     * KColour 
+     * KColour
      */
     private Color kColor;
 
     /**
-     * MColour 
+     * MColour
      */
     private Color mColor;
 
     /**
-     * XColour 
+     * XColour
      */
     private Color xColor;
 
     /**
-     * BackColour 
+     * BackColour
      */
     private Color backgroundColor;
 
     /**
-     * TextColour 
+     * TextColour
      */
     private Color textColor;
 
@@ -89,52 +89,52 @@ public class ViewPreferences {
     private short oRadius;
 
     /**
-     * BRad 
+     * BRad
      */
     private short bRadius;
 
     /**
-     * ARad 
+     * ARad
      */
     private short aRadius;
 
     /**
-     * FRad 
+     * FRad
      */
     private short fRadius;
 
     /**
-     * GRad 
+     * GRad
      */
     private short gRadius;
 
     /**
-     * KRad 
+     * KRad
      */
     private short kRadius;
 
     /**
-     * MRad 
+     * MRad
      */
     private short mRadius;
 
     /**
-     * XRad 
+     * XRad
      */
     private short xRadius;
 
     /**
-     * DwarfRad 
+     * DwarfRad
      */
     private short dwarfRadius;
 
     /**
-     * GiantRad 
+     * GiantRad
      */
     private short giantRadius;
 
     /**
-     * SuperGiantRad 
+     * SuperGiantRad
      */
     private short superGiantRadius;
 

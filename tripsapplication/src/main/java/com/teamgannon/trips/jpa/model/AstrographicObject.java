@@ -163,7 +163,6 @@ public class AstrographicObject implements Serializable {
     private double rs_cdeg;
 
 
-
     /**
      * the parallax measurement
      */
@@ -198,7 +197,7 @@ public class AstrographicObject implements Serializable {
     private String spectralClass;
 
     /**
-     * the temprature of the star in K
+     * the temperature of the star in K
      */
     @CsvBindByName(column = "temp")
     private double temperature;
@@ -357,6 +356,7 @@ public class AstrographicObject implements Serializable {
      * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
      * if we have to add custom fields in the custom object, but sometimes text notes make sense.
      */
+    @Lob
     @CsvBindByName(column = "notes")
     private String notes;
 

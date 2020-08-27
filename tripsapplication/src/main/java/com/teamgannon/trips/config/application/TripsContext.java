@@ -1,7 +1,6 @@
 package com.teamgannon.trips.config.application;
 
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
-import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.search.SearchContext;
 import lombok.Data;
 

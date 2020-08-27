@@ -9,7 +9,7 @@ public interface RouteUpdater {
      *
      * @param routeDescriptor the route descriptor
      */
-    void newRoute(RouteDescriptor routeDescriptor);
+    void newRoute(String datasetName, RouteDescriptor routeDescriptor);
 
     /**
      * triggered when an existing route changes

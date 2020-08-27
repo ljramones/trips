@@ -1,12 +1,12 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.starmodel.StarBase;
 import javafx.geometry.Point3D;
@@ -34,13 +34,11 @@ public class AstrographicPlotter {
     private final SearchContext searchContext;
 
     private final AstrographicTransformer astrographicTransformer;
-
+    private final ColorPalette colorPalette;
     /**
      * the drawing surface for the astrographic plotter
      */
     private InterstellarSpacePane interstellarSpacePane;
-
-    private final ColorPalette colorPalette;
 
     /**
      * for dependency injection
@@ -80,12 +78,15 @@ public class AstrographicPlotter {
      * @param centerCoordinates   the center of the plot
      * @param colorPalette        the color palette to draw
      */
-    public void drawAstrographicData(List<AstrographicObject> astrographicObjects,
+    public void drawAstrographicData(String datasetName,
+                                     List<AstrographicObject> astrographicObjects,
                                      double[] centerCoordinates,
                                      ColorPalette colorPalette) {
 
         // clear old drawing
         interstellarSpacePane.clearStars();
+
+        interstellarSpacePane.setDataSetContext(datasetName);
 
         // set the records to the in memory cache for quick access
         starBase.setRecords(astrographicObjects, colorPalette);

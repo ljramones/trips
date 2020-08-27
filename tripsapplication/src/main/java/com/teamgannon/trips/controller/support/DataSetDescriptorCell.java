@@ -11,15 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
 
+    // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
+    // for the Tooltip for each cell
+    final Tooltip tooltip = new Tooltip();
     private StellarDataUpdater updater;
 
     public DataSetDescriptorCell(StellarDataUpdater updater) {
         this.updater = updater;
     }
-
-    // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
-    // for the Tooltip for each cell
-    final Tooltip tooltip = new Tooltip();
 
     @Override
     public void updateItem(DataSetDescriptor descriptor, boolean empty) {

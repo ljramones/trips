@@ -11,13 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
+    private final ApplicationPreferences preferences;
     private TabPane tabPane;
-
     private ButtonType buttonTypeOk;
-
     private PreferencesUpdater updater;
     private TripsContext tripsContext;
-    private final ApplicationPreferences preferences;
 
 
     public ViewPreferencesDialog(PreferencesUpdater updater, TripsContext tripsContext, ApplicationPreferences preferences) {

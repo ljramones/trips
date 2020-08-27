@@ -18,11 +18,15 @@ import java.util.*;
 public class Planet implements Serializable {
 
     private static final long serialVersionUID = 27756541411017604L;
+    private final UUID id = UUID.randomUUID();
+    /**
+     * all the type of planets present
+     */
+    private final List<PlanetaryProductType> products = new ArrayList<>();
     /**
      * the set of moons that are
      */
     Set<Planet> moons = new HashSet<>();
-    private final UUID id = UUID.randomUUID();
     /**
      * the stellar system that this belongs to
      */
@@ -75,10 +79,6 @@ public class Planet implements Serializable {
      * whether there is a military in space
      */
     private boolean militarySpaceside;
-    /**
-     * all the type of planets present
-     */
-    private final List<PlanetaryProductType> products = new ArrayList<>();
     /**
      * whether there is an anomaly present
      */

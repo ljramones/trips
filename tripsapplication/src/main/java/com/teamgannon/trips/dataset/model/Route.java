@@ -1,6 +1,5 @@
 package com.teamgannon.trips.dataset.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -49,6 +48,16 @@ public class Route {
      * the notes for the route
      */
     private String routeNotes;
+
+    /**
+     * the color we selected for the route
+     */
+    private String routeColor;
+
+    /**
+     * the star this route starts at
+     */
+    private String startingStar;
 
     ////////////
 

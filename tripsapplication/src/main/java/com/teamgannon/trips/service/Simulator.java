@@ -69,8 +69,7 @@ public class Simulator {
         IntStream.range(0, 25).forEach(i -> recordList.add(createStarNode()));
 
 
-
-        starPane.drawStar(recordList, "Sol" , colorPalette);
+        starPane.drawStar(recordList, "Sol", colorPalette);
     }
 
 

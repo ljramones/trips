@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dataset;
 
-import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.dialogs.dataset.TableEditResult;
+import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.tableviews.StarEditRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -19,10 +19,6 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class AddStarDialog extends Dialog<TableEditResult> {
 
-    private StarEditRecord starEditRecord = new StarEditRecord();
-
-    public Button addStarButton = new Button("Add Star");
-
     private final TextField starName = new TextField();
     private final TextField distanceToEarth = new TextField();
     private final TextField spectra = new TextField();
@@ -35,8 +31,9 @@ public class AddStarDialog extends Dialog<TableEditResult> {
     private final TextField yCoord = new TextField();
     private final TextField zCoord = new TextField();
     private final CheckBox real = new CheckBox("Real/Fictional");
-
     private final TextArea notes = new TextArea();
+    public Button addStarButton = new Button("Add Star");
+    private StarEditRecord starEditRecord = new StarEditRecord();
 
 
     public AddStarDialog(StarEditRecord starEditRecord) {

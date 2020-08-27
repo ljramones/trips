@@ -17,6 +17,8 @@ import java.util.Map;
 public class SearchContext {
 
     private final Map<String, DataSetDescriptor> dataSetDescriptorMap = new HashMap<>();
+    private String currentDataSet;
+    private AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
 
     public String getCurrentDataSet() {
         return currentDataSet;
@@ -25,10 +27,6 @@ public class SearchContext {
     public void setCurrentDataSet(String currentDataSet) {
         this.currentDataSet = currentDataSet;
     }
-
-    private String currentDataSet;
-
-    private AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
 
     public AstroSearchQuery getAstroSearchQuery() {
         return astroSearchQuery;

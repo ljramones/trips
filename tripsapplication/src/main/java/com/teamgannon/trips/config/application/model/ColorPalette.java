@@ -17,6 +17,12 @@ public class ColorPalette {
 
     private Color legendColor;
 
+    public static ColorPalette defaultColors() {
+        ColorPalette palette = new ColorPalette();
+        palette.assignColors(GraphColorsPersist.defaults());
+        return palette;
+    }
+
     public void assignColors(GraphColorsPersist graphColorsPersist) {
         id = graphColorsPersist.getId();
         labelColor = Color.valueOf(graphColorsPersist.getLabelColor());
@@ -40,13 +46,6 @@ public class ColorPalette {
     public void setLegendColor(String color) {
         legendColor = Color.valueOf(color);
     }
-
-    public static ColorPalette defaultColors() {
-        ColorPalette palette = new ColorPalette();
-        palette.assignColors(GraphColorsPersist.defaults());
-        return palette;
-    }
-
 
     public void setDefaults() {
         labelColor = Color.BEIGE;

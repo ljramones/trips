@@ -22,15 +22,12 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class QueryDialog extends Dialog<AstroSearchQuery> {
 
+    public final Button runQueryButton = new Button("Run Query");
     private final SearchContext searchContext;
-
     private final SearchPane searchPane;
-
+    Button cancelDataSetButton = new Button("Dismiss");
     private CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
     private CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
-
-    public final Button runQueryButton = new Button("Run Query");
-    Button cancelDataSetButton = new Button("Dismiss");
 
     public QueryDialog(SearchContext searchContext, StellarDataUpdater updater) {
         this.searchContext = searchContext;

@@ -44,287 +44,235 @@ public class CHViewPreferences implements Serializable {
     public final static int LINKSTYLE1 = 0;
     public final static int LINKSTYLE2 = 1;
     public final static int LINKSTYLE3 = 2;
-
+    /**
+     * LinkColour x 3 |Colorref |Colour of link gradations
+     */
+    private final Color[] linkColor = new Color[3];
+    /**
+     * CentreOrds x 3 |double |Galactic coordinates of centre
+     */
+    private final double[] centreOrdinates = new double[3];
+    /**
+     * not sure what this one is for
+     */
+    private final double[] galCoordinates = new double[3];
+    /**
+     * GroupLabel x 4 |string |Names of groups
+     */
+    private final String[] namesOfGroups = new String[4];
+    /**
+     * DisplayGroup x 4 |int |Display each group or not
+     */
+    private final boolean[] displayFlagGroupOn = new boolean[4];
+    /**
+     * the routes
+     */
+    private final List<RouteDescriptor> routes = new ArrayList<>();
     /**
      * Grid |int |Display grid or not
      * <p>
      * first
      */
     private boolean gridOn = false;
-
     /**
      * GridSize |double |Granularity of grid
      * <p>
      * second
      */
     private double gridSize;
-
     /**
      * Link |int |Display Links or not
      * <p>
      * third
      */
     private boolean linkOn = false;
-
     /**
      * LinkNumbers |int |Display Link Numbers or not
      * <p>
      * fourth
      */
-    private  boolean displayLinkOn = false;
-
+    private boolean displayLinkOn = false;
     /**
      * LinkSize x 4 |double |Size of each link graduation
      * <p>
      * sixth
      */
-    private  double[] linksize = new double[4];
-
+    private double[] linksize = new double[4];
     /**
      * StarName |int |Display Star Names or not
      * <p>
      * seventh
      */
-    private  boolean starNameOn = false;
-
+    private boolean starNameOn = false;
     /**
      * Radius |double |View Radius
      * <p>
      * eighth
      */
     private double radius;
-
     /**
      * Scale |int |Display Scope or note
      * <p>
      * ninth
      */
     private boolean scaleOn;
-
     /**
      * GridStyle |int |Style of grid lines
      * <p>
      * tenth
      */
     private int gridStyle;
-
     /**
      * LinkStyle x 3 |int |Style of link lines
      * <p>
      * eleven
      */
-    private  short[] linkStyle = new short[3];
-
+    private short[] linkStyle = new short[3];
     /**
      * StemStyle |int |Style of stems
      * <p>
      * twelve
      */
     private short stemStyle;
-
     /**
      * StarOutline |int |Display star outline or not
      * <p>
      * thirteen
      */
-    private  boolean starOutlineOn = false;
-
+    private boolean starOutlineOn = false;
     /**
      * RouteDisp |int |Display routes or not
      */
-    private  boolean routeDisplayOn = false;
-
+    private boolean routeDisplayOn = false;
     /**
      * OColour |Colorref |Colour of spectral type O stars
      * (long)
      */
     private Color oColor;
-
     /**
      * BColour |Colorref |
      */
     private Color bColor;
-
-
     /**
      * AColour |Colorref |
      */
     private Color aColor;
-
     /**
      * FColour |Colorref |
      */
     private Color fColor;
-
     /**
      * GColour |Colorref |
      */
     private Color gColor;
-
     /**
      * KColour |Colorref |
      */
     private Color kColor;
-
     /**
      * MColour |Colorref |
      */
     private Color mColor;
-
     /**
      * XColour |Colorref |
      */
     private Color xColor;
-
     /**
      * BackColour |Colorref |Colour of background
      */
     private Color backgroundColor;
-
     /**
      * TextColour |Colorref |Colour of text
      */
     private Color textColor;
-
     /**
      * LinkNumColour |Colorref |Colour of link numbers
      */
     private Color linkNumberColor;
-
-    /**
-     * LinkColour x 3 |Colorref |Colour of link gradations
-     */
-    private final Color[] linkColor = new Color[3];
-
     /**
      * GridColour |Colorref |Colour of grid
      */
     private Color gridColor;
-
     /**
      * StemColour |Colorref |Colour of stems
      */
     private Color stemColor;
-
     /**
      * ORad |int |Radius of spectral class O stars
      */
     private short oRadius;
-
     /**
      * BRad |int |
      */
     private short bRadius;
-
     /**
      * ARad |int |
      */
     private short aRadius;
-
     /**
      * FRad |int |
      */
     private short fRadius;
-
     /**
      * GRad |int |
      */
     private short gRadius;
-
     /**
      * KRad |int |
      */
     private short kRadius;
-
     /**
      * MRad |int |
      */
     private short mRadius;
-
     /**
      * XRad |int |
      */
     private short xRadius;
-
     /**
      * DwarfRad |int |
      */
     private short dwarfRadius;
-
     /**
      * GiantRad |int |
      */
     private short giantRadius;
-
     /**
      * SuperGiantRad |int |
      */
     private short superGiantRadius;
-
-    /**
-     * CentreOrds x 3 |double |Galactic coordinates of centre
-     */
-    private final double[] centreOrdinates = new double[3];
-
-    /**
-     * not sure what this one is for
-     */
-    private final double[] galCoordinates = new double[3];
-
     /**
      * theta |double |Rotational position
      */
     private double theta;
-
     /**
      * phi |double |
      */
     private double phi;
-
     /**
      * rho |double |
      */
     private double rho;
-
     /**
      * tscale |double |Angular scales
      */
     private double tScale;
-
     /**
      * pscale |double |
      */
     private double pScale;
-
     /**
      * rscale |double |
      */
     private double rScale;
-
     /**
      * xscale |double |Display scales
      */
     private double xScale;
-
     /**
      * yscale |double |
      */
     private double yScale;
-
-    /**
-     * GroupLabel x 4 |string |Names of groups
-     */
-    private final String[] namesOfGroups = new String[4];
-
-    /**
-     * DisplayGroup x 4 |int |Display each group or not
-     */
-    private final boolean[] displayFlagGroupOn = new boolean[4];
-
-    /**
-     * the routes
-     */
-    private final List<RouteDescriptor> routes = new ArrayList<>();
 
 
     //  -------------------- public special accessors ------------------- //
