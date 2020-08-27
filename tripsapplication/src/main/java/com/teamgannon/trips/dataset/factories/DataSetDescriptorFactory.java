@@ -49,22 +49,6 @@ public class DataSetDescriptorFactory {
         dataSetDescriptor.setFileCreator(dataset.getAuthor());
         dataSetDescriptor.setDatasetType(dataset.getDataType().getDataFormatEnum().getValue());
 
-        List<Route> routeList = new ArrayList<>();
-        Route route1 = new Route();
-        route1.setRouteName("route1");
-        route1.setRouteType(UUID.randomUUID());
-        route1.setRouteNotes("a basic route");
-        List<UUID> routeStars = new ArrayList<>();
-        routeStars.add(UUID.randomUUID());
-        routeStars.add(UUID.randomUUID());
-        routeStars.add(UUID.randomUUID());
-        routeStars.add(UUID.randomUUID());
-        route1.setRouteStars(routeStars);
-
-        routeList.add(route1);
-
-        dataSetDescriptor.setRoutes(routeList);
-
         // parse chview file to create the basics for the data set to save
         dataSetDescriptor.setTheme(createTheme("default", chViewFile));
 
