@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * an elasticsearch data model for astrographic objects
+ * an relational data model for astrographic objects
  * <p>
  * Created by larrymitchell on 2017-03-28.
  */
