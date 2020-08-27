@@ -27,12 +27,11 @@ import java.util.Set;
 @Component
 public class RBCsvReader {
 
-    private AstrographicObjectRepository repository;
-
     /**
      * the stellar factory
      */
     private final StellarFactory stellarFactory;
+    private AstrographicObjectRepository repository;
 
     public RBCsvReader(StellarFactory stellarFactory, AstrographicObjectRepository repository) {
         this.stellarFactory = stellarFactory;

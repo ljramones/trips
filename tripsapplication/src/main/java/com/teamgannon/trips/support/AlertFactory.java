@@ -30,7 +30,7 @@ public class AlertFactory {
      * @param message the warning message
      */
     public static void showWarningMessage(String title,
-                                    String message) {
+                                          String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
         alert.setContentText(message);
@@ -47,8 +47,8 @@ public class AlertFactory {
      * @return the button that was selected
      */
     public static Optional<ButtonType> showConfirmationAlert(String title,
-                                                       String headerTxt,
-                                                       String contentTxt) {
+                                                             String headerTxt,
+                                                             String contentTxt) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(title);
         alert.setHeaderText(headerTxt);

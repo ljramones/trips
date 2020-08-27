@@ -20,15 +20,13 @@ import java.util.Map;
  */
 public class SolarSystemSpacePane extends Pane {
 
-    private Label systemIdentifierLabel;
-
-    private String systemName = "No System Selected";
-    private Button returnButton;
-
     /**
      * the universe model which holds detail about our pocket universe
      */
     private final Universe universe = new Universe();
+    private Label systemIdentifierLabel;
+    private String systemName = "No System Selected";
+    private Button returnButton;
     private Map<String, String> objectProperties;
     private ContextSelector contextSelector;
 

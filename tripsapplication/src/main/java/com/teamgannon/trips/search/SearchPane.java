@@ -1,7 +1,6 @@
 package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.search.components.*;
-import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
@@ -15,8 +14,6 @@ public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
     private final StellarDataUpdater updater;
-
-    private DataSetPanel dataSetChoicePanel;
     private final DistanceSelectionPanel d2EarthSlider = new DistanceSelectionPanel();
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
@@ -30,8 +27,8 @@ public class SearchPane extends Pane {
     private final MilPlanetSelectionPanel milPlanetSelectionPanel = new MilPlanetSelectionPanel();
     private final ProductsSelectionPanel productsSelectionPanel = new ProductsSelectionPanel();
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
-
     private final Button searchButton = new Button("New Search");
+    private DataSetPanel dataSetChoicePanel;
 
 
     public SearchPane(SearchContext query, StellarDataUpdater updater) {

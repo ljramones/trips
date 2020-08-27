@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.operators.*;
 import javafx.animation.Interpolator;
@@ -48,66 +49,14 @@ public class InterstellarSpacePane extends Pane {
     ////////////////// Routing ////////////////
     private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
-    HashMap<Shape3D, Label> shape3DToLabel = new HashMap<>();
-    double modifier = 1.0;
-    double modifierFactor = 0.1;
-
     /**
      * list of star display records
      */
     private final Set<StarDisplayRecord> starDisplayRecords = new HashSet<>();
-
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
-
-    /**
-     * used to signal an update to the parent list view
-     */
-    private ListUpdater listUpdater;
-
-    /**
-     * used to signal an update to the parent property panes
-     */
-    private StellarPropertiesDisplayer displayer;
-
-    /**
-     * used to an update to the parent controlling which graphics
-     * panes is being displayed
-     */
-    private ContextSelector contextSelector;
-
-    /**
-     * the route updater listener
-     */
-    private RouteUpdater routeUpdater;
-
-    /**
-     * the redraw listener
-     */
-    private RedrawListener redrawListener;
-
-    /**
-     * the report generator
-     */
-    private ReportGenerator reportGenerator;
-
-    /**
-     * this is the descriptor of the current route
-     */
-    private RouteDescriptor currentRoute;
-
-    /**
-     * the graphic portion of the current route
-     */
-    private Xform currentRouteDisplay = new Xform();
-
-    /**
-     * whether there is a route being traced, true is yes
-     */
-    private boolean routingActive = false;
-
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
@@ -116,22 +65,14 @@ public class InterstellarSpacePane extends Pane {
     private final Xform stellarDisplayGroup = new Xform();
     private final Xform scaleGroup = new Xform();
     private final Xform routesGroup = new Xform();
-
     // used to control label visibility
     private final Xform labelDisplayGroup = new Xform();
-
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
     private final double CONTROL_MULTIPLIER = 0.1;
     private final double SHIFT_MULTIPLIER = 0.1;
     private final double ALT_MULTIPLIER = 0.5;
-
-    // mose positions
-    private double mousePosX, mousePosY = 0;
-    private double mouseOldX, mouseOldY = 0;
-    private double mouseDeltaX, mouseDeltaY = 0;
     private final RotateTransition rotator;
-
     /////////////////
     // screen real estate
     private final int width;
@@ -139,8 +80,53 @@ public class InterstellarSpacePane extends Pane {
     private final int depth;
     private final int spacing;
     private final double lineWidth = 0.5;
-
     private final ColorPalette colorPalette;
+    HashMap<Shape3D, Label> shape3DToLabel = new HashMap<>();
+    double modifier = 1.0;
+    double modifierFactor = 0.1;
+    /**
+     * used to signal an update to the parent list view
+     */
+    private ListUpdater listUpdater;
+    /**
+     * used to signal an update to the parent property panes
+     */
+    private StellarPropertiesDisplayer displayer;
+    /**
+     * used to an update to the parent controlling which graphics
+     * panes is being displayed
+     */
+    private ContextSelector contextSelector;
+    /**
+     * the route updater listener
+     */
+    private RouteUpdater routeUpdater;
+    /**
+     * the redraw listener
+     */
+    private RedrawListener redrawListener;
+    /**
+     * the report generator
+     */
+    private ReportGenerator reportGenerator;
+    /**
+     * this is the descriptor of the current route
+     */
+    private RouteDescriptor currentRoute;
+    /**
+     * the graphic portion of the current route
+     */
+    private Xform currentRouteDisplay = new Xform();
+    /**
+     * whether there is a route being traced, true is yes
+     */
+    private boolean routingActive = false;
+    // mose positions
+    private double mousePosX, mousePosY = 0;
+    private double mouseOldX, mouseOldY = 0;
+    private double mouseDeltaX, mouseDeltaY = 0;
+    private DatabaseUpdater updater;
+    private String datasetName;
 
 
     /**
@@ -149,12 +135,24 @@ public class InterstellarSpacePane extends Pane {
      * @param width  the width
      * @param height the height
      */
-    public InterstellarSpacePane(int width, int height, int depth, int spacing, ColorPalette colorPalette) {
+    public InterstellarSpacePane(int width,
+                                 int height,
+                                 int depth,
+                                 int spacing,
+                                 ColorPalette colorPalette,
+                                 RouteUpdater routeUpdater,
+                                 ListUpdater listUpdater,
+                                 StellarPropertiesDisplayer displayer,
+                                 DatabaseUpdater updater) {
         this.width = width;
         this.height = height;
         this.depth = depth;
         this.spacing = spacing;
         this.colorPalette = colorPalette;
+        this.routeUpdater = routeUpdater;
+        this.listUpdater = listUpdater;
+        this.displayer = displayer;
+        this.updater = updater;
 
         this.setMinHeight(height);
         this.setMinWidth(width);
@@ -200,23 +198,6 @@ public class InterstellarSpacePane extends Pane {
 
     //////////////////////////  External event updaters   ////////////////////////
 
-    /**
-     * set the list updater
-     *
-     * @param listUpdater the updater
-     */
-    public void setListUpdater(ListUpdater listUpdater) {
-        this.listUpdater = listUpdater;
-    }
-
-    /**
-     * set the stellar properties displayer
-     *
-     * @param displayer the displayer
-     */
-    public void setStellarObjectDisplayer(StellarPropertiesDisplayer displayer) {
-        this.displayer = displayer;
-    }
 
     /**
      * set the context updater
@@ -225,15 +206,6 @@ public class InterstellarSpacePane extends Pane {
      */
     public void setContextUpdater(ContextSelector contextSelector) {
         this.contextSelector = contextSelector;
-    }
-
-    /**
-     * set the route updater
-     *
-     * @param routeUpdater the route updater
-     */
-    public void setRouteUpdater(RouteUpdater routeUpdater) {
-        this.routeUpdater = routeUpdater;
     }
 
     /**
@@ -326,7 +298,7 @@ public class InterstellarSpacePane extends Pane {
 
         // trigger that a new route has been created
         if (routeUpdater != null) {
-            routeUpdater.newRoute(currentRoute);
+            routeUpdater.newRoute(datasetName, currentRoute);
         }
     }
 
@@ -656,6 +628,8 @@ public class InterstellarSpacePane extends Pane {
         MenuItem recenterMenuItem = createRecenterMenuitem(star);
         cm.getItems().add(recenterMenuItem);
 
+        MenuItem enterNotesItem = createNotesMenuItem(star);
+        cm.getItems().add(enterNotesItem);
         cm.getItems().add(new SeparatorMenuItem());
 
         MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
@@ -691,6 +665,27 @@ public class InterstellarSpacePane extends Pane {
         cm.getItems().add(removeMenuItem);
 
         return cm;
+    }
+
+    private MenuItem createNotesMenuItem(Node star) {
+        MenuItem menuItem = new MenuItem("Enter notes on this star");
+        menuItem.setOnAction(event -> {
+            Map<String, String> properties = (Map<String, String>) star.getUserData();
+            StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
+
+            StarNotesDialog notesDialog = new StarNotesDialog();
+            notesDialog.setTitle("Add notes for " + starDescriptor.getStarName());
+            Optional<String> notesOptional = notesDialog.showAndWait();
+            if (notesOptional.isPresent()) {
+                String notes = notesOptional.get();
+                if (!notes.isEmpty()) {
+                    // save notes in star
+                    updater.astrographicUpdate(starDescriptor.getRecordId(), notes);
+                }
+            }
+
+        });
+        return menuItem;
     }
 
     private MenuItem distanceReportMenuItem(Node star) {
@@ -758,7 +753,7 @@ public class InterstellarSpacePane extends Pane {
         createRouteSegment(properties);
         routingActive = false;
         makeRoutePermanent(currentRoute);
-        routeUpdater.newRoute(currentRoute);
+        routeUpdater.newRoute(datasetName, currentRoute);
     }
 
     private void makeRoutePermanent(RouteDescriptor currentRoute) {
@@ -1227,4 +1222,7 @@ public class InterstellarSpacePane extends Pane {
         });
     }
 
+    public void setDataSetContext(String datasetName) {
+        this.datasetName = datasetName;
+    }
 }

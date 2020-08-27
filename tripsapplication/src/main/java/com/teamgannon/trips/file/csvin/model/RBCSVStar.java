@@ -85,7 +85,7 @@ public class RBCSVStar {
 
                 // the star radius
                 double radius = stellarClassification.getAverageRadius();
-                if (radius==0) {
+                if (radius == 0) {
                     radius = 1.2;
                 }
                 astro.setRadius(radius);
@@ -102,7 +102,7 @@ public class RBCSVStar {
 
                     // the star radius
                     double radius = stellarClassification.getAverageRadius();
-                    if (radius==0) {
+                    if (radius == 0) {
                         radius = 1.2;
                     }
                     astro.setRadius(radius);
@@ -173,7 +173,7 @@ public class RBCSVStar {
         xyz[0] = Double.parseDouble(split[0]);
         xyz[1] = Double.parseDouble(split[1]);
         xyz[2] = Double.parseDouble(split[2]);
-        if (xyz[0]==0.0 && xyz[1]==0.0 && xyz[2]==0.0 ) {
+        if (xyz[0] == 0.0 && xyz[1] == 0.0 && xyz[2] == 0.0) {
             log.error("really?");
         }
 

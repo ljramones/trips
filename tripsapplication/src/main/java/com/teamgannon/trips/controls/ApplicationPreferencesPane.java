@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationPreferencesPane extends Pane {
 
-    ApplicationPreferences preferences;
     private final VBox mainPane = new VBox();
     private final GridPane gridPane = new GridPane();
     private final TripsContext tripsContext;
+    ApplicationPreferences preferences;
 
 
     public ApplicationPreferencesPane(TripsContext tripsContext) {

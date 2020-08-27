@@ -10,10 +10,12 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
+import com.teamgannon.trips.dataset.model.Route;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
 import com.teamgannon.trips.search.AstroSearchQuery;
@@ -200,27 +202,6 @@ public class DatabaseManagementService {
             log.error("data type mismatch:{}", e.getMessage());
         }
     }
-
-
-    /**
-     * setup the header line so we can write it out
-     *
-     * @return the headers
-     */
-    private String[] setupHeaderLine() {
-        return new String[0];
-    }
-
-    /**
-     * setup an output line
-     *
-     * @param starDefinition the star definition
-     * @return an output line
-     */
-    private String[] getLine(AstrographicObject starDefinition) {
-        return new String[0];
-    }
-
 
     /**
      * parse and save a record line
@@ -432,7 +413,6 @@ public class DatabaseManagementService {
         return filterList;
     }
 
-
     //////////////////////////////////////
 
     /**
@@ -610,5 +590,42 @@ public class DatabaseManagementService {
     public void updateStarPreferences(StarDisplayPreferences starDisplayPreferences) {
         List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
+    }
+
+    public void addRouteToDataSet(String datasetName, RouteDescriptor routeDescriptor) {
+        Optional<DataSetDescriptor> descriptorOptional = dataSetDescriptorRepository.findById(datasetName);
+        if (descriptorOptional.isPresent()) {
+            DataSetDescriptor descriptor = descriptorOptional.get();
+            // pull all routes
+            List<Route> routeList = descriptor.getRoutes();
+            // convert to a Route and add to current list
+            routeList.add(routeDescriptor.toRoute());
+            // overwrite the list of routes
+            descriptor.setRoutes(routeList);
+            dataSetDescriptorRepository.save(descriptor);
+        } else {
+            log.error("Attempting to add a route to a non existent dataset: {}", datasetName);
+        }
+    }
+
+    public void updateNotesOnStar(UUID recordId, String notes) {
+        Optional<AstrographicObject> objectOptional = astrographicObjectRepository.findById(recordId);
+        if (objectOptional.isPresent()) {
+            AstrographicObject object = objectOptional.get();
+            object.setNotes(notes);
+            astrographicObjectRepository.save(object);
+
+            getStar(recordId);
+        } else {
+            log.error("Attempt to set notes on a non existent star: {}", recordId);
+        }
+    }
+
+    private void getStar(UUID recordId) {
+        Optional<AstrographicObject> objectOptional = astrographicObjectRepository.findById(recordId);
+        if (objectOptional.isPresent()) {
+            AstrographicObject object = objectOptional.get();
+            log.info("there");
+        }
     }
 }

@@ -24,13 +24,10 @@ public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> 
     private final AppPrefsPane appPrefsPane;
 
     private final ApplicationPreferences applicationPreferences;
-
-    public Button changeButton = new Button("Change");
-
-    public Button resetColorsButton = new Button("Reset to defaults");
-
     // app preferences
     private final TextField routeSegmentLengthTextField = new TextField();
+    public Button changeButton = new Button("Change");
+    public Button resetColorsButton = new Button("Reset to defaults");
 
     /**
      * constructor

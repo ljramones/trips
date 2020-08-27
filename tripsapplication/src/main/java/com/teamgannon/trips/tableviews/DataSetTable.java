@@ -1,8 +1,8 @@
 package com.teamgannon.trips.tableviews;
 
 import com.teamgannon.trips.dataset.AddStarDialog;
-import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.dialogs.dataset.TableEditResult;
+import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import javafx.collections.ListChangeListener;
@@ -40,15 +40,11 @@ public class DataSetTable {
      * the table view object
      */
     private final TableView<StarEditRecord> tableView = new TableView<>();
-
+    private final Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
     /**
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
-
-
-    private final Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
-
     private List<AstrographicObject> astrographicObjects;
 
     private int currentPosition = 0;

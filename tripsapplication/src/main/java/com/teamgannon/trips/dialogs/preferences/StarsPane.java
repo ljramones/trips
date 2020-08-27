@@ -25,11 +25,9 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class StarsPane extends Pane {
-    private final PreferencesUpdater updater;
-
     private final static String STAR_PANE_TITLE = "Change Star Colors";
     private final static String STAR_PANE_TITLE_MODIFIED = "Change Star Colors - *modified*";
-
+    private final PreferencesUpdater updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final StarDisplayPreferences starDisplayPreferences;

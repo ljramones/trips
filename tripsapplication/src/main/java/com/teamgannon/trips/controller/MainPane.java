@@ -6,10 +6,11 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.controls.RoutingPanel;
+import com.teamgannon.trips.dataset.model.Route;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
-import com.teamgannon.trips.dialogs.query.QueryDialog;
-import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.preferences.PreferencesUpdater;
+import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
+import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
@@ -18,6 +19,7 @@ import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.operators.*;
+import com.teamgannon.trips.graphics.panes.DatabaseUpdater;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -79,43 +81,8 @@ public class MainPane implements
         ContextSelector,
         RouteUpdater,
         RedrawListener,
-        ReportGenerator {
-
-    /**
-     * the ListView UI control for displaying lists - the V for the MVC of Listview
-     */
-    @FXML
-    public MenuBar menuBar;
-    @FXML
-    public ToolBar toolBar;
-    @FXML
-    public HBox statusBar;
-    @FXML
-    public SplitPane mainSplitPane;
-    @FXML
-    public ToggleButton toggleSettings;
-    @FXML
-    public Label databaseStatus;
-    @FXML
-    public StackPane leftDisplayPane;
-    @FXML
-    public VBox settingsPane;
-    @FXML
-    public Accordion propertiesAccordion;
-    @FXML
-    public Pane mainPanel;
-    @FXML
-    public TitledPane datasetsPane;
-
-    @FXML
-    public TitledPane objectsViewPane;
-    @FXML
-    public TitledPane stellarObjectPane;
-
-    @FXML
-    public TitledPane routingPane;
-    @FXML
-    public GridPane propertiesPane;
+        ReportGenerator,
+        DatabaseUpdater {
 
     /**
      * used to weave the java fx code with spring boot
@@ -153,52 +120,81 @@ public class MainPane implements
      * the TRIPS context component
      */
     private final TripsContext tripsContext;
-
     /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
-
     /**
      * list of routes
      */
     private final List<RouteDescriptor> routeList = new ArrayList<>();
-
     /**
      * backing array for listable stellar objects - the M for the MVC of Listview
      */
     private final List<Map<String, String>> objectsInView = new ArrayList<>();
-
     /**
      * observable list that provides the C for the MVC of the ListView
      */
     private final ObservableList<Map<String, String>> stellarObjectList = FXCollections.observableArrayList(objectsInView);
-
     /**
      * the ListView UI control for displaying lists - the V for the MVC of Listview
      */
     private final ListView<Map<String, String>> stellarObjectsListView = new ListView<>(stellarObjectList);
-
     /**
      * dataset lists
      */
     private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
-
+    private final int width;
+    ///////////////////////////////////////
+    private final int height;
+    private final int depth;
+    private final int spacing;
+    /**
+     * the ListView UI control for displaying lists - the V for the MVC of Listview
+     */
+    @FXML
+    public MenuBar menuBar;
+    @FXML
+    public ToolBar toolBar;
+    @FXML
+    public HBox statusBar;
+    @FXML
+    public SplitPane mainSplitPane;
+    @FXML
+    public ToggleButton toggleSettings;
+    @FXML
+    public Label databaseStatus;
+    @FXML
+    public StackPane leftDisplayPane;
+    @FXML
+    public VBox settingsPane;
+    @FXML
+    public Accordion propertiesAccordion;
+    @FXML
+    public Pane mainPanel;
+    @FXML
+    public TitledPane datasetsPane;
+    @FXML
+    public TitledPane objectsViewPane;
+    @FXML
+    public TitledPane stellarObjectPane;
+    @FXML
+    public TitledPane routingPane;
+    @FXML
+    public GridPane propertiesPane;
     public ToggleButton toggleStarBtn;
     public ToggleButton toggleGridBtn;
     public ToggleButton toggleStemBtn;
+
+    ////////////////////////////////
     public ToggleButton toggleScaleBtn;
     public ToggleButton toggleZoomInBtn;
     public ToggleButton toggleZoomOutBtn;
     public ToggleButton toggleLabelsBtn;
-
-    ////////////////////////////////
-
     /**
      * temporary data for chview data testing
      */
     private ChViewFile chViewFile;
-
     /**
      * solar system panes for showing the details of various solar systems
      */
@@ -211,22 +207,14 @@ public class MainPane implements
      * the simulator
      */
     private Simulator simulator;
-
     // state settings for control positions
     private boolean gridOn = true;
     private boolean extensionsOn = true;
     private boolean labelsOn = true;
     private boolean starsOn = true;
-
     /////// data objects ///////////
     private boolean scaleOn = true;
     private boolean routesOn = true;
-    private final int width;
-
-    ///////////////////////////////////////
-    private final int height;
-    private final int depth;
-    private final int spacing;
 
     ///////////////////////////////////////////////////////
 
@@ -408,6 +396,14 @@ public class MainPane implements
     private List<DataSetDescriptor> loadDataSetView() {
 
         List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSetIds();
+
+        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
+            if (descriptor.getRoutesStr() != null) {
+                List<Route> routeList = descriptor.getRoutes();
+                log.info("routes");
+            }
+        }
+
         addDataSetToList(dataSetDescriptorList, true);
         log.info("loaded DBs");
         return dataSetDescriptorList;
@@ -432,7 +428,7 @@ public class MainPane implements
      */
     private void createInterstellarSpace(ColorPalette colorPalette) {
         // create main graphics display pane
-        interstellarSpacePane = new InterstellarSpacePane(1080, 680, depth, spacing, colorPalette);
+        interstellarSpacePane = new InterstellarSpacePane(1080, 680, depth, spacing, colorPalette, this, this, this, this);
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
         // put the interstellar space on top and the solar system to the back
@@ -445,10 +441,7 @@ public class MainPane implements
         simulator = new Simulator(interstellarSpacePane, width, height, depth, colorPalette);
 
         // setup event listeners
-        interstellarSpacePane.setListUpdater(this);
         interstellarSpacePane.setContextUpdater(this);
-        interstellarSpacePane.setStellarObjectDisplayer(this);
-        interstellarSpacePane.setRouteUpdater(this);
         interstellarSpacePane.setRedrawListener(this);
         interstellarSpacePane.setReportGenerator(this);
     }
@@ -678,7 +671,10 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                astrographicPlotter.drawAstrographicData(searchQuery.getDataSetName(),
+                        astrographicObjects,
+                        searchQuery.getCenterCoordinates(),
+                        tripsContext.getAppViewPreferences().getColorPallete());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -709,7 +705,7 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                astrographicPlotter.drawAstrographicData(searchQuery.getDataSetName(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -810,6 +806,7 @@ public class MainPane implements
                 AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
                 astroSearchQuery.zeroCenter();
                 astrographicPlotter.drawAstrographicData(
+                        tripsContext.getSearchContext().getAstroSearchQuery().getDataSetName(),
                         astrographicObjects,
                         astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
                 String data = String.format("%s records plotted from dataset %s.",
@@ -948,17 +945,19 @@ public class MainPane implements
     }
 
     @Override
-    public void newRoute(RouteDescriptor routeDescriptor) {
+    public void newRoute(String datasetName, RouteDescriptor routeDescriptor) {
         log.info("new route");
 
         // store in database @todo
+        // update in database @todo
+        databaseManagementService.addRouteToDataSet(datasetName, routeDescriptor);
     }
+
 
     @Override
     public void updateRoute(RouteDescriptor routeDescriptor) {
         log.info("update route");
 
-        // update in database @todo
     }
 
     @Override
@@ -1110,4 +1109,8 @@ public class MainPane implements
         databaseManagementService.updateStarPreferences(starDisplayPreferences);
     }
 
+    @Override
+    public void astrographicUpdate(UUID recordId, String notes) {
+        databaseManagementService.updateNotesOnStar(recordId, notes);
+    }
 }

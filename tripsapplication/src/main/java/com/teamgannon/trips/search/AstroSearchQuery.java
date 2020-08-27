@@ -1,7 +1,6 @@
 package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

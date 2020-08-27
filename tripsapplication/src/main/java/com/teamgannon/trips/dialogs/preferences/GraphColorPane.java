@@ -22,21 +22,17 @@ public class GraphColorPane extends Pane {
     private final static String COLOR_PANE_TITLE_MODIFIED = "Change Graph Colors - *modified*";
 
     private final ColorPalette colorPalette;
-
-    private boolean colorChangeDetected = false;
-
     private final TitledPane colorPane = new TitledPane();
-
     // color change text fields
     private final TextField labelColorTextField = new TextField();
     private final TextField gridColorTextField = new TextField();
     private final TextField extensionColorTextField = new TextField();
     private final TextField legendColorTextField = new TextField();
-
     private final ColorPicker labelColorPicker = new ColorPicker();
     private final ColorPicker gridColorPicker = new ColorPicker();
     private final ColorPicker extensionColorPicker = new ColorPicker();
     private final ColorPicker legendColorPicker = new ColorPicker();
+    private boolean colorChangeDetected = false;
 
 
     public GraphColorPane(ColorPalette colorPalette) {

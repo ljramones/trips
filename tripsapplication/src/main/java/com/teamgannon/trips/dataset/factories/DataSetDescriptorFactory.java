@@ -1,16 +1,13 @@
 package com.teamgannon.trips.dataset.factories;
 
 
-import com.teamgannon.trips.dataset.model.Link;
-import com.teamgannon.trips.dataset.model.Polity;
-import com.teamgannon.trips.dataset.model.RouteDescriptor;
-import com.teamgannon.trips.dataset.model.Theme;
+import com.teamgannon.trips.dataset.model.*;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
-import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
@@ -51,6 +48,22 @@ public class DataSetDescriptorFactory {
         dataSetDescriptor.setFileNotes(dataset.getNotes());
         dataSetDescriptor.setFileCreator(dataset.getAuthor());
         dataSetDescriptor.setDatasetType(dataset.getDataType().getDataFormatEnum().getValue());
+
+        List<Route> routeList = new ArrayList<>();
+        Route route1 = new Route();
+        route1.setRouteName("route1");
+        route1.setRouteType(UUID.randomUUID());
+        route1.setRouteNotes("a basic route");
+        List<UUID> routeStars = new ArrayList<>();
+        routeStars.add(UUID.randomUUID());
+        routeStars.add(UUID.randomUUID());
+        routeStars.add(UUID.randomUUID());
+        routeStars.add(UUID.randomUUID());
+        route1.setRouteStars(routeStars);
+
+        routeList.add(route1);
+
+        dataSetDescriptor.setRoutes(routeList);
 
         // parse chview file to create the basics for the data set to save
         dataSetDescriptor.setTheme(createTheme("default", chViewFile));

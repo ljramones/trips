@@ -15,27 +15,22 @@ import java.util.List;
 @Slf4j
 public class AstrographicTransformer {
 
+    // scaleIncrement
+    private final double scaleIncrement;
     // X range limits
     private double minX = 0;
     private double maxX = 0;
-
     // Y range limits
     private double minY = 0;
     private double maxY = 0;
-
     // Z range limits
     private double minZ = 0;
     private double maxZ = 0;
-
     private double[] centerCoordinates;
-
     /**
      * the scaling parameters
      */
     private ScalingParameters scalingParameters;
-
-    // scaleIncrement
-    private final double scaleIncrement;
 
     public AstrographicTransformer(double scaleIncrement) {
         this.scaleIncrement = scaleIncrement;

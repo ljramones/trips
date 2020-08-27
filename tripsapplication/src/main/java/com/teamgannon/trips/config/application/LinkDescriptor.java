@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 @Data
 @Builder
-public class LinkDescriptor  implements Serializable {
+public class LinkDescriptor implements Serializable {
 
     private static final long serialVersionUID = -2500991529523405863L;
 

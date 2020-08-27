@@ -35,6 +35,12 @@ public class GraphColorsPersist {
      */
     private String legendColor = Color.BEIGE.toString();
 
+    public static GraphColorsPersist defaults() {
+        GraphColorsPersist colorsPersist = new GraphColorsPersist();
+        colorsPersist.setId(UUID.randomUUID().toString());
+        return colorsPersist;
+    }
+
     public ColorPalette getColorPalette() {
         ColorPalette palette = new ColorPalette();
         palette.assignColors(this);
@@ -54,12 +60,6 @@ public class GraphColorsPersist {
         gridColor = Color.MEDIUMBLUE.toString();
         extensionColor = Color.DARKSLATEBLUE.toString();
         legendColor = Color.BEIGE.toString();
-    }
-
-    public static GraphColorsPersist defaults() {
-        GraphColorsPersist colorsPersist = new GraphColorsPersist();
-        colorsPersist.setId(UUID.randomUUID().toString());
-        return colorsPersist;
     }
 
     public void setGraphColors(ColorPalette graphColors) {

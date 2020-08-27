@@ -23,11 +23,9 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class GraphPane extends Pane {
 
-    private final PreferencesUpdater updater;
-
     private final static String COLOR_PANE_TITLE = "Change Graph Colors";
     private final static String COLOR_PANE_TITLE_MODIFIED = "Change Graph Colors - *modified*";
-
+    private final PreferencesUpdater updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final ColorPalette colorPalette;

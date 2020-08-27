@@ -10,5 +10,4 @@ public class LinePattern {
     private double[] pattern;
 
 
-
 }
