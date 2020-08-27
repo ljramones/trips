@@ -1,4 +1,4 @@
-package com.teamgannon.trips.dataset.model;
+package com.teamgannon.trips.routing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,12 +22,14 @@ import java.util.UUID;
 
 @Slf4j
 @Data
-public class Route {
+public class Route implements Serializable  {
 
     /**
      * used for JSON serialization
      */
     private final static ObjectMapper mapper = new ObjectMapper();
+
+    private static final long serialVersionUID = -6623481310539750766L;
 
     /**
      * Name given to this route.  May default to “Start star to End Star” when generated but it can be

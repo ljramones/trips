@@ -1,6 +1,6 @@
 package com.teamgannon.trips.graphics.entities;
 
-import com.teamgannon.trips.dataset.model.Route;
+import com.teamgannon.trips.routing.Route;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Builder;

@@ -5,8 +5,6 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
-import com.teamgannon.trips.controls.RoutingPanel;
-import com.teamgannon.trips.dataset.model.Route;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.PreferencesUpdater;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
@@ -26,6 +24,8 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
+import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -178,19 +178,24 @@ public class MainPane implements
     public TitledPane objectsViewPane;
     @FXML
     public TitledPane stellarObjectPane;
+
     @FXML
     public TitledPane routingPane;
+
     @FXML
     public GridPane propertiesPane;
     public ToggleButton toggleStarBtn;
     public ToggleButton toggleGridBtn;
     public ToggleButton toggleStemBtn;
 
+    private RoutingPanel routingPanel;
+
     ////////////////////////////////
     public ToggleButton toggleScaleBtn;
     public ToggleButton toggleZoomInBtn;
     public ToggleButton toggleZoomOutBtn;
     public ToggleButton toggleLabelsBtn;
+
     /**
      * temporary data for chview data testing
      */
@@ -199,19 +204,23 @@ public class MainPane implements
      * solar system panes for showing the details of various solar systems
      */
     private SolarSystemSpacePane solarSystemSpacePane;
+
     /**
      * graphics pane to draw stars across interstellar space
      */
     private InterstellarSpacePane interstellarSpacePane;
+
     /**
      * the simulator
      */
     private Simulator simulator;
+
     // state settings for control positions
     private boolean gridOn = true;
     private boolean extensionsOn = true;
     private boolean labelsOn = true;
     private boolean starsOn = true;
+
     /////// data objects ///////////
     private boolean scaleOn = true;
     private boolean routesOn = true;
@@ -463,7 +472,8 @@ public class MainPane implements
     }
 
     private void createRoutingPane() {
-        routingPane.setContent(new RoutingPanel());
+        routingPanel = new RoutingPanel(databaseManagementService);
+        routingPane.setContent(routingPanel);
     }
 
     /**
@@ -666,6 +676,8 @@ public class MainPane implements
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
+        routingPanel.setContext(searchQuery.getDataSetName());
+
         // do a search and cause the plot to show it
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
 
@@ -699,6 +711,8 @@ public class MainPane implements
     @Override
     public void showNewStellarData(boolean showPlot, boolean showTable) {
         AstroSearchQuery searchQuery = tripsContext.getSearchContext().getAstroSearchQuery();
+
+        routingPanel.setContext(searchQuery.getDataSetName());
 
         // do a search and cause the plot to show it
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
@@ -797,6 +811,9 @@ public class MainPane implements
                 return;
             }
 
+            // update the routing table in the side panel
+            routingPanel.setContext(dataSetDescriptor.getDataSetName());
+
             List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
                     dataSetDescriptor,
                     searchContext.getAstroSearchQuery().getDistanceFromCenterStar());
@@ -893,7 +910,7 @@ public class MainPane implements
     @Override
     public void updateList(Map<String, String> listItem) {
         stellarObjectList.add(listItem);
-        log.info(listItem.get("name"));
+//        log.info(listItem.get("name"));
     }
 
     @Override

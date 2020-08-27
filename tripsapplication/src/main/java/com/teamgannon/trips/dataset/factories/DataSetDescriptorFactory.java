@@ -12,6 +12,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
+import com.teamgannon.trips.routing.RouteDescriptor;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 

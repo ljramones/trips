@@ -51,7 +51,6 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
             updater.removeDataSet(descriptor);
         });
 
-
         contextMenu.getItems().addAll(plotMenuItem, displayMenuItem, displayPlotMenuItem, deleteMenuItem);
 
         // Format name

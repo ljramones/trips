@@ -668,13 +668,13 @@ public class InterstellarSpacePane extends Pane {
     }
 
     private MenuItem createNotesMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Enter notes on this star");
+        MenuItem menuItem = new MenuItem("Edit notes on this star");
         menuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
             StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
 
             StarNotesDialog notesDialog = new StarNotesDialog();
-            notesDialog.setTitle("Add notes for " + starDescriptor.getStarName());
+            notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
             Optional<String> notesOptional = notesDialog.showAndWait();
             if (notesOptional.isPresent()) {
                 String notes = notesOptional.get();
