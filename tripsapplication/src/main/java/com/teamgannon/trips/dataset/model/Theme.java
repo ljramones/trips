@@ -3,6 +3,7 @@ package com.teamgannon.trips.dataset.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import com.teamgannon.trips.dataset.enums.GridShape;
+import com.teamgannon.trips.routing.RouteDescriptor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

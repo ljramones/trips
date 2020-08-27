@@ -2,8 +2,8 @@ package com.teamgannon.trips.jpa.model;
 
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
-import com.teamgannon.trips.dataset.model.Route;
 import com.teamgannon.trips.dataset.model.Theme;
+import com.teamgannon.trips.routing.Route;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -133,7 +133,11 @@ public class DataSetDescriptor implements Serializable {
      * @return the list of routes
      */
     public List<Route> getRoutes() {
-        return new Route().toRoute(routesStr);
+        if (routesStr != null) {
+            return new Route().toRoute(routesStr);
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     /**
