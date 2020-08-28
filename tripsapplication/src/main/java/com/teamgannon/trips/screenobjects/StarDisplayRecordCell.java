@@ -41,7 +41,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
                     String.format("%.2f", actualCoordinates[1]) + "," +
                     String.format("%.2f", actualCoordinates[2]) + ")";
 
-            log.info("show route:{}", entry);
+            log.info("show star:{}", entry);
 
             tooltip.setText("tooltip here");
             setTooltip(tooltip);
