@@ -1,6 +1,5 @@
 package com.teamgannon.trips.controller;
 
-import com.teamgannon.trips.StellarPane;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
@@ -27,7 +26,9 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
+import com.teamgannon.trips.screenobjects.ListSelecterActions;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
+import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -49,7 +50,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -76,6 +76,7 @@ public class MainPane implements
         ListUpdater,
         StellarPropertiesDisplayer,
         StellarDataUpdater,
+        ListSelecterActions,
         PreferencesUpdater,
         ContextSelector,
         RouteUpdater,
@@ -1002,7 +1003,7 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
-        objectViewPane = new ObjectViewPane(this);
+        objectViewPane = new ObjectViewPane(this, this);
 
         // setup model to display in case we turn on
         objectsViewPane.setContent(objectViewPane);

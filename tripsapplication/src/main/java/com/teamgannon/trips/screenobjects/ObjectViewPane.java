@@ -18,14 +18,16 @@ public class ObjectViewPane extends Pane {
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
     private final StellarPropertiesDisplayer updater;
+    private ListSelecterActions listSelecterActions;
 
 
-    public ObjectViewPane(StellarPropertiesDisplayer updater) {
+    public ObjectViewPane(StellarPropertiesDisplayer updater, ListSelecterActions listSelecterActions) {
         this.updater = updater;
+        this.listSelecterActions = listSelecterActions;
 
         stellarObjectsListView.setPrefHeight(200);
         stellarObjectsListView.setPrefWidth(255);
-        stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory());
+        stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory(listSelecterActions));
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             updater.displayStellarProperties(newValue);
         });
