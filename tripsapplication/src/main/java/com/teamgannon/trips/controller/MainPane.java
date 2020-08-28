@@ -1,5 +1,6 @@
 package com.teamgannon.trips.controller;
 
+import com.teamgannon.trips.StellarPane;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
@@ -172,6 +173,8 @@ public class MainPane implements
 
     @FXML
     public TitledPane stellarObjectPane;
+
+    public StellarPane stellarPane;
 
     @FXML
     public TitledPane routingPane;
@@ -462,7 +465,13 @@ public class MainPane implements
      * create the right portion of the display
      */
     private void createRightDisplay() {
+        createStellarPane();
         createRoutingPane();
+    }
+
+    private void createStellarPane() {
+        stellarPane = new StellarPane();
+        stellarObjectPane.setContent(stellarPane);
     }
 
     private void createRoutingPane() {
@@ -982,33 +991,9 @@ public class MainPane implements
     ////////////////////////////////
 
     @Override
-    public void displayStellarProperties(Map<String, String> stellarObjectSelected) {
-        displayProperties(stellarObjectSelected);
-    }
-
-    /**
-     * Displays the properties of the astronomical object of name given as a parameter.
-     *
-     * @param properties Astronomical object unique name.
-     */
-    private void displayProperties(Map<String, String> properties) {
-        String record = properties.get("recordNumber");
-        UUID recordNumber = UUID.fromString(record);
-        Map<String, String> characteristics = starBase.getRecordFields(recordNumber);
-        propertiesPane.getChildren().clear();
-        int i = 0;
-        for (String key : characteristics.keySet()) {
-            Label keyLabel = new Label(key + ":");
-            keyLabel.setWrapText(true);
-            keyLabel.setTextAlignment(TextAlignment.JUSTIFY);
-            Label charLabel = new Label(characteristics.get(key));
-            charLabel.setWrapText(true);
-            charLabel.setTextAlignment(TextAlignment.JUSTIFY);
-            charLabel.setPrefWidth(200);
-            propertiesPane.addRow(i++, keyLabel, charLabel);
-        }
-
-        stellarObjectPane.setDisable(false);
+    public void displayStellarProperties(StarDisplayRecord starDisplayRecord) {
+//        displayProperties(starDisplayRecord);
+        stellarPane.setRecord(starDisplayRecord);
         propertiesAccordion.setExpandedPane(stellarObjectPane);
     }
 
@@ -1017,7 +1002,7 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
-        objectViewPane = new ObjectViewPane();
+        objectViewPane = new ObjectViewPane(this);
 
         // setup model to display in case we turn on
         objectsViewPane.setContent(objectViewPane);

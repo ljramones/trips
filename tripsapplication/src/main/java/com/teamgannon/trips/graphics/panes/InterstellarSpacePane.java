@@ -906,7 +906,8 @@ public class InterstellarSpacePane extends Pane {
         MenuItem propertiesMenuItem = new MenuItem("Properties");
         propertiesMenuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
-            displayProperties(properties);
+            StarDisplayRecord record = StarDisplayRecord.fromProperties(properties);
+            displayProperties(record);
         });
         return propertiesMenuItem;
     }
@@ -946,10 +947,10 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param properties the properties to display
      */
-    private void displayProperties(Map<String, String> properties) {
-        log.info("Showing properties in side panes for:" + properties.get("name"));
+    private void displayProperties(StarDisplayRecord starDisplayRecord) {
+        log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());
         if (displayer != null) {
-            displayer.displayStellarProperties(properties);
+            displayer.displayStellarProperties(starDisplayRecord);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.teamgannon.trips.graphics.operators;
 
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+
 import java.util.Map;
 
 /**
@@ -9,6 +11,6 @@ import java.util.Map;
  */
 public interface StellarPropertiesDisplayer {
 
-    void displayStellarProperties(Map<String, String> properties);
+    void displayStellarProperties(StarDisplayRecord starDisplayRecord);
 
 }
