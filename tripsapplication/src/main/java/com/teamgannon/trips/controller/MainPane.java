@@ -26,6 +26,7 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
+import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
@@ -40,8 +41,6 @@ import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -54,7 +53,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import javafx.util.Callback;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -128,23 +126,14 @@ public class MainPane implements
      * list of routes
      */
     private final List<RouteDescriptor> routeList = new ArrayList<>();
-    /**
-     * backing array for listable stellar objects - the M for the MVC of Listview
-     */
-    private final List<Map<String, String>> objectsInView = new ArrayList<>();
-    /**
-     * observable list that provides the C for the MVC of the ListView
-     */
-    private final ObservableList<Map<String, String>> stellarObjectList = FXCollections.observableArrayList(objectsInView);
-    /**
-     * the ListView UI control for displaying lists - the V for the MVC of Listview
-     */
-    private final ListView<Map<String, String>> stellarObjectsListView = new ListView<>(stellarObjectList);
+
     /**
      * dataset lists
      */
     private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
+
     private final int width;
+
     ///////////////////////////////////////
     private final int height;
     private final int depth;
@@ -174,8 +163,13 @@ public class MainPane implements
     public Pane mainPanel;
     @FXML
     public TitledPane datasetsPane;
+
+
     @FXML
     public TitledPane objectsViewPane;
+
+    private ObjectViewPane objectViewPane;
+
     @FXML
     public TitledPane stellarObjectPane;
 
@@ -908,14 +902,15 @@ public class MainPane implements
     }
 
     @Override
-    public void updateList(Map<String, String> listItem) {
-        stellarObjectList.add(listItem);
+    public void updateList(StarDisplayRecord starDisplayRecord) {
+        objectViewPane.add(starDisplayRecord);
+//        stellarObjectList.add(listItem);
 //        log.info(listItem.get("name"));
     }
 
     @Override
     public void clearList() {
-        stellarObjectList.clear();
+        objectViewPane.clear();
     }
 
     @Override
@@ -1022,35 +1017,11 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
+        objectViewPane = new ObjectViewPane();
+
         // setup model to display in case we turn on
-        objectsViewPane.setContent(stellarObjectsListView);
+        objectsViewPane.setContent(objectViewPane);
 
-        stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener(
-                (ObservableValue<? extends Map<String, String>> ov, Map<String, String> old_val, Map<String, String> newSelection) -> {
-                    displayProperties(newSelection);
-                    log.info("Object Selected is:" + newSelection);
-                });
-
-        stellarObjectsListView.setCellFactory(new Callback<>() {
-
-            @Override
-            public ListCell<Map<String, String>> call(ListView<Map<String, String>> p) {
-                objectsViewPane.setDisable(false);
-                return new ListCell<>() {
-                    @Override
-                    protected void updateItem(Map<String, String> objectProperties, boolean bln) {
-                        final Tooltip tooltip = new Tooltip();
-
-                        super.updateItem(objectProperties, bln);
-                        if (objectProperties != null) {
-                            tooltip.setText("Please select a star to show it's properties");
-                            setTooltip(tooltip);
-                            setText(objectProperties.get("name"));
-                        }
-                    }
-                };
-            }
-        });
     }
 
     /////////////////////////  Shutdown   /////////////////////////

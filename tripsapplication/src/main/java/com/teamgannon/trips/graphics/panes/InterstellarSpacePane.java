@@ -447,7 +447,7 @@ public class InterstellarSpacePane extends Pane {
         starDisplayRecords.add(record);
 
         if (listUpdater != null) {
-            listUpdater.updateList(customProperties);
+            listUpdater.updateList(record);
         }
 
         ContextMenu starContextMenu = createPopup(record.getStarName(), star);
@@ -553,7 +553,7 @@ public class InterstellarSpacePane extends Pane {
         starDisplayRecords.add(record);
 
         if (listUpdater != null) {
-            listUpdater.updateList(customProperties);
+            listUpdater.updateList(record);
         }
 
         ContextMenu starContextMenu = createPopup(record.getStarName(), star);

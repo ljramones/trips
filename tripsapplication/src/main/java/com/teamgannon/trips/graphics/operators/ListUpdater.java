@@ -1,5 +1,7 @@
 package com.teamgannon.trips.graphics.operators;
 
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+
 import java.util.Map;
 
 /**
@@ -12,9 +14,9 @@ public interface ListUpdater {
     /**
      * update the list
      *
-     * @param listItem the list item
+     * @param starDisplayRecord the list item
      */
-    void updateList(Map<String, String> listItem);
+    void updateList(StarDisplayRecord starDisplayRecord);
 
     /**
      * clear the entire list
