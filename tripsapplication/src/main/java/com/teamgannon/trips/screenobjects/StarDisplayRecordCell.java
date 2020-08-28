@@ -14,21 +14,25 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
+    private ListSelecterActions listSelecterActions;
+
+    public StarDisplayRecordCell(ListSelecterActions listSelecterActions) {
+        this.listSelecterActions = listSelecterActions;
+    }
 
 
     @Override
     public void updateItem(StarDisplayRecord starDisplayRecord, boolean empty) {
         super.updateItem(starDisplayRecord, empty);
 
-
         int index = this.getIndex();
         String entry = null;
 
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem eitMenuItem = new MenuItem("Edit");
+        MenuItem eitMenuItem = new MenuItem("center on this star");
         eitMenuItem.setOnAction((event) -> {
             log.info("edit Route");
-//            updater.showNewStellarData(true, false);
+            listSelecterActions.recenter(starDisplayRecord);
         });
 
         contextMenu.getItems().addAll(eitMenuItem);

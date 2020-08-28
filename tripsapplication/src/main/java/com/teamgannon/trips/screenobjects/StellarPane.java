@@ -1,4 +1,4 @@
-package com.teamgannon.trips;
+package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Insets;
