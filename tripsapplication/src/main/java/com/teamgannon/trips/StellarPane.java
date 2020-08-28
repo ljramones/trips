@@ -8,7 +8,12 @@ import javafx.scene.layout.Pane;
 
 public class StellarPane extends Pane {
 
-    private  Label starName = new Label();
+    private  final Label starName = new Label();
+    private  final Label color = new Label();
+    private  final Label radius = new Label();
+    private  final Label x = new Label();
+    private  final Label y = new Label();
+    private  final Label z = new Label();
 
     public StellarPane() {
         GridPane gridPane = new GridPane();
@@ -18,14 +23,34 @@ public class StellarPane extends Pane {
 
         this.getChildren().add(gridPane);
 
-        Label name = new Label("Name");
-
-        gridPane.add(name, 0,0);
+        gridPane.add(new Label("Name"), 0,0);
         gridPane.add(starName, 1,0);
+
+        gridPane.add(new Label("Color"), 0,1);
+        gridPane.add(color, 1,1);
+
+        gridPane.add(new Label("Radius"), 0,2);
+        gridPane.add(radius, 1,2);
+
+        gridPane.add(new Label("X"), 0,3);
+        gridPane.add(x, 1,3);
+
+        gridPane.add(new Label("Y"), 0,4);
+        gridPane.add(y, 1,4);
+
+        gridPane.add(new Label("Z"), 0,5);
+        gridPane.add(z, 1,5);
 
     }
 
     public void setRecord(StarDisplayRecord starDisplayRecord) {
         starName.setText(starDisplayRecord.getStarName());
+        color.setText(starDisplayRecord.getStarColor().toString());
+        radius.setText(String.format("%.2f", starDisplayRecord.getRadius()));
+
+        double[] actualCoordinates = starDisplayRecord.getActualCoordinates();
+        x.setText(String.format("%.2f", actualCoordinates[0]));
+        y.setText(String.format("%.2f", actualCoordinates[1]));
+        z.setText(String.format("%.2f", actualCoordinates[2]));
     }
 }
