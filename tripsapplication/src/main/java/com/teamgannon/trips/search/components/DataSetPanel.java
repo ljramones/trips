@@ -23,18 +23,10 @@ public class DataSetPanel extends BasePane {
 
     private final SearchContext searchContext;
 
-    private DataSetDescriptor currentDescriptor;
 
     public DataSetPanel(SearchContext searchContext, DataSetContext dataSetContext) {
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
-        if (datasets.size() > 0) {
-            if (searchContext.getCurrentDataSet() != null) {
-                currentDescriptor = datasets.get(searchContext.getCurrentDataSet());
-            } else {
-                currentDescriptor = datasets.values().iterator().next();
-            }
-        }
 
         for (DataSetDescriptor dataset : datasets.values()) {
             datasetChoiceBox.getItems().add(dataset.getDataSetName());
@@ -72,7 +64,7 @@ public class DataSetPanel extends BasePane {
                 DataSetDescriptor descriptor = datasets.get(name);
                 DataSetDescribeDialog dialog = new DataSetDescribeDialog(descriptor);
                 searchContext.setCurrentDataSet(name);
-                searchContext.getAstroSearchQuery().setDataSetName(name);
+                searchContext.getAstroSearchQuery().setDescriptor(descriptor);
                 dialog.showAndWait();
             } else {
                 showErrorAlert("Add Dataset", "Dataset name cannot be empty!");

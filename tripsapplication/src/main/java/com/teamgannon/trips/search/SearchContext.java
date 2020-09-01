@@ -20,10 +20,6 @@ public class SearchContext {
     private String currentDataSet;
     private AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
 
-    public String getCurrentDataSet() {
-        return currentDataSet;
-    }
-
     public void setCurrentDataSet(String currentDataSet) {
         this.currentDataSet = currentDataSet;
     }
@@ -36,15 +32,12 @@ public class SearchContext {
         this.astroSearchQuery = astroSearchQuery;
     }
 
-    public String getCurrentDataset() {
-        return currentDataSet;
-    }
 
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         // this ensures that we set a default if it is null
         if (currentDataSet == null) {
             currentDataSet = dataSetDescriptor.getDataSetName();
-            astroSearchQuery.setDataSetName(currentDataSet);
+            astroSearchQuery.setDescriptor(dataSetDescriptor);
         }
         dataSetDescriptorMap.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
     }
@@ -53,7 +46,7 @@ public class SearchContext {
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
         if (currentDataSet.equals(dataSetDescriptor.getDataSetName())) {
             currentDataSet = null;
-            astroSearchQuery.setDataSetName(null);
+            astroSearchQuery.setDescriptor(null);
         }
         dataSetDescriptorMap.remove(dataSetDescriptor.getDataSetName());
     }
@@ -62,7 +55,7 @@ public class SearchContext {
         dataSetDescriptors.forEach(descriptor -> dataSetDescriptorMap.put(descriptor.getDataSetName(), descriptor));
         if (dataSetDescriptors.size() != 0) {
             currentDataSet = dataSetDescriptors.get(0).getDataSetName();
-            astroSearchQuery.setDataSetName(currentDataSet);
+            astroSearchQuery.setDescriptor(dataSetDescriptors.get(0));
         }
     }
 
@@ -74,7 +67,7 @@ public class SearchContext {
         DataSetDescriptor descriptor = dataSetDescriptorMap.get(currentDataSet);
         if (descriptor != null) {
             this.currentDataSet = currentDataSet;
-            astroSearchQuery.setDataSetName(currentDataSet);
+            astroSearchQuery.setDescriptor(descriptor);
             return true;
         } else {
             return false;

@@ -72,7 +72,7 @@ public class SearchPane extends Pane {
         AstroSearchQuery newQuery = createSearchQuery();
         log.info("New search request:{}", newQuery);
 
-        if (newQuery.getDataSetName() != null) {
+        if (newQuery.getDescriptor() != null) {
             // update main screen
             updater.showNewStellarData(newQuery, showPlot, showTable);
         } else {

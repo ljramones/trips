@@ -413,20 +413,6 @@ public class MainPane implements
         log.info("Change: old = " + oldText + ", new = " + newText + "\n");
     }
 
-    /**
-     * select the dataset in use
-     *
-     * @param index the index to select
-     * @todo connect this code
-     */
-    private void selectDataSet(int index) {
-        Platform.runLater(() -> {
-            dataSetsListView.scrollTo(index);
-            dataSetsListView.getFocusModel().focus(index);
-            dataSetsListView.getSelectionModel().select(index);
-        });
-
-    }
 
     private List<DataSetDescriptor> loadDataSetView() {
 
@@ -728,14 +714,16 @@ public class MainPane implements
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
-        routingPanel.setContext(searchQuery.getDataSetName());
+        DataSetDescriptor descriptor = searchQuery.getDescriptor();
+
+        routingPanel.setContext(descriptor);
 
         // do a search and cause the plot to show it
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(searchQuery.getDataSetName(),
+                astrographicPlotter.drawAstrographicData(descriptor.getDataSetName(),
                         astrographicObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete());
@@ -743,10 +731,8 @@ public class MainPane implements
             if (showTable) {
                 showList(astrographicObjects);
             }
-            showStatus("Dataset loaded is: " + searchQuery.getDataSetName());
-
-            // highlight the data set used
-            selectDataSet(1);
+            showStatus("Dataset loaded is: " + descriptor.getDataSetName());
+            setContextDataSet(descriptor);
 
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -764,22 +750,22 @@ public class MainPane implements
     public void showNewStellarData(boolean showPlot, boolean showTable) {
         AstroSearchQuery searchQuery = tripsContext.getSearchContext().getAstroSearchQuery();
 
-        routingPanel.setContext(searchQuery.getDataSetName());
+        routingPanel.setContext(searchQuery.getDescriptor());
 
         // do a search and cause the plot to show it
         List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(searchQuery.getDataSetName(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor().getDataSetName(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
             }
             if (showTable) {
                 showList(astrographicObjects);
             }
-            showStatus("Dataset loaded is: " + searchQuery.getDataSetName());
+            showStatus("Dataset loaded is: " + searchQuery.getDescriptor().getDataSetName());
 
             // highlight the data set used
-            selectDataSet(1);
+            setContextDataSet(searchQuery.getDescriptor());
 
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -876,7 +862,7 @@ public class MainPane implements
                 }
 
                 // update the routing table in the side panel
-                routingPanel.setContext(dataSetDescriptor.getDataSetName());
+                routingPanel.setContext(dataSetDescriptor);
 
                 drawStars(dataSetDescriptor);
                 setContextDataSet(dataSetDescriptor);
@@ -894,7 +880,7 @@ public class MainPane implements
             AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
             astroSearchQuery.zeroCenter();
             astrographicPlotter.drawAstrographicData(
-                    tripsContext.getSearchContext().getAstroSearchQuery().getDataSetName(),
+                    tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor().getDataSetName(),
                     astrographicObjects,
                     astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
             String data = String.format("%s records plotted from dataset %s.",

@@ -366,7 +366,7 @@ public class DatabaseManagementService {
         if (searchQuery.isRecenter()) {
             astrographicObjects
                     = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
-                    searchQuery.getDataSetName(),
+                    searchQuery.getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
                     searchQuery.getYMinus(),
