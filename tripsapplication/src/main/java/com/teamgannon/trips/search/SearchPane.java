@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search;
 
+import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.search.components.*;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
@@ -12,6 +13,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
+    private final DataSetContext dataSetContext;
     private final StellarDataUpdater updater;
     private final DistanceSelectionPanel d2EarthSlider = new DistanceSelectionPanel();
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
@@ -28,8 +30,9 @@ public class SearchPane extends Pane {
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
 
 
-    public SearchPane(SearchContext query, StellarDataUpdater updater) {
+    public SearchPane(SearchContext query, DataSetContext dataSetContext, StellarDataUpdater updater) {
         this.searchContext = query;
+        this.dataSetContext = dataSetContext;
         this.updater = updater;
         this.getChildren().add(createContent());
     }
@@ -42,7 +45,7 @@ public class SearchPane extends Pane {
         queryBox.setPrefWidth(675.0);
         queryBox.setSpacing(10);
 
-        DataSetPanel dataSetChoicePanel = new DataSetPanel(searchContext);
+        DataSetPanel dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext);
         queryBox.getChildren().add(dataSetChoicePanel.getPane());
         queryBox.getChildren().add(d2EarthSlider.getPane());
         queryBox.getChildren().add(stellarClassSelectionPanel.getPane());

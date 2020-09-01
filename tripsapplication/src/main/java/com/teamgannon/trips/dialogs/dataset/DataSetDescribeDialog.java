@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
 
-    private final static float LABEL_PREF_WIDTH = 100;
+    private final static float LABEL_PREF_WIDTH = 200;
     protected GridPane planGrid = new GridPane();
     private DataSetDescriptor descriptor;
 
@@ -26,7 +26,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         this.descriptor = descriptor;
         this.setTitle("Dataset Description");
         this.setHeight(200);
-        this.setWidth(300);
+        this.setWidth(450);
 
         planGrid.add(createLabel("name:  ", true), 0, 0);
         planGrid.add(createLabel(descriptor.getDataSetName(), false), 1, 0);
@@ -37,25 +37,25 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         planGrid.add(createLabel("Date:  ", true), 0, 2);
         planGrid.add(createLabel(descriptor.getCreationDate(), false), 1, 2);
 
-        planGrid.add(createLabel("# of Stars:  ", true), 0, 2);
-        planGrid.add(createLabel(Long.toString(descriptor.getNumberStars()), false), 1, 2);
+        planGrid.add(createLabel("# of Stars:  ", true), 0, 3);
+        planGrid.add(createLabel(Long.toString(descriptor.getNumberStars()), false), 1, 3);
 
-        planGrid.add(createLabel("Max Range (ly):  ", true), 0, 2);
-        planGrid.add(createLabel(Double.toString(descriptor.getDistanceRange()), false), 1, 2);
+        planGrid.add(createLabel("Max Range (ly):  ", true), 0, 4);
+        planGrid.add(createLabel(Double.toString(descriptor.getDistanceRange()), false), 1, 4);
 
-        planGrid.add(createLabel("Notes:  ", true), 0, 3);
-        planGrid.add(createLabel(descriptor.getNotes(), false), 1, 3);
+        planGrid.add(createLabel("Notes:  ", true), 0, 5);
+        planGrid.add(createLabel(descriptor.getNotes(), false), 1, 5);
 
         Separator mySep = new Separator();
         mySep.setMinHeight(10);
-        planGrid.add(mySep, 0, 4, 2, 1);
+        planGrid.add(mySep, 0, 6, 2, 1);
 
-        Button cancelDataSetButton = new Button("Cancel");
+        Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().add(cancelDataSetButton);
-        planGrid.add(hBox, 0, 5, 2, 1);
+        planGrid.add(hBox, 0, 7, 2, 1);
 
         this.getDialogPane().setContent(planGrid);
 
