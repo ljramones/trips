@@ -744,7 +744,6 @@ public class MainPane implements
      *
      * @param showPlot  show the graphical plot
      * @param showTable show the table
-     * @todo implement this
      */
     @Override
     public void showNewStellarData(boolean showPlot, boolean showTable) {

@@ -113,7 +113,7 @@ public class AstrographicPlotter {
                     StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject);
                     record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
                     interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar(), colorPalette);
-                    log.info("\nstar: {}\n", astrographicObject);
+//                    log.info("\nstar: {}\n", astrographicObject);
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
                 }

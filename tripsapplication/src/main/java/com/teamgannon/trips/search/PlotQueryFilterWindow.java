@@ -14,7 +14,7 @@ public class PlotQueryFilterWindow extends Dialog<AstroSearchQuery> {
 
     private final AstroSearchQuery astroSearchQuery;
 
-    private final DistanceSelectionPanel d2EarthSlider = new DistanceSelectionPanel();
+    private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
     private final PolitySelectionPanel politySelectionPanel = new PolitySelectionPanel();
@@ -38,6 +38,8 @@ public class PlotQueryFilterWindow extends Dialog<AstroSearchQuery> {
         this.astroSearchQuery = astroSearchQuery;
 
         final DialogPane dialogPane = getDialogPane();
+
+        d2EarthSlider = new DistanceSelectionPanel(astroSearchQuery.getDistanceFromCenterStar(), astroSearchQuery.getDescriptor().getDistanceRange());
 
         setTitle("Select Parameters for Search");
 
