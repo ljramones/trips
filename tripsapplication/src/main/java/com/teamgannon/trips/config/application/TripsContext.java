@@ -13,4 +13,6 @@ public class TripsContext {
 
     private SearchContext searchContext = new SearchContext();
 
+    private DataSetContext dataSetContext = new DataSetContext();
+
 }

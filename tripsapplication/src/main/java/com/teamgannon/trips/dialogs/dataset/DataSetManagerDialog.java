@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.dataset;
 
+import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
@@ -18,6 +19,9 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -32,7 +36,10 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Slf4j
 public class DataSetManagerDialog extends Dialog<Integer> {
 
+    private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+
     private final StellarDataUpdater dataUpdater;
+    private DataSetContext dataSetContext;
     /**
      * the database management service used to manage datasets and databases
      */
@@ -40,6 +47,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final ChviewReader chviewReader;
     private final ExcelReader excelReader;
     private final RBCsvReader rbCsvReader;
+
+    private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
     private final TableView<DataSetDescriptor> tableView = new TableView<>();
 
@@ -49,11 +58,13 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private DataSetDescriptor selectedDataset;
 
     public DataSetManagerDialog(StellarDataUpdater dataUpdater,
+                                DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 ChviewReader chviewReader,
                                 ExcelReader excelReader,
                                 RBCsvReader rbCsvReader) {
         this.dataUpdater = dataUpdater;
+        this.dataSetContext = dataSetContext;
 
         this.databaseManagementService = databaseManagementService;
         this.chviewReader = chviewReader;
@@ -69,6 +80,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         createTable(vBox);
 
+        createSelectedDatasetContext(vBox);
+
         createButtonPanel(vBox);
 
         updateTable();
@@ -76,7 +89,36 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
+    }
 
+    private void createSelectedDatasetContext(VBox vBox) {
+        HBox hBox = new HBox();
+        hBox.setAlignment(Pos.CENTER);
+        Label contextSettingLabel = new Label("Active Dataset");
+        contextSettingLabel.setFont(font);
+        hBox.getChildren().addAll(contextSettingLabel, new Separator(), descriptorComboBox);
+        vBox.getChildren().add(hBox);
+        vBox.getChildren().addAll(new Separator());
+        if (dataSetContext.isValidDescriptor()) {
+            descriptorComboBox.setValue(dataSetContext.getDescriptor());
+        }
+        descriptorComboBox.setCellFactory(new ComboBoxDatasetCellFactory());
+
+        // THIS IS NEEDED because providing a custom cell factory is NOT enough. You also need a specific set button cell
+        descriptorComboBox.setButtonCell(new ListCell<>() {
+
+            @Override
+            protected void updateItem(DataSetDescriptor item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(item.getDataSetName());
+                } else {
+                    setText(null);
+                }
+            }
+        });
+
+        descriptorComboBox.setOnAction(e -> dataUpdater.setContextDataSet(descriptorComboBox.getValue()));
     }
 
     /**
@@ -129,19 +171,22 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         TableColumn<DataSetDescriptor, String> nameColumn = new TableColumn<>("Dataset Name");
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("dataSetName"));
+        tableView.getColumns().add(nameColumn);
 
         TableColumn<DataSetDescriptor, String> typeColumn = new TableColumn<>("Type");
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("datasetType"));
+        tableView.getColumns().add(typeColumn);
 
         TableColumn<DataSetDescriptor, String> starsColumn = new TableColumn<>("# of stars");
         starsColumn.setCellValueFactory(new PropertyValueFactory<>("numberStars"));
+        tableView.getColumns().add(starsColumn);
+
+        TableColumn<DataSetDescriptor, String> distanceColumn = new TableColumn<>("Range in ly");
+        distanceColumn.setCellValueFactory(new PropertyValueFactory<>("distanceRange"));
+        tableView.getColumns().add(distanceColumn);
 
         TableColumn<DataSetDescriptor, String> notesColumn = new TableColumn<>("Notes");
         notesColumn.setCellValueFactory(new PropertyValueFactory<>("fileNotes"));
-
-        tableView.getColumns().add(nameColumn);
-        tableView.getColumns().add(typeColumn);
-        tableView.getColumns().add(starsColumn);
         tableView.getColumns().add(notesColumn);
 
         // set the default
@@ -176,6 +221,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         // fill in table
         for (DataSetDescriptor descriptor : descriptors) {
             tableView.getItems().add(descriptor);
+            descriptorComboBox.getItems().add(descriptor);
         }
     }
 
@@ -217,7 +263,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private void addDataSet(ActionEvent actionEvent) {
 
-
         AddDataSetDialog dialog = new AddDataSetDialog();
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
@@ -253,8 +298,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             case "chv" -> {
                 result = processCHViewFile(dataset);
                 if (result.isSuccess()) {
-                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                    this.dataUpdater.addDataSet(dataSetDescriptor);
+                    this.dataUpdater.addDataSet(result.getDataSetDescriptor());
                     updateTable();
                 } else {
                     showErrorAlert("load CH View file", result.getMessage());
@@ -273,8 +317,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
                 result = processCSVFile(dataset);
                 if (result.isSuccess()) {
-                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                    this.dataUpdater.addDataSet(dataSetDescriptor);
+                    this.dataUpdater.addDataSet(result.getDataSetDescriptor());
                     updateTable();
                 } else {
                     showErrorAlert("load csv", result.getMessage());
@@ -356,7 +399,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(dataset, chViewFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());
             showInfoMessage("Load CHV Format", data);
             processResult.setSuccess(true);

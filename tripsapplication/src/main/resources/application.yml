@@ -38,3 +38,6 @@ spring:
 
       # Custom H2 Console URL
       path: /h2
+app:
+  version: v0.5.2
+  releaseDate: 31 Aug 2020

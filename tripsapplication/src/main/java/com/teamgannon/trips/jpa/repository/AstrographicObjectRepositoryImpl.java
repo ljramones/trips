@@ -90,14 +90,6 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(cb.isFalse(root.get("realStar")));
         }
 
-        // create a query with a fictional star type
-        if (astroSearchQuery.isFictionalStars()) {
-            predicates.add(cb.isTrue(root.get("fictional")));
-        } else {
-            predicates.add(cb.isFalse(root.get("fictional")));
-        }
-
-
         // setup a predicate based on other is true
         if (astroSearchQuery.isOtherSearch()) {
             predicates.add(cb.isTrue(root.get("other")));

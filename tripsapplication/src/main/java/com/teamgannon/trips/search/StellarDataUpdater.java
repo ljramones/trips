@@ -39,6 +39,13 @@ public interface StellarDataUpdater {
     void removeDataSet(DataSetDescriptor dataSetDescriptor);
 
     /**
+     * set the contextual dataset
+     *
+     * @param descriptor the dataset descript that is in context
+     */
+    void setContextDataSet(DataSetDescriptor descriptor);
+
+    /**
      * get the astro object from the db on new search query
      *
      * @return the list of objects
@@ -65,5 +72,6 @@ public interface StellarDataUpdater {
      * @param astrographicObject the star to remove
      */
     void removeStar(AstrographicObject astrographicObject);
+
 
 }

@@ -20,7 +20,7 @@ public class SimbadEntry implements Serializable {
     @Id
     private String id;
 
-    private int recordNumber;
+    private int recordId;
 
     private String identifier;
 

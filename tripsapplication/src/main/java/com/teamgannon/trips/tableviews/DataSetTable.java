@@ -35,7 +35,6 @@ public class DataSetTable {
 
     private final int PAGE_SIZE = 100;
 
-
     /**
      * the table view object
      */
@@ -49,7 +48,7 @@ public class DataSetTable {
 
     private int currentPosition = 0;
 
-    private StellarDataUpdater updater;
+    private final StellarDataUpdater updater;
 
     /**
      * the constructor that we use to show the data
@@ -259,7 +258,7 @@ public class DataSetTable {
         zCoordCol.setMinWidth(50);
         zCoordCol.setCellValueFactory(new PropertyValueFactory<>("zCoord"));
 
-        TableColumn<StarEditRecord, String> realCol = new TableColumn<>("Real/Fictional");
+        TableColumn<StarEditRecord, String> realCol = new TableColumn<>("Real");
         realCol.setMinWidth(100);
         realCol.setCellValueFactory(new PropertyValueFactory<>("real"));
 
@@ -329,7 +328,7 @@ public class DataSetTable {
 
     private void updateObject(StarEditRecord starEditRecord, AstrographicObject astrographicObject) {
         if (starEditRecord.getDisplayName() == null) {
-            showErrorAlert("Upda Star", "Star name cannot be empty!");
+            showErrorAlert("Update Star", "Star name cannot be empty!");
             return;
         }
         astrographicObject.setDisplayName(starEditRecord.getDisplayName());

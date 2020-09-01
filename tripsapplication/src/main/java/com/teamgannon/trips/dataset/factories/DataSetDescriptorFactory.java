@@ -1,7 +1,9 @@
 package com.teamgannon.trips.dataset.factories;
 
 
-import com.teamgannon.trips.dataset.model.*;
+import com.teamgannon.trips.dataset.model.Link;
+import com.teamgannon.trips.dataset.model.Polity;
+import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
@@ -62,8 +64,14 @@ public class DataSetDescriptorFactory {
         // process all the stellar records from chview and convert to our target objects
         Map<Integer, ChViewRecord> chViewRecordMap = chViewFile.getRecords();
         Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
-        for (Integer recordNumber : chViewRecordMap.keySet()) {
-            ChViewRecord chViewRecord = chViewRecordMap.get(recordNumber);
+        double maxDistance = 0;
+        for (Integer recordId : chViewRecordMap.keySet()) {
+            ChViewRecord chViewRecord = chViewRecordMap.get(recordId);
+            // distance check
+            double distance = Double.parseDouble(chViewRecord.getDistanceToEarth());
+            if (distance > maxDistance) {
+                maxDistance = distance;
+            }
             AstrographicObject astrographicObject = AstrographicObjectFactory.create(dataset, chViewRecord);
             log.info("Star:: name={}, distance={}", astrographicObject.getDisplayName(), astrographicObject.getDistance());
             astrographicObjectMap.put(astrographicObject.getId(), astrographicObject);
@@ -76,8 +84,13 @@ public class DataSetDescriptorFactory {
                 astrographicObjectMap.size());
 
         // set the records for this
-        dataSetDescriptor.setAstrographicDataList(astrographicObjectMap.keySet());
+//        dataSetDescriptor.setAstrographicDataList(astrographicObjectMap.keySet());
         dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
+        log.info("Dataset :{} has {} stars are range of {}",
+                dataSetDescriptor.getDataSetName(),
+                dataSetDescriptor.getNumberStars(),
+                dataSetDescriptor.getDistanceRange());
+        dataSetDescriptor.setDistanceRange(maxDistance);
 
         // save the data set which is cross referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);

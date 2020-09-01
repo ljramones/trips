@@ -18,18 +18,28 @@
             <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Display">
-            <MenuItem mnemonicParsing="false" onAction="#showApplicationPreferences" text="Change Application Preferences..."/>
+            <MenuItem mnemonicParsing="false" onAction="#showApplicationPreferences"
+                      text="Change Application Preferences..."/>
             <SeparatorMenuItem/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleGrid" text="Toggle Grid"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleLabels" text="Toggle Labels"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleGridExtensions" text="Toggle Grid Extensions"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleStars" text="Toggle Stars"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleScale" text="Toggle Scale"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleRoutes" text="Toggle  Routes"/>
+            <CheckMenuItem fx:id="toggleGridMenuitem" mnemonicParsing="false" onAction="#toggleGrid"
+                           text="Toggle Grid"/>
+            <CheckMenuItem fx:id="toggleLabelsMenuitem" mnemonicParsing="false" onAction="#toggleLabels"
+                           text="Toggle Labels"/>
+            <CheckMenuItem fx:id="toggleExtensionsMenuitem" mnemonicParsing="false" onAction="#toggleGridExtensions"
+                           text="Toggle Grid Extensions"/>
+            <CheckMenuItem fx:id="toggleStarMenuitem" mnemonicParsing="false" onAction="#toggleStars"
+                           text="Toggle Stars"/>
+            <CheckMenuItem fx:id="toggleScaleMenuitem" mnemonicParsing="false" onAction="#toggleScale"
+                           text="Toggle Scale"/>
+            <CheckMenuItem fx:id="toggleRoutesMenuitem" mnemonicParsing="false" onAction="#toggleRoutes"
+                           text="Toggle  Routes"/>
             <SeparatorMenuItem/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleSidePane" text="Toggle Side Pane"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleToolbar" text="Toggle Toolbar"/>
-            <MenuItem mnemonicParsing="false" onAction="#toggleStatusBar" text="Toggle Status Bar"/>
+            <CheckMenuItem fx:id="toggleSidePaneMenuitem" mnemonicParsing="false" onAction="#toggleSidePane"
+                           text="Toggle Side Pane"/>
+            <CheckMenuItem fx:id="toggleToolBarMenuitem" mnemonicParsing="false" onAction="#toggleToolbar"
+                           text="Toggle Toolbar"/>
+            <CheckMenuItem fx:id="toggleStatusBarMenuitem" mnemonicParsing="false" onAction="#toggleStatusBar"
+                           text="Toggle Status Bar"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Data Management">
             <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset Manager..."/>
@@ -54,11 +64,12 @@
             <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>
             <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false" onAction="#toggleGrid" text="Grid"/>
             <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false" onAction="#toggleLabels" text="Labels"/>
-            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false" onAction="#toggleGridExtensions" text="Extensions"/>
-            <ToggleButton fx:id="toggleScaleBtn"  mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
-            <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Settings"/>
-            <ToggleButton fx:id="toggleZoomInBtn"  mnemonicParsing="false" onAction="#zoomIn" text="+"/>
-            <ToggleButton fx:id="toggleZoomOutBtn"  mnemonicParsing="false" onAction="#zoomOut" text="-"/>
+            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false" onAction="#toggleGridExtensions"
+                          text="Extensions"/>
+            <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
+            <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Side Pane"/>
+            <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false" onAction="#zoomIn" text="+"/>
+            <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false" onAction="#zoomOut" text="-"/>
         </ToolBar>
     </VBox>
     <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0" prefHeight="588.0"

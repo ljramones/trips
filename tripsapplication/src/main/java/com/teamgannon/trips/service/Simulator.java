@@ -79,14 +79,15 @@ public class Simulator {
      * @return the earth node
      */
     private StarDisplayRecord createSolNode() {
-        return StarDisplayRecord.builder()
-                .starName("Sol")
-                .starColor(Color.YELLOW)
-                .radius(2)
-                .recordId(UUID.randomUUID())
-                .coordinates(new Point3D(0, 0, 0))
-                .build();
+        StarDisplayRecord record = new StarDisplayRecord();
 
+        record.setStarName("Sol");
+        record.setStarColor(Color.YELLOW);
+        record.setRadius(2);
+        record.setRecordId(UUID.randomUUID());
+        record.setCoordinates(new Point3D(0, 0, 0));
+
+        return record;
     }
 
     private StarDisplayRecord createStarNode() {
@@ -103,13 +104,15 @@ public class Simulator {
         Color color = chooseRandomColor();
         String name = generateRandomLabel();
 
-        return StarDisplayRecord.builder()
-                .starName(name)
-                .starColor(color)
-                .radius(starSize)
-                .recordId(UUID.randomUUID())
-                .coordinates(new Point3D(x, y, z))
-                .build();
+        StarDisplayRecord record = new StarDisplayRecord();
+        record.setStarName(name);
+        record.setStarColor(color);
+        record.setRadius(starSize);
+        record.setRecordId(UUID.randomUUID());
+        record.setCoordinates(new Point3D(x, y, z));
+
+        return record;
+
     }
 
 

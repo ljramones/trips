@@ -59,7 +59,6 @@ public class RBCSVStar {
             astro.setId(UUID.randomUUID());
 
             astro.setDisplayName(name);
-            astro.setStarClassType(type);
 
             astro.setRa(Double.parseDouble(ra));
             astro.setDeclination(Double.parseDouble(dec));
@@ -137,7 +136,6 @@ public class RBCSVStar {
             astro.setRealStar(true);
 
             astro.setSource(source);
-            astro.setNnClass(nnclass);
 
             astro.getCatalogIdList().add(catalogid);
 

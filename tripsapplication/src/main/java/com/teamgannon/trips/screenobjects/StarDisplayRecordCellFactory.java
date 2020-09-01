@@ -7,15 +7,15 @@ import javafx.util.Callback;
 
 public class StarDisplayRecordCellFactory implements Callback<ListView<StarDisplayRecord>, ListCell<StarDisplayRecord>> {
 
-    private ListSelecterActions listSelecterActions;
+    private ListSelecterActionsListener listSelecterActionsListener;
 
-    public StarDisplayRecordCellFactory(ListSelecterActions listSelecterActions) {
-        this.listSelecterActions = listSelecterActions;
+    public StarDisplayRecordCellFactory(ListSelecterActionsListener listSelecterActionsListener) {
+        this.listSelecterActionsListener = listSelecterActionsListener;
     }
 
     @Override
     public ListCell<StarDisplayRecord> call(ListView<StarDisplayRecord> routeListView) {
-        return new StarDisplayRecordCell(listSelecterActions);
+        return new StarDisplayRecordCell(listSelecterActionsListener);
     }
 
 }

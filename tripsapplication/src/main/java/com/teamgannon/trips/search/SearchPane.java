@@ -2,7 +2,6 @@ package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.search.components.*;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +26,6 @@ public class SearchPane extends Pane {
     private final MilPlanetSelectionPanel milPlanetSelectionPanel = new MilPlanetSelectionPanel();
     private final ProductsSelectionPanel productsSelectionPanel = new ProductsSelectionPanel();
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
-    private final Button searchButton = new Button("New Search");
-    private DataSetPanel dataSetChoicePanel;
 
 
     public SearchPane(SearchContext query, StellarDataUpdater updater) {
@@ -45,7 +42,7 @@ public class SearchPane extends Pane {
         queryBox.setPrefWidth(675.0);
         queryBox.setSpacing(10);
 
-        dataSetChoicePanel = new DataSetPanel(searchContext);
+        DataSetPanel dataSetChoicePanel = new DataSetPanel(searchContext);
         queryBox.getChildren().add(dataSetChoicePanel.getPane());
         queryBox.getChildren().add(d2EarthSlider.getPane());
         queryBox.getChildren().add(stellarClassSelectionPanel.getPane());
@@ -92,7 +89,6 @@ public class SearchPane extends Pane {
 
         astroSearchQuery.setDistanceFromCenterStar(d2EarthSlider.getDistance());
         astroSearchQuery.setRealStars(categorySelectionPanel.isRealStars());
-        astroSearchQuery.setFictionalStars(categorySelectionPanel.isFictionalStars());
         astroSearchQuery.setAnomalySearch(miscellaneousSelectionPanel.isAnomalyPresent());
         astroSearchQuery.setOtherSearch(miscellaneousSelectionPanel.isOtherPresent());
 

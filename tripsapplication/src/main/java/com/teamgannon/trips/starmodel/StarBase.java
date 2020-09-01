@@ -39,15 +39,15 @@ public class StarBase {
     /**
      * get a record
      *
-     * @param recordNumber the record number
+     * @param recordId the record number
      * @return the record
      */
-    public AstrographicObject getRecord(UUID recordNumber) {
-        return database.get(recordNumber);
+    public AstrographicObject getRecord(UUID recordId) {
+        return database.get(recordId);
     }
 
-    public Map<String, String> getRecordFields(UUID recordNumber) {
-        AstrographicObject record = getRecord(recordNumber);
+    public Map<String, String> getRecordFields(UUID recordId) {
+        AstrographicObject record = getRecord(recordId);
         Map<String, String> properties = new HashMap<>();
 
         properties.put("Star Name", record.getDisplayName());
