@@ -86,13 +86,10 @@ public class MainPane implements
 
     @Value("${app.version:unknown}")
     String version;
+
     @Value("${app.releaseDate:unknown}")
     String releaseDate;
 
-    /**
-     * used to weave the java fx code with spring boot
-     */
-    private final FxWeaver fxWeaver;
     /**
      * database management spring component service
      */
@@ -259,7 +256,8 @@ public class MainPane implements
                     StarBase starBase,
                     TripsContext tripsContext) {
 
-        this.fxWeaver = fxWeaver;
+        //
+        //  used to weave the java fx code with spring boot
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
         this.chviewReader = chviewReader;
@@ -815,8 +813,8 @@ public class MainPane implements
     public void setContextDataSet(DataSetDescriptor descriptor) {
         tripsContext.getDataSetContext().setDescriptor(descriptor);
         tripsContext.getDataSetContext().setValidDescriptor(true);
+        dataSetsListView.getSelectionModel().select(descriptor);
         showStatus(descriptor.getDataSetName() + " is the active context");
-
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
@@ -881,7 +879,7 @@ public class MainPane implements
                 routingPanel.setContext(dataSetDescriptor.getDataSetName());
 
                 drawStars(dataSetDescriptor);
-                tripsContext.getDataSetContext().setDataDescriptor(dataSetDescriptor);
+                setContextDataSet(dataSetDescriptor);
             }
         }
     }
@@ -946,7 +944,7 @@ public class MainPane implements
                 showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
 
                 // set current context
-                tripsContext.getDataSetContext().setDataDescriptor(dataSetDescriptor);
+                setContextDataSet(dataSetDescriptor);
             }
         }
     }
