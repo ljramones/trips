@@ -1,6 +1,7 @@
 package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ public class AstroSearchQuery {
     /**
      * this is used for context since multiple datasets can be used
      */
-    private String dataSetName;
+    private DataSetDescriptor descriptor;
 
     /**
      * this is intended to be used to determine how far out the sphere that we search should be
@@ -211,8 +212,8 @@ public class AstroSearchQuery {
         }
     }
 
-    public void setDataSetName(String dataSetName) {
-        this.dataSetName = dataSetName;
+    public void setDescriptor(DataSetDescriptor descriptor) {
+        this.descriptor = descriptor;
     }
 
     public void zeroCenter() {

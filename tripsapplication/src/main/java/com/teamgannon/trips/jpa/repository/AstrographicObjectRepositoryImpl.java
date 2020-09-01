@@ -69,7 +69,7 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         List<Predicate> predicates = new ArrayList<>();
         log.info("created the predicates");
 
-        predicates.add(cb.equal(root.get("dataSetName"), astroSearchQuery.getDataSetName()));
+        predicates.add(cb.equal(root.get("dataSetName"), astroSearchQuery.getDescriptor().getDataSetName()));
 
         // create a query with a range limit
         predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getDistanceFromCenterStar()));

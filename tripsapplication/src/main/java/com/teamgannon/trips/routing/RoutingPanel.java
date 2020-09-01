@@ -37,10 +37,8 @@ public class RoutingPanel extends Pane {
     private void routingChanged(Observable observable) {
     }
 
-    public void setContext(String datasetname) {
+    public void setContext(DataSetDescriptor descriptor) {
 
-        this.datasetname = datasetname;
-        DataSetDescriptor descriptor = databaseManagementService.getDatasetFromName(datasetname);
         if (descriptor != null) {
             List<Route> routeList = descriptor.getRoutes();
             if (routeList.size() != 0) {
