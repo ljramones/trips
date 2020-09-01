@@ -673,7 +673,7 @@ public class InterstellarSpacePane extends Pane {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
             StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
 
-            StarNotesDialog notesDialog = new StarNotesDialog();
+            StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
             notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
             Optional<String> notesOptional = notesDialog.showAndWait();
             if (notesOptional.isPresent()) {
