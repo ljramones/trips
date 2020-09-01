@@ -1,6 +1,7 @@
 package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.components.*;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
@@ -15,7 +16,8 @@ public class SearchPane extends Pane {
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
     private final StellarDataUpdater updater;
-    private final DistanceSelectionPanel d2EarthSlider = new DistanceSelectionPanel();
+    private DataSetPanel dataSetChoicePanel;
+    private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
     private final PolitySelectionPanel politySelectionPanel = new PolitySelectionPanel();
@@ -34,6 +36,9 @@ public class SearchPane extends Pane {
         this.searchContext = query;
         this.dataSetContext = dataSetContext;
         this.updater = updater;
+
+        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getDistanceFromCenterStar(),dataSetContext.getDescriptor().getDistanceRange());
+
         this.getChildren().add(createContent());
     }
 
@@ -45,7 +50,7 @@ public class SearchPane extends Pane {
         queryBox.setPrefWidth(675.0);
         queryBox.setSpacing(10);
 
-        DataSetPanel dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext);
+        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext);
         queryBox.getChildren().add(dataSetChoicePanel.getPane());
         queryBox.getChildren().add(d2EarthSlider.getPane());
         queryBox.getChildren().add(stellarClassSelectionPanel.getPane());
@@ -89,6 +94,9 @@ public class SearchPane extends Pane {
      */
     private AstroSearchQuery createSearchQuery() {
         AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
+
+        DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
+        astroSearchQuery.setDescriptor(descriptor);
 
         astroSearchQuery.setDistanceFromCenterStar(d2EarthSlider.getDistance());
         astroSearchQuery.setRealStars(categorySelectionPanel.isRealStars());

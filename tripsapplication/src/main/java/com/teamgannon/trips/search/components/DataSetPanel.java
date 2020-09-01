@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.SearchContext;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -11,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.swing.event.ChangeListener;
 import java.util.Map;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -35,8 +37,8 @@ public class DataSetPanel extends BasePane {
         Label rowLabel = createLabel("DataSet to use: ");
         if (dataSetContext.isValidDescriptor()) {
             datasetChoiceBox.setValue(dataSetContext.getDescriptor().getDataSetName());
+            searchContext.getAstroSearchQuery().setDescriptor(dataSetContext.getDescriptor());
         }
-
 
         Separator space = new Separator();
         space.setMinSize(50, 1);
@@ -72,8 +74,8 @@ public class DataSetPanel extends BasePane {
         }
     }
 
-    public String getSelected() {
-        return datasetChoiceBox.getValue();
+    public DataSetDescriptor getSelected() {
+        return datasets.get(datasetChoiceBox.getValue());
     }
 
 
