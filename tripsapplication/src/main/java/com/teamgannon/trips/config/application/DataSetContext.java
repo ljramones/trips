@@ -15,4 +15,9 @@ public class DataSetContext {
 
     private boolean validDescriptor = false;
 
+    public void setDataDescriptor(DataSetDescriptor dataDescriptor) {
+        descriptor = dataDescriptor;
+        validDescriptor = true;
+    }
+
 }
