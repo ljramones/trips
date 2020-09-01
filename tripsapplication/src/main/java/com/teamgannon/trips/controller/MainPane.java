@@ -541,7 +541,7 @@ public class MainPane implements
     //////////  menu events
 
     public void runQuery(ActionEvent actionEvent) {
-        QueryDialog queryDialog = new QueryDialog(searchContext, this);
+        QueryDialog queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this);
         queryDialog.initModality(Modality.NONE);
         queryDialog.show();
     }

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search.components;
 
+import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.SearchContext;
@@ -18,13 +19,13 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class DataSetPanel extends BasePane {
 
     private final ChoiceBox<String> datasetChoiceBox = new ChoiceBox<>();
-    private Map<String, DataSetDescriptor> datasets;
+    private final Map<String, DataSetDescriptor> datasets;
 
-    private SearchContext searchContext;
+    private final SearchContext searchContext;
 
     private DataSetDescriptor currentDescriptor;
 
-    public DataSetPanel(SearchContext searchContext) {
+    public DataSetPanel(SearchContext searchContext, DataSetContext dataSetContext) {
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
         if (datasets.size() > 0) {
@@ -40,9 +41,10 @@ public class DataSetPanel extends BasePane {
         }
 
         Label rowLabel = createLabel("DataSet to use: ");
-        if (currentDescriptor != null) {
-            datasetChoiceBox.setValue(currentDescriptor.getDataSetName());
+        if (dataSetContext.isValidDescriptor()) {
+            datasetChoiceBox.setValue(dataSetContext.getDescriptor().getDataSetName());
         }
+
 
         Separator space = new Separator();
         space.setMinSize(50, 1);

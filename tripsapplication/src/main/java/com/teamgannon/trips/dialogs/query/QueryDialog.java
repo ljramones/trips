@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
+import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
@@ -24,16 +25,18 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     public final Button runQueryButton = new Button("Run Query");
     private final SearchContext searchContext;
+    private DataSetContext dataSetContext;
     private final SearchPane searchPane;
     Button cancelDataSetButton = new Button("Dismiss");
     private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
-    public QueryDialog(SearchContext searchContext, StellarDataUpdater updater) {
+    public QueryDialog(SearchContext searchContext, DataSetContext dataSetContext, StellarDataUpdater updater) {
         this.searchContext = searchContext;
+        this.dataSetContext = dataSetContext;
         this.setTitle("Query And Search for Stars");
 
-        searchPane = new SearchPane(this.searchContext, updater);
+        searchPane = new SearchPane(this.searchContext, this.dataSetContext, updater);
 
         this.setHeight(1000);
         this.setWidth(500);
