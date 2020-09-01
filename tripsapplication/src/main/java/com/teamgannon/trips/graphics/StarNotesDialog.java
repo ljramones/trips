@@ -16,8 +16,10 @@ public class StarNotesDialog extends Dialog<String> {
 
     private final TextArea notesArea = new TextArea();
 
-    public StarNotesDialog() {
+    public StarNotesDialog(String notesData) {
         VBox vBox = new VBox();
+
+        notesArea.setText(notesData);
 
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
