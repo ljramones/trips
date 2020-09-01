@@ -39,7 +39,6 @@ import com.teamgannon.trips.starmodel.DistanceToFrom;
 import com.teamgannon.trips.starmodel.StarBase;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
@@ -85,8 +84,10 @@ public class MainPane implements
         ReportGenerator,
         DatabaseUpdater {
 
-    @Value("${app.version:unknown}") String version;
-    @Value("${app.releaseDate:unknown}") String releaseDate;
+    @Value("${app.version:unknown}")
+    String version;
+    @Value("${app.releaseDate:unknown}")
+    String releaseDate;
 
     /**
      * used to weave the java fx code with spring boot
@@ -641,7 +642,7 @@ public class MainPane implements
     }
 
     public void toggleStatusBar(ActionEvent actionEvent) {
-        statusBarOn = ! statusBarOn;
+        statusBarOn = !statusBarOn;
         statusBar.setVisible(!statusBar.isVisible());
         toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
@@ -854,47 +855,57 @@ public class MainPane implements
             return;
         }
 
-        List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName)
-                .collect(Collectors.toList());
+        if (tripsContext.getDataSetContext().isValidDescriptor()) {
+            DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
+            drawStars(dataSetDescriptor);
+        } else {
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
-        dialog.setTitle("Choice Data set to display");
-        dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
+            List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
 
-        Optional<String> result = dialog.showAndWait();
+            ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
+            dialog.setTitle("Choice Data set to display");
+            dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
 
-        if (result.isPresent()) {
-            String selected = result.get();
+            Optional<String> result = dialog.showAndWait();
 
-            DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
-            if (dataSetDescriptor == null) {
-                log.error("How the hell did this happen");
-                return;
+            if (result.isPresent()) {
+                String selected = result.get();
+
+                DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
+                if (dataSetDescriptor == null) {
+                    log.error("How the hell did this happen");
+                    return;
+                }
+
+                // update the routing table in the side panel
+                routingPanel.setContext(dataSetDescriptor.getDataSetName());
+
+                drawStars(dataSetDescriptor);
+                tripsContext.getDataSetContext().setDataDescriptor(dataSetDescriptor);
             }
+        }
+    }
 
-            // update the routing table in the side panel
-            routingPanel.setContext(dataSetDescriptor.getDataSetName());
+    private void drawStars(DataSetDescriptor dataSetDescriptor) {
+        List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
+                dataSetDescriptor,
+                searchContext.getAstroSearchQuery().getDistanceFromCenterStar());
+        log.info("DB Query returns {} stars", astrographicObjects.size());
 
-            List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
-                    dataSetDescriptor,
-                    searchContext.getAstroSearchQuery().getDistanceFromCenterStar());
-            log.info("DB Query returns {} stars", astrographicObjects.size());
-
-            if (!astrographicObjects.isEmpty()) {
-                AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
-                astroSearchQuery.zeroCenter();
-                astrographicPlotter.drawAstrographicData(
-                        tripsContext.getSearchContext().getAstroSearchQuery().getDataSetName(),
-                        astrographicObjects,
-                        astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
-                String data = String.format("%s records plotted from dataset %s.",
-                        dataSetDescriptor.getNumberStars(),
-                        dataSetDescriptor.getDataSetName());
-                showInfoMessage("Load Astrographic Format", data);
-                showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
-            } else {
-                showErrorAlert("Astronautic data view error", "No Astronautic data was loaded ");
-            }
+        if (!astrographicObjects.isEmpty()) {
+            AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
+            astroSearchQuery.zeroCenter();
+            astrographicPlotter.drawAstrographicData(
+                    tripsContext.getSearchContext().getAstroSearchQuery().getDataSetName(),
+                    astrographicObjects,
+                    astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+            String data = String.format("%s records plotted from dataset %s.",
+                    dataSetDescriptor.getNumberStars(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load Astrographic Format", data);
+            showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
+        } else {
+            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
     }
 
@@ -902,32 +913,41 @@ public class MainPane implements
      * show the data in a spreadsheet
      */
     private void showTableData() {
-        List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
-        if (datasets.size() == 0) {
-            showErrorAlert("Plot Stars", "No datasets loaded, please load one");
-            return;
-        }
 
-        List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName)
-                .collect(Collectors.toList());
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
-        dialog.setTitle("Choice Data set to display");
-        dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
-
-        Optional<String> result = dialog.showAndWait();
-
-        if (result.isPresent()) {
-            String selected = result.get();
-
-            DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
-            if (dataSetDescriptor == null) {
-                log.error("How the hell did this happen");
-                return;
-            }
+        if (tripsContext.getDataSetContext().isValidDescriptor()) {
+            DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(this, astrographicObjects);
-            showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
+        } else {
+            List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
+            if (datasets.size() == 0) {
+                showErrorAlert("Plot Stars", "No datasets loaded, please load one");
+                return;
+            }
+
+            List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
+
+            ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
+            dialog.setTitle("Choice Data set to display");
+            dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
+
+            Optional<String> result = dialog.showAndWait();
+
+            if (result.isPresent()) {
+                String selected = result.get();
+
+                DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
+                if (dataSetDescriptor == null) {
+                    log.error("How the hell did this happen");
+                    return;
+                }
+                List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
+                new DataSetTable(this, astrographicObjects);
+                showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
+
+                // set current context
+                tripsContext.getDataSetContext().setDataDescriptor(dataSetDescriptor);
+            }
         }
     }
 
