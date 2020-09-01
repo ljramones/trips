@@ -30,26 +30,13 @@ public class AstrographicObjectFactory {
 
         astrographicObject.setRealStar(true);
 
-        // the simbad id is not available from CH View
-        astrographicObject.setSimbadId(AstrographicObject.SIMBAD_NO_ID);
-
-        // this field is tied to the simbad id so we fill it out when we have it
-        astrographicObject.setObjectType(AstrographicObject.SIMBAD_NO_TYPE);
-
         astrographicObject.setDisplayName(chViewRecord.getStarName());
-
-        // since we are importing a real catalog then by default this cannot be fictional
-        astrographicObject.setFictional(false);
 
         astrographicObject.setStarColor(chViewRecord.getStarColor());
 
         // mark that this is the first load of this object
-        astrographicObject.setNotes("initial load of object");
+        astrographicObject.setNotes("initial load of object for CHView file");
 
-//
-//        astrographicObject.setChildren();
-//        astrographicObject.setSiblings();
-//        astrographicObject.setParentObject();
 
         astrographicObject.setCoordinates(chViewRecord.getOrdinates());
         astrographicObject.setDistance(Double.parseDouble(chViewRecord.getDistanceToEarth()));
@@ -57,11 +44,10 @@ public class AstrographicObjectFactory {
         astrographicObject.setRadius(chViewRecord.getRadius());
 
         // ch view data records do not contain the RA and declination for objects
-//        astrographicObject.setDeclination();
-//        astrographicObject.setRaDec();
 
         astrographicObject.setSpectralClass(chViewRecord.getSpectra());
 
+        astrographicObject.setSource("CHView");
 
         return astrographicObject;
     }

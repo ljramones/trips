@@ -87,11 +87,11 @@ public class InterstellarSpacePane extends Pane {
     /**
      * used to signal an update to the parent list view
      */
-    private ListUpdater listUpdater;
+    private final ListUpdater listUpdater;
     /**
      * used to signal an update to the parent property panes
      */
-    private StellarPropertiesDisplayer displayer;
+    private final StellarPropertiesDisplayer displayer;
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
@@ -100,7 +100,7 @@ public class InterstellarSpacePane extends Pane {
     /**
      * the route updater listener
      */
-    private RouteUpdater routeUpdater;
+    private final RouteUpdater routeUpdater;
     /**
      * the redraw listener
      */
@@ -125,7 +125,7 @@ public class InterstellarSpacePane extends Pane {
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
-    private DatabaseUpdater updater;
+    private final DatabaseUpdater updater;
     private String datasetName;
 
 
@@ -539,7 +539,7 @@ public class InterstellarSpacePane extends Pane {
      * create a star named with radius and color located at x,y,z
      *
      * @param record       the star record
-     * @param colorPalette
+     * @param colorPalette the color palette to use
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette) {
@@ -791,7 +791,7 @@ public class InterstellarSpacePane extends Pane {
         double x = Double.parseDouble(properties.get("x"));
         double y = Double.parseDouble(properties.get("y"));
         double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordNumber"));
+        UUID id = UUID.fromString(properties.get("recordId"));
         if (currentRoute != null) {
             Point3D toPoint3D = new Point3D(x, y, z);
             currentRoute.getLineSegments().add(toPoint3D);
@@ -812,7 +812,7 @@ public class InterstellarSpacePane extends Pane {
         double x = Double.parseDouble(properties.get("x"));
         double y = Double.parseDouble(properties.get("y"));
         double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordNumber"));
+        UUID id = UUID.fromString(properties.get("recordId"));
 
         if (currentRoute != null) {
             int size = currentRoute.getLineSegments().size();
@@ -945,7 +945,7 @@ public class InterstellarSpacePane extends Pane {
     /**
      * display properties for this star
      *
-     * @param properties the properties to display
+     * @param starDisplayRecord the properties to display
      */
     private void displayProperties(StarDisplayRecord starDisplayRecord) {
         log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());

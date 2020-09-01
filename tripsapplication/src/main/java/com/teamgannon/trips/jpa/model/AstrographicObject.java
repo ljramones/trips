@@ -1,11 +1,13 @@
 package com.teamgannon.trips.jpa.model;
 
 import com.opencsv.bean.CsvBindByName;
-import com.teamgannon.trips.dataset.model.OrbitalDescriptor;
 import javafx.scene.paint.Color;
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class AstrographicObject implements Serializable {
     public final static String SIMBAD_NO_ID = "UNDEFINED";
     public final static String SIMBAD_NO_TYPE = "UNDEFINED";
     public final static String POLITY_NOT_SET = "NOT+SET";
-    private static final long serialVersionUID = 1132779255908975239L;
+    private static final long serialVersionUID = -5589152046288176364L;
     /**
      * id of the object
      */
@@ -41,49 +43,18 @@ public class AstrographicObject implements Serializable {
     private String dataSetName;
 
     /**
-     * used for Rick Boatright Excel format files
-     */
-    @CsvBindByName(column = "rbNumber")
-    private int rbNumber;
-
-    /**
-     * the simbad id of this object
-     */
-    @CsvBindByName(column = "simbadId")
-    private String simbadId;
-
-    /**
-     * if true then it is fictional and not a real object
-     */
-    @CsvBindByName(column = "fictional")
-    private boolean fictional;
-
-    /**
      * name to use for display
      */
     @CsvBindByName(column = "displayName")
     private String displayName;
 
-
     /**
-     * Oh dear, why does it have to get complicated on only the third field?
-     * <p>
-     * I propose we use the Simbad object type codes, but a given star can fit in several categories.
-     * For example, it could be a white dwarf, Type code WD*, and that white dwarf could have high proper
-     * motion, so it’s a type PM*, and it could be one of several types of variable star with any of
-     * several type codes beginning with V.
-     * <p>
-     * If I were going to do this myself, I would make the objectType an array which could have 1
-     * to many types…  {“WD*”, “PM*”, “Vl”} and so on. “Planet” is a type.
+     * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
+     * if we have to add custom fields in the custom object, but sometimes text notes make sense.
      */
-    @CsvBindByName(column = "objectType")
-    private String objectType;
-
-    /**
-     * the class of object (Star,...)
-     */
-    @CsvBindByName(column = "nnclass")
-    private String nnClass;
+    @Lob
+    @CsvBindByName(column = "notes")
+    private String notes;
 
     /**
      * the source catalog system used to hold this star
@@ -162,7 +133,6 @@ public class AstrographicObject implements Serializable {
     @CsvBindByName(column = "rs_cdeg")
     private double rs_cdeg;
 
-
     /**
      * the parallax measurement
      */
@@ -203,12 +173,6 @@ public class AstrographicObject implements Serializable {
     private double temperature;
 
     /**
-     * from the Simbad definitions
-     */
-    @CsvBindByName(column = "starClassType")
-    private String starClassType;
-
-    /**
      * This is an indicator on whether this is a real star or one we made up
      * <p>
      * values are - real/fictional
@@ -225,20 +189,6 @@ public class AstrographicObject implements Serializable {
 
     @CsvBindByName(column = "grp")
     private double grp;
-
-    /**
-     * this is a generic marker that means that this is marked by other
-     * <p>
-     * user defined
-     */
-    @CsvBindByName(column = "other")
-    private boolean other;
-
-    /**
-     * this is a flag for whether there is an anomaly
-     */
-    @CsvBindByName(column = "anomaly")
-    private boolean anomaly;
 
     private double redColor;
 
@@ -272,6 +222,21 @@ public class AstrographicObject implements Serializable {
 
     @CsvBindByName(column = "magi")
     private double magi;
+
+    ///////////////////  for fiction writing   //////////////
+    /**
+     * this is a generic marker that means that this is marked by other
+     * <p>
+     * user defined
+     */
+    @CsvBindByName(column = "other")
+    private boolean other;
+
+    /**
+     * this is a flag for whether there is an anomaly
+     */
+    @CsvBindByName(column = "anomaly")
+    private boolean anomaly;
 
     /**
      * What polity does this object belong to.  Obviously, it has to be null or one of the polities listed in
@@ -328,43 +293,56 @@ public class AstrographicObject implements Serializable {
     @CsvBindByName(column = "milPlanType")
     private String milPlanType;
 
-    /**
-     * parent of this entity if its a child
-     */
-    @CsvBindByName(column = "parentObject")
-    private UUID parentObject;
 
-    /**
-     * An array of guids of children of this object.
-     * Note that it is possible to have many layers of parent and child. Gamma Fictionatus is a triple star system
-     * consisting of G.F. A, B, and C so each of A,B, and C list G.F. as parents, and list the other two as siblings,
-     * and then each of them could have planets which are children.
-     */
-    @CsvBindByName(column = "children")
-    @Lob
-    private String children;
+    public AstrographicObject() {
+        init();
+    }
 
-    /**
-     * An array of guids of the siblings of this object.
-     * See the discussion under children.
-     */
-    @CsvBindByName(column = "siblings")
-    @Lob
-    private String siblings;
-
-    /**
-     * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
-     * if we have to add custom fields in the custom object, but sometimes text notes make sense.
-     */
-    @Lob
-    @CsvBindByName(column = "notes")
-    private String notes;
-
-    /**
-     * orbital description
-     */
-    @Embedded
-    private OrbitalDescriptor orbitalParameters;
+    private void init() {
+        UUID id = UUID.randomUUID();
+        dataSetName = "not specified";
+        realStar = true;
+        displayName = "no name";
+        source = "no source identified";
+        catalogIdList = "NA";
+        x = 0;
+        y = 0;
+        z = 0;
+        radius = 0;
+        ra = 0;
+        pmra = 0;
+        declination = 0;
+        pmdec = 0;
+        dec_deg = 0;
+        rs_cdeg = 0;
+        parallax = 0;
+        distance = 0;
+        radialVelocity = 0;
+        spectralClass = "";
+        temperature = 0;
+        bprp = 0;
+        bpg = 0;
+        grp = 0;
+        other = false;
+        redColor = 0;
+        greenColor = 0;
+        blueColor = 0;
+        luminosity = " ";
+        magu = 0;
+        magb = 0;
+        magv = 0;
+        magr = 0;
+        magi = 0;
+        polity = "NA";
+        worldType = "NA";
+        fuelType = "NA";
+        portType = "NA";
+        populationType = "NA";
+        techType = "NA";
+        productType = "NA";
+        milSpaceType = "NA";
+        notes = "initial star file load";
+    }
 
 
     /////////////////  convertors  /////////////
@@ -378,28 +356,6 @@ public class AstrographicObject implements Serializable {
 
     public void setCatalogIdList(List<String> stringList) {
         catalogIdList = String.join(",", stringList);
-    }
-
-    public List<String> getSiblings() {
-        if (siblings == null) {
-            return new ArrayList<>();
-        }
-        return Arrays.asList(siblings.split("\\s*,\\s*"));
-    }
-
-    public void setSiblings(List<String> stringList) {
-        siblings = String.join(",", stringList);
-    }
-
-    public List<String> getChildren() {
-        if (children == null) {
-            return new ArrayList<>();
-        }
-        return Arrays.asList(children.split("\\s*,\\s*"));
-    }
-
-    public void setChildren(List<String> stringList) {
-        children = String.join(",", stringList);
     }
 
     public double[] getCoordinates() {

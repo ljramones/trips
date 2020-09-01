@@ -74,6 +74,11 @@ public class DataSetDescriptor implements Serializable {
     private Long numberStars;
 
     /**
+     * the max radius span of this dataset
+     */
+    private double distanceRange;
+
+    /**
      * number of routes in dataset
      */
     private Integer numberRoutes;

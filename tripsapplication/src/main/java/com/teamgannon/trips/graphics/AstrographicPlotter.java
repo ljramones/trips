@@ -110,16 +110,10 @@ public class AstrographicPlotter {
 
                 // draw the star
                 if (drawable(astrographicObject)) {
-                    StarDisplayRecord record
-                            = StarDisplayRecord.builder()
-                            .starName(starName)
-                            .recordId(astrographicObject.getId())
-                            .starColor(starColor)
-                            .radius(radius)
-                            .actualCoordinates(ords)
-                            .coordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]))
-                            .build();
+                    StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject);
+                    record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
                     interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar(), colorPalette);
+                    log.info("\nstar: {}\n", astrographicObject);
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
                 }

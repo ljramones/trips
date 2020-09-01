@@ -26,8 +26,8 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final SearchContext searchContext;
     private final SearchPane searchPane;
     Button cancelDataSetButton = new Button("Dismiss");
-    private CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
-    private CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
+    private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
+    private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
     public QueryDialog(SearchContext searchContext, StellarDataUpdater updater) {
         this.searchContext = searchContext;

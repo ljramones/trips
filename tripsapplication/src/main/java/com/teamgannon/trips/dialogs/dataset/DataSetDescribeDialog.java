@@ -37,6 +37,12 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         planGrid.add(createLabel("Date:  ", true), 0, 2);
         planGrid.add(createLabel(descriptor.getCreationDate(), false), 1, 2);
 
+        planGrid.add(createLabel("# of Stars:  ", true), 0, 2);
+        planGrid.add(createLabel(Long.toString(descriptor.getNumberStars()), false), 1, 2);
+
+        planGrid.add(createLabel("Max Range (ly):  ", true), 0, 2);
+        planGrid.add(createLabel(Double.toString(descriptor.getDistanceRange()), false), 1, 2);
+
         planGrid.add(createLabel("Notes:  ", true), 0, 3);
         planGrid.add(createLabel(descriptor.getNotes(), false), 1, 3);
 

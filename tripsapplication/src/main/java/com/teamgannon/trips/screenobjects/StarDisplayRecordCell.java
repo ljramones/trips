@@ -7,17 +7,26 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Slf4j
 public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
 
 
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
-    final Tooltip tooltip = new Tooltip();
-    private ListSelecterActions listSelecterActions;
+    private final Tooltip tooltip = new Tooltip();
 
-    public StarDisplayRecordCell(ListSelecterActions listSelecterActions) {
-        this.listSelecterActions = listSelecterActions;
+
+    private final ListSelecterActionsListener listSelecterActionsListener;
+
+    /**
+     * the constructor for this cell
+     *
+     * @param listSelecterActionsListener the listener
+     */
+    public StarDisplayRecordCell(ListSelecterActionsListener listSelecterActionsListener) {
+        this.listSelecterActionsListener = listSelecterActionsListener;
     }
 
 
@@ -29,13 +38,29 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         String entry = null;
 
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem eitMenuItem = new MenuItem("center on this star");
-        eitMenuItem.setOnAction((event) -> {
-            log.info("edit Route");
-            listSelecterActions.recenter(starDisplayRecord);
+
+        MenuItem recenterMenuItem = new MenuItem("Center on this star");
+        recenterMenuItem.setOnAction((event) -> {
+            log.info("recenter on {}", starDisplayRecord.getStarName());
+            listSelecterActionsListener.recenter(starDisplayRecord);
         });
 
-        contextMenu.getItems().addAll(eitMenuItem);
+        MenuItem editMenuItem = new MenuItem("Edit this star");
+        editMenuItem.setOnAction((event) -> {
+            log.info("editing {}", starDisplayRecord.getStarName());
+            StarEditDialog starEditDialog = new StarEditDialog(starDisplayRecord);
+            Optional<StarDisplayRecord> optionalStarDisplayRecord = starEditDialog.showAndWait();
+            if (optionalStarDisplayRecord.isPresent()) {
+                StarDisplayRecord record = optionalStarDisplayRecord.get();
+                if (record != null) {
+                    log.info("Changed value: {}", starDisplayRecord);
+                } else {
+                    log.error("no return");
+                }
+            }
+        });
+
+        contextMenu.getItems().addAll(recenterMenuItem, editMenuItem);
 
         // Format name
         if (starDisplayRecord != null && !empty) {
@@ -44,8 +69,6 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
                     String.format("%.2f", actualCoordinates[0]) + "," +
                     String.format("%.2f", actualCoordinates[1]) + "," +
                     String.format("%.2f", actualCoordinates[2]) + ")";
-
-            log.info("show star:{}", entry);
 
             tooltip.setText("tooltip here");
             setTooltip(tooltip);

@@ -40,12 +40,9 @@ public class RBStar {
             AstrographicObject astro = new AstrographicObject();
 
             astro.setId(UUID.randomUUID());
-            astro.setRbNumber(Integer.parseInt(number));
 
             astro.getCatalogIdList().add(catalog1);
             astro.getCatalogIdList().add(catalog2);
-            astro.setSimbadId(simbadId);
-            astro.setStarClassType(type);
             astro.setParallax(Double.parseDouble(parallax));
             astro.setMagu(Double.parseDouble(magu));
             astro.setMagb(Double.parseDouble(magb));

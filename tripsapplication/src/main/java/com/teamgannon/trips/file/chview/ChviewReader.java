@@ -164,7 +164,7 @@ public class ChviewReader {
                 currentIndex += destination.getIndexAdd();
             }
         } else {
-            log.info("Reached end of file ->  no links");
+            log.debug("Reached end of file ->  no links");
         }
 
     }
@@ -181,7 +181,7 @@ public class ChviewReader {
             StringResult fileComments = readString(fileContent, currentIndex);
             return fileComments.getValue();
         } else {
-            log.info("Reached end of file ->  no links");
+            log.debug("Reached end of file ->  no links");
             return "no file comments";
         }
     }
@@ -615,7 +615,7 @@ public class ChviewReader {
 
         if (buffer[currentIndex] != 0) {
             currentIndex++;
-            log.info(chViewRecord.toString());
+            log.debug(chViewRecord.toString());
             chViewRecord.setSubsidiaryStar(parseRecord(buffer, currentIndex));
         }
 
@@ -638,7 +638,7 @@ public class ChviewReader {
             chViewRecord.setRadius(0.5);
         }
 
-        log.info(chViewRecord.toString());
+        log.debug(chViewRecord.toString());
 
 
         return chViewRecord;

@@ -37,7 +37,7 @@ public class JavafxApplication extends Application {
         };
 
         this.context = new SpringApplicationBuilder()
-                .sources(TerranRepublicInterstellarPlotterApplication.class)
+                .sources(TripsSpringBootApplication.class)
                 .initializers(initializer)
                 .build().run(getParameters().getRaw().toArray(new String[0]));
     }

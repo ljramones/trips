@@ -123,7 +123,7 @@ public class SimbadCSVParser {
             int numSiblings = Integer.parseInt(nextLine[14]);
 
             // create the star definition
-            simbadEntry.setRecordNumber(recordNumber);
+            simbadEntry.setRecordId(recordNumber);
             simbadEntry.setIdentifier(identifier);
             simbadEntry.setOType(oType);
             simbadEntry.setGalacticLong(galacticLong);

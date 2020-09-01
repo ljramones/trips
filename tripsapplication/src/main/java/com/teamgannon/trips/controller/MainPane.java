@@ -5,12 +5,12 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
+import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.PreferencesUpdater;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
-import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
@@ -26,7 +26,7 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
-import com.teamgannon.trips.screenobjects.ListSelecterActions;
+import com.teamgannon.trips.screenobjects.ListSelecterActionsListener;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
@@ -57,6 +57,7 @@ import javafx.stage.Window;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -76,13 +77,16 @@ public class MainPane implements
         ListUpdater,
         StellarPropertiesDisplayer,
         StellarDataUpdater,
-        ListSelecterActions,
+        ListSelecterActionsListener,
         PreferencesUpdater,
         ContextSelector,
         RouteUpdater,
         RedrawListener,
         ReportGenerator,
         DatabaseUpdater {
+
+    @Value("${app.version:unknown}") String version;
+    @Value("${app.releaseDate:unknown}") String releaseDate;
 
     /**
      * used to weave the java fx code with spring boot
@@ -145,30 +149,49 @@ public class MainPane implements
      */
     @FXML
     public MenuBar menuBar;
+
     @FXML
     public ToolBar toolBar;
+
     @FXML
     public HBox statusBar;
+
     @FXML
     public SplitPane mainSplitPane;
+
     @FXML
     public ToggleButton toggleSettings;
+
     @FXML
     public Label databaseStatus;
+
     @FXML
     public StackPane leftDisplayPane;
+
     @FXML
     public VBox settingsPane;
+
     @FXML
     public Accordion propertiesAccordion;
+
     @FXML
     public Pane mainPanel;
+
     @FXML
     public TitledPane datasetsPane;
 
-
     @FXML
     public TitledPane objectsViewPane;
+
+    public CheckMenuItem toggleSidePaneMenuitem;
+    public CheckMenuItem toggleRoutesMenuitem;
+    public CheckMenuItem toggleGridMenuitem;
+    public CheckMenuItem toggleLabelsMenuitem;
+    public CheckMenuItem toggleExtensionsMenuitem;
+    public CheckMenuItem toggleStarMenuitem;
+    public CheckMenuItem toggleScaleMenuitem;
+    public CheckMenuItem toggleToolBarMenuitem;
+    public CheckMenuItem toggleStatusBarMenuitem;
 
     private ObjectViewPane objectViewPane;
 
@@ -182,6 +205,7 @@ public class MainPane implements
 
     @FXML
     public GridPane propertiesPane;
+
     public ToggleButton toggleStarBtn;
     public ToggleButton toggleGridBtn;
     public ToggleButton toggleStemBtn;
@@ -194,10 +218,6 @@ public class MainPane implements
     public ToggleButton toggleZoomOutBtn;
     public ToggleButton toggleLabelsBtn;
 
-    /**
-     * temporary data for chview data testing
-     */
-    private ChViewFile chViewFile;
     /**
      * solar system panes for showing the details of various solar systems
      */
@@ -218,15 +238,17 @@ public class MainPane implements
     private boolean extensionsOn = true;
     private boolean labelsOn = true;
     private boolean starsOn = true;
+    private boolean sidePaneOn = false;
 
     /////// data objects ///////////
     private boolean scaleOn = true;
     private boolean routesOn = true;
+    private boolean toolBarOn = true;
+    private boolean statusBarOn = true;
 
     ///////////////////////////////////////////////////////
 
     public MainPane(FxWeaver fxWeaver,
-                    HostServices hostServices,
                     DatabaseManagementService databaseManagementService,
                     ApplicationContext appContext,
                     ChviewReader chviewReader,
@@ -326,22 +348,29 @@ public class MainPane implements
         if (graphEnablesPersist.isDisplayGrid()) {
             interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
             toggleGridBtn.setSelected(graphEnablesPersist.isDisplayGrid());
+            toggleGridMenuitem.setSelected(graphEnablesPersist.isDisplayGrid());
         }
 
         if (graphEnablesPersist.isDisplayLabels()) {
             interstellarSpacePane.toggleLabels(graphEnablesPersist.isDisplayLabels());
             toggleLabelsBtn.setSelected(graphEnablesPersist.isDisplayLabels());
+            toggleLabelsMenuitem.setSelected(graphEnablesPersist.isDisplayLabels());
         }
 
         if (graphEnablesPersist.isDisplayStems()) {
             interstellarSpacePane.toggleExtensions(graphEnablesPersist.isDisplayStems());
             toggleStemBtn.setSelected(graphEnablesPersist.isDisplayStems());
+            toggleExtensionsMenuitem.setSelected(graphEnablesPersist.isDisplayStems());
         }
 
         if (graphEnablesPersist.isDisplayLegend()) {
             interstellarSpacePane.toggleScale(graphEnablesPersist.isDisplayLegend());
             toggleScaleBtn.setSelected(graphEnablesPersist.isDisplayLegend());
+            toggleScaleMenuitem.setSelected(graphEnablesPersist.isDisplayLegend());
         }
+
+        toggleToolBarMenuitem.setSelected(toolBarOn);
+        toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
 
     private void setupDataSetView() {
@@ -546,12 +575,16 @@ public class MainPane implements
         gridOn = !gridOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayGrid(gridOn);
         interstellarSpacePane.toggleGrid(gridOn);
+        toggleGridMenuitem.setSelected(gridOn);
+        toggleGridBtn.setSelected(gridOn);
     }
 
     public void toggleGridExtensions(ActionEvent actionEvent) {
         extensionsOn = !extensionsOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayStems(extensionsOn);
         interstellarSpacePane.toggleExtensions(extensionsOn);
+        toggleGridMenuitem.setSelected(extensionsOn);
+        toggleGridBtn.setSelected(extensionsOn);
     }
 
 
@@ -559,26 +592,37 @@ public class MainPane implements
         labelsOn = !labelsOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLabels(labelsOn);
         interstellarSpacePane.toggleLabels(labelsOn);
+        toggleLabelsMenuitem.setSelected(labelsOn);
+        toggleLabelsBtn.setSelected(labelsOn);
     }
 
     public void toggleStars(ActionEvent actionEvent) {
         starsOn = !starsOn;
         interstellarSpacePane.toggleStars(starsOn);
+        toggleStarMenuitem.setSelected(starsOn);
+        toggleStarBtn.setSelected(starsOn);
     }
 
     public void toggleScale(ActionEvent actionEvent) {
         scaleOn = !scaleOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLegend(scaleOn);
         interstellarSpacePane.toggleScale(scaleOn);
+        toggleScaleMenuitem.setSelected(scaleOn);
+        toggleScaleBtn.setSelected(scaleOn);
     }
 
     public void toggleRoutes(ActionEvent actionEvent) {
         routesOn = !routesOn;
         interstellarSpacePane.toggleRoutes(routesOn);
+        toggleRoutesMenuitem.setSelected(routesOn);
+        toggleRoutesMenuitem.setSelected(routesOn);
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {
-        toggleSidePane(toggleSettings.isSelected());
+        sidePaneOn = !sidePaneOn;
+        toggleSidePane(sidePaneOn);
+        toggleGridBtn.setSelected(sidePaneOn);
+        toggleSidePaneMenuitem.setSelected(sidePaneOn);
     }
 
 
@@ -591,11 +635,15 @@ public class MainPane implements
     }
 
     public void toggleToolbar(ActionEvent actionEvent) {
+        toolBarOn = !toolBarOn;
         toolBar.setVisible(!toolBar.isVisible());
+        toggleToolBarMenuitem.setSelected(toolBarOn);
     }
 
     public void toggleStatusBar(ActionEvent actionEvent) {
+        statusBarOn = ! statusBarOn;
         statusBar.setVisible(!statusBar.isVisible());
+        toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -634,7 +682,8 @@ public class MainPane implements
     /////////  About /////////////
 
     public void aboutTrips(ActionEvent actionEvent) {
-        showWarningMessage("info", "aboutTrips");
+        AboutDialog aboutDialog = new AboutDialog(version, releaseDate);
+        aboutDialog.showAndWait();
     }
 
     public void howToSupport(ActionEvent actionEvent) {
@@ -761,6 +810,14 @@ public class MainPane implements
         }
     }
 
+    @Override
+    public void setContextDataSet(DataSetDescriptor descriptor) {
+        tripsContext.getDataSetContext().setDescriptor(descriptor);
+        tripsContext.getDataSetContext().setValidDescriptor(true);
+        showStatus(descriptor.getDataSetName() + " is the active context");
+
+    }
+
     private void showList(List<AstrographicObject> astrographicObjects) {
         new DataSetTable(this, astrographicObjects);
     }
@@ -831,7 +888,7 @@ public class MainPane implements
                         astrographicObjects,
                         astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
                 String data = String.format("%s records plotted from dataset %s.",
-                        dataSetDescriptor.getAstrographicDataList().size(),
+                        dataSetDescriptor.getNumberStars(),
                         dataSetDescriptor.getDataSetName());
                 showInfoMessage("Load Astrographic Format", data);
                 showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
@@ -1044,6 +1101,7 @@ public class MainPane implements
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
                 this,
+                tripsContext.getDataSetContext(),
                 databaseManagementService,
                 chviewReader,
                 excelReader,
