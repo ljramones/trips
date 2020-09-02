@@ -1,6 +1,7 @@
 package com.teamgannon.trips.controller;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
@@ -83,11 +84,6 @@ public class MainPane implements
         ReportGenerator,
         DatabaseUpdater {
 
-    @Value("${app.version:unknown}")
-    String version;
-
-    @Value("${app.releaseDate:unknown}")
-    String releaseDate;
 
     /**
      * database management spring component service
@@ -125,6 +121,7 @@ public class MainPane implements
      * the current search context to display from
      */
     private final SearchContext searchContext;
+    private Localization localization;
     /**
      * list of routes
      */
@@ -253,7 +250,8 @@ public class MainPane implements
                     RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     StarBase starBase,
-                    TripsContext tripsContext) {
+                    TripsContext tripsContext,
+                    Localization localization) {
 
         //
         //  used to weave the java fx code with spring boot
@@ -266,6 +264,7 @@ public class MainPane implements
         this.starBase = starBase;
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
+        this.localization = localization;
 
         this.width = 1100;
         this.height = 700;
@@ -666,7 +665,7 @@ public class MainPane implements
     /////////  About /////////////
 
     public void aboutTrips(ActionEvent actionEvent) {
-        AboutDialog aboutDialog = new AboutDialog(version, releaseDate);
+        AboutDialog aboutDialog = new AboutDialog(localization);
         aboutDialog.showAndWait();
     }
 
@@ -1107,7 +1106,8 @@ public class MainPane implements
                 databaseManagementService,
                 chviewReader,
                 excelReader,
-                rbCsvReader);
+                rbCsvReader,
+                localization);
 
         // we throw away the result after returning
         dialog.showAndWait();

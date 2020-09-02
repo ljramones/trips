@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dataset;
 
+import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
@@ -33,9 +34,11 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     public Button addDataSetButton = new Button("Add Dataset");
+    private Localization localization;
 
 
-    public AddDataSetDialog() {
+    public AddDataSetDialog(Localization localization) {
+        this.localization = localization;
 
         this.setHeight(400);
         this.setWidth(400);
@@ -199,6 +202,15 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         final FileChooser fileChooser = new FileChooser();
         String title = String.format("Select %s file to import", dataFileFormat.getDataFormatEnum().getValue());
         fileChooser.setTitle(title);
+        File filesFolder = new File(localization.getFileDirectory());
+        if (!filesFolder.exists()) {
+            boolean created = filesFolder.mkdirs();
+            if (!created) {
+                log.error("data files folder did not exist, but attempt to create directories failed");
+                showErrorAlert("Add Dataset ", "files folder did not exist, but attempt to create directories failed");
+            }
+        }
+        fileChooser.setInitialDirectory(filesFolder);
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(dataFileFormat.getDataFormatEnum().getValue(), dataFileFormat.getSuffix());
         fileChooser.setSelectedExtensionFilter(filter);
         File file = fileChooser.showOpenDialog(null);

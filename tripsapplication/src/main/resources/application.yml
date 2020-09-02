@@ -39,5 +39,9 @@ spring:
       # Custom H2 Console URL
       path: /h2
 app:
+  title: Terran Republic Interstellar Plotting System (TRIPS)
   version: v0.5.2
   releaseDate: 31 Aug 2020
+  contributors: LJ Ramones, CE Gannon, R Boatright
+  projectPage: https://github.com/ljramones/trips
+  fileDirectory: files
