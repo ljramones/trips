@@ -49,11 +49,13 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
             StarEditDialog starEditDialog = new StarEditDialog(starDisplayRecord);
-            Optional<StarDisplayRecord> optionalStarDisplayRecord = starEditDialog.showAndWait();
+            Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
-                StarDisplayRecord record = optionalStarDisplayRecord.get();
-                if (record != null) {
-                    log.info("Changed value: {}", starDisplayRecord);
+                StarEditStatus status = optionalStarDisplayRecord.get();
+                if (status.isChanged()) {
+                    StarDisplayRecord record = status.getRecord();
+                    listSelecterActionsListener.astrographicUpdate(record);
+                    log.info("Changed value: {}", record);
                 } else {
                     log.error("no return");
                 }

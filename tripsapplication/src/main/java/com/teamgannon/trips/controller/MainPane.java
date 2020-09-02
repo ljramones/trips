@@ -39,7 +39,6 @@ import com.teamgannon.trips.starmodel.DistanceToFrom;
 import com.teamgannon.trips.starmodel.StarBase;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
-import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -1147,5 +1146,11 @@ public class MainPane implements
     @Override
     public void astrographicUpdate(UUID recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
+    }
+
+    @Override
+    public void astrographicUpdate(StarDisplayRecord record) {
+        log.info("\n\n\nUpdate database for record\n\n\n");
+
     }
 }
