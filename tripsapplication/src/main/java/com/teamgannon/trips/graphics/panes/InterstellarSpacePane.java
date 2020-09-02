@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.operators.*;
+import com.teamgannon.trips.screenobjects.StarEditDialog;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
@@ -939,6 +940,17 @@ public class InterstellarSpacePane extends Pane {
      * @param properties the properties to edit
      */
     private void editProperties(Map<String, String> properties) {
+        StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
+        StarEditDialog starEditDialog = new StarEditDialog(starDisplayRecord);
+        Optional<StarDisplayRecord> optionalStarDisplayRecord = starEditDialog.showAndWait();
+        if (optionalStarDisplayRecord.isPresent()) {
+            StarDisplayRecord record = optionalStarDisplayRecord.get();
+            if (record != null) {
+                log.info("Changed value: {}", starDisplayRecord);
+            } else {
+                log.error("no return");
+            }
+        }
         log.info("Editing properties in side panes for:" + properties.get("name"));
     }
 
