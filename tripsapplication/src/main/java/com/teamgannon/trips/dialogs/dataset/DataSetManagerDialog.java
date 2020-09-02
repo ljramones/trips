@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.dataset;
 
 import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
@@ -47,6 +48,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final ChviewReader chviewReader;
     private final ExcelReader excelReader;
     private final RBCsvReader rbCsvReader;
+    private Localization localization;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
@@ -62,7 +64,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                                 DatabaseManagementService databaseManagementService,
                                 ChviewReader chviewReader,
                                 ExcelReader excelReader,
-                                RBCsvReader rbCsvReader) {
+                                RBCsvReader rbCsvReader,
+                                Localization localization) {
         this.dataUpdater = dataUpdater;
         this.dataSetContext = dataSetContext;
 
@@ -70,6 +73,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         this.chviewReader = chviewReader;
         this.excelReader = excelReader;
         this.rbCsvReader = rbCsvReader;
+        this.localization = localization;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -263,7 +267,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private void addDataSet(ActionEvent actionEvent) {
 
-        AddDataSetDialog dialog = new AddDataSetDialog();
+        AddDataSetDialog dialog = new AddDataSetDialog(localization);
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
         if (optionalDataSet.isPresent()) {
