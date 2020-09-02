@@ -9,12 +9,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class StarEditDialog extends Dialog<StarDisplayRecord> {
+public class StarEditDialog extends Dialog<StarEditStatus> {
 
 
     private final StarDisplayRecord record;
@@ -272,7 +271,10 @@ public class StarEditDialog extends Dialog<StarDisplayRecord> {
 
     private void changeClicked(ActionEvent actionEvent) {
         StarDisplayRecord starDisplayRecord = getData();
-        setResult(starDisplayRecord);
+        StarEditStatus starEditStatus = new StarEditStatus();
+        starEditStatus.setRecord(starDisplayRecord);
+        starEditStatus.setChanged(true);
+        setResult(starEditStatus);
     }
 
     private StarDisplayRecord getData() {
@@ -283,7 +285,9 @@ public class StarEditDialog extends Dialog<StarDisplayRecord> {
     }
 
     private void dismissClicked(ActionEvent actionEvent) {
-        setResult(null);
+        StarEditStatus starEditStatus = new StarEditStatus();
+        starEditStatus.setChanged(false);
+        setResult(starEditStatus);
     }
 
 }

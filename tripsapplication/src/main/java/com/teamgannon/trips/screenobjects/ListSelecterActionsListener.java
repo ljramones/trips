@@ -6,4 +6,6 @@ public interface ListSelecterActionsListener {
 
     void recenter(StarDisplayRecord starDisplayRecord);
 
+    void astrographicUpdate(StarDisplayRecord record);
+
 }
