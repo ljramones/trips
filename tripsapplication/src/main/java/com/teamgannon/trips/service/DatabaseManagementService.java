@@ -183,7 +183,7 @@ public class DatabaseManagementService {
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(dataBaseFile.getAbsolutePath()));
 
-            List<AstrographicObject> astrographicObjects = astrographicObjectRepository.findByDataSetName(dataSetDescriptor.getDataSetName());
+            List<AstrographicObject> astrographicObjects = astrographicObjectRepository.findByDataSetNameOrderByDisplayName(dataSetDescriptor.getDataSetName());
             StatefulBeanToCsv<AstrographicObject> beanToCsv = new StatefulBeanToCsvBuilder(writer)
                     .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                     .build();
@@ -365,7 +365,7 @@ public class DatabaseManagementService {
         List<AstrographicObject> astrographicObjects;
         if (searchQuery.isRecenter()) {
             astrographicObjects
-                    = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
+                    = astrographicObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
                     searchQuery.getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
@@ -456,7 +456,7 @@ public class DatabaseManagementService {
 
     public List<AstrographicObject> getFromDatasetWithinLimit(DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
-        return toList(astrographicObjectRepository.findByDataSetNameAndDistanceIsLessThan(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
+        return toList(astrographicObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
     public DataSetDescriptor getDatasetFromName(String dataSetName) {
