@@ -280,7 +280,7 @@ public class DataSetTable {
         updateObject(starEditRecord, astrographicObject);
 
         // updated star
-        databaseUpdater.updateStar(astrographicObject);
+        databaseUpdater.updateNotesForStar(astrographicObject);
 
         resetList();
     }
@@ -292,7 +292,7 @@ public class DataSetTable {
         astrographicObjectMap.put(astrographicObjectNew.getId(), astrographicObjectNew);
 
         // add to DB
-        databaseUpdater.updateStar(astrographicObjectNew);
+        databaseUpdater.updateNotesForStar(astrographicObjectNew);
 
         resetList();
 

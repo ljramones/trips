@@ -794,7 +794,7 @@ public class MainPane implements
 
 
     @Override
-    public void updateStar(AstrographicObject astrographicObject) {
+    public void updateNotesForStar(AstrographicObject astrographicObject) {
         databaseManagementService.updateStar(astrographicObject);
     }
 
@@ -1124,8 +1124,7 @@ public class MainPane implements
         // colors changes so update db
         databaseManagementService.updateColors(colorPalette);
         astrographicPlotter.changeColors(colorPalette);
-
-        log.info("UPDATE COLORS!!!");
+        log.debug("UPDATE COLORS!!!");
     }
 
 
@@ -1137,7 +1136,7 @@ public class MainPane implements
 
         databaseManagementService.updateGraphEnables(graphEnablesPersist);
         astrographicPlotter.changeGraphEnables(graphEnablesPersist);
-        log.info("UPDATE GRAPH ENABLES!!!");
+        log.debug("UPDATE GRAPH ENABLES!!!");
     }
 
     @Override
@@ -1146,7 +1145,7 @@ public class MainPane implements
     }
 
     @Override
-    public void updateStar(UUID recordId, String notes) {
+    public void updateNotesForStar(UUID recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
     }
 

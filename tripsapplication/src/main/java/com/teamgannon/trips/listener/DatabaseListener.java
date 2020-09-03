@@ -19,7 +19,7 @@ public interface DatabaseListener {
      *
      * @param astrographicObject the star to update
      */
-    void updateStar(AstrographicObject astrographicObject);
+    void updateNotesForStar(AstrographicObject astrographicObject);
 
     /**
      * update the star notes field only
@@ -27,7 +27,7 @@ public interface DatabaseListener {
      * @param recordId the id
      * @param notes    the fields field
      */
-    void updateStar(UUID recordId, String notes);
+    void updateNotesForStar(UUID recordId, String notes);
 
     /**
      * get a star by UUID
