@@ -33,46 +33,44 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final TextField xTextField = new TextField();
     private final TextField yTextField = new TextField();
     private final TextField zTextField = new TextField();
-    TextArea notesArea = new TextArea();
+    private final TextArea notesArea = new TextArea();
 
     //////////
 
-    TextField raLabel = new TextField();
-    TextField pmraLabel = new TextField();
-    TextField decLabel = new TextField();
-    TextField pmdecLabel = new TextField();
-    TextField decdegLabel = new TextField();
-    TextField rsLabel = new TextField();
-    TextField parallaxLabel = new TextField();
-    TextField radialVelocityLabel = new TextField();
-    TextField bprpLabel = new TextField();
-    TextField bpgLabel = new TextField();
-    TextField grpLabel = new TextField();
+    private final TextField raLabel = new TextField();
+    private final TextField pmraLabel = new TextField();
+    private final TextField decLabel = new TextField();
+    private final TextField pmdecLabel = new TextField();
+    private final TextField decdegLabel = new TextField();
+    private final TextField rsLabel = new TextField();
+    private final TextField parallaxLabel = new TextField();
+    private final TextField radialVelocityLabel = new TextField();
+    private final TextField bprpLabel = new TextField();
+    private final TextField bpgLabel = new TextField();
+    private final TextField grpLabel = new TextField();
 
     /////////
-    TextField polityTextField = new TextField();
-    TextField worldTypeTextField = new TextField();
-    TextField fuelTypeTextField = new TextField();
-    TextField techTypeTextField = new TextField();
-    TextField portTypeTextField = new TextField();
-    TextField popTypeTextField = new TextField();
-    TextField prodField = new TextField();
-    TextField milspaceTextField = new TextField();
-    TextField milplanTextField = new TextField();
+    private final TextField polityTextField = new TextField();
+    private final TextField worldTypeTextField = new TextField();
+    private final TextField fuelTypeTextField = new TextField();
+    private final TextField techTypeTextField = new TextField();
+    private final TextField portTypeTextField = new TextField();
+    private final TextField popTypeTextField = new TextField();
+    private final TextField prodField = new TextField();
+    private final TextField milspaceTextField = new TextField();
+    private final TextField milplanTextField = new TextField();
 
-    CheckBox anomalyCheckbox = new CheckBox();
-    CheckBox otherCheckbox = new CheckBox();
+    private final CheckBox anomalyCheckbox = new CheckBox();
+    private final CheckBox otherCheckbox = new CheckBox();
 
     ////////////////
-
-    TabPane tabPane;
 
     public StarEditDialog(AstrographicObject record) {
         this.record = record;
 
         VBox vBox = new VBox();
 
-        tabPane = new TabPane();
+        TabPane tabPane = new TabPane();
 
         Tab overviewTab = new Tab("Overview");
         overviewTab.setContent(createOverviewTab());
@@ -464,7 +462,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         gridPane.add(new Label("Spectral class"), 0, 7);
         spectralClassTextField.setText(record.getSpectralClass());
-        spectralClassTextField.setText(" the spectral class as in O, A, etc.");
+        spectralClassTextField.setPromptText(" the spectral class as in O, A, etc.");
         gridPane.add(spectralClassTextField, 1, 7);
 
         gridPane.add(new Label("Temperature"), 0, 8);
