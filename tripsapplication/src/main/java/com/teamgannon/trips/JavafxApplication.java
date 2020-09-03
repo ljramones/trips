@@ -6,7 +6,6 @@ import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.starmodel.StarBase;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -31,7 +30,6 @@ public class JavafxApplication extends Application {
             genericApplicationContext.registerBean(ChviewReader.class);
             genericApplicationContext.registerBean(ExcelReader.class);
             genericApplicationContext.registerBean(AstrographicPlotter.class);
-            genericApplicationContext.registerBean(StarBase.class);
             genericApplicationContext.registerBean(TripsContext.class);
 //            genericApplicationContext.registerBean(AstrographicObjectRepository.class);
         };

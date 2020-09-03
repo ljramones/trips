@@ -24,6 +24,12 @@ import java.util.Map;
 public class StellarEntityFactory {
 
     /**
+     * we do this to make the star size a constant size bigger x3
+     */
+    private final static int GRAPHICS_FUDGE_FACTOR = 3;
+
+
+    /**
      * create a line sgment based on a very slender cylinder
      *
      * @param origin the from point
@@ -68,6 +74,7 @@ public class StellarEntityFactory {
                                          StarDisplayRecord record,
                                          ColorPalette colorPalette,
                                          Xform labelGroup) {
+
         Sphere sphere = createStellarShape(record);
         Label label = createLabel(record, sphere, colorPalette);
         labelGroup.getChildren().add(label);
@@ -127,7 +134,7 @@ public class StellarEntityFactory {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
-        Sphere sphere = new Sphere(record.getRadius());
+        Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
         sphere.setMaterial(material);
         Point3D point3D = record.getCoordinates();
         sphere.setTranslateX(point3D.getX());

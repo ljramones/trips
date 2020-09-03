@@ -1,7 +1,6 @@
 package com.teamgannon.trips.config.stellar;
 
 import com.teamgannon.trips.stardata.StellarFactory;
-import com.teamgannon.trips.starmodel.StarBase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,11 +20,6 @@ public class StellarConfiguration {
         StellarFactory.createStellarTypes();
 
         return factory;
-    }
-
-    @Bean
-    public StarBase starBase() {
-        return new StarBase();
     }
 
 }

@@ -27,7 +27,7 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
-import com.teamgannon.trips.screenobjects.ListSelecterActionsListener;
+import com.teamgannon.trips.screenobjects.ListSelectorActionsListener;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
@@ -35,9 +35,6 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.StellarDataUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.Simulator;
-import com.teamgannon.trips.starmodel.DistanceReport;
-import com.teamgannon.trips.starmodel.DistanceToFrom;
-import com.teamgannon.trips.starmodel.StarBase;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
@@ -56,14 +53,11 @@ import javafx.stage.Window;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,7 +70,7 @@ public class MainPane implements
         ListUpdater,
         StellarPropertiesDisplayer,
         StellarDataUpdater,
-        ListSelecterActionsListener,
+        ListSelectorActionsListener,
         PreferencesUpdater,
         ContextSelector,
         RouteUpdater,
@@ -109,10 +103,8 @@ public class MainPane implements
      * star plotter component
      */
     private final AstrographicPlotter astrographicPlotter;
-    /**
-     * in memory star base component
-     */
-    private final StarBase starBase;
+
+
     /**
      * the TRIPS context component
      */
@@ -121,7 +113,8 @@ public class MainPane implements
      * the current search context to display from
      */
     private final SearchContext searchContext;
-    private Localization localization;
+
+    private final Localization localization;
     /**
      * list of routes
      */
@@ -249,7 +242,6 @@ public class MainPane implements
                     ExcelReader excelReader,
                     RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
-                    StarBase starBase,
                     TripsContext tripsContext,
                     Localization localization) {
 
@@ -261,7 +253,6 @@ public class MainPane implements
         this.excelReader = excelReader;
         this.rbCsvReader = rbCsvReader;
         this.astrographicPlotter = astrographicPlotter;
-        this.starBase = starBase;
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
@@ -880,10 +871,6 @@ public class MainPane implements
                     tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor().getDataSetName(),
                     astrographicObjects,
                     astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
-            String data = String.format("%s records plotted from dataset %s.",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName());
-            showInfoMessage("Load Astrographic Format", data);
             showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -1008,14 +995,14 @@ public class MainPane implements
         if (file != null) {
             // load chview file
             try {
-                DistanceReport report = starBase.getDistanceReport(starDisplayRecord);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                List<DistanceToFrom> distanceToFromList = report.getDistanceList();
-                for (DistanceToFrom distanceToFrom : distanceToFromList) {
-                    writer.write(distanceToFrom.toString());
-                }
-                writer.flush();
-                writer.close();
+//                DistanceReport report = starBase.getDistanceReport(starDisplayRecord);
+//                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+//                List<DistanceToFrom> distanceToFromList = report.getDistanceList();
+//                for (DistanceToFrom distanceToFrom : distanceToFromList) {
+//                    writer.write(distanceToFrom.toString());
+//                }
+//                writer.flush();
+//                writer.close();
             } catch (Exception e) {
                 showErrorAlert("Report Generation Error", "Failed to save distance report");
             }
@@ -1023,6 +1010,24 @@ public class MainPane implements
             log.warn("file storage cancelled");
         }
     }
+
+    /*
+            DistanceReport report = new DistanceReport();
+        for (AstrographicObject astrographicObject : database.values()) {
+            try {
+                DistanceToFrom distanceToFrom = new DistanceToFrom();
+                distanceToFrom.setStarFrom(starDisplayRecord.getStarName());
+                distanceToFrom.setStarTo(astrographicObject.getDisplayName());
+                double distance = StarMath.getDistance(starDisplayRecord.getActualCoordinates(), astrographicObject.getCoordinates());
+                distanceToFrom.setDistance(distance);
+                report.addDistanceToFrom(distanceToFrom);
+            } catch (Exception e) {
+                log.error("Failed to calculate distance:" + e);
+            }
+        }
+
+        return report;
+     */
 
     @Override
     public void newRoute(String datasetName, RouteDescriptor routeDescriptor) {
@@ -1051,9 +1056,10 @@ public class MainPane implements
 
     @Override
     public void displayStellarProperties(StarDisplayRecord starDisplayRecord) {
-//        displayProperties(starDisplayRecord);
-        stellarPane.setRecord(starDisplayRecord);
-        propertiesAccordion.setExpandedPane(stellarObjectPane);
+        if (starDisplayRecord != null) {
+            stellarPane.setRecord(starDisplayRecord);
+            propertiesAccordion.setExpandedPane(stellarObjectPane);
+        }
     }
 
     /**
@@ -1072,7 +1078,10 @@ public class MainPane implements
 
     private void shutdown() {
         log.debug("Exit selection");
-        Optional<ButtonType> result = AlertFactory.showConfirmationAlert("Exit Application", "Exit Application?", "Are you sure you want to leave?");
+        Optional<ButtonType> result = AlertFactory.showConfirmationAlert(
+                "Exit Application",
+                "Exit Application?",
+                "Are you sure you want to leave?");
 
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             initiateShutdown(0);
@@ -1149,8 +1158,19 @@ public class MainPane implements
     }
 
     @Override
-    public void astrographicUpdate(StarDisplayRecord record) {
+    public void astrographicUpdate(AstrographicObject record) {
         log.info("\n\n\nUpdate database for record\n\n\n");
+        databaseManagementService.updateStar(record);
 
+    }
+
+    @Override
+    public AstrographicObject getStar(UUID starId) {
+        return databaseManagementService.getStar(starId);
+    }
+
+    @Override
+    public void removeStar(UUID recordId) {
+        databaseManagementService.removeStar(recordId);
     }
 }

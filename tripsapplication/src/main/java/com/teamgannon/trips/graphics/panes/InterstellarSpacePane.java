@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.operators.*;
+import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.Interpolator;
@@ -123,6 +124,7 @@ public class InterstellarSpacePane extends Pane {
      * whether there is a route being traced, true is yes
      */
     private boolean routingActive = false;
+
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
@@ -933,6 +935,8 @@ public class InterstellarSpacePane extends Pane {
      */
     private void removeNode(Map<String, String> properties) {
         log.info("Removing object for:" + properties.get("name"));
+        String recordId = properties.get("recordId");
+        databaseUpdater.removeStar(UUID.fromString(recordId));
     }
 
     /**
@@ -942,12 +946,13 @@ public class InterstellarSpacePane extends Pane {
      */
     private void editProperties(Map<String, String> properties) {
         StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
-        StarEditDialog starEditDialog = new StarEditDialog(starDisplayRecord);
+        AstrographicObject starObject = databaseUpdater.getStar(starDisplayRecord.getRecordId());
+        StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
         if (optionalStarDisplayRecord.isPresent()) {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
-                StarDisplayRecord record = status.getRecord();
+                AstrographicObject record = status.getRecord();
                 databaseUpdater.astrographicUpdate(record);
                 log.info("Changed value: {}", record);
             } else {
@@ -964,6 +969,7 @@ public class InterstellarSpacePane extends Pane {
      */
     private void displayProperties(StarDisplayRecord starDisplayRecord) {
         log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());
+        AstrographicObject star = databaseUpdater.getStar(starDisplayRecord.getRecordId());
         if (displayer != null) {
             displayer.displayStellarProperties(starDisplayRecord);
         }

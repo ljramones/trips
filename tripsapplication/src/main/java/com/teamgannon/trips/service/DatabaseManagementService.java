@@ -10,7 +10,6 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
-import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
@@ -18,6 +17,7 @@ import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
+import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import lombok.extern.slf4j.Slf4j;
@@ -456,7 +456,7 @@ public class DatabaseManagementService {
 
     public List<AstrographicObject> getFromDatasetWithinLimit(DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
-        return toList(astrographicObjectRepository.findByDistanceIsLessThan(distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
+        return toList(astrographicObjectRepository.findByDataSetNameAndDistanceIsLessThan(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
     public DataSetDescriptor getDatasetFromName(String dataSetName) {
@@ -621,11 +621,12 @@ public class DatabaseManagementService {
         }
     }
 
-    private void getStar(UUID recordId) {
+    public AstrographicObject getStar(UUID recordId) {
         Optional<AstrographicObject> objectOptional = astrographicObjectRepository.findById(recordId);
-        if (objectOptional.isPresent()) {
-            AstrographicObject object = objectOptional.get();
-            log.info("there");
-        }
+        return objectOptional.orElse(null);
+    }
+
+    public void removeStar(UUID recordId) {
+        astrographicObjectRepository.deleteById(recordId);
     }
 }
