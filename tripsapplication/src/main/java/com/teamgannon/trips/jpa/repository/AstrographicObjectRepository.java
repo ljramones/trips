@@ -33,7 +33,7 @@ public interface AstrographicObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-    Page<AstrographicObject> findByDataSetNameAndDistanceIsLessThan(String dataSetName, double limitDistance, Pageable page);
+    Page<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
@@ -41,7 +41,7 @@ public interface AstrographicObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-    List<AstrographicObject> findByDataSetName(String dataSetName);
+    List<AstrographicObject> findByDataSetNameOrderByDisplayName(String dataSetName);
 
     /**
      * delete all stars stored with a specific dataset name
@@ -57,9 +57,9 @@ public interface AstrographicObjectRepository
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-    List<AstrographicObject> findByDataSetNameAndDistanceIsLessThan(String dataSetName, double limitDistance);
+    List<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
 
-    List<AstrographicObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
+    List<AstrographicObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
             double xg,
             double xl,
