@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -18,15 +19,15 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final Tooltip tooltip = new Tooltip();
 
 
-    private final ListSelecterActionsListener listSelecterActionsListener;
+    private final ListSelectorActionsListener listSelectorActionsListener;
 
     /**
      * the constructor for this cell
      *
-     * @param listSelecterActionsListener the listener
+     * @param listSelectorActionsListener the listener
      */
-    public StarDisplayRecordCell(ListSelecterActionsListener listSelecterActionsListener) {
-        this.listSelecterActionsListener = listSelecterActionsListener;
+    public StarDisplayRecordCell(ListSelectorActionsListener listSelectorActionsListener) {
+        this.listSelectorActionsListener = listSelectorActionsListener;
     }
 
 
@@ -34,7 +35,6 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     public void updateItem(StarDisplayRecord starDisplayRecord, boolean empty) {
         super.updateItem(starDisplayRecord, empty);
 
-        int index = this.getIndex();
         String entry = null;
 
         ContextMenu contextMenu = new ContextMenu();
@@ -42,19 +42,20 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem recenterMenuItem = new MenuItem("Center on this star");
         recenterMenuItem.setOnAction((event) -> {
             log.info("recenter on {}", starDisplayRecord.getStarName());
-            listSelecterActionsListener.recenter(starDisplayRecord);
+            listSelectorActionsListener.recenter(starDisplayRecord);
         });
 
         MenuItem editMenuItem = new MenuItem("Edit this star");
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
-            StarEditDialog starEditDialog = new StarEditDialog(starDisplayRecord);
+            AstrographicObject starObject = listSelectorActionsListener.getStar(starDisplayRecord.getRecordId());
+            StarEditDialog starEditDialog = new StarEditDialog(starObject);
             Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 StarEditStatus status = optionalStarDisplayRecord.get();
                 if (status.isChanged()) {
-                    StarDisplayRecord record = status.getRecord();
-                    listSelecterActionsListener.astrographicUpdate(record);
+                    AstrographicObject record = status.getRecord();
+                    listSelectorActionsListener.astrographicUpdate(record);
                     log.info("Changed value: {}", record);
                 } else {
                     log.error("no return");

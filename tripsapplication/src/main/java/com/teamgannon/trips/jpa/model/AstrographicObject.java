@@ -211,7 +211,7 @@ public class AstrographicObject implements Serializable {
     @CsvBindByName(column = "magu")
     private double magu;
 
-    @CsvBindByName(column = "")
+    @CsvBindByName(column = "magb")
     private double magb;
 
     @CsvBindByName(column = "magv")
@@ -299,7 +299,7 @@ public class AstrographicObject implements Serializable {
     }
 
     private void init() {
-        UUID id = UUID.randomUUID();
+        id = UUID.randomUUID();
         dataSetName = "not specified";
         realStar = true;
         displayName = "no name";

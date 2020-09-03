@@ -33,30 +33,31 @@ public interface AstrographicObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-    Page<AstrographicObject> findByDistanceIsLessThan(double limitDistance, Pageable page);
+    Page<AstrographicObject> findByDataSetNameAndDistanceIsLessThan(String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
      *
-     * @param name the name
-     * @return the lsit of objects
+     * @param dataSetName the name
+     * @return the list of objects
      */
-    List<AstrographicObject> findByDataSetName(String name);
+    List<AstrographicObject> findByDataSetName(String dataSetName);
 
     /**
      * delete all stars stored with a specific dataset name
      *
-     * @param name the name
+     * @param dataSetName the name
      */
-    void deleteByDataSetName(String name);
+    void deleteByDataSetName(String dataSetName);
 
     /**
      * this is the distance from Sol
      *
+     * @param dataSetName the name of the dataset to search by
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-    List<AstrographicObject> findByDistanceIsLessThan(double limitDistance);
+    List<AstrographicObject> findByDataSetNameAndDistanceIsLessThan(String dataSetName, double limitDistance);
 
     List<AstrographicObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
             String dataSetName,

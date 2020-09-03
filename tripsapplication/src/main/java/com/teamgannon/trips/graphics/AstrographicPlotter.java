@@ -8,13 +8,14 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.search.SearchContext;
-import com.teamgannon.trips.starmodel.StarBase;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 /**
  * This plots a astrographic list of object to the panes
@@ -25,12 +26,6 @@ import java.util.List;
 @Component
 public class AstrographicPlotter {
 
-    /**
-     * we do this to make the star size a constant size bigger x3
-     */
-    private final static int GRAPHICS_FUDGE_FACTOR = 3;
-
-    private final StarBase starBase;
     private final SearchContext searchContext;
 
     private final AstrographicTransformer astrographicTransformer;
@@ -43,12 +38,10 @@ public class AstrographicPlotter {
     /**
      * for dependency injection
      *
-     * @param starBase the in memory starbase
+     * @param tripsContext the trips context
      */
     public AstrographicPlotter(
-            StarBase starBase,
             TripsContext tripsContext) {
-        this.starBase = starBase;
         this.searchContext = tripsContext.getSearchContext();
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
@@ -88,9 +81,6 @@ public class AstrographicPlotter {
 
         interstellarSpacePane.setDataSetContext(datasetName);
 
-        // set the records to the in memory cache for quick access
-        starBase.setRecords(astrographicObjects, colorPalette);
-
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
@@ -102,11 +92,6 @@ public class AstrographicPlotter {
                 // create a star record object
                 double[] ords = astrographicObject.getCoordinates();
                 double[] correctedOrds = astrographicTransformer.transformOrds(ords);
-                String starName = astrographicObject.getDisplayName();
-                Color starColor = astrographicObject.getStarColor();
-
-                // we create a 3x radius based on stars much smaller than Sol
-                double radius = astrographicObject.getRadius() * GRAPHICS_FUDGE_FACTOR;
 
                 // draw the star
                 if (drawable(astrographicObject)) {
@@ -121,6 +106,10 @@ public class AstrographicPlotter {
                 log.error("Star color is invalid:{}", astrographicObject);
             }
         }
+        String data = String.format("%s records plotted from dataset %s.",
+                astrographicObjects.size(),
+                datasetName);
+        showInfoMessage("Load Astrographic Format", data);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,4 +133,5 @@ public class AstrographicPlotter {
 
     public void changeGraphEnables(GraphEnablesPersist graphEnablesPersist) {
     }
+
 }
