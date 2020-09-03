@@ -44,18 +44,20 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
         // create the base criteria query
-        CriteriaQuery<AstrographicObject> cq = cb.createQuery(AstrographicObject.class);
+        CriteriaQuery<AstrographicObject> query = cb.createQuery(AstrographicObject.class);
 
         // create the root object
-        Root<AstrographicObject> astrographicObjectRoot = cq.from(AstrographicObject.class);
+        Root<AstrographicObject> astrographicObject = query.from(AstrographicObject.class);
 
         // setup the list of predicates to apply
-        List<Predicate> predicates = makeAstroQuery(astroSearchQuery, astrographicObjectRoot, cb);
+        List<Predicate> predicates = makeAstroQuery(astroSearchQuery, astrographicObject, cb);
 
-        cq.where(predicates.toArray(new Predicate[0]));
-        TypedQuery<AstrographicObject> query = em.createQuery(cq);
+        query.where(predicates.toArray(new Predicate[0]));
+        query.orderBy(cb.asc(astrographicObject.get("displayName")));
 
-        List<AstrographicObject> astrographicObjects = query.getResultList();
+        TypedQuery<AstrographicObject> typedQuery = em.createQuery(query);
+
+        List<AstrographicObject> astrographicObjects = typedQuery.getResultList();
 
         // spit out the the number of objects found
         log.info("number of objects found = {}", astrographicObjects.size());
