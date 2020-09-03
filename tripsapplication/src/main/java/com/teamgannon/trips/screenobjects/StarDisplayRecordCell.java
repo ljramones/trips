@@ -59,7 +59,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
                 StarEditStatus status = optionalStarDisplayRecord.get();
                 if (status.isChanged()) {
                     AstrographicObject record = status.getRecord();
-                    databaseListener.updateStar(record);
+                    databaseListener.updateNotesForStar(record);
                     log.info("Changed value: {}", record);
                 } else {
                     log.error("no return");

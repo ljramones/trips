@@ -684,7 +684,10 @@ public class InterstellarSpacePane extends Pane {
                 String notes = notesOptional.get();
                 if (!notes.isEmpty()) {
                     // save notes in star
-                    databaseListener.updateStar(starDescriptor.getRecordId(), notes);
+                    databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
+                    // update the star notes on screen
+                    properties.put("notes", notes);
+                    star.setUserData(properties);
                 }
             }
 
@@ -959,7 +962,7 @@ public class InterstellarSpacePane extends Pane {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
-                databaseListener.updateStar(record);
+                databaseListener.updateNotesForStar(record);
                 log.info("Changed value: {}", record);
             } else {
                 log.error("no return");
