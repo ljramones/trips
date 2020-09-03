@@ -19,7 +19,7 @@ public interface DatabaseListener {
      *
      * @param astrographicObject the star to update
      */
-    void updateNotesForStar(AstrographicObject astrographicObject);
+    void updateStar(AstrographicObject astrographicObject);
 
     /**
      * update the star notes field only

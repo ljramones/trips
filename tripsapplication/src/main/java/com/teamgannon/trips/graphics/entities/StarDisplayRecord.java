@@ -165,7 +165,8 @@ public class StarDisplayRecord {
         record.setSpectralClass(astrographicObject.getSpectralClass());
         record.setNotes(astrographicObject.getNotes());
         record.setStarColor(astrographicObject.getStarColor());
-        record.setActualCoordinates(astrographicObject.getCoordinates());
+        double[] coords = astrographicObject.getCoordinates();
+        record.setActualCoordinates(coords);
 
         return record;
     }
