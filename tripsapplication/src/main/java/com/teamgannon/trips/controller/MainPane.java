@@ -26,6 +26,7 @@ import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
+import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
@@ -182,7 +183,7 @@ public class MainPane implements
     @FXML
     public TitledPane stellarObjectPane;
 
-    public StellarPane stellarPane;
+    public StarPropertiesPane starPropertiesPane;
 
     @FXML
     public TitledPane routingPane;
@@ -471,8 +472,10 @@ public class MainPane implements
     }
 
     private void createStellarPane() {
-        stellarPane = new StellarPane();
-        stellarObjectPane.setContent(stellarPane);
+        stellarObjectPane.setPrefHeight(800);
+        starPropertiesPane = new StarPropertiesPane();
+        ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
+        stellarObjectPane.setContent(scrollPane);
     }
 
     private void createRoutingPane() {
@@ -1048,9 +1051,9 @@ public class MainPane implements
     ////////////////////////////////
 
     @Override
-    public void displayStellarProperties(StarDisplayRecord starDisplayRecord) {
-        if (starDisplayRecord != null) {
-            stellarPane.setRecord(starDisplayRecord);
+    public void displayStellarProperties(AstrographicObject astrographicObject) {
+        if (astrographicObject != null) {
+            starPropertiesPane.setStar(astrographicObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
         }
     }

@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.StellarPropertiesDisplayer;
@@ -14,19 +15,16 @@ public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
-    private final ListSelectorActionsListener listSelectorActionsListener;
-
-
     public ObjectViewPane(StellarPropertiesDisplayer propertiesDisplayer,
                           DatabaseListener databaseListener,
                           ListSelectorActionsListener listSelectorActionsListener) {
-        this.listSelectorActionsListener = listSelectorActionsListener;
 
-        stellarObjectsListView.setPrefHeight(200);
+        stellarObjectsListView.setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(255);
         stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory(databaseListener, listSelectorActionsListener));
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            propertiesDisplayer.displayStellarProperties(newValue);
+            AstrographicObject astrographicObject = databaseListener.getStar(newValue.getRecordId());
+            propertiesDisplayer.displayStellarProperties(astrographicObject);
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));
 

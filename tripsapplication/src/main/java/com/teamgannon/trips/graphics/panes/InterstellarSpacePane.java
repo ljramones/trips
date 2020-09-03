@@ -923,7 +923,8 @@ public class InterstellarSpacePane extends Pane {
         propertiesMenuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
             StarDisplayRecord record = StarDisplayRecord.fromProperties(properties);
-            displayProperties(record);
+            AstrographicObject astrographicObject = databaseListener.getStar(record.getRecordId());
+            displayProperties(astrographicObject);
         });
         return propertiesMenuItem;
     }
@@ -983,13 +984,12 @@ public class InterstellarSpacePane extends Pane {
     /**
      * display properties for this star
      *
-     * @param starDisplayRecord the properties to display
+     * @param astrographicObject the properties to display
      */
-    private void displayProperties(StarDisplayRecord starDisplayRecord) {
-        log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());
-        AstrographicObject star = databaseListener.getStar(starDisplayRecord.getRecordId());
+    private void displayProperties(AstrographicObject astrographicObject) {
+        log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
         if (displayer != null) {
-            displayer.displayStellarProperties(starDisplayRecord);
+            displayer.displayStellarProperties(astrographicObject);
         }
     }
 
