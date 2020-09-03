@@ -8,7 +8,6 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
-import com.teamgannon.trips.listener.PreferencesUpdater;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
@@ -17,13 +16,13 @@ import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
+import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
@@ -73,7 +72,8 @@ public class MainPane implements
         RouteUpdaterListener,
         RedrawListener,
         ReportGenerator,
-        DatabaseUpdaterListener {
+        DatabaseListener,
+        DataSetChangeListener {
 
 
     /**
@@ -364,7 +364,7 @@ public class MainPane implements
         datasetsPane.setContent(dataSetsListView);
 
         dataSetsListView.setPrefHeight(10);
-        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this));
+        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
         dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
 
         // load viable datasets into search context
@@ -792,10 +792,6 @@ public class MainPane implements
         new DataSetTable(this, astrographicObjects);
     }
 
-    @Override
-    public void addStar(AstrographicObject astrographicObject) {
-        databaseManagementService.addStar(astrographicObject);
-    }
 
     @Override
     public void updateStar(AstrographicObject astrographicObject) {
@@ -1064,7 +1060,7 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
-        objectViewPane = new ObjectViewPane(this, this);
+        objectViewPane = new ObjectViewPane(this, this, this);
 
         // setup model to display in case we turn on
         objectsViewPane.setContent(objectViewPane);
@@ -1150,15 +1146,8 @@ public class MainPane implements
     }
 
     @Override
-    public void astrographicUpdate(UUID recordId, String notes) {
+    public void updateStar(UUID recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
-    }
-
-    @Override
-    public void astrographicUpdate(AstrographicObject record) {
-        log.info("\n\n\nUpdate database for record\n\n\n");
-        databaseManagementService.updateStar(record);
-
     }
 
     @Override

@@ -9,8 +9,4 @@ public interface ListSelectorActionsListener {
 
     void recenter(StarDisplayRecord starDisplayRecord);
 
-    void astrographicUpdate(AstrographicObject record);
-
-    AstrographicObject getStar(UUID starId);
-
 }

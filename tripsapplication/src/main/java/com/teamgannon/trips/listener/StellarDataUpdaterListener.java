@@ -25,54 +25,7 @@ public interface StellarDataUpdaterListener {
      */
     void showNewStellarData(boolean showPlot, boolean showTable);
 
-    /**
-     * add the data set descriptor
-     *
-     * @param dataSetDescriptor the dataset descriptor
-     */
-    void addDataSet(DataSetDescriptor dataSetDescriptor);
 
-    /**
-     * remove the data set descriptor
-     *
-     * @param dataSetDescriptor the dataset descriptor
-     */
-    void removeDataSet(DataSetDescriptor dataSetDescriptor);
-
-    /**
-     * set the contextual dataset
-     *
-     * @param descriptor the dataset descript that is in context
-     */
-    void setContextDataSet(DataSetDescriptor descriptor);
-
-    /**
-     * get the astro object from the db on new search query
-     *
-     * @return the list of objects
-     */
-    List<AstrographicObject> getAstrographicObjectsOnQuery();
-
-    /**
-     * add a star to the db
-     *
-     * @param astrographicObject the star
-     */
-    void addStar(AstrographicObject astrographicObject);
-
-    /**
-     * update the star
-     *
-     * @param astrographicObject the star to update
-     */
-    void updateStar(AstrographicObject astrographicObject);
-
-    /**
-     * remove the specified star
-     *
-     * @param astrographicObject the star to remove
-     */
-    void removeStar(AstrographicObject astrographicObject);
 
 
 }

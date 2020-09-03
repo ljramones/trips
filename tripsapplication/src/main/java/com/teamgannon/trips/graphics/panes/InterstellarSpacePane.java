@@ -129,7 +129,7 @@ public class InterstellarSpacePane extends Pane {
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
-    private final DatabaseUpdaterListener databaseUpdaterListener;
+    private final DatabaseListener databaseListener;
     private String datasetName;
 
 
@@ -147,7 +147,7 @@ public class InterstellarSpacePane extends Pane {
                                  RouteUpdaterListener routeUpdaterListener,
                                  ListUpdater listUpdater,
                                  StellarPropertiesDisplayer displayer,
-                                 DatabaseUpdaterListener dbUpdater) {
+                                 DatabaseListener dbUpdater) {
         this.width = width;
         this.height = height;
         this.depth = depth;
@@ -156,7 +156,7 @@ public class InterstellarSpacePane extends Pane {
         this.routeUpdaterListener = routeUpdaterListener;
         this.listUpdater = listUpdater;
         this.displayer = displayer;
-        this.databaseUpdaterListener = dbUpdater;
+        this.databaseListener = dbUpdater;
 
         this.setMinHeight(height);
         this.setMinWidth(width);
@@ -684,7 +684,7 @@ public class InterstellarSpacePane extends Pane {
                 String notes = notesOptional.get();
                 if (!notes.isEmpty()) {
                     // save notes in star
-                    databaseUpdaterListener.astrographicUpdate(starDescriptor.getRecordId(), notes);
+                    databaseListener.updateStar(starDescriptor.getRecordId(), notes);
                 }
             }
 
@@ -942,7 +942,7 @@ public class InterstellarSpacePane extends Pane {
     private void removeNode(Map<String, String> properties) {
         log.info("Removing object for:" + properties.get("name"));
         String recordId = properties.get("recordId");
-        databaseUpdaterListener.removeStar(UUID.fromString(recordId));
+        databaseListener.removeStar(UUID.fromString(recordId));
     }
 
     /**
@@ -952,14 +952,14 @@ public class InterstellarSpacePane extends Pane {
      */
     private void editProperties(Map<String, String> properties) {
         StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
-        AstrographicObject starObject = databaseUpdaterListener.getStar(starDisplayRecord.getRecordId());
+        AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
         if (optionalStarDisplayRecord.isPresent()) {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
-                databaseUpdaterListener.astrographicUpdate(record);
+                databaseListener.updateStar(record);
                 log.info("Changed value: {}", record);
             } else {
                 log.error("no return");
@@ -975,7 +975,7 @@ public class InterstellarSpacePane extends Pane {
      */
     private void displayProperties(StarDisplayRecord starDisplayRecord) {
         log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());
-        AstrographicObject star = databaseUpdaterListener.getStar(starDisplayRecord.getRecordId());
+        AstrographicObject star = databaseListener.getStar(starDisplayRecord.getRecordId());
         if (displayer != null) {
             displayer.displayStellarProperties(starDisplayRecord);
         }
