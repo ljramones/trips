@@ -31,7 +31,7 @@ This project is setup to work as a gitflow project. Please read [this guide on h
 If you need a tool to make using gitflow easy to use, [check this one out as I use it](https://danielkummer.github.io/git-flow-cheatsheet/).
 
 ## Installing
-    a. Down load one of the release versions form the release page.
+    a. Down load one of the release versions from the release page.
     b. unzip into a target direction of your choice
     c. acquire data files from one of the data pages (TBD) and unzip into the ./files directory
 
@@ -46,10 +46,9 @@ To run simply form the command line, `java -jar target/trips-version.jar`
     a. Once installed, the install directory is complete and independent. Nothing else needs to be installed
     b. in the main director, run either
         - runme.bat (Windows version)
-        - runme.sh (Mac/Linux version)
-        
-        
-##Using Application
+        - runme.sh (Mac/Linux version)        
+  
+## Using Application
 You will see a screen as below:
 
 Main Screen: 
