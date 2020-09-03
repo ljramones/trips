@@ -794,7 +794,7 @@ public class MainPane implements
 
 
     @Override
-    public void updateNotesForStar(AstrographicObject astrographicObject) {
+    public void updateStar(AstrographicObject astrographicObject) {
         databaseManagementService.updateStar(astrographicObject);
     }
 

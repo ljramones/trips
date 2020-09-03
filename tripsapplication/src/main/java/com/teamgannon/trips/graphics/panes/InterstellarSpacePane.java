@@ -632,10 +632,6 @@ public class InterstellarSpacePane extends Pane {
         MenuItem recenterMenuItem = createRecenterMenuitem(star);
         cm.getItems().add(recenterMenuItem);
 
-        MenuItem enterNotesItem = createNotesMenuItem(star);
-        cm.getItems().add(enterNotesItem);
-        cm.getItems().add(new SeparatorMenuItem());
-
         MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
         cm.getItems().add(jumpSystemMenuItem);
 
@@ -661,6 +657,10 @@ public class InterstellarSpacePane extends Pane {
 
         MenuItem propertiesMenuItem = createShowPropertiesMenuItem(star);
         cm.getItems().add(propertiesMenuItem);
+
+        MenuItem enterNotesItem = createNotesMenuItem(star);
+        cm.getItems().add(enterNotesItem);
+        cm.getItems().add(new SeparatorMenuItem());
 
         MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
         cm.getItems().add(editPropertiesMenuItem);
@@ -904,7 +904,10 @@ public class InterstellarSpacePane extends Pane {
         MenuItem editPropertiesMenuItem = new MenuItem("Edit");
         editPropertiesMenuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
-            editProperties(properties);
+            Map<String, String> propertiesChange = editProperties(properties);
+            if (properties != null) {
+                star.setUserData(propertiesChange);
+            }
         });
         return editPropertiesMenuItem;
     }
@@ -953,7 +956,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param properties the properties to edit
      */
-    private void editProperties(Map<String, String> properties) {
+    private Map<String, String> editProperties(Map<String, String> properties) {
         StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
         AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
@@ -962,13 +965,19 @@ public class InterstellarSpacePane extends Pane {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
-                databaseListener.updateNotesForStar(record);
+                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record);
+                record1.setCoordinates(starDisplayRecord.getCoordinates());
+                Map<String, String> propertiesChange = record1.toProperties();
                 log.info("Changed value: {}", record);
+                databaseListener.updateStar(record);
+                return propertiesChange;
             } else {
                 log.error("no return");
+                return null;
             }
         }
         log.info("Editing properties in side panes for:" + properties.get("name"));
+        return null;
     }
 
     /**
