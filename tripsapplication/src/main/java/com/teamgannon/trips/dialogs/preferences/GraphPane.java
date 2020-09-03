@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.preferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
+import com.teamgannon.trips.listener.PreferencesUpdater;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

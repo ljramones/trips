@@ -2,6 +2,7 @@ package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
@@ -15,7 +16,7 @@ public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
-    private final StellarDataUpdater updater;
+    private final StellarDataUpdaterListener updater;
     private DataSetPanel dataSetChoicePanel;
     private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
@@ -32,7 +33,7 @@ public class SearchPane extends Pane {
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
 
 
-    public SearchPane(SearchContext query, DataSetContext dataSetContext, StellarDataUpdater updater) {
+    public SearchPane(SearchContext query, DataSetContext dataSetContext, StellarDataUpdaterListener updater) {
         this.searchContext = query;
         this.dataSetContext = dataSetContext;
         this.updater = updater;

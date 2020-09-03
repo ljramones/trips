@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.graphics.operators.ContextSelector;
+import com.teamgannon.trips.listener.ContextSelectorListener;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -28,7 +28,7 @@ public class SolarSystemSpacePane extends Pane {
     private String systemName = "No System Selected";
     private Button returnButton;
     private Map<String, String> objectProperties;
-    private ContextSelector contextSelector;
+    private ContextSelectorListener contextSelectorListener;
 
 
     public SolarSystemSpacePane(double width, double height) {
@@ -82,11 +82,11 @@ public class SolarSystemSpacePane extends Pane {
 
     private void jumpBackToInterstellarSpace() {
         // there is no specific context at the moment.  We assume the same interstellar space we came form
-        contextSelector.selectInterstellarSpace(new HashMap<>());
+        contextSelectorListener.selectInterstellarSpace(new HashMap<>());
     }
 
 
-    public void setContextUpdater(ContextSelector contextSelector) {
-        this.contextSelector = contextSelector;
+    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
+        this.contextSelectorListener = contextSelectorListener;
     }
 }

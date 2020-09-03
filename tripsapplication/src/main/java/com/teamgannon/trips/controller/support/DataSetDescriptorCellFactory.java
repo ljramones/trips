@@ -1,7 +1,7 @@
 package com.teamgannon.trips.controller.support;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.search.StellarDataUpdater;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
@@ -9,9 +9,9 @@ import javafx.util.Callback;
 
 public class DataSetDescriptorCellFactory implements Callback<ListView<DataSetDescriptor>, ListCell<DataSetDescriptor>> {
 
-    private StellarDataUpdater updater;
+    private StellarDataUpdaterListener updater;
 
-    public DataSetDescriptorCellFactory(StellarDataUpdater updater) {
+    public DataSetDescriptorCellFactory(StellarDataUpdaterListener updater) {
         this.updater = updater;
     }
 
