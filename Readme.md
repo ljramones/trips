@@ -134,7 +134,7 @@ Edit of Delete of data rows
 Update Stellar Object
 ![alt text](assets/20EditStar.png "Update Stellar Object")
 
-### General Ploting and Star Maintenance
+### General Plotting and Star Maintenance
 Add Notes to a star on the plot
 ![alt text](assets/21AddNotesToStar.png "Add notes to a star")
 
