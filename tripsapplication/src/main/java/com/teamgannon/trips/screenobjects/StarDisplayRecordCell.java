@@ -2,6 +2,7 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
@@ -20,6 +21,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final Tooltip tooltip = new Tooltip();
 
 
+    private DatabaseListener databaseListener;
     private final ListSelectorActionsListener listSelectorActionsListener;
 
     /**
@@ -27,7 +29,8 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
      *
      * @param listSelectorActionsListener the listener
      */
-    public StarDisplayRecordCell(ListSelectorActionsListener listSelectorActionsListener) {
+    public StarDisplayRecordCell(DatabaseListener databaseListener, ListSelectorActionsListener listSelectorActionsListener) {
+        this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
     }
 
@@ -49,14 +52,14 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem editMenuItem = new MenuItem("Edit this star");
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
-            AstrographicObject starObject = listSelectorActionsListener.getStar(starDisplayRecord.getRecordId());
+            AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
             StarEditDialog starEditDialog = new StarEditDialog(starObject);
             Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 StarEditStatus status = optionalStarDisplayRecord.get();
                 if (status.isChanged()) {
                     AstrographicObject record = status.getRecord();
-                    listSelectorActionsListener.astrographicUpdate(record);
+                    databaseListener.updateStar(record);
                     log.info("Changed value: {}", record);
                 } else {
                     log.error("no return");

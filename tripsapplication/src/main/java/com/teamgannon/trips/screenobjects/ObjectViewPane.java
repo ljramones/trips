@@ -1,8 +1,9 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.listener.StellarPropertiesDisplayer;
+import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
+import com.teamgannon.trips.listener.StellarPropertiesDisplayer;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
@@ -13,19 +14,19 @@ public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
-    private final StellarPropertiesDisplayer updater;
-    private ListSelectorActionsListener listSelectorActionsListener;
+    private final ListSelectorActionsListener listSelectorActionsListener;
 
 
-    public ObjectViewPane(StellarPropertiesDisplayer updater, ListSelectorActionsListener listSelectorActionsListener) {
-        this.updater = updater;
+    public ObjectViewPane(StellarPropertiesDisplayer propertiesDisplayer,
+                          DatabaseListener databaseListener,
+                          ListSelectorActionsListener listSelectorActionsListener) {
         this.listSelectorActionsListener = listSelectorActionsListener;
 
         stellarObjectsListView.setPrefHeight(200);
         stellarObjectsListView.setPrefWidth(255);
-        stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory(listSelectorActionsListener));
+        stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory(databaseListener, listSelectorActionsListener));
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            updater.displayStellarProperties(newValue);
+            propertiesDisplayer.displayStellarProperties(newValue);
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));
 
@@ -35,7 +36,6 @@ public class ObjectViewPane extends Pane {
     public void clear() {
         stellarObjectsListView.getItems().clear();
     }
-
 
 
     public void add(StarDisplayRecord starDisplayRecord) {

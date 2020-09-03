@@ -10,7 +10,7 @@ import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
+import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -39,8 +39,9 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final StellarDataUpdaterListener dataUpdater;
-    private DataSetContext dataSetContext;
+
+    private final DataSetChangeListener dataSetChangeListener;
+    private final DataSetContext dataSetContext;
     /**
      * the database management service used to manage datasets and databases
      */
@@ -48,7 +49,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final ChviewReader chviewReader;
     private final ExcelReader excelReader;
     private final RBCsvReader rbCsvReader;
-    private Localization localization;
+    private final Localization localization;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
@@ -59,14 +60,14 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private DataSetDescriptor selectedDataset;
 
-    public DataSetManagerDialog(StellarDataUpdaterListener dataUpdater,
+    public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 ChviewReader chviewReader,
                                 ExcelReader excelReader,
                                 RBCsvReader rbCsvReader,
                                 Localization localization) {
-        this.dataUpdater = dataUpdater;
+        this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
 
         this.databaseManagementService = databaseManagementService;
@@ -122,7 +123,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             }
         });
 
-        descriptorComboBox.setOnAction(e -> dataUpdater.setContextDataSet(descriptorComboBox.getValue()));
+        descriptorComboBox.setOnAction(e -> dataSetChangeListener.setContextDataSet(descriptorComboBox.getValue()));
     }
 
     /**
@@ -235,7 +236,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             if (selectedDataset != null) {
                 DataSetDescriptor dataSetDescriptor = databaseManagementService.getDatasetFromName(selectedDataset.getDataSetName());
                 databaseManagementService.removeDataSet(dataSetDescriptor);
-                this.dataUpdater.removeDataSet(dataSetDescriptor);
+                this.dataSetChangeListener.removeDataSet(dataSetDescriptor);
             } else {
                 showErrorAlert("Delete Dataset", "You need to select a dataset first");
             }
@@ -302,7 +303,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             case "chv" -> {
                 result = processCHViewFile(dataset);
                 if (result.isSuccess()) {
-                    this.dataUpdater.addDataSet(result.getDataSetDescriptor());
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     updateTable();
                 } else {
                     showErrorAlert("load CH View file", result.getMessage());
@@ -321,7 +322,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
                 result = processCSVFile(dataset);
                 if (result.isSuccess()) {
-                    this.dataUpdater.addDataSet(result.getDataSetDescriptor());
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     updateTable();
                 } else {
                     showErrorAlert("load csv", result.getMessage());

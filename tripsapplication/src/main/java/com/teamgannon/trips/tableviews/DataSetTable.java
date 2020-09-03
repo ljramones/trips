@@ -4,7 +4,7 @@ import com.teamgannon.trips.dataset.AddStarDialog;
 import com.teamgannon.trips.dialogs.dataset.TableEditResult;
 import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
+import com.teamgannon.trips.listener.DatabaseListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -44,21 +44,20 @@ public class DataSetTable {
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
+    private DatabaseListener databaseUpdater;
     private List<AstrographicObject> astrographicObjects;
 
     private int currentPosition = 0;
 
-    private final StellarDataUpdaterListener updater;
-
     /**
      * the constructor that we use to show the data
      *
-     * @param updater             the reference back to search for more stars if needs be
+     * @param databaseUpdater     the reference back to search for more stars if needs be
      * @param astrographicObjects the list of objects
      */
 
-    public DataSetTable(StellarDataUpdaterListener updater, List<AstrographicObject> astrographicObjects) {
-        this.updater = updater;
+    public DataSetTable(DatabaseListener databaseUpdater, List<AstrographicObject> astrographicObjects) {
+        this.databaseUpdater = databaseUpdater;
         this.astrographicObjects = astrographicObjects;
         if (!astrographicObjects.isEmpty()) {
             MapUtils.populateMap(astrographicObjectMap, astrographicObjects, AstrographicObject::getId);
@@ -281,7 +280,7 @@ public class DataSetTable {
         updateObject(starEditRecord, astrographicObject);
 
         // updated star
-        updater.updateStar(astrographicObject);
+        databaseUpdater.updateStar(astrographicObject);
 
         resetList();
     }
@@ -293,7 +292,7 @@ public class DataSetTable {
         astrographicObjectMap.put(astrographicObjectNew.getId(), astrographicObjectNew);
 
         // add to DB
-        updater.addStar(astrographicObjectNew);
+        databaseUpdater.updateStar(astrographicObjectNew);
 
         resetList();
 
@@ -314,7 +313,7 @@ public class DataSetTable {
         astrographicObjectMap.remove(id);
 
         // remove from DB
-        updater.removeStar(astrographicObject);
+        databaseUpdater.removeStar(astrographicObject);
 
         resetList();
 
