@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.listener.PreferencesUpdater;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;

@@ -4,8 +4,8 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
-import com.teamgannon.trips.graphics.operators.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.Interpolator;
@@ -99,11 +99,11 @@ public class InterstellarSpacePane extends Pane {
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
-    private ContextSelector contextSelector;
+    private ContextSelectorListener contextSelectorListener;
     /**
      * the route updater listener
      */
-    private final RouteUpdater routeUpdater;
+    private final RouteUpdaterListener routeUpdaterListener;
     /**
      * the redraw listener
      */
@@ -129,7 +129,7 @@ public class InterstellarSpacePane extends Pane {
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
-    private final DatabaseUpdater databaseUpdater;
+    private final DatabaseUpdaterListener databaseUpdaterListener;
     private String datasetName;
 
 
@@ -144,19 +144,19 @@ public class InterstellarSpacePane extends Pane {
                                  int depth,
                                  int spacing,
                                  ColorPalette colorPalette,
-                                 RouteUpdater routeUpdater,
+                                 RouteUpdaterListener routeUpdaterListener,
                                  ListUpdater listUpdater,
                                  StellarPropertiesDisplayer displayer,
-                                 DatabaseUpdater dbUpdater) {
+                                 DatabaseUpdaterListener dbUpdater) {
         this.width = width;
         this.height = height;
         this.depth = depth;
         this.spacing = spacing;
         this.colorPalette = colorPalette;
-        this.routeUpdater = routeUpdater;
+        this.routeUpdaterListener = routeUpdaterListener;
         this.listUpdater = listUpdater;
         this.displayer = displayer;
-        this.databaseUpdater = dbUpdater;
+        this.databaseUpdaterListener = dbUpdater;
 
         this.setMinHeight(height);
         this.setMinWidth(width);
@@ -206,10 +206,10 @@ public class InterstellarSpacePane extends Pane {
     /**
      * set the context updater
      *
-     * @param contextSelector the context selector
+     * @param contextSelectorListener the context selector
      */
-    public void setContextUpdater(ContextSelector contextSelector) {
-        this.contextSelector = contextSelector;
+    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
+        this.contextSelectorListener = contextSelectorListener;
     }
 
     /**
@@ -301,8 +301,8 @@ public class InterstellarSpacePane extends Pane {
     public void completeRoute() {
 
         // trigger that a new route has been created
-        if (routeUpdater != null) {
-            routeUpdater.newRoute(datasetName, currentRoute);
+        if (routeUpdaterListener != null) {
+            routeUpdaterListener.newRoute(datasetName, currentRoute);
         }
     }
 
@@ -684,7 +684,7 @@ public class InterstellarSpacePane extends Pane {
                 String notes = notesOptional.get();
                 if (!notes.isEmpty()) {
                     // save notes in star
-                    databaseUpdater.astrographicUpdate(starDescriptor.getRecordId(), notes);
+                    databaseUpdaterListener.astrographicUpdate(starDescriptor.getRecordId(), notes);
                 }
             }
 
@@ -711,6 +711,8 @@ public class InterstellarSpacePane extends Pane {
         });
         return menuItem;
     }
+
+    ////////////////// Routing
 
     private MenuItem createRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
@@ -757,7 +759,7 @@ public class InterstellarSpacePane extends Pane {
         createRouteSegment(properties);
         routingActive = false;
         makeRoutePermanent(currentRoute);
-        routeUpdater.newRoute(datasetName, currentRoute);
+        routeUpdaterListener.newRoute(datasetName, currentRoute);
     }
 
     private void makeRoutePermanent(RouteDescriptor currentRoute) {
@@ -770,6 +772,7 @@ public class InterstellarSpacePane extends Pane {
         // add this created one to the routes group
         routesGroup.getChildren().add(displayRoute);
     }
+
 
     private Xform createDisplayRoute(RouteDescriptor currentRoute) {
         Xform route = new Xform();
@@ -804,6 +807,7 @@ public class InterstellarSpacePane extends Pane {
             routesGroup.setVisible(true);
         }
     }
+
 
     private void continueRoute(Map<String, String> properties) {
         if (routingActive) {
@@ -856,6 +860,8 @@ public class InterstellarSpacePane extends Pane {
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
     }
+
+    ///////////////////// Routing
 
     /**
      * create a menuitem to remove a targeted item
@@ -923,8 +929,8 @@ public class InterstellarSpacePane extends Pane {
      * @param properties the properties of the star selected
      */
     private void jumpToSystem(Map<String, String> properties) {
-        if (contextSelector != null) {
-            contextSelector.selectSolarSystemSpace(properties);
+        if (contextSelectorListener != null) {
+            contextSelectorListener.selectSolarSystemSpace(properties);
         }
     }
 
@@ -936,7 +942,7 @@ public class InterstellarSpacePane extends Pane {
     private void removeNode(Map<String, String> properties) {
         log.info("Removing object for:" + properties.get("name"));
         String recordId = properties.get("recordId");
-        databaseUpdater.removeStar(UUID.fromString(recordId));
+        databaseUpdaterListener.removeStar(UUID.fromString(recordId));
     }
 
     /**
@@ -946,14 +952,14 @@ public class InterstellarSpacePane extends Pane {
      */
     private void editProperties(Map<String, String> properties) {
         StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
-        AstrographicObject starObject = databaseUpdater.getStar(starDisplayRecord.getRecordId());
+        AstrographicObject starObject = databaseUpdaterListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
         if (optionalStarDisplayRecord.isPresent()) {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
-                databaseUpdater.astrographicUpdate(record);
+                databaseUpdaterListener.astrographicUpdate(record);
                 log.info("Changed value: {}", record);
             } else {
                 log.error("no return");
@@ -969,7 +975,7 @@ public class InterstellarSpacePane extends Pane {
      */
     private void displayProperties(StarDisplayRecord starDisplayRecord) {
         log.info("Showing properties in side panes for:" + starDisplayRecord.getStarName());
-        AstrographicObject star = databaseUpdater.getStar(starDisplayRecord.getRecordId());
+        AstrographicObject star = databaseUpdaterListener.getStar(starDisplayRecord.getRecordId());
         if (displayer != null) {
             displayer.displayStellarProperties(starDisplayRecord);
         }

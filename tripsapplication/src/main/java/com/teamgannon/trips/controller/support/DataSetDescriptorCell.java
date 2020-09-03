@@ -1,7 +1,7 @@
 package com.teamgannon.trips.controller.support;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.search.StellarDataUpdater;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -14,9 +14,9 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
-    private StellarDataUpdater updater;
+    private StellarDataUpdaterListener updater;
 
-    public DataSetDescriptorCell(StellarDataUpdater updater) {
+    public DataSetDescriptorCell(StellarDataUpdaterListener updater) {
         this.updater = updater;
     }
 

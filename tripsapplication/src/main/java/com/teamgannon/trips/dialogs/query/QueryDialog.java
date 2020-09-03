@@ -4,7 +4,7 @@ import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
-import com.teamgannon.trips.search.StellarDataUpdater;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -31,7 +31,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
-    public QueryDialog(SearchContext searchContext, DataSetContext dataSetContext, StellarDataUpdater updater) {
+    public QueryDialog(SearchContext searchContext, DataSetContext dataSetContext, StellarDataUpdaterListener updater) {
         this.searchContext = searchContext;
         this.dataSetContext = dataSetContext;
         this.setTitle("Query And Search for Stars");

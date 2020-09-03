@@ -1,8 +1,8 @@
-package com.teamgannon.trips.graphics.operators;
+package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 
-public interface RouteUpdater {
+public interface RouteUpdaterListener {
 
     /**
      * triggered when a new route is created

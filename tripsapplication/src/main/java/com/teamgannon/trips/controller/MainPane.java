@@ -8,7 +8,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
-import com.teamgannon.trips.dialogs.preferences.PreferencesUpdater;
+import com.teamgannon.trips.listener.PreferencesUpdater;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
@@ -17,8 +17,7 @@ import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.operators.*;
-import com.teamgannon.trips.graphics.panes.DatabaseUpdater;
+import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -27,12 +26,10 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
-import com.teamgannon.trips.screenobjects.ListSelectorActionsListener;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
-import com.teamgannon.trips.search.StellarDataUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.Simulator;
 import com.teamgannon.trips.support.AlertFactory;
@@ -69,14 +66,14 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 public class MainPane implements
         ListUpdater,
         StellarPropertiesDisplayer,
-        StellarDataUpdater,
+        StellarDataUpdaterListener,
         ListSelectorActionsListener,
         PreferencesUpdater,
-        ContextSelector,
-        RouteUpdater,
+        ContextSelectorListener,
+        RouteUpdaterListener,
         RedrawListener,
         ReportGenerator,
-        DatabaseUpdater {
+        DatabaseUpdaterListener {
 
 
     /**

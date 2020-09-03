@@ -10,7 +10,7 @@ import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.search.StellarDataUpdater;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -39,7 +39,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final StellarDataUpdater dataUpdater;
+    private final StellarDataUpdaterListener dataUpdater;
     private DataSetContext dataSetContext;
     /**
      * the database management service used to manage datasets and databases
@@ -59,7 +59,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private DataSetDescriptor selectedDataset;
 
-    public DataSetManagerDialog(StellarDataUpdater dataUpdater,
+    public DataSetManagerDialog(StellarDataUpdaterListener dataUpdater,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 ChviewReader chviewReader,

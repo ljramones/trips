@@ -1,11 +1,12 @@
-package com.teamgannon.trips.search;
+package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.search.AstroSearchQuery;
 
 import java.util.List;
 
-public interface StellarDataUpdater {
+public interface StellarDataUpdaterListener {
 
     /**
      * do a plot update based on new search query

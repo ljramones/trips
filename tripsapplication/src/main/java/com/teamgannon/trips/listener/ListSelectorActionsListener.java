@@ -1,4 +1,4 @@
-package com.teamgannon.trips.screenobjects;
+package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;

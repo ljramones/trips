@@ -4,7 +4,7 @@ import com.teamgannon.trips.dataset.AddStarDialog;
 import com.teamgannon.trips.dialogs.dataset.TableEditResult;
 import com.teamgannon.trips.dialogs.support.EditTypeEnum;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.search.StellarDataUpdater;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -48,7 +48,7 @@ public class DataSetTable {
 
     private int currentPosition = 0;
 
-    private final StellarDataUpdater updater;
+    private final StellarDataUpdaterListener updater;
 
     /**
      * the constructor that we use to show the data
@@ -57,7 +57,7 @@ public class DataSetTable {
      * @param astrographicObjects the list of objects
      */
 
-    public DataSetTable(StellarDataUpdater updater, List<AstrographicObject> astrographicObjects) {
+    public DataSetTable(StellarDataUpdaterListener updater, List<AstrographicObject> astrographicObjects) {
         this.updater = updater;
         this.astrographicObjects = astrographicObjects;
         if (!astrographicObjects.isEmpty()) {

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.dialogs.preferences;
+package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;

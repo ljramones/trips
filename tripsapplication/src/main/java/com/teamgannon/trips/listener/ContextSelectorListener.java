@@ -1,4 +1,4 @@
-package com.teamgannon.trips.graphics.operators;
+package com.teamgannon.trips.listener;
 
 import java.util.Map;
 
@@ -7,7 +7,7 @@ import java.util.Map;
  * <p>
  * Created by larrymitchell on 2017-02-05.
  */
-public interface ContextSelector {
+public interface ContextSelectorListener {
 
     /**
      * select a interstellar system space
