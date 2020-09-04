@@ -76,7 +76,6 @@ public class MainPane implements
         DatabaseListener,
         DataSetChangeListener {
 
-
     /**
      * database management spring component service
      */
@@ -826,6 +825,7 @@ public class MainPane implements
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
             drawStars(dataSetDescriptor);
+            routingPanel.setContext(dataSetDescriptor);
         } else {
 
             List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
