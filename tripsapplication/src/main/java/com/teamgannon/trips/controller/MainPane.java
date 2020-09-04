@@ -711,7 +711,7 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(descriptor.getDataSetName(),
+                astrographicPlotter.drawAstrographicData(descriptor,
                         astrographicObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete());
@@ -744,7 +744,7 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor().getDataSetName(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -864,7 +864,7 @@ public class MainPane implements
             AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
             astroSearchQuery.zeroCenter();
             astrographicPlotter.drawAstrographicData(
-                    tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor().getDataSetName(),
+                    tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
                     astrographicObjects,
                     astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
             showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
@@ -1026,12 +1026,12 @@ public class MainPane implements
      */
 
     @Override
-    public void newRoute(String datasetName, RouteDescriptor routeDescriptor) {
+    public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
         log.info("new route");
 
         // store in database @todo
         // update in database @todo
-        databaseManagementService.addRouteToDataSet(datasetName, routeDescriptor);
+        databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
     }
 
 

@@ -6,6 +6,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.search.SearchContext;
 import javafx.geometry.Point3D;
@@ -71,7 +72,7 @@ public class AstrographicPlotter {
      * @param centerCoordinates   the center of the plot
      * @param colorPalette        the color palette to draw
      */
-    public void drawAstrographicData(String datasetName,
+    public void drawAstrographicData(DataSetDescriptor dataSetDescriptor,
                                      List<AstrographicObject> astrographicObjects,
                                      double[] centerCoordinates,
                                      ColorPalette colorPalette) {
@@ -79,7 +80,7 @@ public class AstrographicPlotter {
         // clear old drawing
         interstellarSpacePane.clearStars();
 
-        interstellarSpacePane.setDataSetContext(datasetName);
+        interstellarSpacePane.setDataSetContext(dataSetDescriptor);
 
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
@@ -108,7 +109,7 @@ public class AstrographicPlotter {
         }
         String data = String.format("%s records plotted from dataset %s.",
                 astrographicObjects.size(),
-                datasetName);
+                dataSetDescriptor.getDataSetName());
         showInfoMessage("Load Astrographic Format", data);
     }
 

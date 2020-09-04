@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -130,7 +131,7 @@ public class InterstellarSpacePane extends Pane {
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
     private final DatabaseListener databaseListener;
-    private String datasetName;
+    private DataSetDescriptor dataSetDescriptor;
 
 
     /**
@@ -302,7 +303,7 @@ public class InterstellarSpacePane extends Pane {
 
         // trigger that a new route has been created
         if (routeUpdaterListener != null) {
-            routeUpdaterListener.newRoute(datasetName, currentRoute);
+            routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
         }
     }
 
@@ -425,8 +426,11 @@ public class InterstellarSpacePane extends Pane {
             createExtension(record, colorPalette.getExtensionColor());
         }
 
+
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
+
+//        reDraw?outes(ds);
     }
 
 
@@ -715,6 +719,13 @@ public class InterstellarSpacePane extends Pane {
         return menuItem;
     }
 
+    ///////////////////
+
+    public void setDataSetContext(DataSetDescriptor datasetName) {
+        this.dataSetDescriptor = datasetName;
+    }
+
+
     ////////////////// Routing
 
     private MenuItem createRoutingMenuItem(Node star) {
@@ -762,7 +773,7 @@ public class InterstellarSpacePane extends Pane {
         createRouteSegment(properties);
         routingActive = false;
         makeRoutePermanent(currentRoute);
-        routeUpdaterListener.newRoute(datasetName, currentRoute);
+        routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
     }
 
     private void makeRoutePermanent(RouteDescriptor currentRoute) {
@@ -1262,7 +1273,4 @@ public class InterstellarSpacePane extends Pane {
         });
     }
 
-    public void setDataSetContext(String datasetName) {
-        this.datasetName = datasetName;
-    }
 }
