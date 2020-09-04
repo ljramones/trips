@@ -592,20 +592,16 @@ public class DatabaseManagementService {
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
     }
 
-    public void addRouteToDataSet(String datasetName, RouteDescriptor routeDescriptor) {
-        Optional<DataSetDescriptor> descriptorOptional = dataSetDescriptorRepository.findById(datasetName);
-        if (descriptorOptional.isPresent()) {
-            DataSetDescriptor descriptor = descriptorOptional.get();
-            // pull all routes
-            List<Route> routeList = descriptor.getRoutes();
-            // convert to a Route and add to current list
-            routeList.add(routeDescriptor.toRoute());
-            // overwrite the list of routes
-            descriptor.setRoutes(routeList);
-            dataSetDescriptorRepository.save(descriptor);
-        } else {
-            log.error("Attempting to add a route to a non existent dataset: {}", datasetName);
-        }
+    public void addRouteToDataSet(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
+
+        // pull all routes
+        List<Route> routeList = dataSetDescriptor.getRoutes();
+        // convert to a Route and add to current list
+        routeList.add(routeDescriptor.toRoute());
+        // overwrite the list of routes
+        dataSetDescriptor.setRoutes(routeList);
+        dataSetDescriptorRepository.save(dataSetDescriptor);
+
     }
 
     public void updateNotesOnStar(UUID recordId, String notes) {

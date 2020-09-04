@@ -50,7 +50,6 @@ public class RoutingPanel extends Pane {
             log.error("This dataset should be there but we couldn't find it: {}", datasetname);
         }
 
-
     }
 
 }

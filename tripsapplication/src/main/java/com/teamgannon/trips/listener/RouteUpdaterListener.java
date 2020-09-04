@@ -1,6 +1,7 @@
 package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 
 public interface RouteUpdaterListener {
 
@@ -9,7 +10,7 @@ public interface RouteUpdaterListener {
      *
      * @param routeDescriptor the route descriptor
      */
-    void newRoute(String datasetName, RouteDescriptor routeDescriptor);
+    void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor);
 
     /**
      * triggered when an existing route changes
