@@ -18,27 +18,46 @@
             <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Display">
-            <MenuItem mnemonicParsing="false" onAction="#showApplicationPreferences"
+            <MenuItem mnemonicParsing="false"
+                      onAction="#showApplicationPreferences"
                       text="Change Application Preferences..."/>
             <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="toggleGridMenuitem" mnemonicParsing="false" onAction="#toggleGrid"
+            <CheckMenuItem fx:id="toggleGridMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleGrid"
                            text="Toggle Grid"/>
-            <CheckMenuItem fx:id="toggleLabelsMenuitem" mnemonicParsing="false" onAction="#toggleLabels"
+            <CheckMenuItem fx:id="toggleLabelsMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleLabels"
                            text="Toggle Labels"/>
-            <CheckMenuItem fx:id="toggleExtensionsMenuitem" mnemonicParsing="false" onAction="#toggleGridExtensions"
+            <CheckMenuItem fx:id="toggleExtensionsMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleGridExtensions"
                            text="Toggle Grid Extensions"/>
-            <CheckMenuItem fx:id="toggleStarMenuitem" mnemonicParsing="false" onAction="#toggleStars"
+            <CheckMenuItem fx:id="toggleStarMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleStars"
                            text="Toggle Stars"/>
-            <CheckMenuItem fx:id="toggleScaleMenuitem" mnemonicParsing="false" onAction="#toggleScale"
+            <CheckMenuItem fx:id="toggleScaleMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleScale"
                            text="Toggle Scale"/>
-            <CheckMenuItem fx:id="toggleRoutesMenuitem" mnemonicParsing="false" onAction="#toggleRoutes"
+            <CheckMenuItem fx:id="toggleRoutesMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleRoutes"
                            text="Toggle  Routes"/>
             <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="toggleSidePaneMenuitem" mnemonicParsing="false" onAction="#toggleSidePane"
+            <CheckMenuItem fx:id="toggleSidePaneMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleSidePane"
                            text="Toggle Side Pane"/>
-            <CheckMenuItem fx:id="toggleToolBarMenuitem" mnemonicParsing="false" onAction="#toggleToolbar"
+            <CheckMenuItem fx:id="toggleToolBarMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleToolbar"
                            text="Toggle Toolbar"/>
-            <CheckMenuItem fx:id="toggleStatusBarMenuitem" mnemonicParsing="false" onAction="#toggleStatusBar"
+            <CheckMenuItem fx:id="toggleStatusBarMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleStatusBar"
                            text="Toggle Status Bar"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Data Management">
@@ -70,6 +89,7 @@
             <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Side Pane"/>
             <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false" onAction="#zoomIn" text="+"/>
             <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false" onAction="#zoomOut" text="-"/>
+            <CheckBox fx:id="animationCheckbox" mnemonicParsing="false" onAction="#runAnimation" text="animate"/>
         </ToolBar>
     </VBox>
     <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0" prefHeight="588.0"

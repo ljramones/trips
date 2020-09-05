@@ -85,6 +85,11 @@ public class InterstellarSpacePane extends Pane {
     private final double lineWidth = 0.5;
     private final ColorPalette colorPalette;
 
+    /**
+     * animation toggle
+     */
+    private boolean animationPlay = false;
+
 
     /**
      * used to signal an update to the parent list view
@@ -101,11 +106,6 @@ public class InterstellarSpacePane extends Pane {
      * panes is being displayed
      */
     private ContextSelectorListener contextSelectorListener;
-
-    /**
-     * the route updater listener
-     */
-    private final RouteUpdaterListener routeUpdaterListener;
 
     /**
      * the redraw listener
@@ -127,7 +127,7 @@ public class InterstellarSpacePane extends Pane {
 
     private DataSetDescriptor dataSetDescriptor;
 
-    private RouteManager routeManager;
+    private final RouteManager routeManager;
 
     // the lookout for drawn stars
     private final Map<UUID, Node> starLookup = new HashMap<>();
@@ -153,7 +153,6 @@ public class InterstellarSpacePane extends Pane {
         this.depth = depth;
         this.spacing = spacing;
         this.colorPalette = colorPalette;
-        this.routeUpdaterListener = routeUpdaterListener;
         this.listUpdater = listUpdater;
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
@@ -268,6 +267,10 @@ public class InterstellarSpacePane extends Pane {
         routeManager.redrawRoutes();
     }
 
+    public void plotRoutes(List<RouteDescriptor> routeList) {
+        routeManager.plotRoutes(routeList);
+    }
+
     /**
      * plot a number of stars
      *
@@ -284,6 +287,8 @@ public class InterstellarSpacePane extends Pane {
     }
 
 
+    ////////////// zoom and move
+
     public void zoomIn() {
         zoomGraph(-50);
     }
@@ -295,13 +300,15 @@ public class InterstellarSpacePane extends Pane {
     /**
      * do actual zoom
      *
-     * @param zoomAmt the amoutn to zoom
+     * @param zoomAmt the amount to zoom
      */
     private void zoomGraph(double zoomAmt) {
         double z = camera.getTranslateZ();
         double newZ = z - zoomAmt;
         camera.setTranslateZ(newZ);
     }
+
+    ////////// toggles
 
     /**
      * toggle the grid
@@ -370,16 +377,15 @@ public class InterstellarSpacePane extends Pane {
     /**
      * start the rotation of Y-axis animation
      */
-    public void startYrotate() {
-        rotator.play();
+    public void toggleAnimation() {
+        animationPlay = !animationPlay;
+        if (animationPlay) {
+            rotator.play();
+        } else {
+            rotator.pause();
+        }
     }
 
-    /**
-     * stop the rotation animation
-     */
-    public void stopYrotate() {
-        rotator.pause();
-    }
 
     /**
      * draw a star
@@ -396,13 +402,12 @@ public class InterstellarSpacePane extends Pane {
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
             starNode = createCentralPoint(record, colorPalette);
-            starLookup.put(record.getRecordId(), starNode);
         } else {
             // otherwise draw a regular star
             starNode = createStar(record, colorPalette);
             createExtension(record, colorPalette.getExtensionColor());
-            starLookup.put(record.getRecordId(), starNode);
         }
+        starLookup.put(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
@@ -1098,7 +1103,4 @@ public class InterstellarSpacePane extends Pane {
         });
     }
 
-    public void plotRoutes(List<RouteDescriptor> routeList) {
-        routeManager.plotRoutes(routeList);
-    }
 }
