@@ -7,6 +7,7 @@ import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.Interpolator;
@@ -19,13 +20,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.Shape3D;
-import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,10 +32,8 @@ import java.util.*;
 public class InterstellarSpacePane extends Pane {
 
     //////////////  Star Definitions   //////////////////
-
     private static final double CAMERA_INITIAL_DISTANCE = -500;
     private static final double CAMERA_INITIAL_X_ANGLE = -25;//   -90
-
 
     //////////////// event listeners and updaters
     private static final double CAMERA_INITIAL_Y_ANGLE = -25; // 0
@@ -50,7 +45,7 @@ public class InterstellarSpacePane extends Pane {
     private static final String scaleString = "Scale: 1 grid is %d ly square";
     private final Xform cameraXform = new Xform();
 
-    ////////////////// Routing ////////////////
+    ////////////////// Camera stuff ////////////////
     private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
     /**
@@ -61,6 +56,7 @@ public class InterstellarSpacePane extends Pane {
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
@@ -68,16 +64,19 @@ public class InterstellarSpacePane extends Pane {
     private final Xform extensionsGroup = new Xform();
     private final Xform stellarDisplayGroup = new Xform();
     private final Xform scaleGroup = new Xform();
-    private final Xform routesGroup = new Xform();
+
     // used to control label visibility
     private final Xform labelDisplayGroup = new Xform();
+
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
     private final double CONTROL_MULTIPLIER = 0.1;
     private final double SHIFT_MULTIPLIER = 0.1;
     private final double ALT_MULTIPLIER = 0.5;
     private final RotateTransition rotator;
+
     /////////////////
+
     // screen real estate
     private final int width;
     private final int height;
@@ -85,53 +84,53 @@ public class InterstellarSpacePane extends Pane {
     private final int spacing;
     private final double lineWidth = 0.5;
     private final ColorPalette colorPalette;
-    HashMap<Shape3D, Label> shape3DToLabel = new HashMap<>();
-    double modifier = 1.0;
-    double modifierFactor = 0.1;
+
+
     /**
      * used to signal an update to the parent list view
      */
     private final ListUpdater listUpdater;
+
     /**
      * used to signal an update to the parent property panes
      */
     private final StellarPropertiesDisplayer displayer;
+
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
     private ContextSelectorListener contextSelectorListener;
+
     /**
      * the route updater listener
      */
     private final RouteUpdaterListener routeUpdaterListener;
+
     /**
      * the redraw listener
      */
     private RedrawListener redrawListener;
+
     /**
      * the report generator
      */
     private ReportGenerator reportGenerator;
-    /**
-     * this is the descriptor of the current route
-     */
-    private RouteDescriptor currentRoute;
-    /**
-     * the graphic portion of the current route
-     */
-    private Xform currentRouteDisplay = new Xform();
-    /**
-     * whether there is a route being traced, true is yes
-     */
-    private boolean routingActive = false;
+
 
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
+
     private final DatabaseListener databaseListener;
+
     private DataSetDescriptor dataSetDescriptor;
+
+    private RouteManager routeManager;
+
+    // the lookout for drawn stars
+    private final Map<UUID, Node> starLookup = new HashMap<>();
 
 
     /**
@@ -159,6 +158,8 @@ public class InterstellarSpacePane extends Pane {
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
 
+        this.routeManager = new RouteManager(routeUpdaterListener);
+
         this.setMinHeight(height);
         this.setMinWidth(width);
 
@@ -171,13 +172,12 @@ public class InterstellarSpacePane extends Pane {
         world.getChildren().add(stellarDisplayGroup);
         extensionsGroup.setWhatAmI("Star Extensions");
         world.getChildren().add(extensionsGroup);
-        routesGroup.setWhatAmI("Star Routes");
-        world.getChildren().add(routesGroup);
+
+        world.getChildren().add(routeManager.getRoutesGroup());
+
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
 
-        // we don't connect this into the world yet
-        createCurrentRouteDisplay();
 
         // create a rotation animation
         rotator = createRotateAnimation();
@@ -195,14 +195,17 @@ public class InterstellarSpacePane extends Pane {
         handleKeyboard(this);
     }
 
+    //////////////////////
+
+    public void clearPlot() {
+        starLookup.clear();
+    }
 
     public double getDepth() {
         return depth;
     }
 
-
     //////////////////////////  External event updaters   ////////////////////////
-
 
     /**
      * set the context updater
@@ -258,7 +261,11 @@ public class InterstellarSpacePane extends Pane {
      */
     public void clearRoutes() {
         // clear the routes
-        routesGroup.getChildren().clear();
+        routeManager.clearRoutes();
+    }
+
+    public void redrawRoutes() {
+        routeManager.redrawRoutes();
     }
 
     /**
@@ -273,37 +280,6 @@ public class InterstellarSpacePane extends Pane {
         // clear the list
         if (listUpdater != null) {
             listUpdater.clearList();
-        }
-    }
-
-    /**
-     * plot the routes
-     *
-     * @param routeList the list of routes
-     */
-    public void plotRoutes(List<RouteDescriptor> routeList) {
-        // clear existing routes
-        routesGroup.getChildren().clear();
-        routeList.forEach(this::plotRoute);
-    }
-
-    public void plotRoute(RouteDescriptor routeDescriptor) {
-        Xform route = StellarEntityFactory.createRoute(routeDescriptor);
-        routesGroup.getChildren().add(route);
-        routesGroup.setVisible(true);
-    }
-
-
-    public void createRoute(RouteDescriptor currentRoute) {
-        this.currentRoute = currentRoute;
-    }
-
-
-    public void completeRoute() {
-
-        // trigger that a new route has been created
-        if (routeUpdaterListener != null) {
-            routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
         }
     }
 
@@ -375,7 +351,7 @@ public class InterstellarSpacePane extends Pane {
      * @param routesOn the status of the routes
      */
     public void toggleRoutes(boolean routesOn) {
-        routesGroup.setVisible(routesOn);
+        routeManager.toggleRoutes(routesOn);
     }
 
     /**
@@ -420,17 +396,16 @@ public class InterstellarSpacePane extends Pane {
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
             starNode = createCentralPoint(record, colorPalette);
+            starLookup.put(record.getRecordId(), starNode);
         } else {
             // otherwise draw a regular star
             starNode = createStar(record, colorPalette);
             createExtension(record, colorPalette.getExtensionColor());
+            starLookup.put(record.getRecordId(), starNode);
         }
-
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
-
-//        reDraw?outes(ds);
     }
 
 
@@ -475,11 +450,6 @@ public class InterstellarSpacePane extends Pane {
 
     ////////////// Star creation helpers  //////////////
 
-
-    private void createCurrentRouteDisplay() {
-        currentRouteDisplay = new Xform();
-        currentRouteDisplay.setWhatAmI("Current Route");
-    }
 
     private RotateTransition createRotateAnimation() {
         RotateTransition rotate = new RotateTransition(
@@ -723,6 +693,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setDataSetContext(DataSetDescriptor datasetName) {
         this.dataSetDescriptor = datasetName;
+        routeManager.setDatasetContext(dataSetDescriptor);
     }
 
 
@@ -735,7 +706,7 @@ public class InterstellarSpacePane extends Pane {
             RouteDialog dialog = new RouteDialog(properties);
             Optional<RouteDescriptor> result = dialog.showAndWait();
             result.ifPresent(routeDescriptor -> {
-                startRoute(routeDescriptor, properties);
+                routeManager.startRoute(routeDescriptor, properties);
             });
         });
         return menuItem;
@@ -745,7 +716,7 @@ public class InterstellarSpacePane extends Pane {
         MenuItem menuItem = new MenuItem("Continue Route");
         menuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
-            continueRoute(properties);
+            routeManager.continueRoute(properties);
         });
         return menuItem;
     }
@@ -754,7 +725,7 @@ public class InterstellarSpacePane extends Pane {
         MenuItem menuItem = new MenuItem("Finish Route");
         menuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
-            finishRoute(properties);
+            routeManager.finishRoute(properties);
         });
         return menuItem;
     }
@@ -764,116 +735,11 @@ public class InterstellarSpacePane extends Pane {
         MenuItem menuItem = new MenuItem("Reset Route");
         menuItem.setOnAction(event -> {
             Map<String, String> properties = (Map<String, String>) star.getUserData();
-            resetRoute(properties);
+            routeManager.resetRoute(properties);
         });
         return menuItem;
     }
 
-    private void finishRoute(Map<String, String> properties) {
-        createRouteSegment(properties);
-        routingActive = false;
-        makeRoutePermanent(currentRoute);
-        routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
-    }
-
-    private void makeRoutePermanent(RouteDescriptor currentRoute) {
-        // remove our hand drawn route
-        routesGroup.getChildren().remove(currentRouteDisplay);
-
-        // create a new one based on descriptor
-        Xform displayRoute = createDisplayRoute(currentRoute);
-
-        // add this created one to the routes group
-        routesGroup.getChildren().add(displayRoute);
-    }
-
-
-    private Xform createDisplayRoute(RouteDescriptor currentRoute) {
-        Xform route = new Xform();
-        route.setWhatAmI(currentRoute.getName());
-        Point3D previousPoint = new Point3D(0, 0, 0);
-        boolean firstPoint = true;
-        for (Point3D point3D : currentRoute.getLineSegments()) {
-            if (firstPoint) {
-                firstPoint = false;
-            } else {
-                Node lineSegment = CustomObjectFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
-                route.getChildren().add(lineSegment);
-            }
-            previousPoint = point3D;
-        }
-        return route;
-    }
-
-    private void startRoute(RouteDescriptor routeDescriptor, Map<String, String> properties) {
-        routingActive = true;
-        currentRoute = routeDescriptor;
-        log.info("Start charting the route:" + routeDescriptor);
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordId"));
-        if (currentRoute != null) {
-            Point3D toPoint3D = new Point3D(x, y, z);
-            currentRoute.getLineSegments().add(toPoint3D);
-            currentRoute.getRouteList().add(id);
-            routesGroup.getChildren().add(currentRouteDisplay);
-            routesGroup.setVisible(true);
-        }
-    }
-
-
-    private void continueRoute(Map<String, String> properties) {
-        if (routingActive) {
-            createRouteSegment(properties);
-            log.info("Next Routing step:{}", currentRoute);
-        }
-    }
-
-    private void createRouteSegment(Map<String, String> properties) {
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordId"));
-
-        if (currentRoute != null) {
-            int size = currentRoute.getLineSegments().size();
-            Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
-            Point3D toPoint3D = new Point3D(x, y, z);
-            Node lineSegment = CustomObjectFactory.createLineSegment(
-                    fromPoint, toPoint3D, 0.5, currentRoute.getColor()
-            );
-            currentRouteDisplay.getChildren().add(lineSegment);
-            currentRoute.getLineSegments().add(toPoint3D);
-            currentRoute.getRouteList().add(id);
-            currentRouteDisplay.setVisible(true);
-        }
-    }
-
-    /**
-     * reset the route and remove the parts that were partially drawn
-     *
-     * @param properties the properties
-     */
-    private void resetRoute(Map<String, String> properties) {
-        if (currentRoute != null) {
-            currentRoute.clear();
-        }
-        routesGroup.getChildren().remove(currentRouteDisplay);
-        routingActive = false;
-        createCurrentRouteDisplay();
-        resetCurrentRoute();
-        log.info("Resetting the route");
-    }
-
-    /**
-     * reset the current route
-     */
-    private void resetCurrentRoute() {
-        currentRoute.clear();
-        currentRouteDisplay = new Xform();
-        currentRouteDisplay.setWhatAmI("Current Route");
-    }
 
     ///////////////////// Routing
 
@@ -1144,53 +1010,12 @@ public class InterstellarSpacePane extends Pane {
             } else if (me.isMiddleButtonDown()) {
                 log.info("middle button pushed, x={}, y={}", mousePosX, mousePosY);
             }
+
+//            me.setDragDetect(true);
         });
 
     }
 
-    private void updateLabels() {
-        List<Node> starGroup = stellarDisplayGroup.getChildren();
-
-        for (Node star : starGroup) {
-            Xform xform = (Xform) star;
-            List<Node> nodes = xform.getChildren();
-            for (Node node : nodes) {
-                Group group = (Group) node;
-                List<Node> things = group.getChildren();
-                Label label;
-                Sphere sphere;
-                // one or another
-                if (things.get(0) instanceof Label) {
-                    label = (Label) things.get(0);
-                    // leave center star alone
-                    if (things.get(1) instanceof Box) {
-                        continue;
-                    }
-                    sphere = (Sphere) things.get(1);
-                } else {
-                    label = (Label) things.get(1);
-                    // leave center star alone
-                    if (things.get(0) instanceof Box) {
-                        continue;
-                    }
-                    sphere = (Sphere) things.get(0);
-                }
-                redrawLabel(group, sphere, label);
-            }
-//            log.info(star.toString());
-        }
-
-    }
-
-    private void redrawLabel(Group group, Sphere sphere, Label label) {
-        Point3D point3d = new Point3D(label.getTranslateX(), label.getTranslateY(), label.getTranslateZ());
-        Point3D localToScenePoint3d = label.localToScene(point3d, true);
-
-        label.getTransforms().setAll(new Translate(localToScenePoint3d.getX(), localToScenePoint3d.getY()));
-
-        boolean elementsRemoved = group.getChildren().removeIf(Label.class::isInstance);
-        group.getChildren().add(label);
-    }
 
     private void handleKeyboard(Pane pane) {
         log.info("Setting up keyboard handling");
@@ -1273,4 +1098,7 @@ public class InterstellarSpacePane extends Pane {
         });
     }
 
+    public void plotRoutes(List<RouteDescriptor> routeList) {
+        routeManager.plotRoutes(routeList);
+    }
 }
