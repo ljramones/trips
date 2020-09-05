@@ -27,7 +27,6 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
-import com.teamgannon.trips.screenobjects.StellarPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -176,6 +175,8 @@ public class MainPane implements
     public CheckMenuItem toggleScaleMenuitem;
     public CheckMenuItem toggleToolBarMenuitem;
     public CheckMenuItem toggleStatusBarMenuitem;
+    public CheckBox animationCheckbox
+            ;
 
     private ObjectViewPane objectViewPane;
 
@@ -1161,4 +1162,9 @@ public class MainPane implements
     public void removeStar(UUID recordId) {
         databaseManagementService.removeStar(recordId);
     }
+
+    public void runAnimation(ActionEvent actionEvent) {
+        interstellarSpacePane.toggleAnimation();
+    }
+
 }
