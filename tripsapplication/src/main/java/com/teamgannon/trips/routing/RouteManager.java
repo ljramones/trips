@@ -37,53 +37,66 @@ public class RouteManager {
 
     private final Xform routesGroup = new Xform();
 
+    ///////////////////////
+
+    /**
+     * the constructor
+     *
+     * @param routeUpdaterListener the route update listener
+     */
     public RouteManager(RouteUpdaterListener routeUpdaterListener) {
         this.routeUpdaterListener = routeUpdaterListener;
 
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
 
+        // define the
         routesGroup.setWhatAmI("Star Routes");
     }
 
+    /////////////// general
 
-    public void finishRoute(Map<String, String> properties) {
-        createRouteSegment(properties);
-        routingActive = false;
-        makeRoutePermanent(currentRoute);
-        routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
+    /**
+     * set the data descriptor descriptor context
+     *
+     * @param dataSetDescriptor the new current context
+     */
+    public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
+        this.dataSetDescriptor = dataSetDescriptor;
     }
 
-    public void makeRoutePermanent(com.teamgannon.trips.graphics.entities.RouteDescriptor currentRoute) {
-        // remove our hand drawn route
-        routesGroup.getChildren().remove(currentRouteDisplay);
-
-        // create a new one based on descriptor
-        Xform displayRoute = createDisplayRoute(currentRoute);
-
-        // add this created one to the routes group
-        routesGroup.getChildren().add(displayRoute);
+    /**
+     * clear the routes
+     */
+    public void clearRoutes() {
+        // clear the routes
+        routesGroup.getChildren().clear();
     }
 
-
-    public Xform createDisplayRoute(com.teamgannon.trips.graphics.entities.RouteDescriptor currentRoute) {
-        Xform route = new Xform();
-        route.setWhatAmI(currentRoute.getName());
-        Point3D previousPoint = new Point3D(0, 0, 0);
-        boolean firstPoint = true;
-        for (Point3D point3D : currentRoute.getLineSegments()) {
-            if (firstPoint) {
-                firstPoint = false;
-            } else {
-                Node lineSegment = CustomObjectFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
-                route.getChildren().add(lineSegment);
-            }
-            previousPoint = point3D;
-        }
-        return route;
+    /**
+     * get the total routes being displayed
+     *
+     * @return the entire routes set
+     */
+    public Node getRoutesGroup() {
+        return this.routesGroup;
     }
+
+    /**
+     * toggle the routes
+     *
+     * @param routesOn the status of the routes
+     */
+    public void toggleRoutes(boolean routesOn) {
+        routesGroup.setVisible(routesOn);
+    }
+
+    ///////////// routing functions
 
     public void startRoute(RouteDescriptor routeDescriptor, Map<String, String> properties) {
+        if (routingActive) {
+            resetRoute();
+        }
         routingActive = true;
         currentRoute = routeDescriptor;
         log.info("Start charting the route:" + routeDescriptor);
@@ -108,6 +121,43 @@ public class RouteManager {
         }
     }
 
+
+    public void finishRoute(Map<String, String> properties) {
+        createRouteSegment(properties);
+        routingActive = false;
+        makeRoutePermanent(currentRoute);
+        routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
+    }
+
+    public void makeRoutePermanent(com.teamgannon.trips.graphics.entities.RouteDescriptor currentRoute) {
+        // remove our hand drawn route
+        routesGroup.getChildren().remove(currentRouteDisplay);
+
+        // create a new one based on descriptor
+        Xform displayRoute = createDisplayRoute(currentRoute);
+
+        // add this created one to the routes group
+        routesGroup.getChildren().add(displayRoute);
+    }
+
+
+    public Xform createDisplayRoute(RouteDescriptor currentRoute) {
+        Xform route = new Xform();
+        route.setWhatAmI(currentRoute.getName());
+        Point3D previousPoint = new Point3D(0, 0, 0);
+        boolean firstPoint = true;
+        for (Point3D point3D : currentRoute.getLineSegments()) {
+            if (firstPoint) {
+                firstPoint = false;
+            } else {
+                Node lineSegment = CustomObjectFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
+                route.getChildren().add(lineSegment);
+            }
+            previousPoint = point3D;
+        }
+        return route;
+    }
+
     public void createRouteSegment(Map<String, String> properties) {
         double x = Double.parseDouble(properties.get("x"));
         double y = Double.parseDouble(properties.get("y"));
@@ -130,10 +180,8 @@ public class RouteManager {
 
     /**
      * reset the route and remove the parts that were partially drawn
-     *
-     * @param properties the properties
      */
-    public void resetRoute(Map<String, String> properties) {
+    public void resetRoute() {
         if (currentRoute != null) {
             currentRoute.clear();
         }
@@ -159,10 +207,7 @@ public class RouteManager {
         currentRouteDisplay.setWhatAmI("Current Route");
     }
 
-    public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
-        this.dataSetDescriptor = dataSetDescriptor;
-    }
-
+    ////////////  redraw the routes
 
     /**
      * plot the routes
@@ -180,43 +225,6 @@ public class RouteManager {
         routesGroup.getChildren().add(route);
         routesGroup.setVisible(true);
     }
-
-
-    public void createRoute(RouteDescriptor currentRoute) {
-        this.currentRoute = currentRoute;
-    }
-
-
-    public void completeRoute() {
-
-        // trigger that a new route has been created
-        if (routeUpdaterListener != null) {
-            routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
-        }
-    }
-
-    /**
-     * clear the routes
-     */
-    public void clearRoutes() {
-        // clear the routes
-        routesGroup.getChildren().clear();
-    }
-
-
-    public Node getRoutesGroup() {
-        return this.routesGroup;
-    }
-
-    /**
-     * toggle the routes
-     *
-     * @param routesOn the status of the routes
-     */
-    public void toggleRoutes(boolean routesOn) {
-        routesGroup.setVisible(routesOn);
-    }
-
 
     public void redrawRoutes() {
 //        if (dataSetDescriptor != null) {

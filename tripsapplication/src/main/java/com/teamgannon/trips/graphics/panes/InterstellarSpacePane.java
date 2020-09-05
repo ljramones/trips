@@ -73,6 +73,8 @@ public class InterstellarSpacePane extends Pane {
     private final double CONTROL_MULTIPLIER = 0.1;
     private final double SHIFT_MULTIPLIER = 0.1;
     private final double ALT_MULTIPLIER = 0.5;
+
+
     private final RotateTransition rotator;
 
     /////////////////
@@ -739,8 +741,7 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem resetRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Reset Route");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            routeManager.resetRoute(properties);
+            routeManager.resetRoute();
         });
         return menuItem;
     }
