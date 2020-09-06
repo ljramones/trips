@@ -22,7 +22,7 @@ public class RoutingPanel extends Pane {
 
     public RoutingPanel(DatabaseManagementService databaseManagementService) {
 
-        routingListView.setPrefHeight(200);
+        routingListView.setPrefHeight(500);
         routingListView.setPrefWidth(255);
         routingListView.setCellFactory(new RouteCellFactory());
         routingListView.getSelectionModel().selectedItemProperty().addListener(this::routingChanged);
