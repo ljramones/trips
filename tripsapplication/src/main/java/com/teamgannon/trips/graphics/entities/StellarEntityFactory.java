@@ -184,10 +184,11 @@ public class StellarEntityFactory {
                 // create the line segment
                 Node lineSegment
                         = CustomObjectFactory.createLineSegment(
-                        previousPoint, point3D, 0.5, Color.GREEN
+                        previousPoint, point3D, 0.5, routeDescriptor.getColor()
                 );
                 // step along the segment
                 previousPoint = point3D;
+
                 // add the completed line segment to overall list
                 route.getChildren().add(lineSegment);
             }
