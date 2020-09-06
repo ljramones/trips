@@ -15,12 +15,20 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
+
     private final DataSetChangeListener dataSetChangeListener;
+
     private final StellarDataUpdaterListener updater;
 
-    public DataSetDescriptorCell(DataSetChangeListener dataSetChangeListener, StellarDataUpdaterListener updater) {
+    /**
+     * the constructor
+     *
+     * @param dataSetChangeListener      the listener for datasets
+     * @param stellarDataUpdaterListener the stellar listener
+     */
+    public DataSetDescriptorCell(DataSetChangeListener dataSetChangeListener, StellarDataUpdaterListener stellarDataUpdaterListener) {
         this.dataSetChangeListener = dataSetChangeListener;
-        this.updater = updater;
+        this.updater = stellarDataUpdaterListener;
     }
 
     @Override
@@ -33,19 +41,19 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
         MenuItem plotMenuItem = new MenuItem("Plot Star");
         plotMenuItem.setOnAction((event) -> {
             log.info("plot stars!");
-            updater.showNewStellarData(true, false);
+            updater.showNewStellarData(descriptor, true, false);
         });
 
         MenuItem displayMenuItem = new MenuItem("Display Data");
         displayMenuItem.setOnAction((event) -> {
             log.info("display star data!");
-            updater.showNewStellarData(false, true);
+            updater.showNewStellarData(descriptor, false, true);
         });
 
         MenuItem displayPlotMenuItem = new MenuItem("Plot and display data");
         displayPlotMenuItem.setOnAction((event) -> {
             log.info("plot and display star data!");
-            updater.showNewStellarData(true, true);
+            updater.showNewStellarData(descriptor,true, true);
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
