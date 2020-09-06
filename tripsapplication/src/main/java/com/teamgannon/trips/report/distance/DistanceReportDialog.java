@@ -19,7 +19,7 @@ public class DistanceReportDialog extends Dialog<DistanceReport> {
     public DistanceReportDialog(DistanceReport report) {
         this.report = report;
 
-        this.setTitle("Distance Report Dialog for: " + report.getStarDisplayRecord().getStarName());
+        this.setTitle("Distance Report Dialog for: " + report.getSourceStar().getStarName());
         this.setHeight(300);
         this.setWidth(400);
 
