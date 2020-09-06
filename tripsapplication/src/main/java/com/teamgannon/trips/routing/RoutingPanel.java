@@ -1,7 +1,6 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.beans.Observable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -15,13 +14,15 @@ import java.util.List;
 @Component
 public class RoutingPanel extends Pane {
 
-    private String datasetname;
-
+    /**
+     * the set of routings
+     */
     private final ListView<Route> routingListView = new ListView<>();
 
-
-    public RoutingPanel(DatabaseManagementService databaseManagementService) {
-
+    /**
+     * the constructor
+     */
+    public RoutingPanel() {
         routingListView.setPrefHeight(500);
         routingListView.setPrefWidth(255);
         routingListView.setCellFactory(new RouteCellFactory());
@@ -32,8 +33,13 @@ public class RoutingPanel extends Pane {
     }
 
     private void routingChanged(Observable observable) {
+
     }
 
+    /**
+     * set the dataset context
+     * @param descriptor the descriptor
+     */
     public void setContext(DataSetDescriptor descriptor) {
 
         routingListView.getItems().clear();
@@ -46,7 +52,7 @@ public class RoutingPanel extends Pane {
             }
 
         } else {
-            log.error("This dataset should be there but we couldn't find it: {}", datasetname);
+            log.error("This dataset should be there but we couldn't find it");
         }
 
     }

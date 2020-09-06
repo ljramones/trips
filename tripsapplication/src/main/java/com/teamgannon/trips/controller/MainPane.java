@@ -498,7 +498,7 @@ public class MainPane implements
      * create the routing pane
      */
     private void createRoutingPane() {
-        routingPanel = new RoutingPanel(databaseManagementService);
+        routingPanel = new RoutingPanel();
         routingPane.setContent(routingPanel);
     }
 
@@ -750,6 +750,19 @@ public class MainPane implements
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
+    }
+
+    /**
+     * show the data
+     *
+     * @param dataSetDescriptor the dataset descriptor
+     * @param showPlot          show the graphical plot
+     * @param showTable         show the table
+     */
+    @Override
+    public void showNewStellarData(DataSetDescriptor dataSetDescriptor, boolean showPlot, boolean showTable) {
+        setContextDataSet(dataSetDescriptor);
+        showNewStellarData(showPlot, showTable);
     }
 
     /**

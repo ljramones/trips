@@ -10,8 +10,8 @@ import javafx.util.Callback;
 
 public class DataSetDescriptorCellFactory implements Callback<ListView<DataSetDescriptor>, ListCell<DataSetDescriptor>> {
 
-    private DataSetChangeListener dataSetChangeListener;
-    private StellarDataUpdaterListener updater;
+    private final DataSetChangeListener dataSetChangeListener;
+    private final StellarDataUpdaterListener updater;
 
     public DataSetDescriptorCellFactory(DataSetChangeListener dataSetChangeListener,
                                         StellarDataUpdaterListener stellarDataUpdaterListener) {
