@@ -50,10 +50,8 @@ public class InterstellarSpacePane extends Pane {
     ////////////////// Camera stuff ////////////////
     private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
-    /**
-     * list of star display records
-     */
-    private final Set<StarDisplayRecord> starDisplayRecords = new HashSet<>();
+
+
     /**
      * used to implement a selection model for selecting stars
      */
@@ -251,9 +249,9 @@ public class InterstellarSpacePane extends Pane {
      * clear the stars from the display
      */
     public void clearStars() {
+
         // remove stars
         stellarDisplayGroup.getChildren().clear();
-        starDisplayRecords.clear();
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
@@ -402,8 +400,6 @@ public class InterstellarSpacePane extends Pane {
      */
     public void drawStar(StarDisplayRecord record, String centerStar, ColorPalette colorPalette) {
 
-        starDisplayRecords.add(record);
-
         Node starNode;
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
@@ -428,7 +424,7 @@ public class InterstellarSpacePane extends Pane {
      * @param recordList the list of stars
      */
     public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
-        starDisplayRecords.addAll(recordList);
+
         for (StarDisplayRecord star : recordList) {
             drawStar(star, centerStar, colorPalette);
         }
@@ -439,8 +435,6 @@ public class InterstellarSpacePane extends Pane {
         Map<String, String> customProperties = record.toProperties();
 
         Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record, colorPalette, labelDisplayGroup);
-
-        starDisplayRecords.add(record);
 
         if (listUpdater != null) {
             listUpdater.updateList(record);
@@ -541,8 +535,6 @@ public class InterstellarSpacePane extends Pane {
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
-
-        starDisplayRecords.add(record);
 
         if (listUpdater != null) {
             listUpdater.updateList(record);
