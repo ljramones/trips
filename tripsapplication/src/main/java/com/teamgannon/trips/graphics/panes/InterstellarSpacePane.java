@@ -541,7 +541,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param record                 the star record
      * @param colorPalette           the color palette to use
-     * @param starDisplayPreferences
+     * @param starDisplayPreferences the star preferences
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette, StarDisplayPreferences starDisplayPreferences) {
@@ -761,7 +761,7 @@ public class InterstellarSpacePane extends Pane {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            reportGenerator.generateDistanceReport(starDescriptor);
+            reportGenerator.generateDistanceReport(starDescriptor, starLookup);
         });
         return menuItem;
     }

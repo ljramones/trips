@@ -23,6 +23,8 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.report.DistanceReport;
+import com.teamgannon.trips.report.DistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
@@ -39,6 +41,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -56,7 +59,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1018,14 +1023,27 @@ public class MainPane implements
     }
 
     @Override
-    public void generateDistanceReport(StarDisplayRecord starDescriptor) {
+    public void generateDistanceReport(StarDisplayRecord starDescriptor, Map<UUID, Node> starLookup) {
         log.info("generate the distance report");
-        storeFile(starDescriptor);
+
+        DistanceReport report = new DistanceReport(starDescriptor);
+        for (UUID id : starLookup.keySet()) {
+            StarDisplayRecord record = (StarDisplayRecord) starLookup.get(id).getUserData();
+            report.findDistance(record);
+        }
+        // generate the report
+        report.generateReport();
+        DistanceReportDialog reportDialog = new DistanceReportDialog(report);
+        Optional<DistanceReport> reportOptional = reportDialog.showAndWait();
+        if (reportOptional.isPresent()) {
+            String reportToSave = report.getGeneratedReport();
+            storeFile(reportToSave);
+        }
         log.info("report complete");
     }
 
 
-    private void storeFile(StarDisplayRecord starDisplayRecord) {
+    private void storeFile(String report) {
         log.debug("Store the report format file");
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Enter Report file to save");
@@ -1035,14 +1053,10 @@ public class MainPane implements
         if (file != null) {
             // load chview file
             try {
-//                DistanceReport report = starBase.getDistanceReport(starDisplayRecord);
-//                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-//                List<DistanceToFrom> distanceToFromList = report.getDistanceList();
-//                for (DistanceToFrom distanceToFrom : distanceToFromList) {
-//                    writer.write(distanceToFrom.toString());
-//                }
-//                writer.flush();
-//                writer.close();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                writer.write(report);
+                writer.flush();
+                writer.close();
             } catch (Exception e) {
                 showErrorAlert("Report Generation Error", "Failed to save distance report");
             }
