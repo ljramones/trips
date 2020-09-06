@@ -23,8 +23,10 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.report.DistanceReport;
-import com.teamgannon.trips.report.DistanceReportDialog;
+import com.teamgannon.trips.report.distance.DistanceReport;
+import com.teamgannon.trips.report.distance.DistanceReportDialog;
+import com.teamgannon.trips.report.distance.DistanceReportSelection;
+import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
@@ -671,7 +673,19 @@ public class MainPane implements
     ///////////// Reports /////////
 
     public void distanceReport(ActionEvent actionEvent) {
-        showWarningMessage("Work in progress", "not supported yet ");
+        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+        if (starsInView.size() > 0) {
+            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(starsInView);
+            Optional<DistanceReportSelection> optionalStarDisplayRecord = selectDialog.showAndWait();
+            if (optionalStarDisplayRecord.isPresent()) {
+                DistanceReportSelection reportSelection = optionalStarDisplayRecord.get();
+                if (reportSelection.isSelected()) {
+                    generateDistanceReport(reportSelection.getRecord());
+                }
+            }
+        } else {
+            showWarningMessage("No Visible Stars", "There are no visible stars in the plot. Please plot some first");
+        }
     }
 
     public void routeFinder(ActionEvent actionEvent) {
