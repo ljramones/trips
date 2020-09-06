@@ -1,9 +1,5 @@
-package com.teamgannon.trips.report;
+package com.teamgannon.trips.report.distance;
 
-import com.teamgannon.trips.dialogs.support.ApplicationPreferencesChange;
-import com.teamgannon.trips.dialogs.support.ChangeTypeEnum;
-import com.teamgannon.trips.dialogs.support.ColorChangeResult;
-import com.teamgannon.trips.dialogs.support.ViewPreferencesChange;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;

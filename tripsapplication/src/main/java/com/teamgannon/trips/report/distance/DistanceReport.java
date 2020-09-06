@@ -1,4 +1,4 @@
-package com.teamgannon.trips.report;
+package com.teamgannon.trips.report.distance;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;

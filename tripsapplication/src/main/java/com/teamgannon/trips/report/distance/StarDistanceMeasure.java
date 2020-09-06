@@ -1,4 +1,4 @@
-package com.teamgannon.trips.report;
+package com.teamgannon.trips.report.distance;
 
 
 import lombok.Builder;
