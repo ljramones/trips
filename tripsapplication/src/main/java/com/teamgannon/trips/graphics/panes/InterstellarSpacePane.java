@@ -232,6 +232,7 @@ public class InterstellarSpacePane extends Pane {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) starLookup.get(id).getUserData();
             starsInView.add(starDisplayRecord);
         }
+        starsInView.sort(Comparator.comparing(StarDisplayRecord::getStarName));
         return starsInView;
     }
 
