@@ -226,6 +226,15 @@ public class InterstellarSpacePane extends Pane {
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
 
+    public List<StarDisplayRecord> getCurrentStarsInView() {
+        List<StarDisplayRecord> starsInView = new ArrayList<>();
+        for (UUID id : starLookup.keySet()) {
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) starLookup.get(id).getUserData();
+            starsInView.add(starDisplayRecord);
+        }
+        return starsInView;
+    }
+
     /////////////////// SET DATASET CONTEXT  /////////////////
 
     public void setDataSetContext(DataSetDescriptor datasetName) {
@@ -761,7 +770,7 @@ public class InterstellarSpacePane extends Pane {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            reportGenerator.generateDistanceReport(starDescriptor, starLookup);
+            reportGenerator.generateDistanceReport(starDescriptor);
         });
         return menuItem;
     }

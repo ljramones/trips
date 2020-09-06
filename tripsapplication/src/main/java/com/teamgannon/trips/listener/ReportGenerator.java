@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface ReportGenerator {
 
-    void generateDistanceReport(StarDisplayRecord starDescriptor, Map<UUID, Node> starLookup);
+    void generateDistanceReport(StarDisplayRecord starDescriptor);
 
 }
