@@ -96,17 +96,17 @@ public class RouteManager {
 
     ///////////// routing functions
 
-    public void startRoute(RouteDescriptor routeDescriptor, Map<String, String> properties) {
+    public void startRoute(RouteDescriptor routeDescriptor, StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
             resetRoute();
         }
         routingActive = true;
         currentRoute = routeDescriptor;
         log.info("Start charting the route:" + routeDescriptor);
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordId"));
+        double x = starDisplayRecord.getX();
+        double y = starDisplayRecord.getY();
+        double z = starDisplayRecord.getZ();
+        UUID id = starDisplayRecord.getRecordId();
         if (currentRoute != null) {
             Point3D toPoint3D = new Point3D(x, y, z);
             currentRoute.getLineSegments().add(toPoint3D);
@@ -117,16 +117,16 @@ public class RouteManager {
     }
 
 
-    public void continueRoute(Map<String, String> properties) {
+    public void continueRoute(StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
-            createRouteSegment(properties);
+            createRouteSegment(starDisplayRecord);
             log.info("Next Routing step:{}", currentRoute);
         }
     }
 
 
-    public void finishRoute(Map<String, String> properties) {
-        createRouteSegment(properties);
+    public void finishRoute(StarDisplayRecord starDisplayRecord) {
+        createRouteSegment(starDisplayRecord);
         routingActive = false;
         makeRoutePermanent(currentRoute);
         routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
@@ -161,11 +161,11 @@ public class RouteManager {
         return route;
     }
 
-    public void createRouteSegment(Map<String, String> properties) {
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
-        UUID id = UUID.fromString(properties.get("recordId"));
+    public void createRouteSegment(StarDisplayRecord starDisplayRecord) {
+        double x = starDisplayRecord.getX();
+        double y = starDisplayRecord.getY();
+        double z = starDisplayRecord.getZ();
+        UUID id = starDisplayRecord.getRecordId();
 
         if (currentRoute != null) {
             int size = currentRoute.getLineSegments().size();

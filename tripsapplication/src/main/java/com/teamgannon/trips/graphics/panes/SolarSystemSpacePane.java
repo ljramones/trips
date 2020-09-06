@@ -1,6 +1,7 @@
 package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.listener.ContextSelectorListener;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -11,7 +12,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This is used to display a solar system
@@ -27,7 +27,7 @@ public class SolarSystemSpacePane extends Pane {
     private Label systemIdentifierLabel;
     private String systemName = "No System Selected";
     private Button returnButton;
-    private Map<String, String> objectProperties;
+    private StarDisplayRecord starDisplayRecord;
     private ContextSelectorListener contextSelectorListener;
 
 
@@ -44,11 +44,11 @@ public class SolarSystemSpacePane extends Pane {
     /**
      * set the system to show
      *
-     * @param objectProperties object properties of this system
+     * @param starDisplayRecord object properties of this system
      */
-    public void setSystemToDisplay(Map<String, String> objectProperties) {
-        this.objectProperties = objectProperties;
-        systemName = objectProperties.get("name");
+    public void setSystemToDisplay(StarDisplayRecord starDisplayRecord) {
+        this.starDisplayRecord = starDisplayRecord;
+        systemName = starDisplayRecord.getStarName();
         systemIdentifierLabel.setText(systemName);
     }
 

@@ -70,8 +70,7 @@ public class StellarEntityFactory {
     }
 
 
-    public static Node drawStellarObject(Map<String, String> customProperties,
-                                         StarDisplayRecord record,
+    public static Node drawStellarObject(StarDisplayRecord record,
                                          ColorPalette colorPalette,
                                          Xform labelGroup) {
 
@@ -79,20 +78,19 @@ public class StellarEntityFactory {
         Label label = createLabel(record, sphere, colorPalette);
         labelGroup.getChildren().add(label);
         Group group = new Group(sphere, label);
-        group.setUserData(customProperties);
+        group.setUserData(record);
         return group;
     }
 
 
-    public static Node drawCentralIndicator(Map<String, String> customProperties,
-                                            StarDisplayRecord record,
+    public static Node drawCentralIndicator(StarDisplayRecord record,
                                             ColorPalette colorPalette,
                                             Xform labelGroup) {
         Box box = createBox(record);
         Label label = createLabel(record, box, colorPalette);
         labelGroup.getChildren().add(label);
         Group group = new Group(box, label);
-        group.setUserData(customProperties);
+        group.setUserData(record);
         RotateTransition rotator = setRotationAnimation(group);
         rotator.play();
         return group;

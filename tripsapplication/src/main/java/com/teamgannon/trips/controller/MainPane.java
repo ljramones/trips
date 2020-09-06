@@ -983,12 +983,12 @@ public class MainPane implements
     /**
      * select the solar space
      *
-     * @param objectProperties the properties of the selected object
+     * @param starDisplayRecord the properties of the selected object
      */
     @Override
-    public void selectSolarSystemSpace(Map<String, String> objectProperties) {
+    public void selectSolarSystemSpace(StarDisplayRecord starDisplayRecord) {
         log.info("Showing a solar system");
-        solarSystemSpacePane.setSystemToDisplay(objectProperties);
+        solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
         solarSystemSpacePane.render();
         solarSystemSpacePane.toFront();
     }

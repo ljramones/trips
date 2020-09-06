@@ -411,7 +411,6 @@ public class InterstellarSpacePane extends Pane {
             createExtension(record, colorPalette.getExtensionColor());
         }
         starLookup.put(record.getRecordId(), starNode);
-        StarDisplayRecord recordStored = (StarDisplayRecord) starNode.getUserData();
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
@@ -432,9 +431,8 @@ public class InterstellarSpacePane extends Pane {
     }
 
     private Xform createCentralPoint(StarDisplayRecord record, ColorPalette colorPalette) {
-        Map<String, String> customProperties = record.toProperties();
 
-        Node star = StellarEntityFactory.drawCentralIndicator(customProperties, record, colorPalette, labelDisplayGroup);
+        Node star = StellarEntityFactory.drawCentralIndicator(record, colorPalette, labelDisplayGroup);
 
         if (listUpdater != null) {
             listUpdater.updateList(record);
@@ -445,8 +443,8 @@ public class InterstellarSpacePane extends Pane {
                 e -> starClickEventHandler(star, starContextMenu, e));
         star.setOnMousePressed(event -> {
             Node node = (Node) event.getSource();
-            Map<String, String> properties = (Map<String, String>) node.getUserData();
-            log.info("mouse click detected! " + properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
+            log.info("mouse click detected! " + starDescriptor);
         });
 
         Xform starNode = new Xform();
@@ -529,10 +527,7 @@ public class InterstellarSpacePane extends Pane {
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette) {
-
-        Map<String, String> customProperties = record.toProperties();
-        Node star = StellarEntityFactory.drawStellarObject(customProperties, record, colorPalette, labelDisplayGroup);
-
+        Node star = StellarEntityFactory.drawStellarObject(record, colorPalette, labelDisplayGroup);
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
 
@@ -545,8 +540,8 @@ public class InterstellarSpacePane extends Pane {
                 e -> starClickEventHandler(star, starContextMenu, e));
         star.setOnMousePressed(event -> {
             Node node = (Node) event.getSource();
-            Map<String, String> properties = (Map<String, String>) node.getUserData();
-            log.info("mouse click detected! " + properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
+            log.info("mouse click detected! " + starDescriptor);
         });
 
         Xform starNode = new Xform();
@@ -641,10 +636,10 @@ public class InterstellarSpacePane extends Pane {
 
         MenuItem enterNotesItem = createNotesMenuItem(star);
         cm.getItems().add(enterNotesItem);
-        cm.getItems().add(new SeparatorMenuItem());
-
         MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
         cm.getItems().add(editPropertiesMenuItem);
+
+        cm.getItems().add(new SeparatorMenuItem());
 
         MenuItem removeMenuItem = createRemoveMenuItem(star);
         cm.getItems().add(removeMenuItem);
@@ -655,9 +650,7 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createNotesMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Edit notes on this star");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
-
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
             notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
             Optional<String> notesOptional = notesDialog.showAndWait();
@@ -667,8 +660,8 @@ public class InterstellarSpacePane extends Pane {
                     // save notes in star
                     databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
                     // update the star notes on screen
-                    properties.put("notes", notes);
-                    star.setUserData(properties);
+                    starDescriptor.setNotes(notes);
+                    star.setUserData(starDescriptor);
                 }
             }
 
@@ -679,8 +672,7 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem distanceReportMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             reportGenerator.generateDistanceReport(starDescriptor);
         });
         return menuItem;
@@ -689,8 +681,7 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createRecenterMenuitem(Node star) {
         MenuItem menuItem = new MenuItem("Recenter on this star");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            StarDisplayRecord starDescriptor = StarDisplayRecord.fromProperties(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             redrawListener.recenter(starDescriptor);
         });
         return menuItem;
@@ -709,11 +700,11 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            RouteDialog dialog = new RouteDialog(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            RouteDialog dialog = new RouteDialog(starDescriptor);
             Optional<RouteDescriptor> result = dialog.showAndWait();
             result.ifPresent(routeDescriptor -> {
-                routeManager.startRoute(routeDescriptor, properties);
+                routeManager.startRoute(routeDescriptor, starDescriptor);
             });
         });
         return menuItem;
@@ -722,8 +713,8 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem continueRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Continue Route");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            routeManager.continueRoute(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            routeManager.continueRoute(starDescriptor);
         });
         return menuItem;
     }
@@ -731,8 +722,8 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem finishRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Finish Route");
         menuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            routeManager.finishRoute(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            routeManager.finishRoute(starDescriptor);
         });
         return menuItem;
     }
@@ -761,8 +752,8 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createRemoveMenuItem(Node star) {
         MenuItem removeMenuItem = new MenuItem("Remove");
         removeMenuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            removeNode(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            removeNode(starDescriptor);
         });
         return removeMenuItem;
     }
@@ -776,8 +767,9 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createEnterSystemItem(Node star) {
         MenuItem removeMenuItem = new MenuItem("Enter System");
         removeMenuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            jumpToSystem(properties);
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            ;
+            jumpToSystem(starDescriptor);
         });
         return removeMenuItem;
     }
@@ -790,11 +782,10 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createEditPropertiesMenuItem(Node star) {
         MenuItem editPropertiesMenuItem = new MenuItem("Edit");
         editPropertiesMenuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            Map<String, String> propertiesChange = editProperties(properties);
-            if (properties != null) {
-                star.setUserData(propertiesChange);
-            }
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
+            StarDisplayRecord editRecord = editProperties(starDisplayRecord);
+            star.setUserData(editRecord);
+
         });
         return editPropertiesMenuItem;
     }
@@ -808,9 +799,8 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createShowPropertiesMenuItem(Node star) {
         MenuItem propertiesMenuItem = new MenuItem("Properties");
         propertiesMenuItem.setOnAction(event -> {
-            Map<String, String> properties = (Map<String, String>) star.getUserData();
-            StarDisplayRecord record = StarDisplayRecord.fromProperties(properties);
-            AstrographicObject astrographicObject = databaseListener.getStar(record.getRecordId());
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
+            AstrographicObject astrographicObject = databaseListener.getStar(starDisplayRecord.getRecordId());
             displayProperties(astrographicObject);
         });
         return propertiesMenuItem;
@@ -820,32 +810,30 @@ public class InterstellarSpacePane extends Pane {
     /**
      * jump to the solar system selected
      *
-     * @param properties the properties of the star selected
+     * @param starDisplayRecord the properties of the star selected
      */
-    private void jumpToSystem(Map<String, String> properties) {
+    private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
         if (contextSelectorListener != null) {
-            contextSelectorListener.selectSolarSystemSpace(properties);
+            contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
         }
     }
 
     /**
      * remove a star node form the db
      *
-     * @param properties the properties to remove
+     * @param starDisplayRecord the star to remove
      */
-    private void removeNode(Map<String, String> properties) {
-        log.info("Removing object for:" + properties.get("name"));
-        String recordId = properties.get("recordId");
-        databaseListener.removeStar(UUID.fromString(recordId));
+    private void removeNode(StarDisplayRecord starDisplayRecord) {
+        log.info("Removing object for:" + starDisplayRecord.getStarName());
+        databaseListener.removeStar(starDisplayRecord.getRecordId());
     }
 
     /**
      * edit a star in the database
      *
-     * @param properties the properties to edit
+     * @param starDisplayRecord the properties to edit
      */
-    private Map<String, String> editProperties(Map<String, String> properties) {
-        StarDisplayRecord starDisplayRecord = StarDisplayRecord.fromProperties(properties);
+    private StarDisplayRecord editProperties(StarDisplayRecord starDisplayRecord) {
         AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
@@ -855,16 +843,15 @@ public class InterstellarSpacePane extends Pane {
                 AstrographicObject record = status.getRecord();
                 StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record);
                 record1.setCoordinates(starDisplayRecord.getCoordinates());
-                Map<String, String> propertiesChange = record1.toProperties();
                 log.info("Changed value: {}", record);
                 databaseListener.updateStar(record);
-                return propertiesChange;
+                return record1;
             } else {
                 log.error("no return");
                 return null;
             }
         }
-        log.info("Editing properties in side panes for:" + properties.get("name"));
+        log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
         return null;
     }
 
@@ -1107,7 +1094,6 @@ public class InterstellarSpacePane extends Pane {
             }
         });
     }
-
 
 
 }

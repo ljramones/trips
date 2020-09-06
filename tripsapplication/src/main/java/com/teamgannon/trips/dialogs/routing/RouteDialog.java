@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.routing;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -12,14 +13,14 @@ import java.util.Map;
 
 public class RouteDialog extends Dialog<RouteDescriptor> {
 
-    public RouteDialog(Map<String, String> properties) {
+    public RouteDialog(StarDisplayRecord starDisplayRecord) {
         this.setTitle("Route Creation Dialog");
         this.setHeaderText("Create an initial Route");
 
-        String starName = properties.get("name");
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
+        String starName = starDisplayRecord.getStarName();
+        double x = starDisplayRecord.getX();
+        double y = starDisplayRecord.getY();
+        double z = starDisplayRecord.getZ();
 
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(10, 10, 10, 10));

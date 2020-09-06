@@ -1,5 +1,7 @@
 package com.teamgannon.trips.listener;
 
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+
 import java.util.Map;
 
 /**
@@ -21,6 +23,6 @@ public interface ContextSelectorListener {
      *
      * @param objectProperties the properties of the selected object
      */
-    void selectSolarSystemSpace(Map<String, String> objectProperties);
+    void selectSolarSystemSpace(StarDisplayRecord starDisplayRecord);
 
 }
