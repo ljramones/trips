@@ -17,13 +17,10 @@ public class RoutingPanel extends Pane {
 
     private String datasetname;
 
-    private final DatabaseManagementService databaseManagementService;
-
     private final ListView<Route> routingListView = new ListView<>();
 
 
     public RoutingPanel(DatabaseManagementService databaseManagementService) {
-        this.databaseManagementService = databaseManagementService;
 
         routingListView.setPrefHeight(200);
         routingListView.setPrefWidth(255);
@@ -38,6 +35,8 @@ public class RoutingPanel extends Pane {
     }
 
     public void setContext(DataSetDescriptor descriptor) {
+
+        routingListView.getItems().clear();
 
         if (descriptor != null) {
             List<Route> routeList = descriptor.getRoutes();

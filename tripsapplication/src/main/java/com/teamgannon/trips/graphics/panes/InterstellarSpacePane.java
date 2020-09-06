@@ -7,6 +7,7 @@ import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -159,7 +160,7 @@ public class InterstellarSpacePane extends Pane {
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
 
-        this.routeManager = new RouteManager(routeUpdaterListener);
+        this.routeManager = new RouteManager(routeUpdaterListener, starLookup);
 
         this.setMinHeight(height);
         this.setMinWidth(width);
@@ -265,11 +266,7 @@ public class InterstellarSpacePane extends Pane {
         routeManager.clearRoutes();
     }
 
-    public void redrawRoutes() {
-        routeManager.redrawRoutes();
-    }
-
-    public void plotRoutes(List<RouteDescriptor> routeList) {
+    public void plotRoutes(List<Route> routeList) {
         routeManager.plotRoutes(routeList);
     }
 
@@ -410,6 +407,7 @@ public class InterstellarSpacePane extends Pane {
             createExtension(record, colorPalette.getExtensionColor());
         }
         starLookup.put(record.getRecordId(), starNode);
+        StarDisplayRecord recordStored = (StarDisplayRecord) starNode.getUserData();
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
@@ -450,6 +448,7 @@ public class InterstellarSpacePane extends Pane {
         });
 
         Xform starNode = new Xform();
+        starNode.setUserData(record);
         starNode.getChildren().add(star);
         return starNode;
     }
@@ -551,6 +550,7 @@ public class InterstellarSpacePane extends Pane {
         });
 
         Xform starNode = new Xform();
+        starNode.setUserData(record);
         starNode.getChildren().add(star);
         return starNode;
     }
@@ -744,6 +744,10 @@ public class InterstellarSpacePane extends Pane {
             routeManager.resetRoute();
         });
         return menuItem;
+    }
+
+    public void redrawRoutes(List<Route> routes) {
+        routeManager.plotRoutes(routes);
     }
 
 
@@ -1103,5 +1107,6 @@ public class InterstellarSpacePane extends Pane {
             }
         });
     }
+
 
 }

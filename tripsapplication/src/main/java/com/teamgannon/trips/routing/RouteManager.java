@@ -1,9 +1,7 @@
 package com.teamgannon.trips.routing;
 
-import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
-import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
-import com.teamgannon.trips.graphics.entities.Xform;
+import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Point3D;
@@ -19,6 +17,7 @@ public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
     private final RouteUpdaterListener routeUpdaterListener;
+    private Map<UUID, Node> starLookup;
 
     private final double lineWidth = 0.5;
 
@@ -35,6 +34,9 @@ public class RouteManager {
      */
     private boolean routingActive = false;
 
+    /**
+     * the total set of all routes
+     */
     private final Xform routesGroup = new Xform();
 
     ///////////////////////
@@ -44,8 +46,9 @@ public class RouteManager {
      *
      * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(RouteUpdaterListener routeUpdaterListener) {
+    public RouteManager(RouteUpdaterListener routeUpdaterListener, Map<UUID, Node> starLookup) {
         this.routeUpdaterListener = routeUpdaterListener;
+        this.starLookup = starLookup;
 
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
@@ -214,38 +217,67 @@ public class RouteManager {
      *
      * @param routeList the list of routes
      */
-    public void plotRoutes(List<RouteDescriptor> routeList) {
+    public void plotRoutes(List<Route> routeList) {
         // clear existing routes
         routesGroup.getChildren().clear();
         routeList.forEach(this::plotRoute);
     }
 
-    public void plotRoute(RouteDescriptor routeDescriptor) {
-        Xform route = StellarEntityFactory.createRoute(routeDescriptor);
-        routesGroup.getChildren().add(route);
-        routesGroup.setVisible(true);
+    ////////
+
+    /**
+     * plot a single route
+     *
+     * @param route the route to plot
+     */
+    public void plotRoute(Route route) {
+        if (checkIfRouteCanBePlotted(route)) {
+            // do actual plot
+            RouteDescriptor routeDescriptor = toRouteDescriptor(route);
+            Xform routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+            routesGroup.getChildren().add(routeGraphic);
+            routesGroup.setVisible(true);
+        }
+        log.info("Plot done");
     }
 
-    public void redrawRoutes() {
-//        if (dataSetDescriptor != null) {
-//            List<Route> routeList = dataSetDescriptor.getRoutes();
-//            for (Route routeDescriptor : routeList) {
-//                Xform route = new Xform();
-//                List<UUID> stars = routeDescriptor.getRouteStars();
-//                UUID firstStar = stars.get(0);
-//                Node star = starLookup.get(firstStar);
-//                for (int i = 1; i < stars.size(); i++) {
-//                    UUID nextStar = stars.get(i);
-//                    drawSegment(firstStar, nextStar, routeDescriptor.getRouteColor(), routeDescriptor.getRouteType());
-//                    firstStar = nextStar;
-//                }
-//
-//            }
-//        }
+    /**
+     * convert a database description of a route to a graphical one.
+     * check that all the stars in the original route are present because we can't display the route
+     *
+     * @param route the db description of a route
+     * @return the graphical descriptor
+     */
+    private RouteDescriptor toRouteDescriptor(Route route) {
+        RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
+        for (UUID id : route.getRouteStars()) {
+            StarDisplayRecord starDisplayRecord = getStar(id);
+            if (starDisplayRecord != null) {
+                routeDescriptor.getRouteList().add(id);
+                routeDescriptor.getLineSegments().add(starDisplayRecord.getCoordinates());
+            }
+        }
+
+        return routeDescriptor;
     }
 
-    private void drawSegment(UUID firstStar, UUID nextStar, String routeColor, UUID routeType) {
+    public boolean checkIfRouteCanBePlotted(Route route) {
+        return route.getRouteStars().stream().allMatch(id -> starLookup.containsKey(id));
+    }
 
+    /**
+     * get the embedded object associated with the star in the lookup
+     *
+     * @param starId the id
+     * @return the embedded object
+     */
+    public StarDisplayRecord getStar(UUID starId) {
+        Node star = starLookup.get(starId);
+        if (star != null) {
+            return (StarDisplayRecord) star.getUserData();
+        } else {
+            return null;
+        }
     }
 
 }
