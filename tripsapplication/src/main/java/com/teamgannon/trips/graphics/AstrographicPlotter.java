@@ -1,6 +1,7 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -71,7 +72,8 @@ public class AstrographicPlotter {
     public void drawAstrographicData(DataSetDescriptor dataSetDescriptor,
                                      List<AstrographicObject> astrographicObjects,
                                      double[] centerCoordinates,
-                                     ColorPalette colorPalette) {
+                                     ColorPalette colorPalette,
+                                     StarDisplayPreferences starDisplayPreferences) {
 
         // clear old drawing
         interstellarSpacePane.clearStars();
@@ -94,7 +96,10 @@ public class AstrographicPlotter {
                 if (drawable(astrographicObject)) {
                     StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject);
                     record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
-                    interstellarSpacePane.drawStar(record, searchContext.getAstroSearchQuery().getCenterStar(), colorPalette);
+                    interstellarSpacePane.drawStar(record,
+                            searchContext.getAstroSearchQuery().getCenterStar(),
+                            colorPalette,
+                            starDisplayPreferences);
 //                    log.info("\nstar: {}\n", astrographicObject);
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
