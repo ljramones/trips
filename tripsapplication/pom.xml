@@ -13,7 +13,7 @@
 
     <groupId>com.teamgannon.trips</groupId>
     <artifactId>trips</artifactId>
-    <version>v0.5.2</version>
+    <version>v0.5.3</version>
 
     <name>Terran Republic Interstellar Plotter</name>
     <description>
@@ -38,6 +38,7 @@
     </developers>
 
     <contributors>
+
         <contributor>
             <name>Charles Gannon</name>
             <email>TBD</email>
@@ -51,6 +52,7 @@
             <properties>
             </properties>
         </contributor>
+
         <contributor>
             <name>Rick Boatwright</name>
             <email>TBD</email>
@@ -64,6 +66,7 @@
             <properties>
             </properties>
         </contributor>
+
     </contributors>
 
     <!-- this entire section needs to be figured out -->
@@ -254,12 +257,6 @@
         </dependency>
 
         <!-- Java FX support third party -->
-<!--        <dependency>-->
-<!--            <groupId>org.controlsfx</groupId>-->
-<!--            <artifactId>controlsfx</artifactId>-->
-<!--            <version>8.40.17</version>-->
-<!--        </dependency>-->
-
         <!-- Java FX Weaver dependencies -->
         <dependency>
             <groupId>net.rgielen</groupId>
@@ -290,8 +287,6 @@
     <build>
 
 <!--        <finalName>trips</finalName>-->
-
-
 
         <plugins>
             <plugin>
