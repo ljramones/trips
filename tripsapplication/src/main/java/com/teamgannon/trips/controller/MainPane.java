@@ -41,7 +41,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -1022,13 +1021,18 @@ public class MainPane implements
         showNewStellarData(query, true, false);
     }
 
+    /**
+     * generate the distance report
+     *
+     * @param starDescriptor the star to generate the report about
+     */
     @Override
-    public void generateDistanceReport(StarDisplayRecord starDescriptor, Map<UUID, Node> starLookup) {
+    public void generateDistanceReport(StarDisplayRecord starDescriptor) {
         log.info("generate the distance report");
 
         DistanceReport report = new DistanceReport(starDescriptor);
-        for (UUID id : starLookup.keySet()) {
-            StarDisplayRecord record = (StarDisplayRecord) starLookup.get(id).getUserData();
+        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+        for (StarDisplayRecord record : starsInView) {
             report.findDistance(record);
         }
         // generate the report
@@ -1042,7 +1046,11 @@ public class MainPane implements
         log.info("report complete");
     }
 
-
+    /**
+     * store a report file
+     *
+     * @param report the report as a string
+     */
     private void storeFile(String report) {
         log.debug("Store the report format file");
         final FileChooser fileChooser = new FileChooser();
@@ -1051,7 +1059,6 @@ public class MainPane implements
         fileChooser.setSelectedExtensionFilter(filter);
         File file = fileChooser.showSaveDialog(getStage());
         if (file != null) {
-            // load chview file
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                 writer.write(report);
@@ -1065,23 +1072,6 @@ public class MainPane implements
         }
     }
 
-    /*
-            DistanceReport report = new DistanceReport();
-        for (AstrographicObject astrographicObject : database.values()) {
-            try {
-                DistanceToFrom distanceToFrom = new DistanceToFrom();
-                distanceToFrom.setStarFrom(starDisplayRecord.getStarName());
-                distanceToFrom.setStarTo(astrographicObject.getDisplayName());
-                double distance = StarMath.getDistance(starDisplayRecord.getActualCoordinates(), astrographicObject.getCoordinates());
-                distanceToFrom.setDistance(distance);
-                report.addDistanceToFrom(distanceToFrom);
-            } catch (Exception e) {
-                log.error("Failed to calculate distance:" + e);
-            }
-        }
-
-        return report;
-     */
 
     @Override
     public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
@@ -1119,7 +1109,11 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
-        objectViewPane = new ObjectViewPane(this, this, this);
+        objectViewPane = new ObjectViewPane(
+                this,
+                this,
+                this,
+                this);
 
         // setup model to display in case we turn on
         objectsViewPane.setContent(objectViewPane);

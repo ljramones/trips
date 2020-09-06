@@ -4,6 +4,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
+import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -21,17 +22,21 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final Tooltip tooltip = new Tooltip();
 
 
-    private DatabaseListener databaseListener;
+    private final DatabaseListener databaseListener;
     private final ListSelectorActionsListener listSelectorActionsListener;
+    private final ReportGenerator reportGenerator;
 
     /**
      * the constructor for this cell
      *
      * @param listSelectorActionsListener the listener
      */
-    public StarDisplayRecordCell(DatabaseListener databaseListener, ListSelectorActionsListener listSelectorActionsListener) {
+    public StarDisplayRecordCell(DatabaseListener databaseListener,
+                                 ListSelectorActionsListener listSelectorActionsListener,
+                                 ReportGenerator reportGenerator) {
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
+        this.reportGenerator = reportGenerator;
     }
 
 
@@ -67,7 +72,13 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
             }
         });
 
-        contextMenu.getItems().addAll(recenterMenuItem, editMenuItem);
+        MenuItem distanceReportMenuItem = new MenuItem("Generate distance report");
+        distanceReportMenuItem.setOnAction((event) -> {
+            log.info("generate distance report {}", starDisplayRecord.getStarName());
+            reportGenerator.generateDistanceReport(starDisplayRecord);
+        });
+
+        contextMenu.getItems().addAll(recenterMenuItem, editMenuItem, distanceReportMenuItem);
 
         // Format name
         if (starDisplayRecord != null && !empty) {

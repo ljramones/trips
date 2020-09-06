@@ -4,6 +4,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
+import com.teamgannon.trips.listener.ReportGenerator;
 import com.teamgannon.trips.listener.StellarPropertiesDisplayer;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -17,11 +18,16 @@ public class ObjectViewPane extends Pane {
 
     public ObjectViewPane(StellarPropertiesDisplayer propertiesDisplayer,
                           DatabaseListener databaseListener,
-                          ListSelectorActionsListener listSelectorActionsListener) {
+                          ListSelectorActionsListener listSelectorActionsListener,
+                          ReportGenerator reportGenerator) {
 
         stellarObjectsListView.setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(255);
-        stellarObjectsListView.setCellFactory(new StarDisplayRecordCellFactory(databaseListener, listSelectorActionsListener));
+        stellarObjectsListView.setCellFactory(
+                new StarDisplayRecordCellFactory(
+                        databaseListener,
+                        listSelectorActionsListener,
+                        reportGenerator));
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             AstrographicObject astrographicObject = databaseListener.getStar(newValue.getRecordId());
             propertiesDisplayer.displayStellarProperties(astrographicObject);
