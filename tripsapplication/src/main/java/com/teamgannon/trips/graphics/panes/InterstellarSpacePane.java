@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.graphics.StarNotesDialog;
@@ -86,13 +87,15 @@ public class InterstellarSpacePane extends Pane {
     private final int depth;
     private final int spacing;
     private final double lineWidth = 0.5;
-    private final ColorPalette colorPalette;
+    private ColorPalette colorPalette;
 
     /**
      * animation toggle
      */
     private boolean animationPlay = false;
 
+
+    private final TripsContext tripsContext;
 
     /**
      * used to signal an update to the parent list view
@@ -146,7 +149,7 @@ public class InterstellarSpacePane extends Pane {
                                  int height,
                                  int depth,
                                  int spacing,
-                                 ColorPalette colorPalette,
+                                 TripsContext tripsContext,
                                  RouteUpdaterListener routeUpdaterListener,
                                  ListUpdater listUpdater,
                                  StellarPropertiesDisplayer displayer,
@@ -155,7 +158,8 @@ public class InterstellarSpacePane extends Pane {
         this.height = height;
         this.depth = depth;
         this.spacing = spacing;
-        this.colorPalette = colorPalette;
+        this.tripsContext = tripsContext;
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.listUpdater = listUpdater;
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
@@ -205,6 +209,10 @@ public class InterstellarSpacePane extends Pane {
 
     public double getDepth() {
         return depth;
+    }
+
+    public void changeColors(ColorPalette colorPalette) {
+        this.colorPalette = colorPalette;
     }
 
     //////////////////////////  External event updaters   ////////////////////////
@@ -1107,6 +1115,7 @@ public class InterstellarSpacePane extends Pane {
             }
         });
     }
+
 
 
 }

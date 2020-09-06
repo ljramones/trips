@@ -448,7 +448,8 @@ public class MainPane implements
         // create main graphics display pane
         interstellarSpacePane = new InterstellarSpacePane(
                 1080, 680, depth,
-                spacing, colorPalette,
+                spacing,
+                tripsContext,
                 this, this, this, this);
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
@@ -1164,7 +1165,7 @@ public class MainPane implements
 
         // colors changes so update db
         databaseManagementService.updateColors(colorPalette);
-        astrographicPlotter.changeColors(colorPalette);
+        interstellarSpacePane.changeColors(colorPalette);
         log.debug("UPDATE COLORS!!!");
     }
 

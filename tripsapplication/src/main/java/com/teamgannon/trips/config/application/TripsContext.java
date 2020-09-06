@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 public class TripsContext {
 
-
     private AppViewPreferences appViewPreferences = new AppViewPreferences();
 
     private ApplicationPreferences appPreferences = new ApplicationPreferences();
