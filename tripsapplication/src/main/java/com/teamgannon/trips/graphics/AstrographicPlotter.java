@@ -61,10 +61,6 @@ public class AstrographicPlotter {
         this.interstellarSpacePane = interstellarSpacePane;
     }
 
-    public void changeColors(ColorPalette colorPalette) {
-        log.info("Change colors");
-    }
-
     /**
      * draw the ch view file
      *
