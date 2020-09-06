@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
@@ -16,10 +17,12 @@ import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -85,7 +88,16 @@ public class InterstellarSpacePane extends Pane {
     private final int depth;
     private final int spacing;
     private final double lineWidth = 0.5;
+
+    /**
+     * the general color palette of the graph
+     */
     private ColorPalette colorPalette;
+
+    /**
+     * star display specifics
+     */
+    private StarDisplayPreferences starDisplayPreferences;
 
     /**
      * animation toggle
@@ -158,6 +170,7 @@ public class InterstellarSpacePane extends Pane {
         this.spacing = spacing;
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
         this.listUpdater = listUpdater;
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
@@ -181,7 +194,6 @@ public class InterstellarSpacePane extends Pane {
 
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
-
 
         // create a rotation animation
         rotator = createRotateAnimation();
@@ -211,7 +223,16 @@ public class InterstellarSpacePane extends Pane {
 
     public void changeColors(ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
+        tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
+
+    /////////////////// SET DATASET CONTEXT  /////////////////
+
+    public void setDataSetContext(DataSetDescriptor datasetName) {
+        this.dataSetDescriptor = datasetName;
+        routeManager.setDatasetContext(dataSetDescriptor);
+    }
+
 
     //////////////////////////  External event updaters   ////////////////////////
 
@@ -243,7 +264,6 @@ public class InterstellarSpacePane extends Pane {
     }
 
     //////////////////////////  public methods /////////////////////////////
-
 
     /**
      * clear the stars from the display
@@ -391,6 +411,20 @@ public class InterstellarSpacePane extends Pane {
         }
     }
 
+    ///////////////////////////////////
+
+    /**
+     * draw a list of stars
+     *
+     * @param recordList the list of stars
+     */
+    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+
+        for (StarDisplayRecord star : recordList) {
+            drawStar(star, centerStar, colorPalette, starDisplayPreferences);
+        }
+        createExtensionGroup(recordList, colorPalette.getExtensionColor());
+    }
 
     /**
      * draw a star
@@ -398,16 +432,20 @@ public class InterstellarSpacePane extends Pane {
      * @param record     the star record
      * @param centerStar the name of the center star
      */
-    public void drawStar(StarDisplayRecord record, String centerStar, ColorPalette colorPalette) {
+    public void drawStar(StarDisplayRecord
+                                 record,
+                         String centerStar,
+                         ColorPalette colorPalette,
+                         StarDisplayPreferences starDisplayPreferences) {
 
         Node starNode;
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
-            starNode = createCentralPoint(record, colorPalette);
+            starNode = createCentralPoint(record, colorPalette, starDisplayPreferences);
         } else {
             // otherwise draw a regular star
-            starNode = createStar(record, colorPalette);
+            starNode = createStar(record, colorPalette, starDisplayPreferences);
             createExtension(record, colorPalette.getExtensionColor());
         }
         starLookup.put(record.getRecordId(), starNode);
@@ -418,21 +456,18 @@ public class InterstellarSpacePane extends Pane {
 
 
     /**
-     * draw a list of stars
+     * Draw the central star to the plot
      *
-     * @param recordList the list of stars
+     * @param record                 the star record to show
+     * @param colorPalette           the color palette to use
+     * @param starDisplayPreferences the star display preferences
+     * @return the graphical object group representing the star
      */
-    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+    private Xform createCentralPoint(StarDisplayRecord record,
+                                     ColorPalette colorPalette,
+                                     StarDisplayPreferences starDisplayPreferences) {
 
-        for (StarDisplayRecord star : recordList) {
-            drawStar(star, centerStar, colorPalette);
-        }
-        createExtensionGroup(recordList, colorPalette.getExtensionColor());
-    }
-
-    private Xform createCentralPoint(StarDisplayRecord record, ColorPalette colorPalette) {
-
-        Node star = StellarEntityFactory.drawCentralIndicator(record, colorPalette, labelDisplayGroup);
+        Node star = StellarEntityFactory.drawCentralIndicator(record, colorPalette, starDisplayPreferences, labelDisplayGroup);
 
         if (listUpdater != null) {
             listUpdater.updateList(record);
@@ -453,22 +488,7 @@ public class InterstellarSpacePane extends Pane {
         return starNode;
     }
 
-
     ////////////// Star creation helpers  //////////////
-
-
-    private RotateTransition createRotateAnimation() {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(ROTATE_SECS),
-                world
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(RotateTransition.INDEFINITE);
-        return rotate;
-    }
 
     /**
      * create a set of extensions for a set of stars
@@ -490,10 +510,7 @@ public class InterstellarSpacePane extends Pane {
     private void createExtension(StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
-        Node lineSegment
-                = CustomObjectFactory.createLineSegment(
-                point3DFrom, point3DTo, lineWidth, extensionColor
-        );
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
@@ -514,7 +531,7 @@ public class InterstellarSpacePane extends Pane {
     private void createScaleLegend(int scaleValue) {
         Text scaleText = new Text(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
-        scaleText.setFill(Color.BEIGE);
+        scaleText.setFill(colorPalette.getLegendColor());
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);
     }
@@ -522,12 +539,13 @@ public class InterstellarSpacePane extends Pane {
     /**
      * create a star named with radius and color located at x,y,z
      *
-     * @param record       the star record
-     * @param colorPalette the color palette to use
+     * @param record                 the star record
+     * @param colorPalette           the color palette to use
+     * @param starDisplayPreferences
      * @return the star to plot
      */
-    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette) {
-        Node star = StellarEntityFactory.drawStellarObject(record, colorPalette, labelDisplayGroup);
+    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette, StarDisplayPreferences starDisplayPreferences) {
+        Node star = StellarEntityFactory.drawStellarObject(record, colorPalette, starDisplayPreferences, labelDisplayGroup);
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
 
@@ -587,6 +605,76 @@ public class InterstellarSpacePane extends Pane {
             }
         }
     }
+
+    /**
+     * remove a star node form the db
+     *
+     * @param starDisplayRecord the star to remove
+     */
+    private void removeNode(StarDisplayRecord starDisplayRecord) {
+        log.info("Removing object for:" + starDisplayRecord.getStarName());
+        databaseListener.removeStar(starDisplayRecord.getRecordId());
+    }
+
+    /**
+     * edit a star in the database
+     *
+     * @param starDisplayRecord the properties to edit
+     */
+    private StarDisplayRecord editProperties(StarDisplayRecord starDisplayRecord) {
+        AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+        StarEditDialog starEditDialog = new StarEditDialog(starObject);
+        Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
+        if (optionalStarDisplayRecord.isPresent()) {
+            StarEditStatus status = optionalStarDisplayRecord.get();
+            if (status.isChanged()) {
+                AstrographicObject record = status.getRecord();
+                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record);
+                record1.setCoordinates(starDisplayRecord.getCoordinates());
+                log.info("Changed value: {}", record);
+                databaseListener.updateStar(record);
+                return record1;
+            } else {
+                log.error("no return");
+                return null;
+            }
+        }
+        log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
+        return null;
+    }
+
+    /**
+     * display properties for this star
+     *
+     * @param astrographicObject the properties to display
+     */
+    private void displayProperties(AstrographicObject astrographicObject) {
+        log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
+        if (displayer != null) {
+            displayer.displayStellarProperties(astrographicObject);
+        }
+    }
+
+    ////////////////////////// animation helpers
+
+    /**
+     * create an animation player
+     *
+     * @return the rotation animator
+     */
+    private RotateTransition createRotateAnimation() {
+        RotateTransition rotate = new RotateTransition(
+                Duration.seconds(ROTATE_SECS),
+                world
+        );
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setFromAngle(360);
+        rotate.setToAngle(0);
+        rotate.setInterpolator(Interpolator.LINEAR);
+        rotate.setCycleCount(RotateTransition.INDEFINITE);
+        return rotate;
+    }
+
 
     ////////////////// Context Menus  ///////////////////
 
@@ -686,16 +774,6 @@ public class InterstellarSpacePane extends Pane {
         });
         return menuItem;
     }
-
-    ///////////////////
-
-    public void setDataSetContext(DataSetDescriptor datasetName) {
-        this.dataSetDescriptor = datasetName;
-        routeManager.setDatasetContext(dataSetDescriptor);
-    }
-
-
-    ////////////////// Routing
 
     private MenuItem createRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
@@ -818,66 +896,6 @@ public class InterstellarSpacePane extends Pane {
         }
     }
 
-    /**
-     * remove a star node form the db
-     *
-     * @param starDisplayRecord the star to remove
-     */
-    private void removeNode(StarDisplayRecord starDisplayRecord) {
-        log.info("Removing object for:" + starDisplayRecord.getStarName());
-        databaseListener.removeStar(starDisplayRecord.getRecordId());
-    }
-
-    /**
-     * edit a star in the database
-     *
-     * @param starDisplayRecord the properties to edit
-     */
-    private StarDisplayRecord editProperties(StarDisplayRecord starDisplayRecord) {
-        AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
-        StarEditDialog starEditDialog = new StarEditDialog(starObject);
-        Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
-        if (optionalStarDisplayRecord.isPresent()) {
-            StarEditStatus status = optionalStarDisplayRecord.get();
-            if (status.isChanged()) {
-                AstrographicObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record);
-                record1.setCoordinates(starDisplayRecord.getCoordinates());
-                log.info("Changed value: {}", record);
-                databaseListener.updateStar(record);
-                return record1;
-            } else {
-                log.error("no return");
-                return null;
-            }
-        }
-        log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
-        return null;
-    }
-
-    /**
-     * display properties for this star
-     *
-     * @param astrographicObject the properties to display
-     */
-    private void displayProperties(AstrographicObject astrographicObject) {
-        log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
-        if (displayer != null) {
-            displayer.displayStellarProperties(astrographicObject);
-        }
-    }
-
-    ////////////////////////
-
-    private GridPane createPopupGridPaneForNode(Map<String, String> properties) {
-        GridPane pane = new GridPane();
-        pane.getChildren().clear();
-        int i = 0;
-        for (String key : properties.keySet()) {
-            pane.addRow(i++, new Label(key + ":"), new Label(properties.get(key)));
-        }
-        return pane;
-    }
 
     ////////////// graphics helpers  /////////////////////////
 
@@ -918,6 +936,8 @@ public class InterstellarSpacePane extends Pane {
         cameraXform3.setTranslate(0, 0, -1000);
 
     }
+
+    ////////////////  GRID HELPERS  ///////////////////////
 
     public void rebuildGrid(double scaleIncrement, double gridScale, ColorPalette colorPalette) {
 
@@ -963,6 +983,8 @@ public class InterstellarSpacePane extends Pane {
 
         grid.setVisible(true);
     }
+
+    /////////////////  MOUSE AND KEYBOARD EVENT HANDLERS  /////////////////////////
 
     /**
      * used to handle rotation of the scene

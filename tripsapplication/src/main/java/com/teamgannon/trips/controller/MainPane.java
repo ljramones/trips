@@ -406,8 +406,6 @@ public class MainPane implements
     public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, DataSetDescriptor oldValue, DataSetDescriptor newValue) {
         String oldText = oldValue == null ? "null" : oldValue.toString();
         String newText = newValue == null ? "null" : newValue.toString();
-
-        log.info("Change: old = " + oldText + ", new = " + newText + "\n");
     }
 
 
@@ -660,8 +658,6 @@ public class MainPane implements
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-
-
     ////////// importer and exporters  //////////////////
 
     public void viewEditStarData(ActionEvent actionEvent) {
@@ -740,7 +736,8 @@ public class MainPane implements
                 astrographicPlotter.drawAstrographicData(descriptor,
                         astrographicObjects,
                         searchQuery.getCenterCoordinates(),
-                        tripsContext.getAppViewPreferences().getColorPallete());
+                        tripsContext.getAppViewPreferences().getColorPallete(),
+                        tripsContext.getAppViewPreferences().getStarDisplayPreferences());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -783,7 +780,11 @@ public class MainPane implements
 
         if (!astrographicObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor(), astrographicObjects, searchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor(),
+                        astrographicObjects,
+                        searchQuery.getCenterCoordinates(),
+                        tripsContext.getAppViewPreferences().getColorPallete(),
+                        tripsContext.getAppViewPreferences().getStarDisplayPreferences());
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -907,7 +908,9 @@ public class MainPane implements
             astrographicPlotter.drawAstrographicData(
                     tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
                     astrographicObjects,
-                    astroSearchQuery.getCenterCoordinates(), tripsContext.getAppViewPreferences().getColorPallete());
+                    astroSearchQuery.getCenterCoordinates(),
+                    tripsContext.getAppViewPreferences().getColorPallete(),
+                    tripsContext.getAppViewPreferences().getStarDisplayPreferences());
             showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");

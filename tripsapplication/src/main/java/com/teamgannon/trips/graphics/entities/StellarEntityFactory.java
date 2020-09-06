@@ -1,6 +1,7 @@
 package com.teamgannon.trips.graphics.entities;
 
 
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
@@ -72,6 +73,7 @@ public class StellarEntityFactory {
 
     public static Node drawStellarObject(StarDisplayRecord record,
                                          ColorPalette colorPalette,
+                                         StarDisplayPreferences starDisplayPreferences,
                                          Xform labelGroup) {
 
         Sphere sphere = createStellarShape(record);
@@ -85,6 +87,7 @@ public class StellarEntityFactory {
 
     public static Node drawCentralIndicator(StarDisplayRecord record,
                                             ColorPalette colorPalette,
+                                            StarDisplayPreferences starDisplayPreferences,
                                             Xform labelGroup) {
         Box box = createBox(record);
         Label label = createLabel(record, box, colorPalette);
