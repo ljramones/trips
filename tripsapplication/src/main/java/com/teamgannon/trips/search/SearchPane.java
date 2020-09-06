@@ -38,7 +38,11 @@ public class SearchPane extends Pane {
         this.dataSetContext = dataSetContext;
         this.updater = updater;
 
-        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getDistanceFromCenterStar(),dataSetContext.getDescriptor().getDistanceRange());
+        double distanceRange = 20.0;
+        if (dataSetContext.getDescriptor() != null) {
+            distanceRange = dataSetContext.getDescriptor().getDistanceRange();
+        }
+        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getDistanceFromCenterStar(), distanceRange);
 
         this.getChildren().add(createContent());
     }
