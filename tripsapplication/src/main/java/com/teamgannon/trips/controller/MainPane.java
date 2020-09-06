@@ -41,7 +41,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -79,27 +82,31 @@ public class MainPane implements
      * database management spring component service
      */
     private final DatabaseManagementService databaseManagementService;
+
     /**
      * the TRIPS application context
      */
     private final ApplicationContext appContext;
+
     /**
      * the CHView file reader component
      */
     private final ChviewReader chviewReader;
+
     /**
      * the excel file reader component
      */
     private final ExcelReader excelReader;
+
     /**
      * the RB csv reader
      */
     private final RBCsvReader rbCsvReader;
+
     /**
      * star plotter component
      */
     private final AstrographicPlotter astrographicPlotter;
-
 
     /**
      * the TRIPS context component
@@ -110,11 +117,15 @@ public class MainPane implements
      */
     private final SearchContext searchContext;
 
+    /**
+     * the localization of the application
+     */
     private final Localization localization;
+
     /**
      * list of routes
      */
-    private final List<RouteDescriptor> routeList = new ArrayList<>();
+    private List<Route> routeList;
 
     /**
      * dataset lists
@@ -175,8 +186,7 @@ public class MainPane implements
     public CheckMenuItem toggleScaleMenuitem;
     public CheckMenuItem toggleToolBarMenuitem;
     public CheckMenuItem toggleStatusBarMenuitem;
-    public CheckBox animationCheckbox
-            ;
+    public CheckBox animationCheckbox;
 
     private ObjectViewPane objectViewPane;
 
@@ -188,14 +198,11 @@ public class MainPane implements
     @FXML
     public TitledPane routingPane;
 
-    @FXML
-    public GridPane propertiesPane;
+    private RoutingPanel routingPanel;
 
     public ToggleButton toggleStarBtn;
     public ToggleButton toggleGridBtn;
     public ToggleButton toggleStemBtn;
-
-    private RoutingPanel routingPanel;
 
     ////////////////////////////////
     public ToggleButton toggleScaleBtn;
@@ -243,7 +250,6 @@ public class MainPane implements
                     TripsContext tripsContext,
                     Localization localization) {
 
-        //
         //  used to weave the java fx code with spring boot
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
@@ -329,7 +335,11 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
     }
 
-
+    /**
+     * update the graph toggles
+     *
+     * @param graphEnablesPersist the graph
+     */
     private void updateToggles(GraphEnablesPersist graphEnablesPersist) {
         if (graphEnablesPersist.isDisplayGrid()) {
             interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
@@ -407,7 +417,7 @@ public class MainPane implements
 
         for (DataSetDescriptor descriptor : dataSetDescriptorList) {
             if (descriptor.getRoutesStr() != null) {
-                List<Route> routeList = descriptor.getRoutes();
+                routeList = descriptor.getRoutes();
                 log.info("routes");
             }
         }
@@ -436,7 +446,10 @@ public class MainPane implements
      */
     private void createInterstellarSpace(ColorPalette colorPalette) {
         // create main graphics display pane
-        interstellarSpacePane = new InterstellarSpacePane(1080, 680, depth, spacing, colorPalette, this, this, this, this);
+        interstellarSpacePane = new InterstellarSpacePane(
+                1080, 680, depth,
+                spacing, colorPalette,
+                this, this, this, this);
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
         // put the interstellar space on top and the solar system to the back
@@ -471,6 +484,9 @@ public class MainPane implements
         createRoutingPane();
     }
 
+    /**
+     * create stellar pane
+     */
     private void createStellarPane() {
         stellarObjectPane.setPrefHeight(800);
         starPropertiesPane = new StarPropertiesPane();
@@ -478,6 +494,9 @@ public class MainPane implements
         stellarObjectPane.setContent(scrollPane);
     }
 
+    /**
+     * create the routing pane
+     */
     private void createRoutingPane() {
         routingPanel = new RoutingPanel(databaseManagementService);
         routingPane.setContent(routingPanel);
@@ -515,6 +534,11 @@ public class MainPane implements
 
     //////////  menu events
 
+    /**
+     * run the query
+     *
+     * @param actionEvent the event
+     */
     public void runQuery(ActionEvent actionEvent) {
         QueryDialog queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this);
         queryDialog.initModality(Modality.NONE);
@@ -787,7 +811,9 @@ public class MainPane implements
     public void setContextDataSet(DataSetDescriptor descriptor) {
         tripsContext.getDataSetContext().setDescriptor(descriptor);
         tripsContext.getDataSetContext().setValidDescriptor(true);
+        tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         dataSetsListView.getSelectionModel().select(descriptor);
+
         showStatus(descriptor.getDataSetName() + " is the active context");
     }
 
@@ -1029,10 +1055,8 @@ public class MainPane implements
     @Override
     public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
         log.info("new route");
-
-        // store in database @todo
-        // update in database @todo
         databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
+        routingPanel.setContext(dataSetDescriptor);
     }
 
 

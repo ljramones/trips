@@ -106,9 +106,9 @@ public class AstrographicPlotter {
             } catch (IllegalArgumentException iae) {
                 log.error("Star color is invalid:{}", astrographicObject);
             }
-            // draw the routes for this descriptor
-            interstellarSpacePane.redrawRoutes();
         }
+        // draw the routes for this descriptor
+        interstellarSpacePane.redrawRoutes(dataSetDescriptor.getRoutes());
 
         String data = String.format("%s records plotted from dataset %s.",
                 astrographicObjects.size(),

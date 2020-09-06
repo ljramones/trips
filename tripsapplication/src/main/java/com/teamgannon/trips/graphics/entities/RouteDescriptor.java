@@ -28,7 +28,7 @@ public class RouteDescriptor {
      * defined color of route
      */
     @Builder.Default
-    private Color color = Color.LIGHTCORAL;
+    private Color color = Color.WHITE;
 
     /**
      * list of ordered routes, min length is 2
@@ -68,5 +68,18 @@ public class RouteDescriptor {
         route.setRouteColor(this.color.toString());
         return route;
     }
+    public static RouteDescriptor toRouteDescriptor(Route route) {
+        return RouteDescriptor
+                .builder()
+                .name(route.getRouteName())
+                .maxLength(route.getRouteStars().size())
+                .color(Color.valueOf(route.getRouteColor()))
+                .routeNotes(route.getRouteNotes())
+                .startStar(route.getStartingStar())
+                .build();
+    }
+
+
+
 
 }
