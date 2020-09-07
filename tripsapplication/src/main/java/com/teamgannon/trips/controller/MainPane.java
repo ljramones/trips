@@ -1035,6 +1035,11 @@ public class MainPane implements
         showNewStellarData(query, true, false);
     }
 
+    @Override
+    public void highlightStar(UUID starId) {
+        interstellarSpacePane.highlightStar(starId);
+    }
+
     /**
      * generate the distance report
      *
@@ -1124,6 +1129,7 @@ public class MainPane implements
     private void setupStellarObjectListView() {
 
         objectViewPane = new ObjectViewPane(
+                this,
                 this,
                 this,
                 this,

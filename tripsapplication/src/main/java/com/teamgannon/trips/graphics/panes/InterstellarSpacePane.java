@@ -13,14 +13,13 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -77,6 +76,10 @@ public class InterstellarSpacePane extends Pane {
     private final double SHIFT_MULTIPLIER = 0.1;
     private final double ALT_MULTIPLIER = 0.5;
 
+    /**
+     * the current fade point
+     */
+    private FadeTransition fadeTransition;
 
     private final RotateTransition rotator;
 
@@ -146,8 +149,9 @@ public class InterstellarSpacePane extends Pane {
     private final RouteManager routeManager;
 
     // the lookout for drawn stars
-    private final Map<UUID, Node> starLookup = new HashMap<>();
+    private final Map<UUID, Xform> starLookup = new HashMap<>();
 
+    private RotateTransition highlightRotator;
 
     /**
      * constructor for the Graphics Pane
@@ -212,6 +216,29 @@ public class InterstellarSpacePane extends Pane {
     }
 
     //////////////////////
+
+    public void highlightStar(UUID starId) {
+        Xform starGroup = starLookup.get(starId);
+        if (highlightRotator!= null) {
+            highlightRotator.stop();
+        }
+        highlightRotator = setRotationAnimation(starGroup);
+        highlightRotator.play();
+        log.info("mark point");
+    }
+
+    private static RotateTransition setRotationAnimation(Group group) {
+        RotateTransition rotate = new RotateTransition(
+                Duration.seconds(10),
+                group
+        );
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setFromAngle(360);
+        rotate.setToAngle(0);
+        rotate.setInterpolator(Interpolator.LINEAR);
+        rotate.setCycleCount(RotateTransition.INDEFINITE);
+        return rotate;
+    }
 
     public void clearPlot() {
         starLookup.clear();
@@ -305,22 +332,6 @@ public class InterstellarSpacePane extends Pane {
     public void plotRoutes(List<Route> routeList) {
         routeManager.plotRoutes(routeList);
     }
-
-    /**
-     * plot a number of stars
-     *
-     * @param starDisplayRecordList the list of stars
-     */
-    public void plotStars(List<StarDisplayRecord> starDisplayRecordList) {
-        // clear stars, extensions and routes
-        clearStars();
-
-        // clear the list
-        if (listUpdater != null) {
-            listUpdater.clearList();
-        }
-    }
-
 
     ////////////// zoom and move
 
@@ -448,7 +459,7 @@ public class InterstellarSpacePane extends Pane {
                          ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {
 
-        Node starNode;
+        Xform starNode;
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
@@ -493,6 +504,7 @@ public class InterstellarSpacePane extends Pane {
         });
 
         Xform starNode = new Xform();
+        starNode.setId("central");
         starNode.setUserData(record);
         starNode.getChildren().add(star);
         return starNode;
@@ -573,6 +585,7 @@ public class InterstellarSpacePane extends Pane {
         });
 
         Xform starNode = new Xform();
+        starNode.setId("regularStar");
         starNode.setUserData(record);
         starNode.getChildren().add(star);
         return starNode;
@@ -703,6 +716,9 @@ public class InterstellarSpacePane extends Pane {
 //        titleItem.getStyleClass().add("context-menu-title");
         cm.getItems().add(titleItem);
 
+        MenuItem setStarMenuItem = createSetStarMenuitem(star);
+        cm.getItems().add(setStarMenuItem);
+
         MenuItem recenterMenuItem = createRecenterMenuitem(star);
         cm.getItems().add(recenterMenuItem);
 
@@ -743,6 +759,16 @@ public class InterstellarSpacePane extends Pane {
         cm.getItems().add(removeMenuItem);
 
         return cm;
+    }
+
+    private MenuItem createSetStarMenuitem(Node star) {
+        MenuItem menuItem = new MenuItem("Highlight star");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            redrawListener.highlightStar(starDescriptor.getRecordId());
+
+        });
+        return menuItem;
     }
 
     private MenuItem createNotesMenuItem(Node star) {

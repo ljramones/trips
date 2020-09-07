@@ -152,11 +152,12 @@ public class StellarEntityFactory {
      * @param colorPalette the color palette to use
      * @return the created object
      */
-    public static Label createLabel(StarDisplayRecord record, Shape3D sphere, ColorPalette colorPalette) {
+    public static Label createLabel(StarDisplayRecord record,
+                                    Shape3D sphere,
+                                    ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 8));
         label.setTextFill(colorPalette.getLabelColor());
-//        label.setTextFill(record.getStarColor());
         Point3D point3D = record.getCoordinates();
         label.setTranslateX(point3D.getX());
         label.setTranslateY(point3D.getY());
