@@ -17,7 +17,7 @@ public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
     private final RouteUpdaterListener routeUpdaterListener;
-    private Map<UUID, Node> starLookup;
+    private Map<UUID, Xform> starLookup;
 
     private final double lineWidth = 0.5;
 
@@ -46,7 +46,7 @@ public class RouteManager {
      *
      * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(RouteUpdaterListener routeUpdaterListener, Map<UUID, Node> starLookup) {
+    public RouteManager(RouteUpdaterListener routeUpdaterListener, Map<UUID, Xform> starLookup) {
         this.routeUpdaterListener = routeUpdaterListener;
         this.starLookup = starLookup;
 

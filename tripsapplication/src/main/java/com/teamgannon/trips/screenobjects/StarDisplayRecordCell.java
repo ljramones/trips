@@ -4,6 +4,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
+import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
@@ -25,6 +26,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final DatabaseListener databaseListener;
     private final ListSelectorActionsListener listSelectorActionsListener;
     private final ReportGenerator reportGenerator;
+    private final RedrawListener redrawListener;
 
     /**
      * the constructor for this cell
@@ -33,26 +35,33 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
      */
     public StarDisplayRecordCell(DatabaseListener databaseListener,
                                  ListSelectorActionsListener listSelectorActionsListener,
-                                 ReportGenerator reportGenerator) {
+                                 ReportGenerator reportGenerator,
+                                 RedrawListener redrawListener) {
+
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
         this.reportGenerator = reportGenerator;
+        this.redrawListener = redrawListener;
     }
-
 
     @Override
     public void updateItem(StarDisplayRecord starDisplayRecord, boolean empty) {
         super.updateItem(starDisplayRecord, empty);
 
         String entry = null;
-
         ContextMenu contextMenu = new ContextMenu();
-
         MenuItem recenterMenuItem = new MenuItem("Center on this star");
         recenterMenuItem.setOnAction((event) -> {
             log.info("recenter on {}", starDisplayRecord.getStarName());
             listSelectorActionsListener.recenter(starDisplayRecord);
         });
+
+        MenuItem highlightMenuItem = new MenuItem("Highlight this star");
+        highlightMenuItem.setOnAction((event) -> {
+            log.info("Highlight on {}", starDisplayRecord.getStarName());
+            redrawListener.highlightStar(starDisplayRecord.getRecordId());
+        });
+
 
         MenuItem editMenuItem = new MenuItem("Edit this star");
         editMenuItem.setOnAction((event) -> {
@@ -78,7 +87,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
             reportGenerator.generateDistanceReport(starDisplayRecord);
         });
 
-        contextMenu.getItems().addAll(recenterMenuItem, editMenuItem, distanceReportMenuItem);
+        contextMenu.getItems().addAll(recenterMenuItem, highlightMenuItem, editMenuItem, distanceReportMenuItem);
 
         // Format name
         if (starDisplayRecord != null && !empty) {
