@@ -13,14 +13,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
-
-import java.util.Map;
 
 public class StellarEntityFactory {
 
@@ -73,12 +70,10 @@ public class StellarEntityFactory {
 
     public static Node drawStellarObject(StarDisplayRecord record,
                                          ColorPalette colorPalette,
-                                         StarDisplayPreferences starDisplayPreferences,
-                                         Xform labelGroup) {
+                                         Label label,
+                                         StarDisplayPreferences starDisplayPreferences) {
 
-        Sphere sphere = createStellarShape(record);
-        Label label = createLabel(record, sphere, colorPalette);
-        labelGroup.getChildren().add(label);
+        Sphere sphere = createStellarShape(record, label);
         Group group = new Group(sphere, label);
         group.setUserData(record);
         return group;
@@ -87,11 +82,10 @@ public class StellarEntityFactory {
 
     public static Node drawCentralIndicator(StarDisplayRecord record,
                                             ColorPalette colorPalette,
-                                            StarDisplayPreferences starDisplayPreferences,
-                                            Xform labelGroup) {
-        Box box = createBox(record);
-        Label label = createLabel(record, box, colorPalette);
-        labelGroup.getChildren().add(label);
+                                            Label label,
+                                            StarDisplayPreferences starDisplayPreferences) {
+
+        Box box = createBox(record, label);
         Group group = new Group(box, label);
         group.setUserData(record);
         RotateTransition rotator = setRotationAnimation(group);
@@ -112,7 +106,7 @@ public class StellarEntityFactory {
         return rotate;
     }
 
-    private static Box createBox(StarDisplayRecord record) {
+    private static Box createBox(StarDisplayRecord record, Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
@@ -122,6 +116,7 @@ public class StellarEntityFactory {
         box.setTranslateX(point3D.getX());
         box.setTranslateY(point3D.getY());
         box.setTranslateZ(point3D.getZ());
+        label.setLabelFor(box);
         return box;
     }
 
@@ -129,9 +124,10 @@ public class StellarEntityFactory {
      * create a stellar object
      *
      * @param record the star record
+     * @param label the label
      * @return the created object
      */
-    public static Sphere createStellarShape(StarDisplayRecord record) {
+    public static Sphere createStellarShape(StarDisplayRecord record, Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
@@ -141,6 +137,7 @@ public class StellarEntityFactory {
         sphere.setTranslateX(point3D.getX());
         sphere.setTranslateY(point3D.getY());
         sphere.setTranslateZ(point3D.getZ());
+        label.setLabelFor(sphere);
         return sphere;
     }
 
@@ -148,12 +145,10 @@ public class StellarEntityFactory {
      * create a label for a shape
      *
      * @param record       the star record
-     * @param sphere       the star/shape
      * @param colorPalette the color palette to use
      * @return the created object
      */
     public static Label createLabel(StarDisplayRecord record,
-                                    Shape3D sphere,
                                     ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 8));
@@ -162,7 +157,6 @@ public class StellarEntityFactory {
         label.setTranslateX(point3D.getX());
         label.setTranslateY(point3D.getY());
         label.setTranslateZ(point3D.getZ());
-        label.setLabelFor(sphere);
         return label;
     }
 

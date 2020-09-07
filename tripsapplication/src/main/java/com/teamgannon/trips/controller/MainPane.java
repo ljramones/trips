@@ -10,6 +10,8 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
+import com.teamgannon.trips.dialogs.search.FindResults;
+import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
@@ -1236,4 +1238,16 @@ public class MainPane implements
         interstellarSpacePane.toggleAnimation();
     }
 
+    public void findInView(ActionEvent actionEvent) {
+        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
+        Optional<FindResults> optional = findStarInViewDialog.showAndWait();
+        if (optional.isPresent()) {
+            FindResults findResults = optional.get();
+            if (findResults.isSelected()) {
+                log.info("Value chose = {}", findResults.getRecord());
+                interstellarSpacePane.highlightStar(findResults.getRecord().getRecordId());
+            }
+        }
+    }
 }

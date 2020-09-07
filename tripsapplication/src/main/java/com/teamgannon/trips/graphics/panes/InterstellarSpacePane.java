@@ -13,7 +13,6 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
-import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
@@ -219,7 +218,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void highlightStar(UUID starId) {
         Xform starGroup = starLookup.get(starId);
-        if (highlightRotator!= null) {
+        if (highlightRotator != null) {
             highlightRotator.stop();
         }
         highlightRotator = setRotationAnimation(starGroup);
@@ -413,10 +412,13 @@ public class InterstellarSpacePane extends Pane {
      * @param labelsOn true is labels should be on
      */
     public void toggleLabels(boolean labelsOn) {
+        log.info("Label set:"+labelsOn);
         labelDisplayGroup.setVisible(labelsOn);
         List<Node> labelList = labelDisplayGroup.getChildren();
         for (Node node : labelList) {
             node.setVisible(labelsOn);
+            node.setManaged(labelsOn);
+            node.setDisable(labelsOn);
         }
     }
 
@@ -488,7 +490,14 @@ public class InterstellarSpacePane extends Pane {
                                      ColorPalette colorPalette,
                                      StarDisplayPreferences starDisplayPreferences) {
 
-        Node star = StellarEntityFactory.drawCentralIndicator(record, colorPalette, starDisplayPreferences, labelDisplayGroup);
+        Label label = StellarEntityFactory.createLabel(record, colorPalette);
+        labelDisplayGroup.getChildren().add(label);
+
+        Node star = StellarEntityFactory.drawCentralIndicator(
+                record,
+                colorPalette,
+                label,
+                starDisplayPreferences);
 
         if (listUpdater != null) {
             listUpdater.updateList(record);
@@ -505,6 +514,50 @@ public class InterstellarSpacePane extends Pane {
 
         Xform starNode = new Xform();
         starNode.setId("central");
+        starNode.setUserData(record);
+        starNode.getChildren().add(star);
+        return starNode;
+    }
+
+
+    /**
+     * create a star named with radius and color located at x,y,z
+     *
+     * @param record                 the star record
+     * @param colorPalette           the color palette to use
+     * @param starDisplayPreferences the star preferences
+     * @return the star to plot
+     */
+    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette, StarDisplayPreferences starDisplayPreferences) {
+
+        Label label = StellarEntityFactory.createLabel(record, colorPalette);
+        labelDisplayGroup.getChildren().add(label);
+
+        Node star = StellarEntityFactory.drawStellarObject(
+                record,
+                colorPalette,
+                label,
+                starDisplayPreferences);
+
+        Tooltip tooltip = new Tooltip(record.getStarName());
+        Tooltip.install(star, tooltip);
+
+        if (listUpdater != null) {
+            listUpdater.updateList(record);
+        }
+
+        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
+        star.addEventHandler(
+                MouseEvent.MOUSE_CLICKED,
+                e -> starClickEventHandler(star, starContextMenu, e));
+        star.setOnMousePressed(event -> {
+            Node node = (Node) event.getSource();
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
+            log.info("mouse click detected! " + starDescriptor);
+        });
+
+        Xform starNode = new Xform();
+        starNode.setId("regularStar");
         starNode.setUserData(record);
         starNode.getChildren().add(star);
         return starNode;
@@ -556,39 +609,6 @@ public class InterstellarSpacePane extends Pane {
         scaleText.setFill(colorPalette.getLegendColor());
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);
-    }
-
-    /**
-     * create a star named with radius and color located at x,y,z
-     *
-     * @param record                 the star record
-     * @param colorPalette           the color palette to use
-     * @param starDisplayPreferences the star preferences
-     * @return the star to plot
-     */
-    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette, StarDisplayPreferences starDisplayPreferences) {
-        Node star = StellarEntityFactory.drawStellarObject(record, colorPalette, starDisplayPreferences, labelDisplayGroup);
-        Tooltip tooltip = new Tooltip(record.getStarName());
-        Tooltip.install(star, tooltip);
-
-        if (listUpdater != null) {
-            listUpdater.updateList(record);
-        }
-
-        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
-
-        Xform starNode = new Xform();
-        starNode.setId("regularStar");
-        starNode.setUserData(record);
-        starNode.getChildren().add(star);
-        return starNode;
     }
 
     /**
