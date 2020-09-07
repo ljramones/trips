@@ -11,6 +11,7 @@ import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
+import com.teamgannon.trips.listener.StatusUpdater;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -50,6 +51,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final ExcelReader excelReader;
     private final RBCsvReader rbCsvReader;
     private final Localization localization;
+    private final StatusUpdater statusUpdater;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
@@ -66,7 +68,9 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                                 ChviewReader chviewReader,
                                 ExcelReader excelReader,
                                 RBCsvReader rbCsvReader,
-                                Localization localization) {
+                                Localization localization,
+                                StatusUpdater statusUpdater) {
+
         this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
 
@@ -75,6 +79,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         this.excelReader = excelReader;
         this.rbCsvReader = rbCsvReader;
         this.localization = localization;
+        this.statusUpdater = statusUpdater;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -279,9 +284,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             if (dataset.getName() == null) {
                 return;
             }
-
-//            showProgress(this.getDialogPane().getScene());
-
             processFileType(dataset);
         }
         log.info("loaded data set dialog");
@@ -305,6 +307,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     updateTable();
+                    statusUpdater.updateStatus("CHView database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
                 } else {
                     showErrorAlert("load CH View file", result.getMessage());
                 }
@@ -314,6 +317,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 if (result.isSuccess()) {
                     DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
                     updateTable();
+                    statusUpdater.updateStatus("Excel database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
                 } else {
                     showErrorAlert("load Excel file", result.getMessage());
                 }
@@ -324,6 +328,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     updateTable();
+                    statusUpdater.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
                 } else {
                     showErrorAlert("load csv", result.getMessage());
                 }
@@ -332,8 +337,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 result = processSimbadFile(dataset);
                 if (result.isSuccess()) {
                     DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-
                     updateTable();
+                    statusUpdater.updateStatus(result.getDataSetDescriptor().getDataSetName() + " is loaded");
                 } else {
                     showErrorAlert("load simbad", result.getMessage());
                 }
