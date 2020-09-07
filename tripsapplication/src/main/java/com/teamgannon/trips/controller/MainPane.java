@@ -10,8 +10,10 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
-import com.teamgannon.trips.dialogs.search.FindResults;
+import com.teamgannon.trips.dialogs.search.FindDistanceBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
+import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
+import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.ExcelReader;
@@ -84,7 +86,8 @@ public class MainPane implements
         RedrawListener,
         ReportGenerator,
         DatabaseListener,
-        DataSetChangeListener {
+        DataSetChangeListener,
+        StatusUpdater {
 
     /**
      * database management spring component service
@@ -762,7 +765,7 @@ public class MainPane implements
             if (showTable) {
                 showList(astrographicObjects);
             }
-            showStatus("Dataset loaded is: " + descriptor.getDataSetName());
+            updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
             setContextDataSet(descriptor);
 
         } else {
@@ -809,7 +812,7 @@ public class MainPane implements
             if (showTable) {
                 showList(astrographicObjects);
             }
-            showStatus("Dataset loaded is: " + searchQuery.getDescriptor().getDataSetName());
+            updateStatus("Dataset loaded is: " + searchQuery.getDescriptor().getDataSetName());
 
             // highlight the data set used
             setContextDataSet(searchQuery.getDescriptor());
@@ -823,6 +826,7 @@ public class MainPane implements
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
         addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+        updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " loaded");
     }
 
     @Override
@@ -839,6 +843,7 @@ public class MainPane implements
 
             // redisplay the datasets
             addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+            updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " removed");
         }
     }
 
@@ -849,7 +854,7 @@ public class MainPane implements
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         dataSetsListView.getSelectionModel().select(descriptor);
 
-        showStatus(descriptor.getDataSetName() + " is the active context");
+        updateStatus(descriptor.getDataSetName() + " is the active context");
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
@@ -931,7 +936,7 @@ public class MainPane implements
                     astroSearchQuery.getCenterCoordinates(),
                     tripsContext.getAppViewPreferences().getColorPallete(),
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences());
-            showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
+            updateStatus("Dataset plotted is: " + dataSetDescriptor.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -943,7 +948,6 @@ public class MainPane implements
     private void showTableData() {
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
-            DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(this, astrographicObjects);
         } else {
@@ -957,7 +961,7 @@ public class MainPane implements
 
             ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
             dialog.setTitle("Choice Data set to display");
-            dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
+            dialog.setHeaderText("Select your choice - (Default display is 20 light years from Earth, use Show Stars filter to change)");
 
             Optional<String> result = dialog.showAndWait();
 
@@ -971,7 +975,7 @@ public class MainPane implements
                 }
                 List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
                 new DataSetTable(this, astrographicObjects);
-                showStatus("Dataset loaded is: " + dataSetDescriptor.getDataSetName());
+                updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
 
                 // set current context
                 setContextDataSet(dataSetDescriptor);
@@ -1001,6 +1005,7 @@ public class MainPane implements
     public void selectInterstellarSpace(Map<String, String> objectProperties) {
         log.info("Showing interstellar Space");
         interstellarSpacePane.toFront();
+        updateStatus("Selected Interstellar space");
     }
 
     /**
@@ -1014,13 +1019,12 @@ public class MainPane implements
         solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
         solarSystemSpacePane.render();
         solarSystemSpacePane.toFront();
+        updateStatus("Selected Solarsystem space");
     }
 
     @Override
     public void updateList(StarDisplayRecord starDisplayRecord) {
         objectViewPane.add(starDisplayRecord);
-//        stellarObjectList.add(listItem);
-//        log.info(listItem.get("name"));
     }
 
     @Override
@@ -1171,9 +1175,6 @@ public class MainPane implements
 
     /////////////////////////  user feedback  //////////////////////////////
 
-    private void showStatus(String message) {
-        databaseStatus.setText(message);
-    }
 
     public void loadDataSetManager(ActionEvent actionEvent) {
 
@@ -1184,7 +1185,8 @@ public class MainPane implements
                 chviewReader,
                 excelReader,
                 rbCsvReader,
-                localization);
+                localization,
+                this);
 
         // we throw away the result after returning
         dialog.showAndWait();
@@ -1245,9 +1247,26 @@ public class MainPane implements
         if (optional.isPresent()) {
             FindResults findResults = optional.get();
             if (findResults.isSelected()) {
+
                 log.info("Value chose = {}", findResults.getRecord());
                 interstellarSpacePane.highlightStar(findResults.getRecord().getRecordId());
             }
         }
+    }
+
+
+    public void findDistanceBetweenStars(ActionEvent actionEvent) {
+
+        FindDistanceBetweenStarsDialog findDistanceBetweenStarsDialog = new FindDistanceBetweenStarsDialog();
+        Optional<DistanceRoutes> optionalDistanceRoutes = findDistanceBetweenStarsDialog.showAndWait();
+        if (optionalDistanceRoutes.isPresent()) {
+            DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();
+            log.info("Distance between stars is:" + distanceRoutes.getDistance());
+        }
+    }
+
+    @Override
+    public void updateStatus(String message) {
+        databaseStatus.setText(message);
     }
 }

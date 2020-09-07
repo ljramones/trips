@@ -1,4 +1,4 @@
-package com.teamgannon.trips.dialogs.search;
+package com.teamgannon.trips.dialogs.search.model;
 
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;

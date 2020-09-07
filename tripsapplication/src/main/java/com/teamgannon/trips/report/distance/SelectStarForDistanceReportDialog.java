@@ -15,17 +15,17 @@ import java.util.List;
 
 public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSelection> {
 
-    private List<StarDisplayRecord> starsInView;
-
-    private ChoiceBox<StarDisplayRecord> starChoice = new ChoiceBox<>();
-
+    private final ChoiceBox<StarDisplayRecord> starChoice = new ChoiceBox<>();
 
     public Button generateButton = new Button("Generate");
 
-
+    /**
+     * constructor
+     *
+     * @param starsInView the stars in view
+     */
     public SelectStarForDistanceReportDialog(List<StarDisplayRecord> starsInView) {
 
-        this.starsInView = starsInView;
         if (starsInView.size() > 0) {
             for (StarDisplayRecord starDisplayRecord : starsInView) {
                 starChoice.getItems().add(starDisplayRecord);

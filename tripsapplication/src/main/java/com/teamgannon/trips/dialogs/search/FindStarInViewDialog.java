@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.search;
 
+import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -107,9 +108,11 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
     private void goToStarClicked(ActionEvent actionEvent) {
         String value = cmb.getValue();
-        StarDisplayRecord record = starLookup.get(value);
-        FindResults findResults = FindResults.builder().selected(true).record(record).build();
-        setResult(findResults);
+        if (value != null) {
+            StarDisplayRecord record = starLookup.get(value);
+            FindResults findResults = FindResults.builder().selected(true).record(record).build();
+            setResult(findResults);
+        }
     }
 
 
