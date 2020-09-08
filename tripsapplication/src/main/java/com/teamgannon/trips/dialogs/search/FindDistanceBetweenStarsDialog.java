@@ -2,8 +2,10 @@ package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -16,7 +18,8 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 public class FindDistanceBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
-    private final TextField distanceMeasure = new TextField();
+    private final TextField upperDistanceMeasure = new TextField();
+    private final TextField lowerDistanceMeasure = new TextField();
 
     public FindDistanceBetweenStarsDialog() {
 
@@ -28,15 +31,24 @@ public class FindDistanceBetweenStarsDialog extends Dialog<DistanceRoutes> {
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         vBox.getChildren().add(new Separator());
 
-        HBox hBox = new HBox();
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
 
-        Label distanceLabel = new Label("Select Distance Between Stars:  ");
-        distanceLabel.setFont(font);
+        Label upperDistanceLabel = new Label("Select Upper Distance Between Stars:  ");
+        upperDistanceLabel.setFont(font);
 
-        hBox.getChildren().add(distanceLabel);
-        hBox.getChildren().add(distanceMeasure);
-        hBox.setAlignment(Pos.CENTER);
-        vBox.getChildren().add(hBox);
+        Label lowerDistanceLabel = new Label("Select Lower Distance Between Stars:  ");
+        lowerDistanceLabel.setFont(font);
+
+        gridPane.add(upperDistanceLabel, 0, 1);
+        gridPane.add(upperDistanceMeasure, 1, 1);
+
+        gridPane.add(lowerDistanceLabel, 0, 2);
+        gridPane.add(lowerDistanceMeasure, 1, 2);
+
+        vBox.getChildren().add(gridPane);
 
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10.0);
@@ -73,11 +85,18 @@ public class FindDistanceBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
     private void goToStarClicked(ActionEvent actionEvent) {
         try {
-            double distance = Double.parseDouble(distanceMeasure.getText());
-            DistanceRoutes distanceRoutes = DistanceRoutes.builder().distance(distance).selected(true).build();
+            double upperDistance = Double.parseDouble(upperDistanceMeasure.getText());
+            double lowerDistance = Double.parseDouble(lowerDistanceMeasure.getText());
+            DistanceRoutes distanceRoutes = DistanceRoutes
+                    .builder()
+                    .upperDistance(upperDistance)
+                    .lowerDistance(lowerDistance)
+                    .selected(true)
+                    .build();
             setResult(distanceRoutes);
         } catch (NumberFormatException nfe) {
-            showErrorAlert("Find Distance Between Stars", "Not a valid floating point:" + distanceMeasure.getText());
+            showErrorAlert("Find Distance Between Stars",
+                    "Not a valid floating point:" + upperDistanceMeasure.getText());
         }
     }
 

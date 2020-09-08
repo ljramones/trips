@@ -9,5 +9,8 @@ public class DistanceRoutes {
 
     private boolean selected;
 
-    private double distance;
+    private double upperDistance;
+
+    private double lowerDistance;
+
 }
