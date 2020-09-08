@@ -129,6 +129,11 @@ public class MainPane implements
     private final SearchContext searchContext;
 
     /**
+     * the query dialog
+     */
+    private QueryDialog queryDialog;
+
+    /**
      * the localization of the application
      */
     private final Localization localization;
@@ -550,7 +555,7 @@ public class MainPane implements
      * @param actionEvent the event
      */
     public void runQuery(ActionEvent actionEvent) {
-        QueryDialog queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this);
+        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
         queryDialog.initModality(Modality.NONE);
         queryDialog.show();
     }
@@ -853,6 +858,7 @@ public class MainPane implements
         tripsContext.getDataSetContext().setValidDescriptor(true);
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         dataSetsListView.getSelectionModel().select(descriptor);
+        queryDialog.setDataSetContext(descriptor);
 
         updateStatus(descriptor.getDataSetName() + " is the active context");
     }
