@@ -39,6 +39,7 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.Simulator;
+import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
@@ -309,6 +310,9 @@ public class MainPane implements
         // load database preset values
         loadDBPresets();
 
+        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
+        queryDialog.initModality(Modality.NONE);
+
     }
 
     private void loadDBPresets() {
@@ -555,8 +559,6 @@ public class MainPane implements
      * @param actionEvent the event
      */
     public void runQuery(ActionEvent actionEvent) {
-        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
-        queryDialog.initModality(Modality.NONE);
         queryDialog.show();
     }
 
@@ -1267,7 +1269,11 @@ public class MainPane implements
         Optional<DistanceRoutes> optionalDistanceRoutes = findDistanceBetweenStarsDialog.showAndWait();
         if (optionalDistanceRoutes.isPresent()) {
             DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();
-            log.info("Distance between stars is:" + distanceRoutes.getDistance());
+            log.info("Distance between stars is:" + distanceRoutes.getUpperDistance());
+            StarMeasurementService starMeasurementService = new StarMeasurementService();
+            List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+            starMeasurementService.calculateDistances(distanceRoutes, starsInView);
+            log.info("done calcs");
         }
     }
 
