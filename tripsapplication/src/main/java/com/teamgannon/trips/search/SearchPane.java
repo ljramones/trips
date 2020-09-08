@@ -2,6 +2,7 @@ package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
 import javafx.scene.Node;
@@ -16,6 +17,7 @@ public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
+    private DataSetChangeListener dataSetChangeListener;
     private final StellarDataUpdaterListener updater;
     private DataSetPanel dataSetChoicePanel;
     private final DistanceSelectionPanel d2EarthSlider;
@@ -33,9 +35,20 @@ public class SearchPane extends Pane {
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
 
 
-    public SearchPane(SearchContext query, DataSetContext dataSetContext, StellarDataUpdaterListener updater) {
+    /**
+     * constructor
+     *
+     * @param query          the search context
+     * @param dataSetContext the data set context
+     * @param updater        the data updater
+     */
+    public SearchPane(SearchContext query,
+                      DataSetContext dataSetContext,
+                      DataSetChangeListener dataSetChangeListener,
+                      StellarDataUpdaterListener updater) {
         this.searchContext = query;
         this.dataSetContext = dataSetContext;
+        this.dataSetChangeListener = dataSetChangeListener;
         this.updater = updater;
 
         double distanceRange = 20.0;
@@ -55,7 +68,7 @@ public class SearchPane extends Pane {
         queryBox.setPrefWidth(675.0);
         queryBox.setSpacing(10);
 
-        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext);
+        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
         queryBox.getChildren().add(dataSetChoicePanel.getPane());
         queryBox.getChildren().add(d2EarthSlider.getPane());
         queryBox.getChildren().add(stellarClassSelectionPanel.getPane());
@@ -76,6 +89,11 @@ public class SearchPane extends Pane {
         return vBox;
     }
 
+    public void setDataSetContext(DataSetDescriptor descriptor) {
+        dataSetChoicePanel.setDataSetContext(descriptor);
+        d2EarthSlider.setMaxRange(descriptor.getDistanceRange());
+    }
+
     public void runQuery(boolean showPlot, boolean showTable) {
 
         // pull derived query
@@ -91,7 +109,6 @@ public class SearchPane extends Pane {
     }
 
     ///////////////   Query Construction   //////////////////
-
     /**
      * construct the query
      *
@@ -201,5 +218,6 @@ public class SearchPane extends Pane {
     private void getPolityValues(AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.addPolities(politySelectionPanel.getPolitySelections());
     }
+
 
 }

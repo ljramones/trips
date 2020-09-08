@@ -3,6 +3,7 @@ package com.teamgannon.trips.search.components;
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.search.SearchContext;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -12,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.swing.event.ChangeListener;
 import java.util.Map;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -22,13 +22,23 @@ public class DataSetPanel extends BasePane {
 
     private final ChoiceBox<String> datasetChoiceBox = new ChoiceBox<>();
     private final Map<String, DataSetDescriptor> datasets;
+    private final DataSetChangeListener dataSetChangeListener;
 
     private final SearchContext searchContext;
 
+    /**
+     * constructor
+     *
+     * @param searchContext  the search context
+     * @param dataSetContext the dataset context
+     */
+    public DataSetPanel(SearchContext searchContext,
+                        DataSetContext dataSetContext,
+                        DataSetChangeListener dataSetChangeListener) {
 
-    public DataSetPanel(SearchContext searchContext, DataSetContext dataSetContext) {
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
+        this.dataSetChangeListener = dataSetChangeListener;
 
         for (DataSetDescriptor dataset : datasets.values()) {
             datasetChoiceBox.getItems().add(dataset.getDataSetName());
@@ -39,6 +49,9 @@ public class DataSetPanel extends BasePane {
             datasetChoiceBox.setValue(dataSetContext.getDescriptor().getDataSetName());
             searchContext.getAstroSearchQuery().setDescriptor(dataSetContext.getDescriptor());
         }
+        datasetChoiceBox.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> setNewDataSet(newValue));
 
         Separator space = new Separator();
         space.setMinSize(50, 1);
@@ -52,6 +65,11 @@ public class DataSetPanel extends BasePane {
         planGrid.add(whatButton, 3, 0);
 
         this.getChildren().add(planGrid);
+    }
+
+    private void setNewDataSet(String newValue) {
+        DataSetDescriptor descriptor = datasets.get(newValue);
+        dataSetChangeListener.setContextDataSet(descriptor);
     }
 
     private void describeButtonClicked(ActionEvent actionEvent) {
@@ -78,5 +96,8 @@ public class DataSetPanel extends BasePane {
         return datasets.get(datasetChoiceBox.getValue());
     }
 
+    public void setDataSetContext(DataSetDescriptor descriptor) {
+        datasetChoiceBox.setValue(descriptor.getDataSetName());
+    }
 
 }

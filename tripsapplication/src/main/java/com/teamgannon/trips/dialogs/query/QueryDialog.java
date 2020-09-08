@@ -1,10 +1,12 @@
 package com.teamgannon.trips.dialogs.query;
 
 import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.DataSetChangeListener;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -31,12 +33,26 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
-    public QueryDialog(SearchContext searchContext, DataSetContext dataSetContext, StellarDataUpdaterListener updater) {
+    /**
+     * constructor
+     *
+     * @param searchContext  the search context
+     * @param dataSetContext the data set context
+     * @param updater        the data updater
+     */
+    public QueryDialog(SearchContext searchContext,
+                       DataSetContext dataSetContext,
+                       StellarDataUpdaterListener updater,
+                       DataSetChangeListener dataSetChangeListener) {
         this.searchContext = searchContext;
         this.dataSetContext = dataSetContext;
         this.setTitle("Query And Search for Stars");
 
-        searchPane = new SearchPane(this.searchContext, this.dataSetContext, updater);
+        searchPane = new SearchPane(
+                this.searchContext,
+                this.dataSetContext,
+                dataSetChangeListener,
+                updater);
 
         this.setHeight(1000);
         this.setWidth(500);
@@ -69,6 +85,12 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
+    }
+
+
+    public void setDataSetContext(DataSetDescriptor descriptor) {
+        dataSetContext.setDataDescriptor(descriptor);
+        searchPane.setDataSetContext(descriptor);
     }
 
     private void close(ActionEvent actionEvent) {
