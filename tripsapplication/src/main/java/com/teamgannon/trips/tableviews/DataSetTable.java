@@ -35,6 +35,12 @@ public class DataSetTable {
 
     private final int PAGE_SIZE = 100;
 
+    private int pageNumber = 0;
+
+    private int totalPages = 1;
+
+    private int currentPosition = 0;
+
     /**
      * the table view object
      */
@@ -44,10 +50,12 @@ public class DataSetTable {
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
-    private DatabaseListener databaseUpdater;
+    private final DatabaseListener databaseUpdater;
     private List<AstrographicObject> astrographicObjects;
 
-    private int currentPosition = 0;
+    private final String dataSetName;
+
+    private final Dialog<String> dialog;
 
     /**
      * the constructor that we use to show the data
@@ -55,18 +63,23 @@ public class DataSetTable {
      * @param databaseUpdater     the reference back to search for more stars if needs be
      * @param astrographicObjects the list of objects
      */
-
-    public DataSetTable(DatabaseListener databaseUpdater, List<AstrographicObject> astrographicObjects) {
+    public DataSetTable(DatabaseListener databaseUpdater,
+                        List<AstrographicObject> astrographicObjects) {
         this.databaseUpdater = databaseUpdater;
         this.astrographicObjects = astrographicObjects;
         if (!astrographicObjects.isEmpty()) {
-            MapUtils.populateMap(astrographicObjectMap, astrographicObjects, AstrographicObject::getId);
+            MapUtils.populateMap(astrographicObjectMap,
+                    astrographicObjects,
+                    AstrographicObject::getId);
         }
 
         // the actual ui component to hold these entries
-        Dialog dialog = new Dialog();
+        dialog = new Dialog<>();
 
-        dialog.setTitle("Astrographic Records Table");
+        dataSetName = astrographicObjects.get(0).getDataSetName();
+        totalPages = astrographicObjects.size() / PAGE_SIZE;
+
+        setTitle();
 
         // set the dimensions
         dialog.setHeight(600);
@@ -92,7 +105,13 @@ public class DataSetTable {
         dismissButton.setOnAction(event -> window.hide());
 
         HBox hBox = new HBox();
-        hBox.getChildren().addAll(previousButton, forwardButton, new Separator(), addButton, new Separator(), dismissButton);
+        hBox.getChildren().addAll(
+                previousButton,
+                forwardButton,
+                new Separator(),
+                addButton,
+                new Separator(),
+                dismissButton);
         Pane bottomPane = new Pane();
         bottomPane.getChildren().addAll(hBox);
         vBox.getChildren().add(bottomPane);
@@ -106,13 +125,17 @@ public class DataSetTable {
         dialog.show();
     }
 
-    public void loadData(List<AstrographicObject> astrographicObjects) {
-        astrographicObjectMap.clear();
-        if (!astrographicObjects.isEmpty()) {
-            MapUtils.populateMap(astrographicObjectMap, astrographicObjects, AstrographicObject::getId);
-        }
+    /**
+     * update the title
+     */
+    public void setTitle() {
+        dialog.setTitle("Astrographic Records Table: for dataset:: " +
+                dataSetName + " - page: " + pageNumber + " of " + totalPages + " pages");
     }
 
+    /**
+     * move forward by a page which is 100
+     */
     private void moveForward() {
         log.info("move forward");
         if (astrographicObjectMap.size() < PAGE_SIZE) {
@@ -121,12 +144,19 @@ public class DataSetTable {
         if ((currentPosition + PAGE_SIZE) > astrographicObjectMap.size()) {
             currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
         } else {
-            currentPosition += 100;
+            currentPosition += PAGE_SIZE;
+            if (pageNumber < totalPages) {
+                pageNumber++;
+            }
         }
+        setTitle();
         clearData();
         loadData();
     }
 
+    /**
+     * move back a page which is 100
+     */
     private void moveBack() {
         log.info("move back");
         if (astrographicObjectMap.size() < PAGE_SIZE) {
@@ -136,7 +166,10 @@ public class DataSetTable {
             currentPosition = 0;
         } else {
             currentPosition -= PAGE_SIZE;
+            pageNumber--;
         }
+
+        setTitle();
         clearData();
         loadData();
     }
@@ -159,6 +192,9 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * setup the table
+     */
     private void setupTable() {
 
         // allow the table to be editable
@@ -320,12 +356,22 @@ public class DataSetTable {
         log.info("Removed from DB");
     }
 
+    /**
+     * reset the list
+     */
     private void resetList() {
         astrographicObjects = new ArrayList<>(astrographicObjectMap.values());
 
     }
 
-    private void updateObject(StarEditRecord starEditRecord, AstrographicObject astrographicObject) {
+    /**
+     * update the record
+     *
+     * @param starEditRecord     the star display reocrd
+     * @param astrographicObject the db record
+     */
+    private void updateObject(StarEditRecord starEditRecord,
+                              AstrographicObject astrographicObject) {
         if (starEditRecord.getDisplayName() == null) {
             showErrorAlert("Update Star", "Star name cannot be empty!");
             return;
@@ -361,7 +407,9 @@ public class DataSetTable {
         return borderPane;
     }
 
-
+    /**
+     * load the data
+     */
     private void loadData() {
         int pageSize = PAGE_SIZE;
         int diff = astrographicObjects.size() - currentPosition;
@@ -381,10 +429,19 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * clear the data
+     */
     private void clearData() {
         tableView.getItems().clear();
     }
 
+    /**
+     * convert an astro record to a StarDisplayrecord
+     *
+     * @param astrographicObject the DB record
+     * @return the star display record
+     */
     private StarEditRecord convertToStarEditRecord(AstrographicObject astrographicObject) {
         StarEditRecord starEditRecord = new StarEditRecord();
 
