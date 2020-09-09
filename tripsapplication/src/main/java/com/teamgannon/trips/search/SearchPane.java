@@ -5,7 +5,9 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +19,7 @@ public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
-    private DataSetChangeListener dataSetChangeListener;
+    private final DataSetChangeListener dataSetChangeListener;
     private final StellarDataUpdaterListener updater;
     private DataSetPanel dataSetChoicePanel;
     private final DistanceSelectionPanel d2EarthSlider;
@@ -64,25 +66,28 @@ public class SearchPane extends Pane {
 
         VBox vBox = new VBox();
         vBox.setSpacing(10);
-        VBox queryBox = new VBox();
-        queryBox.setPrefWidth(675.0);
-        queryBox.setSpacing(10);
+
+        GridPane queryBox = new GridPane();
+        queryBox.setPadding(new Insets(10, 10, 10, 10));
+        queryBox.setVgap(5);
+        queryBox.setHgap(5);
 
         dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
-        queryBox.getChildren().add(dataSetChoicePanel.getPane());
-        queryBox.getChildren().add(d2EarthSlider.getPane());
-        queryBox.getChildren().add(stellarClassSelectionPanel.getPane());
-        queryBox.getChildren().add(categorySelectionPanel.getPane());
-        queryBox.getChildren().add(fuelSelectionPanel.getPane());
-        queryBox.getChildren().add(worldSelectionPanel.getPane());
-        queryBox.getChildren().add(portSelectionPanel.getPane());
-        queryBox.getChildren().add(populationSelectionPanel.getPane());
-        queryBox.getChildren().add(politySelectionPanel.getPane());
-        queryBox.getChildren().add(techSelectionPanel.getPane());
-        queryBox.getChildren().add(productsSelectionPanel.getPane());
-        queryBox.getChildren().add(milSpaceSelectionPanel.getPane());
-        queryBox.getChildren().add(milPlanetSelectionPanel.getPane());
-        queryBox.getChildren().add(miscellaneousSelectionPanel.getPane());
+        queryBox.add(dataSetChoicePanel.getPane(),0,1,2,1);
+        queryBox.add(d2EarthSlider.getPane(),0,2, 2,1);
+        queryBox.add(stellarClassSelectionPanel.getPane(),0,3);
+        queryBox.add(categorySelectionPanel.getPane(),0,4);
+        queryBox.add(fuelSelectionPanel.getPane(),0,5);
+        queryBox.add(worldSelectionPanel.getPane(),0,6);
+        queryBox.add(portSelectionPanel.getPane(),0,7);
+        queryBox.add(populationSelectionPanel.getPane(),0,8);
+        queryBox.add(politySelectionPanel.getPane(),0,9);
+
+        queryBox.add(techSelectionPanel.getPane(),1,3);
+        queryBox.add(productsSelectionPanel.getPane(),1,4);
+        queryBox.add(milSpaceSelectionPanel.getPane(),1,5);
+        queryBox.add(milPlanetSelectionPanel.getPane(),1,6);
+        queryBox.add(miscellaneousSelectionPanel.getPane(),1,7);
 
         vBox.getChildren().add(queryBox);
 
