@@ -34,7 +34,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     public Button addDataSetButton = new Button("Add Dataset");
-    private Localization localization;
+    private final Localization localization;
 
 
     public AddDataSetDialog(Localization localization) {

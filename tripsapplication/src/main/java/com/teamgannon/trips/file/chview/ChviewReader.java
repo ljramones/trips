@@ -519,6 +519,7 @@ public class ChviewReader {
      * @return the parsed record
      */
     private ChViewRecord parseRecord(byte[] buffer, int index) {
+
         ChViewRecord chViewRecord = new ChViewRecord();
 
         // set the record number

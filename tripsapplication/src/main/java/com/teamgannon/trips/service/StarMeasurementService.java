@@ -40,7 +40,7 @@ public class StarMeasurementService {
             double distance = StarMath.getDistance(sourceCoordinates, targetCoordinates);
             if (checkInRange(distanceRange, distance)) {
                 // ok, we have a measure to save
-                log.info(String.format("%s --> %s is %.2f ly",
+                System.out.println(String.format("%s --> %s is %.2f ly",
                         sourceRecord.getStarName(),
                         targetRecord.getStarName(),
                         distance
