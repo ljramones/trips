@@ -1,6 +1,7 @@
-package com.teamgannon.trips.jpa.repository;
+package com.teamgannon.trips.jpa.repository.impl;
 
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.repository.AstrographicObjectRepositoryCustom;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.extern.slf4j.Slf4j;
@@ -77,21 +78,22 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         // create a query with a range limit
         predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getDistanceFromCenterStar()));
 
-//        // make a stellar spectral class query
-//        Set<StellarType> stellarSet = astroSearchQuery.getStellarTypes();
-//        if (!stellarSet.isEmpty()) {
-//            List<String> spectralClasses = stellarSet.stream().map(StellarType::getValue).collect(Collectors.toList());
-//            Expression<String> exp = root.get("spectralClass");
-//            Predicate predicate = exp.in(spectralClasses);
-//            predicates.add(predicate);
-//        }
+        // make a stellar spectral class query
+        Set<StellarType> stellarSet = astroSearchQuery.getStellarTypes();
 
-//        // create a query with a real star type
-//        if (astroSearchQuery.isRealStars()) {
-//            predicates.add(cb.isTrue(root.get("realStar")));
-//        } else {
-//            predicates.add(cb.isFalse(root.get("realStar")));
-//        }
+        if (!stellarSet.isEmpty()) {
+            List<String> spectralClasses = stellarSet.stream().map(StellarType::getValue).collect(Collectors.toList());
+            Expression<String> exp = root.get("orthoSpectralClass");
+            Predicate predicate = exp.in(spectralClasses);
+            predicates.add(predicate);
+        }
+
+        // create a query with a real star type
+        if (astroSearchQuery.isRealStars()) {
+            predicates.add(cb.isTrue(root.get("realStar")));
+        } else {
+            predicates.add(cb.isFalse(root.get("realStar")));
+        }
 
 //        // setup a predicate based on other is true
 //        if (astroSearchQuery.isOtherSearch()) {

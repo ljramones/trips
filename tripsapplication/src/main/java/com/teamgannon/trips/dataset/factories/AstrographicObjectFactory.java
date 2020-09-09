@@ -46,6 +46,7 @@ public class AstrographicObjectFactory {
         // ch view data records do not contain the RA and declination for objects
 
         astrographicObject.setSpectralClass(chViewRecord.getSpectra());
+        astrographicObject.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
 
         astrographicObject.setSource("CHView");
 

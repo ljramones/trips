@@ -1,6 +1,5 @@
 package com.teamgannon.trips.jpa.model;
 
-import com.opencsv.bean.CsvBindByName;
 import javafx.scene.paint.Color;
 import lombok.Data;
 
@@ -31,7 +30,6 @@ public class AstrographicObject implements Serializable {
     /**
      * id of the object
      */
-    @CsvBindByName(column = "dataSetName")
     @Id
     @GeneratedValue
     private UUID id;
@@ -39,13 +37,11 @@ public class AstrographicObject implements Serializable {
     /**
      * the dataset name which we are guaranteeing to be unique
      */
-    @CsvBindByName(column = "dataSetName")
     private String dataSetName;
 
     /**
      * name to use for display
      */
-    @CsvBindByName(column = "displayName")
     private String displayName;
 
     /**
@@ -53,21 +49,18 @@ public class AstrographicObject implements Serializable {
      * if we have to add custom fields in the custom object, but sometimes text notes make sense.
      */
     @Lob
-    @CsvBindByName(column = "notes")
     private String notes;
 
     /**
      * the source catalog system used to hold this star
      * where did it come from?
      */
-    @CsvBindByName(column = "source")
     private String source;
 
     /**
      * Same story. One object has names in many catalogs. The catalogIDs go in an array which can have
      * one to many entries.
      */
-    @CsvBindByName(column = "catalogIdList")
     @Lob
     private String catalogIdList;
 
@@ -81,74 +74,61 @@ public class AstrographicObject implements Serializable {
     /**
      * The X position of the coordinates
      */
-    @CsvBindByName(column = "x")
     private double x;
 
     /**
      * THe Y position of the coordinates
      */
-    @CsvBindByName(column = "y")
     private double y;
 
     /**
      * THe Z position of the coordinates
      */
-    @CsvBindByName(column = "z")
     private double z;
 
     /**
      * this is the radius in solar multiples
      */
-    @CsvBindByName(column = "radius")
     private double radius;
 
     /**
      * expressed as right ascension in HHMMSS
      */
-    @CsvBindByName(column = "ra")
     private double ra;
 
     /**
      * proper motion in right ascension)
      */
-    @CsvBindByName(column = "pmra")
     private double pmra;
 
     /**
      * expressed Declination in DDMMSS
      */
-    @CsvBindByName(column = "declination")
     private double declination;
 
     /**
      * proper motion in declination)
      */
-    @CsvBindByName(column = "pmdec")
     private double pmdec;
 
 
-    @CsvBindByName(column = "dec_deg")
     private double dec_deg;
 
-    @CsvBindByName(column = "rs_cdeg")
     private double rs_cdeg;
 
     /**
      * the parallax measurement
      */
-    @CsvBindByName(column = "parallax")
     private double parallax;
 
     /**
      * distance in LY
      */
-    @CsvBindByName(column = "distance")
     private double distance;
 
     /**
      * the star's radial velocity
      */
-    @CsvBindByName(column = "radialvel")
     private double radialVelocity;
 
     /**
@@ -163,13 +143,16 @@ public class AstrographicObject implements Serializable {
      * like it.  The spectral class should be the temp and color of the star, not trying to code more than one
      * thing.  A stars dwarfness or giantness in my opinion goes in the Type array.
      */
-    @CsvBindByName(column = "spectralClass")
     private String spectralClass;
+
+    /**
+     * this is a one character descriptor of spectralClass
+     */
+    private String orthoSpectralClass;
 
     /**
      * the temperature of the star in K
      */
-    @CsvBindByName(column = "temp")
     private double temperature;
 
     /**
@@ -177,24 +160,19 @@ public class AstrographicObject implements Serializable {
      * <p>
      * values are - real/fictional
      */
-    @CsvBindByName(column = "realStar")
     @NotNull
     private boolean realStar;
 
-    @CsvBindByName(column = "bprp")
     private double bprp;
 
-    @CsvBindByName(column = "bpg")
     private double bpg;
 
-    @CsvBindByName(column = "grp")
     private double grp;
 
-    private double redColor;
-
-    private double greenColor;
-
-    private double blueColor;
+    /**
+     * String representation of the star's color
+     */
+    private String color;
 
     /**
      * We choose to store the standard luminosity bands. Luminosity is published based on a set of standard
@@ -202,25 +180,19 @@ public class AstrographicObject implements Serializable {
      * Fluxes are measured in watts/m2 Not every object will have a measurement in every band.  Some objects will
      * have no flux measurements. The standard bands are:
      */
-    @CsvBindByName(column = "luminosity")
     private String luminosity;
 
     /**
      * various magnitudes
      */
-    @CsvBindByName(column = "magu")
     private double magu;
 
-    @CsvBindByName(column = "magb")
     private double magb;
 
-    @CsvBindByName(column = "magv")
     private double magv;
 
-    @CsvBindByName(column = "magr")
     private double magr;
 
-    @CsvBindByName(column = "magi")
     private double magi;
 
     ///////////////////  for fiction writing   //////////////
@@ -229,68 +201,57 @@ public class AstrographicObject implements Serializable {
      * <p>
      * user defined
      */
-    @CsvBindByName(column = "other")
     private boolean other;
 
     /**
      * this is a flag for whether there is an anomaly
      */
-    @CsvBindByName(column = "anomaly")
     private boolean anomaly;
 
     /**
      * What polity does this object belong to.  Obviously, it has to be null or one of the polities listed in
      * the theme above.
      */
-    @CsvBindByName(column = "polity")
     private String polity;
 
     /**
      * the type of world
      */
-    @CsvBindByName(column = "worldType")
     private String worldType;
 
     /**
      * the type of fuel
      */
-    @CsvBindByName(column = "fuelType")
     private String fuelType;
 
     /**
      * the type of port
      */
-    @CsvBindByName(column = "portType")
     private String portType;
 
     /**
      * the type of population
      */
-    @CsvBindByName(column = "populationType")
     private String populationType;
 
     /**
      * the tech type
      */
-    @CsvBindByName(column = "techType")
     private String techType;
 
     /**
      * the product type
      */
-    @CsvBindByName(column = "productType")
     private String productType;
 
     /**
      * the type of military in space
      */
-    @CsvBindByName(column = "milSpaceType")
     private String milSpaceType;
 
     /**
      * the type of military on the planet
      */
-    @CsvBindByName(column = "milPlanType")
     private String milPlanType;
 
 
@@ -324,9 +285,7 @@ public class AstrographicObject implements Serializable {
         bpg = 0;
         grp = 0;
         other = false;
-        redColor = 0;
-        greenColor = 0;
-        blueColor = 0;
+        this.color= Color.WHITE.toString();
         luminosity = " ";
         magu = 0;
         magb = 0;
@@ -374,13 +333,11 @@ public class AstrographicObject implements Serializable {
     }
 
     public Color getStarColor() {
-        return Color.color(redColor, greenColor, blueColor);
+        return Color.valueOf(this.color);
     }
 
     public void setStarColor(Color color) {
-        redColor = color.getRed();
-        greenColor = color.getGreen();
-        blueColor = color.getBlue();
+        this.color = color.toString();
     }
 
 }
