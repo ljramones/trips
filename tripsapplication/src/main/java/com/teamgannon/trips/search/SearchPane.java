@@ -99,6 +99,11 @@ public class SearchPane extends Pane {
         d2EarthSlider.setMaxRange(descriptor.getDistanceRange());
     }
 
+
+    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+        dataSetChoicePanel.updateDataContext(dataSetDescriptor);
+    }
+
     public void runQuery(boolean showPlot, boolean showTable) {
 
         // pull derived query

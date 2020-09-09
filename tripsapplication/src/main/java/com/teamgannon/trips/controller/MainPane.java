@@ -833,6 +833,7 @@ public class MainPane implements
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
         addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+        queryDialog.updateDataContext(dataSetDescriptor);
         updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " loaded");
     }
 

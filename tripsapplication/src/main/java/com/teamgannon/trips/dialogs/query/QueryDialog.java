@@ -93,6 +93,11 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         searchPane.setDataSetContext(descriptor);
     }
 
+
+    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+        searchPane.updateDataContext(dataSetDescriptor);
+    }
+
     private void close(ActionEvent actionEvent) {
         setResult(searchContext.getAstroSearchQuery());
     }
