@@ -100,4 +100,8 @@ public class DataSetPanel extends BasePane {
         datasetChoiceBox.setValue(descriptor.getDataSetName());
     }
 
+    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+        datasets.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
+        datasetChoiceBox.getItems().add(dataSetDescriptor.getDataSetName());
+    }
 }
