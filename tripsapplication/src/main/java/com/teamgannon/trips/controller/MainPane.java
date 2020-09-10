@@ -5,7 +5,7 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.controller.support.DataSetDescriptorCellFactory;
+import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
@@ -908,7 +908,7 @@ public class MainPane implements
 
             ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
             dialog.setTitle("Choice Data set to display");
-            dialog.setHeaderText("Select your choice - (Default display is 15 light years from Earth, use Show Stars filter to change)");
+            dialog.setHeaderText("Select your choice - (Default display is 20 light years from Earth, use Show Stars filter to change)");
 
             Optional<String> result = dialog.showAndWait();
 

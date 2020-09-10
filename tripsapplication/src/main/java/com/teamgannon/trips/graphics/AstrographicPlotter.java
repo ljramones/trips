@@ -42,11 +42,12 @@ public class AstrographicPlotter {
      *
      * @param tripsContext the trips context
      */
-    public AstrographicPlotter(
-            TripsContext tripsContext) {
+    public AstrographicPlotter(TripsContext tripsContext) {
+
         this.searchContext = tripsContext.getSearchContext();
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
-        this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
+        this.astrographicTransformer = new AstrographicTransformer(
+                tripsContext.getAppPreferences().getGridsize());
     }
 
     public static Color getColor(double[] colors) {
@@ -83,7 +84,11 @@ public class AstrographicPlotter {
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
-        interstellarSpacePane.rebuildGrid(scalingParameters.getScaleIncrement(), scalingParameters.getGridScale(), colorPalette);
+        log.info("New Plot Scaling parameters:" + scalingParameters);
+        interstellarSpacePane.getGridPlotManager().rebuildGrid(
+                scalingParameters.getScaleIncrement(),
+                scalingParameters.getGridScale(),
+                colorPalette);
 
         // plot all stars
         for (AstrographicObject astrographicObject : astrographicObjects) {

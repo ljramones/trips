@@ -17,16 +17,21 @@ public class AstrographicTransformer {
 
     // scaleIncrement
     private final double scaleIncrement;
+
     // X range limits
     private double minX = 0;
     private double maxX = 0;
+
     // Y range limits
     private double minY = 0;
     private double maxY = 0;
+
     // Z range limits
     private double minZ = 0;
     private double maxZ = 0;
+
     private double[] centerCoordinates;
+
     /**
      * the scaling parameters
      */
@@ -94,7 +99,7 @@ public class AstrographicTransformer {
      * find the min/max in all coordinates
      *
      * @param starRecords       the star records to check
-     * @param centerCoordinates
+     * @param centerCoordinates teh center coordinates
      */
     public ScalingParameters findMinMaxValues(List<AstrographicObject> starRecords, double[] centerCoordinates) {
 
@@ -175,7 +180,7 @@ public class AstrographicTransformer {
         double scalingFactor = Universe.boxHeight / maxValue;
 
         // determine the grid scale for 5 light year increments
-        double gridScale = (scalingParameters.getYRange() / scaleIncrement) * scalingFactor;
+        double gridScale = scalingParameters.getYRange() / scaleIncrement * scalingFactor/2;
         if (gridScale <= 0) {
             log.error("gridScale ={}, scalingParameters={}", gridScale, scalingParameters);
         }
