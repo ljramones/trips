@@ -607,8 +607,11 @@ public class InterstellarSpacePane extends Pane {
         Text scaleText = new Text(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
         scaleText.setFill(colorPalette.getLegendColor());
+//        scaleText.setFill(Color.BEIGE);
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);
+        scaleGroup.setVisible(true);
+        log.info("show scale");
     }
 
     /**

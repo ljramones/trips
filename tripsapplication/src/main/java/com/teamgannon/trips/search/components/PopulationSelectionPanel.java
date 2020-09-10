@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * populaiton selection panel
+ * population selection panel
  * <p>
  * Created by larrymitchell on 2017-06-24.
  */
@@ -34,7 +34,7 @@ public class PopulationSelectionPanel extends BasePane {
         planGrid.setHgap(10);
         planGrid.setVgap(10);
 
-        Label populationLabel = createLabel("Population");
+        Label populationLabel = createLabel("Population ");
 
         planGrid.add(populationLabel, 0, 0);
 
@@ -104,7 +104,7 @@ public class PopulationSelectionPanel extends BasePane {
      * initialize the event handler
      */
     private void initEventHandler() {
-        EventHandler eh = (EventHandler<ActionEvent>) event -> {
+        EventHandler<ActionEvent> eh = (EventHandler<ActionEvent>) event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
                 log.debug("Action performed on checkbox " + chk.getText());

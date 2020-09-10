@@ -292,6 +292,9 @@ public class MainPane implements
         setSliderControl();
         setStatusPanel();
 
+        // get colors from DB
+        getGraphColorsFromDB();
+
         // left display
         createLeftDisplay();
 
@@ -316,9 +319,6 @@ public class MainPane implements
     }
 
     private void loadDBPresets() {
-
-        // get colors from DB
-        getGraphColorsFromDB();
 
         // get graph enables from DB
         getGraphEnablesFromDB();
