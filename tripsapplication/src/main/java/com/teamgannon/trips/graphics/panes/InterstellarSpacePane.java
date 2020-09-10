@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
@@ -13,7 +14,6 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
-import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
@@ -23,8 +23,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +59,8 @@ public class InterstellarSpacePane extends Pane {
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
-    private final Xform gridGroup = new Xform();
     private final Xform extensionsGroup = new Xform();
     private final Xform stellarDisplayGroup = new Xform();
-    private final Xform scaleGroup = new Xform();
 
     // used to control label visibility
     private final Xform labelDisplayGroup = new Xform();
@@ -76,9 +72,9 @@ public class InterstellarSpacePane extends Pane {
     private final double ALT_MULTIPLIER = 0.5;
 
     /**
-     * the current fade point
+     * the gird plot manager
      */
-    private FadeTransition fadeTransition;
+    private final GridPlotManager gridPlotManager;
 
     private final RotateTransition rotator;
 
@@ -179,15 +175,19 @@ public class InterstellarSpacePane extends Pane {
         this.databaseListener = dbUpdater;
 
         this.routeManager = new RouteManager(routeUpdaterListener, starLookup);
+        this.gridPlotManager = new GridPlotManager(
+                extensionsGroup,
+                spacing, width, depth, lineWidth,
+                colorPalette
+        );
 
         this.setMinHeight(height);
         this.setMinWidth(width);
 
         // setup data structures for each independent element
-        gridGroup.setWhatAmI("Planar Grid");
-        world.getChildren().add(gridGroup);
-        scaleGroup.setWhatAmI("Reference Scale");
-        world.getChildren().add(scaleGroup);
+        world.getChildren().add(gridPlotManager.getGridGroup());
+        world.getChildren().add(gridPlotManager.getScaleGroup());
+
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
         extensionsGroup.setWhatAmI("Star Extensions");
@@ -206,15 +206,16 @@ public class InterstellarSpacePane extends Pane {
         buildScene();
         buildCamera();
 
-        buildGrid();
-        buildInitialScaleLegend();
-
         // handle mouse and keyboard events
         handleMouseEvents(this);
         handleKeyboard(this);
     }
 
     //////////////////////
+
+    public GridPlotManager getGridPlotManager() {
+        return gridPlotManager;
+    }
 
     public void highlightStar(UUID starId) {
         Xform starGroup = starLookup.get(starId);
@@ -361,8 +362,7 @@ public class InterstellarSpacePane extends Pane {
      * @param gridToggle the status for the grid
      */
     public void toggleGrid(boolean gridToggle) {
-        gridGroup.setVisible(gridToggle);
-        extensionsGroup.setVisible(gridToggle);
+        gridPlotManager.toggleGrid(gridToggle);
     }
 
     /**
@@ -371,9 +371,7 @@ public class InterstellarSpacePane extends Pane {
      * @param extensionsOn the status of the extensions
      */
     public void toggleExtensions(boolean extensionsOn) {
-        if (gridGroup.isVisible()) {
-            extensionsGroup.setVisible(extensionsOn);
-        }
+        gridPlotManager.toggleExtensions(extensionsOn);
     }
 
     /**
@@ -383,8 +381,8 @@ public class InterstellarSpacePane extends Pane {
      */
     public void toggleStars(boolean starsOn) {
         stellarDisplayGroup.setVisible(starsOn);
-        if (gridGroup.isVisible()) {
-            extensionsGroup.setVisible(starsOn);
+        if (gridPlotManager.isVisible()) {
+            gridPlotManager.extensionsOn(true);
         }
     }
 
@@ -394,7 +392,7 @@ public class InterstellarSpacePane extends Pane {
      * @param scaleOn the status of the scale
      */
     public void toggleScale(boolean scaleOn) {
-        scaleGroup.setVisible(scaleOn);
+        gridPlotManager.toggleScale(scaleOn);
     }
 
     /**
@@ -412,7 +410,7 @@ public class InterstellarSpacePane extends Pane {
      * @param labelsOn true is labels should be on
      */
     public void toggleLabels(boolean labelsOn) {
-        log.info("Label set:"+labelsOn);
+        log.info("Label set:" + labelsOn);
         labelDisplayGroup.setVisible(labelsOn);
         List<Node> labelList = labelDisplayGroup.getChildren();
         for (Node node : labelList) {
@@ -589,29 +587,6 @@ public class InterstellarSpacePane extends Pane {
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
-    }
-
-    private void rebuildScaleLegend(int newScaleLegend) {
-        scaleGroup.getChildren().clear();
-        createScaleLegend(newScaleLegend);
-    }
-
-    /**
-     * build the scale for the display
-     */
-    private void buildInitialScaleLegend() {
-        createScaleLegend(spacing);
-    }
-
-    private void createScaleLegend(int scaleValue) {
-        Text scaleText = new Text(String.format(scaleString, scaleValue));
-        scaleText.setFont(Font.font("Verdana", 20));
-        scaleText.setFill(colorPalette.getLegendColor());
-//        scaleText.setFill(Color.BEIGE);
-        scaleGroup.getChildren().add(scaleText);
-        scaleGroup.setTranslate(50, 350, 0);
-        scaleGroup.setVisible(true);
-        log.info("show scale");
     }
 
     /**
@@ -996,53 +971,6 @@ public class InterstellarSpacePane extends Pane {
 
     }
 
-    ////////////////  GRID HELPERS  ///////////////////////
-
-    public void rebuildGrid(double scaleIncrement, double gridScale, ColorPalette colorPalette) {
-
-        // clear old grid
-        gridGroup.getChildren().clear();
-
-        // rebuild grid
-        createGrid(gridGroup, (int) gridScale, colorPalette);
-
-        // now rebuild scale legend
-        rebuildScaleLegend((int) scaleIncrement);
-    }
-
-    private void buildGrid() {
-        createGrid(gridGroup, spacing, colorPalette);
-    }
-
-    private void createGrid(Group grid, int gridIncrement, ColorPalette colorPalette) {
-
-        gridGroup.setTranslate(-width / 2.0, 0, -depth / 2.0);
-
-        // iterate over z dimension
-        int zDivisions = width / gridIncrement;
-        double x = 0.0;
-        for (int i = 0; i <= zDivisions; i++) {
-            Point3D from = new Point3D(x, 0, 0);
-            Point3D to = new Point3D(x, 0, depth);
-            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
-            grid.getChildren().add(lineSegment);
-            x += gridIncrement;
-        }
-
-        // iterate over x dimension
-        int xDivisions = depth / gridIncrement;
-        double z = 0.0;
-        for (int i = 0; i <= xDivisions; i++) {
-            Point3D from = new Point3D(0, 0, z);
-            Point3D to = new Point3D(width, 0, z);
-            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
-            grid.getChildren().add(lineSegment);
-            z += gridIncrement;
-        }
-
-        grid.setVisible(true);
-    }
-
     /////////////////  MOUSE AND KEYBOARD EVENT HANDLERS  /////////////////////////
 
     /**
@@ -1094,7 +1022,11 @@ public class InterstellarSpacePane extends Pane {
 
     }
 
-
+    /**
+     * setup keyboard events
+     *
+     * @param pane the pane to manage
+     */
     private void handleKeyboard(Pane pane) {
         log.info("Setting up keyboard handling");
         pane.setOnKeyPressed(event -> {
@@ -1111,7 +1043,7 @@ public class InterstellarSpacePane extends Pane {
                     break;
                 case X:
                     if (event.isControlDown()) {
-                        gridGroup.setVisible(!gridGroup.isVisible());
+                        gridPlotManager.toggleVisibility();
                     }
                     break;
                 case S:

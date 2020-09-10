@@ -1,4 +1,4 @@
-package com.teamgannon.trips.controller.support;
+package com.teamgannon.trips.dataset.model;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
