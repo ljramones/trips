@@ -174,7 +174,10 @@ public class InterstellarSpacePane extends Pane {
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
 
-        this.routeManager = new RouteManager(routeUpdaterListener, starLookup);
+        this.routeManager = new RouteManager(
+                routeUpdaterListener,
+                starLookup
+        );
         this.gridPlotManager = new GridPlotManager(
                 extensionsGroup,
                 spacing, width, depth, lineWidth,
@@ -190,6 +193,7 @@ public class InterstellarSpacePane extends Pane {
 
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
+
         extensionsGroup.setWhatAmI("Star Extensions");
         world.getChildren().add(extensionsGroup);
 
