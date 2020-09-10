@@ -2,12 +2,15 @@ package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
+import com.teamgannon.trips.graphics.entities.LineSegment;
 import com.teamgannon.trips.graphics.entities.Xform;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import lombok.extern.slf4j.Slf4j;
+
+import static java.lang.Math.*;
 
 @Slf4j
 public class GridPlotManager {
@@ -50,7 +53,7 @@ public class GridPlotManager {
         this.gridGroup.setWhatAmI("Planar Grid");
         this.scaleGroup.setWhatAmI("Reference Scale");
 
-        buildGrid();
+        buildInitialGrid();
         buildInitialScaleLegend();
     }
 
@@ -114,22 +117,79 @@ public class GridPlotManager {
     public void rebuildGrid(AstrographicTransformer transformer, ColorPalette colorPalette) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
+
         // clear old grid
         gridGroup.getChildren().clear();
 
         log.info("rebuilding grid scale increment: " + parameters.getScaleIncrement());
+
         // rebuild grid
-        createGrid((int) parameters.getGridScale(), colorPalette);
+        createGrid(transformer, colorPalette);
 
         // now rebuild scale legend
         rebuildScaleLegend((int) parameters.getScaleIncrement());
     }
 
+    private void createGrid(AstrographicTransformer transformer, ColorPalette colorPalette) {
+
+        ScalingParameters parameters = transformer.getScalingParameters();
+        double minZ = parameters.getMinZ();
+        double maxZ = parameters.getMaxZ();
+        double zDivs = ceil(parameters.getZRange() / 5);
+
+        double minX = parameters.getMinX();
+        double maxX = parameters.getMaxX();
+        double xDivs = ceil(parameters.getXRange() / 5);
+
+
+        // create z division lines
+        drawXLineSegments(transformer, colorPalette, minZ, maxZ, xDivs, 0, 5);
+        drawXLineSegments(transformer, colorPalette, minZ, maxZ, xDivs, 0, -5);
+
+        // create x division lines
+        drawZLineSegments(transformer, colorPalette, zDivs, minX, maxX, 0, 5);
+        drawZLineSegments(transformer, colorPalette, zDivs, minX, maxX, 0, -5);
+
+        gridGroup.setVisible(true);
+
+    }
+
+    private void drawZLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double zDivs, double minX, double maxX, double beginZ, double increment) {
+        for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
+            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), 0, beginZ};
+            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), 0, beginZ};
+            String label = Integer.toString((int) beginZ);
+            LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
+            Node gridLineSegmentX = CustomObjectFactory.createLineSegment(
+                    lineSegmentX.getFrom(), lineSegmentX.getTo(),
+                    lineWidth, colorPalette.getGridColor(),
+                    label, false);
+            gridGroup.getChildren().add(gridLineSegmentX);
+            beginZ += increment;
+        }
+    }
+
+    private void drawXLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double minZ, double maxZ, double xDivs, double beginX, double increment) {
+        for (int i = 0; i < (ceil(xDivs / 2) ); i++) {
+            double[] fromPointZ = new double[]{beginX, 0, signum(minZ) * ceil(abs(minZ))};
+            double[] toPointZ = new double[]{beginX, 0, signum(maxZ) * ceil(abs(maxZ))};
+            String label = Integer.toString((int) beginX);
+            LineSegment lineSegmentZ = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
+            Node gridLineSegmentZ = CustomObjectFactory.createLineSegment(
+                    lineSegmentZ.getFrom(), lineSegmentZ.getTo(),
+                    lineWidth, colorPalette.getGridColor(),
+                    label, true);
+            gridGroup.getChildren().add(gridLineSegmentZ);
+            beginX -= increment;
+        }
+    }
+
+    //////////////////  Initial  GRID  build   ///////////////////
 
     /**
      * build a fresh grid
      */
-    private void buildGrid() {
+    private void buildInitialGrid() {
         createGrid(spacing, colorPalette);
     }
 
@@ -149,7 +209,8 @@ public class GridPlotManager {
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
-            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
+            Node lineSegment = CustomObjectFactory.createLineSegment(
+                    from, to, lineWidth, colorPalette.getGridColor());
             gridGroup.getChildren().add(lineSegment);
             x += gridIncrement;
         }
@@ -160,7 +221,8 @@ public class GridPlotManager {
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
-            Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
+            Node lineSegment = CustomObjectFactory.createLineSegment(
+                    from, to, lineWidth, colorPalette.getGridColor());
             gridGroup.getChildren().add(lineSegment);
             z += gridIncrement;
         }
@@ -168,12 +230,14 @@ public class GridPlotManager {
         gridGroup.setVisible(true);
     }
 
-    //////////////////
-
-
     ////////////////////  SCALE Group  /////////////////
 
 
+    /**
+     * rebuild the scale legend
+     *
+     * @param newScaleLegend the new scale legend
+     */
     private void rebuildScaleLegend(int newScaleLegend) {
         scaleGroup.getChildren().clear();
         createScaleLegend(newScaleLegend);
@@ -186,6 +250,11 @@ public class GridPlotManager {
         createScaleLegend(spacing);
     }
 
+    /**
+     * create a scale legend
+     *
+     * @param scaleValue the scaling value
+     */
     private void createScaleLegend(int scaleValue) {
         Text scaleText = new Text(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
@@ -195,6 +264,5 @@ public class GridPlotManager {
         scaleGroup.setVisible(true);
         log.info("show scale");
     }
-
 
 }

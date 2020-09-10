@@ -43,7 +43,6 @@ public class InterstellarSpacePane extends Pane {
 
     // animations
     private static final double ROTATE_SECS = 60;
-    private static final String scaleString = "Scale: 1 grid is %d ly square";
     private final Xform cameraXform = new Xform();
 
     ////////////////// Camera stuff ////////////////
@@ -95,7 +94,7 @@ public class InterstellarSpacePane extends Pane {
     /**
      * star display specifics
      */
-    private StarDisplayPreferences starDisplayPreferences;
+    private final StarDisplayPreferences starDisplayPreferences;
 
     /**
      * animation toggle
@@ -468,6 +467,7 @@ public class InterstellarSpacePane extends Pane {
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
             starNode = createCentralPoint(record, colorPalette, starDisplayPreferences);
+            log.info("sol is at {}", record.getActualCoordinates());
         } else {
             // otherwise draw a regular star
             starNode = createStar(record, colorPalette, starDisplayPreferences);
@@ -477,6 +477,7 @@ public class InterstellarSpacePane extends Pane {
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
+
     }
 
 
