@@ -85,10 +85,7 @@ public class AstrographicPlotter {
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
         log.info("New Plot Scaling parameters:" + scalingParameters);
-        interstellarSpacePane.getGridPlotManager().rebuildGrid(
-                scalingParameters.getScaleIncrement(),
-                scalingParameters.getGridScale(),
-                colorPalette);
+        interstellarSpacePane.getGridPlotManager().rebuildGrid(astrographicTransformer, colorPalette);
 
         // plot all stars
         for (AstrographicObject astrographicObject : astrographicObjects) {

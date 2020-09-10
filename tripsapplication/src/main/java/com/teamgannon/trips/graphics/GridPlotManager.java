@@ -4,7 +4,6 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.Xform;
 import javafx.geometry.Point3D;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -106,25 +105,41 @@ public class GridPlotManager {
         scaleGroup.setVisible(scaleOn);
     }
 
-    public void rebuildGrid(double scaleIncrement, double gridScale, ColorPalette colorPalette) {
+    /**
+     * rebuild the grid with the specified transformation characteristics
+     *
+     * @param transformer  the transformer
+     * @param colorPalette the color palette
+     */
+    public void rebuildGrid(AstrographicTransformer transformer, ColorPalette colorPalette) {
 
+        ScalingParameters parameters = transformer.getScalingParameters();
         // clear old grid
         gridGroup.getChildren().clear();
 
-        log.info("rebuilding grid scale increment: " + scaleIncrement);
+        log.info("rebuilding grid scale increment: " + parameters.getScaleIncrement());
         // rebuild grid
-        createGrid(gridGroup, (int) gridScale, colorPalette);
+        createGrid((int) parameters.getGridScale(), colorPalette);
 
         // now rebuild scale legend
-        rebuildScaleLegend((int) scaleIncrement);
+        rebuildScaleLegend((int) parameters.getScaleIncrement());
     }
 
 
+    /**
+     * build a fresh grid
+     */
     private void buildGrid() {
-        createGrid(gridGroup, spacing, colorPalette);
+        createGrid(spacing, colorPalette);
     }
 
-    private void createGrid(Group grid, int gridIncrement, ColorPalette colorPalette) {
+    /**
+     * create a gird based on parameter supplied
+     *
+     * @param gridIncrement the grid increment
+     * @param colorPalette  the color palette
+     */
+    private void createGrid(int gridIncrement, ColorPalette colorPalette) {
 
         gridGroup.setTranslate(-width / 2.0, 0, -depth / 2.0);
 
@@ -135,7 +150,7 @@ public class GridPlotManager {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
             Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
-            grid.getChildren().add(lineSegment);
+            gridGroup.getChildren().add(lineSegment);
             x += gridIncrement;
         }
 
@@ -146,14 +161,17 @@ public class GridPlotManager {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
             Node lineSegment = CustomObjectFactory.createLineSegment(from, to, lineWidth, colorPalette.getGridColor());
-            grid.getChildren().add(lineSegment);
+            gridGroup.getChildren().add(lineSegment);
             z += gridIncrement;
         }
 
-        grid.setVisible(true);
+        gridGroup.setVisible(true);
     }
 
-    ////////////////////
+    //////////////////
+
+
+    ////////////////////  SCALE Group  /////////////////
 
 
     private void rebuildScaleLegend(int newScaleLegend) {
@@ -177,5 +195,6 @@ public class GridPlotManager {
         scaleGroup.setVisible(true);
         log.info("show scale");
     }
+
 
 }
