@@ -68,6 +68,46 @@ public class AstroSearchQuery {
 
     private boolean recenter = false;
 
+    public void clearPolities() {
+        polities = new HashSet<>();
+    }
+
+    public void clearStellarTypes() {
+        stellarTypes = new HashSet<>();
+    }
+
+    public void clearFuelTypes() {
+        fuelTypes = new HashSet<>();
+    }
+
+    public void clearWorldTypes() {
+        worldTypes = new HashSet<>();
+    }
+
+    public void clearPortTypes() {
+        portTypes = new HashSet<>();
+    }
+
+    public void clearPopulationTypes() {
+        populationTypes = new HashSet<>();
+    }
+
+    public void clearTechTypes() {
+        techTypes = new HashSet<>();
+    }
+
+    public void clearProductTypes() {
+        productTypes = new HashSet<>();
+    }
+
+    public void clearMilSpaceTypes() {
+        milSpaceTypes = new HashSet<>();
+    }
+
+    public void clearMilPlanTypes() {
+        milPlanTypes = new HashSet<>();
+    }
+
     private double xMinus;
     private double xPlus;
     private double yPlus;
@@ -201,6 +241,7 @@ public class AstroSearchQuery {
     }
 
     public void addStellarTypes(List<String> selection) {
+
         for (String stellarType : selection) {
             this.addStellarType(stellarType);
         }
