@@ -3,6 +3,7 @@ package com.teamgannon.trips.search;
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
+import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
 import javafx.geometry.Insets;
@@ -11,6 +12,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -151,6 +154,7 @@ public class SearchPane extends Pane {
     }
 
     private void getProductSearch(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearProductTypes();
         if (productsSelectionPanel.isSelected()) {
             astroSearchQuery.setProductSearch(true);
             astroSearchQuery.addProducts(productsSelectionPanel.getSelections());
@@ -160,6 +164,7 @@ public class SearchPane extends Pane {
     }
 
     private void getPortTypes(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearPortTypes();
         if (portSelectionPanel.isSelected()) {
             astroSearchQuery.setPortSearch(false);
             astroSearchQuery.addPorts(portSelectionPanel.getSelections());
@@ -169,6 +174,7 @@ public class SearchPane extends Pane {
     }
 
     private void getMilPlanSearch(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearMilPlanTypes();
         if (milPlanetSelectionPanel.isSelected()) {
             astroSearchQuery.setMilPlanetSearch(true);
             astroSearchQuery.addMilPlans(milPlanetSelectionPanel.getSelections());
@@ -178,6 +184,7 @@ public class SearchPane extends Pane {
     }
 
     private void getMilSpaceSearch(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearMilSpaceTypes();
         if (milSpaceSelectionPanel.isSelected()) {
             astroSearchQuery.setMilSpaceSearch(true);
             astroSearchQuery.addMilSpaces(milSpaceSelectionPanel.getSelections());
@@ -187,6 +194,7 @@ public class SearchPane extends Pane {
     }
 
     private void getWorldSearch(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearWorldTypes();
         if (worldSelectionPanel.isSelected()) {
             astroSearchQuery.setWorldSearch(true);
             astroSearchQuery.addWorldTypes(worldSelectionPanel.getSelections());
@@ -196,6 +204,7 @@ public class SearchPane extends Pane {
     }
 
     private void getPopulationTypes(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearPopulationTypes();
         if (populationSelectionPanel.isSelected()) {
             astroSearchQuery.setPopSearch(true);
             astroSearchQuery.addPopulationTypes(populationSelectionPanel.getSelections());
@@ -205,6 +214,7 @@ public class SearchPane extends Pane {
     }
 
     private void getFuelTypes(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearFuelTypes();
         if (fuelSelectionPanel.isSelected()) {
             astroSearchQuery.setFuelSearch(true);
             astroSearchQuery.addFuelTypes(fuelSelectionPanel.getSelections());
@@ -214,6 +224,7 @@ public class SearchPane extends Pane {
     }
 
     private void getTechTypes(AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearTechTypes();
         if (techSelectionPanel.isSelected()) {
             astroSearchQuery.addTechs(techSelectionPanel.getSelections());
         } else {
@@ -222,7 +233,11 @@ public class SearchPane extends Pane {
     }
 
     private void getStellarTypes(AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.addStellarTypes(stellarClassSelectionPanel.getSelection());
+        astroSearchQuery.clearStellarTypes();
+        List<String> stellarTypes = stellarClassSelectionPanel.getSelection();
+        if (stellarClassSelectionPanel.isSelected()) {
+            astroSearchQuery.addStellarTypes(stellarTypes);
+        }
     }
 
     private void getPolityValues(AstroSearchQuery astroSearchQuery) {

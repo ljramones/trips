@@ -18,23 +18,23 @@ import java.util.List;
 public class PopulationSelectionPanel extends BasePane {
 
     private final CheckBox yesNoPop = new CheckBox("Yes?");
-    private final CheckBox pop0 = new CheckBox("0");
-    private final CheckBox pop1 = new CheckBox("1");
-    private final CheckBox pop2 = new CheckBox("2");
-    private final CheckBox pop3 = new CheckBox("3");
-    private final CheckBox pop4 = new CheckBox("4");
-    private final CheckBox pop5 = new CheckBox("5");
-    private final CheckBox pop6 = new CheckBox("6");
-    private final CheckBox pop7 = new CheckBox("7");
-    private final CheckBox pop8 = new CheckBox("8");
-    private final CheckBox pop9 = new CheckBox("9");
+    private final CheckBox pop0 = new CheckBox("1");
+    private final CheckBox pop1 = new CheckBox("10");
+    private final CheckBox pop2 = new CheckBox("100");
+    private final CheckBox pop3 = new CheckBox("1000");
+    private final CheckBox pop4 = new CheckBox("10\u2074");
+    private final CheckBox pop5 = new CheckBox("10\u2075");
+    private final CheckBox pop6 = new CheckBox("10\u2076");
+    private final CheckBox pop7 = new CheckBox("10\u2077");
+    private final CheckBox pop8 = new CheckBox("10\u2078");
+    private final CheckBox pop9 = new CheckBox("10\u2079");
 
 
     public PopulationSelectionPanel() {
         planGrid.setHgap(10);
         planGrid.setVgap(10);
 
-        Label populationLabel = createLabel("Population(Billions)");
+        Label populationLabel = createLabel("Population");
 
         planGrid.add(populationLabel, 0, 0);
 

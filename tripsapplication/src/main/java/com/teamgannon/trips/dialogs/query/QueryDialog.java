@@ -74,7 +74,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         hBox2.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox2);
 
-        runQueryButton.setOnAction(this::addDataSetClicked);
+        runQueryButton.setOnAction(this::runQueryclicked);
         hBox2.getChildren().add(runQueryButton);
 
         cancelDataSetButton.setOnAction(this::close);
@@ -106,7 +106,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         setResult(searchContext.getAstroSearchQuery());
     }
 
-    private void addDataSetClicked(ActionEvent actionEvent) {
+    private void runQueryclicked(ActionEvent actionEvent) {
         boolean showPlot = plotDisplayCheckbox.isSelected();
         boolean showTable = tableDisplayCheckbox.isSelected();
 
