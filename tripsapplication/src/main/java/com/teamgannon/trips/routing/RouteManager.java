@@ -17,9 +17,7 @@ public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
     private final RouteUpdaterListener routeUpdaterListener;
-    private Map<UUID, Xform> starLookup;
-
-    private final double lineWidth = 0.5;
+    private final Map<UUID, Xform> starLookup;
 
     /**
      * this is the descriptor of the current route
@@ -28,7 +26,7 @@ public class RouteManager {
     /**
      * the graphic portion of the current route
      */
-    private Xform currentRouteDisplay = new Xform();
+    private Xform currentRouteDisplay;
     /**
      * whether there is a route being traced, true is yes
      */
@@ -128,6 +126,11 @@ public class RouteManager {
     public void finishRoute(StarDisplayRecord starDisplayRecord) {
         createRouteSegment(starDisplayRecord);
         routingActive = false;
+        //
+        Xform routeGraphic = StellarEntityFactory.createRoute(currentRoute);
+        routesGroup.getChildren().add(routeGraphic);
+        routesGroup.setVisible(true);
+        //
         makeRoutePermanent(currentRoute);
         routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
     }
@@ -153,6 +156,7 @@ public class RouteManager {
             if (firstPoint) {
                 firstPoint = false;
             } else {
+                double lineWidth = 0.5;
                 Node lineSegment = CustomObjectFactory.createLineSegment(previousPoint, point3D, lineWidth, currentRoute.getColor());
                 route.getChildren().add(lineSegment);
             }
@@ -174,10 +178,12 @@ public class RouteManager {
             Node lineSegment = CustomObjectFactory.createLineSegment(
                     fromPoint, toPoint3D, 0.5, currentRoute.getColor()
             );
-            currentRouteDisplay.getChildren().add(lineSegment);
             currentRoute.getLineSegments().add(toPoint3D);
             currentRoute.getRouteList().add(id);
+
+            currentRouteDisplay.getChildren().add(lineSegment);
             currentRouteDisplay.setVisible(true);
+            log.info("route continued");
         }
     }
 
@@ -262,7 +268,7 @@ public class RouteManager {
     }
 
     public boolean checkIfRouteCanBePlotted(Route route) {
-        return route.getRouteStars().stream().allMatch(id -> starLookup.containsKey(id));
+        return route.getRouteStars().stream().allMatch(starLookup::containsKey);
     }
 
     /**
