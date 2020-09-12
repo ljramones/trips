@@ -406,6 +406,13 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         // load chview file
         ChViewFile chViewFile = chviewReader.loadFile(file);
+        if (chViewFile== null) {
+            FileProcessResult result= new FileProcessResult();
+            result.setDataSetDescriptor(null);
+            result.setSuccess(false);
+            result.setMessage("Failed to parse file");
+            return result;
+        }
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(dataset, chViewFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
