@@ -522,6 +522,10 @@ public class DatabaseManagementService {
     @Transactional
     public void addStar(AstrographicObject astrographicObjectNew) {
         astrographicObjectRepository.save(astrographicObjectNew);
+        Optional<AstrographicObject> testGet = astrographicObjectRepository.findById(astrographicObjectNew.getId());
+        if (testGet.isEmpty()) {
+            log.error("why didn't this save work");
+        }
     }
 
 

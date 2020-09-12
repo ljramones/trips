@@ -867,7 +867,7 @@ public class MainPane implements
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
-        new DataSetTable(this, astrographicObjects);
+        new DataSetTable(databaseManagementService, astrographicObjects);
     }
 
 
@@ -958,7 +958,7 @@ public class MainPane implements
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-            new DataSetTable(this, astrographicObjects);
+            new DataSetTable(databaseManagementService, astrographicObjects);
         } else {
             List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
             if (datasets.size() == 0) {
@@ -983,7 +983,7 @@ public class MainPane implements
                     return;
                 }
                 List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-                new DataSetTable(this, astrographicObjects);
+                new DataSetTable(databaseManagementService, astrographicObjects);
                 updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
 
                 // set current context

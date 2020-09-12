@@ -1,10 +1,10 @@
 package com.teamgannon.trips.tableviews;
 
-import com.teamgannon.trips.dataset.AddStarDialog;
-import com.teamgannon.trips.dialogs.dataset.TableEditResult;
-import com.teamgannon.trips.dialogs.support.EditTypeEnum;
+import com.teamgannon.trips.dataset.enums.SortParameterEnum;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.listener.DatabaseListener;
+import com.teamgannon.trips.screenobjects.StarEditDialog;
+import com.teamgannon.trips.screenobjects.StarEditStatus;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -68,23 +68,27 @@ public class DataSetTable {
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
-    private final DatabaseListener databaseUpdater;
+    private final DatabaseManagementService databaseManagementService;
     private List<AstrographicObject> astrographicObjects;
 
     private final String dataSetName;
 
     private final Dialog<String> dialog;
 
+    private SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
+    private SortType sortDirection = SortType.ASCENDING;
+
     /**
      * the constructor that we use to show the data
      *
-     * @param databaseUpdater     the reference back to search for more stars if needs be
-     * @param astrographicObjects the list of objects
+     * @param databaseManagementService the database management service
+     * @param astrographicObjects       the list of objects
      */
-    public DataSetTable(DatabaseListener databaseUpdater,
+    public DataSetTable(DatabaseManagementService databaseManagementService,
                         List<AstrographicObject> astrographicObjects) {
 
-        this.databaseUpdater = databaseUpdater;
+        this.databaseManagementService = databaseManagementService;
+
         this.astrographicObjects = astrographicObjects;
         if (!astrographicObjects.isEmpty()) {
             MapUtils.populateMap(astrographicObjectMap,
@@ -141,6 +145,7 @@ public class DataSetTable {
                 addButton,
                 new Separator(),
                 dismissButton);
+
         Pane bottomPane = new Pane();
         bottomPane.getChildren().addAll(hBox);
         vBox.getChildren().add(bottomPane);
@@ -154,87 +159,6 @@ public class DataSetTable {
         dialog.show();
     }
 
-    private void moveFirst() {
-        currentPosition = 0;
-        pageNumber = 1;
-        clearData();
-        loadData();
-    }
-
-    private void moveEnd() {
-        currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
-        pageNumber = (int) floor(astrographicObjectMap.size() / (float) PAGE_SIZE);
-        clearData();
-        loadData();
-    }
-
-
-    /**
-     * update the title
-     */
-    public void setTitle() {
-        dialog.setTitle("Astrographic Records Table: for dataset:: " +
-                dataSetName + " - page: " + pageNumber + " of " + totalPages + " pages");
-    }
-
-    /**
-     * move forward by a page which is 50
-     */
-    private void moveForward() {
-        log.info("move forward");
-        if (astrographicObjectMap.size() < PAGE_SIZE) {
-            return;
-        }
-        if ((currentPosition + PAGE_SIZE) > astrographicObjectMap.size()) {
-            currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
-        } else {
-            currentPosition += PAGE_SIZE;
-            if (pageNumber < totalPages) {
-                pageNumber++;
-            }
-        }
-        setTitle();
-        clearData();
-        loadData();
-    }
-
-    /**
-     * move back a page which is 50
-     */
-    private void moveBack() {
-        log.info("move back");
-        if (astrographicObjectMap.size() < PAGE_SIZE) {
-            return;
-        }
-        if (currentPosition < PAGE_SIZE) {
-            currentPosition = 0;
-        } else {
-            currentPosition -= PAGE_SIZE;
-            pageNumber--;
-        }
-
-        setTitle();
-        clearData();
-        loadData();
-    }
-
-
-    /**
-     * add a new entry
-     */
-    private void addNewDataEntry() {
-        AddStarDialog addStarDialog = new AddStarDialog();
-        Optional<TableEditResult> optionalDataSet = addStarDialog.showAndWait();
-        if (optionalDataSet.isPresent()) {
-            TableEditResult editResult = optionalDataSet.get();
-            if (editResult.getEditType().equals(EditTypeEnum.UPDATE)) {
-                StarEditRecord starEditRecord = editResult.getStarEditRecord();
-                log.info("star created={}", starEditRecord);
-                tableView.getItems().add(starEditRecord);
-                addToDB(starEditRecord);
-            }
-        }
-    }
 
     /**
      * setup the table
@@ -260,16 +184,26 @@ public class DataSetTable {
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
             final StarEditRecord selectedStarEditRecord = tableView.getSelectionModel().getSelectedItem();
-            AddStarDialog addStarDialog = new AddStarDialog(selectedStarEditRecord);
-            Optional<TableEditResult> optionalDataSet = addStarDialog.showAndWait();
-            if (optionalDataSet.isPresent()) {
-                TableEditResult editResult = optionalDataSet.get();
-                if (editResult.getEditType().equals(EditTypeEnum.UPDATE)) {
-                    StarEditRecord starEditRecord = editResult.getStarEditRecord();
-                    log.info("star created={}", starEditRecord);
-                    tableView.getItems().add(starEditRecord);
-                    updateEntry(starEditRecord);
+            AstrographicObject astrographicObject = databaseManagementService.getStar(selectedStarEditRecord.getId());
+            if (astrographicObject != null) {
+                StarEditDialog starEditDialog = new StarEditDialog(astrographicObject);
+
+                Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
+                if (statusOptional.isPresent()) {
+                    StarEditStatus starEditStatus = statusOptional.get();
+                    if (starEditStatus.isChanged()) {
+                        // update the database
+                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                        // resort
+                        reSort();
+                        // load data base on were we are
+                        loadData();
+                    }
                 }
+            } else {
+                showErrorAlert("Edit Star",
+                        "record:" + selectedStarEditRecord.getId() + " could not be found. This is odd");
+
             }
         });
 
@@ -355,89 +289,14 @@ public class DataSetTable {
                 );
     }
 
-    private void updateEntry(StarEditRecord starEditRecord) {
-        UUID id = starEditRecord.getId();
-        AstrographicObject astrographicObject = astrographicObjectMap.get(id);
-        updateObject(starEditRecord, astrographicObject);
-
-        // updated star
-        databaseUpdater.updateStar(astrographicObject);
-
-        resetList();
-    }
-
-
-    private void addToDB(StarEditRecord starEditRecord) {
-
-        AstrographicObject astrographicObjectNew = convertToAstrographicObject(starEditRecord);
-        astrographicObjectMap.put(astrographicObjectNew.getId(), astrographicObjectNew);
-
-        // add to DB
-        databaseUpdater.updateStar(astrographicObjectNew);
-
-        resetList();
-
-        log.info("Added to DB");
-    }
-
-    private AstrographicObject convertToAstrographicObject(StarEditRecord starEditRecord) {
-        AstrographicObject astrographicObject = new AstrographicObject();
-        updateObject(starEditRecord, astrographicObject);
-        astrographicObject.setId(UUID.randomUUID());
-        return astrographicObject;
-    }
-
-    private void removeFromDB(StarEditRecord starEditRecord) {
-
-        UUID id = starEditRecord.getId();
-        AstrographicObject astrographicObject = astrographicObjectMap.get(id);
-        astrographicObjectMap.remove(id);
-
-        // remove from DB
-        databaseUpdater.removeStar(astrographicObject);
-
-        resetList();
-
-        log.info("Removed from DB");
-    }
-
     /**
-     * reset the list
+     * update the title
      */
-    private void resetList() {
-        astrographicObjects = new ArrayList<>(astrographicObjectMap.values());
-
+    private void setTitle() {
+        dialog.setTitle("Astrographic Records Table: for dataset:: " +
+                dataSetName + " - page: " + pageNumber + " of " + totalPages + " pages");
     }
 
-    /**
-     * update the record
-     *
-     * @param starEditRecord     the star display reocrd
-     * @param astrographicObject the db record
-     */
-    private void updateObject(StarEditRecord starEditRecord,
-                              AstrographicObject astrographicObject) {
-        if (starEditRecord.getDisplayName() == null) {
-            showErrorAlert("Update Star", "Star name cannot be empty!");
-            return;
-        }
-        astrographicObject.setDisplayName(starEditRecord.getDisplayName());
-        astrographicObject.setDistance(starEditRecord.getDistanceToEarth());
-        astrographicObject.setSpectralClass(starEditRecord.getSpectra());
-        astrographicObject.setRadius(starEditRecord.getRadius());
-        astrographicObject.setRa(starEditRecord.getRa());
-        astrographicObject.setDeclination(starEditRecord.getDeclination());
-        if (starEditRecord.getParallax() != null) {
-            astrographicObject.setParallax(starEditRecord.getParallax());
-        }
-        astrographicObject.setX(starEditRecord.getXCoord());
-        astrographicObject.setY(starEditRecord.getYCoord());
-        astrographicObject.setZ(starEditRecord.getZCoord());
-        astrographicObject.setRealStar(starEditRecord.isReal());
-        astrographicObject.setNotes(starEditRecord.getComment());
-    }
-
-    // ----------------------------- //
 
     public Node getPanel() {
         BorderPane borderPane = new BorderPane();
@@ -451,6 +310,129 @@ public class DataSetTable {
 
         return borderPane;
     }
+
+    //////////////// Navigation functions   ///////////////////////
+
+    /**
+     * move to page one
+     */
+    private void moveFirst() {
+        currentPosition = 0;
+        pageNumber = 1;
+        clearData();
+        loadData();
+        setTitle();
+    }
+
+    /**
+     * move to the last page
+     */
+    private void moveEnd() {
+        currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
+        pageNumber = (int) floor(astrographicObjectMap.size() / (float) PAGE_SIZE);
+        clearData();
+        loadData();
+        setTitle();
+    }
+
+    /**
+     * move forward by a page which is defined by PAGE_SIZE
+     */
+    private void moveForward() {
+        log.info("move forward");
+        if (astrographicObjectMap.size() < PAGE_SIZE) {
+            return;
+        }
+        if ((currentPosition + PAGE_SIZE) > astrographicObjectMap.size()) {
+            currentPosition = astrographicObjectMap.size() - PAGE_SIZE;
+        } else {
+            currentPosition += PAGE_SIZE;
+            if (pageNumber < totalPages) {
+                pageNumber++;
+            }
+        }
+        setTitle();
+        clearData();
+        loadData();
+    }
+
+    /**
+     * move back a page which is defined by PAGE_SIZE
+     */
+    private void moveBack() {
+        log.info("move back");
+        if (astrographicObjectMap.size() < PAGE_SIZE) {
+            return;
+        }
+        if (currentPosition < PAGE_SIZE) {
+            currentPosition = 0;
+        } else {
+            currentPosition -= PAGE_SIZE;
+            pageNumber--;
+        }
+
+        setTitle();
+        clearData();
+        loadData();
+    }
+
+    /**
+     * add a new entry
+     */
+    private void addNewDataEntry() {
+        AstrographicObject astrographicObject = new AstrographicObject();
+        astrographicObject.setId(UUID.randomUUID());
+        astrographicObject.setDataSetName(dataSetName);
+        StarEditDialog editDialog = new StarEditDialog(astrographicObject);
+        Optional<StarEditStatus> status = editDialog.showAndWait();
+        if (status.isPresent()) {
+            StarEditStatus editResult = status.get();
+            if (editResult.isChanged()) {
+                AstrographicObject astro = editResult.getRecord();
+                log.info("star created={}", astro);
+                // add to the backing list for table view
+                astrographicObjects.add(astro);
+                // add to our map which backs the list
+                astrographicObjectMap.put(astro.getId(), astro);
+                // add to the database
+                databaseManagementService.addStar(astro);
+                // now that we added an entry, we resort and reset the page views
+                reSort();
+                moveFirst();
+            }
+        }
+    }
+
+
+    /**
+     * remove an entry from the DB
+     *
+     * @param starEditRecord the record to remove
+     */
+    private void removeFromDB(StarEditRecord starEditRecord) {
+
+        UUID id = starEditRecord.getId();
+        astrographicObjectMap.remove(id);
+
+        // remove from DB
+        databaseManagementService.removeStar(id);
+
+        resetList();
+        reSort();
+        loadData();
+
+        log.info("Removed from DB");
+    }
+
+    /**
+     * reset the list
+     */
+    private void resetList() {
+        astrographicObjects = new ArrayList<>(astrographicObjectMap.values());
+    }
+
+
+    // ----------------------------- //
 
     /**
      * load the data
@@ -468,7 +450,7 @@ public class DataSetTable {
                 continue;
             }
             if (!object.getDisplayName().equalsIgnoreCase("name")) {
-                StarEditRecord starEditRecord = convertToStarEditRecord(object);
+                StarEditRecord starEditRecord = StarEditRecord.fromAstrographicObject(object);
                 tableView.getItems().add(starEditRecord);
             }
         }
@@ -481,105 +463,157 @@ public class DataSetTable {
         tableView.getItems().clear();
     }
 
-    /**
-     * convert an astro record to a StarDisplayrecord
-     *
-     * @param astrographicObject the DB record
-     * @return the star display record
-     */
-    private StarEditRecord convertToStarEditRecord(AstrographicObject astrographicObject) {
-        StarEditRecord starEditRecord = new StarEditRecord();
-
-        starEditRecord.setId(astrographicObject.getId());
-        starEditRecord.setDisplayName(astrographicObject.getDisplayName());
-        starEditRecord.setDistanceToEarth(astrographicObject.getDistance());
-        starEditRecord.setSpectra(astrographicObject.getSpectralClass());
-        starEditRecord.setRadius(astrographicObject.getRadius());
-        starEditRecord.setRa(astrographicObject.getRa());
-        starEditRecord.setDeclination(astrographicObject.getDeclination());
-
-        starEditRecord.setXCoord(astrographicObject.getX());
-        starEditRecord.setYCoord(astrographicObject.getY());
-        starEditRecord.setZCoord(astrographicObject.getZ());
-
-        starEditRecord.setReal(astrographicObject.isRealStar());
-
-        starEditRecord.setComment(astrographicObject.getNotes());
-
-        starEditRecord.setDirty(false);
-
-        return starEditRecord;
-    }
-
     ///////////////////  Sorting operators   ///////////////
 
+    /**
+     * display name sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void displayNameSortOrderChange(Observable o) {
         SortType sortType = displayNameCol.getSortType();
         sortByName(sortType);
         log.info("re-sorted by display name ");
     }
 
+    /**
+     * distance sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void distanceSortOrderChange(Observable o) {
         SortType sortType = distanceToEarthCol.getSortType();
         sortByDistance(sortType);
         log.info("re-sorted by distance ");
     }
 
+    /**
+     * spectra sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void spectraSortOrderChange(Observable o) {
         SortType sortType = spectraCol.getSortType();
         sortBySpectra(sortType);
         log.info("re-sorted by spectra ");
     }
 
+    /**
+     * radius sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void radiusSortOrderChange(Observable o) {
         SortType sortType = radiusCol.getSortType();
         sortByRadius(sortType);
         log.info("re-sorted by radius ");
     }
 
+    /**
+     * RA sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void raSortOrderChange(Observable o) {
         SortType sortType = raCol.getSortType();
         sortByRa(sortType);
         log.info("re-sorted by RA ");
     }
 
+    /**
+     * declination sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void declinationSortOrderChange(Observable o) {
         SortType sortType = decCol.getSortType();
         sortByDeclination(sortType);
         log.info("re-sorted by declination ");
     }
 
+    /**
+     * parallax sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void parallaxSortOrderChange(Observable o) {
         SortType sortType = paraCol.getSortType();
         sortByParallax(sortType);
         log.info("re-sorted by parallax ");
     }
 
+    /**
+     * X sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void xSortOrderChange(Observable o) {
         SortType sortType = xCoordCol.getSortType();
         sortByX(sortType);
         log.info("re-sorted by X ");
     }
 
+    /**
+     * Y sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void ySortOrderChange(Observable o) {
         SortType sortType = yCoordCol.getSortType();
         sortByY(sortType);
         log.info("re-sorted by Y ");
     }
 
+    /**
+     * Z sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void zSortOrderChange(Observable o) {
         SortType sortType = zCoordCol.getSortType();
         sortByZ(sortType);
         log.info("re-sorted by Z ");
     }
 
+    /**
+     * real sort event trigger
+     *
+     * @param o observable that triggered the event
+     */
     private void realSortOrderChange(Observable o) {
         SortType sortType = realCol.getSortType();
         sortByReal(sortType);
         log.info("re-sorted by real flag");
     }
 
+    /**
+     * resort the list with the current sorting strategy and direction
+     */
+    private void reSort() {
+        switch (currentSortStrategy) {
+            case NAME -> sortByName(sortDirection);
+            case DISTANCE -> sortByDistance(sortDirection);
+            case SPECTRA -> sortBySpectra(sortDirection);
+            case RADIUS -> sortByRadius(sortDirection);
+            case RA -> sortByRa(sortDirection);
+            case DECLINATION -> sortByDeclination(sortDirection);
+            case PARALLAX -> sortByParallax(sortDirection);
+            case X -> sortByX(sortDirection);
+            case Y -> sortByY(sortDirection);
+            case Z -> sortByZ(sortDirection);
+            case REAL -> sortByReal(sortDirection);
+            default -> log.error("Unexpected value: " + currentSortStrategy);
+        }
+    }
+
+    /**
+     * sort the list by name attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByName(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.NAME;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDisplayName));
         } else {
@@ -587,7 +621,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by distance attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByDistance(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.DISTANCE;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance));
         } else {
@@ -595,7 +636,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by spectra attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortBySpectra(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.SPECTRA;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass));
         } else {
@@ -603,7 +651,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by radius attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByRadius(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.RADIUS;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRadius));
         } else {
@@ -611,7 +666,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by ra attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByRa(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.RA;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRa));
         } else {
@@ -619,7 +681,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by declination attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByDeclination(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.DECLINATION;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDeclination));
         } else {
@@ -627,7 +696,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by parallax attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByParallax(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.PARALLAX;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getParallax));
         } else {
@@ -635,7 +711,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by X attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByX(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.X;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getX));
         } else {
@@ -643,7 +726,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by Y attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByY(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.Y;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getY));
         } else {
@@ -651,7 +741,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by Z attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByZ(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.Z;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::getZ));
         } else {
@@ -659,7 +756,14 @@ public class DataSetTable {
         }
     }
 
+    /**
+     * sort the list by real attribute
+     *
+     * @param sortOrder the sorting order - up or down
+     */
     public void sortByReal(SortType sortOrder) {
+        currentSortStrategy = SortParameterEnum.REAL;
+        sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
             astrographicObjects.sort(Comparator.comparing(AstrographicObject::isRealStar));
         } else {
