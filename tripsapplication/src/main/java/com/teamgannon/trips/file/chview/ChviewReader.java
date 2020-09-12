@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
+
 /**
  * Used to read the CHView file format
  * <p>
@@ -137,6 +139,9 @@ public class ChviewReader {
         // read each file record
         for (int i = 0; i < numberOfRecords; i++) {
             ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex);
+            if (chViewRecord ==null) {
+                return null;
+            }
             chViewFile.addRecord(chViewRecord);
         }
 
@@ -522,126 +527,133 @@ public class ChviewReader {
 
         ChViewRecord chViewRecord = new ChViewRecord();
 
-        // set the record number
-        chViewRecord.setRecordNumber(recordNumber++);
+        try {
+            // set the record number
+            chViewRecord.setRecordNumber(recordNumber++);
 
-        // first problem is to find boundary of where star record actially starts
-        // there might be a proper place name  followed by a star name
-        //  OR .. there might not be a star name
-        // the stupid developer who write the original program seems to have had
-        // convention where both names and strings were stored as strings
-        // a name starts with a length followed by a 00 byte then the actual name.
-        // a float/double (does he even know the difference??) is a lenth followed by
-        // the value,no 00
+            // first problem is to find boundary of where star record actially starts
+            // there might be a proper place name  followed by a star name
+            //  OR .. there might not be a star name
+            // the stupid developer who write the original program seems to have had
+            // convention where both names and strings were stored as strings
+            // a name starts with a length followed by a 00 byte then the actual name.
+            // a float/double (does he even know the difference??) is a lenth followed by
+            // the value,no 00
 
-        // so we need to figure out whether there is a place and a star or just a star
-        // we scan until we see the dToEarth which should be a float/double.
-        // if we encounter two string link objects prior to that then we have
-        // a place and a star followed by a distance
-        // else if only one prioer to the dToEarth then the place is null and
-        // there is only a star name.
-        // Damn, who programs like this??
+            // so we need to figure out whether there is a place and a star or just a star
+            // we scan until we see the dToEarth which should be a float/double.
+            // if we encounter two string link objects prior to that then we have
+            // a place and a star followed by a distance
+            // else if only one prioer to the dToEarth then the place is null and
+            // there is only a star name.
+            // Damn, who programs like this??
 
-        PseudoString string1 = findString(buffer, currentIndex);
-        currentIndex += string1.getLength();
+            PseudoString string1 = findString(buffer, currentIndex);
+            currentIndex += string1.getLength();
 
-        PseudoString string2 = findString(buffer, currentIndex);
-        currentIndex += string2.getLength();
+            PseudoString string2 = findString(buffer, currentIndex);
+            currentIndex += string2.getLength();
 
-        if (string1.isName() && string2.isName()) {
-            // found place name and star name
-            chViewRecord.setProperPlaceName(string1.getValue());
-            chViewRecord.setStarName(string2.getValue());
+            if (string1.isName() && string2.isName()) {
+                // found place name and star name
+                chViewRecord.setProperPlaceName(string1.getValue());
+                chViewRecord.setStarName(string2.getValue());
 
-            // now parse for the distance to earth value
-            PseudoString dToEarth = readStarParameter(buffer, currentIndex);
-            currentIndex += dToEarth.getLength();
-            chViewRecord.setDistanceToEarth(dToEarth.getValue());
+                // now parse for the distance to earth value
+                PseudoString dToEarth = readStarParameter(buffer, currentIndex);
+                currentIndex += dToEarth.getLength();
+                chViewRecord.setDistanceToEarth(dToEarth.getValue());
 
-        } else {
-            // this is the only other valid case or we really screwed up the pointers
-            if (!string2.isName()) {
-                chViewRecord.setStarName(string1.getValue());
-                chViewRecord.setDistanceToEarth(string2.getValue());
             } else {
-                throw new IllegalArgumentException("File parsing is really screwed");
+                // this is the only other valid case or we really screwed up the pointers
+                if (!string2.isName()) {
+                    chViewRecord.setStarName(string1.getValue());
+                    chViewRecord.setDistanceToEarth(string2.getValue());
+                } else {
+                    throw new IllegalArgumentException("File parsing is really screwed");
+                }
             }
-        }
 
-        PseudoString spectra = readStarParameter(buffer, currentIndex);
-        currentIndex += spectra.getLength();
-        chViewRecord.setSpectra(spectra.getValue());
+            PseudoString spectra = readStarParameter(buffer, currentIndex);
+            currentIndex += spectra.getLength();
+            chViewRecord.setSpectra(spectra.getValue());
 
-        PseudoString mass = readStarParameter(buffer, currentIndex);
-        currentIndex += mass.getLength();
-        chViewRecord.setCollapsedMass(Double.parseDouble(mass.getValue()));
+            PseudoString mass = readStarParameter(buffer, currentIndex);
+            currentIndex += mass.getLength();
+            chViewRecord.setCollapsedMass(Double.parseDouble(mass.getValue()));
 
-        PseudoString actualMass = readStarParameter(buffer, currentIndex);
-        currentIndex += actualMass.getLength();
-        chViewRecord.setUncollapsedMass(Double.parseDouble(actualMass.getValue()));
+            PseudoString actualMass = readStarParameter(buffer, currentIndex);
+            currentIndex += actualMass.getLength();
+            chViewRecord.setUncollapsedMass(Double.parseDouble(actualMass.getValue()));
 
-        PseudoString ords1 = readStarParameter(buffer, currentIndex);
-        currentIndex += ords1.getLength();
+            PseudoString ords1 = readStarParameter(buffer, currentIndex);
+            currentIndex += ords1.getLength();
 
-        PseudoString ords2 = readStarParameter(buffer, currentIndex);
-        currentIndex += ords2.getLength();
+            PseudoString ords2 = readStarParameter(buffer, currentIndex);
+            currentIndex += ords2.getLength();
 
-        PseudoString ords3 = readStarParameter(buffer, currentIndex);
-        currentIndex += ords3.getLength();
-        chViewRecord.setOrdinates(
-                Double.parseDouble(ords1.getValue()),
-                Double.parseDouble(ords2.getValue()),
-                Double.parseDouble(ords3.getValue())
-        );
+            PseudoString ords3 = readStarParameter(buffer, currentIndex);
+            currentIndex += ords3.getLength();
+            chViewRecord.setOrdinates(
+                    Double.parseDouble(ords1.getValue()),
+                    Double.parseDouble(ords2.getValue()),
+                    Double.parseDouble(ords3.getValue())
+            );
 
-        PseudoString constellation = readStarParameter(buffer, currentIndex);
-        currentIndex += constellation.getLength();
-        chViewRecord.setConstellation(constellation.getValue());
+            PseudoString constellation = readStarParameter(buffer, currentIndex);
+            currentIndex += constellation.getLength();
+            chViewRecord.setConstellation(constellation.getValue());
 
-        PseudoString comment = readStarParameter(buffer, currentIndex);
-        currentIndex += comment.getLength();
-        chViewRecord.setComment(comment.getValue());
+            PseudoString comment = readStarParameter(buffer, currentIndex);
+            currentIndex += comment.getLength();
+            chViewRecord.setComment(comment.getValue());
 
-        boolean selected = readBoolean(buffer, currentIndex);
-        currentIndex += 2;
-        chViewRecord.setSelected(selected);
+            boolean selected = readBoolean(buffer, currentIndex);
+            currentIndex += 2;
+            chViewRecord.setSelected(selected);
 
-        short indexInFile = readShort(buffer, currentIndex);
-        currentIndex += 2;
-        chViewRecord.setIndex(indexInFile);
+            short indexInFile = readShort(buffer, currentIndex);
+            currentIndex += 2;
+            chViewRecord.setIndex(indexInFile);
 
-        short group = readShort(buffer, currentIndex);
-        currentIndex += 2;
-        chViewRecord.setGroupNumber(group);
+            short group = readShort(buffer, currentIndex);
+            currentIndex += 2;
+            chViewRecord.setGroupNumber(group);
 
-        if (buffer[currentIndex] != 0) {
-            currentIndex++;
+            if (buffer[currentIndex] != 0) {
+                currentIndex++;
+                log.debug(chViewRecord.toString());
+                chViewRecord.setSubsidiaryStar(parseRecord(buffer, currentIndex));
+            }
+
+            // get the stellar class
+            String stellarClass = spectra.getValue().substring(0, 1);
+            if (stellarFactory.classes(stellarClass)) {
+
+                // the stellar classification
+                StellarClassification stellarClassification = stellarFactory.getStellarClass(stellarClass);
+
+                // get the star color and store it
+                Color starColor = getColor(stellarClassification.getStarColor());
+                chViewRecord.setStarColor(starColor);
+
+                // the star radius
+                double radius = stellarClassification.getAverageRadius();
+                chViewRecord.setRadius(radius);
+            } else {
+                chViewRecord.setStarColor(getColor(StarColor.M));
+                chViewRecord.setRadius(0.5);
+            }
+
             log.debug(chViewRecord.toString());
-            chViewRecord.setSubsidiaryStar(parseRecord(buffer, currentIndex));
+
+
+        } catch (Exception e) {
+            log.error("format corruption in file:" + e.getMessage());
+            showErrorAlert("Loading CHV file",
+                    "Encountered a corruption in file and was not about to continue");
+            return null;
         }
-
-        // get the stellar class
-        String stellarClass = spectra.getValue().substring(0, 1);
-        if (stellarFactory.classes(stellarClass)) {
-
-            // the stellar classification
-            StellarClassification stellarClassification = stellarFactory.getStellarClass(stellarClass);
-
-            // get the star color and store it
-            Color starColor = getColor(stellarClassification.getStarColor());
-            chViewRecord.setStarColor(starColor);
-
-            // the star radius
-            double radius = stellarClassification.getAverageRadius();
-            chViewRecord.setRadius(radius);
-        } else {
-            chViewRecord.setStarColor(getColor(StarColor.M));
-            chViewRecord.setRadius(0.5);
-        }
-
-        log.debug(chViewRecord.toString());
-
-
         return chViewRecord;
     }
 
