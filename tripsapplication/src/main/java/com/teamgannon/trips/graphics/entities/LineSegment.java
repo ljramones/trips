@@ -58,11 +58,11 @@ public class LineSegment {
         lineSegment.actualFrom = pointFrom;
         lineSegment.actualTo = pointTo;
         lineSegment.translatedFrom = transformer.transformOrds(lineSegment.actualFrom);
-        lineSegment.translatedFrom[0] += width / 2;
-        lineSegment.translatedFrom[2] += depth / 2;
+        lineSegment.translatedFrom[0] += width / 2.0;
+        lineSegment.translatedFrom[2] += depth / 2.0;
         lineSegment.translatedTo = transformer.transformOrds(lineSegment.actualTo);
-        lineSegment.translatedTo[0] += width / 2;
-        lineSegment.translatedTo[2] += depth / 2;
+        lineSegment.translatedTo[0] += width / 2.0;
+        lineSegment.translatedTo[2] += depth / 2.0;
 
         return lineSegment;
     }

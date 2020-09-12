@@ -716,7 +716,6 @@ public class InterstellarSpacePane extends Pane {
 
         MenuItem titleItem = new MenuItem(name);
         titleItem.setDisable(true);
-//        titleItem.getStyleClass().add("context-menu-title");
         cm.getItems().add(titleItem);
 
         MenuItem setStarMenuItem = createSetStarMenuitem(star);
@@ -820,9 +819,7 @@ public class InterstellarSpacePane extends Pane {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             RouteDialog dialog = new RouteDialog(starDescriptor);
             Optional<RouteDescriptor> result = dialog.showAndWait();
-            result.ifPresent(routeDescriptor -> {
-                routeManager.startRoute(routeDescriptor, starDescriptor);
-            });
+            result.ifPresent(routeDescriptor -> routeManager.startRoute(routeDescriptor, starDescriptor));
         });
         return menuItem;
     }
