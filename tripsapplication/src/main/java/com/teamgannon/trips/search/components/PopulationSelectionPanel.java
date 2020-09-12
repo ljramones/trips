@@ -18,10 +18,10 @@ import java.util.List;
 public class PopulationSelectionPanel extends BasePane {
 
     private final CheckBox yesNoPop = new CheckBox("Yes?");
-    private final CheckBox pop0 = new CheckBox("1");
-    private final CheckBox pop1 = new CheckBox("10");
-    private final CheckBox pop2 = new CheckBox("100");
-    private final CheckBox pop3 = new CheckBox("1000");
+    private final CheckBox pop0 = new CheckBox("1s");
+    private final CheckBox pop1 = new CheckBox("10s");
+    private final CheckBox pop2 = new CheckBox("100s");
+    private final CheckBox pop3 = new CheckBox("1000s");
     private final CheckBox pop4 = new CheckBox("10\u2074");
     private final CheckBox pop5 = new CheckBox("10\u2075");
     private final CheckBox pop6 = new CheckBox("10\u2076");
@@ -34,7 +34,7 @@ public class PopulationSelectionPanel extends BasePane {
         planGrid.setHgap(10);
         planGrid.setVgap(10);
 
-        Label populationLabel = createLabel("Population ");
+        Label populationLabel = createLabel("Population (magnitude) ");
 
         planGrid.add(populationLabel, 0, 0);
 
