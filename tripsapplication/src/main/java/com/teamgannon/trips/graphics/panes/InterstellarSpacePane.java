@@ -21,12 +21,14 @@ import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
+import java.beans.EventHandler;
 import java.util.*;
 
 @Slf4j
@@ -981,6 +983,16 @@ public class InterstellarSpacePane extends Pane {
      * @param pane the subscene to manage rotation
      */
     private void handleMouseEvents(Pane pane) {
+
+        pane.setOnScroll((ScrollEvent event) -> {
+            // Adjust the zoom factor as per your requirement
+            double zoomFactor = 1.05;
+            double deltaY = event.getDeltaY();
+            if (deltaY < 0){
+                zoomFactor = 2.0 - zoomFactor;
+            }
+            zoomGraph(deltaY);
+        });
 
         // get initial position of the mouse
         pane.setOnMousePressed((MouseEvent me) -> {
