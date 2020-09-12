@@ -28,7 +28,6 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import java.beans.EventHandler;
 import java.util.*;
 
 @Slf4j
@@ -985,12 +984,7 @@ public class InterstellarSpacePane extends Pane {
     private void handleMouseEvents(Pane pane) {
 
         pane.setOnScroll((ScrollEvent event) -> {
-            // Adjust the zoom factor as per your requirement
-            double zoomFactor = 1.05;
             double deltaY = event.getDeltaY();
-            if (deltaY < 0){
-                zoomFactor = 2.0 - zoomFactor;
-            }
             zoomGraph(deltaY);
         });
 
@@ -1010,28 +1004,36 @@ public class InterstellarSpacePane extends Pane {
             mousePosY = me.getSceneY();
             mouseDeltaX = (mousePosX - mouseOldX);
             mouseDeltaY = (mousePosY - mouseOldY);
-//            updateLabels();  // used to eventually make the labels flat
-
-            double modifier = 1.0;
-            double modifierFactor = 0.1;
 
             if (me.isControlDown()) {
-                modifier = 0.1;
-            }
-            if (me.isShiftDown()) {
-                modifier = 10.0;
-            }
+                // this drags the graph if the control key is pressed
+                double cameraX = cameraXform.getTranslateX() - mouseDeltaX;
+                double cameraY = cameraXform.getTranslateY() - mouseDeltaY;
 
-            if (me.isPrimaryButtonDown()) {
-                cameraXform.ry.setAngle(cameraXform.ry.getAngle() - mouseDeltaX * modifierFactor * modifier * 2.0);  // +
-                cameraXform.rx.setAngle(cameraXform.rx.getAngle() + mouseDeltaY * modifierFactor * modifier * 2.0);  // -
-            } else if (me.isSecondaryButtonDown()) {
-                log.info("secondary button pushed, x={}, y={}", mousePosX, mousePosY);
-            } else if (me.isMiddleButtonDown()) {
-                log.info("middle button pushed, x={}, y={}", mousePosX, mousePosY);
-            }
+                cameraXform.setTranslateX(cameraX);
+                cameraXform.setTranslateY(cameraY);
+            } else {
+
+//            updateLabels();  // used to eventually make the labels flat
+
+                double modifier = 1.0;
+                double modifierFactor = 0.1;
+
+                if (me.isShiftDown()) {
+                    modifier = 5.0;
+                }
+
+                if (me.isPrimaryButtonDown()) {
+                    cameraXform.ry.setAngle(cameraXform.ry.getAngle() - mouseDeltaX * modifierFactor * modifier * 2.0);  // +
+                    cameraXform.rx.setAngle(cameraXform.rx.getAngle() + mouseDeltaY * modifierFactor * modifier * 2.0);  // -
+                } else if (me.isSecondaryButtonDown()) {
+                    log.info("secondary button pushed, x={}, y={}", mousePosX, mousePosY);
+                } else if (me.isMiddleButtonDown()) {
+                    log.info("middle button pushed, x={}, y={}", mousePosX, mousePosY);
+                }
 
 //            me.setDragDetect(true);
+            }
         });
 
     }
