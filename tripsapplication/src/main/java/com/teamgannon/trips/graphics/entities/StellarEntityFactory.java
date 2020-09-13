@@ -79,6 +79,16 @@ public class StellarEntityFactory {
         return group;
     }
 
+    public static Node drawStellarObject(StarDisplayRecord record,
+                                         ColorPalette colorPalette,
+                                         StarDisplayPreferences starDisplayPreferences) {
+
+        Sphere sphere = createStellarShape(record);
+        Group group = new Group(sphere);
+        group.setUserData(record);
+        return group;
+    }
+
 
     public static Node drawCentralIndicator(StarDisplayRecord record,
                                             ColorPalette colorPalette,
@@ -138,6 +148,25 @@ public class StellarEntityFactory {
         sphere.setTranslateY(point3D.getY());
         sphere.setTranslateZ(point3D.getZ());
         label.setLabelFor(sphere);
+        return sphere;
+    }
+
+    /**
+     * create a stellar object
+     *
+     * @param record the star record
+     * @return the created object
+     */
+    public static Sphere createStellarShape(StarDisplayRecord record) {
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(record.getStarColor());
+        material.setSpecularColor(record.getStarColor());
+        Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
+        sphere.setMaterial(material);
+        Point3D point3D = record.getCoordinates();
+        sphere.setTranslateX(point3D.getX());
+        sphere.setTranslateY(point3D.getY());
+        sphere.setTranslateZ(point3D.getZ());
         return sphere;
     }
 

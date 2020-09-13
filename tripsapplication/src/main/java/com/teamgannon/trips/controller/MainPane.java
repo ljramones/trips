@@ -267,7 +267,6 @@ public class MainPane implements
                     TripsContext tripsContext,
                     Localization localization) {
 
-        //  used to weave the java fx code with spring boot
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
         this.chviewReader = chviewReader;
@@ -343,6 +342,9 @@ public class MainPane implements
         extensionsOn = graphEnablesPersist.isDisplayStems();
         labelsOn = graphEnablesPersist.isDisplayLabels();
         scaleOn = graphEnablesPersist.isDisplayLegend();
+
+        // set defaults
+        interstellarSpacePane.setGraphPresets(graphEnablesPersist);
     }
 
     /**
