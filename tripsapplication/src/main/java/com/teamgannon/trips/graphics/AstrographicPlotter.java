@@ -46,8 +46,7 @@ public class AstrographicPlotter {
 
         this.searchContext = tripsContext.getSearchContext();
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
-        this.astrographicTransformer = new AstrographicTransformer(
-                tripsContext.getAppPreferences().getGridsize());
+        this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
     }
 
     public static Color getColor(double[] colors) {
@@ -76,10 +75,7 @@ public class AstrographicPlotter {
                                      ColorPalette colorPalette,
                                      StarDisplayPreferences starDisplayPreferences) {
 
-        // clear old drawing
-        interstellarSpacePane.clearStars();
-
-        interstellarSpacePane.setDataSetContext(dataSetDescriptor);
+        interstellarSpacePane.setupPlot(dataSetDescriptor, centerCoordinates, starDisplayPreferences);
 
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
@@ -102,7 +98,6 @@ public class AstrographicPlotter {
                             searchContext.getAstroSearchQuery().getCenterStar(),
                             colorPalette,
                             starDisplayPreferences);
-//                    log.info("\nstar: {}\n", astrographicObject);
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
                 }

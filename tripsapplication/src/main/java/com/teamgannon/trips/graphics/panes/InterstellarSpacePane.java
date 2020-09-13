@@ -4,11 +4,13 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
@@ -51,7 +53,6 @@ public class InterstellarSpacePane extends Pane {
     private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
 
-
     /**
      * used to implement a selection model for selecting stars
      */
@@ -86,6 +87,18 @@ public class InterstellarSpacePane extends Pane {
     private final int height;
     private final int depth;
     private final double lineWidth = 0.5;
+
+    /**
+     * label state
+     */
+    private boolean labelsOn = true;
+
+    /**
+     * is there a plot on screen?
+     */
+    private boolean plotActive = false;
+
+    private CurrentPlot currentPlot;
 
     /**
      * the general color palette of the graph
@@ -212,6 +225,29 @@ public class InterstellarSpacePane extends Pane {
         handleKeyboard(this);
     }
 
+    /////////////////// SET DATASET CONTEXT  /////////////////
+
+    public void setDataSetContext(DataSetDescriptor datasetName) {
+        routeManager.setDatasetContext(datasetName);
+    }
+
+    public void setupPlot(
+            DataSetDescriptor dataSetDescriptor,
+            double[] centerCoordinates,
+            StarDisplayPreferences starDisplayPreferences) {
+
+        clearStars();
+
+        currentPlot = new CurrentPlot();
+        currentPlot.setDataSetDescriptor(dataSetDescriptor);
+        currentPlot.setCenterCoordinates(centerCoordinates);
+        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
+
+        routeManager.setDatasetContext(dataSetDescriptor);
+
+        plotActive = true;
+    }
+
     //////////////////////
 
     public GridPlotManager getGridPlotManager() {
@@ -264,13 +300,6 @@ public class InterstellarSpacePane extends Pane {
         return starsInView;
     }
 
-    /////////////////// SET DATASET CONTEXT  /////////////////
-
-    public void setDataSetContext(DataSetDescriptor datasetName) {
-        routeManager.setDatasetContext(datasetName);
-    }
-
-
     //////////////////////////  External event updaters   ////////////////////////
 
     /**
@@ -319,6 +348,7 @@ public class InterstellarSpacePane extends Pane {
         if (listUpdater != null) {
             listUpdater.clearList();
         }
+
     }
 
     /**
@@ -355,6 +385,14 @@ public class InterstellarSpacePane extends Pane {
     }
 
     ////////// toggles
+
+
+    public void setGraphPresets(GraphEnablesPersist graphEnablesPersist) {
+        gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
+        gridPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
+        gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
+        labelsOn = graphEnablesPersist.isDisplayLabels();
+    }
 
     /**
      * toggle the grid
@@ -407,17 +445,30 @@ public class InterstellarSpacePane extends Pane {
     /**
      * toggle the labels
      *
-     * @param labelsOn true is labels should be on
+     * @param labelSetting true is labels should be on
      */
-    public void toggleLabels(boolean labelsOn) {
-        log.info("Label set:" + labelsOn);
-        labelDisplayGroup.setVisible(labelsOn);
-        List<Node> labelList = labelDisplayGroup.getChildren();
-        for (Node node : labelList) {
-            node.setVisible(labelsOn);
-            node.setManaged(labelsOn);
-            node.setDisable(labelsOn);
+    public void toggleLabels(boolean labelSetting) {
+        this.labelsOn = labelSetting;
+
+        // we can only do this if there are plot element on screen
+        if (plotActive) {
+            redrawPlot(labelsOn);
         }
+    }
+
+    private void redrawPlot(boolean labelsOn) {
+        clearPlot();
+        clearRoutes();
+        clearStars();
+        log.info("redrawing plot: {}", labelsOn);
+        List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
+        recordList.forEach(starDisplayRecord -> plotStar(starDisplayRecord,
+                currentPlot.getCenterStar(),
+                colorPalette,
+                currentPlot.getStarDisplayPreferences()
+        ));
+        // replot routes
+        plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
     }
 
     /**
@@ -445,6 +496,9 @@ public class InterstellarSpacePane extends Pane {
             drawStar(star, centerStar, colorPalette, starDisplayPreferences);
         }
         createExtensionGroup(recordList, colorPalette.getExtensionColor());
+
+        // there is an active plot on screen
+        plotActive = true;
     }
 
     /**
@@ -453,12 +507,22 @@ public class InterstellarSpacePane extends Pane {
      * @param record     the star record
      * @param centerStar the name of the center star
      */
-    public void drawStar(StarDisplayRecord
-                                 record,
+    public void drawStar(StarDisplayRecord record,
                          String centerStar,
                          ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {
 
+        currentPlot.addRecord(record.copy());
+        currentPlot.setCenterStar(centerStar);
+
+        plotStar(record, centerStar, colorPalette, starDisplayPreferences);
+
+    }
+
+    private void plotStar(StarDisplayRecord record,
+                          String centerStar,
+                          ColorPalette colorPalette,
+                          StarDisplayPreferences starDisplayPreferences) {
         Xform starNode;
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
@@ -467,14 +531,13 @@ public class InterstellarSpacePane extends Pane {
             log.info("sol is at {}", record.getActualCoordinates());
         } else {
             // otherwise draw a regular star
-            starNode = createStar(record, colorPalette, starDisplayPreferences);
+            starNode = createStar(record, colorPalette, starDisplayPreferences, labelsOn);
             createExtension(record, colorPalette.getExtensionColor());
         }
         starLookup.put(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
-
     }
 
 
@@ -526,20 +589,29 @@ public class InterstellarSpacePane extends Pane {
      * @param record                 the star record
      * @param colorPalette           the color palette to use
      * @param starDisplayPreferences the star preferences
+     * @param labelsOn
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record,
                              ColorPalette colorPalette,
-                             StarDisplayPreferences starDisplayPreferences) {
+                             StarDisplayPreferences starDisplayPreferences,
+                             boolean labelsOn) {
 
-        Label label = StellarEntityFactory.createLabel(record, colorPalette);
-        labelDisplayGroup.getChildren().add(label);
+        Node star;
+        if (labelsOn) {
+            Label label = StellarEntityFactory.createLabel(record, colorPalette);
 
-        Node star = StellarEntityFactory.drawStellarObject(
-                record,
-                colorPalette,
-                label,
-                starDisplayPreferences);
+            star = StellarEntityFactory.drawStellarObject(
+                    record,
+                    colorPalette,
+                    label,
+                    starDisplayPreferences);
+        } else {
+            star = StellarEntityFactory.drawStellarObject(
+                    record,
+                    colorPalette,
+                    starDisplayPreferences);
+        }
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
@@ -1123,4 +1195,5 @@ public class InterstellarSpacePane extends Pane {
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
     }
+
 }

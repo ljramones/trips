@@ -86,6 +86,28 @@ public class StarDisplayRecord {
         notes = " ";
     }
 
+    public StarDisplayRecord copy() {
+        StarDisplayRecord record = new StarDisplayRecord();
+
+        record.setNotes(notes);
+        double[] newCoordinate = new double[3];
+        newCoordinate[0] = actualCoordinates[0];
+        newCoordinate[1] = actualCoordinates[1];
+        newCoordinate[2] = actualCoordinates[2];
+        record.setActualCoordinates(newCoordinate);
+        Point3D newPoint = new Point3D(coordinates.getX(), coordinates.getY(), coordinates.getZ());
+        record.setCoordinates(newPoint);
+        record.setDataSetName(dataSetName);
+        record.setDistance(distance);
+        record.setRadius(radius);
+        record.setRecordId(recordId);
+        record.setSpectralClass(spectralClass);
+        record.setStarColor(new Color(starColor.getRed(), starColor.getGreen(), starColor.getBlue(), starColor.getOpacity()));
+        record.setStarName(starName);
+
+        return record;
+    }
+
 
     public static StarDisplayRecord fromProperties(Map<String, String> properties) {
         StarDisplayRecord record = new StarDisplayRecord();
