@@ -6,11 +6,10 @@ labels: ''
 assignees: ''
 
 ---
-<!- The bits enclosed in these comment brackets are just comments and instructions. You don't need to edit them ->
-
-<!- Please LEAVE THE BOLD HEADINGS. Just replace what's under them with your information -> 
-
-<!- What's there now is just a suggestion. -> 
+<!- The bits enclosed in these comment brackets are just comments and instructions. 
+You don't need to edit them 
+Please LEAVE THE BOLD HEADINGS. Just replace what's under them with your information 
+What's there now is just a suggestion. -> 
 
 **Describe the bug**
 
