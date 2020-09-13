@@ -1,3 +1,18 @@
+/*
+ *     Copyright 2016-2020 TRIPS https://github.com/ljramones/trips
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *          http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -101,20 +116,21 @@ public class RouteManager {
         routingActive = true;
         currentRoute = routeDescriptor;
         log.info("Start charting the route:" + routeDescriptor);
-        double x = starDisplayRecord.getX();
-        double y = starDisplayRecord.getY();
-        double z = starDisplayRecord.getZ();
+        Point3D startStar = starDisplayRecord.getCoordinates();
         UUID id = starDisplayRecord.getRecordId();
         if (currentRoute != null) {
-            Point3D toPoint3D = new Point3D(x, y, z);
-            currentRoute.getLineSegments().add(toPoint3D);
+            currentRoute.getLineSegments().add(startStar);
             currentRoute.getRouteList().add(id);
             routesGroup.getChildren().add(currentRouteDisplay);
             routesGroup.setVisible(true);
         }
     }
 
-
+    /**
+     * continue the route
+     *
+     * @param starDisplayRecord the the star to route to
+     */
     public void continueRoute(StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
@@ -122,7 +138,11 @@ public class RouteManager {
         }
     }
 
-
+    /**
+     * finish the route
+     *
+     * @param starDisplayRecord the star record to terminate at
+     */
     public void finishRoute(StarDisplayRecord starDisplayRecord) {
         createRouteSegment(starDisplayRecord);
         routingActive = false;
@@ -135,7 +155,12 @@ public class RouteManager {
         routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
     }
 
-    public void makeRoutePermanent(com.teamgannon.trips.graphics.entities.RouteDescriptor currentRoute) {
+    /**
+     * make the route permanent
+     *
+     * @param currentRoute the current route
+     */
+    private void makeRoutePermanent(RouteDescriptor currentRoute) {
         // remove our hand drawn route
         routesGroup.getChildren().remove(currentRouteDisplay);
 
@@ -147,7 +172,7 @@ public class RouteManager {
     }
 
 
-    public Xform createDisplayRoute(RouteDescriptor currentRoute) {
+    private Xform createDisplayRoute(RouteDescriptor currentRoute) {
         Xform route = new Xform();
         route.setWhatAmI(currentRoute.getName());
         Point3D previousPoint = new Point3D(0, 0, 0);
@@ -165,20 +190,19 @@ public class RouteManager {
         return route;
     }
 
-    public void createRouteSegment(StarDisplayRecord starDisplayRecord) {
-        double x = starDisplayRecord.getX();
-        double y = starDisplayRecord.getY();
-        double z = starDisplayRecord.getZ();
+    private void createRouteSegment(StarDisplayRecord starDisplayRecord) {
+
         UUID id = starDisplayRecord.getRecordId();
+        Point3D toStarLocation = starDisplayRecord.getCoordinates();
 
         if (currentRoute != null) {
             int size = currentRoute.getLineSegments().size();
             Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
-            Point3D toPoint3D = new Point3D(x, y, z);
+
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    fromPoint, toPoint3D, 0.5, currentRoute.getColor()
+                    fromPoint, toStarLocation, 0.5, currentRoute.getColor()
             );
-            currentRoute.getLineSegments().add(toPoint3D);
+            currentRoute.getLineSegments().add(toStarLocation);
             currentRoute.getRouteList().add(id);
 
             currentRouteDisplay.getChildren().add(lineSegment);
@@ -202,7 +226,7 @@ public class RouteManager {
     }
 
 
-    public void createCurrentRouteDisplay() {
+    private void createCurrentRouteDisplay() {
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
     }
@@ -210,7 +234,7 @@ public class RouteManager {
     /**
      * reset the current route
      */
-    public void resetCurrentRoute() {
+    private void resetCurrentRoute() {
         currentRoute.clear();
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
@@ -248,6 +272,16 @@ public class RouteManager {
     }
 
     /**
+     * this checks if all the stars on the route can be seen for a route
+     *
+     * @param route the route definition
+     * @return true means we can plot the whole route
+     */
+    public boolean checkIfRouteCanBePlotted(Route route) {
+        return route.getRouteStars().stream().allMatch(starLookup::containsKey);
+    }
+
+    /**
      * convert a database description of a route to a graphical one.
      * check that all the stars in the original route are present because we can't display the route
      *
@@ -267,17 +301,13 @@ public class RouteManager {
         return routeDescriptor;
     }
 
-    public boolean checkIfRouteCanBePlotted(Route route) {
-        return route.getRouteStars().stream().allMatch(starLookup::containsKey);
-    }
-
     /**
      * get the embedded object associated with the star in the lookup
      *
      * @param starId the id
      * @return the embedded object
      */
-    public StarDisplayRecord getStar(UUID starId) {
+    private StarDisplayRecord getStar(UUID starId) {
         Node star = starLookup.get(starId);
         if (star != null) {
             return (StarDisplayRecord) star.getUserData();
