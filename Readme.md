@@ -20,7 +20,7 @@ TRIPS (Terran Interstellar Plotter System) is intended to be a stellar cartograp
         - runme.sh (Mac/Linux version)        
 
 ## See the User Manual in the Wiki
-[User Manual Home](https://github.com/ljramones/trips/wiki/User-Manual}
+[User Manual Home](https://github.com/ljramones/trips/wiki/User-Manual)
 
 ## Contributing
 
