@@ -16,6 +16,7 @@ import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
+import javafx.event.ActionEvent;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -84,7 +85,6 @@ public class InterstellarSpacePane extends Pane {
     private final int width;
     private final int height;
     private final int depth;
-    private final int spacing;
     private final double lineWidth = 0.5;
 
     /**
@@ -139,8 +139,6 @@ public class InterstellarSpacePane extends Pane {
 
     private final DatabaseListener databaseListener;
 
-    private DataSetDescriptor dataSetDescriptor;
-
     private final RouteManager routeManager;
 
     // the lookout for drawn stars
@@ -166,7 +164,6 @@ public class InterstellarSpacePane extends Pane {
         this.width = width;
         this.height = height;
         this.depth = depth;
-        this.spacing = spacing;
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
@@ -270,8 +267,7 @@ public class InterstellarSpacePane extends Pane {
     /////////////////// SET DATASET CONTEXT  /////////////////
 
     public void setDataSetContext(DataSetDescriptor datasetName) {
-        this.dataSetDescriptor = datasetName;
-        routeManager.setDatasetContext(dataSetDescriptor);
+        routeManager.setDatasetContext(datasetName);
     }
 
 
@@ -532,7 +528,9 @@ public class InterstellarSpacePane extends Pane {
      * @param starDisplayPreferences the star preferences
      * @return the star to plot
      */
-    private Xform createStar(StarDisplayRecord record, ColorPalette colorPalette, StarDisplayPreferences starDisplayPreferences) {
+    private Xform createStar(StarDisplayRecord record,
+                             ColorPalette colorPalette,
+                             StarDisplayPreferences starDisplayPreferences) {
 
         Label label = StellarEntityFactory.createLabel(record, colorPalette);
         labelDisplayGroup.getChildren().add(label);
@@ -738,7 +736,7 @@ public class InterstellarSpacePane extends Pane {
         MenuItem finishRouteMenuItem = finishRoutingMenuItem(star);
         cm.getItems().add(finishRouteMenuItem);
 
-        MenuItem resetRouteMenuItem = resetRoutingMenuItem(star);
+        MenuItem resetRouteMenuItem = resetRoutingMenuItem();
         cm.getItems().add(resetRouteMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
@@ -844,11 +842,9 @@ public class InterstellarSpacePane extends Pane {
     }
 
 
-    private MenuItem resetRoutingMenuItem(Node star) {
+    private MenuItem resetRoutingMenuItem() {
         MenuItem menuItem = new MenuItem("Reset Route");
-        menuItem.setOnAction(event -> {
-            routeManager.resetRoute();
-        });
+        menuItem.setOnAction(this::resetRoute);
         return menuItem;
     }
 
@@ -883,7 +879,6 @@ public class InterstellarSpacePane extends Pane {
         MenuItem removeMenuItem = new MenuItem("Enter System");
         removeMenuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            ;
             jumpToSystem(starDescriptor);
         });
         return removeMenuItem;
@@ -1125,4 +1120,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
 
+    private void resetRoute(ActionEvent event) {
+        routeManager.resetRoute();
+    }
 }
