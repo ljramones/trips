@@ -310,6 +310,9 @@ public class AstrographicObject implements Serializable {
         if (catalogIdList == null) {
             return new ArrayList<>();
         }
+        if (catalogIdList.equals("NA")) {
+            return new ArrayList<>();
+        }
         return Arrays.asList(catalogIdList.split("\\s*,\\s*"));
     }
 
