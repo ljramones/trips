@@ -20,12 +20,15 @@ public class GraphEnablesPersist {
 
     private boolean displayLegend = true;
 
+    private boolean displayRoutes = true;
+
     public static GraphEnablesPersist getDefaults() {
         GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
         graphEnablesPersist.setDisplayGrid(true);
         graphEnablesPersist.setDisplayStems(true);
         graphEnablesPersist.setDisplayLabels(true);
         graphEnablesPersist.setDisplayLegend(true);
+        graphEnablesPersist.setDisplayRoutes(true);
         return graphEnablesPersist;
     }
 
@@ -34,6 +37,7 @@ public class GraphEnablesPersist {
         displayStems = true;
         displayLabels = true;
         displayLegend = true;
+        displayRoutes = true;
     }
 
 }
