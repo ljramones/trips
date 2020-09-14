@@ -12,6 +12,8 @@ public class RBCsvFile {
     private long numbAccepts = 0;
     private long numbRejects = 0;
 
+    private double maxDistance = 0;
+
     public void incRejects() {
         numbRejects += 1;
     }

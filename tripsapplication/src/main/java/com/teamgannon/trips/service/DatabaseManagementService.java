@@ -451,7 +451,7 @@ public class DatabaseManagementService {
 
     public List<AstrographicObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
         // we can only effectively gather 500 at a time
-        return toList(astrographicObjectRepository.findByIdIn(dataSetDescriptor.getAstrographicDataList(), PageRequest.of(0, MAX_REQUEST_SIZE)));
+        return astrographicObjectRepository.findByDataSetName(dataSetDescriptor.getDataSetName());
     }
 
     public List<AstrographicObject> getFromDatasetWithinLimit(DataSetDescriptor dataSetDescriptor, double distance) {

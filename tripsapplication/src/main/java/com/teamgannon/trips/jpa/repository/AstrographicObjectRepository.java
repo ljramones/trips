@@ -41,6 +41,14 @@ public interface AstrographicObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
+    List<AstrographicObject> findByDataSetName(String dataSetName);
+
+    /**
+     * find all objects by dataset name
+     *
+     * @param dataSetName the name
+     * @return the list of objects
+     */
     List<AstrographicObject> findByDataSetNameOrderByDisplayName(String dataSetName);
 
     /**

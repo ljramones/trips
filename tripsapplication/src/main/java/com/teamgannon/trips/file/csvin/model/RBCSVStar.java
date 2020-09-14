@@ -77,6 +77,7 @@ public class RBCSVStar {
                 spectralClass = "?";
                 astro.setSpectralClass(spectralClass);
                 stellarClassification = stellarFactory.getStellarClass(StellarType.Q.toString());
+                astro.setOrthoSpectralClass(StellarType.Q.toString());
 
                 // get the star color and store it
                 Color starColor = getColor(stellarClassification.getStarColor());
@@ -91,6 +92,7 @@ public class RBCSVStar {
             } else {
                 astro.setSpectralClass(spectralClass);
                 String stellarClass = spectralClass.substring(0, 1);
+                astro.setOrthoSpectralClass(stellarClass);
                 if (stellarFactory.classes(stellarClass)) {
                     // the stellar classification
                     stellarClassification = stellarFactory.getStellarClass(stellarClass);
@@ -142,13 +144,7 @@ public class RBCSVStar {
             return astro;
 
         } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error("failed to convert a RB CSV star object into a astrographic one: {}", e.getMessage());
-//            System.out.println(String.format("star is :%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
-//                    name, type, ra, dec, pmra, pmdec, parallax,
-//                    radialvel, spectral, magv, bprp, bpg, grp, temp, position,
-//                    distance, source, nnclass, catalogid)
-//            );
+            log.error("failed to convert a RB CSV star object into a astrographic one: {}", e.getMessage());
             return null;
         }
 

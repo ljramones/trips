@@ -45,6 +45,8 @@ public class RBCsvReader {
 
         long totalCount = 0;
         boolean readComplete = false;
+        double maxDistance = 0.0;
+
         try {
             Reader reader = Files.newBufferedReader(Paths.get(file.toURI()));
             CSVReader csvReader = new CSVReader(reader);
@@ -71,6 +73,14 @@ public class RBCsvReader {
                             lineRead[15], lineRead[16], lineRead[17],
                             lineRead[18]);
                     try {
+                        double distance = Double.parseDouble(star.getDistance());
+                        if (distance > maxDistance) {
+                            maxDistance = distance;
+                        }
+                    } catch (NumberFormatException nfe) {
+                        log.error("Error getting distance for {}", star.getName());
+                    }
+                    try {
                         AstrographicObject astrographicObject = star.toAstrographicObject();
                         if (astrographicObject != null) {
                             astrographicObject.setDataSetName(dataset.getName());
@@ -95,6 +105,8 @@ public class RBCsvReader {
         } catch (IOException | CsvValidationException e) {
             log.error("failed to read file because: {}", e.getMessage());
         }
+
+        rbCsvFile.setMaxDistance(maxDistance);
 
         return rbCsvFile;
     }

@@ -138,6 +138,7 @@ public class DataSetDescriptorFactory {
 
     public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
                                                             RBCsvFile rbCsvFile) throws Exception {
+
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
 
         // parse excel file to create the basics for the data set to save
@@ -147,6 +148,7 @@ public class DataSetDescriptorFactory {
         dataSetDescriptor.setFileCreator(dataset.getAuthor());
         dataSetDescriptor.setNumberStars(rbCsvFile.getSize());
         dataSetDescriptor.setFileNotes(dataset.getNotes());
+        dataSetDescriptor.setDistanceRange(rbCsvFile.getMaxDistance());
         dataSetDescriptor.setDatasetType(dataset.getDataType().getDataFormatEnum().getValue());
 
         Theme theme = new Theme();
