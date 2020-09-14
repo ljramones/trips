@@ -124,10 +124,16 @@ public class MainPane implements
      * the TRIPS context component
      */
     private final TripsContext tripsContext;
+
     /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
+
+    /**
+     * the toggle button
+     */
+    public ToggleButton toggleRoutesBtn;
 
     /**
      * the query dialog
@@ -247,11 +253,11 @@ public class MainPane implements
     private boolean extensionsOn = true;
     private boolean labelsOn = true;
     private boolean starsOn = true;
-    private boolean sidePaneOn = false;
-
-    /////// data objects ///////////
     private boolean scaleOn = true;
     private boolean routesOn = true;
+
+    /////// data objects ///////////
+    private boolean sidePaneOn = false;
     private boolean toolBarOn = true;
     private boolean statusBarOn = true;
 
@@ -338,10 +344,12 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
+
         gridOn = graphEnablesPersist.isDisplayGrid();
         extensionsOn = graphEnablesPersist.isDisplayStems();
         labelsOn = graphEnablesPersist.isDisplayLabels();
         scaleOn = graphEnablesPersist.isDisplayLegend();
+        routesOn = graphEnablesPersist.isDisplayRoutes();
 
         // set defaults
         interstellarSpacePane.setGraphPresets(graphEnablesPersist);
@@ -385,6 +393,12 @@ public class MainPane implements
             interstellarSpacePane.toggleScale(graphEnablesPersist.isDisplayLegend());
             toggleScaleBtn.setSelected(graphEnablesPersist.isDisplayLegend());
             toggleScaleMenuitem.setSelected(graphEnablesPersist.isDisplayLegend());
+        }
+
+        if (graphEnablesPersist.isDisplayRoutes()) {
+            interstellarSpacePane.toggleRoutes(graphEnablesPersist.isDisplayRoutes());
+            toggleRoutesBtn.setSelected(graphEnablesPersist.isDisplayRoutes());
+            toggleRoutesMenuitem.setSelected(graphEnablesPersist.isDisplayRoutes());
         }
 
         toggleToolBarMenuitem.setSelected(toolBarOn);
@@ -630,9 +644,10 @@ public class MainPane implements
 
     public void toggleRoutes(ActionEvent actionEvent) {
         routesOn = !routesOn;
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesOn);
         interstellarSpacePane.toggleRoutes(routesOn);
         toggleRoutesMenuitem.setSelected(routesOn);
-        toggleRoutesMenuitem.setSelected(routesOn);
+        toggleRoutesBtn.setSelected(routesOn);
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {
