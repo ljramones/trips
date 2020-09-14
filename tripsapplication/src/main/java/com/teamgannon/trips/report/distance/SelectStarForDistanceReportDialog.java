@@ -10,12 +10,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.apache.commons.collections4.MapUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSelection> {
 
-    private final ChoiceBox<StarDisplayRecord> starChoice = new ChoiceBox<>();
+    private final ChoiceBox<String> starChoice = new ChoiceBox<>();
+
+    private final Map<String, StarDisplayRecord> starDisplayRecordMap = new HashMap<>();
 
     public Button generateButton = new Button("Generate");
 
@@ -26,9 +31,15 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
      */
     public SelectStarForDistanceReportDialog(List<StarDisplayRecord> starsInView) {
 
+        if (!starsInView.isEmpty()) {
+            MapUtils.populateMap(starDisplayRecordMap,
+                    starsInView,
+                    StarDisplayRecord::getStarName);
+        }
+
         if (starsInView.size() > 0) {
             for (StarDisplayRecord starDisplayRecord : starsInView) {
-                starChoice.getItems().add(starDisplayRecord);
+                starChoice.getItems().add(starDisplayRecord.getStarName());
             }
         }
 
@@ -45,7 +56,7 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
 
         // set the first one
         if (starsInView.size() > 0) {
-            starChoice.setValue(starsInView.get(0));
+            starChoice.setValue(starsInView.get(0).getStarName());
         }
 
         HBox prefsBox = new HBox();
@@ -85,7 +96,8 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
     }
 
     private void generate(ActionEvent actionEvent) {
-        StarDisplayRecord record = starChoice.getValue();
+        String selected = starChoice.getValue();
+        StarDisplayRecord record = starDisplayRecordMap.get(selected);
         DistanceReportSelection reportSelection = DistanceReportSelection
                 .builder()
                 .selected(true)
