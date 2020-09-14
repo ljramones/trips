@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -64,6 +65,20 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final CheckBox otherCheckbox = new CheckBox();
 
     ////////////////
+    private final TextField misc1TextField = new TextField();
+    private final TextField misc2TextField = new TextField();
+    private final TextField misc3TextField = new TextField();
+    private final TextField misc4TextField = new TextField();
+    private final TextField misc5TextField = new TextField();
+
+    private final TextField miscNum1TextField = new TextField();
+    private final TextField miscNum2TextField = new TextField();
+    private final TextField miscNum3TextField = new TextField();
+    private final TextField miscNum4TextField = new TextField();
+    private final TextField miscNum5TextField = new TextField();
+
+
+    ////////////////
 
     public StarEditDialog(AstrographicObject record) {
         this.record = record;
@@ -84,6 +99,10 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         fictionalTab.setContent(createFictionalTab());
         tabPane.getTabs().add(fictionalTab);
 
+        Tab userTab = new Tab("User Special");
+        userTab.setContent(createUserTab());
+        tabPane.getTabs().add(userTab);
+
         vBox.getChildren().add(tabPane);
 
         // setup button boxes
@@ -99,6 +118,92 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         this.setTitle("Change attributes for " + record.getDisplayName());
         this.getDialogPane().setContent(vBox);
+    }
+
+    private Pane createUserTab() {
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+
+        GridPane innerGridPane1 = new GridPane();
+        innerGridPane1.setPadding(new Insets(10, 10, 10, 10));
+        innerGridPane1.setVgap(5);
+        innerGridPane1.setHgap(5);
+        gridPane.add(innerGridPane1, 0, 1);
+
+        innerGridPane1.add(new Label("misc1"), 0, 1);
+        misc1TextField.setText(record.getMiscText1());
+        innerGridPane1.add(misc1TextField, 1, 1);
+
+        innerGridPane1.add(new Label("misc2"), 0, 2);
+        misc2TextField.setText(record.getMiscText2());
+        innerGridPane1.add(misc2TextField, 1, 2);
+
+        innerGridPane1.add(new Label("misc3"), 0, 3);
+        misc3TextField.setText(record.getMiscText3());
+        innerGridPane1.add(misc3TextField, 1, 3);
+
+        innerGridPane1.add(new Label("misc4"), 0, 4);
+        misc4TextField.setText(record.getMiscText4());
+        innerGridPane1.add(misc4TextField, 1, 4);
+
+        innerGridPane1.add(new Label("misc5"), 0, 5);
+        misc5TextField.setText(record.getMiscText5());
+        innerGridPane1.add(misc5TextField, 1, 5);
+
+        GridPane innerGridPane2 = new GridPane();
+        innerGridPane2.setPadding(new Insets(10, 10, 10, 10));
+        innerGridPane2.setVgap(5);
+        innerGridPane2.setHgap(5);
+        gridPane.add(innerGridPane2, 1, 1);
+
+        innerGridPane2.add(new Label("miscNum1"), 0, 1);
+        miscNum1TextField.setText(Double.toString(record.getMiscNum2()));
+        miscNum1TextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMiscNum1();
+            }
+        });
+        innerGridPane2.add(miscNum1TextField, 1, 1);
+
+        innerGridPane2.add(new Label("miscNum2"), 0, 2);
+        miscNum2TextField.setText(Double.toString(record.getMiscNum2()));
+        miscNum2TextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMiscNum2();
+            }
+        });
+        innerGridPane2.add(miscNum2TextField, 1, 2);
+
+        innerGridPane2.add(new Label("miscNum3"), 0, 3);
+        miscNum3TextField.setText(Double.toString(record.getMiscNum3()));
+        miscNum3TextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMiscNum3();
+            }
+        });
+        innerGridPane2.add(miscNum3TextField, 1, 3);
+
+        innerGridPane2.add(new Label("miscNum4"), 0, 4);
+        miscNum4TextField.setText(Double.toString(record.getMiscNum4()));
+        miscNum4TextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMiscNum4();
+            }
+        });
+        innerGridPane2.add(miscNum4TextField, 1, 4);
+
+        innerGridPane2.add(new Label("miscNum5"), 0, 5);
+        miscNum5TextField.setText(Double.toString(record.getMiscNum5()));
+        miscNum5TextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMiscNum5();
+            }
+        });
+        innerGridPane2.add(miscNum5TextField, 1, 5);
+
+        return gridPane;
     }
 
     private Pane createFictionalTab() {
@@ -316,6 +421,51 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     }
 
+    private void checkMiscNum1() {
+        try {
+            double miscNum1 = Double.parseDouble(miscNum1TextField.getText());
+            record.setMiscNum1(miscNum1);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", miscNum1TextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMiscNum2() {
+        try {
+            double miscNum2 = Double.parseDouble(miscNum2TextField.getText());
+            record.setMiscNum2(miscNum2);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", miscNum2TextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMiscNum3() {
+        try {
+            double miscNum3 = Double.parseDouble(miscNum3TextField.getText());
+            record.setMiscNum4(miscNum3);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", miscNum3TextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMiscNum4() {
+        try {
+            double miscNum4 = Double.parseDouble(miscNum4TextField.getText());
+            record.setMiscNum4(miscNum4);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", miscNum4TextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMiscNum5() {
+        try {
+            double miscNum5 = Double.parseDouble(miscNum5TextField.getText());
+            record.setMiscNum5(miscNum5);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", miscNum5TextField.getText() + " is an invalid floating point number");
+        }
+    }
+
     private void checkRa() {
         try {
             double ra = Double.parseDouble(raLabel.getText());
@@ -434,11 +584,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         gridPane.add(new Label("Star name"), 0, 3);
         starNameTextField.setText(record.getDisplayName());
         gridPane.add(starNameTextField, 1, 3);
-
-        gridPane.add(new Label("Color"), 0, 4);
-        starColorPicker.setValue(record.getStarColor());
-        starColorPicker.setOnAction(event -> record.setStarColor(starColorPicker.getValue()));
-        gridPane.add(starColorPicker, 1, 4);
 
         gridPane.add(new Label("Radius"), 0, 5);
         radiusTextField.setText(Double.toString(record.getRadius()));
@@ -632,6 +777,29 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         double grp = Double.parseDouble(grpLabel.getText());
         record.setGrp(grp);
+
+        record.setMiscText1(misc1TextField.getText());
+        record.setMiscText2(misc2TextField.getText());
+        record.setMiscText3(misc3TextField.getText());
+        record.setMiscText4(misc4TextField.getText());
+        record.setMiscText5(misc5TextField.getText());
+
+        double miscNum1 = Double.parseDouble(miscNum1TextField.getText());
+        record.setMiscNum1(miscNum1);
+
+        double miscNum2 = Double.parseDouble(miscNum2TextField.getText());
+        record.setMiscNum2(miscNum2);
+
+        double miscNum3 = Double.parseDouble(miscNum3TextField.getText());
+        record.setMiscNum3(miscNum3);
+
+        double miscNum4 = Double.parseDouble(miscNum4TextField.getText());
+        record.setMiscNum4(miscNum4);
+
+        double miscNum5 = Double.parseDouble(miscNum5TextField.getText());
+        record.setMiscNum5(miscNum5);
+
+
     }
 
     private void changeClicked(ActionEvent actionEvent) {

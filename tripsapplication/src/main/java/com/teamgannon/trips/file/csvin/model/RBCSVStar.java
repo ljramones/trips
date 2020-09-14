@@ -79,10 +79,6 @@ public class RBCSVStar {
                 stellarClassification = stellarFactory.getStellarClass(StellarType.Q.toString());
                 astro.setOrthoSpectralClass(StellarType.Q.toString());
 
-                // get the star color and store it
-                Color starColor = getColor(stellarClassification.getStarColor());
-                astro.setStarColor(starColor);
-
                 // the star radius
                 double radius = stellarClassification.getAverageRadius();
                 if (radius == 0) {
@@ -97,10 +93,6 @@ public class RBCSVStar {
                     // the stellar classification
                     stellarClassification = stellarFactory.getStellarClass(stellarClass);
 
-                    // get the star color and store it
-                    Color starColor = getColor(stellarClassification.getStarColor());
-                    astro.setStarColor(starColor);
-
                     // the star radius
                     double radius = stellarClassification.getAverageRadius();
                     if (radius == 0) {
@@ -108,7 +100,6 @@ public class RBCSVStar {
                     }
                     astro.setRadius(radius);
                 } else {
-                    astro.setStarColor(getColor(StarColor.M));
                     astro.setRadius(0.5);
                 }
             }

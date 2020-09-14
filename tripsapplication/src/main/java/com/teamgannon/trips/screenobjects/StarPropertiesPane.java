@@ -87,7 +87,6 @@ public class StarPropertiesPane extends Pane {
         recordIdLabel.setText(record.getId().toString());
         dataSetLabel.setText(record.getDataSetName());
         starNameLabel.setText(record.getDisplayName());
-        starColorPicker.setValue(record.getStarColor());
         radiusLabel.setText(Double.toString(record.getRadius()));
         distanceNameLabel.setText(Double.toString(record.getDistance()));
         spectralClassLabel.setText(record.getSpectralClass());
@@ -255,10 +254,6 @@ public class StarPropertiesPane extends Pane {
         gridPane.add(new Label("Star name"), 0, 3);
         starNameLabel.setText(record.getDisplayName());
         gridPane.add(starNameLabel, 1, 3);
-
-        gridPane.add(new Label("Color"), 0, 4);
-        starColorPicker.setValue(record.getStarColor());
-        gridPane.add(starColorPicker, 1, 4);
 
         gridPane.add(new Label("Radius"), 0, 5);
         radiusLabel.setText(Double.toString(record.getRadius()));

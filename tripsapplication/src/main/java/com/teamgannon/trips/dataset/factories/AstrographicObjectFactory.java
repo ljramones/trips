@@ -32,8 +32,6 @@ public class AstrographicObjectFactory {
 
         astrographicObject.setDisplayName(chViewRecord.getStarName());
 
-        astrographicObject.setStarColor(chViewRecord.getStarColor());
-
         // mark that this is the first load of this object
         astrographicObject.setNotes("initial load of object for CHView file");
 

@@ -108,7 +108,7 @@ public class InterstellarSpacePane extends Pane {
     /**
      * star display specifics
      */
-    private final StarDisplayPreferences starDisplayPreferences;
+    private StarDisplayPreferences starDisplayPreferences;
 
     /**
      * animation toggle
@@ -178,8 +178,11 @@ public class InterstellarSpacePane extends Pane {
         this.height = height;
         this.depth = depth;
         this.tripsContext = tripsContext;
+
+        // setup defaults
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
+
         this.listUpdater = listUpdater;
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
@@ -223,6 +226,11 @@ public class InterstellarSpacePane extends Pane {
         // handle mouse and keyboard events
         handleMouseEvents(this);
         handleKeyboard(this);
+    }
+
+
+    public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
+        this.starDisplayPreferences = starDisplayPreferences;
     }
 
     /////////////////// SET DATASET CONTEXT  /////////////////
@@ -589,7 +597,7 @@ public class InterstellarSpacePane extends Pane {
      * @param record                 the star record
      * @param colorPalette           the color palette to use
      * @param starDisplayPreferences the star preferences
-     * @param labelsOn
+     * @param labelsOn               whether we labels on or off
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record,
@@ -726,7 +734,7 @@ public class InterstellarSpacePane extends Pane {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record);
+                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record, starDisplayPreferences);
                 record1.setCoordinates(starDisplayRecord.getCoordinates());
                 log.info("Changed value: {}", record);
                 databaseListener.updateStar(record);

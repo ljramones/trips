@@ -69,20 +69,23 @@ public class AstrographicObject implements Serializable {
      * is oriented from the Sun to the galactic center at that J Date. The y axis is perpendicular, through
      * the sun, and oriented so that the X and Y axis define the plane of the earth’s orbit, and the Z axis
      * is at right angles to that plane.
+     *
+     * Cartesian position in LY. Heliocentric (Sol at 0,0,0), Epoch J2000.0
      */
 
     /**
-     * The X position of the coordinates
+     * X position, X axis is a line from Sol to the galactic center at that J Date
      */
     private double x;
 
     /**
-     * THe Y position of the coordinates
+     * Y position, Y axis is perpendicular, through sol, and oriented so that the X and Y axis
+     * define the plane of the earth’s orbit
      */
     private double y;
 
     /**
-     * THe Z position of the coordinates
+     * Z position, Z axis is through Sol at right angles to the XY plane
      */
     private double z;
 
@@ -97,7 +100,7 @@ public class AstrographicObject implements Serializable {
     private double ra;
 
     /**
-     * proper motion in right ascension)
+     * Proper Motion in RA direction in milli-arcseconds per year
      */
     private double pmra;
 
@@ -107,17 +110,22 @@ public class AstrographicObject implements Serializable {
     private double declination;
 
     /**
-     * proper motion in declination)
+     * Proper Motion in Dec direction in milli-arcseconds per year
      */
     private double pmdec;
 
-
+    /**
+     * Declination in decimal degrees
+     */
     private double dec_deg;
 
+    /**
+     * Right ascension in decimal degrees
+     */
     private double rs_cdeg;
 
     /**
-     * the parallax measurement
+     * the parallax measurement n milli-arc-seconds
      */
     private double parallax;
 
@@ -128,6 +136,7 @@ public class AstrographicObject implements Serializable {
 
     /**
      * the star's radial velocity
+     * Radial velocity from Sol in km/year
      */
     private double radialVelocity;
 
@@ -163,16 +172,20 @@ public class AstrographicObject implements Serializable {
     @NotNull
     private boolean realStar;
 
+    /**
+     * Gaia magnitude in the bprp band - crudely "red"
+     */
     private double bprp;
 
+    /**
+     * Gaia magnitude in the bpg band - crudely "blue"
+     */
     private double bpg;
 
-    private double grp;
-
     /**
-     * String representation of the star's color
+     * Gaia magnitude in the grp band - crudely "green"
      */
-    private String color;
+    private double grp;
 
     /**
      * We choose to store the standard luminosity bands. Luminosity is published based on a set of standard
@@ -183,16 +196,28 @@ public class AstrographicObject implements Serializable {
     private String luminosity;
 
     /**
-     * various magnitudes
+     * Magnitude in the astronomic "U" band
      */
     private double magu;
 
+    /**
+     * Magnitude in the astronomic "B" band
+     */
     private double magb;
 
+    /**
+     * Magnitude in the astronomic "V" band
+     */
     private double magv;
 
+    /**
+     * Magnitude in the astronomic "R" band
+     */
     private double magr;
 
+    /**
+     * Magnitude in the astronomic "I" band
+     */
     private double magi;
 
     ///////////////////  for fiction writing   //////////////
@@ -254,6 +279,60 @@ public class AstrographicObject implements Serializable {
      */
     private String milPlanType;
 
+    /////////////   Miscellaneous   /////////////////////////////////////
+
+    /**
+     * for user custom use in future versions
+     */
+    private String miscText1;
+
+    /**
+     * for user custom use in future versions
+     */
+    private String miscText2;
+
+    /**
+     * for user custom use in future versions
+     */
+    private String miscText3;
+
+    /**
+     * for user custom use in future versions
+     */
+    private String miscText4;
+
+    /**
+     * for user custom use in future versions
+     */
+    private String miscText5;
+
+    /**
+     * for user custom use in future versions
+     */
+    private double miscNum1;
+
+    /**
+     * for user custom use in future versions
+     */
+    private double miscNum2;
+
+    /**
+     * for user custom use in future versions
+     */
+    private double miscNum3;
+
+    /**
+     * for user custom use in future versions
+     */
+    private double miscNum4;
+
+    /**
+     * for user custom use in future versions
+     */
+    private double miscNum5;
+
+    ///////////////////////////////////////
+
 
     public AstrographicObject() {
         init();
@@ -285,7 +364,6 @@ public class AstrographicObject implements Serializable {
         bpg = 0;
         grp = 0;
         other = false;
-        this.color= Color.WHITE.toString();
         luminosity = " ";
         magu = 0;
         magb = 0;
@@ -333,14 +411,6 @@ public class AstrographicObject implements Serializable {
         x = coordinates[0];
         y = coordinates[1];
         z = coordinates[2];
-    }
-
-    public Color getStarColor() {
-        return Color.valueOf(this.color);
-    }
-
-    public void setStarColor(Color color) {
-        this.color = color.toString();
     }
 
 }
