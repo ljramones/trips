@@ -15,8 +15,8 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private final ApplicationPreferences preferences;
     private TabPane tabPane;
     private ButtonType buttonTypeOk;
-    private PreferencesUpdater updater;
-    private TripsContext tripsContext;
+    private final PreferencesUpdater updater;
+    private final TripsContext tripsContext;
 
 
     public ViewPreferencesDialog(PreferencesUpdater updater, TripsContext tripsContext, ApplicationPreferences preferences) {
@@ -24,7 +24,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         this.tripsContext = tripsContext;
 
         this.preferences = preferences;
-        this.setTitle("View Preferences - currently disabled");
+        this.setTitle("View Preferences");
 
         VBox vBox = new VBox();
         createTabPanes(vBox);

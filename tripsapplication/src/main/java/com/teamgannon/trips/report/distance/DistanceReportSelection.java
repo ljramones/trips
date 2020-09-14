@@ -9,6 +9,7 @@ import lombok.Data;
 @Builder
 public class DistanceReportSelection {
 
+    @Builder.Default
     private boolean selected = false;
 
     private StarDisplayRecord record;

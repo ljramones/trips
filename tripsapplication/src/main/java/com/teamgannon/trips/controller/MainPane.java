@@ -363,6 +363,7 @@ public class MainPane implements
         StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
         starDisplayPreferences.setStars(starDetailsPersistList);
         tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
+        interstellarSpacePane.setStellarPreferences(starDisplayPreferences);
     }
 
     /**

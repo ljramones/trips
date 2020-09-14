@@ -1,6 +1,9 @@
 package com.teamgannon.trips.graphics.entities;
 
+import com.teamgannon.trips.config.application.StarDescriptionPreference;
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.stardata.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Data;
@@ -108,56 +111,6 @@ public class StarDisplayRecord {
         return record;
     }
 
-
-    public static StarDisplayRecord fromProperties(Map<String, String> properties) {
-        StarDisplayRecord record = new StarDisplayRecord();
-
-        String starName = properties.get("starName");
-        record.setStarName(starName);
-        UUID recordId = UUID.fromString(properties.get("recordId"));
-        record.setRecordId(recordId);
-        String dataSetName = properties.get("dataSetName");
-        record.setDataSetName(dataSetName);
-        double radius = Double.parseDouble(properties.get("radius"));
-        record.setRadius(radius);
-
-        double distance = Double.parseDouble(properties.get("distance"));
-        record.setDistance(distance);
-
-        Color starColor = fromRGB(properties.get("starColor"));
-        record.setStarColor(starColor);
-
-        String spectralClass = properties.get("spectralClass");
-        record.setSpectralClass(spectralClass);
-        String notes = properties.get("notes");
-        record.setNotes(notes);
-
-        double xAct = Double.parseDouble(properties.get("xAct"));
-        double yAct = Double.parseDouble(properties.get("yAct"));
-        double zAct = Double.parseDouble(properties.get("zAct"));
-        double[] coordinates = new double[3];
-        coordinates[0] = xAct;
-        coordinates[1] = yAct;
-        coordinates[2] = zAct;
-        record.setActualCoordinates(coordinates);
-
-        double x = Double.parseDouble(properties.get("x"));
-        double y = Double.parseDouble(properties.get("y"));
-        double z = Double.parseDouble(properties.get("z"));
-        Point3D point3D = new Point3D(x, y, z);
-        record.setCoordinates(point3D);
-
-        return record;
-    }
-
-    private static Color fromRGB(String colorStr) {
-        String[] parts = colorStr.split(",");
-        double red = Double.parseDouble(parts[0]);
-        double green = Double.parseDouble(parts[1]);
-        double blue = Double.parseDouble(parts[2]);
-        return Color.color(red, green, blue);
-    }
-
     public static AstrographicObject toAstrographicObject(StarDisplayRecord displayRecord) {
         AstrographicObject object = new AstrographicObject();
 
@@ -171,55 +124,36 @@ public class StarDisplayRecord {
         object.setRadius(displayRecord.getRadius());
         object.setDistance(displayRecord.getDistance());
         object.setSpectralClass(displayRecord.getSpectralClass());
-        object.setStarColor(displayRecord.getStarColor());
 
         return object;
     }
 
-    public static StarDisplayRecord fromAstrographicObject(AstrographicObject astrographicObject) {
+    public static StarDisplayRecord fromAstrographicObject(AstrographicObject astrographicObject, StarDisplayPreferences starDisplayPreferences) {
         StarDisplayRecord record = new StarDisplayRecord();
+
+        StellarType stellarType;
+        try {
+           stellarType= StellarType.valueOf(astrographicObject.getOrthoSpectralClass());
+        } catch (Exception e) {
+            stellarType = StellarType.M;
+        }
+
+        StarDescriptionPreference starDescriptionPreference= starDisplayPreferences.get(stellarType);
+        record.setRadius(starDescriptionPreference.getSize());
+        record.setStarColor(starDescriptionPreference.getColor());
 
         record.setRecordId(astrographicObject.getId());
         record.setStarName(astrographicObject.getDisplayName());
         record.setDataSetName(astrographicObject.getDataSetName());
-        record.setRadius(astrographicObject.getRadius());
         record.setDistance(astrographicObject.getDistance());
         record.setSpectralClass(astrographicObject.getSpectralClass());
         record.setNotes(astrographicObject.getNotes());
-        record.setStarColor(astrographicObject.getStarColor());
         double[] coords = astrographicObject.getCoordinates();
         record.setActualCoordinates(coords);
 
         return record;
     }
 
-    public Map<String, String> toProperties() {
-        Map<String, String> properties = new HashMap<>();
-
-        properties.put("starName", starName);
-        properties.put("recordId", recordId.toString());
-        properties.put("dataSetName", dataSetName);
-        properties.put("radius", Double.toString(radius));
-        properties.put("distance", Double.toString(distance));
-        properties.put("radialVelocity", Double.toString(radius));
-        properties.put("spectralClass", spectralClass);
-        properties.put("notes", notes);
-        properties.put("starColor", toRGB(starColor));
-
-        properties.put("xAct", Double.toString(actualCoordinates[0]));
-        properties.put("yAct", Double.toString(actualCoordinates[1]));
-        properties.put("zAct", Double.toString(actualCoordinates[2]));
-
-        properties.put("x", Double.toString(getCoordinates().getX()));
-        properties.put("y", Double.toString(getCoordinates().getY()));
-        properties.put("z", Double.toString(getCoordinates().getZ()));
-
-        return properties;
-    }
-
-    private String toRGB(Color starColor) {
-        return starColor.getRed() + "," + starColor.getGreen() + "," + starColor.getBlue();
-    }
 
     public void setX(double x) {
         actualCoordinates[0] = x;
