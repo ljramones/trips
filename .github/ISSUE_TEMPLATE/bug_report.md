@@ -6,10 +6,10 @@ labels: ''
 assignees: ''
 
 ---
-<!- The bits enclosed in these comment brackets are just comments and instructions. 
+<!-- The bits enclosed in these comment brackets are just comments and instructions. 
 You don't need to edit them 
 Please LEAVE THE BOLD HEADINGS. Just replace what's under them with your information 
-What's there now is just a suggestion. -> 
+What's there now is just a suggestion. --> 
 
 **Describe the bug**
 
@@ -38,7 +38,7 @@ If applicable, add screenshots to help explain your problem. If none, delete thi
 - [ ] 0.55
  
 **Desktop (please complete the following information):** 
-<!- Move the X to the right line -> 
+<!-- Move the X to the right line --> 
 - [ ] IOS 
 - [X] Windows 10 
 - [ ] Windows Vista, 7 or 8
