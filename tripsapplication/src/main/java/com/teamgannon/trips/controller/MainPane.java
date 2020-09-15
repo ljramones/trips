@@ -22,10 +22,7 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.jpa.model.StarDetailsPersist;
+import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.report.distance.DistanceReport;
 import com.teamgannon.trips.report.distance.DistanceReportDialog;
@@ -134,6 +131,10 @@ public class MainPane implements
      * the toggle button
      */
     public ToggleButton toggleRoutesBtn;
+
+    public CheckMenuItem togglePolitiesMenuitem;
+
+    public ToggleButton togglePolityBtn;
 
     /**
      * the query dialog
@@ -249,6 +250,7 @@ public class MainPane implements
     private Simulator simulator;
 
     // state settings for control positions
+    private boolean polities = true;
     private boolean gridOn = true;
     private boolean extensionsOn = true;
     private boolean labelsOn = true;
@@ -324,13 +326,17 @@ public class MainPane implements
     }
 
     private void loadDBPresets() {
-
         // get graph enables from DB
         getGraphEnablesFromDB();
-
         // get Star definitions from DB
         getStarDefinitionsFromDB();
+        // get civilizations/polities
+        getCivilizationsFromDB();
+    }
 
+    private void getCivilizationsFromDB() {
+        CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
+        tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
     private void getGraphColorsFromDB() {
@@ -338,13 +344,13 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
 
-
     public void getGraphEnablesFromDB() {
         GraphEnablesPersist graphEnablesPersist = databaseManagementService.getGraphEnablesFromDB();
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
 
+        polities = graphEnablesPersist.isDisplayPolities();
         gridOn = graphEnablesPersist.isDisplayGrid();
         extensionsOn = graphEnablesPersist.isDisplayStems();
         labelsOn = graphEnablesPersist.isDisplayLabels();
@@ -376,6 +382,12 @@ public class MainPane implements
             interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
             toggleGridBtn.setSelected(graphEnablesPersist.isDisplayGrid());
             toggleGridMenuitem.setSelected(graphEnablesPersist.isDisplayGrid());
+        }
+
+        if (graphEnablesPersist.isDisplayPolities()) {
+            interstellarSpacePane.togglePolities(graphEnablesPersist.isDisplayPolities());
+            togglePolityBtn.setSelected(graphEnablesPersist.isDisplayPolities());
+            togglePolitiesMenuitem.setSelected(graphEnablesPersist.isDisplayPolities());
         }
 
         if (graphEnablesPersist.isDisplayLabels()) {
@@ -601,6 +613,14 @@ public class MainPane implements
 
     public void quit(ActionEvent actionEvent) {
         shutdown();
+    }
+
+    public void togglePolities(ActionEvent actionEvent) {
+        polities = !polities;
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(polities);
+        interstellarSpacePane.togglePolities(polities);
+        togglePolitiesMenuitem.setSelected(polities);
+        togglePolityBtn.setSelected(polities);
     }
 
     public void toggleGrid(ActionEvent actionEvent) {
@@ -1249,6 +1269,11 @@ public class MainPane implements
     }
 
     @Override
+    public void changePolitiesPreferences(CivilizationDisplayPreferences civilizationDisplayPreferences) {
+        databaseManagementService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
+    }
+
+    @Override
     public void updateNotesForStar(UUID recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
     }
@@ -1300,4 +1325,6 @@ public class MainPane implements
     public void updateStatus(String message) {
         databaseStatus.setText(message);
     }
+
+
 }

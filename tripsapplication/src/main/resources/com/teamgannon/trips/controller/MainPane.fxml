@@ -22,6 +22,11 @@
                       onAction="#showApplicationPreferences"
                       text="Change Application Preferences..."/>
             <SeparatorMenuItem/>
+            <CheckMenuItem fx:id="togglePolitiesMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#togglePolities"
+                           text="Toggle Polities"/>
+            <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleGridMenuitem"
                            mnemonicParsing="false"
                            onAction="#toggleGrid"
@@ -83,6 +88,8 @@
     </MenuBar>
     <VBox layoutX="2.0" layoutY="29.0" prefHeight="39.0" prefWidth="1100.0">
         <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="856.0" VBox.vgrow="ALWAYS">
+            <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false" onAction="#togglePolities" text="Polities"/>
+            <Separator/>
             <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>
             <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false" onAction="#toggleGrid" text="Grid"/>
             <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false" onAction="#toggleLabels" text="Labels"/>

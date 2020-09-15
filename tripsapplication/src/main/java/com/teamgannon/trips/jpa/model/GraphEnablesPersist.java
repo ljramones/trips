@@ -12,6 +12,8 @@ public class GraphEnablesPersist {
     @Id
     private String id;
 
+    private boolean displayPolities = true;
+
     private boolean displayGrid = true;
 
     private boolean displayStems = true;
@@ -24,6 +26,7 @@ public class GraphEnablesPersist {
 
     public static GraphEnablesPersist getDefaults() {
         GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
+        graphEnablesPersist.setDisplayPolities(true);
         graphEnablesPersist.setDisplayGrid(true);
         graphEnablesPersist.setDisplayStems(true);
         graphEnablesPersist.setDisplayLabels(true);
@@ -33,6 +36,7 @@ public class GraphEnablesPersist {
     }
 
     public void setDefault() {
+        displayPolities = true;
         displayGrid = true;
         displayStems = true;
         displayLabels = true;

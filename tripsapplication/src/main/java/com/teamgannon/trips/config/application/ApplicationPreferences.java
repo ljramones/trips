@@ -1,5 +1,6 @@
 package com.teamgannon.trips.config.application;
 
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;

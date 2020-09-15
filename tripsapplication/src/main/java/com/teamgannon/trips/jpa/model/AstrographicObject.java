@@ -27,6 +27,7 @@ public class AstrographicObject implements Serializable {
     public final static String SIMBAD_NO_TYPE = "UNDEFINED";
     public final static String POLITY_NOT_SET = "NOT+SET";
     private static final long serialVersionUID = -5589152046288176364L;
+
     /**
      * id of the object
      */
@@ -330,6 +331,7 @@ public class AstrographicObject implements Serializable {
      * for user custom use in future versions
      */
     private double miscNum5;
+
 
     ///////////////////////////////////////
 

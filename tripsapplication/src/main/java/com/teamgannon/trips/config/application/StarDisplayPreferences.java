@@ -114,9 +114,7 @@ public class StarDisplayPreferences implements Serializable {
         StarDescriptionPreference yStar = starMap.get(StellarType.Y);
         yStar.setColor(Color.MEDIUMVIOLETRED);
         yStar.setSize(0.2f);
-
     }
-
 
     /**
      * set the stars from what was in the database
