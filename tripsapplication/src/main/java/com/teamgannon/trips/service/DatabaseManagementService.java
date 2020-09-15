@@ -77,14 +77,27 @@ public class DatabaseManagementService {
      */
     private final StarDetailsPersistRepository starDetailsPersistRepository;
 
+    private final CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository;
 
+    /**
+     * constructor
+     *
+     * @param stellarSystemRepository
+     * @param starRepository
+     * @param dataSetDescriptorRepository
+     * @param astrographicObjectRepository
+     * @param graphColorsRepository
+     * @param graphEnablesRepository
+     * @param starDetailsPersistRepository
+     */
     public DatabaseManagementService(StellarSystemRepository stellarSystemRepository,
                                      StarRepository starRepository,
                                      DataSetDescriptorRepository dataSetDescriptorRepository,
                                      AstrographicObjectRepository astrographicObjectRepository,
                                      GraphColorsRepository graphColorsRepository,
                                      GraphEnablesRepository graphEnablesRepository,
-                                     StarDetailsPersistRepository starDetailsPersistRepository) {
+                                     StarDetailsPersistRepository starDetailsPersistRepository,
+                                     CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository) {
 
         this.stellarSystemRepository = stellarSystemRepository;
         this.starRepository = starRepository;
@@ -93,6 +106,7 @@ public class DatabaseManagementService {
         this.graphColorsRepository = graphColorsRepository;
         this.graphEnablesRepository = graphEnablesRepository;
         this.starDetailsPersistRepository = starDetailsPersistRepository;
+        this.civilizationDisplayPreferencesRepository = civilizationDisplayPreferencesRepository;
     }
 
     /**
@@ -560,6 +574,26 @@ public class DatabaseManagementService {
         graphEnablesRepository.save(graphEnablesPersist);
     }
 
+    public CivilizationDisplayPreferences getCivilizationDisplayPreferences() {
+        Optional<CivilizationDisplayPreferences> optionalCivilizationDisplayPreferences = civilizationDisplayPreferencesRepository.findByStorageTag("Main");
+        CivilizationDisplayPreferences civilizationDisplayPreferences;
+
+        if (optionalCivilizationDisplayPreferences.isPresent()) {
+            civilizationDisplayPreferences = optionalCivilizationDisplayPreferences.get();
+        } else {
+            civilizationDisplayPreferences = new CivilizationDisplayPreferences();
+            civilizationDisplayPreferences.reset();
+            civilizationDisplayPreferences.setId(UUID.randomUUID());
+            civilizationDisplayPreferencesRepository.save(civilizationDisplayPreferences);
+        }
+
+        return civilizationDisplayPreferences;
+    }
+
+    public void updateCivilizationDisplayPreferences(CivilizationDisplayPreferences preferences) {
+        civilizationDisplayPreferencesRepository.save(preferences);
+    }
+
     public ColorPalette getGraphColorsFromDB() {
         Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
         GraphColorsPersist graphColorsPersist;
@@ -576,6 +610,7 @@ public class DatabaseManagementService {
         colorPalette.assignColors(graphColorsPersist);
         return colorPalette;
     }
+
 
     public void updateColors(ColorPalette colorPalette) {
         Optional<GraphColorsPersist> graphColorsPersistOptional = graphColorsRepository.findById(colorPalette.getId());
@@ -629,4 +664,6 @@ public class DatabaseManagementService {
     public void removeStar(UUID recordId) {
         astrographicObjectRepository.deleteById(recordId);
     }
+
+
 }

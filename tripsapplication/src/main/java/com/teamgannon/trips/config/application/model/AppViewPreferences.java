@@ -1,6 +1,7 @@
 package com.teamgannon.trips.config.application.model;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import lombok.Data;
 
@@ -21,5 +22,10 @@ public class AppViewPreferences {
      * the values of stars, size, type, color
      */
     private StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+
+    /**
+     * the civilizations
+     */
+    private CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
 
 }

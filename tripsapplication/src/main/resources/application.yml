@@ -7,15 +7,17 @@ spring:
   # spring datasource requirements
   datasource:
     hikari:
+      minimum-idle: 0
+      initialization-fail-timeout: -1
       connectionTimeout: 20000
       maximumPoolSize: 5
-      poolName: HikariPoolZZZ
+      poolName: HikariPoolTrips
     url: jdbc:h2:file:./data/tripsdb
     driverClassName: org.h2.Driver
     username: sa
     password:
+    continue-on-error: true
 
-  # spring data jpa settings
   jpa:
     databasePlatform: org.hibernate.dialect.H2Dialect
     show-sql: false

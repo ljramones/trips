@@ -57,23 +57,17 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         starsTab.setContent(new StarsPane(tripsContext.getAppViewPreferences().getStarDisplayPreferences(), updater));
         tabPane.getTabs().add(starsTab);
 
-//        Tab positionTab = new Tab("Position");
-//        String style4 = "-fx-background-color: lavender";
-//        positionTab.setStyle(style4);
-//        positionTab.setContent(new PositionPane(preferences.getPositionDisplayPreferences(), style4));
-//        tabPane.getTabs().add(positionTab);
-
         Tab routeTab = new Tab("Route");
         String style5 = "-fx-background-color: lightyellow";
         routeTab.setStyle(style5);
         routeTab.setContent(new RoutePane(preferences.getRouteDisplayPreferences(), style5));
         tabPane.getTabs().add(routeTab);
 
-//        Tab civilizationTab = new Tab("Civilization");
-//        String style6 = "-fx-background-color: limegreen";
-//        civilizationTab.setStyle(style6);
-//        civilizationTab.setContent(new CivilizationPane(preferences.getCivilizationDisplayPreferences(), style6));
-//        tabPane.getTabs().add(civilizationTab);
+        Tab civilizationTab = new Tab("Civilization");
+        String style6 = "-fx-background-color: limegreen";
+        civilizationTab.setStyle(style6);
+        civilizationTab.setContent(new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), updater));
+        tabPane.getTabs().add(civilizationTab);
 
         vBox.getChildren().add(tabPane);
     }

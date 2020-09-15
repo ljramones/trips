@@ -411,6 +411,10 @@ public class InterstellarSpacePane extends Pane {
         gridPlotManager.toggleGrid(gridToggle);
     }
 
+    public void togglePolities(boolean polities) {
+        log.info("toggle polities: {}", polities);
+    }
+
     /**
      * toggle the extensions
      *
@@ -1203,5 +1207,6 @@ public class InterstellarSpacePane extends Pane {
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
     }
+
 
 }
