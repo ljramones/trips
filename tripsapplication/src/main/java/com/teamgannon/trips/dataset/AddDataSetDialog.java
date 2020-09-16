@@ -162,10 +162,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
                 showErrorAlert("Add Dataset", "file selected does not exist!");
             }
         }
-        if (dataSet.getNotes().isEmpty()) {
-            showErrorAlert("Add Dataset", "Dataset notes cannot be empty!");
-            return;
-        }
 
         // the result for return
         setResult(dataSet);
