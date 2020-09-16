@@ -9,8 +9,6 @@ import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -61,6 +59,11 @@ public class StarDisplayRecord {
     private String spectralClass = "G";
 
     /**
+     * the polity, NA means not applicatible
+     */
+    private String polity = "NA";
+
+    /**
      * actual location of the star
      */
     private double[] actualCoordinates = new double[3];
@@ -109,6 +112,7 @@ public class StarDisplayRecord {
         record.setSpectralClass(spectralClass);
         record.setStarColor(new Color(starColor.getRed(), starColor.getGreen(), starColor.getBlue(), starColor.getOpacity()));
         record.setStarName(starName);
+        record.setPolity(polity);
 
         return record;
     }
@@ -126,21 +130,23 @@ public class StarDisplayRecord {
         object.setRadius(displayRecord.getRadius());
         object.setDistance(displayRecord.getDistance());
         object.setSpectralClass(displayRecord.getSpectralClass());
+        object.setPolity(displayRecord.getPolity());
 
         return object;
     }
 
-    public static StarDisplayRecord fromAstrographicObject(AstrographicObject astrographicObject, StarDisplayPreferences starDisplayPreferences) {
+    public static StarDisplayRecord fromAstrographicObject(AstrographicObject astrographicObject,
+                                                           StarDisplayPreferences starDisplayPreferences) {
         StarDisplayRecord record = new StarDisplayRecord();
 
         StellarType stellarType;
         try {
-           stellarType= StellarType.valueOf(astrographicObject.getOrthoSpectralClass());
+            stellarType = StellarType.valueOf(astrographicObject.getOrthoSpectralClass());
         } catch (Exception e) {
             stellarType = StellarType.M;
         }
 
-        StarDescriptionPreference starDescriptionPreference= starDisplayPreferences.get(stellarType);
+        StarDescriptionPreference starDescriptionPreference = starDisplayPreferences.get(stellarType);
         if (starDescriptionPreference != null) {
             record.setRadius(starDescriptionPreference.getSize());
             record.setStarColor(starDescriptionPreference.getColor());
@@ -153,6 +159,7 @@ public class StarDisplayRecord {
             record.setNotes(astrographicObject.getNotes());
             double[] coords = astrographicObject.getCoordinates();
             record.setActualCoordinates(coords);
+            record.setPolity(astrographicObject.getPolity());
         } else {
             log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
             return null;

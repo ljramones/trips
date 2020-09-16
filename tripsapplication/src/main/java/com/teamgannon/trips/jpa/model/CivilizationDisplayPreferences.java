@@ -5,7 +5,6 @@ import lombok.Data;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.io.Serializable;
 import java.util.UUID;
@@ -92,6 +91,23 @@ public class CivilizationDisplayPreferences implements Serializable {
         other2PolityColor = Color.LIGHTSKYBLUE.toString();
         other3PolityColor = Color.LIGHTGRAY.toString();
         other4PolityColor = Color.LEMONCHIFFON.toString();
+    }
+
+    public Color getColorForPolity(String polity) {
+        return switch (polity) {
+            case "human" -> Color.valueOf(humanPolityColor);
+            case "dornani" -> Color.valueOf(dornaniPolityColor);
+            case "ktor" -> Color.valueOf(ktorPolityColor);
+            case "artakur" -> Color.valueOf(aratKurPolityColor);
+            case "hkhrkh" -> Color.valueOf(hkhRkhPolityColor);
+            case "slaasriithi" -> Color.valueOf(slaasriithiPolityColor);
+            case "other1" -> Color.valueOf(other1PolityColor);
+            case "other2" -> Color.valueOf(other3PolityColor);
+            case "other3" -> Color.valueOf(other3PolityColor);
+            case "other4" -> Color.valueOf(other4PolityColor);
+            default -> Color.GRAY;
+        };
+
     }
 
 }
