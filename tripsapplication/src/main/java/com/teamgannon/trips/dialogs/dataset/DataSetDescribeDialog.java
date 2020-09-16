@@ -90,5 +90,4 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         return label;
     }
 
-
 }
