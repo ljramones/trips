@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
@@ -67,24 +68,14 @@ public class StellarEntityFactory {
         return line;
     }
 
-
     public static Node drawStellarObject(StarDisplayRecord record,
                                          ColorPalette colorPalette,
-                                         Label label,
-                                         StarDisplayPreferences starDisplayPreferences) {
+                                         boolean labelsOn,
+                                         boolean politiesOn,
+                                         StarDisplayPreferences starDisplayPreferences,
+                                         CivilizationDisplayPreferences polityPreferences) {
 
-        Sphere sphere = createStellarShape(record, label);
-        Group group = new Group(sphere, label);
-        group.setUserData(record);
-        return group;
-    }
-
-    public static Node drawStellarObject(StarDisplayRecord record,
-                                         ColorPalette colorPalette,
-                                         StarDisplayPreferences starDisplayPreferences) {
-
-        Sphere sphere = createStellarShape(record);
-        Group group = new Group(sphere);
+        Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn);
         group.setUserData(record);
         return group;
     }
@@ -133,31 +124,18 @@ public class StellarEntityFactory {
     /**
      * create a stellar object
      *
-     * @param record the star record
-     * @param label the label
+     * @param record       the star record
+     * @param colorPalette the color palette to use
+     * @param labelsOn     are labels on?
+     * @param politiesOn   are polities on?
      * @return the created object
      */
-    public static Sphere createStellarShape(StarDisplayRecord record, Label label) {
-        final PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(record.getStarColor());
-        material.setSpecularColor(record.getStarColor());
-        Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
-        sphere.setMaterial(material);
-        Point3D point3D = record.getCoordinates();
-        sphere.setTranslateX(point3D.getX());
-        sphere.setTranslateY(point3D.getY());
-        sphere.setTranslateZ(point3D.getZ());
-        label.setLabelFor(sphere);
-        return sphere;
-    }
+    public static Group createStellarShape(StarDisplayRecord record,
+                                           ColorPalette colorPalette,
+                                           boolean labelsOn,
+                                           boolean politiesOn) {
+        Group group = new Group();
 
-    /**
-     * create a stellar object
-     *
-     * @param record the star record
-     * @return the created object
-     */
-    public static Sphere createStellarShape(StarDisplayRecord record) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
@@ -167,7 +145,21 @@ public class StellarEntityFactory {
         sphere.setTranslateX(point3D.getX());
         sphere.setTranslateY(point3D.getY());
         sphere.setTranslateZ(point3D.getZ());
-        return sphere;
+        group.getChildren().add(sphere);
+
+        if (labelsOn) {
+            Label label = createLabel(record, colorPalette);
+            label.setLabelFor(sphere);
+            group.getChildren().add(label);
+
+        }
+
+        if (politiesOn) {
+            // add a polity indicator
+            double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
+            // group.getChildren().add(politySphere);
+        }
+        return group;
     }
 
     /**
