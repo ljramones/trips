@@ -75,7 +75,7 @@ public class StellarEntityFactory {
                                          StarDisplayPreferences starDisplayPreferences,
                                          CivilizationDisplayPreferences polityPreferences) {
 
-        Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn);
+        Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
         group.setUserData(record);
         return group;
     }
@@ -124,16 +124,19 @@ public class StellarEntityFactory {
     /**
      * create a stellar object
      *
-     * @param record       the star record
-     * @param colorPalette the color palette to use
-     * @param labelsOn     are labels on?
-     * @param politiesOn   are polities on?
+     * @param record            the star record
+     * @param colorPalette      the color palette to use
+     * @param labelsOn          are labels on?
+     * @param politiesOn        are polities on?
+     * @param polityPreferences
      * @return the created object
      */
     public static Group createStellarShape(StarDisplayRecord record,
                                            ColorPalette colorPalette,
                                            boolean labelsOn,
-                                           boolean politiesOn) {
+                                           boolean politiesOn,
+                                           CivilizationDisplayPreferences polityPreferences) {
+
         Group group = new Group();
 
         final PhongMaterial material = new PhongMaterial();
@@ -155,12 +158,37 @@ public class StellarEntityFactory {
         }
 
         if (politiesOn) {
-            // add a polity indicator
-            double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
-            // group.getChildren().add(politySphere);
+            if (!record.getPolity().equals("NA")) {
+                Color polityColor = polityPreferences.getColorForPolity(record.getPolity());
+                // add a polity indicator
+                double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
+                // group.getChildren().add(politySphere);
+                PhongMaterial polityMaterial = new PhongMaterial();
+//            polityMaterial.setDiffuseMap(earthImage);
+                polityMaterial.setDiffuseColor(new Color(polityColor.getRed(), polityColor.getGreen(), polityColor.getBlue(), 0.2));  // Note alpha of 0.6
+                polityMaterial.diffuseMapProperty();
+                Sphere politySphere = new Sphere(polityShellRadius);
+                politySphere.setMaterial(polityMaterial);
+                politySphere.setTranslateX(point3D.getX());
+                politySphere.setTranslateY(point3D.getY());
+                politySphere.setTranslateZ(point3D.getZ());
+                group.getChildren().add(politySphere);
+            }
         }
         return group;
     }
+
+    /*
+          PhongMaterial earthMaterial = new PhongMaterial();
+         Image earthImage = new Image("file:imgs/earth.jpg");
+         earthMaterial.setDiffuseMap(earthImage);
+         earthMaterial.setDiffuseColor(new Color(1,1,1,0.6));  // Note alpha of 0.6
+         earthMaterial.diffuseMapProperty();
+         earth=createSphere(0,0,0,300,earthMaterial);
+         earthMaterial.setSpecularColor(Color.INDIANRED);
+         earth.setRotationAxis(Rotate.Y_AXIS);
+         world.getChildren().add(earth);
+     */
 
     /**
      * create a label for a shape
