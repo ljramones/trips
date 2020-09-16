@@ -7,6 +7,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.search.SearchContext;
@@ -73,9 +74,10 @@ public class AstrographicPlotter {
                                      List<AstrographicObject> astrographicObjects,
                                      double[] centerCoordinates,
                                      ColorPalette colorPalette,
-                                     StarDisplayPreferences starDisplayPreferences) {
+                                     StarDisplayPreferences starDisplayPreferences,
+                                     CivilizationDisplayPreferences civilizationDisplayPreferences) {
 
-        interstellarSpacePane.setupPlot(dataSetDescriptor, centerCoordinates, starDisplayPreferences);
+        interstellarSpacePane.setupPlot(dataSetDescriptor, centerCoordinates, starDisplayPreferences, civilizationDisplayPreferences);
 
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
@@ -93,11 +95,15 @@ public class AstrographicPlotter {
                 // draw the star
                 if (drawable(astrographicObject)) {
                     StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject, starDisplayPreferences);
-                    record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
-                    interstellarSpacePane.drawStar(record,
-                            searchContext.getAstroSearchQuery().getCenterStar(),
-                            colorPalette,
-                            starDisplayPreferences);
+                    if (record != null) {
+                        record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
+                        interstellarSpacePane.drawStar(record,
+                                searchContext.getAstroSearchQuery().getCenterStar(),
+                                colorPalette,
+                                starDisplayPreferences);
+                    } else {
+                        log.error("astorgraphic object is bad: {}", astrographicObject);
+                    }
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
                 }

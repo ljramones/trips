@@ -3,8 +3,8 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import lombok.Builder;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -32,6 +32,11 @@ public class CurrentPlot {
      * the star display preferences
      */
     private StarDisplayPreferences starDisplayPreferences;
+
+    /**
+     * the polities
+     */
+    private CivilizationDisplayPreferences civilizationDisplayPreferences;
 
     /**
      * the list of stars

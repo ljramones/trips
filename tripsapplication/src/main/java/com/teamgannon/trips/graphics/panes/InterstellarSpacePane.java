@@ -9,6 +9,7 @@ import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
@@ -92,6 +93,7 @@ public class InterstellarSpacePane extends Pane {
      * label state
      */
     private boolean labelsOn = true;
+    private boolean politiesOn = true;
 
     /**
      * is there a plot on screen?
@@ -109,6 +111,11 @@ public class InterstellarSpacePane extends Pane {
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
+
+    /**
+     * the civilization and
+     */
+    private CivilizationDisplayPreferences politiesPreferences;
 
     /**
      * animation toggle
@@ -182,6 +189,7 @@ public class InterstellarSpacePane extends Pane {
         // setup defaults
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
+        this.politiesPreferences = tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences();
 
         this.listUpdater = listUpdater;
         this.displayer = displayer;
@@ -233,6 +241,10 @@ public class InterstellarSpacePane extends Pane {
         this.starDisplayPreferences = starDisplayPreferences;
     }
 
+    public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
+        this.politiesPreferences = preferences;
+    }
+
     /////////////////// SET DATASET CONTEXT  /////////////////
 
     public void setDataSetContext(DataSetDescriptor datasetName) {
@@ -242,7 +254,8 @@ public class InterstellarSpacePane extends Pane {
     public void setupPlot(
             DataSetDescriptor dataSetDescriptor,
             double[] centerCoordinates,
-            StarDisplayPreferences starDisplayPreferences) {
+            StarDisplayPreferences starDisplayPreferences,
+            CivilizationDisplayPreferences civilizationDisplayPreferences) {
 
         clearStars();
 
@@ -250,6 +263,7 @@ public class InterstellarSpacePane extends Pane {
         currentPlot.setDataSetDescriptor(dataSetDescriptor);
         currentPlot.setCenterCoordinates(centerCoordinates);
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);
+        currentPlot.setCivilizationDisplayPreferences(civilizationDisplayPreferences);
 
         routeManager.setDatasetContext(dataSetDescriptor);
 
@@ -412,7 +426,13 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void togglePolities(boolean polities) {
+        this.politiesOn = polities;
         log.info("toggle polities: {}", polities);
+
+        // we can only do this if there are plot element on screen
+        if (plotActive) {
+            redrawPlot();
+        }
     }
 
     /**
@@ -464,21 +484,23 @@ public class InterstellarSpacePane extends Pane {
 
         // we can only do this if there are plot element on screen
         if (plotActive) {
-            redrawPlot(labelsOn);
+            redrawPlot();
         }
     }
 
-    private void redrawPlot(boolean labelsOn) {
+    private void redrawPlot() {
         clearPlot();
         clearRoutes();
         clearStars();
-        log.info("redrawing plot: {}", labelsOn);
+        log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
         List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
-        recordList.forEach(starDisplayRecord -> plotStar(starDisplayRecord,
-                currentPlot.getCenterStar(),
-                colorPalette,
-                currentPlot.getStarDisplayPreferences()
-        ));
+        recordList.forEach(
+                starDisplayRecord -> plotStar(starDisplayRecord,
+                        currentPlot.getCenterStar(),
+                        colorPalette,
+                        currentPlot.getStarDisplayPreferences()
+                )
+        );
         // replot routes
         plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
     }
@@ -543,7 +565,12 @@ public class InterstellarSpacePane extends Pane {
             log.info("sol is at {}", record.getActualCoordinates());
         } else {
             // otherwise draw a regular star
-            starNode = createStar(record, colorPalette, starDisplayPreferences, labelsOn);
+            starNode = createStar(
+                    record,
+                    colorPalette,
+                    starDisplayPreferences,
+                    labelsOn,
+                    politiesOn);
             createExtension(record, colorPalette.getExtensionColor());
         }
         starLookup.put(record.getRecordId(), starNode);
@@ -601,29 +628,23 @@ public class InterstellarSpacePane extends Pane {
      * @param record                 the star record
      * @param colorPalette           the color palette to use
      * @param starDisplayPreferences the star preferences
+     * @param on
      * @param labelsOn               whether we labels on or off
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record,
                              ColorPalette colorPalette,
                              StarDisplayPreferences starDisplayPreferences,
-                             boolean labelsOn) {
+                             boolean labelsOn,
+                             boolean politiesOn) {
 
-        Node star;
-        if (labelsOn) {
-            Label label = StellarEntityFactory.createLabel(record, colorPalette);
-
-            star = StellarEntityFactory.drawStellarObject(
-                    record,
-                    colorPalette,
-                    label,
-                    starDisplayPreferences);
-        } else {
-            star = StellarEntityFactory.drawStellarObject(
-                    record,
-                    colorPalette,
-                    starDisplayPreferences);
-        }
+        Node star = StellarEntityFactory.drawStellarObject(
+                record,
+                colorPalette,
+                labelsOn,
+                politiesOn,
+                starDisplayPreferences,
+                politiesPreferences);
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);

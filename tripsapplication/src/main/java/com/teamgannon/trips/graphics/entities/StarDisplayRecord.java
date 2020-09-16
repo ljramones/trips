@@ -7,11 +7,13 @@ import com.teamgannon.trips.stardata.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Data
 public class StarDisplayRecord {
 
@@ -139,17 +141,22 @@ public class StarDisplayRecord {
         }
 
         StarDescriptionPreference starDescriptionPreference= starDisplayPreferences.get(stellarType);
-        record.setRadius(starDescriptionPreference.getSize());
-        record.setStarColor(starDescriptionPreference.getColor());
+        if (starDescriptionPreference != null) {
+            record.setRadius(starDescriptionPreference.getSize());
+            record.setStarColor(starDescriptionPreference.getColor());
 
-        record.setRecordId(astrographicObject.getId());
-        record.setStarName(astrographicObject.getDisplayName());
-        record.setDataSetName(astrographicObject.getDataSetName());
-        record.setDistance(astrographicObject.getDistance());
-        record.setSpectralClass(astrographicObject.getSpectralClass());
-        record.setNotes(astrographicObject.getNotes());
-        double[] coords = astrographicObject.getCoordinates();
-        record.setActualCoordinates(coords);
+            record.setRecordId(astrographicObject.getId());
+            record.setStarName(astrographicObject.getDisplayName());
+            record.setDataSetName(astrographicObject.getDataSetName());
+            record.setDistance(astrographicObject.getDistance());
+            record.setSpectralClass(astrographicObject.getSpectralClass());
+            record.setNotes(astrographicObject.getNotes());
+            double[] coords = astrographicObject.getCoordinates();
+            record.setActualCoordinates(coords);
+        } else {
+            log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
+            return null;
+        }
 
         return record;
     }

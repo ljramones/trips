@@ -805,7 +805,9 @@ public class MainPane implements
                         astrographicObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
-                        tripsContext.getAppViewPreferences().getStarDisplayPreferences());
+                        tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                        tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                );
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -852,7 +854,9 @@ public class MainPane implements
                         astrographicObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
-                        tripsContext.getAppViewPreferences().getStarDisplayPreferences());
+                        tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                        tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                );
             }
             if (showTable) {
                 showList(astrographicObjects);
@@ -982,7 +986,9 @@ public class MainPane implements
                     astrographicObjects,
                     astroSearchQuery.getCenterCoordinates(),
                     tripsContext.getAppViewPreferences().getColorPallete(),
-                    tripsContext.getAppViewPreferences().getStarDisplayPreferences());
+                    tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                    tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+            );
             updateStatus("Dataset plotted is: " + dataSetDescriptor.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
