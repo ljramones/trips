@@ -210,7 +210,7 @@ public class InterstellarSpacePane extends Pane {
                 colorPalette
         );
 
-        this.transitManager = new TransitManager(routeUpdaterListener);
+        this.transitManager = new TransitManager(world, routeUpdaterListener);
 
 
         this.setMinHeight(height);
@@ -264,6 +264,13 @@ public class InterstellarSpacePane extends Pane {
     public void findTransits(DistanceRoutes distanceRoutes) {
         List<StarDisplayRecord> starsInView = getCurrentStarsInView();
         transitManager.findTransits(distanceRoutes, starsInView);
+    }
+
+    /**
+     * clear existing transits
+     */
+    public void clearTransits() {
+        transitManager.clearTransits();
     }
 
 
@@ -459,6 +466,15 @@ public class InterstellarSpacePane extends Pane {
     }
 
     /**
+     * toggle the transit lengths for the transits shown
+     *
+     * @param transitsLengthsOn flag for transit lengths
+     */
+    public void toggleTransitLengths(boolean transitsLengthsOn) {
+        transitManager.toggleTransitLengths(transitsLengthsOn);
+    }
+
+    /**
      * toggle the extensions
      *
      * @param extensionsOn the status of the extensions
@@ -530,7 +546,7 @@ public class InterstellarSpacePane extends Pane {
                         currentPlot.getStarDisplayPreferences()
                 )
         );
-        // replot routes
+        // re-plot routes
         plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
     }
 

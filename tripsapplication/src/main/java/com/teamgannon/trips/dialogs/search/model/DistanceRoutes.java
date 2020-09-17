@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.search.model;
 
+import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,5 +13,9 @@ public class DistanceRoutes {
     private double upperDistance;
 
     private double lowerDistance;
+
+    private Color color;
+
+    private double lineWidth;
 
 }

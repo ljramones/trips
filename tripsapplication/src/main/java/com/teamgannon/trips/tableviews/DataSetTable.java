@@ -131,9 +131,9 @@ public class DataSetTable {
         addButton.setText("Add Entry");
         addButton.setOnAction(event -> addNewDataEntry());
 
-        Button dismissButton = new Button();
-        dismissButton.setText("Dismiss");
-        dismissButton.setOnAction(event -> window.hide());
+        Button cancelButton = new Button();
+        cancelButton.setText("Cancel");
+        cancelButton.setOnAction(event -> window.hide());
 
         HBox hBox = new HBox();
         hBox.getChildren().addAll(
@@ -144,7 +144,7 @@ public class DataSetTable {
                 new Separator(),
                 addButton,
                 new Separator(),
-                dismissButton);
+                cancelButton);
 
         Pane bottomPane = new Pane();
         bottomPane.getChildren().addAll(hBox);

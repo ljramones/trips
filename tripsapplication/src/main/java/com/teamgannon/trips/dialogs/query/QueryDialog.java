@@ -29,7 +29,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final SearchContext searchContext;
     private DataSetContext dataSetContext;
     private final SearchPane searchPane;
-    Button cancelDataSetButton = new Button("Dismiss");
+    Button cancelDataSetButton = new Button("Cancel");
     private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 

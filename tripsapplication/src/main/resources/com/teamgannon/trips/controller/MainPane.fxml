@@ -51,10 +51,6 @@
                            mnemonicParsing="false"
                            onAction="#toggleRoutes"
                            text="Toggle Routes"/>
-            <CheckMenuItem fx:id="toggleTransitsMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleTransit"
-                           text="Toggle Transits"/>
             <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleSidePaneMenuitem"
                            mnemonicParsing="false"
@@ -74,9 +70,23 @@
             <MenuItem mnemonicParsing="false" onAction="#viewEditStarData" text="View/Edit Star Data"/>
             <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
         </Menu>
-        <Menu mnemonicParsing="false" text="Search">
-            <MenuItem mnemonicParsing="false" onAction="#transitFinder"
+        <Menu mnemonicParsing="false" text="Transits">
+            <MenuItem mnemonicParsing="false"
+                      onAction="#transitFinder"
                       text="Find Transits Between Stars..."/>
+            <CheckMenuItem fx:id="toggleTransitsMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleTransit"
+                           selected="true"
+                           text="Toggle Transits"/>
+            <CheckMenuItem mnemonicParsing="false"
+                           onAction="#toggleTransitLengths"
+                           selected="true"
+                           text="Toggle Transit Lengths"/>
+            <MenuItem mnemonicParsing="false" onAction="#clearTransits"
+                      text="Clear Transits"/>
+        </Menu>
+        <Menu mnemonicParsing="false" text="Search">
             <MenuItem mnemonicParsing="false" onAction="#findInView" text="Find Star in View..."/>
             <MenuItem mnemonicParsing="false" onAction="#runQuery" text="Show Query Dialog..."/>
         </Menu>

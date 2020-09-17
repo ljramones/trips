@@ -4,7 +4,6 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -108,8 +107,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         // setup button boxes
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
-        Button resetBtn = new Button("Dismiss");
-        resetBtn.setOnAction(this::dismissClicked);
+        Button resetBtn = new Button("Cancel");
+        resetBtn.setOnAction(this::cancelClicked);
         hBox.getChildren().add(resetBtn);
         Button addBtn = new Button("Change");
         addBtn.setOnAction(this::changeClicked);
@@ -814,7 +813,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
     }
 
-    private void dismissClicked(ActionEvent actionEvent) {
+    private void cancelClicked(ActionEvent actionEvent) {
         StarEditStatus starEditStatus = new StarEditStatus();
         starEditStatus.setChanged(false);
         setResult(starEditStatus);

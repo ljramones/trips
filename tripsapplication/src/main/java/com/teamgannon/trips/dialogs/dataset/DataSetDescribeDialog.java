@@ -50,7 +50,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         mySep.setMinHeight(10);
         planGrid.add(mySep, 0, 6, 2, 1);
 
-        Button cancelDataSetButton = new Button("Dismiss");
+        Button cancelDataSetButton = new Button("Cancel");
         cancelDataSetButton.setOnAction(this::close);
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);

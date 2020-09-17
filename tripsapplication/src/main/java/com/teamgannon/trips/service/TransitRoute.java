@@ -2,6 +2,7 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Point3D;
+import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,6 +16,13 @@ public class TransitRoute {
     private StarDisplayRecord target;
 
     private double distance;
+
+    /**
+     * transit route color
+     */
+    private Color color;
+
+    private double lineWeight;
 
     public Point3D getSourceEndpoint() {
         return source.getCoordinates();

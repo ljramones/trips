@@ -67,6 +67,8 @@ public class StarMeasurementService {
                         .source(sourceRecord)
                         .target(targetRecord)
                         .distance(distance)
+                        .lineWeight((distanceRange.getLineWidth()))
+                        .color(distanceRange.getColor())
                         .build();
             } else {
                 return TransitRoute.builder().good(false).build();
