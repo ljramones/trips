@@ -50,6 +50,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -137,6 +138,7 @@ public class MainPane implements
 
     public CheckMenuItem toggleTransitsMenuitem;
     public ToggleButton toggleTransitsBtn;
+    public Label routingStatus;
 
     /**
      * the query dialog
@@ -1170,12 +1172,23 @@ public class MainPane implements
         }
     }
 
+    @Override
+    public void routingStatus(boolean statusFlag) {
+        if (statusFlag) {
+            routingStatus.setTextFill(Color.RED);
+            routingStatus.setText("Active");
+        } else {
+            routingStatus.setTextFill(Color.SEAGREEN);
+            routingStatus.setText("Inactive");
+        }
+    }
 
     @Override
     public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
         log.info("new route");
         databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
         routingPanel.setContext(dataSetDescriptor);
+        routingStatus(false);
     }
 
 

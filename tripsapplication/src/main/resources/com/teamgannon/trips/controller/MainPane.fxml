@@ -47,10 +47,7 @@
                            mnemonicParsing="false"
                            onAction="#toggleScale"
                            text="Toggle Scale"/>
-            <CheckMenuItem fx:id="toggleRoutesMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleRoutes"
-                           text="Toggle Routes"/>
+
             <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleSidePaneMenuitem"
                            mnemonicParsing="false"
@@ -86,13 +83,20 @@
             <MenuItem mnemonicParsing="false" onAction="#clearTransits"
                       text="Clear Transits"/>
         </Menu>
+        <Menu mnemonicParsing="false" text="Routing">
+            <MenuItem mnemonicParsing="false" onAction="#routeFinder" text="Route Finder ..."/>
+            <CheckMenuItem fx:id="toggleRoutesMenuitem"
+                           mnemonicParsing="false"
+                           onAction="#toggleRoutes"
+                           text="Toggle Routes"/>
+        </Menu>
         <Menu mnemonicParsing="false" text="Search">
             <MenuItem mnemonicParsing="false" onAction="#findInView" text="Find Star in View..."/>
             <MenuItem mnemonicParsing="false" onAction="#runQuery" text="Show Query Dialog..."/>
         </Menu>
         <Menu mnemonicParsing="false" text="Reports">
             <MenuItem mnemonicParsing="false" onAction="#distanceReport" text="Distance .."/>
-            <MenuItem mnemonicParsing="false" onAction="#routeFinder" text="Route Finder ..."/>
+
         </Menu>
         <Menu mnemonicParsing="false" text="Help">
             <MenuItem mnemonicParsing="false" onAction="#aboutTrips" text="About Terran Republic Viewer"/>
@@ -116,6 +120,12 @@
             <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Side Pane"/>
             <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false" onAction="#zoomIn" text="+"/>
             <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false" onAction="#zoomOut" text="-"/>
+            <Separator/>
+            <VBox alignment="CENTER">
+                <Label text="Routing State:"/>
+                <Label fx:id="routingStatus" text="Inactive" textFill="seagreen"/>
+            </VBox>
+            <Separator/>
             <CheckBox fx:id="animationCheckbox" mnemonicParsing="false" onAction="#runAnimation" text="animate"/>
         </ToolBar>
     </VBox>

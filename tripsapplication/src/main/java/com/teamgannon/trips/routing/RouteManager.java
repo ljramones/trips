@@ -15,7 +15,6 @@
  */
 package com.teamgannon.trips.routing;
 
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
@@ -26,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class RouteManager {
@@ -73,6 +74,15 @@ public class RouteManager {
     /////////////// general
 
     /**
+     * Is routing active?
+     *
+     * @return true if yes
+     */
+    public boolean isRoutingActive() {
+        return routingActive;
+    }
+
+    /**
      * set the data descriptor descriptor context
      *
      * @param dataSetDescriptor the new current context
@@ -110,9 +120,7 @@ public class RouteManager {
     ///////////// routing functions
 
     public void startRoute(RouteDescriptor routeDescriptor, StarDisplayRecord starDisplayRecord) {
-        if (routingActive) {
-            resetRoute();
-        }
+        resetRoute();
         routingActive = true;
         currentRoute = routeDescriptor;
         log.info("Start charting the route:" + routeDescriptor);
@@ -123,6 +131,7 @@ public class RouteManager {
             currentRoute.getRouteList().add(id);
             routesGroup.getChildren().add(currentRouteDisplay);
             routesGroup.setVisible(true);
+            routeUpdaterListener.routingStatus(true);
         }
     }
 
@@ -135,6 +144,8 @@ public class RouteManager {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
             log.info("Next Routing step:{}", currentRoute);
+        } else {
+            showErrorAlert("Routing", "start a route first");
         }
     }
 
@@ -144,15 +155,19 @@ public class RouteManager {
      * @param starDisplayRecord the star record to terminate at
      */
     public void finishRoute(StarDisplayRecord starDisplayRecord) {
-        createRouteSegment(starDisplayRecord);
-        routingActive = false;
-        //
-        Xform routeGraphic = StellarEntityFactory.createRoute(currentRoute);
-        routesGroup.getChildren().add(routeGraphic);
-        routesGroup.setVisible(true);
-        //
-        makeRoutePermanent(currentRoute);
-        routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
+        if (routingActive) {
+            createRouteSegment(starDisplayRecord);
+            routingActive = false;
+            //
+            Xform routeGraphic = StellarEntityFactory.createRoute(currentRoute);
+            routesGroup.getChildren().add(routeGraphic);
+            routesGroup.setVisible(true);
+            //
+            makeRoutePermanent(currentRoute);
+            routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
+        } else {
+            showErrorAlert("Routing", "start a route first");
+        }
     }
 
     /**
@@ -235,7 +250,9 @@ public class RouteManager {
      * reset the current route
      */
     private void resetCurrentRoute() {
-        currentRoute.clear();
+        if (currentRoute != null) {
+            currentRoute.clear();
+        }
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
     }
