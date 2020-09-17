@@ -1135,8 +1135,11 @@ public class MainPane implements
         DistanceReportDialog reportDialog = new DistanceReportDialog(report);
         Optional<DistanceReport> reportOptional = reportDialog.showAndWait();
         if (reportOptional.isPresent()) {
-            String reportToSave = report.getGeneratedReport();
-            storeFile(reportToSave);
+            DistanceReport distanceReport = reportOptional.get();
+            if (distanceReport.isSaveSelected()) {
+                String reportToSave = report.getGeneratedReport();
+                storeFile(reportToSave);
+            }
         }
         log.info("report complete");
     }
