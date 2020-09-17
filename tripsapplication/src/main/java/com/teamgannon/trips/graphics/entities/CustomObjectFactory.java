@@ -65,4 +65,35 @@ public class CustomObjectFactory {
     }
 
 
+    public static Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, boolean labelsOn, Label lengthLabel) {
+        Point3D yAxis = new Point3D(0, 1, 0);
+        Point3D diff = target.subtract(origin);
+        double height = diff.magnitude();
+
+        Point3D mid = target.midpoint(origin);
+        Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
+
+        Point3D axisOfRotation = diff.crossProduct(yAxis);
+        double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
+
+        // create cylinder and color it with phong material
+        Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
+
+        Xform lineGroup = new Xform();
+
+        line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+        lineGroup.getChildren().add(line);
+
+        if (labelsOn) {
+            // attach label
+            lengthLabel.setTranslateX(mid.getX());
+            lengthLabel.setTranslateY(mid.getY());
+            lengthLabel.setTranslateZ(mid.getZ());
+            lengthLabel.setTextFill(color);
+            lineGroup.getChildren().add(lengthLabel);
+        }
+
+        return lineGroup;
+    }
 }

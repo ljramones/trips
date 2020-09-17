@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -20,6 +21,11 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
     private final TextField upperDistanceMeasure = new TextField();
     private final TextField lowerDistanceMeasure = new TextField();
+
+    private final ColorPicker colorPicker = new ColorPicker();
+
+    private final TextField lineWidth = new TextField();
+
 
     public FindTransitsBetweenStarsDialog() {
 
@@ -36,17 +42,29 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         gridPane.setVgap(5);
         gridPane.setHgap(5);
 
-        Label upperDistanceLabel = new Label("Select Upper Distance Between Stars:  ");
+        Label upperDistanceLabel = new Label("Select Upper Distance Between Stars: ");
         upperDistanceLabel.setFont(font);
 
-        Label lowerDistanceLabel = new Label("Select Lower Distance Between Stars:  ");
+        Label lowerDistanceLabel = new Label("Select Lower Distance Between Stars: ");
         lowerDistanceLabel.setFont(font);
+
+        Label colorLabel = new Label("Select color for transit: ");
+        colorLabel.setFont(font);
+
+        Label lineWidthLabel = new Label("Select transit line width: ");
+        lineWidthLabel.setFont(font);
 
         gridPane.add(upperDistanceLabel, 0, 1);
         gridPane.add(upperDistanceMeasure, 1, 1);
 
         gridPane.add(lowerDistanceLabel, 0, 2);
         gridPane.add(lowerDistanceMeasure, 1, 2);
+
+        gridPane.add(colorLabel, 0, 3);
+        gridPane.add(colorPicker, 1,3);
+
+        gridPane.add(lineWidthLabel, 0, 4);
+        gridPane.add(lineWidth, 1,4);
 
         vBox.getChildren().add(gridPane);
 
@@ -61,12 +79,11 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         gotToStarButton.setOnAction(this::goToStarClicked);
         hBox1.getChildren().add(gotToStarButton);
 
-        Button cancelDataSetButton = new Button("Dismiss");
+        Button cancelDataSetButton = new Button("Cancel");
         cancelDataSetButton.setOnAction(this::close);
         hBox1.getChildren().add(cancelDataSetButton);
 
         this.getDialogPane().setContent(vBox);
-
 
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
@@ -87,10 +104,14 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         try {
             double upperDistance = Double.parseDouble(upperDistanceMeasure.getText());
             double lowerDistance = Double.parseDouble(lowerDistanceMeasure.getText());
+            Color transitColor = colorPicker.getValue();
+            double transitLineWidth = Double.parseDouble(lineWidth.getText());
             DistanceRoutes distanceRoutes = DistanceRoutes
                     .builder()
                     .upperDistance(upperDistance)
                     .lowerDistance(lowerDistance)
+                    .color(transitColor)
+                    .lineWidth(transitLineWidth)
                     .selected(true)
                     .build();
             setResult(distanceRoutes);

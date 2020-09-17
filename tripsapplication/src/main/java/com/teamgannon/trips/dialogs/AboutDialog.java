@@ -14,7 +14,6 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 
 import java.io.File;
-import java.nio.file.Path;
 
 public class AboutDialog extends Dialog<String> {
 
@@ -62,8 +61,8 @@ public class AboutDialog extends Dialog<String> {
         vBox.getChildren().add(gridPane);
 
         HBox hBox = new HBox();
-        Button resetBtn = new Button("Dismiss");
-        resetBtn.setOnAction(this::dismiss);
+        Button resetBtn = new Button("Cancel");
+        resetBtn.setOnAction(this::cancel);
         hBox.getChildren().add(resetBtn);
 
 
@@ -73,7 +72,7 @@ public class AboutDialog extends Dialog<String> {
         this.getDialogPane().setContent(vBox);
     }
 
-    private void dismiss(ActionEvent actionEvent) {
+    private void cancel(ActionEvent actionEvent) {
         setResult("  ");
     }
 

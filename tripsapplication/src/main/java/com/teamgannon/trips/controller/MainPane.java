@@ -10,8 +10,8 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
-import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
+import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.file.chview.ChviewReader;
@@ -36,7 +36,6 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.Simulator;
-import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
@@ -261,6 +260,7 @@ public class MainPane implements
     private boolean scaleOn = true;
     private boolean routesOn = true;
     private boolean transitsOn = true;
+    private boolean transitsLengthsOn = true;
 
     /////// data objects ///////////
     private boolean sidePaneOn = false;
@@ -620,7 +620,7 @@ public class MainPane implements
     }
 
     public void togglePolities(ActionEvent actionEvent) {
-        polities = !polities;
+        this.polities = !polities;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(polities);
         interstellarSpacePane.togglePolities(polities);
         togglePolitiesMenuitem.setSelected(polities);
@@ -628,7 +628,7 @@ public class MainPane implements
     }
 
     public void toggleGrid(ActionEvent actionEvent) {
-        gridOn = !gridOn;
+        this.gridOn = !gridOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayGrid(gridOn);
         interstellarSpacePane.toggleGrid(gridOn);
         toggleGridMenuitem.setSelected(gridOn);
@@ -636,7 +636,7 @@ public class MainPane implements
     }
 
     public void toggleGridExtensions(ActionEvent actionEvent) {
-        extensionsOn = !extensionsOn;
+        this.extensionsOn = !extensionsOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayStems(extensionsOn);
         interstellarSpacePane.toggleExtensions(extensionsOn);
         toggleGridMenuitem.setSelected(extensionsOn);
@@ -645,7 +645,7 @@ public class MainPane implements
 
 
     public void toggleLabels(ActionEvent actionEvent) {
-        labelsOn = !labelsOn;
+        this.labelsOn = !labelsOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLabels(labelsOn);
         interstellarSpacePane.toggleLabels(labelsOn);
         toggleLabelsMenuitem.setSelected(labelsOn);
@@ -653,14 +653,14 @@ public class MainPane implements
     }
 
     public void toggleStars(ActionEvent actionEvent) {
-        starsOn = !starsOn;
+        this.starsOn = !starsOn;
         interstellarSpacePane.toggleStars(starsOn);
         toggleStarMenuitem.setSelected(starsOn);
         toggleStarBtn.setSelected(starsOn);
     }
 
     public void toggleScale(ActionEvent actionEvent) {
-        scaleOn = !scaleOn;
+        this.scaleOn = !scaleOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLegend(scaleOn);
         interstellarSpacePane.toggleScale(scaleOn);
         toggleScaleMenuitem.setSelected(scaleOn);
@@ -668,7 +668,7 @@ public class MainPane implements
     }
 
     public void toggleRoutes(ActionEvent actionEvent) {
-        routesOn = !routesOn;
+        this.routesOn = !routesOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesOn);
         interstellarSpacePane.toggleRoutes(routesOn);
         toggleRoutesMenuitem.setSelected(routesOn);
@@ -676,10 +676,15 @@ public class MainPane implements
     }
 
     public void toggleTransit(ActionEvent actionEvent) {
-        transitsOn = !transitsOn;
+        this.transitsOn = !transitsOn;
         toggleTransitsMenuitem.setSelected(transitsOn);
         toggleTransitsBtn.setSelected(transitsOn);
         interstellarSpacePane.toggleTransits(transitsOn);
+    }
+
+    public void toggleTransitLengths(ActionEvent actionEvent) {
+        this.transitsLengthsOn = !transitsLengthsOn;
+        interstellarSpacePane.toggleTransitLengths(transitsLengthsOn);
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {
@@ -1343,4 +1348,7 @@ public class MainPane implements
     }
 
 
+    public void clearTransits(ActionEvent actionEvent) {
+        interstellarSpacePane.clearTransits();
+    }
 }

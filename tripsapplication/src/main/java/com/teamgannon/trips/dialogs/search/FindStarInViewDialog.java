@@ -77,7 +77,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
         gotToStarButton.setOnAction(this::goToStarClicked);
         hBox1.getChildren().add(gotToStarButton);
 
-        Button cancelDataSetButton = new Button("Dismiss");
+        Button cancelDataSetButton = new Button("Cancel");
         cancelDataSetButton.setOnAction(this::close);
         hBox1.getChildren().add(cancelDataSetButton);
 
