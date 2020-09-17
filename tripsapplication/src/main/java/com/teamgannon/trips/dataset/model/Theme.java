@@ -3,7 +3,7 @@ package com.teamgannon.trips.dataset.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import com.teamgannon.trips.dataset.enums.GridShape;
-import com.teamgannon.trips.routing.RouteDescriptor;
+import com.teamgannon.trips.routing.RouteDefinition;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -264,7 +264,7 @@ public class Theme {
      * This merely controls the display of routes of type, not
      * the storage of the routes themselves.
      */
-    private Map<UUID, RouteDescriptor> routeDescriptorList = new HashMap<>();
+    private Map<UUID, RouteDefinition> routeDescriptorList = new HashMap<>();
 
     /**
      * list of political entities

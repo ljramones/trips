@@ -1,9 +1,13 @@
 package com.teamgannon.trips.transits;
 
+import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.Xform;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.TransitRoute;
 import javafx.scene.Node;
@@ -17,6 +21,7 @@ import org.apache.commons.collections4.MapUtils;
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class TransitManager {
@@ -46,18 +51,38 @@ public class TransitManager {
      */
     private List<TransitRoute> currentRouteList = new ArrayList<>();
 
+    /**
+     * the route descriptor
+     */
+    private RouteDescriptor routeDescriptor;
+
+    private boolean routingActive = false;
+    private final RouteUpdaterListener routeUpdaterListener;
+    private DataSetDescriptor dataSetDescriptor;
+
+
     ////////////////
 
     /**
      * constructor
      */
-    public TransitManager() {
+    public TransitManager(RouteUpdaterListener routeUpdaterListener) {
+        this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Xform();
         transitGroup.setWhatAmI("Transit Plot Group");
     }
 
+
+    public boolean isVisible() {
+        return transitsOn;
+    }
+
     public Xform getTransitGroup() {
         return transitGroup;
+    }
+
+    public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
+        this.dataSetDescriptor = dataSetDescriptor;
     }
 
     /**
@@ -127,7 +152,7 @@ public class TransitManager {
         MenuItem addRouteMenuItem = addToRoute(transitSegment);
         cm.getItems().add(addRouteMenuItem);
 
-        MenuItem completeRouteMenuItem = completeToRoute(transitSegment);
+        MenuItem completeRouteMenuItem = completeTheRoute(transitSegment);
         cm.getItems().add(completeRouteMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
@@ -157,31 +182,6 @@ public class TransitManager {
                 TransitRoute::getName);
     }
 
-    private MenuItem completeToRoute(Node transitSegment) {
-        MenuItem menuItem = new MenuItem("Complete Route");
-        menuItem.setOnAction(event -> {
-            TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-            currentRouteList.add(transitRoute);
-            constructRoute();
-            log.info("complete route");
-        });
-        return menuItem;
-    }
-
-    private void constructRoute() {
-        log.info("validate the ");
-    }
-
-    private MenuItem addToRoute(Node transitSegment) {
-        MenuItem menuItem = new MenuItem("Add To Route");
-        menuItem.setOnAction(event -> {
-            TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-            currentRouteList.add(transitRoute);
-            log.info("add to route");
-        });
-        return menuItem;
-    }
-
     private MenuItem createNewRoute(Node transitSegment) {
         MenuItem menuItem = new MenuItem("Create New Route");
         menuItem.setOnAction(event -> {
@@ -201,20 +201,66 @@ public class TransitManager {
         return menuItem;
     }
 
+
     private void createRoute(Node transitSegment) {
         TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-        currentRouteList.clear();
-        currentRouteList.add(transitRoute);
-        log.info("new route");
+        RouteDialog dialog = new RouteDialog(transitRoute.getSource());
+        Optional<RouteDescriptor> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            currentRouteList.clear();
+            routingActive = true;
+            routeDescriptor = result.get();
+            routeDescriptor.setStartStar(transitRoute.getSource().getStarName());
+            routeDescriptor.getRouteList().add(transitRoute.getSource().getRecordId());
+            currentRouteList.add(transitRoute);
+            log.info("new route");
+        }
     }
+
+    private MenuItem addToRoute(Node transitSegment) {
+        MenuItem menuItem = new MenuItem("Add To Route");
+        menuItem.setOnAction(event -> {
+            if (routingActive) {
+                TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
+                currentRouteList.add(transitRoute);
+                log.info("add to route");
+            } else {
+                showErrorAlert("Transit Routing", "start a route first");
+            }
+        });
+        return menuItem;
+    }
+
+
+    private MenuItem completeTheRoute(Node transitSegment) {
+        MenuItem menuItem = new MenuItem("Complete Route");
+        menuItem.setOnAction(event -> {
+            if (routingActive) {
+                TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
+                currentRouteList.add(transitRoute);
+                constructRoute();
+                log.info("complete route");
+            } else {
+                showErrorAlert("Transit Routing", "start a route first");
+            }
+        });
+        return menuItem;
+    }
+
+
+    private void constructRoute() {
+        log.info("validate the ");
+        for (TransitRoute transitRoute : currentRouteList) {
+            routeDescriptor.getLineSegments().add(transitRoute.getTargetEndpoint());
+            routeDescriptor.getRouteList().add(transitRoute.getTarget().getRecordId());
+            routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
+        }
+    }
+
 
     public void setVisible(boolean transitsOn) {
         this.transitsOn = transitsOn;
         transitGroup.setVisible(transitsOn);
-    }
-
-    public boolean isVisible() {
-        return transitsOn;
     }
 
     private String hoverText(TransitRoute transitRoute) {

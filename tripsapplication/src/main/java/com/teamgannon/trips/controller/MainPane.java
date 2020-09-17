@@ -915,6 +915,7 @@ public class MainPane implements
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         dataSetsListView.getSelectionModel().select(descriptor);
         queryDialog.setDataSetContext(descriptor);
+        interstellarSpacePane.setDataSetContext(descriptor);
 
         updateStatus(descriptor.getDataSetName() + " is the active context");
     }

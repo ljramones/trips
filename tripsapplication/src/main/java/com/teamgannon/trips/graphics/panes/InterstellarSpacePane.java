@@ -210,7 +210,7 @@ public class InterstellarSpacePane extends Pane {
                 colorPalette
         );
 
-        this.transitManager = new TransitManager();
+        this.transitManager = new TransitManager(routeUpdaterListener);
 
 
         this.setMinHeight(height);
@@ -271,6 +271,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setDataSetContext(DataSetDescriptor datasetName) {
         routeManager.setDatasetContext(datasetName);
+        transitManager.setDatasetContext(datasetName);
     }
 
     public void setupPlot(

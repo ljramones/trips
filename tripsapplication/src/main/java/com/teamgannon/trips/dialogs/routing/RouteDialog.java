@@ -5,15 +5,19 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 
 public class RouteDialog extends Dialog<RouteDescriptor> {
 
+    /**
+     * constructor
+     *
+     * @param starDisplayRecord the start star
+     */
     public RouteDialog(StarDisplayRecord starDisplayRecord) {
+
         this.setTitle("Route Creation Dialog");
         this.setHeaderText("Create an initial Route");
 
@@ -47,7 +51,7 @@ public class RouteDialog extends Dialog<RouteDescriptor> {
         grid.add(routeStartCoordinatesLabel, 1, 4);
         grid.add(routeStartCoordinates, 2, 4);
 
-        Label notesLabel= new Label("Notes: ");
+        Label notesLabel = new Label("Notes: ");
         TextArea notes = new TextArea();
         grid.add(notesLabel, 1, 5);
         grid.add(notes, 2, 5);

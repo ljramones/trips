@@ -14,7 +14,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
-import com.teamgannon.trips.routing.RouteDescriptor;
+import com.teamgannon.trips.routing.RouteDefinition;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
@@ -285,16 +285,16 @@ public class DataSetDescriptorFactory {
     }
 
 
-    private static Map<UUID, RouteDescriptor> createRouteDescriptorMap(ChViewFile chViewFile) {
-        Map<UUID, RouteDescriptor> routeDescriptorMap = new HashMap<>();
+    private static Map<UUID, RouteDefinition> createRouteDescriptorMap(ChViewFile chViewFile) {
+        Map<UUID, RouteDefinition> routeDescriptorMap = new HashMap<>();
         List<com.teamgannon.trips.file.chview.model.RouteDescriptor> routeDescriptors = new ArrayList<>();
         for (com.teamgannon.trips.file.chview.model.RouteDescriptor routeDescriptor : routeDescriptors) {
-            RouteDescriptor routeDescriptor1 = new RouteDescriptor();
+            RouteDefinition routeDefinition1 = new RouteDefinition();
 
             // the rest are set by default
-            routeDescriptor1.setRouteColor(routeDescriptor.getColor());
+            routeDefinition1.setRouteColor(routeDescriptor.getColor());
 
-            routeDescriptorMap.put(UUID.randomUUID(), routeDescriptor1);
+            routeDescriptorMap.put(UUID.randomUUID(), routeDefinition1);
         }
 
         return routeDescriptorMap;

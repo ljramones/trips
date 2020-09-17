@@ -15,7 +15,7 @@ import lombok.Data;
  * Created by larrymitchell on 2017-03-02.
  */
 @Data
-public class RouteDescriptor {
+public class RouteDefinition {
 
 
     /**
