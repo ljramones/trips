@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.StarNotesDialog;
@@ -17,6 +18,7 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
+import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.event.ActionEvent;
@@ -64,6 +66,7 @@ public class InterstellarSpacePane extends Pane {
     private final Xform world = new Xform();
     private final Xform extensionsGroup = new Xform();
     private final Xform stellarDisplayGroup = new Xform();
+
 
     // used to control label visibility
     private final Xform labelDisplayGroup = new Xform();
@@ -161,6 +164,8 @@ public class InterstellarSpacePane extends Pane {
 
     private final RouteManager routeManager;
 
+    private final TransitManager transitManager;
+
     // the lookout for drawn stars
     private final Map<UUID, Xform> starLookup = new HashMap<>();
 
@@ -205,6 +210,9 @@ public class InterstellarSpacePane extends Pane {
                 colorPalette
         );
 
+        this.transitManager = new TransitManager();
+
+
         this.setMinHeight(height);
         this.setMinWidth(width);
 
@@ -219,6 +227,8 @@ public class InterstellarSpacePane extends Pane {
         world.getChildren().add(extensionsGroup);
 
         world.getChildren().add(routeManager.getRoutesGroup());
+
+        world.getChildren().add(transitManager.getTransitGroup());
 
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
@@ -244,6 +254,18 @@ public class InterstellarSpacePane extends Pane {
     public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
         this.politiesPreferences = preferences;
     }
+
+
+    /**
+     * finds all the transits for stars in view
+     *
+     * @param distanceRoutes the distance range selected
+     */
+    public void findTransits(DistanceRoutes distanceRoutes) {
+        List<StarDisplayRecord> starsInView = getCurrentStarsInView();
+        transitManager.findTransits(distanceRoutes, starsInView);
+    }
+
 
     /////////////////// SET DATASET CONTEXT  /////////////////
 
@@ -474,6 +496,12 @@ public class InterstellarSpacePane extends Pane {
         routeManager.toggleRoutes(routesOn);
     }
 
+
+    public void toggleTransits(boolean transitsOn) {
+        transitManager.setVisible(transitsOn);
+
+    }
+
     /**
      * toggle the labels
      *
@@ -628,8 +656,8 @@ public class InterstellarSpacePane extends Pane {
      * @param record                 the star record
      * @param colorPalette           the color palette to use
      * @param starDisplayPreferences the star preferences
-     * @param on
-     * @param labelsOn               whether we labels on or off
+     * @param labelsOn               whether labels are on or off
+     * @param politiesOn             whether we polities on or off
      * @return the star to plot
      */
     private Xform createStar(StarDisplayRecord record,
@@ -1228,6 +1256,5 @@ public class InterstellarSpacePane extends Pane {
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
     }
-
 
 }

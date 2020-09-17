@@ -25,7 +25,7 @@ public class StellarEntityFactory {
     /**
      * we do this to make the star size a constant size bigger x3
      */
-    private final static int GRAPHICS_FUDGE_FACTOR = 3;
+    private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
 
 
     /**
@@ -128,7 +128,7 @@ public class StellarEntityFactory {
      * @param colorPalette      the color palette to use
      * @param labelsOn          are labels on?
      * @param politiesOn        are polities on?
-     * @param polityPreferences
+     * @param polityPreferences the plo
      * @return the created object
      */
     public static Group createStellarShape(StarDisplayRecord record,
@@ -178,17 +178,6 @@ public class StellarEntityFactory {
         return group;
     }
 
-    /*
-          PhongMaterial earthMaterial = new PhongMaterial();
-         Image earthImage = new Image("file:imgs/earth.jpg");
-         earthMaterial.setDiffuseMap(earthImage);
-         earthMaterial.setDiffuseColor(new Color(1,1,1,0.6));  // Note alpha of 0.6
-         earthMaterial.diffuseMapProperty();
-         earth=createSphere(0,0,0,300,earthMaterial);
-         earthMaterial.setSpecularColor(Color.INDIANRED);
-         earth.setRotationAxis(Rotate.Y_AXIS);
-         world.getChildren().add(earth);
-     */
 
     /**
      * create a label for a shape
