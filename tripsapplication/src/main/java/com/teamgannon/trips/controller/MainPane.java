@@ -10,7 +10,7 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
-import com.teamgannon.trips.dialogs.search.FindDistanceBetweenStarsDialog;
+import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
@@ -136,6 +136,9 @@ public class MainPane implements
 
     public ToggleButton togglePolityBtn;
 
+    public CheckMenuItem toggleTransitsMenuitem;
+    public ToggleButton toggleTransitsBtn;
+
     /**
      * the query dialog
      */
@@ -257,6 +260,7 @@ public class MainPane implements
     private boolean starsOn = true;
     private boolean scaleOn = true;
     private boolean routesOn = true;
+    private boolean transitsOn = true;
 
     /////// data objects ///////////
     private boolean sidePaneOn = false;
@@ -669,6 +673,13 @@ public class MainPane implements
         interstellarSpacePane.toggleRoutes(routesOn);
         toggleRoutesMenuitem.setSelected(routesOn);
         toggleRoutesBtn.setSelected(routesOn);
+    }
+
+    public void toggleTransit(ActionEvent actionEvent) {
+        transitsOn = !transitsOn;
+        toggleTransitsMenuitem.setSelected(transitsOn);
+        toggleTransitsBtn.setSelected(transitsOn);
+        interstellarSpacePane.toggleTransits(transitsOn);
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {
@@ -1313,17 +1324,15 @@ public class MainPane implements
     }
 
 
-    public void findDistanceBetweenStars(ActionEvent actionEvent) {
+    public void transitFinder(ActionEvent actionEvent) {
 
-        FindDistanceBetweenStarsDialog findDistanceBetweenStarsDialog = new FindDistanceBetweenStarsDialog();
-        Optional<DistanceRoutes> optionalDistanceRoutes = findDistanceBetweenStarsDialog.showAndWait();
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog();
+        Optional<DistanceRoutes> optionalDistanceRoutes = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalDistanceRoutes.isPresent()) {
             DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();
-            log.info("Distance between stars is:" + distanceRoutes.getUpperDistance());
-            StarMeasurementService starMeasurementService = new StarMeasurementService();
-            List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-            starMeasurementService.calculateDistances(distanceRoutes, starsInView);
-            log.info("done calcs");
+            if (distanceRoutes.isSelected()) {
+                interstellarSpacePane.findTransits(distanceRoutes);
+            }
         }
     }
 

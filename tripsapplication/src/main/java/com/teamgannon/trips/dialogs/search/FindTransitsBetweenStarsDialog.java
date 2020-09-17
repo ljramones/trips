@@ -16,14 +16,14 @@ import javafx.stage.WindowEvent;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
-public class FindDistanceBetweenStarsDialog extends Dialog<DistanceRoutes> {
+public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
     private final TextField upperDistanceMeasure = new TextField();
     private final TextField lowerDistanceMeasure = new TextField();
 
-    public FindDistanceBetweenStarsDialog() {
+    public FindTransitsBetweenStarsDialog() {
 
-        this.setTitle("Find a star in current view");
+        this.setTitle("Select a Range to Find Transits");
         this.setHeight(300);
         this.setWidth(500);
 
