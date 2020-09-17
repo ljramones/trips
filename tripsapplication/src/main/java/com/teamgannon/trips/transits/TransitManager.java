@@ -305,9 +305,11 @@ public class TransitManager {
                 if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
                     currentRouteList.clear();
                     createRoute(transitSegment);
+                    routeUpdaterListener.routingStatus(true);
                 }
             } else {
                 createRoute(transitSegment);
+                routeUpdaterListener.routingStatus(true);
             }
         });
         return menuItem;

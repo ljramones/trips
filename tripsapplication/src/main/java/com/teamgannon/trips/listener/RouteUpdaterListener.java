@@ -6,6 +6,11 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 public interface RouteUpdaterListener {
 
     /**
+     * updates the routing status
+     */
+    void routingStatus(boolean statusFlag);
+
+    /**
      * triggered when a new route is created
      *
      * @param routeDescriptor the route descriptor

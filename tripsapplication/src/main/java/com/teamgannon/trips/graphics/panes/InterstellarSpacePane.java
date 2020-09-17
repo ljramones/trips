@@ -36,6 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+
 @Slf4j
 public class InterstellarSpacePane extends Pane {
 
@@ -82,6 +84,9 @@ public class InterstellarSpacePane extends Pane {
      */
     private final GridPlotManager gridPlotManager;
 
+    /**
+     * animation rotator
+     */
     private final RotateTransition rotator;
 
     /////////////////
@@ -103,6 +108,9 @@ public class InterstellarSpacePane extends Pane {
      */
     private boolean plotActive = false;
 
+    /**
+     * our current plot
+     */
     private CurrentPlot currentPlot;
 
     /**
@@ -125,7 +133,9 @@ public class InterstellarSpacePane extends Pane {
      */
     private boolean animationPlay = false;
 
-
+    /**
+     * application context
+     */
     private final TripsContext tripsContext;
 
     /**
@@ -965,6 +975,16 @@ public class InterstellarSpacePane extends Pane {
     private MenuItem createRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
         menuItem.setOnAction(event -> {
+            boolean routingActive = routeManager.isRoutingActive();
+            if (routingActive) {
+                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
+                        "Restart Route?",
+                        "You have a route in progress, Ok will clear current?");
+
+                if ((buttonType.isEmpty()) || (buttonType.get() != ButtonType.OK)) {
+                    return;
+                }
+            }
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             RouteDialog dialog = new RouteDialog(starDescriptor);
             Optional<RouteDescriptor> result = dialog.showAndWait();
