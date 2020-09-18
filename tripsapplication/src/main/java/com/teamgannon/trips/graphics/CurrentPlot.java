@@ -19,6 +19,11 @@ public class CurrentPlot {
     private DataSetDescriptor dataSetDescriptor;
 
     /**
+     * whether the plot is currently active
+     */
+    private boolean plotActive = false;
+
+    /**
      * the center coordinates for this plot
      */
     private double[] centerCoordinates;

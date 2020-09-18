@@ -98,6 +98,7 @@ public class TransitManager {
      */
     public TransitManager(Xform world,
                           RouteUpdaterListener routeUpdaterListener) {
+        
         this.world = world;
         this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Xform();
