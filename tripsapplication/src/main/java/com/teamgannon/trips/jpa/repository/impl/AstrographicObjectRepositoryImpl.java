@@ -95,19 +95,19 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(cb.isFalse(root.get("realStar")));
         }
 
-//        // setup a predicate based on other is true
-//        if (astroSearchQuery.isOtherSearch()) {
-//            predicates.add(cb.isTrue(root.get("other")));
-//        } else {
-//            predicates.add(cb.isFalse(root.get("other")));
-//        }
+        // setup a predicate based on other is true
+        if (astroSearchQuery.isOtherSearch()) {
+            predicates.add(cb.isTrue(root.get("other")));
+        } else {
+            predicates.add(cb.isFalse(root.get("other")));
+        }
 
-//        // setup a predicate based on anomaly is true
-//        if (astroSearchQuery.isAnomalySearch()) {
-//            predicates.add(cb.isTrue(root.get("anomaly")));
-//        } else {
-//            predicates.add(cb.isFalse(root.get("anomaly")));
-//        }
+        // setup a predicate based on anomaly is true
+        if (astroSearchQuery.isAnomalySearch()) {
+            predicates.add(cb.isTrue(root.get("anomaly")));
+        } else {
+            predicates.add(cb.isFalse(root.get("anomaly")));
+        }
 
 //        // setup a predicate based on military space types
 //        Set<String> politySet = astroSearchQuery.getPolities();
