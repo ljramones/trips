@@ -22,6 +22,10 @@
                       onAction="#showApplicationPreferences"
                       text="Change Application Preferences..."/>
             <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#resetView"
+                      text="Reset View..."/>
+            <SeparatorMenuItem/>
             <CheckMenuItem fx:id="togglePolitiesMenuitem"
                            mnemonicParsing="false"
                            onAction="#togglePolities"
@@ -47,7 +51,6 @@
                            mnemonicParsing="false"
                            onAction="#toggleScale"
                            text="Toggle Scale"/>
-
             <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleSidePaneMenuitem"
                            mnemonicParsing="false"
@@ -106,6 +109,8 @@
     </MenuBar>
     <VBox layoutX="2.0" layoutY="29.0" prefHeight="39.0" prefWidth="1100.0">
         <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="856.0" VBox.vgrow="ALWAYS">
+            <ToggleButton mnemonicParsing="false" onAction="#resetView" text="Reset View"/>
+            <Separator/>
             <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false" onAction="#togglePolities" text="Polities"/>
             <Separator/>
             <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>

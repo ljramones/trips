@@ -109,6 +109,7 @@ public class StarPlotManager {
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+    private boolean extensionsOn;
 
 
     public StarPlotManager(Xform world,
@@ -148,6 +149,9 @@ public class StarPlotManager {
         return starsInView;
     }
 
+    public void setExtensionsOn(boolean extensionsOn) {
+        this.extensionsOn = extensionsOn;
+    }
 
     public void setRouteManager(RouteManager routeManager) {
         this.routeManager = routeManager;
@@ -701,9 +705,13 @@ public class StarPlotManager {
             if (status.isChanged()) {
                 AstrographicObject record = status.getRecord();
                 StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record, starDisplayPreferences);
-                record1.setCoordinates(starDisplayRecord.getCoordinates());
-                log.info("Changed value: {}", record);
-                databaseListener.updateStar(record);
+                if (record1 != null) {
+                    record1.setCoordinates(starDisplayRecord.getCoordinates());
+                    log.info("Changed value: {}", record);
+                    databaseListener.updateStar(record);
+                } else {
+                    log.error("Conversion of {} to star display record, returned a null-->bug!!", record);
+                }
                 return record1;
             } else {
                 log.error("no return");
@@ -754,6 +762,5 @@ public class StarPlotManager {
             contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
         }
     }
-
 
 }

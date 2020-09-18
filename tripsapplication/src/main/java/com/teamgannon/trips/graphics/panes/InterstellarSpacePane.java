@@ -268,6 +268,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
         this.politiesPreferences = preferences;
+        currentPlot.setCivilizationDisplayPreferences(preferences);
     }
 
 
@@ -309,6 +310,8 @@ public class InterstellarSpacePane extends Pane {
         currentPlot.setCivilizationDisplayPreferences(civilizationDisplayPreferences);
         currentPlot.setPlotActive(true);
 
+        starPlotManager.setStarDisplayPreferences(starDisplayPreferences);
+
         routeManager.setDatasetContext(dataSetDescriptor);
     }
 
@@ -324,10 +327,6 @@ public class InterstellarSpacePane extends Pane {
 
     public void clearPlot() {
         starPlotManager.clearStars();
-    }
-
-    public double getDepth() {
-        return depth;
     }
 
     public void changeColors(ColorPalette colorPalette) {
@@ -438,7 +437,7 @@ public class InterstellarSpacePane extends Pane {
     public void toggleStars(boolean starsOn) {
         starPlotManager.toggleStars(starsOn);
         if (gridPlotManager.isVisible()) {
-            gridPlotManager.extensionsOn(true);
+            starPlotManager.setExtensionsOn(true);
         }
     }
 
@@ -463,7 +462,10 @@ public class InterstellarSpacePane extends Pane {
 
     public void toggleTransits(boolean transitsOn) {
         transitManager.setVisible(transitsOn);
+    }
 
+    public void redrawRoutes(List<Route> routes) {
+        routeManager.plotRoutes(routes);
     }
 
     /**
@@ -563,6 +565,11 @@ public class InterstellarSpacePane extends Pane {
 //        cameraXform3.setRotateZ(180.0);
 
         // set camera POV and initial position
+        setInitialView();
+
+    }
+
+    public void setInitialView() {
         camera.setNearClip(CAMERA_NEAR_CLIP);
         camera.setFarClip(CAMERA_FAR_CLIP);
         camera.setTranslateZ(CAMERA_INITIAL_DISTANCE);
@@ -573,7 +580,6 @@ public class InterstellarSpacePane extends Pane {
 
         // push camera back to see the object
         cameraXform3.setTranslate(0, 0, -1000);
-
     }
 
     /////////////////  MOUSE AND KEYBOARD EVENT HANDLERS  /////////////////////////
@@ -726,11 +732,4 @@ public class InterstellarSpacePane extends Pane {
         });
     }
 
-    private void resetRoute(ActionEvent event) {
-        routeManager.resetRoute();
-    }
-
-    public void redrawRoutes(List<Route> routes) {
-        routeManager.plotRoutes(routes);
-    }
 }

@@ -730,6 +730,11 @@ public class MainPane implements
     }
 
 
+    public void resetView(ActionEvent actionEvent) {
+        interstellarSpacePane.setInitialView();
+    }
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ////////// importer and exporters  //////////////////
 
@@ -1366,4 +1371,5 @@ public class MainPane implements
     public void clearTransits(ActionEvent actionEvent) {
         interstellarSpacePane.clearTransits();
     }
+
 }
