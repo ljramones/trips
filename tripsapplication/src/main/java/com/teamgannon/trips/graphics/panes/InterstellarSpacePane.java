@@ -67,7 +67,6 @@ public class InterstellarSpacePane extends Pane {
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
-    private final Xform extensionsGroup = new Xform();
     private final Xform stellarDisplayGroup = new Xform();
 
 
@@ -209,6 +208,17 @@ public class InterstellarSpacePane extends Pane {
         currentPlot = new CurrentPlot();
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);
 
+
+        this.starPlotManager = new StarPlotManager(
+                world,
+                listUpdater,
+                redrawListener,
+                databaseListener,
+                displayer,
+                starDisplayPreferences,
+                currentPlot
+        );
+
         this.routeManager = new RouteManager(
                 world,
                 routeUpdaterListener,
@@ -216,7 +226,7 @@ public class InterstellarSpacePane extends Pane {
         );
         this.gridPlotManager = new GridPlotManager(
                 world,
-                extensionsGroup,
+                starPlotManager.getExtensionsGroup(),
                 spacing, width, depth, lineWidth,
                 colorPalette
         );
@@ -226,15 +236,6 @@ public class InterstellarSpacePane extends Pane {
                 routeUpdaterListener
         );
 
-        this.starPlotManager = new StarPlotManager(
-                world,
-                listUpdater,
-                redrawListener,
-                databaseListener,
-                displayer,
-                starDisplayPreferences
-        );
-
         starPlotManager.setRouteManager(routeManager);
 
         this.setMinHeight(height);
@@ -242,9 +243,6 @@ public class InterstellarSpacePane extends Pane {
 
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
-
-        extensionsGroup.setWhatAmI("Star Extensions");
-        world.getChildren().add(extensionsGroup);
 
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
@@ -404,7 +402,7 @@ public class InterstellarSpacePane extends Pane {
         stellarDisplayGroup.getChildren().clear();
 
         // remove the extension points to the stars
-        extensionsGroup.getChildren().clear();
+        starPlotManager.getExtensionsGroup().getChildren().clear();
 
         clearRoutes();
 
@@ -750,9 +748,9 @@ public class InterstellarSpacePane extends Pane {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
-        extensionsGroup.getChildren().add(lineSegment);
+        starPlotManager.getExtensionsGroup().getChildren().add(lineSegment);
         // add the extensions group to the world model
-        extensionsGroup.setVisible(true);
+        starPlotManager.getExtensionsGroup().setVisible(true);
     }
 
     /**

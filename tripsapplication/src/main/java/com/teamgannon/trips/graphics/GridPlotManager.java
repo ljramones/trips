@@ -41,10 +41,11 @@ public class GridPlotManager {
      * @param depth           the screen depth
      * @param lineWidth       the linewidth
      */
-    public GridPlotManager( Xform world,
-                            Xform extensionsGroup,
+    public GridPlotManager(Xform world,
+                           Xform extensionsGroup,
                            int spacing, int width, int depth, double lineWidth,
                            ColorPalette colorPalette) {
+
         this.extensionsGroup = extensionsGroup;
         this.spacing = spacing;
         this.width = width;
@@ -57,7 +58,6 @@ public class GridPlotManager {
         // setup data structures for each independent element
         world.getChildren().add(gridGroup);
         world.getChildren().add(scaleGroup);
-
 
         buildInitialGrid();
         buildInitialScaleLegend();
@@ -176,7 +176,7 @@ public class GridPlotManager {
     }
 
     private void drawXLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double minZ, double maxZ, double xDivs, double beginX, double increment) {
-        for (int i = 0; i < (ceil(xDivs / 2) ); i++) {
+        for (int i = 0; i < (ceil(xDivs / 2)); i++) {
             double[] fromPointZ = new double[]{beginX, 0, signum(minZ) * ceil(abs(minZ))};
             double[] toPointZ = new double[]{beginX, 0, signum(maxZ) * ceil(abs(maxZ))};
             String label = Integer.toString((int) beginX);

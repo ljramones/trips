@@ -3,6 +3,7 @@ package com.teamgannon.trips.starplotting;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
@@ -90,6 +91,7 @@ public class StarPlotManager {
      * star display specifics
      */
     private final StarDisplayPreferences starDisplayPreferences;
+    private CurrentPlot currentPlot;
 
     /**
      * the civilization and
@@ -101,10 +103,7 @@ public class StarPlotManager {
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
 
-    /**
-     * the lookout for drawn stars
-     */
-    private final Map<UUID, Xform> starLookup = new HashMap<>();
+
 
 
     public StarPlotManager(Xform world,
@@ -112,7 +111,8 @@ public class StarPlotManager {
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,
                            StellarPropertiesDisplayer displayer,
-                           StarDisplayPreferences starDisplayPreferences) {
+                           StarDisplayPreferences starDisplayPreferences,
+                           CurrentPlot currentPlot) {
 
         this.world = world;
         this.listUpdater = listUpdater;
@@ -120,6 +120,7 @@ public class StarPlotManager {
         this.databaseListener = databaseListener;
         this.displayer = displayer;
         this.starDisplayPreferences = starDisplayPreferences;
+        this.currentPlot = currentPlot;
 
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
@@ -191,7 +192,7 @@ public class StarPlotManager {
                     politiesOn);
             createExtension(record, colorPalette.getExtensionColor());
         }
-        starLookup.put(record.getRecordId(), starNode);
+        currentPlot.addStar(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
