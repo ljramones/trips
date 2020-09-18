@@ -18,6 +18,7 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
+import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
@@ -176,6 +177,8 @@ public class InterstellarSpacePane extends Pane {
 
     private final TransitManager transitManager;
 
+    private final StarPlotManager starPlotManager;
+
     // the lookout for drawn stars
     private final Map<UUID, Xform> starLookup = new HashMap<>();
 
@@ -215,20 +218,30 @@ public class InterstellarSpacePane extends Pane {
                 starLookup
         );
         this.gridPlotManager = new GridPlotManager(
+                world,
                 extensionsGroup,
                 spacing, width, depth, lineWidth,
                 colorPalette
         );
 
-        this.transitManager = new TransitManager(world, routeUpdaterListener);
+        this.transitManager = new TransitManager(
+                world,
+                routeUpdaterListener
+        );
 
+        this.starPlotManager = new StarPlotManager(
+                world,
+                listUpdater,
+                redrawListener,
+                databaseListener,
+                displayer,
+                starDisplayPreferences
+        );
+
+        starPlotManager.setRouteManager(routeManager);
 
         this.setMinHeight(height);
         this.setMinWidth(width);
-
-        // setup data structures for each independent element
-        world.getChildren().add(gridPlotManager.getGridGroup());
-        world.getChildren().add(gridPlotManager.getScaleGroup());
 
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
@@ -237,7 +250,6 @@ public class InterstellarSpacePane extends Pane {
         world.getChildren().add(extensionsGroup);
 
         world.getChildren().add(routeManager.getRoutesGroup());
-
         world.getChildren().add(transitManager.getTransitGroup());
 
         labelDisplayGroup.setWhatAmI("Labels");
@@ -1022,8 +1034,6 @@ public class InterstellarSpacePane extends Pane {
         routeManager.plotRoutes(routes);
     }
 
-
-    ///////////////////// Routing
 
     /**
      * create a menuitem to remove a targeted item
