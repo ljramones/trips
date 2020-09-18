@@ -23,7 +23,7 @@ import javafx.util.Duration;
 public class StellarEntityFactory {
 
     /**
-     * we do this to make the star size a constant size bigger x3
+     * we do this to make the star size a constant size bigger x1.5
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
 
