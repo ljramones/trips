@@ -345,6 +345,7 @@ public class MainPane implements
     private void getCivilizationsFromDB() {
         CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
         tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
+        interstellarSpacePane.setCivilizationPreferences(civilizationDisplayPreferences);
     }
 
     private void getGraphColorsFromDB() {
