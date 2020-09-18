@@ -215,7 +215,7 @@ public class RouteManager {
             Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
 
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    fromPoint, toStarLocation, 0.5, currentRoute.getColor()
+                    fromPoint, toStarLocation, currentRoute.getLineWidth(), currentRoute.getColor()
             );
             currentRoute.getLineSegments().add(toStarLocation);
             currentRoute.getRouteList().add(id);
