@@ -79,7 +79,7 @@
                            onAction="#toggleTransit"
                            selected="true"
                            text="Toggle Transits"/>
-            <CheckMenuItem mnemonicParsing="false"
+            <CheckMenuItem fx:id="toggleTransitLengthsMenuitem" mnemonicParsing="false"
                            onAction="#toggleTransitLengths"
                            selected="true"
                            text="Toggle Transit Lengths"/>

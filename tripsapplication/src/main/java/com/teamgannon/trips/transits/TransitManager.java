@@ -64,11 +64,6 @@ public class TransitManager {
     private boolean routingActive = false;
 
     /**
-     * our graphics world
-     */
-    private final Xform world;
-
-    /**
      * the graphical element controlling transits
      */
     private final Xform transitGroup;
@@ -76,7 +71,7 @@ public class TransitManager {
     /**
      * to track the labels for the transits
      */
-    private final Xform transitLabelsGroup = new Xform();
+    private final Xform transitLabelsGroup;
 
     /**
      * the listener to create routes on demand
@@ -98,25 +93,22 @@ public class TransitManager {
      */
     public TransitManager(Xform world,
                           RouteUpdaterListener routeUpdaterListener) {
-        
-        this.world = world;
+
+        // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Xform();
         transitGroup.setWhatAmI("Transit Plot Group");
+        world.getChildren().add(transitGroup);
 
+        transitLabelsGroup = new Xform();
         transitLabelsGroup.setWhatAmI("Labels for Transit Plots");
         world.getChildren().add(transitLabelsGroup);
-        world.getChildren().add(transitGroup);
 
     }
 
 
     public boolean isVisible() {
         return transitsOn;
-    }
-
-    public Xform getTransitGroup() {
-        return transitGroup;
     }
 
     public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
@@ -128,6 +120,11 @@ public class TransitManager {
         transitRouteMap.clear();
         if (transitRoutes != null) {
             transitRoutes.clear();
+            transitsOn = false;
+        }
+        if (transitLabelsGroup != null) {
+            transitLabelsGroup.getChildren().clear();
+            transitsLengthsOn = false;
         }
         routeDescriptor = null;
         currentRouteList.clear();
@@ -155,6 +152,10 @@ public class TransitManager {
         // clear existing
         clearTransits();
 
+        // set
+        transitsLengthsOn = true;
+        transitsOn = true;
+
         // now draw new
         log.info("Distance between stars is:" + distanceRoutes.getUpperDistance());
         StarMeasurementService starMeasurementService = new StarMeasurementService();
@@ -177,7 +178,6 @@ public class TransitManager {
                     transitRoute.getTargetEndpoint(),
                     transitRoute.getLineWeight(),
                     transitRoute.getColor(),
-                    transitsLengthsOn,
                     lengthLabel);
             transitSegment.setUserData(transitRoute);
             Tooltip tooltip = new Tooltip(hoverText(transitRoute));
@@ -188,7 +188,7 @@ public class TransitManager {
         transitGroup.setVisible(true);
     }
 
-    private Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, boolean labelsOn, Label lengthLabel) {
+    private Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, Label lengthLabel) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -208,7 +208,7 @@ public class TransitManager {
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);
 
-        if (labelsOn) {
+        if (transitsLengthsOn) {
             // attach label
             lengthLabel.setTranslateX(mid.getX());
             lengthLabel.setTranslateY(mid.getY());
@@ -371,8 +371,8 @@ public class TransitManager {
         for (TransitRoute transitRoute : currentRouteList) {
             routeDescriptor.getLineSegments().add(transitRoute.getTargetEndpoint());
             routeDescriptor.getRouteList().add(transitRoute.getTarget().getRecordId());
-            routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
         }
+        routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
     }
 
 
