@@ -105,11 +105,6 @@ public class InterstellarSpacePane extends Pane {
     private boolean politiesOn = true;
 
     /**
-     * is there a plot on screen?
-     */
-    private boolean plotActive = false;
-
-    /**
      * our current plot
      */
     private CurrentPlot currentPlot;
@@ -213,6 +208,9 @@ public class InterstellarSpacePane extends Pane {
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
 
+        currentPlot = new CurrentPlot();
+        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
+
         this.routeManager = new RouteManager(
                 world,
                 routeUpdaterListener,
@@ -308,15 +306,12 @@ public class InterstellarSpacePane extends Pane {
 
         clearStars();
 
-        currentPlot = new CurrentPlot();
         currentPlot.setDataSetDescriptor(dataSetDescriptor);
         currentPlot.setCenterCoordinates(centerCoordinates);
-        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
         currentPlot.setCivilizationDisplayPreferences(civilizationDisplayPreferences);
+        currentPlot.setPlotActive(true);
 
         routeManager.setDatasetContext(dataSetDescriptor);
-
-        plotActive = true;
     }
 
     //////////////////////
@@ -479,7 +474,7 @@ public class InterstellarSpacePane extends Pane {
         log.info("toggle polities: {}", polities);
 
         // we can only do this if there are plot element on screen
-        if (plotActive) {
+        if (currentPlot.isPlotActive()) {
             redrawPlot();
         }
     }
@@ -547,7 +542,7 @@ public class InterstellarSpacePane extends Pane {
         this.labelsOn = labelSetting;
 
         // we can only do this if there are plot element on screen
-        if (plotActive) {
+        if (currentPlot.isPlotActive()) {
             redrawPlot();
         }
     }
@@ -596,7 +591,7 @@ public class InterstellarSpacePane extends Pane {
         createExtensionGroup(recordList, colorPalette.getExtensionColor());
 
         // there is an active plot on screen
-        plotActive = true;
+        currentPlot.setPlotActive(true);
     }
 
     /**
@@ -1295,7 +1290,6 @@ public class InterstellarSpacePane extends Pane {
             }
         });
     }
-
 
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
