@@ -60,7 +60,9 @@ public class RouteManager {
      *
      * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(RouteUpdaterListener routeUpdaterListener, Map<UUID, Xform> starLookup) {
+    public RouteManager(Xform world,
+                        RouteUpdaterListener routeUpdaterListener,
+                        Map<UUID, Xform> starLookup) {
         this.routeUpdaterListener = routeUpdaterListener;
         this.starLookup = starLookup;
 
@@ -69,6 +71,8 @@ public class RouteManager {
 
         // define the
         routesGroup.setWhatAmI("Star Routes");
+        world.getChildren().add(routesGroup);
+
     }
 
     /////////////// general
