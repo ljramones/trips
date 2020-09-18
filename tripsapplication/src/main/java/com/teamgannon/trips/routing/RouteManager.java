@@ -15,6 +15,7 @@
  */
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
@@ -33,7 +34,7 @@ public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
     private final RouteUpdaterListener routeUpdaterListener;
-    private final Map<UUID, Xform> starLookup;
+    private final CurrentPlot currentPlot;
 
     /**
      * this is the descriptor of the current route
@@ -62,9 +63,10 @@ public class RouteManager {
      */
     public RouteManager(Xform world,
                         RouteUpdaterListener routeUpdaterListener,
-                        Map<UUID, Xform> starLookup) {
+                        CurrentPlot currentPlot) {
+
         this.routeUpdaterListener = routeUpdaterListener;
-        this.starLookup = starLookup;
+        this.currentPlot = currentPlot;
 
         currentRouteDisplay = new Xform();
         currentRouteDisplay.setWhatAmI("Current Route");
@@ -299,7 +301,7 @@ public class RouteManager {
      * @return true means we can plot the whole route
      */
     public boolean checkIfRouteCanBePlotted(Route route) {
-        return route.getRouteStars().stream().allMatch(starLookup::containsKey);
+        return route.getRouteStars().stream().allMatch(currentPlot.getStarLookup()::containsKey);
     }
 
     /**
@@ -329,7 +331,7 @@ public class RouteManager {
      * @return the embedded object
      */
     private StarDisplayRecord getStar(UUID starId) {
-        Node star = starLookup.get(starId);
+        Node star = currentPlot.getStar(starId);
         if (star != null) {
             return (StarDisplayRecord) star.getUserData();
         } else {

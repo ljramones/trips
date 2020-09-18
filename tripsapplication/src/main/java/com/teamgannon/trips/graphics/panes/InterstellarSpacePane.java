@@ -174,8 +174,6 @@ public class InterstellarSpacePane extends Pane {
 
     private final StarPlotManager starPlotManager;
 
-    // the lookout for drawn stars
-    private final Map<UUID, Xform> starLookup = new HashMap<>();
 
     private RotateTransition highlightRotator;
 
@@ -214,7 +212,7 @@ public class InterstellarSpacePane extends Pane {
         this.routeManager = new RouteManager(
                 world,
                 routeUpdaterListener,
-                starLookup
+                currentPlot
         );
         this.gridPlotManager = new GridPlotManager(
                 world,
@@ -321,7 +319,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void highlightStar(UUID starId) {
-        Xform starGroup = starLookup.get(starId);
+        Xform starGroup = currentPlot.getStar(starId);
         if (highlightRotator != null) {
             highlightRotator.stop();
         }
@@ -344,7 +342,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void clearPlot() {
-        starLookup.clear();
+        currentPlot.clearStars();
     }
 
     public double getDepth() {
@@ -358,8 +356,8 @@ public class InterstellarSpacePane extends Pane {
 
     public List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
-        for (UUID id : starLookup.keySet()) {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) starLookup.get(id).getUserData();
+        for (UUID id : currentPlot.getStarIds()) {
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) currentPlot.getStar(id).getUserData();
             starsInView.add(starDisplayRecord);
         }
         starsInView.sort(Comparator.comparing(StarDisplayRecord::getStarName));
@@ -632,7 +630,7 @@ public class InterstellarSpacePane extends Pane {
                     politiesOn);
             createExtension(record, colorPalette.getExtensionColor());
         }
-        starLookup.put(record.getRecordId(), starNode);
+        currentPlot.addStar(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
