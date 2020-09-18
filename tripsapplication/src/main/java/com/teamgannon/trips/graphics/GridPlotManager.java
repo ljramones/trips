@@ -41,7 +41,8 @@ public class GridPlotManager {
      * @param depth           the screen depth
      * @param lineWidth       the linewidth
      */
-    public GridPlotManager(Xform extensionsGroup,
+    public GridPlotManager( Xform world,
+                            Xform extensionsGroup,
                            int spacing, int width, int depth, double lineWidth,
                            ColorPalette colorPalette) {
         this.extensionsGroup = extensionsGroup;
@@ -52,6 +53,11 @@ public class GridPlotManager {
         this.colorPalette = colorPalette;
         this.gridGroup.setWhatAmI("Planar Grid");
         this.scaleGroup.setWhatAmI("Reference Scale");
+
+        // setup data structures for each independent element
+        world.getChildren().add(gridGroup);
+        world.getChildren().add(scaleGroup);
+
 
         buildInitialGrid();
         buildInitialScaleLegend();
