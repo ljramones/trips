@@ -5,7 +5,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 
-public interface PreferencesUpdater {
+public interface PreferencesUpdaterListener {
 
     void updateGraphColors(ColorPalette colorPalette);
 

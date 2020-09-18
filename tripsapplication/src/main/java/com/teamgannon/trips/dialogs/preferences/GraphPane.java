@@ -3,7 +3,7 @@ package com.teamgannon.trips.dialogs.preferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.listener.PreferencesUpdater;
+import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -26,7 +26,7 @@ public class GraphPane extends Pane {
 
     private final static String COLOR_PANE_TITLE = "Change Graph Colors";
     private final static String COLOR_PANE_TITLE_MODIFIED = "Change Graph Colors - *modified*";
-    private final PreferencesUpdater updater;
+    private final PreferencesUpdaterListener updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final ColorPalette colorPalette;
@@ -52,7 +52,7 @@ public class GraphPane extends Pane {
     private final CheckBox displayLegendCheckbox = new CheckBox();
 
 
-    public GraphPane(PreferencesUpdater updater, TripsContext tripsContext) {
+    public GraphPane(PreferencesUpdaterListener updater, TripsContext tripsContext) {
         this.updater = updater;
 
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();

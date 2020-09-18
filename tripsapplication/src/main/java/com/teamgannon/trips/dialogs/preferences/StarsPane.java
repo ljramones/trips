@@ -2,7 +2,7 @@ package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
-import com.teamgannon.trips.listener.PreferencesUpdater;
+import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import com.teamgannon.trips.stardata.StellarType;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -28,7 +28,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class StarsPane extends Pane {
     private final static String STAR_PANE_TITLE = "Change Star Colors";
     private final static String STAR_PANE_TITLE_MODIFIED = "Change Star Colors - *modified*";
-    private final PreferencesUpdater updater;
+    private final PreferencesUpdaterListener updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final StarDisplayPreferences starDisplayPreferences;
@@ -68,7 +68,7 @@ public class StarsPane extends Pane {
 
     private final TitledPane starPane;
 
-    public StarsPane(StarDisplayPreferences starDisplayPreferences, PreferencesUpdater updater) {
+    public StarsPane(StarDisplayPreferences starDisplayPreferences, PreferencesUpdaterListener updater) {
         this.starDisplayPreferences = starDisplayPreferences;
         this.updater = updater;
         VBox vBox = new VBox();

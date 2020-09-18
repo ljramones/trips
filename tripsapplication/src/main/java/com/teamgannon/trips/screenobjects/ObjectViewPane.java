@@ -13,7 +13,7 @@ public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
-    public ObjectViewPane(StellarPropertiesDisplayer propertiesDisplayer,
+    public ObjectViewPane(StellarPropertiesDisplayerListener propertiesDisplayer,
                           DatabaseListener databaseListener,
                           ListSelectorActionsListener listSelectorActionsListener,
                           ReportGenerator reportGenerator,

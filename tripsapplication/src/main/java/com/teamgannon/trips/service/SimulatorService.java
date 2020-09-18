@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Slf4j
-public class Simulator {
+public class SimulatorService {
 
 
     /**
@@ -45,7 +45,7 @@ public class Simulator {
 
     private final ColorPalette colorPalette;
 
-    public Simulator(InterstellarSpacePane starPane, int width, int height, int depth, ColorPalette colorPalette) {
+    public SimulatorService(InterstellarSpacePane starPane, int width, int height, int depth, ColorPalette colorPalette) {
         this.starPane = starPane;
         this.width = width;
         this.height = height;
@@ -69,7 +69,7 @@ public class Simulator {
         IntStream.range(0, 25).forEach(i -> recordList.add(createStarNode()));
 
 
-        starPane.drawStar(recordList, "Sol", colorPalette);
+        starPane.plotStar(recordList, "Sol", colorPalette);
     }
 
 

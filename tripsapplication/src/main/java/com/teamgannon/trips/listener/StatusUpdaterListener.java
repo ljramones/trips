@@ -1,6 +1,6 @@
 package com.teamgannon.trips.listener;
 
-public interface StatusUpdater {
+public interface StatusUpdaterListener {
 
     /**
      * update the status
