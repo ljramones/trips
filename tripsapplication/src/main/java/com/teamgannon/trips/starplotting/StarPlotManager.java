@@ -23,6 +23,9 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Sphere;
+import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +38,16 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 public class StarPlotManager {
 
     /**
+     * we do this to make the star size a constant size bigger x1.5
+     */
+    private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+
+    /**
      * label state
      */
     private boolean labelsOn = true;
+
+    ///////////////////
 
     /**
      * toggle state of polities
@@ -50,7 +60,7 @@ public class StarPlotManager {
     private final Xform extensionsGroup = new Xform();
 
     /**
-     * the stellar gorup for display
+     * the stellar group for display
      */
     private final Xform stellarDisplayGroup = new Xform();
 
@@ -58,6 +68,9 @@ public class StarPlotManager {
      * used to control label visibility
      */
     private final Xform labelDisplayGroup = new Xform();
+
+
+    ///////////////////
 
     /**
      * used to signal an update to the parent list view
@@ -295,7 +308,8 @@ public class StarPlotManager {
 
         // we can only do this if there are plot element on screen
         if (currentPlot.isPlotActive()) {
-            redrawPlot();
+//            redrawPlot();
+            labelDisplayGroup.setVisible(labelSetting);
         }
     }
 
@@ -345,6 +359,8 @@ public class StarPlotManager {
                     starDisplayPreferences,
                     labelsOn,
                     politiesOn);
+
+            // create the extension stem tot he star from the grid
             createExtension(record, colorPalette.getExtensionColor());
         }
         currentPlot.addStar(record.getRecordId(), starNode);
@@ -411,13 +427,15 @@ public class StarPlotManager {
                              boolean labelsOn,
                              boolean politiesOn) {
 
-        Node star = StellarEntityFactory.drawStellarObject(
+        Node star = drawStellarObject(
                 record,
                 colorPalette,
                 labelsOn,
                 politiesOn,
                 starDisplayPreferences,
                 politiesPreferences);
+
+        // labelDisplayGroup.getChildren().add()
 
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
@@ -442,6 +460,96 @@ public class StarPlotManager {
         starNode.getChildren().add(star);
         return starNode;
     }
+
+
+    public Node drawStellarObject(StarDisplayRecord record,
+                                  ColorPalette colorPalette,
+                                  boolean labelsOn,
+                                  boolean politiesOn,
+                                  StarDisplayPreferences starDisplayPreferences,
+                                  CivilizationDisplayPreferences polityPreferences) {
+
+        Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
+        group.setUserData(record);
+        return group;
+    }
+
+    /**
+     * create a stellar object
+     *
+     * @param record            the star record
+     * @param colorPalette      the color palette to use
+     * @param labelsOn          are labels on?
+     * @param politiesOn        are polities on?
+     * @param polityPreferences the plo
+     * @return the created object
+     */
+    public Group createStellarShape(StarDisplayRecord record,
+                                    ColorPalette colorPalette,
+                                    boolean labelsOn,
+                                    boolean politiesOn,
+                                    CivilizationDisplayPreferences polityPreferences) {
+
+        Group group = new Group();
+
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(record.getStarColor());
+        material.setSpecularColor(record.getStarColor());
+        Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
+        sphere.setMaterial(material);
+        Point3D point3D = record.getCoordinates();
+        sphere.setTranslateX(point3D.getX());
+        sphere.setTranslateY(point3D.getY());
+        sphere.setTranslateZ(point3D.getZ());
+        group.getChildren().add(sphere);
+
+        if (labelsOn) {
+            Label label = createLabel(record, colorPalette);
+            label.setLabelFor(sphere);
+            labelDisplayGroup.getChildren().add(label);
+
+        }
+
+        if (politiesOn) {
+            if (!record.getPolity().equals("NA")) {
+                Color polityColor = polityPreferences.getColorForPolity(record.getPolity());
+                // add a polity indicator
+                double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
+                // group.getChildren().add(politySphere);
+                PhongMaterial polityMaterial = new PhongMaterial();
+//            polityMaterial.setDiffuseMap(earthImage);
+                polityMaterial.setDiffuseColor(new Color(polityColor.getRed(), polityColor.getGreen(), polityColor.getBlue(), 0.2));  // Note alpha of 0.6
+                polityMaterial.diffuseMapProperty();
+                Sphere politySphere = new Sphere(polityShellRadius);
+                politySphere.setMaterial(polityMaterial);
+                politySphere.setTranslateX(point3D.getX());
+                politySphere.setTranslateY(point3D.getY());
+                politySphere.setTranslateZ(point3D.getZ());
+                group.getChildren().add(politySphere);
+            }
+        }
+        return group;
+    }
+
+    /**
+     * create a label for a shape
+     *
+     * @param record       the star record
+     * @param colorPalette the color palette to use
+     * @return the created object
+     */
+    public Label createLabel(StarDisplayRecord record,
+                             ColorPalette colorPalette) {
+        Label label = new Label(record.getStarName());
+        label.setFont(new Font("Arial", 6));
+        label.setTextFill(colorPalette.getLabelColor());
+        Point3D point3D = record.getCoordinates();
+        label.setTranslateX(point3D.getX());
+        label.setTranslateY(point3D.getY());
+        label.setTranslateZ(point3D.getZ());
+        return label;
+    }
+
 
     /**
      * create a set of extensions for a set of stars
