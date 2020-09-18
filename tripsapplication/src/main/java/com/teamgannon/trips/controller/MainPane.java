@@ -498,12 +498,15 @@ public class MainPane implements
      * @param colorPalette the colors to use in drawing
      */
     private void createInterstellarSpace(ColorPalette colorPalette) {
+
         // create main graphics display pane
         interstellarSpacePane = new InterstellarSpacePane(
                 1080, 680, depth,
                 spacing,
                 tripsContext,
+                this, this, this,
                 this, this, this, this);
+
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
         // put the interstellar space on top and the solar system to the back
@@ -515,10 +518,6 @@ public class MainPane implements
         // setup simulator
         simulator = new Simulator(interstellarSpacePane, width, height, depth, colorPalette);
 
-        // setup event listeners
-        interstellarSpacePane.setContextUpdater(this);
-        interstellarSpacePane.setRedrawListener(this);
-        interstellarSpacePane.setReportGenerator(this);
     }
 
     /**
