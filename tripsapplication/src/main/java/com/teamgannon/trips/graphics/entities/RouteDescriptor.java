@@ -25,6 +25,11 @@ public class RouteDescriptor {
     private double maxLength;
 
     /**
+     * width of the routing line
+     */
+    private double lineWidth;
+
+    /**
      * defined color of route
      */
     @Builder.Default
