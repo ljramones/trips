@@ -14,6 +14,8 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
+import javafx.animation.Interpolator;
+import javafx.animation.RotateTransition;
 import javafx.event.ActionEvent;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -22,6 +24,8 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.transform.Rotate;
+import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -90,8 +94,11 @@ public class StarPlotManager {
     /**
      * star display specifics
      */
-    private final StarDisplayPreferences starDisplayPreferences;
+    private StarDisplayPreferences starDisplayPreferences;
     private CurrentPlot currentPlot;
+    private ColorPalette colorPalette;
+
+    private RotateTransition highlightRotator;
 
     /**
      * the civilization and
@@ -104,23 +111,25 @@ public class StarPlotManager {
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
 
 
-
-
     public StarPlotManager(Xform world,
                            ListUpdater listUpdater,
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,
                            StellarPropertiesDisplayer displayer,
+                           ContextSelectorListener contextSelectorListener,
                            StarDisplayPreferences starDisplayPreferences,
-                           CurrentPlot currentPlot) {
+                           CurrentPlot currentPlot,
+                           ColorPalette colorPalette) {
 
         this.world = world;
         this.listUpdater = listUpdater;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
         this.displayer = displayer;
+        this.contextSelectorListener = contextSelectorListener;
         this.starDisplayPreferences = starDisplayPreferences;
         this.currentPlot = currentPlot;
+        this.colorPalette = colorPalette;
 
         stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
@@ -129,27 +138,23 @@ public class StarPlotManager {
         world.getChildren().add(extensionsGroup);
     }
 
-    /**
-     * set the context updater
-     *
-     * @param contextSelectorListener the context selector
-     */
-    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
-        this.contextSelectorListener = contextSelectorListener;
-    }
-
-    /**
-     * callback for report generation
-     *
-     * @param reportGenerator the report generator
-     */
-    public void setReportGenerator(ReportGenerator reportGenerator) {
-        this.reportGenerator = reportGenerator;
+    public List<StarDisplayRecord> getCurrentStarsInView() {
+        List<StarDisplayRecord> starsInView = new ArrayList<>();
+        for (UUID id : currentPlot.getStarIds()) {
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) currentPlot.getStar(id).getUserData();
+            starsInView.add(starDisplayRecord);
+        }
+        starsInView.sort(Comparator.comparing(StarDisplayRecord::getStarName));
+        return starsInView;
     }
 
 
     public void setRouteManager(RouteManager routeManager) {
         this.routeManager = routeManager;
+    }
+
+    public void setStarDisplayPreferences(StarDisplayPreferences displayPreferences) {
+        this.starDisplayPreferences = displayPreferences;
     }
 
     public Xform getStellarDisplayGroup() {
@@ -170,6 +175,114 @@ public class StarPlotManager {
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
+    }
+
+
+    public void highlightStar(UUID starId) {
+        Xform starGroup = currentPlot.getStar(starId);
+        if (highlightRotator != null) {
+            highlightRotator.stop();
+        }
+        highlightRotator = setRotationAnimation(starGroup);
+        highlightRotator.play();
+        log.info("mark point");
+    }
+
+    private static RotateTransition setRotationAnimation(Group group) {
+        RotateTransition rotate = new RotateTransition(
+                Duration.seconds(10),
+                group
+        );
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setFromAngle(360);
+        rotate.setToAngle(0);
+        rotate.setInterpolator(Interpolator.LINEAR);
+        rotate.setCycleCount(RotateTransition.INDEFINITE);
+        return rotate;
+    }
+
+    public void toggleStars(boolean starsOn) {
+        stellarDisplayGroup.setVisible(starsOn);
+    }
+
+    /**
+     * draw a list of stars
+     *
+     * @param recordList the list of stars
+     */
+    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+
+        for (StarDisplayRecord star : recordList) {
+            drawStar(star, centerStar, colorPalette, starDisplayPreferences);
+        }
+        createExtensionGroup(recordList, colorPalette.getExtensionColor());
+
+        // there is an active plot on screen
+        currentPlot.setPlotActive(true);
+    }
+
+
+    /**
+     * draw a star
+     *
+     * @param record     the star record
+     * @param centerStar the name of the center star
+     */
+    public void drawStar(StarDisplayRecord record,
+                         String centerStar,
+                         ColorPalette colorPalette,
+                         StarDisplayPreferences starDisplayPreferences) {
+
+        currentPlot.addRecord(record.copy());
+        currentPlot.setCenterStar(centerStar);
+
+        plotStar(record, centerStar, colorPalette, starDisplayPreferences);
+
+    }
+
+    public void clearPlot() {
+        currentPlot.clearStars();
+    }
+
+    /**
+     * toggle the labels
+     *
+     * @param labelSetting true is labels should be on
+     */
+    public void toggleLabels(boolean labelSetting) {
+        this.labelsOn = labelSetting;
+
+        // we can only do this if there are plot element on screen
+        if (currentPlot.isPlotActive()) {
+            redrawPlot();
+        }
+    }
+
+    public void togglePolities(boolean polities) {
+        this.politiesOn = polities;
+        log.info("toggle polities: {}", polities);
+
+        // we can only do this if there are plot element on screen
+        if (currentPlot.isPlotActive()) {
+            redrawPlot();
+        }
+    }
+
+    private void redrawPlot() {
+        clearPlot();
+        clearStars();
+        log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
+        List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
+        recordList.forEach(
+                starDisplayRecord -> plotStar(
+                        starDisplayRecord,
+                        currentPlot.getCenterStar(),
+                        colorPalette,
+                        currentPlot.getStarDisplayPreferences()
+                )
+        );
+        routeManager.plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
+        // re-plot routes
     }
 
     private void plotStar(StarDisplayRecord record,

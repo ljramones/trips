@@ -3,30 +3,23 @@ package com.teamgannon.trips.graphics.panes;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
-import com.teamgannon.trips.graphics.StarNotesDialog;
-import com.teamgannon.trips.graphics.entities.*;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.screenobjects.StarEditDialog;
-import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.event.ActionEvent;
-import javafx.geometry.Point3D;
 import javafx.scene.*;
-import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -35,9 +28,10 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
-
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class InterstellarSpacePane extends Pane {
@@ -159,7 +153,6 @@ public class InterstellarSpacePane extends Pane {
      */
     private ReportGenerator reportGenerator;
 
-
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
@@ -190,7 +183,10 @@ public class InterstellarSpacePane extends Pane {
                                  RouteUpdaterListener routeUpdaterListener,
                                  ListUpdater listUpdater,
                                  StellarPropertiesDisplayer displayer,
-                                 DatabaseListener dbUpdater) {
+                                 DatabaseListener dbUpdater,
+                                 ContextSelectorListener contextSelectorListener,
+                                 RedrawListener redrawListener,
+                                 ReportGenerator reportGenerator) {
         this.width = width;
         this.height = height;
         this.depth = depth;
@@ -204,6 +200,9 @@ public class InterstellarSpacePane extends Pane {
         this.listUpdater = listUpdater;
         this.displayer = displayer;
         this.databaseListener = dbUpdater;
+        this.contextSelectorListener = contextSelectorListener;
+        this.redrawListener = redrawListener;
+        this.reportGenerator = reportGenerator;
 
         currentPlot = new CurrentPlot();
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);
@@ -215,8 +214,10 @@ public class InterstellarSpacePane extends Pane {
                 redrawListener,
                 databaseListener,
                 displayer,
+                contextSelectorListener,
                 starDisplayPreferences,
-                currentPlot
+                currentPlot,
+                colorPalette
         );
 
         this.routeManager = new RouteManager(
@@ -262,6 +263,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
         this.starDisplayPreferences = starDisplayPreferences;
+        this.starPlotManager.setStarDisplayPreferences(starDisplayPreferences);
     }
 
     public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
@@ -317,30 +319,11 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void highlightStar(UUID starId) {
-        Xform starGroup = currentPlot.getStar(starId);
-        if (highlightRotator != null) {
-            highlightRotator.stop();
-        }
-        highlightRotator = setRotationAnimation(starGroup);
-        highlightRotator.play();
-        log.info("mark point");
-    }
-
-    private static RotateTransition setRotationAnimation(Group group) {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(10),
-                group
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(RotateTransition.INDEFINITE);
-        return rotate;
+        starPlotManager.highlightStar(starId);
     }
 
     public void clearPlot() {
-        currentPlot.clearStars();
+        starPlotManager.clearStars();
     }
 
     public double getDepth() {
@@ -353,42 +336,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public List<StarDisplayRecord> getCurrentStarsInView() {
-        List<StarDisplayRecord> starsInView = new ArrayList<>();
-        for (UUID id : currentPlot.getStarIds()) {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) currentPlot.getStar(id).getUserData();
-            starsInView.add(starDisplayRecord);
-        }
-        starsInView.sort(Comparator.comparing(StarDisplayRecord::getStarName));
-        return starsInView;
-    }
-
-    //////////////////////////  External event updaters   ////////////////////////
-
-    /**
-     * set the context updater
-     *
-     * @param contextSelectorListener the context selector
-     */
-    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
-        this.contextSelectorListener = contextSelectorListener;
-    }
-
-    /**
-     * callback when there is a redraw
-     *
-     * @param redrawListener the notification that a redraw is happening
-     */
-    public void setRedrawListener(RedrawListener redrawListener) {
-        this.redrawListener = redrawListener;
-    }
-
-    /**
-     * callback for report generation
-     *
-     * @param reportGenerator the report generator
-     */
-    public void setReportGenerator(ReportGenerator reportGenerator) {
-        this.reportGenerator = reportGenerator;
+        return starPlotManager.getCurrentStarsInView();
     }
 
     //////////////////////////  public methods /////////////////////////////
@@ -398,12 +346,7 @@ public class InterstellarSpacePane extends Pane {
      */
     public void clearStars() {
 
-        // remove stars
-        stellarDisplayGroup.getChildren().clear();
-
-        // remove the extension points to the stars
-        starPlotManager.getExtensionsGroup().getChildren().clear();
-
+        starPlotManager.clearStars();
         clearRoutes();
 
         // clear the list
@@ -466,13 +409,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void togglePolities(boolean polities) {
-        this.politiesOn = polities;
-        log.info("toggle polities: {}", polities);
-
-        // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
-            redrawPlot();
-        }
+        starPlotManager.togglePolities(polities);
     }
 
     /**
@@ -499,7 +436,7 @@ public class InterstellarSpacePane extends Pane {
      * @param starsOn the status of the stars
      */
     public void toggleStars(boolean starsOn) {
-        stellarDisplayGroup.setVisible(starsOn);
+        starPlotManager.toggleStars(starsOn);
         if (gridPlotManager.isVisible()) {
             gridPlotManager.extensionsOn(true);
         }
@@ -535,30 +472,9 @@ public class InterstellarSpacePane extends Pane {
      * @param labelSetting true is labels should be on
      */
     public void toggleLabels(boolean labelSetting) {
-        this.labelsOn = labelSetting;
-
-        // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
-            redrawPlot();
-        }
+        starPlotManager.toggleLabels(labelSetting);
     }
 
-    private void redrawPlot() {
-        clearPlot();
-        clearRoutes();
-        clearStars();
-        log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
-        List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
-        recordList.forEach(
-                starDisplayRecord -> plotStar(starDisplayRecord,
-                        currentPlot.getCenterStar(),
-                        colorPalette,
-                        currentPlot.getStarDisplayPreferences()
-                )
-        );
-        // re-plot routes
-        plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
-    }
 
     /**
      * start the rotation of Y-axis animation
@@ -580,14 +496,7 @@ public class InterstellarSpacePane extends Pane {
      * @param recordList the list of stars
      */
     public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
-
-        for (StarDisplayRecord star : recordList) {
-            drawStar(star, centerStar, colorPalette, starDisplayPreferences);
-        }
-        createExtensionGroup(recordList, colorPalette.getExtensionColor());
-
-        // there is an active plot on screen
-        currentPlot.setPlotActive(true);
+        starPlotManager.drawStar(recordList, centerStar, colorPalette);
     }
 
     /**
@@ -601,244 +510,10 @@ public class InterstellarSpacePane extends Pane {
                          ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {
 
-        currentPlot.addRecord(record.copy());
-        currentPlot.setCenterStar(centerStar);
 
-        plotStar(record, centerStar, colorPalette, starDisplayPreferences);
-
+        starPlotManager.drawStar(record, centerStar, colorPalette, starDisplayPreferences);
     }
 
-    private void plotStar(StarDisplayRecord record,
-                          String centerStar,
-                          ColorPalette colorPalette,
-                          StarDisplayPreferences starDisplayPreferences) {
-        Xform starNode;
-        // create a star for display
-        if (record.getStarName().equals(centerStar)) {
-            // we use a special icon for the center of the diagram plot
-            starNode = createCentralPoint(record, colorPalette, starDisplayPreferences);
-            log.info("sol is at {}", record.getActualCoordinates());
-        } else {
-            // otherwise draw a regular star
-            starNode = createStar(
-                    record,
-                    colorPalette,
-                    starDisplayPreferences,
-                    labelsOn,
-                    politiesOn);
-            createExtension(record, colorPalette.getExtensionColor());
-        }
-        currentPlot.addStar(record.getRecordId(), starNode);
-
-        // draw the star on the pane
-        stellarDisplayGroup.getChildren().add(starNode);
-    }
-
-
-    /**
-     * Draw the central star to the plot
-     *
-     * @param record                 the star record to show
-     * @param colorPalette           the color palette to use
-     * @param starDisplayPreferences the star display preferences
-     * @return the graphical object group representing the star
-     */
-    private Xform createCentralPoint(StarDisplayRecord record,
-                                     ColorPalette colorPalette,
-                                     StarDisplayPreferences starDisplayPreferences) {
-
-        Label label = StellarEntityFactory.createLabel(record, colorPalette);
-        labelDisplayGroup.getChildren().add(label);
-
-        Node star = StellarEntityFactory.drawCentralIndicator(
-                record,
-                colorPalette,
-                label,
-                starDisplayPreferences);
-
-        if (listUpdater != null) {
-            listUpdater.updateList(record);
-        }
-
-        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
-
-        Xform starNode = new Xform();
-        starNode.setId("central");
-        starNode.setUserData(record);
-        starNode.getChildren().add(star);
-        return starNode;
-    }
-
-
-    /**
-     * create a star named with radius and color located at x,y,z
-     *
-     * @param record                 the star record
-     * @param colorPalette           the color palette to use
-     * @param starDisplayPreferences the star preferences
-     * @param labelsOn               whether labels are on or off
-     * @param politiesOn             whether we polities on or off
-     * @return the star to plot
-     */
-    private Xform createStar(StarDisplayRecord record,
-                             ColorPalette colorPalette,
-                             StarDisplayPreferences starDisplayPreferences,
-                             boolean labelsOn,
-                             boolean politiesOn) {
-
-        Node star = StellarEntityFactory.drawStellarObject(
-                record,
-                colorPalette,
-                labelsOn,
-                politiesOn,
-                starDisplayPreferences,
-                politiesPreferences);
-
-        Tooltip tooltip = new Tooltip(record.getStarName());
-        Tooltip.install(star, tooltip);
-
-        if (listUpdater != null) {
-            listUpdater.updateList(record);
-        }
-
-        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
-        star.addEventHandler(
-                MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
-
-        Xform starNode = new Xform();
-        starNode.setId("regularStar");
-        starNode.setUserData(record);
-        starNode.getChildren().add(star);
-        return starNode;
-    }
-
-    ////////////// Star creation helpers  //////////////
-
-    /**
-     * create a set of extensions for a set of stars
-     *
-     * @param recordList the list of stars
-     */
-    private void createExtensionGroup(List<StarDisplayRecord> recordList, Color extensionColor) {
-        for (StarDisplayRecord record : recordList) {
-            createExtension(record, extensionColor);
-        }
-    }
-
-    /**
-     * create an extension for an added star
-     *
-     * @param record         the star
-     * @param extensionColor the color of the extensions from grid to star
-     */
-    private void createExtension(StarDisplayRecord record, Color extensionColor) {
-        Point3D point3DFrom = record.getCoordinates();
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
-        starPlotManager.getExtensionsGroup().getChildren().add(lineSegment);
-        // add the extensions group to the world model
-        starPlotManager.getExtensionsGroup().setVisible(true);
-    }
-
-    /**
-     * setup the event click handler for a star
-     *
-     * @param star            the star
-     * @param starContextMenu the menu
-     * @param e               the exception caught
-     */
-    private void starClickEventHandler(Node star, ContextMenu starContextMenu, MouseEvent e) {
-        if (e.getButton() == MouseButton.PRIMARY) {
-            log.info("Primary button pressed");
-            starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-        }
-        if (e.getButton() == MouseButton.MIDDLE) {
-            log.info("Middle button pressed");
-            starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-        }
-
-        if (e.getButton() == MouseButton.SECONDARY) {
-            log.info("Secondary button pressed");
-            if (selectionModel.containsKey(star)) {
-                // remove star and selection rectangle
-                StarSelectionModel starSelectionModel = selectionModel.get(star);
-                Group group = (Group) star;
-                group.getChildren().remove(starSelectionModel.getSelectionRectangle());
-
-                // remove the selection model
-                selectionModel.remove(star);
-
-            } else {
-                // add star selection
-                StarSelectionModel starSelectionModel = new StarSelectionModel();
-                starSelectionModel.setStarNode(star);
-                selectionModel.put(star, starSelectionModel);
-
-            }
-        }
-    }
-
-    /**
-     * remove a star node form the db
-     *
-     * @param starDisplayRecord the star to remove
-     */
-    private void removeNode(StarDisplayRecord starDisplayRecord) {
-        log.info("Removing object for:" + starDisplayRecord.getStarName());
-        databaseListener.removeStar(starDisplayRecord.getRecordId());
-    }
-
-    /**
-     * edit a star in the database
-     *
-     * @param starDisplayRecord the properties to edit
-     */
-    private StarDisplayRecord editProperties(StarDisplayRecord starDisplayRecord) {
-        AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
-        StarEditDialog starEditDialog = new StarEditDialog(starObject);
-        Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
-        if (optionalStarDisplayRecord.isPresent()) {
-            StarEditStatus status = optionalStarDisplayRecord.get();
-            if (status.isChanged()) {
-                AstrographicObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record, starDisplayPreferences);
-                record1.setCoordinates(starDisplayRecord.getCoordinates());
-                log.info("Changed value: {}", record);
-                databaseListener.updateStar(record);
-                return record1;
-            } else {
-                log.error("no return");
-                return null;
-            }
-        }
-        log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
-        return null;
-    }
-
-    /**
-     * display properties for this star
-     *
-     * @param astrographicObject the properties to display
-     */
-    private void displayProperties(AstrographicObject astrographicObject) {
-        log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
-        if (displayer != null) {
-            displayer.displayStellarProperties(astrographicObject);
-        }
-    }
 
     ////////////////////////// animation helpers
 
@@ -858,242 +533,6 @@ public class InterstellarSpacePane extends Pane {
         rotate.setInterpolator(Interpolator.LINEAR);
         rotate.setCycleCount(RotateTransition.INDEFINITE);
         return rotate;
-    }
-
-
-    ////////////////// Context Menus  ///////////////////
-
-    /**
-     * create a context menu for clicking on the stars
-     *
-     * @param name the name of the star
-     * @param star the star
-     * @return the menu
-     */
-    private ContextMenu createPopup(String name, Node star) {
-        final ContextMenu cm = new ContextMenu();
-
-        MenuItem titleItem = new MenuItem(name);
-        titleItem.setDisable(true);
-        cm.getItems().add(titleItem);
-
-        MenuItem setStarMenuItem = createSetStarMenuitem(star);
-        cm.getItems().add(setStarMenuItem);
-
-        MenuItem recenterMenuItem = createRecenterMenuitem(star);
-        cm.getItems().add(recenterMenuItem);
-
-        MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
-        cm.getItems().add(jumpSystemMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-        MenuItem startRouteMenuItem = createRoutingMenuItem(star);
-        cm.getItems().add(startRouteMenuItem);
-
-        MenuItem continueRouteMenuItem = continueRoutingMenuItem(star);
-        cm.getItems().add(continueRouteMenuItem);
-
-        MenuItem finishRouteMenuItem = finishRoutingMenuItem(star);
-        cm.getItems().add(finishRouteMenuItem);
-
-        MenuItem resetRouteMenuItem = resetRoutingMenuItem();
-        cm.getItems().add(resetRouteMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem distanceToMenuItem = distanceReportMenuItem(star);
-        cm.getItems().add(distanceToMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem propertiesMenuItem = createShowPropertiesMenuItem(star);
-        cm.getItems().add(propertiesMenuItem);
-
-        MenuItem enterNotesItem = createNotesMenuItem(star);
-        cm.getItems().add(enterNotesItem);
-        MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
-        cm.getItems().add(editPropertiesMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem removeMenuItem = createRemoveMenuItem(star);
-        cm.getItems().add(removeMenuItem);
-
-        return cm;
-    }
-
-    private MenuItem createSetStarMenuitem(Node star) {
-        MenuItem menuItem = new MenuItem("Highlight star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            redrawListener.highlightStar(starDescriptor.getRecordId());
-
-        });
-        return menuItem;
-    }
-
-    private MenuItem createNotesMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Edit notes on this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
-            notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
-            Optional<String> notesOptional = notesDialog.showAndWait();
-            if (notesOptional.isPresent()) {
-                String notes = notesOptional.get();
-                if (!notes.isEmpty()) {
-                    // save notes in star
-                    databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
-                    // update the star notes on screen
-                    starDescriptor.setNotes(notes);
-                    star.setUserData(starDescriptor);
-                }
-            }
-
-        });
-        return menuItem;
-    }
-
-    private MenuItem distanceReportMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Generate Distances from this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            reportGenerator.generateDistanceReport(starDescriptor);
-        });
-        return menuItem;
-    }
-
-    private MenuItem createRecenterMenuitem(Node star) {
-        MenuItem menuItem = new MenuItem("Recenter on this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            redrawListener.recenter(starDescriptor);
-        });
-        return menuItem;
-    }
-
-    private MenuItem createRoutingMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Start Route");
-        menuItem.setOnAction(event -> {
-            boolean routingActive = routeManager.isRoutingActive();
-            if (routingActive) {
-                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                        "Restart Route?",
-                        "You have a route in progress, Ok will clear current?");
-
-                if ((buttonType.isEmpty()) || (buttonType.get() != ButtonType.OK)) {
-                    return;
-                }
-            }
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            RouteDialog dialog = new RouteDialog(starDescriptor);
-            Optional<RouteDescriptor> result = dialog.showAndWait();
-            result.ifPresent(routeDescriptor -> routeManager.startRoute(routeDescriptor, starDescriptor));
-        });
-        return menuItem;
-    }
-
-    private MenuItem continueRoutingMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Continue Route");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.continueRoute(starDescriptor);
-        });
-        return menuItem;
-    }
-
-    private MenuItem finishRoutingMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Finish Route");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.finishRoute(starDescriptor);
-        });
-        return menuItem;
-    }
-
-
-    private MenuItem resetRoutingMenuItem() {
-        MenuItem menuItem = new MenuItem("Reset Route");
-        menuItem.setOnAction(this::resetRoute);
-        return menuItem;
-    }
-
-    public void redrawRoutes(List<Route> routes) {
-        routeManager.plotRoutes(routes);
-    }
-
-
-    /**
-     * create a menuitem to remove a targeted item
-     *
-     * @return the menuitem supporting this action
-     */
-    private MenuItem createRemoveMenuItem(Node star) {
-        MenuItem removeMenuItem = new MenuItem("Remove");
-        removeMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            removeNode(starDescriptor);
-        });
-        return removeMenuItem;
-    }
-
-    /**
-     * create an enter system object
-     *
-     * @param star the star selected
-     * @return the menuitem
-     */
-    private MenuItem createEnterSystemItem(Node star) {
-        MenuItem removeMenuItem = new MenuItem("Enter System");
-        removeMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            jumpToSystem(starDescriptor);
-        });
-        return removeMenuItem;
-    }
-
-    /**
-     * crate a menuitem to edit a targeted item
-     *
-     * @return the menuitem supporting this action
-     */
-    private MenuItem createEditPropertiesMenuItem(Node star) {
-        MenuItem editPropertiesMenuItem = new MenuItem("Edit");
-        editPropertiesMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            StarDisplayRecord editRecord = editProperties(starDisplayRecord);
-            star.setUserData(editRecord);
-
-        });
-        return editPropertiesMenuItem;
-    }
-
-
-    /**
-     * create a menuitem to show properties
-     *
-     * @return the menuitem supporting this action
-     */
-    private MenuItem createShowPropertiesMenuItem(Node star) {
-        MenuItem propertiesMenuItem = new MenuItem("Properties");
-        propertiesMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            AstrographicObject astrographicObject = databaseListener.getStar(starDisplayRecord.getRecordId());
-            displayProperties(astrographicObject);
-        });
-        return propertiesMenuItem;
-    }
-
-
-    /**
-     * jump to the solar system selected
-     *
-     * @param starDisplayRecord the properties of the star selected
-     */
-    private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
-        if (contextSelectorListener != null) {
-            contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
-        }
     }
 
 
@@ -1291,4 +730,7 @@ public class InterstellarSpacePane extends Pane {
         routeManager.resetRoute();
     }
 
+    public void redrawRoutes(List<Route> routes) {
+        routeManager.plotRoutes(routes);
+    }
 }
