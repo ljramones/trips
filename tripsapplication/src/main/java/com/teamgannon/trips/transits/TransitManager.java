@@ -96,7 +96,8 @@ public class TransitManager {
     /**
      * constructor
      */
-    public TransitManager(Xform world, RouteUpdaterListener routeUpdaterListener) {
+    public TransitManager(Xform world,
+                          RouteUpdaterListener routeUpdaterListener) {
         this.world = world;
         this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Xform();
@@ -104,6 +105,8 @@ public class TransitManager {
 
         transitLabelsGroup.setWhatAmI("Labels for Transit Plots");
         world.getChildren().add(transitLabelsGroup);
+        world.getChildren().add(transitGroup);
+
     }
 
 

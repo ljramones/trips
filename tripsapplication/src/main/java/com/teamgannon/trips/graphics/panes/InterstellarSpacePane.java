@@ -214,6 +214,7 @@ public class InterstellarSpacePane extends Pane {
         this.databaseListener = dbUpdater;
 
         this.routeManager = new RouteManager(
+                world,
                 routeUpdaterListener,
                 starLookup
         );
@@ -249,9 +250,6 @@ public class InterstellarSpacePane extends Pane {
         extensionsGroup.setWhatAmI("Star Extensions");
         world.getChildren().add(extensionsGroup);
 
-        world.getChildren().add(routeManager.getRoutesGroup());
-        world.getChildren().add(transitManager.getTransitGroup());
-
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
 
@@ -267,7 +265,6 @@ public class InterstellarSpacePane extends Pane {
         handleMouseEvents(this);
         handleKeyboard(this);
     }
-
 
     public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
         this.starDisplayPreferences = starDisplayPreferences;
