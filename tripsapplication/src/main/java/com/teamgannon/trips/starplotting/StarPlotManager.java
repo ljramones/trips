@@ -10,7 +10,6 @@ import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -39,15 +38,21 @@ public class StarPlotManager {
      * label state
      */
     private boolean labelsOn = true;
+
+    /**
+     * toggle state of polities
+     */
     private boolean politiesOn = true;
 
-    private final double lineWidth = 0.5;
-
-    private final Xform world;
-
+    /**
+     * a graphics object group for extensions
+     */
     private final Xform extensionsGroup = new Xform();
-    private final Xform stellarDisplayGroup = new Xform();
 
+    /**
+     * the stellar gorup for display
+     */
+    private final Xform stellarDisplayGroup = new Xform();
 
     /**
      * used to control label visibility
@@ -62,7 +67,7 @@ public class StarPlotManager {
     /**
      * the redraw listener
      */
-    private RedrawListener redrawListener;
+    private final RedrawListener redrawListener;
 
     /**
      * to make database changes
@@ -73,18 +78,17 @@ public class StarPlotManager {
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
-    private ContextSelectorListener contextSelectorListener;
+    private final ContextSelectorListener contextSelectorListener;
 
     /**
      * used to signal an update to the parent property panes
      */
     private final StellarPropertiesDisplayerListener displayer;
 
-
     /**
      * the report generator
      */
-    private ReportGenerator reportGenerator;
+    private final ReportGenerator reportGenerator;
 
     /**
      * reference to the Route Manager
@@ -95,9 +99,20 @@ public class StarPlotManager {
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
-    private CurrentPlot currentPlot;
-    private ColorPalette colorPalette;
 
+    /**
+     * the current plot
+     */
+    private final CurrentPlot currentPlot;
+
+    /**
+     * our color palette
+     */
+    private final ColorPalette colorPalette;
+
+    /**
+     * the highlight rotator
+     */
     private RotateTransition highlightRotator;
 
     /**
@@ -110,7 +125,20 @@ public class StarPlotManager {
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
 
-
+    /**
+     * constructor
+     *
+     * @param world                   the graphics world
+     * @param listUpdaterListener     the list updater
+     * @param redrawListener          the redraw listener
+     * @param databaseListener        the database listener
+     * @param displayer               the displayer
+     * @param contextSelectorListener the context selector
+     * @param starDisplayPreferences  the star display prefs
+     * @param reportGenerator         the report generator
+     * @param currentPlot             the current plot
+     * @param colorPalette            the color palette
+     */
     public StarPlotManager(Xform world,
                            ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
@@ -122,7 +150,6 @@ public class StarPlotManager {
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
 
-        this.world = world;
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
@@ -143,6 +170,11 @@ public class StarPlotManager {
         world.getChildren().add(labelDisplayGroup);
     }
 
+    /**
+     * get the plotted stars in view
+     *
+     * @return the list of star display records
+     */
     public List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
         for (UUID id : currentPlot.getStarIds()) {
@@ -153,7 +185,12 @@ public class StarPlotManager {
         return starsInView;
     }
 
-    public void setExtensionsOn(boolean extensionsOn) {
+    /**
+     * toggle the extensions
+     *
+     * @param extensionsOn the extensions flag
+     */
+    public void toggleExtensions(boolean extensionsOn) {
         extensionsGroup.setVisible(extensionsOn);
     }
 
@@ -165,9 +202,6 @@ public class StarPlotManager {
         this.starDisplayPreferences = displayPreferences;
     }
 
-    public Xform getStellarDisplayGroup() {
-        return stellarDisplayGroup;
-    }
 
     public Xform getExtensionsGroup() {
         return extensionsGroup;
@@ -205,7 +239,7 @@ public class StarPlotManager {
         rotate.setFromAngle(360);
         rotate.setToAngle(0);
         rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(RotateTransition.INDEFINITE);
+        rotate.setCycleCount(30);
         return rotate;
     }
 
@@ -228,7 +262,6 @@ public class StarPlotManager {
         // there is an active plot on screen
         currentPlot.setPlotActive(true);
     }
-
 
     /**
      * draw a star
@@ -298,6 +331,7 @@ public class StarPlotManager {
                           ColorPalette colorPalette,
                           StarDisplayPreferences starDisplayPreferences) {
         Xform starNode;
+
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
@@ -429,6 +463,7 @@ public class StarPlotManager {
     private void createExtension(StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
+        double lineWidth = 0.5;
         Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
@@ -568,7 +603,7 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            if (reportGenerator!=null) {
+            if (reportGenerator != null) {
                 reportGenerator.generateDistanceReport(starDescriptor);
             } else {
                 log.error("report generator should not be null --> bug");
@@ -634,11 +669,6 @@ public class StarPlotManager {
 
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
-    }
-
-
-    public void redrawRoutes(List<Route> routes) {
-        routeManager.plotRoutes(routes);
     }
 
 
