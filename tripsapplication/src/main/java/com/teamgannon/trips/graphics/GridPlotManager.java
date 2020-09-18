@@ -16,7 +16,7 @@ import static java.lang.Math.*;
 public class GridPlotManager {
 
     private final Xform gridGroup = new Xform();
-    private final Xform extensionsGroup;
+
     private final Xform scaleGroup = new Xform();
 
     private final int width;
@@ -35,18 +35,15 @@ public class GridPlotManager {
     /**
      * constructor
      *
-     * @param extensionsGroup the extensions group
      * @param spacing         the spacing
      * @param width           the screen width
      * @param depth           the screen depth
      * @param lineWidth       the linewidth
      */
     public GridPlotManager(Xform world,
-                           Xform extensionsGroup,
                            int spacing, int width, int depth, double lineWidth,
                            ColorPalette colorPalette) {
 
-        this.extensionsGroup = extensionsGroup;
         this.spacing = spacing;
         this.width = width;
         this.depth = depth;
@@ -67,10 +64,6 @@ public class GridPlotManager {
         return gridGroup;
     }
 
-    public Xform getScaleGroup() {
-        return scaleGroup;
-    }
-
     /**
      * toggle the grid
      *
@@ -78,23 +71,6 @@ public class GridPlotManager {
      */
     public void toggleGrid(boolean gridToggle) {
         gridGroup.setVisible(gridToggle);
-        extensionsGroup.setVisible(gridToggle);
-    }
-
-    /**
-     * toggle the extensions
-     *
-     * @param extensionsOn the status of the extensions
-     */
-    public void toggleExtensions(boolean extensionsOn) {
-        if (gridGroup.isVisible()) {
-            extensionsGroup.setVisible(extensionsOn);
-        }
-    }
-
-
-    public void extensionsOn(boolean starsOn) {
-        extensionsGroup.setVisible(starsOn);
     }
 
     public void toggleVisibility() {

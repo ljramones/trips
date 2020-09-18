@@ -174,7 +174,6 @@ public class InterstellarSpacePane extends Pane {
         double lineWidth = 0.5;
         this.gridPlotManager = new GridPlotManager(
                 world,
-                starPlotManager.getExtensionsGroup(),
                 spacing, width, depth, lineWidth,
                 colorPalette
         );
@@ -333,7 +332,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setGraphPresets(GraphEnablesPersist graphEnablesPersist) {
         gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
-        gridPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
+        starPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
         gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
         starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
     }
@@ -345,6 +344,7 @@ public class InterstellarSpacePane extends Pane {
      */
     public void toggleGrid(boolean gridToggle) {
         gridPlotManager.toggleGrid(gridToggle);
+        starPlotManager.toggleExtensions(gridPlotManager.isVisible());
     }
 
     public void togglePolities(boolean polities) {
@@ -366,7 +366,7 @@ public class InterstellarSpacePane extends Pane {
      * @param extensionsOn the status of the extensions
      */
     public void toggleExtensions(boolean extensionsOn) {
-        gridPlotManager.toggleExtensions(extensionsOn);
+        starPlotManager.toggleExtensions(extensionsOn);
     }
 
     /**
@@ -377,7 +377,7 @@ public class InterstellarSpacePane extends Pane {
     public void toggleStars(boolean starsOn) {
         starPlotManager.toggleStars(starsOn);
         if (gridPlotManager.isVisible()) {
-            starPlotManager.setExtensionsOn(true);
+            starPlotManager.toggleExtensions(true);
         }
     }
 
