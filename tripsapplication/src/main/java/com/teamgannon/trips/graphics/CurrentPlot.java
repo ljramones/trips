@@ -3,12 +3,12 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Data
 public class CurrentPlot {
@@ -49,6 +49,11 @@ public class CurrentPlot {
     private List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
 
     /**
+     * the lookout for drawn stars
+     */
+    private final Map<UUID, Xform> starLookup = new HashMap<>();
+
+    /**
      * the color palette
      */
     private ColorPalette colorPalette;
@@ -60,6 +65,28 @@ public class CurrentPlot {
      */
     public void addRecord(StarDisplayRecord record) {
         starDisplayRecordList.add(record);
+    }
+
+    /**
+     * retrieve a star
+     *
+     * @param starId tge guid for the star
+     * @return the star
+     */
+    public Xform getStar(UUID starId) {
+        return starLookup.get(starId);
+    }
+
+    public void addStar(UUID id, Xform star) {
+        starLookup.put(id, star);
+    }
+
+    public Set<UUID> getStarIds() {
+        return starLookup.keySet();
+    }
+
+    public void clearStars() {
+        starLookup.clear();
     }
 
 }
