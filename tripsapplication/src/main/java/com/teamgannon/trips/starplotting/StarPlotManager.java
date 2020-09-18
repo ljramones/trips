@@ -240,6 +240,8 @@ public class StarPlotManager {
 
         // remove stars
         stellarDisplayGroup.getChildren().clear();
+        labelDisplayGroup.getChildren().clear();
+        politiesDisplayGroup.getChildren().clear();
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
