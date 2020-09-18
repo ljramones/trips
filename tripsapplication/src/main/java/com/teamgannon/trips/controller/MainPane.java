@@ -35,7 +35,7 @@ import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.Simulator;
+import com.teamgannon.trips.service.SimulatorService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
@@ -74,18 +74,18 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Component
 @FxmlView("MainPane.fxml")
 public class MainPane implements
-        ListUpdater,
-        StellarPropertiesDisplayer,
+        ListUpdaterListener,
+        StellarPropertiesDisplayerListener,
         StellarDataUpdaterListener,
         ListSelectorActionsListener,
-        PreferencesUpdater,
+        PreferencesUpdaterListener,
         ContextSelectorListener,
         RouteUpdaterListener,
         RedrawListener,
         ReportGenerator,
         DatabaseListener,
         DataSetChangeListener,
-        StatusUpdater {
+        StatusUpdaterListener {
 
     /**
      * database management spring component service
@@ -251,7 +251,7 @@ public class MainPane implements
     /**
      * the simulator
      */
-    private Simulator simulator;
+    private SimulatorService simulatorService;
 
     // state settings for control positions
     private boolean polities = true;
@@ -516,7 +516,7 @@ public class MainPane implements
         astrographicPlotter.setInterstellarPane(interstellarSpacePane);
 
         // setup simulator
-        simulator = new Simulator(interstellarSpacePane, width, height, depth, colorPalette);
+        simulatorService = new SimulatorService(interstellarSpacePane, width, height, depth, colorPalette);
 
     }
 
@@ -597,7 +597,7 @@ public class MainPane implements
     }
 
     public void simulate(ActionEvent actionEvent) {
-        simulator.simulate();
+        simulatorService.simulate();
     }
 
     public void plotStars(ActionEvent actionEvent) {

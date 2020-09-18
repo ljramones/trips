@@ -57,7 +57,7 @@ public class StarPlotManager {
     /**
      * used to signal an update to the parent list view
      */
-    private final ListUpdater listUpdater;
+    private final ListUpdaterListener listUpdaterListener;
 
     /**
      * the redraw listener
@@ -78,7 +78,7 @@ public class StarPlotManager {
     /**
      * used to signal an update to the parent property panes
      */
-    private final StellarPropertiesDisplayer displayer;
+    private final StellarPropertiesDisplayerListener displayer;
 
 
     /**
@@ -109,26 +109,27 @@ public class StarPlotManager {
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
-    private boolean extensionsOn;
 
 
     public StarPlotManager(Xform world,
-                           ListUpdater listUpdater,
+                           ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,
-                           StellarPropertiesDisplayer displayer,
+                           StellarPropertiesDisplayerListener displayer,
                            ContextSelectorListener contextSelectorListener,
                            StarDisplayPreferences starDisplayPreferences,
+                           ReportGenerator reportGenerator,
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
 
         this.world = world;
-        this.listUpdater = listUpdater;
+        this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
         this.displayer = displayer;
         this.contextSelectorListener = contextSelectorListener;
         this.starDisplayPreferences = starDisplayPreferences;
+        this.reportGenerator = reportGenerator;
         this.currentPlot = currentPlot;
         this.colorPalette = colorPalette;
 
@@ -137,6 +138,9 @@ public class StarPlotManager {
 
         extensionsGroup.setWhatAmI("Star Extensions");
         world.getChildren().add(extensionsGroup);
+
+        labelDisplayGroup.setWhatAmI("Labels");
+        world.getChildren().add(labelDisplayGroup);
     }
 
     public List<StarDisplayRecord> getCurrentStarsInView() {
@@ -150,7 +154,7 @@ public class StarPlotManager {
     }
 
     public void setExtensionsOn(boolean extensionsOn) {
-        this.extensionsOn = extensionsOn;
+        extensionsGroup.setVisible(extensionsOn);
     }
 
     public void setRouteManager(RouteManager routeManager) {
@@ -336,8 +340,8 @@ public class StarPlotManager {
                 label,
                 starDisplayPreferences);
 
-        if (listUpdater != null) {
-            listUpdater.updateList(record);
+        if (listUpdaterListener != null) {
+            listUpdaterListener.updateList(record);
         }
 
         ContextMenu starContextMenu = createPopup(record.getStarName(), star);
@@ -384,8 +388,8 @@ public class StarPlotManager {
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
 
-        if (listUpdater != null) {
-            listUpdater.updateList(record);
+        if (listUpdaterListener != null) {
+            listUpdaterListener.updateList(record);
         }
 
         ContextMenu starContextMenu = createPopup(record.getStarName(), star);
@@ -564,7 +568,11 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            reportGenerator.generateDistanceReport(starDescriptor);
+            if (reportGenerator!=null) {
+                reportGenerator.generateDistanceReport(starDescriptor);
+            } else {
+                log.error("report generator should not be null --> bug");
+            }
         });
         return menuItem;
     }

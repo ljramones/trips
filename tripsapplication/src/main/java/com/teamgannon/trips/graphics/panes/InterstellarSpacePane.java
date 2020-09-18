@@ -18,8 +18,10 @@ import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
-import javafx.event.ActionEvent;
-import javafx.scene.*;
+import javafx.scene.Group;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.SceneAntialiasing;
+import javafx.scene.SubScene;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -28,9 +30,7 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -53,19 +53,10 @@ public class InterstellarSpacePane extends Pane {
     private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
 
-    /**
-     * used to implement a selection model for selecting stars
-     */
-    private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
 
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
     private final Xform world = new Xform();
-    private final Xform stellarDisplayGroup = new Xform();
-
-
-    // used to control label visibility
-    private final Xform labelDisplayGroup = new Xform();
 
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
@@ -88,19 +79,11 @@ public class InterstellarSpacePane extends Pane {
     // screen real estate
     private final int width;
     private final int height;
-    private final int depth;
-    private final double lineWidth = 0.5;
-
-    /**
-     * label state
-     */
-    private boolean labelsOn = true;
-    private boolean politiesOn = true;
 
     /**
      * our current plot
      */
-    private CurrentPlot currentPlot;
+    private final CurrentPlot currentPlot;
 
     /**
      * the general color palette of the graph
@@ -111,11 +94,6 @@ public class InterstellarSpacePane extends Pane {
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
-
-    /**
-     * the civilization and
-     */
-    private CivilizationDisplayPreferences politiesPreferences;
 
     /**
      * animation toggle
@@ -130,44 +108,18 @@ public class InterstellarSpacePane extends Pane {
     /**
      * used to signal an update to the parent list view
      */
-    private final ListUpdater listUpdater;
-
-    /**
-     * used to signal an update to the parent property panes
-     */
-    private final StellarPropertiesDisplayer displayer;
-
-    /**
-     * used to an update to the parent controlling which graphics
-     * panes is being displayed
-     */
-    private ContextSelectorListener contextSelectorListener;
-
-    /**
-     * the redraw listener
-     */
-    private RedrawListener redrawListener;
-
-    /**
-     * the report generator
-     */
-    private ReportGenerator reportGenerator;
+    private final ListUpdaterListener listUpdaterListener;
 
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
 
-    private final DatabaseListener databaseListener;
-
     private final RouteManager routeManager;
 
     private final TransitManager transitManager;
 
     private final StarPlotManager starPlotManager;
-
-
-    private RotateTransition highlightRotator;
 
     /**
      * constructor for the Graphics Pane
@@ -181,28 +133,21 @@ public class InterstellarSpacePane extends Pane {
                                  int spacing,
                                  TripsContext tripsContext,
                                  RouteUpdaterListener routeUpdaterListener,
-                                 ListUpdater listUpdater,
-                                 StellarPropertiesDisplayer displayer,
-                                 DatabaseListener dbUpdater,
+                                 ListUpdaterListener listUpdaterListener,
+                                 StellarPropertiesDisplayerListener displayer,
+                                 DatabaseListener databaseListener,
                                  ContextSelectorListener contextSelectorListener,
                                  RedrawListener redrawListener,
                                  ReportGenerator reportGenerator) {
         this.width = width;
         this.height = height;
-        this.depth = depth;
         this.tripsContext = tripsContext;
 
         // setup defaults
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
-        this.politiesPreferences = tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences();
 
-        this.listUpdater = listUpdater;
-        this.displayer = displayer;
-        this.databaseListener = dbUpdater;
-        this.contextSelectorListener = contextSelectorListener;
-        this.redrawListener = redrawListener;
-        this.reportGenerator = reportGenerator;
+        this.listUpdaterListener = listUpdaterListener;
 
         currentPlot = new CurrentPlot();
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);
@@ -210,12 +155,13 @@ public class InterstellarSpacePane extends Pane {
 
         this.starPlotManager = new StarPlotManager(
                 world,
-                listUpdater,
+                listUpdaterListener,
                 redrawListener,
                 databaseListener,
                 displayer,
                 contextSelectorListener,
                 starDisplayPreferences,
+                reportGenerator,
                 currentPlot,
                 colorPalette
         );
@@ -225,6 +171,7 @@ public class InterstellarSpacePane extends Pane {
                 routeUpdaterListener,
                 currentPlot
         );
+        double lineWidth = 0.5;
         this.gridPlotManager = new GridPlotManager(
                 world,
                 starPlotManager.getExtensionsGroup(),
@@ -241,12 +188,6 @@ public class InterstellarSpacePane extends Pane {
 
         this.setMinHeight(height);
         this.setMinWidth(width);
-
-        stellarDisplayGroup.setWhatAmI("Stellar Group");
-        world.getChildren().add(stellarDisplayGroup);
-
-        labelDisplayGroup.setWhatAmI("Labels");
-        world.getChildren().add(labelDisplayGroup);
 
         // create a rotation animation
         rotator = createRotateAnimation();
@@ -267,7 +208,6 @@ public class InterstellarSpacePane extends Pane {
     }
 
     public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
-        this.politiesPreferences = preferences;
         currentPlot.setCivilizationDisplayPreferences(preferences);
     }
 
@@ -349,8 +289,8 @@ public class InterstellarSpacePane extends Pane {
         clearRoutes();
 
         // clear the list
-        if (listUpdater != null) {
-            listUpdater.clearList();
+        if (listUpdaterListener != null) {
+            listUpdaterListener.clearList();
         }
 
     }
@@ -395,7 +335,7 @@ public class InterstellarSpacePane extends Pane {
         gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
         gridPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
         gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
-        labelsOn = graphEnablesPersist.isDisplayLabels();
+        starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
     }
 
     /**
@@ -459,7 +399,11 @@ public class InterstellarSpacePane extends Pane {
         routeManager.toggleRoutes(routesOn);
     }
 
-
+    /**
+     * toggle the transit view
+     *
+     * @param transitsOn true means transits on, false - otherwise
+     */
     public void toggleTransits(boolean transitsOn) {
         transitManager.setVisible(transitsOn);
     }
@@ -497,7 +441,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param recordList the list of stars
      */
-    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+    public void plotStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
         starPlotManager.drawStar(recordList, centerStar, colorPalette);
     }
 
@@ -507,7 +451,7 @@ public class InterstellarSpacePane extends Pane {
      * @param record     the star record
      * @param centerStar the name of the center star
      */
-    public void drawStar(StarDisplayRecord record,
+    public void plotStar(StarDisplayRecord record,
                          String centerStar,
                          ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {

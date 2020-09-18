@@ -2,7 +2,7 @@ package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.listener.PreferencesUpdater;
+import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -15,11 +15,11 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private final ApplicationPreferences preferences;
     private TabPane tabPane;
     private ButtonType buttonTypeOk;
-    private final PreferencesUpdater updater;
+    private final PreferencesUpdaterListener updater;
     private final TripsContext tripsContext;
 
 
-    public ViewPreferencesDialog(PreferencesUpdater updater, TripsContext tripsContext, ApplicationPreferences preferences) {
+    public ViewPreferencesDialog(PreferencesUpdaterListener updater, TripsContext tripsContext, ApplicationPreferences preferences) {
         this.updater = updater;
         this.tripsContext = tripsContext;
 

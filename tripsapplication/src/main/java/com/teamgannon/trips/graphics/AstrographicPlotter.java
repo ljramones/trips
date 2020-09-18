@@ -97,7 +97,7 @@ public class AstrographicPlotter {
                     StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject, starDisplayPreferences);
                     if (record != null) {
                         record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
-                        interstellarSpacePane.drawStar(record,
+                        interstellarSpacePane.plotStar(record,
                                 searchContext.getAstroSearchQuery().getCenterStar(),
                                 colorPalette,
                                 starDisplayPreferences);

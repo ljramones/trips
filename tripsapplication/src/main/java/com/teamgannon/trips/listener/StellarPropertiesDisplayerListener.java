@@ -10,7 +10,7 @@ import java.util.Map;
  * <p>
  * Created by larrymitchell on 2017-02-02.
  */
-public interface StellarPropertiesDisplayer {
+public interface StellarPropertiesDisplayerListener {
 
     void displayStellarProperties(AstrographicObject astrographicObject);
 

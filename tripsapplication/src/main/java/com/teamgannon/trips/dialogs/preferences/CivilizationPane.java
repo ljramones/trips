@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
-import com.teamgannon.trips.listener.PreferencesUpdater;
+import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,7 +20,7 @@ import javafx.scene.text.FontWeight;
 public class CivilizationPane extends Pane {
 
     private final CivilizationDisplayPreferences preferences;
-    private final PreferencesUpdater updater;
+    private final PreferencesUpdaterListener updater;
 
     private final ColorPicker humanColorPicker = new ColorPicker();
     private final ColorPicker dornaniColorPicker = new ColorPicker();
@@ -33,7 +33,7 @@ public class CivilizationPane extends Pane {
     private final ColorPicker other3ColorPicker = new ColorPicker();
     private final ColorPicker other4ColorPicker = new ColorPicker();
 
-    public CivilizationPane(CivilizationDisplayPreferences preferences, PreferencesUpdater updater) {
+    public CivilizationPane(CivilizationDisplayPreferences preferences, PreferencesUpdaterListener updater) {
         this.preferences = preferences;
         this.updater = updater;
 

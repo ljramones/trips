@@ -9,7 +9,7 @@ import java.util.Map;
  * <p>
  * Created by larrymitchell on 2017-02-01.
  */
-public interface ListUpdater {
+public interface ListUpdaterListener {
 
     /**
      * update the list
