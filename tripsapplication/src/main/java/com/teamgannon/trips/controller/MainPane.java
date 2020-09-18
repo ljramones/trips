@@ -140,6 +140,8 @@ public class MainPane implements
     public ToggleButton toggleTransitsBtn;
     public Label routingStatus;
 
+    public CheckMenuItem toggleTransitLengthsMenuitem;
+
     /**
      * the query dialog
      */
@@ -1370,6 +1372,9 @@ public class MainPane implements
 
     public void clearTransits(ActionEvent actionEvent) {
         interstellarSpacePane.clearTransits();
+        toggleTransitsBtn.setSelected(false);
+        toggleTransitsMenuitem.setSelected(false);
+        toggleTransitLengthsMenuitem.setSelected(false);
     }
 
 }

@@ -152,6 +152,7 @@ public class InterstellarSpacePane extends Pane {
         currentPlot = new CurrentPlot();
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);
 
+        double lineWidth = 0.5;
 
         this.starPlotManager = new StarPlotManager(
                 world,
@@ -171,7 +172,7 @@ public class InterstellarSpacePane extends Pane {
                 routeUpdaterListener,
                 currentPlot
         );
-        double lineWidth = 0.5;
+
         this.gridPlotManager = new GridPlotManager(
                 world,
                 spacing, width, depth, lineWidth,
