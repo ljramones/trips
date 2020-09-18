@@ -209,6 +209,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
         currentPlot.setCivilizationDisplayPreferences(preferences);
+        starPlotManager.setCivilizationDisplayPreferences(preferences);
     }
 
 

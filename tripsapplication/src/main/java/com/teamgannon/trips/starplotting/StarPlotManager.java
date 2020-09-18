@@ -69,6 +69,11 @@ public class StarPlotManager {
      */
     private final Xform labelDisplayGroup = new Xform();
 
+    /**
+     * to hold all the polities
+     */
+    private final Xform politiesDisplayGroup = new Xform();
+
 
     ///////////////////
 
@@ -181,6 +186,10 @@ public class StarPlotManager {
 
         labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
+
+        politiesDisplayGroup.setWhatAmI("Polities");
+        world.getChildren().add(politiesDisplayGroup);
+
     }
 
     /**
@@ -213,6 +222,10 @@ public class StarPlotManager {
 
     public void setStarDisplayPreferences(StarDisplayPreferences displayPreferences) {
         this.starDisplayPreferences = displayPreferences;
+    }
+
+    public void setCivilizationDisplayPreferences(CivilizationDisplayPreferences politiesPreferences) {
+        this.politiesPreferences = politiesPreferences;
     }
 
 
@@ -319,7 +332,8 @@ public class StarPlotManager {
 
         // we can only do this if there are plot element on screen
         if (currentPlot.isPlotActive()) {
-            redrawPlot();
+//            redrawPlot();
+            politiesDisplayGroup.setVisible(polities);
         }
     }
 
@@ -435,8 +449,6 @@ public class StarPlotManager {
                 starDisplayPreferences,
                 politiesPreferences);
 
-        // labelDisplayGroup.getChildren().add()
-
         Tooltip tooltip = new Tooltip(record.getStarName());
         Tooltip.install(star, tooltip);
 
@@ -525,7 +537,10 @@ public class StarPlotManager {
                 politySphere.setTranslateX(point3D.getX());
                 politySphere.setTranslateY(point3D.getY());
                 politySphere.setTranslateZ(point3D.getZ());
-                group.getChildren().add(politySphere);
+                politiesDisplayGroup.getChildren().add(politySphere);
+                politiesDisplayGroup.setVisible(true);
+            } else {
+                log.debug("No polity to plot");
             }
         }
         return group;
