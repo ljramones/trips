@@ -118,14 +118,14 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(predicate);
         }
 
-//        // setup a predicate based on world types
-//        Set<String> worldTypesSet = astroSearchQuery.getWorldTypes();
-//        if (!worldTypesSet.isEmpty()) {
-//            List<String> worldTypesList = new ArrayList<>(worldTypesSet);
-//            Expression<String> exp = root.get("worldType");
-//            Predicate predicate = exp.in(worldTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on world types
+        Set<String> worldTypesSet = astroSearchQuery.getWorldTypes();
+        if (!worldTypesSet.isEmpty()) {
+            List<String> worldTypesList = new ArrayList<>(worldTypesSet);
+            Expression<String> exp = root.get("worldType");
+            Predicate predicate = exp.in(worldTypesList);
+            predicates.add(predicate);
+        }
 
 //        // setup a predicate based on fuel types
 //        Set<String> fuelTypesSet = astroSearchQuery.getFuelTypes();
