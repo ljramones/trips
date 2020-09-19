@@ -75,46 +75,46 @@ public class TechSelectionPanel extends BasePane {
     public List<String> getSelections() {
         List<String> selections = new ArrayList<>();
         if (tech1.isSelected()) {
-            selections.add("tech1");
+            selections.add("1");
         }
         if (tech2.isSelected()) {
-            selections.add("tech2");
+            selections.add("2");
         }
         if (tech3.isSelected()) {
-            selections.add("tech3");
+            selections.add("3");
         }
         if (tech4.isSelected()) {
-            selections.add("tech4");
+            selections.add("4");
         }
         if (tech5.isSelected()) {
-            selections.add("tech5");
+            selections.add("5");
         }
         if (tech6.isSelected()) {
-            selections.add("tech6");
+            selections.add("6");
         }
         if (tech7.isSelected()) {
-            selections.add("tech7");
+            selections.add("7");
         }
         if (tech8.isSelected()) {
-            selections.add("tech8");
+            selections.add("8");
         }
         if (tech9.isSelected()) {
-            selections.add("tech9");
+            selections.add("9");
         }
         if (techA.isSelected()) {
-            selections.add("techA");
+            selections.add("A");
         }
         if (techB.isSelected()) {
-            selections.add("techB");
+            selections.add("B");
         }
         if (techC.isSelected()) {
-            selections.add("techC");
+            selections.add("C");
         }
         if (techD.isSelected()) {
-            selections.add("techD");
+            selections.add("D");
         }
         if (techE.isSelected()) {
-            selections.add("techE");
+            selections.add("E");
         }
         return selections;
     }
@@ -124,7 +124,7 @@ public class TechSelectionPanel extends BasePane {
      * initialize the event handler
      */
     private void initEventHandler() {
-        EventHandler eh = (EventHandler<ActionEvent>) event -> {
+        EventHandler<ActionEvent> eh = event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
                 log.debug("Action performed on checkbox " + chk.getText());

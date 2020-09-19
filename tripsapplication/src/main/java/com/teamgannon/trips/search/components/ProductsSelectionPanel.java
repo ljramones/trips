@@ -77,16 +77,16 @@ public class ProductsSelectionPanel extends BasePane {
             selections.add("Services");
         }
         if (rawMatProd.isSelected()) {
-            selections.add("RawMaterials");
+            selections.add("Raw Materials");
         }
         if (bioProd.isSelected()) {
             selections.add("Bio");
         }
         if (fossilFuelProd.isSelected()) {
-            selections.add("FossilFuel");
+            selections.add("Fossil Fuel");
         }
         if (finishGoodsProd.isSelected()) {
-            selections.add("FinishedGoods");
+            selections.add("Finished Goods");
         }
         if (hiTechProd.isSelected()) {
             selections.add("HiTech");
