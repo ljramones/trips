@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search.components;
 
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
@@ -19,16 +20,16 @@ public class PolitySelectionPanel extends BasePane {
 
     private final CheckBox yesPolity = new CheckBox("Yes?");
 
-    private final CheckBox polity1 = new CheckBox("Human");
-    private final CheckBox polity2 = new CheckBox("Dornaani");
-    private final CheckBox polity3 = new CheckBox("Ktor");
-    private final CheckBox polity4 = new CheckBox("Arat Kur");
-    private final CheckBox polity5 = new CheckBox("Hkh'Rkh");
-    private final CheckBox polity6 = new CheckBox("Slaasriithi");
-    private final CheckBox polity7 = new CheckBox("Other 1");
-    private final CheckBox polity8 = new CheckBox("Other 2");
-    private final CheckBox polity9 = new CheckBox("Other 3");
-    private final CheckBox polity10 = new CheckBox("Other 4");
+    private final CheckBox polity1 = new CheckBox(CivilizationDisplayPreferences.HUMAN);
+    private final CheckBox polity2 = new CheckBox(CivilizationDisplayPreferences.DORNANI);
+    private final CheckBox polity3 = new CheckBox(CivilizationDisplayPreferences.KTOR);
+    private final CheckBox polity4 = new CheckBox(CivilizationDisplayPreferences.ARAKUR);
+    private final CheckBox polity5 = new CheckBox(CivilizationDisplayPreferences.HKHRKH);
+    private final CheckBox polity6 = new CheckBox(CivilizationDisplayPreferences.SLAASRIITHI);
+    private final CheckBox polity7 = new CheckBox(CivilizationDisplayPreferences.OTHER1);
+    private final CheckBox polity8 = new CheckBox(CivilizationDisplayPreferences.OTHER2);
+    private final CheckBox polity9 = new CheckBox( CivilizationDisplayPreferences.OTHER3);
+    private final CheckBox polity10 = new CheckBox(CivilizationDisplayPreferences.OTHER4);
 
     public PolitySelectionPanel() {
 

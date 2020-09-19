@@ -109,14 +109,14 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(cb.isFalse(root.get("anomaly")));
         }
 
-//        // setup a predicate based on military space types
-//        Set<String> politySet = astroSearchQuery.getPolities();
-//        if (!politySet.isEmpty()) {
-//            List<String> polityList = new ArrayList<>(politySet);
-//            Expression<String> exp = root.get("polity");
-//            Predicate predicate = exp.in(polityList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on military space types
+        Set<String> politySet = astroSearchQuery.getPolities();
+        if (!politySet.isEmpty()) {
+            List<String> polityList = new ArrayList<>(politySet);
+            Expression<String> exp = root.get("polity");
+            Predicate predicate = exp.in(polityList);
+            predicates.add(predicate);
+        }
 
 //        // setup a predicate based on world types
 //        Set<String> worldTypesSet = astroSearchQuery.getWorldTypes();

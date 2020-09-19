@@ -3,7 +3,6 @@ package com.teamgannon.trips.search;
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
 import javafx.geometry.Insets;
@@ -76,21 +75,21 @@ public class SearchPane extends Pane {
         queryBox.setHgap(5);
 
         dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
-        queryBox.add(dataSetChoicePanel.getPane(),0,1,2,1);
-        queryBox.add(d2EarthSlider.getPane(),0,2, 2,1);
-        queryBox.add(stellarClassSelectionPanel.getPane(),0,3);
-        queryBox.add(categorySelectionPanel.getPane(),0,4);
-        queryBox.add(fuelSelectionPanel.getPane(),0,5);
-        queryBox.add(worldSelectionPanel.getPane(),0,6);
-        queryBox.add(portSelectionPanel.getPane(),0,7);
-        queryBox.add(populationSelectionPanel.getPane(),0,8);
-        queryBox.add(politySelectionPanel.getPane(),0,9);
+        queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
+        queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
+        queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);
+        queryBox.add(categorySelectionPanel.getPane(), 0, 4);
+        queryBox.add(fuelSelectionPanel.getPane(), 0, 5);
+        queryBox.add(worldSelectionPanel.getPane(), 0, 6);
+        queryBox.add(portSelectionPanel.getPane(), 0, 7);
+        queryBox.add(populationSelectionPanel.getPane(), 0, 8);
+        queryBox.add(politySelectionPanel.getPane(), 0, 9);
 
-        queryBox.add(techSelectionPanel.getPane(),1,3);
-        queryBox.add(productsSelectionPanel.getPane(),1,4);
-        queryBox.add(milSpaceSelectionPanel.getPane(),1,5);
-        queryBox.add(milPlanetSelectionPanel.getPane(),1,6);
-        queryBox.add(miscellaneousSelectionPanel.getPane(),1,7);
+        queryBox.add(techSelectionPanel.getPane(), 1, 3);
+        queryBox.add(productsSelectionPanel.getPane(), 1, 4);
+        queryBox.add(milSpaceSelectionPanel.getPane(), 1, 5);
+        queryBox.add(milPlanetSelectionPanel.getPane(), 1, 6);
+        queryBox.add(miscellaneousSelectionPanel.getPane(), 1, 7);
 
         vBox.getChildren().add(queryBox);
 
@@ -122,6 +121,7 @@ public class SearchPane extends Pane {
     }
 
     ///////////////   Query Construction   //////////////////
+
     /**
      * construct the query
      *
@@ -241,8 +241,10 @@ public class SearchPane extends Pane {
     }
 
     private void getPolityValues(AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.addPolities(politySelectionPanel.getPolitySelections());
+        astroSearchQuery.clearPolities();
+        if (politySelectionPanel.isSelected()) {
+            astroSearchQuery.addPolities(politySelectionPanel.getPolitySelections());
+        }
     }
-
 
 }
