@@ -127,23 +127,23 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(predicate);
         }
 
-//        // setup a predicate based on fuel types
-//        Set<String> fuelTypesSet = astroSearchQuery.getFuelTypes();
-//        if (!fuelTypesSet.isEmpty()) {
-//            List<String> fuelTypesList = new ArrayList<>(fuelTypesSet);
-//            Expression<String> exp = root.get("fuelType");
-//            Predicate predicate = exp.in(fuelTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on fuel types
+        Set<String> fuelTypesSet = astroSearchQuery.getFuelTypes();
+        if (!fuelTypesSet.isEmpty()) {
+            List<String> fuelTypesList = new ArrayList<>(fuelTypesSet);
+            Expression<String> exp = root.get("fuelType");
+            Predicate predicate = exp.in(fuelTypesList);
+            predicates.add(predicate);
+        }
 
-//        // setup a predicate based on space port types
-//        Set<String> portTypesSet = astroSearchQuery.getPortTypes();
-//        if (!portTypesSet.isEmpty()) {
-//            List<String> portTypesList = new ArrayList<>(portTypesSet);
-//            Expression<String> exp = root.get("portType");
-//            Predicate predicate = exp.in(portTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on space port types
+        Set<String> portTypesSet = astroSearchQuery.getPortTypes();
+        if (!portTypesSet.isEmpty()) {
+            List<String> portTypesList = new ArrayList<>(portTypesSet);
+            Expression<String> exp = root.get("portType");
+            Predicate predicate = exp.in(portTypesList);
+            predicates.add(predicate);
+        }
 
 //        // setup a predicate based on population types
 //        Set<String> populationTypesSet = astroSearchQuery.getPopulationTypes();
