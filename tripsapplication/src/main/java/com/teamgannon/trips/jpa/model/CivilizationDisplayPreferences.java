@@ -13,6 +13,17 @@ import java.util.UUID;
 @Entity
 public class CivilizationDisplayPreferences implements Serializable {
 
+    public static final String HUMAN = "Human";
+    public static final String DORNANI = "Dornani";
+    public static final String KTOR = "Ktor";
+    public static final String ARAKUR = "Arat Kur";
+    public static final String HKHRKH = "Hkh'Rkh";
+    public static final String SLAASRIITHI = "Slaasriithi";
+    public static final String OTHER1 = "Other 1";
+    public static final String OTHER2 = "Other 2";
+    public static final String OTHER3 = "Other 3";
+    public static final String OTHER4 = "Other 4";
+
     /**
      * id of the object
      */
@@ -95,16 +106,16 @@ public class CivilizationDisplayPreferences implements Serializable {
 
     public Color getColorForPolity(String polity) {
         return switch (polity) {
-            case "human" -> Color.valueOf(humanPolityColor);
-            case "dornani" -> Color.valueOf(dornaniPolityColor);
-            case "ktor" -> Color.valueOf(ktorPolityColor);
-            case "artakur" -> Color.valueOf(aratKurPolityColor);
-            case "hkhrkh" -> Color.valueOf(hkhRkhPolityColor);
-            case "slaasriithi" -> Color.valueOf(slaasriithiPolityColor);
-            case "other1" -> Color.valueOf(other1PolityColor);
-            case "other2" -> Color.valueOf(other3PolityColor);
-            case "other3" -> Color.valueOf(other3PolityColor);
-            case "other4" -> Color.valueOf(other4PolityColor);
+            case CivilizationDisplayPreferences.HUMAN -> Color.valueOf(humanPolityColor);
+            case CivilizationDisplayPreferences.DORNANI -> Color.valueOf(dornaniPolityColor);
+            case CivilizationDisplayPreferences.KTOR -> Color.valueOf(ktorPolityColor);
+            case CivilizationDisplayPreferences.ARAKUR -> Color.valueOf(aratKurPolityColor);
+            case CivilizationDisplayPreferences.HKHRKH -> Color.valueOf(hkhRkhPolityColor);
+            case CivilizationDisplayPreferences.SLAASRIITHI -> Color.valueOf(slaasriithiPolityColor);
+            case CivilizationDisplayPreferences.OTHER1 -> Color.valueOf(other1PolityColor);
+            case CivilizationDisplayPreferences.OTHER2 -> Color.valueOf(other3PolityColor);
+            case CivilizationDisplayPreferences.OTHER3 -> Color.valueOf(other3PolityColor);
+            case CivilizationDisplayPreferences.OTHER4 -> Color.valueOf(other4PolityColor);
             default -> Color.GRAY;
         };
 
