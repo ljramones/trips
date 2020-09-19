@@ -33,7 +33,11 @@ public class AstrographicObjectFactory {
         astrographicObject.setDisplayName(chViewRecord.getStarName());
 
         // mark that this is the first load of this object
-        astrographicObject.setNotes("initial load of object for CHView file");
+        if (chViewRecord.getComment()!=null) {
+            astrographicObject.setNotes(chViewRecord.getComment());
+        } else {
+            astrographicObject.setNotes("none");
+        }
 
 
         astrographicObject.setCoordinates(chViewRecord.getOrdinates());
