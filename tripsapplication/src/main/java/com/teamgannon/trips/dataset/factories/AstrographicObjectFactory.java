@@ -32,8 +32,20 @@ public class AstrographicObjectFactory {
 
         astrographicObject.setDisplayName(chViewRecord.getStarName());
 
+        if (chViewRecord.getConstellation() != null) {
+            astrographicObject.setConstellationName(chViewRecord.getConstellation());
+        } else {
+            astrographicObject.setConstellationName("none specified");
+        }
+
+        // set the collapsed mass
+        astrographicObject.setMass(chViewRecord.getCollapsedMass());
+
+        // get the actual mass from the collapsed mass
+        astrographicObject.setActualMass(chViewRecord.getUncollapsedMass());
+
         // mark that this is the first load of this object
-        if (chViewRecord.getComment()!=null) {
+        if (chViewRecord.getComment() != null) {
             astrographicObject.setNotes(chViewRecord.getComment());
         } else {
             astrographicObject.setNotes("none");

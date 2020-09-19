@@ -1,6 +1,5 @@
 package com.teamgannon.trips.jpa.model;
 
-import javafx.scene.paint.Color;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -44,6 +43,21 @@ public class AstrographicObject implements Serializable {
      * name to use for display
      */
     private String displayName;
+
+    /**
+     * name of the constellation that this is part of
+     */
+    private String constellationName;
+
+    /**
+     * the collapsed mass value
+     */
+    private double mass;
+
+    /**
+     * actual mass is Sol units
+     */
+    private double actualMass;
 
     /**
      * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
