@@ -145,50 +145,50 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
             predicates.add(predicate);
         }
 
-//        // setup a predicate based on population types
-//        Set<String> populationTypesSet = astroSearchQuery.getPopulationTypes();
-//        if (!populationTypesSet.isEmpty()) {
-//            List<String> populationTypesList = new ArrayList<>(populationTypesSet);
-//            Expression<String> exp = root.get("populationType");
-//            Predicate predicate = exp.in(populationTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on population types
+        Set<String> populationTypesSet = astroSearchQuery.getPopulationTypes();
+        if (!populationTypesSet.isEmpty()) {
+            List<String> populationTypesList = new ArrayList<>(populationTypesSet);
+            Expression<String> exp = root.get("populationType");
+            Predicate predicate = exp.in(populationTypesList);
+            predicates.add(predicate);
+        }
 
-//        // setup a predicate based on tech types
-//        Set<String> techTypesSet = astroSearchQuery.getTechTypes();
-//        if (!techTypesSet.isEmpty()) {
-//            List<String> techTypesList = new ArrayList<>(techTypesSet);
-//            Expression<String> exp = root.get("techType");
-//            Predicate predicate = exp.in(techTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on tech types
+        Set<String> techTypesSet = astroSearchQuery.getTechTypes();
+        if (!techTypesSet.isEmpty()) {
+            List<String> techTypesList = new ArrayList<>(techTypesSet);
+            Expression<String> exp = root.get("techType");
+            Predicate predicate = exp.in(techTypesList);
+            predicates.add(predicate);
+        }
 
-//        // setup a predicate based on product types
-//        Set<String> productTypesSet = astroSearchQuery.getProductTypes();
-//        if (!productTypesSet.isEmpty()) {
-//            List<String> productTypesList = new ArrayList<>(productTypesSet);
-//            Expression<String> exp = root.get("productType");
-//            Predicate predicate = exp.in(productTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on product types
+        Set<String> productTypesSet = astroSearchQuery.getProductTypes();
+        if (!productTypesSet.isEmpty()) {
+            List<String> productTypesList = new ArrayList<>(productTypesSet);
+            Expression<String> exp = root.get("productType");
+            Predicate predicate = exp.in(productTypesList);
+            predicates.add(predicate);
+        }
 
-//        // setup a predicate based on military space types
-//        Set<String> milSpaceTypesSet = astroSearchQuery.getMilSpaceTypes();
-//        if (!milSpaceTypesSet.isEmpty()) {
-//            List<String> milSpaceTypesList = new ArrayList<>(milSpaceTypesSet);
-//            Expression<String> exp = root.get("milSpaceType");
-//            Predicate predicate = exp.in(milSpaceTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on military space types
+        Set<String> milSpaceTypesSet = astroSearchQuery.getMilSpaceTypes();
+        if (!milSpaceTypesSet.isEmpty()) {
+            List<String> milSpaceTypesList = new ArrayList<>(milSpaceTypesSet);
+            Expression<String> exp = root.get("milSpaceType");
+            Predicate predicate = exp.in(milSpaceTypesList);
+            predicates.add(predicate);
+        }
 
-//        // setup a predicate based on military planet types
-//        Set<String> milPlanTypesSet = astroSearchQuery.getMilPlanTypes();
-//        if (!milPlanTypesSet.isEmpty()) {
-//            List<String> milPlanTypesList = new ArrayList<>(milPlanTypesSet);
-//            Expression<String> exp = root.get("milPlanType");
-//            Predicate predicate = exp.in(milPlanTypesList);
-//            predicates.add(predicate);
-//        }
+        // setup a predicate based on military planet types
+        Set<String> milPlanTypesSet = astroSearchQuery.getMilPlanTypes();
+        if (!milPlanTypesSet.isEmpty()) {
+            List<String> milPlanTypesList = new ArrayList<>(milPlanTypesSet);
+            Expression<String> exp = root.get("milPlanType");
+            Predicate predicate = exp.in(milPlanTypesList);
+            predicates.add(predicate);
+        }
 
         // return the  set of predicated to query on
         return predicates;
