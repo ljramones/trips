@@ -20,7 +20,7 @@ public class PolitySelectionPanel extends BasePane {
 
     private final CheckBox yesPolity = new CheckBox("Yes?");
 
-    private final CheckBox polity1 = new CheckBox(CivilizationDisplayPreferences.HUMAN);
+    private final CheckBox polity1 = new CheckBox(CivilizationDisplayPreferences.TERRAN);
     private final CheckBox polity2 = new CheckBox(CivilizationDisplayPreferences.DORNANI);
     private final CheckBox polity3 = new CheckBox(CivilizationDisplayPreferences.KTOR);
     private final CheckBox polity4 = new CheckBox(CivilizationDisplayPreferences.ARAKUR);

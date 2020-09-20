@@ -10,10 +10,19 @@ import lombok.Data;
 @Data
 public class PseudoString {
 
+    /**
+     * the actual value
+     */
     private String value;
 
+    /**
+     * the length
+     */
     private int length;
 
+    /**
+     * the name
+     */
     private boolean name;
 
 }
