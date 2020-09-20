@@ -3,6 +3,7 @@ package com.teamgannon.trips.dataset.factories;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.scene.paint.Color;
 
 import java.util.UUID;
@@ -57,11 +58,15 @@ public class AstrographicObjectFactory {
 
         astrographicObject.setRadius(chViewRecord.getRadius());
 
-        // ch view data records do not contain the RA and declination for objects
-
         astrographicObject.setSpectralClass(chViewRecord.getSpectra());
         astrographicObject.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
 
+        switch (chViewRecord.getGroupNumber()) {
+            case 1 -> astrographicObject.setPolity(CivilizationDisplayPreferences.ARAKUR);
+            case 2 -> astrographicObject.setPolity(CivilizationDisplayPreferences.HKHRKH);
+            case 4 -> astrographicObject.setPolity(CivilizationDisplayPreferences.KTOR);
+            case 8 -> astrographicObject.setPolity(CivilizationDisplayPreferences.TERRAN);
+        }
         astrographicObject.setSource("CHView");
 
         return astrographicObject;

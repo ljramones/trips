@@ -13,7 +13,7 @@ import java.util.UUID;
 @Entity
 public class CivilizationDisplayPreferences implements Serializable {
 
-    public static final String HUMAN = "Human";
+    public static final String TERRAN = "Terran";
     public static final String DORNANI = "Dornani";
     public static final String KTOR = "Ktor";
     public static final String ARAKUR = "Arat Kur";
@@ -106,7 +106,7 @@ public class CivilizationDisplayPreferences implements Serializable {
 
     public Color getColorForPolity(String polity) {
         return switch (polity) {
-            case CivilizationDisplayPreferences.HUMAN -> Color.valueOf(humanPolityColor);
+            case CivilizationDisplayPreferences.TERRAN -> Color.valueOf(humanPolityColor);
             case CivilizationDisplayPreferences.DORNANI -> Color.valueOf(dornaniPolityColor);
             case CivilizationDisplayPreferences.KTOR -> Color.valueOf(ktorPolityColor);
             case CivilizationDisplayPreferences.ARAKUR -> Color.valueOf(aratKurPolityColor);

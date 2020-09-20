@@ -114,6 +114,7 @@ public class ChviewReader {
         }
     }
 
+
     /**
      * relies on the file being read into a byte buffer
      */
@@ -139,7 +140,7 @@ public class ChviewReader {
         // read each file record
         for (int i = 0; i < numberOfRecords; i++) {
             ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex);
-            if (chViewRecord ==null) {
+            if (chViewRecord == null) {
                 return null;
             }
             chViewFile.addRecord(chViewRecord);
@@ -617,6 +618,7 @@ public class ChviewReader {
             chViewRecord.setIndex(indexInFile);
 
             short group = readShort(buffer, currentIndex);
+
             currentIndex += 2;
             chViewRecord.setGroupNumber(group);
 
