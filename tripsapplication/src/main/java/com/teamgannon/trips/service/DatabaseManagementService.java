@@ -192,30 +192,147 @@ public class DatabaseManagementService {
     public void exportDatabase(DataSetDescriptor dataSetDescriptor, File dataBaseFile) {
         log.info("attempting to export database file to:" + dataBaseFile.getAbsolutePath());
 
-        // open a file for writing csv data
-
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(dataBaseFile.getAbsolutePath()));
 
             List<AstrographicObject> astrographicObjects = astrographicObjectRepository.findByDataSetNameOrderByDisplayName(dataSetDescriptor.getDataSetName());
-            StatefulBeanToCsv<AstrographicObject> beanToCsv = new StatefulBeanToCsvBuilder(writer)
-                    .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
-                    .build();
 
+            String headers = getHeaders();
+            writer.write(headers);
             for (AstrographicObject astrographicObject : astrographicObjects) {
-                beanToCsv.write(astrographicObject);
+                String csvRecord = convertToCSV(astrographicObject);
+                writer.write(csvRecord);
             }
 
             // close the file before returning
             writer.close();
         } catch (IOException e) {
             log.error("caught error opening the file:{}", e.getMessage());
-        } catch (CsvRequiredFieldEmptyException e) {
-            log.error("missed required field: {}", e.getMessage());
-        } catch (CsvDataTypeMismatchException e) {
-            log.error("data type mismatch:{}", e.getMessage());
         }
     }
+
+    private String getHeaders() {
+
+        return "id," +
+                "dataSetName," +
+                "displayName," +
+                "constellationName," +
+                "mass," +
+                "actualMass," +
+                "source," +
+                "catalogIdList," +
+                "X," +
+                "Y," +
+                "Z," +
+                "radius," +
+                "ra," +
+                "pmra," +
+                "declination," +
+                "pmdec," +
+                "dec_deg," +
+                "rs_cdeg," +
+                "parallax," +
+                "distance," +
+                "radialVelocity," +
+                "spectralClass," +
+                "orthoSpectralClass," +
+                "temperature," +
+                "realStar," +
+                "bprp," +
+                "bpg," +
+                "grp," +
+                "luminosity," +
+                "magu," +
+                "magb," +
+                "magv," +
+                "magr," +
+                "magi," +
+                "other," +
+                "anomaly," +
+                "polity," +
+                "worldType," +
+                "fuelType," +
+                "portType," +
+                "populationType," +
+                "techType," +
+                "productType," +
+                "milSpaceType," +
+                "milPlanType," +
+                "miscText1," +
+                "miscText2," +
+                "miscText3," +
+                "miscText4," +
+                "miscText5," +
+                "miscNum1," +
+                "miscNum2," +
+                "miscNum3," +
+                "miscNum4," +
+                "miscNum5," +
+                "notes" +
+                "\n";
+    }
+    private String convertToCSV(AstrographicObject astrographicObject) {
+
+        return astrographicObject.getId().toString() + ", " +
+                astrographicObject.getDataSetName() + ", " +
+                astrographicObject.getDisplayName() + ", " +
+                astrographicObject.getConstellationName() + ", " +
+                astrographicObject.getMass() + ", " +
+                astrographicObject.getActualMass() + ", " +
+                astrographicObject.getSource() + ", " +
+                astrographicObject.getCatalogIdList() + ", " +
+                astrographicObject.getX() + ", " +
+                astrographicObject.getY() + ", " +
+                astrographicObject.getY() + ", " +
+                astrographicObject.getRadius() + ", " +
+                astrographicObject.getRa() + ", " +
+                astrographicObject.getPmra() + ", " +
+                astrographicObject.getDeclination() + ", " +
+                astrographicObject.getPmdec() + ", " +
+                astrographicObject.getDec_deg() + ", " +
+                astrographicObject.getRs_cdeg() + ", " +
+                astrographicObject.getParallax() + ", " +
+                astrographicObject.getDistance() + ", " +
+                astrographicObject.getRadialVelocity() + ", " +
+                astrographicObject.getSpectralClass() + ", " +
+                astrographicObject.getOrthoSpectralClass() + ", " +
+                astrographicObject.getTemperature() + ", " +
+                astrographicObject.isRealStar() + ", " +
+                astrographicObject.getBprp() + ", " +
+                astrographicObject.getBpg() + ", " +
+                astrographicObject.getGrp() + ", " +
+                astrographicObject.getLuminosity() + ", " +
+                astrographicObject.getMagu() + ", " +
+                astrographicObject.getMagb() + ", " +
+                astrographicObject.getMagv() + ", " +
+                astrographicObject.getMagr() + ", " +
+                astrographicObject.getMagi() + ", " +
+                astrographicObject.isOther() + ", " +
+                astrographicObject.isAnomaly() + ", " +
+                astrographicObject.getPolity() + ", " +
+                astrographicObject.getWorldType() + ", " +
+                astrographicObject.getFuelType() + ", " +
+                astrographicObject.getPortType() + ", " +
+                astrographicObject.getPopulationType() + ", " +
+                astrographicObject.getTechType() + ", " +
+                astrographicObject.getProductType() + ", " +
+                astrographicObject.getMilSpaceType() + ", " +
+                astrographicObject.getMilPlanType() + ", " +
+                astrographicObject.getMiscText1() + ", " +
+                astrographicObject.getMiscText2() + ", " +
+                astrographicObject.getMiscText3() + ", " +
+                astrographicObject.getMiscText4() + ", " +
+                astrographicObject.getMiscText5() + ", " +
+                astrographicObject.getMiscNum1() + ", " +
+                astrographicObject.getMiscNum2() + ", " +
+                astrographicObject.getMiscNum3() + ", " +
+                astrographicObject.getMiscNum4() + ", " +
+                astrographicObject.getMiscNum5() + ", " +
+                astrographicObject.getNotes() +
+                "\n";
+    }
+
+
 
     /**
      * parse and save a record line
