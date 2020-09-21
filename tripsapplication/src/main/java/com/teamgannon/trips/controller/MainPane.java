@@ -679,16 +679,24 @@ public class MainPane implements
         toggleRoutesBtn.setSelected(routesOn);
     }
 
-    public void toggleTransit(ActionEvent actionEvent) {
+    public void toggleTransitAction(ActionEvent actionEvent) {
         this.transitsOn = !transitsOn;
-        toggleTransitsMenuitem.setSelected(transitsOn);
-        toggleTransitsBtn.setSelected(transitsOn);
-        interstellarSpacePane.toggleTransits(transitsOn);
+        toggleTransit(transitsOn);
     }
 
     public void toggleTransitLengths(ActionEvent actionEvent) {
         this.transitsLengthsOn = !transitsLengthsOn;
         interstellarSpacePane.toggleTransitLengths(transitsLengthsOn);
+        if (transitsLengthsOn) {
+            this.transitsOn = true;
+            toggleTransit(true);
+        }
+    }
+
+    private void toggleTransit(boolean transitWish) {
+        toggleTransitsMenuitem.setSelected(transitWish);
+        toggleTransitsBtn.setSelected(transitWish);
+        interstellarSpacePane.toggleTransits(transitWish);
     }
 
     public void toggleSidePane(ActionEvent actionEvent) {

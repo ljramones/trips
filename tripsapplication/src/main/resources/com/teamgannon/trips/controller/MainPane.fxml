@@ -76,7 +76,7 @@
                       text="Find Transits Between Stars..."/>
             <CheckMenuItem fx:id="toggleTransitsMenuitem"
                            mnemonicParsing="false"
-                           onAction="#toggleTransit"
+                           onAction="#toggleTransitAction"
                            selected="true"
                            text="Toggle Transits"/>
             <CheckMenuItem fx:id="toggleTransitLengthsMenuitem" mnemonicParsing="false"
@@ -120,7 +120,7 @@
                           text="Extensions"/>
             <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
             <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false" onAction="#toggleRoutes" text="Routes"/>
-            <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false" onAction="#toggleTransit" text="Transits"/>
+            <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false" onAction="#toggleTransitAction" text="Transits"/>
             <Separator/>
             <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Side Pane"/>
             <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false" onAction="#zoomIn" text="+"/>

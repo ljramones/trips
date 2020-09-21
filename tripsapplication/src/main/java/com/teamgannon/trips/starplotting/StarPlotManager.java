@@ -249,16 +249,13 @@ public class StarPlotManager {
 
 
     public void highlightStar(UUID starId) {
-        Xform starGroup = currentPlot.getStar(starId);
-        if (highlightRotator != null) {
-            highlightRotator.stop();
-        }
+        Label starGroup = currentPlot.getLabelForStar(starId);
         highlightRotator = setRotationAnimation(starGroup);
         highlightRotator.play();
         log.info("mark point");
     }
 
-    private static RotateTransition setRotationAnimation(Group group) {
+    private static RotateTransition setRotationAnimation(Label group) {
         RotateTransition rotate = new RotateTransition(
                 Duration.seconds(10),
                 group
@@ -521,7 +518,7 @@ public class StarPlotManager {
             Label label = createLabel(record, colorPalette);
             label.setLabelFor(sphere);
             labelDisplayGroup.getChildren().add(label);
-
+            currentPlot.mapLabelToStar(record.getRecordId(), label);
         }
 
         if (politiesOn) {
@@ -696,7 +693,7 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Highlight star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            redrawListener.highlightStar(starDescriptor.getRecordId());
+            highlightStar(starDescriptor.getRecordId());
 
         });
         return menuItem;
