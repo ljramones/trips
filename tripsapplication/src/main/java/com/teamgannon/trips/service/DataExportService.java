@@ -1,5 +1,6 @@
 package com.teamgannon.trips.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +41,34 @@ public class DataExportService {
                 exportAsExcel(exportOptions.getFileName(), astrographicObjects);
             }
             case JSON -> {
-                exportAsJson(exportOptions.getFileName(), astrographicObjects);
+                exportAsJson(exportOptions, astrographicObjects);
             }
         }
 
     }
 
-    private void exportAsJson(String fileName, List<AstrographicObject> astrographicObjects) {
+    private void exportAsJson(ExportOptions export, List<AstrographicObject> astrographicObjects) {
 
+        ObjectMapper Obj = new ObjectMapper();
+
+        try {
+            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".json"));
+
+            String jsonStr = Obj.writeValueAsString(astrographicObjects);
+            writer.write(jsonStr);
+
+            writer.flush();
+            writer.close();
+            showInfoMessage("Database Export", export.getDataset().getDataSetName()
+                    + " was export to " + export.getFileName() + ".json");
+
+        } catch (Exception e) {
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Export Dataset as JSON file",
+                    export.getDataset().getDataSetName() +
+                            "failed to export:" + e.getMessage());
+        }
     }
 
     private void exportAsExcel(String fileName, List<AstrographicObject> astrographicObjects) {
