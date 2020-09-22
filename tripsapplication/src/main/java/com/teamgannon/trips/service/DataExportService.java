@@ -3,6 +3,11 @@ package com.teamgannon.trips.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.StatusUpdaterListener;
+import javafx.application.Platform;
+import javafx.scene.control.ButtonType;
+import javafx.stage.FileChooser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
@@ -12,15 +17,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
+import static com.teamgannon.trips.support.AlertFactory.*;
 
 /**
  * Used to import and export data sets
@@ -28,13 +32,83 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
  * Created by larrymitchell on 2017-01-22.
  */
 @Slf4j
-@Service
 public class DataExportService {
 
-    private DatabaseManagementService databaseManagementService;
+    private final DatabaseManagementService databaseManagementService;
+    private final StatusUpdaterListener updaterListener;
 
-    public DataExportService(DatabaseManagementService databaseManagementService) {
+    public DataExportService(DatabaseManagementService databaseManagementService,
+                             StatusUpdaterListener updaterListener) {
         this.databaseManagementService = databaseManagementService;
+        this.updaterListener = updaterListener;
+    }
+
+
+    public void exportDB() {
+        Optional<ButtonType> result = showConfirmationAlert(
+                "Data Export Service", "Entire Database",
+                "Do you want to export this dataset? It will take a while.");
+        if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
+            final FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Export entire database to export as a Excel file");
+            File file = fileChooser.showSaveDialog(null);
+            if (file != null) {
+                exportEntireDB(file.getAbsolutePath());
+            } else {
+                log.warn("file export cancelled");
+                showInfoMessage("Database export", "Export cancelled");
+            }
+        }
+    }
+
+    private void exportEntireDB(String fileName) {
+        try {
+
+            File myFile = new File(fileName + ".tripsdb.xlsx");
+            updateStatus("Starting database export to: " + myFile.getAbsolutePath());
+
+            if (!myFile.createNewFile()) {
+                showErrorAlert(
+                        "Export Entire Database as an Excel file",
+                        "Unable to create file: " + fileName);
+                updateStatus("Export failed, could not create: " + myFile.getAbsolutePath());
+            }
+
+            // create a work book
+            XSSFWorkbook myWorkBook = new XSSFWorkbook();
+
+            List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            for (DataSetDescriptor descriptor : dataSetDescriptorList) {
+                createDataSetSheet(myWorkBook, descriptor);
+            }
+
+            // now write it out
+            FileOutputStream os = new FileOutputStream(myFile);
+            myWorkBook.write(os);
+            showInfoMessage("Database Export", "Entire DB was exported to " + myFile.getAbsolutePath());
+            updateStatus("export complete, please see: " + myFile.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Export Dataset as an Excel file",
+                    "Database failed to exported:" + e.getMessage());
+        }
+    }
+
+    private void createDataSetSheet(XSSFWorkbook myWorkBook, DataSetDescriptor descriptor) {
+        // create a work sheet with the dataset name on it
+        updateStatus(String.format("starting export of %s", descriptor.getDataSetName()));
+        XSSFSheet mySheet = myWorkBook.createSheet(descriptor.getDataSetName());
+        writeHeaders(mySheet);
+        int rowCount = 1;
+        List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(descriptor);
+        for (AstrographicObject astrographicObject : astrographicObjects) {
+            Row row = mySheet.createRow(rowCount++);
+            saveRow(row, astrographicObject);
+        }
+        updateStatus(String.format("Export of %s complete, moving to next", descriptor.getDataSetName()));
     }
 
     public void exportDataset(ExportOptions exportOptions) {
@@ -60,7 +134,7 @@ public class DataExportService {
         ObjectMapper Obj = new ObjectMapper();
 
         try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".json"));
+            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.json"));
 
             String jsonStr = Obj.writeValueAsString(astrographicObjects);
             writer.write(jsonStr);
@@ -68,7 +142,7 @@ public class DataExportService {
             writer.flush();
             writer.close();
             showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was export to " + export.getFileName() + ".json");
+                    + " was export to " + export.getFileName() + ".trips.json");
 
         } catch (Exception e) {
             log.error("caught error opening the file:{}", e.getMessage());
@@ -83,13 +157,12 @@ public class DataExportService {
 
         try {
 
-            File myFile = new File(export.getFileName() + ".xlsx");
+            File myFile = new File(export.getFileName() + ".trips.xlsx");
             if (!myFile.createNewFile()) {
                 showErrorAlert(
-                        "Export Dataset as JSON file",
+                        "Export Dataset as an Excel file",
                         "Unable to create file: " + export.getFileName());
             }
-            FileInputStream fis = new FileInputStream(myFile);
 
             // create a work book
             XSSFWorkbook myWorkBook = new XSSFWorkbook();
@@ -112,17 +185,26 @@ public class DataExportService {
             myWorkBook.close();
 
             showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was exported to " + export.getFileName() + ".xlsx");
+                    + " was exported to " + export.getFileName() + ".trips.xlsx");
 
 
         } catch (Exception e) {
             e.printStackTrace();
             log.error("caught error opening the file:{}", e.getMessage());
             showErrorAlert(
-                    "Export Dataset as JSON file",
+                    "Export Dataset as an Excel file",
                     export.getDataset().getDataSetName() +
                             "failed to exported:" + e.getMessage());
         }
+    }
+
+    private void updateStatus(String status) {
+        new Thread(() -> {
+            Platform.runLater(() -> {
+                log.info(status);
+                updaterListener.updateStatus(status);
+            });
+        }).start();
     }
 
     private void writeHeaders(XSSFSheet mySheet) {
@@ -270,7 +352,7 @@ public class DataExportService {
 
     private void exportAsCSV(ExportOptions export, List<AstrographicObject> astrographicObjects) {
         try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".csv"));
+            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
 
             String headers = getHeaders();
             writer.write(headers);
@@ -283,7 +365,7 @@ public class DataExportService {
             writer.flush();
             writer.close();
             showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was exported to " + export.getFileName() + ".csv");
+                    + " was exported to " + export.getFileName() + ".trips.csv");
 
         } catch (Exception e) {
             log.error("caught error opening the file:{}", e.getMessage());

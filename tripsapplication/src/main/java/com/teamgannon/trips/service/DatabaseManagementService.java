@@ -419,7 +419,7 @@ public class DatabaseManagementService {
      *
      * @return the list of all descriptors in the database
      */
-    public List<DataSetDescriptor> getDataSetIds() {
+    public List<DataSetDescriptor> getDataSets() {
         Iterable<DataSetDescriptor> dataSetDescriptors = dataSetDescriptorRepository.findAll();
         List<DataSetDescriptor> descriptors = new ArrayList<>();
         dataSetDescriptors.forEach(descriptors::add);
