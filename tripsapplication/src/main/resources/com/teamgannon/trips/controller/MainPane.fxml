@@ -69,6 +69,9 @@
             <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset Manager..."/>
             <MenuItem mnemonicParsing="false" onAction="#viewEditStarData" text="View/Edit Star Data"/>
             <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
+            <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false" onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
+            <MenuItem mnemonicParsing="false" onAction="#exportDatabase" text="Export Database to Excel"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Transits">
             <MenuItem mnemonicParsing="false"

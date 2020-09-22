@@ -35,6 +35,7 @@ import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
+import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SimulatorService;
 import com.teamgannon.trips.support.AlertFactory;
@@ -152,6 +153,7 @@ public class MainPane implements
      * the localization of the application
      */
     private final Localization localization;
+    private DataImportService dataImportService;
     private DataExportService dataExportService;
 
     /**
@@ -284,6 +286,7 @@ public class MainPane implements
                     AstrographicPlotter astrographicPlotter,
                     TripsContext tripsContext,
                     Localization localization,
+                    DataImportService dataImportService,
                     DataExportService dataExportService) {
 
         this.databaseManagementService = databaseManagementService;
@@ -295,6 +298,7 @@ public class MainPane implements
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
+        this.dataImportService = dataImportService;
         this.dataExportService = dataExportService;
 
         this.width = 1100;
@@ -1391,4 +1395,11 @@ public class MainPane implements
         toggleTransitLengthsMenuitem.setSelected(false);
     }
 
+    public void loadMuliple(ActionEvent actionEvent) {
+        dataImportService.loadMultipleDatasets();
+    }
+
+    public void exportDatabase(ActionEvent actionEvent) {
+
+    }
 }
