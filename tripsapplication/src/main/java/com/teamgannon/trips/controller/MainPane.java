@@ -286,8 +286,7 @@ public class MainPane implements
                     AstrographicPlotter astrographicPlotter,
                     TripsContext tripsContext,
                     Localization localization,
-                    DataImportService dataImportService,
-                    DataExportService dataExportService) {
+                    DataImportService dataImportService) {
 
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
@@ -299,7 +298,8 @@ public class MainPane implements
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
         this.dataImportService = dataImportService;
-        this.dataExportService = dataExportService;
+
+        this.dataExportService = new DataExportService(databaseManagementService, this);
 
         this.width = 1100;
         this.height = 700;
@@ -477,7 +477,7 @@ public class MainPane implements
 
     private List<DataSetDescriptor> loadDataSetView() {
 
-        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSetIds();
+        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
 
         for (DataSetDescriptor descriptor : dataSetDescriptorList) {
             if (descriptor.getRoutesStr() != null) {
@@ -976,7 +976,7 @@ public class MainPane implements
      * show a loaded dataset in the plot menu
      */
     private void showPlot() {
-        List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
+        List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
         if (datasets.size() == 0) {
             showErrorAlert("Plot Stars", "No datasets loaded, please load one");
             return;
@@ -1046,7 +1046,7 @@ public class MainPane implements
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
             new DataSetTable(databaseManagementService, astrographicObjects);
         } else {
-            List<DataSetDescriptor> datasets = databaseManagementService.getDataSetIds();
+            List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
             if (datasets.size() == 0) {
                 showErrorAlert("Plot Stars", "No datasets loaded, please load one");
                 return;
@@ -1400,6 +1400,6 @@ public class MainPane implements
     }
 
     public void exportDatabase(ActionEvent actionEvent) {
-
+        dataExportService.exportDB();
     }
 }

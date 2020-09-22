@@ -25,7 +25,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -230,7 +229,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         tableView.getItems().clear();
 
         // get descriptors
-        List<DataSetDescriptor> descriptors = databaseManagementService.getDataSetIds();
+        List<DataSetDescriptor> descriptors = databaseManagementService.getDataSets();
 
         // fill in table
         for (DataSetDescriptor descriptor : descriptors) {
@@ -260,14 +259,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             if (selectedDataset != null) {
                 log.debug("Export the selected dataset as a CSV file");
-//                final FileChooser fileChooser = new FileChooser();
-//                fileChooser.setTitle("Select Database to export as a CSV file");
-//                File file = fileChooser.showSaveDialog(null);
-//                if (file != null) {
-//                    exportDB(selectedDataset, file);
-//                } else {
-//                    log.warn("file export cancelled");
-//                }
                 ExportDialog exportDialog = new ExportDialog(selectedDataset);
                 Optional<ExportOptions> exportOptional = exportDialog.showAndWait();
                 if (exportOptional.isPresent()) {
