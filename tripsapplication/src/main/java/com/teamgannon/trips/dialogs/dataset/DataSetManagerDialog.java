@@ -12,6 +12,7 @@ import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -51,6 +52,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     private final ExcelReader excelReader;
     private final RBCsvReader rbCsvReader;
     private final Localization localization;
+    private DataExportService dataExportService;
     private final StatusUpdaterListener statusUpdaterListener;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
@@ -69,6 +71,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                                 ExcelReader excelReader,
                                 RBCsvReader rbCsvReader,
                                 Localization localization,
+                                DataExportService dataExportService,
                                 StatusUpdaterListener statusUpdaterListener) {
 
         this.dataSetChangeListener = dataSetChangeListener;
@@ -79,6 +82,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         this.excelReader = excelReader;
         this.rbCsvReader = rbCsvReader;
         this.localization = localization;
+        this.dataExportService = dataExportService;
         this.statusUpdaterListener = statusUpdaterListener;
 
         this.setTitle("Dataset Management Dialog");
@@ -256,13 +260,21 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             if (selectedDataset != null) {
                 log.debug("Export the selected dataset as a CSV file");
-                final FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Select Database to export as a CSV file");
-                File file = fileChooser.showSaveDialog(null);
-                if (file != null) {
-                    exportDB(selectedDataset, file);
-                } else {
-                    log.warn("file export cancelled");
+//                final FileChooser fileChooser = new FileChooser();
+//                fileChooser.setTitle("Select Database to export as a CSV file");
+//                File file = fileChooser.showSaveDialog(null);
+//                if (file != null) {
+//                    exportDB(selectedDataset, file);
+//                } else {
+//                    log.warn("file export cancelled");
+//                }
+                ExportDialog exportDialog = new ExportDialog(selectedDataset);
+                Optional<ExportOptions> exportOptional = exportDialog.showAndWait();
+                if (exportOptional.isPresent()) {
+                    ExportOptions exportOptions = exportOptional.get();
+                    if (exportOptions.isDoExport()) {
+                        dataExportService.exportDataset(exportOptions);
+                    }
                 }
             } else {
                 showErrorAlert("Export Dataset", "You need to select a dataset first");
@@ -406,8 +418,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         // load chview file
         ChViewFile chViewFile = chviewReader.loadFile(file);
-        if (chViewFile== null) {
-            FileProcessResult result= new FileProcessResult();
+        if (chViewFile == null) {
+            FileProcessResult result = new FileProcessResult();
             result.setDataSetDescriptor(null);
             result.setSuccess(false);
             result.setMessage("Failed to parse file");
@@ -443,36 +455,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         Optional<ButtonType> result = showConfirmationAlert("MainPane", "", "Database loaded:" + file.getName());
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             log.info("import database");
-        }
-    }
-
-
-    /**
-     * export the database as a CSV file
-     *
-     * @param dataSetDescriptor the descriptor
-     * @param file              the file to export
-     */
-    private void exportDB(DataSetDescriptor dataSetDescriptor, File file) {
-        databaseManagementService.exportDatabase(dataSetDescriptor, file);
-        log.info("File selection is:" + file.getAbsolutePath());
-    }
-
-    /**
-     * export as a JSON file
-     */
-    public void exportJSON() {
-        log.debug("Export as a CSV format file");
-        final FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select JSON file to import");
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("JSON Files", "json");
-        fileChooser.setSelectedExtensionFilter(filter);
-        File file = fileChooser.showSaveDialog(null);
-        if (file != null) {
-            log.info("export");
-//            chviewReader.exportJson(file, chViewFile);
-        } else {
-            log.warn("file selection cancelled");
         }
     }
 

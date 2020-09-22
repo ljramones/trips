@@ -3,6 +3,7 @@ package com.teamgannon.trips.service;
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.service.model.TransitRoute;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

@@ -34,6 +34,7 @@ import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SimulatorService;
 import com.teamgannon.trips.support.AlertFactory;
@@ -151,6 +152,7 @@ public class MainPane implements
      * the localization of the application
      */
     private final Localization localization;
+    private DataExportService dataExportService;
 
     /**
      * list of routes
@@ -281,7 +283,8 @@ public class MainPane implements
                     RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     TripsContext tripsContext,
-                    Localization localization) {
+                    Localization localization,
+                    DataExportService dataExportService) {
 
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
@@ -292,6 +295,7 @@ public class MainPane implements
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
+        this.dataExportService = dataExportService;
 
         this.width = 1100;
         this.height = 700;
@@ -1287,6 +1291,7 @@ public class MainPane implements
                 excelReader,
                 rbCsvReader,
                 localization,
+                dataExportService,
                 this);
 
         // we throw away the result after returning
