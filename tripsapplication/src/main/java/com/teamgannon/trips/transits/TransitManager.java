@@ -9,7 +9,7 @@ import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.StarMeasurementService;
-import com.teamgannon.trips.service.TransitRoute;
+import com.teamgannon.trips.service.model.TransitRoute;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.*;

@@ -3,7 +3,7 @@ package com.teamgannon.trips.file.simbad;
 import com.opencsv.CSVReader;
 import com.teamgannon.trips.jpa.model.SimbadEntry;
 import com.teamgannon.trips.jpa.repository.SimbadEntryRepository;
-import com.teamgannon.trips.service.DatabaseImportStatus;
+import com.teamgannon.trips.service.model.DatabaseImportStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
