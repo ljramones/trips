@@ -23,9 +23,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -393,6 +394,16 @@ public class DatabaseManagementService {
     //////////////////////////////////////
 
     /**
+     * this is used to create
+     *
+     * @param dataSetDescriptor the descriptor to add
+     */
+    @Transactional
+    public void createDataSet(DataSetDescriptor dataSetDescriptor) {
+        dataSetDescriptorRepository.save(dataSetDescriptor);
+    }
+
+    /**
      * remove the data set and associated stars by name
      *
      * @param dataSetName the dataset to remove
@@ -465,6 +476,7 @@ public class DatabaseManagementService {
      *
      * @param starDetailsPersists the list of star details
      */
+    @Transactional
     public void updateStarDetails(List<StarDetailsPersist> starDetailsPersists) {
         starDetailsPersistRepository.saveAll(starDetailsPersists);
     }
@@ -628,5 +640,26 @@ public class DatabaseManagementService {
         astrographicObjectRepository.deleteById(recordId);
     }
 
+
+    /**
+     * does a dataset with this name exist?
+     *
+     * @param name the dataset name that we are looking for
+     * @return true if we found one
+     */
+    public boolean hasDataSet(String name) {
+        return dataSetDescriptorRepository.findByDataSetName(name) != null;
+    }
+
+
+    /**
+     * store a bulk of stars
+     *
+     * @param astrographicObjectList the list of stars to save
+     */
+    @Transactional
+    public void addStars(List<AstrographicObject> astrographicObjectList) {
+        astrographicObjectRepository.saveAll(astrographicObjectList);
+    }
 
 }

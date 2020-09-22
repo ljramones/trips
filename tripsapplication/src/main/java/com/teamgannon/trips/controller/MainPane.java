@@ -285,8 +285,7 @@ public class MainPane implements
                     RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     TripsContext tripsContext,
-                    Localization localization,
-                    DataImportService dataImportService) {
+                    Localization localization) {
 
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
@@ -297,7 +296,7 @@ public class MainPane implements
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
-        this.dataImportService = dataImportService;
+        this.dataImportService = new DataImportService(databaseManagementService, this);
 
         this.dataExportService = new DataExportService(databaseManagementService, this);
 

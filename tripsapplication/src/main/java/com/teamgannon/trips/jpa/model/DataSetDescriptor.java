@@ -6,10 +6,12 @@ import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.routing.Route;
 import lombok.Data;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -101,6 +103,7 @@ public class DataSetDescriptor implements Serializable {
      * an object describing routes
      */
     @Lob
+    @Column(length = 1000)
     private String routesStr;
     /**
      * a set of custom data definitions
@@ -139,7 +142,11 @@ public class DataSetDescriptor implements Serializable {
      */
     public List<Route> getRoutes() {
         if (routesStr != null) {
-            return new Route().toRoute(routesStr);
+            if (routesStr.isBlank()) {
+                return new Route().toRoute(routesStr);
+            } else {
+                return new ArrayList<>();
+            }
         } else {
             return new ArrayList<>();
         }

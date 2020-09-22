@@ -14,7 +14,6 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,7 +46,7 @@ public class DataExportService {
     public void exportDB() {
         Optional<ButtonType> result = showConfirmationAlert(
                 "Data Export Service", "Entire Database",
-                "Do you want to export this dataset? It will take a while.");
+                "Do you want to export this database? It will take a while.");
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             final FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Export entire database to export as a Excel file");
@@ -78,6 +77,8 @@ public class DataExportService {
             XSSFWorkbook myWorkBook = new XSSFWorkbook();
 
             List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            createDataSetDescriptorsPage(myWorkBook, dataSetDescriptorList);
+
             for (DataSetDescriptor descriptor : dataSetDescriptorList) {
                 createDataSetSheet(myWorkBook, descriptor);
             }
@@ -95,6 +96,44 @@ public class DataExportService {
                     "Export Dataset as an Excel file",
                     "Database failed to exported:" + e.getMessage());
         }
+    }
+
+    private void createDataSetDescriptorsPage(XSSFWorkbook myWorkBook, List<DataSetDescriptor> dataSetDescriptorList) {
+        XSSFSheet mySheet = myWorkBook.createSheet("Database");
+        createDescriptorHeaderRow(mySheet);
+        int row = 1;
+        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
+            createDescriptorRow(mySheet, row++, descriptor);
+        }
+
+    }
+
+    private void createDescriptorHeaderRow(XSSFSheet mySheet) {
+        int column = 0;
+        Row row = mySheet.createRow(0);
+        storeCell(row, column++, "Dataset name");
+        storeCell(row, column++, "File creator");
+        storeCell(row, column++, "Original date");
+        storeCell(row, column++, "file notes");
+        storeCell(row, column++, "datasetType");
+        storeCell(row, column++, "Number of stars");
+        storeCell(row, column++, "Distance Range");
+        storeCell(row, column++, "Number of Routes");
+        storeCell(row, column, "Routes as a string");
+    }
+
+    private void createDescriptorRow(XSSFSheet mySheet, int i, DataSetDescriptor descriptor) {
+        int column = 0;
+        Row row = mySheet.createRow(i);
+        storeCell(row, column++, descriptor.getDataSetName());
+        storeCell(row, column++, descriptor.getFileCreator());
+        storeCell(row, column++, descriptor.getFileOriginalDate());
+        storeCell(row, column++, descriptor.getFileNotes());
+        storeCell(row, column++, descriptor.getDatasetType());
+        storeCell(row, column++, descriptor.getNumberStars());
+        storeCell(row, column++, descriptor.getDistanceRange());
+        storeCell(row, column, descriptor.getRoutesStr());
+
     }
 
     private void createDataSetSheet(XSSFWorkbook myWorkBook, DataSetDescriptor descriptor) {
@@ -187,7 +226,6 @@ public class DataExportService {
             showInfoMessage("Database Export", export.getDataset().getDataSetName()
                     + " was exported to " + export.getFileName() + ".trips.xlsx");
 
-
         } catch (Exception e) {
             e.printStackTrace();
             log.error("caught error opening the file:{}", e.getMessage());
@@ -199,12 +237,10 @@ public class DataExportService {
     }
 
     private void updateStatus(String status) {
-        new Thread(() -> {
-            Platform.runLater(() -> {
-                log.info(status);
-                updaterListener.updateStatus(status);
-            });
-        }).start();
+        new Thread(() -> Platform.runLater(() -> {
+            log.info(status);
+            updaterListener.updateStatus(status);
+        })).start();
     }
 
     private void writeHeaders(XSSFSheet mySheet) {
@@ -328,6 +364,16 @@ public class DataExportService {
         storeCell(row, column++, astrographicObject.getMiscNum5());
         storeCell(row, column, astrographicObject.getNotes());
 
+    }
+
+    private void storeCell(Row row, int column, long intValue) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(Long.toString(intValue));
+    }
+
+    private void storeCell(Row row, int column, int intValue) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(Integer.toString(intValue));
     }
 
     private void storeCell(Row row, int column, boolean booleanValue) {
