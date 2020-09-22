@@ -4,8 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -38,7 +46,7 @@ public class DataExportService {
                 exportAsCSV(exportOptions, astrographicObjects);
             }
             case EXCEL -> {
-                exportAsExcel(exportOptions.getFileName(), astrographicObjects);
+                exportAsExcel(exportOptions, astrographicObjects);
             }
             case JSON -> {
                 exportAsJson(exportOptions, astrographicObjects);
@@ -71,8 +79,129 @@ public class DataExportService {
         }
     }
 
-    private void exportAsExcel(String fileName, List<AstrographicObject> astrographicObjects) {
+    private void exportAsExcel(ExportOptions export, List<AstrographicObject> astrographicObjects) {
 
+        try {
+
+            File myFile = new File(export.getFileName() + ".xlsx");
+            if (!myFile.createNewFile()) {
+                showErrorAlert(
+                        "Export Dataset as JSON file",
+                        "Unable to create file: " + export.getFileName());
+            }
+            FileInputStream fis = new FileInputStream(myFile);
+
+            // create a work book
+            XSSFWorkbook myWorkBook = new XSSFWorkbook();
+
+            // create a work sheet with the dataset name on it
+            XSSFSheet mySheet = myWorkBook.createSheet(export.getDataset().getDataSetName());
+
+            int rowCount = 0;
+            for (AstrographicObject astrographicObject : astrographicObjects) {
+                Row row = mySheet.createRow(++rowCount);
+                saveRow(row, astrographicObject);
+            }
+
+            FileOutputStream os = new FileOutputStream(myFile);
+            myWorkBook.write(os);
+
+            // close the work book
+            myWorkBook.close();
+
+            showInfoMessage("Database Export", export.getDataset().getDataSetName()
+                    + " was exported to " + export.getFileName() + ".xlsx");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Export Dataset as JSON file",
+                    export.getDataset().getDataSetName() +
+                            "failed to exported:" + e.getMessage());
+        }
+    }
+
+    private void saveRow(Row row, AstrographicObject astrographicObject) {
+        int column = 0;
+
+        storeCell(row, column++, astrographicObject.getId().toString());
+        storeCell(row, column++, astrographicObject.getDataSetName());
+        storeCell(row, column++, astrographicObject.getDisplayName());
+        storeCell(row, column++, astrographicObject.getConstellationName());
+        storeCell(row, column++, astrographicObject.getMass());
+        storeCell(row, column++, astrographicObject.getActualMass());
+        storeCell(row, column++, astrographicObject.getSource());
+        storeCell(row, column++, astrographicObject.getCatalogIdList());
+        storeCell(row, column++, astrographicObject.getX());
+        storeCell(row, column++, astrographicObject.getY());
+        storeCell(row, column++, astrographicObject.getZ());
+        storeCell(row, column++, astrographicObject.getRadius());
+        storeCell(row, column++, astrographicObject.getRa());
+        storeCell(row, column++, astrographicObject.getPmra());
+        storeCell(row, column++, astrographicObject.getDeclination());
+        storeCell(row, column++, astrographicObject.getDec_deg());
+        storeCell(row, column++, astrographicObject.getRs_cdeg());
+        storeCell(row, column++, astrographicObject.getParallax());
+        storeCell(row, column++, astrographicObject.getDistance());
+        storeCell(row, column++, astrographicObject.getRadialVelocity());
+        storeCell(row, column++, astrographicObject.getSpectralClass());
+        storeCell(row, column++, astrographicObject.getOrthoSpectralClass());
+        storeCell(row, column++, astrographicObject.getTemperature());
+        storeCell(row, column++, astrographicObject.isRealStar());
+        storeCell(row, column++, astrographicObject.getBprp());
+        storeCell(row, column++, astrographicObject.getBpg());
+        storeCell(row, column++, astrographicObject.getGrp());
+        storeCell(row, column++, astrographicObject.getLuminosity());
+        storeCell(row, column++, astrographicObject.getMagu());
+        storeCell(row, column++, astrographicObject.getMagb());
+        storeCell(row, column++, astrographicObject.getMagv());
+        storeCell(row, column++, astrographicObject.getMagr());
+        storeCell(row, column++, astrographicObject.getMagi());
+        storeCell(row, column++, astrographicObject.isOther());
+        storeCell(row, column++, astrographicObject.isAnomaly());
+        storeCell(row, column++, astrographicObject.getPolity());
+        storeCell(row, column++, astrographicObject.getWorldType());
+        storeCell(row, column++, astrographicObject.getFuelType());
+        storeCell(row, column++, astrographicObject.getPortType());
+        storeCell(row, column++, astrographicObject.getPopulationType());
+        storeCell(row, column++, astrographicObject.getTechType());
+        storeCell(row, column++, astrographicObject.getProductType());
+        storeCell(row, column++, astrographicObject.getMilSpaceType());
+        storeCell(row, column++, astrographicObject.getMilPlanType());
+        storeCell(row, column++, astrographicObject.getMiscText1());
+        storeCell(row, column++, astrographicObject.getMiscText2());
+        storeCell(row, column++, astrographicObject.getMiscText3());
+        storeCell(row, column++, astrographicObject.getMiscText4());
+        storeCell(row, column++, astrographicObject.getMiscText5());
+        storeCell(row, column++, astrographicObject.getMiscNum1());
+        storeCell(row, column++, astrographicObject.getMiscNum2());
+        storeCell(row, column++, astrographicObject.getMiscNum3());
+        storeCell(row, column++, astrographicObject.getMiscNum4());
+        storeCell(row, column++, astrographicObject.getMiscNum5());
+        storeCell(row, column, astrographicObject.getNotes());
+
+    }
+
+    private void storeCell(Row row, int column, boolean booleanValue) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(Boolean.toString(booleanValue));
+    }
+
+    private void storeCell(Row row, int column, String stringValue) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(stringValue);
+    }
+
+    private void storeCell(Row row, int column, double doubleValue) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(Double.toString(doubleValue));
+    }
+
+    private void storeCell(Row row, int column, List<String> list) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(StringUtils.join(list, ' '));
     }
 
     private void exportAsCSV(ExportOptions export, List<AstrographicObject> astrographicObjects) {
@@ -89,7 +218,8 @@ public class DataExportService {
             }
             writer.flush();
             writer.close();
-            showInfoMessage("Database Export", export.getDataset().getDataSetName() + " was export to " + export.getFileName() + ".csv");
+            showInfoMessage("Database Export", export.getDataset().getDataSetName()
+                    + " was exported to " + export.getFileName() + ".csv");
 
         } catch (Exception e) {
             log.error("caught error opening the file:{}", e.getMessage());
@@ -227,7 +357,7 @@ public class DataExportService {
     private String removeCommas(String origin) {
         String replaced = origin;
         if (origin != null) {
-            replaced= origin.replace(",", " ");
+            replaced = origin.replace(",", " ");
         }
         return replaced;
     }
