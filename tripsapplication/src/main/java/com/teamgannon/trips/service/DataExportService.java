@@ -97,9 +97,11 @@ public class DataExportService {
             // create a work sheet with the dataset name on it
             XSSFSheet mySheet = myWorkBook.createSheet(export.getDataset().getDataSetName());
 
-            int rowCount = 0;
+            writeHeaders(mySheet);
+
+            int rowCount = 1;
             for (AstrographicObject astrographicObject : astrographicObjects) {
-                Row row = mySheet.createRow(++rowCount);
+                Row row = mySheet.createRow(rowCount++);
                 saveRow(row, astrographicObject);
             }
 
@@ -123,6 +125,67 @@ public class DataExportService {
         }
     }
 
+    private void writeHeaders(XSSFSheet mySheet) {
+        int column = 0;
+        Row row = mySheet.createRow(0);
+        storeCell(row, column++, "id");
+        storeCell(row, column++, "dataSetName");
+        storeCell(row, column++, "displayName");
+        storeCell(row, column++, "constellationName");
+        storeCell(row, column++, "mass");
+        storeCell(row, column++, "actualMass");
+        storeCell(row, column++, "source");
+        storeCell(row, column++, "catalogIdList");
+        storeCell(row, column++, "X");
+        storeCell(row, column++, "Y");
+        storeCell(row, column++, "Z");
+        storeCell(row, column++, "radius");
+        storeCell(row, column++, "ra");
+        storeCell(row, column++, "pmra");
+        storeCell(row, column++, "declination");
+        storeCell(row, column++, "pmdec");
+        storeCell(row, column++, "dec_deg");
+        storeCell(row, column++, "rs_cdeg");
+        storeCell(row, column++, "parallax");
+        storeCell(row, column++, "distance");
+        storeCell(row, column++, "radialVelocity");
+        storeCell(row, column++, "spectralClass");
+        storeCell(row, column++, "orthoSpectralClass");
+        storeCell(row, column++, "temperature");
+        storeCell(row, column++, "realStar");
+        storeCell(row, column++, "bprp");
+        storeCell(row, column++, "bpg");
+        storeCell(row, column++, "grp");
+        storeCell(row, column++, "luminosity");
+        storeCell(row, column++, "magu");
+        storeCell(row, column++, "magb");
+        storeCell(row, column++, "magv");
+        storeCell(row, column++, "magr");
+        storeCell(row, column++, "magi");
+        storeCell(row, column++, "other");
+        storeCell(row, column++, "anomaly");
+        storeCell(row, column++, "polity");
+        storeCell(row, column++, "worldType");
+        storeCell(row, column++, "fuelType");
+        storeCell(row, column++, "portType");
+        storeCell(row, column++, "populationType");
+        storeCell(row, column++, "techType");
+        storeCell(row, column++, "productType");
+        storeCell(row, column++, "milSpaceType");
+        storeCell(row, column++, "milPlanType");
+        storeCell(row, column++, "miscText1");
+        storeCell(row, column++, "miscText2");
+        storeCell(row, column++, "miscText3");
+        storeCell(row, column++, "miscText4");
+        storeCell(row, column++, "miscText5");
+        storeCell(row, column++, "miscNum1");
+        storeCell(row, column++, "miscNum2");
+        storeCell(row, column++, "miscNum3");
+        storeCell(row, column++, "miscNum4");
+        storeCell(row, column++, "miscNum5");
+        storeCell(row, column, "notes");
+    }
+
     private void saveRow(Row row, AstrographicObject astrographicObject) {
         int column = 0;
 
@@ -141,6 +204,7 @@ public class DataExportService {
         storeCell(row, column++, astrographicObject.getRa());
         storeCell(row, column++, astrographicObject.getPmra());
         storeCell(row, column++, astrographicObject.getDeclination());
+        storeCell(row, column++, astrographicObject.getPmdec());
         storeCell(row, column++, astrographicObject.getDec_deg());
         storeCell(row, column++, astrographicObject.getRs_cdeg());
         storeCell(row, column++, astrographicObject.getParallax());
