@@ -585,7 +585,7 @@ public class StarPlotManager {
     private void createExtension(StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
-        double lineWidth = 0.5;
+        double lineWidth = colorPalette.getStemLineWidth();
         Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
