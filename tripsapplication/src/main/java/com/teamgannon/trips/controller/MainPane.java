@@ -153,8 +153,8 @@ public class MainPane implements
      * the localization of the application
      */
     private final Localization localization;
-    private DataImportService dataImportService;
-    private DataExportService dataExportService;
+    private final DataImportService dataImportService;
+    private final DataExportService dataExportService;
 
     /**
      * list of routes
@@ -443,12 +443,16 @@ public class MainPane implements
         dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
         dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
 
+        loadDatasets(searchContext);
+        log.info("Application up and running");
+    }
+
+    private void loadDatasets(SearchContext searchContext) {
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
         if (dataSets.size() > 0) {
             searchContext.addDataSets(dataSets);
         }
-        log.info("Application up and running");
     }
 
     public void addDataSetToList(List<DataSetDescriptor> list, boolean clear) {
@@ -1396,6 +1400,9 @@ public class MainPane implements
 
     public void loadMuliple(ActionEvent actionEvent) {
         dataImportService.loadMultipleDatasets();
+        // load datasets into the system
+        SearchContext searchContext = tripsContext.getSearchContext();
+        loadDatasets(searchContext);
     }
 
     public void exportDatabase(ActionEvent actionEvent) {

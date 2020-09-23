@@ -23,18 +23,26 @@ import java.util.UUID;
 import static com.teamgannon.trips.support.AlertFactory.*;
 
 @Slf4j
-@Service
 public class DataImportService {
 
     private final DatabaseManagementService databaseManagementService;
     private final StatusUpdaterListener updaterListener;
 
+    /**
+     * constructor
+     *
+     * @param databaseManagementService the database service
+     * @param updaterListener           the updater
+     */
     public DataImportService(DatabaseManagementService databaseManagementService,
                              StatusUpdaterListener updaterListener) {
         this.databaseManagementService = databaseManagementService;
         this.updaterListener = updaterListener;
     }
 
+    /**
+     * load the database from an excel file
+     */
     public void loadMultipleDatasets() {
         Optional<ButtonType> result = showConfirmationAlert(
                 "Data Import Service", "Database load",
@@ -58,6 +66,11 @@ public class DataImportService {
         }
     }
 
+    /**
+     * load a database file form an excel document
+     *
+     * @param file the database file
+     */
     private void loadDBFile(File file) {
         try {
             FileInputStream fis = new FileInputStream(file);
@@ -67,7 +80,7 @@ public class DataImportService {
             if (dataSetDescriptorList.size() > 0) {
                 for (DataSetDescriptor descriptor : dataSetDescriptorList) {
                     XSSFSheet mySheet = myWorkBook.getSheet(descriptor.getDataSetName());
-                    if (mySheet!=null) {
+                    if (mySheet != null) {
                         extractDataset(mySheet);
                     }
                 }
@@ -93,6 +106,12 @@ public class DataImportService {
 
     }
 
+    /**
+     * get the dataset definitions from the Database worksheet
+     *
+     * @param myWorkBook the workbook containing the database
+     * @return the set of dataset descriptors
+     */
     private List<DataSetDescriptor> getDatasets(XSSFWorkbook myWorkBook) {
         try {
             List<DataSetDescriptor> dataSetDescriptorList = new ArrayList<>();
@@ -120,7 +139,7 @@ public class DataImportService {
                 String routeStr = readCell(currentRow, column);
                 if (routeStr.isBlank()) {
                     descriptor.setRoutesStr(null);
-                }else {
+                } else {
                     descriptor.setRoutesStr(routeStr);
                 }
 
@@ -135,11 +154,23 @@ public class DataImportService {
         }
     }
 
+    /**
+     * read a cell on a row of a sheet
+     *
+     * @param currentRow the current row we are processing
+     * @param column     the column to read
+     * @return the cell as a string
+     */
     private String readCell(Row currentRow, int column) {
         Cell cell = currentRow.getCell(column);
         return cell.getStringCellValue();
     }
 
+    /**
+     * extract a dataset form a sheet
+     *
+     * @param mySheet the sheet on the excel workbook to extract
+     */
     private void extractDataset(XSSFSheet mySheet) {
         updateStatus(String.format("starting import of %s dataset", mySheet.getSheetName()));
         List<AstrographicObject> astrographicObjectList = new ArrayList<>();
@@ -152,6 +183,12 @@ public class DataImportService {
         databaseManagementService.addStars(astrographicObjectList);
     }
 
+    /**
+     * load a row of data for a star
+     *
+     * @param row the excel sheet row
+     * @return the star data
+     */
     private AstrographicObject loadRow(Row row) {
         try {
             AstrographicObject object = new AstrographicObject();
@@ -335,7 +372,11 @@ public class DataImportService {
         }
     }
 
-
+    /**
+     * update the status on an off UI thread
+     *
+     * @param status the status to report
+     */
     private void updateStatus(String status) {
         new Thread(() -> Platform.runLater(() -> {
             log.info(status);
