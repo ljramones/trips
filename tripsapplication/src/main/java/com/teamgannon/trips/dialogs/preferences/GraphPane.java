@@ -39,6 +39,8 @@ public class GraphPane extends Pane {
     private final TextField labelColorTextField = new TextField();
     private final TextField gridColorTextField = new TextField();
     private final TextField extensionColorTextField = new TextField();
+    private final TextField extensionLineWidthTextField = new TextField();
+
     private final TextField legendColorTextField = new TextField();
 
     private final ColorPicker labelColorPicker = new ColorPicker();
@@ -145,6 +147,9 @@ public class GraphPane extends Pane {
             extensionColorTextField.setText(c.toString());
         });
         colorGridPane.add(extensionColorPicker, 2, 2);
+        extensionLineWidthTextField.setPromptText("enter line width of stem");
+        colorGridPane.add(extensionLineWidthTextField, 3, 2);
+        extensionLineWidthTextField.setText(Double.toString(colorPalette.getStemLineWidth()));
 
         // set values
         extensionColorTextField.setText(colorPalette.getExtensionColor().toString());
@@ -269,6 +274,7 @@ public class GraphPane extends Pane {
         colorPalette.setGridColor(gridColorPicker.getValue().toString());
         colorPalette.setExtensionColor(extensionColorPicker.getValue().toString());
         colorPalette.setLabelColor(legendColorPicker.getValue().toString());
+        colorPalette.setStemLineWidth(Double.parseDouble(extensionLineWidthTextField.getText()));
 
         updater.updateGraphColors(colorPalette);
     }
@@ -284,6 +290,7 @@ public class GraphPane extends Pane {
 
         extensionColorTextField.setText(colorPalette.getExtensionColor().toString());
         extensionColorPicker.setValue(colorPalette.getExtensionColor());
+        extensionLineWidthTextField.setText(Double.toString(colorPalette.getStemLineWidth()));
 
         legendColorTextField.setText(colorPalette.getLegendColor().toString());
         legendColorPicker.setValue(colorPalette.getLegendColor());
