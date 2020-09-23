@@ -28,6 +28,7 @@ public class GraphColorPane extends Pane {
     private final TextField gridColorTextField = new TextField();
     private final TextField extensionColorTextField = new TextField();
     private final TextField extensionLineWidthTextField = new TextField();
+    private final TextField gridLineWidthTextField = new TextField();
     private final TextField legendColorTextField = new TextField();
     private final ColorPicker labelColorPicker = new ColorPicker();
     private final ColorPicker gridColorPicker = new ColorPicker();
@@ -77,6 +78,7 @@ public class GraphColorPane extends Pane {
             gridColorTextField.setText(c.toString());
         });
         gridPane.add(gridColorPicker, 2, 1);
+        gridPane.add(gridLineWidthTextField, 3, 1);
 
         // set values
         gridColorTextField.setText(colorPalette.getGridColor().toString());

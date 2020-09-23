@@ -37,6 +37,9 @@ public class GraphColorsPersist {
 
     private double stemLineWidth = 0.5;
 
+    private double gridLineWidth = 0.5;
+
+
     public static GraphColorsPersist defaults() {
         GraphColorsPersist colorsPersist = new GraphColorsPersist();
         colorsPersist.setId(UUID.randomUUID().toString());
@@ -63,6 +66,7 @@ public class GraphColorsPersist {
         extensionColor = Color.DARKSLATEBLUE.toString();
         legendColor = Color.BEIGE.toString();
         stemLineWidth = 0.5;
+        gridLineWidth = 0.5;
     }
 
     public void setGraphColors(ColorPalette graphColors) {
@@ -71,5 +75,6 @@ public class GraphColorsPersist {
         extensionColor = graphColors.getExtensionColor().toString();
         legendColor = graphColors.getLegendColor().toString();
         stemLineWidth = graphColors.getStemLineWidth();
+        gridLineWidth = graphColors.getGridLineWidth();
     }
 }
