@@ -19,6 +19,8 @@ public class ColorPalette {
 
     private double stemLineWidth = 0.5;
 
+    private double gridLineWidth = 0.5;
+
     public static ColorPalette defaultColors() {
         ColorPalette palette = new ColorPalette();
         palette.assignColors(GraphColorsPersist.defaults());
@@ -32,6 +34,7 @@ public class ColorPalette {
         extensionColor = Color.valueOf(graphColorsPersist.getExtensionColor());
         legendColor = Color.valueOf(graphColorsPersist.getLegendColor());
         stemLineWidth = graphColorsPersist.getStemLineWidth();
+        gridLineWidth = graphColorsPersist.getGridLineWidth();
     }
 
     public void setLabelColor(String color) {
@@ -56,5 +59,6 @@ public class ColorPalette {
         extensionColor = Color.DARKSLATEBLUE;
         legendColor = Color.BEIGE;
         stemLineWidth = 0.5;
+        gridLineWidth = 0.5;
     }
 }

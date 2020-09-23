@@ -173,7 +173,7 @@ public class InterstellarSpacePane extends Pane {
 
         this.gridPlotManager = new GridPlotManager(
                 world,
-                spacing, width, depth, colorPalette.getStemLineWidth(),
+                spacing, width, depth,
                 colorPalette
         );
 

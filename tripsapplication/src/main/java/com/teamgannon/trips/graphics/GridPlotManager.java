@@ -38,16 +38,15 @@ public class GridPlotManager {
      * @param spacing         the spacing
      * @param width           the screen width
      * @param depth           the screen depth
-     * @param lineWidth       the linewidth
      */
     public GridPlotManager(Xform world,
-                           int spacing, int width, int depth, double lineWidth,
+                           int spacing, int width, int depth,
                            ColorPalette colorPalette) {
 
         this.spacing = spacing;
         this.width = width;
         this.depth = depth;
-        this.lineWidth = lineWidth;
+        this.lineWidth = colorPalette.getGridLineWidth();
         this.colorPalette = colorPalette;
         this.gridGroup.setWhatAmI("Planar Grid");
         this.scaleGroup.setWhatAmI("Reference Scale");
