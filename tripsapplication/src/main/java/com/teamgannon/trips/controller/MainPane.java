@@ -29,6 +29,7 @@ import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.RouteFinder;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
@@ -783,7 +784,16 @@ public class MainPane implements
     }
 
     public void routeFinder(ActionEvent actionEvent) {
-        showWarningMessage("Work in progress", "not supported yet ");
+        RouteFinder routeFinder = new RouteFinder(interstellarSpacePane);
+        if (interstellarSpacePane.getCurrentStarsInView().size() > 2) {
+            routeFinder.startRouteLocation();
+        } else {
+            showErrorAlert("Route Finder", "You need to have more than 2 stars on a plot to use.");
+        }
+    }
+
+    public void routeFinderTree(ActionEvent actionEvent) {
+
     }
 
     /////////  About /////////////
@@ -1408,4 +1418,6 @@ public class MainPane implements
     public void exportDatabase(ActionEvent actionEvent) {
         dataExportService.exportDB();
     }
+
+
 }

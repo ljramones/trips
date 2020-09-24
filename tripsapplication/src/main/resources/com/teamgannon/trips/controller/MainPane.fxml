@@ -90,7 +90,9 @@
                       text="Clear Transits"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Routing">
-            <MenuItem mnemonicParsing="false" onAction="#routeFinder" text="Route Finder ..."/>
+            <MenuItem mnemonicParsing="false" onAction="#routeFinder" text="Route finder from A to B"/>
+            <MenuItem mnemonicParsing="false" onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
+            <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleRoutesMenuitem"
                            mnemonicParsing="false"
                            onAction="#toggleRoutes"
@@ -102,7 +104,6 @@
         </Menu>
         <Menu mnemonicParsing="false" text="Reports">
             <MenuItem mnemonicParsing="false" onAction="#distanceReport" text="Distance .."/>
-
         </Menu>
         <Menu mnemonicParsing="false" text="Help">
             <MenuItem mnemonicParsing="false" onAction="#aboutTrips" text="About Terran Republic Viewer"/>
