@@ -305,7 +305,6 @@ public class GraphPane extends Pane {
 
     }
 
-
     ///////////////////////////////////////////////////////////////////
 
     private GridPane createEnablePane(GraphEnablesPersist graphEnablesPersist) {
