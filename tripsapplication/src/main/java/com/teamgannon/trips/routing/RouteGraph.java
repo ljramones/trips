@@ -11,7 +11,6 @@ import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.alg.shortestpath.YenKShortestPath;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
@@ -29,16 +28,37 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RouteGraph {
 
+    /**
+     * our discovered transits
+     */
     private final List<TransitRoute> transitRoutes;
 
+    /**
+     * the graph constructed
+     */
     private final Graph<String, DefaultEdge> routingGraph;
 
+    /**
+     * our connectivity graph
+     */
     private final ConnectivityInspector<String, DefaultEdge> connectivityInspector;
 
+    /**
+     * our shortest path graph
+     */
     private final DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
 
+    /**
+     * our Yen k shortest paths
+     */
     private final YenKShortestPath<String, DefaultEdge> kShortedPaths;
 
+
+    /**
+     * the ctor
+     *
+     * @param transitRoutes the transits to map to a graph
+     */
     public RouteGraph(List<TransitRoute> transitRoutes) {
         this.transitRoutes = transitRoutes;
 
@@ -63,6 +83,9 @@ public class RouteGraph {
 
     }
 
+    /**
+     * export our grah in GraphViz format for plotting
+     */
     public void exportGraphViz() {
         DOTExporter<String, DefaultEdge> exporter =
                 new DOTExporter<>();
@@ -98,11 +121,26 @@ public class RouteGraph {
         return connectivityInspector.connectedSetOf(vertexToLook);
     }
 
+    /**
+     * find the shortest path
+     *
+     * @param origin      the star
+     * @param destination the destination
+     * @return the path found
+     */
     public String findShortestPath(String origin, String destination) {
         ShortestPathAlgorithm.SingleSourcePaths<String, DefaultEdge> originPaths = dijkstraAlg.getPaths(origin);
         return originPaths.getPath(destination).toString();
     }
 
+    /**
+     * find the k shortest paths
+     *
+     * @param source      the start
+     * @param destination the destination
+     * @param kPaths      the number of paths to find
+     * @return the lsit of discovered paths
+     */
     public List<String> findKShortestPaths(String source, String destination, int kPaths) {
         List<GraphPath<String, DefaultEdge>> yenKShort = kShortedPaths.getPaths(source, destination, kPaths);
         return yenKShort.stream().map(Object::toString).collect(Collectors.toList());

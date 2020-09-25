@@ -25,6 +25,11 @@ public class RouteDescriptor {
     private double maxLength;
 
     /**
+     * total length of the route
+     */
+    private double totalLength;
+
+    /**
      * width of the routing line
      */
     private double lineWidth;
