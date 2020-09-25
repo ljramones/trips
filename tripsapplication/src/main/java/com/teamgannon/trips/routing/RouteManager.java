@@ -276,6 +276,10 @@ public class RouteManager {
         routeList.forEach(this::plotRoute);
     }
 
+    public void plotRouteDescriptors(List<RouteDescriptor> routeDescriptorList) {
+        routeDescriptorList.forEach(this::plotRouteDescriptor);
+    }
+
     ////////
 
     /**
@@ -292,6 +296,12 @@ public class RouteManager {
             routesGroup.setVisible(true);
         }
         log.info("Plot done");
+    }
+
+    public void plotRouteDescriptor(RouteDescriptor routeDescriptor) {
+        Xform routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+        routesGroup.getChildren().add(routeGraphic);
+        routesGroup.setVisible(true);
     }
 
     /**

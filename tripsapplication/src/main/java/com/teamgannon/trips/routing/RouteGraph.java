@@ -9,8 +9,10 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.alg.shortestpath.YenKShortestPath;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
@@ -21,30 +23,34 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @Slf4j
 public class RouteGraph {
 
-    private List<TransitRoute> transitRoutes;
+    private final List<TransitRoute> transitRoutes;
 
-    private Graph<String, DefaultEdge> routingGraph;
+    private final Graph<String, DefaultEdge> routingGraph;
 
-    private ConnectivityInspector<String, DefaultEdge> connectivityInspector;
+    private final ConnectivityInspector<String, DefaultEdge> connectivityInspector;
 
-    DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
+    private final DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
+
+    private final YenKShortestPath<String, DefaultEdge> kShortedPaths;
 
     public RouteGraph(List<TransitRoute> transitRoutes) {
         this.transitRoutes = transitRoutes;
 
-        routingGraph = new SimpleGraph<>(DefaultEdge.class);
+        routingGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
 
         for (TransitRoute transitRoute : transitRoutes) {
             StarDisplayRecord source = transitRoute.getSource();
             StarDisplayRecord destination = transitRoute.getTarget();
             routingGraph.addVertex(source.getStarName());
             routingGraph.addVertex(destination.getStarName());
-            routingGraph.addEdge(source.getStarName(), destination.getStarName());
+            DefaultEdge e1 = routingGraph.addEdge(source.getStarName(), destination.getStarName());
+            routingGraph.setEdgeWeight(e1, transitRoute.getDistance());
         }
 
         // setup a connectivity inspector
@@ -52,6 +58,8 @@ public class RouteGraph {
 
         // determine shortest paths
         dijkstraAlg = new DijkstraShortestPath<>(routingGraph);
+
+        kShortedPaths = new YenKShortestPath<>(routingGraph);
 
     }
 
@@ -93,6 +101,11 @@ public class RouteGraph {
     public String findShortestPath(String origin, String destination) {
         ShortestPathAlgorithm.SingleSourcePaths<String, DefaultEdge> originPaths = dijkstraAlg.getPaths(origin);
         return originPaths.getPath(destination).toString();
+    }
+
+    public List<String> findKShortestPaths(String source, String destination, int kPaths) {
+        List<GraphPath<String, DefaultEdge>> yenKShort = kShortedPaths.getPaths(source, destination, kPaths);
+        return yenKShort.stream().map(Object::toString).collect(Collectors.toList());
     }
 
 }
