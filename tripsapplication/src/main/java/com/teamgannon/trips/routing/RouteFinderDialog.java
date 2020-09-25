@@ -3,13 +3,11 @@ package com.teamgannon.trips.routing;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -26,6 +24,10 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
     private final TextField upperLengthLengthTextField = new TextField();
     private final TextField lowerLengthLengthTextField = new TextField();
 
+    private final TextField numPathsToFindTextField = new TextField();
+    private final TextField lineWidthTextField = new TextField();
+
+    private final ColorPicker colorPicker = new ColorPicker();
 
     public RouteFinderDialog() {
         this.setTitle("Enter parameters for Route location");
@@ -53,11 +55,31 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
         upperBound.setFont(font);
         gridPane.add(upperBound, 0, 3);
         gridPane.add(upperLengthLengthTextField, 1, 3);
+        upperLengthLengthTextField.setText("8");
 
         Label lowerBound = new Label("lower limit for route length");
         lowerBound.setFont(font);
         gridPane.add(lowerBound, 0, 4);
         gridPane.add(lowerLengthLengthTextField, 1, 4);
+        lowerLengthLengthTextField.setText("3");
+
+        Label lineWidth = new Label("route line width");
+        lineWidth.setFont(font);
+        gridPane.add(lineWidth, 0, 5);
+        gridPane.add(lineWidthTextField, 1, 5);
+        lineWidthTextField.setText("0.5");
+
+        Label routeColor = new Label("route color");
+        routeColor.setFont(font);
+        gridPane.add(routeColor, 0, 6);
+        gridPane.add(colorPicker, 1, 6);
+        colorPicker.setValue(Color.AQUA);
+
+        Label numberPaths = new Label("number of paths to find");
+        numberPaths.setFont(font);
+        gridPane.add(numberPaths, 0, 7);
+        gridPane.add(numPathsToFindTextField, 1, 7);
+        numPathsToFindTextField.setText("3");
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
@@ -89,6 +111,8 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
                             .destinationStar(destinationStarTextField.getText())
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
+                            .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
+                            .numberPaths(Integer.parseInt(numPathsToFindTextField.getText()))
                             .build()
             );
             log.info("cancel clicked");

@@ -6,6 +6,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -410,6 +411,10 @@ public class InterstellarSpacePane extends Pane {
 
     public void redrawRoutes(List<Route> routes) {
         routeManager.plotRoutes(routes);
+    }
+
+    public void plotRouteDesciptors(List<RouteDescriptor> routeDescriptorList) {
+        routeManager.plotRouteDescriptors(routeDescriptorList);
     }
 
     /**
