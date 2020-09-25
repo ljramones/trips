@@ -25,17 +25,13 @@ public class StarMath {
      * @param a first location
      * @param b second location
      * @return the distance between these points
-     * @throws Exception if the arrays are not 3 of length
      */
-    public static double getDistance(double[] a, double[] b) throws Exception {
-        if (a.length != 3 && b.length != 3) {
-            throw new Exception("must be both length of 3");
-        }
+    public static double getDistance(double[] a, double[] b) {
+
         double xPart = a[0] - b[0];
         double yPart = a[1] - b[1];
         double zPart = a[2] - b[2];
-        return Math.sqrt(
-                xPart * xPart + yPart * yPart + zPart * zPart
+        return Math.sqrt(xPart * xPart + yPart * yPart + zPart * zPart
         );
     }
 
