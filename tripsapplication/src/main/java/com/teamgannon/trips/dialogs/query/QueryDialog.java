@@ -15,6 +15,9 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +30,8 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     public final Button runQueryButton = new Button("Run Query");
     private final SearchContext searchContext;
-    private DataSetContext dataSetContext;
     private final SearchPane searchPane;
-    Button cancelDataSetButton = new Button("Cancel");
-    private final CheckBox plotDisplayCheckbox = new CheckBox("Show Plot");
+    private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
     /**
@@ -45,12 +46,11 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
         this.searchContext = searchContext;
-        this.dataSetContext = dataSetContext;
-        this.setTitle("Query And Search for Stars");
+        this.setTitle("Query and Search");
 
         searchPane = new SearchPane(
                 this.searchContext,
-                this.dataSetContext,
+                dataSetContext,
                 dataSetChangeListener,
                 updater);
 
@@ -66,8 +66,11 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         HBox hBox1 = new HBox();
         hBox1.setAlignment(Pos.CENTER);
         hBox1.getChildren().add(plotDisplayCheckbox);
+        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+        plotDisplayCheckbox.setFont(font);
         hBox1.getChildren().add(new Separator());
         hBox1.getChildren().add(tableDisplayCheckbox);
+        tableDisplayCheckbox.setFont(font);
         vBox.getChildren().add(hBox1);
 
         HBox hBox2 = new HBox();
@@ -76,9 +79,6 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
         runQueryButton.setOnAction(this::runQueryclicked);
         hBox2.getChildren().add(runQueryButton);
-
-        cancelDataSetButton.setOnAction(this::close);
-        hBox2.getChildren().add(cancelDataSetButton);
 
         this.getDialogPane().setContent(vBox);
 
@@ -89,17 +89,12 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
 
     public void setDataSetContext(DataSetDescriptor descriptor) {
-        dataSetContext.setDataDescriptor(descriptor);
         searchPane.setDataSetContext(descriptor);
     }
 
 
     public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
         searchPane.updateDataContext(dataSetDescriptor);
-    }
-
-    private void close(ActionEvent actionEvent) {
-        setResult(searchContext.getAstroSearchQuery());
     }
 
     private void close(WindowEvent we) {

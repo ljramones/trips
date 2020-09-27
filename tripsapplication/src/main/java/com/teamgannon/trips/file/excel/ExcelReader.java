@@ -27,28 +27,9 @@ public class ExcelReader {
 
     /**
      * dependency injection
-     *
-     * @param stellarFactory the stellar factory used to create objects in the DB
      */
-    public ExcelReader(StellarFactory stellarFactory) {
-        this.stellarFactory = stellarFactory;
-    }
-
-    /**
-     * a maiin for testing
-     *
-     * @param args the input args which I don't use
-     * @throws IOException            file read exception
-     * @throws InvalidFormatException bad format
-     */
-    public static void main(String[] args) throws IOException, InvalidFormatException {
-
-        File file = new File("/Users/larrymitchell/ChuckGannon/terranrepublicviewer/trips/stardata/clean-chview.xlsx");
-
-        ExcelReader reader = new ExcelReader(null);
-        RBExcelFile excelFile = reader.loadFile(file);
-        log.info("parsing complete, {} read", excelFile.getAstrographicObjects().size());
-
+    public ExcelReader() {
+        this.stellarFactory = new StellarFactory();
     }
 
     /**

@@ -15,6 +15,7 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
@@ -413,7 +414,7 @@ public class InterstellarSpacePane extends Pane {
         routeManager.plotRoutes(routes);
     }
 
-    public void plotRouteDesciptors(List<RouteDescriptor> routeDescriptorList) {
+    public void plotRouteDesciptors(List<RoutingMetric> routeDescriptorList) {
         routeManager.plotRouteDescriptors(routeDescriptorList);
     }
 

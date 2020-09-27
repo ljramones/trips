@@ -14,9 +14,6 @@ import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
-import com.teamgannon.trips.file.chview.ChviewReader;
-import com.teamgannon.trips.file.csvin.RBCsvReader;
-import com.teamgannon.trips.file.excel.ExcelReader;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -100,20 +97,7 @@ public class MainPane implements
      */
     private final ApplicationContext appContext;
 
-    /**
-     * the CHView file reader component
-     */
-    private final ChviewReader chviewReader;
 
-    /**
-     * the excel file reader component
-     */
-    private final ExcelReader excelReader;
-
-    /**
-     * the RB csv reader
-     */
-    private final RBCsvReader rbCsvReader;
 
     /**
      * star plotter component
@@ -281,25 +265,20 @@ public class MainPane implements
     public MainPane(FxWeaver fxWeaver,
                     DatabaseManagementService databaseManagementService,
                     ApplicationContext appContext,
-                    ChviewReader chviewReader,
-                    ExcelReader excelReader,
-                    RBCsvReader rbCsvReader,
                     AstrographicPlotter astrographicPlotter,
                     TripsContext tripsContext,
                     Localization localization) {
 
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
-        this.chviewReader = chviewReader;
-        this.excelReader = excelReader;
-        this.rbCsvReader = rbCsvReader;
         this.astrographicPlotter = astrographicPlotter;
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
         this.localization = localization;
-        this.dataImportService = new DataImportService(databaseManagementService, this);
-
-        this.dataExportService = new DataExportService(databaseManagementService, this);
+        this.dataImportService = new DataImportService(
+                databaseManagementService, this, this);
+        this.dataExportService = new DataExportService(
+                databaseManagementService, this);
 
         this.width = 1100;
         this.height = 700;
@@ -1304,12 +1283,9 @@ public class MainPane implements
                 this,
                 tripsContext.getDataSetContext(),
                 databaseManagementService,
-                chviewReader,
-                excelReader,
-                rbCsvReader,
+                dataImportService,
                 localization,
-                dataExportService,
-                this);
+                dataExportService);
 
         // we throw away the result after returning
         dialog.showAndWait();
@@ -1409,7 +1385,7 @@ public class MainPane implements
     }
 
     public void loadMuliple(ActionEvent actionEvent) {
-        dataImportService.loadMultipleDatasets();
+        dataImportService.loadDatabase();
         // load datasets into the system
         SearchContext searchContext = tripsContext.getSearchContext();
         loadDatasets(searchContext);

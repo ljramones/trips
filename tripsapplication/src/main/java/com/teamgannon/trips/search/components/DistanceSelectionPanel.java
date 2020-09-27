@@ -20,7 +20,7 @@ public class DistanceSelectionPanel extends BasePane {
     public DistanceSelectionPanel(double searchDistance, double distanceRange) {
 
         this.distanceRange = distanceRange;
-        Label distanceToEarth = createLabel("Distance from Earth");
+        Label distanceToEarth = createLabel("Radius from Earth in ly");
 
         d2EarthSlider = new Slider(0, distanceRange, distanceRange);
         d2EarthSlider.setPrefWidth(400);

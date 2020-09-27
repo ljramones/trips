@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -35,10 +36,14 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     public Button addDataSetButton = new Button("Add Dataset");
     private final Localization localization;
+    private final DatabaseManagementService databaseManagementService;
 
 
-    public AddDataSetDialog(Localization localization) {
+    public AddDataSetDialog(Localization localization,
+                            DatabaseManagementService databaseManagementService) {
+
         this.localization = localization;
+        this.databaseManagementService = databaseManagementService;
 
         this.setHeight(400);
         this.setWidth(400);
@@ -57,10 +62,14 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         Label dataSetNameLabel = new Label("Dataset Name:");
         gridPane.add(dataSetNameLabel, 0, 0);
         gridPane.add(dataSetName, 1, 0);
+        dataSetName.setPromptText("Use \"Select File\" below of enter full path to file");
+        Tooltip tooltipDataSetName = new Tooltip("Use \"Select File\" below of enter full path to file");
+        dataSetName.setTooltip(tooltipDataSetName);
 
         Label dataSetTypeLabel = new Label("Dataset Type:");
         gridPane.add(dataSetTypeLabel, 0, 1);
         addChoices();
+        dataSetType.setValue(DataFormatEnum.CH_VIEW.getValue());
         gridPane.add(dataSetType, 1, 1);
 
         Label dataSetAuthorLabel = new Label("Author:");
@@ -85,7 +94,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         hBox5.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox5);
 
-        Button loadDataSetButton = new Button("Select and Load File");
+        Button loadDataSetButton = new Button("Select File");
         loadDataSetButton.setOnAction(this::loadDataSetClicked);
         hBox5.getChildren().add(loadDataSetButton);
 
@@ -125,8 +134,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         addFormat(DataFormatEnum.RB_CSV, "csv");
         addFormat(DataFormatEnum.RB_EXCEL, "xlsv");
         addFormat(DataFormatEnum.EXPORT, "csv");
-        addFormat(DataFormatEnum.SIMBAD, "simbad");
-        addFormat(DataFormatEnum.HIPPARCOS3, "hpp3");
     }
 
     private void addFormat(DataFormatEnum fileType, String suffix) {
@@ -144,6 +151,10 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         // do a validity check for each iem
         if (dataSet.getName().isEmpty()) {
             showErrorAlert("Add Dataset", "Dataset name cannot be empty!");
+            return;
+        }
+        if (databaseManagementService.hasDataSet(dataSet.getName())) {
+            showErrorAlert("Add Dataset", "A dataset with this name already exists!");
             return;
         }
         if (dataSet.getDataType() == null) {

@@ -1,7 +1,18 @@
 package com.teamgannon.trips.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
+import com.teamgannon.trips.file.chview.ChviewReader;
+import com.teamgannon.trips.file.chview.model.ChViewFile;
+import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RBCsvReader;
+import com.teamgannon.trips.file.excel.ExcelReader;
+import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
@@ -11,14 +22,13 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.*;
 
@@ -26,24 +36,270 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 public class DataImportService {
 
     private final DatabaseManagementService databaseManagementService;
-    private final StatusUpdaterListener updaterListener;
+    private final RBCsvReader rbCsvReader;
+    private final DataSetChangeListener dataSetChangeListener;
+    private final ChviewReader chviewReader;
+    private final StatusUpdaterListener statusUpdaterListener;
+    private final ExcelReader excelReader;
 
     /**
      * constructor
      *
      * @param databaseManagementService the database service
-     * @param updaterListener           the updater
+     * @param statusUpdaterListener     the updater
      */
     public DataImportService(DatabaseManagementService databaseManagementService,
-                             StatusUpdaterListener updaterListener) {
+                             StatusUpdaterListener statusUpdaterListener,
+                             DataSetChangeListener dataSetChangeListener
+    ) {
+
         this.databaseManagementService = databaseManagementService;
-        this.updaterListener = updaterListener;
+        this.dataSetChangeListener = dataSetChangeListener;
+        this.statusUpdaterListener = statusUpdaterListener;
+
+        // define readers
+        this.rbCsvReader = new RBCsvReader(databaseManagementService);
+        this.chviewReader = new ChviewReader();
+        this.excelReader = new ExcelReader();
     }
+
+    /**
+     * process the file provided
+     *
+     * @param dataset the defined dataset
+     */
+    public boolean processFileType(Dataset dataset) {
+        FileProcessResult result;
+        // this is a CH View import format
+        // this is Excel format that follows a specification from the Rick Boatwright format
+        // this is a database import
+        // this is Simbad database import format
+        switch (dataset.getDataType().getSuffix()) {
+            case "chv" -> {
+                result = processCHViewFile(dataset);
+                if (result.isSuccess()) {
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+                    statusUpdaterListener.updateStatus("CHView database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load CH View file", result.getMessage());
+                    return false;
+                }
+            }
+            case "rb.xlsx" -> {
+                result = processRBExcelFile(dataset);
+                if (result.isSuccess()) {
+                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
+                    statusUpdaterListener.updateStatus("Excel database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load Excel file", result.getMessage());
+                    return false;
+                }
+            }
+            case "rb.csv" -> {
+                result = processRBCSVFile(dataset);
+                if (result.isSuccess()) {
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load csv", result.getMessage());
+                    return false;
+                }
+            }
+            case ".csv" -> {
+                result = processCSVFile(dataset);
+                if (result.isSuccess()) {
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load csv", result.getMessage());
+                    return false;
+                }
+            }
+            case ".json" -> {
+                result = processJSONFile(dataset);
+                if (result.isSuccess()) {
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load csv", result.getMessage());
+                    return false;
+                }
+            }
+            case ".xlsx" -> {
+                result = processExcelFile(dataset);
+                if (result.isSuccess()) {
+                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    return true;
+                } else {
+                    showErrorAlert("load csv", result.getMessage());
+                    return false;
+                }
+            }
+        }
+        log.info("New dataset {} added", dataset.getName());
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    public FileProcessResult processCHViewFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+
+        File file = new File(dataset.getFileSelected());
+
+        // load chview file
+        ChViewFile chViewFile = chviewReader.loadFile(file);
+        if (chViewFile == null) {
+            FileProcessResult result = new FileProcessResult();
+            result.setDataSetDescriptor(null);
+            result.setSuccess(false);
+            result.setMessage("Failed to parse file");
+            return result;
+        }
+        try {
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(dataset, chViewFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getNumberStars(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load CHV Format", data);
+            processResult.setSuccess(true);
+            processResult.setDataSetDescriptor(dataSetDescriptor);
+        } catch (Exception e) {
+            processResult.setSuccess(false);
+            processResult.setMessage("This dataset was already loaded in the system ");
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+        }
+        return processResult;
+    }
+
+    public FileProcessResult processRBCSVFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+
+        File file = new File(dataset.getFileSelected());
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset);
+        try {
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getNumberStars(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load CSV Format", data);
+            processResult.setSuccess(true);
+            processResult.setDataSetDescriptor(dataSetDescriptor);
+        } catch (Exception e) {
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            processResult.setSuccess(false);
+        }
+
+        return processResult;
+    }
+
+
+    public FileProcessResult processRBExcelFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+
+        File file = new File(dataset.getFileSelected());
+
+        // load RB excel file
+        RBExcelFile excelFile = excelReader.loadFile(file);
+        try {
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load RB Excel Format", data);
+            processResult.setSuccess(true);
+
+        } catch (Exception e) {
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            processResult.setSuccess(false);
+        }
+
+        return processResult;
+    }
+
+    private FileProcessResult processCSVFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+
+        File file = new File(dataset.getFileSelected());
+
+        return processResult;
+    }
+
+
+    private FileProcessResult processJSONFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+        try {
+            //create ObjectMapper instance
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            //read json file and convert to customer object
+            Set<AstrographicObject> astrographicObjectList = objectMapper.readValue(new File("customer.json"), new TypeReference<>() {});
+
+            // now store
+            databaseManagementService.starBulkSave(astrographicObjectList);
+
+        } catch (Exception e) {
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            processResult.setSuccess(false);
+        }
+
+        return processResult;
+    }
+
+    private FileProcessResult processExcelFile(Dataset dataset) {
+        FileProcessResult processResult = new FileProcessResult();
+
+        File file = new File(dataset.getFileSelected());
+
+        // load RB excel file
+        RBExcelFile excelFile = excelReader.loadFile(file);
+        try {
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
+            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+                    dataSetDescriptor.getAstrographicDataList().size(),
+                    dataSetDescriptor.getDataSetName());
+            showInfoMessage("Load RB Excel Format", data);
+            processResult.setSuccess(true);
+
+        } catch (Exception e) {
+            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            processResult.setSuccess(false);
+        }
+
+        return processResult;
+    }
+
+
+    /////////////////////////////////////////////////
+
+    public void loadCSVDataset(File file) {
+        try {
+            Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
+
+
+        } catch (Exception e) {
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Import Dataset from CSV file",
+                    file.getAbsolutePath() +
+                            " failed to import:" + e.getMessage()
+            );
+        }
+    }
+
+
+    /////////////////////////////////////////////
 
     /**
      * load the database from an excel file
      */
-    public void loadMultipleDatasets() {
+    public void loadDatabase() {
         Optional<ButtonType> result = showConfirmationAlert(
                 "Data Import Service", "Database load",
                 "Do you want to export this database? It will take a while, and if any of " +
@@ -65,6 +321,9 @@ public class DataImportService {
             }
         }
     }
+
+
+    ///////////////////////////////////
 
     /**
      * load a database file form an excel document
@@ -105,6 +364,7 @@ public class DataImportService {
         }
 
     }
+
 
     /**
      * get the dataset definitions from the Database worksheet
@@ -372,6 +632,9 @@ public class DataImportService {
         }
     }
 
+
+    ///////////////////////////////////////////////////
+
     /**
      * update the status on an off UI thread
      *
@@ -380,7 +643,7 @@ public class DataImportService {
     private void updateStatus(String status) {
         new Thread(() -> Platform.runLater(() -> {
             log.info(status);
-            updaterListener.updateStatus(status);
+            statusUpdaterListener.updateStatus(status);
         })).start();
     }
 

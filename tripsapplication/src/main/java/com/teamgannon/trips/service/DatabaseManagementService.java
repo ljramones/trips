@@ -27,10 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -660,6 +657,16 @@ public class DatabaseManagementService {
     @Transactional
     public void addStars(List<AstrographicObject> astrographicObjectList) {
         astrographicObjectRepository.saveAll(astrographicObjectList);
+    }
+
+    /**
+     * save a large number of stars at once
+     *
+     * @param starSet the star set
+     */
+    @Transactional
+    public void starBulkSave(Set<AstrographicObject> starSet) {
+        astrographicObjectRepository.saveAll(starSet);
     }
 
 }

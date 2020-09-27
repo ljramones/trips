@@ -276,8 +276,8 @@ public class RouteManager {
         routeList.forEach(this::plotRoute);
     }
 
-    public void plotRouteDescriptors(List<RouteDescriptor> routeDescriptorList) {
-        routeDescriptorList.forEach(this::plotRouteDescriptor);
+    public void plotRouteDescriptors(List<RoutingMetric> routeDescriptorList) {
+        routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(this::plotRouteDescriptor);
     }
 
     ////////
