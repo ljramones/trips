@@ -3,9 +3,9 @@ package com.teamgannon.trips.file.csvin;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +19,10 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * parse a csv file with the following entries
- * <p>
- * name,type,ra,dec,pmra,pmdec,parallax,radialvel,spectral,magv,bprp,bpg,grp,temp,position,distance,source,nnclass,catalogid
- */
 @Slf4j
 @Component
-public class RBCsvReader {
+public class RegularCsvReader {
+
 
     /**
      * the stellar factory
@@ -34,7 +30,7 @@ public class RBCsvReader {
     private final StellarFactory stellarFactory;
     private final DatabaseManagementService databaseManagementService;
 
-    public RBCsvReader(DatabaseManagementService databaseManagementService) {
+    public RegularCsvReader(DatabaseManagementService databaseManagementService) {
         this.stellarFactory = new StellarFactory();
         this.databaseManagementService = databaseManagementService;
     }
@@ -65,21 +61,24 @@ public class RBCsvReader {
                         break;
                     }
                     loopCounter++;
-                    RBCSVStar star = new RBCSVStar(stellarFactory,
-                            lineRead[0], lineRead[1], lineRead[2],
-                            lineRead[3], lineRead[4], lineRead[5],
-                            lineRead[6], lineRead[7], lineRead[8],
-                            lineRead[9], lineRead[10], lineRead[11],
-                            lineRead[12], lineRead[13], lineRead[14],
-                            lineRead[15], lineRead[16], lineRead[17],
-                            lineRead[18]);
+                    AstroCSVStar star =  AstroCSVStar
+                            .builder()
+                            .build();
+
+//                            lineRead[0], lineRead[1], lineRead[2],
+//                            lineRead[3], lineRead[4], lineRead[5],
+//                            lineRead[6], lineRead[7], lineRead[8],
+//                            lineRead[9], lineRead[10], lineRead[11],
+//                            lineRead[12], lineRead[13], lineRead[14],
+//                            lineRead[15], lineRead[16], lineRead[17],
+//                            lineRead[18]);
                     try {
                         double distance = Double.parseDouble(star.getDistance());
                         if (distance > maxDistance) {
                             maxDistance = distance;
                         }
                     } catch (NumberFormatException nfe) {
-                        log.error("Error getting distance for {}", star.getName());
+                        log.error("Error getting distance for {}", star.getDisplayName());
                     }
                     try {
                         AstrographicObject astrographicObject = star.toAstrographicObject();
@@ -111,5 +110,6 @@ public class RBCsvReader {
 
         return rbCsvFile;
     }
+
 
 }

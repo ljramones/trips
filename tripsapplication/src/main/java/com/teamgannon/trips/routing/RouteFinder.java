@@ -6,7 +6,6 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
-import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
@@ -113,22 +112,34 @@ public class RouteFinder {
 
                             routeList.add(route);
 
-                            RoutingMetric routingMetric= RoutingMetric
+                            RoutingMetric routingMetric = RoutingMetric
                                     .builder()
                                     .totalLength(route.getTotalLength())
                                     .routeDescriptor(route)
-                                    .rank(i-1)
+                                    .path(path)
+                                    .rank(i - 1)
                                     .numberOfSegments(route.getLineSegments().size())
                                     .build();
                             possibleRoutes.getRoutes().add(routingMetric);
                         }
 
-                        // plot the routes found
-                        plot(routeList);
+
+                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
+                        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
+                        if (optionalRoutingMetrics.isPresent()) {
+                            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
+                            if (selectedRoutingMetrics.size() > 0) {
+                                log.info("plotting selected routes:{}", selectedRoutingMetrics);
+                                // plot the routes found
+                                plot(selectedRoutingMetrics);
+
+                            }
+                        }
 
                     } else {
                         log.error("Source and destination stars do not have a path");
-                        showErrorAlert("Route Finder form A to B", "Unable to find a ");
+                        showErrorAlert("Route Finder form A to B",
+                                "Unable to find a route between source and destination based on supplied parameters.");
                     }
 
 //                    routeGraph.exportGraphViz();
@@ -146,7 +157,7 @@ public class RouteFinder {
      *
      * @param routeList the routes to plot
      */
-    private void plot(List<RouteDescriptor> routeList) {
+    private void plot(List<RoutingMetric> routeList) {
         interstellarSpacePane.plotRouteDesciptors(routeList);
     }
 }

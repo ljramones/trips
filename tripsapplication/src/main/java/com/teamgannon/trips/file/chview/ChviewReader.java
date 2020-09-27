@@ -54,11 +54,9 @@ public class ChviewReader {
 
     /**
      * dependency injection for component
-     *
-     * @param stellarFactory the stellar fatory used to create objects in the DB
      */
-    public ChviewReader(StellarFactory stellarFactory) {
-        this.stellarFactory = stellarFactory;
+    public ChviewReader() {
+        this.stellarFactory = new StellarFactory();
     }
 
     /**

@@ -3,16 +3,11 @@ package com.teamgannon.trips.dialogs.dataset;
 import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
-import com.teamgannon.trips.file.chview.ChviewReader;
-import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
-import com.teamgannon.trips.file.csvin.RBCsvReader;
-import com.teamgannon.trips.file.excel.ExcelReader;
-import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
+import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -29,30 +24,28 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-import static com.teamgannon.trips.support.AlertFactory.*;
+import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class DataSetManagerDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
+
     /**
      * the database management service used to manage datasets and databases
      */
     private final DatabaseManagementService databaseManagementService;
-    private final ChviewReader chviewReader;
-    private final ExcelReader excelReader;
-    private final RBCsvReader rbCsvReader;
+
+    private final DataImportService dataImportService;
     private final Localization localization;
-    private DataExportService dataExportService;
-    private final StatusUpdaterListener statusUpdaterListener;
+    private final DataExportService dataExportService;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
@@ -66,23 +59,16 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
-                                ChviewReader chviewReader,
-                                ExcelReader excelReader,
-                                RBCsvReader rbCsvReader,
+                                DataImportService dataImportService,
                                 Localization localization,
-                                DataExportService dataExportService,
-                                StatusUpdaterListener statusUpdaterListener) {
+                                DataExportService dataExportService) {
 
         this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
-
         this.databaseManagementService = databaseManagementService;
-        this.chviewReader = chviewReader;
-        this.excelReader = excelReader;
-        this.rbCsvReader = rbCsvReader;
+        this.dataImportService = dataImportService;
         this.localization = localization;
         this.dataExportService = dataExportService;
-        this.statusUpdaterListener = statusUpdaterListener;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -232,10 +218,10 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         List<DataSetDescriptor> descriptors = databaseManagementService.getDataSets();
 
         // fill in table
-        for (DataSetDescriptor descriptor : descriptors) {
+        descriptors.forEach(descriptor -> {
             tableView.getItems().add(descriptor);
             descriptorComboBox.getItems().add(descriptor);
-        }
+        });
     }
 
     private void delete(ActionEvent actionEvent) {
@@ -276,7 +262,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private void addDataSet(ActionEvent actionEvent) {
 
-        AddDataSetDialog dialog = new AddDataSetDialog(localization);
+        AddDataSetDialog dialog = new AddDataSetDialog(localization, databaseManagementService);
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
         if (optionalDataSet.isPresent()) {
@@ -287,166 +273,11 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             if (dataset.getName() == null) {
                 return;
             }
-            processFileType(dataset);
+            if (dataImportService.processFileType(dataset)) {
+                updateTable();
+            }
         }
         log.info("loaded data set dialog");
-    }
-
-
-    /**
-     * process the file provided
-     *
-     * @param dataset the defined dataset
-     */
-    private void processFileType(Dataset dataset) {
-        FileProcessResult result;
-        // this is a CH View import format
-        // this is Excel format that follows a specification from the Rick Boatwright format
-        // this is a database import
-        // this is Simbad database import format
-        switch (dataset.getDataType().getSuffix()) {
-            case "chv" -> {
-                result = processCHViewFile(dataset);
-                if (result.isSuccess()) {
-                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
-                    updateTable();
-                    statusUpdaterListener.updateStatus("CHView database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                } else {
-                    showErrorAlert("load CH View file", result.getMessage());
-                }
-            }
-            case "xlsv" -> {
-                result = processRBExcelFile(dataset);
-                if (result.isSuccess()) {
-                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                    updateTable();
-                    statusUpdaterListener.updateStatus("Excel database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                } else {
-                    showErrorAlert("load Excel file", result.getMessage());
-                }
-            }
-            case "csv" -> {
-
-                result = processCSVFile(dataset);
-                if (result.isSuccess()) {
-                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
-                    updateTable();
-                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                } else {
-                    showErrorAlert("load csv", result.getMessage());
-                }
-            }
-            case "simbad" -> {
-                result = processSimbadFile(dataset);
-                if (result.isSuccess()) {
-                    DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
-                    updateTable();
-                    statusUpdaterListener.updateStatus(result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                } else {
-                    showErrorAlert("load simbad", result.getMessage());
-                }
-            }
-        }
-        log.info("New dataset {} added", dataset.getName());
-    }
-
-
-    private FileProcessResult processSimbadFile(Dataset dataset) {
-        FileProcessResult processResult = new FileProcessResult();
-        processResult.setSuccess(true);
-
-        return processResult;
-    }
-
-    private FileProcessResult processCSVFile(Dataset dataset) {
-        FileProcessResult processResult = new FileProcessResult();
-
-        File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset);
-        try {
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
-            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName());
-            showInfoMessage("Load CSV Format", data);
-            processResult.setSuccess(true);
-            processResult.setDataSetDescriptor(dataSetDescriptor);
-        } catch (Exception e) {
-            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
-            processResult.setSuccess(false);
-        }
-
-        return processResult;
-    }
-
-    private FileProcessResult processRBExcelFile(Dataset dataset) {
-        FileProcessResult processResult = new FileProcessResult();
-
-        File file = new File(dataset.getFileSelected());
-
-        // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(file);
-        try {
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
-            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getAstrographicDataList().size(),
-                    dataSetDescriptor.getDataSetName());
-            showInfoMessage("Load RB Excel Format", data);
-            processResult.setSuccess(true);
-
-        } catch (Exception e) {
-            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
-            processResult.setSuccess(false);
-        }
-
-        return processResult;
-    }
-
-    private FileProcessResult processCHViewFile(Dataset dataset) {
-        FileProcessResult processResult = new FileProcessResult();
-
-        File file = new File(dataset.getFileSelected());
-
-        // load chview file
-        ChViewFile chViewFile = chviewReader.loadFile(file);
-        if (chViewFile == null) {
-            FileProcessResult result = new FileProcessResult();
-            result.setDataSetDescriptor(null);
-            result.setSuccess(false);
-            result.setMessage("Failed to parse file");
-            return result;
-        }
-        try {
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(dataset, chViewFile);
-            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName());
-            showInfoMessage("Load CHV Format", data);
-            processResult.setSuccess(true);
-            processResult.setDataSetDescriptor(dataSetDescriptor);
-        } catch (Exception e) {
-            processResult.setSuccess(false);
-            processResult.setMessage("This dataset was already loaded in the system ");
-            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
-        }
-        return processResult;
-
-    }
-
-    //////// Database import and export methods
-
-    /**
-     * call the database import method
-     *
-     * @param file the file to load
-     */
-    private void importDatabase(File file) {
-        databaseManagementService.importDatabase(file);
-        log.info("File selection is:" + file.getAbsolutePath());
-        Optional<ButtonType> result = showConfirmationAlert("MainPane", "", "Database loaded:" + file.getName());
-        if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
-            log.info("import database");
-        }
     }
 
 }

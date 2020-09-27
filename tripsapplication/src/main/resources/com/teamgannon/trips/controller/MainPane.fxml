@@ -65,8 +65,8 @@
                            onAction="#toggleStatusBar"
                            text="Toggle Status Bar"/>
         </Menu>
-        <Menu mnemonicParsing="false" text="Data Management">
-            <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset Manager..."/>
+        <Menu mnemonicParsing="false" text="Star Data">
+            <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset..."/>
             <MenuItem mnemonicParsing="false" onAction="#viewEditStarData" text="View/Edit Star Data"/>
             <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
             <SeparatorMenuItem/>

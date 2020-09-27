@@ -112,6 +112,7 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
+                            .color(colorPicker.getValue())
                             .numberPaths(Integer.parseInt(numPathsToFindTextField.getText()))
                             .build()
             );
