@@ -80,69 +80,75 @@ public class DataImportService {
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     statusUpdaterListener.updateStatus("CHView database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    log.info("New dataset {} added", dataset.getName());
                     return true;
                 } else {
                     showErrorAlert("load CH View file", result.getMessage());
                     return false;
                 }
             }
-            case "rb.xlsx" -> {
+            case "xlsx" -> {
                 result = processRBExcelFile(dataset);
                 if (result.isSuccess()) {
                     DataSetDescriptor dataSetDescriptor = result.getDataSetDescriptor();
                     statusUpdaterListener.updateStatus("Excel database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    log.info("New dataset {} added", dataset.getName());
                     return true;
                 } else {
                     showErrorAlert("load Excel file", result.getMessage());
                     return false;
                 }
             }
-            case "rb.csv" -> {
+            case "csv" -> {
                 result = processRBCSVFile(dataset);
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    log.info("New dataset {} added", dataset.getName());
                     return true;
                 } else {
                     showErrorAlert("load csv", result.getMessage());
                     return false;
                 }
             }
-            case ".csv" -> {
-                result = processCSVFile(dataset);
-                if (result.isSuccess()) {
-                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
-                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                    return true;
-                } else {
-                    showErrorAlert("load csv", result.getMessage());
-                    return false;
-                }
-            }
-            case ".json" -> {
+//            case ".csv" -> {
+//                result = processCSVFile(dataset);
+//                if (result.isSuccess()) {
+//                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+//                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+//                    return true;
+//                } else {
+//                    showErrorAlert("load csv", result.getMessage());
+//                    return false;
+//                }
+//            }
+            case "json" -> {
                 result = processJSONFile(dataset);
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
-                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    statusUpdaterListener.updateStatus("JSON database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+                    log.info("New dataset {} added", dataset.getName());
                     return true;
                 } else {
-                    showErrorAlert("load csv", result.getMessage());
+                    showErrorAlert("load JSON", result.getMessage());
                     return false;
                 }
             }
-            case ".xlsx" -> {
-                result = processExcelFile(dataset);
-                if (result.isSuccess()) {
-                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
-                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
-                    return true;
-                } else {
-                    showErrorAlert("load csv", result.getMessage());
-                    return false;
-                }
+//            case ".xlsx" -> {
+//                result = processExcelFile(dataset);
+//                if (result.isSuccess()) {
+//                    this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
+//                    statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
+//                    return true;
+//                } else {
+//                    showErrorAlert("load csv", result.getMessage());
+//                    return false;
+//                }
+//            }
+            default -> {
+                showErrorAlert("Add Dataset", "Unable to match the correct suffix to: " + dataset.getDataType().getSuffix());
             }
         }
-        log.info("New dataset {} added", dataset.getName());
         return false;
     }
 
@@ -239,7 +245,8 @@ public class DataImportService {
             ObjectMapper objectMapper = new ObjectMapper();
 
             //read json file and convert to customer object
-            Set<AstrographicObject> astrographicObjectList = objectMapper.readValue(new File("customer.json"), new TypeReference<>() {});
+            Set<AstrographicObject> astrographicObjectList = objectMapper.readValue(new File("customer.json"), new TypeReference<>() {
+            });
 
             // now store
             databaseManagementService.starBulkSave(astrographicObjectList);
