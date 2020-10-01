@@ -12,12 +12,12 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.File;
 
 public class AboutDialog extends Dialog<String> {
-
-    private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     public AboutDialog(Localization localization) {
 
@@ -28,6 +28,7 @@ public class AboutDialog extends Dialog<String> {
         gridPane.setHgap(5);
 
         Label applicationLabel = new Label("Application");
+        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         applicationLabel.setFont(font);
         gridPane.add(applicationLabel, 0, 1);
         gridPane.add(new Label(localization.getTitle()), 1, 1);
@@ -64,12 +65,17 @@ public class AboutDialog extends Dialog<String> {
         Button resetBtn = new Button("Cancel");
         resetBtn.setOnAction(this::cancel);
         hBox.getChildren().add(resetBtn);
-
-
         vBox.getChildren().add(hBox);
 
-
         this.getDialogPane().setContent(vBox);
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+    }
+
+    private void close(WindowEvent windowEvent) {
+        setResult("  ");
     }
 
     private void cancel(ActionEvent actionEvent) {

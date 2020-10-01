@@ -126,7 +126,7 @@
                       onAction="#checkUpdate" text="Check for update"/>
         </Menu>
     </MenuBar>
-    <VBox fx:id="vbox1" layoutX="2.0" layoutY="29.0">
+    <VBox fx:id="vbox1" layoutX="2.0" layoutY="29.0" VBox.vgrow="ALWAYS">
         <ToolBar fx:id="toolBar"
                  VBox.vgrow="ALWAYS">
             <ToggleButton mnemonicParsing="false"
@@ -170,7 +170,7 @@
     </VBox>
     <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0">
         <AnchorPane fx:id="anchorPane1">
-            <StackPane fx:id="leftDisplayPane"/>
+            <StackPane fx:id="leftDisplayPane" />
         </AnchorPane>
         <AnchorPane fx:id="anchorPane2">
             <VBox fx:id="settingsPane">
