@@ -11,6 +11,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +50,12 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
         this.getDialogPane().setContent(vBox);
 
         updateTable(possibleRoutes);
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
     }
+
 
     private void updateTable(PossibleRoutes possibleRoutes) {
         routingChoicesTable.getItems().clear();
@@ -105,5 +112,8 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
         setResult(new ArrayList<>());
     }
 
+    private void close(WindowEvent windowEvent) {
+        setResult(new ArrayList<>());
+    }
 
 }
