@@ -270,6 +270,7 @@ public class StarPlotManager {
 
     public void toggleStars(boolean starsOn) {
         stellarDisplayGroup.setVisible(starsOn);
+        labelDisplayGroup.setVisible(starsOn);
     }
 
     /**
