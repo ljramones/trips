@@ -40,6 +40,7 @@ import com.teamgannon.trips.service.SimulatorService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -85,6 +86,7 @@ public class MainPane implements
         DataSetChangeListener,
         StatusUpdaterListener {
 
+    private FxWeaver fxWeaver;
     /**
      * database management spring component service
      */
@@ -263,6 +265,8 @@ public class MainPane implements
     private boolean toolBarOn = true;
     private boolean statusBarOn = true;
 
+    private Stage stage;
+
     ///////////////////////////////////////////////////////
 
     public MainPane(FxWeaver fxWeaver,
@@ -272,7 +276,7 @@ public class MainPane implements
                     TripsContext tripsContext,
                     Localization localization) {
 
-
+        this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
         this.astrographicPlotter = astrographicPlotter;
@@ -291,39 +295,59 @@ public class MainPane implements
 
     }
 
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+
+        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
+            resizeTrips(stage.getHeight(), stage.getWidth());
+        };
+
+        stage.widthProperty().addListener(stageSizeListener);
+        stage.heightProperty().addListener(stageSizeListener);
+    }
+
+    private void resizeTrips(double height, double width) {
+        log.info("Height: " + height + " Width: " + width);
+        interstellarSpacePane.resize(width, height);
+        this.vbox1.setPrefWidth(width);
+        this.menuBar.setPrefWidth(width);
+        this.toolBar.setPrefWidth(width);
+        this.statusBar.setPrefWidth(width);
+        this.mainSplitPane.setPrefWidth(width);
+        this.mainSplitPane.setPrefHeight(height - 112);
+        this.settingsPane.setPrefHeight(height - 112);
+        this.settingsPane.setPrefWidth(260);
+        this.leftDisplayPane.setPrefWidth(width);
+        this.leftDisplayPane.setPrefHeight(height);
+    }
+
     @FXML
     public void initialize() {
         log.info("initialize view");
 
-
-//        this.mainPanel.setMaxHeight(700.0);
-//        this.mainPanel.setMaxWidth(1100.0);
-//        this.mainPanel.setMinHeight(700);
-//        this.mainPanel.setMinWidth(1100.0);
-        this.mainPanel.setPrefHeight(700.0);
-        this.mainPanel.setPrefWidth(1100.0);
+        this.mainPanel.setPrefHeight(Universe.boxHeight + 20);
+        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
 
         this.menuBar.setPrefHeight(29.0);
-        this.menuBar.setPrefWidth(1100.0);
+        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
 
         this.statusBar.setPrefHeight(39.0);
-        this.statusBar.setPrefWidth(1100.0);
+        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
 
         this.mainSplitPane.setPrefHeight(588.0);
-        this.mainSplitPane.setPrefWidth(1100.0);
+        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
 
         this.anchorPane1.setMinHeight(0.0);
         this.anchorPane1.setMinWidth(0.0);
         this.anchorPane1.setPrefHeight(554.0);
         this.anchorPane1.setPrefWidth(785.0);
 
-        this.leftDisplayPane.setMinHeight(680.0);
-        this.leftDisplayPane.setMinWidth(780.0);
-        this.leftDisplayPane.setPrefHeight(680.0);
-        this.leftDisplayPane.setPrefWidth(1080);
+        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
+        this.leftDisplayPane.setMinWidth(Universe.boxWidth+100);
+        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
+        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
 
-        this.settingsPane.setMinHeight(0.0);
-        this.settingsPane.setMinWidth(0.0);
         this.settingsPane.setPrefHeight(588.0);
         this.settingsPane.setPrefWidth(260.0);
 
@@ -343,10 +367,10 @@ public class MainPane implements
         this.routingPane.setMinWidth(200);
 
         this.toolBar.setPrefHeight(40.0);
-        this.toolBar.setPrefWidth(856.0);
+        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
 
         this.vbox1.setPrefHeight(39.0);
-        this.vbox1.setPrefWidth(1100.0);
+        this.vbox1.setPrefWidth(Universe.boxWidth + 20);
 
         setSliderControl();
         setStatusPanel();
@@ -840,11 +864,11 @@ public class MainPane implements
     }
 
     public void howToSupport(ActionEvent actionEvent) {
-        showWarningMessage("info", "howToSupport");
+        showWarningMessage("Get Support", "Not currently supported");
     }
 
     public void checkUpdate(ActionEvent actionEvent) {
-        showWarningMessage("info", "checkUpdate");
+        showWarningMessage("Check for Update", "Not currently supported");
     }
 
     /////////////// Toolbar events
@@ -1451,6 +1475,5 @@ public class MainPane implements
     public void exportDatabase(ActionEvent actionEvent) {
         dataExportService.exportDB();
     }
-
 
 }

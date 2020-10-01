@@ -42,8 +42,8 @@ spring:
       path: /h2
 app:
   title: Terran Republic Interstellar Plotting System (TRIPS)
-  version: v0.5.3
-  releaseDate: 11 Sep 2020
+  version: v0.5.6
+  releaseDate: 11 Oct 2020
   contributors: LJ Ramones, CE Gannon, R Boatright
   projectPage: https://github.com/ljramones/trips
   fileDirectory: files
