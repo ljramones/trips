@@ -53,7 +53,7 @@ public class LineSegment {
      * @param pointTo     the point to
      * @return the line segment
      */
-    public static LineSegment getTransformedLine(AstrographicTransformer transformer, int width, int depth, double[] pointFrom, double[] pointTo) {
+    public static LineSegment getTransformedLine(AstrographicTransformer transformer, double width, double depth, double[] pointFrom, double[] pointTo) {
         LineSegment lineSegment = new LineSegment();
         lineSegment.actualFrom = pointFrom;
         lineSegment.actualTo = pointTo;

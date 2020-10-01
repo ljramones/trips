@@ -1,5 +1,6 @@
 package com.teamgannon.trips.controller;
 
+import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
@@ -46,10 +47,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -98,7 +96,6 @@ public class MainPane implements
     private final ApplicationContext appContext;
 
 
-
     /**
      * star plotter component
      */
@@ -128,6 +125,9 @@ public class MainPane implements
     public Label routingStatus;
 
     public CheckMenuItem toggleTransitLengthsMenuitem;
+    public AnchorPane anchorPane1;
+    public AnchorPane anchorPane2;
+    public VBox vbox1;
 
     /**
      * the query dialog
@@ -151,12 +151,15 @@ public class MainPane implements
      */
     private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
 
-    private final int width;
 
     ///////////////////////////////////////
-    private final int height;
-    private final int depth;
-    private final int spacing;
+
+    private final double width;
+    private final double height;
+    private final double depth;
+    private final double spacing;
+
+
     /**
      * the ListView UI control for displaying lists - the V for the MVC of Listview
      */
@@ -269,6 +272,7 @@ public class MainPane implements
                     TripsContext tripsContext,
                     Localization localization) {
 
+
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
         this.astrographicPlotter = astrographicPlotter;
@@ -290,6 +294,59 @@ public class MainPane implements
     @FXML
     public void initialize() {
         log.info("initialize view");
+
+
+//        this.mainPanel.setMaxHeight(700.0);
+//        this.mainPanel.setMaxWidth(1100.0);
+//        this.mainPanel.setMinHeight(700);
+//        this.mainPanel.setMinWidth(1100.0);
+        this.mainPanel.setPrefHeight(700.0);
+        this.mainPanel.setPrefWidth(1100.0);
+
+        this.menuBar.setPrefHeight(29.0);
+        this.menuBar.setPrefWidth(1100.0);
+
+        this.statusBar.setPrefHeight(39.0);
+        this.statusBar.setPrefWidth(1100.0);
+
+        this.mainSplitPane.setPrefHeight(588.0);
+        this.mainSplitPane.setPrefWidth(1100.0);
+
+        this.anchorPane1.setMinHeight(0.0);
+        this.anchorPane1.setMinWidth(0.0);
+        this.anchorPane1.setPrefHeight(554.0);
+        this.anchorPane1.setPrefWidth(785.0);
+
+        this.leftDisplayPane.setMinHeight(680.0);
+        this.leftDisplayPane.setMinWidth(780.0);
+        this.leftDisplayPane.setPrefHeight(680.0);
+        this.leftDisplayPane.setPrefWidth(1080);
+
+        this.settingsPane.setMinHeight(0.0);
+        this.settingsPane.setMinWidth(0.0);
+        this.settingsPane.setPrefHeight(588.0);
+        this.settingsPane.setPrefWidth(260.0);
+
+        this.anchorPane2.setMinWidth(0.0);
+        this.anchorPane2.setMinHeight(0.0);
+
+        this.datasetsPane.setPrefHeight(200.0);
+        this.datasetsPane.setPrefWidth(200.0);
+
+        this.objectsViewPane.setMinHeight(200.0);
+        this.objectsViewPane.setMinWidth(200.0);
+
+        this.stellarObjectPane.setMinHeight(200.0);
+        this.stellarObjectPane.setMinWidth(200.0);
+
+        this.routingPane.setMinHeight(200);
+        this.routingPane.setMinWidth(200);
+
+        this.toolBar.setPrefHeight(40.0);
+        this.toolBar.setPrefWidth(856.0);
+
+        this.vbox1.setPrefHeight(39.0);
+        this.vbox1.setPrefWidth(1100.0);
 
         setSliderControl();
         setStatusPanel();
@@ -495,7 +552,7 @@ public class MainPane implements
 
         // create main graphics display pane
         interstellarSpacePane = new InterstellarSpacePane(
-                1080, 680, depth,
+                Universe.boxWidth, Universe.boxHeight, depth,
                 spacing,
                 tripsContext,
                 this, this, this,

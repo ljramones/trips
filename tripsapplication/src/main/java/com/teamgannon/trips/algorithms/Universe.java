@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 public class Universe {
 
-    public final static double boxWidth = 780;
+    public final static double boxWidth = 1080;   //780
 
     public final static double boxHeight = 680;
 
