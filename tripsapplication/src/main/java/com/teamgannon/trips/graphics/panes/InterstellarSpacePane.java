@@ -79,8 +79,8 @@ public class InterstellarSpacePane extends Pane {
     /////////////////
 
     // screen real estate
-    private final int width;
-    private final int height;
+    private final double width;
+    private final double height;
 
     /**
      * our current plot
@@ -129,10 +129,10 @@ public class InterstellarSpacePane extends Pane {
      * @param width  the width
      * @param height the height
      */
-    public InterstellarSpacePane(int width,
-                                 int height,
-                                 int depth,
-                                 int spacing,
+    public InterstellarSpacePane(double width,
+                                 double height,
+                                 double depth,
+                                 double spacing,
                                  TripsContext tripsContext,
                                  RouteUpdaterListener routeUpdaterListener,
                                  ListUpdaterListener listUpdaterListener,

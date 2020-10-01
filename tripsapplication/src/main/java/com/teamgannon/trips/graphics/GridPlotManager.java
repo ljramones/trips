@@ -19,12 +19,12 @@ public class GridPlotManager {
 
     private final Xform scaleGroup = new Xform();
 
-    private final int width;
-    private final int depth;
-    private final int spacing;
+    private final double width;
+    private final double depth;
+    private final double spacing;
     private final double lineWidth;
 
-    private static final String scaleString = "Scale: 1 grid is %d ly square";
+    private static final String scaleString = "Scale: 1 grid is %.2f ly square";
 
     /**
      * the general color palette of the graph
@@ -35,12 +35,12 @@ public class GridPlotManager {
     /**
      * constructor
      *
-     * @param spacing         the spacing
-     * @param width           the screen width
-     * @param depth           the screen depth
+     * @param spacing the spacing
+     * @param width   the screen width
+     * @param depth   the screen depth
      */
     public GridPlotManager(Xform world,
-                           int spacing, int width, int depth,
+                           double spacing, double width, double depth,
                            ColorPalette colorPalette) {
 
         this.spacing = spacing;
@@ -180,12 +180,12 @@ public class GridPlotManager {
      * @param gridIncrement the grid increment
      * @param colorPalette  the color palette
      */
-    private void createGrid(int gridIncrement, ColorPalette colorPalette) {
+    private void createGrid(double gridIncrement, ColorPalette colorPalette) {
 
         gridGroup.setTranslate(-width / 2.0, 0, -depth / 2.0);
 
         // iterate over z dimension
-        int zDivisions = width / gridIncrement;
+        int zDivisions = (int) ceil(width / gridIncrement);
         double x = 0.0;
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
@@ -197,7 +197,7 @@ public class GridPlotManager {
         }
 
         // iterate over x dimension
-        int xDivisions = depth / gridIncrement;
+        int xDivisions = (int) ceil(depth / gridIncrement);
         double z = 0.0;
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, 0, z);
@@ -236,7 +236,7 @@ public class GridPlotManager {
      *
      * @param scaleValue the scaling value
      */
-    private void createScaleLegend(int scaleValue) {
+    private void createScaleLegend(double scaleValue) {
         Text scaleText = new Text(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
         scaleText.setFill(colorPalette.getLegendColor());

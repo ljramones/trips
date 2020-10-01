@@ -1,7 +1,6 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import javafx.geometry.Point3D;
@@ -29,23 +28,17 @@ public class SimulatorService {
      */
     private final List<StarDisplayRecord> recordList = new ArrayList<>();
 
-    /**
-     * list of routes
-     */
-    private final List<RouteDescriptor> routeList = new ArrayList<>();
-
-
     private final InterstellarSpacePane starPane;
 
     private final Random random = new Random();
 
-    private final int width;
-    private final int height;
-    private final int depth;
+    private final double width;
+    private final double height;
+    private final double depth;
 
     private final ColorPalette colorPalette;
 
-    public SimulatorService(InterstellarSpacePane starPane, int width, int height, int depth, ColorPalette colorPalette) {
+    public SimulatorService(InterstellarSpacePane starPane, double width, double height, double depth, ColorPalette colorPalette) {
         this.starPane = starPane;
         this.width = width;
         this.height = height;
@@ -152,27 +145,6 @@ public class SimulatorService {
         colors[7] = Color.GOLD;
         colors[8] = Color.DARKMAGENTA;
         colors[9] = Color.OLIVE;
-    }
-
-    private RouteDescriptor createRoute() {
-        RouteDescriptor route
-                = RouteDescriptor.builder()
-                .name("TestRoute")
-                .color(Color.LIGHTCORAL)
-                .maxLength(10)
-                .startStar("Sol")
-                .build();
-
-        List<Point3D> lineSegments = new ArrayList<>();
-        lineSegments.add(new Point3D(0, 0, 0));
-        lineSegments.add(new Point3D(10, 10, 10));
-        lineSegments.add(new Point3D(5, -2, 10));
-        lineSegments.add(new Point3D(15, 2, 15));
-        lineSegments.add(new Point3D(20, 8, 15));
-        lineSegments.add(new Point3D(25, 10, 20));
-        route.setLineSegments(lineSegments);
-
-        return route;
     }
 
 }

@@ -3,12 +3,12 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<Pane fx:id="mainPanel" maxHeight="700" maxWidth="1100.0" minHeight="700" minWidth="1100" prefHeight="700.0"
-      prefWidth="1100.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+<Pane fx:id="mainPanel"
+      xmlns="http://javafx.com/javafx/10.0.2-internal"
+      xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teamgannon.trips.controller.MainPane">
 
-    <MenuBar fx:id="menuBar" layoutX="2.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="29.0"
-             prefWidth="1100.0">
+    <MenuBar fx:id="menuBar" layoutX="2.0" minHeight="-Infinity" minWidth="-Infinity">
         <Menu mnemonicParsing="false" text="General">
             <MenuItem mnemonicParsing="false" onAction="#simulate" text="Simulate"/>
             <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
@@ -66,12 +66,17 @@
                            text="Toggle Status Bar"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Star Data">
-            <MenuItem mnemonicParsing="false" onAction="#loadDataSetManager" text="Load Dataset..."/>
-            <MenuItem mnemonicParsing="false" onAction="#viewEditStarData" text="View/Edit Star Data"/>
-            <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#loadDataSetManager" text="Load Dataset..."/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#viewEditStarData" text="View/Edit Star Data"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#plotStars" text="Plot Stars"/>
             <SeparatorMenuItem/>
-            <MenuItem mnemonicParsing="false" onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
-            <MenuItem mnemonicParsing="false" onAction="#exportDatabase" text="Export Database to Excel"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#exportDatabase" text="Export Database to Excel"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Transits">
             <MenuItem mnemonicParsing="false"
@@ -82,16 +87,20 @@
                            onAction="#toggleTransitAction"
                            selected="true"
                            text="Toggle Transits"/>
-            <CheckMenuItem fx:id="toggleTransitLengthsMenuitem" mnemonicParsing="false"
+            <CheckMenuItem fx:id="toggleTransitLengthsMenuitem"
+                           mnemonicParsing="false"
                            onAction="#toggleTransitLengths"
                            selected="true"
                            text="Toggle Transit Lengths"/>
-            <MenuItem mnemonicParsing="false" onAction="#clearTransits"
+            <MenuItem mnemonicParsing="false"
+                      onAction="#clearTransits"
                       text="Clear Transits"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Routing">
-            <MenuItem mnemonicParsing="false" onAction="#routeFinder" text="Route finder from A to B"/>
-            <MenuItem mnemonicParsing="false" onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#routeFinder" text="Route finder from A to B"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
             <SeparatorMenuItem/>
             <CheckMenuItem fx:id="toggleRoutesMenuitem"
                            mnemonicParsing="false"
@@ -99,69 +108,90 @@
                            text="Toggle Routes"/>
         </Menu>
         <Menu mnemonicParsing="false" text="Search">
-            <MenuItem mnemonicParsing="false" onAction="#findInView" text="Find Star in View..."/>
-            <MenuItem mnemonicParsing="false" onAction="#runQuery" text="Show Query Dialog..."/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#findInView" text="Find Star in View..."/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#runQuery" text="Show Query Dialog..."/>
         </Menu>
         <Menu mnemonicParsing="false" text="Reports">
-            <MenuItem mnemonicParsing="false" onAction="#distanceReport" text="Distance .."/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#distanceReport" text="Distance .."/>
         </Menu>
         <Menu mnemonicParsing="false" text="Help">
-            <MenuItem mnemonicParsing="false" onAction="#aboutTrips" text="About Terran Republic Viewer"/>
-            <MenuItem mnemonicParsing="false" onAction="#howToSupport" text="How to get support"/>
-            <MenuItem mnemonicParsing="false" onAction="#checkUpdate" text="Check for update"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#aboutTrips" text="About Terran Republic Viewer"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#howToSupport" text="How to get support"/>
+            <MenuItem mnemonicParsing="false"
+                      onAction="#checkUpdate" text="Check for update"/>
         </Menu>
     </MenuBar>
-    <VBox layoutX="2.0" layoutY="29.0" prefHeight="39.0" prefWidth="1100.0">
-        <ToolBar fx:id="toolBar" prefHeight="40.0" prefWidth="856.0" VBox.vgrow="ALWAYS">
-            <ToggleButton mnemonicParsing="false" onAction="#resetView" text="Reset View"/>
+    <VBox fx:id="vbox1" layoutX="2.0" layoutY="29.0">
+        <ToolBar fx:id="toolBar"
+                 VBox.vgrow="ALWAYS">
+            <ToggleButton mnemonicParsing="false"
+                          onAction="#resetView" text="Reset View"/>
             <Separator/>
-            <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false" onAction="#togglePolities" text="Polities"/>
+            <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false"
+                          onAction="#togglePolities" text="Polities"/>
             <Separator/>
-            <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" onAction="#toggleStars" text="Stars"/>
-            <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false" onAction="#toggleGrid" text="Grid"/>
-            <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false" onAction="#toggleLabels" text="Labels"/>
-            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false" onAction="#toggleGridExtensions"
+            <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false"
+                          onAction="#toggleStars" text="Stars"/>
+            <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false"
+                          onAction="#toggleGrid" text="Grid"/>
+            <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false"
+                          onAction="#toggleLabels" text="Labels"/>
+            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false"
+                          onAction="#toggleGridExtensions"
                           text="Extensions"/>
-            <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false" onAction="#toggleScale" text="Scale"/>
-            <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false" onAction="#toggleRoutes" text="Routes"/>
-            <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false" onAction="#toggleTransitAction" text="Transits"/>
+            <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false"
+                          onAction="#toggleScale" text="Scale"/>
+            <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false"
+                          onAction="#toggleRoutes" text="Routes"/>
+            <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false"
+                          onAction="#toggleTransitAction"
+                          text="Transits"/>
             <Separator/>
-            <ToggleButton fx:id="toggleSettings" mnemonicParsing="false" onAction="#toggleSidePane" text="Side Pane"/>
-            <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false" onAction="#zoomIn" text="+"/>
-            <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false" onAction="#zoomOut" text="-"/>
+            <ToggleButton fx:id="toggleSettings" mnemonicParsing="false"
+                          onAction="#toggleSidePane" text="Side Pane"/>
+            <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false"
+                          onAction="#zoomIn" text="+"/>
+            <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false"
+                          onAction="#zoomOut" text="-"/>
             <Separator/>
             <VBox alignment="CENTER">
                 <Label text="Routing State:"/>
                 <Label fx:id="routingStatus" text="Inactive" textFill="seagreen"/>
             </VBox>
             <Separator/>
-            <CheckBox fx:id="animationCheckbox" mnemonicParsing="false" onAction="#runAnimation" text="animate"/>
+            <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
+                      onAction="#runAnimation" text="animate"/>
         </ToolBar>
     </VBox>
-    <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0" prefHeight="588.0"
-               prefWidth="1100.0">
-        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="554.0" prefWidth="785.0">
-            <StackPane fx:id="leftDisplayPane" minHeight="680.0" minWidth="780.0" prefHeight="680.0"
-                       prefWidth="1080.0"/>
+    <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0">
+        <AnchorPane fx:id="anchorPane1">
+            <StackPane fx:id="leftDisplayPane"/>
         </AnchorPane>
-        <AnchorPane minHeight="0.0" minWidth="0.0">
-            <VBox fx:id="settingsPane" minHeight="0.0" minWidth="0.0" prefHeight="588.0" prefWidth="260.0">
+        <AnchorPane fx:id="anchorPane2">
+            <VBox fx:id="settingsPane">
                 <Accordion fx:id="propertiesAccordion">
                     <panes>
-                        <TitledPane fx:id="datasetsPane" prefHeight="200.0" prefWidth="200.0" text="DataSets Available">
+                        <TitledPane fx:id="datasetsPane"
+                                    text="DataSets Available">
                         </TitledPane>
-                        <TitledPane fx:id="objectsViewPane" prefHeight="200.0" prefWidth="200.0"
+                        <TitledPane fx:id="objectsViewPane"
                                     text="Objects in View"/>
-                        <TitledPane fx:id="stellarObjectPane" prefHeight="200.0" prefWidth="200.0"
+                        <TitledPane fx:id="stellarObjectPane"
                                     text="Stellar Object Properties">
                         </TitledPane>
-                        <TitledPane fx:id="routingPane" prefHeight="200.0" prefWidth="200.0" text="Star Routing"/>
+                        <TitledPane fx:id="routingPane"
+                                    text="Star Routing"/>
                     </panes>
                 </Accordion>
             </VBox>
         </AnchorPane>
     </SplitPane>
-    <HBox fx:id="statusBar" layoutX="2.0" layoutY="659.0" prefHeight="39.0" prefWidth="1100.0">
+    <HBox fx:id="statusBar" layoutX="2.0" layoutY="659.0">
         <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#3333FF">
             <font>
                 <Font name="Arial" size="15.0"/>
