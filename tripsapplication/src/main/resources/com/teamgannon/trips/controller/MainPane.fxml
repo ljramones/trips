@@ -10,7 +10,6 @@
 
     <MenuBar fx:id="menuBar" layoutX="2.0" minHeight="-Infinity" minWidth="-Infinity">
         <Menu mnemonicParsing="false" text="General">
-            <MenuItem mnemonicParsing="false" onAction="#simulate" text="Simulate"/>
             <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
             <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>
             <MenuItem mnemonicParsing="false" onAction="#clearStars" text="Clear Stars"/>

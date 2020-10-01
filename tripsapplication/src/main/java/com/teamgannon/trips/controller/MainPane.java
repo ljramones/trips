@@ -36,7 +36,6 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.SimulatorService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.beans.property.DoubleProperty;
@@ -243,11 +242,6 @@ public class MainPane implements
      * graphics pane to draw stars across interstellar space
      */
     private InterstellarSpacePane interstellarSpacePane;
-
-    /**
-     * the simulator
-     */
-    private SimulatorService simulatorService;
 
     // state settings for control positions
     private boolean polities = true;
@@ -590,9 +584,6 @@ public class MainPane implements
         // set the interstellar pane to be the drawing surface
         astrographicPlotter.setInterstellarPane(interstellarSpacePane);
 
-        // setup simulator
-        simulatorService = new SimulatorService(interstellarSpacePane, width, height, depth, colorPalette);
-
     }
 
     /**
@@ -669,10 +660,6 @@ public class MainPane implements
      */
     public void runQuery(ActionEvent actionEvent) {
         queryDialog.show();
-    }
-
-    public void simulate(ActionEvent actionEvent) {
-        simulatorService.simulate();
     }
 
     public void plotStars(ActionEvent actionEvent) {
