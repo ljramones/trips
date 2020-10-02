@@ -45,14 +45,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -85,7 +84,11 @@ public class MainPane implements
         DataSetChangeListener,
         StatusUpdaterListener {
 
-    private FxWeaver fxWeaver;
+    public Button resetButton;
+
+    private Popup resizePopup;
+
+
     /**
      * database management spring component service
      */
@@ -155,8 +158,6 @@ public class MainPane implements
 
     ///////////////////////////////////////
 
-    private final double width;
-    private final double height;
     private final double depth;
     private final double spacing;
 
@@ -270,7 +271,6 @@ public class MainPane implements
                     TripsContext tripsContext,
                     Localization localization) {
 
-        this.fxWeaver = fxWeaver;
         this.databaseManagementService = databaseManagementService;
         this.appContext = appContext;
         this.astrographicPlotter = astrographicPlotter;
@@ -282,8 +282,8 @@ public class MainPane implements
         this.dataExportService = new DataExportService(
                 databaseManagementService, this);
 
-        this.width = 1100;
-        this.height = 700;
+        double width = 1100;
+        double height = 700;
         this.depth = 700;
         this.spacing = 20;
 
@@ -299,6 +299,10 @@ public class MainPane implements
 
         stage.widthProperty().addListener(stageSizeListener);
         stage.heightProperty().addListener(stageSizeListener);
+        resizePopup.hide();
+
+        queryDialog = new QueryDialog(stage, searchContext, tripsContext.getDataSetContext(), this, this);
+        queryDialog.initModality(Modality.NONE);
     }
 
     private void resizeTrips(double height, double width) {
@@ -314,11 +318,20 @@ public class MainPane implements
         this.settingsPane.setPrefWidth(260);
         this.leftDisplayPane.setPrefWidth(width);
         this.leftDisplayPane.setPrefHeight(height);
+
+        resetButton.requestFocus();
+
+        if (interstellarSpacePane.isPlotActive()) {
+            resizePopup.show(stage);
+        }
+
     }
 
     @FXML
     public void initialize() {
         log.info("initialize view");
+
+        createResizePopup();
 
         this.mainPanel.setPrefHeight(Universe.boxHeight + 20);
         this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
@@ -328,6 +341,12 @@ public class MainPane implements
 
         this.statusBar.setPrefHeight(39.0);
         this.statusBar.setPrefWidth(Universe.boxWidth + 20);
+        this.statusBar.setStyle("-fx-padding: 2;" +
+                "-fx-border-style: solid inside;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-insets: 1;" +
+                "-fx-border-radius: 5;" +
+                "-fx-border-color: blue;");
 
         this.mainSplitPane.setPrefHeight(588.0);
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
@@ -338,7 +357,7 @@ public class MainPane implements
         this.anchorPane1.setPrefWidth(785.0);
 
         this.leftDisplayPane.setMinHeight(Universe.boxHeight);
-        this.leftDisplayPane.setMinWidth(Universe.boxWidth+100);
+        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
         this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
         this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
 
@@ -365,6 +384,12 @@ public class MainPane implements
 
         this.vbox1.setPrefHeight(39.0);
         this.vbox1.setPrefWidth(Universe.boxWidth + 20);
+        this.vbox1.setStyle("-fx-padding: 1;" +
+                "-fx-border-style: solid inside;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-insets: 2;" +
+                "-fx-border-radius: 5;" +
+                "-fx-border-color: blue;");
 
         setSliderControl();
         setStatusPanel();
@@ -390,10 +415,40 @@ public class MainPane implements
         // load database preset values
         loadDBPresets();
 
-        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
-        queryDialog.initModality(Modality.NONE);
+        resizePopup.hide();
 
     }
+
+    private void createResizePopup() {
+
+        // create border
+        Border border = new Border(new BorderStroke(Color.BLACK,
+                Color.BLACK,
+                Color.BLACK,
+                Color.BLACK,
+                BorderStrokeStyle.SOLID,
+                BorderStrokeStyle.SOLID,
+                BorderStrokeStyle.SOLID,
+                BorderStrokeStyle.SOLID,
+                new CornerRadii(4), BorderWidths.DEFAULT,
+                new Insets(1)));
+
+        // create a label
+        Label label = new Label("press Reset View Button\n to rescale plot");
+        label.setWrapText(true);
+        label.setAlignment(Pos.CENTER);
+        label.setBorder(border);
+
+        // create a popup
+        resizePopup = new Popup();
+
+        // set background
+        label.setStyle(" -fx-background-color: darkgrey;");
+
+        // add the label
+        resizePopup.getContent().add(label);
+    }
+
 
     private void loadDBPresets() {
         // get graph enables from DB
@@ -640,16 +695,6 @@ public class MainPane implements
                 -> toggleSettings.setSelected(newPos.doubleValue() < 0.95));
     }
 
-    /**
-     * get the parent window for this application
-     *
-     * @return the primary primaryStage
-     */
-    private Stage getStage() {
-        Scene scene = mainPanel.getScene();
-        Window window = scene.getWindow();
-        return (Stage) window;
-    }
 
     //////////  menu events
 
@@ -801,6 +846,7 @@ public class MainPane implements
 
 
     public void resetView(ActionEvent actionEvent) {
+        resizePopup.hide();
         interstellarSpacePane.setInitialView();
     }
 
@@ -817,7 +863,7 @@ public class MainPane implements
     public void distanceReport(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         if (starsInView.size() > 0) {
-            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(starsInView);
+            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(stage, starsInView);
             Optional<DistanceReportSelection> optionalStarDisplayRecord = selectDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 DistanceReportSelection reportSelection = optionalStarDisplayRecord.get();
@@ -831,7 +877,7 @@ public class MainPane implements
     }
 
     public void routeFinder(ActionEvent actionEvent) {
-        RouteFinder routeFinder = new RouteFinder(interstellarSpacePane);
+        RouteFinder routeFinder = new RouteFinder(stage, interstellarSpacePane);
         if (interstellarSpacePane.getCurrentStarsInView().size() > 2) {
             routeFinder.startRouteLocation();
         } else {
@@ -846,7 +892,7 @@ public class MainPane implements
     /////////  About /////////////
 
     public void aboutTrips(ActionEvent actionEvent) {
-        AboutDialog aboutDialog = new AboutDialog(localization);
+        AboutDialog aboutDialog = new AboutDialog(stage, localization);
         aboutDialog.showAndWait();
     }
 
@@ -1217,7 +1263,7 @@ public class MainPane implements
         }
         // generate the report
         report.generateReport();
-        DistanceReportDialog reportDialog = new DistanceReportDialog(report);
+        DistanceReportDialog reportDialog = new DistanceReportDialog(stage, report);
         Optional<DistanceReport> reportOptional = reportDialog.showAndWait();
         if (reportOptional.isPresent()) {
             DistanceReport distanceReport = reportOptional.get();
@@ -1240,7 +1286,7 @@ public class MainPane implements
         fileChooser.setTitle("Enter Report file to save");
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("TXT Files", "txt");
         fileChooser.setSelectedExtensionFilter(filter);
-        File file = fileChooser.showSaveDialog(getStage());
+        File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
@@ -1348,6 +1394,7 @@ public class MainPane implements
     public void loadDataSetManager(ActionEvent actionEvent) {
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
+                stage,
                 this,
                 tripsContext.getDataSetContext(),
                 databaseManagementService,
@@ -1414,7 +1461,7 @@ public class MainPane implements
 
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
+        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(stage, starsInView);
         Optional<FindResults> optional = findStarInViewDialog.showAndWait();
         if (optional.isPresent()) {
             FindResults findResults = optional.get();
@@ -1429,7 +1476,7 @@ public class MainPane implements
 
     public void transitFinder(ActionEvent actionEvent) {
 
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog();
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(stage);
         Optional<DistanceRoutes> optionalDistanceRoutes = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalDistanceRoutes.isPresent()) {
             DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();

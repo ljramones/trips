@@ -12,6 +12,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
@@ -28,11 +29,14 @@ import javafx.stage.Window;
  */
 public class ComboBoxAutoComplete<T> {
 
+    private Stage stage;
     private ComboBox<T> cmb;
     String filter = "";
     private ObservableList<T> originalItems;
 
-    public ComboBoxAutoComplete(ComboBox<T> cmb) {
+    public ComboBoxAutoComplete(Stage stage,
+                                ComboBox<T> cmb) {
+        this.stage = stage;
         this.cmb = cmb;
         originalItems = FXCollections.observableArrayList(cmb.getItems());
         cmb.setTooltip(new Tooltip());
@@ -62,7 +66,6 @@ public class ComboBoxAutoComplete<T> {
             String txtUsr = unaccent(filter.toString().toLowerCase());
             itens.filter(el -> unaccent(el.toString().toLowerCase()).contains(txtUsr)).forEach(filteredList::add);
             cmb.getTooltip().setText(txtUsr);
-            Window stage = cmb.getScene().getWindow();
             double posX = stage.getX() + cmb.getBoundsInParent().getMinX();
             double posY = stage.getY() + cmb.getBoundsInParent().getMinY();
             cmb.getTooltip().show(stage, posX, posY);

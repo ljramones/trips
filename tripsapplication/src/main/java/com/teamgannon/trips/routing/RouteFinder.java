@@ -7,6 +7,7 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class RouteFinder {
 
+    private Stage stage;
     /**
      * used to plot the routes found
      */
@@ -28,7 +30,9 @@ public class RouteFinder {
      *
      * @param interstellarSpacePane the graphics pane to plot
      */
-    public RouteFinder(InterstellarSpacePane interstellarSpacePane) {
+    public RouteFinder(Stage stage,
+                       InterstellarSpacePane interstellarSpacePane) {
+        this.stage = stage;
         this.interstellarSpacePane = interstellarSpacePane;
     }
 
@@ -124,7 +128,7 @@ public class RouteFinder {
                         }
 
 
-                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
+                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(stage, possibleRoutes);
                         Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
                         if (optionalRoutingMetrics.isPresent()) {
                             List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();

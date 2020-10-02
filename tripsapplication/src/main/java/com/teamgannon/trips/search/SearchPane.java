@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class SearchPane extends Pane {
 
+    private Stage stage;
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
     private final DataSetChangeListener dataSetChangeListener;
@@ -46,10 +48,12 @@ public class SearchPane extends Pane {
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
-    public SearchPane(SearchContext query,
+    public SearchPane(Stage stage,
+                      SearchContext query,
                       DataSetContext dataSetContext,
                       DataSetChangeListener dataSetChangeListener,
                       StellarDataUpdaterListener updater) {
+        this.stage = stage;
         this.searchContext = query;
         this.dataSetContext = dataSetContext;
         this.dataSetChangeListener = dataSetChangeListener;
@@ -74,7 +78,7 @@ public class SearchPane extends Pane {
         queryBox.setVgap(5);
         queryBox.setHgap(5);
 
-        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
+        dataSetChoicePanel = new DataSetPanel(stage, searchContext, dataSetContext, dataSetChangeListener);
         queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
         queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
         queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);

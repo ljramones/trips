@@ -23,7 +23,7 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
 
     private final List<RoutingMetric> selectedRoutingMetrics = new ArrayList<>();
 
-    public DisplayAutoRoutesDialog(PossibleRoutes possibleRoutes) {
+    public DisplayAutoRoutesDialog(Stage stage, PossibleRoutes possibleRoutes) {
         this.setTitle("Select Routes to Plot");
 
         VBox vBox = new VBox();
@@ -52,7 +52,6 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
         updateTable(possibleRoutes);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 

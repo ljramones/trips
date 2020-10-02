@@ -38,7 +38,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
      *
      * @param starsInView the list of stars in view
      */
-    public FindStarInViewDialog(List<StarDisplayRecord> starsInView) {
+    public FindStarInViewDialog(Stage stage, List<StarDisplayRecord> starsInView) {
 
         this.setTitle("Find a star in current view");
         this.setHeight(1000);
@@ -59,7 +59,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
         cmb.setPromptText("start typing");
         cmb.setTooltip(new Tooltip());
         cmb.getItems().addAll(searchValues);
-        new ComboBoxAutoComplete<>(cmb);
+        new ComboBoxAutoComplete<>(stage, cmb);
 
         hBox.getChildren().add(new Label("Star to go to:     "));
         hBox.getChildren().add(cmb);
@@ -85,7 +85,6 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 

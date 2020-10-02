@@ -8,6 +8,7 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;

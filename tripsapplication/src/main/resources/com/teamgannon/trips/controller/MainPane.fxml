@@ -128,8 +128,8 @@
     <VBox fx:id="vbox1" layoutX="2.0" layoutY="29.0" VBox.vgrow="ALWAYS">
         <ToolBar fx:id="toolBar"
                  VBox.vgrow="ALWAYS">
-            <ToggleButton mnemonicParsing="false"
-                          onAction="#resetView" text="Reset View"/>
+            <Button fx:id="resetButton" mnemonicParsing="false"
+                    onAction="#resetView" text="Reset View"/>
             <Separator/>
             <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false"
                           onAction="#togglePolities" text="Polities"/>
