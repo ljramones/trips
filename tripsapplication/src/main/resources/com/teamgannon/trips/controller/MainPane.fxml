@@ -125,76 +125,80 @@
                       onAction="#checkUpdate" text="Check for update"/>
         </Menu>
     </MenuBar>
-    <VBox fx:id="vbox1" layoutX="2.0" layoutY="29.0" VBox.vgrow="ALWAYS">
-        <ToolBar fx:id="toolBar"
-                 VBox.vgrow="ALWAYS">
-            <Button fx:id="resetButton" mnemonicParsing="false"
-                    onAction="#resetView" text="Reset View"/>
-            <Separator/>
-            <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false"
-                          onAction="#togglePolities" text="Polities"/>
-            <Separator/>
-            <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false"
-                          onAction="#toggleStars" text="Stars"/>
-            <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false"
-                          onAction="#toggleGrid" text="Grid"/>
-            <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false"
-                          onAction="#toggleLabels" text="Labels"/>
-            <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false"
-                          onAction="#toggleGridExtensions"
-                          text="Extensions"/>
-            <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false"
-                          onAction="#toggleScale" text="Scale"/>
-            <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false"
-                          onAction="#toggleRoutes" text="Routes"/>
-            <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false"
-                          onAction="#toggleTransitAction"
-                          text="Transits"/>
-            <Separator/>
-            <ToggleButton fx:id="toggleSettings" mnemonicParsing="false"
-                          onAction="#toggleSidePane" text="Side Pane"/>
-            <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false"
-                          onAction="#zoomIn" text="+"/>
-            <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false"
-                          onAction="#zoomOut" text="-"/>
-            <Separator/>
-            <VBox alignment="CENTER">
-                <Label text="Routing State:"/>
-                <Label fx:id="routingStatus" text="Inactive" textFill="seagreen"/>
-            </VBox>
-            <Separator/>
-            <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
-                      onAction="#runAnimation" text="animate"/>
-        </ToolBar>
+    <VBox>
+        <VBox fx:id="vbox1"  VBox.vgrow="ALWAYS">
+            <ToolBar fx:id="toolBar"
+                     VBox.vgrow="ALWAYS">
+                <Button fx:id="resetButton" mnemonicParsing="false"
+                        onAction="#resetView" text="Reset View"/>
+                <Separator/>
+                <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false"
+                              onAction="#togglePolities" text="Polities"/>
+                <Separator/>
+                <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false"
+                              onAction="#toggleStars" text="Stars"/>
+                <ToggleButton fx:id="toggleGridBtn" mnemonicParsing="false"
+                              onAction="#toggleGrid" text="Grid"/>
+                <ToggleButton fx:id="toggleLabelsBtn" mnemonicParsing="false"
+                              onAction="#toggleLabels" text="Labels"/>
+                <ToggleButton fx:id="toggleStemBtn" mnemonicParsing="false"
+                              onAction="#toggleGridExtensions"
+                              text="Extensions"/>
+                <ToggleButton fx:id="toggleScaleBtn" mnemonicParsing="false"
+                              onAction="#toggleScale" text="Scale"/>
+                <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false"
+                              onAction="#toggleRoutes" text="Routes"/>
+                <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false"
+                              onAction="#toggleTransitAction"
+                              text="Transits"/>
+                <Separator/>
+                <ToggleButton fx:id="toggleSettings" mnemonicParsing="false"
+                              onAction="#toggleSidePane" text="Side Pane"/>
+                <ToggleButton fx:id="toggleZoomInBtn" mnemonicParsing="false"
+                              onAction="#zoomIn" text="+"/>
+                <ToggleButton fx:id="toggleZoomOutBtn" mnemonicParsing="false"
+                              onAction="#zoomOut" text="-"/>
+                <Separator/>
+                <VBox alignment="CENTER">
+                    <Label text="Routing State:"/>
+                    <Label fx:id="routingStatus" text="Inactive" textFill="seagreen"/>
+                </VBox>
+                <Separator/>
+                <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
+                          onAction="#runAnimation" text="animate"/>
+            </ToolBar>
+        </VBox>
+        <VBox>
+            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" >
+                <AnchorPane fx:id="anchorPane1">
+                    <StackPane fx:id="leftDisplayPane"/>
+                </AnchorPane>
+                <AnchorPane fx:id="anchorPane2">
+                    <VBox fx:id="settingsPane">
+                        <Accordion fx:id="propertiesAccordion">
+                            <panes>
+                                <TitledPane fx:id="datasetsPane"
+                                            text="DataSets Available">
+                                </TitledPane>
+                                <TitledPane fx:id="objectsViewPane"
+                                            text="Objects in View"/>
+                                <TitledPane fx:id="stellarObjectPane"
+                                            text="Stellar Object Properties">
+                                </TitledPane>
+                                <TitledPane fx:id="routingPane"
+                                            text="Star Routing"/>
+                            </panes>
+                        </Accordion>
+                    </VBox>
+                </AnchorPane>
+            </SplitPane>
+        </VBox>
+        <HBox fx:id="statusBar" >
+            <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#3333FF">
+                <font>
+                    <Font name="Arial" size="15.0"/>
+                </font>
+            </Label>
+        </HBox>
     </VBox>
-    <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" layoutX="2.0" layoutY="70.0">
-        <AnchorPane fx:id="anchorPane1">
-            <StackPane fx:id="leftDisplayPane" />
-        </AnchorPane>
-        <AnchorPane fx:id="anchorPane2">
-            <VBox fx:id="settingsPane">
-                <Accordion fx:id="propertiesAccordion">
-                    <panes>
-                        <TitledPane fx:id="datasetsPane"
-                                    text="DataSets Available">
-                        </TitledPane>
-                        <TitledPane fx:id="objectsViewPane"
-                                    text="Objects in View"/>
-                        <TitledPane fx:id="stellarObjectPane"
-                                    text="Stellar Object Properties">
-                        </TitledPane>
-                        <TitledPane fx:id="routingPane"
-                                    text="Star Routing"/>
-                    </panes>
-                </Accordion>
-            </VBox>
-        </AnchorPane>
-    </SplitPane>
-    <HBox fx:id="statusBar" layoutX="2.0" layoutY="659.0">
-        <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#3333FF">
-            <font>
-                <Font name="Arial" size="15.0"/>
-            </font>
-        </Label>
-    </HBox>
 </Pane>

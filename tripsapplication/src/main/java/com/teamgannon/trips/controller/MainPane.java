@@ -282,8 +282,6 @@ public class MainPane implements
         this.dataExportService = new DataExportService(
                 databaseManagementService, this);
 
-        double width = 1100;
-        double height = 700;
         this.depth = 700;
         this.spacing = 20;
 
@@ -333,20 +331,25 @@ public class MainPane implements
 
         createResizePopup();
 
-        this.mainPanel.setPrefHeight(Universe.boxHeight + 20);
+        this.mainPanel.setPrefHeight(Universe.boxHeight + 40);
         this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
 
         this.menuBar.setPrefHeight(29.0);
         this.menuBar.setPrefWidth(Universe.boxWidth + 20);
 
-        this.statusBar.setPrefHeight(39.0);
+        this.statusBar.setPrefHeight(35.0);
         this.statusBar.setPrefWidth(Universe.boxWidth + 20);
-        this.statusBar.setStyle("-fx-padding: 2;" +
-                "-fx-border-style: solid inside;" +
-                "-fx-border-width: 1;" +
-                "-fx-border-insets: 1;" +
-                "-fx-border-radius: 5;" +
-                "-fx-border-color: blue;");
+
+        this.statusBar.setStyle(" -fx-border-insets: 0;\n" +
+                "    -fx-border-width: 2px;\n" +
+                "    -fx-border-color: black lightgray lightgray black;");
+
+//        this.statusBar.setStyle("-fx-padding: 2;" +
+//                "-fx-border-style: solid inside;" +
+//                "-fx-border-width: 1;" +
+//                "-fx-border-insets: 1;" +
+//                "-fx-border-radius: 5;" +
+//                "-fx-border-color: blue;");
 
         this.mainSplitPane.setPrefHeight(588.0);
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
