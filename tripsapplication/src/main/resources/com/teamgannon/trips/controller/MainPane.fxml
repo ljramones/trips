@@ -7,126 +7,126 @@
       xmlns="http://javafx.com/javafx/10.0.2-internal"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teamgannon.trips.controller.MainPane">
-
-    <MenuBar fx:id="menuBar" layoutX="2.0" minHeight="-Infinity" minWidth="-Infinity">
-        <Menu mnemonicParsing="false" text="General">
-            <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
-            <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>
-            <MenuItem mnemonicParsing="false" onAction="#clearStars" text="Clear Stars"/>
-            <MenuItem mnemonicParsing="false" onAction="#clearRoutes" text="Clear Routes"/>
-            <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Display">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#showApplicationPreferences"
-                      text="Change Application Preferences..."/>
-            <SeparatorMenuItem/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#resetView"
-                      text="Reset View..."/>
-            <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="togglePolitiesMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#togglePolities"
-                           text="Toggle Polities"/>
-            <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="toggleGridMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleGrid"
-                           text="Toggle Grid"/>
-            <CheckMenuItem fx:id="toggleLabelsMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleLabels"
-                           text="Toggle Labels"/>
-            <CheckMenuItem fx:id="toggleExtensionsMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleGridExtensions"
-                           text="Toggle Grid Extensions"/>
-            <CheckMenuItem fx:id="toggleStarMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleStars"
-                           text="Toggle Stars"/>
-            <CheckMenuItem fx:id="toggleScaleMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleScale"
-                           text="Toggle Scale"/>
-            <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="toggleSidePaneMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleSidePane"
-                           text="Toggle Side Pane"/>
-            <CheckMenuItem fx:id="toggleToolBarMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleToolbar"
-                           text="Toggle Toolbar"/>
-            <CheckMenuItem fx:id="toggleStatusBarMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleStatusBar"
-                           text="Toggle Status Bar"/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Star Data">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#loadDataSetManager" text="Load Dataset..."/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#viewEditStarData" text="View/Edit Star Data"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#plotStars" text="Plot Stars"/>
-            <SeparatorMenuItem/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#exportDatabase" text="Export Database to Excel"/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Transits">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#transitFinder"
-                      text="Find Transits Between Stars..."/>
-            <CheckMenuItem fx:id="toggleTransitsMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleTransitAction"
-                           selected="true"
-                           text="Toggle Transits"/>
-            <CheckMenuItem fx:id="toggleTransitLengthsMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleTransitLengths"
-                           selected="true"
-                           text="Toggle Transit Lengths"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#clearTransits"
-                      text="Clear Transits"/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Routing">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#routeFinder" text="Route finder from A to B"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
-            <SeparatorMenuItem/>
-            <CheckMenuItem fx:id="toggleRoutesMenuitem"
-                           mnemonicParsing="false"
-                           onAction="#toggleRoutes"
-                           text="Toggle Routes"/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Search">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#findInView" text="Find Star in View..."/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#runQuery" text="Show Query Dialog..."/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Reports">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#distanceReport" text="Distance .."/>
-        </Menu>
-        <Menu mnemonicParsing="false" text="Help">
-            <MenuItem mnemonicParsing="false"
-                      onAction="#aboutTrips" text="About Terran Republic Viewer"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#howToSupport" text="How to get support"/>
-            <MenuItem mnemonicParsing="false"
-                      onAction="#checkUpdate" text="Check for update"/>
-        </Menu>
-    </MenuBar>
     <VBox>
-        <VBox fx:id="vbox1"  VBox.vgrow="ALWAYS">
+        <MenuBar fx:id="menuBar" layoutX="2.0" minHeight="-Infinity" minWidth="-Infinity">
+            <Menu mnemonicParsing="false" text="General">
+                <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
+                <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>
+                <MenuItem mnemonicParsing="false" onAction="#clearStars" text="Clear Stars"/>
+                <MenuItem mnemonicParsing="false" onAction="#clearRoutes" text="Clear Routes"/>
+                <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Display">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#showApplicationPreferences"
+                          text="Change Application Preferences..."/>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#resetView"
+                          text="Reset View..."/>
+                <SeparatorMenuItem/>
+                <CheckMenuItem fx:id="togglePolitiesMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#togglePolities"
+                               text="Toggle Polities"/>
+                <SeparatorMenuItem/>
+                <CheckMenuItem fx:id="toggleGridMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleGrid"
+                               text="Toggle Grid"/>
+                <CheckMenuItem fx:id="toggleLabelsMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleLabels"
+                               text="Toggle Labels"/>
+                <CheckMenuItem fx:id="toggleExtensionsMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleGridExtensions"
+                               text="Toggle Grid Extensions"/>
+                <CheckMenuItem fx:id="toggleStarMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleStars"
+                               text="Toggle Stars"/>
+                <CheckMenuItem fx:id="toggleScaleMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleScale"
+                               text="Toggle Scale"/>
+                <SeparatorMenuItem/>
+                <CheckMenuItem fx:id="toggleSidePaneMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleSidePane"
+                               text="Toggle Side Pane"/>
+                <CheckMenuItem fx:id="toggleToolBarMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleToolbar"
+                               text="Toggle Toolbar"/>
+                <CheckMenuItem fx:id="toggleStatusBarMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleStatusBar"
+                               text="Toggle Status Bar"/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Star Data">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#loadDataSetManager" text="Load Dataset..."/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#viewEditStarData" text="View/Edit Star Data"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#plotStars" text="Plot Stars"/>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#exportDatabase" text="Export Database to Excel"/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Transits">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#transitFinder"
+                          text="Find Transits Between Stars..."/>
+                <CheckMenuItem fx:id="toggleTransitsMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleTransitAction"
+                               selected="true"
+                               text="Toggle Transits"/>
+                <CheckMenuItem fx:id="toggleTransitLengthsMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleTransitLengths"
+                               selected="true"
+                               text="Toggle Transit Lengths"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#clearTransits"
+                          text="Clear Transits"/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Routing">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#routeFinder" text="Route finder from A to B"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
+                <SeparatorMenuItem/>
+                <CheckMenuItem fx:id="toggleRoutesMenuitem"
+                               mnemonicParsing="false"
+                               onAction="#toggleRoutes"
+                               text="Toggle Routes"/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Search">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#findInView" text="Find Star in View..."/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#runQuery" text="Show Query Dialog..."/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Reports">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#distanceReport" text="Distance .."/>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Help">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#aboutTrips" text="About Terran Republic Viewer"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#howToSupport" text="How to get support"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#checkUpdate" text="Check for update"/>
+            </Menu>
+        </MenuBar>
+
+        <VBox fx:id="vbox1" VBox.vgrow="ALWAYS">
             <ToolBar fx:id="toolBar"
                      VBox.vgrow="ALWAYS">
                 <Button fx:id="resetButton" mnemonicParsing="false"
@@ -169,7 +169,7 @@
             </ToolBar>
         </VBox>
         <VBox>
-            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76" >
+            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76">
                 <AnchorPane fx:id="anchorPane1">
                     <StackPane fx:id="leftDisplayPane"/>
                 </AnchorPane>
@@ -193,7 +193,7 @@
                 </AnchorPane>
             </SplitPane>
         </VBox>
-        <HBox fx:id="statusBar" >
+        <HBox fx:id="statusBar">
             <Label fx:id="databaseStatus" text="No Database Loaded" textFill="#3333FF">
                 <font>
                     <Font name="Arial" size="15.0"/>
