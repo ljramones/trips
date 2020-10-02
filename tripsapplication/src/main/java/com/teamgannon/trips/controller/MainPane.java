@@ -48,6 +48,9 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
@@ -129,8 +132,8 @@ public class MainPane implements
     public Label routingStatus;
 
     public CheckMenuItem toggleTransitLengthsMenuitem;
-    public AnchorPane anchorPane1;
-    public AnchorPane anchorPane2;
+    public Pane anchorPane1;
+    public Pane anchorPane2;
     public VBox vbox1;
 
     /**
@@ -306,7 +309,6 @@ public class MainPane implements
     private void resizeTrips(double height, double width) {
         log.info("Height: " + height + " Width: " + width);
         interstellarSpacePane.resize(width, height);
-        this.vbox1.setPrefWidth(width);
         this.menuBar.setPrefWidth(width);
         this.toolBar.setPrefWidth(width);
         this.statusBar.setPrefWidth(width);
@@ -331,68 +333,7 @@ public class MainPane implements
 
         createResizePopup();
 
-        this.mainPanel.setPrefHeight(Universe.boxHeight + 40);
-        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
-
-        this.menuBar.setPrefHeight(29.0);
-        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
-
-        this.statusBar.setPrefHeight(35.0);
-        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
-
-        this.statusBar.setStyle(" -fx-border-insets: 0;\n" +
-                "    -fx-border-width: 2px;\n" +
-                "    -fx-border-color: black lightgray lightgray black;");
-
-//        this.statusBar.setStyle("-fx-padding: 2;" +
-//                "-fx-border-style: solid inside;" +
-//                "-fx-border-width: 1;" +
-//                "-fx-border-insets: 1;" +
-//                "-fx-border-radius: 5;" +
-//                "-fx-border-color: blue;");
-
-        this.mainSplitPane.setPrefHeight(588.0);
-        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
-
-        this.anchorPane1.setMinHeight(0.0);
-        this.anchorPane1.setMinWidth(0.0);
-        this.anchorPane1.setPrefHeight(554.0);
-        this.anchorPane1.setPrefWidth(785.0);
-
-        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
-        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
-        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
-        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
-
-        this.settingsPane.setPrefHeight(588.0);
-        this.settingsPane.setPrefWidth(260.0);
-
-        this.anchorPane2.setMinWidth(0.0);
-        this.anchorPane2.setMinHeight(0.0);
-
-        this.datasetsPane.setPrefHeight(200.0);
-        this.datasetsPane.setPrefWidth(200.0);
-
-        this.objectsViewPane.setMinHeight(200.0);
-        this.objectsViewPane.setMinWidth(200.0);
-
-        this.stellarObjectPane.setMinHeight(200.0);
-        this.stellarObjectPane.setMinWidth(200.0);
-
-        this.routingPane.setMinHeight(200);
-        this.routingPane.setMinWidth(200);
-
-        this.toolBar.setPrefHeight(40.0);
-        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
-
-        this.vbox1.setPrefHeight(39.0);
-        this.vbox1.setPrefWidth(Universe.boxWidth + 20);
-//        this.vbox1.setStyle("-fx-padding: 1;" +
-//                "-fx-border-style: solid inside;" +
-//                "-fx-border-width: 1;" +
-//                "-fx-border-insets: 2;" +
-//                "-fx-border-radius: 5;" +
-//                "-fx-border-color: blue;");
+        setDefaultSizesForUI();
 
         setSliderControl();
         setStatusPanel();
@@ -415,11 +356,69 @@ public class MainPane implements
         // by default side panel should be off
         toggleSidePane(false);
 
+        setupStatusbar();
+
         // load database preset values
         loadDBPresets();
 
         resizePopup.hide();
 
+    }
+
+    private void setupStatusbar() {
+        Font labelFont = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+        Font statusFont = Font.font("Verdana", FontWeight.LIGHT, FontPosture.REGULAR, 13);
+
+        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
+        this.statusBar.setAlignment(Pos.BASELINE_LEFT);
+
+        GridPane gridPane = new GridPane();
+        Label databaseCommentLabel = new Label("Plot Status: ");
+        databaseCommentLabel.setFont(labelFont);
+        databaseCommentLabel.setTextFill(Color.BLACK);
+        gridPane.add(databaseCommentLabel, 0, 0);
+
+        databaseStatus = new Label("Waiting for a dataset to be selected");
+        databaseStatus.setFont(statusFont);
+        databaseStatus.setTextFill(Color.BLUE);
+        gridPane.add(databaseStatus, 1, 0);
+
+        gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
+
+        Label routingStatusLabel = new Label("Routing State: ");
+        routingStatusLabel.setFont(labelFont);
+        routingStatusLabel.setTextFill(Color.BLACK);
+        gridPane.add(routingStatusLabel, 3, 0);
+
+        routingStatus = new Label("Inactive");
+        routingStatus.setFont(statusFont);
+        routingStatus.setTextFill(Color.SEAGREEN);
+        gridPane.add(routingStatus, 4, 0);
+
+        this.statusBar.getChildren().add(gridPane);
+
+    }
+
+    private void setDefaultSizesForUI() {
+        this.mainPanel.setPrefHeight(Universe.boxHeight + 20);
+        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
+
+        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
+        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
+
+        this.mainSplitPane.setPrefHeight(588.0);
+        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
+
+        this.anchorPane1.setPrefHeight(554.0);
+        this.anchorPane1.setPrefWidth(785.0);
+
+        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
+        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
+        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
+        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
+
+        this.settingsPane.setPrefHeight(588.0);
+        this.settingsPane.setPrefWidth(260.0);
     }
 
     private void createResizePopup() {
