@@ -39,7 +39,8 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final DatabaseManagementService databaseManagementService;
 
 
-    public AddDataSetDialog(Localization localization,
+    public AddDataSetDialog(Stage stage,
+                            Localization localization,
                             DatabaseManagementService databaseManagementService) {
 
         this.localization = localization;
@@ -107,7 +108,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         hBox5.getChildren().add(cancelDataSetButton);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 

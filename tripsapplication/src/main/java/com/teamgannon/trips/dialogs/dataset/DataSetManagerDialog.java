@@ -35,6 +35,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
+    private Stage stage;
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
 
@@ -56,12 +57,14 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private DataSetDescriptor selectedDataset;
 
-    public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
+    public DataSetManagerDialog(Stage stage,
+                                DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 DataImportService dataImportService,
                                 Localization localization,
                                 DataExportService dataExportService) {
+        this.stage = stage;
 
         this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
@@ -86,7 +89,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         updateTable();
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
@@ -262,7 +264,7 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private void addDataSet(ActionEvent actionEvent) {
 
-        AddDataSetDialog dialog = new AddDataSetDialog(localization, databaseManagementService);
+        AddDataSetDialog dialog = new AddDataSetDialog(stage, localization, databaseManagementService);
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
         if (optionalDataSet.isPresent()) {

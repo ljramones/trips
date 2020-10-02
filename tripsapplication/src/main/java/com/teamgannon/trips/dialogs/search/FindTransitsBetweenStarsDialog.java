@@ -27,7 +27,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
     private final TextField lineWidth = new TextField();
 
 
-    public FindTransitsBetweenStarsDialog() {
+    public FindTransitsBetweenStarsDialog(Stage stage) {
 
         this.setTitle("Select a Range to Find Transits");
         this.setHeight(300);
@@ -86,7 +86,6 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 

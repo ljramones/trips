@@ -29,7 +29,7 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
      *
      * @param starsInView the stars in view
      */
-    public SelectStarForDistanceReportDialog(List<StarDisplayRecord> starsInView) {
+    public SelectStarForDistanceReportDialog(Stage stage, List<StarDisplayRecord> starsInView) {
 
         if (!starsInView.isEmpty()) {
             MapUtils.populateMap(starDisplayRecordMap,
@@ -74,7 +74,6 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
         hBox.getChildren().add(cancelBtn);
 
         // set the dialog as a utility so that the closing is cancelling
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
     }

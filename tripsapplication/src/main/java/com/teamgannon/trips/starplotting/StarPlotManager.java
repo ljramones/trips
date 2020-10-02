@@ -273,6 +273,10 @@ public class StarPlotManager {
         labelDisplayGroup.setVisible(starsOn);
     }
 
+    public boolean isPlotActive() {
+        return stellarDisplayGroup.getChildren().size() > 0;
+    }
+
     /**
      * draw a list of stars
      *

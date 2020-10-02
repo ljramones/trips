@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -24,6 +25,7 @@ public class DataSetPanel extends BasePane {
     private final Map<String, DataSetDescriptor> datasets;
     private final DataSetChangeListener dataSetChangeListener;
 
+    private Stage stage;
     private final SearchContext searchContext;
 
     /**
@@ -32,9 +34,11 @@ public class DataSetPanel extends BasePane {
      * @param searchContext  the search context
      * @param dataSetContext the dataset context
      */
-    public DataSetPanel(SearchContext searchContext,
+    public DataSetPanel(Stage stage,
+                        SearchContext searchContext,
                         DataSetContext dataSetContext,
                         DataSetChangeListener dataSetChangeListener) {
+        this.stage = stage;
 
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
@@ -82,7 +86,7 @@ public class DataSetPanel extends BasePane {
         } else {
             if (name != null) {
                 DataSetDescriptor descriptor = datasets.get(name);
-                DataSetDescribeDialog dialog = new DataSetDescribeDialog(descriptor);
+                DataSetDescribeDialog dialog = new DataSetDescribeDialog(stage, descriptor);
                 searchContext.setCurrentDataSet(name);
                 searchContext.getAstroSearchQuery().setDescriptor(descriptor);
                 dialog.showAndWait();

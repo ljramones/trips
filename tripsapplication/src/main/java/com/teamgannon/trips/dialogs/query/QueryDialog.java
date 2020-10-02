@@ -41,7 +41,8 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
-    public QueryDialog(SearchContext searchContext,
+    public QueryDialog(Stage stage,
+                       SearchContext searchContext,
                        DataSetContext dataSetContext,
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
@@ -49,10 +50,12 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         this.setTitle("Query and Search");
 
         searchPane = new SearchPane(
+                stage,
                 this.searchContext,
                 dataSetContext,
                 dataSetChangeListener,
                 updater);
+
 
         this.setHeight(1000);
         this.setWidth(500);
@@ -83,7 +86,6 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 

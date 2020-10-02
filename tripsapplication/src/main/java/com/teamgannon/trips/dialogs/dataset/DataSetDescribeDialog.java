@@ -22,7 +22,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
     protected GridPane planGrid = new GridPane();
     private DataSetDescriptor descriptor;
 
-    public DataSetDescribeDialog(DataSetDescriptor descriptor) {
+    public DataSetDescribeDialog(Stage stage, DataSetDescriptor descriptor) {
         this.descriptor = descriptor;
         this.setTitle("Dataset Description");
         this.setHeight(200);
@@ -60,7 +60,6 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         this.getDialogPane().setContent(planGrid);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
     }

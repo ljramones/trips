@@ -175,7 +175,7 @@ public class StellarClassSelectionPanel extends BasePane {
      * initialize the event handler
      */
     private void initEventHandler() {
-        EventHandler eh = (EventHandler<ActionEvent>) event -> {
+        EventHandler<ActionEvent> eh = (EventHandler<ActionEvent>) event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
                 log.debug("Action performed on checkbox " + chk.getText());

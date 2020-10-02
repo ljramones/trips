@@ -426,6 +426,10 @@ public class InterstellarSpacePane extends Pane {
         starPlotManager.toggleLabels(labelSetting);
     }
 
+    public boolean isPlotActive() {
+        return starPlotManager.isPlotActive();
+    }
+
 
     /**
      * start the rotation of Y-axis animation

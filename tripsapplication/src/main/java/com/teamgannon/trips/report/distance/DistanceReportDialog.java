@@ -16,7 +16,8 @@ public class DistanceReportDialog extends Dialog<DistanceReport> {
 
     private final DistanceReport report;
 
-    public DistanceReportDialog(DistanceReport report) {
+    public DistanceReportDialog(Stage stage,
+                                DistanceReport report) {
         this.report = report;
 
         this.setTitle("Distance Report Dialog for: " + report.getSourceStar().getStarName());
@@ -47,7 +48,6 @@ public class DistanceReportDialog extends Dialog<DistanceReport> {
         hBox.getChildren().add(cancelBtn);
 
         // set the dialog as a utility so that the closing is cancelling
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
