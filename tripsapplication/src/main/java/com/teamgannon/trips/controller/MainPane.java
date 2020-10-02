@@ -387,12 +387,12 @@ public class MainPane implements
 
         this.vbox1.setPrefHeight(39.0);
         this.vbox1.setPrefWidth(Universe.boxWidth + 20);
-        this.vbox1.setStyle("-fx-padding: 1;" +
-                "-fx-border-style: solid inside;" +
-                "-fx-border-width: 1;" +
-                "-fx-border-insets: 2;" +
-                "-fx-border-radius: 5;" +
-                "-fx-border-color: blue;");
+//        this.vbox1.setStyle("-fx-padding: 1;" +
+//                "-fx-border-style: solid inside;" +
+//                "-fx-border-width: 1;" +
+//                "-fx-border-insets: 2;" +
+//                "-fx-border-radius: 5;" +
+//                "-fx-border-color: blue;");
 
         setSliderControl();
         setStatusPanel();
