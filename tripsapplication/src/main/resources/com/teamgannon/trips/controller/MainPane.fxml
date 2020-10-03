@@ -158,32 +158,7 @@
                       onAction="#runAnimation" text="animate"/>
         </ToolBar>
         <VBox>
-            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76">
-                <Pane fx:id="anchorPane1" minWidth="0">
-                    <StackPane fx:id="leftDisplayPane"/>
-                </Pane>
-                <Pane fx:id="anchorPane2" minWidth="0">
-                    <VBox fx:id="settingsPane">
-                        <Accordion fx:id="propertiesAccordion">
-                            <panes>
-                                <TitledPane fx:id="datasetsPane"
-                                            minWidth="200" minHeight="200"
-                                            text="DataSets Available">
-                                </TitledPane>
-                                <TitledPane fx:id="objectsViewPane"
-                                            minWidth="200" minHeight="200"
-                                            text="Objects in View"/>
-                                <TitledPane fx:id="stellarObjectPane"
-                                            text="Stellar Object Properties">
-                                </TitledPane>
-                                <TitledPane fx:id="routingPane"
-                                            minWidth="200" minHeight="200"
-                                            text="Star Routing"/>
-                            </panes>
-                        </Accordion>
-                    </VBox>
-                </Pane>
-            </SplitPane>
+            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76"/>
         </VBox>
         <HBox fx:id="statusBar" prefHeight="18" minHeight="18"/>
     </VBox>

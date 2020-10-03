@@ -36,7 +36,7 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
     public void onApplicationEvent(StageReadyEvent event) {
         Stage stage = event.stage;
         Parent root = fxWeaver.loadView(MainPane.class);
-        Scene scene = new Scene(root, 1100, 700);
+        Scene scene = new Scene(root, 1101, 816);
         stage.setScene(scene);
         stage.initStyle(StageStyle.DECORATED);
         stage.setResizable(true);
