@@ -132,8 +132,8 @@ public class MainPane implements
     public Label routingStatus;
 
     public CheckMenuItem toggleTransitLengthsMenuitem;
-    public Pane anchorPane1;
-    public Pane anchorPane2;
+    public BorderPane leftBorderPane;
+    public BorderPane rightBorderPane;
     public VBox vbox1;
 
     /**
@@ -312,12 +312,30 @@ public class MainPane implements
         this.menuBar.setPrefWidth(width);
         this.toolBar.setPrefWidth(width);
         this.statusBar.setPrefWidth(width);
-        this.mainSplitPane.setPrefWidth(width);
-        this.mainSplitPane.setPrefHeight(height - 112);
+
         this.settingsPane.setPrefHeight(height - 112);
         this.settingsPane.setPrefWidth(260);
+
         this.leftDisplayPane.setPrefWidth(width);
         this.leftDisplayPane.setPrefHeight(height);
+
+        this.mainSplitPane.setPrefWidth(width);
+        this.mainSplitPane.setPrefHeight(height - 112);
+        // control splitpane divder so it doesn't lag while resizing
+        double spPosition = mainSplitPane.getDividers().get(0).getPosition();
+        if (spPosition > .95) {
+            // if the divider is all the way over then make sure it stays there
+            mainSplitPane.setDividerPosition(0, 1);
+        } else {
+            // now make sure that the divider does not go past the settings panel position
+            double currentWidth = this.mainPanel.getWidth();
+            double exposedSettingsWidth = (1 - spPosition) * currentWidth;
+            log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
+            if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
+                double adjustedWidthRatio = 260 / currentWidth;
+                mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
+            }
+        }
 
         resetButton.requestFocus();
 
@@ -335,7 +353,6 @@ public class MainPane implements
 
         setDefaultSizesForUI();
 
-        setSliderControl();
         setStatusPanel();
 
         // get colors from DB
@@ -346,6 +363,8 @@ public class MainPane implements
 
         // right display
         createRightDisplay();
+
+        setSliderControl();
 
         // create the list of objects in view
         setupStellarObjectListView();
@@ -383,6 +402,7 @@ public class MainPane implements
         databaseStatus.setTextFill(Color.BLUE);
         gridPane.add(databaseStatus, 1, 0);
 
+        // put a unique divider
         gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
 
         Label routingStatusLabel = new Label("Routing State: ");
@@ -409,16 +429,6 @@ public class MainPane implements
         this.mainSplitPane.setPrefHeight(588.0);
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
 
-        this.anchorPane1.setPrefHeight(554.0);
-        this.anchorPane1.setPrefWidth(785.0);
-
-        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
-        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
-        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
-        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
-
-        this.settingsPane.setPrefHeight(588.0);
-        this.settingsPane.setPrefWidth(260.0);
     }
 
     private void createResizePopup() {
@@ -611,6 +621,21 @@ public class MainPane implements
      */
     private void createLeftDisplay() {
 
+        leftBorderPane = new BorderPane();
+        leftBorderPane.setMinWidth(0);
+        this.leftBorderPane.setPrefHeight(554.0);
+        this.leftBorderPane.setPrefWidth(785.0);
+
+        mainSplitPane.getItems().add(leftBorderPane);
+
+        leftDisplayPane = new StackPane();
+        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
+        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
+        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
+        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
+
+        leftBorderPane.setLeft(leftDisplayPane);
+
         // create the solar system
         createSolarSystemSpace();
 
@@ -656,27 +681,58 @@ public class MainPane implements
      * create the right portion of the display
      */
     private void createRightDisplay() {
-        createStellarPane();
-        createRoutingPane();
-    }
 
-    /**
-     * create stellar pane
-     */
-    private void createStellarPane() {
-        stellarObjectPane.setPrefHeight(800);
+        rightBorderPane = new BorderPane();
+        mainSplitPane.getItems().add(rightBorderPane);
+
+        rightBorderPane.setMinWidth(0);
+        settingsPane = new VBox();
+        settingsPane.setPrefHeight(588.0);
+        settingsPane.setPrefWidth(260.0);
+
+        rightBorderPane.setRight(settingsPane);
+
+        propertiesAccordion = new Accordion();
+        settingsPane.getChildren().add(propertiesAccordion);
+
+        // datasets pane
+        datasetsPane = new TitledPane();
+        datasetsPane.setText("DataSets Available");
+        datasetsPane.setMinWidth(200);
+        datasetsPane.setMinHeight(200);
+        datasetsPane.setMaxHeight(500);
+        propertiesAccordion.getPanes().add(datasetsPane);
+
+        // objects in pane
+        objectsViewPane = new TitledPane();
+        objectsViewPane.setText("Objects in View");
+        objectsViewPane.setMinWidth(200);
+        objectsViewPane.setMinHeight(200);
+        objectsViewPane.setMaxHeight(460);
+        propertiesAccordion.getPanes().add(objectsViewPane);
+
+        // stellar pane
+        stellarObjectPane = new TitledPane();
+        stellarObjectPane.setText("Stellar Object Properties");
+        stellarObjectPane.setPrefHeight(500);
+        stellarObjectPane.setMaxHeight(520);
         starPropertiesPane = new StarPropertiesPane();
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
-    }
+        propertiesAccordion.getPanes().add(stellarObjectPane);
 
-    /**
-     * create the routing pane
-     */
-    private void createRoutingPane() {
+        // routing pane
+        routingPane = new TitledPane();
+        routingPane.setText("Star Routing");
+        routingPane.setMinWidth(200);
+        routingPane.setMinHeight(400);
+        routingPane.setMaxHeight(400);
         routingPanel = new RoutingPanel();
         routingPane.setContent(routingPanel);
+        propertiesAccordion.getPanes().add(routingPane);
+
     }
+
 
     /**
      * setup the status panel

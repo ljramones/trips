@@ -21,6 +21,7 @@ public class ObjectViewPane extends Pane {
 
         stellarObjectsListView.setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(255);
+        stellarObjectsListView.setMaxHeight(600);
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
                         databaseListener,
