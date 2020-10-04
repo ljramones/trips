@@ -1,6 +1,8 @@
 package com.teamgannon.trips;
 
+import com.sun.javafx.application.LauncherImpl;
 import com.teamgannon.trips.javafxsupport.TripsFxApplication;
+import com.teamgannon.trips.javafxsupport.TripsPreloader;
 import javafx.application.Application;
 import javafx.scene.Node;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +29,8 @@ public class TripsSpringBootApplication implements CommandLineRunner {
 
 
     public static void main(String[] args) {
-        Application.launch(TripsFxApplication.class, args);
+        LauncherImpl.launchApplication(TripsFxApplication.class, TripsPreloader.class, args);
+//        Application.launch(TripsFxApplication.class, args);
     }
 
     @Bean
