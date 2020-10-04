@@ -389,6 +389,17 @@ public class MainPane implements
     }
 
     private void setButtons() {
+
+        final Image        resetButtonGraphic  = new Image("/images/buttons/tb_refresh.png");
+        final ImageView    resetButtonImage = new ImageView(resetButtonGraphic);
+        resetButton.setGraphic(resetButtonImage);
+        resetButton.setTooltip(new Tooltip("Reset View"));
+
+        final Image        toggleRoutesBtnGraphic  = new Image("/images/buttons/tb_routes.gif");
+        final ImageView    toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
+        toggleRoutesBtn.setGraphic(toggleRoutesBtnImage);
+        toggleRoutesBtn.setTooltip(new Tooltip("Toggle routes"));
+
         final Image        toggleZoomInBtnGraphic  = new Image("/images/buttons/tb_enlarge.gif");
         final ImageView    toggleZoomInBtnImage = new ImageView(toggleZoomInBtnGraphic);
         toggleZoomInBtn.setGraphic(toggleZoomInBtnImage);
