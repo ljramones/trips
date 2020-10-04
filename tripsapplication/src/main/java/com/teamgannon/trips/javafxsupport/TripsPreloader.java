@@ -16,12 +16,10 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.io.InputStream;
-import java.net.URL;
-
 public class TripsPreloader extends Preloader {
 
     private Stage preloaderStage;
+
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -66,6 +64,11 @@ public class TripsPreloader extends Preloader {
         primaryStage.show();
     }
 
+    /**
+     * catch and handle event
+     *
+     * @param stateChangeNotification the state notification
+     */
     public void handleStateChangeNotification(StateChangeNotification stateChangeNotification) {
         if (stateChangeNotification.getType() == StateChangeNotification.Type.BEFORE_START) {
             preloaderStage.hide();

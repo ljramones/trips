@@ -46,6 +46,8 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -349,6 +351,8 @@ public class MainPane implements
     public void initialize() {
         log.info("initialize view");
 
+        setButtons();
+
         createResizePopup();
 
         setDefaultSizesForUI();
@@ -382,6 +386,23 @@ public class MainPane implements
 
         resizePopup.hide();
 
+    }
+
+    private void setButtons() {
+        final Image        toggleZoomInBtnGraphic  = new Image("/images/buttons/tb_enlarge.gif");
+        final ImageView    toggleZoomInBtnImage = new ImageView(toggleZoomInBtnGraphic);
+        toggleZoomInBtn.setGraphic(toggleZoomInBtnImage);
+        toggleZoomInBtn.setTooltip(new Tooltip("Zoom in"));
+
+        final Image        toggleZoomOutBtnGraphic  = new Image("/images/buttons/tb_reduce.gif");
+        final ImageView    toggleZoomOutBtnImage = new ImageView(toggleZoomOutBtnGraphic);
+        toggleZoomOutBtn.setGraphic(toggleZoomOutBtnImage);
+        toggleZoomOutBtn.setTooltip(new Tooltip("Zoom out"));
+
+        final Image        toggleGridBtnGraphic  = new Image("/images/buttons/tb_grid.gif");
+        final ImageView    toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
+        toggleGridBtn.setGraphic(toggleGridBtnImage);
+        toggleGridBtn.setTooltip(new Tooltip("Toggle grid"));
     }
 
     private void setupStatusbar() {
