@@ -309,8 +309,11 @@ public class MainPane implements
     }
 
     private void resizeTrips(double height, double width) {
+
         log.info("Height: " + height + " Width: " + width);
+
         interstellarSpacePane.resize(width, height);
+
         this.menuBar.setPrefWidth(width);
         this.toolBar.setPrefWidth(width);
         this.statusBar.setPrefWidth(width);
