@@ -37,7 +37,7 @@ public class TripsPreloader extends Preloader {
 
         HBox hBox2 = new HBox();
         final ImageView selectedImage = new ImageView();
-        Image image1 = new Image("/images/splashScreen.jpg");
+        Image image1 = new Image("/images/CTR_emblem_metal.jpg");
         selectedImage.setImage(image1);
         hBox2.getChildren().add(selectedImage);
         loading.getChildren().addAll(hBox2);
@@ -58,8 +58,8 @@ public class TripsPreloader extends Preloader {
         BorderPane root = new BorderPane(loading);
         Scene scene = new Scene(root);
 
-        primaryStage.setWidth(800);
-        primaryStage.setHeight(600);
+        primaryStage.setWidth(900);
+        primaryStage.setHeight(800);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
