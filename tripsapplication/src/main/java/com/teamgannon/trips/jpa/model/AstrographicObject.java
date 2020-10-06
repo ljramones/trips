@@ -52,12 +52,12 @@ public class AstrographicObject implements Serializable {
     /**
      * the collapsed mass value
      */
-    private double mass;
+    private double mass = 0.0;
 
     /**
      * actual mass is Sol units
      */
-    private double actualMass;
+    private double actualMass = 0.0;
 
     /**
      * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
@@ -91,69 +91,69 @@ public class AstrographicObject implements Serializable {
     /**
      * X position, X axis is a line from Sol to the galactic center at that J Date
      */
-    private double x;
+    private double x = 0.0;
 
     /**
      * Y position, Y axis is perpendicular, through sol, and oriented so that the X and Y axis
      * define the plane of the earth’s orbit
      */
-    private double y;
+    private double y = 0.0;
 
     /**
      * Z position, Z axis is through Sol at right angles to the XY plane
      */
-    private double z;
+    private double z = 0.0;
 
     /**
      * this is the radius in solar multiples
      */
-    private double radius;
+    private double radius = 0.0;
 
     /**
      * expressed as right ascension in HHMMSS
      */
-    private double ra;
+    private double ra = 0.0;
 
     /**
      * Proper Motion in RA direction in milli-arcseconds per year
      */
-    private double pmra;
+    private double pmra = 0.0;
 
     /**
      * expressed Declination in DDMMSS
      */
-    private double declination;
+    private double declination = 0.0;
 
     /**
      * Proper Motion in Dec direction in milli-arcseconds per year
      */
-    private double pmdec;
+    private double pmdec = 0.0;
 
     /**
      * Declination in decimal degrees
      */
-    private double dec_deg;
+    private double dec_deg = 0.0;
 
     /**
      * Right ascension in decimal degrees
      */
-    private double rs_cdeg;
+    private double rs_cdeg = 0.0;
 
     /**
      * the parallax measurement n milli-arc-seconds
      */
-    private double parallax;
+    private double parallax = 0.0;
 
     /**
      * distance in LY
      */
-    private double distance;
+    private double distance = 0.0;
 
     /**
      * the star's radial velocity
      * Radial velocity from Sol in km/year
      */
-    private double radialVelocity;
+    private double radialVelocity = 0.0;
 
     /**
      * From Simbad, We’re only storing ONE per object, and in reality we’re only interested in the first character
@@ -177,7 +177,7 @@ public class AstrographicObject implements Serializable {
     /**
      * the temperature of the star in K
      */
-    private double temperature;
+    private double temperature = 0.0;
 
     /**
      * This is an indicator on whether this is a real star or one we made up
@@ -190,17 +190,17 @@ public class AstrographicObject implements Serializable {
     /**
      * Gaia magnitude in the bprp band - crudely "red"
      */
-    private double bprp;
+    private double bprp = 0.0;
 
     /**
      * Gaia magnitude in the bpg band - crudely "blue"
      */
-    private double bpg;
+    private double bpg = 0.0;
 
     /**
      * Gaia magnitude in the grp band - crudely "green"
      */
-    private double grp;
+    private double grp = 0.0;
 
     /**
      * We choose to store the standard luminosity bands. Luminosity is published based on a set of standard
@@ -213,27 +213,27 @@ public class AstrographicObject implements Serializable {
     /**
      * Magnitude in the astronomic "U" band
      */
-    private double magu;
+    private double magu = 0.0;
 
     /**
      * Magnitude in the astronomic "B" band
      */
-    private double magb;
+    private double magb = 0.0;
 
     /**
      * Magnitude in the astronomic "V" band
      */
-    private double magv;
+    private double magv = 0.0;
 
     /**
      * Magnitude in the astronomic "R" band
      */
-    private double magr;
+    private double magr = 0.0;
 
     /**
      * Magnitude in the astronomic "I" band
      */
-    private double magi;
+    private double magi = 0.0;
 
     ///////////////////  for fiction writing   //////////////
     /**
@@ -324,27 +324,27 @@ public class AstrographicObject implements Serializable {
     /**
      * for user custom use in future versions
      */
-    private double miscNum1;
+    private double miscNum1 = 0.0;
 
     /**
      * for user custom use in future versions
      */
-    private double miscNum2;
+    private double miscNum2 = 0.0;
 
     /**
      * for user custom use in future versions
      */
-    private double miscNum3;
+    private double miscNum3 = 0.0;
 
     /**
      * for user custom use in future versions
      */
-    private double miscNum4;
+    private double miscNum4 = 0.0;
 
     /**
      * for user custom use in future versions
      */
-    private double miscNum5;
+    private double miscNum5 = 0.0;
 
 
     ///////////////////////////////////////
