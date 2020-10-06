@@ -29,8 +29,10 @@ public class TripsSpringBootApplication implements CommandLineRunner {
 
 
     public static void main(String[] args) {
-        LauncherImpl.launchApplication(TripsFxApplication.class, TripsPreloader.class, args);
-//        Application.launch(TripsFxApplication.class, args);
+//        LauncherImpl.launchApplication(TripsFxApplication.class, args);
+//        LauncherImpl.launchApplication(TripsFxApplication.class, TripsPreloader.class, args);
+        System.setProperty("javafx.preloader", "com.teamgannon.trips.javafxsupport.TripsPreloader");
+        Application.launch(TripsFxApplication.class, args);
     }
 
     @Bean
