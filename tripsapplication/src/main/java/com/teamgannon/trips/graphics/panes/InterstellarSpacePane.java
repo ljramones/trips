@@ -39,10 +39,10 @@ public class InterstellarSpacePane extends Pane {
 
     //////////////  Star Definitions   //////////////////
     private static final double CAMERA_INITIAL_DISTANCE = -500;
-    private static final double CAMERA_INITIAL_X_ANGLE = -25;//   -90
+    private static final double CAMERA_INITIAL_X_ANGLE = -25;
 
     //////////////// event listeners and updaters
-    private static final double CAMERA_INITIAL_Y_ANGLE = -25; // 0
+    private static final double CAMERA_INITIAL_Y_ANGLE = -25;
     private static final double CAMERA_NEAR_CLIP = 0.1;
     private static final double CAMERA_FAR_CLIP = 10000.0;
 
@@ -51,7 +51,6 @@ public class InterstellarSpacePane extends Pane {
     private final Xform cameraXform = new Xform();
 
     ////////////////// Camera stuff ////////////////
-    private final Xform cameraXform2 = new Xform();
     private final Xform cameraXform3 = new Xform();
 
 
@@ -61,14 +60,6 @@ public class InterstellarSpacePane extends Pane {
 
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
-    private final double CONTROL_MULTIPLIER = 0.1;
-    private final double SHIFT_MULTIPLIER = 0.1;
-    private final double ALT_MULTIPLIER = 0.5;
-
-    /**
-     * the gird plot manager
-     */
-    private final GridPlotManager gridPlotManager;
 
     /**
      * animation rotator
@@ -115,6 +106,11 @@ public class InterstellarSpacePane extends Pane {
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
+
+    /**
+     * the grid plot manager
+     */
+    private final GridPlotManager gridPlotManager;
 
     private final RouteManager routeManager;
 
@@ -198,7 +194,6 @@ public class InterstellarSpacePane extends Pane {
 
         // handle mouse and keyboard events
         handleMouseEvents(this);
-        handleKeyboard(this);
     }
 
     public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
@@ -511,11 +506,9 @@ public class InterstellarSpacePane extends Pane {
 
     private void buildCamera() {
 
-        root.getChildren().add(cameraXform);
-        cameraXform.getChildren().add(cameraXform2);
-        cameraXform2.getChildren().add(cameraXform3);
+        root.getChildren().add(cameraXform3);
+        cameraXform.getChildren().add(cameraXform3);
         cameraXform3.getChildren().add(camera);
-//        cameraXform3.setRotateZ(180.0);
 
         // set camera POV and initial position
         setInitialView();
@@ -595,93 +588,6 @@ public class InterstellarSpacePane extends Pane {
             }
         });
 
-    }
-
-
-    /**
-     * setup keyboard events
-     *
-     * @param pane the pane to manage
-     */
-    private void handleKeyboard(Pane pane) {
-        log.info("Setting up keyboard handling");
-        pane.setOnKeyPressed(event -> {
-            log.info("Keyboard Event Received: {}", event);
-            switch (event.getCode()) {
-                case Z:
-                    if (event.isShiftDown()) {
-                        cameraXform.ry.setAngle(0.0);
-                        cameraXform.rx.setAngle(0.0);
-                        camera.setTranslateZ(-300.0);
-                    }
-                    cameraXform2.t.setX(0.0);
-                    cameraXform2.t.setY(0.0);
-                    break;
-                case X:
-                    if (event.isControlDown()) {
-                        gridPlotManager.toggleVisibility();
-                    }
-                    break;
-                case S:
-                    break;
-                case SPACE:
-                    break;
-                case UP:
-                    if (event.isControlDown() && event.isShiftDown()) {
-                        cameraXform2.t.setY(cameraXform2.t.getY() - 10.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown() && event.isShiftDown()) {
-                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 10.0 * ALT_MULTIPLIER);
-                    } else if (event.isControlDown()) {
-                        cameraXform2.t.setY(cameraXform2.t.getY() - 1.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown()) {
-                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 2.0 * ALT_MULTIPLIER);
-                    } else if (event.isShiftDown()) {
-                        double z = camera.getTranslateZ();
-                        double newZ = z + 5.0 * SHIFT_MULTIPLIER;
-                        camera.setTranslateZ(newZ);
-                    }
-                    break;
-                case DOWN:
-                    if (event.isControlDown() && event.isShiftDown()) {
-                        cameraXform2.t.setY(cameraXform2.t.getY() + 10.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown() && event.isShiftDown()) {
-                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 10.0 * ALT_MULTIPLIER);
-                    } else if (event.isControlDown()) {
-                        cameraXform2.t.setY(cameraXform2.t.getY() + 1.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown()) {
-                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 2.0 * ALT_MULTIPLIER);
-                    } else if (event.isShiftDown()) {
-                        double z = camera.getTranslateZ();
-                        double newZ = z - 5.0 * SHIFT_MULTIPLIER;
-                        camera.setTranslateZ(newZ);
-                    }
-                    break;
-                case RIGHT:
-                    if (event.isControlDown() && event.isShiftDown()) {
-                        cameraXform2.t.setX(cameraXform2.t.getX() + 10.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown() && event.isShiftDown()) {
-                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 10.0 * ALT_MULTIPLIER);
-                    } else if (event.isControlDown()) {
-                        cameraXform2.t.setX(cameraXform2.t.getX() + 1.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown()) {
-                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 2.0 * ALT_MULTIPLIER);
-                    }
-                    break;
-                case LEFT:
-                    if (event.isControlDown() && event.isShiftDown()) {
-                        cameraXform2.t.setX(cameraXform2.t.getX() - 10.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown() && event.isShiftDown()) {
-                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 10.0 * ALT_MULTIPLIER);  // -
-                    } else if (event.isControlDown()) {
-                        cameraXform2.t.setX(cameraXform2.t.getX() - 1.0 * CONTROL_MULTIPLIER);
-                    } else if (event.isAltDown()) {
-                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 2.0 * ALT_MULTIPLIER);  // -
-                    }
-                    break;
-                default:
-                    log.info("keyboard Event is {}", event.getCode());
-            }
-        });
     }
 
 }

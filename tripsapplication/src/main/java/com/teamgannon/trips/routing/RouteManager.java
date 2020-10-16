@@ -44,7 +44,7 @@ public class RouteManager {
     /**
      * the graphic portion of the current route
      */
-    private Xform currentRouteDisplay;
+    private MoveableGroup currentRouteDisplay;
     /**
      * whether there is a route being traced, true is yes
      */
@@ -53,7 +53,7 @@ public class RouteManager {
     /**
      * the total set of all routes
      */
-    private final Xform routesGroup = new Xform();
+    private final MoveableGroup routesGroup = new MoveableGroup();
 
     ///////////////////////
 
@@ -69,7 +69,7 @@ public class RouteManager {
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;
 
-        currentRouteDisplay = new Xform();
+        currentRouteDisplay = new MoveableGroup();
         currentRouteDisplay.setWhatAmI("Current Route");
 
         // define the
@@ -249,7 +249,7 @@ public class RouteManager {
 
 
     private void createCurrentRouteDisplay() {
-        currentRouteDisplay = new Xform();
+        currentRouteDisplay = new MoveableGroup();
         currentRouteDisplay.setWhatAmI("Current Route");
     }
 
@@ -260,7 +260,7 @@ public class RouteManager {
         if (currentRoute != null) {
             currentRoute.clear();
         }
-        currentRouteDisplay = new Xform();
+        currentRouteDisplay = new MoveableGroup();
         currentRouteDisplay.setWhatAmI("Current Route");
     }
 

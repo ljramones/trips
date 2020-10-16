@@ -58,22 +58,22 @@ public class StarPlotManager {
     /**
      * a graphics object group for extensions
      */
-    private final Xform extensionsGroup = new Xform();
+    private final MoveableGroup extensionsGroup = new MoveableGroup();
 
     /**
      * the stellar group for display
      */
-    private final Xform stellarDisplayGroup = new Xform();
+    private final MoveableGroup stellarDisplayGroup = new MoveableGroup();
 
     /**
      * used to control label visibility
      */
-    private Xform labelDisplayGroup = new Xform();
+    private MoveableGroup labelDisplayGroup = new MoveableGroup();
 
     /**
      * to hold all the polities
      */
-    private final Xform politiesDisplayGroup = new Xform();
+    private final MoveableGroup politiesDisplayGroup = new MoveableGroup();
 
 
     ///////////////////
@@ -195,7 +195,7 @@ public class StarPlotManager {
 
     }
 
-    public Xform getLabels() {
+    public Group getLabels() {
         return labelDisplayGroup;
     }
 
@@ -236,7 +236,7 @@ public class StarPlotManager {
     }
 
 
-    public Xform getExtensionsGroup() {
+    public Group getExtensionsGroup() {
         return extensionsGroup;
     }
 
@@ -369,8 +369,8 @@ public class StarPlotManager {
                           String centerStar,
                           ColorPalette colorPalette,
                           StarDisplayPreferences starDisplayPreferences) {
-        Xform starNode;
 
+        Node starNode;
         // create a star for display
         if (record.getStarName().equals(centerStar)) {
             // we use a special icon for the center of the diagram plot
@@ -402,7 +402,7 @@ public class StarPlotManager {
      * @param starDisplayPreferences the star display preferences
      * @return the graphical object group representing the star
      */
-    private Xform createCentralPoint(StarDisplayRecord record,
+    private Node createCentralPoint(StarDisplayRecord record,
                                      ColorPalette colorPalette,
                                      StarDisplayPreferences starDisplayPreferences) {
 
@@ -428,11 +428,9 @@ public class StarPlotManager {
             log.info("mouse click detected! " + starDescriptor);
         });
 
-        Xform starNode = new Xform();
-        starNode.setId("central");
-        starNode.setUserData(record);
-        starNode.getChildren().add(star);
-        return starNode;
+        star.setId("central");
+        star.setUserData(record);
+        return star;
     }
 
 
@@ -446,7 +444,7 @@ public class StarPlotManager {
      * @param politiesOn             whether we polities on or off
      * @return the star to plot
      */
-    private Xform createStar(StarDisplayRecord record,
+    private Node createStar(StarDisplayRecord record,
                              ColorPalette colorPalette,
                              StarDisplayPreferences starDisplayPreferences,
                              boolean labelsOn,
@@ -477,11 +475,10 @@ public class StarPlotManager {
             log.info("mouse click detected! " + starDescriptor);
         });
 
-        Xform starNode = new Xform();
-        starNode.setId("regularStar");
-        starNode.setUserData(record);
-        starNode.getChildren().add(star);
-        return starNode;
+        star.setId("regularStar");
+        star.setUserData(record);
+
+        return star;
     }
 
 
@@ -938,39 +935,6 @@ public class StarPlotManager {
     private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
         if (contextSelectorListener != null) {
             contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
-        }
-    }
-
-
-    public void updateLabels() {
-        if (labelsOn) {
-            Xform newLabelsGroup = new Xform();
-
-            synchronized (this) {
-                /////////
-                log.info("enter critical section");
-                Iterator<Node> nodeIterator= labelDisplayGroup.getChildren().listIterator();
-                while (nodeIterator.hasNext()) {
-                    Node labelNode = nodeIterator.next();
-                    LabelDescriptor labelDescriptor = (LabelDescriptor) labelNode.getUserData();
-                    if (labelDescriptor == null) {
-                        newLabelsGroup.getChildren().add(labelNode);
-                        continue;
-                    }
-                    Point3D p2 = labelNode.localToScene(labelDescriptor.getLabelLocation());
-                    Label newLabel = new Label(labelDescriptor.getText());
-                    newLabel.getTransforms().setAll(new Translate(p2.getX(), p2.getY()));
-                    newLabelsGroup.getChildren().add(newLabel);
-                }
-                log.info("exit critical section");
-                /////////
-            }
-            newLabelsGroup.setVisible(true);
-            labelDisplayGroup.setVisible(false);
-            world.getChildren().add(newLabelsGroup);
-//            labelDisplayGroup.getChildren().addAll(newLabelsGroup);
-        } else {
-            log.debug("labels are off so nothing to do");
         }
     }
 
