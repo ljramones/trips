@@ -19,8 +19,10 @@ import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
-import javafx.geometry.Point3D;
-import javafx.scene.*;
+import javafx.scene.Group;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.SceneAntialiasing;
+import javafx.scene.SubScene;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -29,7 +31,6 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,7 +57,7 @@ public class InterstellarSpacePane extends Pane {
 
     ////////////   Graphics Section of definitions  ////////////////
     private final Group root = new Group();
-    private final Xform world = new Xform();
+    private final Group world = new Group();
 
     // camera work
     private final PerspectiveCamera camera = new PerspectiveCamera(true);

@@ -78,7 +78,7 @@ public class StarPlotManager {
 
     ///////////////////
 
-    private Xform world;
+    private Group world;
     /**
      * used to signal an update to the parent list view
      */
@@ -159,7 +159,7 @@ public class StarPlotManager {
      * @param currentPlot             the current plot
      * @param colorPalette            the color palette
      */
-    public StarPlotManager(Xform world,
+    public StarPlotManager(Group world,
                            ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,

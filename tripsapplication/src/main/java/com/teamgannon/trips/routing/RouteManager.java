@@ -20,6 +20,7 @@ import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Point3D;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,7 +62,7 @@ public class RouteManager {
      *
      * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(Xform world,
+    public RouteManager(Group world,
                         RouteUpdaterListener routeUpdaterListener,
                         CurrentPlot currentPlot) {
 
