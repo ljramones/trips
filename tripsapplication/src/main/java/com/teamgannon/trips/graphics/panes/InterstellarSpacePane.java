@@ -6,8 +6,8 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
+import com.teamgannon.trips.graphics.entities.RxTxGroup;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
@@ -48,10 +48,10 @@ public class InterstellarSpacePane extends Pane {
 
     // animations
     private static final double ROTATE_SECS = 60;
-    private final Xform cameraXform = new Xform();
+    private final RxTxGroup cameraXform = new RxTxGroup();
 
     ////////////////// Camera stuff ////////////////
-    private final Xform cameraXform3 = new Xform();
+    private final RxTxGroup cameraXform3 = new RxTxGroup();
 
 
     ////////////   Graphics Section of definitions  ////////////////
@@ -505,14 +505,12 @@ public class InterstellarSpacePane extends Pane {
     }
 
     private void buildCamera() {
-
         root.getChildren().add(cameraXform3);
         cameraXform.getChildren().add(cameraXform3);
         cameraXform3.getChildren().add(camera);
 
         // set camera POV and initial position
         setInitialView();
-
     }
 
     public void setInitialView() {

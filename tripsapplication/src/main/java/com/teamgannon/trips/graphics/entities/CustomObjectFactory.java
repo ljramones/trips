@@ -41,7 +41,7 @@ public class CustomObjectFactory {
         // create cylinder and color it with phong material
         Cylinder line = StellarEntityFactory.createCylinder(width, color, height);
 
-        Xform lineGroup = new Xform();
+        MoveableGroup lineGroup = new MoveableGroup();
 
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);
@@ -80,7 +80,7 @@ public class CustomObjectFactory {
         // create cylinder and color it with phong material
         Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
 
-        Xform lineGroup = new Xform();
+        MoveableGroup lineGroup = new MoveableGroup();
 
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);

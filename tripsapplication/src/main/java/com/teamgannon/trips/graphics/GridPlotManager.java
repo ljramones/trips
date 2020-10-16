@@ -4,7 +4,6 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
 import com.teamgannon.trips.graphics.entities.MoveableGroup;
-import com.teamgannon.trips.graphics.entities.Xform;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;

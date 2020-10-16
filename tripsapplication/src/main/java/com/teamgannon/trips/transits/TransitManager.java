@@ -64,7 +64,7 @@ public class TransitManager {
     /**
      * the graphical element controlling transits
      */
-    private final Xform transitGroup;
+    private final MoveableGroup transitGroup;
 
     /**
      * to track the labels for the transits
@@ -94,7 +94,7 @@ public class TransitManager {
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
-        transitGroup = new Xform();
+        transitGroup = new MoveableGroup();
         transitGroup.setWhatAmI("Transit Plot Group");
         world.getChildren().add(transitGroup);
 
@@ -201,7 +201,7 @@ public class TransitManager {
         // create cylinder and color it with phong material
         Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
 
-        Xform lineGroup = new Xform();
+        MoveableGroup lineGroup = new MoveableGroup();
 
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);
