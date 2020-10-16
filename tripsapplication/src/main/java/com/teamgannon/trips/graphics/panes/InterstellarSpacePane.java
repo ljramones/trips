@@ -19,10 +19,8 @@ import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
-import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.SceneAntialiasing;
-import javafx.scene.SubScene;
+import javafx.geometry.Point3D;
+import javafx.scene.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -31,6 +29,7 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
+import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -575,7 +574,7 @@ public class InterstellarSpacePane extends Pane {
                 cameraXform.setTranslateY(cameraY);
             } else {
 
-//            updateLabels();  // used to eventually make the labels flat
+//                starPlotManager.updateLabels();  // used to eventually make the labels flat
 
                 double modifier = 1.0;
                 double modifierFactor = 0.1;
@@ -592,12 +591,11 @@ public class InterstellarSpacePane extends Pane {
                 } else if (me.isMiddleButtonDown()) {
                     log.info("middle button pushed, x={}, y={}", mousePosX, mousePosY);
                 }
-
-//            me.setDragDetect(true);
             }
         });
 
     }
+
 
     /**
      * setup keyboard events

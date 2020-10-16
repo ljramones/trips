@@ -42,6 +42,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,10 +54,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
-import javafx.stage.Modality;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -306,6 +304,7 @@ public class MainPane implements
 
         queryDialog = new QueryDialog(stage, searchContext, tripsContext.getDataSetContext(), this, this);
         queryDialog.initModality(Modality.NONE);
+
     }
 
     private void resizeTrips(double height, double width) {
@@ -393,28 +392,28 @@ public class MainPane implements
 
     private void setButtons() {
 
-        final Image        resetButtonGraphic  = new Image("/images/buttons/tb_refresh.png");
-        final ImageView    resetButtonImage = new ImageView(resetButtonGraphic);
+        final Image resetButtonGraphic = new Image("/images/buttons/tb_refresh.png");
+        final ImageView resetButtonImage = new ImageView(resetButtonGraphic);
         resetButton.setGraphic(resetButtonImage);
         resetButton.setTooltip(new Tooltip("Reset View"));
 
-        final Image        toggleRoutesBtnGraphic  = new Image("/images/buttons/tb_routes.gif");
-        final ImageView    toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
+        final Image toggleRoutesBtnGraphic = new Image("/images/buttons/tb_routes.gif");
+        final ImageView toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
         toggleRoutesBtn.setGraphic(toggleRoutesBtnImage);
         toggleRoutesBtn.setTooltip(new Tooltip("Toggle routes"));
 
-        final Image        toggleZoomInBtnGraphic  = new Image("/images/buttons/tb_enlarge.gif");
-        final ImageView    toggleZoomInBtnImage = new ImageView(toggleZoomInBtnGraphic);
+        final Image toggleZoomInBtnGraphic = new Image("/images/buttons/tb_enlarge.gif");
+        final ImageView toggleZoomInBtnImage = new ImageView(toggleZoomInBtnGraphic);
         toggleZoomInBtn.setGraphic(toggleZoomInBtnImage);
         toggleZoomInBtn.setTooltip(new Tooltip("Zoom in"));
 
-        final Image        toggleZoomOutBtnGraphic  = new Image("/images/buttons/tb_reduce.gif");
-        final ImageView    toggleZoomOutBtnImage = new ImageView(toggleZoomOutBtnGraphic);
+        final Image toggleZoomOutBtnGraphic = new Image("/images/buttons/tb_reduce.gif");
+        final ImageView toggleZoomOutBtnImage = new ImageView(toggleZoomOutBtnGraphic);
         toggleZoomOutBtn.setGraphic(toggleZoomOutBtnImage);
         toggleZoomOutBtn.setTooltip(new Tooltip("Zoom out"));
 
-        final Image        toggleGridBtnGraphic  = new Image("/images/buttons/tb_grid.gif");
-        final ImageView    toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
+        final Image toggleGridBtnGraphic = new Image("/images/buttons/tb_grid.gif");
+        final ImageView toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
         toggleGridBtn.setGraphic(toggleGridBtnImage);
         toggleGridBtn.setTooltip(new Tooltip("Toggle grid"));
     }
@@ -797,6 +796,31 @@ public class MainPane implements
      * @param actionEvent the event
      */
     public void runQuery(ActionEvent actionEvent) {
+        queryDialog.setOnShown(new EventHandler<DialogEvent>() {
+            @Override
+            public void handle(DialogEvent event) {
+
+                //Values from screen
+                int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
+                int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
+
+                //Values from stage
+                int width = (int) stage.getWidth();
+                int height = (int) stage.getHeight();
+                int stageMaxX = (int) stage.getX();
+                int stageMaxY = (int) stage.getY();
+
+                //Maximal values your stage
+                int paneMaxX = screenMaxX - width;
+                int paneMaxY = screenMaxY - height;
+
+                //Check if the position of your stage is not out of screen
+                if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
+                    // Set stage where ever you want
+                    // future
+                }
+            }
+        });
         queryDialog.show();
     }
 
@@ -1111,6 +1135,13 @@ public class MainPane implements
         }
     }
 
+    ///////////////////  DATASET LISTENER  ///////////////////
+
+    /**
+     * add the dataset
+     *
+     * @param dataSetDescriptor the dataset descriptor to add
+     */
     @Override
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
@@ -1119,6 +1150,11 @@ public class MainPane implements
         updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " loaded");
     }
 
+    /**
+     * remove the dataset
+     *
+     * @param dataSetDescriptor the dataset descriptor to remove
+     */
     @Override
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
         Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
@@ -1128,7 +1164,7 @@ public class MainPane implements
         if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
             searchContext.removeDataSet(dataSetDescriptor);
 
-            //
+            // remove from database
             databaseManagementService.removeDataSet(dataSetDescriptor);
 
             // redisplay the datasets
@@ -1137,6 +1173,11 @@ public class MainPane implements
         }
     }
 
+    /**
+     * set the context
+     *
+     * @param descriptor the dataset descriptor that is in context
+     */
     @Override
     public void setContextDataSet(DataSetDescriptor descriptor) {
         tripsContext.getDataSetContext().setDescriptor(descriptor);
@@ -1146,13 +1187,14 @@ public class MainPane implements
         queryDialog.setDataSetContext(descriptor);
         interstellarSpacePane.setDataSetContext(descriptor);
 
-        updateStatus(descriptor.getDataSetName() + " is the active context");
+        updateStatus("You are looking at the stars in "+ descriptor.getDataSetName()+" dataset.  " );
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
         new DataSetTable(databaseManagementService, astrographicObjects);
     }
 
+    ////////////////////////////////////////////////////////////////////////
 
     @Override
     public void updateStar(AstrographicObject astrographicObject) {
@@ -1474,6 +1516,9 @@ public class MainPane implements
      * @param returnCode should be a return code of zero meaning success
      */
     private void initiateShutdown(int returnCode) {
+        if (queryDialog != null) {
+            queryDialog.close();
+        }
         // close the spring context which invokes all the bean destroy methods
         SpringApplication.exit(appContext, () -> returnCode);
         // now exit the application
@@ -1555,6 +1600,31 @@ public class MainPane implements
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(stage, starsInView);
+        findStarInViewDialog.setOnShown(new EventHandler<DialogEvent>() {
+            @Override
+            public void handle(DialogEvent event) {
+
+                //Values from screen
+                int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
+                int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
+
+                //Values from stage
+                int width = (int) stage.getWidth();
+                int height = (int) stage.getHeight();
+                int stageMaxX = (int) stage.getX();
+                int stageMaxY = (int) stage.getY();
+
+                //Maximal values your stage
+                int paneMaxX = screenMaxX - width;
+                int paneMaxY = screenMaxY - height;
+
+                //Check if the position of your stage is not out of screen
+                if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
+                    // Set stage where ever you want
+                    // future
+                }
+            }
+        });
         Optional<FindResults> optional = findStarInViewDialog.showAndWait();
         if (optional.isPresent()) {
             FindResults findResults = optional.get();

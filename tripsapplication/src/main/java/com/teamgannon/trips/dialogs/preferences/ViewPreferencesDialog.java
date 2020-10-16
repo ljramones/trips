@@ -19,7 +19,9 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private final TripsContext tripsContext;
 
 
-    public ViewPreferencesDialog(PreferencesUpdaterListener updater, TripsContext tripsContext, ApplicationPreferences preferences) {
+    public ViewPreferencesDialog(PreferencesUpdaterListener updater,
+                                 TripsContext tripsContext,
+                                 ApplicationPreferences preferences) {
         this.updater = updater;
         this.tripsContext = tripsContext;
 
@@ -66,7 +68,8 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         Tab civilizationTab = new Tab("Civilization");
         String style6 = "-fx-background-color: limegreen";
         civilizationTab.setStyle(style6);
-        civilizationTab.setContent(new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), updater));
+        civilizationTab.setContent(
+                new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), updater));
         tabPane.getTabs().add(civilizationTab);
 
         vBox.getChildren().add(tabPane);

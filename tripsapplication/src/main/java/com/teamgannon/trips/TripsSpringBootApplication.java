@@ -1,6 +1,5 @@
 package com.teamgannon.trips;
 
-import com.sun.javafx.application.LauncherImpl;
 import com.teamgannon.trips.javafxsupport.TripsFxApplication;
 import com.teamgannon.trips.javafxsupport.TripsPreloader;
 import javafx.application.Application;
@@ -29,9 +28,8 @@ public class TripsSpringBootApplication implements CommandLineRunner {
 
 
     public static void main(String[] args) {
-//        LauncherImpl.launchApplication(TripsFxApplication.class, args);
-//        LauncherImpl.launchApplication(TripsFxApplication.class, TripsPreloader.class, args);
-        System.setProperty("javafx.preloader", "com.teamgannon.trips.javafxsupport.TripsPreloader");
+
+        System.setProperty("javafx.preloader", TripsPreloader.class.getName());
         Application.launch(TripsFxApplication.class, args);
     }
 

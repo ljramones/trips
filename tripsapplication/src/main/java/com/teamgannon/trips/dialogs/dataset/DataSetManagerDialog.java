@@ -5,7 +5,6 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -227,18 +226,14 @@ public class DataSetManagerDialog extends Dialog<Integer> {
     }
 
     private void delete(ActionEvent actionEvent) {
-        Optional<ButtonType> result = showConfirmationAlert("Main Pane", "", "You want to delete these datasets?\nThis action cannot be undone");
-        if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
-            if (selectedDataset != null) {
-                DataSetDescriptor dataSetDescriptor = databaseManagementService.getDatasetFromName(selectedDataset.getDataSetName());
-                databaseManagementService.removeDataSet(dataSetDescriptor);
-                this.dataSetChangeListener.removeDataSet(dataSetDescriptor);
-            } else {
-                showErrorAlert("Delete Dataset", "You need to select a dataset first");
-            }
-            selectedDataset = null;
-            updateTable();
+        if (selectedDataset != null) {
+            this.dataSetChangeListener.removeDataSet(selectedDataset);
+        } else {
+            showErrorAlert("Delete Dataset", "You need to select a dataset first");
         }
+        selectedDataset = null;
+        updateTable();
+
     }
 
 
