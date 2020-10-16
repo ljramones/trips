@@ -11,6 +11,7 @@ import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
 import javafx.geometry.Point3D;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
@@ -91,7 +92,7 @@ public class TransitManager {
     /**
      * constructor
      */
-    public TransitManager(Xform world,
+    public TransitManager(Group world,
                           RouteUpdaterListener routeUpdaterListener) {
 
         // our graphics world

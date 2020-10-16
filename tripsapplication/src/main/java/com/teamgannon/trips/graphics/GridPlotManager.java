@@ -5,6 +5,7 @@ import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
 import com.teamgannon.trips.graphics.entities.Xform;
 import javafx.geometry.Point3D;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -39,7 +40,7 @@ public class GridPlotManager {
      * @param width   the screen width
      * @param depth   the screen depth
      */
-    public GridPlotManager(Xform world,
+    public GridPlotManager(Group world,
                            double spacing, double width, double depth,
                            ColorPalette colorPalette) {
 
