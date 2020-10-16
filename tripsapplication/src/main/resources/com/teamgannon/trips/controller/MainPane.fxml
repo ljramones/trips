@@ -108,7 +108,7 @@
             </Menu>
             <Menu mnemonicParsing="false" text="Search">
                 <MenuItem mnemonicParsing="false"
-                          onAction="#findInView" text="Find Star in View..."/>
+                          onAction="#findInView" text="Select star..."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#runQuery" text="Show Query Dialog..."/>
             </Menu>

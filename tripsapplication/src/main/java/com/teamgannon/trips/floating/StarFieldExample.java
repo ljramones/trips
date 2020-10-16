@@ -26,7 +26,7 @@ import java.util.Random;
 import static org.fxyz3d.geometry.MathUtils.clamp;
 
 /**
- * example for floating labels
+ * example for flat labels
  */
 public class StarFieldExample extends Application {
 

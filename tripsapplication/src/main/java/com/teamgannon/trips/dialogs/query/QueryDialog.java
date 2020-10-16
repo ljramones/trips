@@ -8,17 +8,20 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Separator;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,10 +32,15 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     public final Button runQueryButton = new Button("Run Query");
-    private final SearchContext searchContext;
+    public final Button dismissButton = new Button("Dismiss");
     private final SearchPane searchPane;
     private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
+
+
+    private static double xOffset = 0;
+    private static double yOffset = 0;
+
 
     /**
      * constructor
@@ -46,16 +54,14 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                        DataSetContext dataSetContext,
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
-        this.searchContext = searchContext;
         this.setTitle("Query and Search");
 
         searchPane = new SearchPane(
                 stage,
-                this.searchContext,
+                searchContext,
                 dataSetContext,
                 dataSetChangeListener,
                 updater);
-
 
         this.setHeight(1000);
         this.setWidth(500);
@@ -80,13 +86,20 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         hBox2.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox2);
 
-        runQueryButton.setOnAction(this::runQueryclicked);
+        runQueryButton.setOnAction(this::runQueryClicked);
         hBox2.getChildren().add(runQueryButton);
+
+        dismissButton.setOnAction(this::close);
+        hBox2.getChildren().add(dismissButton);
 
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
         stage.setOnCloseRequest(this::close);
+    }
+
+    private void close(ActionEvent actionEvent) {
+        setResult(new AstroSearchQuery());
     }
 
 
@@ -100,16 +113,16 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     }
 
     private void close(WindowEvent we) {
-        setResult(searchContext.getAstroSearchQuery());
+        setResult(new AstroSearchQuery());
     }
 
-    private void runQueryclicked(ActionEvent actionEvent) {
+    private void runQueryClicked(ActionEvent actionEvent) {
         boolean showPlot = plotDisplayCheckbox.isSelected();
         boolean showTable = tableDisplayCheckbox.isSelected();
 
         if (!showPlot && !showTable) {
             showErrorAlert("Query Request",
-                    "Must select at leat one target for data, plot or table");
+                    "Must select at least one target for data, plot or table");
         }
         searchPane.runQuery(showPlot, showTable);
     }

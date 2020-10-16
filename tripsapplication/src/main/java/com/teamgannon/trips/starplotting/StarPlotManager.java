@@ -27,6 +27,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,7 +68,7 @@ public class StarPlotManager {
     /**
      * used to control label visibility
      */
-    private final Xform labelDisplayGroup = new Xform();
+    private Xform labelDisplayGroup = new Xform();
 
     /**
      * to hold all the polities
@@ -77,6 +78,7 @@ public class StarPlotManager {
 
     ///////////////////
 
+    private Xform world;
     /**
      * used to signal an update to the parent list view
      */
@@ -167,6 +169,7 @@ public class StarPlotManager {
                            ReportGenerator reportGenerator,
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
+        this.world = world;
 
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
@@ -190,6 +193,10 @@ public class StarPlotManager {
         politiesDisplayGroup.setWhatAmI("Polities");
         world.getChildren().add(politiesDisplayGroup);
 
+    }
+
+    public Xform getLabels() {
+        return labelDisplayGroup;
     }
 
     /**
@@ -566,6 +573,12 @@ public class StarPlotManager {
         label.setTranslateX(point3D.getX());
         label.setTranslateY(point3D.getY());
         label.setTranslateZ(point3D.getZ());
+        LabelDescriptor descriptor = LabelDescriptor
+                .builder()
+                .text(record.getStarName())
+                .labelLocation(point3D)
+                .build();
+        label.setUserData(descriptor);
         return label;
     }
 
@@ -925,6 +938,39 @@ public class StarPlotManager {
     private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
         if (contextSelectorListener != null) {
             contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
+        }
+    }
+
+
+    public void updateLabels() {
+        if (labelsOn) {
+            Xform newLabelsGroup = new Xform();
+
+            synchronized (this) {
+                /////////
+                log.info("enter critical section");
+                Iterator<Node> nodeIterator= labelDisplayGroup.getChildren().listIterator();
+                while (nodeIterator.hasNext()) {
+                    Node labelNode = nodeIterator.next();
+                    LabelDescriptor labelDescriptor = (LabelDescriptor) labelNode.getUserData();
+                    if (labelDescriptor == null) {
+                        newLabelsGroup.getChildren().add(labelNode);
+                        continue;
+                    }
+                    Point3D p2 = labelNode.localToScene(labelDescriptor.getLabelLocation());
+                    Label newLabel = new Label(labelDescriptor.getText());
+                    newLabel.getTransforms().setAll(new Translate(p2.getX(), p2.getY()));
+                    newLabelsGroup.getChildren().add(newLabel);
+                }
+                log.info("exit critical section");
+                /////////
+            }
+            newLabelsGroup.setVisible(true);
+            labelDisplayGroup.setVisible(false);
+            world.getChildren().add(newLabelsGroup);
+//            labelDisplayGroup.getChildren().addAll(newLabelsGroup);
+        } else {
+            log.debug("labels are off so nothing to do");
         }
     }
 

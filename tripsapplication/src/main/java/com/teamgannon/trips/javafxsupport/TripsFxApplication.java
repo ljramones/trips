@@ -4,7 +4,9 @@ import com.teamgannon.trips.TripsSpringBootApplication;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -33,6 +35,13 @@ public class TripsFxApplication extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         context.publishEvent(new StageReadyEvent(primaryStage));
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
     }
 
     @Override
