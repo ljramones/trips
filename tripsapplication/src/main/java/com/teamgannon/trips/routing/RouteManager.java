@@ -166,7 +166,7 @@ public class RouteManager {
             createRouteSegment(starDisplayRecord);
             routingActive = false;
             //
-            Xform routeGraphic = StellarEntityFactory.createRoute(currentRoute);
+            MoveableGroup routeGraphic = StellarEntityFactory.createRoute(currentRoute);
             routesGroup.getChildren().add(routeGraphic);
             routesGroup.setVisible(true);
             //
@@ -187,15 +187,15 @@ public class RouteManager {
         routesGroup.getChildren().remove(currentRouteDisplay);
 
         // create a new one based on descriptor
-        Xform displayRoute = createDisplayRoute(currentRoute);
+        MoveableGroup displayRoute = createDisplayRoute(currentRoute);
 
         // add this created one to the routes group
         routesGroup.getChildren().add(displayRoute);
     }
 
 
-    private Xform createDisplayRoute(RouteDescriptor currentRoute) {
-        Xform route = new Xform();
+    private MoveableGroup createDisplayRoute(RouteDescriptor currentRoute) {
+        MoveableGroup route = new MoveableGroup();
         route.setWhatAmI(currentRoute.getName());
         Point3D previousPoint = new Point3D(0, 0, 0);
         boolean firstPoint = true;
@@ -292,7 +292,7 @@ public class RouteManager {
         if (checkIfRouteCanBePlotted(route)) {
             // do actual plot
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
-            Xform routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+            MoveableGroup routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
             routesGroup.getChildren().add(routeGraphic);
             routesGroup.setVisible(true);
         }
@@ -300,7 +300,7 @@ public class RouteManager {
     }
 
     public void plotRouteDescriptor(RouteDescriptor routeDescriptor) {
-        Xform routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+        MoveableGroup routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
         routesGroup.getChildren().add(routeGraphic);
         routesGroup.setVisible(true);
     }

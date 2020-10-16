@@ -204,8 +204,8 @@ public class StellarEntityFactory {
      * @param routeDescriptor the route descriptor
      * @return the route Xform
      */
-    public static Xform createRoute(RouteDescriptor routeDescriptor) {
-        Xform route = new Xform();
+    public static MoveableGroup createRoute(RouteDescriptor routeDescriptor) {
+        MoveableGroup route = new MoveableGroup();
         route.setWhatAmI("route-" + routeDescriptor.getName());
         boolean firstLink = true;
 
