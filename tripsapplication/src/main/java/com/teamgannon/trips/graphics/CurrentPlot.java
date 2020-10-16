@@ -6,6 +6,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.Xform;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import lombok.Data;
 
@@ -52,7 +53,7 @@ public class CurrentPlot {
     /**
      * the lookout for drawn stars
      */
-    private final Map<UUID, Xform> starLookup = new HashMap<>();
+    private final Map<UUID, Node> starLookup = new HashMap<>();
 
     /**
      * a one way map form star id to label of the star
@@ -79,11 +80,11 @@ public class CurrentPlot {
      * @param starId the guid for the star
      * @return the star
      */
-    public Xform getStar(UUID starId) {
+    public Node getStar(UUID starId) {
         return starLookup.get(starId);
     }
 
-    public void addStar(UUID id, Xform star) {
+    public void addStar(UUID id, Node star) {
         starLookup.put(id, star);
     }
 

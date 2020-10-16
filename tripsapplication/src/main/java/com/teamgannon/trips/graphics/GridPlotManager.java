@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
+import com.teamgannon.trips.graphics.entities.MoveableGroup;
 import com.teamgannon.trips.graphics.entities.Xform;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -16,9 +17,9 @@ import static java.lang.Math.*;
 @Slf4j
 public class GridPlotManager {
 
-    private final Xform gridGroup = new Xform();
+    private final MoveableGroup gridGroup = new MoveableGroup();
 
-    private final Xform scaleGroup = new Xform();
+    private final MoveableGroup scaleGroup = new MoveableGroup();
 
     private final double width;
     private final double depth;
@@ -50,7 +51,7 @@ public class GridPlotManager {
         this.lineWidth = colorPalette.getGridLineWidth();
         this.colorPalette = colorPalette;
         this.gridGroup.setWhatAmI("Planar Grid");
-        this.scaleGroup.setWhatAmI("Reference Scale");
+//        this.scaleGroup.setWhatAmI("Reference Scale");
 
         // setup data structures for each independent element
         world.getChildren().add(gridGroup);
@@ -60,7 +61,7 @@ public class GridPlotManager {
         buildInitialScaleLegend();
     }
 
-    public Xform getGridGroup() {
+    public Group getGridGroup() {
         return gridGroup;
     }
 

@@ -2,10 +2,7 @@ package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
-import com.teamgannon.trips.graphics.entities.Xform;
+import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.StarMeasurementService;
@@ -72,7 +69,7 @@ public class TransitManager {
     /**
      * to track the labels for the transits
      */
-    private final Xform transitLabelsGroup;
+    private final MoveableGroup transitLabelsGroup;
 
     /**
      * the listener to create routes on demand
@@ -101,7 +98,7 @@ public class TransitManager {
         transitGroup.setWhatAmI("Transit Plot Group");
         world.getChildren().add(transitGroup);
 
-        transitLabelsGroup = new Xform();
+        transitLabelsGroup = new MoveableGroup();
         transitLabelsGroup.setWhatAmI("Labels for Transit Plots");
         world.getChildren().add(transitLabelsGroup);
 
