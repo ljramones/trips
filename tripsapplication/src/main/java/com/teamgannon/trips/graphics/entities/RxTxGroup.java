@@ -1,21 +1,14 @@
 package com.teamgannon.trips.graphics.entities;
 
-import javafx.scene.Group;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Scale;
-import javafx.scene.transform.Translate;
+import lombok.Data;
 
+@Data
+public class RxTxGroup extends MoveableGroup {
 
-public class RxTxGroup extends Group {
-
-    public Translate t = new Translate();
-    public Translate p = new Translate();
-    public Translate ip = new Translate();
     public Rotate rx = new Rotate();
     public Rotate ry = new Rotate();
     public Rotate rz = new Rotate();
-    public Scale s = new Scale();
-    private String whatAmI;
 
     {
         rx.setAxis(Rotate.X_AXIS);
@@ -31,56 +24,7 @@ public class RxTxGroup extends Group {
 
     public RxTxGroup() {
         super();
-        getTransforms().addAll(t, rz, ry, rx, s);
-    }
-
-    public RxTxGroup(RotateOrder rotateOrder) {
-        super();
-        // choose the order of rotations based on the rotateOrder
-        switch (rotateOrder) {
-            case XYZ -> getTransforms().addAll(t, p, rz, ry, rx, s, ip);
-            case XZY -> getTransforms().addAll(t, p, ry, rz, rx, s, ip);
-            case YXZ -> getTransforms().addAll(t, p, rz, rx, ry, s, ip);
-            case YZX -> getTransforms().addAll(t, p, rx, rz, ry, s, ip);  // For Camera
-            case ZXY -> getTransforms().addAll(t, p, ry, rx, rz, s, ip);
-            case ZYX -> getTransforms().addAll(t, p, rx, ry, rz, s, ip);
-        }
-    }
-
-    public void setTranslate(double x, double y, double z) {
-        t.setX(x);
-        t.setY(y);
-        t.setZ(z);
-    }
-
-    public String getWhatAmI() {
-        return whatAmI;
-    }
-
-    public void setWhatAmI(String whatAmI) {
-        this.whatAmI = whatAmI;
-    }
-
-    public void setTranslate(double x, double y) {
-        t.setX(x);
-        t.setY(y);
-    }
-
-    // Cannot override these methods as they are final:
-    // public void setTranslateX(double x) { t.setX(x); }
-    // public void setTranslateY(double y) { t.setY(y); }
-    // public void setTranslateZ(double z) { t.setZ(z); }
-    // Use these methods instead:
-    public void setTx(double x) {
-        t.setX(x);
-    }
-
-    public void setTy(double y) {
-        t.setY(y);
-    }
-
-    public void setTz(double z) {
-        t.setZ(z);
+        getTransforms().addAll(rz, ry, rx);
     }
 
     public void setRotate(double x, double y, double z) {
@@ -113,78 +57,4 @@ public class RxTxGroup extends Group {
         rz.setAngle(z);
     }
 
-    public void setScale(double scaleFactor) {
-        s.setX(scaleFactor);
-        s.setY(scaleFactor);
-        s.setZ(scaleFactor);
-    }
-
-    public void setScale(double x, double y, double z) {
-        s.setX(x);
-        s.setY(y);
-        s.setZ(z);
-    }
-
-    // Cannot override these methods as they are final:
-    // public void setScaleX(double x) { s.setX(x); }
-    // public void setScaleY(double y) { s.setY(y); }
-    // public void setScaleZ(double z) { s.setZ(z); }
-    // Use these methods instead:
-    public void setSx(double x) {
-        s.setX(x);
-    }
-
-    public void setSy(double y) {
-        s.setY(y);
-    }
-
-    public void setSz(double z) {
-        s.setZ(z);
-    }
-
-    public void setPivot(double x, double y, double z) {
-        p.setX(x);
-        p.setY(y);
-        p.setZ(z);
-        ip.setX(-x);
-        ip.setY(-y);
-        ip.setZ(-z);
-    }
-
-    public void reset() {
-        t.setX(0.0);
-        t.setY(0.0);
-        t.setZ(0.0);
-        rx.setAngle(0.0);
-        ry.setAngle(0.0);
-        rz.setAngle(0.0);
-        s.setX(1.0);
-        s.setY(1.0);
-        s.setZ(1.0);
-        p.setX(0.0);
-        p.setY(0.0);
-        p.setZ(0.0);
-        ip.setX(0.0);
-        ip.setY(0.0);
-        ip.setZ(0.0);
-    }
-
-    public void resetTSP() {
-        t.setX(0.0);
-        t.setY(0.0);
-        t.setZ(0.0);
-        s.setX(1.0);
-        s.setY(1.0);
-        s.setZ(1.0);
-        p.setX(0.0);
-        p.setY(0.0);
-        p.setZ(0.0);
-        ip.setX(0.0);
-        ip.setY(0.0);
-        ip.setZ(0.0);
-    }
-
-    public enum RotateOrder {
-        XYZ, XZY, YXZ, YZX, ZXY, ZYX
-    }
 }

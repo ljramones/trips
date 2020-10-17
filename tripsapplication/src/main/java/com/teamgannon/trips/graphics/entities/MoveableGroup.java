@@ -9,12 +9,12 @@ import lombok.Data;
 @Data
 public class MoveableGroup extends Group {
 
-    private String whatAmI;
+    protected String whatAmI;
 
     /**
      * used to translate an object around the system
      */
-    private Translate t = new Translate();
+    protected Translate t = new Translate();
 
     /**
      * used to rescale the object
@@ -49,6 +49,31 @@ public class MoveableGroup extends Group {
         t.setZ(z);
     }
 
+
+    public void setScale(double scaleFactor) {
+        s.setX(scaleFactor);
+        s.setY(scaleFactor);
+        s.setZ(scaleFactor);
+    }
+
+    public void setScale(double x, double y, double z) {
+        s.setX(x);
+        s.setY(y);
+        s.setZ(z);
+    }
+
+    // Use these methods instead:
+    public void setSx(double x) {
+        s.setX(x);
+    }
+
+    public void setSy(double y) {
+        s.setY(y);
+    }
+
+    public void setSz(double z) {
+        s.setZ(z);
+    }
 
 }
 
