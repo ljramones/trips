@@ -16,12 +16,10 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
-import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.SceneAntialiasing;
-import javafx.scene.SubScene;
+import javafx.scene.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -36,6 +34,7 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 
 @Slf4j
 public class InterstellarSpacePane extends Pane {
+    private static final int CYCLE_COUNT = 30;
 
     ///////  new  ///////
 
@@ -133,53 +132,12 @@ public class InterstellarSpacePane extends Pane {
         this.sceneHeight = sceneHeight;
         this.tripsContext = tripsContext;
 
-        //////////   new  /////////////
-
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
         root.getChildren().add(subScene);
 
         subScene.setCamera(camera);
-
-        subScene.setOnMousePressed((MouseEvent me) -> {
-                    mousePosX = me.getSceneX();
-                    mousePosY = me.getSceneY();
-                    mouseOldX = me.getSceneX();
-                    mouseOldY = me.getSceneY();
-                }
-        );
-
-        subScene.setOnMouseDragged((MouseEvent me) -> {
-                    mouseOldX = mousePosX;
-                    mouseOldY = mousePosY;
-                    mousePosX = me.getSceneX();
-                    mousePosY = me.getSceneY();
-                    mouseDeltaX = (mousePosX - mouseOldX);
-                    mouseDeltaY = (mousePosY - mouseOldY);
-                    double modifier = 5.0;
-                    double modifierFactor = 0.1;
-
-                    if (me.isPrimaryButtonDown()) {
-                        if (me.isAltDown()) { //roll
-                            rotateZ.setAngle(((rotateZ.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
-                        } else {
-                            rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
-                            rotateX.setAngle(
-                                    clamp(
-                                            (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
-                                            -60,
-                                            60
-                                    )
-                            ); // -
-                        }
-                    }
-//                    updateLabels();
-                }
-        );
-
-        //////////////////////////////
-        //////////////////////////////
 
         // setup defaults
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
@@ -232,6 +190,56 @@ public class InterstellarSpacePane extends Pane {
         buildRoot();
         setInitialView();
 
+        handleMouseEvents();
+    }
+
+    /**
+     * handle the mouse events
+     */
+    private void handleMouseEvents() {
+        subScene.setOnMousePressed((MouseEvent me) -> {
+                    mousePosX = me.getSceneX();
+                    mousePosY = me.getSceneY();
+                    mouseOldX = me.getSceneX();
+                    mouseOldY = me.getSceneY();
+                }
+        );
+
+        subScene.setOnMouseDragged((MouseEvent me) -> {
+                    mouseOldX = mousePosX;
+                    mouseOldY = mousePosY;
+                    mousePosX = me.getSceneX();
+                    mousePosY = me.getSceneY();
+                    mouseDeltaX = (mousePosX - mouseOldX);
+                    mouseDeltaY = (mousePosY - mouseOldY);
+                    double modifier = 5.0;
+                    double modifierFactor = 0.1;
+
+                    if (me.isPrimaryButtonDown()) {
+                        if (me.isAltDown()) { //roll
+                            rotateZ.setAngle(((rotateZ.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                        } else {
+                            rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                            rotateX.setAngle(
+                                    clamp(
+                                            (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
+                                            -60,
+                                            60
+                                    )
+                            ); // -
+                        }
+                    }
+//                    updateLabels();
+                }
+        );
+    }
+
+    /**
+     * build root
+     */
+    private void buildRoot() {
+        // hooks this into the
+        this.getChildren().add(root);
     }
 
     /**
@@ -550,9 +558,19 @@ public class InterstellarSpacePane extends Pane {
 
     ////////////// graphics helpers  /////////////////////////
 
-    private void buildRoot() {
-        // hooks this into the
-        this.getChildren().add(root);
+
+    /**
+     * set a fade transition on a node
+     *
+     * @param node the node to set
+     */
+    public void setFade(Node node, int cycleCount) {
+        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
+        fader.setFromValue(1.0);
+        fader.setToValue(0.1);
+        fader.setCycleCount(cycleCount);
+        fader.setAutoReverse(true);
+        fader.play();
     }
 
 }
