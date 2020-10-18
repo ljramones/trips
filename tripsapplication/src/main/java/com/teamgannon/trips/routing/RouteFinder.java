@@ -162,6 +162,6 @@ public class RouteFinder {
      * @param routeList the routes to plot
      */
     private void plot(List<RoutingMetric> routeList) {
-        interstellarSpacePane.plotRouteDesciptors(routeList);
+        interstellarSpacePane.plotRouteDescriptors(routeList);
     }
 }

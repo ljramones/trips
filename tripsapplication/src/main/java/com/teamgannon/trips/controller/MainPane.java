@@ -964,7 +964,7 @@ public class MainPane implements
 
     public void resetView(ActionEvent actionEvent) {
         resizePopup.hide();
-        interstellarSpacePane.setInitialView();
+        interstellarSpacePane.resetView();
     }
 
 

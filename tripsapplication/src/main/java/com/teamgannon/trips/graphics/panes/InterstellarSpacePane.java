@@ -6,7 +6,6 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.GridPlotManager;
-import com.teamgannon.trips.graphics.entities.RxTxGroup;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -24,7 +23,6 @@ import javafx.scene.PerspectiveCamera;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
@@ -34,32 +32,31 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.UUID;
 
+import static org.fxyz3d.geometry.MathUtils.clamp;
+
 @Slf4j
 public class InterstellarSpacePane extends Pane {
 
-    //////////////  Star Definitions   //////////////////
-    private static final double CAMERA_INITIAL_DISTANCE = -500;
-    private static final double CAMERA_INITIAL_X_ANGLE = -25;
-
-    //////////////// event listeners and updaters
-    private static final double CAMERA_INITIAL_Y_ANGLE = -25;
-    private static final double CAMERA_NEAR_CLIP = 0.1;
-    private static final double CAMERA_FAR_CLIP = 10000.0;
-
-    // animations
-    private static final double ROTATE_SECS = 60;
-    private final RxTxGroup cameraXform = new RxTxGroup();
-
-    ////////////////// Camera stuff ////////////////
-    private final RxTxGroup cameraXform3 = new RxTxGroup();
+    ///////  new  ///////
 
 
-    ////////////   Graphics Section of definitions  ////////////////
+    // mouse positions
+    private double mousePosX, mousePosY = 0;
+    private double mouseOldX, mouseOldY = 0;
+    private double mouseDeltaX, mouseDeltaY = 0;
+
+    private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
+    private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
+    private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
+
     private final Group root = new Group();
     private final Group world = new Group();
 
-    // camera work
-    private final PerspectiveCamera camera = new PerspectiveCamera(true);
+    private final SubScene subScene;
+
+    PerspectiveCamera camera = new PerspectiveCamera(true);
+
+    private static final double ROTATE_SECS = 60;
 
     /**
      * animation rotator
@@ -69,8 +66,8 @@ public class InterstellarSpacePane extends Pane {
     /////////////////
 
     // screen real estate
-    private final double width;
-    private final double height;
+    private final double sceneWidth;
+    private final double sceneHeight;
 
     /**
      * our current plot
@@ -102,10 +99,6 @@ public class InterstellarSpacePane extends Pane {
      */
     private final ListUpdaterListener listUpdaterListener;
 
-    // mouse positions
-    private double mousePosX, mousePosY = 0;
-    private double mouseOldX, mouseOldY = 0;
-    private double mouseDeltaX, mouseDeltaY = 0;
 
     /**
      * the grid plot manager
@@ -121,11 +114,11 @@ public class InterstellarSpacePane extends Pane {
     /**
      * constructor for the Graphics Pane
      *
-     * @param width  the width
-     * @param height the height
+     * @param sceneWidth  the width
+     * @param sceneHeight the height
      */
-    public InterstellarSpacePane(double width,
-                                 double height,
+    public InterstellarSpacePane(double sceneWidth,
+                                 double sceneHeight,
                                  double depth,
                                  double spacing,
                                  TripsContext tripsContext,
@@ -136,9 +129,57 @@ public class InterstellarSpacePane extends Pane {
                                  ContextSelectorListener contextSelectorListener,
                                  RedrawListener redrawListener,
                                  ReportGenerator reportGenerator) {
-        this.width = width;
-        this.height = height;
+        this.sceneWidth = sceneWidth;
+        this.sceneHeight = sceneHeight;
         this.tripsContext = tripsContext;
+
+        //////////   new  /////////////
+
+        subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
+        subScene.setFill(Color.BLACK);
+
+        root.getChildren().add(subScene);
+
+        subScene.setCamera(camera);
+
+        subScene.setOnMousePressed((MouseEvent me) -> {
+                    mousePosX = me.getSceneX();
+                    mousePosY = me.getSceneY();
+                    mouseOldX = me.getSceneX();
+                    mouseOldY = me.getSceneY();
+                }
+        );
+
+        subScene.setOnMouseDragged((MouseEvent me) -> {
+                    mouseOldX = mousePosX;
+                    mouseOldY = mousePosY;
+                    mousePosX = me.getSceneX();
+                    mousePosY = me.getSceneY();
+                    mouseDeltaX = (mousePosX - mouseOldX);
+                    mouseDeltaY = (mousePosY - mouseOldY);
+                    double modifier = 5.0;
+                    double modifierFactor = 0.1;
+
+                    if (me.isPrimaryButtonDown()) {
+                        if (me.isAltDown()) { //roll
+                            rotateZ.setAngle(((rotateZ.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                        } else {
+                            rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                            rotateX.setAngle(
+                                    clamp(
+                                            (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
+                                            -60,
+                                            60
+                                    )
+                            ); // -
+                        }
+                    }
+//                    updateLabels();
+                }
+        );
+
+        //////////////////////////////
+        //////////////////////////////
 
         // setup defaults
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
@@ -170,7 +211,7 @@ public class InterstellarSpacePane extends Pane {
 
         this.gridPlotManager = new GridPlotManager(
                 world,
-                spacing, width, depth,
+                spacing, sceneWidth, depth,
                 colorPalette
         );
 
@@ -181,19 +222,40 @@ public class InterstellarSpacePane extends Pane {
 
         starPlotManager.setRouteManager(routeManager);
 
-        this.setMinHeight(height);
-        this.setMinWidth(width);
+        this.setMinHeight(sceneHeight);
+        this.setMinWidth(sceneWidth);
 
         // create a rotation animation
         rotator = createRotateAnimation();
 
         // create all the base display elements
         buildRoot();
-        buildScene();
-        buildCamera();
+        setInitialView();
 
-        // handle mouse and keyboard events
-        handleMouseEvents(this);
+    }
+
+    /**
+     * set the initial view
+     */
+    public void setInitialView() {
+        setInitialCamera();
+        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
+
+        world.getRotate();
+    }
+
+    /**
+     * set the initial camera view
+     */
+    public void setInitialCamera() {
+        camera.setNearClip(0.1);
+        camera.setFarClip(10000.0);
+        camera.setTranslateZ(-1500);
+    }
+
+    public void resetView() {
+        setInitialView();
+        camera.setRotate(25);
     }
 
     public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
@@ -408,7 +470,7 @@ public class InterstellarSpacePane extends Pane {
         routeManager.plotRoutes(routes);
     }
 
-    public void plotRouteDesciptors(List<RoutingMetric> routeDescriptorList) {
+    public void plotRouteDescriptors(List<RoutingMetric> routeDescriptorList) {
         routeManager.plotRouteDescriptors(routeDescriptorList);
     }
 
@@ -491,101 +553,6 @@ public class InterstellarSpacePane extends Pane {
     private void buildRoot() {
         // hooks this into the
         this.getChildren().add(root);
-    }
-
-    private void buildScene() {
-        SubScene subScene = new SubScene(
-                world,
-                width, height,
-                true, SceneAntialiasing.BALANCED);
-        subScene.setCamera(camera);
-        subScene.setFill(Color.BLACK);
-
-        root.getChildren().add(subScene);
-    }
-
-    private void buildCamera() {
-        root.getChildren().add(cameraXform3);
-        cameraXform.getChildren().add(cameraXform3);
-        cameraXform3.getChildren().add(camera);
-
-        // set camera POV and initial position
-        setInitialView();
-    }
-
-    public void setInitialView() {
-        camera.setNearClip(CAMERA_NEAR_CLIP);
-        camera.setFarClip(CAMERA_FAR_CLIP);
-        camera.setTranslateZ(CAMERA_INITIAL_DISTANCE);
-
-        // rotate camera along x and y axis
-        cameraXform.ry.setAngle(CAMERA_INITIAL_Y_ANGLE);
-        cameraXform.rx.setAngle(CAMERA_INITIAL_X_ANGLE);
-
-        // push camera back to see the object
-        cameraXform3.setTranslate(0, 0, -1000);
-    }
-
-    /////////////////  MOUSE AND KEYBOARD EVENT HANDLERS  /////////////////////////
-
-    /**
-     * used to handle rotation of the scene
-     *
-     * @param pane the subscene to manage rotation
-     */
-    private void handleMouseEvents(Pane pane) {
-
-        pane.setOnScroll((ScrollEvent event) -> {
-            double deltaY = event.getDeltaY();
-            zoomGraph(deltaY);
-        });
-
-        // get initial position of the mouse
-        pane.setOnMousePressed((MouseEvent me) -> {
-            mousePosX = me.getSceneX();
-            mousePosY = me.getSceneY();
-            mouseOldX = me.getSceneX();
-            mouseOldY = me.getSceneY();
-        });
-
-        // rotate the scene based on whether move moves
-        pane.setOnMouseDragged((MouseEvent me) -> {
-            mouseOldX = mousePosX;
-            mouseOldY = mousePosY;
-            mousePosX = me.getSceneX();
-            mousePosY = me.getSceneY();
-            mouseDeltaX = (mousePosX - mouseOldX);
-            mouseDeltaY = (mousePosY - mouseOldY);
-
-            if (me.isControlDown()) {
-                // this drags the graph if the control key is pressed
-                double cameraX = cameraXform.getTranslateX() - mouseDeltaX;
-                double cameraY = cameraXform.getTranslateY() - mouseDeltaY;
-
-                cameraXform.setTranslateX(cameraX);
-                cameraXform.setTranslateY(cameraY);
-            } else {
-
-//                starPlotManager.updateLabels();  // used to eventually make the labels flat
-
-                double modifier = 1.0;
-                double modifierFactor = 0.1;
-
-                if (me.isShiftDown()) {
-                    modifier = 5.0;
-                }
-
-                if (me.isPrimaryButtonDown()) {
-                    cameraXform.ry.setAngle(cameraXform.ry.getAngle() - mouseDeltaX * modifierFactor * modifier * 2.0);  // +
-                    cameraXform.rx.setAngle(cameraXform.rx.getAngle() + mouseDeltaY * modifierFactor * modifier * 2.0);  // -
-                } else if (me.isSecondaryButtonDown()) {
-                    log.info("secondary button pushed, x={}, y={}", mousePosX, mousePosY);
-                } else if (me.isMiddleButtonDown()) {
-                    log.info("middle button pushed, x={}, y={}", mousePosX, mousePosY);
-                }
-            }
-        });
-
     }
 
 }
