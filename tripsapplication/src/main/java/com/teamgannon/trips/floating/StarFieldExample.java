@@ -48,7 +48,7 @@ public class StarFieldExample extends Application {
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
 
     private final Group root = new Group();
-    private final Group nodeGroup = new Group();  //all 3D nodes in scene
+    private final Group world = new Group();  //all 3D nodes in scene
     private final Group labelGroup = new Group(); //all generic 3D labels
 
     //All shapes and labels linked via hash for easy update during camera movement
@@ -56,6 +56,7 @@ public class StarFieldExample extends Application {
 
     private SubScene subScene;
 
+    //////  support
     private final Random random = new Random();
 
     private final static double RADIUS_MAX = 7;
@@ -65,10 +66,10 @@ public class StarFieldExample extends Application {
 
     public Pane createStarField() {
 
-        //attach our custom rotation transforms so we can update the labels dynamically
-        nodeGroup.getTransforms().addAll(rotateX, rotateY, rotateZ);
+        // attach our custom rotation transforms so we can update the labels dynamically
+        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
 
-        subScene = new SubScene(nodeGroup, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
+        subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
@@ -162,7 +163,7 @@ public class StarFieldExample extends Application {
         sphere.setTranslateZ(z);
         sphere.setMaterial(new PhongMaterial(color));
         //add our nodes to the group that will later be added to the 3D scene
-        nodeGroup.getChildren().add(sphere);
+        world.getChildren().add(sphere);
 
         Label label = new Label(labelText);
         label.setTextFill(color);
