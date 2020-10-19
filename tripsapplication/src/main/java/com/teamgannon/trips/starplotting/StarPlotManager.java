@@ -27,7 +27,6 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,108 +41,87 @@ public class StarPlotManager {
      * we do this to make the star size a constant size bigger x1.5
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
-
-    /**
-     * label state
-     */
-    private boolean labelsOn = true;
-
-    ///////////////////
-
-    /**
-     * toggle state of polities
-     */
-    private boolean politiesOn = true;
-
     /**
      * a graphics object group for extensions
      */
     private final MoveableGroup extensionsGroup = new MoveableGroup();
 
+    ///////////////////
     /**
      * the stellar group for display
      */
     private final MoveableGroup stellarDisplayGroup = new MoveableGroup();
-
     /**
      * used to control label visibility
      */
-    private MoveableGroup labelDisplayGroup = new MoveableGroup();
-
+    private final MoveableGroup labelDisplayGroup = new MoveableGroup();
     /**
      * to hold all the polities
      */
     private final MoveableGroup politiesDisplayGroup = new MoveableGroup();
-
-
-    ///////////////////
-
-    private Group world;
     /**
      * used to signal an update to the parent list view
      */
     private final ListUpdaterListener listUpdaterListener;
-
     /**
      * the redraw listener
      */
     private final RedrawListener redrawListener;
-
     /**
      * to make database changes
      */
     private final DatabaseListener databaseListener;
-
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
     private final ContextSelectorListener contextSelectorListener;
-
     /**
      * used to signal an update to the parent property panes
      */
     private final StellarPropertiesDisplayerListener displayer;
-
     /**
      * the report generator
      */
     private final ReportGenerator reportGenerator;
-
-    /**
-     * reference to the Route Manager
-     */
-    private RouteManager routeManager;
-
-    /**
-     * star display specifics
-     */
-    private StarDisplayPreferences starDisplayPreferences;
-
     /**
      * the current plot
      */
     private final CurrentPlot currentPlot;
-
     /**
      * our color palette
      */
     private final ColorPalette colorPalette;
-
-    /**
-     * the highlight rotator
-     */
-    private RotateTransition highlightRotator;
-
-    /**
-     * the civilization and
-     */
-    private CivilizationDisplayPreferences politiesPreferences;
-
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+    /**
+     * label state
+     */
+    private boolean labelsOn = true;
+    /**
+     * toggle state of polities
+     */
+    private boolean politiesOn = true;
+    /**
+     * reference to the Route Manager
+     */
+    private RouteManager routeManager;
+    /**
+     * star display specifics
+     */
+    private StarDisplayPreferences starDisplayPreferences;
+    /**
+     * the highlight rotator
+     */
+    private RotateTransition highlightRotator;
+    /**
+     * the civilization and
+     */
+    private CivilizationDisplayPreferences politiesPreferences;
+    private Map<Node, Label> shapeToLabel;
+
 
     /**
      * constructor
@@ -160,6 +138,7 @@ public class StarPlotManager {
      * @param colorPalette            the color palette
      */
     public StarPlotManager(Group world,
+                           Map<Node, Label> shapeToLabel,
                            ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,
@@ -169,7 +148,8 @@ public class StarPlotManager {
                            ReportGenerator reportGenerator,
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
-        this.world = world;
+
+        this.shapeToLabel = shapeToLabel;
 
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
@@ -193,6 +173,20 @@ public class StarPlotManager {
         politiesDisplayGroup.setWhatAmI("Polities");
         world.getChildren().add(politiesDisplayGroup);
 
+    }
+
+
+    private static RotateTransition setRotationAnimation(Label group) {
+        RotateTransition rotate = new RotateTransition(
+                Duration.seconds(10),
+                group
+        );
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setFromAngle(360);
+        rotate.setToAngle(0);
+        rotate.setInterpolator(Interpolator.LINEAR);
+        rotate.setCycleCount(30);
+        return rotate;
     }
 
     public Group getLabels() {
@@ -235,7 +229,6 @@ public class StarPlotManager {
         this.politiesPreferences = politiesPreferences;
     }
 
-
     public Group getExtensionsGroup() {
         return extensionsGroup;
     }
@@ -254,25 +247,11 @@ public class StarPlotManager {
         extensionsGroup.getChildren().clear();
     }
 
-
     public void highlightStar(UUID starId) {
         Label starGroup = currentPlot.getLabelForStar(starId);
         highlightRotator = setRotationAnimation(starGroup);
         highlightRotator.play();
         log.info("mark point");
-    }
-
-    private static RotateTransition setRotationAnimation(Label group) {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(10),
-                group
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(30);
-        return rotate;
     }
 
     public void toggleStars(boolean starsOn) {
@@ -403,8 +382,8 @@ public class StarPlotManager {
      * @return the graphical object group representing the star
      */
     private Node createCentralPoint(StarDisplayRecord record,
-                                     ColorPalette colorPalette,
-                                     StarDisplayPreferences starDisplayPreferences) {
+                                    ColorPalette colorPalette,
+                                    StarDisplayPreferences starDisplayPreferences) {
 
         Label label = StellarEntityFactory.createLabel(record, colorPalette);
         labelDisplayGroup.getChildren().add(label);
@@ -414,6 +393,8 @@ public class StarPlotManager {
                 colorPalette,
                 label,
                 starDisplayPreferences);
+
+//        shapeToLabel.put(star, label);
 
         if (listUpdaterListener != null) {
             listUpdaterListener.updateList(record);
@@ -445,10 +426,10 @@ public class StarPlotManager {
      * @return the star to plot
      */
     private Node createStar(StarDisplayRecord record,
-                             ColorPalette colorPalette,
-                             StarDisplayPreferences starDisplayPreferences,
-                             boolean labelsOn,
-                             boolean politiesOn) {
+                            ColorPalette colorPalette,
+                            StarDisplayPreferences starDisplayPreferences,
+                            boolean labelsOn,
+                            boolean politiesOn) {
 
         Node star = drawStellarObject(
                 record,
@@ -528,6 +509,7 @@ public class StarPlotManager {
             label.setLabelFor(sphere);
             labelDisplayGroup.getChildren().add(label);
             currentPlot.mapLabelToStar(record.getRecordId(), label);
+//            shapeToLabel.put(sphere, label);
         }
 
         if (politiesOn) {

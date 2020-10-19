@@ -22,6 +22,7 @@ import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -34,6 +35,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
+    private Map<Node, Label> shapeToLabel;
     private final RouteUpdaterListener routeUpdaterListener;
     private final CurrentPlot currentPlot;
 
@@ -63,8 +65,10 @@ public class RouteManager {
      * @param routeUpdaterListener the route update listener
      */
     public RouteManager(Group world,
+                        Map<Node, Label> shapeToLabel,
                         RouteUpdaterListener routeUpdaterListener,
                         CurrentPlot currentPlot) {
+        this.shapeToLabel = shapeToLabel;
 
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;
