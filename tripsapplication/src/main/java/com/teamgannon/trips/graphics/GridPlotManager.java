@@ -7,9 +7,12 @@ import com.teamgannon.trips.graphics.entities.MoveableGroup;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
 
 import static java.lang.Math.*;
 
@@ -22,6 +25,7 @@ public class GridPlotManager {
 
     private final double width;
     private final double depth;
+    private Map<Node, Label> shapeToLabel;
     private final double spacing;
     private final double lineWidth;
 
@@ -32,6 +36,8 @@ public class GridPlotManager {
      */
     private final ColorPalette colorPalette;
 
+    private Label scaleText;
+
 
     /**
      * constructor
@@ -41,8 +47,10 @@ public class GridPlotManager {
      * @param depth   the screen depth
      */
     public GridPlotManager(Group world,
+                           Map<Node, Label> shapeToLabel,
                            double spacing, double width, double depth,
                            ColorPalette colorPalette) {
+        this.shapeToLabel = shapeToLabel;
 
         this.spacing = spacing;
         this.width = width;
@@ -238,13 +246,18 @@ public class GridPlotManager {
      * @param scaleValue the scaling value
      */
     private void createScaleLegend(double scaleValue) {
-        Text scaleText = new Text(String.format(scaleString, scaleValue));
+        scaleText = new Label(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
-        scaleText.setFill(colorPalette.getLegendColor());
+        scaleText.setTextFill(colorPalette.getLegendColor());
+        shapeToLabel.put(scaleText, scaleText);
+
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);
         scaleGroup.setVisible(true);
         log.info("show scale");
     }
 
+    public void updateLabels() {
+        scaleGroup.setTranslate(50, 350, 0);
+    }
 }

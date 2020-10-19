@@ -12,13 +12,13 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Random;
@@ -28,8 +28,12 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 /**
  * example for flat labels
  */
+@Slf4j
 public class StarFieldExample extends Application {
 
+    public static final int SCALE_X = 510;
+    public static final int SCALE_Y = 540;
+    public static final int SCALE_Z = 0;
     final double sceneWidth = 600;
     final double sceneHeight = 600;
 
@@ -52,7 +56,7 @@ public class StarFieldExample extends Application {
     private final Group labelGroup = new Group(); //all generic 3D labels
 
     //All shapes and labels linked via hash for easy update during camera movement
-    private final HashMap<Shape3D, Label> shape3DToLabel = new HashMap<>();
+    private final HashMap<Node, Label> shape3DToLabel = new HashMap<>();
 
     private SubScene subScene;
 
@@ -63,6 +67,8 @@ public class StarFieldExample extends Application {
     private final static double X_MAX = 300;
     private final static double Y_MAX = 300;
     private final static double Z_MAX = 300;
+
+    private final Label scaleLabel = new Label("Scale: 5 ly");
 
     public Pane createStarField() {
 
@@ -81,7 +87,7 @@ public class StarFieldExample extends Application {
         Group sceneRoot = new Group(subScene);
         sceneRoot.getChildren().add(labelGroup);
 
-        generateRandomStars(20);
+        generateRandomStars(5);
 
         subScene.setOnMousePressed((MouseEvent me) -> {
                     mousePosX = me.getSceneX();
@@ -146,6 +152,16 @@ public class StarFieldExample extends Application {
             boolean fadeFlag = random.nextBoolean();
             createSphereLabel(radius, x, y, z, color, labelText, fadeFlag);
         }
+
+        //Add to hashmap so updateLabels() can manage the label position
+
+        scaleLabel.setFont(new Font("Arial", 15));
+        scaleLabel.setTextFill(Color.WHEAT);
+        scaleLabel.setTranslateX(SCALE_X);
+        scaleLabel.setTranslateY(SCALE_Y);
+        scaleLabel.setTranslateZ(SCALE_Z);
+        labelGroup.getChildren().add(scaleLabel);
+        log.info("shapes:{}", shape3DToLabel.size());
     }
 
     private Color randomColor() {
@@ -184,6 +200,7 @@ public class StarFieldExample extends Application {
 
         //Add to hashmap so updateLabels() can manage the label position
         shape3DToLabel.put(sphere, label);
+
     }
 
     private void updateLabels() {
@@ -219,6 +236,10 @@ public class StarFieldExample extends Application {
             //update the local transform of the label.
             label.getTransforms().setAll(new Translate(x, y));
         });
+
+        scaleLabel.setTranslateX(SCALE_X);
+        scaleLabel.setTranslateY(SCALE_Y);
+        scaleLabel.setTranslateZ(SCALE_Z);
     }
 
     //////////////////////////////////

@@ -19,15 +19,20 @@ import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
+import javafx.geometry.Point3D;
 import javafx.scene.*;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.fxyz3d.geometry.MathUtils.clamp;
@@ -35,9 +40,6 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 @Slf4j
 public class InterstellarSpacePane extends Pane {
     private static final int CYCLE_COUNT = 30;
-
-    ///////  new  ///////
-
 
     // mouse positions
     private double mousePosX, mousePosY = 0;
@@ -98,7 +100,6 @@ public class InterstellarSpacePane extends Pane {
      */
     private final ListUpdaterListener listUpdaterListener;
 
-
     /**
      * the grid plot manager
      */
@@ -109,6 +110,8 @@ public class InterstellarSpacePane extends Pane {
     private final TransitManager transitManager;
 
     private final StarPlotManager starPlotManager;
+
+    private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     /**
      * constructor for the Graphics Pane
@@ -150,6 +153,7 @@ public class InterstellarSpacePane extends Pane {
 
         this.starPlotManager = new StarPlotManager(
                 world,
+                shapeToLabel,
                 listUpdaterListener,
                 redrawListener,
                 databaseListener,
@@ -163,18 +167,21 @@ public class InterstellarSpacePane extends Pane {
 
         this.routeManager = new RouteManager(
                 world,
+                shapeToLabel,
                 routeUpdaterListener,
                 currentPlot
         );
 
         this.gridPlotManager = new GridPlotManager(
                 world,
+                shapeToLabel,
                 spacing, sceneWidth, depth,
                 colorPalette
         );
 
         this.transitManager = new TransitManager(
                 world,
+                shapeToLabel,
                 routeUpdaterListener
         );
 
@@ -187,9 +194,8 @@ public class InterstellarSpacePane extends Pane {
         rotator = createRotateAnimation();
 
         // create all the base display elements
-        buildRoot();
+        this.getChildren().add(root);
         setInitialView();
-
         handleMouseEvents();
     }
 
@@ -229,17 +235,48 @@ public class InterstellarSpacePane extends Pane {
                             ); // -
                         }
                     }
-//                    updateLabels();
+                    updateLabels();
                 }
         );
     }
 
-    /**
-     * build root
-     */
-    private void buildRoot() {
-        // hooks this into the
-        this.getChildren().add(root);
+    private void updateLabels() {
+
+        log.info("updateLabels: {}", shapeToLabel.size());
+        shapeToLabel.forEach((node, label) -> {
+            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+
+            //Clipping Logic
+            //if coordinates are outside of the scene it could
+            //stretch the screen so don't transform them
+            double x = coordinates.getX();
+            double y = coordinates.getY();
+
+            // is it left of the view?
+            if (x < 0) {
+                x = 0;
+            }
+
+            // is it right of the view?
+            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + 5);
+            }
+
+            // is it above the view?
+            if (y < 0) {
+                y = 0;
+            }
+
+            // is it below the view
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + 5);
+            }
+
+            //update the local transform of the label.
+            label.getTransforms().setAll(new Translate(x, y));
+        });
+
+        gridPlotManager.updateLabels();
     }
 
     /**
