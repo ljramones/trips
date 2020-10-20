@@ -225,10 +225,6 @@ public class StarPlotManager {
         return rotate;
     }
 
-    public Group getLabels() {
-        return labelDisplayGroup;
-    }
-
     /**
      * get the plotted stars in view
      *

@@ -7,11 +7,14 @@ import com.teamgannon.trips.graphics.entities.MoveableGroup;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.Math.*;
@@ -19,21 +22,26 @@ import static java.lang.Math.*;
 @Slf4j
 public class GridPlotManager {
 
-    private final MoveableGroup gridGroup = new MoveableGroup();
+    private final Map<Node, Label> shapeToLabel;
 
-    private final MoveableGroup scaleGroup = new MoveableGroup();
+    private final Group scaleGroup = new Group();
+    private final Group gridGroup = new Group();
 
-    private final double width;
-    private final double depth;
-    private final double spacing;
+    private final Group world;
+    private Group sceneRoot;
+    private double spacing;
+    private double width;
+    private double depth;
+    private ColorPalette colorPalette;
+
+
+    private final SubScene subScene;
+
     private final double lineWidth;
 
     private static final String scaleString = "Scale: 1 grid is %.2f ly square";
 
-    /**
-     * the general color palette of the graph
-     */
-    private final ColorPalette colorPalette;
+    private final Font font = Font.font("Verdana", 20);
 
     private Label scaleText;
 
@@ -46,24 +54,31 @@ public class GridPlotManager {
      * @param depth   the screen depth
      */
     public GridPlotManager(Group world,
-                           double spacing, double width, double depth,
+                           Group sceneRoot,
+                           SubScene subScene,
+                           double spacing,
+                           double width, double depth,
                            ColorPalette colorPalette) {
 
+        this.world = world;
         this.spacing = spacing;
         this.width = width;
         this.depth = depth;
-        this.lineWidth = colorPalette.getGridLineWidth();
         this.colorPalette = colorPalette;
-        this.gridGroup.setWhatAmI("Planar Grid");
-//        this.scaleGroup.setWhatAmI("Reference Scale");
+        this.shapeToLabel = new HashMap<>();
+        this.subScene = subScene;
 
-        // setup data structures for each independent element
+        this.lineWidth = 0.5;
+
+        sceneRoot.getChildren().add(scaleGroup);
         world.getChildren().add(gridGroup);
-        world.getChildren().add(scaleGroup);
 
         buildInitialGrid();
         buildInitialScaleLegend();
     }
+
+
+    //////////////   public controls  //////////////////
 
     public Group getGridGroup() {
         return gridGroup;
@@ -94,6 +109,90 @@ public class GridPlotManager {
     public void toggleScale(boolean scaleOn) {
         scaleGroup.setVisible(scaleOn);
     }
+
+    ///////////////////// SCALE DRAWING  //////////////////
+
+    /**
+     * rebuild the scale legend
+     *
+     * @param newScaleLegend the new scale legend
+     */
+    private void rebuildScaleLegend(int newScaleLegend) {
+        scaleGroup.getChildren().clear();
+        createScaleLegend(newScaleLegend);
+    }
+
+    /**
+     * build the scale for the display
+     */
+    private void buildInitialScaleLegend() {
+        createScaleLegend(spacing);
+    }
+
+
+
+    private void createScaleLegend(double scaleValue) {
+        scaleText = new Label(String.format(scaleString, scaleValue));
+        scaleText.setFont(Font.font("Verdana", 20));
+        scaleText.setTextFill(colorPalette.getLegendColor());
+        updateScale();
+        scaleGroup.getChildren().add(scaleText);
+        log.info("shapes:{}", shapeToLabel.size());
+    }
+
+    public void updateScale() {
+        scaleText.setTranslateX(subScene.getWidth() - 250);
+        scaleText.setTranslateY(subScene.getHeight() - 30);
+        scaleText.setTranslateZ(0);
+    }
+
+    ///////////////////// GRID DRAWING //////////////////
+
+
+    private void buildInitialGrid() {
+        createGrid(spacing, colorPalette);
+    }
+
+    /**
+     * create a gird based on parameter supplied
+     *
+     * @param gridIncrement the grid increment
+     * @param colorPalette  the color palette
+     */
+    private void createGrid(double gridIncrement, ColorPalette colorPalette) {
+
+        gridGroup.getTransforms().add(
+                new Translate(-width / 2.0, 0, -depth / 2.0)
+        );
+
+        // iterate over z dimension
+        int zDivisions = (int) ceil(width / gridIncrement);
+        double x = 0.0;
+        for (int i = 0; i <= zDivisions; i++) {
+            Point3D from = new Point3D(x, 0, 0);
+            Point3D to = new Point3D(x, 0, depth);
+            Node lineSegment = CustomObjectFactory.createLineSegment(
+                    from, to, lineWidth, colorPalette.getGridColor());
+            gridGroup.getChildren().add(lineSegment);
+            x += gridIncrement;
+        }
+
+        // iterate over x dimension
+        int xDivisions = (int) ceil(depth / gridIncrement);
+        double z = 0.0;
+        for (int i = 0; i <= xDivisions; i++) {
+            Point3D from = new Point3D(0, 0, z);
+            Point3D to = new Point3D(width, 0, z);
+            Node lineSegment = CustomObjectFactory.createLineSegment(
+                    from, to, lineWidth, colorPalette.getGridColor());
+            gridGroup.getChildren().add(lineSegment);
+            z += gridIncrement;
+        }
+
+        gridGroup.setVisible(true);
+    }
+
+    ////
 
     /**
      * rebuild the grid with the specified transformation characteristics
@@ -141,6 +240,7 @@ public class GridPlotManager {
 
     }
 
+
     private void drawZLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double zDivs, double minX, double maxX, double beginZ, double increment) {
         for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
             double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), 0, beginZ};
@@ -171,93 +271,45 @@ public class GridPlotManager {
         }
     }
 
-    //////////////////  Initial  GRID  build   ///////////////////
+    ////////////  label updates
 
     /**
-     * build a fresh grid
+     * update labels
      */
-    private void buildInitialGrid() {
-        createGrid(spacing, colorPalette);
-    }
-
-    /**
-     * create a gird based on parameter supplied
-     *
-     * @param gridIncrement the grid increment
-     * @param colorPalette  the color palette
-     */
-    private void createGrid(double gridIncrement, ColorPalette colorPalette) {
-
-        gridGroup.setTranslate(-width / 2.0, 0, -depth / 2.0);
-
-        // iterate over z dimension
-        int zDivisions = (int) ceil(width / gridIncrement);
-        double x = 0.0;
-        for (int i = 0; i <= zDivisions; i++) {
-            Point3D from = new Point3D(x, 0, 0);
-            Point3D to = new Point3D(x, 0, depth);
-            Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor());
-            gridGroup.getChildren().add(lineSegment);
-            x += gridIncrement;
-        }
-
-        // iterate over x dimension
-        int xDivisions = (int) ceil(depth / gridIncrement);
-        double z = 0.0;
-        for (int i = 0; i <= xDivisions; i++) {
-            Point3D from = new Point3D(0, 0, z);
-            Point3D to = new Point3D(width, 0, z);
-            Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor());
-            gridGroup.getChildren().add(lineSegment);
-            z += gridIncrement;
-        }
-
-        gridGroup.setVisible(true);
-    }
-
-    ////////////////////  SCALE Group  /////////////////
-
-
-    /**
-     * rebuild the scale legend
-     *
-     * @param newScaleLegend the new scale legend
-     */
-    private void rebuildScaleLegend(int newScaleLegend) {
-        scaleGroup.getChildren().clear();
-        createScaleLegend(newScaleLegend);
-    }
-
-    /**
-     * build the scale for the display
-     */
-    private void buildInitialScaleLegend() {
-        createScaleLegend(spacing);
-    }
-
-    /**
-     * create a scale legend
-     *
-     * @param scaleValue the scaling value
-     */
-    private void createScaleLegend(double scaleValue) {
-        scaleText = new Label(String.format(scaleString, scaleValue));
-        scaleText.setFont(Font.font("Verdana", 20));
-        scaleText.setTextFill(colorPalette.getLegendColor());
-
-        scaleGroup.getChildren().add(scaleText);
-        scaleGroup.setTranslate(50, 350, 0);
-        scaleGroup.setVisible(true);
-        log.info("show scale");
-    }
-
     public void updateLabels() {
-        scaleGroup.setTranslate(50, 350, 0);
+        shapeToLabel.forEach((node, label) -> {
+            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+
+            //Clipping Logic
+            //if coordinates are outside of the scene it could
+            //stretch the screen so don't transform them
+            double x = coordinates.getX();
+            double y = coordinates.getY();
+
+            // is it left of the view?
+            if (x < 0) {
+                x = 0;
+            }
+
+            // is it right of the view?
+            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + 5);
+            }
+
+            // is it above the view?
+            if (y < 0) {
+                y = 0;
+            }
+
+            // is it below the view
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + 5);
+            }
+
+            //update the local transform of the label.
+            label.getTransforms().setAll(new Translate(x, y));
+        });
+
     }
 
-    public void updateScale() {
-
-    }
 }
