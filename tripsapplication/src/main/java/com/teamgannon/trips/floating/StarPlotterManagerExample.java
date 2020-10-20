@@ -50,8 +50,8 @@ public class StarPlotterManagerExample {
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
 
-    private final Group sceneRoot;
     private final Group world;
+
     /**
      * the stellar group for display
      */
@@ -145,11 +145,6 @@ public class StarPlotterManagerExample {
     private StarDisplayPreferences starDisplayPreferences;
 
     /**
-     * the highlight rotator
-     */
-    private RotateTransition highlightRotator;
-
-    /**
      * the civilization and
      */
     private CivilizationDisplayPreferences politiesPreferences;
@@ -173,7 +168,6 @@ public class StarPlotterManagerExample {
                                      ReportGenerator reportGenerator,
                                      CurrentPlot currentPlot,
                                      ColorPalette colorPalette) {
-        this.sceneRoot = sceneRoot;
 
         this.world = world;
         this.subScene = subScene;
@@ -287,7 +281,10 @@ public class StarPlotterManagerExample {
 
     public void highlightStar(UUID starId) {
         Label starGroup = currentPlot.getLabelForStar(starId);
-        highlightRotator = setRotationAnimation(starGroup);
+        /**
+         * the highlight rotator
+         */
+        RotateTransition highlightRotator = setRotationAnimation(starGroup);
         highlightRotator.play();
         log.info("mark point");
     }

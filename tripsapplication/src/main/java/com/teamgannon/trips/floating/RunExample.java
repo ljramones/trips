@@ -1,27 +1,33 @@
 package com.teamgannon.trips.floating;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.model.AppViewPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.graphics.CurrentPlot;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.*;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class RunExample extends Application
-implements ListUpdaterListener,
+        implements ListUpdaterListener,
         RedrawListener,
         DatabaseListener,
         StellarPropertiesDisplayerListener,
         ContextSelectorListener,
-        ReportGenerator {
+        ReportGenerator,
+        RouteUpdaterListener {
 
 
     @Override
@@ -34,22 +40,30 @@ implements ListUpdaterListener,
         ColorPalette colorPalette = new ColorPalette();
         colorPalette.setDefaults();
 
+        StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+        starDisplayPreferences.setDefaults();
+
+        AppViewPreferences appViewPreferences = new AppViewPreferences();
+        appViewPreferences.setColorPallete(colorPalette);
+        appViewPreferences.setStarDisplayPreferences(starDisplayPreferences);
+
+        TripsContext tripsContext = new TripsContext();
+        tripsContext.setAppViewPreferences(appViewPreferences);
+
         double spacing = 20;
 
-        InterstellarExample interstellarExample = new InterstellarExample(
-                sceneWidth,
+        InterstellarExample interstellarExample = new InterstellarExample(sceneWidth,
                 sceneHeight,
                 depth,
                 spacing,
+                tripsContext,
                 this,
                 this,
                 this,
                 this,
                 this,
-                new StarDisplayPreferences(),
                 this,
-                new CurrentPlot(),
-                colorPalette
+                this
         );
 
         Scene scene = new Scene(interstellarExample.getRoot(), sceneWidth, sceneHeight);
@@ -74,7 +88,7 @@ implements ListUpdaterListener,
 
     @Override
     public List<AstrographicObject> getAstrographicObjectsOnQuery() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -89,7 +103,7 @@ implements ListUpdaterListener,
 
     @Override
     public AstrographicObject getStar(UUID starId) {
-        return null;
+        return new AstrographicObject();
     }
 
     @Override
@@ -131,4 +145,25 @@ implements ListUpdaterListener,
     public void displayStellarProperties(AstrographicObject astrographicObject) {
 
     }
+
+    @Override
+    public void routingStatus(boolean statusFlag) {
+
+    }
+
+    @Override
+    public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
+
+    }
+
+    @Override
+    public void updateRoute(RouteDescriptor routeDescriptor) {
+
+    }
+
+    @Override
+    public void deleteRoute(RouteDescriptor routeDescriptor) {
+
+    }
+
 }
