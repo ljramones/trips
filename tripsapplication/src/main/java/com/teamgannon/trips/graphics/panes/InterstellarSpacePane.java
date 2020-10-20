@@ -208,7 +208,7 @@ public class InterstellarSpacePane extends Pane {
     private void setPerspectiveCamera() {
         camera.setNearClip(0.1);
         camera.setFarClip(10000.0);
-        camera.setTranslateZ(-1500);
+        camera.setTranslateZ(-1600);
     }
 
     /**
@@ -216,8 +216,6 @@ public class InterstellarSpacePane extends Pane {
      */
     public void setInitialView() {
         setPerspectiveCamera();
-        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
-        world.getRotate();
     }
 
     public void resetView() {
@@ -268,41 +266,7 @@ public class InterstellarSpacePane extends Pane {
 
     private void updateLabels() {
 
-        log.info("updateLabels: {}", shapeToLabel.size());
-        shapeToLabel.forEach((node, label) -> {
-            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
-            //Clipping Logic
-            //if coordinates are outside of the scene it could
-            //stretch the screen so don't transform them
-            double x = coordinates.getX();
-            double y = coordinates.getY();
-
-            // is it left of the view?
-            if (x < 0) {
-                x = 0;
-            }
-
-            // is it right of the view?
-            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + 5);
-            }
-
-            // is it above the view?
-            if (y < 0) {
-                y = 0;
-            }
-
-            // is it below the view
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + 5);
-            }
-
-            //update the local transform of the label.
-            label.getTransforms().setAll(new Translate(x, y));
-        });
-
-        gridPlotManager.updateLabels();
     }
 
 
