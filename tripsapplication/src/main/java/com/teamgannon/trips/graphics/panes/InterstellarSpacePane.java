@@ -182,6 +182,8 @@ public class InterstellarSpacePane extends Pane {
 
         this.gridPlotManager = new GridPlotManager(
                 world,
+                sceneRoot,
+                subScene,
                 spacing, sceneWidth, depth,
                 colorPalette
         );
