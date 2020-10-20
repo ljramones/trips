@@ -37,6 +37,7 @@ public class StarPlotterManagerExample {
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
 
+    private Group sceneRoot;
     private final Group world;
     /**
      * the stellar group for display
@@ -51,7 +52,7 @@ public class StarPlotterManagerExample {
     /**
      * the label display
      */
-    private final Group labelDisplayGroup;
+    private final Group labelDisplayGroup = new Group();
 
     /**
      * the extensions group
@@ -132,18 +133,18 @@ public class StarPlotterManagerExample {
     /**
      * constructor
      *
-     * @param labelDisplayGroup the label display
      * @param world             the world group
      * @param subScene          the sub scene
      */
-    public StarPlotterManagerExample(Group labelDisplayGroup,
+    public StarPlotterManagerExample(Group sceneRoot,
                                      Group world,
                                      SubScene subScene) {
+        this.sceneRoot = sceneRoot;
 
-        this.labelDisplayGroup = labelDisplayGroup;
         this.world = world;
         this.subScene = subScene;
 
+        sceneRoot.getChildren().add(labelDisplayGroup);
         world.getChildren().add(extensionsGroup);
 
     }

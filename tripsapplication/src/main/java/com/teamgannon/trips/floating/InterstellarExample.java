@@ -38,8 +38,6 @@ public class InterstellarExample extends Pane {
 
     private final Group root = new Group();
     private final Group world = new Group();  //all 3D nodes in scene
-    private final Group labelGroup = new Group(); //all generic 3D labels
-
 
     private final SubScene subScene;
 
@@ -64,7 +62,6 @@ public class InterstellarExample extends Pane {
 
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
-        sceneRoot.getChildren().add(labelGroup);
 
         handleMouseEvents();
 
@@ -83,13 +80,12 @@ public class InterstellarExample extends Pane {
         root.getChildren().add(pane);
 
         this.starPlotterManagerExample = new StarPlotterManagerExample(
-                labelGroup,
+                sceneRoot,
                 world,
                 subScene
         );
 
         this.gridPlotManagerExample = new GridPlotManagerExample(
-                labelGroup,
                 world,
                 sceneRoot,
                 subScene,
