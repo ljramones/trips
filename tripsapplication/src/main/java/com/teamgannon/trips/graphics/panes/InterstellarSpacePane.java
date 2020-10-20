@@ -190,6 +190,8 @@ public class InterstellarSpacePane extends Pane {
 
         this.transitManager = new TransitManager(
                 world,
+                sceneRoot,
+                subScene,
                 routeUpdaterListener
         );
 

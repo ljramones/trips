@@ -11,6 +11,7 @@ import com.teamgannon.trips.service.model.TransitRoute;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.SubScene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -31,6 +32,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class TransitManager {
+
 
     /**
      * whether the transits are visible or not
@@ -73,6 +75,16 @@ public class TransitManager {
     private final Group transitLabelsGroup;
 
     /**
+     * the label display
+     */
+    private final Group labelDisplayGroup = new Group();
+
+    private final Map<Node, Label> shapeToLabel = new HashMap<>();
+
+    private final SubScene subScene;
+
+
+    /**
      * the listener to create routes on demand
      */
     private final RouteUpdaterListener routeUpdaterListener;
@@ -91,7 +103,10 @@ public class TransitManager {
      * constructor
      */
     public TransitManager(Group world,
+                          Group sceneRoot,
+                          SubScene subScene,
                           RouteUpdaterListener routeUpdaterListener) {
+        this.subScene = subScene;
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
@@ -100,6 +115,8 @@ public class TransitManager {
 
         transitLabelsGroup = new Group();
         world.getChildren().add(transitLabelsGroup);
+
+        sceneRoot.getChildren().add(labelDisplayGroup);
 
     }
 
@@ -388,6 +405,37 @@ public class TransitManager {
     }
 
     public void updateLabels() {
+        shapeToLabel.forEach((node, label) -> {
+            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
+            //Clipping Logic
+            //if coordinates are outside of the scene it could
+            //stretch the screen so don't transform them
+            double x = coordinates.getX();
+            double y = coordinates.getY();
+
+            // is it left of the view?
+            if (x < 0) {
+                x = 0;
+            }
+
+            // is it right of the view?
+            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + 5);
+            }
+
+            // is it above the view?
+            if (y < 0) {
+                y = 0;
+            }
+
+            // is it below the view
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + 5);
+            }
+
+            //update the local transform of the label.
+            label.getTransforms().setAll(new Translate(x, y));
+        });
     }
 }

@@ -106,7 +106,6 @@ public class TransitManagerExample {
                                  RouteUpdaterListener routeUpdaterListener) {
         this.subScene = subScene;
 
-
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Group();
@@ -388,7 +387,6 @@ public class TransitManagerExample {
         routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
     }
 
-
     public void setVisible(boolean transitsOn) {
         this.transitsOn = transitsOn;
         this.transitsLengthsOn = transitsOn;
@@ -440,6 +438,5 @@ public class TransitManagerExample {
         });
 
     }
-
 
 }
