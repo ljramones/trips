@@ -24,51 +24,50 @@ import java.util.Random;
 @Slf4j
 public class StarPlotterManagerExample {
 
-    //////  support
-    private final Random random = new Random();
 
-    private final static double RADIUS_MAX = 7;
-    private final static double X_MAX = 300;
-    private final static double Y_MAX = 300;
-    private final static double Z_MAX = 300;
-    private final Group labelGroup;
+    /**
+     * we do this to make the star size a constant size bigger x1.5
+     */
+    private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+
     private final Group world;
-    private final SubScene subScene;
+    /**
+     * the stellar group for display
+     */
+    private final Group stellarDisplayGroup = new Group();
 
+    /**
+     * to hold all the polities
+     */
+    private final Group politiesDisplayGroup = new Group();
+
+    /**
+     * the label display
+     */
+    private final Group labelDisplayGroup;
+
+    /**
+     * the extensions group
+     */
     private final Group extensionsGroup = new Group();
+
+    private final SubScene subScene;
 
 
     private final Font font = new Font("arial", 10);
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
-    public StarPlotterManagerExample(Group labelGroup,
+    public StarPlotterManagerExample(Group labelDisplayGroup,
                                      Group world,
                                      SubScene subScene) {
 
-        this.labelGroup = labelGroup;
+        this.labelDisplayGroup = labelDisplayGroup;
         this.world = world;
         this.subScene = subScene;
 
         world.getChildren().add(extensionsGroup);
 
-    }
-
-    public void generateRandomStars(int numberStars) {
-        for (int i = 0; i < numberStars; i++) {
-            double radius = random.nextDouble() * RADIUS_MAX;
-            Color color = randomColor();
-            double x = random.nextDouble() * X_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
-            double y = random.nextDouble() * Y_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
-            double z = random.nextDouble() * Z_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
-
-            String labelText = "Star " + i;
-            boolean fadeFlag = random.nextBoolean();
-            createSphereAndLabel(radius, x, y, z, color, labelText, fadeFlag);
-            createExtension(x,y,z, Color.VIOLET);
-        }
-
-        log.info("shapes:{}", shapeToLabel.size());
     }
 
     private void createExtension(double x, double y, double z, Color extensionColor) {
@@ -81,59 +80,6 @@ public class StarPlotterManagerExample {
         extensionsGroup.setVisible(true);
     }
 
-    private Color randomColor() {
-        int r = random.nextInt(255);
-        int g = random.nextInt(255);
-        int b = random.nextInt(255);
-        return Color.rgb(r, g, b);
-    }
-
-
-    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, String labelText, boolean fadeFlag) {
-        Sphere sphere = new Sphere(radius);
-        sphere.setTranslateX(x);
-        sphere.setTranslateY(y);
-        sphere.setTranslateZ(z);
-        sphere.setMaterial(new PhongMaterial(color));
-        //add our nodes to the group that will later be added to the 3D scene
-        world.getChildren().add(sphere);
-
-        Label label = new Label(labelText);
-        label.setTextFill(color);
-        label.setFont(font);
-        ObjectDescriptor descriptor = ObjectDescriptor
-                .builder()
-                .name(labelText)
-                .color(color)
-                .x(x)
-                .y(y)
-                .z(z)
-                .build();
-        sphere.setUserData(descriptor);
-        Tooltip tooltip = new Tooltip(descriptor.toString());
-        Tooltip.install(sphere, tooltip);
-        if (fadeFlag) {
-            //have some fun, just one example of what you can do with the 2D node
-            //in parallel to the 3D transformation. Be careful when you manipulate
-            //the position of the 2D label as putting it off screen can mess with
-            //your 2D layout.  See the clipping logic in updateLabels() for details
-//            setupFade(label);
-        }
-        labelGroup.getChildren().add(label);
-
-        //Add to hashmap so updateLabels() can manage the label position
-        shapeToLabel.put(sphere, label);
-
-    }
-
-    private void setupFade(Node node) {
-        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-        fader.setFromValue(1.0);
-        fader.setToValue(0.1);
-        fader.setCycleCount(Timeline.INDEFINITE);
-        fader.setAutoReverse(true);
-        fader.play();
-    }
 
     public void updateLabels() {
         shapeToLabel.forEach((node, label) -> {
@@ -170,5 +116,90 @@ public class StarPlotterManagerExample {
         });
 
     }
+
+    ///////////////////////// Simulate  /////////
+
+    private final Random random = new Random();
+
+    private final static double RADIUS_MAX = 7;
+    private final static double X_MAX = 300;
+    private final static double Y_MAX = 300;
+    private final static double Z_MAX = 300;
+
+    /**
+     * generate random stars
+     *
+     * @param numberStars number of stars
+     */
+    public void generateRandomStars(int numberStars) {
+        for (int i = 0; i < numberStars; i++) {
+            double radius = random.nextDouble() * RADIUS_MAX;
+            Color color = randomColor();
+            double x = random.nextDouble() * X_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
+            double y = random.nextDouble() * Y_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
+            double z = random.nextDouble() * Z_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
+
+            String labelText = "Star " + i;
+            boolean fadeFlag = random.nextBoolean();
+            createSphereAndLabel(radius, x, y, z, color, labelText, fadeFlag);
+            createExtension(x, y, z, Color.VIOLET);
+        }
+
+        log.info("shapes:{}", shapeToLabel.size());
+    }
+
+    private Color randomColor() {
+        int r = random.nextInt(255);
+        int g = random.nextInt(255);
+        int b = random.nextInt(255);
+        return Color.rgb(r, g, b);
+    }
+
+    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, String labelText, boolean fadeFlag) {
+        Sphere sphere = new Sphere(radius);
+        sphere.setTranslateX(x);
+        sphere.setTranslateY(y);
+        sphere.setTranslateZ(z);
+        sphere.setMaterial(new PhongMaterial(color));
+        //add our nodes to the group that will later be added to the 3D scene
+        world.getChildren().add(sphere);
+
+        Label label = new Label(labelText);
+        label.setTextFill(color);
+        label.setFont(font);
+        ObjectDescriptor descriptor = ObjectDescriptor
+                .builder()
+                .name(labelText)
+                .color(color)
+                .x(x)
+                .y(y)
+                .z(z)
+                .build();
+        sphere.setUserData(descriptor);
+        Tooltip tooltip = new Tooltip(descriptor.toString());
+        Tooltip.install(sphere, tooltip);
+        if (fadeFlag) {
+            //have some fun, just one example of what you can do with the 2D node
+            //in parallel to the 3D transformation. Be careful when you manipulate
+            //the position of the 2D label as putting it off screen can mess with
+            //your 2D layout.  See the clipping logic in updateLabels() for details
+//            setupFade(label);
+        }
+        labelDisplayGroup.getChildren().add(label);
+
+        //Add to hashmap so updateLabels() can manage the label position
+        shapeToLabel.put(sphere, label);
+
+    }
+
+    private void setupFade(Node node) {
+        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
+        fader.setFromValue(1.0);
+        fader.setToValue(0.1);
+        fader.setCycleCount(Timeline.INDEFINITE);
+        fader.setAutoReverse(true);
+        fader.play();
+    }
+
 
 }
