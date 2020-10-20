@@ -1,7 +1,15 @@
 package com.teamgannon.trips.floating;
 
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
+import com.teamgannon.trips.graphics.panes.StarSelectionModel;
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
+import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.routing.RouteManager;
 import javafx.animation.FadeTransition;
+import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -23,7 +31,6 @@ import java.util.Random;
 
 @Slf4j
 public class StarPlotterManagerExample {
-
 
     /**
      * we do this to make the star size a constant size bigger x1.5
@@ -58,6 +65,77 @@ public class StarPlotterManagerExample {
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    /**
+     * used to signal an update to the parent list view
+     */
+    private ListUpdaterListener listUpdaterListener;
+    /**
+     * the redraw listener
+     */
+    private RedrawListener redrawListener;
+    /**
+     * to make database changes
+     */
+    private DatabaseListener databaseListener;
+    /**
+     * used to an update to the parent controlling which graphics
+     * panes is being displayed
+     */
+    private ContextSelectorListener contextSelectorListener;
+    /**
+     * used to signal an update to the parent property panes
+     */
+    private StellarPropertiesDisplayerListener displayer;
+    /**
+     * the report generator
+     */
+    private ReportGenerator reportGenerator;
+    /**
+     * the current plot
+     */
+    private CurrentPlot currentPlot;
+
+    /**
+     * our color palette
+     */
+    private  ColorPalette colorPalette;
+    /**
+     * used to implement a selection model for selecting stars
+     */
+    private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+    /**
+     * label state
+     */
+    private boolean labelsOn = true;
+    /**
+     * toggle state of polities
+     */
+    private boolean politiesOn = true;
+    /**
+     * reference to the Route Manager
+     */
+    private RouteManager routeManager;
+    /**
+     * star display specifics
+     */
+    private StarDisplayPreferences starDisplayPreferences;
+    /**
+     * the highlight rotator
+     */
+    private RotateTransition highlightRotator;
+    /**
+     * the civilization and
+     */
+    private CivilizationDisplayPreferences politiesPreferences;
+
+
+    /**
+     * constructor
+     *
+     * @param labelDisplayGroup the label display
+     * @param world             the world group
+     * @param subScene          the sub scene
+     */
     public StarPlotterManagerExample(Group labelDisplayGroup,
                                      Group world,
                                      SubScene subScene) {
