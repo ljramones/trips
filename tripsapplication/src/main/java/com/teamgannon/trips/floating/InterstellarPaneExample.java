@@ -36,6 +36,8 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 @Slf4j
 public class InterstellarPaneExample extends Pane {
 
+    private final ListUpdaterListener listUpdaterListener;
+
     private  ColorPalette colorPalette;
 
     private double mousePosX;
@@ -46,7 +48,6 @@ public class InterstellarPaneExample extends Pane {
     private double mouseDeltaY;
 
     PerspectiveCamera camera = new PerspectiveCamera(true);
-
 
     // We'll use custom Rotate transforms to manage the coordinate conversions
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
@@ -67,13 +68,8 @@ public class InterstellarPaneExample extends Pane {
     private final GridPlotManagerExample gridPlotManagerExample;
 
     private TripsContext tripsContext;
-    private ListUpdaterListener listUpdaterListener;
-    private RedrawListener redrawListener;
-    private DatabaseListener databaseListener;
-    private StellarPropertiesDisplayerListener displayer;
-    private ContextSelectorListener contextSelectorListener;
+
     private StarDisplayPreferences starDisplayPreferences;
-    private ReportGenerator reportGenerator;
     private CurrentPlot currentPlot;
 
 
@@ -90,8 +86,6 @@ public class InterstellarPaneExample extends Pane {
     private static final double ROTATE_SECS = 60;
 
 
-
-
     public InterstellarPaneExample(double sceneWidth,
                                    double sceneHeight,
                                    double depth,
@@ -104,14 +98,9 @@ public class InterstellarPaneExample extends Pane {
                                    ContextSelectorListener contextSelectorListener,
                                    RedrawListener redrawListener,
                                    ReportGenerator reportGenerator) {
-        this.tripsContext = tripsContext;
 
+        this.tripsContext = tripsContext;
         this.listUpdaterListener = listUpdaterListener;
-        this.redrawListener = redrawListener;
-        this.databaseListener = databaseListener;
-        this.displayer = displayer;
-        this.contextSelectorListener = contextSelectorListener;
-        this.reportGenerator = reportGenerator;
 
         currentPlot = new CurrentPlot();
         currentPlot.setStarDisplayPreferences(starDisplayPreferences);

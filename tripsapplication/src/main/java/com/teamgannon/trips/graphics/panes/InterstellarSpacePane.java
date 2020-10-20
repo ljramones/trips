@@ -66,10 +66,6 @@ public class InterstellarSpacePane extends Pane {
 
     /////////////////
 
-    // screen real estate
-    private final double sceneWidth;
-    private final double sceneHeight;
-
     /**
      * our current plot
      */
@@ -131,8 +127,7 @@ public class InterstellarSpacePane extends Pane {
                                  ContextSelectorListener contextSelectorListener,
                                  RedrawListener redrawListener,
                                  ReportGenerator reportGenerator) {
-        this.sceneWidth = sceneWidth;
-        this.sceneHeight = sceneHeight;
+
         this.tripsContext = tripsContext;
 
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
