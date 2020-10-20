@@ -256,4 +256,8 @@ public class GridPlotManager {
     public void updateLabels() {
         scaleGroup.setTranslate(50, 350, 0);
     }
+
+    public void updateScale() {
+
+    }
 }
