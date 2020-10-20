@@ -1,7 +1,6 @@
 package com.teamgannon.trips.floating;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
@@ -52,7 +51,7 @@ public class RunExample extends Application
 
         double spacing = 20;
 
-        InterstellarExample interstellarExample = new InterstellarExample(sceneWidth,
+        InterstellarPaneExample interstellarPaneExample = new InterstellarPaneExample(sceneWidth,
                 sceneHeight,
                 depth,
                 spacing,
@@ -66,7 +65,7 @@ public class RunExample extends Application
                 this
         );
 
-        Scene scene = new Scene(interstellarExample.getRoot(), sceneWidth, sceneHeight);
+        Scene scene = new Scene(interstellarPaneExample.getRoot(), sceneWidth, sceneHeight);
         primaryStage.setTitle("2D Labels over 3D SubScene");
         primaryStage.setScene(scene);
         primaryStage.show();
