@@ -32,7 +32,7 @@ public class GridPlotManagerExample {
     private double width;
     private double depth;
     private ColorPalette colorPalette;
-    private final Group labelGroup;
+
 
     private final SubScene subScene;
 
@@ -45,8 +45,7 @@ public class GridPlotManagerExample {
     private Label scaleText;
 
 
-    public GridPlotManagerExample(Group labelGroup,
-                                  Group world,
+    public GridPlotManagerExample(Group world,
                                   Group sceneRoot,
                                   SubScene subScene,
                                   double spacing,
@@ -59,7 +58,6 @@ public class GridPlotManagerExample {
         this.depth = depth;
         this.colorPalette = colorPalette;
         this.shapeToLabel = new HashMap<>();
-        this.labelGroup = labelGroup;
         this.subScene = subScene;
 
         this.lineWidth = 0.5;
