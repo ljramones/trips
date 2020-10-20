@@ -65,10 +65,8 @@ public class RouteManager {
      * @param routeUpdaterListener the route update listener
      */
     public RouteManager(Group world,
-                        Map<Node, Label> shapeToLabel,
                         RouteUpdaterListener routeUpdaterListener,
                         CurrentPlot currentPlot) {
-        this.shapeToLabel = shapeToLabel;
 
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;

@@ -71,7 +71,6 @@ public class TransitManager {
      */
     private final MoveableGroup transitLabelsGroup;
 
-    private Map<Node, Label> shapeToLabel;
     /**
      * the listener to create routes on demand
      */
@@ -91,9 +90,7 @@ public class TransitManager {
      * constructor
      */
     public TransitManager(Group world,
-                          Map<Node, Label> shapeToLabel,
                           RouteUpdaterListener routeUpdaterListener) {
-        this.shapeToLabel = shapeToLabel;
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;

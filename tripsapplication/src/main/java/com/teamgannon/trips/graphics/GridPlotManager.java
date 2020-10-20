@@ -25,7 +25,6 @@ public class GridPlotManager {
 
     private final double width;
     private final double depth;
-    private Map<Node, Label> shapeToLabel;
     private final double spacing;
     private final double lineWidth;
 
@@ -47,10 +46,8 @@ public class GridPlotManager {
      * @param depth   the screen depth
      */
     public GridPlotManager(Group world,
-                           Map<Node, Label> shapeToLabel,
                            double spacing, double width, double depth,
                            ColorPalette colorPalette) {
-        this.shapeToLabel = shapeToLabel;
 
         this.spacing = spacing;
         this.width = width;
@@ -249,7 +246,6 @@ public class GridPlotManager {
         scaleText = new Label(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
         scaleText.setTextFill(colorPalette.getLegendColor());
-        shapeToLabel.put(scaleText, scaleText);
 
         scaleGroup.getChildren().add(scaleText);
         scaleGroup.setTranslate(50, 350, 0);

@@ -120,7 +120,7 @@ public class StarPlotManager {
      * the civilization and
      */
     private CivilizationDisplayPreferences politiesPreferences;
-    private Map<Node, Label> shapeToLabel;
+
 
 
     /**
@@ -138,7 +138,6 @@ public class StarPlotManager {
      * @param colorPalette            the color palette
      */
     public StarPlotManager(Group world,
-                           Map<Node, Label> shapeToLabel,
                            ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
                            DatabaseListener databaseListener,
@@ -149,7 +148,6 @@ public class StarPlotManager {
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
 
-        this.shapeToLabel = shapeToLabel;
 
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
