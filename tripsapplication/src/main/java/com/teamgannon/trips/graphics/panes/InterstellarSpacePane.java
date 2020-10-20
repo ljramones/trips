@@ -41,6 +41,7 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 
 @Slf4j
 public class InterstellarSpacePane extends Pane {
+
     private static final int CYCLE_COUNT = 30;
 
     // mouse positions
@@ -109,7 +110,6 @@ public class InterstellarSpacePane extends Pane {
 
     private final StarPlotManager starPlotManager;
 
-    private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     /**
      * constructor for the Graphics Pane
@@ -166,7 +166,6 @@ public class InterstellarSpacePane extends Pane {
 
         this.starPlotManager = new StarPlotManager(
                 world,
-                shapeToLabel,
                 listUpdaterListener,
                 redrawListener,
                 databaseListener,
@@ -180,21 +179,18 @@ public class InterstellarSpacePane extends Pane {
 
         this.routeManager = new RouteManager(
                 world,
-                shapeToLabel,
                 routeUpdaterListener,
                 currentPlot
         );
 
         this.gridPlotManager = new GridPlotManager(
                 world,
-                shapeToLabel,
                 spacing, sceneWidth, depth,
                 colorPalette
         );
 
         this.transitManager = new TransitManager(
                 world,
-                shapeToLabel,
                 routeUpdaterListener
         );
 
