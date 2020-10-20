@@ -141,7 +141,7 @@ public class GridPlotManager {
     }
 
     public void updateScale() {
-        scaleText.setTranslateX(subScene.getWidth() - 250);
+        scaleText.setTranslateX(subScene.getWidth() - 430);
         scaleText.setTranslateY(subScene.getHeight() - 30);
         scaleText.setTranslateZ(0);
     }
