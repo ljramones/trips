@@ -5,22 +5,19 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.routing.RouteManager;
 import javafx.application.Platform;
-import javafx.scene.*;
-import javafx.scene.control.Label;
+import javafx.scene.Group;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.SceneAntialiasing;
+import javafx.scene.SubScene;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.fxyz3d.geometry.MathUtils.clamp;
 
@@ -50,6 +47,8 @@ public class InterstellarExample extends Pane {
     private final StarPlotterManagerExample starPlotterManagerExample;
 
     private final RouteManagerExample routeManagerExample;
+
+    private final TransitManagerExample transitManagerExample;
 
     private final GridPlotManagerExample gridPlotManagerExample;
     private ListUpdaterListener listUpdaterListener;
@@ -145,7 +144,15 @@ public class InterstellarExample extends Pane {
                 currentPlot
         );
 
+        this.transitManagerExample = new TransitManagerExample(
+                world,
+                sceneRoot,
+                subScene,
+                routeUpdaterListener
+        );
 
+
+        // just for simulation
         starPlotterManagerExample.generateRandomStars(50);
 
     }
@@ -204,8 +211,13 @@ public class InterstellarExample extends Pane {
 
     private void updateLabels() {
         starPlotterManagerExample.updateLabels();
+
         gridPlotManagerExample.updateScale();
         gridPlotManagerExample.updateLabels();
+
+        routeManagerExample.updateLabels();
+
+        transitManagerExample.updateLabels();
     }
 
 }
