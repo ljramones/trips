@@ -70,6 +70,7 @@ public class InterstellarPaneExample extends Pane {
     private TripsContext tripsContext;
 
     private StarDisplayPreferences starDisplayPreferences;
+
     private CurrentPlot currentPlot;
 
 

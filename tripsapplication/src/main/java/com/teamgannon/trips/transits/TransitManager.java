@@ -2,6 +2,7 @@ package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
+import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
@@ -64,12 +65,12 @@ public class TransitManager {
     /**
      * the graphical element controlling transits
      */
-    private final MoveableGroup transitGroup;
+    private final Group transitGroup;
 
     /**
      * to track the labels for the transits
      */
-    private final MoveableGroup transitLabelsGroup;
+    private final Group transitLabelsGroup;
 
     /**
      * the listener to create routes on demand
@@ -94,12 +95,10 @@ public class TransitManager {
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
-        transitGroup = new MoveableGroup();
-        transitGroup.setWhatAmI("Transit Plot Group");
+        transitGroup = new Group();
         world.getChildren().add(transitGroup);
 
-        transitLabelsGroup = new MoveableGroup();
-        transitLabelsGroup.setWhatAmI("Labels for Transit Plots");
+        transitLabelsGroup = new Group();
         world.getChildren().add(transitLabelsGroup);
 
     }

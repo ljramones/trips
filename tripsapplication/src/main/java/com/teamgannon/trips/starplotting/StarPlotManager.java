@@ -44,21 +44,21 @@ public class StarPlotManager {
     /**
      * a graphics object group for extensions
      */
-    private final MoveableGroup extensionsGroup = new MoveableGroup();
+    private final Group extensionsGroup = new Group();
 
     ///////////////////
     /**
      * the stellar group for display
      */
-    private final MoveableGroup stellarDisplayGroup = new MoveableGroup();
+    private final Group stellarDisplayGroup = new Group();
     /**
      * used to control label visibility
      */
-    private final MoveableGroup labelDisplayGroup = new MoveableGroup();
+    private final Group labelDisplayGroup = new Group();
     /**
      * to hold all the polities
      */
-    private final MoveableGroup politiesDisplayGroup = new MoveableGroup();
+    private final Group politiesDisplayGroup = new Group();
     /**
      * used to signal an update to the parent list view
      */
@@ -159,16 +159,12 @@ public class StarPlotManager {
         this.currentPlot = currentPlot;
         this.colorPalette = colorPalette;
 
-        stellarDisplayGroup.setWhatAmI("Stellar Group");
         world.getChildren().add(stellarDisplayGroup);
 
-        extensionsGroup.setWhatAmI("Star Extensions");
         world.getChildren().add(extensionsGroup);
 
-        labelDisplayGroup.setWhatAmI("Labels");
         world.getChildren().add(labelDisplayGroup);
 
-        politiesDisplayGroup.setWhatAmI("Polities");
         world.getChildren().add(politiesDisplayGroup);
 
     }
