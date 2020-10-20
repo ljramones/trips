@@ -28,6 +28,7 @@ public class GridPlotManagerExample {
 
     private final Group world;
     private final Group labelGroup;
+
     private final SubScene subScene;
 
     private final double lineWidth;
@@ -98,7 +99,7 @@ public class GridPlotManagerExample {
         double x = -Universe.boxWidth / 2;
         for (int i = 0; i <= zDivisions; i++) {
             Point3D from = new Point3D(x, 0, -Universe.boxDepth / 2);
-            Point3D to = new Point3D(x, 0, Universe.boxDepth / 2);
+            Point3D to = new Point3D(x, 0, ceil(Universe.boxDepth / 2));
             Node lineSegment = CustomObjectFactory.createLineSegment(
                     from, to, lineWidth, Color.BLUE);
             gridGroup.getChildren().add(lineSegment);
@@ -110,7 +111,7 @@ public class GridPlotManagerExample {
         double z = -Universe.boxDepth / 2;
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(-Universe.boxWidth / 2, 0, z);
-            Point3D to = new Point3D(Universe.boxWidth / 2, 0, z);
+            Point3D to = new Point3D(ceil(Universe.boxWidth / 2), 0, z);
             Node lineSegment = CustomObjectFactory.createLineSegment(
                     from, to, lineWidth, Color.BLUE);
             gridGroup.getChildren().add(lineSegment);
