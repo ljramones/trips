@@ -19,10 +19,12 @@ import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
+import javafx.application.Platform;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
@@ -143,9 +145,24 @@ public class InterstellarSpacePane extends Pane {
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
-        root.getChildren().add(subScene);
+        setInitialView();
 
         subScene.setCamera(camera);
+        Group sceneRoot = new Group(subScene);
+
+        this.setPrefSize(sceneWidth, sceneHeight);
+        this.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
+        this.setMinSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
+        this.setBackground(Background.EMPTY);
+        this.getChildren().add(sceneRoot);
+        this.setPickOnBounds(false);
+
+        subScene.widthProperty().bind(this.widthProperty());
+        subScene.heightProperty().bind(this.heightProperty());
+        Platform.runLater(this::updateLabels);
+        root.getChildren().add(this);
+
+        handleMouseEvents();
 
         this.starPlotManager = new StarPlotManager(
                 world,
@@ -183,16 +200,29 @@ public class InterstellarSpacePane extends Pane {
 
         starPlotManager.setRouteManager(routeManager);
 
-        this.setMinHeight(sceneHeight);
-        this.setMinWidth(sceneWidth);
-
         // create a rotation animation
         rotator = createRotateAnimation();
 
-        // create all the base display elements
-        this.getChildren().add(root);
+    }
+
+    private void setPerspectiveCamera() {
+        camera.setNearClip(0.1);
+        camera.setFarClip(10000.0);
+        camera.setTranslateZ(-1500);
+    }
+
+    /**
+     * set the initial view
+     */
+    public void setInitialView() {
+        setPerspectiveCamera();
+        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
+        world.getRotate();
+    }
+
+    public void resetView() {
         setInitialView();
-        handleMouseEvents();
+        camera.setRotate(25);
     }
 
     /**
@@ -275,28 +305,6 @@ public class InterstellarSpacePane extends Pane {
         gridPlotManager.updateLabels();
     }
 
-    /**
-     * set the initial view
-     */
-    public void setInitialView() {
-        setInitialCamera();
-        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
-        world.getRotate();
-    }
-
-    /**
-     * set the initial camera view
-     */
-    public void setInitialCamera() {
-        camera.setNearClip(0.1);
-        camera.setFarClip(10000.0);
-        camera.setTranslateZ(-1500);
-    }
-
-    public void resetView() {
-        setInitialView();
-        camera.setRotate(25);
-    }
 
     public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
         this.starDisplayPreferences = starDisplayPreferences;

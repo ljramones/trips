@@ -119,10 +119,6 @@ public class InterstellarPaneExample extends Pane {
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
 
-        handleMouseEvents();
-
-        // add to the 2D portion of this component
-
         this.setPrefSize(sceneWidth, sceneHeight);
         this.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
         this.setMinSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
@@ -134,6 +130,8 @@ public class InterstellarPaneExample extends Pane {
         subScene.heightProperty().bind(this.heightProperty());
         Platform.runLater(this::updateLabels);
         root.getChildren().add(this);
+
+        handleMouseEvents();
 
         this.starPlotterManagerExample = new StarPlotterManagerExample(
                 sceneRoot,
