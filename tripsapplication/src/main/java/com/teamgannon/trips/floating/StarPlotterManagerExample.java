@@ -138,11 +138,29 @@ public class StarPlotterManagerExample {
      */
     public StarPlotterManagerExample(Group sceneRoot,
                                      Group world,
-                                     SubScene subScene) {
+                                     SubScene subScene,
+                                     ListUpdaterListener listUpdaterListener,
+                                     RedrawListener redrawListener,
+                                     DatabaseListener databaseListener,
+                                     StellarPropertiesDisplayerListener displayer,
+                                     ContextSelectorListener contextSelectorListener,
+                                     StarDisplayPreferences starDisplayPreferences,
+                                     ReportGenerator reportGenerator,
+                                     CurrentPlot currentPlot,
+                                     ColorPalette colorPalette) {
         this.sceneRoot = sceneRoot;
 
         this.world = world;
         this.subScene = subScene;
+        this.listUpdaterListener = listUpdaterListener;
+        this.redrawListener = redrawListener;
+        this.databaseListener = databaseListener;
+        this.displayer = displayer;
+        this.contextSelectorListener = contextSelectorListener;
+        this.starDisplayPreferences = starDisplayPreferences;
+        this.reportGenerator = reportGenerator;
+        this.currentPlot = currentPlot;
+        this.colorPalette = colorPalette;
 
         sceneRoot.getChildren().add(labelDisplayGroup);
         world.getChildren().add(extensionsGroup);
