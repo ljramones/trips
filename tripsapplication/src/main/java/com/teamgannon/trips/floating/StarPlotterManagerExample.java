@@ -180,33 +180,52 @@ public class StarPlotterManagerExample {
 
     }
 
-    private void createExtension(double x, double y, double z, Color extensionColor) {
-        Point3D point3DFrom = new Point3D(x, y, z);
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
-        double lineWidth = 0.3;
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
-        extensionsGroup.getChildren().add(lineSegment);
-        // add the extensions group to the world model
-        extensionsGroup.setVisible(true);
+    ///////////////////
+
+    /**
+     * toggle the extensions
+     *
+     * @param extensionsOn the extensions flag
+     */
+    public void toggleExtensions(boolean extensionsOn) {
+        extensionsGroup.setVisible(extensionsOn);
     }
 
 
-    private static RotateTransition setRotationAnimation(Label group) {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(10),
-                group
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(30);
-        return rotate;
+    public void toggleStars(boolean starsOn) {
+        stellarDisplayGroup.setVisible(starsOn);
+        labelDisplayGroup.setVisible(starsOn);
+    }
+
+
+    /**
+     * toggle the labels
+     *
+     * @param labelSetting true is labels should be on
+     */
+    public void toggleLabels(boolean labelSetting) {
+        this.labelsOn = labelSetting;
+
+        // we can only do this if there are plot element on screen
+        if (currentPlot.isPlotActive()) {
+            labelDisplayGroup.setVisible(labelSetting);
+        }
+    }
+
+    public void togglePolities(boolean polities) {
+        this.politiesOn = polities;
+        log.info("toggle polities: {}", polities);
+
+        // we can only do this if there are plot element on screen
+        if (currentPlot.isPlotActive()) {
+            politiesDisplayGroup.setVisible(polities);
+        }
     }
 
     public Group getLabels() {
         return labelDisplayGroup;
     }
+
 
     /**
      * get the plotted stars in view
@@ -223,14 +242,6 @@ public class StarPlotterManagerExample {
         return starsInView;
     }
 
-    /**
-     * toggle the extensions
-     *
-     * @param extensionsOn the extensions flag
-     */
-    public void toggleExtensions(boolean extensionsOn) {
-        extensionsGroup.setVisible(extensionsOn);
-    }
 
     public void setRouteManager(RouteManager routeManager) {
         this.routeManager = routeManager;
@@ -269,14 +280,12 @@ public class StarPlotterManagerExample {
         log.info("mark point");
     }
 
-    public void toggleStars(boolean starsOn) {
-        stellarDisplayGroup.setVisible(starsOn);
-        labelDisplayGroup.setVisible(starsOn);
-    }
 
     public boolean isPlotActive() {
         return stellarDisplayGroup.getChildren().size() > 0;
     }
+
+
 
     /**
      * draw a list of stars
@@ -311,6 +320,35 @@ public class StarPlotterManagerExample {
         plotStar(record, centerStar, colorPalette, starDisplayPreferences);
 
     }
+
+
+
+    ///////////
+
+    private void createExtension(double x, double y, double z, Color extensionColor) {
+        Point3D point3DFrom = new Point3D(x, y, z);
+        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
+        double lineWidth = 0.3;
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
+        extensionsGroup.getChildren().add(lineSegment);
+        // add the extensions group to the world model
+        extensionsGroup.setVisible(true);
+    }
+
+
+    private static RotateTransition setRotationAnimation(Label group) {
+        RotateTransition rotate = new RotateTransition(
+                Duration.seconds(10),
+                group
+        );
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setFromAngle(360);
+        rotate.setToAngle(0);
+        rotate.setInterpolator(Interpolator.LINEAR);
+        rotate.setCycleCount(30);
+        return rotate;
+    }
+
 
 
     private void plotStar(StarDisplayRecord record,
@@ -864,32 +902,6 @@ public class StarPlotterManagerExample {
 
     public void clearPlot() {
         currentPlot.clearStars();
-    }
-
-    /**
-     * toggle the labels
-     *
-     * @param labelSetting true is labels should be on
-     */
-    public void toggleLabels(boolean labelSetting) {
-        this.labelsOn = labelSetting;
-
-        // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
-//            redrawPlot();
-            labelDisplayGroup.setVisible(labelSetting);
-        }
-    }
-
-    public void togglePolities(boolean polities) {
-        this.politiesOn = polities;
-        log.info("toggle polities: {}", polities);
-
-        // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
-//            redrawPlot();
-            politiesDisplayGroup.setVisible(polities);
-        }
     }
 
 
