@@ -50,7 +50,7 @@ public class StarPlotterManagerExample {
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
 
-    private Group sceneRoot;
+    private final Group sceneRoot;
     private final Group world;
     /**
      * the stellar group for display
@@ -82,37 +82,37 @@ public class StarPlotterManagerExample {
     /**
      * used to signal an update to the parent list view
      */
-    private ListUpdaterListener listUpdaterListener;
+    private final ListUpdaterListener listUpdaterListener;
     /**
      * the redraw listener
      */
-    private RedrawListener redrawListener;
+    private final RedrawListener redrawListener;
     /**
      * to make database changes
      */
-    private DatabaseListener databaseListener;
+    private final DatabaseListener databaseListener;
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
-    private ContextSelectorListener contextSelectorListener;
+    private final ContextSelectorListener contextSelectorListener;
     /**
      * used to signal an update to the parent property panes
      */
-    private StellarPropertiesDisplayerListener displayer;
+    private final StellarPropertiesDisplayerListener displayer;
     /**
      * the report generator
      */
-    private ReportGenerator reportGenerator;
+    private final ReportGenerator reportGenerator;
     /**
      * the current plot
      */
-    private CurrentPlot currentPlot;
+    private final CurrentPlot currentPlot;
 
     /**
      * our color palette
      */
-    private  ColorPalette colorPalette;
+    private final ColorPalette colorPalette;
     /**
      * used to implement a selection model for selecting stars
      */
@@ -277,8 +277,6 @@ public class StarPlotterManagerExample {
     public boolean isPlotActive() {
         return stellarDisplayGroup.getChildren().size() > 0;
     }
-
-
 
     /**
      * draw a list of stars
@@ -894,6 +892,23 @@ public class StarPlotterManagerExample {
         }
     }
 
+
+    private void redrawPlot() {
+        clearPlot();
+        clearStars();
+        log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
+        List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
+        recordList.forEach(
+                starDisplayRecord -> plotStar(
+                        starDisplayRecord,
+                        currentPlot.getCenterStar(),
+                        colorPalette,
+                        currentPlot.getStarDisplayPreferences()
+                )
+        );
+        routeManager.plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
+        // re-plot routes
+    }
 
     /**
      * create a set of extensions for a set of stars
