@@ -129,6 +129,17 @@ public class InterstellarSpacePane extends Pane {
                                  ReportGenerator reportGenerator) {
 
         this.tripsContext = tripsContext;
+        this.listUpdaterListener = listUpdaterListener;
+
+        currentPlot = new CurrentPlot();
+        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
+
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
+
+
+
+
 
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
@@ -136,15 +147,6 @@ public class InterstellarSpacePane extends Pane {
         root.getChildren().add(subScene);
 
         subScene.setCamera(camera);
-
-        // setup defaults
-        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
-        this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
-
-        this.listUpdaterListener = listUpdaterListener;
-
-        currentPlot = new CurrentPlot();
-        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
 
         this.starPlotManager = new StarPlotManager(
                 world,
