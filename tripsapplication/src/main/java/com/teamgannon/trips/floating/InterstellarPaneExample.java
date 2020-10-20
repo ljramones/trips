@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import static org.fxyz3d.geometry.MathUtils.clamp;
 
 @Slf4j
-public class InterstellarExample extends Pane {
+public class InterstellarPaneExample extends Pane {
 
     private final ColorPalette colorPalette;
     private double mousePosX;
@@ -61,18 +61,18 @@ public class InterstellarExample extends Pane {
     private CurrentPlot currentPlot;
 
 
-    public InterstellarExample(double sceneWidth,
-                               double sceneHeight,
-                               double depth,
-                               double spacing,
-                               TripsContext tripsContext,
-                               RouteUpdaterListener routeUpdaterListener,
-                               ListUpdaterListener listUpdaterListener,
-                               StellarPropertiesDisplayerListener displayer,
-                               DatabaseListener databaseListener,
-                               ContextSelectorListener contextSelectorListener,
-                               RedrawListener redrawListener,
-                               ReportGenerator reportGenerator) {
+    public InterstellarPaneExample(double sceneWidth,
+                                   double sceneHeight,
+                                   double depth,
+                                   double spacing,
+                                   TripsContext tripsContext,
+                                   RouteUpdaterListener routeUpdaterListener,
+                                   ListUpdaterListener listUpdaterListener,
+                                   StellarPropertiesDisplayerListener displayer,
+                                   DatabaseListener databaseListener,
+                                   ContextSelectorListener contextSelectorListener,
+                                   RedrawListener redrawListener,
+                                   ReportGenerator reportGenerator) {
 
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
