@@ -1,5 +1,6 @@
 package com.teamgannon.trips.floating;
 
+import com.teamgannon.trips.config.application.model.ColorPalette;
 import javafx.application.Platform;
 import javafx.scene.*;
 import javafx.scene.control.Label;
@@ -48,7 +49,10 @@ public class InterstellarExample extends Pane {
 
 
     public InterstellarExample(double sceneWidth,
-                               double sceneHeight) {
+                               double sceneHeight,
+                               double depth,
+                               double spacing,
+                               ColorPalette colorPalette) {
 
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -88,7 +92,9 @@ public class InterstellarExample extends Pane {
                 labelGroup,
                 world,
                 sceneRoot,
-                subScene);
+                subScene,
+                spacing, sceneWidth, depth,
+                colorPalette);
 
         starPlotterManagerExample.generateRandomStars(20);
 
