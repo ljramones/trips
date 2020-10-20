@@ -137,9 +137,8 @@ public class InterstellarSpacePane extends Pane {
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
 
-
-
-
+        // attach our custom rotation transforms so we can update the labels dynamically
+        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
 
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);

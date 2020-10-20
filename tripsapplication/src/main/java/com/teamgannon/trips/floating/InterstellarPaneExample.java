@@ -122,18 +122,18 @@ public class InterstellarPaneExample extends Pane {
         handleMouseEvents();
 
         // add to the 2D portion of this component
-        Pane pane = new Pane();
-        pane.setPrefSize(sceneWidth, sceneHeight);
-        pane.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
-        pane.setMinSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
-        pane.setBackground(Background.EMPTY);
-        pane.getChildren().add(sceneRoot);
-        pane.setPickOnBounds(false);
 
-        subScene.widthProperty().bind(pane.widthProperty());
-        subScene.heightProperty().bind(pane.heightProperty());
+        this.setPrefSize(sceneWidth, sceneHeight);
+        this.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
+        this.setMinSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
+        this.setBackground(Background.EMPTY);
+        this.getChildren().add(sceneRoot);
+        this.setPickOnBounds(false);
+
+        subScene.widthProperty().bind(this.widthProperty());
+        subScene.heightProperty().bind(this.heightProperty());
         Platform.runLater(this::updateLabels);
-        root.getChildren().add(pane);
+        root.getChildren().add(this);
 
         this.starPlotterManagerExample = new StarPlotterManagerExample(
                 sceneRoot,
