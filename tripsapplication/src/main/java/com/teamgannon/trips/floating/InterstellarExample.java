@@ -1,6 +1,9 @@
 package com.teamgannon.trips.floating;
 
+import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.graphics.CurrentPlot;
+import com.teamgannon.trips.listener.*;
 import javafx.application.Platform;
 import javafx.scene.*;
 import javafx.scene.control.Label;
@@ -44,13 +47,37 @@ public class InterstellarExample extends Pane {
     private final StarPlotterManagerExample starPlotterManagerExample;
 
     private final GridPlotManagerExample gridPlotManagerExample;
+    private ListUpdaterListener listUpdaterListener;
+    private RedrawListener redrawListener;
+    private DatabaseListener databaseListener;
+    private StellarPropertiesDisplayerListener displayer;
+    private ContextSelectorListener contextSelectorListener;
+    private StarDisplayPreferences starDisplayPreferences;
+    private ReportGenerator reportGenerator;
+    private CurrentPlot currentPlot;
 
 
     public InterstellarExample(double sceneWidth,
                                double sceneHeight,
                                double depth,
                                double spacing,
+                               ListUpdaterListener listUpdaterListener,
+                               RedrawListener redrawListener,
+                               DatabaseListener databaseListener,
+                               StellarPropertiesDisplayerListener displayer,
+                               ContextSelectorListener contextSelectorListener,
+                               StarDisplayPreferences starDisplayPreferences,
+                               ReportGenerator reportGenerator,
+                               CurrentPlot currentPlot,
                                ColorPalette colorPalette) {
+        this.listUpdaterListener = listUpdaterListener;
+        this.redrawListener = redrawListener;
+        this.databaseListener = databaseListener;
+        this.displayer = displayer;
+        this.contextSelectorListener = contextSelectorListener;
+        this.starDisplayPreferences = starDisplayPreferences;
+        this.reportGenerator = reportGenerator;
+        this.currentPlot = currentPlot;
 
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -82,7 +109,16 @@ public class InterstellarExample extends Pane {
         this.starPlotterManagerExample = new StarPlotterManagerExample(
                 sceneRoot,
                 world,
-                subScene
+                subScene,
+                listUpdaterListener,
+                redrawListener,
+                databaseListener,
+                displayer,
+                contextSelectorListener,
+                new StarDisplayPreferences(),
+                reportGenerator,
+                new CurrentPlot(),
+                colorPalette
         );
 
         this.gridPlotManagerExample = new GridPlotManagerExample(
@@ -92,7 +128,7 @@ public class InterstellarExample extends Pane {
                 spacing, sceneWidth, depth,
                 colorPalette);
 
-        starPlotterManagerExample.generateRandomStars(20);
+        starPlotterManagerExample.generateRandomStars(50);
 
     }
 
