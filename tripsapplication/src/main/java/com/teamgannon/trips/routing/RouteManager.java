@@ -22,9 +22,11 @@ import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,7 +37,15 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class RouteManager {
 
     private DataSetDescriptor dataSetDescriptor;
-    private Map<Node, Label> shapeToLabel;
+    private Map<Node, Label> shapeToLabel = new HashMap<>();
+
+    /**
+     * the label display
+     */
+    private final Group labelDisplayGroup = new Group();
+
+    private Group sceneRoot;
+    private SubScene subScene;
     private final RouteUpdaterListener routeUpdaterListener;
     private final CurrentPlot currentPlot;
 
@@ -46,7 +56,7 @@ public class RouteManager {
     /**
      * the graphic portion of the current route
      */
-    private MoveableGroup currentRouteDisplay;
+    private Group currentRouteDisplay;
     /**
      * whether there is a route being traced, true is yes
      */
@@ -55,7 +65,8 @@ public class RouteManager {
     /**
      * the total set of all routes
      */
-    private final MoveableGroup routesGroup = new MoveableGroup();
+    private final Group routesGroup = new Group();
+
 
     ///////////////////////
 
@@ -65,18 +76,23 @@ public class RouteManager {
      * @param routeUpdaterListener the route update listener
      */
     public RouteManager(Group world,
+                        Group sceneRoot,
+                        SubScene subScene,
                         RouteUpdaterListener routeUpdaterListener,
                         CurrentPlot currentPlot) {
+
+        this.sceneRoot = sceneRoot;
+        this.subScene = subScene;
 
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;
 
-        currentRouteDisplay = new MoveableGroup();
-        currentRouteDisplay.setWhatAmI("Current Route");
+        currentRouteDisplay = new Group();
 
         // define the
-        routesGroup.setWhatAmI("Star Routes");
         world.getChildren().add(routesGroup);
+
+        sceneRoot.getChildren().add(labelDisplayGroup);
 
     }
 
@@ -252,7 +268,6 @@ public class RouteManager {
 
     private void createCurrentRouteDisplay() {
         currentRouteDisplay = new MoveableGroup();
-        currentRouteDisplay.setWhatAmI("Current Route");
     }
 
     /**
@@ -263,7 +278,6 @@ public class RouteManager {
             currentRoute.clear();
         }
         currentRouteDisplay = new MoveableGroup();
-        currentRouteDisplay.setWhatAmI("Current Route");
     }
 
     ////////////  redraw the routes
