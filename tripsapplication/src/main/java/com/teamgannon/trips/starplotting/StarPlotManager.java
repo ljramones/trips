@@ -913,4 +913,7 @@ public class StarPlotManager {
         }
     }
 
+    public void updateLabels() {
+
+    }
 }

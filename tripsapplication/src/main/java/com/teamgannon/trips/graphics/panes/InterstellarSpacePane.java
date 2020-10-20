@@ -261,8 +261,14 @@ public class InterstellarSpacePane extends Pane {
     }
 
     private void updateLabels() {
+        starPlotManager.updateLabels();
 
+        gridPlotManager.updateScale();
+        gridPlotManager.updateLabels();
 
+        routeManager.updateLabels();
+
+        transitManager.updateLabels();
     }
 
 

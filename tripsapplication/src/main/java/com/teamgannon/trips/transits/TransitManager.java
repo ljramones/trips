@@ -387,4 +387,7 @@ public class TransitManager {
                 + String.format("%.2f", transitRoute.getDistance()) + "ly";
     }
 
+    public void updateLabels() {
+
+    }
 }
