@@ -176,6 +176,8 @@ public class InterstellarSpacePane extends Pane {
 
         this.routeManager = new RouteManager(
                 world,
+                sceneRoot,
+                subScene,
                 routeUpdaterListener,
                 currentPlot
         );
