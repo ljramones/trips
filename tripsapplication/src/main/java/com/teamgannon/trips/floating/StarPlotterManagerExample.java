@@ -86,24 +86,29 @@ public class StarPlotterManagerExample {
     /**
      * the redraw listener
      */
+
     private final RedrawListener redrawListener;
     /**
      * to make database changes
      */
     private final DatabaseListener databaseListener;
+
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
     private final ContextSelectorListener contextSelectorListener;
+
     /**
      * used to signal an update to the parent property panes
      */
     private final StellarPropertiesDisplayerListener displayer;
+
     /**
      * the report generator
      */
     private final ReportGenerator reportGenerator;
+
     /**
      * the current plot
      */
@@ -113,30 +118,37 @@ public class StarPlotterManagerExample {
      * our color palette
      */
     private final ColorPalette colorPalette;
+
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
+
     /**
      * label state
      */
     private boolean labelsOn = true;
+
     /**
      * toggle state of polities
      */
     private boolean politiesOn = true;
+
     /**
      * reference to the Route Manager
      */
     private RouteManager routeManager;
+
     /**
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
+
     /**
      * the highlight rotator
      */
     private RotateTransition highlightRotator;
+
     /**
      * the civilization and
      */
@@ -146,8 +158,8 @@ public class StarPlotterManagerExample {
     /**
      * constructor
      *
-     * @param world             the world group
-     * @param subScene          the sub scene
+     * @param world    the world group
+     * @param subScene the sub scene
      */
     public StarPlotterManagerExample(Group sceneRoot,
                                      Group world,
@@ -286,7 +298,6 @@ public class StarPlotterManagerExample {
     }
 
 
-
     /**
      * draw a list of stars
      *
@@ -322,7 +333,6 @@ public class StarPlotterManagerExample {
     }
 
 
-
     ///////////
 
     private void createExtension(double x, double y, double z, Color extensionColor) {
@@ -348,7 +358,6 @@ public class StarPlotterManagerExample {
         rotate.setCycleCount(30);
         return rotate;
     }
-
 
 
     private void plotStar(StarDisplayRecord record,
