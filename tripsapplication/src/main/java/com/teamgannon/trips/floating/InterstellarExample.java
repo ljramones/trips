@@ -1,9 +1,11 @@
 package com.teamgannon.trips.floating;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.routing.RouteManager;
 import javafx.application.Platform;
 import javafx.scene.*;
 import javafx.scene.control.Label;
@@ -25,6 +27,7 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 @Slf4j
 public class InterstellarExample extends Pane {
 
+    private final ColorPalette colorPalette;
     private double mousePosX;
     private double mousePosY;
     private double mouseOldX;
@@ -46,6 +49,8 @@ public class InterstellarExample extends Pane {
 
     private final StarPlotterManagerExample starPlotterManagerExample;
 
+    private final RouteManagerExample routeManagerExample;
+
     private final GridPlotManagerExample gridPlotManagerExample;
     private ListUpdaterListener listUpdaterListener;
     private RedrawListener redrawListener;
@@ -61,23 +66,27 @@ public class InterstellarExample extends Pane {
                                double sceneHeight,
                                double depth,
                                double spacing,
+                               TripsContext tripsContext,
+                               RouteUpdaterListener routeUpdaterListener,
                                ListUpdaterListener listUpdaterListener,
-                               RedrawListener redrawListener,
-                               DatabaseListener databaseListener,
                                StellarPropertiesDisplayerListener displayer,
+                               DatabaseListener databaseListener,
                                ContextSelectorListener contextSelectorListener,
-                               StarDisplayPreferences starDisplayPreferences,
-                               ReportGenerator reportGenerator,
-                               CurrentPlot currentPlot,
-                               ColorPalette colorPalette) {
+                               RedrawListener redrawListener,
+                               ReportGenerator reportGenerator) {
+
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
         this.displayer = displayer;
         this.contextSelectorListener = contextSelectorListener;
-        this.starDisplayPreferences = starDisplayPreferences;
         this.reportGenerator = reportGenerator;
-        this.currentPlot = currentPlot;
+
+        currentPlot = new CurrentPlot();
+        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
+
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
 
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -127,6 +136,15 @@ public class InterstellarExample extends Pane {
                 subScene,
                 spacing, sceneWidth, depth,
                 colorPalette);
+
+        this.routeManagerExample = new RouteManagerExample(
+                world,
+                sceneRoot,
+                subScene,
+                routeUpdaterListener,
+                currentPlot
+        );
+
 
         starPlotterManagerExample.generateRandomStars(50);
 
