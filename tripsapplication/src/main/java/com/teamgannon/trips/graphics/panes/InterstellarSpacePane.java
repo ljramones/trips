@@ -20,21 +20,16 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
-import javafx.geometry.Point3D;
 import javafx.scene.*;
-import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.fxyz3d.geometry.MathUtils.clamp;
@@ -165,7 +160,9 @@ public class InterstellarSpacePane extends Pane {
         handleMouseEvents();
 
         this.starPlotManager = new StarPlotManager(
+                sceneRoot,
                 world,
+                subScene,
                 listUpdaterListener,
                 redrawListener,
                 databaseListener,
