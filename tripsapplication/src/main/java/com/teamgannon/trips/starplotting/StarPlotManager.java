@@ -175,7 +175,6 @@ public class StarPlotManager {
 
     }
 
-
     private static RotateTransition setRotationAnimation(Label group) {
         RotateTransition rotate = new RotateTransition(
                 Duration.seconds(10),
