@@ -1,6 +1,6 @@
 package com.teamgannon.trips.floating;
 
-import com.teamgannon.trips.starplotting.LabelDescriptor;
+import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.Point3D;
@@ -35,6 +35,9 @@ public class StarPlotterManagerExample {
     private final Group world;
     private final SubScene subScene;
 
+    private final Group extensionsGroup = new Group();
+
+
     private final Font font = new Font("arial", 10);
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
@@ -46,6 +49,9 @@ public class StarPlotterManagerExample {
         this.labelGroup = labelGroup;
         this.world = world;
         this.subScene = subScene;
+
+        world.getChildren().add(extensionsGroup);
+
     }
 
     public void generateRandomStars(int numberStars) {
@@ -59,9 +65,20 @@ public class StarPlotterManagerExample {
             String labelText = "Star " + i;
             boolean fadeFlag = random.nextBoolean();
             createSphereAndLabel(radius, x, y, z, color, labelText, fadeFlag);
+            createExtension(x,y,z, Color.VIOLET);
         }
 
         log.info("shapes:{}", shapeToLabel.size());
+    }
+
+    private void createExtension(double x, double y, double z, Color extensionColor) {
+        Point3D point3DFrom = new Point3D(x, y, z);
+        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
+        double lineWidth = 0.3;
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
+        extensionsGroup.getChildren().add(lineSegment);
+        // add the extensions group to the world model
+        extensionsGroup.setVisible(true);
     }
 
     private Color randomColor() {

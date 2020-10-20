@@ -285,7 +285,6 @@ public class InterstellarSpacePane extends Pane {
     public void setInitialView() {
         setInitialCamera();
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
-
         world.getRotate();
     }
 

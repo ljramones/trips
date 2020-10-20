@@ -9,7 +9,9 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +31,8 @@ public class InterstellarExample extends Pane {
     private final Font font = new Font("arial", 10);
 
     // We'll use custom Rotate transforms to manage the coordinate conversions
-    private final Rotate rotateX = new Rotate(0, Rotate.X_AXIS);
-    private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
+    private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
+    private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
 
     private final Group root = new Group();
@@ -54,10 +56,7 @@ public class InterstellarExample extends Pane {
         subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
-        PerspectiveCamera camera = new PerspectiveCamera(true);
-        camera.setNearClip(0.1);
-        camera.setFarClip(10000.0);
-        camera.setTranslateZ(-1000);
+        PerspectiveCamera camera = setPerspectiveCamera();
 
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
@@ -93,6 +92,16 @@ public class InterstellarExample extends Pane {
 
         starPlotterManagerExample.generateRandomStars(20);
 
+    }
+
+    @NotNull
+    private PerspectiveCamera setPerspectiveCamera() {
+
+        PerspectiveCamera camera = new PerspectiveCamera(true);
+        camera.setNearClip(0.1);
+        camera.setFarClip(10000.0);
+        camera.setTranslateZ(-1500);
+        return camera;
     }
 
     public Group getRoot() {
