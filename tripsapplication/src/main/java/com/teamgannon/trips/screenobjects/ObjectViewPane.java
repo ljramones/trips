@@ -30,8 +30,10 @@ public class ObjectViewPane extends Pane {
                         redrawListener));
 
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            AstrographicObject astrographicObject = databaseListener.getStar(newValue.getRecordId());
-            propertiesDisplayer.displayStellarProperties(astrographicObject);
+            if (newValue != null) {
+                AstrographicObject astrographicObject = databaseListener.getStar(newValue.getRecordId());
+                propertiesDisplayer.displayStellarProperties(astrographicObject);
+            }
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));
 
