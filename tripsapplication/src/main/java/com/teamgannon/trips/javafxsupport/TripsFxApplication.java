@@ -4,7 +4,6 @@ import com.teamgannon.trips.TripsSpringBootApplication;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,13 +18,7 @@ public class TripsFxApplication extends Application {
 
     @Override
     public void init() throws Exception {
-        ApplicationContextInitializer<GenericApplicationContext> initializer =
-                context -> {
-                    context.registerBean(Application.class, () -> TripsFxApplication.this);
-                    context.registerBean(Parameters.class, this::getParameters);
-                    context.registerBean(HostServices.class, this::getHostServices);
-
-                };
+        ApplicationContextInitializer<GenericApplicationContext> initializer = this::initialize;
         this.context = new SpringApplicationBuilder()
                 .sources(TripsSpringBootApplication.class)
                 .initializers(initializer)
@@ -35,18 +28,23 @@ public class TripsFxApplication extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         context.publishEvent(new StageReadyEvent(primaryStage));
-        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent event) {
-                Platform.exit();
-                System.exit(0);
-            }
-        });
+        primaryStage.setOnCloseRequest(TripsFxApplication::exitApplication);
     }
 
     @Override
     public void stop() throws Exception {
         context.close();
         Platform.exit();
+    }
+
+    private void initialize(GenericApplicationContext context) {
+        context.registerBean(Application.class, () -> TripsFxApplication.this);
+        context.registerBean(Parameters.class, this::getParameters);
+        context.registerBean(HostServices.class, this::getHostServices);
+    }
+
+    private static void exitApplication(WindowEvent event) {
+        Platform.exit();
+        System.exit(0);
     }
 }

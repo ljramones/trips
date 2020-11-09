@@ -1,6 +1,5 @@
 package com.teamgannon.trips.routing;
 
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

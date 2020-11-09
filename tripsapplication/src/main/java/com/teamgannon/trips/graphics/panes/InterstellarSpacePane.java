@@ -48,8 +48,9 @@ public class InterstellarSpacePane extends Pane {
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
 
-    private final Group root = new Group();
     private final Group world = new Group();
+
+    Group root = new Group();
 
     private final SubScene subScene;
 
@@ -105,6 +106,11 @@ public class InterstellarSpacePane extends Pane {
 
     private final StarPlotManager starPlotManager;
 
+    /**
+     * offset to scene coordinates to account for the top UI plane
+     */
+    private double controlPaneOffset;
+
 
     /**
      * constructor for the Graphics Pane
@@ -145,16 +151,17 @@ public class InterstellarSpacePane extends Pane {
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
 
+        this.setMinSize(sceneWidth, sceneHeight);
         this.setPrefSize(sceneWidth, sceneHeight);
-        this.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
-        this.setMinSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
+        this.setMaxSize(sceneWidth, sceneHeight);
+
         this.setBackground(Background.EMPTY);
         this.getChildren().add(sceneRoot);
         this.setPickOnBounds(false);
 
         subScene.widthProperty().bind(this.widthProperty());
         subScene.heightProperty().bind(this.heightProperty());
-        Platform.runLater(this::updateLabels);
+
         root.getChildren().add(this);
 
         handleMouseEvents();
@@ -178,6 +185,7 @@ public class InterstellarSpacePane extends Pane {
                 world,
                 sceneRoot,
                 subScene,
+                this,
                 routeUpdaterListener,
                 currentPlot
         );
@@ -194,6 +202,7 @@ public class InterstellarSpacePane extends Pane {
                 world,
                 sceneRoot,
                 subScene,
+                this,
                 routeUpdaterListener
         );
 
@@ -263,15 +272,20 @@ public class InterstellarSpacePane extends Pane {
         );
     }
 
-    private void updateLabels() {
-        starPlotManager.updateLabels();
+    public void simulateStars(int numberStars) {
+        starPlotManager.generateRandomStars(numberStars);
+        Platform.runLater(this::updateLabels);
+    }
+
+    public void updateLabels() {
+        starPlotManager.updateLabels(this);
 
         gridPlotManager.updateScale();
-        gridPlotManager.updateLabels();
+        gridPlotManager.updateLabels(this);
 
-        routeManager.updateLabels();
+        routeManager.updateLabels(this);
 
-        transitManager.updateLabels();
+        transitManager.updateLabels(this);
     }
 
 
@@ -385,10 +399,12 @@ public class InterstellarSpacePane extends Pane {
 
     public void zoomIn() {
         zoomGraph(-50);
+        updateLabels();
     }
 
     public void zoomOut() {
         zoomGraph(50);
+        updateLabels();
     }
 
     /**
@@ -580,6 +596,18 @@ public class InterstellarSpacePane extends Pane {
         fader.setCycleCount(cycleCount);
         fader.setAutoReverse(true);
         fader.play();
+    }
+
+    public Parent getRoot() {
+        return root;
+    }
+
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
+        starPlotManager.setControlPaneOffset(controlPaneOffset);
+        gridPlotManager.setControlPaneOffset(controlPaneOffset);
+        routeManager.setControlPaneOffset(controlPaneOffset);
+        transitManager.setControlPaneOffset(controlPaneOffset);
     }
 
 }

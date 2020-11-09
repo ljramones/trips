@@ -6,6 +6,7 @@ import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
 
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +48,18 @@ public class RouteDescriptor {
     private List<UUID> routeList = new ArrayList<>();
 
     /**
+     * list of ordered lengths, min length is 2
+     */
+    @Builder.Default
+    private List<Double> lengthList = new ArrayList<>();
+
+    /**
+     * we keep track of the from star for calculations
+     */
+    @Transient
+    private StarDisplayRecord lastStar;
+
+    /**
      * start star name
      */
     private String startStar;
@@ -64,6 +77,10 @@ public class RouteDescriptor {
 
     public void addLineSegment(Point3D point3D) {
         lineSegments.add(point3D);
+    }
+
+    public void addLengthSegment(Double length) {
+        lengthList.add(length);
     }
 
     public void clear() {

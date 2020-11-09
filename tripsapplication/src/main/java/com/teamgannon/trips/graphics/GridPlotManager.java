@@ -3,14 +3,20 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
-import com.teamgannon.trips.graphics.entities.MoveableGroup;
+import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
+import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
+import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,13 +33,17 @@ public class GridPlotManager {
     private final Group scaleGroup = new Group();
     private final Group gridGroup = new Group();
 
-    private final Group world;
     private Group sceneRoot;
-    private double spacing;
-    private double width;
-    private double depth;
-    private ColorPalette colorPalette;
 
+    /**
+     * used to control label visibility
+     */
+    private final Group labelDisplayGroup = new Group();
+
+    private final double spacing;
+    private final double width;
+    private final double depth;
+    private final ColorPalette colorPalette;
 
     private final SubScene subScene;
 
@@ -41,9 +51,9 @@ public class GridPlotManager {
 
     private static final String scaleString = "Scale: 1 grid is %.2f ly square";
 
-    private final Font font = Font.font("Verdana", 20);
 
     private Label scaleText;
+    private double controlPaneOffset;
 
 
     /**
@@ -60,7 +70,6 @@ public class GridPlotManager {
                            double width, double depth,
                            ColorPalette colorPalette) {
 
-        this.world = world;
         this.spacing = spacing;
         this.width = width;
         this.depth = depth;
@@ -71,6 +80,7 @@ public class GridPlotManager {
         this.lineWidth = 0.5;
 
         sceneRoot.getChildren().add(scaleGroup);
+        sceneRoot.getChildren().add(labelDisplayGroup);
         world.getChildren().add(gridGroup);
 
         buildInitialGrid();
@@ -91,10 +101,13 @@ public class GridPlotManager {
      */
     public void toggleGrid(boolean gridToggle) {
         gridGroup.setVisible(gridToggle);
+        labelDisplayGroup.setVisible(gridToggle);
     }
 
     public void toggleVisibility() {
-        gridGroup.setVisible(!gridGroup.isVisible());
+        boolean flag = !gridGroup.isVisible();
+        gridGroup.setVisible(flag);
+        labelDisplayGroup.setVisible(flag);
     }
 
     public boolean isVisible() {
@@ -130,14 +143,12 @@ public class GridPlotManager {
     }
 
 
-
     private void createScaleLegend(double scaleValue) {
         scaleText = new Label(String.format(scaleString, scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
         scaleText.setTextFill(colorPalette.getLegendColor());
         updateScale();
         scaleGroup.getChildren().add(scaleText);
-        log.info("shapes:{}", shapeToLabel.size());
     }
 
     public void updateScale() {
@@ -241,13 +252,15 @@ public class GridPlotManager {
     }
 
 
-    private void drawZLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double zDivs, double minX, double maxX, double beginZ, double increment) {
+    private void drawZLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette,
+                                   double zDivs, double minX, double maxX, double beginZ,
+                                   double increment) {
         for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
             double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), 0, beginZ};
             double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), 0, beginZ};
             String label = Integer.toString((int) beginZ);
             LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
-            Node gridLineSegmentX = CustomObjectFactory.createLineSegment(
+            Node gridLineSegmentX = createLineSegment(
                     lineSegmentX.getFrom(), lineSegmentX.getTo(),
                     lineWidth, colorPalette.getGridColor(),
                     label, false);
@@ -262,7 +275,7 @@ public class GridPlotManager {
             double[] toPointZ = new double[]{beginX, 0, signum(maxZ) * ceil(abs(maxZ))};
             String label = Integer.toString((int) beginX);
             LineSegment lineSegmentZ = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
-            Node gridLineSegmentZ = CustomObjectFactory.createLineSegment(
+            Node gridLineSegmentZ = createLineSegment(
                     lineSegmentZ.getFrom(), lineSegmentZ.getTo(),
                     lineWidth, colorPalette.getGridColor(),
                     label, true);
@@ -271,20 +284,97 @@ public class GridPlotManager {
         }
     }
 
+    public Node createLineSegment(Point3D origin,
+                                  Point3D target,
+                                  double width,
+                                  Color color,
+                                  String tag,
+                                  boolean sense) {
+
+        Point3D yAxis = new Point3D(0, 1, 0);
+        Point3D diff = target.subtract(origin);
+        double height = diff.magnitude();
+
+        Point3D mid = target.midpoint(origin);
+        Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
+
+        Point3D axisOfRotation = diff.crossProduct(yAxis);
+        double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
+
+        // create cylinder and color it with phong material
+        Cylinder line = StellarEntityFactory.createCylinder(width, color, height);
+
+        Group lineGroup = new Group();
+
+        line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+        lineGroup.getChildren().add(line);
+        if (tag != null) {
+            Label label = createLabel(tag);
+            Sphere pointSphere = createPointSphere(label);
+            if (sense) {
+                pointSphere.setTranslateX(origin.getX());
+                pointSphere.setTranslateY(origin.getY());
+                pointSphere.setTranslateZ(origin.getZ());
+            } else {
+                pointSphere.setTranslateX(target.getX());
+                pointSphere.setTranslateY(target.getY());
+                pointSphere.setTranslateZ(target.getZ());
+            }
+            lineGroup.getChildren().add(pointSphere);
+        }
+
+        return lineGroup;
+    }
+
+    public Label createLabel(String text) {
+        Label label = new Label(text);
+        label.setFont(new Font("Arial", 6));
+        label.setTextFill(Color.WHEAT);
+        return label;
+    }
+
+    private Sphere createPointSphere(Label label) {
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.WHEAT);
+        material.setSpecularColor(Color.WHEAT);
+        Sphere sphere = new Sphere(1);
+        sphere.setMaterial(material);
+        label.setLabelFor(sphere);
+        labelDisplayGroup.getChildren().add(label);
+        shapeToLabel.put(sphere, label);
+        return sphere;
+    }
+
     ////////////  label updates
 
     /**
      * update labels
      */
-    public void updateLabels() {
+    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
             //Clipping Logic
             //if coordinates are outside of the scene it could
             //stretch the screen so don't transform them
-            double x = coordinates.getX();
-            double y = coordinates.getY();
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
+
+            double x;
+            double y;
+
+            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+            if (ofParent.getMinX() > 0) {
+                x = xs - ofParent.getMinX();
+            } else {
+                x = xs;
+            }
+            if (ofParent.getMinY() >= 0) {
+                y = ys - ofParent.getMinY() - controlPaneOffset;
+            } else {
+                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
+            }
 
             // is it left of the view?
             if (x < 0) {
@@ -312,4 +402,7 @@ public class GridPlotManager {
 
     }
 
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
+    }
 }

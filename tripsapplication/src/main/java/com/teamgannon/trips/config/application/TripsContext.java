@@ -3,11 +3,8 @@ package com.teamgannon.trips.config.application;
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
 import com.teamgannon.trips.search.SearchContext;
 import lombok.Data;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 
 @Data
-
 public class TripsContext {
 
     private AppViewPreferences appViewPreferences = new AppViewPreferences();

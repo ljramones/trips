@@ -1,10 +1,6 @@
 package com.teamgannon.trips.dialogs.search;
 
 
-import java.text.Normalizer;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
@@ -13,7 +9,10 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-import javafx.stage.Window;
+
+import java.text.Normalizer;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  *

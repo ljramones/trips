@@ -1,6 +1,5 @@
 package com.teamgannon.trips.tableviews;
 
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.Data;
 

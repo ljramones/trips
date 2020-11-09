@@ -2,7 +2,6 @@ package com.teamgannon.trips.dataset.model;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.teamgannon.trips.dataset.enums.CustomFieldType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import  com.teamgannon.trips.dataset.enums.CustomFieldType;
 
 /**
  * The custom data definition
