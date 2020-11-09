@@ -4,7 +4,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
-import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.stardata.StellarFactory;

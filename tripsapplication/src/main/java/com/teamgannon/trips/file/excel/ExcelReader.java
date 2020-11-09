@@ -3,7 +3,6 @@ package com.teamgannon.trips.file.excel;
 import com.teamgannon.trips.file.excel.model.RBStar;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Component;
 

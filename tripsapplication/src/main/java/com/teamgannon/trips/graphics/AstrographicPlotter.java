@@ -102,7 +102,7 @@ public class AstrographicPlotter {
                                 colorPalette,
                                 starDisplayPreferences);
                     } else {
-                        log.error("astorgraphic object is bad: {}", astrographicObject);
+                        log.error("astrographic object is bad: {}", astrographicObject);
                     }
                 } else {
                     log.warn("star record is not drawable:{}", astrographicObject);
@@ -114,6 +114,7 @@ public class AstrographicPlotter {
         // draw the routes for this descriptor
         interstellarSpacePane.redrawRoutes(dataSetDescriptor.getRoutes());
 
+        interstellarSpacePane.updateLabels();
         String data = String.format("%s records plotted from dataset %s.",
                 astrographicObjects.size(),
                 dataSetDescriptor.getDataSetName());

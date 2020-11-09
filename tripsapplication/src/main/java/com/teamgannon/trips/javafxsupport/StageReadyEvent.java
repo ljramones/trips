@@ -12,4 +12,8 @@ public class StageReadyEvent extends ApplicationEvent {
         super(stage);
         this.stage = stage;
     }
+
+    public Stage getStage() {
+        return stage;
+    }
 }

@@ -10,6 +10,7 @@ import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
+import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -22,6 +23,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -158,6 +160,8 @@ public class StarPlotManager {
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    private double controlPaneOffset;
+
 
     /**
      * constructor
@@ -203,8 +207,8 @@ public class StarPlotManager {
 
         world.getChildren().add(stellarDisplayGroup);
 
-//        sceneRoot.getChildren().add(labelDisplayGroup);
-        world.getChildren().add(labelDisplayGroup);
+        sceneRoot.getChildren().add(labelDisplayGroup);
+//        world.getChildren().add(labelDisplayGroup);
 
         world.getChildren().add(extensionsGroup);
 
@@ -426,8 +430,6 @@ public class StarPlotManager {
                 label,
                 starDisplayPreferences);
 
-//        shapeToLabel.put(star, label);
-
         if (listUpdaterListener != null) {
             listUpdaterListener.updateList(record);
         }
@@ -541,7 +543,7 @@ public class StarPlotManager {
             label.setLabelFor(sphere);
             labelDisplayGroup.getChildren().add(label);
             currentPlot.mapLabelToStar(record.getRecordId(), label);
-//            shapeToLabel.put(sphere, label);
+            shapeToLabel.put(sphere, label);
         }
 
         if (politiesOn) {
@@ -580,16 +582,6 @@ public class StarPlotManager {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 6));
         label.setTextFill(colorPalette.getLabelColor());
-        Point3D point3D = record.getCoordinates();
-        label.setTranslateX(point3D.getX());
-        label.setTranslateY(point3D.getY());
-        label.setTranslateZ(point3D.getZ());
-        LabelDescriptor descriptor = LabelDescriptor
-                .builder()
-                .text(record.getStarName())
-                .labelLocation(point3D)
-                .build();
-        label.setUserData(descriptor);
         return label;
     }
 
@@ -952,15 +944,30 @@ public class StarPlotManager {
         }
     }
 
-    public void updateLabels() {
+    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
             //Clipping Logic
             //if coordinates are outside of the scene it could
             //stretch the screen so don't transform them
-            double x = coordinates.getX();
-            double y = coordinates.getY();
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
+
+            double x;
+            double y;
+
+            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+            if (ofParent.getMinX() > 0) {
+                x = xs - ofParent.getMinX();
+            } else {
+                x = xs;
+            }
+            if (ofParent.getMinY() >= 0) {
+                y = ys - ofParent.getMinY() - controlPaneOffset;
+            } else {
+                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
+            }
 
             // is it left of the view?
             if (x < 0) {
@@ -1012,8 +1019,7 @@ public class StarPlotManager {
             double z = random.nextDouble() * Z_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
 
             String labelText = "Star " + i;
-            boolean fadeFlag = random.nextBoolean();
-            createSphereAndLabel(radius, x, y, z, color, labelText, fadeFlag);
+            createSphereAndLabel(radius, x, y, z, color, labelText);
             createExtension(x, y, z, Color.VIOLET);
         }
 
@@ -1027,7 +1033,7 @@ public class StarPlotManager {
         return Color.rgb(r, g, b);
     }
 
-    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, String labelText, boolean fadeFlag) {
+    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, String labelText) {
         Sphere sphere = new Sphere(radius);
         sphere.setTranslateX(x);
         sphere.setTranslateY(y);
@@ -1050,13 +1056,6 @@ public class StarPlotManager {
         sphere.setUserData(descriptor);
         Tooltip tooltip = new Tooltip(descriptor.toString());
         Tooltip.install(sphere, tooltip);
-        if (fadeFlag) {
-            //have some fun, just one example of what you can do with the 2D node
-            //in parallel to the 3D transformation. Be careful when you manipulate
-            //the position of the 2D label as putting it off screen can mess with
-            //your 2D layout.  See the clipping logic in updateLabels() for details
-//            setupFade(label);
-        }
         labelDisplayGroup.getChildren().add(label);
 
         //Add to hashmap so updateLabels() can manage the label position
@@ -1084,5 +1083,9 @@ public class StarPlotManager {
         extensionsGroup.setVisible(true);
     }
 
+
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
+    }
 
 }

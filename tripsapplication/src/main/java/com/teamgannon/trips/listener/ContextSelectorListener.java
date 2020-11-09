@@ -21,7 +21,7 @@ public interface ContextSelectorListener {
     /**
      * select a solar system
      *
-     * @param objectProperties the properties of the selected object
+     * @param starDisplayRecord the properties of the selected object
      */
     void selectSolarSystemSpace(StarDisplayRecord starDisplayRecord);
 

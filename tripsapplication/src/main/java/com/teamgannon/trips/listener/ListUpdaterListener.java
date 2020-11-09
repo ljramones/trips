@@ -2,8 +2,6 @@ package com.teamgannon.trips.listener;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 
-import java.util.Map;
-
 /**
  * Used to provide a feedback
  * <p>

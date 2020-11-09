@@ -15,15 +15,30 @@
  */
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.graphics.CurrentPlot;
-import com.teamgannon.trips.graphics.entities.*;
+import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
+import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Sphere;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -44,8 +59,9 @@ public class RouteManager {
      */
     private final Group labelDisplayGroup = new Group();
 
-    private Group sceneRoot;
-    private SubScene subScene;
+    private final Group sceneRoot;
+    private final SubScene subScene;
+    private InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
     private final CurrentPlot currentPlot;
 
@@ -67,6 +83,10 @@ public class RouteManager {
      */
     private final Group routesGroup = new Group();
 
+    private double controlPaneOffset;
+
+    private final boolean routeLabelsOn = true;
+
 
     ///////////////////////
 
@@ -78,20 +98,20 @@ public class RouteManager {
     public RouteManager(Group world,
                         Group sceneRoot,
                         SubScene subScene,
+                        InterstellarSpacePane interstellarSpacePane,
                         RouteUpdaterListener routeUpdaterListener,
                         CurrentPlot currentPlot) {
 
         this.sceneRoot = sceneRoot;
         this.subScene = subScene;
+        this.interstellarSpacePane = interstellarSpacePane;
 
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;
 
         currentRouteDisplay = new Group();
 
-        // define the
         world.getChildren().add(routesGroup);
-
         sceneRoot.getChildren().add(labelDisplayGroup);
 
     }
@@ -122,6 +142,7 @@ public class RouteManager {
     public void clearRoutes() {
         // clear the routes
         routesGroup.getChildren().clear();
+        labelDisplayGroup.getChildren().clear();
     }
 
     /**
@@ -140,6 +161,7 @@ public class RouteManager {
      */
     public void toggleRoutes(boolean routesOn) {
         routesGroup.setVisible(routesOn);
+        labelDisplayGroup.setVisible(routesOn);
     }
 
     ///////////// routing functions
@@ -154,6 +176,7 @@ public class RouteManager {
         if (currentRoute != null) {
             currentRoute.getLineSegments().add(startStar);
             currentRoute.getRouteList().add(id);
+            currentRoute.setLastStar(starDisplayRecord);
             routesGroup.getChildren().add(currentRouteDisplay);
             routesGroup.setVisible(true);
             routeUpdaterListener.routingStatus(true);
@@ -168,6 +191,7 @@ public class RouteManager {
     public void continueRoute(StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
+            updateLabels(interstellarSpacePane);
             log.info("Next Routing step:{}", currentRoute);
         } else {
             showErrorAlert("Routing", "start a route first");
@@ -184,11 +208,12 @@ public class RouteManager {
             createRouteSegment(starDisplayRecord);
             routingActive = false;
             //
-            MoveableGroup routeGraphic = StellarEntityFactory.createRoute(currentRoute);
-            routesGroup.getChildren().add(routeGraphic);
-            routesGroup.setVisible(true);
+//            Group routeGraphic = createRoute(currentRoute);
+//            routesGroup.getChildren().add(routeGraphic);
+//            routesGroup.setVisible(true);
             //
-            makeRoutePermanent(currentRoute);
+//            makeRoutePermanent(currentRoute);
+            updateLabels(interstellarSpacePane);
             routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
         } else {
             showErrorAlert("Routing", "start a route first");
@@ -205,16 +230,15 @@ public class RouteManager {
         routesGroup.getChildren().remove(currentRouteDisplay);
 
         // create a new one based on descriptor
-        MoveableGroup displayRoute = createDisplayRoute(currentRoute);
+        Group displayRoute = createDisplayRoute(currentRoute);
 
         // add this created one to the routes group
         routesGroup.getChildren().add(displayRoute);
     }
 
 
-    private MoveableGroup createDisplayRoute(RouteDescriptor currentRoute) {
-        MoveableGroup route = new MoveableGroup();
-        route.setWhatAmI(currentRoute.getName());
+    private Group createDisplayRoute(RouteDescriptor currentRoute) {
+        Group route = new Group();
         Point3D previousPoint = new Point3D(0, 0, 0);
         boolean firstPoint = true;
         for (Point3D point3D : currentRoute.getLineSegments()) {
@@ -239,16 +263,81 @@ public class RouteManager {
             int size = currentRoute.getLineSegments().size();
             Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
 
-            Node lineSegment = CustomObjectFactory.createLineSegment(
-                    fromPoint, toStarLocation, currentRoute.getLineWidth(), currentRoute.getColor()
-            );
+            double length = calculateDistance(currentRoute.getLastStar(), starDisplayRecord.getActualCoordinates());
+            Label lengthLabel = createLabel(length);
+            Node lineSegment = createLineSegment(fromPoint, toStarLocation, currentRoute.getLineWidth(), currentRoute.getColor(), lengthLabel);
             currentRoute.getLineSegments().add(toStarLocation);
             currentRoute.getRouteList().add(id);
+            currentRoute.setLastStar(starDisplayRecord);
 
             currentRouteDisplay.getChildren().add(lineSegment);
             currentRouteDisplay.setVisible(true);
             log.info("route continued");
         }
+    }
+
+    private double calculateDistance(StarDisplayRecord fromStar, double[] toStarCoords) {
+        double[] fromStarCoords = fromStar.getActualCoordinates();
+        // calculate the actual distance
+        return StarMath.getDistance(fromStarCoords, toStarCoords);
+    }
+
+    private Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, Label lengthLabel) {
+        Point3D yAxis = new Point3D(0, 1, 0);
+        Point3D diff = target.subtract(origin);
+        double height = diff.magnitude();
+
+        Point3D mid = target.midpoint(origin);
+        Translate moveToMidpoint = new Translate(mid.getX(), mid.getY(), mid.getZ());
+
+        Point3D axisOfRotation = diff.crossProduct(yAxis);
+        double angle = Math.acos(diff.normalize().dotProduct(yAxis));
+        Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
+
+        // create cylinder and color it with phong material
+        Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
+
+        Group lineGroup = new Group();
+
+        line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+        lineGroup.getChildren().add(line);
+
+        if (routeLabelsOn) {
+            // attach label
+            Sphere pointSphere = createPointSphere(lengthLabel);
+            pointSphere.setTranslateX(mid.getX());
+            pointSphere.setTranslateY(mid.getY());
+            pointSphere.setTranslateZ(mid.getZ());
+            lengthLabel.setTextFill(color);
+            lineGroup.getChildren().add(pointSphere);
+            if (!shapeToLabel.containsValue(lengthLabel)) {
+                shapeToLabel.put(pointSphere, lengthLabel);
+                labelDisplayGroup.getChildren().add(lengthLabel);
+            } else {
+                log.warn("what is <{}> present twice", lengthLabel.getText());
+            }
+        }
+
+        return lineGroup;
+    }
+
+    private Sphere createPointSphere(Label label) {
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.WHEAT);
+        material.setSpecularColor(Color.WHEAT);
+        Sphere sphere = new Sphere(1);
+        sphere.setMaterial(material);
+        label.setLabelFor(sphere);
+        labelDisplayGroup.getChildren().add(label);
+        shapeToLabel.put(sphere, label);
+        return sphere;
+    }
+
+    private Label createLabel(double length) {
+        Label label = new Label(String.format("%.2fly", length));
+        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 6);
+        label.setFont(font);
+        return label;
     }
 
     /**
@@ -267,7 +356,7 @@ public class RouteManager {
 
 
     private void createCurrentRouteDisplay() {
-        currentRouteDisplay = new MoveableGroup();
+        currentRouteDisplay = new Group();
     }
 
     /**
@@ -277,7 +366,7 @@ public class RouteManager {
         if (currentRoute != null) {
             currentRoute.clear();
         }
-        currentRouteDisplay = new MoveableGroup();
+        currentRouteDisplay = new Group();
     }
 
     ////////////  redraw the routes
@@ -295,6 +384,7 @@ public class RouteManager {
 
     public void plotRouteDescriptors(List<RoutingMetric> routeDescriptorList) {
         routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(this::plotRouteDescriptor);
+        updateLabels(interstellarSpacePane);
     }
 
     ////////
@@ -308,17 +398,50 @@ public class RouteManager {
         if (checkIfRouteCanBePlotted(route)) {
             // do actual plot
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
-            MoveableGroup routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+            Group routeGraphic = createRoute(routeDescriptor);
             routesGroup.getChildren().add(routeGraphic);
             routesGroup.setVisible(true);
         }
+        updateLabels(interstellarSpacePane);
         log.info("Plot done");
     }
 
     public void plotRouteDescriptor(RouteDescriptor routeDescriptor) {
-        MoveableGroup routeGraphic = StellarEntityFactory.createRoute(routeDescriptor);
+        Group routeGraphic = createRoute(routeDescriptor);
         routesGroup.getChildren().add(routeGraphic);
         routesGroup.setVisible(true);
+    }
+
+    /**
+     * this creates an independent connect series of lines related to the route
+     *
+     * @param routeDescriptor the route descriptor
+     * @return the route Xform
+     */
+    public Group createRoute(RouteDescriptor routeDescriptor) {
+        Group route = new Group();
+        boolean firstLink = true;
+
+        int i = 0;
+        Point3D previousPoint = new Point3D(0, 0, 0);
+        for (Point3D point3D : routeDescriptor.getLineSegments()) {
+            if (firstLink) {
+                previousPoint = point3D;
+                firstLink = false;
+            } else {
+                double length = routeDescriptor.getLengthList().get(i++);
+                Label lengthLabel = createLabel(length);
+                // create the line segment
+                Node lineSegment = createLineSegment(previousPoint, point3D, 0.5, routeDescriptor.getColor(), lengthLabel);
+                // step along the segment
+                previousPoint = point3D;
+
+                // add the completed line segment to overall list
+                route.getChildren().add(lineSegment);
+            }
+
+        }
+        return route;
     }
 
     /**
@@ -366,7 +489,59 @@ public class RouteManager {
         }
     }
 
-    public void updateLabels() {
+    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+        shapeToLabel.forEach((node, label) -> {
+            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+
+            //Clipping Logic
+            //if coordinates are outside of the scene it could
+            //stretch the screen so don't transform them
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
+
+            double x;
+            double y;
+
+            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+            if (ofParent.getMinX() > 0) {
+                x = xs - ofParent.getMinX();
+            } else {
+                x = xs;
+            }
+            if (ofParent.getMinY() >= 0) {
+                y = ys - ofParent.getMinY() - controlPaneOffset;
+            } else {
+                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
+            }
+
+            // is it left of the view?
+            if (x < 0) {
+                x = 0;
+            }
+
+            // is it right of the view?
+            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + 5);
+            }
+
+            // is it above the view?
+            if (y < 0) {
+                y = 0;
+            }
+
+            // is it below the view
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + 5);
+            }
+
+            //update the local transform of the label.
+            label.getTransforms().setAll(new Translate(x, y));
+        });
 
     }
+
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
+    }
+
 }

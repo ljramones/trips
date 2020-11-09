@@ -268,7 +268,7 @@ public class DatabaseManagementService {
             star.setVar_min(var_min);
             star.setVar_max(var_max);
 
-            UUID systemId = java.util.UUID.randomUUID();
+            UUID systemId = UUID.randomUUID();
 
             star.setId(systemId.toString());
             star.setStellarSystemId(systemId.toString());

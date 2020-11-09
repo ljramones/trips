@@ -17,15 +17,9 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
-/**
- * FxWeaverSpringBootStarterSampleApplication.
- *
- * @author Rene Gielen
- */
 @Slf4j
 @SpringBootApplication
 public class TripsSpringBootApplication implements CommandLineRunner {
-
 
     public static void main(String[] args) {
 
@@ -57,5 +51,6 @@ public class TripsSpringBootApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("TRIPS UP and Running!!");
     }
+
 
 }

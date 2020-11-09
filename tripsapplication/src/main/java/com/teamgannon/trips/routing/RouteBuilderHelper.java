@@ -56,20 +56,23 @@ public class RouteBuilderHelper {
 
         // set segments
 
-        double totalLength =0;
+        double totalLength = 0;
         boolean first = true;
         double[] coordinates1 = new double[3];
         for (String star : starList) {
             StarDisplayRecord starDisplayRecord = starDisplayRecordMap.get(star.trim());
             if (first) {
-                first= false;
+                first = false;
                 coordinates1 = starDisplayRecord.getActualCoordinates();
             } else {
-               double[] coordinates2 = starDisplayRecord.getActualCoordinates();
-               totalLength+= StarMath.getDistance(coordinates1, coordinates2);
-               coordinates1 = coordinates2;
+                double[] coordinates2 = starDisplayRecord.getActualCoordinates();
+                double lengthValue = StarMath.getDistance(coordinates1, coordinates2);
+                totalLength += lengthValue;
+                coordinates1 = coordinates2;
+                route.addLengthSegment(lengthValue);
             }
             route.addLineSegment(starDisplayRecord.getCoordinates());
+
         }
         route.setTotalLength(totalLength);
 

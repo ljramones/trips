@@ -2,12 +2,15 @@ package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
-import com.teamgannon.trips.graphics.GridPlotManager;
-import com.teamgannon.trips.graphics.entities.*;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
+import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -16,7 +19,9 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -35,19 +40,9 @@ public class TransitManager {
 
 
     /**
-     * whether the transits are visible or not
-     */
-    private boolean transitsOn;
-
-    /**
      * lookup for transits
      */
     private final Map<String, TransitRoute> transitRouteMap = new HashMap<>();
-
-    /**
-     * list of computed transits
-     */
-    private List<TransitRoute> transitRoutes;
 
     /**
      * used to track the current rout list
@@ -55,24 +50,9 @@ public class TransitManager {
     private final List<TransitRoute> currentRouteList = new ArrayList<>();
 
     /**
-     * the route descriptor
-     */
-    private RouteDescriptor routeDescriptor;
-
-    /**
-     * used to track an active routing effort
-     */
-    private boolean routingActive = false;
-
-    /**
      * the graphical element controlling transits
      */
     private final Group transitGroup;
-
-    /**
-     * to track the labels for the transits
-     */
-    private final Group transitLabelsGroup;
 
     /**
      * the label display
@@ -83,18 +63,34 @@ public class TransitManager {
 
     private final SubScene subScene;
 
-
+    private InterstellarSpacePane interstellarSpacePane;
     /**
      * the listener to create routes on demand
      */
     private final RouteUpdaterListener routeUpdaterListener;
-
+    /**
+     * whether the transits are visible or not
+     */
+    private boolean transitsOn;
+    /**
+     * list of computed transits
+     */
+    private List<TransitRoute> transitRoutes;
+    /**
+     * the route descriptor
+     */
+    private RouteDescriptor routeDescriptor;
+    /**
+     * used to track an active routing effort
+     */
+    private boolean routingActive = false;
     /**
      * current dataset
      */
     private DataSetDescriptor dataSetDescriptor;
 
     private boolean transitsLengthsOn = true;
+    private double controlPaneOffset;
 
 
     ////////////////
@@ -105,17 +101,15 @@ public class TransitManager {
     public TransitManager(Group world,
                           Group sceneRoot,
                           SubScene subScene,
+                          InterstellarSpacePane interstellarSpacePane,
                           RouteUpdaterListener routeUpdaterListener) {
         this.subScene = subScene;
+        this.interstellarSpacePane = interstellarSpacePane;
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
-
-        transitLabelsGroup = new Group();
-        world.getChildren().add(transitLabelsGroup);
-
         sceneRoot.getChildren().add(labelDisplayGroup);
 
     }
@@ -123,6 +117,13 @@ public class TransitManager {
 
     public boolean isVisible() {
         return transitsOn;
+    }
+
+    public void setVisible(boolean transitsOn) {
+        this.transitsOn = transitsOn;
+        this.transitsLengthsOn = transitsOn;
+        transitGroup.setVisible(transitsOn);
+        labelDisplayGroup.setVisible(transitsLengthsOn);
     }
 
     public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
@@ -136,10 +137,10 @@ public class TransitManager {
             transitRoutes.clear();
             transitsOn = false;
         }
-        if (transitLabelsGroup != null) {
-            transitLabelsGroup.getChildren().clear();
-            transitsLengthsOn = false;
-        }
+
+        labelDisplayGroup.getChildren().clear();
+        transitsLengthsOn = false;
+
         routeDescriptor = null;
         currentRouteList.clear();
         routingActive = false;
@@ -153,7 +154,7 @@ public class TransitManager {
     public void toggleTransitLengths(boolean transitsLengthsOn) {
         this.transitsLengthsOn = transitsLengthsOn;
         log.info("transit labels visibility:{}", transitsLengthsOn);
-        transitLabelsGroup.setVisible(transitsLengthsOn);
+        labelDisplayGroup.setVisible(transitsLengthsOn);
     }
 
     /**
@@ -199,6 +200,7 @@ public class TransitManager {
             createContextMenu(transitSegment);
             transitGroup.getChildren().add(transitSegment);
         }
+        updateLabels(interstellarSpacePane);
         transitGroup.setVisible(true);
     }
 
@@ -217,21 +219,40 @@ public class TransitManager {
         // create cylinder and color it with phong material
         Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
 
-        MoveableGroup lineGroup = new MoveableGroup();
+        Group lineGroup = new Group();
 
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);
 
         if (transitsLengthsOn) {
             // attach label
-            lengthLabel.setTranslateX(mid.getX());
-            lengthLabel.setTranslateY(mid.getY());
-            lengthLabel.setTranslateZ(mid.getZ());
+            Sphere pointSphere = createPointSphere(lengthLabel);
+            pointSphere.setTranslateX(mid.getX());
+            pointSphere.setTranslateY(mid.getY());
+            pointSphere.setTranslateZ(mid.getZ());
             lengthLabel.setTextFill(color);
-            transitLabelsGroup.getChildren().add(lengthLabel);
+            lineGroup.getChildren().add(pointSphere);
+            if (!shapeToLabel.containsValue(lengthLabel)) {
+                shapeToLabel.put(pointSphere, lengthLabel);
+                labelDisplayGroup.getChildren().add(lengthLabel);
+            } else {
+                log.warn("what is <{}> present twice", lengthLabel.getText());
+            }
         }
 
         return lineGroup;
+    }
+
+    private Sphere createPointSphere(Label label) {
+        final PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.WHEAT);
+        material.setSpecularColor(Color.WHEAT);
+        Sphere sphere = new Sphere(1);
+        sphere.setMaterial(material);
+        label.setLabelFor(sphere);
+        labelDisplayGroup.getChildren().add(label);
+        shapeToLabel.put(sphere, label);
+        return sphere;
     }
 
     private Label createLabel(TransitRoute transitRoute) {
@@ -301,6 +322,9 @@ public class TransitManager {
         return menuItem;
     }
 
+
+    ///////////////////////  ROUTING  ////////////////////
+
     private void removeTransit(TransitRoute transitRoute) {
         transitRouteMap.remove(transitRoute.getName());
         transitRoutes = new ArrayList<>(transitRouteMap.values());
@@ -308,9 +332,6 @@ public class TransitManager {
                 transitRoutes,
                 TransitRoute::getName);
     }
-
-
-    ///////////////////////  ROUTING  ////////////////////
 
     private MenuItem createNewRoute(Node transitSegment) {
         MenuItem menuItem = new MenuItem("Create New Route");
@@ -332,7 +353,6 @@ public class TransitManager {
         });
         return menuItem;
     }
-
 
     private void createRoute(Node transitSegment) {
         TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
@@ -363,7 +383,6 @@ public class TransitManager {
         return menuItem;
     }
 
-
     private MenuItem completeTheRoute(Node transitSegment) {
         MenuItem menuItem = new MenuItem("Complete Route");
         menuItem.setOnAction(event -> {
@@ -379,7 +398,6 @@ public class TransitManager {
         return menuItem;
     }
 
-
     private void constructRoute() {
         log.info("validate the ");
         for (TransitRoute transitRoute : currentRouteList) {
@@ -389,14 +407,6 @@ public class TransitManager {
         routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
     }
 
-
-    public void setVisible(boolean transitsOn) {
-        this.transitsOn = transitsOn;
-        this.transitsLengthsOn = transitsOn;
-        transitGroup.setVisible(transitsOn);
-        transitLabelsGroup.setVisible(transitsLengthsOn);
-    }
-
     private String hoverText(TransitRoute transitRoute) {
         return "transit: "
                 + transitRoute.getSource().getStarName() + " <--> "
@@ -404,15 +414,30 @@ public class TransitManager {
                 + String.format("%.2f", transitRoute.getDistance()) + "ly";
     }
 
-    public void updateLabels() {
+    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
             //Clipping Logic
             //if coordinates are outside of the scene it could
             //stretch the screen so don't transform them
-            double x = coordinates.getX();
-            double y = coordinates.getY();
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
+
+            double x = 0;
+            double y = 0;
+
+            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+            if (ofParent.getMinX() > 0) {
+                x = xs - ofParent.getMinX();
+            } else {
+                x = xs;
+            }
+            if (ofParent.getMinY() >= 0) {
+                y = ys - ofParent.getMinY() - controlPaneOffset;
+            } else {
+                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
+            }
 
             // is it left of the view?
             if (x < 0) {
@@ -437,5 +462,9 @@ public class TransitManager {
             //update the local transform of the label.
             label.getTransforms().setAll(new Translate(x, y));
         });
+    }
+
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
     }
 }
