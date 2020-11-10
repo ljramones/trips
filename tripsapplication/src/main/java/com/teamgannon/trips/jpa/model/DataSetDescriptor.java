@@ -141,7 +141,7 @@ public class DataSetDescriptor implements Serializable {
      */
     public List<Route> getRoutes() {
         if (routesStr != null) {
-            if (routesStr.isBlank()) {
+            if (!routesStr.isBlank()) {
                 return new Route().toRoute(routesStr);
             } else {
                 return new ArrayList<>();
