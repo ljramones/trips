@@ -94,6 +94,7 @@ public class RouteDescriptor {
         Route route = new Route();
         route.setRouteName(this.name);
         route.getRouteStars().addAll(routeList);
+        route.getRouteLengths().addAll(lengthList);
         route.setRouteNotes(this.routeNotes);
         route.setStartingStar(this.startStar);
         route.setRouteColor(this.color.toString());

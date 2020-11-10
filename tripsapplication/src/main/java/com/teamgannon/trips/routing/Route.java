@@ -22,14 +22,14 @@ import java.util.UUID;
 
 @Slf4j
 @Data
-public class Route implements Serializable  {
+public class Route implements Serializable {
 
     /**
      * used for JSON serialization
      */
     private final static ObjectMapper mapper = new ObjectMapper();
 
-    private static final long serialVersionUID = -6623481310539750766L;
+    private static final long serialVersionUID = 6432469144778289966L;
 
     /**
      * Name given to this route.  May default to “Start star to End Star” when generated but it can be
@@ -46,6 +46,12 @@ public class Route implements Serializable  {
      * An array of star GUIDs which defines this route
      */
     private List<UUID> routeStars = new ArrayList<>();
+
+    /**
+     * we calculate the route lengths when we create a route and store them so we don't have to
+     * recalculate each time we draw this.
+     */
+    private List<Double> routeLengths = new ArrayList<>();
 
     /**
      * the notes for the route

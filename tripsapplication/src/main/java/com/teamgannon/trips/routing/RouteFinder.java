@@ -19,7 +19,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class RouteFinder {
 
-    private Stage stage;
+    private final Stage stage;
     /**
      * used to plot the routes found
      */
