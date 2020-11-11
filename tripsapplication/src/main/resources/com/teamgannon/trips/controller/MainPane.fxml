@@ -157,7 +157,7 @@
                           onAction="#zoomOut" text="-"/>
             <Separator/>
             <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
-                      onAction="#runAnimation" text="animate"/>
+                      onAction="#runAnimation" disable="true" text="animate"/>
         </ToolBar>
         <VBox>
             <SplitPane fx:id="mainSplitPane" dividerPositions="0.76"/>
