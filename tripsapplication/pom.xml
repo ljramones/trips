@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.4.RELEASE</version>
+        <version>2.3.5.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.teamgannon.trips</groupId>
     <artifactId>trips</artifactId>
-    <version>0.5.7</version>
+    <version>0.5.8</version>
 
     <name>Terran Republic Interstellar Plotter</name>
     <description>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.2</version>
+            <version>2.11.3</version>
         </dependency>
 
         <!-- Various apache commons libraries -->
