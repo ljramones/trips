@@ -45,6 +45,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         Label upperDistanceLabel = new Label("Select Upper Distance Between Stars: ");
         upperDistanceLabel.setFont(font);
 
+
         Label lowerDistanceLabel = new Label("Select Lower Distance Between Stars: ");
         lowerDistanceLabel.setFont(font);
 
@@ -56,15 +57,18 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
         gridPane.add(upperDistanceLabel, 0, 1);
         gridPane.add(upperDistanceMeasure, 1, 1);
+        upperDistanceMeasure.setText("8");
 
         gridPane.add(lowerDistanceLabel, 0, 2);
         gridPane.add(lowerDistanceMeasure, 1, 2);
+        lowerDistanceMeasure.setText("3");
 
         gridPane.add(colorLabel, 0, 3);
         gridPane.add(colorPicker, 1,3);
 
         gridPane.add(lineWidthLabel, 0, 4);
         gridPane.add(lineWidth, 1,4);
+        lineWidth.setText(".4");
 
         vBox.getChildren().add(gridPane);
 

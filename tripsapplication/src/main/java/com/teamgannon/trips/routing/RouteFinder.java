@@ -40,7 +40,7 @@ public class RouteFinder {
      * start the location of routes
      */
     public void startRouteLocation() {
-        RouteFinderDialog routeFinderDialog = new RouteFinderDialog();
+        RouteFinderDialog routeFinderDialog = new RouteFinderDialog(stage, interstellarSpacePane.getCurrentStarsInView());
 
         // get the route location parameters from the dialog
         Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialog.showAndWait();
