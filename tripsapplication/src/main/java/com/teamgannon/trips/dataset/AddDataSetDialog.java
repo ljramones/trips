@@ -5,6 +5,8 @@ import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -37,6 +39,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     public Button addDataSetButton = new Button("Add Dataset");
     private final Localization localization;
     private final DatabaseManagementService databaseManagementService;
+
 
 
     public AddDataSetDialog(Stage stage,
