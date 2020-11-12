@@ -1,4 +1,4 @@
-package com.teamgannon.trips.floating;
+package com.teamgannon.trips.experiments;
 
 import javafx.application.Application;
 import javafx.geometry.Bounds;

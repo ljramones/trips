@@ -3,7 +3,7 @@ package com.teamgannon.trips.starplotting;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
-import com.teamgannon.trips.floating.ObjectDescriptor;
+import com.teamgannon.trips.experiments.ObjectDescriptor;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
