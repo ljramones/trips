@@ -1,4 +1,4 @@
-package com.teamgannon.trips.floating;
+package com.teamgannon.trips.experiments;
 
 import javafx.scene.paint.Color;
 import lombok.Builder;

@@ -17,6 +17,7 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -35,6 +36,7 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Slf4j
 public class DataImportService {
 
+    private Stage stage;
     private final DatabaseManagementService databaseManagementService;
     private final RBCsvReader rbCsvReader;
     private final DataSetChangeListener dataSetChangeListener;
@@ -48,10 +50,12 @@ public class DataImportService {
      * @param databaseManagementService the database service
      * @param statusUpdaterListener     the updater
      */
-    public DataImportService(DatabaseManagementService databaseManagementService,
+    public DataImportService(Stage stage,
+                             DatabaseManagementService databaseManagementService,
                              StatusUpdaterListener statusUpdaterListener,
                              DataSetChangeListener dataSetChangeListener
     ) {
+        this.stage = stage;
 
         this.databaseManagementService = databaseManagementService;
         this.dataSetChangeListener = dataSetChangeListener;

@@ -190,7 +190,7 @@ public class MainPane implements
     private final AstrographicPlotter astrographicPlotter;
     private final Localization localization;
 
-    private final DataImportService dataImportService;
+    private DataImportService dataImportService;
     private final DataExportService dataExportService;
 
     /**
@@ -244,8 +244,6 @@ public class MainPane implements
         this.astrographicPlotter = astrographicPlotter;
         this.localization = localization;
 
-        this.dataImportService = new DataImportService(
-                databaseManagementService, this, this);
         this.dataExportService = new DataExportService(
                 databaseManagementService, this);
 
@@ -338,6 +336,10 @@ public class MainPane implements
 
         queryDialog = new QueryDialog(stage, searchContext, tripsContext.getDataSetContext(), this, this);
         queryDialog.initModality(Modality.NONE);
+
+        this.dataImportService = new DataImportService(
+                stage,
+                databaseManagementService, this, this);
 
     }
 
