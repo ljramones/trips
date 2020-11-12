@@ -22,6 +22,7 @@ import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.scene.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -235,6 +236,13 @@ public class InterstellarSpacePane extends Pane {
      * handle the mouse events
      */
     private void handleMouseEvents() {
+
+        subScene.setOnScroll((ScrollEvent event) -> {
+            double deltaY = event.getDeltaY();
+            zoomGraph(deltaY);
+            updateLabels();
+        });
+
         subScene.setOnMousePressed((MouseEvent me) -> {
                     mousePosX = me.getSceneX();
                     mousePosY = me.getSceneY();
