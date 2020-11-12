@@ -288,7 +288,8 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 return;
             }
             progressText.setText("  starting load of " + dataset.getName() + " file");
-            if (dataImportService.processFileType(dataset)) {
+            boolean success = dataImportService.processFileType(dataset);
+            if (success) {
                 progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
                 updateTable();
             }
