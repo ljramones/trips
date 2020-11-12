@@ -1,5 +1,7 @@
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.dialogs.search.ComboBoxAutoComplete;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,15 +13,29 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
 
-    private final TextField originStarTextField = new TextField();
-    private final TextField destinationStarTextField = new TextField();
+    /**
+     * the combobox for selection
+     */
+    private final ComboBox<String> originCmb;
+    private final ComboBox<String> destinationCmb;
+
+    /**
+     * our lookup
+     */
+    private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
 
     private final TextField upperLengthLengthTextField = new TextField();
     private final TextField lowerLengthLengthTextField = new TextField();
@@ -29,8 +45,10 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
 
     private final ColorPicker colorPicker = new ColorPicker();
 
-    public RouteFinderDialog() {
+    public RouteFinderDialog(Stage stage, List<StarDisplayRecord> starsInView) {
         this.setTitle("Enter parameters for Route location");
+
+        Set<String> searchValues = convertList(starsInView);
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();
@@ -44,12 +62,26 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
         Label originStar = new Label("Origin Star");
         originStar.setFont(font);
         gridPane.add(originStar, 0, 1);
-        gridPane.add(originStarTextField, 1, 1);
+
+        originCmb = new ComboBox<>();
+        originCmb.setPromptText("start typing");
+        originCmb.setTooltip(new Tooltip());
+        originCmb.getItems().addAll(searchValues);
+        new ComboBoxAutoComplete<>(stage, originCmb);
+
+        gridPane.add(originCmb, 1, 1);
 
         Label destinationStar = new Label("Destination Star");
         destinationStar.setFont(font);
         gridPane.add(destinationStar, 0, 2);
-        gridPane.add(destinationStarTextField, 1, 2);
+        destinationCmb = new ComboBox<>();
+        destinationCmb.setPromptText("start typing");
+        destinationCmb.setTooltip(new Tooltip());
+        destinationCmb.getItems().addAll(searchValues);
+        new ComboBoxAutoComplete<>(stage, destinationCmb);
+
+
+        gridPane.add(destinationCmb, 1, 2);
 
         Label upperBound = new Label("Upper limit for route length");
         upperBound.setFont(font);
@@ -96,6 +128,14 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
         this.getDialogPane().setContent(vBox);
     }
 
+
+    private Set<String> convertList(List<StarDisplayRecord> starsInView) {
+        for (StarDisplayRecord record : starsInView) {
+            starLookup.put(record.getStarName(), record);
+        }
+        return starLookup.keySet();
+    }
+
     private void cancelClicked(ActionEvent actionEvent) {
         setResult(RouteFindingOptions.builder().selected(false).build());
         log.info("cancel find routes clicked");
@@ -103,12 +143,14 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
 
     private void findRoutesClicked(ActionEvent actionEvent) {
         try {
+            String originStarSelected = originCmb.getValue();
+            String destinationStarSelected = destinationCmb.getValue();
             setResult(
                     RouteFindingOptions
                             .builder()
                             .selected(true)
-                            .originStar(originStarTextField.getText())
-                            .destinationStar(destinationStarTextField.getText())
+                            .originStar(originStarSelected)
+                            .destinationStar(destinationStarSelected)
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
