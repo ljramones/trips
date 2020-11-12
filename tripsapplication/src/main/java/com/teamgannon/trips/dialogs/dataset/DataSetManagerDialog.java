@@ -10,6 +10,8 @@ import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -34,9 +36,14 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private Stage stage;
+    private final Stage stage;
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
+
+    private final ProgressBar loadProgress = new ProgressBar();
+    private final Label progressText = new Label("    waiting for file selection");
+
+    private Task<?> task;
 
     /**
      * the database management service used to manage datasets and databases
@@ -86,6 +93,15 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         createButtonPanel(vBox);
 
         updateTable();
+
+        vBox.getChildren().add(new Separator());
+        HBox hBox6 = new HBox();
+        hBox6.setAlignment(Pos.CENTER);
+        Label progressLabel = new Label("Data file loading progress:  ");
+        hBox6.getChildren().add(progressLabel);
+        hBox6.getChildren().add(loadProgress);
+        hBox6.getChildren().add(progressText);
+        vBox.getChildren().add(hBox6);
 
         // set the dialog as a utility
         stage.setOnCloseRequest(this::close);
@@ -268,13 +284,33 @@ public class DataSetManagerDialog extends Dialog<Integer> {
             // we test if the name is null
             // a null means it was cancelled and so we skip processing
             if (dataset.getName() == null) {
+                progressText.setText("  bad file, could not load");
                 return;
             }
+            progressText.setText("  starting load of " + dataset.getName() + " file");
             if (dataImportService.processFileType(dataset)) {
+                progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
                 updateTable();
             }
         }
         log.info("loaded data set dialog");
+    }
+
+    public void set(Task<?> task) {
+        this.task = task;
+        progressText.textProperty().bind(task.messageProperty());
+        loadProgress.progressProperty().bind(task.progressProperty());
+    }
+
+    public void startLoad() {
+        progressText.setText("starting load of file");
+        task.stateProperty().addListener((observableValue, oldState, newState) -> {
+            if (newState == Worker.State.SUCCEEDED) {
+                log.info("File load successfully completed");
+            } else if (newState == Worker.State.FAILED) {
+                log.error("failed to load data");
+            }
+        });
     }
 
 }
