@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
+import com.teamgannon.trips.progress.LoadGaiaDBTask;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -288,13 +289,18 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 return;
             }
             progressText.setText("  starting load of " + dataset.getName() + " file");
+//            LoadGaiaDBTask loadTask = new LoadGaiaDBTask(dataImportService, dataset);
             boolean success = dataImportService.processFileType(dataset);
-            if (success) {
-                progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
-                updateTable();
-            }
+            complete(success, dataset);
         }
         log.info("loaded data set dialog");
+    }
+
+    private void complete(boolean status, Dataset dataset) {
+        if (status) {
+            progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
+            updateTable();
+        }
     }
 
     public void set(Task<?> task) {
