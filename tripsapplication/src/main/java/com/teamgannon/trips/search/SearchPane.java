@@ -44,17 +44,17 @@ public class SearchPane extends Pane {
     /**
      * constructor
      *
-     * @param query          the search context
+     * @param searchContext          the search context
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
     public SearchPane(Stage stage,
-                      SearchContext query,
+                      SearchContext searchContext,
                       DataSetContext dataSetContext,
                       DataSetChangeListener dataSetChangeListener,
                       StellarDataUpdaterListener updater) {
         this.stage = stage;
-        this.searchContext = query;
+        this.searchContext = searchContext;
         this.dataSetContext = dataSetContext;
         this.dataSetChangeListener = dataSetChangeListener;
         this.updater = updater;
@@ -70,7 +70,7 @@ public class SearchPane extends Pane {
             distanceRange.setMax(dataSetContext.getDescriptor().getDistanceRange());
         }
 
-        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
+        d2EarthSlider = new DistanceSelectionPanel(searchContext.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
 
         this.getChildren().add(createContent());
     }
@@ -109,8 +109,7 @@ public class SearchPane extends Pane {
 
     public void setDataSetContext(DataSetDescriptor descriptor) {
         dataSetChoicePanel.setDataSetContext(descriptor);
-        DistanceRange distanceRange = DistanceRange.builder().max(descriptor.getDistanceRange()).build();
-        d2EarthSlider.setRange(distanceRange);
+        d2EarthSlider.setDataSetDescriptor(descriptor);
     }
 
 

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search.components;
 
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Label;
@@ -13,7 +14,7 @@ import org.controlsfx.control.RangeSlider;
 public class DistanceSelectionPanel extends BasePane {
 
     private final RangeSlider d2EarthSlider;
-    private DistanceRange distanceRange;
+    private DistanceRange distanceRange = DistanceRange.builder().lowValue(0).highValue(20).min(0).max(20).build();
 
 
     public DistanceSelectionPanel(double searchDistance, DistanceRange distanceRange) {
@@ -51,6 +52,11 @@ public class DistanceSelectionPanel extends BasePane {
                 .min(d2EarthSlider.getMin())
                 .max(d2EarthSlider.getMax())
                 .build();
+    }
+
+    public void setDataSetDescriptor(DataSetDescriptor descriptor) {
+        distanceRange.setMax(descriptor.getDistanceRange());
+        d2EarthSlider.setMax(descriptor.getDistanceRange());
     }
 
 }
