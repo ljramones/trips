@@ -48,9 +48,8 @@ public class ProgressLoader {
     }
 
     public void start(Stage primaryStage) {
-
         splashScreen = new SplashScreen();
-        final LoadGaiaDBTask loadGaiaDBTask = new LoadGaiaDBTask(file, dataset, databaseManagementService);
+        final LoadGaiaDBTask loadGaiaDBTask = new LoadGaiaDBTask(null, null);
 
         showSplash(
                 primaryStage,
