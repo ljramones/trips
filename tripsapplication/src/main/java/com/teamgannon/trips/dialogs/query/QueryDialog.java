@@ -34,11 +34,6 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
-
-    private static double xOffset = 0;
-    private static double yOffset = 0;
-
-
     /**
      * constructor
      *
