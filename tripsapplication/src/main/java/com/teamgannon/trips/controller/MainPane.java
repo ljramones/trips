@@ -1144,7 +1144,7 @@ public class MainPane implements
     public void recenter(StarDisplayRecord starId) {
         log.info("recenter plot at {}", starId);
         AstroSearchQuery query = searchContext.getAstroSearchQuery();
-        query.setCenterRanging(starId, query.getDistanceFromCenterStar());
+        query.setCenterRanging(starId, query.getUpperDistanceLimit());
         log.info("New Center Range: {}", query.getCenterRangingCube());
         showNewStellarData(query, true, false);
     }
@@ -1475,7 +1475,7 @@ public class MainPane implements
     private void drawStars(DataSetDescriptor dataSetDescriptor) {
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
                 dataSetDescriptor,
-                searchContext.getAstroSearchQuery().getDistanceFromCenterStar());
+                searchContext.getAstroSearchQuery().getUpperDistanceLimit());
         log.info("DB Query returns {} stars", astrographicObjects.size());
 
         if (!astrographicObjects.isEmpty()) {

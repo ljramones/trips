@@ -76,7 +76,7 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         predicates.add(cb.equal(root.get("dataSetName"), astroSearchQuery.getDescriptor().getDataSetName()));
 
         // create a query with a range limit
-        predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getDistanceFromCenterStar()));
+        predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getUpperDistanceLimit()));
 
         // make a stellar spectral class query
         Set<StellarType> stellarSet = astroSearchQuery.getStellarTypes();

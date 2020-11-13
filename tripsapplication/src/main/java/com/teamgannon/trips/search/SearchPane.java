@@ -20,7 +20,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class SearchPane extends Pane {
 
-    private Stage stage;
+    private final Stage stage;
     private final SearchContext searchContext;
     private final DataSetContext dataSetContext;
     private final DataSetChangeListener dataSetChangeListener;
@@ -63,7 +63,7 @@ public class SearchPane extends Pane {
         if (dataSetContext.getDescriptor() != null) {
             distanceRange = dataSetContext.getDescriptor().getDistanceRange();
         }
-        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getDistanceFromCenterStar(), distanceRange);
+        d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
 
         this.getChildren().add(createContent());
     }
@@ -137,7 +137,7 @@ public class SearchPane extends Pane {
         DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
         astroSearchQuery.setDescriptor(descriptor);
 
-        astroSearchQuery.setDistanceFromCenterStar(d2EarthSlider.getDistance());
+        astroSearchQuery.setUpperDistanceLimit(d2EarthSlider.getDistance());
         astroSearchQuery.setRealStars(categorySelectionPanel.isRealStars());
         astroSearchQuery.setAnomalySearch(miscellaneousSelectionPanel.isAnomalyPresent());
         astroSearchQuery.setOtherSearch(miscellaneousSelectionPanel.isOtherPresent());

@@ -28,7 +28,10 @@ public class AstroSearchQuery {
     /**
      * this is intended to be used to determine how far out the sphere that we search should be
      */
-    private double distanceFromCenterStar = 20.0;
+
+    private double lowerDistanceLimit = 0.0;
+
+    private double upperDistanceLimit = 20.0;
 
     private boolean fuelSearch = false;
     private boolean worldSearch = false;
@@ -129,7 +132,8 @@ public class AstroSearchQuery {
         this.centerCoordinates = star.getActualCoordinates();
         this.centerStar = star.getStarName();
         this.recenter = true;
-        this.distanceFromCenterStar = distance;
+        this.lowerDistanceLimit = 0.0;
+        this.upperDistanceLimit = distance;
         centrePoint = star.getRecordId();
         xMinus = centerCoordinates[0] - distance;
         xPlus = centerCoordinates[0] + distance;
