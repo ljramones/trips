@@ -59,10 +59,17 @@ public class SearchPane extends Pane {
         this.dataSetChangeListener = dataSetChangeListener;
         this.updater = updater;
 
-        double distanceRange = 20.0;
+        DistanceRange distanceRange = DistanceRange
+                .builder()
+                .min(0)
+                .lowValue(0)
+                .highValue(20)
+                .max(20)
+                .build();
         if (dataSetContext.getDescriptor() != null) {
-            distanceRange = dataSetContext.getDescriptor().getDistanceRange();
+            distanceRange.setMax(dataSetContext.getDescriptor().getDistanceRange());
         }
+
         d2EarthSlider = new DistanceSelectionPanel(query.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
 
         this.getChildren().add(createContent());
@@ -102,7 +109,8 @@ public class SearchPane extends Pane {
 
     public void setDataSetContext(DataSetDescriptor descriptor) {
         dataSetChoicePanel.setDataSetContext(descriptor);
-        d2EarthSlider.setMaxRange(descriptor.getDistanceRange());
+        DistanceRange distanceRange = DistanceRange.builder().max(descriptor.getDistanceRange()).build();
+        d2EarthSlider.setRange(distanceRange);
     }
 
 
@@ -137,7 +145,8 @@ public class SearchPane extends Pane {
         DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
         astroSearchQuery.setDescriptor(descriptor);
 
-        astroSearchQuery.setUpperDistanceLimit(d2EarthSlider.getDistance());
+        astroSearchQuery.setLowerDistanceLimit(d2EarthSlider.getDistance().getLowValue());
+        astroSearchQuery.setUpperDistanceLimit(d2EarthSlider.getDistance().getHighValue());
         astroSearchQuery.setRealStars(categorySelectionPanel.isRealStars());
         astroSearchQuery.setAnomalySearch(miscellaneousSelectionPanel.isAnomalyPresent());
         astroSearchQuery.setOtherSearch(miscellaneousSelectionPanel.isOtherPresent());

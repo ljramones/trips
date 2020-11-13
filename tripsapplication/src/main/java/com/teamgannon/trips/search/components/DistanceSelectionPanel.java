@@ -12,17 +12,16 @@ import org.controlsfx.control.RangeSlider;
  */
 public class DistanceSelectionPanel extends BasePane {
 
-    private final static Color textColor = Color.BLACK;
     private final RangeSlider d2EarthSlider;
-    private double distanceRange;
+    private DistanceRange distanceRange;
 
 
-    public DistanceSelectionPanel(double searchDistance, double distanceRange) {
+    public DistanceSelectionPanel(double searchDistance, DistanceRange distanceRange) {
 
         this.distanceRange = distanceRange;
         Label distanceToEarth = createLabel("Radius from Earth in ly");
 
-        d2EarthSlider = new RangeSlider(0, distanceRange, 0, distanceRange);
+        d2EarthSlider = new RangeSlider(distanceRange.getMin(), distanceRange.getMax(), distanceRange.getLowValue(), distanceRange.getHighValue());
         d2EarthSlider.setPrefWidth(400);
         d2EarthSlider.setPrefHeight(25);
         d2EarthSlider.setHighValue(searchDistance);
@@ -35,17 +34,23 @@ public class DistanceSelectionPanel extends BasePane {
         planGrid.add(d2EarthSlider, 1, 0);
     }
 
-    private double getDistanceValue() {
-        return distanceRange;
-    }
 
-    public void setMaxRange(double distanceRange) {
+    public void setRange(DistanceRange distanceRange) {
         this.distanceRange = distanceRange;
-        d2EarthSlider.setMax(distanceRange);
+        d2EarthSlider.setLowValue(distanceRange.getLowValue());
+        d2EarthSlider.setHighValue(distanceRange.getHighValue());
+        d2EarthSlider.setMin(distanceRange.getMin());
+        d2EarthSlider.setMax(distanceRange.getMax());
     }
 
-    public double getDistance() {
-        return d2EarthSlider.getHighValue();
+    public DistanceRange getDistance() {
+        return DistanceRange
+                .builder()
+                .lowValue(d2EarthSlider.getLowValue())
+                .highValue(d2EarthSlider.getHighValue())
+                .min(d2EarthSlider.getMin())
+                .max(d2EarthSlider.getMax())
+                .build();
     }
 
 }
