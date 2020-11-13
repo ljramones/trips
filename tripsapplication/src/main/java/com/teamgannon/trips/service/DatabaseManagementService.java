@@ -354,7 +354,7 @@ public class DatabaseManagementService {
             astrographicObjects = astrographicObjectRepository.findBySearchQuery(searchQuery);
         }
         log.info("New DB Query returns {} stars", astrographicObjects.size());
-        astrographicObjects = filterByDistance(astrographicObjects, searchQuery.getCenterCoordinates(), searchQuery.getDistanceFromCenterStar());
+        astrographicObjects = filterByDistance(astrographicObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
         log.info("Filtered by distance Query returns {} stars", astrographicObjects.size());
         return astrographicObjects;
     }
