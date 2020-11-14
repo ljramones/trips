@@ -588,6 +588,10 @@ public class InterstellarSpacePane extends Pane {
         return rotate;
     }
 
+    private void doRotateAnimation() {
+
+    }
+
 
     ////////////// graphics helpers  /////////////////////////
 

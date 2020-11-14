@@ -669,4 +669,15 @@ public class DatabaseManagementService {
         astrographicObjectRepository.saveAll(starSet);
     }
 
+    /**
+     * find a set of stars that match our search term
+     *
+     * @param datasetName the dataset to search in
+     * @param starName    the star name to search
+     * @return the lsit of matching stars
+     */
+    public List<AstrographicObject> findStarsWithName(String datasetName, String starName) {
+        return astrographicObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+    }
+
 }

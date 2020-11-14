@@ -43,6 +43,17 @@ public interface AstrographicObjectRepository
      */
     List<AstrographicObject> findByDataSetName(String dataSetName);
 
+
+    /**
+     * find a star containing a partial match on a name in a specified dataset
+     *
+     * @param dataSetName the dataset
+     * @param nameMatch   the partial match
+     * @return the list of objects that match what we search for
+     */
+    List<AstrographicObject> findByDataSetNameAndDisplayNameContainsIgnoreCase(String dataSetName, String nameMatch);
+
+
     /**
      * find all objects by dataset name
      *
@@ -61,7 +72,7 @@ public interface AstrographicObjectRepository
     /**
      * this is the distance from Sol
      *
-     * @param dataSetName the name of the dataset to search by
+     * @param dataSetName   the name of the dataset to search by
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
