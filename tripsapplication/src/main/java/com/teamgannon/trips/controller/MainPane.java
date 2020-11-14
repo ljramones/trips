@@ -13,9 +13,11 @@ import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
+import com.teamgannon.trips.dialogs.search.FindStarsWithNameMatch;
 import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
+import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -1574,6 +1576,29 @@ public class MainPane implements
         SpringApplication.exit(appContext, () -> returnCode);
         // now exit the application
         System.exit(returnCode);
+    }
+
+    public void findInDatabase(ActionEvent actionEvent) {
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindStarsWithNameMatch findStarsWithNameMatch = new FindStarsWithNameMatch(datasetNames);
+        Optional<StarSearchResults> optional = findStarsWithNameMatch.showAndWait();
+        if (optional.isPresent()) {
+            StarSearchResults starSearchResults = optional.get();
+            String datasetName = starSearchResults.getDataSetName();
+            String starName = starSearchResults.getNameToSearch();
+            log.info("name to search: {}", starSearchResults.getNameToSearch());
+            List<AstrographicObject> astrographicObjects = databaseManagementService.findStarsWithName(datasetName, starName);
+            log.info("number of stars found ={}", astrographicObjects.size());
+        }
+    }
+
+
+    public void copyDatabase(ActionEvent actionEvent) {
+
     }
 
 }
