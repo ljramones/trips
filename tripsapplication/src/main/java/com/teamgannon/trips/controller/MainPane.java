@@ -1589,19 +1589,21 @@ public class MainPane implements
         Optional<StarSearchResults> optional = findStarsWithNameMatchDialog.showAndWait();
         if (optional.isPresent()) {
             StarSearchResults starSearchResults = optional.get();
-            String datasetName = starSearchResults.getDataSetName();
-            String starName = starSearchResults.getNameToSearch();
-            log.info("name to search: {}", starSearchResults.getNameToSearch());
-            List<AstrographicObject> astrographicObjects = databaseManagementService.findStarsWithName(datasetName, starName);
-            log.info("number of stars found ={}", astrographicObjects.size());
-            ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(astrographicObjects);
-            showStarMatchesDialog.showAndWait();
+            if (starSearchResults.isStarsFound()) {
+                String datasetName = starSearchResults.getDataSetName();
+                String starName = starSearchResults.getNameToSearch();
+                log.info("name to search: {}", starSearchResults.getNameToSearch());
+                List<AstrographicObject> astrographicObjects = databaseManagementService.findStarsWithName(datasetName, starName);
+                log.info("number of stars found ={}", astrographicObjects.size());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, astrographicObjects);
+                showStarMatchesDialog.showAndWait();
+            }
         }
     }
 
 
     public void copyDatabase(ActionEvent actionEvent) {
-
+        showInfoMessage("Copy Database", "not ready yet, coming soon");
     }
 
 }
