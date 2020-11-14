@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -28,19 +29,18 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
         datasets.getSelectionModel().select(0);
 
         VBox vBox = new VBox();
-        HBox hBox = new HBox();
+        GridPane gridPane = new GridPane();
+        vBox.getChildren().add(gridPane);
         Label starSearchLabel = new Label("Please enter the partial name to search: ");
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         starSearchLabel.setFont(font);
-        hBox.getChildren().addAll(starSearchLabel, starName);
-        vBox.getChildren().add(hBox);
-
-        HBox hBox1 = new HBox();
-        hBox1.setAlignment(Pos.CENTER);
-        vBox.getChildren().add(hBox1);
+        gridPane.add(starSearchLabel, 0, 1);
+        gridPane.add(starName, 1, 1);
 
         Label datasetLabel = new Label("Please enter dataset name: ");
-        hBox1.getChildren().addAll(datasetLabel, datasets);
+        datasetLabel.setFont(font);
+        gridPane.add(datasetLabel, 0, 2);
+        gridPane.add(datasets, 1, 2);
 
         HBox hBox2 = new HBox();
         hBox2.setAlignment(Pos.CENTER);
