@@ -14,12 +14,12 @@ import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
-public class FindStarsWithNameMatch extends Dialog<StarSearchResults> {
+public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
 
     private final TextField starName = new TextField();
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
 
-    public FindStarsWithNameMatch(List<String> datasetNames) {
+    public FindStarsWithNameMatchDialog(List<String> datasetNames) {
         this.setTitle("Find a star in database");
         this.setHeight(500);
         this.setWidth(300);
@@ -50,7 +50,7 @@ public class FindStarsWithNameMatch extends Dialog<StarSearchResults> {
         gotToStarButton.setOnAction(this::searchStarClicked);
         hBox2.getChildren().add(gotToStarButton);
 
-        Button cancelDataSetButton = new Button("Cancel");
+        Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
 
