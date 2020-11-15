@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
@@ -43,6 +44,7 @@ public class DataImportService {
     private final ChviewReader chviewReader;
     private final StatusUpdaterListener statusUpdaterListener;
     private final ExcelReader excelReader;
+    private LoadUpdater loadUpdater;
 
     /**
      * constructor
@@ -72,7 +74,8 @@ public class DataImportService {
      *
      * @param dataset the defined dataset
      */
-    public boolean processFileType(Dataset dataset) {
+    public boolean processFileType(LoadUpdater loadUpdater, Dataset dataset) {
+        this.loadUpdater = loadUpdater;
         FileProcessResult result;
         // this is a CH View import format
         // this is Excel format that follows a specification from the Rick Boatwright format
@@ -104,7 +107,7 @@ public class DataImportService {
                 }
             }
             case "csv" -> {
-                result = processRBCSVFile(dataset);
+                result = processRBCSVFile(loadUpdater, dataset);
                 if (result.isSuccess()) {
                     this.dataSetChangeListener.addDataSet(result.getDataSetDescriptor());
                     statusUpdaterListener.updateStatus("CSV database: " + result.getDataSetDescriptor().getDataSetName() + " is loaded");
@@ -188,11 +191,11 @@ public class DataImportService {
         return processResult;
     }
 
-    public FileProcessResult processRBCSVFile(Dataset dataset) {
+    public FileProcessResult processRBCSVFile(LoadUpdater loadUpdater, Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = rbCsvReader.loadFile(file, dataset);
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(loadUpdater, file, dataset);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -216,7 +219,7 @@ public class DataImportService {
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(file);
+        RBExcelFile excelFile = excelReader.loadFile(loadUpdater,file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -269,7 +272,7 @@ public class DataImportService {
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(file);
+        RBExcelFile excelFile = excelReader.loadFile(loadUpdater, file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
