@@ -1,5 +1,6 @@
 package com.teamgannon.trips.file.excel;
 
+import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.excel.model.RBStar;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class ExcelReader {
 
     // Create a DataFormatter to format and get each cell's value as String
     private final DataFormatter dataFormatter = new DataFormatter();
+    private LoadUpdater loadUpdater;
 
 
     /**
@@ -34,9 +36,11 @@ public class ExcelReader {
     /**
      * load the excel file
      *
+     * @param loadUpdater
      * @param file the excel file in RB Format
      */
-    public RBExcelFile loadFile(File file) {
+    public RBExcelFile loadFile(LoadUpdater loadUpdater, File file) {
+        this.loadUpdater = loadUpdater;
 
         RBExcelFile excelFile = new RBExcelFile();
         excelFile.setFileName(file.getAbsolutePath());

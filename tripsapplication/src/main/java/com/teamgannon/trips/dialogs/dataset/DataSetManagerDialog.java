@@ -33,7 +33,7 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class DataSetManagerDialog extends Dialog<Integer> {
+public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete, LoadUpdater {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -95,6 +95,13 @@ public class DataSetManagerDialog extends Dialog<Integer> {
 
         updateTable();
 
+        createProgress(vBox);
+
+        // set the dialog as a utility
+        stage.setOnCloseRequest(this::close);
+    }
+
+    private void createProgress(VBox vBox) {
         vBox.getChildren().add(new Separator());
         HBox hBox6 = new HBox();
         hBox6.setAlignment(Pos.CENTER);
@@ -103,9 +110,6 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         hBox6.getChildren().add(loadProgress);
         hBox6.getChildren().add(progressText);
         vBox.getChildren().add(hBox6);
-
-        // set the dialog as a utility
-        stage.setOnCloseRequest(this::close);
     }
 
     private void createSelectedDatasetContext(VBox vBox) {
@@ -289,17 +293,23 @@ public class DataSetManagerDialog extends Dialog<Integer> {
                 return;
             }
             progressText.setText("  starting load of " + dataset.getName() + " file");
-//            LoadGaiaDBTask loadTask = new LoadGaiaDBTask(dataImportService, dataset);
-            boolean success = dataImportService.processFileType(dataset);
-            complete(success, dataset);
+//            LoadGaiaDBTask loadTask = new LoadGaiaDBTask(this, dataImportService, dataset);
+//            set(loadTask);
+//            loadTask.start();
+
+            boolean success = dataImportService.processFileType(this, dataset);
+            complete(success, dataset, "success");
         }
         log.info("loaded data set dialog");
     }
 
-    private void complete(boolean status, Dataset dataset) {
+    public void complete(boolean status, Dataset dataset, String errorMessage) {
         if (status) {
             progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
             updateTable();
+        } else {
+            showErrorAlert("Add Dataset",
+                    "failed to load dataset: " + dataset.getName() + ", because of " + errorMessage);
         }
     }
 
@@ -320,4 +330,13 @@ public class DataSetManagerDialog extends Dialog<Integer> {
         });
     }
 
+    @Override
+    public void updateLoad(String message) {
+
+    }
+
+    @Override
+    public void loadComplete(boolean status, Dataset dataset, String errorMessage) {
+
+    }
 }

@@ -3,6 +3,7 @@ package com.teamgannon.trips.file.csvin;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -32,13 +33,15 @@ public class RBCsvReader {
      */
     private final StellarFactory stellarFactory;
     private final DatabaseManagementService databaseManagementService;
+    private LoadUpdater loadUpdater;
 
     public RBCsvReader(DatabaseManagementService databaseManagementService) {
         this.stellarFactory = new StellarFactory();
         this.databaseManagementService = databaseManagementService;
     }
 
-    public RBCsvFile loadFile(File file, Dataset dataset) {
+    public RBCsvFile loadFile(LoadUpdater loadUpdater, File file, Dataset dataset) {
+        this.loadUpdater = loadUpdater;
         RBCsvFile rbCsvFile = new RBCsvFile();
         rbCsvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
@@ -99,11 +102,17 @@ public class RBCsvReader {
                 databaseManagementService.starBulkSave(starSet);
                 totalCount += loopCounter;
                 log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
+                loadUpdater.updateLoad(String.format("saving %s entries, total count is %s", loopCounter, totalCount));
             } while (!readComplete); // the moment readComplete turns true, we stop
 
-            log.info("File load report: total:{}, accepts:{}, rejects:{}", rbCsvFile.getSize(), rbCsvFile.getNumbAccepts(), rbCsvFile.getNumbRejects());
+            log.info("File load report: total:{}, accepts:{}, rejects:{}",
+                    rbCsvFile.getSize(),
+                    rbCsvFile.getNumbAccepts(),
+                    rbCsvFile.getNumbRejects());
+            loadUpdater.loadComplete(true, dataset, "load complete");
         } catch (IOException | CsvValidationException e) {
             log.error("failed to read file because: {}", e.getMessage());
+            loadUpdater.loadComplete(false, dataset, "failed to read file because: " + e.getMessage());
         }
 
         rbCsvFile.setMaxDistance(maxDistance);
