@@ -87,7 +87,7 @@ public class DataImportService {
                 runningImportService = rbExcelDataImportService;
                 boolean queued = rbExcelDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText);
+                        taskComplete, progressText, loadProgressBar, cancelLoad);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);

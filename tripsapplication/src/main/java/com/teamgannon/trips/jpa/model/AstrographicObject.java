@@ -19,7 +19,7 @@ import java.util.UUID;
  * Created by larrymitchell on 2017-03-28.
  */
 @Data
-@Entity
+@Entity(name = "ASTROGRAPHIC_OBJ")
 public class AstrographicObject implements Serializable {
 
     public final static String SIMBAD_NO_ID = "UNDEFINED";

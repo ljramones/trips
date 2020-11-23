@@ -11,6 +11,8 @@ import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
+import com.teamgannon.trips.dialogs.query.AdvResultsSet;
+import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.dialogs.search.FindStarsWithNameMatchDialog;
@@ -1603,6 +1605,22 @@ public class MainPane implements
 
     public void copyDatabase(ActionEvent actionEvent) {
         showInfoMessage("Copy Database", "not ready yet, coming soon");
+    }
+
+    public void advancedSearch(ActionEvent actionEvent) {
+        AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, searchContext.getDatasetMap());
+        Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
+        if (optional.isPresent()) {
+            AdvResultsSet advResultsSet = optional.get();
+            if (!advResultsSet.isDismissed()) {
+                if (advResultsSet.isResultsFound()) {
+                    showList(advResultsSet.getStarsFound());
+                } else {
+                    showInfoMessage("Advanced Query", "No stars were found to match query");
+                }
+            }
+        }
+
     }
 
 }
