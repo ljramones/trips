@@ -302,6 +302,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
             progressText.setText("  starting load of " + dataset.getName() + " file");
 
             loadingPanel.setVisible(true);
+            loadProgressBar.setProgress(0);
 
             ImportResult success = dataImportService.processFile(
                     dataset,
