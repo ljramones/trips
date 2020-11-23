@@ -340,9 +340,7 @@ public class MainPane implements
         queryDialog = new QueryDialog(stage, searchContext, tripsContext.getDataSetContext(), this, this);
         queryDialog.initModality(Modality.NONE);
 
-        this.dataImportService = new DataImportService(
-                stage,
-                databaseManagementService, this, this);
+        this.dataImportService = new DataImportService(databaseManagementService);
 
     }
 
@@ -877,6 +875,7 @@ public class MainPane implements
                 this,
                 tripsContext.getDataSetContext(),
                 databaseManagementService,
+                this,
                 dataImportService,
                 localization,
                 dataExportService);

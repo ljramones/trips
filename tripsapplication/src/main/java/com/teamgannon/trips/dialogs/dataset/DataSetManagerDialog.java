@@ -5,14 +5,13 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.progress.LoadGaiaDBTask;
+import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.ImportResult;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -33,7 +32,7 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete, LoadUpdater {
+public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -41,16 +40,17 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
 
-    private final ProgressBar loadProgress = new ProgressBar();
+    private final ProgressBar loadProgressBar = new ProgressBar();
     private final Label progressText = new Label("    waiting for file selection");
+    private final Button cancelLoad = new Button("Cancel Loading");
 
-    private Task<?> task;
 
     /**
      * the database management service used to manage datasets and databases
      */
     private final DatabaseManagementService databaseManagementService;
 
+    private final StatusUpdaterListener statusUpdaterListener;
     private final DataImportService dataImportService;
     private final Localization localization;
     private final DataExportService dataExportService;
@@ -62,12 +62,15 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final Button deleteButton = new Button("Delete");
     private final Button exportButton = new Button("Export");
 
+    private HBox loadingPanel = new HBox();
+
     private DataSetDescriptor selectedDataset;
 
     public DataSetManagerDialog(Stage stage,
                                 DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
+                                StatusUpdaterListener statusUpdaterListener,
                                 DataImportService dataImportService,
                                 Localization localization,
                                 DataExportService dataExportService) {
@@ -76,6 +79,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
         this.databaseManagementService = databaseManagementService;
+        this.statusUpdaterListener = statusUpdaterListener;
         this.dataImportService = dataImportService;
         this.localization = localization;
         this.dataExportService = dataExportService;
@@ -103,13 +107,16 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     private void createProgress(VBox vBox) {
         vBox.getChildren().add(new Separator());
-        HBox hBox6 = new HBox();
-        hBox6.setAlignment(Pos.CENTER);
+
+        loadingPanel.setAlignment(Pos.CENTER);
         Label progressLabel = new Label("Data file loading progress:  ");
-        hBox6.getChildren().add(progressLabel);
-        hBox6.getChildren().add(loadProgress);
-        hBox6.getChildren().add(progressText);
-        vBox.getChildren().add(hBox6);
+        loadingPanel.getChildren().add(progressLabel);
+        loadingPanel.getChildren().add(loadProgressBar);
+        loadingPanel.getChildren().add(progressText);
+        loadingPanel.getChildren().add(cancelLoad);
+        cancelLoad.setOnAction(this::cancelTaskLoad);
+        loadingPanel.setVisible(false);
+        vBox.getChildren().add(loadingPanel);
     }
 
     private void createSelectedDatasetContext(VBox vBox) {
@@ -293,50 +300,37 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
                 return;
             }
             progressText.setText("  starting load of " + dataset.getName() + " file");
-//            LoadGaiaDBTask loadTask = new LoadGaiaDBTask(this, dataImportService, dataset);
-//            set(loadTask);
-//            loadTask.start();
 
-            boolean success = dataImportService.processFileType(this, dataset);
-            complete(success, dataset, "success");
+            loadingPanel.setVisible(true);
+
+            ImportResult success = dataImportService.processFile(
+                    dataset,
+                    statusUpdaterListener,
+                    dataSetChangeListener,
+                    this,
+                    progressText,
+                    loadProgressBar,
+                    cancelLoad);
+            if (!success.isSuccess()) {
+                showErrorAlert("add Dataset", success.getMessage());
+            }
+
         }
         log.info("loaded data set dialog");
     }
 
-    public void complete(boolean status, Dataset dataset, String errorMessage) {
+    public void complete(boolean status, Dataset dataset, FileProcessResult fileProcessResult, String errorMessage) {
         if (status) {
-            progressText.setText("  " + dataset.getName() + " is loaded, updating local tables");
             updateTable();
         } else {
             showErrorAlert("Add Dataset",
                     "failed to load dataset: " + dataset.getName() + ", because of " + errorMessage);
         }
+        dataImportService.complete(status, dataset, errorMessage);
     }
 
-    public void set(Task<?> task) {
-        this.task = task;
-        progressText.textProperty().bind(task.messageProperty());
-        loadProgress.progressProperty().bind(task.progressProperty());
-    }
-
-    public void startLoad() {
-        progressText.setText("starting load of file");
-        task.stateProperty().addListener((observableValue, oldState, newState) -> {
-            if (newState == Worker.State.SUCCEEDED) {
-                log.info("File load successfully completed");
-            } else if (newState == Worker.State.FAILED) {
-                log.error("failed to load data");
-            }
-        });
-    }
-
-    @Override
-    public void updateLoad(String message) {
-
-    }
-
-    @Override
-    public void loadComplete(boolean status, Dataset dataset, String errorMessage) {
-
+    private void cancelTaskLoad(ActionEvent event) {
+        log.info("loading was cancelled");
+        dataImportService.cancelCurrent();
     }
 }

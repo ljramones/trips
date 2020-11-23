@@ -15,6 +15,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
 import com.teamgannon.trips.routing.RouteDefinition;
+import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ public class DataSetDescriptorFactory {
     /**
      * create a Dataset descriptor for chview files
      *
+     * @param progressUpdater              an updater for any long loading progress
      * @param dataset                      the descriptor from the user for this dataset
      * @param dataSetDescriptorRepository  the data set repo to save this in
      * @param astrographicObjectRepository the astrographic repo to save it in
@@ -40,6 +42,7 @@ public class DataSetDescriptorFactory {
      * @return a dataset descriptor
      */
     public static DataSetDescriptor createDataSetDescriptor(
+            ProgressUpdater progressUpdater,
             Dataset dataset,
             DataSetDescriptorRepository dataSetDescriptorRepository,
             AstrographicObjectRepository astrographicObjectRepository,
@@ -65,6 +68,7 @@ public class DataSetDescriptorFactory {
         Map<Integer, ChViewRecord> chViewRecordMap = chViewFile.getRecords();
         Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
         double maxDistance = 0;
+        progressUpdater.updateLoadInfo("Saving records in database");
         for (Integer recordId : chViewRecordMap.keySet()) {
             ChViewRecord chViewRecord = chViewRecordMap.get(recordId);
             // distance check
@@ -73,29 +77,31 @@ public class DataSetDescriptorFactory {
                 maxDistance = distance;
             }
             AstrographicObject astrographicObject = AstrographicObjectFactory.create(dataset, chViewRecord);
-            log.info("Star:: name={}, distance={}", astrographicObject.getDisplayName(), astrographicObject.getDistance());
             astrographicObjectMap.put(astrographicObject.getId(), astrographicObject);
         }
 
         // save the astrographic records
         astrographicObjectRepository.saveAll(astrographicObjectMap.values());
-        log.info("Number of records load for file:{} is {}",
+        String saveMessage = String.format("Number of records loaded for file:%s is %d",
                 chViewFile.getOriginalFileName(),
                 astrographicObjectMap.size());
+        log.info(saveMessage);
+        progressUpdater.updateLoadInfo(saveMessage);
 
         // set the records for this
-//        dataSetDescriptor.setAstrographicDataList(astrographicObjectMap.keySet());
         dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
-        log.info("Dataset :{} has {} stars are range of {}",
+        String message = String.format("Dataset :%s has %d stars are range of %.3f",
                 dataSetDescriptor.getDataSetName(),
                 dataSetDescriptor.getNumberStars(),
                 dataSetDescriptor.getDistanceRange());
+        log.info(message);
         dataSetDescriptor.setDistanceRange(maxDistance);
 
         // save the data set which is cross referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);
 
-        log.info("Saved the data set named: {}", dataset);
+        log.info("Saved the data set descriptor named: {}", dataset);
+        progressUpdater.updateLoadInfo(message);
 
         return dataSetDescriptor;
     }

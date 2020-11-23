@@ -33,7 +33,6 @@ public class RBCsvReader {
      */
     private final StellarFactory stellarFactory;
     private final DatabaseManagementService databaseManagementService;
-    private LoadUpdater loadUpdater;
 
     public RBCsvReader(DatabaseManagementService databaseManagementService) {
         this.stellarFactory = new StellarFactory();
@@ -41,7 +40,6 @@ public class RBCsvReader {
     }
 
     public RBCsvFile loadFile(LoadUpdater loadUpdater, File file, Dataset dataset) {
-        this.loadUpdater = loadUpdater;
         RBCsvFile rbCsvFile = new RBCsvFile();
         rbCsvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
@@ -109,10 +107,8 @@ public class RBCsvReader {
                     rbCsvFile.getSize(),
                     rbCsvFile.getNumbAccepts(),
                     rbCsvFile.getNumbRejects());
-            loadUpdater.loadComplete(true, dataset, "load complete");
         } catch (IOException | CsvValidationException e) {
             log.error("failed to read file because: {}", e.getMessage());
-            loadUpdater.loadComplete(false, dataset, "failed to read file because: " + e.getMessage());
         }
 
         rbCsvFile.setMaxDistance(maxDistance);
