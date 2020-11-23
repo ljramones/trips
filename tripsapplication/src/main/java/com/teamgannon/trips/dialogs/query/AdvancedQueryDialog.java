@@ -27,7 +27,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
-    private final TextField wherePart = new TextField();
+    private final TextArea wherePart = new TextArea();
 
     private final CheckBox plotCheckBox = new CheckBox("Plot Results");
     private final CheckBox viewCheckBox = new CheckBox("View Results");
@@ -96,34 +96,43 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private void runquery(ActionEvent actionEvent) {
         String queryWherePart = wherePart.getText();
         if (!queryWherePart.isEmpty()) {
-            String queryToRun = "SELECT * FROM ASTROGRAPHIC_OBJ WHERE " + queryWherePart;
-            Validation validation = new Validation(Collections.singletonList(DatabaseType.H2), queryToRun);
-            List<ValidationError> errors = validation.validate();
-            if (errors.size() > 0) {
-                String stringBuilder = errors.stream().map(error -> error.toString() + "\n").collect(Collectors.joining());
-                queryErrors.setText(stringBuilder);
-            } else {
-                if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
-                    try {
-                        List<AstrographicObject> astrographicObjectList = service.runNativeQuery(queryToRun);
-                        AdvResultsSet advResultsSet = AdvResultsSet
-                                .builder()
-                                .queryValid(true)
-                                .resultsFound(astrographicObjectList.size() > 0)
-                                .starsFound(astrographicObjectList)
-                                .build();
-                        setResult(advResultsSet);
-                    } catch (Exception e) {
-                        showErrorAlert("Run Advanced Query", "failed: " + e.getMessage());
-                    }
+
+            String datasetName = datasetChoices.getValue();
+            if (!datasetName.isEmpty()) {
+                String datasetQuery = "DATASETNAME='" + datasetName + "' AND ";
+
+                String queryToRun = "SELECT * FROM ASTROGRAPHIC_OBJ WHERE " + datasetQuery + queryWherePart;
+                log.info("query is ::  {}", queryToRun);
+                Validation validation = new Validation(Collections.singletonList(DatabaseType.H2), queryToRun);
+                List<ValidationError> errors = validation.validate();
+                if (errors.size() > 0) {
+                    String stringBuilder = errors.stream().map(error -> error.toString() + "\n").collect(Collectors.joining());
+                    queryErrors.setText(stringBuilder);
                 } else {
-                    showErrorAlert("Run Advanced Query", "either plot or view must be selected");
+                    if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
+                        try {
+                            List<AstrographicObject> astrographicObjectList = service.runNativeQuery(queryToRun);
+                            AdvResultsSet advResultsSet = AdvResultsSet
+                                    .builder()
+                                    .queryValid(true)
+                                    .dataSetDescriptor(dataSetDescriptorMap.get(datasetName))
+                                    .resultsFound(astrographicObjectList.size() > 0)
+                                    .starsFound(astrographicObjectList)
+                                    .build();
+                            setResult(advResultsSet);
+                        } catch (Exception e) {
+                            showErrorAlert("Run Advanced Query", "failed: " + e.getMessage());
+                        }
+                    } else {
+                        showErrorAlert("Run Advanced Query", "either plot or view must be selected");
+                    }
                 }
+            } else {
+                showErrorAlert("Run Advanced Query", "you must enter a query");
             }
         } else {
-            showErrorAlert("Run Advanced Query", "you must enter a query");
+            showErrorAlert("Run Advanced Query", "dataset name must be selected");
         }
-
     }
 
 }

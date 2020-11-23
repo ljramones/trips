@@ -2,10 +2,7 @@ package com.teamgannon.trips.jpa.model;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -37,6 +34,7 @@ public class AstrographicObject implements Serializable {
     /**
      * the dataset name which we are guaranteeing to be unique
      */
+    @Column(name="DATASETNAME")
     private String dataSetName;
 
     /**
