@@ -101,7 +101,7 @@ public class RBCsvReader {
                 databaseManagementService.starBulkSave(starSet);
                 totalCount += loopCounter;
                 log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
-                loadUpdater.updateLoadInfo(String.format("saving %s entries, total count is %s", loopCounter, totalCount));
+                loadUpdater.updateLoadInfo(String.format(" saving %s entries, total count is %s ", loopCounter, totalCount));
             } while (!readComplete); // the moment readComplete turns true, we stop
 
             log.info("File load report: total:{}, accepts:{}, rejects:{}",
