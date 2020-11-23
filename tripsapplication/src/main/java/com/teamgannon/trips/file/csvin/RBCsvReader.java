@@ -7,6 +7,7 @@ import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ public class RBCsvReader {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public RBCsvFile loadFile(LoadUpdater loadUpdater, File file, Dataset dataset) {
+    public RBCsvFile loadFile(ProgressUpdater loadUpdater, File file, Dataset dataset) {
         RBCsvFile rbCsvFile = new RBCsvFile();
         rbCsvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
@@ -100,7 +101,7 @@ public class RBCsvReader {
                 databaseManagementService.starBulkSave(starSet);
                 totalCount += loopCounter;
                 log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
-                loadUpdater.updateLoad(String.format("saving %s entries, total count is %s", loopCounter, totalCount));
+                loadUpdater.updateLoadInfo(String.format("saving %s entries, total count is %s", loopCounter, totalCount));
             } while (!readComplete); // the moment readComplete turns true, we stop
 
             log.info("File load report: total:{}, accepts:{}, rejects:{}",
