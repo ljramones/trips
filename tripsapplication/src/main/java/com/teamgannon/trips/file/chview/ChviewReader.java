@@ -8,6 +8,7 @@ import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.chview.model.PseudoString;
 import com.teamgannon.trips.file.chview.model.StringResult;
+import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.stardata.StarColor;
 import com.teamgannon.trips.stardata.StellarClassification;
 import com.teamgannon.trips.stardata.StellarFactory;
@@ -65,8 +66,8 @@ public class ChviewReader {
      * @param file the chview file
      * @return a chview file
      */
-    public ChViewFile loadFile(File file) {
-        return readCompleteFile(file);
+    public ChViewFile loadFile(ProgressUpdater progressUpdater, File file) {
+        return readCompleteFile(progressUpdater, file);
     }
 
     public void exportJson(File file, ChViewFile chViewFile) {
@@ -99,13 +100,14 @@ public class ChviewReader {
     /**
      * read the complete file
      *
-     * @param inputFile the file name to read
+     * @param progressUpdater
+     * @param inputFile       the file name to read
      */
-    private ChViewFile readCompleteFile(File inputFile) {
+    private ChViewFile readCompleteFile(ProgressUpdater progressUpdater, File inputFile) {
 
         try {
             fileContent = Files.readAllBytes(inputFile.toPath());
-            return parsefile(inputFile.getAbsolutePath());
+            return parsefile(progressUpdater, inputFile.getAbsolutePath());
         } catch (IOException e) {
             log.error("load failed for file because of:" + e);
             return null;
@@ -116,7 +118,8 @@ public class ChviewReader {
     /**
      * relies on the file being read into a byte buffer
      */
-    private ChViewFile parsefile(String fileName) {
+    private ChViewFile parsefile(ProgressUpdater progressUpdater, String fileName) {
+        progressUpdater.updateLoadInfo("reading front preamble");
         ChViewFile chViewFile = new ChViewFile();
         currentIndex = 0;
         chViewFile.setOriginalFileName(fileName);
@@ -136,19 +139,25 @@ public class ChviewReader {
         chViewFile.setNumberOfRecords(numberOfRecords);
 
         // read each file record
+        progressUpdater.updateLoadInfo("reading records");
         for (int i = 0; i < numberOfRecords; i++) {
             ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex);
             if (chViewRecord == null) {
                 return null;
             }
             chViewFile.addRecord(chViewRecord);
+            if (i % 100 == 0) {
+                progressUpdater.updateLoadInfo("read " + i + " records");
+            }
         }
+
 
         parseLinks(fileContent, currentIndex);
 
         chViewFile.setComments(parsePreamble(fileContent, currentIndex));
 
         // return the JSON file
+        progressUpdater.updateLoadInfo("file read complete");
         return chViewFile;
     }
 

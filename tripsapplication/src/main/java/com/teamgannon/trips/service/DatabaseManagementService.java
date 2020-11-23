@@ -15,6 +15,7 @@ import com.teamgannon.trips.jpa.repository.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.service.model.DatabaseImportStatus;
 import com.teamgannon.trips.service.model.ParseResult;
 import lombok.extern.slf4j.Slf4j;
@@ -296,10 +297,11 @@ public class DatabaseManagementService {
         stellarSystemRepository.saveAll(stellarSystemList);
     }
 
-    public DataSetDescriptor loadCHFile(Dataset dataset, ChViewFile chViewFile) throws Exception {
+    public DataSetDescriptor loadCHFile(ProgressUpdater progressUpdater, Dataset dataset, ChViewFile chViewFile) throws Exception {
 
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
+                progressUpdater,
                 dataset,
                 dataSetDescriptorRepository,
                 astrographicObjectRepository,
