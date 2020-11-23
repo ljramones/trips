@@ -54,9 +54,9 @@ public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUp
         File file = new File(dataset.getFileSelected());
         RBCsvFile rbCsvFile = rbCsvReader.loadFile(this, file, dataset);
         try {
-            updateMessage("File load complete, about to save records in database");
+            updateMessage(" File load complete, about to save records in database ");
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
-            String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
+            String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
                     dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());
             processResult.setMessage(data);

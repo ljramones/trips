@@ -87,8 +87,6 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
         return true;
     }
 
-
-
     @Override
     public boolean cancelImport() {
         return this.cancel();
@@ -103,7 +101,6 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
     public Dataset getCurrentDataSet() {
         return dataSet;
     }
-
 
     private void unsetProgressControls() {
         progressText.textProperty().unbind();
