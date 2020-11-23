@@ -7,7 +7,6 @@ import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
-import javafx.scene.control.Label;
 
 import java.io.File;
 
@@ -15,21 +14,18 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
 
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
-    private final Label progressText;
 
     private final ChviewReader chviewReader;
 
-    public ChvLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService, Label progressText) {
+    public ChvLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService) {
         this.dataset = dataset;
         this.databaseManagementService = databaseManagementService;
 
-        this.progressText = progressText;
         this.chviewReader = new ChviewReader();
     }
 
     @Override
     protected FileProcessResult call() throws Exception {
-        // bind message property to gui message indicator
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());

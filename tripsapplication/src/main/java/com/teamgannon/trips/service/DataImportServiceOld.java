@@ -195,7 +195,7 @@ public class DataImportServiceOld {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = rbCsvReader.loadFile(loadUpdater, file, dataset);
+        RBCsvFile rbCsvFile = rbCsvReader.loadFile(null, file, dataset);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",

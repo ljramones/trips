@@ -26,7 +26,6 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private TaskComplete taskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
-    private Button cancelLoad;
 
     ChvLoadTask task;
 
@@ -36,7 +35,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
 
     @Override
     protected Task<FileProcessResult> createTask() {
-        task = new ChvLoadTask(dataset, databaseManagementService, progressText);
+        task = new ChvLoadTask(dataset, databaseManagementService);
         return task;
     }
 
@@ -53,7 +52,6 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
         this.taskComplete = taskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
-        this.cancelLoad = cancelLoad;
 
         progressText.textProperty().bind(this.messageProperty());
         loadProgressBar.progressProperty().bind(this.progressProperty());
