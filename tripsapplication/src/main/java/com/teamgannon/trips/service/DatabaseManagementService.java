@@ -23,6 +23,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,6 +50,9 @@ public class DatabaseManagementService {
     private final StellarSystemRepository stellarSystemRepository;
 
     private final StarRepository starRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * storage of data sets in DB
@@ -307,6 +313,16 @@ public class DatabaseManagementService {
                 astrographicObjectRepository,
                 chViewFile
         );
+    }
+
+    public List<AstrographicObject> runNativeQuery(String queryToRun) {
+        Query query = entityManager.createNativeQuery(queryToRun, AstrographicObject.class);
+        List<AstrographicObject> astrographicObjects = query.getResultList();
+        for (AstrographicObject astrographicObject : astrographicObjects) {
+            log.info(astrographicObject.toString());
+        }
+        log.info("number of elements=" + astrographicObjects.size());
+        return astrographicObjects;
     }
 
     public DataSetDescriptor loadRBStarSet(RBExcelFile excelFile) throws Exception {

@@ -2,7 +2,6 @@ package com.teamgannon.trips.service.importservices.tasks;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
-import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -11,9 +10,6 @@ import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
 public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUpdater {
@@ -42,7 +38,7 @@ public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUp
         if (result.isSuccess()) {
             log.info("New dataset {} added", dataSet.getName());
         } else {
-            showErrorAlert("load csv", result.getMessage());
+            log.error("load csv" + result.getMessage());
         }
 
         return result;

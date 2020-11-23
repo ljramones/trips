@@ -29,7 +29,6 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
     private Label progressText;
     private ProgressBar loadProgressBar;
 
-    private Dataset dataSet;
     private Dataset dataset;
 
 
@@ -49,7 +48,8 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         taskComplete.complete(true, dataset, fileProcessResult, "loaded");
-        dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());   }
+        dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
+    }
 
     @Override
     protected void failed() {
@@ -63,7 +63,7 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
     @Override
     protected void cancelled() {
         log.warn("dataset load cancelled");
-        statusUpdaterListener.updateStatus("dataset laod was cancelled for " + dataset.getName());
+        statusUpdaterListener.updateStatus("dataset load was cancelled for " + dataset.getName());
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         taskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
@@ -99,7 +99,7 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
 
     @Override
     public Dataset getCurrentDataSet() {
-        return dataSet;
+        return dataset;
     }
 
     private void unsetProgressControls() {

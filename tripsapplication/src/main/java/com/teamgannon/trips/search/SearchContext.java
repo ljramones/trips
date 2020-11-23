@@ -86,4 +86,8 @@ public class SearchContext {
         return new ArrayList<>(dataSetDescriptorMap.keySet());
     }
 
+    public List<DataSetDescriptor> getDatasetDescriptors() {
+        return new ArrayList<>(dataSetDescriptorMap.values());
+    }
+
 }

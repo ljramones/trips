@@ -219,7 +219,7 @@ public class DataImportServiceOld {
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(loadUpdater,file);
+        RBExcelFile excelFile = excelReader.loadFile(null,file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -272,7 +272,7 @@ public class DataImportServiceOld {
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(loadUpdater, file);
+        RBExcelFile excelFile = excelReader.loadFile(null, file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
