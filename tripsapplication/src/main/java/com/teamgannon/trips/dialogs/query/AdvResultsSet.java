@@ -34,6 +34,18 @@ public class AdvResultsSet {
     private boolean resultsFound = false;
 
     /**
+     * if true, view stars in table
+     */
+    @Builder.Default
+    private boolean plotStars = false;
+
+    /**
+     * if true, plot stars
+     */
+    @Builder.Default
+    private boolean viewStars = false;
+
+    /**
      * the list of results found
      */
     @Builder.Default

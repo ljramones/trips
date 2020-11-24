@@ -1615,6 +1615,13 @@ public class MainPane implements
             if (!advResultsSet.isDismissed()) {
                 if (advResultsSet.isResultsFound()) {
                     showList(advResultsSet.getStarsFound());
+                    astrographicPlotter.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
+                            advResultsSet.getStarsFound(),
+                            searchContext.getAstroSearchQuery().getCenterCoordinates(),
+                            tripsContext.getAppViewPreferences().getColorPallete(),
+                            tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                            tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                    );
                 } else {
                     showInfoMessage("Advanced Query", "No stars were found to match query");
                 }
