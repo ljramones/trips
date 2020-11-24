@@ -34,8 +34,7 @@ public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> 
      *
      * @param tripsContext the trips context
      */
-    public ApplicationPreferencesDialog(Stage stage,
-                                        TripsContext tripsContext) {
+    public ApplicationPreferencesDialog(TripsContext tripsContext) {
         this.applicationPreferences = tripsContext.getAppPreferences();
 
         this.setTitle("Change Application Preferences Dialog");
@@ -70,7 +69,8 @@ public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> 
         cancelBtn.setOnAction(this::cancel);
         hBox.getChildren().add(cancelBtn);
 
-        // set the dialog as a utility so that the closing is cancelling
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
     }

@@ -14,6 +14,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -71,6 +73,14 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         // load data
         loadData();
 
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+
+    }
+
+    private void close(WindowEvent windowEvent) {
+        setResult("dismiss");
     }
 
     private void setupTable() {

@@ -19,8 +19,7 @@ import java.io.File;
 
 public class AboutDialog extends Dialog<String> {
 
-    public AboutDialog(Stage stage,
-                       Localization localization) {
+    public AboutDialog(Localization localization) {
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();
@@ -71,6 +70,7 @@ public class AboutDialog extends Dialog<String> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
