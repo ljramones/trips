@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
+import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 
 @Slf4j
 public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
@@ -65,7 +66,6 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         wherePart.setMinWidth(300);
         gridPane.add(wherePart, 2, 2);
 
-        plotCheckBox.setDisable(true);
         gridPane.add(plotCheckBox, 0, 3);
 
         viewCheckBox.setSelected(true);
@@ -85,7 +85,6 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         queryErrors.setDisable(true);
         queryErrors.setPromptText("query syntax errors will appear here");
         vBox.getChildren().add(queryErrors);
-
     }
 
     private void cancelReq(ActionEvent actionEvent) {
@@ -95,44 +94,50 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
     private void runquery(ActionEvent actionEvent) {
         String queryWherePart = wherePart.getText();
-        if (!queryWherePart.isEmpty()) {
 
-            String datasetName = datasetChoices.getValue();
-            if (!datasetName.isEmpty()) {
-                String datasetQuery = "DATASETNAME='" + datasetName + "' AND ";
+        String datasetName = datasetChoices.getValue();
+        if (!datasetName.isEmpty()) {
+            String queryPrefix = "SELECT * FROM ASTROGRAPHIC_OBJ WHERE ";
+            String datasetQuery = "DATASETNAME='" + datasetName + "' ";
+            String queryToRun = queryPrefix + datasetQuery;
 
-                String queryToRun = "SELECT * FROM ASTROGRAPHIC_OBJ WHERE " + datasetQuery + queryWherePart;
-                log.info("query is ::  {}", queryToRun);
-                Validation validation = new Validation(Collections.singletonList(DatabaseType.H2), queryToRun);
-                List<ValidationError> errors = validation.validate();
-                if (errors.size() > 0) {
-                    String stringBuilder = errors.stream().map(error -> error.toString() + "\n").collect(Collectors.joining());
-                    queryErrors.setText(stringBuilder);
-                } else {
-                    if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
-                        try {
-                            List<AstrographicObject> astrographicObjectList = service.runNativeQuery(queryToRun);
-                            AdvResultsSet advResultsSet = AdvResultsSet
-                                    .builder()
-                                    .queryValid(true)
-                                    .dataSetDescriptor(dataSetDescriptorMap.get(datasetName))
-                                    .resultsFound(astrographicObjectList.size() > 0)
-                                    .starsFound(astrographicObjectList)
-                                    .build();
-                            setResult(advResultsSet);
-                        } catch (Exception e) {
-                            showErrorAlert("Run Advanced Query", "failed: " + e.getMessage());
-                        }
-                    } else {
-                        showErrorAlert("Run Advanced Query", "either plot or view must be selected");
-                    }
-                }
+            if (queryWherePart.isEmpty()) {
+                showWarningMessage("Run Advanced Query", "this will get all stars");
             } else {
-                showErrorAlert("Run Advanced Query", "you must enter a query");
+                queryToRun += " AND " + queryWherePart;
+            }
+
+            log.info("query is ::  {}", queryToRun);
+            Validation validation = new Validation(Collections.singletonList(DatabaseType.H2), queryToRun);
+            List<ValidationError> errors = validation.validate();
+            if (errors.size() > 0) {
+                String stringBuilder = errors.stream().map(error -> error.toString() + "\n").collect(Collectors.joining());
+                queryErrors.setText(stringBuilder);
+            } else {
+                if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
+                    try {
+                        List<AstrographicObject> astrographicObjectList = service.runNativeQuery(queryToRun);
+                        AdvResultsSet advResultsSet = AdvResultsSet
+                                .builder()
+                                .queryValid(true)
+                                .plotStars(plotCheckBox.isSelected())
+                                .viewStars(viewCheckBox.isSelected())
+                                .dataSetDescriptor(dataSetDescriptorMap.get(datasetName))
+                                .resultsFound(astrographicObjectList.size() > 0)
+                                .starsFound(astrographicObjectList)
+                                .build();
+                        setResult(advResultsSet);
+                    } catch (Exception e) {
+                        showErrorAlert("Run Advanced Query", "failed: " + e.getMessage());
+                    }
+                } else {
+                    showErrorAlert("Run Advanced Query", "either plot or view must be selected");
+                }
             }
         } else {
-            showErrorAlert("Run Advanced Query", "dataset name must be selected");
+            showErrorAlert("Run Advanced Query", "you must enter a query");
         }
+
     }
 
 }
