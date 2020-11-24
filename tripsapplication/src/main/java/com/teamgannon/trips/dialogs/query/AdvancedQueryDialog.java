@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -12,6 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.util.validation.Validation;
 import net.sf.jsqlparser.util.validation.ValidationError;
@@ -35,10 +38,10 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
     private final TextArea queryErrors = new TextArea();
 
-    private ChoiceBox<String> datasetChoices = new ChoiceBox<>();
+    private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
 
     private final DatabaseManagementService service;
-    private Map<String, DataSetDescriptor> dataSetDescriptorMap;
+    private final Map<String, DataSetDescriptor> dataSetDescriptorMap;
 
     public AdvancedQueryDialog(DatabaseManagementService service, Map<String, DataSetDescriptor> dataSetDescriptorMap) {
         this.service = service;
@@ -49,6 +52,11 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
         GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+        gridPane.setPrefWidth(900);
+
         Label datasetLabel = new Label("Dataset desired: ");
         datasetLabel.setFont(font);
         gridPane.add(datasetLabel, 0, 1);
@@ -85,6 +93,15 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         queryErrors.setDisable(true);
         queryErrors.setPromptText("query syntax errors will appear here");
         vBox.getChildren().add(queryErrors);
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+    }
+
+    private void close(WindowEvent windowEvent) {
+        AdvResultsSet advResultsSet = AdvResultsSet.builder().dismissed(true).build();
+        setResult(advResultsSet);
     }
 
     private void cancelReq(ActionEvent actionEvent) {

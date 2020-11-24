@@ -10,6 +10,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.util.List;
 
@@ -56,6 +58,15 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
 
         this.getDialogPane().setContent(vBox);
 
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+
+    }
+
+    private void close(WindowEvent windowEvent) {
+        StarSearchResults findResults = StarSearchResults.builder().starsFound(false).build();
+        setResult(findResults);
     }
 
     private void searchStarClicked(ActionEvent actionEvent) {

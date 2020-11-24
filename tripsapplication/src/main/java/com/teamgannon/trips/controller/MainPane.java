@@ -873,7 +873,6 @@ public class MainPane implements
     public void loadDataSetManager(ActionEvent actionEvent) {
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
-                stage,
                 this,
                 tripsContext.getDataSetContext(),
                 databaseManagementService,
@@ -902,7 +901,7 @@ public class MainPane implements
     }
 
     public void transitFinder(ActionEvent actionEvent) {
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(stage);
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog();
         Optional<DistanceRoutes> optionalDistanceRoutes = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalDistanceRoutes.isPresent()) {
             DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();
@@ -963,7 +962,7 @@ public class MainPane implements
 
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(stage, starsInView);
+        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog( starsInView);
         findStarInViewDialog.setOnShown(new EventHandler<DialogEvent>() {
             @Override
             public void handle(DialogEvent event) {
@@ -1046,7 +1045,7 @@ public class MainPane implements
     }
 
     public void aboutTrips(ActionEvent actionEvent) {
-        AboutDialog aboutDialog = new AboutDialog(stage, localization);
+        AboutDialog aboutDialog = new AboutDialog(localization);
         aboutDialog.showAndWait();
     }
 

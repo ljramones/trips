@@ -36,7 +36,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final Stage stage;
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
 
@@ -62,19 +61,17 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final Button deleteButton = new Button("Delete");
     private final Button exportButton = new Button("Export");
 
-    private HBox loadingPanel = new HBox();
+    private final HBox loadingPanel = new HBox();
 
     private DataSetDescriptor selectedDataset;
 
-    public DataSetManagerDialog(Stage stage,
-                                DataSetChangeListener dataSetChangeListener,
+    public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 StatusUpdaterListener statusUpdaterListener,
                                 DataImportService dataImportService,
                                 Localization localization,
                                 DataExportService dataExportService) {
-        this.stage = stage;
 
         this.dataSetChangeListener = dataSetChangeListener;
         this.dataSetContext = dataSetContext;
@@ -102,6 +99,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         createProgress(vBox);
 
         // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
@@ -287,7 +285,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     private void addDataSet(ActionEvent actionEvent) {
 
-        AddDataSetDialog dialog = new AddDataSetDialog(stage, localization, databaseManagementService);
+        AddDataSetDialog dialog = new AddDataSetDialog(localization, databaseManagementService);
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
         if (optionalDataSet.isPresent()) {

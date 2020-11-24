@@ -38,7 +38,11 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
      *
      * @param starsInView the list of stars in view
      */
-    public FindStarInViewDialog(Stage stage, List<StarDisplayRecord> starsInView) {
+    public FindStarInViewDialog(List<StarDisplayRecord> starsInView) {
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
 
         this.setTitle("Find a star in current view");
         this.setHeight(1000);
@@ -83,9 +87,6 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
         this.getDialogPane().setContent(vBox);
 
-
-        // set the dialog as a utility
-        stage.setOnCloseRequest(this::close);
     }
 
     private Set<String> convertList(List<StarDisplayRecord> starsInView) {

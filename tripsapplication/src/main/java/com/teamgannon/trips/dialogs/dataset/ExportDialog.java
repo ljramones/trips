@@ -57,7 +57,7 @@ public class ExportDialog extends Dialog<ExportOptions> {
         fileNameTextField.setPrefWidth(300);
         gridPane.add(fileNameTextField, 1, 2);
 
-        Button fileDialogButton = new Button("Get file");
+        Button fileDialogButton = new Button("Pick file and location");
         fileDialogButton.setFont(font);
         gridPane.add(fileDialogButton, 0, 2);
         fileDialogButton.setOnAction(event -> {

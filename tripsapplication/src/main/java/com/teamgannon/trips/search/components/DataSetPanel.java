@@ -86,7 +86,7 @@ public class DataSetPanel extends BasePane {
         } else {
             if (name != null) {
                 DataSetDescriptor descriptor = datasets.get(name);
-                DataSetDescribeDialog dialog = new DataSetDescribeDialog(stage, descriptor);
+                DataSetDescribeDialog dialog = new DataSetDescribeDialog(descriptor);
                 searchContext.setCurrentDataSet(name);
                 searchContext.getAstroSearchQuery().setDescriptor(descriptor);
                 dialog.showAndWait();
