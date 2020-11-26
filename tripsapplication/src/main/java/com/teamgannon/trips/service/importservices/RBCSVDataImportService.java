@@ -21,7 +21,7 @@ import static javafx.concurrent.Worker.State.RUNNING;
 @Slf4j
 public class RBCSVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
-    private DatabaseManagementService databaseManagementService;
+    private final DatabaseManagementService databaseManagementService;
 
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
