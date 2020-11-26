@@ -6,7 +6,9 @@ public enum DataFormatEnum {
 
     CH_VIEW("chview import"),
     RB_CSV("csv(RB) import"),
-    RB_EXCEL("excel import");
+    CSV("csv import"),
+    RB_EXCEL("excel(RB) import"),
+    EXCEL("excel import");
 
     private final String value;
 

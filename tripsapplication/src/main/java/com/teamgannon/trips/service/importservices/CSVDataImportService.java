@@ -6,7 +6,7 @@ import com.teamgannon.trips.dialogs.dataset.TaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.importservices.tasks.JsonLoadTask;
+import com.teamgannon.trips.service.importservices.tasks.CSVLoadTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.control.Button;
@@ -17,19 +17,44 @@ import lombok.extern.slf4j.Slf4j;
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
-public class JsonDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
-
+public class CSVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
     private final DatabaseManagementService databaseManagementService;
-    private Dataset dataset;
+
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
     private TaskComplete taskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
 
-    public JsonDataImportService(DatabaseManagementService databaseManagementService) {
+    private Dataset dataset;
+
+
+    public CSVDataImportService(DatabaseManagementService databaseManagementService) {
         this.databaseManagementService = databaseManagementService;
+    }
+
+    public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,
+                                  DataSetChangeListener dataSetChangeListener,
+                                  TaskComplete taskComplete, Label progressText,
+                                  ProgressBar loadProgressBar, Button cancelLoad) {
+        this.dataset = dataset;
+        this.statusUpdaterListener = statusUpdaterListener;
+        this.dataSetChangeListener = dataSetChangeListener;
+        this.taskComplete = taskComplete;
+        this.progressText = progressText;
+        this.loadProgressBar = loadProgressBar;
+
+        progressText.textProperty().bind(this.messageProperty());
+        loadProgressBar.progressProperty().bind(this.progressProperty());
+        cancelLoad.disableProperty().bind(this.stateProperty().isNotEqualTo(RUNNING));
+
+        return true;
+    }
+
+    @Override
+    protected Task<FileProcessResult> createTask() {
+        return new CSVLoadTask(dataset, databaseManagementService);
     }
 
 
@@ -63,36 +88,13 @@ public class JsonDataImportService extends Service<FileProcessResult> implements
 
 
     @Override
-    protected Task<FileProcessResult> createTask() {
-        return new JsonLoadTask(dataset, databaseManagementService);
-    }
-
-    public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,
-                                  DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete, Label progressText,
-                                  ProgressBar loadProgressBar, Button cancelLoad) {
-        this.dataset = dataset;
-        this.statusUpdaterListener = statusUpdaterListener;
-        this.dataSetChangeListener = dataSetChangeListener;
-        this.taskComplete = taskComplete;
-        this.progressText = progressText;
-        this.loadProgressBar = loadProgressBar;
-
-        progressText.textProperty().bind(this.messageProperty());
-        loadProgressBar.progressProperty().bind(this.progressProperty());
-        cancelLoad.disableProperty().bind(this.stateProperty().isNotEqualTo(RUNNING));
-
-        return true;
-    }
-
-    @Override
     public boolean cancelImport() {
         return this.cancel();
     }
 
     @Override
     public String whoAmI() {
-        return "JSON importer";
+        return "CSV importer";
     }
 
     @Override

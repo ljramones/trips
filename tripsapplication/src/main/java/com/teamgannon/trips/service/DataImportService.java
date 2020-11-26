@@ -21,6 +21,7 @@ public class DataImportService {
     private final JsonDataImportService jsonDataImportService;
     private final RBCSVDataImportService rbcsvDataImportService;
     private final RBExcelDataImportService rbExcelDataImportService;
+    private final CSVDataImportService csvDataImportService;
 
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
@@ -34,6 +35,7 @@ public class DataImportService {
         jsonDataImportService = new JsonDataImportService(databaseManagementService);
         rbcsvDataImportService = new RBCSVDataImportService(databaseManagementService);
         rbExcelDataImportService = new RBExcelDataImportService(databaseManagementService);
+        csvDataImportService = new CSVDataImportService(databaseManagementService);
     }
 
     public ImportResult processFile(Dataset dataset,
@@ -100,7 +102,7 @@ public class DataImportService {
                 rbcsvDataImportService.restart();
             }
 
-            case "csv" -> {
+            case "rb.csv" -> {
                 currentlyRunning.set(true);
                 runningImportService = rbcsvDataImportService;
                 boolean queued = rbcsvDataImportService.processDataSet(
@@ -118,12 +120,30 @@ public class DataImportService {
                 rbcsvDataImportService.restart();
             }
 
+            case "trips.csv"-> {
+                currentlyRunning.set(true);
+                runningImportService = csvDataImportService;
+                boolean queued = csvDataImportService.processDataSet(
+                        dataset, statusUpdaterListener, dataSetChangeListener,
+                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                if (!queued) {
+                    log.error("failed to start import process");
+                    currentlyRunning.set(false);
+                    runningImportService = null;
+                    csvDataImportService.reset();
+                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
+                }
+                // start the work
+                csvDataImportService.reset();
+                csvDataImportService.restart();
+            }
+
             case "json" -> {
                 currentlyRunning.set(true);
                 runningImportService = jsonDataImportService;
                 boolean queued = jsonDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText);
+                        taskComplete, progressText, loadProgressBar, cancelLoad);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
