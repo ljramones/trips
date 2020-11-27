@@ -1,35 +1,36 @@
-package com.teamgannon.trips.file.csvin;
+package com.teamgannon.trips.experiments;
 
+import com.opencsv.CSVReader;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 @Slf4j
-@Component
-public class RegularCsvReader {
+public class CSVReadUtil {
 
-    private final DatabaseManagementService databaseManagementService;
+    private String fileName = "/Users/larrymitchell/tripsnew/trips/larry.trips.csv";
 
-    public RegularCsvReader(DatabaseManagementService databaseManagementService) {
-        this.databaseManagementService = databaseManagementService;
-    }
 
-    public RegCSVFile loadFile(ProgressUpdater progressUpdater, File file, Dataset dataset) {
-        RegCSVFile csvFile = new RegCSVFile();
-        csvFile.setDataset(dataset);
+    public void readFile() {
+
+        File file = new File(fileName);
+
+        Dataset dataset = new Dataset();
+        dataset.setName("Mine");
+        dataset.setNotes("la de da");
+        dataset.setAuthor("No one");
+
+
         dataset.setFileSelected(file.getAbsolutePath());
 
         long totalCount = 0;
@@ -38,24 +39,22 @@ public class RegularCsvReader {
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
+//            CSVReader csvReader = new CSVReader(reader);
 
             // read descriptor
-            // skeip headers
-            reader.readLine();
             String line = reader.readLine();
+            line = reader.readLine();
             String[] descriptor = line.split(",");
-            csvFile.setDataSetDescriptor(transformDescriptor(dataset, descriptor));
 
             // read stars
 
             // skip header
-            reader.readLine();
+           reader.readLine();
 
             do {
                 Set<AstrographicObject> starSet = new HashSet<>();
                 int loopCounter = 0;
-                for (int i = 0; i < 20000; i++) {
-
+                for (int i = 0; i < 200; i++) {
                     line = reader.readLine();
 
                     if (line == null) {
@@ -65,6 +64,7 @@ public class RegularCsvReader {
                     }
 
                     String[] lineRead = line.split(",");
+
                     System.out.println("name=   " + lineRead[2]);
                     loopCounter++;
                     AstroCSVStar star = AstroCSVStar
@@ -140,34 +140,22 @@ public class RegularCsvReader {
                         if (astrographicObject != null) {
                             astrographicObject.setDataSetName(dataset.getName());
                             starSet.add(astrographicObject);
-                            csvFile.incAccepts();
                         } else {
-                            csvFile.incRejects();
+                            log.error("bad line");
                         }
-                        csvFile.incTotal();
                     } catch (Exception e) {
                         log.error("failed to parse star:{}, because of {}", star, e.getMessage());
                     }
                 }
-
-                // save all the stars we've read so far
-                databaseManagementService.starBulkSave(starSet);
-                totalCount += loopCounter;
-                progressUpdater.updateLoadInfo(String.format("Saving %d  of total so far = %d", 20000, totalCount));
-                log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
+                log.info("records read");
             } while (!readComplete); // the moment readComplete turns true, we stop
-
-            log.info("File load report: total:{}, accepts:{}, rejects:{}", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects());
-        } catch (IOException e) {
-            progressUpdater.updateLoadInfo("failed to read file because: " + e.getMessage());
-            log.error("failed to read file because: {}", e.getMessage());
+        }catch (Exception e) {
+            log.error("fail because of "+e.getMessage());
         }
 
-        csvFile.setMaxDistance(maxDistance);
-        progressUpdater.updateLoadInfo("load of dataset Complete");
-
-        return csvFile;
+        log.info("file processed");
     }
+
 
     private DataSetDescriptor transformDescriptor(Dataset dataset, String[] descriptorVals) {
         try {
@@ -186,7 +174,6 @@ public class RegularCsvReader {
                 descriptor.setNumberRoutes(Integer.parseInt(descriptorVals[8]));
             }
             descriptor.setThemeStr(putBackCommas(descriptorVals[9]));
-//            descriptor.setAstrographicDataList(new HashSet<>());
             if (!descriptorVals[11].equals("null")) {
                 descriptor.setRoutesStr(putBackCommas(descriptorVals[11]));
             } else {
@@ -196,7 +183,7 @@ public class RegularCsvReader {
             descriptor.setCustomDataValuesStr(putBackCommas(descriptorVals[13]));
             return descriptor;
         } catch (Exception e) {
-            log.error("failed to read datadescriptor");
+            log.error("failed to read data descriptor");
             DataSetDescriptor defaultDes = new DataSetDescriptor();
             defaultDes.setDataSetName("file-" + UUID.randomUUID().toString());
             return defaultDes;
@@ -212,4 +199,12 @@ public class RegularCsvReader {
         return replaced;
     }
 
+
+    public static void main(String[] args) throws Exception {
+
+        CSVReadUtil csvReadUtil = new CSVReadUtil();
+        csvReadUtil.readFile();
+        log.info("complete");
+
+    }
 }

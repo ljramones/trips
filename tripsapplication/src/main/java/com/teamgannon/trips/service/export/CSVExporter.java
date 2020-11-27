@@ -185,7 +185,7 @@ public class CSVExporter {
                 astrographicObject.getCatalogIdList() + ", " +
                 astrographicObject.getX() + ", " +
                 astrographicObject.getY() + ", " +
-                astrographicObject.getY() + ", " +
+                astrographicObject.getZ() + ", " +
                 astrographicObject.getRadius() + ", " +
                 astrographicObject.getRa() + ", " +
                 astrographicObject.getPmra() + ", " +

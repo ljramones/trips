@@ -57,7 +57,6 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         return new CSVLoadTask(dataset, databaseManagementService);
     }
 
-
     @Override
     protected void succeeded() {
         log.info("dataset loaded");

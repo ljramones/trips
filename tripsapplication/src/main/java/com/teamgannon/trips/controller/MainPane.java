@@ -962,7 +962,7 @@ public class MainPane implements
 
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog( starsInView);
+        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
         findStarInViewDialog.setOnShown(new EventHandler<DialogEvent>() {
             @Override
             public void handle(DialogEvent event) {
@@ -1105,7 +1105,7 @@ public class MainPane implements
 
     @Override
     public List<AstrographicObject> getAstrographicObjectsOnQuery() {
-        return databaseManagementService.getAstrographicObjectsOnQuery((searchContext));
+        return databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
     }
 
     @Override
@@ -1310,7 +1310,11 @@ public class MainPane implements
     }
 
     private void showList(List<AstrographicObject> astrographicObjects) {
-        new DataSetTable(databaseManagementService, astrographicObjects);
+        if (astrographicObjects.size() > 0) {
+            new DataSetTable(databaseManagementService, astrographicObjects);
+        } else {
+            showErrorAlert("Display Data table", "no data to show");
+        }
     }
 
     @Override
@@ -1505,7 +1509,11 @@ public class MainPane implements
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-            new DataSetTable(databaseManagementService, astrographicObjects);
+            if (astrographicObjects.size() > 0) {
+                new DataSetTable(databaseManagementService, astrographicObjects);
+            } else {
+                showErrorAlert("Show Data Table", "no data found");
+            }
         } else {
             List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
             if (datasets.size() == 0) {
@@ -1530,8 +1538,12 @@ public class MainPane implements
                     return;
                 }
                 List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-                new DataSetTable(databaseManagementService, astrographicObjects);
-                updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
+                if (astrographicObjects.size() > 0) {
+                    new DataSetTable(databaseManagementService, astrographicObjects);
+                    updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
+                } else {
+                    showErrorAlert("Show Data Table", "No data to show");
+                }
 
                 // set current context
                 setContextDataSet(dataSetDescriptor);

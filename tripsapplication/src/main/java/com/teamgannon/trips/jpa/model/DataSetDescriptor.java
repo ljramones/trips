@@ -13,6 +13,7 @@ import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,7 @@ public class DataSetDescriptor implements Serializable {
      * <p>
      * e.g. “2017-02-27”
      */
-    private long fileOriginalDate;
+    private long fileOriginalDate = Instant.now().toEpochMilli();
 
     /**
      * notes on the data in the file
@@ -72,17 +73,17 @@ public class DataSetDescriptor implements Serializable {
     /**
      * number of entities in this dataset
      */
-    private Long numberStars;
+    private Long numberStars = 0L;
 
     /**
      * the max radius span of this dataset
      */
-    private double distanceRange;
+    private double distanceRange = 20;
 
     /**
      * number of routes in dataset
      */
-    private Integer numberRoutes;
+    private Integer numberRoutes = 0;
 
     /**
      * the theme object stored as a json string
