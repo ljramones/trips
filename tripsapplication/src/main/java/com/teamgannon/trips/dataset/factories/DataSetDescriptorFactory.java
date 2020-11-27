@@ -9,6 +9,7 @@ import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -134,6 +135,32 @@ public class DataSetDescriptorFactory {
 
         // set the records for this
         dataSetDescriptor.setAstrographicDataList(keySet);
+
+        // save the data set which is cross referenced to the star records
+        dataSetDescriptorRepository.save(dataSetDescriptor);
+
+        return dataSetDescriptor;
+    }
+
+
+    public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
+                                                            RegCSVFile regCSVFile) throws Exception {
+
+        DataSetDescriptor dataSetDescriptor = regCSVFile.getDataSetDescriptor();
+
+        Theme theme = new Theme();
+        theme.setThemeName("csv");
+        dataSetDescriptor.setTheme(theme);
+
+        // now validate whether the dataset actually exists already
+        if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
+            throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
+        }
+
+        log.info("Number of records load for file:{} is {}",
+                regCSVFile.getDataset().getFileSelected(),
+                regCSVFile.getSize());
+
 
         // save the data set which is cross referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);

@@ -8,6 +8,7 @@ import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.excel.RBExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
@@ -336,12 +337,18 @@ public class DatabaseManagementService {
         );
     }
 
-
     public DataSetDescriptor loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 rbCsvFile
+        );
+    }
+
+    public DataSetDescriptor loadCSVFile(RegCSVFile regCSVFile) throws Exception {
+        return DataSetDescriptorFactory.createDataSetDescriptor(
+                dataSetDescriptorRepository,
+                regCSVFile
         );
     }
 
@@ -697,5 +704,6 @@ public class DatabaseManagementService {
     public List<AstrographicObject> findStarsWithName(String datasetName, String starName) {
         return astrographicObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
+
 
 }

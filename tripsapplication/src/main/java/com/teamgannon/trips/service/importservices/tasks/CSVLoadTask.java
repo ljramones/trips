@@ -2,7 +2,7 @@ package com.teamgannon.trips.service.importservices.tasks;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
+import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.csvin.RegularCsvReader;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -22,13 +22,12 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     public CSVLoadTask(Dataset dataSet, DatabaseManagementService databaseManagementService) {
         this.dataSet = dataSet;
         this.databaseManagementService = databaseManagementService;
-
         regularCsvReader = new RegularCsvReader(databaseManagementService);
     }
 
     @Override
     protected FileProcessResult call() throws Exception {
-        FileProcessResult result = processRBCSVFile(dataSet);
+        FileProcessResult result = processCSVFile(dataSet);
         if (result.isSuccess()) {
             log.info("New dataset {} added", dataSet.getName());
         } else {
@@ -39,14 +38,16 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
 
-    public FileProcessResult processRBCSVFile(Dataset dataset) {
+    public FileProcessResult processCSVFile(Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
-        RBCsvFile rbCsvFile = regularCsvReader.loadFile(this, file, dataset);
+        // read records
+        RegCSVFile regCSVFile = regularCsvReader.loadFile(this, file, dataset);
+
         try {
             updateMessage(" File load complete, about to save records in database ");
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
+            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCSVFile(regCSVFile);
             String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
                     dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());
