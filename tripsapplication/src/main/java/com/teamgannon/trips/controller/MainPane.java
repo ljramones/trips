@@ -768,6 +768,9 @@ public class MainPane implements
         showPlot();
     }
 
+    public void viewEditStarData(ActionEvent actionEvent) {
+        showTableData();
+    }
 
     public void plotRoutes(ActionEvent actionEvent) {
         interstellarSpacePane.plotRoutes(routeList);
@@ -885,9 +888,7 @@ public class MainPane implements
         dialog.showAndWait();
     }
 
-    public void viewEditStarData(ActionEvent actionEvent) {
-        showTableData();
-    }
+
 
     public void loadMuliple(ActionEvent actionEvent) {
         dataImportService.loadDatabase();
@@ -1348,6 +1349,7 @@ public class MainPane implements
         tripsContext.getDataSetContext().setDescriptor(descriptor);
         tripsContext.getDataSetContext().setValidDescriptor(true);
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
+        tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
         dataSetsListView.getSelectionModel().select(descriptor);
         queryDialog.setDataSetContext(descriptor);
         interstellarSpacePane.setDataSetContext(descriptor);

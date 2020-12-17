@@ -173,39 +173,39 @@ public class AstroCSVStar {
             astro.setId(UUID.randomUUID());
 
             astro.setDataSetName(datasetName);
-            astro.setDisplayName(displayName);
-            astro.setConstellationName(constellationName);
+            astro.setDisplayName(displayName.trim());
+            astro.setConstellationName(constellationName.trim());
 
-            astro.setMass(Double.parseDouble(mass));
-            astro.setActualMass(Double.parseDouble(actualMass));
-            astro.setNotes(notes);
-            astro.setSource(source);
+            astro.setMass(Double.parseDouble(mass.trim()));
+            astro.setActualMass(Double.parseDouble(actualMass.trim()));
+            astro.setNotes(notes.trim());
+            astro.setSource(source.trim());
             List<String> catalogList = new ArrayList<>();
             catalogList.add(catalogIdList);
             astro.setCatalogIdList(catalogList);
 
-            astro.setX(Double.parseDouble(x));
-            astro.setY(Double.parseDouble(y));
-            astro.setZ(Double.parseDouble(z));
+            astro.setX(Double.parseDouble(x.trim()));
+            astro.setY(Double.parseDouble(y.trim()));
+            astro.setZ(Double.parseDouble(z.trim()));
 
-            astro.setRadius(Double.parseDouble(radius));
-            astro.setRa(Double.parseDouble(ra));
-            astro.setPmra(Double.parseDouble(pmra));
-            astro.setDeclination(Double.parseDouble(declination));
-            astro.setPmdec(Double.parseDouble(pmdec));
-            astro.setDec_deg(Double.parseDouble(dec_deg));
-            astro.setRs_cdeg(Double.parseDouble(rs_cdeg));
+            astro.setRadius(Double.parseDouble(radius.trim()));
+            astro.setRa(Double.parseDouble(ra.trim()));
+            astro.setPmra(Double.parseDouble(pmra.trim()));
+            astro.setDeclination(Double.parseDouble(declination.trim()));
+            astro.setPmdec(Double.parseDouble(pmdec.trim()));
+            astro.setDec_deg(Double.parseDouble(dec_deg.trim()));
+            astro.setRs_cdeg(Double.parseDouble(rs_cdeg.trim()));
 
-            astro.setParallax(Double.parseDouble(parallax));
-            astro.setDistance(Double.parseDouble(distance));
-            astro.setRadialVelocity(Double.parseDouble(radialVelocity));
-            astro.setSpectralClass(spectralClass);
-            astro.setOrthoSpectralClass(orthoSpectralClass);
+            astro.setParallax(Double.parseDouble(parallax.trim()));
+            astro.setDistance(Double.parseDouble(distance.trim()));
+            astro.setRadialVelocity(Double.parseDouble(radialVelocity.trim()));
+            astro.setSpectralClass(spectralClass.trim());
+            astro.setOrthoSpectralClass(orthoSpectralClass.trim());
 
-            astro.setTemperature(Double.parseDouble(temperature));
-            astro.setRealStar(Boolean.parseBoolean(realStar));
+            astro.setTemperature(Double.parseDouble(temperature.trim()));
+            astro.setRealStar(Boolean.parseBoolean(realStar.trim()));
 
-            astro.setBprp(Double.parseDouble(bprp));
+            astro.setBprp(Double.parseDouble(bprp.trim()));
 
 
             return astro;
