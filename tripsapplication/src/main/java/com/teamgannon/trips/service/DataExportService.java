@@ -37,12 +37,13 @@ public class DataExportService {
 
     public DataExportService(DatabaseManagementService databaseManagementService,
                              StatusUpdaterListener updaterListener) {
+
         this.databaseManagementService = databaseManagementService;
         this.updaterListener = updaterListener;
 
         excelExporter = new ExcelExporter(databaseManagementService, updaterListener);
-        csvExporter = new CSVExporter(databaseManagementService, updaterListener);
-        jsonExporter = new JSONExporter(databaseManagementService, updaterListener);
+        csvExporter = new CSVExporter(updaterListener);
+        jsonExporter = new JSONExporter(updaterListener);
     }
 
     public void exportDB() {
@@ -65,17 +66,12 @@ public class DataExportService {
     public void exportDataset(@NotNull ExportOptions exportOptions) {
 
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
+
         switch (exportOptions.getExportFormat()) {
 
-            case CSV -> {
-                csvExporter.exportAsCSV(exportOptions, astrographicObjects);
-            }
-            case EXCEL -> {
-                excelExporter.exportAsExcel(exportOptions, astrographicObjects);
-            }
-            case JSON -> {
-                jsonExporter.exportAsJson(exportOptions, astrographicObjects);
-            }
+            case CSV -> csvExporter.exportAsCSV(exportOptions, astrographicObjects);
+            case EXCEL -> excelExporter.exportAsExcel(exportOptions, astrographicObjects);
+            case JSON -> jsonExporter.exportAsJson(exportOptions, astrographicObjects);
         }
 
     }
