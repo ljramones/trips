@@ -21,11 +21,9 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 @Slf4j
 public class CSVExporter {
 
-    private final DatabaseManagementService databaseManagementService;
     private final StatusUpdaterListener updaterListener;
 
-    public CSVExporter(DatabaseManagementService databaseManagementService, StatusUpdaterListener updaterListener) {
-        this.databaseManagementService = databaseManagementService;
+    public CSVExporter(StatusUpdaterListener updaterListener) {
         this.updaterListener = updaterListener;
     }
 

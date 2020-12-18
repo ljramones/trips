@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.export.model.JsonExportObj;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +21,9 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 @Slf4j
 public class JSONExporter {
 
-    private DatabaseManagementService databaseManagementService;
-    private StatusUpdaterListener updaterListener;
+    private final StatusUpdaterListener updaterListener;
 
-    public JSONExporter(DatabaseManagementService databaseManagementService, StatusUpdaterListener updaterListener) {
-        this.databaseManagementService = databaseManagementService;
+    public JSONExporter(StatusUpdaterListener updaterListener) {
         this.updaterListener = updaterListener;
     }
 
@@ -35,7 +34,11 @@ public class JSONExporter {
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.json"));
 
-            String jsonStr = Obj.writeValueAsString(astrographicObjects);
+            JsonExportObj jsonExportObj = new JsonExportObj();
+            jsonExportObj.setDescriptor(export.getDataset());
+            jsonExportObj.setAstrographicObjectList(astrographicObjects);
+
+            String jsonStr = Obj.writeValueAsString(jsonExportObj);
             writer.write(jsonStr);
 
             writer.flush();
