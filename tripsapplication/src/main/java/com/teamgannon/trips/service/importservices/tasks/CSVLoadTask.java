@@ -22,6 +22,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     public CSVLoadTask(Dataset dataSet, DatabaseManagementService databaseManagementService) {
         this.dataSet = dataSet;
         this.databaseManagementService = databaseManagementService;
+
         regularCsvReader = new RegularCsvReader(databaseManagementService);
     }
 
@@ -54,6 +55,9 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
             processResult.setMessage(data);
             processResult.setSuccess(true);
             processResult.setDataSetDescriptor(dataSetDescriptor);
+            updateLoadInfo(String.format(" %s records loaded from dataset %s",
+                    dataSetDescriptor.getNumberStars(),
+                    dataSetDescriptor.getDataSetName()));
         } catch (Exception e) {
             processResult.setSuccess(false);
             processResult.setMessage("This dataset was already loaded in the system ");
