@@ -72,7 +72,6 @@ public class ExcelExporter {
     }
 
 
-
     public void exportAsExcel(ExportOptions export, List<AstrographicObject> astrographicObjects) {
 
         try {
@@ -87,16 +86,8 @@ public class ExcelExporter {
             // create a work book
             XSSFWorkbook myWorkBook = new XSSFWorkbook();
 
-            // create a work sheet with the dataset name on it
-            XSSFSheet mySheet = myWorkBook.createSheet(export.getDataset().getDataSetName());
-
-            writeHeaders(mySheet);
-
-            int rowCount = 1;
-            for (AstrographicObject astrographicObject : astrographicObjects) {
-                Row row = mySheet.createRow(rowCount++);
-                saveRow(row, astrographicObject);
-            }
+            writeDataDescriptor(export, myWorkBook);
+            writeStarData(export, astrographicObjects, myWorkBook);
 
             FileOutputStream os = new FileOutputStream(myFile);
             myWorkBook.write(os);
@@ -114,6 +105,65 @@ public class ExcelExporter {
                     "Export Dataset as an Excel file",
                     export.getDataset().getDataSetName() +
                             "failed to exported:" + e.getMessage());
+        }
+    }
+
+    private void writeDataDescriptor(ExportOptions export, XSSFWorkbook myWorkBook) {
+        XSSFSheet mySheet = myWorkBook.createSheet("descriptor");
+        writeDescriptorHeaders(mySheet);
+        writeDescriptorData(export.getDataset(),mySheet);
+
+    }
+
+    private void writeDescriptorData(DataSetDescriptor dataset, XSSFSheet mySheet) {
+        int column = 0;
+        Row row = mySheet.createRow(1);
+        storeCell(row, column++, dataset.getDataSetName());
+        storeCell(row, column++, dataset.getFilePath());
+        storeCell(row, column++, dataset.getFileCreator());
+        storeCell(row, column++, dataset.getFileOriginalDate());
+        storeCell(row, column++, dataset.getFileNotes());
+        storeCell(row, column++, dataset.getDatasetType());
+        storeCell(row, column++, dataset.getNumberStars());
+        storeCell(row, column++, dataset.getDistanceRange());
+        storeCell(row, column++, dataset.getNumberRoutes());
+        storeCell(row, column++, dataset.getThemeStr());
+        storeCell(row, column++, dataset.getAstroDataString());
+        storeCell(row, column++, dataset.getRoutesStr());
+        storeCell(row, column++, dataset.getCustomDataDefsStr());
+        storeCell(row, column, dataset.getCustomDataValuesStr());
+
+    }
+
+    private void writeDescriptorHeaders(XSSFSheet mySheet) {
+        int column = 0;
+        Row row = mySheet.createRow(0);
+        storeCell(row, column++, "dataSetName");
+        storeCell(row, column++, "filePath");
+        storeCell(row, column++, "fileCreator");
+        storeCell(row, column++, "fileOriginalDate");
+        storeCell(row, column++, "fileNotes");
+        storeCell(row, column++, "datasetType");
+        storeCell(row, column++, "numberStars");
+        storeCell(row, column++, "distanceRange");
+        storeCell(row, column++, "numberRoutes");
+        storeCell(row, column++, "themeStr");
+        storeCell(row, column++, "astrographicDataList");
+        storeCell(row, column++, "routesStr");
+        storeCell(row, column++, "customDataDefsStr");
+        storeCell(row, column, "customDataValuesStr");
+    }
+
+    private void writeStarData(ExportOptions export, List<AstrographicObject> astrographicObjects, XSSFWorkbook myWorkBook) {
+        // create a work sheet with the dataset name on it
+        XSSFSheet mySheet = myWorkBook.createSheet("data");
+
+        writeStarDataHeaders(mySheet);
+
+        int rowCount = 1;
+        for (AstrographicObject astrographicObject : astrographicObjects) {
+            Row row = mySheet.createRow(rowCount++);
+            saveRow(row, astrographicObject);
         }
     }
 
@@ -159,12 +209,11 @@ public class ExcelExporter {
     }
 
 
-
     private void createDataSetSheet(XSSFWorkbook myWorkBook, DataSetDescriptor descriptor) {
         // create a work sheet with the dataset name on it
         updateStatus(String.format("starting export of %s", descriptor.getDataSetName()));
         XSSFSheet mySheet = myWorkBook.createSheet(descriptor.getDataSetName());
-        writeHeaders(mySheet);
+        writeStarDataHeaders(mySheet);
         int rowCount = 1;
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(descriptor);
         for (AstrographicObject astrographicObject : astrographicObjects) {
@@ -175,7 +224,7 @@ public class ExcelExporter {
     }
 
 
-    private void writeHeaders(XSSFSheet mySheet) {
+    private void writeStarDataHeaders(XSSFSheet mySheet) {
         int column = 0;
         Row row = mySheet.createRow(0);
         storeCell(row, column++, "id");
@@ -235,7 +284,6 @@ public class ExcelExporter {
         storeCell(row, column++, "miscNum5");
         storeCell(row, column, "notes");
     }
-
 
 
     private void saveRow(Row row, AstrographicObject astrographicObject) {

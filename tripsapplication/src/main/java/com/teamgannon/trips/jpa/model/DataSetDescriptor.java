@@ -198,6 +198,10 @@ public class DataSetDescriptor implements Serializable {
         customDataValuesStr = new CustomDataValue().convertToJson(customDataValues);
     }
 
+    public String getAstroDataString() {
+        return astrographicDataList;
+    }
+
     public Set<UUID> getAstrographicDataList() {
 
         // if its null return an empty list
