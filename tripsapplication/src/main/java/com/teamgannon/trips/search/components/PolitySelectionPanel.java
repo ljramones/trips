@@ -6,6 +6,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class PolitySelectionPanel extends BasePane {
         return yesPolity.isSelected();
     }
 
-    public List<String> getPolitySelections() {
+    public @NotNull List<String> getPolitySelections() {
         List<String> selections = new ArrayList<>();
 
         if (polity1.isSelected()) {

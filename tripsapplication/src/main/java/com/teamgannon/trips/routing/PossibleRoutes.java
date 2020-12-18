@@ -2,6 +2,7 @@ package com.teamgannon.trips.routing;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,6 @@ public class PossibleRoutes {
 
     private String desiredPath;
 
-    private List<RoutingMetric> routes = new ArrayList<>();
+    private @NotNull List<RoutingMetric> routes = new ArrayList<>();
 
 }

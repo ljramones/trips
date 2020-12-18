@@ -9,6 +9,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
@@ -34,7 +35,7 @@ public class ComboBoxAutoComplete<T> {
     private ObservableList<T> originalItems;
 
     public ComboBoxAutoComplete(Stage stage,
-                                ComboBox<T> cmb) {
+                                @NotNull ComboBox<T> cmb) {
         this.stage = stage;
         this.cmb = cmb;
         originalItems = FXCollections.observableArrayList(cmb.getItems());
@@ -43,7 +44,7 @@ public class ComboBoxAutoComplete<T> {
         cmb.setOnHidden(this::handleOnHiding);
     }
 
-    public void handleOnKeyPressed(KeyEvent e) {
+    public void handleOnKeyPressed(@NotNull KeyEvent e) {
         ObservableList<T> filteredList = FXCollections.observableArrayList();
         KeyCode code = e.getCode();
 
@@ -81,7 +82,7 @@ public class ComboBoxAutoComplete<T> {
         cmb.getSelectionModel().select(s);
     }
 
-    private String unaccent(String s) {
+    private String unaccent(@NotNull String s) {
         String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
         return pattern.matcher(temp).replaceAll("");

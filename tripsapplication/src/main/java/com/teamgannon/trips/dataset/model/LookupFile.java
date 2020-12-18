@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dataset.model;
 
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +17,12 @@ public class LookupFile {
     /**
      * the headers
      */
-    private String[] headers = new String[3];
+    private String @NotNull [] headers = new String[3];
 
     /**
      * the list of lookups
      */
-    private List<LookupDescription> records = new ArrayList<>();
+    private @NotNull List<LookupDescription> records = new ArrayList<>();
 
     public void addLookupDescription(LookupDescription lookupDescription) {
         records.add(lookupDescription);

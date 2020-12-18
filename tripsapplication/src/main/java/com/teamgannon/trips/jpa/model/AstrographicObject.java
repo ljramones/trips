@@ -398,7 +398,7 @@ public class AstrographicObject implements Serializable {
 
     /////////////////  convertors  /////////////
 
-    public List<String> getCatalogIdList() {
+    public @org.jetbrains.annotations.NotNull List<String> getCatalogIdList() {
         if (catalogIdList == null) {
             return new ArrayList<>();
         }
@@ -408,11 +408,11 @@ public class AstrographicObject implements Serializable {
         return Arrays.asList(catalogIdList.split("\\s*,\\s*"));
     }
 
-    public void setCatalogIdList(List<String> stringList) {
+    public void setCatalogIdList(@org.jetbrains.annotations.NotNull List<String> stringList) {
         catalogIdList = String.join(",", stringList);
     }
 
-    public double[] getCoordinates() {
+    public double @org.jetbrains.annotations.NotNull [] getCoordinates() {
         double[] coordinates = new double[3];
         coordinates[0] = x;
         coordinates[1] = y;

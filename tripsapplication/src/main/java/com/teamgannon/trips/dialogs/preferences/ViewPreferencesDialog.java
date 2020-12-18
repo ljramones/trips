@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 
 @Slf4j
@@ -37,7 +38,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         this.getDialogPane().setContent(vBox);
     }
 
-    private void createTabPanes(VBox vBox) {
+    private void createTabPanes(@NotNull VBox vBox) {
         tabPane = new TabPane();
         tabPane.setStyle("-fx-background-color: white");
 
@@ -75,7 +76,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         vBox.getChildren().add(tabPane);
     }
 
-    private void createButtons(VBox vBox) {
+    private void createButtons(@NotNull VBox vBox) {
         HBox hBox = new HBox();
 
         ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);

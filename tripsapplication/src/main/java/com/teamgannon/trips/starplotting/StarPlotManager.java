@@ -39,6 +39,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -177,8 +179,8 @@ public class StarPlotManager {
      * @param currentPlot             the current plot
      * @param colorPalette            the color palette
      */
-    public StarPlotManager(Group sceneRoot,
-                           Group world,
+    public StarPlotManager(@NotNull Group sceneRoot,
+                           @NotNull Group world,
                            SubScene subScene,
                            ListUpdaterListener listUpdaterListener,
                            RedrawListener redrawListener,
@@ -216,7 +218,7 @@ public class StarPlotManager {
 
     }
 
-    private static RotateTransition setRotationAnimation(Label group) {
+    private static @NotNull RotateTransition setRotationAnimation(Label group) {
         RotateTransition rotate = new RotateTransition(
                 Duration.seconds(10),
                 group
@@ -234,7 +236,7 @@ public class StarPlotManager {
      *
      * @return the list of star display records
      */
-    public List<StarDisplayRecord> getCurrentStarsInView() {
+    public @NotNull List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
         for (UUID id : currentPlot.getStarIds()) {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) currentPlot.getStar(id).getUserData();
@@ -265,7 +267,7 @@ public class StarPlotManager {
         this.politiesPreferences = politiesPreferences;
     }
 
-    public Group getExtensionsGroup() {
+    public @NotNull Group getExtensionsGroup() {
         return extensionsGroup;
     }
 
@@ -304,7 +306,7 @@ public class StarPlotManager {
      *
      * @param recordList the list of stars
      */
-    public void drawStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+    public void drawStar(@NotNull List<StarDisplayRecord> recordList, String centerStar, @NotNull ColorPalette colorPalette) {
 
         for (StarDisplayRecord star : recordList) {
             drawStar(star, centerStar, colorPalette, starDisplayPreferences);
@@ -321,9 +323,9 @@ public class StarPlotManager {
      * @param record     the star record
      * @param centerStar the name of the center star
      */
-    public void drawStar(StarDisplayRecord record,
+    public void drawStar(@NotNull StarDisplayRecord record,
                          String centerStar,
-                         ColorPalette colorPalette,
+                         @NotNull ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {
 
         currentPlot.addRecord(record.copy());
@@ -380,9 +382,9 @@ public class StarPlotManager {
         // re-plot routes
     }
 
-    private void plotStar(StarDisplayRecord record,
+    private void plotStar(@NotNull StarDisplayRecord record,
                           String centerStar,
-                          ColorPalette colorPalette,
+                          @NotNull ColorPalette colorPalette,
                           StarDisplayPreferences starDisplayPreferences) {
 
         Node starNode;
@@ -417,9 +419,9 @@ public class StarPlotManager {
      * @param starDisplayPreferences the star display preferences
      * @return the graphical object group representing the star
      */
-    private Node createCentralPoint(StarDisplayRecord record,
-                                    ColorPalette colorPalette,
-                                    StarDisplayPreferences starDisplayPreferences) {
+    private @NotNull Node createCentralPoint(@NotNull StarDisplayRecord record,
+                                             @NotNull ColorPalette colorPalette,
+                                             StarDisplayPreferences starDisplayPreferences) {
 
         Label label = StellarEntityFactory.createLabel(record, colorPalette);
         labelDisplayGroup.getChildren().add(label);
@@ -459,11 +461,11 @@ public class StarPlotManager {
      * @param politiesOn             whether we polities on or off
      * @return the star to plot
      */
-    private Node createStar(StarDisplayRecord record,
-                            ColorPalette colorPalette,
-                            StarDisplayPreferences starDisplayPreferences,
-                            boolean labelsOn,
-                            boolean politiesOn) {
+    private @NotNull Node createStar(@NotNull StarDisplayRecord record,
+                                     @NotNull ColorPalette colorPalette,
+                                     StarDisplayPreferences starDisplayPreferences,
+                                     boolean labelsOn,
+                                     boolean politiesOn) {
 
         Node star = drawStellarObject(
                 record,
@@ -497,12 +499,12 @@ public class StarPlotManager {
     }
 
 
-    public Node drawStellarObject(StarDisplayRecord record,
-                                  ColorPalette colorPalette,
-                                  boolean labelsOn,
-                                  boolean politiesOn,
-                                  StarDisplayPreferences starDisplayPreferences,
-                                  CivilizationDisplayPreferences polityPreferences) {
+    public @NotNull Node drawStellarObject(@NotNull StarDisplayRecord record,
+                                           @NotNull ColorPalette colorPalette,
+                                           boolean labelsOn,
+                                           boolean politiesOn,
+                                           StarDisplayPreferences starDisplayPreferences,
+                                           @NotNull CivilizationDisplayPreferences polityPreferences) {
 
         Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
         group.setUserData(record);
@@ -519,11 +521,11 @@ public class StarPlotManager {
      * @param polityPreferences the plo
      * @return the created object
      */
-    public Group createStellarShape(StarDisplayRecord record,
-                                    ColorPalette colorPalette,
-                                    boolean labelsOn,
-                                    boolean politiesOn,
-                                    CivilizationDisplayPreferences polityPreferences) {
+    public @NotNull Group createStellarShape(@NotNull StarDisplayRecord record,
+                                             @NotNull ColorPalette colorPalette,
+                                             boolean labelsOn,
+                                             boolean politiesOn,
+                                             @NotNull CivilizationDisplayPreferences polityPreferences) {
 
         Group group = new Group();
 
@@ -577,8 +579,8 @@ public class StarPlotManager {
      * @param colorPalette the color palette to use
      * @return the created object
      */
-    public Label createLabel(StarDisplayRecord record,
-                             ColorPalette colorPalette) {
+    public @NotNull Label createLabel(@NotNull StarDisplayRecord record,
+                                      @NotNull ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 6));
         label.setTextFill(colorPalette.getLabelColor());
@@ -591,7 +593,7 @@ public class StarPlotManager {
      *
      * @param recordList the list of stars
      */
-    private void createExtensionGroup(List<StarDisplayRecord> recordList, Color extensionColor) {
+    private void createExtensionGroup(@NotNull List<StarDisplayRecord> recordList, Color extensionColor) {
         for (StarDisplayRecord record : recordList) {
             createExtension(record, extensionColor);
         }
@@ -603,7 +605,7 @@ public class StarPlotManager {
      * @param record         the star
      * @param extensionColor the color of the extensions from grid to star
      */
-    private void createExtension(StarDisplayRecord record, Color extensionColor) {
+    private void createExtension(@NotNull StarDisplayRecord record, Color extensionColor) {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         double lineWidth = colorPalette.getStemLineWidth();
@@ -620,7 +622,7 @@ public class StarPlotManager {
      * @param starContextMenu the menu
      * @param e               the exception caught
      */
-    private void starClickEventHandler(Node star, ContextMenu starContextMenu, MouseEvent e) {
+    private void starClickEventHandler(Node star, @NotNull ContextMenu starContextMenu, @NotNull MouseEvent e) {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
             starContextMenu.show(star, e.getScreenX(), e.getScreenY());
@@ -658,7 +660,7 @@ public class StarPlotManager {
      * @param star the star
      * @return the menu
      */
-    private ContextMenu createPopup(String name, Node star) {
+    private @NotNull ContextMenu createPopup(String name, @NotNull Node star) {
         final ContextMenu cm = new ContextMenu();
 
         MenuItem titleItem = new MenuItem(name);
@@ -710,7 +712,7 @@ public class StarPlotManager {
         return cm;
     }
 
-    private MenuItem createSetStarMenuitem(Node star) {
+    private @NotNull MenuItem createSetStarMenuitem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Highlight star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -720,7 +722,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem createNotesMenuItem(Node star) {
+    private @NotNull MenuItem createNotesMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Edit notes on this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -742,7 +744,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem distanceReportMenuItem(Node star) {
+    private @NotNull MenuItem distanceReportMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Generate Distances from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -755,7 +757,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem createRecenterMenuitem(Node star) {
+    private @NotNull MenuItem createRecenterMenuitem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Recenter on this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -764,7 +766,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem createRoutingMenuItem(Node star) {
+    private @NotNull MenuItem createRoutingMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
         menuItem.setOnAction(event -> {
             boolean routingActive = routeManager.isRoutingActive();
@@ -785,7 +787,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem continueRoutingMenuItem(Node star) {
+    private @NotNull MenuItem continueRoutingMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Continue Route");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -794,7 +796,7 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private MenuItem finishRoutingMenuItem(Node star) {
+    private @NotNull MenuItem finishRoutingMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Finish Route");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -804,7 +806,7 @@ public class StarPlotManager {
     }
 
 
-    private MenuItem resetRoutingMenuItem() {
+    private @NotNull MenuItem resetRoutingMenuItem() {
         MenuItem menuItem = new MenuItem("Reset Route");
         menuItem.setOnAction(this::resetRoute);
         return menuItem;
@@ -820,7 +822,7 @@ public class StarPlotManager {
      *
      * @return the menuitem supporting this action
      */
-    private MenuItem createRemoveMenuItem(Node star) {
+    private @NotNull MenuItem createRemoveMenuItem(@NotNull Node star) {
         MenuItem removeMenuItem = new MenuItem("Remove");
         removeMenuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -835,7 +837,7 @@ public class StarPlotManager {
      *
      * @param starDisplayRecord the star to remove
      */
-    private void removeNode(StarDisplayRecord starDisplayRecord) {
+    private void removeNode(@NotNull StarDisplayRecord starDisplayRecord) {
         log.info("Removing object for:" + starDisplayRecord.getStarName());
         databaseListener.removeStar(starDisplayRecord.getRecordId());
     }
@@ -847,7 +849,7 @@ public class StarPlotManager {
      * @param star the star selected
      * @return the menuitem
      */
-    private MenuItem createEnterSystemItem(Node star) {
+    private @NotNull MenuItem createEnterSystemItem(@NotNull Node star) {
         MenuItem removeMenuItem = new MenuItem("Enter System");
         removeMenuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -861,7 +863,7 @@ public class StarPlotManager {
      *
      * @return the menuitem supporting this action
      */
-    private MenuItem createEditPropertiesMenuItem(Node star) {
+    private @NotNull MenuItem createEditPropertiesMenuItem(@NotNull Node star) {
         MenuItem editPropertiesMenuItem = new MenuItem("Edit");
         editPropertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
@@ -877,7 +879,7 @@ public class StarPlotManager {
      *
      * @param starDisplayRecord the properties to edit
      */
-    private StarDisplayRecord editProperties(StarDisplayRecord starDisplayRecord) {
+    private @Nullable StarDisplayRecord editProperties(@NotNull StarDisplayRecord starDisplayRecord) {
         AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
@@ -909,7 +911,7 @@ public class StarPlotManager {
      *
      * @return the menuitem supporting this action
      */
-    private MenuItem createShowPropertiesMenuItem(Node star) {
+    private @NotNull MenuItem createShowPropertiesMenuItem(@NotNull Node star) {
         MenuItem propertiesMenuItem = new MenuItem("Properties");
         propertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
@@ -925,7 +927,7 @@ public class StarPlotManager {
      *
      * @param astrographicObject the properties to display
      */
-    private void displayProperties(AstrographicObject astrographicObject) {
+    private void displayProperties(@NotNull AstrographicObject astrographicObject) {
         log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
         if (displayer != null) {
             displayer.displayStellarProperties(astrographicObject);
@@ -944,7 +946,7 @@ public class StarPlotManager {
         }
     }
 
-    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+    public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
@@ -1026,7 +1028,7 @@ public class StarPlotManager {
         log.info("shapes:{}", shapeToLabel.size());
     }
 
-    private Color randomColor() {
+    private @NotNull Color randomColor() {
         int r = random.nextInt(255);
         int g = random.nextInt(255);
         int b = random.nextInt(255);

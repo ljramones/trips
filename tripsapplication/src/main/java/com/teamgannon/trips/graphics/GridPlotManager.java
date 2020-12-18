@@ -19,6 +19,8 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +30,7 @@ import static java.lang.Math.*;
 @Slf4j
 public class GridPlotManager {
 
-    private final Map<Node, Label> shapeToLabel;
+    private final @NotNull Map<Node, Label> shapeToLabel;
 
     private final Group scaleGroup = new Group();
     private final Group gridGroup = new Group();
@@ -63,8 +65,8 @@ public class GridPlotManager {
      * @param width   the screen width
      * @param depth   the screen depth
      */
-    public GridPlotManager(Group world,
-                           Group sceneRoot,
+    public GridPlotManager(@NotNull Group world,
+                           @NotNull Group sceneRoot,
                            SubScene subScene,
                            double spacing,
                            double width, double depth,
@@ -90,7 +92,7 @@ public class GridPlotManager {
 
     //////////////   public controls  //////////////////
 
-    public Group getGridGroup() {
+    public @NotNull Group getGridGroup() {
         return gridGroup;
     }
 
@@ -170,7 +172,7 @@ public class GridPlotManager {
      * @param gridIncrement the grid increment
      * @param colorPalette  the color palette
      */
-    private void createGrid(double gridIncrement, ColorPalette colorPalette) {
+    private void createGrid(double gridIncrement, @NotNull ColorPalette colorPalette) {
 
         gridGroup.getTransforms().add(
                 new Translate(-width / 2.0, 0, -depth / 2.0)
@@ -211,7 +213,7 @@ public class GridPlotManager {
      * @param transformer  the transformer
      * @param colorPalette the color palette
      */
-    public void rebuildGrid(AstrographicTransformer transformer, ColorPalette colorPalette) {
+    public void rebuildGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
 
@@ -227,7 +229,7 @@ public class GridPlotManager {
         rebuildScaleLegend((int) parameters.getScaleIncrement());
     }
 
-    private void createGrid(AstrographicTransformer transformer, ColorPalette colorPalette) {
+    private void createGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
         double minZ = parameters.getMinZ();
@@ -252,7 +254,7 @@ public class GridPlotManager {
     }
 
 
-    private void drawZLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette,
+    private void drawZLineSegments(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette,
                                    double zDivs, double minX, double maxX, double beginZ,
                                    double increment) {
         for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
@@ -269,7 +271,7 @@ public class GridPlotManager {
         }
     }
 
-    private void drawXLineSegments(AstrographicTransformer transformer, ColorPalette colorPalette, double minZ, double maxZ, double xDivs, double beginX, double increment) {
+    private void drawXLineSegments(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette, double minZ, double maxZ, double xDivs, double beginX, double increment) {
         for (int i = 0; i < (ceil(xDivs / 2)); i++) {
             double[] fromPointZ = new double[]{beginX, 0, signum(minZ) * ceil(abs(minZ))};
             double[] toPointZ = new double[]{beginX, 0, signum(maxZ) * ceil(abs(maxZ))};
@@ -284,12 +286,12 @@ public class GridPlotManager {
         }
     }
 
-    public Node createLineSegment(Point3D origin,
-                                  Point3D target,
-                                  double width,
-                                  Color color,
-                                  String tag,
-                                  boolean sense) {
+    public @NotNull Node createLineSegment(@NotNull Point3D origin,
+                                           @NotNull Point3D target,
+                                           double width,
+                                           Color color,
+                                           @Nullable String tag,
+                                           boolean sense) {
 
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
@@ -327,14 +329,14 @@ public class GridPlotManager {
         return lineGroup;
     }
 
-    public Label createLabel(String text) {
+    public @NotNull Label createLabel(String text) {
         Label label = new Label(text);
         label.setFont(new Font("Arial", 6));
         label.setTextFill(Color.WHEAT);
         return label;
     }
 
-    private Sphere createPointSphere(Label label) {
+    private @NotNull Sphere createPointSphere(@NotNull Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.WHEAT);
         material.setSpecularColor(Color.WHEAT);
@@ -351,7 +353,7 @@ public class GridPlotManager {
     /**
      * update labels
      */
-    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+    public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 

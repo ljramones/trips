@@ -10,6 +10,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -32,7 +33,7 @@ public class RBCsvReader {
     /**
      * the stellar factory
      */
-    private final StellarFactory stellarFactory;
+    private final @NotNull StellarFactory stellarFactory;
     private final DatabaseManagementService databaseManagementService;
 
     public RBCsvReader(DatabaseManagementService databaseManagementService) {
@@ -40,7 +41,7 @@ public class RBCsvReader {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public RBCsvFile loadFile(ProgressUpdater loadUpdater, File file, Dataset dataset) {
+    public @NotNull RBCsvFile loadFile(@NotNull ProgressUpdater loadUpdater, @NotNull File file, @NotNull Dataset dataset) {
         RBCsvFile rbCsvFile = new RBCsvFile();
         rbCsvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
@@ -108,7 +109,7 @@ public class RBCsvReader {
                     rbCsvFile.getSize(),
                     rbCsvFile.getNumbAccepts(),
                     rbCsvFile.getNumbRejects());
-        } catch (IOException | CsvValidationException e) {
+        } catch (@NotNull IOException | CsvValidationException e) {
             log.error("failed to read file because: {}", e.getMessage());
         }
 

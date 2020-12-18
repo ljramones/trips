@@ -5,6 +5,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 @Slf4j
 public class RouteCell extends ListCell<Route> {
@@ -15,7 +16,7 @@ public class RouteCell extends ListCell<Route> {
 
 
     @Override
-    public void updateItem(Route route, boolean empty) {
+    public void updateItem(@Nullable Route route, boolean empty) {
         super.updateItem(route, empty);
 
         int index = this.getIndex();

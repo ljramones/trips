@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class AstrographicTransformer {
      * @param ords the incoming to transform
      * @return the transformed coordinates
      */
-    public double[] transformOrds(double[] ords) {
+    public double @NotNull [] transformOrds(double[] ords) {
         double[] transformOrds = new double[3];
 
         // transform coordinates
@@ -101,7 +102,7 @@ public class AstrographicTransformer {
      * @param starRecords       the star records to check
      * @param centerCoordinates teh center coordinates
      */
-    public ScalingParameters findMinMaxValues(List<AstrographicObject> starRecords, double[] centerCoordinates) {
+    public ScalingParameters findMinMaxValues(@NotNull List<AstrographicObject> starRecords, double[] centerCoordinates) {
 
         scalingParameters = new ScalingParameters();
         clearRanges();
@@ -163,7 +164,7 @@ public class AstrographicTransformer {
         maxZ = 0;
     }
 
-    private double findScalingValues(ScalingParameters scalingParameters) {
+    private double findScalingValues(@NotNull ScalingParameters scalingParameters) {
         double maxValue = 0;
         if (scalingParameters.getXRange() > maxValue) {
             maxValue = scalingParameters.getXRange();

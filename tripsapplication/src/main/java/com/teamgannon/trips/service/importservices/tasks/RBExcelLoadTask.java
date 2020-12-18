@@ -2,24 +2,23 @@ package com.teamgannon.trips.service.importservices.tasks;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
-import com.teamgannon.trips.file.excel.ExcelReader;
-import com.teamgannon.trips.file.excel.RBExcelFile;
+import com.teamgannon.trips.file.excel.rb.RBExcelFile;
+import com.teamgannon.trips.file.excel.rb.RBExcelReader;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
-import javafx.scene.control.Label;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
-
+@Slf4j
 public class RBExcelLoadTask extends Task<FileProcessResult> implements ProgressUpdater {
 
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
 
-    private final ExcelReader excelReader;
+    private final @NotNull RBExcelReader RBExcelReader;
 
 
     public RBExcelLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService) {
@@ -27,28 +26,28 @@ public class RBExcelLoadTask extends Task<FileProcessResult> implements Progress
         this.dataset = dataset;
         this.databaseManagementService = databaseManagementService;
 
-        this.excelReader = new ExcelReader();
+        this.RBExcelReader = new RBExcelReader();
 
     }
 
     @Override
-    protected FileProcessResult call() throws Exception {
+    protected @NotNull FileProcessResult call() throws Exception {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(this,file);
+        RBExcelFile excelFile = RBExcelReader.loadFile(this, file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
                     dataSetDescriptor.getAstrographicDataList().size(),
                     dataSetDescriptor.getDataSetName());
-            showInfoMessage("Load RB Excel Format", data);
+            log.info("Load RB Excel Format {}", data);
             processResult.setSuccess(true);
 
         } catch (Exception e) {
-            showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
+            log.error("Duplicate Dataset, This dataset was already loaded in the system ");
             processResult.setSuccess(false);
         }
 

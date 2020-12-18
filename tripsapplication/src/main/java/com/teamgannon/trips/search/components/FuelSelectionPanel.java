@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class FuelSelectionPanel extends BasePane {
         return yesNoFuel.isSelected();
     }
 
-    public List<String> getSelections() {
+    public @NotNull List<String> getSelections() {
         List<String> selections = new ArrayList<>();
 
         if (h2Fuel.isSelected()) {

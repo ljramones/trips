@@ -8,6 +8,8 @@ import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -56,17 +58,17 @@ public class StarDisplayRecord {
      * like it.  The spectral class should be the temp and color of the star, not trying to code more than one
      * thing.  A stars dwarfness or giantness in my opinion goes in the Type array.
      */
-    private String spectralClass = "G";
+    private @NotNull String spectralClass = "G";
 
     /**
      * the polity, NA means not applicatible
      */
-    private String polity = "NA";
+    private @NotNull String polity = "NA";
 
     /**
      * actual location of the star
      */
-    private double[] actualCoordinates = new double[3];
+    private double @NotNull [] actualCoordinates = new double[3];
 
     /**
      * the x,y,z for the star in screen coordinates - scaled to fit on screen
@@ -94,7 +96,7 @@ public class StarDisplayRecord {
         notes = " ";
     }
 
-    public StarDisplayRecord copy() {
+    public @NotNull StarDisplayRecord copy() {
         StarDisplayRecord record = new StarDisplayRecord();
 
         record.setNotes(notes);
@@ -117,7 +119,7 @@ public class StarDisplayRecord {
         return record;
     }
 
-    public static AstrographicObject toAstrographicObject(StarDisplayRecord displayRecord) {
+    public static @NotNull AstrographicObject toAstrographicObject(@NotNull StarDisplayRecord displayRecord) {
         AstrographicObject object = new AstrographicObject();
 
         object.setId(displayRecord.getRecordId());
@@ -135,8 +137,8 @@ public class StarDisplayRecord {
         return object;
     }
 
-    public static StarDisplayRecord fromAstrographicObject(AstrographicObject astrographicObject,
-                                                           StarDisplayPreferences starDisplayPreferences) {
+    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull AstrographicObject astrographicObject,
+                                                                     @NotNull StarDisplayPreferences starDisplayPreferences) {
         StarDisplayRecord record = new StarDisplayRecord();
 
         StellarType stellarType;

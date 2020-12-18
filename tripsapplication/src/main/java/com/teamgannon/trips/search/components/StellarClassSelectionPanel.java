@@ -6,6 +6,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,11 +70,11 @@ public class StellarClassSelectionPanel extends BasePane {
         initEventHandler();
     }
 
-    public GridPane getPane() {
+    public @NotNull GridPane getPane() {
         return planGrid;
     }
 
-    public List<String> getSelection() {
+    public @NotNull List<String> getSelection() {
         List<String> selections = new ArrayList<>();
         if (oClassStar.isSelected()) {
             selections.add(oClassStar.getText());
@@ -125,7 +126,7 @@ public class StellarClassSelectionPanel extends BasePane {
     }
 
 
-    public List<String> getPolitySelections() {
+    public @NotNull List<String> getPolitySelections() {
         List<String> selections = new ArrayList<>();
 
         if (oClassStar.isSelected()) {

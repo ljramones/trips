@@ -1,5 +1,7 @@
 package com.teamgannon.trips.stardata;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,7 +32,7 @@ public class StellarFactory {
      *
      * @return the factory
      */
-    public static StellarFactory getFactory() {
+    public static @NotNull StellarFactory getFactory() {
         return factory;
     }
 
@@ -66,7 +68,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createOClass() {
+    public static @NotNull StellarClassification createOClass() {
         StellarClassification oClass = new StellarClassification();
         oClass.setStellarType(StellarType.O);
         oClass.setChromacity("blue");
@@ -129,7 +131,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createBClass() {
+    public static @NotNull StellarClassification createBClass() {
         StellarClassification bClass = new StellarClassification();
         bClass.setStellarType(StellarType.B);
         bClass.setStarColor(StarColor.B);
@@ -167,7 +169,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createAClass() {
+    public static @NotNull StellarClassification createAClass() {
         StellarClassification aClass = new StellarClassification();
         aClass.setStellarType(StellarType.A);
 
@@ -209,7 +211,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createFClass() {
+    public static @NotNull StellarClassification createFClass() {
         StellarClassification fClass = new StellarClassification();
         fClass.setStellarType(StellarType.F);
 
@@ -264,7 +266,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createGClass() {
+    public static @NotNull StellarClassification createGClass() {
 
         StellarClassification gClass = new StellarClassification();
         gClass.setStellarType(StellarType.G);
@@ -318,7 +320,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createKClass() {
+    public static @NotNull StellarClassification createKClass() {
         StellarClassification kClass = new StellarClassification();
         kClass.setStellarType(StellarType.K);
 
@@ -372,7 +374,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static StellarClassification createMClass() {
+    public static @NotNull StellarClassification createMClass() {
         StellarClassification mClass = new StellarClassification();
         mClass.setStellarType(StellarType.M);
 
@@ -400,7 +402,7 @@ public class StellarFactory {
         return mClass;
     }
 
-    private static StellarClassification createQClass() {
+    private static @NotNull StellarClassification createQClass() {
         StellarClassification qClass = new StellarClassification();
         qClass.setStellarType(StellarType.Q);
 

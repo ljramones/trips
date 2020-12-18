@@ -10,6 +10,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
@@ -46,7 +47,7 @@ public class SolarSystemSpacePane extends Pane {
      *
      * @param starDisplayRecord object properties of this system
      */
-    public void setSystemToDisplay(StarDisplayRecord starDisplayRecord) {
+    public void setSystemToDisplay(@NotNull StarDisplayRecord starDisplayRecord) {
         this.starDisplayRecord = starDisplayRecord;
         systemName = starDisplayRecord.getStarName();
         systemIdentifierLabel.setText(systemName);
@@ -61,7 +62,7 @@ public class SolarSystemSpacePane extends Pane {
 
     // ---------------------- helpers -------------------------- //
 
-    private GridPane setupGridPane() {
+    private @NotNull GridPane setupGridPane() {
         // setup system label to show name of system you are in
         systemIdentifierLabel = new Label(systemName);
         systemIdentifierLabel.setFont(Font.font("Cambria", 20));

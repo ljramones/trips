@@ -5,6 +5,7 @@ import com.teamgannon.trips.file.chview.enums.PlanetMassRegimeEnum;
 import com.teamgannon.trips.file.chview.enums.PlanetOrbitalRegimeEnum;
 import com.teamgannon.trips.file.chview.enums.PlanetaryProductType;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
@@ -26,7 +27,7 @@ public class Planet implements Serializable {
     /**
      * the set of moons that are
      */
-    Set<Planet> moons = new HashSet<>();
+    @NotNull Set<Planet> moons = new HashSet<>();
     /**
      * the stellar system that this belongs to
      */

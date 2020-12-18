@@ -1,6 +1,7 @@
 package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -24,7 +25,7 @@ public interface AstrographicObjectRepository
      * @param page                 the page to position by
      * @return the stars
      */
-    Page<AstrographicObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
+    @NotNull Page<AstrographicObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
 
     /**
      * this is the distance from Sol
@@ -33,7 +34,7 @@ public interface AstrographicObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-    Page<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
+    @NotNull Page<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
@@ -41,7 +42,7 @@ public interface AstrographicObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-    List<AstrographicObject> findByDataSetName(String dataSetName);
+    @NotNull List<AstrographicObject> findByDataSetName(String dataSetName);
 
 
     /**
@@ -51,7 +52,7 @@ public interface AstrographicObjectRepository
      * @param nameMatch   the partial match
      * @return the list of objects that match what we search for
      */
-    List<AstrographicObject> findByDataSetNameAndDisplayNameContainsIgnoreCase(String dataSetName, String nameMatch);
+    @NotNull List<AstrographicObject> findByDataSetNameAndDisplayNameContainsIgnoreCase(String dataSetName, String nameMatch);
 
 
     /**
@@ -60,7 +61,7 @@ public interface AstrographicObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-    List<AstrographicObject> findByDataSetNameOrderByDisplayName(String dataSetName);
+    @NotNull List<AstrographicObject> findByDataSetNameOrderByDisplayName(String dataSetName);
 
     /**
      * delete all stars stored with a specific dataset name
@@ -76,9 +77,9 @@ public interface AstrographicObjectRepository
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-    List<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
+    @NotNull List<AstrographicObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
 
-    List<AstrographicObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+    @NotNull List<AstrographicObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
             double xg,
             double xl,

@@ -3,6 +3,7 @@ package com.teamgannon.trips.routing;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Description of the Route
@@ -26,17 +27,17 @@ public class RouteDefinition {
     /**
      * Hexadecimal Color value of route lines
      */
-    private double[] routeColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] routeColor = new double[]{0xAA, 0xBB, 0xCC};
     /**
      * Style of Route lines
      */
-    private GridLines routeStyle = GridLines.Solid;
+    private @NotNull GridLines routeStyle = GridLines.Solid;
 
-    public Color getRouteColor() {
+    public @NotNull Color getRouteColor() {
         return Color.color(routeColor[0], routeColor[1], routeColor[2]);
     }
 
-    public void setRouteColor(Color color) {
+    public void setRouteColor(@NotNull Color color) {
         routeColor[0] = color.getRed();
         routeColor[1] = color.getGreen();
         routeColor[2] = color.getBlue();

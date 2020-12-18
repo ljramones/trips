@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -45,13 +47,13 @@ public class Route implements Serializable {
     /**
      * An array of star GUIDs which defines this route
      */
-    private List<UUID> routeStars = new ArrayList<>();
+    private @NotNull List<UUID> routeStars = new ArrayList<>();
 
     /**
      * we calculate the route lengths when we create a route and store them so we don't have to
      * recalculate each time we draw this.
      */
-    private List<Double> routeLengths = new ArrayList<>();
+    private @NotNull List<Double> routeLengths = new ArrayList<>();
 
     /**
      * the notes for the route
@@ -96,7 +98,7 @@ public class Route implements Serializable {
         }
     }
 
-    public List<Route> toRoute(String parametersStr) {
+    public @Nullable List<Route> toRoute(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });

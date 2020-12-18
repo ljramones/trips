@@ -224,7 +224,7 @@ public class StarFieldExample extends Application {
         log.info("shapes:{}", shape3DToLabel.size());
     }
 
-    private Color randomColor() {
+    private @NotNull Color randomColor() {
         int r = random.nextInt(255);
         int g = random.nextInt(255);
         int b = random.nextInt(255);
@@ -256,7 +256,7 @@ public class StarFieldExample extends Application {
     //////////////////////////////////
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(@NotNull Stage primaryStage) throws Exception {
 
         Pane controls = createControls();
         Pane pane = createStarField();
@@ -272,7 +272,7 @@ public class StarFieldExample extends Application {
         primaryStage.show();
     }
 
-    private VBox createControls() {
+    private @NotNull VBox createControls() {
         VBox controls = new VBox(10, new Button("Button"));
         controls.setPadding(new Insets(10));
         return controls;

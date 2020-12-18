@@ -2,6 +2,7 @@ package com.teamgannon.trips.jpa.model;
 
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,7 +37,7 @@ public class CivilizationDisplayPreferences implements Serializable {
      * storage tag
      */
     @Column(unique = true)
-    private String storageTag = "Main";
+    private @NotNull String storageTag = "Main";
 
     /**
      * color of human polity
@@ -104,7 +105,7 @@ public class CivilizationDisplayPreferences implements Serializable {
         other4PolityColor = Color.LEMONCHIFFON.toString();
     }
 
-    public Color getColorForPolity(String polity) {
+    public @NotNull Color getColorForPolity(String polity) {
         return switch (polity) {
             case CivilizationDisplayPreferences.TERRAN -> Color.valueOf(humanPolityColor);
             case CivilizationDisplayPreferences.DORNANI -> Color.valueOf(dornaniPolityColor);

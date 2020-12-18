@@ -2,6 +2,8 @@ package com.teamgannon.trips.search;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +19,7 @@ import java.util.Map;
 public class SearchContext {
 
     private final Map<String, DataSetDescriptor> dataSetDescriptorMap = new HashMap<>();
-    private String currentDataSet;
+    private @Nullable String currentDataSet;
     private AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
 
     public void setCurrentDataSet(String currentDataSet) {
@@ -33,7 +35,7 @@ public class SearchContext {
     }
 
 
-    public void addDataSet(DataSetDescriptor dataSetDescriptor) {
+    public void addDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
         // this ensures that we set a default if it is null
         if (currentDataSet == null) {
             currentDataSet = dataSetDescriptor.getDataSetName();
@@ -43,7 +45,7 @@ public class SearchContext {
     }
 
 
-    public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
+    public void removeDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
         if (currentDataSet.equals(dataSetDescriptor.getDataSetName())) {
             currentDataSet = null;
             astroSearchQuery.setDescriptor(null);
@@ -51,7 +53,7 @@ public class SearchContext {
         dataSetDescriptorMap.remove(dataSetDescriptor.getDataSetName());
     }
 
-    public void addDataSets(List<DataSetDescriptor> dataSetDescriptors) {
+    public void addDataSets(@NotNull List<DataSetDescriptor> dataSetDescriptors) {
         dataSetDescriptors.forEach(descriptor -> dataSetDescriptorMap.put(descriptor.getDataSetName(), descriptor));
         if (dataSetDescriptors.size() != 0) {
             currentDataSet = dataSetDescriptors.get(0).getDataSetName();
@@ -59,7 +61,7 @@ public class SearchContext {
         }
     }
 
-    public Map<String, DataSetDescriptor> getDatasetMap() {
+    public @NotNull Map<String, DataSetDescriptor> getDatasetMap() {
         return dataSetDescriptorMap;
     }
 
@@ -82,11 +84,11 @@ public class SearchContext {
         return dataSetDescriptorMap.get(name);
     }
 
-    public List<String> getDataSetNames() {
+    public @NotNull List<String> getDataSetNames() {
         return new ArrayList<>(dataSetDescriptorMap.keySet());
     }
 
-    public List<DataSetDescriptor> getDatasetDescriptors() {
+    public @NotNull List<DataSetDescriptor> getDatasetDescriptors() {
         return new ArrayList<>(dataSetDescriptorMap.values());
     }
 

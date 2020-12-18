@@ -9,15 +9,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class DistanceReportDialog extends Dialog<DistanceReport> {
 
-    public Button changeButton = new Button("Save");
+    public @NotNull Button changeButton = new Button("Save");
 
-    private final DistanceReport report;
+    private final @NotNull DistanceReport report;
 
-    public DistanceReportDialog(Stage stage,
-                                DistanceReport report) {
+    public DistanceReportDialog(@NotNull Stage stage,
+                                @NotNull DistanceReport report) {
         this.report = report;
 
         this.setTitle("Distance Report Dialog for: " + report.getSourceStar().getStarName());

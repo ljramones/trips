@@ -2,6 +2,7 @@ package com.teamgannon.trips.tableviews;
 
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -37,7 +38,7 @@ public class StarEditRecord {
      */
     private boolean dirty;
 
-    public static StarEditRecord fromAstrographicObject(AstrographicObject astrographicObject) {
+    public static @NotNull StarEditRecord fromAstrographicObject(@NotNull AstrographicObject astrographicObject) {
         StarEditRecord record = new StarEditRecord();
         record.setId(astrographicObject.getId());
         record.setDisplayName(astrographicObject.getDisplayName());

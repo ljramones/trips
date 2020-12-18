@@ -1,10 +1,11 @@
-package com.teamgannon.trips.file.excel;
+package com.teamgannon.trips.file.excel.rb;
 
-import com.teamgannon.trips.file.excel.model.RBStar;
+import com.teamgannon.trips.file.excel.rb.model.RBStar;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.stardata.StellarFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -14,32 +15,26 @@ import java.util.Set;
 
 @Slf4j
 @Component
-public class ExcelReader {
+public class RBExcelReader {
 
     /**
      * the stellar factory
      */
-    private final StellarFactory stellarFactory;
+    private final @NotNull StellarFactory stellarFactory= new StellarFactory();
 
     // Create a DataFormatter to format and get each cell's value as String
     private final DataFormatter dataFormatter = new DataFormatter();
+
     private ProgressUpdater loadUpdater;
 
 
     /**
-     * dependency injection
-     */
-    public ExcelReader() {
-        this.stellarFactory = new StellarFactory();
-    }
-
-    /**
      * load the excel file
      *
-     * @param loadUpdater
+     * @param loadUpdater the load updater
      * @param file        the excel file in RB Format
      */
-    public RBExcelFile loadFile(ProgressUpdater loadUpdater, File file) {
+    public @NotNull RBExcelFile loadFile(ProgressUpdater loadUpdater, @NotNull File file) {
         this.loadUpdater = loadUpdater;
 
         RBExcelFile excelFile = new RBExcelFile();
@@ -79,7 +74,7 @@ public class ExcelReader {
      *
      * @param sheet the sheet to parse
      */
-    private Set<RBStar> parseSheet(Sheet sheet) {
+    private @NotNull Set<RBStar> parseSheet(@NotNull Sheet sheet) {
         log.info("=> " + sheet.getSheetName());
 
         Set<RBStar> starList = new HashSet<>();
@@ -129,7 +124,7 @@ public class ExcelReader {
 
     }
 
-    private String getCell(Row row, int cellNumber) {
+    private String getCell(@NotNull Row row, int cellNumber) {
         return dataFormatter.formatCellValue(row.getCell(cellNumber));
     }
 }

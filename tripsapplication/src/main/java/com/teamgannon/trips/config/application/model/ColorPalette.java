@@ -3,6 +3,7 @@ package com.teamgannon.trips.config.application.model;
 import com.teamgannon.trips.jpa.model.GraphColorsPersist;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public class ColorPalette {
@@ -21,13 +22,13 @@ public class ColorPalette {
 
     private double gridLineWidth = 0.5;
 
-    public static ColorPalette defaultColors() {
+    public static @NotNull ColorPalette defaultColors() {
         ColorPalette palette = new ColorPalette();
         palette.assignColors(GraphColorsPersist.defaults());
         return palette;
     }
 
-    public void assignColors(GraphColorsPersist graphColorsPersist) {
+    public void assignColors(@NotNull GraphColorsPersist graphColorsPersist) {
         id = graphColorsPersist.getId();
         labelColor = Color.valueOf(graphColorsPersist.getLabelColor());
         gridColor = Color.valueOf(graphColorsPersist.getGridColor());
@@ -37,19 +38,19 @@ public class ColorPalette {
         gridLineWidth = graphColorsPersist.getGridLineWidth();
     }
 
-    public void setLabelColor(String color) {
+    public void setLabelColor(@NotNull String color) {
         labelColor = Color.valueOf(color);
     }
 
-    public void setGridColor(String color) {
+    public void setGridColor(@NotNull String color) {
         gridColor = Color.valueOf(color);
     }
 
-    public void setExtensionColor(String color) {
+    public void setExtensionColor(@NotNull String color) {
         extensionColor = Color.valueOf(color);
     }
 
-    public void setLegendColor(String color) {
+    public void setLegendColor(@NotNull String color) {
         legendColor = Color.valueOf(color);
     }
 

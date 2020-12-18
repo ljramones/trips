@@ -1,5 +1,6 @@
 package com.teamgannon.trips.config.application;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -7,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationConfiguration {
 
     @Bean
-    public TripsContext getTripsContext() {
+    public @NotNull TripsContext getTripsContext() {
         return new TripsContext();
     }
 

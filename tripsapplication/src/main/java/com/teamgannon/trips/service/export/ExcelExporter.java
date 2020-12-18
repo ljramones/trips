@@ -12,6 +12,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,7 +73,7 @@ public class ExcelExporter {
     }
 
 
-    public void exportAsExcel(ExportOptions export, List<AstrographicObject> astrographicObjects) {
+    public void exportAsExcel(@NotNull ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects) {
 
         try {
 
@@ -108,14 +109,14 @@ public class ExcelExporter {
         }
     }
 
-    private void writeDataDescriptor(ExportOptions export, XSSFWorkbook myWorkBook) {
+    private void writeDataDescriptor(@NotNull ExportOptions export, @NotNull XSSFWorkbook myWorkBook) {
         XSSFSheet mySheet = myWorkBook.createSheet("descriptor");
         writeDescriptorHeaders(mySheet);
         writeDescriptorData(export.getDataset(),mySheet);
 
     }
 
-    private void writeDescriptorData(DataSetDescriptor dataset, XSSFSheet mySheet) {
+    private void writeDescriptorData(@NotNull DataSetDescriptor dataset, @NotNull XSSFSheet mySheet) {
         int column = 0;
         Row row = mySheet.createRow(1);
         storeCell(row, column++, dataset.getDataSetName());
@@ -135,7 +136,7 @@ public class ExcelExporter {
 
     }
 
-    private void writeDescriptorHeaders(XSSFSheet mySheet) {
+    private void writeDescriptorHeaders(@NotNull XSSFSheet mySheet) {
         int column = 0;
         Row row = mySheet.createRow(0);
         storeCell(row, column++, "dataSetName");
@@ -154,7 +155,7 @@ public class ExcelExporter {
         storeCell(row, column, "customDataValuesStr");
     }
 
-    private void writeStarData(ExportOptions export, List<AstrographicObject> astrographicObjects, XSSFWorkbook myWorkBook) {
+    private void writeStarData(ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects, @NotNull XSSFWorkbook myWorkBook) {
         // create a work sheet with the dataset name on it
         XSSFSheet mySheet = myWorkBook.createSheet("data");
 
@@ -168,7 +169,7 @@ public class ExcelExporter {
     }
 
 
-    private void createDescriptorRow(XSSFSheet mySheet, int i, DataSetDescriptor descriptor) {
+    private void createDescriptorRow(@NotNull XSSFSheet mySheet, int i, @NotNull DataSetDescriptor descriptor) {
         int column = 0;
         Row row = mySheet.createRow(i);
         storeCell(row, column++, descriptor.getDataSetName());
@@ -183,7 +184,7 @@ public class ExcelExporter {
     }
 
 
-    private void createDataSetDescriptorsPage(XSSFWorkbook myWorkBook, List<DataSetDescriptor> dataSetDescriptorList) {
+    private void createDataSetDescriptorsPage(@NotNull XSSFWorkbook myWorkBook, @NotNull List<DataSetDescriptor> dataSetDescriptorList) {
         XSSFSheet mySheet = myWorkBook.createSheet("Database");
         createDescriptorHeaderRow(mySheet);
         int row = 1;
@@ -194,7 +195,7 @@ public class ExcelExporter {
     }
 
 
-    private void createDescriptorHeaderRow(XSSFSheet mySheet) {
+    private void createDescriptorHeaderRow(@NotNull XSSFSheet mySheet) {
         int column = 0;
         Row row = mySheet.createRow(0);
         storeCell(row, column++, "Dataset name");
@@ -209,7 +210,7 @@ public class ExcelExporter {
     }
 
 
-    private void createDataSetSheet(XSSFWorkbook myWorkBook, DataSetDescriptor descriptor) {
+    private void createDataSetSheet(@NotNull XSSFWorkbook myWorkBook, @NotNull DataSetDescriptor descriptor) {
         // create a work sheet with the dataset name on it
         updateStatus(String.format("starting export of %s", descriptor.getDataSetName()));
         XSSFSheet mySheet = myWorkBook.createSheet(descriptor.getDataSetName());
@@ -224,7 +225,7 @@ public class ExcelExporter {
     }
 
 
-    private void writeStarDataHeaders(XSSFSheet mySheet) {
+    private void writeStarDataHeaders(@NotNull XSSFSheet mySheet) {
         int column = 0;
         Row row = mySheet.createRow(0);
         storeCell(row, column++, "id");
@@ -286,7 +287,7 @@ public class ExcelExporter {
     }
 
 
-    private void saveRow(Row row, AstrographicObject astrographicObject) {
+    private void saveRow(@NotNull Row row, @NotNull AstrographicObject astrographicObject) {
         int column = 0;
 
         storeCell(row, column++, astrographicObject.getId().toString());
@@ -348,32 +349,32 @@ public class ExcelExporter {
 
     }
 
-    private void storeCell(Row row, int column, long intValue) {
+    private void storeCell(@NotNull Row row, int column, long intValue) {
         Cell cell = row.createCell(column);
         cell.setCellValue(Long.toString(intValue));
     }
 
-    private void storeCell(Row row, int column, int intValue) {
+    private void storeCell(@NotNull Row row, int column, int intValue) {
         Cell cell = row.createCell(column);
         cell.setCellValue(Integer.toString(intValue));
     }
 
-    private void storeCell(Row row, int column, boolean booleanValue) {
+    private void storeCell(@NotNull Row row, int column, boolean booleanValue) {
         Cell cell = row.createCell(column);
         cell.setCellValue(Boolean.toString(booleanValue));
     }
 
-    private void storeCell(Row row, int column, String stringValue) {
+    private void storeCell(@NotNull Row row, int column, String stringValue) {
         Cell cell = row.createCell(column);
         cell.setCellValue(stringValue);
     }
 
-    private void storeCell(Row row, int column, double doubleValue) {
+    private void storeCell(@NotNull Row row, int column, double doubleValue) {
         Cell cell = row.createCell(column);
         cell.setCellValue(Double.toString(doubleValue));
     }
 
-    private void storeCell(Row row, int column, List<String> list) {
+    private void storeCell(@NotNull Row row, int column, List<String> list) {
         Cell cell = row.createCell(column);
         cell.setCellValue(StringUtils.join(list, ' '));
     }

@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class DataSetPanel extends BasePane {
     private final DataSetChangeListener dataSetChangeListener;
 
     private Stage stage;
-    private final SearchContext searchContext;
+    private final @NotNull SearchContext searchContext;
 
     /**
      * constructor
@@ -35,8 +36,8 @@ public class DataSetPanel extends BasePane {
      * @param dataSetContext the dataset context
      */
     public DataSetPanel(Stage stage,
-                        SearchContext searchContext,
-                        DataSetContext dataSetContext,
+                        @NotNull SearchContext searchContext,
+                        @NotNull DataSetContext dataSetContext,
                         DataSetChangeListener dataSetChangeListener) {
         this.stage = stage;
 
@@ -100,11 +101,11 @@ public class DataSetPanel extends BasePane {
         return datasets.get(datasetChoiceBox.getValue());
     }
 
-    public void setDataSetContext(DataSetDescriptor descriptor) {
+    public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
         datasetChoiceBox.setValue(descriptor.getDataSetName());
     }
 
-    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+    public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         datasets.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
         datasetChoiceBox.getItems().add(dataSetDescriptor.getDataSetName());
     }

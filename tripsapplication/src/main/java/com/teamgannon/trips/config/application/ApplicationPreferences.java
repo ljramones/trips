@@ -9,6 +9,8 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -21,18 +23,18 @@ public class ApplicationPreferences implements Serializable {
     /**
      * current center coordinates
      */
-    private double[] currentCenter = new double[3];
+    private double @NotNull [] currentCenter = new double[3];
 
     /**
      * the name of the center star shosen
      */
-    private String centerStarName = "Sol";
+    private @NotNull String centerStarName = "Sol";
 
     /**
      * the database id of the center star
      * if id is null then it is sol
      */
-    private UUID centerStarId = null;
+    private @Nullable UUID centerStarId = null;
 
     /**
      * the distance for the center star
@@ -52,20 +54,20 @@ public class ApplicationPreferences implements Serializable {
     /**
      * color of the routing line
      */
-    private Color routeColor = Color.WHITE;
+    private @NotNull Color routeColor = Color.WHITE;
 
     //////////////
-    private DisplayPreferences displayPreferences = new DisplayPreferences();
+    private @NotNull DisplayPreferences displayPreferences = new DisplayPreferences();
 
-    private LinkDisplayPreferences linkDisplayPreferences = new LinkDisplayPreferences();
+    private @NotNull LinkDisplayPreferences linkDisplayPreferences = new LinkDisplayPreferences();
 
-    private StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+    private @NotNull StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
 
-    private PositionDisplayPreferences positionDisplayPreferences = new PositionDisplayPreferences();
+    private @NotNull PositionDisplayPreferences positionDisplayPreferences = new PositionDisplayPreferences();
 
-    private RouteDisplayPreferences routeDisplayPreferences = new RouteDisplayPreferences();
+    private @NotNull RouteDisplayPreferences routeDisplayPreferences = new RouteDisplayPreferences();
 
-    private CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
+    private @NotNull CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
 
     /**
      * ctor
@@ -76,7 +78,7 @@ public class ApplicationPreferences implements Serializable {
         currentCenter[2] = 0;
     }
 
-    public String currentCenterToString() {
+    public @NotNull String currentCenterToString() {
         return "x(" + currentCenter[0] + "), y(" + currentCenter[1] + "), z(" + currentCenter[2] + ")";
     }
 
@@ -88,7 +90,7 @@ public class ApplicationPreferences implements Serializable {
         }
     }
 
-    public Label getRouteColorAsLabel() {
+    public @NotNull Label getRouteColorAsLabel() {
         Label color = new Label("Color");
         if (routeColor.equals(Color.WHITE)) {
             color.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));

@@ -19,10 +19,11 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
+import org.jetbrains.annotations.NotNull;
 
 public class StellarEntityFactory {
 
-    public static Cylinder createCylinder(double width, Color color, double height) {
+    public static @NotNull Cylinder createCylinder(double width, Color color, double height) {
         Cylinder line = new Cylinder(width, height);
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(color);
@@ -31,10 +32,10 @@ public class StellarEntityFactory {
         return line;
     }
 
-    public static Node drawCentralIndicator(StarDisplayRecord record,
-                                            ColorPalette colorPalette,
-                                            Label label,
-                                            StarDisplayPreferences starDisplayPreferences) {
+    public static @NotNull Node drawCentralIndicator(@NotNull StarDisplayRecord record,
+                                                     ColorPalette colorPalette,
+                                                     @NotNull Label label,
+                                                     StarDisplayPreferences starDisplayPreferences) {
 
         Box box = createBox(record, label);
         Group group = new Group(box, label);
@@ -44,7 +45,7 @@ public class StellarEntityFactory {
         return group;
     }
 
-    private static RotateTransition setRotationAnimation(Group group) {
+    private static @NotNull RotateTransition setRotationAnimation(Group group) {
         RotateTransition rotate = new RotateTransition(
                 Duration.seconds(10),
                 group
@@ -57,7 +58,7 @@ public class StellarEntityFactory {
         return rotate;
     }
 
-    private static Box createBox(StarDisplayRecord record, Label label) {
+    private static @NotNull Box createBox(@NotNull StarDisplayRecord record, @NotNull Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
@@ -79,8 +80,8 @@ public class StellarEntityFactory {
      * @param colorPalette the color palette to use
      * @return the created object
      */
-    public static Label createLabel(StarDisplayRecord record,
-                                    ColorPalette colorPalette) {
+    public static @NotNull Label createLabel(@NotNull StarDisplayRecord record,
+                                             @NotNull ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
         label.setFont(new Font("Arial", 8));
         label.setTextFill(colorPalette.getLabelColor());

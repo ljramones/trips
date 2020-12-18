@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.service.model.TransitRoute;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,7 +23,7 @@ public class StarMeasurementService {
      * @param distance    the distance measure
      * @param starsInView the list of stars in view
      */
-    public List<TransitRoute> calculateDistances(DistanceRoutes distance, List<StarDisplayRecord> starsInView) {
+    public @NotNull List<TransitRoute> calculateDistances(@NotNull DistanceRoutes distance, @NotNull List<StarDisplayRecord> starsInView) {
         lookupSourceTarget.clear();
         List<TransitRoute> allTransit = new ArrayList<>();
         for (StarDisplayRecord record : starsInView) {
@@ -32,9 +33,9 @@ public class StarMeasurementService {
         return allTransit;
     }
 
-    private List<TransitRoute> findStarsWithLimit(StarDisplayRecord sourceRecord,
-                                                  List<StarDisplayRecord> starsInView,
-                                                  DistanceRoutes distanceRange) {
+    private @NotNull List<TransitRoute> findStarsWithLimit(@NotNull StarDisplayRecord sourceRecord,
+                                                           @NotNull List<StarDisplayRecord> starsInView,
+                                                           @NotNull DistanceRoutes distanceRange) {
         List<TransitRoute> routeList = new ArrayList<>();
         for (StarDisplayRecord targetRecord : starsInView) {
             TransitRoute route = calcDistanceAndCheck(sourceRecord, targetRecord, distanceRange);
@@ -45,9 +46,9 @@ public class StarMeasurementService {
         return routeList;
     }
 
-    private TransitRoute calcDistanceAndCheck(StarDisplayRecord sourceRecord,
-                                              StarDisplayRecord targetRecord,
-                                              DistanceRoutes distanceRange) {
+    private TransitRoute calcDistanceAndCheck(@NotNull StarDisplayRecord sourceRecord,
+                                              @NotNull StarDisplayRecord targetRecord,
+                                              @NotNull DistanceRoutes distanceRange) {
         double[] sourceCoordinates = sourceRecord.getActualCoordinates();
         double[] targetCoordinates = targetRecord.getActualCoordinates();
         if (checkOffSourceTarget(sourceRecord.getStarName(), targetRecord.getStarName())) {
@@ -102,7 +103,7 @@ public class StarMeasurementService {
         return false;
     }
 
-    private boolean checkInRange(DistanceRoutes distanceRange, double distance) {
+    private boolean checkInRange(@NotNull DistanceRoutes distanceRange, double distance) {
         return distance < distanceRange.getUpperDistance() && distance > distanceRange.getLowerDistance();
     }
 

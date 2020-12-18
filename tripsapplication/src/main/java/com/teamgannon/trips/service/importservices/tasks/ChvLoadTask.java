@@ -8,6 +8,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -17,7 +18,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
 
-    private final ChviewReader chviewReader;
+    private final @NotNull ChviewReader chviewReader;
 
     public ChvLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService) {
         this.dataset = dataset;
@@ -27,7 +28,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
     @Override
-    protected FileProcessResult call() throws Exception {
+    protected @NotNull FileProcessResult call() throws Exception {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());

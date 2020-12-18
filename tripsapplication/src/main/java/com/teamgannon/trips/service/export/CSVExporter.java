@@ -7,6 +7,8 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Writer;
 import java.nio.file.Files;
@@ -28,7 +30,7 @@ public class CSVExporter {
     }
 
 
-    public void exportAsCSV(ExportOptions export, List<AstrographicObject> astrographicObjects) {
+    public void exportAsCSV(@NotNull ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects) {
 
         DataSetDescriptor dataSetDescriptor = export.getDataset();
 
@@ -60,7 +62,7 @@ public class CSVExporter {
         }
     }
 
-    private void createDescriptorHeading(Writer writer, DataSetDescriptor dataSetDescriptor) {
+    private void createDescriptorHeading(@NotNull Writer writer, @NotNull DataSetDescriptor dataSetDescriptor) {
         try {
             String headers = getDescriptorHeaders();
             writer.write(headers);
@@ -76,7 +78,7 @@ public class CSVExporter {
         }
     }
 
-    private String convertToCSV(DataSetDescriptor dataSetDescriptor) {
+    private @NotNull String convertToCSV(@NotNull DataSetDescriptor dataSetDescriptor) {
         return removeCommas(dataSetDescriptor.getDataSetName()) + "," +
                 removeCommas(dataSetDescriptor.getFilePath()) + "," +
                 removeCommas(dataSetDescriptor.getFileCreator()) + "," +
@@ -94,7 +96,7 @@ public class CSVExporter {
                 + "\n";
     }
 
-    private String getDescriptorHeaders() {
+    private @NotNull String getDescriptorHeaders() {
         return "dataSetName," +
                 "filePath," +
                 "fileCreator," +
@@ -113,7 +115,7 @@ public class CSVExporter {
     }
 
 
-    private String getHeaders() {
+    private @NotNull String getHeaders() {
         return "id," +
                 "dataSetName," +
                 "displayName," +
@@ -173,7 +175,7 @@ public class CSVExporter {
                 "\n";
     }
 
-    private String convertToCSV(AstrographicObject astrographicObject) {
+    private @NotNull String convertToCSV(@NotNull AstrographicObject astrographicObject) {
 
         return removeCommas(astrographicObject.getId().toString()) + ", " +
                 removeCommas(astrographicObject.getDataSetName()) + ", " +
@@ -234,7 +236,7 @@ public class CSVExporter {
                 "\n";
     }
 
-    private String removeCommas(String origin) {
+    private @Nullable String removeCommas(@Nullable String origin) {
         String replaced = origin;
         if (origin != null) {
             replaced = origin.replace(",", "~");

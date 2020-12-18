@@ -3,6 +3,7 @@ package com.teamgannon.trips.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -72,7 +73,7 @@ public class AsteroidBelt implements Serializable {
         }
     }
 
-    public AsteroidBelt toAsteroidBelt(String parametersStr) {
+    public @Nullable AsteroidBelt toAsteroidBelt(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, AsteroidBelt.class);
         } catch (IOException e) {

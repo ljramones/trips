@@ -11,6 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.apache.commons.collections4.MapUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +23,14 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
 
     private final Map<String, StarDisplayRecord> starDisplayRecordMap = new HashMap<>();
 
-    public Button generateButton = new Button("Generate");
+    public @NotNull Button generateButton = new Button("Generate");
 
     /**
      * constructor
      *
      * @param starsInView the stars in view
      */
-    public SelectStarForDistanceReportDialog(Stage stage, List<StarDisplayRecord> starsInView) {
+    public SelectStarForDistanceReportDialog(@NotNull Stage stage, @NotNull List<StarDisplayRecord> starsInView) {
 
         if (!starsInView.isEmpty()) {
             MapUtils.populateMap(starDisplayRecordMap,

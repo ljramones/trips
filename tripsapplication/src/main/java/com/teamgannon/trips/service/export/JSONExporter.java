@@ -7,6 +7,7 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Writer;
 import java.nio.file.Files;
@@ -27,7 +28,7 @@ public class JSONExporter {
         this.updaterListener = updaterListener;
     }
 
-    public void exportAsJson(ExportOptions export, List<AstrographicObject> astrographicObjects) {
+    public void exportAsJson(@NotNull ExportOptions export, List<AstrographicObject> astrographicObjects) {
 
         ObjectMapper Obj = new ObjectMapper();
 

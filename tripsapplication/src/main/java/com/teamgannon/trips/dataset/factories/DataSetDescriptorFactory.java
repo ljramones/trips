@@ -10,7 +10,7 @@ import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
-import com.teamgannon.trips.file.excel.RBExcelFile;
+import com.teamgannon.trips.file.excel.rb.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
@@ -19,6 +19,8 @@ import com.teamgannon.trips.routing.RouteDefinition;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,12 +44,12 @@ public class DataSetDescriptorFactory {
      * @param chViewFile                   the ch view files
      * @return a dataset descriptor
      */
-    public static DataSetDescriptor createDataSetDescriptor(
-            ProgressUpdater progressUpdater,
-            Dataset dataset,
-            DataSetDescriptorRepository dataSetDescriptorRepository,
-            AstrographicObjectRepository astrographicObjectRepository,
-            ChViewFile chViewFile) throws Exception {
+    public static @NotNull DataSetDescriptor createDataSetDescriptor(
+            @NotNull ProgressUpdater progressUpdater,
+            @NotNull Dataset dataset,
+            @NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
+            @NotNull AstrographicObjectRepository astrographicObjectRepository,
+            @NotNull ChViewFile chViewFile) throws Exception {
 
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
         dataSetDescriptor.setDataSetName(dataset.getName());
@@ -108,11 +110,11 @@ public class DataSetDescriptorFactory {
     }
 
 
-    public static DataSetDescriptor createDataSetDescriptor(
-            DataSetDescriptorRepository dataSetDescriptorRepository,
-            AstrographicObjectRepository astrographicObjectRepository,
+    public static @NotNull DataSetDescriptor createDataSetDescriptor(
+            @NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
+            @NotNull AstrographicObjectRepository astrographicObjectRepository,
             String author,
-            RBExcelFile excelFile) throws Exception {
+            @NotNull RBExcelFile excelFile) throws Exception {
 
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
 
@@ -143,8 +145,8 @@ public class DataSetDescriptorFactory {
     }
 
 
-    public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
-                                                            RegCSVFile regCSVFile) throws Exception {
+    public static DataSetDescriptor createDataSetDescriptor(@NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
+                                                            @NotNull RegCSVFile regCSVFile) throws Exception {
 
         DataSetDescriptor dataSetDescriptor = regCSVFile.getDataSetDescriptor();
 
@@ -169,8 +171,8 @@ public class DataSetDescriptorFactory {
     }
 
 
-    public static DataSetDescriptor createDataSetDescriptor(DataSetDescriptorRepository dataSetDescriptorRepository,
-                                                            RBCsvFile rbCsvFile) throws Exception {
+    public static @NotNull DataSetDescriptor createDataSetDescriptor(@NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
+                                                                     @NotNull RBCsvFile rbCsvFile) throws Exception {
 
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
 
@@ -204,7 +206,7 @@ public class DataSetDescriptorFactory {
         return dataSetDescriptor;
     }
 
-    private static Theme createTheme(String themeName, RBCsvFile rbCsvFile) {
+    private static @Nullable Theme createTheme(String themeName, RBCsvFile rbCsvFile) {
         return extractTheme(themeName, null, CHViewPreferences.earthNormal());
     }
 
@@ -215,7 +217,7 @@ public class DataSetDescriptorFactory {
      * @param excelFile the imported excel file
      * @return the theme
      */
-    public static Theme createTheme(String themeName, RBExcelFile excelFile) {
+    public static @Nullable Theme createTheme(String themeName, RBExcelFile excelFile) {
         return extractTheme(themeName, null, CHViewPreferences.earthNormal());
     }
 
@@ -227,13 +229,13 @@ public class DataSetDescriptorFactory {
      * @param chViewFile the CHV file
      * @return the created theme
      */
-    public static Theme createTheme(String themeName, ChViewFile chViewFile) {
+    public static @Nullable Theme createTheme(String themeName, @NotNull ChViewFile chViewFile) {
 
         CHViewPreferences vp = chViewFile.getCHViewPreferences();
         return extractTheme(themeName, chViewFile, vp);
     }
 
-    private static Theme extractTheme(String themeName, ChViewFile chViewFile, CHViewPreferences vp) {
+    private static @Nullable Theme extractTheme(String themeName, ChViewFile chViewFile, @NotNull CHViewPreferences vp) {
         try {
             Theme theme = new Theme();
             theme.setThemeName(themeName);
@@ -293,11 +295,11 @@ public class DataSetDescriptorFactory {
     }
 
 
-    public static Color getColor(double[] colors) {
+    public static @NotNull Color getColor(double[] colors) {
         return Color.color(colors[0], colors[1], colors[2]);
     }
 
-    public static double[] setColor(Color color) {
+    public static double @NotNull [] setColor(@NotNull Color color) {
         double[] colors = new double[3];
         colors[0] = color.getRed();
         colors[1] = color.getGreen();
@@ -311,14 +313,14 @@ public class DataSetDescriptorFactory {
      * @param chViewFile the file with CHView data
      * @return a linked list of so sort of data
      */
-    public static List<Link> createLinks(ChViewFile chViewFile) {
+    public static @NotNull List<Link> createLinks(ChViewFile chViewFile) {
         List<Link> linkList = new ArrayList<>();
 
         return linkList;
     }
 
 
-    private static Map<UUID, RouteDefinition> createRouteDescriptorMap(ChViewFile chViewFile) {
+    private static @NotNull Map<UUID, RouteDefinition> createRouteDescriptorMap(ChViewFile chViewFile) {
         Map<UUID, RouteDefinition> routeDescriptorMap = new HashMap<>();
         List<com.teamgannon.trips.file.chview.model.RouteDescriptor> routeDescriptors = new ArrayList<>();
         for (com.teamgannon.trips.file.chview.model.RouteDescriptor routeDescriptor : routeDescriptors) {
@@ -334,7 +336,7 @@ public class DataSetDescriptorFactory {
     }
 
 
-    private static List<Polity> createPolities(ChViewFile chViewFile) {
+    private static @NotNull List<Polity> createPolities(ChViewFile chViewFile) {
         List<Polity> polities = new ArrayList<>();
 
         return polities;

@@ -21,6 +21,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -30,7 +31,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     public final Button runQueryButton = new Button("Run Query");
     public final Button dismissButton = new Button("Dismiss");
-    private final SearchPane searchPane;
+    private final @NotNull SearchPane searchPane;
     private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
 
@@ -41,9 +42,9 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
-    public QueryDialog(Stage stage,
-                       SearchContext searchContext,
-                       DataSetContext dataSetContext,
+    public QueryDialog(@NotNull Stage stage,
+                       @NotNull SearchContext searchContext,
+                       @NotNull DataSetContext dataSetContext,
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
         this.setTitle("Query and Search");
@@ -95,12 +96,12 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     }
 
 
-    public void setDataSetContext(DataSetDescriptor descriptor) {
+    public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
         searchPane.setDataSetContext(descriptor);
     }
 
 
-    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+    public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         searchPane.updateDataContext(dataSetDescriptor);
     }
 

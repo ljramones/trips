@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.dataset;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
+import org.jetbrains.annotations.Nullable;
 
 public class DatasetDescriptorCell extends ListCell<DataSetDescriptor> {
 
@@ -15,7 +16,7 @@ public class DatasetDescriptorCell extends ListCell<DataSetDescriptor> {
     }
 
     @Override
-    public void updateItem(DataSetDescriptor descriptor, boolean empty) {
+    public void updateItem(@Nullable DataSetDescriptor descriptor, boolean empty) {
         super.updateItem(descriptor, empty);
 
         super.updateItem(descriptor, empty);

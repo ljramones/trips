@@ -10,23 +10,25 @@ import javafx.scene.shape.Cylinder;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CustomObjectFactory {
 
-    public static Node createLineSegment(Point3D origin,
-                                         Point3D target,
-                                         double width,
-                                         Color color) {
+    public static @NotNull Node createLineSegment(@NotNull Point3D origin,
+                                                  @NotNull Point3D target,
+                                                  double width,
+                                                  Color color) {
         return createLineSegment(origin, target, width, color, null, false);
     }
 
 
-    public static Node createLineSegment(Point3D origin,
-                                         Point3D target,
-                                         double width,
-                                         Color color,
-                                         String tag,
-                                         boolean sense) {
+    public static @NotNull Node createLineSegment(@NotNull Point3D origin,
+                                                  @NotNull Point3D target,
+                                                  double width,
+                                                  Color color,
+                                                  @Nullable String tag,
+                                                  boolean sense) {
 
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);

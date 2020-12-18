@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -62,7 +63,7 @@ public class SystemObject implements Serializable {
         }
     }
 
-    public List<SystemObject> toSystemObject(String parametersStr) {
+    public @Nullable List<SystemObject> toSystemObject(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });

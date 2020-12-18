@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics.entities;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import javafx.geometry.Point3D;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public class LineSegment {
@@ -32,7 +33,7 @@ public class LineSegment {
      *
      * @return the from point
      */
-    public Point3D getFrom() {
+    public @NotNull Point3D getFrom() {
         return new Point3D(translatedFrom[0], translatedFrom[1], translatedFrom[2]);
     }
 
@@ -41,7 +42,7 @@ public class LineSegment {
      *
      * @return the to point
      */
-    public Point3D getTo() {
+    public @NotNull Point3D getTo() {
         return new Point3D(translatedTo[0], translatedTo[1], translatedTo[2]);
     }
 
@@ -53,7 +54,7 @@ public class LineSegment {
      * @param pointTo     the point to
      * @return the line segment
      */
-    public static LineSegment getTransformedLine(AstrographicTransformer transformer, double width, double depth, double[] pointFrom, double[] pointTo) {
+    public static @NotNull LineSegment getTransformedLine(@NotNull AstrographicTransformer transformer, double width, double depth, double[] pointFrom, double[] pointTo) {
         LineSegment lineSegment = new LineSegment();
         lineSegment.actualFrom = pointFrom;
         lineSegment.actualTo = pointTo;

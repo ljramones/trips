@@ -1,6 +1,7 @@
 package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.Star;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public interface StarRepository extends PagingAndSortingRepository<Star, String>
      * @param hipparcosId id
      * @return the corresponding star
      */
-    Star findByHipparcosId(String hipparcosId);
+    @NotNull Star findByHipparcosId(String hipparcosId);
 
     /**
      * find by stellar system id
@@ -28,19 +29,19 @@ public interface StarRepository extends PagingAndSortingRepository<Star, String>
      * @param stellarId id
      * @return the corresponding star
      */
-    Star findByStellarSystemId(String stellarId);
+    @NotNull Star findByStellarSystemId(String stellarId);
 
-    Star findByCatalogId(long catalogId);
+    @NotNull Star findByCatalogId(long catalogId);
 
-    Star findByHenryDraperId(String henryDraperId);
+    @NotNull Star findByHenryDraperId(String henryDraperId);
 
-    Star findByHarvardRevisedId(String harvardRevisedId);
+    @NotNull Star findByHarvardRevisedId(String harvardRevisedId);
 
-    Star findByGlieseId(String glieseId);
+    @NotNull Star findByGlieseId(String glieseId);
 
-    Star findBySaoId(String saoId);
+    @NotNull Star findBySaoId(String saoId);
 
-    Star findBySimbadId(String simbadId);
+    @NotNull Star findBySimbadId(String simbadId);
 
     /**
      * find by the constellation name
@@ -48,7 +49,7 @@ public interface StarRepository extends PagingAndSortingRepository<Star, String>
      * @param constellation the constellation name
      * @return the list of corresponding stars
      */
-    List<Star> findByConstellation(String constellation);
+    @NotNull List<Star> findByConstellation(String constellation);
 
     /**
      * find a star that commons this search segment
@@ -56,19 +57,19 @@ public interface StarRepository extends PagingAndSortingRepository<Star, String>
      * @param toSearch the string to search
      * @return the list of corresponding stars
      */
-    List<Star> findByCommonNameContains(String toSearch);
+    @NotNull List<Star> findByCommonNameContains(String toSearch);
 
     ///////// DISTANCE QUERIES /////////////
 
-    List<Star> findByDistanceIsLessThanEqual(double distance);
+    @NotNull List<Star> findByDistanceIsLessThanEqual(double distance);
 
-    List<Star> findByDistanceGreaterThanEqual(double distance);
+    @NotNull List<Star> findByDistanceGreaterThanEqual(double distance);
 
-    List<Star> findByDistanceGreaterThanEqualAndDistanceLessThanEqual(double lower, double upper);
+    @NotNull List<Star> findByDistanceGreaterThanEqualAndDistanceLessThanEqual(double lower, double upper);
 
     ////////// POSITIONAL QUERIES //////////////
 
-    List<Star> findByXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
+    @NotNull List<Star> findByXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThan(
             double xLower, double xUpper, double yLower, double yUpper, double zLower, double zUpper);
 
 

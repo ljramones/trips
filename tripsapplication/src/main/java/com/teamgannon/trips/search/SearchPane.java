@@ -12,6 +12,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -21,12 +22,12 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class SearchPane extends Pane {
 
     private final Stage stage;
-    private final SearchContext searchContext;
-    private final DataSetContext dataSetContext;
+    private final @NotNull SearchContext searchContext;
+    private final @NotNull DataSetContext dataSetContext;
     private final DataSetChangeListener dataSetChangeListener;
     private final StellarDataUpdaterListener updater;
     private DataSetPanel dataSetChoicePanel;
-    private final DistanceSelectionPanel d2EarthSlider;
+    private final @NotNull DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
     private final PolitySelectionPanel politySelectionPanel = new PolitySelectionPanel();
@@ -49,8 +50,8 @@ public class SearchPane extends Pane {
      * @param updater        the data updater
      */
     public SearchPane(Stage stage,
-                      SearchContext searchContext,
-                      DataSetContext dataSetContext,
+                      @NotNull SearchContext searchContext,
+                      @NotNull DataSetContext dataSetContext,
                       DataSetChangeListener dataSetChangeListener,
                       StellarDataUpdaterListener updater) {
         this.stage = stage;
@@ -75,7 +76,7 @@ public class SearchPane extends Pane {
         this.getChildren().add(createContent());
     }
 
-    private Node createContent() {
+    private @NotNull Node createContent() {
 
         VBox vBox = new VBox();
         vBox.setSpacing(10);
@@ -107,13 +108,13 @@ public class SearchPane extends Pane {
         return vBox;
     }
 
-    public void setDataSetContext(DataSetDescriptor descriptor) {
+    public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
         dataSetChoicePanel.setDataSetContext(descriptor);
         d2EarthSlider.setDataSetDescriptor(descriptor);
     }
 
 
-    public void updateDataContext(DataSetDescriptor dataSetDescriptor) {
+    public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         dataSetChoicePanel.updateDataContext(dataSetDescriptor);
     }
 
@@ -165,7 +166,7 @@ public class SearchPane extends Pane {
         return astroSearchQuery;
     }
 
-    private void getProductSearch(AstroSearchQuery astroSearchQuery) {
+    private void getProductSearch(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearProductTypes();
         if (productsSelectionPanel.isSelected()) {
             astroSearchQuery.setProductSearch(true);
@@ -175,7 +176,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getPortTypes(AstroSearchQuery astroSearchQuery) {
+    private void getPortTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearPortTypes();
         if (portSelectionPanel.isSelected()) {
             astroSearchQuery.setPortSearch(false);
@@ -185,7 +186,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getMilPlanSearch(AstroSearchQuery astroSearchQuery) {
+    private void getMilPlanSearch(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearMilPlanTypes();
         if (milPlanetSelectionPanel.isSelected()) {
             astroSearchQuery.setMilPlanetSearch(true);
@@ -195,7 +196,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getMilSpaceSearch(AstroSearchQuery astroSearchQuery) {
+    private void getMilSpaceSearch(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearMilSpaceTypes();
         if (milSpaceSelectionPanel.isSelected()) {
             astroSearchQuery.setMilSpaceSearch(true);
@@ -205,7 +206,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getWorldSearch(AstroSearchQuery astroSearchQuery) {
+    private void getWorldSearch(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearWorldTypes();
         if (worldSelectionPanel.isSelected()) {
             astroSearchQuery.setWorldSearch(true);
@@ -215,7 +216,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getPopulationTypes(AstroSearchQuery astroSearchQuery) {
+    private void getPopulationTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearPopulationTypes();
         if (populationSelectionPanel.isSelected()) {
             astroSearchQuery.setPopSearch(true);
@@ -225,7 +226,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getFuelTypes(AstroSearchQuery astroSearchQuery) {
+    private void getFuelTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearFuelTypes();
         if (fuelSelectionPanel.isSelected()) {
             astroSearchQuery.setFuelSearch(true);
@@ -235,7 +236,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getTechTypes(AstroSearchQuery astroSearchQuery) {
+    private void getTechTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearTechTypes();
         if (techSelectionPanel.isSelected()) {
             astroSearchQuery.addTechs(techSelectionPanel.getSelections());
@@ -244,7 +245,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getStellarTypes(AstroSearchQuery astroSearchQuery) {
+    private void getStellarTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearStellarTypes();
         List<String> stellarTypes = stellarClassSelectionPanel.getSelection();
         if (stellarClassSelectionPanel.isSelected()) {
@@ -252,7 +253,7 @@ public class SearchPane extends Pane {
         }
     }
 
-    private void getPolityValues(AstroSearchQuery astroSearchQuery) {
+    private void getPolityValues(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearPolities();
         if (politySelectionPanel.isSelected()) {
             astroSearchQuery.addPolities(politySelectionPanel.getPolitySelections());

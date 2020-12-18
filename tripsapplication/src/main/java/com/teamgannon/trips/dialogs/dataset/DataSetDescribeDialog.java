@@ -14,15 +14,16 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
 
     private final static float LABEL_PREF_WIDTH = 200;
-    protected GridPane planGrid = new GridPane();
-    private final DataSetDescriptor descriptor;
+    protected @NotNull GridPane planGrid = new GridPane();
+    private final @NotNull DataSetDescriptor descriptor;
 
-    public DataSetDescribeDialog(DataSetDescriptor descriptor) {
+    public DataSetDescribeDialog(@NotNull DataSetDescriptor descriptor) {
         this.descriptor = descriptor;
         this.setTitle("Dataset Description");
         this.setHeight(200);
@@ -83,7 +84,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         setResult(descriptor);
     }
 
-    protected Label createLabel(String textName, boolean boldFlag) {
+    protected @NotNull Label createLabel(String textName, boolean boldFlag) {
         Label label = new Label(textName);
         label.setPrefWidth(LABEL_PREF_WIDTH);
         label.setFont(boldFlag ? Font.font("Arial", FontWeight.BOLD, 13) : Font.font("Arial", FontWeight.NORMAL, 13));

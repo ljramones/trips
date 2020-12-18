@@ -17,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
@@ -41,8 +42,8 @@ public class ShowStarMatchesDialog extends Dialog<String> {
     private final TableColumn<AstrographicObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<AstrographicObject, String> commentCol = new TableColumn<>("comment");
 
-    private SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
-    private TableColumn.SortType sortDirection = TableColumn.SortType.ASCENDING;
+    private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
+    private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
 
     private DatabaseManagementService databaseManagementService;
     private final List<AstrographicObject> astrographicObjects;
@@ -193,7 +194,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param astrographicObject the record to remove
      */
-    private void removeFromDB(AstrographicObject astrographicObject) {
+    private void removeFromDB(@NotNull AstrographicObject astrographicObject) {
 
         UUID id = astrographicObject.getId();
 
@@ -383,7 +384,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByName(TableColumn.SortType sortOrder) {
+    public void sortByName(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.NAME;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -398,7 +399,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByDistance(TableColumn.SortType sortOrder) {
+    public void sortByDistance(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.DISTANCE;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -413,7 +414,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortBySpectra(TableColumn.SortType sortOrder) {
+    public void sortBySpectra(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.SPECTRA;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -428,7 +429,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByRadius(TableColumn.SortType sortOrder) {
+    public void sortByRadius(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.RADIUS;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -443,7 +444,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByRa(TableColumn.SortType sortOrder) {
+    public void sortByRa(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.RA;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -458,7 +459,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByDeclination(TableColumn.SortType sortOrder) {
+    public void sortByDeclination(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.DECLINATION;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -473,7 +474,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByParallax(TableColumn.SortType sortOrder) {
+    public void sortByParallax(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.PARALLAX;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -488,7 +489,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByX(TableColumn.SortType sortOrder) {
+    public void sortByX(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.X;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -503,7 +504,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByY(TableColumn.SortType sortOrder) {
+    public void sortByY(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.Y;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -518,7 +519,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByZ(TableColumn.SortType sortOrder) {
+    public void sortByZ(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.Z;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
@@ -533,7 +534,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByReal(TableColumn.SortType sortOrder) {
+    public void sortByReal(TableColumn.@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.REAL;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {

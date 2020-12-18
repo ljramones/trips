@@ -1,6 +1,7 @@
 package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.repository.CrudRepository;
 
 public interface StarDetailsPersistRepository extends CrudRepository<StarDetailsPersist, String> {
@@ -11,6 +12,6 @@ public interface StarDetailsPersistRepository extends CrudRepository<StarDetails
      * @param stellarClass the stellar class
      * @return the unique stellar class
      */
-    StarDetailsPersist findByStellarClass(String stellarClass);
+    @NotNull StarDetailsPersist findByStellarClass(String stellarClass);
 
 }

@@ -11,6 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -52,7 +54,7 @@ public class RBCSVStar {
         this.stellarFactory = stellarFactory;
     }
 
-    public AstrographicObject toAstrographicObject() {
+    public @Nullable AstrographicObject toAstrographicObject() {
         try {
             AstrographicObject astro = new AstrographicObject();
 
@@ -141,7 +143,7 @@ public class RBCSVStar {
 
     }
 
-    private Color getColor(StarColor starColor) {
+    private @NotNull Color getColor(@NotNull StarColor starColor) {
         String[] colorRGB = starColor.color().split(",");
         return Color.rgb(
                 Integer.parseInt(colorRGB[0]),
@@ -150,7 +152,7 @@ public class RBCSVStar {
         );
     }
 
-    private double[] parseCoordinate(String position) {
+    private double @NotNull [] parseCoordinate(@NotNull String position) {
         double[] xyz = new double[3];
         String numbers = position.substring(1, position.length() - 1);
         String[] split = numbers.split(",");

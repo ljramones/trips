@@ -7,14 +7,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
-    public ObjectViewPane(StellarPropertiesDisplayerListener propertiesDisplayer,
-                          DatabaseListener databaseListener,
+    public ObjectViewPane(@NotNull StellarPropertiesDisplayerListener propertiesDisplayer,
+                          @NotNull DatabaseListener databaseListener,
                           ListSelectorActionsListener listSelectorActionsListener,
                           ReportGenerator reportGenerator,
                           RedrawListener redrawListener) {

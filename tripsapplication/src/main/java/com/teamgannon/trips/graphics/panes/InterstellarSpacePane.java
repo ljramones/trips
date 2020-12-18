@@ -29,6 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,25 +52,25 @@ public class InterstellarSpacePane extends Pane {
 
     private final Group world = new Group();
 
-    Group root = new Group();
+    @NotNull Group root = new Group();
 
-    private final SubScene subScene;
+    private final @NotNull SubScene subScene;
 
-    PerspectiveCamera camera = new PerspectiveCamera(true);
+    @NotNull PerspectiveCamera camera = new PerspectiveCamera(true);
 
     private static final double ROTATE_SECS = 60;
 
     /**
      * animation rotator
      */
-    private final RotateTransition rotator;
+    private final @NotNull RotateTransition rotator;
 
     /////////////////
 
     /**
      * our current plot
      */
-    private final CurrentPlot currentPlot;
+    private final @NotNull CurrentPlot currentPlot;
 
     /**
      * the general color palette of the graph
@@ -89,7 +90,7 @@ public class InterstellarSpacePane extends Pane {
     /**
      * application context
      */
-    private final TripsContext tripsContext;
+    private final @NotNull TripsContext tripsContext;
 
     /**
      * used to signal an update to the parent list view
@@ -99,13 +100,13 @@ public class InterstellarSpacePane extends Pane {
     /**
      * the grid plot manager
      */
-    private final GridPlotManager gridPlotManager;
+    private final @NotNull GridPlotManager gridPlotManager;
 
-    private final RouteManager routeManager;
+    private final @NotNull RouteManager routeManager;
 
-    private final TransitManager transitManager;
+    private final @NotNull TransitManager transitManager;
 
-    private final StarPlotManager starPlotManager;
+    private final @NotNull StarPlotManager starPlotManager;
 
     /**
      * offset to scene coordinates to account for the top UI plane
@@ -123,7 +124,7 @@ public class InterstellarSpacePane extends Pane {
                                  double sceneHeight,
                                  double depth,
                                  double spacing,
-                                 TripsContext tripsContext,
+                                 @NotNull TripsContext tripsContext,
                                  RouteUpdaterListener routeUpdaterListener,
                                  ListUpdaterListener listUpdaterListener,
                                  StellarPropertiesDisplayerListener displayer,
@@ -313,7 +314,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param distanceRoutes the distance range selected
      */
-    public void findTransits(DistanceRoutes distanceRoutes) {
+    public void findTransits(@NotNull DistanceRoutes distanceRoutes) {
         List<StarDisplayRecord> starsInView = getCurrentStarsInView();
         transitManager.findTransits(distanceRoutes, starsInView);
     }
@@ -353,7 +354,7 @@ public class InterstellarSpacePane extends Pane {
 
     //////////////////////
 
-    public GridPlotManager getGridPlotManager() {
+    public @NotNull GridPlotManager getGridPlotManager() {
         return gridPlotManager;
     }
 
@@ -399,7 +400,7 @@ public class InterstellarSpacePane extends Pane {
         routeManager.clearRoutes();
     }
 
-    public void plotRoutes(List<Route> routeList) {
+    public void plotRoutes(@NotNull List<Route> routeList) {
         routeManager.plotRoutes(routeList);
     }
 
@@ -429,7 +430,7 @@ public class InterstellarSpacePane extends Pane {
     ////////// toggles
 
 
-    public void setGraphPresets(GraphEnablesPersist graphEnablesPersist) {
+    public void setGraphPresets(@NotNull GraphEnablesPersist graphEnablesPersist) {
         gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
         starPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
         gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
@@ -507,11 +508,11 @@ public class InterstellarSpacePane extends Pane {
         transitManager.setVisible(transitsOn);
     }
 
-    public void redrawRoutes(List<Route> routes) {
+    public void redrawRoutes(@NotNull List<Route> routes) {
         routeManager.plotRoutes(routes);
     }
 
-    public void plotRouteDescriptors(List<RoutingMetric> routeDescriptorList) {
+    public void plotRouteDescriptors(@NotNull List<RoutingMetric> routeDescriptorList) {
         routeManager.plotRouteDescriptors(routeDescriptorList);
     }
 
@@ -548,7 +549,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @param recordList the list of stars
      */
-    public void plotStar(List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
+    public void plotStar(@NotNull List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
         starPlotManager.drawStar(recordList, centerStar, colorPalette);
     }
 
@@ -558,7 +559,7 @@ public class InterstellarSpacePane extends Pane {
      * @param record     the star record
      * @param centerStar the name of the center star
      */
-    public void plotStar(StarDisplayRecord record,
+    public void plotStar(@NotNull StarDisplayRecord record,
                          String centerStar,
                          ColorPalette colorPalette,
                          StarDisplayPreferences starDisplayPreferences) {
@@ -575,7 +576,7 @@ public class InterstellarSpacePane extends Pane {
      *
      * @return the rotation animator
      */
-    private RotateTransition createRotateAnimation() {
+    private @NotNull RotateTransition createRotateAnimation() {
         RotateTransition rotate = new RotateTransition(
                 Duration.seconds(ROTATE_SECS),
                 world
@@ -610,7 +611,7 @@ public class InterstellarSpacePane extends Pane {
         fader.play();
     }
 
-    public Parent getRoot() {
+    public @NotNull Parent getRoot() {
         return root;
     }
 

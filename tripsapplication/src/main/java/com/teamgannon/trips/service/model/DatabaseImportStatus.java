@@ -1,6 +1,7 @@
 package com.teamgannon.trips.service.model;
 
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class DatabaseImportStatus {
     /**
      * the list of failed ids
      */
-    private List<Long> idsThatFailed = new ArrayList<>();
+    private @NotNull List<Long> idsThatFailed = new ArrayList<>();
 
     public void incTotal() {
         totalRecords++;

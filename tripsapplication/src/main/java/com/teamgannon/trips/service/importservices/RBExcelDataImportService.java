@@ -13,13 +13,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
 public class RBExcelDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
-    private DatabaseManagementService databaseManagementService;
+    private final DatabaseManagementService databaseManagementService;
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
@@ -40,8 +41,6 @@ public class RBExcelDataImportService extends Service<FileProcessResult> impleme
         FileProcessResult fileProcessResult = this.getValue();
         taskComplete.complete(true, dataset, fileProcessResult, "loaded");
         dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
-
-
     }
 
     @Override
@@ -63,14 +62,14 @@ public class RBExcelDataImportService extends Service<FileProcessResult> impleme
     }
 
     @Override
-    protected Task<FileProcessResult> createTask() {
+    protected @NotNull Task<FileProcessResult> createTask() {
         return new RBExcelLoadTask(dataset, databaseManagementService);
     }
 
     public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete, Label progressText,
-                                  ProgressBar loadProgressBar, Button cancelLoad) {
+                                  TaskComplete taskComplete, @NotNull Label progressText,
+                                  @NotNull ProgressBar loadProgressBar, @NotNull Button cancelLoad) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
@@ -91,7 +90,7 @@ public class RBExcelDataImportService extends Service<FileProcessResult> impleme
     }
 
     @Override
-    public String whoAmI() {
+    public @NotNull String whoAmI() {
         return "RB Excel importer";
     }
 

@@ -64,6 +64,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -170,9 +172,9 @@ public class MainPane implements
     double depth = Universe.boxDepth;
     double spacing = 20;
 
-    private ColorPalette colorPalette = new ColorPalette();
-    private StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
-    private AppViewPreferences appViewPreferences = new AppViewPreferences();
+    private @NotNull ColorPalette colorPalette = new ColorPalette();
+    private @NotNull StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+    private @NotNull AppViewPreferences appViewPreferences = new AppViewPreferences();
 
     /**
      * interstellar space
@@ -196,7 +198,7 @@ public class MainPane implements
     private final Localization localization;
 
     private DataImportService dataImportService;
-    private final DataExportService dataExportService;
+    private final @NotNull DataExportService dataExportService;
 
     /**
      * dataset lists
@@ -232,7 +234,7 @@ public class MainPane implements
      * @param tripsContext our trips context
      */
     public MainPane(FxWeaver fxWeaver,
-                    TripsContext tripsContext,
+                    @NotNull TripsContext tripsContext,
                     ApplicationContext appContext,
                     DatabaseManagementService databaseManagementService,
                     AstrographicPlotter astrographicPlotter,
@@ -323,7 +325,7 @@ public class MainPane implements
     }
 
 
-    public void setStage(Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
+    public void setStage(@NotNull Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
         this.stage = stage;
         this.sceneWidth = sceneWidth;
         this.sceneHeight = sceneHeight;
@@ -560,7 +562,7 @@ public class MainPane implements
         log.info("Application up and running");
     }
 
-    private void loadDatasets(SearchContext searchContext) {
+    private void loadDatasets(@NotNull SearchContext searchContext) {
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
         if (dataSets.size() > 0) {
@@ -569,7 +571,7 @@ public class MainPane implements
     }
 
 
-    private List<DataSetDescriptor> loadDataSetView() {
+    private @NotNull List<DataSetDescriptor> loadDataSetView() {
 
         List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
 
@@ -585,7 +587,7 @@ public class MainPane implements
         return dataSetDescriptorList;
     }
 
-    public void addDataSetToList(List<DataSetDescriptor> list, boolean clear) {
+    public void addDataSetToList(@NotNull List<DataSetDescriptor> list, boolean clear) {
         if (clear) {
             dataSetsListView.getItems().clear();
         }
@@ -593,7 +595,7 @@ public class MainPane implements
         log.debug("update complete");
     }
 
-    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, DataSetDescriptor oldValue, DataSetDescriptor newValue) {
+    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, @Nullable DataSetDescriptor oldValue, @Nullable DataSetDescriptor newValue) {
         String oldText = oldValue == null ? "null" : oldValue.toString();
         String newText = newValue == null ? "null" : newValue.toString();
     }
@@ -1096,7 +1098,7 @@ public class MainPane implements
     }
 
     @Override
-    public void selectSolarSystemSpace(StarDisplayRecord starDisplayRecord) {
+    public void selectSolarSystemSpace(@NotNull StarDisplayRecord starDisplayRecord) {
         log.info("Showing a solar system");
         solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
         solarSystemSpacePane.render();
@@ -1110,27 +1112,27 @@ public class MainPane implements
     }
 
     @Override
-    public void updateStar(AstrographicObject astrographicObject) {
+    public void updateStar(@NotNull AstrographicObject astrographicObject) {
         databaseManagementService.updateStar(astrographicObject);
     }
 
     @Override
-    public void updateNotesForStar(UUID recordId, String notes) {
+    public void updateNotesForStar(@NotNull UUID recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
     }
 
     @Override
-    public AstrographicObject getStar(UUID starId) {
+    public AstrographicObject getStar(@NotNull UUID starId) {
         return databaseManagementService.getStar(starId);
     }
 
     @Override
-    public void removeStar(AstrographicObject astrographicObject) {
+    public void removeStar(@NotNull AstrographicObject astrographicObject) {
         databaseManagementService.removeStar(astrographicObject);
     }
 
     @Override
-    public void removeStar(UUID recordId) {
+    public void removeStar(@NotNull UUID recordId) {
         databaseManagementService.removeStar(recordId);
     }
 
@@ -1145,7 +1147,7 @@ public class MainPane implements
     }
 
     @Override
-    public void recenter(StarDisplayRecord starId) {
+    public void recenter(@NotNull StarDisplayRecord starId) {
         log.info("recenter plot at {}", starId);
         AstroSearchQuery query = searchContext.getAstroSearchQuery();
         query.setCenterRanging(starId, query.getUpperDistanceLimit());
@@ -1187,7 +1189,7 @@ public class MainPane implements
     }
 
     @Override
-    public void newRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
+    public void newRoute(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
         log.info("new route");
         databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
         routingPanel.setContext(dataSetDescriptor);
@@ -1207,7 +1209,7 @@ public class MainPane implements
     }
 
     @Override
-    public void displayStellarProperties(AstrographicObject astrographicObject) {
+    public void displayStellarProperties(@Nullable AstrographicObject astrographicObject) {
         if (astrographicObject != null) {
             starPropertiesPane.setStar(astrographicObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
@@ -1227,7 +1229,7 @@ public class MainPane implements
      * @param showTable   show a table
      */
     @Override
-    public void showNewStellarData(AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
+    public void showNewStellarData(@NotNull AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
@@ -1267,7 +1269,7 @@ public class MainPane implements
      * @param showTable         show the table
      */
     @Override
-    public void showNewStellarData(DataSetDescriptor dataSetDescriptor, boolean showPlot, boolean showTable) {
+    public void showNewStellarData(@NotNull DataSetDescriptor dataSetDescriptor, boolean showPlot, boolean showTable) {
         setContextDataSet(dataSetDescriptor);
         showNewStellarData(showPlot, showTable);
     }
@@ -1310,7 +1312,7 @@ public class MainPane implements
         }
     }
 
-    private void showList(List<AstrographicObject> astrographicObjects) {
+    private void showList(@NotNull List<AstrographicObject> astrographicObjects) {
         if (astrographicObjects.size() > 0) {
             new DataSetTable(databaseManagementService, astrographicObjects);
         } else {
@@ -1319,7 +1321,7 @@ public class MainPane implements
     }
 
     @Override
-    public void addDataSet(DataSetDescriptor dataSetDescriptor) {
+    public void addDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
         addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
         queryDialog.updateDataContext(dataSetDescriptor);
@@ -1327,7 +1329,7 @@ public class MainPane implements
     }
 
     @Override
-    public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
+    public void removeDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
         Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
                 "Remove",
                 "Are you sure you want to remove: " + dataSetDescriptor.getDataSetName());
@@ -1345,7 +1347,7 @@ public class MainPane implements
     }
 
     @Override
-    public void setContextDataSet(DataSetDescriptor descriptor) {
+    public void setContextDataSet(@NotNull DataSetDescriptor descriptor) {
         tripsContext.getDataSetContext().setDescriptor(descriptor);
         tripsContext.getDataSetContext().setValidDescriptor(true);
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
@@ -1358,7 +1360,7 @@ public class MainPane implements
     }
 
     @Override
-    public void updateGraphColors(ColorPalette colorPalette) {
+    public void updateGraphColors(@NotNull ColorPalette colorPalette) {
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
 
         // colors changes so update db
@@ -1368,7 +1370,7 @@ public class MainPane implements
     }
 
     @Override
-    public void changesGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+    public void changesGraphEnables(@NotNull GraphEnablesPersist graphEnablesPersist) {
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
@@ -1383,7 +1385,7 @@ public class MainPane implements
      *
      * @param graphEnablesPersist the graph
      */
-    private void updateToggles(GraphEnablesPersist graphEnablesPersist) {
+    private void updateToggles(@NotNull GraphEnablesPersist graphEnablesPersist) {
         if (graphEnablesPersist.isDisplayGrid()) {
             interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
             toggleGridBtn.setSelected(graphEnablesPersist.isDisplayGrid());
@@ -1425,12 +1427,12 @@ public class MainPane implements
     }
 
     @Override
-    public void changeStarPreferences(StarDisplayPreferences starDisplayPreferences) {
+    public void changeStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
         databaseManagementService.updateStarPreferences(starDisplayPreferences);
     }
 
     @Override
-    public void changePolitiesPreferences(CivilizationDisplayPreferences civilizationDisplayPreferences) {
+    public void changePolitiesPreferences(@NotNull CivilizationDisplayPreferences civilizationDisplayPreferences) {
         databaseManagementService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
@@ -1481,7 +1483,7 @@ public class MainPane implements
         }
     }
 
-    private void drawStars(DataSetDescriptor dataSetDescriptor) {
+    private void drawStars(@NotNull DataSetDescriptor dataSetDescriptor) {
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
                 dataSetDescriptor,
                 searchContext.getAstroSearchQuery().getUpperDistanceLimit());
@@ -1560,7 +1562,7 @@ public class MainPane implements
      * @param datasets the datasets
      * @return the descriptor wanted
      */
-    private DataSetDescriptor findFromDataSet(String selected, List<DataSetDescriptor> datasets) {
+    private DataSetDescriptor findFromDataSet(String selected, @NotNull List<DataSetDescriptor> datasets) {
         return datasets.stream().filter(dataSetDescriptor -> dataSetDescriptor.getDataSetName().equals(selected)).findFirst().orElse(null);
     }
 

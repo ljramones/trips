@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
@@ -37,7 +38,7 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
     }
 
     @Override
-    protected Task<FileProcessResult> createTask() {
+    protected @NotNull Task<FileProcessResult> createTask() {
         return new RBCsvLoadTask(dataset, databaseManagementService);
     }
 
@@ -71,8 +72,8 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
 
     public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete, Label progressText,
-                                  ProgressBar loadProgressBar, Button cancelLoad) {
+                                  TaskComplete taskComplete, @NotNull Label progressText,
+                                  @NotNull ProgressBar loadProgressBar, @NotNull Button cancelLoad) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
@@ -93,7 +94,7 @@ public class RBCSVDataImportService extends Service<FileProcessResult> implement
     }
 
     @Override
-    public String whoAmI() {
+    public @NotNull String whoAmI() {
         return "RB CSV importer";
     }
 

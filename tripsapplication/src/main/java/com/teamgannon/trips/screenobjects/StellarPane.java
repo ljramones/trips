@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import org.jetbrains.annotations.NotNull;
 
 public class StellarPane extends Pane {
 
@@ -43,7 +44,7 @@ public class StellarPane extends Pane {
 
     }
 
-    public void setRecord(StarDisplayRecord starDisplayRecord) {
+    public void setRecord(@NotNull StarDisplayRecord starDisplayRecord) {
         starName.setText(starDisplayRecord.getStarName());
         color.setText(starDisplayRecord.getStarColor().toString());
         radius.setText(String.format("%.2f", starDisplayRecord.getRadius()));

@@ -39,6 +39,8 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -96,8 +98,8 @@ public class RouteManager {
      *
      * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(Group world,
-                        Group sceneRoot,
+    public RouteManager(@NotNull Group world,
+                        @NotNull Group sceneRoot,
                         SubScene subScene,
                         InterstellarSpacePane interstellarSpacePane,
                         RouteUpdaterListener routeUpdaterListener,
@@ -150,7 +152,7 @@ public class RouteManager {
      *
      * @return the entire routes set
      */
-    public Node getRoutesGroup() {
+    public @NotNull Node getRoutesGroup() {
         return this.routesGroup;
     }
 
@@ -166,7 +168,7 @@ public class RouteManager {
 
     ///////////// routing functions
 
-    public void startRoute(RouteDescriptor routeDescriptor, StarDisplayRecord starDisplayRecord) {
+    public void startRoute(RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord starDisplayRecord) {
         resetRoute();
         routingActive = true;
         currentRoute = routeDescriptor;
@@ -188,7 +190,7 @@ public class RouteManager {
      *
      * @param starDisplayRecord the the star to route to
      */
-    public void continueRoute(StarDisplayRecord starDisplayRecord) {
+    public void continueRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
             updateLabels(interstellarSpacePane);
@@ -203,7 +205,7 @@ public class RouteManager {
      *
      * @param starDisplayRecord the star record to terminate at
      */
-    public void finishRoute(StarDisplayRecord starDisplayRecord) {
+    public void finishRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
             routingActive = false;
@@ -225,7 +227,7 @@ public class RouteManager {
      *
      * @param currentRoute the current route
      */
-    private void makeRoutePermanent(RouteDescriptor currentRoute) {
+    private void makeRoutePermanent(@NotNull RouteDescriptor currentRoute) {
 //        // remove our hand drawn route
         routesGroup.getChildren().remove(currentRouteDisplay);
         for (Node node: currentRouteNodePoints) {
@@ -239,7 +241,7 @@ public class RouteManager {
     }
 
 
-    private void createRouteSegment(StarDisplayRecord starDisplayRecord) {
+    private void createRouteSegment(@NotNull StarDisplayRecord starDisplayRecord) {
 
         UUID id = starDisplayRecord.getRecordId();
         Point3D toStarLocation = starDisplayRecord.getCoordinates();
@@ -263,13 +265,13 @@ public class RouteManager {
         }
     }
 
-    private double calculateDistance(StarDisplayRecord fromStar, double[] toStarCoords) {
+    private double calculateDistance(@NotNull StarDisplayRecord fromStar, double[] toStarCoords) {
         double[] fromStarCoords = fromStar.getActualCoordinates();
         // calculate the actual distance
         return StarMath.getDistance(fromStarCoords, toStarCoords);
     }
 
-    private Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, Label lengthLabel) {
+    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target, double lineWeight, Color color, @NotNull Label lengthLabel) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -312,7 +314,7 @@ public class RouteManager {
         return lineGroup;
     }
 
-    private Sphere createPointSphere(Label label) {
+    private @NotNull Sphere createPointSphere(@NotNull Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.WHEAT);
         material.setSpecularColor(Color.WHEAT);
@@ -324,7 +326,7 @@ public class RouteManager {
         return sphere;
     }
 
-    private Label createLabel(double length) {
+    private @NotNull Label createLabel(double length) {
         Label label = new Label(String.format("%.2fly", length));
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 6);
         label.setFont(font);
@@ -370,13 +372,13 @@ public class RouteManager {
      *
      * @param routeList the list of routes
      */
-    public void plotRoutes(List<Route> routeList) {
+    public void plotRoutes(@NotNull List<Route> routeList) {
         // clear existing routes
         routesGroup.getChildren().clear();
         routeList.forEach(this::plotRoute);
     }
 
-    public void plotRouteDescriptors(List<RoutingMetric> routeDescriptorList) {
+    public void plotRouteDescriptors(@NotNull List<RoutingMetric> routeDescriptorList) {
         routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(this::plotRouteDescriptor);
         updateLabels(interstellarSpacePane);
     }
@@ -388,7 +390,7 @@ public class RouteManager {
      *
      * @param route the route to plot
      */
-    public void plotRoute(Route route) {
+    public void plotRoute(@NotNull Route route) {
         if (checkIfRouteCanBePlotted(route)) {
             // do actual plot
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
@@ -400,7 +402,7 @@ public class RouteManager {
         log.info("Plot done");
     }
 
-    public void plotRouteDescriptor(RouteDescriptor routeDescriptor) {
+    public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
         Group routeGraphic = createRoute(routeDescriptor);
         routesGroup.getChildren().add(routeGraphic);
         routesGroup.setVisible(true);
@@ -412,7 +414,7 @@ public class RouteManager {
      * @param routeDescriptor the route descriptor
      * @return the route Xform
      */
-    public Group createRoute(RouteDescriptor routeDescriptor) {
+    public @NotNull Group createRoute(@NotNull RouteDescriptor routeDescriptor) {
         Group route = new Group();
         boolean firstLink = true;
 
@@ -444,7 +446,7 @@ public class RouteManager {
      * @param route the route definition
      * @return true means we can plot the whole route
      */
-    public boolean checkIfRouteCanBePlotted(Route route) {
+    public boolean checkIfRouteCanBePlotted(@NotNull Route route) {
         return route.getRouteStars().stream().allMatch(currentPlot.getStarLookup()::containsKey);
     }
 
@@ -455,7 +457,7 @@ public class RouteManager {
      * @param route the db description of a route
      * @return the graphical descriptor
      */
-    private RouteDescriptor toRouteDescriptor(Route route) {
+    private RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
         int i=0;
         for (UUID id : route.getRouteStars()) {
@@ -478,7 +480,7 @@ public class RouteManager {
      * @param starId the id
      * @return the embedded object
      */
-    private StarDisplayRecord getStar(UUID starId) {
+    private @Nullable StarDisplayRecord getStar(UUID starId) {
         Node star = currentPlot.getStar(starId);
         if (star != null) {
             return (StarDisplayRecord) star.getUserData();
@@ -487,7 +489,7 @@ public class RouteManager {
         }
     }
 
-    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+    public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 

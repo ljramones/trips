@@ -15,6 +15,8 @@ import com.teamgannon.trips.stardata.StellarFactory;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.EndianUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -35,7 +37,7 @@ public class ChviewReader {
     /**
      * the stellar factory
      */
-    private final StellarFactory stellarFactory;
+    private final @NotNull StellarFactory stellarFactory;
 
 
     /**
@@ -66,7 +68,7 @@ public class ChviewReader {
      * @param file the chview file
      * @return a chview file
      */
-    public ChViewFile loadFile(ProgressUpdater progressUpdater, File file) {
+    public @Nullable ChViewFile loadFile(@NotNull ProgressUpdater progressUpdater, @NotNull File file) {
         return readCompleteFile(progressUpdater, file);
     }
 
@@ -103,7 +105,7 @@ public class ChviewReader {
      * @param progressUpdater
      * @param inputFile       the file name to read
      */
-    private ChViewFile readCompleteFile(ProgressUpdater progressUpdater, File inputFile) {
+    private @Nullable ChViewFile readCompleteFile(@NotNull ProgressUpdater progressUpdater, @NotNull File inputFile) {
 
         try {
             fileContent = Files.readAllBytes(inputFile.toPath());
@@ -118,7 +120,7 @@ public class ChviewReader {
     /**
      * relies on the file being read into a byte buffer
      */
-    private ChViewFile parsefile(ProgressUpdater progressUpdater, String fileName) {
+    private @Nullable ChViewFile parsefile(@NotNull ProgressUpdater progressUpdater, String fileName) {
         progressUpdater.updateLoadInfo("reading front preamble");
         ChViewFile chViewFile = new ChViewFile();
         currentIndex = 0;
@@ -161,7 +163,7 @@ public class ChviewReader {
         return chViewFile;
     }
 
-    private void parseLinks(byte[] fileContent, int index) {
+    private void parseLinks(byte @NotNull [] fileContent, int index) {
 
         if (fileContent.length < index) {
             short numberOfLinks = readShort(fileContent, index);
@@ -189,7 +191,7 @@ public class ChviewReader {
      * @param index       the current index
      */
 
-    private String parsePreamble(byte[] fileContent, int index) {
+    private String parsePreamble(byte @NotNull [] fileContent, int index) {
         if (fileContent.length < index) {
             StringResult fileComments = readString(fileContent, currentIndex);
             return fileComments.getValue();
@@ -205,7 +207,7 @@ public class ChviewReader {
      * @param buffer the file content buffer
      * @return the View Preferences object
      */
-    private CHViewPreferences parseViewPreferences(byte[] buffer) {
+    private @NotNull CHViewPreferences parseViewPreferences(byte[] buffer) {
         CHViewPreferences CHViewPreferences = new CHViewPreferences();
 
         // boolean
@@ -516,7 +518,7 @@ public class ChviewReader {
      * @param length the length
      * @return the byte array
      */
-    private byte[] copyBytes(byte[] buffer, int index, int length) {
+    private byte @NotNull [] copyBytes(byte[] buffer, int index, int length) {
         byte[] byteArray = new byte[length];
         for (int i = 0; i < length; ++i) {
             int position = index + i;
@@ -531,7 +533,7 @@ public class ChviewReader {
      * @param buffer the file content
      * @return the parsed record
      */
-    private ChViewRecord parseRecord(byte[] buffer, int index) {
+    private @Nullable ChViewRecord parseRecord(byte[] buffer, int index) {
 
         ChViewRecord chViewRecord = new ChViewRecord();
 
@@ -666,7 +668,7 @@ public class ChviewReader {
         return chViewRecord;
     }
 
-    private Color getColor(StarColor starColor) {
+    private @NotNull Color getColor(@NotNull StarColor starColor) {
         String[] colorRGB = starColor.color().split(",");
         return Color.rgb(
                 Integer.parseInt(colorRGB[0]),
@@ -675,7 +677,7 @@ public class ChviewReader {
         );
     }
 
-    private PseudoString readStarParameter(byte[] buffer, int index) {
+    private @NotNull PseudoString readStarParameter(byte[] buffer, int index) {
         // initialization
         PseudoString pseudoString = new PseudoString();
         int i = index;
@@ -729,7 +731,7 @@ public class ChviewReader {
      * @param index  the point to start from
      * @return the result of what was found
      */
-    private PseudoString findString(byte[] buffer, int index) {
+    private @NotNull PseudoString findString(byte[] buffer, int index) {
         // initialization
         PseudoString pseudoString = new PseudoString();
         int i = index;
@@ -840,7 +842,7 @@ public class ChviewReader {
      * @param index  the index from which to read
      * @return the string
      */
-    private StringResult readString(byte[] buffer, int index) {
+    private @NotNull StringResult readString(byte[] buffer, int index) {
 
         StringResult result = new StringResult();
         StringBuilder stringBuilder = new StringBuilder();
@@ -884,7 +886,7 @@ public class ChviewReader {
         }
     }
 
-    private StringBuilder readString(byte[] buffer, int index, int length) {
+    private @NotNull StringBuilder readString(byte[] buffer, int index, int length) {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < length; ++i) {
             if (buffer[index + i] < 0) {

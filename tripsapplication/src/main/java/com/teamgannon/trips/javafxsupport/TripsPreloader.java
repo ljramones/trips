@@ -15,6 +15,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 public class TripsPreloader extends Preloader {
 
@@ -22,7 +23,7 @@ public class TripsPreloader extends Preloader {
 
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(@NotNull Stage primaryStage) throws Exception {
         this.preloaderStage = primaryStage;
 
         VBox loading = new VBox(20);
@@ -69,7 +70,7 @@ public class TripsPreloader extends Preloader {
      *
      * @param stateChangeNotification the state notification
      */
-    public void handleStateChangeNotification(StateChangeNotification stateChangeNotification) {
+    public void handleStateChangeNotification(@NotNull StateChangeNotification stateChangeNotification) {
         if (stateChangeNotification.getType() == StateChangeNotification.Type.BEFORE_START) {
             preloaderStage.hide();
         }

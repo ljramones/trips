@@ -1,6 +1,7 @@
 package com.teamgannon.trips.algorithms;
 
 import com.teamgannon.trips.DistanceRange;
+import org.jetbrains.annotations.NotNull;
 
 public class StarMath {
 
@@ -48,7 +49,7 @@ public class StarMath {
      * @param distance       the distance in light years
      * @return the xyz coordinates
      */
-    public double[] getPosition(double rightAscension, double declination, double distance) {
+    public double @NotNull [] getPosition(double rightAscension, double declination, double distance) {
         double[] coordinates = new double[3];
 
         coordinates[0] = distance * Math.cos(rightAscension) * Math.cos(declination);
@@ -64,7 +65,7 @@ public class StarMath {
      * @param ep1950coor coordinates in epoch 1950 coordinates
      * @return galactic coordinates
      */
-    public double[] epoch1950ToGalacticCoordinates(double[] ep1950coor) {
+    public double @NotNull [] epoch1950ToGalacticCoordinates(double[] ep1950coor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = -(0.0672 * ep1950coor[0]) - (0.8727 * ep1950coor[1]) - (0.4835 * ep1950coor[2]);
@@ -81,7 +82,7 @@ public class StarMath {
      * @param ep2000coor coordinates in epoch 2000 format
      * @return galactic coordinates
      */
-    public double[] epoch2000ToGalacticCoordinates(double[] ep2000coor) {
+    public double @NotNull [] epoch2000ToGalacticCoordinates(double[] ep2000coor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = -(0.0550 * ep2000coor[0]) - (0.8732 * ep2000coor[1]) - (0.4839 * ep2000coor[2]);
@@ -97,7 +98,7 @@ public class StarMath {
      * @param galCoor the galactic coordinates
      * @return the equatorial (solar) coordinates
      */
-    public double[] galacticToSolarCoordinates(double[] galCoor) {
+    public double @NotNull [] galacticToSolarCoordinates(double[] galCoor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = galCoor[0] - 27058;
@@ -120,7 +121,7 @@ public class StarMath {
         return ParSecToLightYear / parallax;
     }
 
-    public DistanceRange distanceFromParallax(double parallax, double sigma) throws Exception {
+    public @NotNull DistanceRange distanceFromParallax(double parallax, double sigma) throws Exception {
         double base = distanceFromParallaxSecs(parallax);
         double variation = distanceFromParallaxSecs(sigma);
         DistanceRange range = new DistanceRange();
@@ -144,7 +145,7 @@ public class StarMath {
      * @return the distance range
      * @throws Exception if the parallax is bad
      */
-    public DistanceRange distanceFromParallaxMilliSecs(double parallax, double sigma) throws Exception {
+    public @NotNull DistanceRange distanceFromParallaxMilliSecs(double parallax, double sigma) throws Exception {
         double base = distanceFromParallaxMilliSecs(parallax);
         double variation = distanceFromParallaxMilliSecs(sigma);
         DistanceRange range = new DistanceRange();

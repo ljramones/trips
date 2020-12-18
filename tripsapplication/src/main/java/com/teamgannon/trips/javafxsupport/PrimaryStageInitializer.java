@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import net.rgielen.fxweaver.core.FxWeaver;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
@@ -34,7 +35,7 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
     }
 
     @Override
-    public void onApplicationEvent(StageReadyEvent event) {
+    public void onApplicationEvent(@NotNull StageReadyEvent event) {
         Stage stage = event.getStage();
         Parent root = fxWeaver.loadView(MainPane.class);
 

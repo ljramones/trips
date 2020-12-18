@@ -11,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -21,7 +22,7 @@ public class GraphColorPane extends Pane {
     private final static String COLOR_PANE_TITLE = "Change Graph Colors";
     private final static String COLOR_PANE_TITLE_MODIFIED = "Change Graph Colors - *modified*";
 
-    private final ColorPalette colorPalette;
+    private final @NotNull ColorPalette colorPalette;
     private final TitledPane colorPane = new TitledPane();
     // color change text fields
     private final TextField labelColorTextField = new TextField();
@@ -37,7 +38,7 @@ public class GraphColorPane extends Pane {
     private boolean colorChangeDetected = false;
 
 
-    public GraphColorPane(ColorPalette colorPalette) {
+    public GraphColorPane(@NotNull ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
 
         GridPane gridPane = new GridPane();
@@ -224,7 +225,7 @@ public class GraphColorPane extends Pane {
     }
 
 
-    public ColorPalette getColorData() {
+    public @NotNull ColorPalette getColorData() {
 
         ColorPalette palette = new ColorPalette();
 

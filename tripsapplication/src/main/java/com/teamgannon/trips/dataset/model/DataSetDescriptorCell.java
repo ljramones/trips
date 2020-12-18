@@ -8,6 +8,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 @Slf4j
 public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
@@ -32,7 +33,7 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
     }
 
     @Override
-    public void updateItem(DataSetDescriptor descriptor, boolean empty) {
+    public void updateItem(@Nullable DataSetDescriptor descriptor, boolean empty) {
         super.updateItem(descriptor, empty);
 
         int index = this.getIndex();

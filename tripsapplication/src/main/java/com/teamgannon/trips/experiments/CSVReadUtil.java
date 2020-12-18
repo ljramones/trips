@@ -6,6 +6,8 @@ import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +20,7 @@ import java.util.*;
 @Slf4j
 public class CSVReadUtil {
 
-    private String fileName = "/Users/larrymitchell/tripsnew/trips/larry.trips.csv";
+    private @NotNull String fileName = "/Users/larrymitchell/tripsnew/trips/larry.trips.csv";
 
 
     public void readFile() {
@@ -157,7 +159,7 @@ public class CSVReadUtil {
     }
 
 
-    private DataSetDescriptor transformDescriptor(Dataset dataset, String[] descriptorVals) {
+    private @NotNull DataSetDescriptor transformDescriptor(@NotNull Dataset dataset, String[] descriptorVals) {
         try {
             DataSetDescriptor descriptor = new DataSetDescriptor();
             descriptor.setDataSetName(dataset.getName());
@@ -191,7 +193,7 @@ public class CSVReadUtil {
     }
 
 
-    private String putBackCommas(String origin) {
+    private @Nullable String putBackCommas(@Nullable String origin) {
         String replaced = origin;
         if (origin != null) {
             replaced = origin.replace("~", ",");

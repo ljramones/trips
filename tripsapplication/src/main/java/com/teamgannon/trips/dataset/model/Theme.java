@@ -6,6 +6,8 @@ import com.teamgannon.trips.dataset.enums.GridShape;
 import com.teamgannon.trips.routing.RouteDefinition;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -73,17 +75,17 @@ public class Theme {
     /**
      * Color of background
      */
-    private double[] backColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] backColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of text
      */
-    private double[] textColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] textColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * StarName font
      */
-    private FontDescriptor starFont = new FontDescriptor("Arial", 8);
+    private @NotNull FontDescriptor starFont = new FontDescriptor("Arial", 8);
 
     /**
      * Galactic X coordinates of center of view in LY
@@ -128,27 +130,27 @@ public class Theme {
     /**
      * Shape of grid, rectangular or polar
      */
-    private GridShape gridShape = GridShape.Rectangular;
+    private @NotNull GridShape gridShape = GridShape.Rectangular;
 
     /**
      * Line style, solid or dotted for the grid lines
      */
-    private GridLines gridLines = GridLines.Solid;
+    private @NotNull GridLines gridLines = GridLines.Solid;
 
     /**
      * Line style, solid or dotted for the stem lines
      */
-    private GridLines stemLines = GridLines.Solid;
+    private @NotNull GridLines stemLines = GridLines.Solid;
 
     /**
      * Hexadecimal Color value of grid lines
      */
-    private double[] gridLineColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] gridLineColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Hexadecimal Color value of stem lines
      */
-    private double[] stemColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] stemColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Display star outlines or not
@@ -158,42 +160,42 @@ public class Theme {
     /**
      * Color of spectral type O stars
      */
-    private double[] oColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] oColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type B stars
      */
-    private double[] bColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] bColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type A stars
      */
-    private double[] aColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] aColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type F stars
      */
-    private double[] fColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] fColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type G stars
      */
-    private double[] gColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] gColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type K stars
      */
-    private double[] kColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] kColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type M stars
      */
-    private double[] mColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] mColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Color of spectral type X stars
      */
-    private double[] xColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] xColor = new double[]{0xAA, 0xBB, 0xCC};
 
     /**
      * Radius of spectral class O stars in pixels
@@ -256,7 +258,7 @@ public class Theme {
      * each other. UI must enforce no overlapping max and
      * min distances.
      */
-    private List<Link> linkList = new ArrayList<>();
+    private @NotNull List<Link> linkList = new ArrayList<>();
 
     /**
      * Contains an array of route display definitions
@@ -264,14 +266,14 @@ public class Theme {
      * This merely controls the display of routes of type, not
      * the storage of the routes themselves.
      */
-    private Map<UUID, RouteDefinition> routeDescriptorList = new HashMap<>();
+    private @NotNull Map<UUID, RouteDefinition> routeDescriptorList = new HashMap<>();
 
     /**
      * list of political entities
      * <p>
      * Possible Polities which objects may belong to
      */
-    private List<Polity> polities = new ArrayList<>();
+    private @NotNull List<Polity> polities = new ArrayList<>();
 
     //////////////////////////
 
@@ -290,7 +292,7 @@ public class Theme {
         }
     }
 
-    public Theme toTheme(String parametersStr) {
+    public @Nullable Theme toTheme(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, Theme.class);
         } catch (IOException e) {

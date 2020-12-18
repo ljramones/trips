@@ -5,6 +5,7 @@ import com.teamgannon.trips.stardata.StellarType;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
@@ -23,7 +24,7 @@ public class StarDescriptionPreference implements Serializable {
 
     private float size;
 
-    public static StarDescriptionPreference createStarDescription(StarDetailsPersist starDetailsPersist) {
+    public static StarDescriptionPreference createStarDescription(@NotNull StarDetailsPersist starDetailsPersist) {
         StellarType stellarType = StellarType.valueOf(starDetailsPersist.getStellarClass());
         return StarDescriptionPreference
                 .builder()
@@ -34,7 +35,7 @@ public class StarDescriptionPreference implements Serializable {
                 .build();
     }
 
-    public static StarDescriptionPreference createStarDescription(String id, String starClass, String color, float size) {
+    public static StarDescriptionPreference createStarDescription(String id, String starClass, @NotNull String color, float size) {
         StellarType stellarType = StellarType.valueOf(starClass);
         return StarDescriptionPreference
                 .builder()
@@ -66,7 +67,7 @@ public class StarDescriptionPreference implements Serializable {
                 .build();
     }
 
-    public StarDetailsPersist toStarDetailsPersist() {
+    public @NotNull StarDetailsPersist toStarDetailsPersist() {
         StarDetailsPersist starDetailsPersist = new StarDetailsPersist();
         starDetailsPersist.setId(this.getId());
         starDetailsPersist.setRadius(this.getSize());

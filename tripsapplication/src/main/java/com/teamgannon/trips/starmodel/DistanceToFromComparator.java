@@ -1,5 +1,7 @@
 package com.teamgannon.trips.starmodel;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Comparator;
 
 public class DistanceToFromComparator implements Comparator<DistanceToFrom> {
@@ -44,7 +46,7 @@ public class DistanceToFromComparator implements Comparator<DistanceToFrom> {
      *                              being compared by this comparator.
      */
     @Override
-    public int compare(DistanceToFrom first, DistanceToFrom second) {
+    public int compare(@NotNull DistanceToFrom first, @NotNull DistanceToFrom second) {
         return (int) (first.getDistance() - second.getDistance());
     }
 }

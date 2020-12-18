@@ -4,6 +4,7 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +32,7 @@ public class DistanceReport {
     /**
      * the list of distance measures
      */
-    private List<StarDistanceMeasure> distances = new ArrayList<>();
+    private @NotNull List<StarDistanceMeasure> distances = new ArrayList<>();
 
     /**
      * constructor
@@ -47,7 +48,7 @@ public class DistanceReport {
      *
      * @param targetStar from center to the target star
      */
-    public void findDistance(StarDisplayRecord targetStar) {
+    public void findDistance(@NotNull StarDisplayRecord targetStar) {
         try {
             double[] source = sourceStar.getActualCoordinates();
             double[] target = targetStar.getActualCoordinates();

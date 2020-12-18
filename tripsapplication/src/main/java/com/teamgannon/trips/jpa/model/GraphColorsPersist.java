@@ -3,6 +3,7 @@ package com.teamgannon.trips.jpa.model;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -40,13 +41,13 @@ public class GraphColorsPersist {
     private double gridLineWidth = 0.5;
 
 
-    public static GraphColorsPersist defaults() {
+    public static @NotNull GraphColorsPersist defaults() {
         GraphColorsPersist colorsPersist = new GraphColorsPersist();
         colorsPersist.setId(UUID.randomUUID().toString());
         return colorsPersist;
     }
 
-    public ColorPalette getColorPalette() {
+    public @NotNull ColorPalette getColorPalette() {
         ColorPalette palette = new ColorPalette();
         palette.assignColors(this);
         return palette;
@@ -69,7 +70,7 @@ public class GraphColorsPersist {
         gridLineWidth = 0.5;
     }
 
-    public void setGraphColors(ColorPalette graphColors) {
+    public void setGraphColors(@NotNull ColorPalette graphColors) {
         labelColor = graphColors.getLabelColor().toString();
         gridColor = graphColors.getGridColor().toString();
         extensionColor = graphColors.getExtensionColor().toString();

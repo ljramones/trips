@@ -7,10 +7,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import org.jetbrains.annotations.NotNull;
 
 public class StarPropertiesPane extends Pane {
 
-    private  AstrographicObject record = new AstrographicObject();
+    private @NotNull AstrographicObject record = new AstrographicObject();
 
     // UI elements
     private final Label recordIdLabel = new Label();
@@ -79,7 +80,7 @@ public class StarPropertiesPane extends Pane {
         this.getChildren().add(vBox);
     }
 
-    public void setStar(AstrographicObject record) {
+    public void setStar(@NotNull AstrographicObject record) {
         this.record = record;
 
         // primary tab
@@ -124,7 +125,7 @@ public class StarPropertiesPane extends Pane {
 
     }
 
-    private Node createSecondaryTab() {
+    private @NotNull Node createSecondaryTab() {
         // setup grid structure
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
@@ -179,7 +180,7 @@ public class StarPropertiesPane extends Pane {
         return gridPane;
     }
 
-    private Node createFictionalTab() {
+    private @NotNull Node createFictionalTab() {
 
         // setup grid structure
         GridPane gridPane = new GridPane();
@@ -234,7 +235,7 @@ public class StarPropertiesPane extends Pane {
         return gridPane;
     }
 
-    private Node createOverviewTab() {
+    private @NotNull Node createOverviewTab() {
 
         // setup grid structure
         GridPane gridPane = new GridPane();

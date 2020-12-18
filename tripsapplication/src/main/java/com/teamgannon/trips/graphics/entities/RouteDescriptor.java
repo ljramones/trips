@@ -5,6 +5,7 @@ import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -39,19 +40,19 @@ public class RouteDescriptor {
      * defined color of route
      */
     @Builder.Default
-    private Color color = Color.WHITE;
+    private @NotNull Color color = Color.WHITE;
 
     /**
      * list of ordered routes, min length is 2
      */
     @Builder.Default
-    private List<UUID> routeList = new ArrayList<>();
+    private @NotNull List<UUID> routeList = new ArrayList<>();
 
     /**
      * list of ordered lengths, min length is 2
      */
     @Builder.Default
-    private List<Double> lengthList = new ArrayList<>();
+    private @NotNull List<Double> lengthList = new ArrayList<>();
 
     /**
      * we keep track of the from star for calculations
@@ -73,7 +74,7 @@ public class RouteDescriptor {
      * the list of line segments joined by 3D points
      */
     @Builder.Default
-    private List<Point3D> lineSegments = new ArrayList<>();
+    private @NotNull List<Point3D> lineSegments = new ArrayList<>();
 
     public void addLineSegment(Point3D point3D) {
         lineSegments.add(point3D);
@@ -90,7 +91,7 @@ public class RouteDescriptor {
         lineSegments.clear();
     }
 
-    public Route toRoute() {
+    public @NotNull Route toRoute() {
         Route route = new Route();
         route.setRouteName(this.name);
         route.getRouteStars().addAll(routeList);
@@ -101,7 +102,7 @@ public class RouteDescriptor {
         return route;
     }
 
-    public static RouteDescriptor toRouteDescriptor(Route route) {
+    public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         return RouteDescriptor
                 .builder()
                 .name(route.getRouteName())

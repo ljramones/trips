@@ -1,6 +1,8 @@
 package com.teamgannon.trips.starmodel;
 
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ public class DistanceReport {
         distanceToFromList.add(distanceToFrom);
     }
 
-    public List<DistanceToFrom> getDistanceList() {
+    public @NotNull List<DistanceToFrom> getDistanceList() {
         // create the sorting comparator
         DistanceToFromComparator comparator = new DistanceToFromComparator();
 

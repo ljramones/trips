@@ -3,6 +3,7 @@ package com.teamgannon.trips.config.application;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
@@ -17,7 +18,7 @@ public class LinkDescriptor implements Serializable {
     private int linkNumber = 1;
 
     @Builder.Default
-    private Color color = Color.CYAN;
+    private @NotNull Color color = Color.CYAN;
 
     @Builder.Default
     private int linkLength = 9;
