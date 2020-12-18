@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class SearchService {
         this.repository = repository;
     }
 
-    List<AstrographicObject> findAllStarsFromSol(double distance) {
+    @NotNull List<AstrographicObject> findAllStarsFromSol(double distance) {
         List<AstrographicObject> astrographicObjects = new ArrayList<>();
 
 
@@ -33,14 +34,14 @@ public class SearchService {
     }
 
 
-    List<AstrographicObject> findAllStarsFromXYZ(double distance) {
+    @NotNull List<AstrographicObject> findAllStarsFromXYZ(double distance) {
         List<AstrographicObject> astrographicObjects = new ArrayList<>();
 
 
         return astrographicObjects;
     }
 
-    List<AstrographicObject> FindStarsFromQuery(AstroSearchQuery astroSearchQuery) {
+    @NotNull List<AstrographicObject> FindStarsFromQuery(AstroSearchQuery astroSearchQuery) {
         List<AstrographicObject> astrographicObjects = new ArrayList<>();
 
 

@@ -12,6 +12,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
     private final TextField starName = new TextField();
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
 
-    public FindStarsWithNameMatchDialog(List<String> datasetNames) {
+    public FindStarsWithNameMatchDialog(@NotNull List<String> datasetNames) {
         this.setTitle("Find a star in database");
         this.setHeight(500);
         this.setWidth(300);

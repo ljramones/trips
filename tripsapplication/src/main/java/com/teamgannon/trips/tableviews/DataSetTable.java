@@ -21,6 +21,7 @@ import javafx.stage.Modality;
 import javafx.stage.Window;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -73,10 +74,10 @@ public class DataSetTable {
 
     private final String dataSetName;
 
-    private final Dialog<String> dialog;
+    private final @NotNull Dialog<String> dialog;
 
-    private SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
-    private SortType sortDirection = SortType.ASCENDING;
+    private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
+    private @NotNull SortType sortDirection = SortType.ASCENDING;
 
     /**
      * the constructor that we use to show the data
@@ -85,7 +86,7 @@ public class DataSetTable {
      * @param astrographicObjects       the list of objects
      */
     public DataSetTable(DatabaseManagementService databaseManagementService,
-                        List<AstrographicObject> astrographicObjects) {
+                        @NotNull List<AstrographicObject> astrographicObjects) {
 
         this.databaseManagementService = databaseManagementService;
 
@@ -300,7 +301,7 @@ public class DataSetTable {
     }
 
 
-    public Node getPanel() {
+    public @NotNull Node getPanel() {
         BorderPane borderPane = new BorderPane();
 
         // setup the table structure
@@ -411,7 +412,7 @@ public class DataSetTable {
      *
      * @param starEditRecord the record to remove
      */
-    private void removeFromDB(StarEditRecord starEditRecord) {
+    private void removeFromDB(@NotNull StarEditRecord starEditRecord) {
 
         UUID id = starEditRecord.getId();
         astrographicObjectMap.remove(id);
@@ -613,7 +614,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByName(SortType sortOrder) {
+    public void sortByName(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.NAME;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -628,7 +629,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByDistance(SortType sortOrder) {
+    public void sortByDistance(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.DISTANCE;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -643,7 +644,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortBySpectra(SortType sortOrder) {
+    public void sortBySpectra(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.SPECTRA;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -658,7 +659,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByRadius(SortType sortOrder) {
+    public void sortByRadius(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.RADIUS;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -673,7 +674,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByRa(SortType sortOrder) {
+    public void sortByRa(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.RA;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -688,7 +689,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByDeclination(SortType sortOrder) {
+    public void sortByDeclination(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.DECLINATION;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -703,7 +704,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByParallax(SortType sortOrder) {
+    public void sortByParallax(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.PARALLAX;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -718,7 +719,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByX(SortType sortOrder) {
+    public void sortByX(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.X;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -733,7 +734,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByY(SortType sortOrder) {
+    public void sortByY(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.Y;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -748,7 +749,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByZ(SortType sortOrder) {
+    public void sortByZ(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.Z;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
@@ -763,7 +764,7 @@ public class DataSetTable {
      *
      * @param sortOrder the sorting order - up or down
      */
-    public void sortByReal(SortType sortOrder) {
+    public void sortByReal(@NotNull SortType sortOrder) {
         currentSortStrategy = SortParameterEnum.REAL;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {

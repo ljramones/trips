@@ -21,6 +21,7 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class RunExample extends Application
     private final double depth = Universe.boxDepth;
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(@NotNull Stage primaryStage) throws Exception {
 
         ColorPalette colorPalette = new ColorPalette();
         colorPalette.setDefaults();
@@ -93,7 +94,7 @@ public class RunExample extends Application
         interstellarPaneExample.simulateStars(35);
     }
 
-    private VBox createControls() {
+    private @NotNull VBox createControls() {
         Button plotButton = new Button("Button A");
         plotButton.setOnAction(this::plot);
         HBox hBox = new HBox(
@@ -125,7 +126,7 @@ public class RunExample extends Application
     }
 
     @Override
-    public List<AstrographicObject> getAstrographicObjectsOnQuery() {
+    public @NotNull List<AstrographicObject> getAstrographicObjectsOnQuery() {
         return new ArrayList<>();
     }
 
@@ -140,7 +141,7 @@ public class RunExample extends Application
     }
 
     @Override
-    public AstrographicObject getStar(UUID starId) {
+    public @NotNull AstrographicObject getStar(UUID starId) {
         return new AstrographicObject();
     }
 

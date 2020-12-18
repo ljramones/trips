@@ -8,6 +8,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -47,7 +48,7 @@ public class CurrentPlot {
     /**
      * the list of stars
      */
-    private List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
+    private @NotNull List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
 
     /**
      * the lookout for drawn stars
@@ -92,7 +93,7 @@ public class CurrentPlot {
     }
 
 
-    public Set<UUID> getStarIds() {
+    public @NotNull Set<UUID> getStarIds() {
         return starLookup.keySet();
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -120,7 +121,7 @@ public class OrbitalParameters implements Serializable {
         }
     }
 
-    public List<OrbitalParameters> toOrbitalParameters(String parametersStr) {
+    public @Nullable List<OrbitalParameters> toOrbitalParameters(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });

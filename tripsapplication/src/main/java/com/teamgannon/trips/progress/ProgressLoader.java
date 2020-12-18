@@ -15,6 +15,8 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,11 +35,11 @@ public class ProgressLoader {
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
 
-    private AtomicBoolean done = new AtomicBoolean(false);
+    private @NotNull AtomicBoolean done = new AtomicBoolean(false);
 
-    private FileProcessResult processResult = new FileProcessResult();
+    private @NotNull FileProcessResult processResult = new FileProcessResult();
 
-    private RBCsvFile rbCsvFile;
+    private @Nullable RBCsvFile rbCsvFile;
 
     public ProgressLoader(File file,
                           Dataset dataset,
@@ -47,7 +49,7 @@ public class ProgressLoader {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public void start(Stage primaryStage) {
+    public void start(@NotNull Stage primaryStage) {
         splashScreen = new SplashScreen();
         final LoadGaiaDBTask loadGaiaDBTask = new LoadGaiaDBTask(null,null, null);
 
@@ -59,7 +61,7 @@ public class ProgressLoader {
         new Thread(loadGaiaDBTask).start();
     }
 
-    private void showMainStage(LoadGaiaDBTask loadGaiaDBTask) {
+    private void showMainStage(@NotNull LoadGaiaDBTask loadGaiaDBTask) {
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBCSVStarSet(rbCsvFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -79,9 +81,9 @@ public class ProgressLoader {
     }
 
     private void showSplash(
-            final Stage initStage,
-            Task<?> task,
-            ProgressLoader.InitCompletionHandler initCompletionHandler
+            final @NotNull Stage initStage,
+            @NotNull Task<?> task,
+            ProgressLoader.@NotNull InitCompletionHandler initCompletionHandler
     ) {
 
         splashScreen.set(task);
@@ -112,7 +114,7 @@ public class ProgressLoader {
         initStage.show();
     }
 
-    public RBCsvFile getfile() {
+    public @Nullable RBCsvFile getfile() {
         return rbCsvFile;
     }
 
@@ -120,7 +122,7 @@ public class ProgressLoader {
         void complete();
     }
 
-    public FileProcessResult getProcessResult() {
+    public @NotNull FileProcessResult getProcessResult() {
         return processResult;
     }
 

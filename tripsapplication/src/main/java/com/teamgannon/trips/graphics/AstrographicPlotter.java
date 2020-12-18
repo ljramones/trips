@@ -14,6 +14,7 @@ import com.teamgannon.trips.search.SearchContext;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class AstrographicPlotter {
 
     private final SearchContext searchContext;
 
-    private final AstrographicTransformer astrographicTransformer;
+    private final @NotNull AstrographicTransformer astrographicTransformer;
     private final ColorPalette colorPalette;
     /**
      * the drawing surface for the astrographic plotter
@@ -43,14 +44,14 @@ public class AstrographicPlotter {
      *
      * @param tripsContext the trips context
      */
-    public AstrographicPlotter(TripsContext tripsContext) {
+    public AstrographicPlotter(@NotNull TripsContext tripsContext) {
 
         this.searchContext = tripsContext.getSearchContext();
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
     }
 
-    public static Color getColor(double[] colors) {
+    public static @NotNull Color getColor(double[] colors) {
         return Color.color(colors[0], colors[1], colors[2]);
     }
 
@@ -70,11 +71,11 @@ public class AstrographicPlotter {
      * @param centerCoordinates   the center of the plot
      * @param colorPalette        the color palette to draw
      */
-    public void drawAstrographicData(DataSetDescriptor dataSetDescriptor,
-                                     List<AstrographicObject> astrographicObjects,
+    public void drawAstrographicData(@NotNull DataSetDescriptor dataSetDescriptor,
+                                     @NotNull List<AstrographicObject> astrographicObjects,
                                      double[] centerCoordinates,
-                                     ColorPalette colorPalette,
-                                     StarDisplayPreferences starDisplayPreferences,
+                                     @NotNull ColorPalette colorPalette,
+                                     @NotNull StarDisplayPreferences starDisplayPreferences,
                                      CivilizationDisplayPreferences civilizationDisplayPreferences) {
 
         interstellarSpacePane.setupPlot(dataSetDescriptor, centerCoordinates, starDisplayPreferences, civilizationDisplayPreferences);
@@ -129,7 +130,7 @@ public class AstrographicPlotter {
      * @param starRecord the list of ordinates
      * @return true if in the area and false otherwise
      */
-    private boolean drawable(AstrographicObject starRecord) {
+    private boolean drawable(@NotNull AstrographicObject starRecord) {
         double[] ordinates = starRecord.getCoordinates();
         if (ordinates[0] > Universe.boxWidth) {
             return false;

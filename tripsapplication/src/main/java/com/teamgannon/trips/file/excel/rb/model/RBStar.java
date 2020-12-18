@@ -1,8 +1,9 @@
-package com.teamgannon.trips.file.excel.model;
+package com.teamgannon.trips.file.excel.rb.model;
 
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ public class RBStar {
     private String y;
     private String z;
 
-    public AstrographicObject toAstrographicObject() {
+    public @Nullable AstrographicObject toAstrographicObject() {
         try {
             AstrographicObject astro = new AstrographicObject();
 

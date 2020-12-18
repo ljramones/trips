@@ -6,6 +6,7 @@ import com.teamgannon.trips.model.OortCloud;
 import com.teamgannon.trips.model.SystemObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -95,7 +96,7 @@ public class StellarSystem implements Serializable {
      *
      * @param systemObject the system object
      */
-    public void addSystemObject(SystemObject systemObject) {
+    public void addSystemObject(@NotNull SystemObject systemObject) {
         String sysObjStr = systemObject.convertToJson();
         List<String> systemObjectsList = getSystemObjects();
         systemObjectsList.add(sysObjStr);
@@ -107,7 +108,7 @@ public class StellarSystem implements Serializable {
         return new OortCloud().toOortCloud(oortCloud);
     }
 
-    public void setOortCloud(OortCloud oortCloud1) {
+    public void setOortCloud(@NotNull OortCloud oortCloud1) {
         oortCloud = oortCloud1.convertToJson();
     }
 
@@ -117,7 +118,7 @@ public class StellarSystem implements Serializable {
 
     ////
 
-    public void setAsteroidBelt(AsteroidBelt belt) {
+    public void setAsteroidBelt(@NotNull AsteroidBelt belt) {
         asteroidBelt = belt.convertToJson();
     }
 
@@ -125,11 +126,11 @@ public class StellarSystem implements Serializable {
         return new KuiperBelt().toKuiperBelt(kuiperBelt);
     }
 
-    public void setKuiperBelt(KuiperBelt belt) {
+    public void setKuiperBelt(@NotNull KuiperBelt belt) {
         kuiperBelt = belt.convertToString();
     }
 
-    public List<String> getSystemObjects() {
+    public @NotNull List<String> getSystemObjects() {
         if (systemObjects == null) {
             return new ArrayList<>();
         }
@@ -141,11 +142,11 @@ public class StellarSystem implements Serializable {
      *
      * @param systemObjectSet the set of sysm object to add
      */
-    public void setSystemObjects(Set<SystemObject> systemObjectSet) {
+    public void setSystemObjects(@NotNull Set<SystemObject> systemObjectSet) {
         systemObjectSet.forEach(this::addSystemObject);
     }
 
-    public void setSystemObjects(List<String> stringList) {
+    public void setSystemObjects(@NotNull List<String> stringList) {
         systemObjects = String.join(",", stringList);
     }
 
@@ -171,25 +172,25 @@ public class StellarSystem implements Serializable {
         setStarIds(starList);
     }
 
-    public List<String> getStarIds() {
+    public @NotNull List<String> getStarIds() {
         if (starIds == null) {
             return new ArrayList<>();
         }
         return Arrays.asList(starIds.split("\\s*,\\s*"));
     }
 
-    public void setStarIds(List<String> stringList) {
+    public void setStarIds(@NotNull List<String> stringList) {
         starIds = String.join(",", stringList);
     }
 
-    public List<String> getPlanetIds() {
+    public @NotNull List<String> getPlanetIds() {
         if (planetIds == null) {
             return new ArrayList<>();
         }
         return Arrays.asList(planetIds.split("\\s*,\\s*"));
     }
 
-    public void setPlanetIds(List<String> stringList) {
+    public void setPlanetIds(@NotNull List<String> stringList) {
         planetIds = String.join(",", stringList);
     }
 }

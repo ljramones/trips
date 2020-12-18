@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.util.validation.Validation;
 import net.sf.jsqlparser.util.validation.ValidationError;
 import net.sf.jsqlparser.util.validation.feature.DatabaseType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,9 +42,9 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
 
     private final DatabaseManagementService service;
-    private final Map<String, DataSetDescriptor> dataSetDescriptorMap;
+    private final @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap;
 
-    public AdvancedQueryDialog(DatabaseManagementService service, Map<String, DataSetDescriptor> dataSetDescriptorMap) {
+    public AdvancedQueryDialog(DatabaseManagementService service, @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap) {
         this.service = service;
         this.dataSetDescriptorMap = dataSetDescriptorMap;
         VBox vBox = new VBox();

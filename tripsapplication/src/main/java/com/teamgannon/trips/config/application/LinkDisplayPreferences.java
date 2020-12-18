@@ -2,6 +2,7 @@ package com.teamgannon.trips.config.application;
 
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class LinkDisplayPreferences implements Serializable {
 
     private boolean showDistances = false;
 
-    private List<LinkDescriptor> linkDescriptorList = new ArrayList<>();
+    private @NotNull List<LinkDescriptor> linkDescriptorList = new ArrayList<>();
 
     public LinkDisplayPreferences() {
         createLinks();

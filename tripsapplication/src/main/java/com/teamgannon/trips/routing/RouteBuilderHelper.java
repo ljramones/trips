@@ -6,6 +6,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,7 @@ public class RouteBuilderHelper {
      *
      * @param starDisplayRecordList the stars in the plot
      */
-    public RouteBuilderHelper(List<StarDisplayRecord> starDisplayRecordList) {
+    public RouteBuilderHelper(@NotNull List<StarDisplayRecord> starDisplayRecordList) {
         MapUtils.populateMap(starDisplayRecordMap,
                 starDisplayRecordList,
                 StarDisplayRecord::getStarName);
@@ -41,7 +42,7 @@ public class RouteBuilderHelper {
      * @param path        the graph path
      * @return the created route
      */
-    public RouteDescriptor buildPath(String source, String destination, String pathName, Color color, double lineWidth, String path) {
+    public RouteDescriptor buildPath(String source, String destination, String pathName, Color color, double lineWidth, @NotNull String path) {
         RouteDescriptor route = RouteDescriptor.builder().build();
         String extractPath = path.substring(1, path.length() - 1);
         String[] starList = extractPath.split(",");

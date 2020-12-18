@@ -6,12 +6,13 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import org.jetbrains.annotations.NotNull;
 
 public class LinksPane extends Pane {
 
     private LinkDisplayPreferences linksDefinition;
 
-    public LinksPane(LinkDisplayPreferences linksDefinition, String style) {
+    public LinksPane(@NotNull LinkDisplayPreferences linksDefinition, String style) {
         this.linksDefinition = linksDefinition;
 
         this.setStyle(style);
@@ -31,7 +32,7 @@ public class LinksPane extends Pane {
         this.getChildren().add(gridPane);
     }
 
-    private Pane linksDescriptionPane(LinkDisplayPreferences linksDefinition) {
+    private @NotNull Pane linksDescriptionPane(@NotNull LinkDisplayPreferences linksDefinition) {
         GridPane pane = new GridPane();
         pane.setPadding(new Insets(10, 10, 10, 10));
 
@@ -53,7 +54,7 @@ public class LinksPane extends Pane {
         return pane;
     }
 
-    private void createLinkLine(GridPane pane, int row, LinkDescriptor linkDescriptor) {
+    private void createLinkLine(@NotNull GridPane pane, int row, @NotNull LinkDescriptor linkDescriptor) {
         pane.add(
                 new Label(
                         String.format("Link %d:", linkDescriptor.getLinkNumber())),

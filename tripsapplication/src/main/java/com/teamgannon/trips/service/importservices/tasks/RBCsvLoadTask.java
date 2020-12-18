@@ -8,6 +8,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -18,7 +19,7 @@ public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUp
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
-    private final RBCsvReader rbCsvReader;
+    private final @NotNull RBCsvReader rbCsvReader;
 
 
     public RBCsvLoadTask(Dataset dataSet,
@@ -32,7 +33,7 @@ public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUp
     }
 
     @Override
-    protected FileProcessResult call() throws Exception {
+    protected @NotNull FileProcessResult call() throws Exception {
 
         FileProcessResult result = processRBCSVFile(dataSet);
         if (result.isSuccess()) {
@@ -44,7 +45,7 @@ public class RBCsvLoadTask extends Task<FileProcessResult> implements ProgressUp
         return result;
     }
 
-    public FileProcessResult processRBCSVFile(Dataset dataset) {
+    public @NotNull FileProcessResult processRBCSVFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());

@@ -24,6 +24,8 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +65,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     private final HBox loadingPanel = new HBox();
 
-    private DataSetDescriptor selectedDataset;
+    private @Nullable DataSetDescriptor selectedDataset;
 
     public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DataSetContext dataSetContext,
@@ -103,7 +105,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         stage.setOnCloseRequest(this::close);
     }
 
-    private void createProgress(VBox vBox) {
+    private void createProgress(@NotNull VBox vBox) {
         vBox.getChildren().add(new Separator());
 
         loadingPanel.setAlignment(Pos.CENTER);
@@ -117,7 +119,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         vBox.getChildren().add(loadingPanel);
     }
 
-    private void createSelectedDatasetContext(VBox vBox) {
+    private void createSelectedDatasetContext(@NotNull VBox vBox) {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         Label contextSettingLabel = new Label("Active Dataset");
@@ -134,7 +136,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         descriptorComboBox.setButtonCell(new ListCell<>() {
 
             @Override
-            protected void updateItem(DataSetDescriptor item, boolean empty) {
+            protected void updateItem(@Nullable DataSetDescriptor item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item != null) {
                     setText(item.getDataSetName());
@@ -167,7 +169,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     }
 
 
-    private void createButtonPanel(VBox vBox) {
+    private void createButtonPanel(@NotNull VBox vBox) {
         HBox buttonBox = new HBox();
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setSpacing(5);
@@ -191,7 +193,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     }
 
-    private void createTable(VBox vBox) {
+    private void createTable(@NotNull VBox vBox) {
 
         tableView.setPrefWidth(650);
 
@@ -228,7 +230,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         vBox.getChildren().add(tableView);
     }
 
-    private void onChanged(ListChangeListener.Change<? extends DataSetDescriptor> change) {
+    private void onChanged(ListChangeListener.@NotNull Change<? extends DataSetDescriptor> change) {
         ObservableList<DataSetDescriptor> selectedItems = (ObservableList<DataSetDescriptor>) change.getList();
         if (selectedItems.size() != 0) {
             selectedDataset = selectedItems.get(0);
@@ -318,7 +320,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         log.info("loaded data set dialog");
     }
 
-    public void complete(boolean status, Dataset dataset, FileProcessResult fileProcessResult, String errorMessage) {
+    public void complete(boolean status, @NotNull Dataset dataset, FileProcessResult fileProcessResult, String errorMessage) {
         if (status) {
             updateTable();
         } else {

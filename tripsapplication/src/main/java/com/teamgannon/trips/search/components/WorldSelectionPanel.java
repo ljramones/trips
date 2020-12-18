@@ -5,6 +5,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class WorldSelectionPanel extends BasePane {
         return yesNoWorld.isSelected();
     }
 
-    public List<String> getSelections() {
+    public @NotNull List<String> getSelections() {
         List<String> selections = new ArrayList<>();
         if (greenWorld.isSelected()) {
             selections.add("Green");

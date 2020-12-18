@@ -7,17 +7,18 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.paint.Color;
 import org.controlsfx.control.RangeSlider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by larrymitchell on 2017-06-25.
  */
 public class DistanceSelectionPanel extends BasePane {
 
-    private final RangeSlider d2EarthSlider;
+    private final @NotNull RangeSlider d2EarthSlider;
     private DistanceRange distanceRange = DistanceRange.builder().lowValue(0).highValue(20).min(0).max(20).build();
 
 
-    public DistanceSelectionPanel(double searchDistance, DistanceRange distanceRange) {
+    public DistanceSelectionPanel(double searchDistance, @NotNull DistanceRange distanceRange) {
 
         this.distanceRange = distanceRange;
         Label distanceToEarth = createLabel("Radius from Earth in ly");
@@ -36,7 +37,7 @@ public class DistanceSelectionPanel extends BasePane {
     }
 
 
-    public void setRange(DistanceRange distanceRange) {
+    public void setRange(@NotNull DistanceRange distanceRange) {
         this.distanceRange = distanceRange;
         d2EarthSlider.setLowValue(distanceRange.getLowValue());
         d2EarthSlider.setHighValue(distanceRange.getHighValue());
@@ -54,7 +55,7 @@ public class DistanceSelectionPanel extends BasePane {
                 .build();
     }
 
-    public void setDataSetDescriptor(DataSetDescriptor descriptor) {
+    public void setDataSetDescriptor(@NotNull DataSetDescriptor descriptor) {
         distanceRange.setMax(descriptor.getDistanceRange());
         d2EarthSlider.setMax(descriptor.getDistanceRange());
     }

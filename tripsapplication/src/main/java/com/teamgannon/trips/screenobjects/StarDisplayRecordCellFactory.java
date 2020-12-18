@@ -8,6 +8,7 @@ import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
+import org.jetbrains.annotations.NotNull;
 
 public class StarDisplayRecordCellFactory implements Callback<ListView<StarDisplayRecord>, ListCell<StarDisplayRecord>> {
 
@@ -27,7 +28,7 @@ public class StarDisplayRecordCellFactory implements Callback<ListView<StarDispl
     }
 
     @Override
-    public ListCell<StarDisplayRecord> call(ListView<StarDisplayRecord> routeListView) {
+    public @NotNull ListCell<StarDisplayRecord> call(ListView<StarDisplayRecord> routeListView) {
         return new StarDisplayRecordCell(
                 databaseListener,
                 listSelectorActionsListener,

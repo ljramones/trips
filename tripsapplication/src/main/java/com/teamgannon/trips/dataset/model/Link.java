@@ -3,6 +3,7 @@ package com.teamgannon.trips.dataset.model;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The link between two stars
@@ -35,22 +36,22 @@ public class Link {
     /**
      * Line style, solid or dotted
      */
-    private GridLines linkStyle = GridLines.Solid;
+    private @NotNull GridLines linkStyle = GridLines.Solid;
 
     /**
      * Hexadecimal Color value of link lines
      */
-    private double[] linkColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] linkColor = new double[]{0xAA, 0xBB, 0xCC};
     /**
      * Font to display this link ID in
      */
-    private FontDescriptor linkFont = new FontDescriptor("Arial", 10);
+    private @NotNull FontDescriptor linkFont = new FontDescriptor("Arial", 10);
 
-    public Color getLinkColor() {
+    public @NotNull Color getLinkColor() {
         return Color.color(linkColor[0], linkColor[1], linkColor[2]);
     }
 
-    public void setLinkColor(Color color) {
+    public void setLinkColor(@NotNull Color color) {
         linkColor[0] = color.getRed();
         linkColor[1] = color.getGreen();
         linkColor[2] = color.getBlue();

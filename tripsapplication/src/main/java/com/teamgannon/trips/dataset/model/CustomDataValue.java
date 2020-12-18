@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,7 +56,7 @@ public class CustomDataValue {
         }
     }
 
-    public List<CustomDataValue> toCustomDataValue(String parametersStr) {
+    public @Nullable List<CustomDataValue> toCustomDataValue(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });

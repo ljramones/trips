@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import  com.teamgannon.trips.dataset.enums.CustomFieldType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The custom data definition
@@ -31,7 +33,7 @@ public class CustomDataDefinition {
     /**
      * specific id of this
      */
-    private UUID id = UUID.randomUUID();
+    private @NotNull UUID id = UUID.randomUUID();
 
     /**
      * The name to display when entering or editing a custom field
@@ -57,7 +59,7 @@ public class CustomDataDefinition {
      * If a picklist field is of type single, the user can select only one option out of the list. An example
      * of a single could be “Population class: <1 mill, <100 mill, <1 billion, >1billion”
      */
-    private List<String> customFieldOptions = new ArrayList<>();
+    private @NotNull List<String> customFieldOptions = new ArrayList<>();
 
     public String convertToJson() {
         return convertToJson(this);
@@ -85,7 +87,7 @@ public class CustomDataDefinition {
         }
     }
 
-    public List<CustomDataDefinition> toCustomDataDefinition(String parametersStr) {
+    public @Nullable List<CustomDataDefinition> toCustomDataDefinition(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });

@@ -9,6 +9,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,15 +19,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class DataImportService {
 
-    private final CHVDataImportService chvDataImportService;
-    private final JsonDataImportService jsonDataImportService;
-    private final RBCSVDataImportService rbcsvDataImportService;
-    private final RBExcelDataImportService rbExcelDataImportService;
-    private final CSVDataImportService csvDataImportService;
+    private final @NotNull CHVDataImportService chvDataImportService;
+    private final @NotNull JsonDataImportService jsonDataImportService;
+    private final @NotNull RBCSVDataImportService rbcsvDataImportService;
+    private final @NotNull RBExcelDataImportService rbExcelDataImportService;
+    private final @NotNull CSVDataImportService csvDataImportService;
+    private final @NotNull ExcelDataImportService excelDataImportService;
 
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
-    private ImportTaskControl runningImportService;
+    private @Nullable ImportTaskControl runningImportService;
 
 
     public DataImportService(DatabaseManagementService databaseManagementService) {
@@ -36,15 +39,16 @@ public class DataImportService {
         rbcsvDataImportService = new RBCSVDataImportService(databaseManagementService);
         rbExcelDataImportService = new RBExcelDataImportService(databaseManagementService);
         csvDataImportService = new CSVDataImportService(databaseManagementService);
+        excelDataImportService = new ExcelDataImportService(databaseManagementService);
     }
 
-    public ImportResult processFile(Dataset dataset,
+    public ImportResult processFile(@NotNull Dataset dataset,
                                     StatusUpdaterListener statusUpdaterListener,
                                     DataSetChangeListener dataSetChangeListener,
                                     TaskComplete taskComplete,
-                                    Label progressText,
-                                    ProgressBar loadProgressBar,
-                                    Button cancelLoad) {
+                                    @NotNull Label progressText,
+                                    @NotNull ProgressBar loadProgressBar,
+                                    @NotNull Button cancelLoad) {
 
         if (currentlyRunning.get()) {
             if (runningImportService != null) {
@@ -84,7 +88,7 @@ public class DataImportService {
                 chvDataImportService.restart();
             }
 
-            case "xlsv" -> {
+            case "xlsx" -> {
                 currentlyRunning.set(true);
                 runningImportService = rbExcelDataImportService;
                 boolean queued = rbExcelDataImportService.processDataSet(
@@ -136,6 +140,24 @@ public class DataImportService {
                 // start the work
                 csvDataImportService.reset();
                 csvDataImportService.restart();
+            }
+
+            case "trips.xlsx" -> {
+                currentlyRunning.set(true);
+                runningImportService = excelDataImportService;
+                boolean queued = excelDataImportService.processDataSet(
+                        dataset, statusUpdaterListener, dataSetChangeListener,
+                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                if (!queued) {
+                    log.error("failed to start import process");
+                    currentlyRunning.set(false);
+                    runningImportService = null;
+                    excelDataImportService.reset();
+                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
+                }
+                // start the work
+                excelDataImportService.reset();
+                excelDataImportService.restart();
             }
 
             case "json" -> {

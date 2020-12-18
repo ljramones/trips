@@ -15,6 +15,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +30,8 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
     /**
      * the combobox for selection
      */
-    private final ComboBox<String> originCmb;
-    private final ComboBox<String> destinationCmb;
+    private final @NotNull ComboBox<String> originCmb;
+    private final @NotNull ComboBox<String> destinationCmb;
 
     /**
      * our lookup
@@ -45,7 +46,7 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
 
     private final ColorPicker colorPicker = new ColorPicker();
 
-    public RouteFinderDialog(Stage stage, List<StarDisplayRecord> starsInView) {
+    public RouteFinderDialog(Stage stage, @NotNull List<StarDisplayRecord> starsInView) {
         this.setTitle("Enter parameters for Route location");
 
         Set<String> searchValues = convertList(starsInView);
@@ -129,7 +130,7 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
     }
 
 
-    private Set<String> convertList(List<StarDisplayRecord> starsInView) {
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
         for (StarDisplayRecord record : starsInView) {
             starLookup.put(record.getStarName(), record);
         }

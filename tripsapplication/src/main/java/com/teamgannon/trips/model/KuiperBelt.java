@@ -3,6 +3,7 @@ package com.teamgannon.trips.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -67,7 +68,7 @@ public class KuiperBelt implements Serializable {
         }
     }
 
-    public KuiperBelt toKuiperBelt(String parametersStr) {
+    public @Nullable KuiperBelt toKuiperBelt(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, KuiperBelt.class);
         } catch (IOException e) {

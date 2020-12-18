@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.search.model;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public class DistanceBetweenStar {
@@ -25,7 +26,7 @@ public class DistanceBetweenStar {
      * @param b star b
      * @return true is this is the same combination
      */
-    public boolean same(StarDisplayRecord a, StarDisplayRecord b) {
+    public boolean same(@NotNull StarDisplayRecord a, @NotNull StarDisplayRecord b) {
         return a.getRecordId().equals(b.getRecordId())
                 || (a.getRecordId().equals(fromStar.getRecordId())
                 || a.getRecordId().equals(toStar.getRecordId()))

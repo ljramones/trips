@@ -3,6 +3,7 @@ package com.teamgannon.trips.file.chview;
 import com.teamgannon.trips.file.chview.model.CHLinkDescriptor;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
@@ -98,7 +99,7 @@ public class ChViewRecord implements Serializable {
     /**
      * ords[0] |double |Galactic coordinates
      */
-    private double[] ordinates = new double[3];
+    private double @NotNull [] ordinates = new double[3];
 
     /**
      * Constellation |string |Constellation
@@ -133,7 +134,7 @@ public class ChViewRecord implements Serializable {
     /**
      * the list of links for this star subsidiaryStar
      */
-    private List<CHLinkDescriptor> CHLinkDescriptors = new ArrayList<>();
+    private @NotNull List<CHLinkDescriptor> CHLinkDescriptors = new ArrayList<>();
 
     /**
      * the subsidiary star
@@ -164,7 +165,7 @@ public class ChViewRecord implements Serializable {
         ordinates[2] = ord3;
     }
 
-    public String getCoordinatesAsString() {
+    public @NotNull String getCoordinatesAsString() {
         return ordinates[0] + ","
                 + ordinates[1] + ","
                 + ordinates[1];

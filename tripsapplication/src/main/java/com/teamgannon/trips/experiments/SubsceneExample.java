@@ -14,6 +14,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 public class SubsceneExample extends Application {
 
@@ -24,7 +25,7 @@ public class SubsceneExample extends Application {
     private double mousePosY;
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(@NotNull Stage stage) throws Exception {
 
         VBox root = new VBox();
 
@@ -43,7 +44,7 @@ public class SubsceneExample extends Application {
         stage.show();
     }
 
-    private Pane createPane() {
+    private @NotNull Pane createPane() {
         Pane pane = new Pane();
         pane.setPrefSize(sceneWidth, sceneHeight);
         pane.setMaxSize(Pane.USE_COMPUTED_SIZE, Pane.USE_COMPUTED_SIZE);
@@ -52,7 +53,7 @@ public class SubsceneExample extends Application {
         return pane;
     }
 
-    private VBox createControls() {
+    private @NotNull VBox createControls() {
         HBox hBox = new HBox(new Button("Button A"));
         hBox.setAlignment(Pos.CENTER);
         VBox controls = new VBox(10, hBox);
@@ -60,7 +61,7 @@ public class SubsceneExample extends Application {
         return controls;
     }
 
-    private void handleMouseEvents(SubScene subScene) {
+    private void handleMouseEvents(@NotNull SubScene subScene) {
         subScene.setOnMousePressed((MouseEvent me) -> {
                     mousePosX = me.getSceneX();
                     mousePosY = me.getSceneY();

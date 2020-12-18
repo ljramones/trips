@@ -23,6 +23,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.jetbrains.annotations.NotNull;
 
 import static java.lang.Thread.sleep;
 
@@ -72,10 +73,10 @@ public class FadeApp extends Application {
     }
 
     @Override
-    public void start(final Stage initStage) {
+    public void start(final @NotNull Stage initStage) {
         final Task<ObservableList<String>> friendTask = new Task<>() {
             @Override
-            protected ObservableList<String> call() throws InterruptedException {
+            protected @NotNull ObservableList<String> call() throws InterruptedException {
                 ObservableList<String> foundFriends =
                         FXCollections.<String>observableArrayList();
                 ObservableList<String> availableFriends =
@@ -125,9 +126,9 @@ public class FadeApp extends Application {
     }
 
     private void showSplash(
-            final Stage initStage,
-            Task<?> task,
-            InitCompletionHandler initCompletionHandler
+            final @NotNull Stage initStage,
+            @NotNull Task<?> task,
+            @NotNull InitCompletionHandler initCompletionHandler
     ) {
         progressText.textProperty().bind(task.messageProperty());
         loadProgress.progressProperty().bind(task.progressProperty());

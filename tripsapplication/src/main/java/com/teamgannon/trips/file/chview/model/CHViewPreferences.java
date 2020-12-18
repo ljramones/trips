@@ -2,6 +2,7 @@ package com.teamgannon.trips.file.chview.model;
 
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public class CHViewPreferences implements Serializable {
      * <p>
      * sixth
      */
-    private double[] linksize = new double[4];
+    private double @NotNull [] linksize = new double[4];
     /**
      * StarName |int |Display Star Names or not
      * <p>
@@ -127,7 +128,7 @@ public class CHViewPreferences implements Serializable {
      * <p>
      * eleven
      */
-    private short[] linkStyle = new short[3];
+    private short @NotNull [] linkStyle = new short[3];
     /**
      * StemStyle |int |Style of stems
      * <p>
@@ -277,7 +278,7 @@ public class CHViewPreferences implements Serializable {
 
     //  -------------------- public special accessors ------------------- //
 
-    public static CHViewPreferences earthNormal() {
+    public static @NotNull CHViewPreferences earthNormal() {
         CHViewPreferences vp = new CHViewPreferences();
 
         return vp;
@@ -363,13 +364,13 @@ public class CHViewPreferences implements Serializable {
         stemColor = getColor(colorBytes);
     }
 
-    public void setCentreOrdinate(String ord1, String ord2, String ord3) {
+    public void setCentreOrdinate(@NotNull String ord1, @NotNull String ord2, @NotNull String ord3) {
         centreOrdinates[0] = Double.parseDouble(ord1);
         centreOrdinates[1] = Double.parseDouble(ord2);
         centreOrdinates[2] = Double.parseDouble(ord3);
     }
 
-    public void setGalCoordinates(String gal1, String gal2, String gal3) {
+    public void setGalCoordinates(@NotNull String gal1, @NotNull String gal2, @NotNull String gal3) {
         galCoordinates[0] = Double.parseDouble(gal1);
         galCoordinates[1] = Double.parseDouble(gal2);
         galCoordinates[2] = Double.parseDouble(gal3);
@@ -392,7 +393,7 @@ public class CHViewPreferences implements Serializable {
         displayFlagGroupOn[3] = group4;
     }
 
-    public Color getColor(byte[] colorInBytes) {
+    public @NotNull Color getColor(byte[] colorInBytes) {
 
         // int i2 = b & 0xFF;
         int red = (colorInBytes[0] & 0xFF);

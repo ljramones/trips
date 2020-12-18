@@ -5,6 +5,7 @@ import com.teamgannon.trips.jpa.repository.AstrographicObjectRepositoryCustom;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -39,7 +40,7 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
      * @return the list of AstrographicObjects found
      */
     @Override
-    public List<AstrographicObject> findBySearchQuery(AstroSearchQuery astroSearchQuery) {
+    public List<AstrographicObject> findBySearchQuery(@NotNull AstroSearchQuery astroSearchQuery) {
 
         // create the criteria builder to start putting all this together
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -66,9 +67,9 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         return astrographicObjects;
     }
 
-    private List<Predicate> makeAstroQuery(AstroSearchQuery astroSearchQuery,
-                                           Root<AstrographicObject> root,
-                                           CriteriaBuilder cb) {
+    private @NotNull List<Predicate> makeAstroQuery(@NotNull AstroSearchQuery astroSearchQuery,
+                                                    @NotNull Root<AstrographicObject> root,
+                                                    @NotNull CriteriaBuilder cb) {
 
         List<Predicate> predicates = new ArrayList<>();
         log.info("created the predicates");

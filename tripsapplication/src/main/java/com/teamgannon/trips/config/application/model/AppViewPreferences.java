@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public class AppViewPreferences {
@@ -11,21 +12,21 @@ public class AppViewPreferences {
     /**
      * the graph color palette
      */
-    private ColorPalette colorPallete = new ColorPalette();
+    private @NotNull ColorPalette colorPallete = new ColorPalette();
 
     /**
      * what parameters are turned on and off
      */
-    private GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
+    private @NotNull GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
 
     /**
      * the values of stars, size, type, color
      */
-    private StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+    private @NotNull StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
 
     /**
      * the civilizations
      */
-    private CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
+    private @NotNull CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
 
 }

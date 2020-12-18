@@ -9,6 +9,7 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -28,7 +29,7 @@ public class TripsSpringBootApplication implements CommandLineRunner {
     }
 
     @Bean
-    public FxWeaver fxWeaver(ConfigurableApplicationContext applicationContext) {
+    public @NotNull FxWeaver fxWeaver(@NotNull ConfigurableApplicationContext applicationContext) {
         // Would also work with javafx-weaver-core only:
         // return new FxWeaver(applicationContext::getBean, applicationContext::close);
         return new SpringFxWeaver(applicationContext);

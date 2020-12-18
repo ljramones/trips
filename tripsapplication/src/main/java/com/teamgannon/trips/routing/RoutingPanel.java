@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class RoutingPanel extends Pane {
      * set the dataset context
      * @param descriptor the descriptor
      */
-    public void setContext(DataSetDescriptor descriptor) {
+    public void setContext(@Nullable DataSetDescriptor descriptor) {
 
         routingListView.getItems().clear();
 

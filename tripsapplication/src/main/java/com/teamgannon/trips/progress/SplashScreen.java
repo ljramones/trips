@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import org.jetbrains.annotations.NotNull;
 
 public class SplashScreen extends Pane {
 
@@ -50,7 +51,7 @@ public class SplashScreen extends Pane {
         this.getChildren().add(splashLayout);
     }
 
-    public void set(Task<?> task) {
+    public void set(@NotNull Task<?> task) {
         progressText.textProperty().bind(task.messageProperty());
         loadProgress.progressProperty().bind(task.progressProperty());
     }

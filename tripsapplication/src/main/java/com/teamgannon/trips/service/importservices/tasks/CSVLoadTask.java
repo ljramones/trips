@@ -8,6 +8,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -17,7 +18,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
-    private final RegularCsvReader regularCsvReader;
+    private final @NotNull RegularCsvReader regularCsvReader;
 
     public CSVLoadTask(Dataset dataSet, DatabaseManagementService databaseManagementService) {
         this.dataSet = dataSet;
@@ -27,7 +28,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
     @Override
-    protected FileProcessResult call() throws Exception {
+    protected @NotNull FileProcessResult call() throws Exception {
         FileProcessResult result = processCSVFile(dataSet);
         if (result.isSuccess()) {
             log.info("New dataset {} added", dataSet.getName());
@@ -39,7 +40,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
 
-    public FileProcessResult processCSVFile(Dataset dataset) {
+    public @NotNull FileProcessResult processCSVFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());

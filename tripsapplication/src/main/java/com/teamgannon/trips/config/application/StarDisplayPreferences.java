@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.StarDetailsPersist;
 import com.teamgannon.trips.stardata.StellarType;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
@@ -16,7 +17,7 @@ public class StarDisplayPreferences implements Serializable {
     /**
      * the map of stellar attributes
      */
-    private Map<StellarType, StarDescriptionPreference> starMap = new HashMap<>();
+    private @NotNull Map<StellarType, StarDescriptionPreference> starMap = new HashMap<>();
 
     /**
      * the initial defaults if none exist
@@ -130,12 +131,12 @@ public class StarDisplayPreferences implements Serializable {
      *
      * @param starDetailsPersistList the list of data from the DB
      */
-    public void setStars(List<StarDetailsPersist> starDetailsPersistList) {
+    public void setStars(@NotNull List<StarDetailsPersist> starDetailsPersistList) {
         starDetailsPersistList.stream().map(StarDescriptionPreference::createStarDescription).forEach(starDescriptionPreference
                 -> starMap.put(starDescriptionPreference.getStarClass(), starDescriptionPreference));
     }
 
-    public List<StarDetailsPersist> getStarDetails() {
+    public @NotNull List<StarDetailsPersist> getStarDetails() {
         List<StarDetailsPersist> starDetailsPersistList = new ArrayList<>();
         for (StellarType type : starMap.keySet()) {
             StarDetailsPersist starDetailsPersist = starMap.get(type).toStarDetailsPersist();

@@ -7,6 +7,7 @@ import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.service.DataImportServiceOld;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 @Slf4j
 public class LoadGaiaDBTask extends Task<Integer> implements LoadUpdater {
@@ -37,7 +38,7 @@ public class LoadGaiaDBTask extends Task<Integer> implements LoadUpdater {
         return totalCount;
     }
 
-    public RBCsvFile getFile() {
+    public @Nullable RBCsvFile getFile() {
         return null;
     }
 

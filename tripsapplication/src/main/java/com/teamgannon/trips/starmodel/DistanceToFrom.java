@@ -1,6 +1,7 @@
 package com.teamgannon.trips.starmodel;
 
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public class DistanceToFrom implements Comparable<DistanceToFrom> {
@@ -50,7 +51,7 @@ public class DistanceToFrom implements Comparable<DistanceToFrom> {
      *                              from being compared to this object.
      */
     @Override
-    public int compareTo(DistanceToFrom distanceToFrom) {
+    public int compareTo(@NotNull DistanceToFrom distanceToFrom) {
         return (int) (this.distance - distanceToFrom.getDistance());
     }
 

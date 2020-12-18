@@ -2,6 +2,7 @@ package com.teamgannon.trips.dataset.model;
 
 import javafx.scene.paint.Color;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 
 import java.util.UUID;
@@ -25,11 +26,11 @@ public class Polity {
     /**
      * the polity color
      */
-    private double[] polityColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] polityColor = new double[]{0xAA, 0xBB, 0xCC};
     /**
      * font to use for polity
      */
-    private FontDescriptor polityFont = new FontDescriptor("Arial", 10);
+    private @NotNull FontDescriptor polityFont = new FontDescriptor("Arial", 10);
     /**
      * Potential jump distance of this P’s ships
      * <p>
@@ -39,11 +40,11 @@ public class Polity {
      */
     private double pJumpDist = 7.5;
 
-    public Color getPolityColor() {
+    public @NotNull Color getPolityColor() {
         return Color.color(polityColor[0], polityColor[1], polityColor[2]);
     }
 
-    public void setPolityColor(Color color) {
+    public void setPolityColor(@NotNull Color color) {
         polityColor[0] = color.getRed();
         polityColor[1] = color.getGreen();
         polityColor[2] = color.getBlue();

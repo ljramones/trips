@@ -2,6 +2,7 @@ package com.teamgannon.trips.file.chview.model;
 
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ public class ChViewFile implements Serializable {
      *
      * @param chViewRecord the record to add
      */
-    public void addRecord(ChViewRecord chViewRecord) {
+    public void addRecord(@NotNull ChViewRecord chViewRecord) {
         records.put(chViewRecord.getRecordNumber(), chViewRecord);
     }
 

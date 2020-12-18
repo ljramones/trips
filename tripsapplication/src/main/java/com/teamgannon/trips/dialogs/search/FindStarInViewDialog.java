@@ -13,6 +13,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
     /**
      * the combobox for selection
      */
-    private final ComboBox<String> cmb;
+    private final @NotNull ComboBox<String> cmb;
 
     /**
      * our lookup
@@ -38,7 +39,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
      *
      * @param starsInView the list of stars in view
      */
-    public FindStarInViewDialog(List<StarDisplayRecord> starsInView) {
+    public FindStarInViewDialog(@NotNull List<StarDisplayRecord> starsInView) {
 
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
@@ -89,7 +90,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
     }
 
-    private Set<String> convertList(List<StarDisplayRecord> starsInView) {
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
         for (StarDisplayRecord record : starsInView) {
             starLookup.put(record.getStarName(), record);
         }

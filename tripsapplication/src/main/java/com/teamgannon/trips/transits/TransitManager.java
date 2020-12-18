@@ -29,6 +29,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -52,7 +54,7 @@ public class TransitManager {
     /**
      * the graphical element controlling transits
      */
-    private final Group transitGroup;
+    private final @NotNull Group transitGroup;
 
     /**
      * the label display
@@ -79,7 +81,7 @@ public class TransitManager {
     /**
      * the route descriptor
      */
-    private RouteDescriptor routeDescriptor;
+    private @Nullable RouteDescriptor routeDescriptor;
     /**
      * used to track an active routing effort
      */
@@ -98,8 +100,8 @@ public class TransitManager {
     /**
      * constructor
      */
-    public TransitManager(Group world,
-                          Group sceneRoot,
+    public TransitManager(@NotNull Group world,
+                          @NotNull Group sceneRoot,
                           SubScene subScene,
                           InterstellarSpacePane interstellarSpacePane,
                           RouteUpdaterListener routeUpdaterListener) {
@@ -163,7 +165,7 @@ public class TransitManager {
      * @param distanceRoutes the distance range selected
      * @param starsInView    the stars in the current plot
      */
-    public void findTransits(DistanceRoutes distanceRoutes, List<StarDisplayRecord> starsInView) {
+    public void findTransits(@NotNull DistanceRoutes distanceRoutes, @NotNull List<StarDisplayRecord> starsInView) {
         // clear existing
         clearTransits();
 
@@ -183,7 +185,7 @@ public class TransitManager {
         log.info("done calcs");
     }
 
-    private void plotTransitRoutes(List<TransitRoute> transitRoutes) {
+    private void plotTransitRoutes(@NotNull List<TransitRoute> transitRoutes) {
         for (TransitRoute transitRoute : transitRoutes) {
             log.info("transit: {}", transitRoute);
             Label lengthLabel = createLabel(transitRoute);
@@ -204,7 +206,7 @@ public class TransitManager {
         transitGroup.setVisible(true);
     }
 
-    private Node createLineSegment(Point3D origin, Point3D target, double lineWeight, Color color, Label lengthLabel) {
+    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target, double lineWeight, Color color, @NotNull Label lengthLabel) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -243,7 +245,7 @@ public class TransitManager {
         return lineGroup;
     }
 
-    private Sphere createPointSphere(Label label) {
+    private @NotNull Sphere createPointSphere(@NotNull Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.WHEAT);
         material.setSpecularColor(Color.WHEAT);
@@ -255,14 +257,14 @@ public class TransitManager {
         return sphere;
     }
 
-    private Label createLabel(TransitRoute transitRoute) {
+    private @NotNull Label createLabel(@NotNull TransitRoute transitRoute) {
         Label label = new Label(String.format("%.2fly", transitRoute.getDistance()));
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 6);
         label.setFont(font);
         return label;
     }
 
-    private void createContextMenu(Node transitSegment) {
+    private void createContextMenu(@NotNull Node transitSegment) {
         TransitRoute route = (TransitRoute) transitSegment.getUserData();
         ContextMenu transitContextMenu = createPopup(hoverText(route), transitSegment);
 
@@ -278,7 +280,7 @@ public class TransitManager {
 
     }
 
-    private void transitClickEventHandler(Node transitSegment, ContextMenu transitContextMenu, MouseEvent e) {
+    private void transitClickEventHandler(Node transitSegment, @NotNull ContextMenu transitContextMenu, @NotNull MouseEvent e) {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
             transitContextMenu.show(transitSegment, e.getScreenX(), e.getScreenY());
@@ -287,7 +289,7 @@ public class TransitManager {
         }
     }
 
-    private ContextMenu createPopup(String hoverText, Node transitSegment) {
+    private @NotNull ContextMenu createPopup(String hoverText, @NotNull Node transitSegment) {
         final ContextMenu cm = new ContextMenu();
 
         MenuItem titleItem = new MenuItem(hoverText);
@@ -311,7 +313,7 @@ public class TransitManager {
         return cm;
     }
 
-    private MenuItem removeTransit(Node transitSegment) {
+    private @NotNull MenuItem removeTransit(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Remove");
         menuItem.setOnAction(event -> {
             TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
@@ -325,7 +327,7 @@ public class TransitManager {
 
     ///////////////////////  ROUTING  ////////////////////
 
-    private void removeTransit(TransitRoute transitRoute) {
+    private void removeTransit(@NotNull TransitRoute transitRoute) {
         transitRouteMap.remove(transitRoute.getName());
         transitRoutes = new ArrayList<>(transitRouteMap.values());
         MapUtils.populateMap(transitRouteMap,
@@ -333,7 +335,7 @@ public class TransitManager {
                 TransitRoute::getName);
     }
 
-    private MenuItem createNewRoute(Node transitSegment) {
+    private @NotNull MenuItem createNewRoute(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Create New Route");
         menuItem.setOnAction(event -> {
             if (currentRouteList.size() > 0) {
@@ -354,7 +356,7 @@ public class TransitManager {
         return menuItem;
     }
 
-    private void createRoute(Node transitSegment) {
+    private void createRoute(@NotNull Node transitSegment) {
         TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
         RouteDialog dialog = new RouteDialog(transitRoute.getSource());
         Optional<RouteDescriptor> result = dialog.showAndWait();
@@ -369,7 +371,7 @@ public class TransitManager {
         }
     }
 
-    private MenuItem addToRoute(Node transitSegment) {
+    private @NotNull MenuItem addToRoute(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Add To Route");
         menuItem.setOnAction(event -> {
             if (routingActive) {
@@ -383,7 +385,7 @@ public class TransitManager {
         return menuItem;
     }
 
-    private MenuItem completeTheRoute(Node transitSegment) {
+    private @NotNull MenuItem completeTheRoute(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Complete Route");
         menuItem.setOnAction(event -> {
             if (routingActive) {
@@ -407,14 +409,14 @@ public class TransitManager {
         routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
     }
 
-    private String hoverText(TransitRoute transitRoute) {
+    private @NotNull String hoverText(@NotNull TransitRoute transitRoute) {
         return "transit: "
                 + transitRoute.getSource().getStarName() + " <--> "
                 + transitRoute.getTarget().getStarName() + "is "
                 + String.format("%.2f", transitRoute.getDistance()) + "ly";
     }
 
-    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+    public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 

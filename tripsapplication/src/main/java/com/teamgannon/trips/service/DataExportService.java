@@ -1,25 +1,22 @@
 package com.teamgannon.trips.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.export.CSVExporter;
 import com.teamgannon.trips.service.export.ExcelExporter;
 import com.teamgannon.trips.service.export.JSONExporter;
-import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-import static com.teamgannon.trips.support.AlertFactory.*;
+import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 /**
  * Used to import and export data sets
@@ -32,11 +29,11 @@ public class DataExportService {
     private final DatabaseManagementService databaseManagementService;
     private final StatusUpdaterListener updaterListener;
 
-    private final ExcelExporter excelExporter;
+    private final @NotNull ExcelExporter excelExporter;
 
-    private final CSVExporter csvExporter;
+    private final @NotNull CSVExporter csvExporter;
 
-    private final JSONExporter jsonExporter;
+    private final @NotNull JSONExporter jsonExporter;
 
     public DataExportService(DatabaseManagementService databaseManagementService,
                              StatusUpdaterListener updaterListener) {
@@ -65,7 +62,7 @@ public class DataExportService {
         }
     }
 
-    public void exportDataset(ExportOptions exportOptions) {
+    public void exportDataset(@NotNull ExportOptions exportOptions) {
 
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
         switch (exportOptions.getExportFormat()) {

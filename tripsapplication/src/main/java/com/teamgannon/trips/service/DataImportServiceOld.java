@@ -9,8 +9,8 @@ import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
-import com.teamgannon.trips.file.excel.ExcelReader;
-import com.teamgannon.trips.file.excel.RBExcelFile;
+import com.teamgannon.trips.file.excel.rb.RBExcelReader;
+import com.teamgannon.trips.file.excel.rb.RBExcelFile;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
@@ -24,6 +24,8 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,11 +41,11 @@ public class DataImportServiceOld {
 
     private Stage stage;
     private final DatabaseManagementService databaseManagementService;
-    private final RBCsvReader rbCsvReader;
+    private final @NotNull RBCsvReader rbCsvReader;
     private final DataSetChangeListener dataSetChangeListener;
-    private final ChviewReader chviewReader;
+    private final @NotNull ChviewReader chviewReader;
     private final StatusUpdaterListener statusUpdaterListener;
-    private final ExcelReader excelReader;
+    private final @NotNull RBExcelReader RBExcelReader;
     private LoadUpdater loadUpdater;
 
     /**
@@ -66,7 +68,7 @@ public class DataImportServiceOld {
         // define readers
         this.rbCsvReader = new RBCsvReader(databaseManagementService);
         this.chviewReader = new ChviewReader();
-        this.excelReader = new ExcelReader();
+        this.RBExcelReader = new RBExcelReader();
     }
 
     /**
@@ -74,7 +76,7 @@ public class DataImportServiceOld {
      *
      * @param dataset the defined dataset
      */
-    public boolean processFileType(Dataset dataset) {
+    public boolean processFileType(@NotNull Dataset dataset) {
         this.loadUpdater = loadUpdater;
         FileProcessResult result;
         // this is a CH View import format
@@ -161,7 +163,7 @@ public class DataImportServiceOld {
 
     ///////////////////////////////////////////////////////////////////////
 
-    public FileProcessResult processCHViewFile(Dataset dataset) {
+    public @NotNull FileProcessResult processCHViewFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
@@ -191,7 +193,7 @@ public class DataImportServiceOld {
         return processResult;
     }
 
-    public FileProcessResult processRBCSVFile(LoadUpdater loadUpdater, Dataset dataset) {
+    public @NotNull FileProcessResult processRBCSVFile(LoadUpdater loadUpdater, @NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
@@ -213,13 +215,13 @@ public class DataImportServiceOld {
     }
 
 
-    public FileProcessResult processRBExcelFile(Dataset dataset) {
+    public @NotNull FileProcessResult processRBExcelFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(null,file);
+        RBExcelFile excelFile = RBExcelReader.loadFile(null,file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -236,7 +238,7 @@ public class DataImportServiceOld {
         return processResult;
     }
 
-    private FileProcessResult processCSVFile(Dataset dataset) {
+    private @NotNull FileProcessResult processCSVFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
@@ -245,7 +247,7 @@ public class DataImportServiceOld {
     }
 
 
-    private FileProcessResult processJSONFile(Dataset dataset) {
+    private @NotNull FileProcessResult processJSONFile(Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
         try {
             //create ObjectMapper instance
@@ -266,13 +268,13 @@ public class DataImportServiceOld {
         return processResult;
     }
 
-    private FileProcessResult processExcelFile(Dataset dataset) {
+    private @NotNull FileProcessResult processExcelFile(@NotNull Dataset dataset) {
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
 
         // load RB excel file
-        RBExcelFile excelFile = excelReader.loadFile(null, file);
+        RBExcelFile excelFile = RBExcelReader.loadFile(null, file);
         try {
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadRBStarSet(excelFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -292,7 +294,7 @@ public class DataImportServiceOld {
 
     /////////////////////////////////////////////////
 
-    public void loadCSVDataset(File file) {
+    public void loadCSVDataset(@NotNull File file) {
         try {
             Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
 
@@ -344,7 +346,7 @@ public class DataImportServiceOld {
      *
      * @param file the database file
      */
-    private void loadDBFile(File file) {
+    private void loadDBFile(@NotNull File file) {
         try {
             FileInputStream fis = new FileInputStream(file);
             // create a work book
@@ -386,7 +388,7 @@ public class DataImportServiceOld {
      * @param myWorkBook the workbook containing the database
      * @return the set of dataset descriptors
      */
-    private List<DataSetDescriptor> getDatasets(XSSFWorkbook myWorkBook) {
+    private @NotNull List<DataSetDescriptor> getDatasets(@NotNull XSSFWorkbook myWorkBook) {
         try {
             List<DataSetDescriptor> dataSetDescriptorList = new ArrayList<>();
             XSSFSheet mySheet = myWorkBook.getSheet("Database");
@@ -435,7 +437,7 @@ public class DataImportServiceOld {
      * @param column     the column to read
      * @return the cell as a string
      */
-    private String readCell(Row currentRow, int column) {
+    private String readCell(@NotNull Row currentRow, int column) {
         Cell cell = currentRow.getCell(column);
         return cell.getStringCellValue();
     }
@@ -445,7 +447,7 @@ public class DataImportServiceOld {
      *
      * @param mySheet the sheet on the excel workbook to extract
      */
-    private void extractDataset(XSSFSheet mySheet) {
+    private void extractDataset(@NotNull XSSFSheet mySheet) {
         updateStatus(String.format("starting import of %s dataset", mySheet.getSheetName()));
         List<AstrographicObject> astrographicObjectList = new ArrayList<>();
         for (Row row : mySheet) {
@@ -463,7 +465,7 @@ public class DataImportServiceOld {
      * @param row the excel sheet row
      * @return the star data
      */
-    private AstrographicObject loadRow(Row row) {
+    private @Nullable AstrographicObject loadRow(@NotNull Row row) {
         try {
             AstrographicObject object = new AstrographicObject();
             int column = 0;

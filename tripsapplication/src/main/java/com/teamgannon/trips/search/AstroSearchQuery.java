@@ -5,6 +5,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -49,25 +50,25 @@ public class AstroSearchQuery {
 
     private boolean fictionalStars = false;
 
-    private Set<String> polities = new HashSet<>();
+    private @NotNull Set<String> polities = new HashSet<>();
 
-    private Set<StellarType> stellarTypes = new HashSet<>();
+    private @NotNull Set<StellarType> stellarTypes = new HashSet<>();
 
-    private Set<String> fuelTypes = new HashSet<>();
+    private @NotNull Set<String> fuelTypes = new HashSet<>();
 
-    private Set<String> worldTypes = new HashSet<>();
+    private @NotNull Set<String> worldTypes = new HashSet<>();
 
-    private Set<String> portTypes = new HashSet<>();
+    private @NotNull Set<String> portTypes = new HashSet<>();
 
-    private Set<String> populationTypes = new HashSet<>();
+    private @NotNull Set<String> populationTypes = new HashSet<>();
 
-    private Set<String> techTypes = new HashSet<>();
+    private @NotNull Set<String> techTypes = new HashSet<>();
 
-    private Set<String> productTypes = new HashSet<>();
+    private @NotNull Set<String> productTypes = new HashSet<>();
 
-    private Set<String> milSpaceTypes = new HashSet<>();
+    private @NotNull Set<String> milSpaceTypes = new HashSet<>();
 
-    private Set<String> milPlanTypes = new HashSet<>();
+    private @NotNull Set<String> milPlanTypes = new HashSet<>();
 
     private boolean recenter = false;
 
@@ -128,7 +129,7 @@ public class AstroSearchQuery {
         centerCoordinates[2] = 0;
     }
 
-    public void setCenterRanging(StarDisplayRecord star, double distance) {
+    public void setCenterRanging(@NotNull StarDisplayRecord star, double distance) {
         this.centerCoordinates = star.getActualCoordinates();
         this.centerStar = star.getStarName();
         this.recenter = true;
@@ -145,7 +146,7 @@ public class AstroSearchQuery {
         zMinus = centerCoordinates[2] - distance;
     }
 
-    public String getCenterRangingCube() {
+    public @NotNull String getCenterRangingCube() {
         return "Range Cube is :" + String.format("(x[%5.2f, %5.2f]),", xMinus, xPlus) +
                 String.format("(y[%5.2f, %5.2f]),", yMinus, yPlus) +
                 String.format("(z[%5.2f, %5.2f])", zMinus, zPlus);
@@ -196,62 +197,62 @@ public class AstroSearchQuery {
         milPlanTypes.add(milPlan);
     }
 
-    public void addProducts(List<String> selections) {
+    public void addProducts(@NotNull List<String> selections) {
         for (String product : selections) {
             this.addProduct(product);
         }
     }
 
-    public void addPorts(List<String> ports) {
+    public void addPorts(@NotNull List<String> ports) {
         for (String port : ports) {
             this.addPortType(port);
         }
     }
 
-    public void addMilPlans(List<String> selections) {
+    public void addMilPlans(@NotNull List<String> selections) {
         for (String milPlan : selections) {
             this.addMilPlan(milPlan);
         }
     }
 
-    public void addMilSpaces(List<String> selections) {
+    public void addMilSpaces(@NotNull List<String> selections) {
         for (String milSpace : selections) {
             this.addMilSpace(milSpace);
         }
     }
 
-    public void addWorldTypes(List<String> selections) {
+    public void addWorldTypes(@NotNull List<String> selections) {
         for (String world : selections) {
             this.addWorldType(world);
         }
     }
 
-    public void addPopulationTypes(List<String> selections) {
+    public void addPopulationTypes(@NotNull List<String> selections) {
         for (String pop : selections) {
             this.addPopulationType(pop);
         }
     }
 
-    public void addFuelTypes(List<String> selections) {
+    public void addFuelTypes(@NotNull List<String> selections) {
         for (String fuel : selections) {
             this.addFuelType(fuel);
         }
     }
 
-    public void addTechs(List<String> selections) {
+    public void addTechs(@NotNull List<String> selections) {
         for (String tech : selections) {
             this.addTech(tech);
         }
     }
 
-    public void addStellarTypes(List<String> selection) {
+    public void addStellarTypes(@NotNull List<String> selection) {
 
         for (String stellarType : selection) {
             this.addStellarType(stellarType);
         }
     }
 
-    public void addPolities(List<String> politySelections) {
+    public void addPolities(@NotNull List<String> politySelections) {
         for (String polity : politySelections) {
             this.addPolity(polity);
         }

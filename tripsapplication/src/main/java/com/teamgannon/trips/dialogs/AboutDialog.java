@@ -14,12 +14,13 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class AboutDialog extends Dialog<String> {
 
-    public AboutDialog(Localization localization) {
+    public AboutDialog(@NotNull Localization localization) {
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();

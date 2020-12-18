@@ -7,6 +7,8 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -27,7 +29,7 @@ public class RegularCsvReader {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public RegCSVFile loadFile(ProgressUpdater progressUpdater, File file, Dataset dataset) {
+    public @NotNull RegCSVFile loadFile(@NotNull ProgressUpdater progressUpdater, @NotNull File file, @NotNull Dataset dataset) {
         RegCSVFile csvFile = new RegCSVFile();
         csvFile.setDataset(dataset);
         dataset.setFileSelected(file.getAbsolutePath());
@@ -169,7 +171,7 @@ public class RegularCsvReader {
         return csvFile;
     }
 
-    private DataSetDescriptor transformDescriptor(Dataset dataset, String[] descriptorVals) {
+    private @NotNull DataSetDescriptor transformDescriptor(@NotNull Dataset dataset, String[] descriptorVals) {
         try {
             DataSetDescriptor descriptor = new DataSetDescriptor();
             descriptor.setDataSetName(dataset.getName());
@@ -204,7 +206,7 @@ public class RegularCsvReader {
     }
 
 
-    private String putBackCommas(String origin) {
+    private @Nullable String putBackCommas(@Nullable String origin) {
         String replaced = origin;
         if (origin != null) {
             replaced = origin.replace("~", ",");

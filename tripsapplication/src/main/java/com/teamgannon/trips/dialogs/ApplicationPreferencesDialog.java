@@ -15,26 +15,27 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public class ApplicationPreferencesDialog extends Dialog<ViewPreferencesChange> {
 
-    private final GraphColorPane colorPane;
+    private final @NotNull GraphColorPane colorPane;
 
-    private final AppPrefsPane appPrefsPane;
+    private final @NotNull AppPrefsPane appPrefsPane;
 
     private final ApplicationPreferences applicationPreferences;
     // app preferences
     private final TextField routeSegmentLengthTextField = new TextField();
-    public Button changeButton = new Button("Change");
-    public Button resetColorsButton = new Button("Reset to defaults");
+    public @NotNull Button changeButton = new Button("Change");
+    public @NotNull Button resetColorsButton = new Button("Reset to defaults");
 
     /**
      * constructor
      *
      * @param tripsContext the trips context
      */
-    public ApplicationPreferencesDialog(TripsContext tripsContext) {
+    public ApplicationPreferencesDialog(@NotNull TripsContext tripsContext) {
         this.applicationPreferences = tripsContext.getAppPreferences();
 
         this.setTitle("Change Application Preferences Dialog");

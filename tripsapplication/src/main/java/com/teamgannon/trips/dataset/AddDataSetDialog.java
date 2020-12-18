@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final TextField fileSelected = new TextField();
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
-    public Button addDataSetButton = new Button("Add Dataset");
+    public @NotNull Button addDataSetButton = new Button("Add Dataset");
     private final Localization localization;
     private final DatabaseManagementService databaseManagementService;
 
@@ -208,7 +209,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         return chooseFile(dataFileFormats.get(formatEnum));
     }
 
-    public boolean chooseFile(DataFileFormat dataFileFormat) {
+    public boolean chooseFile(@NotNull DataFileFormat dataFileFormat) {
         log.debug("Import a {} format file", dataFileFormat.getDataFormatEnum().getValue());
         final FileChooser fileChooser = new FileChooser();
         String title = String.format("Select %s file to import", dataFileFormat.getDataFormatEnum().getValue());
@@ -257,7 +258,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         dataSet.setAuthor(dataSetAuthor.getText());
     }
 
-    private boolean checkFileDNExists(String filePath) {
+    private boolean checkFileDNExists(@NotNull String filePath) {
         return !new File(filePath).exists();
     }
 

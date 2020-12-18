@@ -157,7 +157,7 @@ public class DataSetDescriptor implements Serializable {
      *
      * @param routes the list of routes
      */
-    public void setRoutes(List<Route> routes) {
+    public void setRoutes(@org.jetbrains.annotations.NotNull List<Route> routes) {
         numberRoutes = routes.size();
         routesStr = new Route().convertToJson(routes);
     }
@@ -202,6 +202,10 @@ public class DataSetDescriptor implements Serializable {
         return astrographicDataList;
     }
 
+    public void setAstroDataString(String astrographicDataList) {
+        this.astrographicDataList = astrographicDataList;
+    }
+
     public Set<UUID> getAstrographicDataList() {
 
         // if its null return an empty list
@@ -215,12 +219,12 @@ public class DataSetDescriptor implements Serializable {
         return stringList.stream().map(UUID::fromString).collect(Collectors.toSet());
     }
 
-    public void setAstrographicDataList(Set<UUID> uuidList) {
+    public void setAstrographicDataList(@org.jetbrains.annotations.NotNull Set<UUID> uuidList) {
         numberStars = (long) uuidList.size();
         astrographicDataList = uuidList.stream().map(uuid -> uuid.toString() + ",").collect(Collectors.joining());
     }
 
-    public String getCreationDate() {
+    public @org.jetbrains.annotations.NotNull String getCreationDate() {
         Date date = new Date(fileOriginalDate);
         SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
         return df2.format(date);
@@ -230,7 +234,7 @@ public class DataSetDescriptor implements Serializable {
         return fileNotes;
     }
 
-    public String getToolTipText() {
+    public @org.jetbrains.annotations.NotNull String getToolTipText() {
         return "name:" + dataSetName + "\n"
                 + "creator: " + fileCreator + "\n"
                 + "type: " + datasetType + "\n"

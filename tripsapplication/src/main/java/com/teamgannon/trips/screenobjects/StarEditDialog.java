@@ -11,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -18,7 +19,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class StarEditDialog extends Dialog<StarEditStatus> {
 
-    private final AstrographicObject record;
+    private final @NotNull AstrographicObject record;
 
     // UI elements
     private final Label recordIdLabel = new Label();
@@ -79,7 +80,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     ////////////////
 
-    public StarEditDialog(AstrographicObject record) {
+    public StarEditDialog(@NotNull AstrographicObject record) {
         this.record = record;
 
         VBox vBox = new VBox();
@@ -119,7 +120,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         this.getDialogPane().setContent(vBox);
     }
 
-    private Pane createUserTab() {
+    private @NotNull Pane createUserTab() {
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
@@ -205,7 +206,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         return gridPane;
     }
 
-    private Pane createFictionalTab() {
+    private @NotNull Pane createFictionalTab() {
         // setup grid structure
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
@@ -297,7 +298,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         record.setMilPlanType(milspaceTextField.getText());
     }
 
-    private Pane createSecondaryTab() {
+    private @NotNull Pane createSecondaryTab() {
 
         // setup grid structure
         GridPane gridPane = new GridPane();
@@ -564,7 +565,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
     }
 
-    private Pane createOverviewTab() {
+    private @NotNull Pane createOverviewTab() {
 
         // setup grid structure
         GridPane gridPane = new GridPane();

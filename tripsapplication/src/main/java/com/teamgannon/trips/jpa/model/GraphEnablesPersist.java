@@ -1,6 +1,7 @@
 package com.teamgannon.trips.jpa.model;
 
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -24,7 +25,7 @@ public class GraphEnablesPersist {
 
     private boolean displayRoutes = true;
 
-    public static GraphEnablesPersist getDefaults() {
+    public static @NotNull GraphEnablesPersist getDefaults() {
         GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
         graphEnablesPersist.setDisplayPolities(true);
         graphEnablesPersist.setDisplayGrid(true);

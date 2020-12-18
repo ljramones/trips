@@ -5,6 +5,7 @@ import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 @Builder
@@ -32,7 +33,7 @@ public class TransitRoute {
         return target.getCoordinates();
     }
 
-    public String getName() {
+    public @NotNull String getName() {
         return source.getStarName()+","+target.getStarName();
     }
 

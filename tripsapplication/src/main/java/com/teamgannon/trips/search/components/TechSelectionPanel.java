@@ -5,6 +5,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ public class TechSelectionPanel extends BasePane {
         return yesTech.isSelected();
     }
 
-    public List<String> getSelections() {
+    public @NotNull List<String> getSelections() {
         List<String> selections = new ArrayList<>();
         if (tech1.isSelected()) {
             selections.add("1");

@@ -3,6 +3,7 @@ package com.teamgannon.trips.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -54,7 +55,7 @@ public class OortCloud implements Serializable {
         }
     }
 
-    public OortCloud toOortCloud(String parametersStr) {
+    public @Nullable OortCloud toOortCloud(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, OortCloud.class);
         } catch (IOException e) {

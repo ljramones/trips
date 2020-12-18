@@ -13,6 +13,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
 
     private final List<RoutingMetric> selectedRoutingMetrics = new ArrayList<>();
 
-    public DisplayAutoRoutesDialog(Stage stage, PossibleRoutes possibleRoutes) {
+    public DisplayAutoRoutesDialog(@NotNull Stage stage, @NotNull PossibleRoutes possibleRoutes) {
         this.setTitle("Select Routes to Plot");
 
         VBox vBox = new VBox();
@@ -56,12 +57,12 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
     }
 
 
-    private void updateTable(PossibleRoutes possibleRoutes) {
+    private void updateTable(@NotNull PossibleRoutes possibleRoutes) {
         routingChoicesTable.getItems().clear();
         possibleRoutes.getRoutes().forEach(metric -> routingChoicesTable.getItems().add(metric));
     }
 
-    private void createTable(VBox vBox) {
+    private void createTable(@NotNull VBox vBox) {
 
         routingChoicesTable.setPrefWidth(750);
 
@@ -95,7 +96,7 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
 
     }
 
-    private void onChanged(ListChangeListener.Change<? extends RoutingMetric> change) {
+    private void onChanged(ListChangeListener.@NotNull Change<? extends RoutingMetric> change) {
         ObservableList<RoutingMetric> selectedItems = (ObservableList<RoutingMetric>) change.getList();
         if (selectedItems.size() != 0) {
             selectedRoutingMetrics.addAll(selectedItems);

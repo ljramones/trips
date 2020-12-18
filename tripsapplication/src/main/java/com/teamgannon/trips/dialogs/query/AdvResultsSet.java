@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class AdvResultsSet {
      * list of validation errors if the query was found to be invalid
      */
     @Builder.Default
-    private List<String> validationErrors = new ArrayList<>();
+    private @NotNull List<String> validationErrors = new ArrayList<>();
 
     /**
      * true if the query returned results
@@ -49,7 +50,7 @@ public class AdvResultsSet {
      * the list of results found
      */
     @Builder.Default
-    private List<AstrographicObject> starsFound = new ArrayList<>();
+    private @NotNull List<AstrographicObject> starsFound = new ArrayList<>();
 
     /**
      * the dataset descriptor that we selected

@@ -6,6 +6,8 @@ import com.teamgannon.trips.stardata.StellarFactory;
 import javafx.scene.paint.Color;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,7 @@ public class AstroCSVStar {
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
     @Builder.Default
-    private StellarFactory stellarFactory = new StellarFactory();
+    private @NotNull StellarFactory stellarFactory = new StellarFactory();
 
     private String datasetName;
     private String displayName;
@@ -166,7 +168,7 @@ public class AstroCSVStar {
      */
     private double miscNum5;
 
-    public AstrographicObject toAstrographicObject() {
+    public @Nullable AstrographicObject toAstrographicObject() {
         try {
             AstrographicObject astro = new AstrographicObject();
 
@@ -211,13 +213,14 @@ public class AstroCSVStar {
             return astro;
 
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("failed to convert a RB CSV star object into a astrographic one: {}", e.getMessage());
             return null;
         }
 
     }
 
-    private Color getColor(StarColor starColor) {
+    private @NotNull Color getColor(@NotNull StarColor starColor) {
         String[] colorRGB = starColor.color().split(",");
         return Color.rgb(
                 Integer.parseInt(colorRGB[0]),
@@ -226,7 +229,7 @@ public class AstroCSVStar {
         );
     }
 
-    private double[] parseCoordinate(String position) {
+    private double @NotNull [] parseCoordinate(@NotNull String position) {
         double[] xyz = new double[3];
         String numbers = position.substring(1, position.length() - 1);
         String[] split = numbers.split(",");

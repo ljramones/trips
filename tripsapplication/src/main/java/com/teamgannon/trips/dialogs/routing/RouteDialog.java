@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -18,7 +19,7 @@ public class RouteDialog extends Dialog<RouteDescriptor> {
      *
      * @param starDisplayRecord the start star
      */
-    public RouteDialog(StarDisplayRecord starDisplayRecord) {
+    public RouteDialog(@NotNull StarDisplayRecord starDisplayRecord) {
 
         this.setTitle("Route Creation Dialog");
         this.setHeaderText("Create an initial Route");

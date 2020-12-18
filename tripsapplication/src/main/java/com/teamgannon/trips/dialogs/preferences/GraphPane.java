@@ -18,6 +18,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -55,7 +56,7 @@ public class GraphPane extends Pane {
     private final CheckBox displayLegendCheckbox = new CheckBox();
 
 
-    public GraphPane(PreferencesUpdaterListener updater, TripsContext tripsContext) {
+    public GraphPane(PreferencesUpdaterListener updater, @NotNull TripsContext tripsContext) {
         this.updater = updater;
 
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
@@ -76,7 +77,7 @@ public class GraphPane extends Pane {
     }
 
 
-    private GridPane createGridPane() {
+    private @NotNull GridPane createGridPane() {
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
@@ -88,7 +89,7 @@ public class GraphPane extends Pane {
     ///////////////////////////////////////////////////////////////////////////
 
 
-    private Pane createColorPane() {
+    private @NotNull Pane createColorPane() {
 
         GridPane colorGridPane = createGridPane();
 
@@ -307,7 +308,7 @@ public class GraphPane extends Pane {
 
     ///////////////////////////////////////////////////////////////////
 
-    private GridPane createEnablePane(GraphEnablesPersist graphEnablesPersist) {
+    private @NotNull GridPane createEnablePane(@NotNull GraphEnablesPersist graphEnablesPersist) {
         GridPane pane = createGridPane();
 
         Label lb1 = new Label("Display Grid:");

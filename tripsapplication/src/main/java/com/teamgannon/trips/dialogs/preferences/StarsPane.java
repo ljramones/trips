@@ -18,6 +18,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class StarsPane extends Pane {
     private final PreferencesUpdaterListener updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final StarDisplayPreferences starDisplayPreferences;
+    private final @NotNull StarDisplayPreferences starDisplayPreferences;
 
     private final TextField oClassRadiusTextField = new TextField();
     private final TextField bClassRadiusTextField = new TextField();
@@ -66,9 +67,9 @@ public class StarsPane extends Pane {
     private final ColorPicker tClassColorPicker = new ColorPicker();
     private final ColorPicker yClassColorPicker = new ColorPicker();
 
-    private final TitledPane starPane;
+    private final @NotNull TitledPane starPane;
 
-    public StarsPane(StarDisplayPreferences starDisplayPreferences, PreferencesUpdaterListener updater) {
+    public StarsPane(@NotNull StarDisplayPreferences starDisplayPreferences, PreferencesUpdaterListener updater) {
         this.starDisplayPreferences = starDisplayPreferences;
         this.updater = updater;
         VBox vBox = new VBox();
@@ -80,7 +81,7 @@ public class StarsPane extends Pane {
         this.getChildren().add(vBox);
     }
 
-    private Pane createStarPane(Map<StellarType, StarDescriptionPreference> starMap) {
+    private @NotNull Pane createStarPane(@NotNull Map<StellarType, StarDescriptionPreference> starMap) {
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
@@ -579,7 +580,7 @@ public class StarsPane extends Pane {
     }
 
 
-    private Pane starsDefinitionPane(StarDisplayPreferences starDisplayPreferences) {
+    private @NotNull Pane starsDefinitionPane(@NotNull StarDisplayPreferences starDisplayPreferences) {
         GridPane pane = new GridPane();
 
         pane.add(new Separator(), 1, 1, 1, starDisplayPreferences.getStarMap().size() + 1);
@@ -592,7 +593,7 @@ public class StarsPane extends Pane {
         return pane;
     }
 
-    private void createStarLine(GridPane pane, int row, StarDescriptionPreference starDescriptionPreference) {
+    private void createStarLine(@NotNull GridPane pane, int row, @NotNull StarDescriptionPreference starDescriptionPreference) {
         pane.add(
                 new Label(
                         String.format("Stellar Class %s:", starDescriptionPreference.getStarClass().getValue())),

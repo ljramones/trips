@@ -4,6 +4,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.service.model.TransitRoute;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
@@ -31,27 +32,27 @@ public class RouteGraph {
     /**
      * our discovered transits
      */
-    private final List<TransitRoute> transitRoutes;
+    private final @NotNull List<TransitRoute> transitRoutes;
 
     /**
      * the graph constructed
      */
-    private final Graph<String, DefaultEdge> routingGraph;
+    private final @NotNull Graph<String, DefaultEdge> routingGraph;
 
     /**
      * our connectivity graph
      */
-    private final ConnectivityInspector<String, DefaultEdge> connectivityInspector;
+    private final @NotNull ConnectivityInspector<String, DefaultEdge> connectivityInspector;
 
     /**
      * our shortest path graph
      */
-    private final DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
+    private final @NotNull DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
 
     /**
      * our Yen k shortest paths
      */
-    private final YenKShortestPath<String, DefaultEdge> kShortedPaths;
+    private final @NotNull YenKShortestPath<String, DefaultEdge> kShortedPaths;
 
 
     /**
@@ -59,7 +60,7 @@ public class RouteGraph {
      *
      * @param transitRoutes the transits to map to a graph
      */
-    public RouteGraph(List<TransitRoute> transitRoutes) {
+    public RouteGraph(@NotNull List<TransitRoute> transitRoutes) {
         this.transitRoutes = transitRoutes;
 
         routingGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
@@ -128,7 +129,7 @@ public class RouteGraph {
      * @param destination the destination
      * @return the path found
      */
-    public String findShortestPath(String origin, String destination) {
+    public String findShortestPath(@NotNull String origin, String destination) {
         ShortestPathAlgorithm.SingleSourcePaths<String, DefaultEdge> originPaths = dijkstraAlg.getPaths(origin);
         return originPaths.getPath(destination).toString();
     }

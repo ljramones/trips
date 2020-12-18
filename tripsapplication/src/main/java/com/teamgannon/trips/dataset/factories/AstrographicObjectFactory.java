@@ -5,6 +5,7 @@ import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.scene.paint.Color;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -22,7 +23,7 @@ public class AstrographicObjectFactory {
      * @param chViewRecord the chview record
      * @return the astrographic object
      */
-    public static AstrographicObject create(Dataset dataset, ChViewRecord chViewRecord) {
+    public static @NotNull AstrographicObject create(@NotNull Dataset dataset, @NotNull ChViewRecord chViewRecord) {
         AstrographicObject astrographicObject = new AstrographicObject();
 
         astrographicObject.setId(UUID.randomUUID());
@@ -73,7 +74,7 @@ public class AstrographicObjectFactory {
     }
 
 
-    public static double[] setColor(Color color) {
+    public static double @NotNull [] setColor(@NotNull Color color) {
         double[] colors = new double[3];
         colors[0] = color.getRed();
         colors[1] = color.getGreen();

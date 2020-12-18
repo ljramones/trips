@@ -9,7 +9,8 @@ import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
-import com.teamgannon.trips.file.excel.RBExcelFile;
+import com.teamgannon.trips.file.excel.normal.ExcelFile;
+import com.teamgannon.trips.file.excel.rb.RBExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
@@ -20,6 +21,7 @@ import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.service.model.DatabaseImportStatus;
 import com.teamgannon.trips.service.model.ParseResult;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -80,18 +82,21 @@ public class DatabaseManagementService {
      */
     private final StarDetailsPersistRepository starDetailsPersistRepository;
 
+    /**
+     * civilization bases
+     */
     private final CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository;
 
     /**
      * constructor
      *
-     * @param stellarSystemRepository
-     * @param starRepository
-     * @param dataSetDescriptorRepository
-     * @param astrographicObjectRepository
-     * @param graphColorsRepository
-     * @param graphEnablesRepository
-     * @param starDetailsPersistRepository
+     * @param stellarSystemRepository      the repo for star systems
+     * @param starRepository               the repo for stars
+     * @param dataSetDescriptorRepository  the data descriptor repo
+     * @param astrographicObjectRepository the astrographic objects
+     * @param graphColorsRepository        the graph colors
+     * @param graphEnablesRepository       the graph enables
+     * @param starDetailsPersistRepository the star details
      */
     public DatabaseManagementService(StellarSystemRepository stellarSystemRepository,
                                      StarRepository starRepository,
@@ -126,7 +131,7 @@ public class DatabaseManagementService {
      *
      * @param databasefile the database file
      */
-    public void importDatabase(File databasefile) {
+    public void importDatabase(@NotNull File databasefile) {
         log.info("attempting to import database file from:" + databasefile.getAbsolutePath());
 
         DatabaseImportStatus databaseImportStatus = new DatabaseImportStatus();
@@ -192,7 +197,7 @@ public class DatabaseManagementService {
      * @param nextLine the line to parse
      * @return parse result
      */
-    private ParseResult saveStarSystemData(String[] nextLine) {
+    private @NotNull ParseResult saveStarSystemData(String[] nextLine) {
 
         ParseResult result = new ParseResult();
         long catalogId = -1;
@@ -296,7 +301,7 @@ public class DatabaseManagementService {
         return result;
     }
 
-    private void bulkSave(List<Star> starList, List<StellarSystem> stellarSystemList) {
+    private void bulkSave(@NotNull List<Star> starList, @NotNull List<StellarSystem> stellarSystemList) {
 
         log.debug("save 1000 star elements and 1000 stellar system elements");
         starRepository.saveAll(starList);
@@ -304,7 +309,7 @@ public class DatabaseManagementService {
         stellarSystemRepository.saveAll(stellarSystemList);
     }
 
-    public DataSetDescriptor loadCHFile(ProgressUpdater progressUpdater, Dataset dataset, ChViewFile chViewFile) throws Exception {
+    public @NotNull DataSetDescriptor loadCHFile(@NotNull ProgressUpdater progressUpdater, @NotNull Dataset dataset, @NotNull ChViewFile chViewFile) throws Exception {
 
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
@@ -326,7 +331,7 @@ public class DatabaseManagementService {
         return astrographicObjects;
     }
 
-    public DataSetDescriptor loadRBStarSet(RBExcelFile excelFile) throws Exception {
+    public @NotNull DataSetDescriptor loadRBStarSet(@NotNull RBExcelFile excelFile) throws Exception {
 
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
@@ -337,7 +342,7 @@ public class DatabaseManagementService {
         );
     }
 
-    public DataSetDescriptor loadRBCSVStarSet(RBCsvFile rbCsvFile) throws Exception {
+    public @NotNull DataSetDescriptor loadRBCSVStarSet(@NotNull RBCsvFile rbCsvFile) throws Exception {
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
@@ -345,7 +350,7 @@ public class DatabaseManagementService {
         );
     }
 
-    public DataSetDescriptor loadCSVFile(RegCSVFile regCSVFile) throws Exception {
+    public @NotNull DataSetDescriptor loadCSVFile(@NotNull RegCSVFile regCSVFile) throws Exception {
         return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 regCSVFile
@@ -360,7 +365,7 @@ public class DatabaseManagementService {
      * @param searchContext the search context
      * @return the list of objects
      */
-    public List<AstrographicObject> getAstrographicObjectsOnQuery(SearchContext searchContext) {
+    public List<AstrographicObject> getAstrographicObjectsOnQuery(@NotNull SearchContext searchContext) {
         AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
         List<AstrographicObject> astrographicObjects;
         if (searchQuery.isRecenter()) {
@@ -392,8 +397,8 @@ public class DatabaseManagementService {
      * @param distanceFromCenterStar the distance frm the centre star to display
      * @return the fitlered list
      */
-    private List<AstrographicObject> filterByDistance(
-            List<AstrographicObject> astrographicObjects,
+    private @NotNull List<AstrographicObject> filterByDistance(
+            @NotNull List<AstrographicObject> astrographicObjects,
             double[] centerCoordinates,
             double distanceFromCenterStar) {
         List<AstrographicObject> filterList = new ArrayList<>();
@@ -421,7 +426,7 @@ public class DatabaseManagementService {
      * @param dataSetDescriptor the descriptor to add
      */
     @Transactional
-    public void createDataSet(DataSetDescriptor dataSetDescriptor) {
+    public void createDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
         dataSetDescriptorRepository.save(dataSetDescriptor);
     }
 
@@ -442,7 +447,7 @@ public class DatabaseManagementService {
      * @param descriptor the descriptor to remove
      */
     @Transactional
-    public void removeDataSet(DataSetDescriptor descriptor) {
+    public void removeDataSet(@NotNull DataSetDescriptor descriptor) {
         astrographicObjectRepository.deleteByDataSetName(descriptor.getDataSetName());
         dataSetDescriptorRepository.delete(descriptor);
     }
@@ -452,24 +457,24 @@ public class DatabaseManagementService {
      *
      * @return the list of all descriptors in the database
      */
-    public List<DataSetDescriptor> getDataSets() {
+    public @NotNull List<DataSetDescriptor> getDataSets() {
         Iterable<DataSetDescriptor> dataSetDescriptors = dataSetDescriptorRepository.findAll();
         List<DataSetDescriptor> descriptors = new ArrayList<>();
         dataSetDescriptors.forEach(descriptors::add);
         return descriptors;
     }
 
-    public List<AstrographicObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
+    public @NotNull List<AstrographicObject> getFromDataset(@NotNull DataSetDescriptor dataSetDescriptor) {
         // we can only effectively gather 500 at a time
         return astrographicObjectRepository.findByDataSetName(dataSetDescriptor.getDataSetName());
     }
 
-    public List<AstrographicObject> getFromDatasetWithinLimit(DataSetDescriptor dataSetDescriptor, double distance) {
+    public @NotNull List<AstrographicObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
         return toList(astrographicObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
-    public DataSetDescriptor getDatasetFromName(String dataSetName) {
+    public @NotNull DataSetDescriptor getDatasetFromName(String dataSetName) {
         return dataSetDescriptorRepository.findByDataSetName(dataSetName);
     }
     ///////////////
@@ -499,7 +504,7 @@ public class DatabaseManagementService {
      * @param starDetailsPersists the list of star details
      */
     @Transactional
-    public void updateStarDetails(List<StarDetailsPersist> starDetailsPersists) {
+    public void updateStarDetails(@NotNull List<StarDetailsPersist> starDetailsPersists) {
         starDetailsPersistRepository.saveAll(starDetailsPersists);
     }
 
@@ -511,7 +516,7 @@ public class DatabaseManagementService {
      * @param pageResult the page result
      * @return the list representation
      */
-    private List<AstrographicObject> toList(Page<AstrographicObject> pageResult) {
+    private @NotNull List<AstrographicObject> toList(@NotNull Page<AstrographicObject> pageResult) {
         return pageResult.getContent();
     }
 
@@ -521,7 +526,7 @@ public class DatabaseManagementService {
      * @param astrographicObject the astrographic object
      */
     @Transactional
-    public void removeStar(AstrographicObject astrographicObject) {
+    public void removeStar(@NotNull AstrographicObject astrographicObject) {
         astrographicObjectRepository.delete(astrographicObject);
     }
 
@@ -531,7 +536,7 @@ public class DatabaseManagementService {
      * @param astrographicObjectNew the star to add
      */
     @Transactional
-    public void addStar(AstrographicObject astrographicObjectNew) {
+    public void addStar(@NotNull AstrographicObject astrographicObjectNew) {
         astrographicObjectRepository.save(astrographicObjectNew);
         Optional<AstrographicObject> testGet = astrographicObjectRepository.findById(astrographicObjectNew.getId());
         if (testGet.isEmpty()) {
@@ -546,7 +551,7 @@ public class DatabaseManagementService {
      * @param astrographicObject the star to update
      */
     @Transactional
-    public void updateStar(AstrographicObject astrographicObject) {
+    public void updateStar(@NotNull AstrographicObject astrographicObject) {
         astrographicObjectRepository.save(astrographicObject);
     }
 
@@ -567,7 +572,7 @@ public class DatabaseManagementService {
         return graphEnablesPersist;
     }
 
-    public void updateGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+    public void updateGraphEnables(@NotNull GraphEnablesPersist graphEnablesPersist) {
         graphEnablesRepository.save(graphEnablesPersist);
     }
 
@@ -587,11 +592,11 @@ public class DatabaseManagementService {
         return civilizationDisplayPreferences;
     }
 
-    public void updateCivilizationDisplayPreferences(CivilizationDisplayPreferences preferences) {
+    public void updateCivilizationDisplayPreferences(@NotNull CivilizationDisplayPreferences preferences) {
         civilizationDisplayPreferencesRepository.save(preferences);
     }
 
-    public ColorPalette getGraphColorsFromDB() {
+    public @NotNull ColorPalette getGraphColorsFromDB() {
         Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
         GraphColorsPersist graphColorsPersist;
 
@@ -609,7 +614,7 @@ public class DatabaseManagementService {
     }
 
 
-    public void updateColors(ColorPalette colorPalette) {
+    public void updateColors(@NotNull ColorPalette colorPalette) {
         Optional<GraphColorsPersist> graphColorsPersistOptional = graphColorsRepository.findById(colorPalette.getId());
         if (graphColorsPersistOptional.isPresent()) {
             GraphColorsPersist graphColorsPersist = graphColorsPersistOptional.get();
@@ -623,12 +628,12 @@ public class DatabaseManagementService {
      *
      * @param starDisplayPreferences the star preferences
      */
-    public void updateStarPreferences(StarDisplayPreferences starDisplayPreferences) {
+    public void updateStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
         List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
     }
 
-    public void addRouteToDataSet(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
+    public void addRouteToDataSet(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
 
         // pull all routes
         List<Route> routeList = dataSetDescriptor.getRoutes();
@@ -640,7 +645,7 @@ public class DatabaseManagementService {
 
     }
 
-    public void updateNotesOnStar(UUID recordId, String notes) {
+    public void updateNotesOnStar(@NotNull UUID recordId, String notes) {
         Optional<AstrographicObject> objectOptional = astrographicObjectRepository.findById(recordId);
         if (objectOptional.isPresent()) {
             AstrographicObject object = objectOptional.get();
@@ -653,12 +658,12 @@ public class DatabaseManagementService {
         }
     }
 
-    public AstrographicObject getStar(UUID recordId) {
+    public AstrographicObject getStar(@NotNull UUID recordId) {
         Optional<AstrographicObject> objectOptional = astrographicObjectRepository.findById(recordId);
         return objectOptional.orElse(null);
     }
 
-    public void removeStar(UUID recordId) {
+    public void removeStar(@NotNull UUID recordId) {
         astrographicObjectRepository.deleteById(recordId);
     }
 
@@ -680,7 +685,7 @@ public class DatabaseManagementService {
      * @param astrographicObjectList the list of stars to save
      */
     @Transactional
-    public void addStars(List<AstrographicObject> astrographicObjectList) {
+    public void addStars(@NotNull List<AstrographicObject> astrographicObjectList) {
         astrographicObjectRepository.saveAll(astrographicObjectList);
     }
 
@@ -690,7 +695,7 @@ public class DatabaseManagementService {
      * @param starSet the star set
      */
     @Transactional
-    public void starBulkSave(Set<AstrographicObject> starSet) {
+    public void starBulkSave(@NotNull Set<AstrographicObject> starSet) {
         astrographicObjectRepository.saveAll(starSet);
     }
 
@@ -701,9 +706,20 @@ public class DatabaseManagementService {
      * @param starName    the star name to search
      * @return the list of matching stars
      */
-    public List<AstrographicObject> findStarsWithName(String datasetName, String starName) {
+    public @NotNull List<AstrographicObject> findStarsWithName(String datasetName, String starName) {
         return astrographicObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
-
+    /**
+     * save all the stars for a saved standard excel file
+     *
+     * @param updater   the updaters
+     * @param excelFile the excel file we want to load
+     */
+    public void loadCSVDataSingelDataset(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
+        dataSetDescriptorRepository.save(excelFile.getDescriptor());
+        updater.updateLoadInfo("saved descriptor in database");
+        astrographicObjectRepository.saveAll(excelFile.getAstrographicObjects());
+        updater.updateLoadInfo("saved all stars in database");
+    }
 }

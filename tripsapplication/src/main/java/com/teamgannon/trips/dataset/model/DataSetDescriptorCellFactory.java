@@ -6,6 +6,7 @@ import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
+import org.jetbrains.annotations.NotNull;
 
 
 public class DataSetDescriptorCellFactory implements Callback<ListView<DataSetDescriptor>, ListCell<DataSetDescriptor>> {
@@ -20,7 +21,7 @@ public class DataSetDescriptorCellFactory implements Callback<ListView<DataSetDe
     }
 
     @Override
-    public ListCell<DataSetDescriptor> call(ListView<DataSetDescriptor> dataSetDescriptorListView) {
+    public @NotNull ListCell<DataSetDescriptor> call(ListView<DataSetDescriptor> dataSetDescriptorListView) {
         return new DataSetDescriptorCell(dataSetChangeListener, updater);
     }
 

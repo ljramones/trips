@@ -12,6 +12,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -21,7 +22,7 @@ public class AppPrefsPane extends Pane {
     private final static String APP_PANE_TITLE = "Change View Preferences";
     private final static String APP_PANE_TITLE_MODIFIED = "Change View Preferences - *modified*";
 
-    private final ApplicationPreferences applicationPreferences;
+    private final @NotNull ApplicationPreferences applicationPreferences;
     private final TitledPane appPreferencesPane = new TitledPane();
     // app preferences
     private final TextField routeSegmentLengthTextField = new TextField();
@@ -31,7 +32,7 @@ public class AppPrefsPane extends Pane {
     private boolean appChangeDetected = false;
 
 
-    public AppPrefsPane(ApplicationPreferences applicationPreferences) {
+    public AppPrefsPane(@NotNull ApplicationPreferences applicationPreferences) {
         this.applicationPreferences = applicationPreferences;
 
         GridPane gridPane = new GridPane();

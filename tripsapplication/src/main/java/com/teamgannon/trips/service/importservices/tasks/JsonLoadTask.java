@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.jetbrains.annotations.Nullable;
 
 public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpdater{
 
@@ -17,7 +18,7 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
     }
 
     @Override
-    protected FileProcessResult call() throws Exception {
+    protected @Nullable FileProcessResult call() throws Exception {
 
 
         return null;
