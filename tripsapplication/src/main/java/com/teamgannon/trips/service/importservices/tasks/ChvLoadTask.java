@@ -7,9 +7,11 @@ import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 
+@Slf4j
 public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpdater {
 
     private final Dataset dataset;

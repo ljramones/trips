@@ -20,24 +20,29 @@ import static javafx.concurrent.Worker.State.RUNNING;
 public class CSVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
     private final DatabaseManagementService databaseManagementService;
-
+    private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
     private TaskComplete taskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
 
-    private Dataset dataset;
-
-
     public CSVDataImportService(DatabaseManagementService databaseManagementService) {
         this.databaseManagementService = databaseManagementService;
     }
 
-    public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,
+    @Override
+    protected Task<FileProcessResult> createTask() {
+        return new CSVLoadTask(dataset, databaseManagementService);
+    }
+
+    public boolean processDataSet(Dataset dataset,
+                                  StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete, Label progressText,
-                                  ProgressBar loadProgressBar, Button cancelLoad) {
+                                  TaskComplete taskComplete,
+                                  Label progressText,
+                                  ProgressBar loadProgressBar,
+                                  Button cancelLoad) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
@@ -53,14 +58,10 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     }
 
     @Override
-    protected Task<FileProcessResult> createTask() {
-        return new CSVLoadTask(dataset, databaseManagementService);
-    }
-
-    @Override
     protected void succeeded() {
         log.info("dataset loaded");
-        statusUpdaterListener.updateStatus(String.format("new Dataset loaded -> %s", dataset.getName()));
+        String message = String.format("new Dataset loaded -> %s", dataset.getName());
+        statusUpdaterListener.updateStatus(message);
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         taskComplete.complete(true, dataset, fileProcessResult, "loaded");
@@ -85,6 +86,11 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         taskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
     }
 
+    private void unsetProgressControls() {
+        progressText.textProperty().unbind();
+        loadProgressBar.progressProperty().unbind();
+        loadProgressBar.setProgress(1);
+    }
 
     @Override
     public boolean cancelImport() {
@@ -99,11 +105,6 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     @Override
     public Dataset getCurrentDataSet() {
         return dataset;
-    }
-
-    private void unsetProgressControls() {
-        progressText.textProperty().unbind();
-        loadProgressBar.progressProperty().unbind();
     }
 
 }
