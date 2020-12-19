@@ -1332,11 +1332,12 @@ public class MainPane implements
         fileChooser.setInitialDirectory(filesFolder);
         File file = fileChooser.showSaveDialog(null);
         if (file != null) {
+            DataSetDescriptor modDescriptor = databaseManagementService.recheckDescriptor(descriptor, astrographicObjects);
             ExportOptions exportOptions =
                     ExportOptions
                             .builder()
                             .doExport(true)
-                            .dataset(descriptor)
+                            .dataset(modDescriptor)
                             .fileName(file.getAbsolutePath())
                             .exportFormat(ExportFileType.EXCEL)
                             .build();
