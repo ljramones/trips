@@ -139,6 +139,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         addFormat(DataFormatEnum.CSV, "trips.csv");
         addFormat(DataFormatEnum.RB_EXCEL, "xlsx");
         addFormat(DataFormatEnum.EXCEL, "trips.xlsx");
+        addFormat(DataFormatEnum.JSON, "json");
     }
 
     private void addFormat(DataFormatEnum fileType, String suffix) {

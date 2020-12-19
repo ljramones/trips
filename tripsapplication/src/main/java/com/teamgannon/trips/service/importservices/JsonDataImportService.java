@@ -104,6 +104,7 @@ public class JsonDataImportService extends Service<FileProcessResult> implements
     private void unsetProgressControls() {
         progressText.textProperty().unbind();
         loadProgressBar.progressProperty().unbind();
+        loadProgressBar.setProgress(1);
     }
 
 }

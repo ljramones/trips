@@ -17,6 +17,8 @@ import com.teamgannon.trips.jpa.repository.*;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.export.model.JsonExportObj;
+import com.teamgannon.trips.service.importservices.tasks.JsonLoadTask;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.service.model.DatabaseImportStatus;
 import com.teamgannon.trips.service.model.ParseResult;
@@ -720,6 +722,13 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.save(excelFile.getDescriptor());
         updater.updateLoadInfo("saved descriptor in database");
         astrographicObjectRepository.saveAll(excelFile.getAstrographicObjects());
+        updater.updateLoadInfo("saved all stars in database");
+    }
+
+    public void loadJsonFileSingleDS(ProgressUpdater updater, JsonExportObj jsonExportObj) {
+        dataSetDescriptorRepository.save(jsonExportObj.getDescriptor().toDataSetDescriptor());
+        updater.updateLoadInfo("saved descriptor in database");
+        astrographicObjectRepository.saveAll(jsonExportObj.getAstrographicObjectList());
         updater.updateLoadInfo("saved all stars in database");
     }
 }

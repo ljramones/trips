@@ -1,9 +1,11 @@
 package com.teamgannon.trips.jpa.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -239,6 +241,27 @@ public class DataSetDescriptor implements Serializable {
                 + "creator: " + fileCreator + "\n"
                 + "type: " + datasetType + "\n"
                 + "notes: " + fileNotes;
+    }
+
+    public DataSetDescriptorDTO toDataSetDescriptorDTO() {
+        DataSetDescriptorDTO dto = new DataSetDescriptorDTO();
+
+        dto.setDataSetName(dataSetName);
+        dto.setFilePath(filePath);
+        dto.setFileCreator(fileCreator);
+        dto.setFileOriginalDate(fileOriginalDate);
+        dto.setFileNotes(fileNotes);
+        dto.setDatasetType(datasetType);
+        dto.setNumberStars(numberStars);
+        dto.setDistanceRange(distanceRange);
+        dto.setNumberRoutes(numberRoutes);
+        dto.setThemeStr(themeStr);
+        dto.setAstrographicDataList(astrographicDataList);
+        dto.setRoutesStr(routesStr);
+        dto.setCustomDataDefsStr(customDataDefsStr);
+        dto.setCustomDataValuesStr(customDataValuesStr);
+
+        return dto;
     }
 
 }

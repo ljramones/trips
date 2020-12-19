@@ -8,7 +8,8 @@ public enum DataFormatEnum {
     RB_CSV("csv(RB) import"),
     CSV("csv import"),
     RB_EXCEL("excel(RB) import"),
-    EXCEL("excel import");
+    EXCEL("excel import"),
+    JSON("json import");
 
     private final String value;
 
