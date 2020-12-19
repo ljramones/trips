@@ -31,5 +31,11 @@ public interface StellarDataUpdaterListener {
      */
     void showNewStellarData(boolean showPlot, boolean showTable);
 
+    /**
+     * create an export file for the selected dataset
+     *
+     * @param newQuery the query to base our dataset on
+     */
+    void doExport(AstroSearchQuery newQuery);
 
 }

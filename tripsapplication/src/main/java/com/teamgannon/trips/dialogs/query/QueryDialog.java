@@ -34,6 +34,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final @NotNull SearchPane searchPane;
     private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
+    private final CheckBox exportCheckbox = new CheckBox("Export Dataset");
 
     /**
      * constructor
@@ -73,6 +74,9 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         hBox1.getChildren().add(new Separator());
         hBox1.getChildren().add(tableDisplayCheckbox);
         tableDisplayCheckbox.setFont(font);
+        hBox1.getChildren().add(new Separator());
+        exportCheckbox.setFont(font);
+        hBox1.getChildren().add(exportCheckbox);
         vBox.getChildren().add(hBox1);
 
         HBox hBox2 = new HBox();
@@ -112,12 +116,13 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private void runQueryClicked(ActionEvent actionEvent) {
         boolean showPlot = plotDisplayCheckbox.isSelected();
         boolean showTable = tableDisplayCheckbox.isSelected();
+        boolean doExport = exportCheckbox.isSelected();
 
-        if (!showPlot && !showTable) {
+        if (!showPlot && !showTable && !doExport) {
             showErrorAlert("Query Request",
-                    "Must select at least one target for data, plot or table");
+                    "Must select at least one target for data, plot, table, or export");
         }
-        searchPane.runQuery(showPlot, showTable);
+        searchPane.runQuery(showPlot, showTable, doExport);
     }
 
 }
