@@ -67,13 +67,34 @@ public class DataExportService {
 
         List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
 
+        exportExec(exportOptions, astrographicObjects);
+
+    }
+
+    /**
+     * do the actual export witht he defined objects
+     *
+     * @param exportOptions       the options
+     * @param astrographicObjects the objects to export
+     */
+    private void exportExec(@NotNull ExportOptions exportOptions, List<AstrographicObject> astrographicObjects) {
         switch (exportOptions.getExportFormat()) {
 
             case CSV -> csvExporter.exportAsCSV(exportOptions, astrographicObjects);
             case EXCEL -> excelExporter.exportAsExcel(exportOptions, astrographicObjects);
             case JSON -> jsonExporter.exportAsJson(exportOptions, astrographicObjects);
         }
+    }
 
+    /**
+     * export a queried dataset based on options
+     *
+     * @param exportOptions       the options
+     * @param astrographicObjects the objects to export
+     */
+    public void exportDatasetOnQuery(ExportOptions exportOptions, List<AstrographicObject> astrographicObjects) {
+        log.info("exporting {} with {} stars ", exportOptions.getDataset(), astrographicObjects.size());
+        exportExec(exportOptions, astrographicObjects);
     }
 
 }

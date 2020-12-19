@@ -45,7 +45,7 @@ public class SearchPane extends Pane {
     /**
      * constructor
      *
-     * @param searchContext          the search context
+     * @param searchContext  the search context
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
@@ -118,11 +118,16 @@ public class SearchPane extends Pane {
         dataSetChoicePanel.updateDataContext(dataSetDescriptor);
     }
 
-    public void runQuery(boolean showPlot, boolean showTable) {
+    public void runQuery(boolean showPlot, boolean showTable, boolean doExport) {
 
         // pull derived query
         AstroSearchQuery newQuery = createSearchQuery();
         log.info("New search request:{}", newQuery);
+
+        // process file location for export if selected
+        if (doExport) {
+            updater.doExport(newQuery);
+        }
 
         if (newQuery.getDescriptor() != null) {
             // update main screen
