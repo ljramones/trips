@@ -13,7 +13,7 @@ public class JsonExportObj {
     /**
      * the data descriptor for these object
      */
-    private DataSetDescriptor descriptor;
+    private DataSetDescriptorDTO descriptor;
 
     /**
      * the astrographic objects themselves

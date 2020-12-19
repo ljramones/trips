@@ -1,10 +1,12 @@
 package com.teamgannon.trips.service.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -29,16 +32,16 @@ public class JSONExporter {
 
     public void exportAsJson(@NotNull ExportOptions export, List<AstrographicObject> astrographicObjects) {
 
-        ObjectMapper Obj = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
 
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.json"));
 
             JsonExportObj jsonExportObj = new JsonExportObj();
-            jsonExportObj.setDescriptor(export.getDataset());
+            jsonExportObj.setDescriptor(export.getDataset().toDataSetDescriptorDTO());
             jsonExportObj.setAstrographicObjectList(astrographicObjects);
 
-            String jsonStr = Obj.writeValueAsString(jsonExportObj);
+            String jsonStr = objectMapper.writeValueAsString(jsonExportObj);
             writer.write(jsonStr);
 
             writer.flush();
@@ -56,11 +59,33 @@ public class JSONExporter {
     }
 
 
-    private void updateStatus(String status) {
-        new Thread(() -> Platform.runLater(() -> {
-            log.info(status);
-            updaterListener.updateStatus(status);
-        })).start();
+    public static void main(String[] args) {
+        try {
+
+            DataSetDescriptor descriptor = new DataSetDescriptor();
+            descriptor.setThemeStr("");
+            descriptor.setCustomDataValuesStr("");
+            descriptor.setCustomDataDefsStr("");
+            descriptor.setDataSetName("test");
+            descriptor.setFileCreator("anon");
+            descriptor.setFileNotes("notes");
+            descriptor.setFilePath("filepath");
+            descriptor.setDatasetType("json");
+            descriptor.setRoutesStr("");
+
+            DataSetDescriptorDTO dto = descriptor.toDataSetDescriptorDTO();
+
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonStr = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(dto);
+            System.out.println(jsonStr);
+
+            DataSetDescriptorDTO dto1 = mapper.readValue(jsonStr, DataSetDescriptorDTO.class);
+            DataSetDescriptor descriptor1 = dto1.toDataSetDescriptor();
+
+            log.info("converted");
+        } catch (Exception e) {
+            log.error("failed to export as Json" + e.getMessage());
+        }
     }
 
 }
