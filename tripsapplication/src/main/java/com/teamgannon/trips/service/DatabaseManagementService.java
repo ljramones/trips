@@ -18,7 +18,6 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
-import com.teamgannon.trips.service.importservices.tasks.JsonLoadTask;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.service.model.DatabaseImportStatus;
 import com.teamgannon.trips.service.model.ParseResult;
@@ -730,5 +729,22 @@ public class DatabaseManagementService {
         updater.updateLoadInfo("saved descriptor in database");
         astrographicObjectRepository.saveAll(jsonExportObj.getAstrographicObjectList());
         updater.updateLoadInfo("saved all stars in database");
+    }
+
+    public DataSetDescriptor recheckDescriptor(DataSetDescriptor descriptor, List<AstrographicObject> astrographicObjects) {
+        double max = 0;
+        long numberStars = 0L;
+        for (AstrographicObject star : astrographicObjects) {
+            if (star.getDistance() > max) {
+                max = star.getDistance();
+            }
+            numberStars++;
+        }
+        descriptor.setDistanceRange(max);
+        descriptor.setNumberStars(numberStars);
+        descriptor.clearRoutes();
+        descriptor.resetDate();
+
+        return descriptor;
     }
 }

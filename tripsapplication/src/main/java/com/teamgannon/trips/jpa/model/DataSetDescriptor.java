@@ -159,9 +159,17 @@ public class DataSetDescriptor implements Serializable {
      *
      * @param routes the list of routes
      */
-    public void setRoutes(@org.jetbrains.annotations.NotNull List<Route> routes) {
+    public void setRoutes( List<Route> routes) {
         numberRoutes = routes.size();
         routesStr = new Route().convertToJson(routes);
+    }
+
+    public void clearRoutes() {
+        setRoutes(new ArrayList<>());
+    }
+
+    public void resetDate() {
+        fileOriginalDate = Instant.now().toEpochMilli();
     }
 
     /**
