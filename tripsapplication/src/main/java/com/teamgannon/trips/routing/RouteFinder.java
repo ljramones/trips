@@ -41,6 +41,9 @@ public class RouteFinder {
      */
     public void startRouteLocation() {
         RouteFinderDialog routeFinderDialog = new RouteFinderDialog(stage, interstellarSpacePane.getCurrentStarsInView());
+        Stage theStage =  (Stage)routeFinderDialog.getDialogPane().getScene().getWindow();
+        theStage.setAlwaysOnTop(true);
+        stage.toFront();
 
         // get the route location parameters from the dialog
         Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialog.showAndWait();
