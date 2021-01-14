@@ -89,6 +89,11 @@ public class DatabaseManagementService {
     private final CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository;
 
     /**
+     * trips prefs
+     */
+    private TripsPrefsRepository tripsPrefsRepository;
+
+    /**
      * constructor
      *
      * @param stellarSystemRepository      the repo for star systems
@@ -106,7 +111,8 @@ public class DatabaseManagementService {
                                      GraphColorsRepository graphColorsRepository,
                                      GraphEnablesRepository graphEnablesRepository,
                                      StarDetailsPersistRepository starDetailsPersistRepository,
-                                     CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository) {
+                                     CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository,
+                                     TripsPrefsRepository tripsPrefsRepository) {
 
         this.stellarSystemRepository = stellarSystemRepository;
         this.starRepository = starRepository;
@@ -116,6 +122,7 @@ public class DatabaseManagementService {
         this.graphEnablesRepository = graphEnablesRepository;
         this.starDetailsPersistRepository = starDetailsPersistRepository;
         this.civilizationDisplayPreferencesRepository = civilizationDisplayPreferencesRepository;
+        this.tripsPrefsRepository = tripsPrefsRepository;
     }
 
     /**
@@ -711,6 +718,7 @@ public class DatabaseManagementService {
         return astrographicObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
+
     /**
      * save all the stars for a saved standard excel file
      *
@@ -746,5 +754,22 @@ public class DatabaseManagementService {
         descriptor.resetDate();
 
         return descriptor;
+    }
+
+    public TripsPrefs getTripsPrefs() {
+        Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
+        if (tripsPrefsOptional.isPresent()) {
+            return tripsPrefsOptional.get();
+        } else {
+            TripsPrefs tripsPrefs = new TripsPrefs();
+            tripsPrefs.setId("main");
+            tripsPrefs.setShowWelcomeDataReq(false);
+            tripsPrefsRepository.save(tripsPrefs);
+            return tripsPrefs;
+        }
+    }
+
+    public void saveTripsPrefs(TripsPrefs tripsPrefs) {
+        tripsPrefsRepository.save(tripsPrefs);
     }
 }

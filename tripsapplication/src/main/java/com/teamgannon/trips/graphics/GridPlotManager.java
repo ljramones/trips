@@ -35,8 +35,6 @@ public class GridPlotManager {
     private final Group scaleGroup = new Group();
     private final Group gridGroup = new Group();
 
-    private Group sceneRoot;
-
     /**
      * used to control label visibility
      */
@@ -185,7 +183,7 @@ public class GridPlotManager {
             Point3D from = new Point3D(x, 0, 0);
             Point3D to = new Point3D(x, 0, depth);
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor());
+                    from, to, lineWidth, colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
             gridGroup.getChildren().add(lineSegment);
             x += gridIncrement;
         }
@@ -197,7 +195,7 @@ public class GridPlotManager {
             Point3D from = new Point3D(0, 0, z);
             Point3D to = new Point3D(width, 0, z);
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor());
+                    from, to, lineWidth, colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
             gridGroup.getChildren().add(lineSegment);
             z += gridIncrement;
         }

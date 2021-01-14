@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
@@ -18,7 +19,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
+import org.controlsfx.dialog.FontSelectorDialog;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -55,6 +59,9 @@ public class GraphPane extends Pane {
     private final CheckBox displayLabelCheckbox = new CheckBox();
     private final CheckBox displayLegendCheckbox = new CheckBox();
 
+    private Font labelFont = Font.font("Arial", FontWeight.NORMAL, FontPosture.REGULAR, 8);
+    private final Label fontLabel = new Label(labelFont.getName());
+    private SerialFont labelSerialFont = new SerialFont(labelFont);
 
     public GraphPane(PreferencesUpdaterListener updater, @NotNull TripsContext tripsContext) {
         this.updater = updater;
@@ -76,6 +83,18 @@ public class GraphPane extends Pane {
         this.getChildren().add(vBox);
     }
 
+    private void setLabelFont(ActionEvent event) {
+        FontSelectorDialog fontSelectorDialog = new FontSelectorDialog(null);
+        fontSelectorDialog.setTitle("Select label Font");
+        Optional<Font> optionalFont = fontSelectorDialog.showAndWait();
+        if (optionalFont.isPresent()) {
+            labelFont = optionalFont.get();
+            fontLabel.setText(labelFont.getName());
+            fontLabel.setFont(labelFont);
+            labelSerialFont = new SerialFont(labelFont);
+        }
+    }
+
 
     private @NotNull GridPane createGridPane() {
         GridPane gridPane = new GridPane();
@@ -85,9 +104,7 @@ public class GraphPane extends Pane {
         return gridPane;
     }
 
-
     ///////////////////////////////////////////////////////////////////////////
-
 
     private @NotNull Pane createColorPane() {
 
@@ -110,6 +127,19 @@ public class GraphPane extends Pane {
         });
         colorGridPane.add(labelColorPicker, 2, 0);
 
+        // Add font prefs
+        Label starFontLabel = new Label("Label Font:");
+        starFontLabel.setFont(font);
+        colorGridPane.add(starFontLabel, 0, 1);
+        labelFont = colorPalette.getLabelFont().toFont();
+        fontLabel.setText(labelFont.getName());
+        fontLabel.setFont(labelFont);
+        colorGridPane.add(fontLabel, 1, 1);
+
+        Button fontButton = new Button("Select Font");
+        fontButton.setOnAction(this::setLabelFont);
+        colorGridPane.add(fontButton, 2, 1);
+
         // set values
         labelColorTextField.setText(colorPalette.getLabelColor().toString());
         labelColorPicker.setValue(colorPalette.getLabelColor());
@@ -118,8 +148,8 @@ public class GraphPane extends Pane {
         //   setup color of grid
         Label gridColorLabel = new Label("Grid color:");
         gridColorLabel.setFont(font);
-        colorGridPane.add(gridColorLabel, 0, 1);
-        colorGridPane.add(gridColorTextField, 1, 1);
+        colorGridPane.add(gridColorLabel, 0, 2);
+        colorGridPane.add(gridColorTextField, 1, 2);
         // set listener
         gridColorPicker.setOnAction(e -> {
             // color
@@ -128,8 +158,8 @@ public class GraphPane extends Pane {
             // set text of the label to RGB value of color
             gridColorTextField.setText(c.toString());
         });
-        colorGridPane.add(gridColorPicker, 2, 1);
-        colorGridPane.add(gridLineWidthTextField, 3,1);
+        colorGridPane.add(gridColorPicker, 2, 2);
+        colorGridPane.add(gridLineWidthTextField, 3, 2);
         gridLineWidthTextField.setPromptText("Enter line width for grid");
         gridLineWidthTextField.setText(Double.toString(colorPalette.getGridLineWidth()));
 
@@ -141,8 +171,8 @@ public class GraphPane extends Pane {
         //   setup color of extensions
         Label stemLabel = new Label("Stem color:");
         stemLabel.setFont(font);
-        colorGridPane.add(stemLabel, 0, 2);
-        colorGridPane.add(extensionColorTextField, 1, 2);
+        colorGridPane.add(stemLabel, 0, 3);
+        colorGridPane.add(extensionColorTextField, 1, 3);
         // set listener
         extensionColorPicker.setOnAction(e -> {
             // color
@@ -151,9 +181,9 @@ public class GraphPane extends Pane {
             // set text of the label to RGB value of color
             extensionColorTextField.setText(c.toString());
         });
-        colorGridPane.add(extensionColorPicker, 2, 2);
+        colorGridPane.add(extensionColorPicker, 2, 3);
         extensionLineWidthTextField.setPromptText("enter line width of stem");
-        colorGridPane.add(extensionLineWidthTextField, 3, 2);
+        colorGridPane.add(extensionLineWidthTextField, 3, 3);
         extensionLineWidthTextField.setText(Double.toString(colorPalette.getStemLineWidth()));
 
         // set values
@@ -164,8 +194,8 @@ public class GraphPane extends Pane {
         //   setup color of legends
         Label legendColor = new Label("Legend color");
         legendColor.setFont(font);
-        colorGridPane.add(legendColor, 0, 3);
-        colorGridPane.add(legendColorTextField, 1, 3);
+        colorGridPane.add(legendColor, 0, 4);
+        colorGridPane.add(legendColorTextField, 1, 4);
         // set listener
         legendColorPicker.setOnAction(e -> {
             // color
@@ -174,7 +204,7 @@ public class GraphPane extends Pane {
             // set text of the label to RGB value of color
             legendColorTextField.setText(c.toString());
         });
-        colorGridPane.add(legendColorPicker, 2, 3);
+        colorGridPane.add(legendColorPicker, 2, 4);
 
         // set values
         legendColorTextField.setText(colorPalette.getLegendColor().toString());
@@ -191,7 +221,7 @@ public class GraphPane extends Pane {
         addBtn.setOnAction(this::changeColorsClicked);
         hBox.getChildren().add(addBtn);
 
-        colorGridPane.add(hBox, 0, 4, 3, 1);
+        colorGridPane.add(hBox, 0, 5, 3, 1);
 
         // set event listeners
         labelColorTextField.setOnKeyPressed(ke -> {
@@ -281,6 +311,7 @@ public class GraphPane extends Pane {
         colorPalette.setLabelColor(legendColorPicker.getValue().toString());
         colorPalette.setStemLineWidth(Double.parseDouble(extensionLineWidthTextField.getText()));
         colorPalette.setGridLineWidth(Double.parseDouble(gridLineWidthTextField.getText()));
+        colorPalette.setLabelFont(labelSerialFont);
 
         updater.updateGraphColors(colorPalette);
     }
@@ -304,6 +335,9 @@ public class GraphPane extends Pane {
 
         colorPane.setText(COLOR_PANE_TITLE);
 
+        labelFont = Font.font("Arial", FontWeight.NORMAL, FontPosture.REGULAR, 8);
+        fontLabel.setText(labelFont.getName());
+        fontLabel.setFont(labelFont);
     }
 
     ///////////////////////////////////////////////////////////////////

@@ -22,6 +22,11 @@ public class GraphColorsPersist {
     private String labelColor = Color.BEIGE.toString();
 
     /**
+     * the font for labels
+     */
+    private String labelFont = "Arial:8";
+
+    /**
      * the grid color on the graph
      */
     private String gridColor = Color.MEDIUMBLUE.toString();
@@ -68,6 +73,7 @@ public class GraphColorsPersist {
         legendColor = Color.BEIGE.toString();
         stemLineWidth = 0.5;
         gridLineWidth = 0.5;
+        labelFont = "Arial:8";
     }
 
     public void setGraphColors(@NotNull ColorPalette graphColors) {
@@ -77,5 +83,6 @@ public class GraphColorsPersist {
         legendColor = graphColors.getLegendColor().toString();
         stemLineWidth = graphColors.getStemLineWidth();
         gridLineWidth = graphColors.getGridLineWidth();
+        labelFont = graphColors.getLabelFont().toString();
     }
 }

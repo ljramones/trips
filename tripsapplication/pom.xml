@@ -121,6 +121,18 @@
         <jackson.annotations.version>2.8.7</jackson.annotations.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.kordamp.ikonli</groupId>
+                <artifactId>ikonli-bom</artifactId>
+                <version>12.1.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
 
         <dependency>
@@ -202,6 +214,16 @@
             <version>${poi.ooxml.version}</version>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-javafx</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-materialdesign-pack</artifactId>
+        </dependency>
 
         <!-- validation apis for database work-->
         <dependency>
@@ -325,7 +347,7 @@
 
     <build>
 
-<!--        <finalName>trips</finalName>-->
+        <!--        <finalName>trips</finalName>-->
 
         <plugins>
             <plugin>

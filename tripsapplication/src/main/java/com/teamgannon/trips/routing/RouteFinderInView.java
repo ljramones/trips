@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
 import javafx.scene.paint.Color;
@@ -17,9 +18,9 @@ import java.util.Optional;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class RouteFinder {
+public class RouteFinderInView {
 
-    private final Stage stage;
+    private DatabaseManagementService databaseManagementService;
     /**
      * used to plot the routes found
      */
@@ -30,20 +31,18 @@ public class RouteFinder {
      *
      * @param interstellarSpacePane the graphics pane to plot
      */
-    public RouteFinder(Stage stage,
-                       InterstellarSpacePane interstellarSpacePane) {
-        this.stage = stage;
+    public RouteFinderInView(InterstellarSpacePane interstellarSpacePane) {
         this.interstellarSpacePane = interstellarSpacePane;
     }
 
     /**
      * start the location of routes
      */
-    public void startRouteLocation() {
-        RouteFinderDialog routeFinderDialog = new RouteFinderDialog(stage, interstellarSpacePane.getCurrentStarsInView());
-        Stage theStage =  (Stage)routeFinderDialog.getDialogPane().getScene().getWindow();
+    public void startRouteLocation(String currentDataSet, DatabaseManagementService databaseManagementService) {
+        RouteFinderDialog routeFinderDialog = new RouteFinderDialog(interstellarSpacePane.getCurrentStarsInView());
+        Stage theStage = (Stage) routeFinderDialog.getDialogPane().getScene().getWindow();
         theStage.setAlwaysOnTop(true);
-        stage.toFront();
+        theStage.toFront();
 
         // get the route location parameters from the dialog
         Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialog.showAndWait();
@@ -131,7 +130,10 @@ public class RouteFinder {
                         }
 
 
-                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(stage, possibleRoutes);
+                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
+                        Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
+                        stage.setAlwaysOnTop(true);
+                        stage.toFront();
                         Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
                         if (optionalRoutingMetrics.isPresent()) {
                             List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();

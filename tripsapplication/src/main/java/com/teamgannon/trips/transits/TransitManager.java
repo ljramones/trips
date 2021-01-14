@@ -1,5 +1,7 @@
 package com.teamgannon.trips.transits;
 
+import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -22,9 +24,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +69,7 @@ public class TransitManager {
      * the listener to create routes on demand
      */
     private final RouteUpdaterListener routeUpdaterListener;
+    private ColorPalette colorPalette;
     /**
      * whether the transits are visible or not
      */
@@ -104,12 +104,14 @@ public class TransitManager {
                           @NotNull Group sceneRoot,
                           SubScene subScene,
                           InterstellarSpacePane interstellarSpacePane,
-                          RouteUpdaterListener routeUpdaterListener) {
+                          RouteUpdaterListener routeUpdaterListener,
+                          ColorPalette colorPalette) {
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
+        this.colorPalette = colorPalette;
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
@@ -259,8 +261,8 @@ public class TransitManager {
 
     private @NotNull Label createLabel(@NotNull TransitRoute transitRoute) {
         Label label = new Label(String.format("%.2fly", transitRoute.getDistance()));
-        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 6);
-        label.setFont(font);
+        SerialFont serialFont = colorPalette.getLabelFont();
+        label.setFont(serialFont.toFont());
         return label;
     }
 

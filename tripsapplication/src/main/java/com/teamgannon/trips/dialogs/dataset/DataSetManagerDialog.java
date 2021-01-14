@@ -34,7 +34,8 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete {
+public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete, LoadUpdateListener {
+
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -90,9 +91,9 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
 
-        createTable(vBox);
-
         createSelectedDatasetContext(vBox);
+
+        createTable(vBox);
 
         createButtonPanel(vBox);
 
@@ -122,7 +123,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private void createSelectedDatasetContext(@NotNull VBox vBox) {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
-        Label contextSettingLabel = new Label("Active Dataset");
+        Label contextSettingLabel = new Label("Active Dataset: ");
         contextSettingLabel.setFont(font);
         hBox.getChildren().addAll(contextSettingLabel, new Separator(), descriptorComboBox);
         vBox.getChildren().add(hBox);
@@ -147,6 +148,11 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         });
 
         descriptorComboBox.setOnAction(e -> dataSetChangeListener.setContextDataSet(descriptorComboBox.getValue()));
+
+        hBox.getChildren().add(new Separator());
+        Button okButton = new Button("Ok");
+        okButton.setOnAction(this::close);
+        hBox.getChildren().add(okButton);
     }
 
     /**
@@ -194,6 +200,15 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     }
 
     private void createTable(@NotNull VBox vBox) {
+
+        vBox.getChildren().add(new Separator());
+        HBox hBox = new HBox();
+        Label titleLabel = new Label("Manage Datasets");
+        titleLabel.setFont(font);
+        hBox.getChildren().add(titleLabel);
+        hBox.setAlignment(Pos.CENTER);
+        vBox.getChildren().add(hBox);
+        vBox.getChildren().add(new Separator());
 
         tableView.setPrefWidth(650);
 
@@ -311,7 +326,9 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
                     this,
                     progressText,
                     loadProgressBar,
-                    cancelLoad);
+                    cancelLoad,
+                    this);
+
             if (!success.isSuccess()) {
                 showErrorAlert("add Dataset", success.getMessage());
             }
@@ -333,5 +350,10 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private void cancelTaskLoad(ActionEvent event) {
         log.info("loading was cancelled");
         dataImportService.cancelCurrent();
+    }
+
+    @Override
+    public void update(DataSetDescriptor descriptor) {
+        descriptorComboBox.getSelectionModel().select(descriptor);
     }
 }

@@ -21,7 +21,6 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class SearchPane extends Pane {
 
-    private final Stage stage;
     private final @NotNull SearchContext searchContext;
     private final @NotNull DataSetContext dataSetContext;
     private final DataSetChangeListener dataSetChangeListener;
@@ -49,12 +48,10 @@ public class SearchPane extends Pane {
      * @param dataSetContext the data set context
      * @param updater        the data updater
      */
-    public SearchPane(Stage stage,
-                      @NotNull SearchContext searchContext,
+    public SearchPane(@NotNull SearchContext searchContext,
                       @NotNull DataSetContext dataSetContext,
                       DataSetChangeListener dataSetChangeListener,
                       StellarDataUpdaterListener updater) {
-        this.stage = stage;
         this.searchContext = searchContext;
         this.dataSetContext = dataSetContext;
         this.dataSetChangeListener = dataSetChangeListener;
@@ -86,7 +83,7 @@ public class SearchPane extends Pane {
         queryBox.setVgap(5);
         queryBox.setHgap(5);
 
-        dataSetChoicePanel = new DataSetPanel(stage, searchContext, dataSetContext, dataSetChangeListener);
+        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
         queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
         queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
         queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);

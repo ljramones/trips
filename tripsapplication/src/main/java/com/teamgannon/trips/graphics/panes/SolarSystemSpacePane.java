@@ -69,14 +69,14 @@ public class SolarSystemSpacePane extends Pane {
         systemIdentifierLabel.setTextFill(Color.WHITE);
 
         // setup return button to jump back to interstellar space
-        returnButton = new Button("Jump Back");
-        returnButton.setOnAction(e -> jumpBackToInterstellarSpace());
+//        returnButton = new Button("Jump Back");
+//        returnButton.setOnAction(e -> jumpBackToInterstellarSpace());
 
         GridPane titlePane = new GridPane();
 //        titlePane.setStyle("-fx-background-color: white");
         Separator separator1 = new Separator();
         separator1.setMinWidth(40.);
-        titlePane.addRow(0, returnButton, separator1, systemIdentifierLabel);
+//        titlePane.addRow(0, returnButton, separator1, systemIdentifierLabel);
         return titlePane;
     }
 

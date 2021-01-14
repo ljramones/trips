@@ -153,10 +153,6 @@ public class InterstellarSpacePane extends Pane {
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
 
-        this.setMinSize(sceneWidth, sceneHeight);
-        this.setPrefSize(sceneWidth, sceneHeight);
-        this.setMaxSize(sceneWidth, sceneHeight);
-
         this.setBackground(Background.EMPTY);
         this.getChildren().add(sceneRoot);
         this.setPickOnBounds(false);
@@ -189,7 +185,8 @@ public class InterstellarSpacePane extends Pane {
                 subScene,
                 this,
                 routeUpdaterListener,
-                currentPlot
+                currentPlot,
+                colorPalette
         );
 
         this.gridPlotManager = new GridPlotManager(
@@ -205,7 +202,8 @@ public class InterstellarSpacePane extends Pane {
                 sceneRoot,
                 subScene,
                 this,
-                routeUpdaterListener
+                routeUpdaterListener,
+                colorPalette
         );
 
         starPlotManager.setRouteManager(routeManager);
@@ -240,7 +238,7 @@ public class InterstellarSpacePane extends Pane {
 
         subScene.setOnScroll((ScrollEvent event) -> {
             double deltaY = event.getDeltaY();
-            zoomGraph(deltaY);
+            zoomGraph(deltaY * 5);
             updateLabels();
         });
 
@@ -259,7 +257,7 @@ public class InterstellarSpacePane extends Pane {
                     mousePosY = me.getSceneY();
                     mouseDeltaX = (mousePosX - mouseOldX);
                     mouseDeltaY = (mousePosY - mouseOldY);
-                    double modifier = 5.0;
+                    double modifier = 1.0;
                     double modifierFactor = 0.1;
 
                     if (me.isPrimaryButtonDown()) {
@@ -407,12 +405,12 @@ public class InterstellarSpacePane extends Pane {
     ////////////// zoom and move
 
     public void zoomIn() {
-        zoomGraph(-50);
+        zoomGraph(-200);
         updateLabels();
     }
 
     public void zoomOut() {
-        zoomGraph(50);
+        zoomGraph(200);
         updateLabels();
     }
 

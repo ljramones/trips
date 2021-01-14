@@ -12,6 +12,8 @@ public class ColorPalette {
 
     private Color labelColor;
 
+    private SerialFont labelFont;
+
     private Color gridColor;
 
     private Color extensionColor;
@@ -36,6 +38,7 @@ public class ColorPalette {
         legendColor = Color.valueOf(graphColorsPersist.getLegendColor());
         stemLineWidth = graphColorsPersist.getStemLineWidth();
         gridLineWidth = graphColorsPersist.getGridLineWidth();
+        labelFont = new SerialFont(graphColorsPersist.getLabelFont());
     }
 
     public void setLabelColor(@NotNull String color) {
@@ -61,5 +64,6 @@ public class ColorPalette {
         legendColor = Color.BEIGE;
         stemLineWidth = 0.5;
         gridLineWidth = 0.5;
+        labelFont = new SerialFont("Arial", 8);
     }
 }

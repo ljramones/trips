@@ -5,8 +5,6 @@ import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -42,7 +40,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final DatabaseManagementService databaseManagementService;
 
 
-
     public AddDataSetDialog(Localization localization,
                             DatabaseManagementService databaseManagementService) {
 
@@ -63,44 +60,51 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         gridPane.setHgap(5);
         vBox.getChildren().add(gridPane);
 
+        Label dataSetTypeLabel = new Label("Dataset Type:");
+        gridPane.add(dataSetTypeLabel, 0, 0);
+        addChoices();
+
+        HBox hBox = new HBox();
+        dataSetType.setValue(DataFormatEnum.CSV.getValue());
+        hBox.getChildren().add(dataSetType);
+        hBox.getChildren().add(new Label("   "));
+
+        Button loadDataSetButton = new Button("Select File");
+        loadDataSetButton.setOnAction(this::loadDataSetClicked);
+        hBox.getChildren().add(loadDataSetButton);
+        gridPane.add(hBox,1,0);
+
+        Label dataSetFileSelectedLabel = new Label("Dataset File:");
+        dataSetFileSelectedLabel.setMinWidth(20);
+        gridPane.add(dataSetFileSelectedLabel, 0, 1);
+        fileSelected.setPromptText("use button to navigate to file, or enter it");
+        gridPane.add(fileSelected, 1, 1);
+
+
         Label dataSetNameLabel = new Label("Dataset Name:");
-        gridPane.add(dataSetNameLabel, 0, 0);
-        gridPane.add(dataSetName, 1, 0);
+        gridPane.add(dataSetNameLabel, 0, 2);
+        gridPane.add(dataSetName, 1, 2);
         dataSetName.setPromptText("Use \"Select File\" below of enter full path to file");
         Tooltip tooltipDataSetName = new Tooltip("Use \"Select File\" below of enter full path to file");
         dataSetName.setTooltip(tooltipDataSetName);
 
-        Label dataSetTypeLabel = new Label("Dataset Type:");
-        gridPane.add(dataSetTypeLabel, 0, 1);
-        addChoices();
-        dataSetType.setValue(DataFormatEnum.CH_VIEW.getValue());
-        gridPane.add(dataSetType, 1, 1);
 
         Label dataSetAuthorLabel = new Label("Author:");
-        gridPane.add(dataSetAuthorLabel, 0, 2);
+        gridPane.add(dataSetAuthorLabel, 0, 3);
         dataSetAuthor.setText("Anonymous");
-        gridPane.add(dataSetAuthor, 1, 2);
+        gridPane.add(dataSetAuthor, 1, 3);
 
         Label dataSetNotesLabel = new Label("Notes:");
         dataSetNotesLabel.setMinWidth(20);
-        gridPane.add(dataSetNotesLabel, 0, 3);
+        gridPane.add(dataSetNotesLabel, 0, 4);
         notes.setMinSize(200, 60);
-        notes.setPromptText("add descriptive infomation for this entry");
-        gridPane.add(notes, 1, 3);
+        notes.setPromptText("add descriptive information for this entry");
+        gridPane.add(notes, 1, 4);
 
-        Label dataSetFileSelectedLabel = new Label("Dataset File:");
-        dataSetFileSelectedLabel.setMinWidth(20);
-        gridPane.add(dataSetFileSelectedLabel, 0, 4);
-        fileSelected.setPromptText("use button to navigate to file, or enter it");
-        gridPane.add(fileSelected, 1, 4);
 
         HBox hBox5 = new HBox();
         hBox5.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox5);
-
-        Button loadDataSetButton = new Button("Select File");
-        loadDataSetButton.setOnAction(this::loadDataSetClicked);
-        hBox5.getChildren().add(loadDataSetButton);
 
         addDataSetButton.setDisable(true);
         addDataSetButton.setOnAction(this::addDataSetClicked);
