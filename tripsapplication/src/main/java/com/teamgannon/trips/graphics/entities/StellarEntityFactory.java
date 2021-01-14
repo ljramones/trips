@@ -4,6 +4,8 @@ package com.teamgannon.trips.graphics.entities;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Point3D;
@@ -40,22 +42,21 @@ public class StellarEntityFactory {
         Box box = createBox(record, label);
         Group group = new Group(box, label);
         group.setUserData(record);
-        RotateTransition rotator = setRotationAnimation(group);
-        rotator.play();
+        blinkStarLabel(label);
         return group;
     }
 
-    private static @NotNull RotateTransition setRotationAnimation(Group group) {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(10),
-                group
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(RotateTransition.INDEFINITE);
-        return rotate;
+    /**
+     * the label to blink
+     * @param label the label to blink
+     */
+    private static void blinkStarLabel(Label label) {
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(1), label);
+        fadeTransition.setFromValue(1.0);
+        fadeTransition.setToValue(0.0);
+        fadeTransition.setCycleCount(Animation.INDEFINITE);
+        fadeTransition.setAutoReverse(true);
+        fadeTransition.play();
     }
 
     private static @NotNull Box createBox(@NotNull StarDisplayRecord record, @NotNull Label label) {

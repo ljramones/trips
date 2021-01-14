@@ -409,8 +409,19 @@ public class InterstellarSpacePane extends Pane {
         updateLabels();
     }
 
+    public void zoomIn(int amount) {
+        zoomGraph(-amount);
+        updateLabels();
+    }
+
+
     public void zoomOut() {
         zoomGraph(200);
+        updateLabels();
+    }
+
+    public void zoomOut(int amount) {
+        zoomGraph(amount);
         updateLabels();
     }
 

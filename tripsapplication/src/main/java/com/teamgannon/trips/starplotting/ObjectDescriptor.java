@@ -1,4 +1,4 @@
-package com.teamgannon.trips.experiments;
+package com.teamgannon.trips.starplotting;
 
 import javafx.scene.paint.Color;
 import lombok.Builder;
