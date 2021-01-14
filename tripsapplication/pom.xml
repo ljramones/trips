@@ -225,6 +225,11 @@
             <artifactId>ikonli-materialdesign-pack</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-zondicons-pack</artifactId>
+        </dependency>
+
         <!-- validation apis for database work-->
         <dependency>
             <groupId>javax.validation</groupId>

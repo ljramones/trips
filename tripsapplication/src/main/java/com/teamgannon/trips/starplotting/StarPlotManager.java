@@ -4,7 +4,6 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
-import com.teamgannon.trips.experiments.ObjectDescriptor;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
@@ -15,12 +14,16 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
-import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.listener.ContextSelectorListener;
+import com.teamgannon.trips.listener.DatabaseListener;
+import com.teamgannon.trips.listener.ListUpdaterListener;
+import com.teamgannon.trips.listener.RedrawListener;
+import com.teamgannon.trips.listener.ReportGenerator;
+import com.teamgannon.trips.listener.StellarPropertiesDisplayerListener;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -29,21 +32,32 @@ import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
-import javafx.scene.control.*;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 
@@ -53,7 +67,7 @@ public class StarPlotManager {
     /**
      * we do this to make the star size a constant size bigger x1.5
      */
-    private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+    private final static double GRAPHICS_FUDGE_FACTOR = 3;
 
     /**
      * a graphics object group for extensions
@@ -213,19 +227,6 @@ public class StarPlotManager {
 
     }
 
-    private static @NotNull RotateTransition setRotationAnimation(Label group) {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(10),
-                group
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(30);
-        return rotate;
-    }
-
     /**
      * get the plotted stars in view
      *
@@ -282,9 +283,23 @@ public class StarPlotManager {
 
     public void highlightStar(UUID starId) {
         Label starGroup = currentPlot.getLabelForStar(starId);
-        highlightRotator = setRotationAnimation(starGroup);
-        highlightRotator.play();
+        blinkStarLabel(starGroup, 60);
+
         log.info("mark point");
+    }
+
+    /**
+     * the label to blink
+     * @param label the label to blink
+     * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
+     */
+    private void blinkStarLabel(Label label, int cycleCount) {
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(1), label);
+        fadeTransition.setFromValue(1.0);
+        fadeTransition.setToValue(0.0);
+        fadeTransition.setCycleCount(cycleCount);
+        fadeTransition.setAutoReverse(true);
+        fadeTransition.play();
     }
 
     public void toggleStars(boolean starsOn) {

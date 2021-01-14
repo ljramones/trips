@@ -47,6 +47,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.model.ExportFileType;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -68,6 +69,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.zondicons.Zondicons;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -229,6 +232,9 @@ public class MainPane implements
     private boolean toolBarOn = true;
     private boolean statusBarOn = true;
 
+    private double originalHeight = Universe.boxHeight;
+    private double originalWidth = Universe.boxWidth;
+
 
     /**
      * constructor
@@ -318,14 +324,12 @@ public class MainPane implements
         toggleRoutesBtn.setGraphic(toggleRoutesBtnImage);
         toggleRoutesBtn.setTooltip(new Tooltip("Toggle routes"));
 
-        final Image toggleZoomInBtnGraphic = new Image("/images/buttons/tb_enlarge.gif");
-        final ImageView toggleZoomInBtnImage = new ImageView(toggleZoomInBtnGraphic);
-        toggleZoomInBtn.setGraphic(toggleZoomInBtnImage);
+        FontIcon fontIconZoomIn = new FontIcon(Zondicons.ZOOM_IN);
+        toggleZoomInBtn.setGraphic(fontIconZoomIn);
         toggleZoomInBtn.setTooltip(new Tooltip("Zoom in"));
 
-        final Image toggleZoomOutBtnGraphic = new Image("/images/buttons/tb_reduce.gif");
-        final ImageView toggleZoomOutBtnImage = new ImageView(toggleZoomOutBtnGraphic);
-        toggleZoomOutBtn.setGraphic(toggleZoomOutBtnImage);
+        FontIcon fontIconZoomOut = new FontIcon(Zondicons.ZOOM_OUT);
+        toggleZoomOutBtn.setGraphic(fontIconZoomOut);
         toggleZoomOutBtn.setTooltip(new Tooltip("Zoom out"));
 
         final Image toggleGridBtnGraphic = new Image("/images/buttons/tb_grid.gif");
@@ -618,9 +622,9 @@ public class MainPane implements
     private void resizeTrips(double height, double width) {
 
         if (Double.isNaN(height)) {
-            height= Universe.boxHeight-10;
+            height = Universe.boxHeight - 10;
         } else {
-            height-=10;
+            height -= 10;
         }
         log.info("Height: " + height + " Width: " + width);
 
@@ -659,6 +663,23 @@ public class MainPane implements
         if (interstellarSpacePane.isPlotActive()) {
             resizePopup.show(stage);
         }
+
+        Double originalDims = Math.sqrt(originalHeight * originalWidth);
+        Double newDims = Math.sqrt(height * width);
+
+        if (originalDims < newDims) {
+            interstellarSpacePane.zoomIn(2);
+        } else {
+            interstellarSpacePane.zoomOut(2);
+        }
+
+        originalHeight = height;
+        originalWidth = width;
+
+        Platform.runLater(() -> {
+            interstellarSpacePane.updateLabels();
+        });
+
 
     }
 
