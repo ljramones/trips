@@ -2,6 +2,7 @@ package com.teamgannon.trips.service.importservices;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.TaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
@@ -27,6 +28,7 @@ public class ExcelDataImportService extends Service<FileProcessResult> implement
     private TaskComplete taskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
+    private LoadUpdateListener loadUpdateListener;
 
     public ExcelDataImportService(DatabaseManagementService databaseManagementService)  {
         this.databaseManagementService = databaseManagementService;
@@ -38,13 +40,14 @@ public class ExcelDataImportService extends Service<FileProcessResult> implement
                                   TaskComplete taskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
-                                  @NotNull Button cancelLoad) {
+                                  @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
         this.taskComplete = taskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
+        this.loadUpdateListener = loadUpdateListener;
 
         progressText.textProperty().bind(this.messageProperty());
         loadProgressBar.progressProperty().bind(this.progressProperty());
@@ -68,6 +71,9 @@ public class ExcelDataImportService extends Service<FileProcessResult> implement
         FileProcessResult fileProcessResult = this.getValue();
         taskComplete.complete(true, dataset, fileProcessResult, "loaded");
         dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
+        // set context to newly loaded dataset
+        dataSetChangeListener.setContextDataSet(fileProcessResult.getDataSetDescriptor());
+        loadUpdateListener.update(fileProcessResult.getDataSetDescriptor());
     }
 
     @Override

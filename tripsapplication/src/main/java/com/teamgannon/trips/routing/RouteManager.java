@@ -16,6 +16,8 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.algorithms.StarMath;
+import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -61,6 +63,7 @@ public class RouteManager {
     private final InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
     private final CurrentPlot currentPlot;
+    private ColorPalette colorPalette;
 
     /**
      * this is the descriptor of the current route
@@ -103,13 +106,15 @@ public class RouteManager {
                         SubScene subScene,
                         InterstellarSpacePane interstellarSpacePane,
                         RouteUpdaterListener routeUpdaterListener,
-                        CurrentPlot currentPlot) {
+                        CurrentPlot currentPlot,
+                        ColorPalette colorPalette) {
 
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
 
         this.routeUpdaterListener = routeUpdaterListener;
         this.currentPlot = currentPlot;
+        this.colorPalette = colorPalette;
 
         currentRouteDisplay = new Group();
 
@@ -328,8 +333,8 @@ public class RouteManager {
 
     private @NotNull Label createLabel(double length) {
         Label label = new Label(String.format("%.2fly", length));
-        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 6);
-        label.setFont(font);
+        SerialFont serialFont = colorPalette.getLabelFont();
+        label.setFont(serialFont.toFont());
         return label;
     }
 

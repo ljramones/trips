@@ -28,4 +28,6 @@ public class RouteFindingOptions {
 
     private boolean selected;
 
+    private double maxDistance;
+
 }

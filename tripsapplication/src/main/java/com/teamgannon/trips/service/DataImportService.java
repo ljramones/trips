@@ -1,6 +1,7 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.TaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
@@ -48,7 +49,8 @@ public class DataImportService {
                                     TaskComplete taskComplete,
                                     @NotNull Label progressText,
                                     @NotNull ProgressBar loadProgressBar,
-                                    @NotNull Button cancelLoad) {
+                                    @NotNull Button cancelLoad,
+                                    LoadUpdateListener loadUpdateListener) {
 
         if (currentlyRunning.get()) {
             if (runningImportService != null) {
@@ -75,7 +77,7 @@ public class DataImportService {
                 runningImportService = chvDataImportService;
                 boolean queued = chvDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -93,7 +95,7 @@ public class DataImportService {
                 runningImportService = rbExcelDataImportService;
                 boolean queued = rbExcelDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -111,7 +113,7 @@ public class DataImportService {
                 runningImportService = rbcsvDataImportService;
                 boolean queued = rbcsvDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -129,7 +131,7 @@ public class DataImportService {
                 runningImportService = csvDataImportService;
                 boolean queued = csvDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -147,7 +149,7 @@ public class DataImportService {
                 runningImportService = excelDataImportService;
                 boolean queued = excelDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -165,7 +167,7 @@ public class DataImportService {
                 runningImportService = jsonDataImportService;
                 boolean queued = jsonDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad);
+                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);

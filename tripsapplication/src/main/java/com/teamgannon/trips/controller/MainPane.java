@@ -22,6 +22,8 @@ import com.teamgannon.trips.dialogs.search.ShowStarMatchesDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
+import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
 import com.teamgannon.trips.graphics.AstrographicPlotter;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -32,7 +34,8 @@ import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
-import com.teamgannon.trips.routing.RouteFinder;
+import com.teamgannon.trips.routing.RouteFinderInView;
+import com.teamgannon.trips.routing.RouteFinderOffline;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
@@ -91,7 +94,6 @@ public class MainPane implements
         DataSetChangeListener,
         StatusUpdaterListener {
 
-
     ////// injected properties
     public Pane mainPanel;
 
@@ -128,6 +130,7 @@ public class MainPane implements
 
     public Label databaseStatus;
     public Label routingStatus;
+    public Button plotButton;
 
     ////  local assets
 
@@ -277,6 +280,7 @@ public class MainPane implements
         // right display
         createRightDisplay();
 
+        // set the sliders
         setSliderControl();
 
         // create the list of objects in view
@@ -295,101 +299,10 @@ public class MainPane implements
 
         resizePopup.hide();
 
-//        colorPalette.setDefaults();
-//
-//        starDisplayPreferences.setDefaults();
-//
-//        appViewPreferences.setColorPallete(colorPalette);
-//        appViewPreferences.setStarDisplayPreferences(starDisplayPreferences);
-//
-//        tripsContext.setAppViewPreferences(appViewPreferences);
-//        interstellarSpacePane = new InterstellarSpacePane(sceneWidth,
-//                sceneHeight,
-//                depth,
-//                spacing,
-//                tripsContext,
-//                this,
-//                this,
-//                this,
-//                this,
-//                this,
-//                this,
-//                this
-//        );
-//
-//        mainSplitPane.setMinHeight(sceneHeight);
-//        mainSplitPane.setMinWidth(sceneWidth);
-//        mainSplitPane.getItems().add(interstellarSpacePane);
-
+        showBeginningAlert();
 
     }
 
-
-    public void setStage(@NotNull Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
-        this.stage = stage;
-        this.sceneWidth = sceneWidth;
-        this.sceneHeight = sceneHeight;
-        this.controlPaneOffset = controlPaneOffset;
-
-        interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
-
-        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
-            resizeTrips(stage.getHeight(), stage.getWidth());
-        };
-
-        stage.widthProperty().addListener(stageSizeListener);
-        stage.heightProperty().addListener(stageSizeListener);
-        resizePopup.hide();
-
-        queryDialog = new QueryDialog(stage, searchContext, tripsContext.getDataSetContext(), this, this);
-        queryDialog.initModality(Modality.NONE);
-
-        this.dataImportService = new DataImportService(databaseManagementService);
-
-    }
-
-
-    private void resizeTrips(double height, double width) {
-
-        log.info("Height: " + height + " Width: " + width);
-
-        interstellarSpacePane.resize(width, height);
-
-        this.menuBar.setPrefWidth(width);
-        this.toolBar.setPrefWidth(width);
-        this.statusBar.setPrefWidth(width);
-
-        this.settingsPane.setPrefHeight(height - 112);
-        this.settingsPane.setPrefWidth(260);
-
-        this.leftDisplayPane.setPrefWidth(width);
-        this.leftDisplayPane.setPrefHeight(height);
-
-        this.mainSplitPane.setPrefWidth(width);
-        this.mainSplitPane.setPrefHeight(height - 112);
-        // control splitpane divder so it doesn't lag while resizing
-        double spPosition = mainSplitPane.getDividers().get(0).getPosition();
-        if (spPosition > .95) {
-            // if the divider is all the way over then make sure it stays there
-            mainSplitPane.setDividerPosition(0, 1);
-        } else {
-            // now make sure that the divider does not go past the settings panel position
-            double currentWidth = this.mainPanel.getWidth();
-            double exposedSettingsWidth = (1 - spPosition) * currentWidth;
-            log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
-            if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
-                double adjustedWidthRatio = 260 / currentWidth;
-                mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
-            }
-        }
-
-        resetButton.requestFocus();
-
-        if (interstellarSpacePane.isPlotActive()) {
-            resizePopup.show(stage);
-        }
-
-    }
 
     /////////////////////////////  CREATE ASSETS  ////////////////////////////
 
@@ -419,53 +332,9 @@ public class MainPane implements
         final ImageView toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
         toggleGridBtn.setGraphic(toggleGridBtnImage);
         toggleGridBtn.setTooltip(new Tooltip("Toggle grid"));
-    }
 
-    private void setupStatusbar() {
-        Font labelFont = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
-        Font statusFont = Font.font("Verdana", FontWeight.LIGHT, FontPosture.REGULAR, 13);
-
-        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
-        this.statusBar.setAlignment(Pos.BASELINE_LEFT);
-
-        GridPane gridPane = new GridPane();
-        Label databaseCommentLabel = new Label("Plot Status: ");
-        databaseCommentLabel.setFont(labelFont);
-        databaseCommentLabel.setTextFill(Color.BLACK);
-        gridPane.add(databaseCommentLabel, 0, 0);
-
-        databaseStatus = new Label("Waiting for a dataset to be selected");
-        databaseStatus.setFont(statusFont);
-        databaseStatus.setTextFill(Color.BLUE);
-        gridPane.add(databaseStatus, 1, 0);
-
-        // put a unique divider
-        gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
-
-        Label routingStatusLabel = new Label("Routing State: ");
-        routingStatusLabel.setFont(labelFont);
-        routingStatusLabel.setTextFill(Color.BLACK);
-        gridPane.add(routingStatusLabel, 3, 0);
-
-        routingStatus = new Label("Inactive");
-        routingStatus.setFont(statusFont);
-        routingStatus.setTextFill(Color.SEAGREEN);
-        gridPane.add(routingStatus, 4, 0);
-
-        this.statusBar.getChildren().add(gridPane);
-
-    }
-
-    private void setDefaultSizesForUI() {
-        this.mainPanel.setPrefHeight(Universe.boxHeight + 20);
-        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
-
-        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
-        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
-
-        this.mainSplitPane.setPrefHeight(588.0);
-        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
-
+        plotButton.setDisable(true);
+        toolBar.setTooltip(new Tooltip("Select Dataset to enable plot"));
     }
 
     private void createResizePopup() {
@@ -498,108 +367,29 @@ public class MainPane implements
         resizePopup.getContent().add(label);
     }
 
-    //////////////////////////  DATABASE STUFF  /////////
+    private void setDefaultSizesForUI() {
+        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
 
+        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
+        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
 
-    private void loadDBPresets() {
-        // get graph enables from DB
-        getGraphEnablesFromDB();
-        // get Star definitions from DB
-        getStarDefinitionsFromDB();
-        // get civilizations/polities
-        getCivilizationsFromDB();
+        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
     }
 
-    private void getCivilizationsFromDB() {
-        CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
-        tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
-        interstellarSpacePane.setCivilizationPreferences(civilizationDisplayPreferences);
+    /**
+     * setup the status panel
+     */
+    private void setStatusPanel() {
+        statusBar.setAlignment(Pos.CENTER);
+        statusBar.setSpacing(5.0);
+        Insets insets1 = new Insets(3.0, 3.0, 3.0, 3.0);
+        statusBar.setPadding(insets1);
     }
 
     private void getGraphColorsFromDB() {
         ColorPalette colorPalette = databaseManagementService.getGraphColorsFromDB();
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
-
-    public void getGraphEnablesFromDB() {
-        GraphEnablesPersist graphEnablesPersist = databaseManagementService.getGraphEnablesFromDB();
-        tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
-
-        updateToggles(graphEnablesPersist);
-
-        polities = graphEnablesPersist.isDisplayPolities();
-        gridOn = graphEnablesPersist.isDisplayGrid();
-        extensionsOn = graphEnablesPersist.isDisplayStems();
-        labelsOn = graphEnablesPersist.isDisplayLabels();
-        scaleOn = graphEnablesPersist.isDisplayLegend();
-        routesOn = graphEnablesPersist.isDisplayRoutes();
-
-        // set defaults
-        interstellarSpacePane.setGraphPresets(graphEnablesPersist);
-    }
-
-    /**
-     * get the star definitions from the db
-     */
-    private void getStarDefinitionsFromDB() {
-        List<StarDetailsPersist> starDetailsPersistList = databaseManagementService.getStarDetails();
-        StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
-        starDisplayPreferences.setStars(starDetailsPersistList);
-        tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
-        interstellarSpacePane.setStellarPreferences(starDisplayPreferences);
-    }
-
-    private void setupDataSetView() {
-
-        SearchContext searchContext = tripsContext.getSearchContext();
-        datasetsPane.setContent(dataSetsListView);
-
-        dataSetsListView.setPrefHeight(10);
-        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
-        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
-
-        loadDatasets(searchContext);
-        log.info("Application up and running");
-    }
-
-    private void loadDatasets(@NotNull SearchContext searchContext) {
-        // load viable datasets into search context
-        List<DataSetDescriptor> dataSets = loadDataSetView();
-        if (dataSets.size() > 0) {
-            searchContext.addDataSets(dataSets);
-        }
-    }
-
-
-    private @NotNull List<DataSetDescriptor> loadDataSetView() {
-
-        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
-
-        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
-            if (descriptor.getRoutesStr() != null) {
-                routeList = descriptor.getRoutes();
-                log.info("routes");
-            }
-        }
-
-        addDataSetToList(dataSetDescriptorList, true);
-        log.info("loaded DBs");
-        return dataSetDescriptorList;
-    }
-
-    public void addDataSetToList(@NotNull List<DataSetDescriptor> list, boolean clear) {
-        if (clear) {
-            dataSetsListView.getItems().clear();
-        }
-        list.forEach(descriptor -> dataSetsListView.getItems().add(descriptor));
-        log.debug("update complete");
-    }
-
-    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, @Nullable DataSetDescriptor oldValue, @Nullable DataSetDescriptor newValue) {
-        String oldText = oldValue == null ? "null" : oldValue.toString();
-        String newText = newValue == null ? "null" : newValue.toString();
-    }
-
 
     /**
      * create the left part of the display
@@ -608,15 +398,13 @@ public class MainPane implements
 
         leftBorderPane = new BorderPane();
         leftBorderPane.setMinWidth(0);
-        this.leftBorderPane.setPrefHeight(554.0);
+
         this.leftBorderPane.setPrefWidth(785.0);
 
         mainSplitPane.getItems().add(leftBorderPane);
 
         leftDisplayPane = new StackPane();
-        this.leftDisplayPane.setMinHeight(Universe.boxHeight);
         this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
-        this.leftDisplayPane.setPrefHeight(Universe.boxHeight);
         this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
 
         leftBorderPane.setLeft(leftDisplayPane);
@@ -626,47 +414,6 @@ public class MainPane implements
 
         // create the interstellar space
         createInterstellarSpace(tripsContext.getAppViewPreferences().getColorPallete());
-    }
-
-    /**
-     * create a interstellar space drawing area
-     *
-     * @param colorPalette the colors to use in drawing
-     */
-    private void createInterstellarSpace(ColorPalette colorPalette) {
-
-        // create main graphics display pane
-        interstellarSpacePane = new InterstellarSpacePane(sceneWidth,
-                sceneHeight,
-                depth,
-                spacing,
-                tripsContext,
-                this,
-                this,
-                this,
-                this,
-                this,
-                this,
-                this
-        );
-
-        leftDisplayPane.getChildren().add(interstellarSpacePane);
-
-        // put the interstellar space on top and the solar system to the back
-        interstellarSpacePane.toFront();
-
-        // set the interstellar pane to be the drawing surface
-        astrographicPlotter.setInterstellarPane(interstellarSpacePane);
-
-    }
-
-    /**
-     * create the solar space drawing area
-     */
-    private void createSolarSystemSpace() {
-        solarSystemSpacePane = new SolarSystemSpacePane(leftDisplayPane.getMaxWidth(), leftDisplayPane.getMaxHeight());
-        solarSystemSpacePane.setContextUpdater(this);
-        leftDisplayPane.getChildren().add(solarSystemSpacePane);
     }
 
     /**
@@ -722,18 +469,6 @@ public class MainPane implements
         routingPanel = new RoutingPanel();
         routingPane.setContent(routingPanel);
         propertiesAccordion.getPanes().add(routingPane);
-
-    }
-
-
-    /**
-     * setup the status panel
-     */
-    private void setStatusPanel() {
-        statusBar.setAlignment(Pos.CENTER);
-        statusBar.setSpacing(5.0);
-        Insets insets1 = new Insets(3.0, 3.0, 3.0, 3.0);
-        statusBar.setPadding(insets1);
     }
 
     /**
@@ -760,6 +495,296 @@ public class MainPane implements
         // setup model to display in case we turn on
         objectsViewPane.setContent(objectViewPane);
 
+    }
+
+    private void setupDataSetView() {
+
+        SearchContext searchContext = tripsContext.getSearchContext();
+        datasetsPane.setContent(dataSetsListView);
+
+        dataSetsListView.setPrefHeight(10);
+        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
+        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
+
+        loadDatasets(searchContext);
+        log.info("Application up and running");
+    }
+
+    public void toggleSidePane(boolean sidePanelOn) {
+        if (sidePanelOn) {
+            mainSplitPane.setDividerPositions(0.76);
+        } else {
+            mainSplitPane.setDividerPositions(1.0);
+        }
+    }
+
+    private void setupStatusbar() {
+        Font labelFont = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+        Font statusFont = Font.font("Verdana", FontWeight.LIGHT, FontPosture.REGULAR, 13);
+
+        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
+        this.statusBar.setAlignment(Pos.BASELINE_LEFT);
+
+        GridPane gridPane = new GridPane();
+        Label databaseCommentLabel = new Label("Plot Status: ");
+        databaseCommentLabel.setFont(labelFont);
+        databaseCommentLabel.setTextFill(Color.BLACK);
+        gridPane.add(databaseCommentLabel, 0, 0);
+
+        databaseStatus = new Label("Waiting for a dataset to be selected");
+        databaseStatus.setFont(statusFont);
+        databaseStatus.setTextFill(Color.BLUE);
+        gridPane.add(databaseStatus, 1, 0);
+
+        // put a unique divider
+        gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
+
+        Label routingStatusLabel = new Label("Routing State: ");
+        routingStatusLabel.setFont(labelFont);
+        routingStatusLabel.setTextFill(Color.BLACK);
+        gridPane.add(routingStatusLabel, 3, 0);
+
+        routingStatus = new Label("Inactive");
+        routingStatus.setFont(statusFont);
+        routingStatus.setTextFill(Color.SEAGREEN);
+        gridPane.add(routingStatus, 4, 0);
+
+        this.statusBar.getChildren().add(gridPane);
+
+    }
+
+    private void loadDBPresets() {
+        // get graph enables from DB
+        getGraphEnablesFromDB();
+        // get Star definitions from DB
+        getStarDefinitionsFromDB();
+        // get civilizations/polities
+        getCivilizationsFromDB();
+        // get trips preferences
+        getTripsPrefsFromDB();
+    }
+
+    private void showBeginningAlert() {
+        if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
+            FirstStartDialog firstStartDialog = new FirstStartDialog();
+            firstStartDialog.showAndWait();
+        }
+
+        TripsPrefs tripsPrefs = tripsContext.getTripsPrefs();
+        if (!tripsPrefs.isShowWelcomeDataReq()) {
+            EachTimeStartDialog eachTimeStartDialog = new EachTimeStartDialog();
+            Optional<Boolean> optStart = eachTimeStartDialog.showAndWait();
+            if (optStart.isPresent()) {
+                boolean onStart = optStart.get();
+                if (onStart) {
+                    log.info("selected is true");
+                    tripsPrefs.setShowWelcomeDataReq(true);
+                    databaseManagementService.saveTripsPrefs(tripsPrefs);
+                } else {
+                    log.info("selected is false");
+                }
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
+
+    public void setStage(@NotNull Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
+        this.stage = stage;
+        this.sceneWidth = sceneWidth;
+        this.sceneHeight = sceneHeight;
+        this.controlPaneOffset = controlPaneOffset;
+
+        interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
+
+        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
+            resizeTrips(stage.getHeight(), stage.getWidth());
+        };
+
+        stage.widthProperty().addListener(stageSizeListener);
+        stage.heightProperty().addListener(stageSizeListener);
+        resizePopup.hide();
+
+        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
+        queryDialog.initModality(Modality.NONE);
+
+        this.dataImportService = new DataImportService(databaseManagementService);
+
+    }
+
+
+    private void resizeTrips(double height, double width) {
+
+        if (Double.isNaN(height)) {
+            height= Universe.boxHeight-10;
+        } else {
+            height-=10;
+        }
+        log.info("Height: " + height + " Width: " + width);
+
+        interstellarSpacePane.resize(width, height);
+
+        this.menuBar.setPrefWidth(width);
+        this.toolBar.setPrefWidth(width);
+        this.statusBar.setPrefWidth(width);
+
+        this.settingsPane.setPrefHeight(height - 112);
+        this.settingsPane.setPrefWidth(260);
+
+        this.leftDisplayPane.setPrefWidth(width);
+        this.leftDisplayPane.setPrefHeight(height);
+
+        this.mainSplitPane.setPrefWidth(width);
+        this.mainSplitPane.setPrefHeight(height - 112);
+        // control split-pane divider so it doesn't lag while resizing
+        double spPosition = mainSplitPane.getDividers().get(0).getPosition();
+        if (spPosition > .95) {
+            // if the divider is all the way over then make sure it stays there
+            mainSplitPane.setDividerPosition(0, 1);
+        } else {
+            // now make sure that the divider does not go past the settings panel position
+            double currentWidth = this.mainPanel.getWidth();
+            double exposedSettingsWidth = (1 - spPosition) * currentWidth;
+            log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
+            if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
+                double adjustedWidthRatio = 260 / currentWidth;
+                mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
+            }
+        }
+
+        resetButton.requestFocus();
+
+        if (interstellarSpacePane.isPlotActive()) {
+            resizePopup.show(stage);
+        }
+
+    }
+
+
+    //////////////////////////  DATABASE STUFF  /////////
+
+
+    private void getTripsPrefsFromDB() {
+        TripsPrefs tripsPrefs = databaseManagementService.getTripsPrefs();
+        tripsContext.setTripsPrefs(tripsPrefs);
+    }
+
+    private void getCivilizationsFromDB() {
+        CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
+        tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
+        interstellarSpacePane.setCivilizationPreferences(civilizationDisplayPreferences);
+    }
+
+
+    public void getGraphEnablesFromDB() {
+        GraphEnablesPersist graphEnablesPersist = databaseManagementService.getGraphEnablesFromDB();
+        tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
+
+        updateToggles(graphEnablesPersist);
+
+        polities = graphEnablesPersist.isDisplayPolities();
+        gridOn = graphEnablesPersist.isDisplayGrid();
+        extensionsOn = graphEnablesPersist.isDisplayStems();
+        labelsOn = graphEnablesPersist.isDisplayLabels();
+        scaleOn = graphEnablesPersist.isDisplayLegend();
+        routesOn = graphEnablesPersist.isDisplayRoutes();
+
+        // set defaults
+        interstellarSpacePane.setGraphPresets(graphEnablesPersist);
+    }
+
+    /**
+     * get the star definitions from the db
+     */
+    private void getStarDefinitionsFromDB() {
+        List<StarDetailsPersist> starDetailsPersistList = databaseManagementService.getStarDetails();
+        StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
+        starDisplayPreferences.setStars(starDetailsPersistList);
+        tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
+        interstellarSpacePane.setStellarPreferences(starDisplayPreferences);
+    }
+
+
+    private void loadDatasets(@NotNull SearchContext searchContext) {
+        // load viable datasets into search context
+        List<DataSetDescriptor> dataSets = loadDataSetView();
+        if (dataSets.size() > 0) {
+            searchContext.addDataSets(dataSets);
+        }
+    }
+
+
+    private @NotNull List<DataSetDescriptor> loadDataSetView() {
+
+        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+
+        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
+            if (descriptor.getRoutesStr() != null) {
+                routeList = descriptor.getRoutes();
+                log.info("routes");
+            }
+        }
+
+        addDataSetToList(dataSetDescriptorList, true);
+        log.info("loaded DBs");
+        return dataSetDescriptorList;
+    }
+
+    public void addDataSetToList(@NotNull List<DataSetDescriptor> list, boolean clear) {
+        if (clear) {
+            dataSetsListView.getItems().clear();
+        }
+        list.forEach(descriptor -> dataSetsListView.getItems().add(descriptor));
+        log.debug("update complete");
+    }
+
+    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, @Nullable DataSetDescriptor oldValue, @Nullable DataSetDescriptor newValue) {
+        String oldText = oldValue == null ? "null" : oldValue.toString();
+        String newText = newValue == null ? "null" : newValue.toString();
+    }
+
+
+    /**
+     * create a interstellar space drawing area
+     *
+     * @param colorPalette the colors to use in drawing
+     */
+    private void createInterstellarSpace(ColorPalette colorPalette) {
+
+        // create main graphics display pane
+        interstellarSpacePane = new InterstellarSpacePane(sceneWidth,
+                sceneHeight,
+                depth,
+                spacing,
+                tripsContext,
+                this,
+                this,
+                this,
+                this,
+                this,
+                this,
+                this
+        );
+
+        leftDisplayPane.getChildren().add(interstellarSpacePane);
+
+        // put the interstellar space on top and the solar system to the back
+        interstellarSpacePane.toFront();
+
+        // set the interstellar pane to be the drawing surface
+        astrographicPlotter.setInterstellarPane(interstellarSpacePane);
+
+    }
+
+    /**
+     * create the solar space drawing area
+     */
+    private void createSolarSystemSpace() {
+        solarSystemSpacePane = new SolarSystemSpacePane(leftDisplayPane.getMaxWidth(), leftDisplayPane.getMaxHeight());
+        solarSystemSpacePane.setContextUpdater(this);
+        leftDisplayPane.getChildren().add(solarSystemSpacePane);
     }
 
 
@@ -815,6 +840,8 @@ public class MainPane implements
         interstellarSpacePane.toggleGrid(gridOn);
         toggleGridMenuitem.setSelected(gridOn);
         toggleGridBtn.setSelected(gridOn);
+
+        toggleScale(null);
     }
 
     public void toggleLabels(ActionEvent actionEvent) {
@@ -855,13 +882,6 @@ public class MainPane implements
         toggleSidePaneMenuitem.setSelected(sidePaneOn);
     }
 
-    public void toggleSidePane(boolean sidePanelOn) {
-        if (sidePanelOn) {
-            mainSplitPane.setDividerPositions(0.76);
-        } else {
-            mainSplitPane.setDividerPositions(1.0);
-        }
-    }
 
     public void toggleToolbar(ActionEvent actionEvent) {
         toolBarOn = !toolBarOn;
@@ -941,13 +961,23 @@ public class MainPane implements
         toggleTransitLengthsMenuitem.setSelected(false);
     }
 
-    public void routeFinder(ActionEvent actionEvent) {
-        RouteFinder routeFinder = new RouteFinder(stage, interstellarSpacePane);
+    public void routeFinderInView(ActionEvent actionEvent) {
+        RouteFinderInView routeFinderInView = new RouteFinderInView(interstellarSpacePane);
         if (interstellarSpacePane.getCurrentStarsInView().size() > 2) {
-            routeFinder.startRouteLocation();
+            routeFinderInView.startRouteLocation(searchContext.getAstroSearchQuery().getDescriptor().getDataSetName(), databaseManagementService);
         } else {
             showErrorAlert("Route Finder", "You need to have more than 2 stars on a plot to use.");
         }
+    }
+
+    public void routeFinderOffline(ActionEvent actionEvent) {
+        RouteFinderOffline routeFinderOffline = new RouteFinderOffline(interstellarSpacePane);
+        routeFinderOffline.startRouteLocation(
+                searchContext.getAstroSearchQuery().getDescriptor(),
+                databaseManagementService,
+                tripsContext.getAppViewPreferences().getStarDisplayPreferences()
+        );
+
     }
 
     public void routeFinderTree(ActionEvent actionEvent) {
@@ -1391,6 +1421,9 @@ public class MainPane implements
         queryDialog.setDataSetContext(descriptor);
         interstellarSpacePane.setDataSetContext(descriptor);
 
+        plotButton.setDisable(false);
+        toolBar.setTooltip(new Tooltip(null));
+
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
     }
 
@@ -1679,5 +1712,6 @@ public class MainPane implements
         }
 
     }
+
 
 }

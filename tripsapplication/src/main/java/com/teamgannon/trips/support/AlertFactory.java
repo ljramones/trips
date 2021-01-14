@@ -2,6 +2,7 @@ package com.teamgannon.trips.support;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
@@ -19,7 +20,7 @@ public class AlertFactory {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setContentText(message);
-        alert.showAndWait();
+        toFront(alert);
         log.info(message);
     }
 
@@ -34,7 +35,7 @@ public class AlertFactory {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
         alert.setContentText(message);
-        alert.showAndWait();
+        toFront(alert);
         log.warn(message);
     }
 
@@ -66,8 +67,15 @@ public class AlertFactory {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setContentText(error);
-        alert.showAndWait();
+        toFront(alert);
         log.error(error);
+    }
+
+    private static void toFront(Alert alert) {
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.setAlwaysOnTop(true);
+        stage.toFront(); // not sure if necessary
+        alert.showAndWait();
     }
 
 }

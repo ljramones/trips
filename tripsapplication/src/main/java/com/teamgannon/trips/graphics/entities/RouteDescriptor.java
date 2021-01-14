@@ -49,6 +49,12 @@ public class RouteDescriptor {
     private @NotNull List<UUID> routeList = new ArrayList<>();
 
     /**
+     * list of star names
+     */
+    @Builder.Default
+    private @NotNull List<String> nameList = new ArrayList<>();
+
+    /**
      * list of ordered lengths, min length is 2
      */
     @Builder.Default

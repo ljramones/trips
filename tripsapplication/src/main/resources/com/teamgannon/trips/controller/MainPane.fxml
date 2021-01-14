@@ -7,7 +7,7 @@
 <Pane fx:id="mainPanel"
       xmlns="http://javafx.com/javafx/10.0.2-internal"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.teamgannon.trips.controller.MainPane">
+      fx:controller="com.teamgannon.trips.controller.MainPane" maxHeight="900">
     <VBox>
         <MenuBar fx:id="menuBar" prefHeight="29">
             <Menu mnemonicParsing="false" text="General">
@@ -102,7 +102,9 @@
             </Menu>
             <Menu mnemonicParsing="false" text="Routing">
                 <MenuItem mnemonicParsing="false"
-                          onAction="#routeFinder" text="Route finder from A to B"/>
+                          onAction="#routeFinderInView" text="Route finder from A to B (in View)"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#routeFinderOffline" text="Route finder from A to B (Offline)"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
                 <SeparatorMenuItem/>
@@ -117,9 +119,9 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#findInDatabase" text="Find star(s) in database..."/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#runQuery" text="Show Query Dialog..."/>
+                          onAction="#runQuery" text="Simple Query..."/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#advancedSearch" text="Show Advanced Query Dialog..."/>
+                          onAction="#advancedSearch" text="Advanced Query..."/>
             </Menu>
             <Menu mnemonicParsing="false" text="Reports">
                 <MenuItem mnemonicParsing="false"
@@ -137,6 +139,9 @@
         <ToolBar fx:id="toolBar" minHeight="40" prefHeight="40">
             <Button fx:id="resetButton" mnemonicParsing="false"
                     onAction="#resetView" text="Reset View"/>
+            <Separator/>
+            <Button fx:id="plotButton" mnemonicParsing="false"
+                    onAction="#plotStars" text="Plot Stars"/>
             <Separator/>
             <ToggleButton fx:id="togglePolityBtn" mnemonicParsing="false"
                           onAction="#togglePolities" text="Polities"/>
@@ -169,6 +174,6 @@
         <VBox>
             <SplitPane fx:id="mainSplitPane" dividerPositions="0.76"/>
         </VBox>
-        <HBox fx:id="statusBar" prefHeight="18" minHeight="18"/>
+        <HBox fx:id="statusBar" prefHeight="50" minHeight="50"/>
     </VBox>
 </Pane>

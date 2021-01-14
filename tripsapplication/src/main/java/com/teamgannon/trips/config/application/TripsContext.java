@@ -1,6 +1,7 @@
 package com.teamgannon.trips.config.application;
 
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
+import com.teamgannon.trips.jpa.model.TripsPrefs;
 import com.teamgannon.trips.search.SearchContext;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -15,5 +16,7 @@ public class TripsContext {
     private @NotNull SearchContext searchContext = new SearchContext();
 
     private @NotNull DataSetContext dataSetContext = new DataSetContext();
+
+    private @NotNull TripsPrefs tripsPrefs = new TripsPrefs();
 
 }

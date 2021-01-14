@@ -19,14 +19,13 @@ import java.util.UUID;
 @Data
 public class ApplicationPreferences implements Serializable {
 
-    // center settings
     /**
      * current center coordinates
      */
     private double @NotNull [] currentCenter = new double[3];
 
     /**
-     * the name of the center star shosen
+     * the name of the center star chosen
      */
     private @NotNull String centerStarName = "Sol";
 

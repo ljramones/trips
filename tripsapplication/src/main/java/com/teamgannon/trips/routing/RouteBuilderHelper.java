@@ -5,12 +5,12 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 public class RouteBuilderHelper {
@@ -26,9 +26,8 @@ public class RouteBuilderHelper {
      * @param starDisplayRecordList the stars in the plot
      */
     public RouteBuilderHelper(@NotNull List<StarDisplayRecord> starDisplayRecordList) {
-        MapUtils.populateMap(starDisplayRecordMap,
-                starDisplayRecordList,
-                StarDisplayRecord::getStarName);
+        starDisplayRecordList.stream().filter(Objects::nonNull).forEach(starDisplayRecord -> starDisplayRecordMap.put(starDisplayRecord.getStarName(), starDisplayRecord));
+        log.info("done");
     }
 
     /**

@@ -2,6 +2,7 @@ package com.teamgannon.trips.starplotting;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.experiments.ObjectDescriptor;
 import com.teamgannon.trips.graphics.CurrentPlot;
@@ -75,13 +76,9 @@ public class StarPlotManager {
      */
     private final Group politiesDisplayGroup = new Group();
 
-    private Group sceneRoot;
+    private final Group world;
 
-    private Group world;
-
-    private SubScene subScene;
-
-    private final Font font = new Font("arial", 10);
+    private final SubScene subScene;
 
     /**
      * used to signal an update to the parent list view
@@ -191,8 +188,6 @@ public class StarPlotManager {
                            ReportGenerator reportGenerator,
                            CurrentPlot currentPlot,
                            ColorPalette colorPalette) {
-
-        this.sceneRoot = sceneRoot;
 
         this.world = world;
         this.subScene = subScene;
@@ -582,7 +577,8 @@ public class StarPlotManager {
     public @NotNull Label createLabel(@NotNull StarDisplayRecord record,
                                       @NotNull ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
-        label.setFont(new Font("Arial", 6));
+        SerialFont serialFont= colorPalette.getLabelFont();
+        label.setFont(serialFont.toFont());
         label.setTextFill(colorPalette.getLabelColor());
         return label;
     }
@@ -609,7 +605,7 @@ public class StarPlotManager {
         Point3D point3DFrom = record.getCoordinates();
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         double lineWidth = colorPalette.getStemLineWidth();
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
@@ -1021,7 +1017,7 @@ public class StarPlotManager {
             double z = random.nextDouble() * Z_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
 
             String labelText = "Star " + i;
-            createSphereAndLabel(radius, x, y, z, color, labelText);
+            createSphereAndLabel(radius, x, y, z, color, colorPalette.getLabelFont().toFont(), labelText);
             createExtension(x, y, z, Color.VIOLET);
         }
 
@@ -1035,7 +1031,7 @@ public class StarPlotManager {
         return Color.rgb(r, g, b);
     }
 
-    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, String labelText) {
+    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, Font font, String labelText) {
         Sphere sphere = new Sphere(radius);
         sphere.setTranslateX(x);
         sphere.setTranslateY(y);
@@ -1079,7 +1075,7 @@ public class StarPlotManager {
         Point3D point3DFrom = new Point3D(x, y, z);
         Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
         double lineWidth = 0.3;
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor);
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);

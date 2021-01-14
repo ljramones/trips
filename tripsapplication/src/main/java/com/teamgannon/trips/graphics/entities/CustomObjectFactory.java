@@ -18,8 +18,9 @@ public class CustomObjectFactory {
     public static @NotNull Node createLineSegment(@NotNull Point3D origin,
                                                   @NotNull Point3D target,
                                                   double width,
-                                                  Color color) {
-        return createLineSegment(origin, target, width, color, null, false);
+                                                  Color color,
+                                                  Font font) {
+        return createLineSegment(origin, target, width, color, font, null, false);
     }
 
 
@@ -27,6 +28,7 @@ public class CustomObjectFactory {
                                                   @NotNull Point3D target,
                                                   double width,
                                                   Color color,
+                                                  Font font,
                                                   @Nullable String tag,
                                                   boolean sense) {
 
@@ -50,7 +52,7 @@ public class CustomObjectFactory {
         lineGroup.getChildren().add(line);
         if (tag != null) {
             Label label = new Label(tag);
-            label.setFont(new Font("Arial", 8));
+            label.setFont(font);
             label.setTextFill(Color.WHEAT);
             if (sense) {
                 label.setTranslateX(origin.getX());
