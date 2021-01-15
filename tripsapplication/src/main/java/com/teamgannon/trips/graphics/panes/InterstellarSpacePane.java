@@ -39,8 +39,6 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 @Slf4j
 public class InterstellarSpacePane extends Pane {
 
-    private static final int CYCLE_COUNT = 30;
-
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
