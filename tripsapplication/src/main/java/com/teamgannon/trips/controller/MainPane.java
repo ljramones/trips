@@ -150,7 +150,6 @@ public class MainPane implements
     public TitledPane objectsViewPane;
     public TitledPane routingPane;
 
-    private Popup resizePopup;
 
     /**
      * the query dialog
@@ -271,8 +270,6 @@ public class MainPane implements
 
         setButtons();
 
-        createResizePopup();
-
         setDefaultSizesForUI();
 
         setStatusPanel();
@@ -303,8 +300,6 @@ public class MainPane implements
         // load database preset values
         loadDBPresets();
 
-        resizePopup.hide();
-
         showBeginningAlert();
 
     }
@@ -313,11 +308,6 @@ public class MainPane implements
     /////////////////////////////  CREATE ASSETS  ////////////////////////////
 
     private void setButtons() {
-
-        final Image resetButtonGraphic = new Image("/images/buttons/tb_refresh.png");
-        final ImageView resetButtonImage = new ImageView(resetButtonGraphic);
-        resetButton.setGraphic(resetButtonImage);
-        resetButton.setTooltip(new Tooltip("Reset View"));
 
         final Image toggleRoutesBtnGraphic = new Image("/images/buttons/tb_routes.gif");
         final ImageView toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
@@ -339,36 +329,6 @@ public class MainPane implements
 
         plotButton.setDisable(true);
         toolBar.setTooltip(new Tooltip("Select Dataset to enable plot"));
-    }
-
-    private void createResizePopup() {
-
-        // create border
-        Border border = new Border(new BorderStroke(Color.BLACK,
-                Color.BLACK,
-                Color.BLACK,
-                Color.BLACK,
-                BorderStrokeStyle.SOLID,
-                BorderStrokeStyle.SOLID,
-                BorderStrokeStyle.SOLID,
-                BorderStrokeStyle.SOLID,
-                new CornerRadii(4), BorderWidths.DEFAULT,
-                new Insets(1)));
-
-        // create a label
-        Label label = new Label("press Reset View Button\n to rescale plot");
-        label.setWrapText(true);
-        label.setAlignment(Pos.CENTER);
-        label.setBorder(border);
-
-        // create a popup
-        resizePopup = new Popup();
-
-        // set background
-        label.setStyle(" -fx-background-color: darkgrey;");
-
-        // add the label
-        resizePopup.getContent().add(label);
     }
 
     private void setDefaultSizesForUI() {
@@ -609,7 +569,6 @@ public class MainPane implements
 
         stage.widthProperty().addListener(stageSizeListener);
         stage.heightProperty().addListener(stageSizeListener);
-        resizePopup.hide();
 
         queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
         queryDialog.initModality(Modality.NONE);
@@ -656,12 +615,6 @@ public class MainPane implements
                 double adjustedWidthRatio = 260 / currentWidth;
                 mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
             }
-        }
-
-        resetButton.requestFocus();
-
-        if (interstellarSpacePane.isPlotActive()) {
-            resizePopup.show(stage);
         }
 
         Double originalDims = Math.sqrt(originalHeight * originalWidth);
@@ -840,11 +793,6 @@ public class MainPane implements
         ApplicationPreferences applicationPreferences = tripsContext.getAppPreferences();
         ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(this, tripsContext, applicationPreferences);
         viewPreferencesDialog.showAndWait();
-    }
-
-    public void resetView(ActionEvent actionEvent) {
-        resizePopup.hide();
-        interstellarSpacePane.resetView();
     }
 
     public void togglePolities(ActionEvent actionEvent) {

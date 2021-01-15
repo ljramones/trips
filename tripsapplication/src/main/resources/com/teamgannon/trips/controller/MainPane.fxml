@@ -4,8 +4,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
-
 <Pane fx:id="mainPanel"
       xmlns="http://javafx.com/javafx/10.0.2-internal"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -24,10 +22,6 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#showApplicationPreferences"
                           text="Change Application Preferences..."/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#resetView"
-                          text="Reset View..."/>
                 <SeparatorMenuItem/>
                 <CheckMenuItem fx:id="togglePolitiesMenuitem"
                                mnemonicParsing="false"
@@ -139,9 +133,6 @@
             </Menu>
         </MenuBar>
         <ToolBar fx:id="toolBar" minHeight="40" prefHeight="40">
-            <Button fx:id="resetButton" mnemonicParsing="false"
-                    onAction="#resetView" text="Reset View"/>
-            <Separator/>
             <Button fx:id="plotButton" mnemonicParsing="false"
                     onAction="#plotStars" text="Plot Stars"/>
             <Separator/>
