@@ -5,7 +5,6 @@ import com.teamgannon.trips.config.application.ApplicationPreferences;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.AppViewPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
@@ -64,7 +63,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +117,6 @@ public class MainPane implements
     public CheckMenuItem toggleRoutesMenuitem;
 
     public ToolBar toolBar;
-    public Button resetButton;
     public ToggleButton togglePolityBtn;
     public ToggleButton toggleStarBtn;
     public ToggleButton toggleGridBtn;
@@ -173,13 +174,8 @@ public class MainPane implements
 
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
-    private double controlPaneOffset;
     double depth = Universe.boxDepth;
     double spacing = 20;
-
-    private @NotNull ColorPalette colorPalette = new ColorPalette();
-    private @NotNull StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
-    private @NotNull AppViewPreferences appViewPreferences = new AppViewPreferences();
 
     /**
      * interstellar space
@@ -259,8 +255,7 @@ public class MainPane implements
         this.astrographicPlotter = astrographicPlotter;
         this.localization = localization;
 
-        this.dataExportService = new DataExportService(
-                databaseManagementService, this);
+        this.dataExportService = new DataExportService(databaseManagementService, this);
 
     }
 
@@ -559,7 +554,6 @@ public class MainPane implements
         this.stage = stage;
         this.sceneWidth = sceneWidth;
         this.sceneHeight = sceneHeight;
-        this.controlPaneOffset = controlPaneOffset;
 
         interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
 
@@ -574,7 +568,6 @@ public class MainPane implements
         queryDialog.initModality(Modality.NONE);
 
         this.dataImportService = new DataImportService(databaseManagementService);
-
     }
 
 
@@ -756,7 +749,7 @@ public class MainPane implements
      * create the solar space drawing area
      */
     private void createSolarSystemSpace() {
-        solarSystemSpacePane = new SolarSystemSpacePane(leftDisplayPane.getMaxWidth(), leftDisplayPane.getMaxHeight());
+        solarSystemSpacePane = new SolarSystemSpacePane(leftDisplayPane.getMaxWidth(), leftDisplayPane.getMaxHeight(), depth);
         solarSystemSpacePane.setContextUpdater(this);
         leftDisplayPane.getChildren().add(solarSystemSpacePane);
     }
@@ -1101,7 +1094,7 @@ public class MainPane implements
         solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
         solarSystemSpacePane.render();
         solarSystemSpacePane.toFront();
-        updateStatus("Selected Solarsystem space");
+        updateStatus("Selected Solarsystem space: " + starDisplayRecord.getStarName());
     }
 
     @Override
