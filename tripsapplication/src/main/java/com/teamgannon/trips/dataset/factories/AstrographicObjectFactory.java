@@ -2,7 +2,7 @@ package com.teamgannon.trips.dataset.factories;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
@@ -23,54 +23,54 @@ public class AstrographicObjectFactory {
      * @param chViewRecord the chview record
      * @return the astrographic object
      */
-    public static @NotNull AstrographicObject create(@NotNull Dataset dataset, @NotNull ChViewRecord chViewRecord) {
-        AstrographicObject astrographicObject = new AstrographicObject();
+    public static @NotNull StarObject create(@NotNull Dataset dataset, @NotNull ChViewRecord chViewRecord) {
+        StarObject starObject = new StarObject();
 
-        astrographicObject.setId(UUID.randomUUID());
+        starObject.setId(UUID.randomUUID());
 
-        astrographicObject.setDataSetName(dataset.getName());
+        starObject.setDataSetName(dataset.getName());
 
-        astrographicObject.setRealStar(true);
+        starObject.setRealStar(true);
 
-        astrographicObject.setDisplayName(chViewRecord.getStarName());
+        starObject.setDisplayName(chViewRecord.getStarName());
 
         if (chViewRecord.getConstellation() != null) {
-            astrographicObject.setConstellationName(chViewRecord.getConstellation());
+            starObject.setConstellationName(chViewRecord.getConstellation());
         } else {
-            astrographicObject.setConstellationName("none specified");
+            starObject.setConstellationName("none specified");
         }
 
         // set the collapsed mass
-        astrographicObject.setMass(chViewRecord.getCollapsedMass());
+        starObject.setMass(chViewRecord.getCollapsedMass());
 
         // get the actual mass from the collapsed mass
-        astrographicObject.setActualMass(chViewRecord.getUncollapsedMass());
+        starObject.setActualMass(chViewRecord.getUncollapsedMass());
 
         // mark that this is the first load of this object
         if (chViewRecord.getComment() != null) {
-            astrographicObject.setNotes(chViewRecord.getComment());
+            starObject.setNotes(chViewRecord.getComment());
         } else {
-            astrographicObject.setNotes("none");
+            starObject.setNotes("none");
         }
 
 
-        astrographicObject.setCoordinates(chViewRecord.getOrdinates());
-        astrographicObject.setDistance(Double.parseDouble(chViewRecord.getDistanceToEarth()));
+        starObject.setCoordinates(chViewRecord.getOrdinates());
+        starObject.setDistance(Double.parseDouble(chViewRecord.getDistanceToEarth()));
 
-        astrographicObject.setRadius(chViewRecord.getRadius());
+        starObject.setRadius(chViewRecord.getRadius());
 
-        astrographicObject.setSpectralClass(chViewRecord.getSpectra());
-        astrographicObject.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
+        starObject.setSpectralClass(chViewRecord.getSpectra());
+        starObject.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
 
         switch (chViewRecord.getGroupNumber()) {
-            case 1 -> astrographicObject.setPolity(CivilizationDisplayPreferences.ARAKUR);
-            case 2 -> astrographicObject.setPolity(CivilizationDisplayPreferences.HKHRKH);
-            case 4 -> astrographicObject.setPolity(CivilizationDisplayPreferences.KTOR);
-            case 8 -> astrographicObject.setPolity(CivilizationDisplayPreferences.TERRAN);
+            case 1 -> starObject.setPolity(CivilizationDisplayPreferences.ARAKUR);
+            case 2 -> starObject.setPolity(CivilizationDisplayPreferences.HKHRKH);
+            case 4 -> starObject.setPolity(CivilizationDisplayPreferences.KTOR);
+            case 8 -> starObject.setPolity(CivilizationDisplayPreferences.TERRAN);
         }
-        astrographicObject.setSource("CHView");
+        starObject.setSource("CHView");
 
-        return astrographicObject;
+        return starObject;
     }
 
 

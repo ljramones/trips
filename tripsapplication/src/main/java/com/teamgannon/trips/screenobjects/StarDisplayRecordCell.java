@@ -1,7 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
@@ -11,7 +11,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -67,13 +66,13 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem editMenuItem = new MenuItem("Edit this star");
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
-            AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+            StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
             StarEditDialog starEditDialog = new StarEditDialog(starObject);
             Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 StarEditStatus status = optionalStarDisplayRecord.get();
                 if (status.isChanged()) {
-                    AstrographicObject record = status.getRecord();
+                    StarObject record = status.getRecord();
                     databaseListener.updateStar(record);
                     log.info("Changed value: {}", record);
                 } else {

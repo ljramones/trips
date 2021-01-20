@@ -1,7 +1,6 @@
 package com.teamgannon.trips.service.export.model;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -18,6 +17,6 @@ public class JsonExportObj {
     /**
      * the astrographic objects themselves
      */
-    List<AstrographicObject> astrographicObjectList = new ArrayList<>();
+    List<StarObject> starObjectList = new ArrayList<>();
 
 }

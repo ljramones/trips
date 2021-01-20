@@ -1,21 +1,18 @@
 package com.teamgannon.trips.service.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
-import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -30,7 +27,7 @@ public class JSONExporter {
         this.updaterListener = updaterListener;
     }
 
-    public void exportAsJson(@NotNull ExportOptions export, List<AstrographicObject> astrographicObjects) {
+    public void exportAsJson(@NotNull ExportOptions export, List<StarObject> starObjects) {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -39,7 +36,7 @@ public class JSONExporter {
 
             JsonExportObj jsonExportObj = new JsonExportObj();
             jsonExportObj.setDescriptor(export.getDataset().toDataSetDescriptorDTO());
-            jsonExportObj.setAstrographicObjectList(astrographicObjects);
+            jsonExportObj.setStarObjectList(starObjects);
 
             String jsonStr = objectMapper.writeValueAsString(jsonExportObj);
             writer.write(jsonStr);

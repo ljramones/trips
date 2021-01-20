@@ -6,7 +6,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
@@ -67,12 +67,12 @@ public class AstrographicPlotter {
     /**
      * draw the ch view file
      *
-     * @param astrographicObjects the list of objects to draw
+     * @param starObjects the list of objects to draw
      * @param centerCoordinates   the center of the plot
      * @param colorPalette        the color palette to draw
      */
     public void drawAstrographicData(@NotNull DataSetDescriptor dataSetDescriptor,
-                                     @NotNull List<AstrographicObject> astrographicObjects,
+                                     @NotNull List<StarObject> starObjects,
                                      double[] centerCoordinates,
                                      @NotNull ColorPalette colorPalette,
                                      @NotNull StarDisplayPreferences starDisplayPreferences,
@@ -81,21 +81,21 @@ public class AstrographicPlotter {
         interstellarSpacePane.setupPlot(dataSetDescriptor, centerCoordinates, starDisplayPreferences, civilizationDisplayPreferences);
 
         // find the min/max values to plot
-        astrographicTransformer.findMinMaxValues(astrographicObjects, centerCoordinates);
+        astrographicTransformer.findMinMaxValues(starObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
         log.info("New Plot Scaling parameters:" + scalingParameters);
         interstellarSpacePane.getGridPlotManager().rebuildGrid(astrographicTransformer, colorPalette);
 
         // plot all stars
-        for (AstrographicObject astrographicObject : astrographicObjects) {
+        for (StarObject starObject : starObjects) {
             try {
                 // create a star record object
-                double[] ords = astrographicObject.getCoordinates();
+                double[] ords = starObject.getCoordinates();
                 double[] correctedOrds = astrographicTransformer.transformOrds(ords);
 
                 // draw the star
-                if (drawable(astrographicObject)) {
-                    StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(astrographicObject, starDisplayPreferences);
+                if (drawable(starObject)) {
+                    StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(starObject, starDisplayPreferences);
                     if (record != null) {
                         record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
                         interstellarSpacePane.plotStar(record,
@@ -103,13 +103,13 @@ public class AstrographicPlotter {
                                 colorPalette,
                                 starDisplayPreferences);
                     } else {
-                        log.error("astrographic object is bad: {}", astrographicObject);
+                        log.error("astrographic object is bad: {}", starObject);
                     }
                 } else {
-                    log.warn("star record is not drawable:{}", astrographicObject);
+                    log.warn("star record is not drawable:{}", starObject);
                 }
             } catch (IllegalArgumentException iae) {
-                log.error("Star color is invalid:{}", astrographicObject);
+                log.error("Star color is invalid:{}", starObject);
             }
         }
         // draw the routes for this descriptor
@@ -117,7 +117,7 @@ public class AstrographicPlotter {
 
         interstellarSpacePane.updateLabels();
         String data = String.format("%s records plotted from dataset %s.",
-                astrographicObjects.size(),
+                starObjects.size(),
                 dataSetDescriptor.getDataSetName());
         showInfoMessage("Load Astrographic Format", data);
     }
@@ -130,7 +130,7 @@ public class AstrographicPlotter {
      * @param starRecord the list of ordinates
      * @return true if in the area and false otherwise
      */
-    private boolean drawable(@NotNull AstrographicObject starRecord) {
+    private boolean drawable(@NotNull StarObject starRecord) {
         double[] ordinates = starRecord.getCoordinates();
         if (ordinates[0] > Universe.boxWidth) {
             return false;

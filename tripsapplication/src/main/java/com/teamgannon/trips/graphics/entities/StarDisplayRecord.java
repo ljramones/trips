@@ -2,7 +2,7 @@ package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.stardata.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
@@ -119,8 +119,8 @@ public class StarDisplayRecord {
         return record;
     }
 
-    public static @NotNull AstrographicObject toAstrographicObject(@NotNull StarDisplayRecord displayRecord) {
-        AstrographicObject object = new AstrographicObject();
+    public static @NotNull StarObject toAstrographicObject(@NotNull StarDisplayRecord displayRecord) {
+        StarObject object = new StarObject();
 
         object.setId(displayRecord.getRecordId());
         object.setDataSetName(displayRecord.getDataSetName());
@@ -137,13 +137,13 @@ public class StarDisplayRecord {
         return object;
     }
 
-    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull AstrographicObject astrographicObject,
+    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull StarObject starObject,
                                                                      @NotNull StarDisplayPreferences starDisplayPreferences) {
         StarDisplayRecord record = new StarDisplayRecord();
 
         StellarType stellarType;
         try {
-            stellarType = StellarType.valueOf(astrographicObject.getOrthoSpectralClass());
+            stellarType = StellarType.valueOf(starObject.getOrthoSpectralClass());
         } catch (Exception e) {
             stellarType = StellarType.M;
         }
@@ -153,15 +153,15 @@ public class StarDisplayRecord {
             record.setRadius(starDescriptionPreference.getSize());
             record.setStarColor(starDescriptionPreference.getColor());
 
-            record.setRecordId(astrographicObject.getId());
-            record.setStarName(astrographicObject.getDisplayName());
-            record.setDataSetName(astrographicObject.getDataSetName());
-            record.setDistance(astrographicObject.getDistance());
-            record.setSpectralClass(astrographicObject.getSpectralClass());
-            record.setNotes(astrographicObject.getNotes());
-            double[] coords = astrographicObject.getCoordinates();
+            record.setRecordId(starObject.getId());
+            record.setStarName(starObject.getDisplayName());
+            record.setDataSetName(starObject.getDataSetName());
+            record.setDistance(starObject.getDistance());
+            record.setSpectralClass(starObject.getSpectralClass());
+            record.setNotes(starObject.getNotes());
+            double[] coords = starObject.getCoordinates();
             record.setActualCoordinates(coords);
-            record.setPolity(astrographicObject.getPolity());
+            record.setPolity(starObject.getPolity());
         } else {
             log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
             return null;

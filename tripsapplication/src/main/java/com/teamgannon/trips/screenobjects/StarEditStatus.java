@@ -1,12 +1,12 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Data;
 
 @Data
 public class StarEditStatus {
 
-    private AstrographicObject record;
+    private StarObject record;
 
     private boolean changed = false;
 }

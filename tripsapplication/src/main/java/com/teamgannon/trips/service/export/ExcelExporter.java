@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -73,7 +73,7 @@ public class ExcelExporter {
     }
 
 
-    public void exportAsExcel(@NotNull ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects) {
+    public void exportAsExcel(@NotNull ExportOptions export, @NotNull List<StarObject> starObjects) {
 
         try {
 
@@ -88,7 +88,7 @@ public class ExcelExporter {
             XSSFWorkbook myWorkBook = new XSSFWorkbook();
 
             writeDataDescriptor(export, myWorkBook);
-            writeStarData(export, astrographicObjects, myWorkBook);
+            writeStarData(export, starObjects, myWorkBook);
 
             FileOutputStream os = new FileOutputStream(myFile);
             myWorkBook.write(os);
@@ -155,16 +155,16 @@ public class ExcelExporter {
         storeCell(row, column, "customDataValuesStr");
     }
 
-    private void writeStarData(ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects, @NotNull XSSFWorkbook myWorkBook) {
+    private void writeStarData(ExportOptions export, @NotNull List<StarObject> starObjects, @NotNull XSSFWorkbook myWorkBook) {
         // create a work sheet with the dataset name on it
         XSSFSheet mySheet = myWorkBook.createSheet("data");
 
         writeStarDataHeaders(mySheet);
 
         int rowCount = 1;
-        for (AstrographicObject astrographicObject : astrographicObjects) {
+        for (StarObject starObject : starObjects) {
             Row row = mySheet.createRow(rowCount++);
-            saveRow(row, astrographicObject);
+            saveRow(row, starObject);
         }
     }
 
@@ -216,10 +216,10 @@ public class ExcelExporter {
         XSSFSheet mySheet = myWorkBook.createSheet(descriptor.getDataSetName());
         writeStarDataHeaders(mySheet);
         int rowCount = 1;
-        List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(descriptor);
-        for (AstrographicObject astrographicObject : astrographicObjects) {
+        List<StarObject> starObjects = databaseManagementService.getFromDataset(descriptor);
+        for (StarObject starObject : starObjects) {
             Row row = mySheet.createRow(rowCount++);
-            saveRow(row, astrographicObject);
+            saveRow(row, starObject);
         }
         updateStatus(String.format("Export of %s complete, moving to next", descriptor.getDataSetName()));
     }
@@ -287,65 +287,65 @@ public class ExcelExporter {
     }
 
 
-    private void saveRow(@NotNull Row row, @NotNull AstrographicObject astrographicObject) {
+    private void saveRow(@NotNull Row row, @NotNull StarObject starObject) {
         int column = 0;
 
-        storeCell(row, column++, astrographicObject.getId().toString());
-        storeCell(row, column++, astrographicObject.getDataSetName());
-        storeCell(row, column++, astrographicObject.getDisplayName());
-        storeCell(row, column++, astrographicObject.getConstellationName());
-        storeCell(row, column++, astrographicObject.getMass());
-        storeCell(row, column++, astrographicObject.getActualMass());
-        storeCell(row, column++, astrographicObject.getSource());
-        storeCell(row, column++, astrographicObject.getCatalogIdList());
-        storeCell(row, column++, astrographicObject.getX());
-        storeCell(row, column++, astrographicObject.getY());
-        storeCell(row, column++, astrographicObject.getZ());
-        storeCell(row, column++, astrographicObject.getRadius());
-        storeCell(row, column++, astrographicObject.getRa());
-        storeCell(row, column++, astrographicObject.getPmra());
-        storeCell(row, column++, astrographicObject.getDeclination());
-        storeCell(row, column++, astrographicObject.getPmdec());
-        storeCell(row, column++, astrographicObject.getDec_deg());
-        storeCell(row, column++, astrographicObject.getRs_cdeg());
-        storeCell(row, column++, astrographicObject.getParallax());
-        storeCell(row, column++, astrographicObject.getDistance());
-        storeCell(row, column++, astrographicObject.getRadialVelocity());
-        storeCell(row, column++, astrographicObject.getSpectralClass());
-        storeCell(row, column++, astrographicObject.getOrthoSpectralClass());
-        storeCell(row, column++, astrographicObject.getTemperature());
-        storeCell(row, column++, astrographicObject.isRealStar());
-        storeCell(row, column++, astrographicObject.getBprp());
-        storeCell(row, column++, astrographicObject.getBpg());
-        storeCell(row, column++, astrographicObject.getGrp());
-        storeCell(row, column++, astrographicObject.getLuminosity());
-        storeCell(row, column++, astrographicObject.getMagu());
-        storeCell(row, column++, astrographicObject.getMagb());
-        storeCell(row, column++, astrographicObject.getMagv());
-        storeCell(row, column++, astrographicObject.getMagr());
-        storeCell(row, column++, astrographicObject.getMagi());
-        storeCell(row, column++, astrographicObject.isOther());
-        storeCell(row, column++, astrographicObject.isAnomaly());
-        storeCell(row, column++, astrographicObject.getPolity());
-        storeCell(row, column++, astrographicObject.getWorldType());
-        storeCell(row, column++, astrographicObject.getFuelType());
-        storeCell(row, column++, astrographicObject.getPortType());
-        storeCell(row, column++, astrographicObject.getPopulationType());
-        storeCell(row, column++, astrographicObject.getTechType());
-        storeCell(row, column++, astrographicObject.getProductType());
-        storeCell(row, column++, astrographicObject.getMilSpaceType());
-        storeCell(row, column++, astrographicObject.getMilPlanType());
-        storeCell(row, column++, astrographicObject.getMiscText1());
-        storeCell(row, column++, astrographicObject.getMiscText2());
-        storeCell(row, column++, astrographicObject.getMiscText3());
-        storeCell(row, column++, astrographicObject.getMiscText4());
-        storeCell(row, column++, astrographicObject.getMiscText5());
-        storeCell(row, column++, astrographicObject.getMiscNum1());
-        storeCell(row, column++, astrographicObject.getMiscNum2());
-        storeCell(row, column++, astrographicObject.getMiscNum3());
-        storeCell(row, column++, astrographicObject.getMiscNum4());
-        storeCell(row, column++, astrographicObject.getMiscNum5());
-        storeCell(row, column, astrographicObject.getNotes());
+        storeCell(row, column++, starObject.getId().toString());
+        storeCell(row, column++, starObject.getDataSetName());
+        storeCell(row, column++, starObject.getDisplayName());
+        storeCell(row, column++, starObject.getConstellationName());
+        storeCell(row, column++, starObject.getMass());
+        storeCell(row, column++, starObject.getActualMass());
+        storeCell(row, column++, starObject.getSource());
+        storeCell(row, column++, starObject.getCatalogIdList());
+        storeCell(row, column++, starObject.getX());
+        storeCell(row, column++, starObject.getY());
+        storeCell(row, column++, starObject.getZ());
+        storeCell(row, column++, starObject.getRadius());
+        storeCell(row, column++, starObject.getRa());
+        storeCell(row, column++, starObject.getPmra());
+        storeCell(row, column++, starObject.getDeclination());
+        storeCell(row, column++, starObject.getPmdec());
+        storeCell(row, column++, starObject.getDec_deg());
+        storeCell(row, column++, starObject.getRs_cdeg());
+        storeCell(row, column++, starObject.getParallax());
+        storeCell(row, column++, starObject.getDistance());
+        storeCell(row, column++, starObject.getRadialVelocity());
+        storeCell(row, column++, starObject.getSpectralClass());
+        storeCell(row, column++, starObject.getOrthoSpectralClass());
+        storeCell(row, column++, starObject.getTemperature());
+        storeCell(row, column++, starObject.isRealStar());
+        storeCell(row, column++, starObject.getBprp());
+        storeCell(row, column++, starObject.getBpg());
+        storeCell(row, column++, starObject.getGrp());
+        storeCell(row, column++, starObject.getLuminosity());
+        storeCell(row, column++, starObject.getMagu());
+        storeCell(row, column++, starObject.getMagb());
+        storeCell(row, column++, starObject.getMagv());
+        storeCell(row, column++, starObject.getMagr());
+        storeCell(row, column++, starObject.getMagi());
+        storeCell(row, column++, starObject.isOther());
+        storeCell(row, column++, starObject.isAnomaly());
+        storeCell(row, column++, starObject.getPolity());
+        storeCell(row, column++, starObject.getWorldType());
+        storeCell(row, column++, starObject.getFuelType());
+        storeCell(row, column++, starObject.getPortType());
+        storeCell(row, column++, starObject.getPopulationType());
+        storeCell(row, column++, starObject.getTechType());
+        storeCell(row, column++, starObject.getProductType());
+        storeCell(row, column++, starObject.getMilSpaceType());
+        storeCell(row, column++, starObject.getMilPlanType());
+        storeCell(row, column++, starObject.getMiscText1());
+        storeCell(row, column++, starObject.getMiscText2());
+        storeCell(row, column++, starObject.getMiscText3());
+        storeCell(row, column++, starObject.getMiscText4());
+        storeCell(row, column++, starObject.getMiscText5());
+        storeCell(row, column++, starObject.getMiscNum1());
+        storeCell(row, column++, starObject.getMiscNum2());
+        storeCell(row, column++, starObject.getMiscNum3());
+        storeCell(row, column++, starObject.getMiscNum4());
+        storeCell(row, column++, starObject.getMiscNum5());
+        storeCell(row, column, starObject.getNotes());
 
     }
 

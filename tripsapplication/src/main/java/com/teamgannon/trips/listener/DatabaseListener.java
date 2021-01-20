@@ -1,6 +1,6 @@
 package com.teamgannon.trips.listener;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,14 +12,14 @@ public interface DatabaseListener {
      *
      * @return the list of objects
      */
-    List<AstrographicObject> getAstrographicObjectsOnQuery();
+    List<StarObject> getAstrographicObjectsOnQuery();
 
     /**
      * update the star
      *
-     * @param astrographicObject the star to update
+     * @param starObject the star to update
      */
-    void updateStar(AstrographicObject astrographicObject);
+    void updateStar(StarObject starObject);
 
     /**
      * update the star notes field only
@@ -35,14 +35,14 @@ public interface DatabaseListener {
      * @param starId the id
      * @return the star
      */
-    AstrographicObject getStar(UUID starId);
+    StarObject getStar(UUID starId);
 
     /**
      * remove the specified star
      *
-     * @param astrographicObject the star to remove
+     * @param starObject the star to remove
      */
-    void removeStar(AstrographicObject astrographicObject);
+    void removeStar(StarObject starObject);
 
     /**
      * remove by UUID

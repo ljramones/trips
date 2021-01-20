@@ -16,8 +16,8 @@ import java.util.UUID;
  * Created by larrymitchell on 2017-03-28.
  */
 @Data
-@Entity(name = "ASTROGRAPHIC_OBJ")
-public class AstrographicObject implements Serializable {
+@Entity(name = "STAR_OBJ")
+public class StarObject implements Serializable {
 
     public final static String SIMBAD_NO_ID = "UNDEFINED";
     public final static String SIMBAD_NO_TYPE = "UNDEFINED";
@@ -344,11 +344,16 @@ public class AstrographicObject implements Serializable {
      */
     private double miscNum5 = 0.0;
 
+    /**
+     * a flag that tells us if this system has exoplanets
+     */
+    private boolean exoplanets;
+
 
     ///////////////////////////////////////
 
 
-    public AstrographicObject() {
+    public StarObject() {
         init();
     }
 

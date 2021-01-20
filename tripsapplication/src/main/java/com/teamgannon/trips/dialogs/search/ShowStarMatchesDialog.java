@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -28,29 +28,29 @@ import java.util.UUID;
 public class ShowStarMatchesDialog extends Dialog<String> {
 
 
-    private final TableView<AstrographicObject> tableView = new TableView<>();
-    private final TableColumn<AstrographicObject, String> displayNameCol = new TableColumn<>("Display Name");
-    private final TableColumn<AstrographicObject, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth(ly)");
-    private final TableColumn<AstrographicObject, String> spectraCol = new TableColumn<>("Spectra");
-    private final TableColumn<AstrographicObject, Double> radiusCol = new TableColumn<>("Radius");
-    private final TableColumn<AstrographicObject, Double> raCol = new TableColumn<>("RA");
-    private final TableColumn<AstrographicObject, Double> decCol = new TableColumn<>("Declination");
-    private final TableColumn<AstrographicObject, Double> paraCol = new TableColumn<>("Parallax");
-    private final TableColumn<AstrographicObject, Double> xCoordCol = new TableColumn<>("X");
-    private final TableColumn<AstrographicObject, Double> yCoordCol = new TableColumn<>("Y");
-    private final TableColumn<AstrographicObject, Double> zCoordCol = new TableColumn<>("Z");
-    private final TableColumn<AstrographicObject, String> realCol = new TableColumn<>("Real");
-    private final TableColumn<AstrographicObject, String> commentCol = new TableColumn<>("comment");
+    private final TableView<StarObject> tableView = new TableView<>();
+    private final TableColumn<StarObject, String> displayNameCol = new TableColumn<>("Display Name");
+    private final TableColumn<StarObject, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth(ly)");
+    private final TableColumn<StarObject, String> spectraCol = new TableColumn<>("Spectra");
+    private final TableColumn<StarObject, Double> radiusCol = new TableColumn<>("Radius");
+    private final TableColumn<StarObject, Double> raCol = new TableColumn<>("RA");
+    private final TableColumn<StarObject, Double> decCol = new TableColumn<>("Declination");
+    private final TableColumn<StarObject, Double> paraCol = new TableColumn<>("Parallax");
+    private final TableColumn<StarObject, Double> xCoordCol = new TableColumn<>("X");
+    private final TableColumn<StarObject, Double> yCoordCol = new TableColumn<>("Y");
+    private final TableColumn<StarObject, Double> zCoordCol = new TableColumn<>("Z");
+    private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
+    private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
 
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
 
     private DatabaseManagementService databaseManagementService;
-    private final List<AstrographicObject> astrographicObjects;
+    private final List<StarObject> starObjects;
 
-    public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService, List<AstrographicObject> astrographicObjects) {
+    public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService, List<StarObject> starObjects) {
         this.databaseManagementService = databaseManagementService;
-        this.astrographicObjects = astrographicObjects;
+        this.starObjects = starObjects;
         this.setTitle("Show discovered stars");
         this.setHeight(700);
         this.setWidth(1000);
@@ -162,8 +162,8 @@ public class ShowStarMatchesDialog extends Dialog<String> {
 
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
-            final AstrographicObject astrographicObject = tableView.getSelectionModel().getSelectedItem();
-            StarEditDialog starEditDialog = new StarEditDialog(astrographicObject);
+            final StarObject starObject = tableView.getSelectionModel().getSelectedItem();
+            StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
             Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
             if (statusOptional.isPresent()) {
@@ -180,9 +180,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
 
         final MenuItem deleteSelectedMenuItem = new MenuItem("Delete selected");
         deleteSelectedMenuItem.setOnAction(event -> {
-            final AstrographicObject astrographicObject = tableView.getSelectionModel().getSelectedItem();
-            tableView.getItems().remove(astrographicObject);
-            removeFromDB(astrographicObject);
+            final StarObject starObject = tableView.getSelectionModel().getSelectedItem();
+            tableView.getItems().remove(starObject);
+            removeFromDB(starObject);
         });
         tableContextMenu.getItems().addAll(editSelectedMenuItem, deleteSelectedMenuItem);
 
@@ -192,11 +192,11 @@ public class ShowStarMatchesDialog extends Dialog<String> {
     /**
      * remove an entry from the DB
      *
-     * @param astrographicObject the record to remove
+     * @param starObject the record to remove
      */
-    private void removeFromDB(@NotNull AstrographicObject astrographicObject) {
+    private void removeFromDB(@NotNull StarObject starObject) {
 
-        UUID id = astrographicObject.getId();
+        UUID id = starObject.getId();
 
         // remove from DB
         databaseManagementService.removeStar(id);
@@ -207,11 +207,11 @@ public class ShowStarMatchesDialog extends Dialog<String> {
     }
 
     private void setSelectionModel() {
-        TableView.TableViewSelectionModel<AstrographicObject> selectionModel = tableView.getSelectionModel();
+        TableView.TableViewSelectionModel<StarObject> selectionModel = tableView.getSelectionModel();
         selectionModel.setSelectionMode(SelectionMode.SINGLE);
-        ObservableList<AstrographicObject> selectedItems = selectionModel.getSelectedItems();
+        ObservableList<StarObject> selectedItems = selectionModel.getSelectedItems();
 
-        selectedItems.addListener((ListChangeListener<AstrographicObject>) change ->
+        selectedItems.addListener((ListChangeListener<StarObject>) change ->
                 log.info("Selection changed: " + change.getList()));
     }
 
@@ -224,13 +224,13 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      */
     private void loadData() {
 
-        for (AstrographicObject astrographicObject : astrographicObjects) {
+        for (StarObject starObject : starObjects) {
             // check for a crap record
-            if (astrographicObject.getDisplayName() == null) {
+            if (starObject.getDisplayName() == null) {
                 continue;
             }
-            if (!astrographicObject.getDisplayName().equalsIgnoreCase("name")) {
-                tableView.getItems().add(astrographicObject);
+            if (!starObject.getDisplayName().equalsIgnoreCase("name")) {
+                tableView.getItems().add(starObject);
             }
         }
     }
@@ -388,9 +388,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.NAME;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDisplayName));
+            starObjects.sort(Comparator.comparing(StarObject::getDisplayName));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDistance).reversed());
         }
     }
 
@@ -403,9 +403,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.DISTANCE;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance));
+            starObjects.sort(Comparator.comparing(StarObject::getDistance));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDistance).reversed());
         }
     }
 
@@ -418,9 +418,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.SPECTRA;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass));
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass).reversed());
         }
     }
 
@@ -433,9 +433,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.RADIUS;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRadius));
+            starObjects.sort(Comparator.comparing(StarObject::getRadius));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass).reversed());
         }
     }
 
@@ -448,9 +448,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.RA;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRa));
+            starObjects.sort(Comparator.comparing(StarObject::getRa));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRa).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getRa).reversed());
         }
     }
 
@@ -463,9 +463,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.DECLINATION;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDeclination));
+            starObjects.sort(Comparator.comparing(StarObject::getDeclination));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDeclination).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDeclination).reversed());
         }
     }
 
@@ -478,9 +478,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.PARALLAX;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getParallax));
+            starObjects.sort(Comparator.comparing(StarObject::getParallax));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getParallax).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getParallax).reversed());
         }
     }
 
@@ -493,9 +493,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.X;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getX));
+            starObjects.sort(Comparator.comparing(StarObject::getX));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getX).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getX).reversed());
         }
     }
 
@@ -508,9 +508,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.Y;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getY));
+            starObjects.sort(Comparator.comparing(StarObject::getY));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getY).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getY).reversed());
         }
     }
 
@@ -523,9 +523,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.Z;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getZ));
+            starObjects.sort(Comparator.comparing(StarObject::getZ));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getZ).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getZ).reversed());
         }
     }
 
@@ -538,9 +538,9 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         currentSortStrategy = SortParameterEnum.REAL;
         sortDirection = sortOrder;
         if (sortOrder.equals(TableColumn.SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::isRealStar));
+            starObjects.sort(Comparator.comparing(StarObject::isRealStar));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::isRealStar).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::isRealStar).reversed());
         }
     }
 }

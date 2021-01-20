@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.Builder;
 import lombok.Data;
@@ -50,7 +50,7 @@ public class AdvResultsSet {
      * the list of results found
      */
     @Builder.Default
-    private @NotNull List<AstrographicObject> starsFound = new ArrayList<>();
+    private @NotNull List<StarObject> starsFound = new ArrayList<>();
 
     /**
      * the dataset descriptor that we selected

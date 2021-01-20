@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.export.CSVExporter;
 import com.teamgannon.trips.service.export.ExcelExporter;
@@ -65,9 +65,9 @@ public class DataExportService {
 
     public void exportDataset(@NotNull ExportOptions exportOptions) {
 
-        List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
+        List<StarObject> starObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
 
-        exportExec(exportOptions, astrographicObjects);
+        exportExec(exportOptions, starObjects);
 
     }
 
@@ -75,14 +75,14 @@ public class DataExportService {
      * do the actual export witht he defined objects
      *
      * @param exportOptions       the options
-     * @param astrographicObjects the objects to export
+     * @param starObjects the objects to export
      */
-    private void exportExec(@NotNull ExportOptions exportOptions, List<AstrographicObject> astrographicObjects) {
+    private void exportExec(@NotNull ExportOptions exportOptions, List<StarObject> starObjects) {
         switch (exportOptions.getExportFormat()) {
 
-            case CSV -> csvExporter.exportAsCSV(exportOptions, astrographicObjects);
-            case EXCEL -> excelExporter.exportAsExcel(exportOptions, astrographicObjects);
-            case JSON -> jsonExporter.exportAsJson(exportOptions, astrographicObjects);
+            case CSV -> csvExporter.exportAsCSV(exportOptions, starObjects);
+            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
+            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
     }
 
@@ -90,11 +90,11 @@ public class DataExportService {
      * export a queried dataset based on options
      *
      * @param exportOptions       the options
-     * @param astrographicObjects the objects to export
+     * @param starObjects the objects to export
      */
-    public void exportDatasetOnQuery(ExportOptions exportOptions, List<AstrographicObject> astrographicObjects) {
-        log.info("exporting {} with {} stars ", exportOptions.getDataset(), astrographicObjects.size());
-        exportExec(exportOptions, astrographicObjects);
+    public void exportDatasetOnQuery(ExportOptions exportOptions, List<StarObject> starObjects) {
+        log.info("exporting {} with {} stars ", exportOptions.getDataset(), starObjects.size());
+        exportExec(exportOptions, starObjects);
     }
 
 }

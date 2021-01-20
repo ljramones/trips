@@ -2,8 +2,8 @@ package com.teamgannon.trips.file.csvin;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Component
@@ -42,23 +43,38 @@ public class RegularCsvReader {
             BufferedReader reader = new BufferedReader(new FileReader(file));
 
             // read descriptor
-            // skeip headers
-            reader.readLine();
-            String line = reader.readLine();
-            String[] descriptor = line.split(",");
-            csvFile.setDataSetDescriptor(transformDescriptor(dataset, descriptor));
+            // read first to determine whether this file follows the backup protocol or not.
+            // backup protocol means that the two lines hold the dataset descriptor
+            // if the first header starts with dataSetName, then backup, if it start with id, then its a fresh load
+            // if it start with anythign else then it's malformed
+            String backup = reader.readLine();
+            String[] indicator = backup.split(",");
+            if (indicator[0].trim().equals("dataSetName")) {
+                // this is a dataset
+                String readLine = reader.readLine();
+                String[] descriptor = readLine.split(",");
+                csvFile.setDataSetDescriptor(transformDescriptor(dataset, descriptor));
+            } else if (!indicator[0].trim().equals("id")) {
+                // we handle the error case here
+                // since it is neither of the cases then we can't reliably know what kind of file was loaded.
+                String message = "This file is malformed, we did not find either a backup marker(dataSetName) or a load marker(id) in the first line, first position";
+                progressUpdater.updateLoadInfo(message);
+                log.error(message);
+                csvFile.setReadSuccess(false);
+                csvFile.setProcessMessage(message);
+                return csvFile;
+            }
 
             // read stars
-
             // skip header
             reader.readLine();
 
             do {
-                Set<AstrographicObject> starSet = new HashSet<>();
+                Set<StarObject> starSet = new HashSet<>();
                 int loopCounter = 0;
                 for (int i = 0; i < 20000; i++) {
 
-                    line = reader.readLine();
+                    String line = reader.readLine();
 
                     if (line == null) {
                         System.out.println(">>> bad line");
@@ -66,7 +82,7 @@ public class RegularCsvReader {
                         break;
                     }
 
-                    String[] lineRead = line.split(",");
+                    String[] lineRead = linePad(line.split(","), 56);
                     System.out.println("name=   " + lineRead[2]);
                     loopCounter++;
                     AstroCSVStar star = AstroCSVStar
@@ -122,11 +138,11 @@ public class RegularCsvReader {
                             .miscText3(lineRead[47])
                             .miscText4(lineRead[48])
                             .miscText5(lineRead[49])
-                            .miscNum1(Double.parseDouble(lineRead[50]))
-                            .miscNum2(Double.parseDouble(lineRead[51]))
-                            .miscNum3(Double.parseDouble(lineRead[52]))
-                            .miscNum4(Double.parseDouble(lineRead[53]))
-                            .miscNum5(Double.parseDouble(lineRead[54]))
+                            .miscNum1(parseDouble(lineRead[50]))
+                            .miscNum2(parseDouble(lineRead[51]))
+                            .miscNum3(parseDouble(lineRead[52]))
+                            .miscNum4(parseDouble(lineRead[53]))
+                            .miscNum5(parseDouble(lineRead[54]))
                             .notes(lineRead[55])
                             .build();
                     try {
@@ -138,10 +154,10 @@ public class RegularCsvReader {
                         log.error("Error getting distance for {}", star.getDisplayName());
                     }
                     try {
-                        AstrographicObject astrographicObject = star.toAstrographicObject();
-                        if (astrographicObject != null) {
-                            astrographicObject.setDataSetName(dataset.getName());
-                            starSet.add(astrographicObject);
+                        StarObject starObject = star.toAstrographicObject();
+                        if (starObject != null) {
+                            starObject.setDataSetName(dataset.getName());
+                            starSet.add(starObject);
                             csvFile.incAccepts();
                         } else {
                             csvFile.incRejects();
@@ -160,15 +176,44 @@ public class RegularCsvReader {
             } while (!readComplete); // the moment readComplete turns true, we stop
 
             log.info("File load report: total:{}, accepts:{}, rejects:{}", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects());
+            csvFile.setReadSuccess(true);
+            csvFile.setProcessMessage(String.format("File load report: total:%d, accepts:%d, rejects:%d", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects()));
         } catch (IOException e) {
             progressUpdater.updateLoadInfo("failed to read file because: " + e.getMessage());
             log.error("failed to read file because: {}", e.getMessage());
+            csvFile.setReadSuccess(false);
+            csvFile.setProcessMessage("failed to read file because: " + e.getMessage());
         }
 
-        csvFile.setMaxDistance(maxDistance);
-        progressUpdater.updateLoadInfo("load of dataset Complete");
+        if (csvFile.isReadSuccess()) {
+            csvFile.setMaxDistance(maxDistance);
+            progressUpdater.updateLoadInfo("load of dataset Complete");
+        }
 
         return csvFile;
+    }
+
+    private double parseDouble(String string) {
+        if (string.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Double.parseDouble(string);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private String[] linePad(String[] split, int size) {
+        String[] pad = new String[size];
+        IntStream.range(0, size).forEachOrdered(i -> {
+            if (i < split.length) {
+                pad[i] = split[i];
+            } else {
+                pad[i] = "";
+            }
+        });
+        return pad;
     }
 
     private @NotNull DataSetDescriptor transformDescriptor(@NotNull Dataset dataset, String[] descriptorVals) {

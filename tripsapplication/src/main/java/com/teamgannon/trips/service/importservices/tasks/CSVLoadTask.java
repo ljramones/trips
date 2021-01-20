@@ -48,20 +48,25 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
         RegCSVFile regCSVFile = regularCsvReader.loadFile(this, file, dataset);
 
         try {
-            updateMessage(" File load complete, about to save records in database ");
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCSVFile(regCSVFile);
-            String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName());
-            processResult.setMessage(data);
-            processResult.setSuccess(true);
-            processResult.setDataSetDescriptor(dataSetDescriptor);
-            updateLoadInfo(String.format(" %s records loaded from dataset %s",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName()));
+            if (regCSVFile.isReadSuccess()) {
+                updateMessage(" File load complete, about to save records in database ");
+                DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCSVFile(regCSVFile);
+                String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
+                        dataSetDescriptor.getNumberStars(),
+                        dataSetDescriptor.getDataSetName());
+                processResult.setMessage(data);
+                processResult.setSuccess(true);
+                processResult.setDataSetDescriptor(dataSetDescriptor);
+                updateLoadInfo(String.format(" %s records loaded from dataset %s",
+                        dataSetDescriptor.getNumberStars(),
+                        dataSetDescriptor.getDataSetName()));
+            } else {
+                processResult.setMessage(regCSVFile.getProcessMessage());
+                processResult.setSuccess(false);
+            }
         } catch (Exception e) {
             processResult.setSuccess(false);
-            processResult.setMessage("This dataset was already loaded in the system ");
+            processResult.setMessage("Failed to load the dataset, see log ");
         }
 
         return processResult;

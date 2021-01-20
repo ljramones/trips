@@ -98,8 +98,6 @@
         <javafx.version>14</javafx.version>
         <fxweaver.version>1.3.0</fxweaver.version>
 
-        <jna.version>4.3.0</jna.version>
-
         <lombok.version>1.18.16</lombok.version>
 
         <commons.collections4.version>4.4</commons.collections4.version>
@@ -118,7 +116,6 @@
         <orekit.version>8.0</orekit.version>
         <opencsv.version>5.2</opencsv.version>
         <poi.ooxml.version>4.1.2</poi.ooxml.version>
-        <jackson.annotations.version>2.8.7</jackson.annotations.version>
     </properties>
 
     <dependencyManagement>
@@ -135,11 +132,13 @@
 
     <dependencies>
 
+        <!-- JPA support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <!-- H2 database support -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -159,6 +158,7 @@
             <version>2.11.3</version>
         </dependency>
 
+        <!-- SQL parsing support -->
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
@@ -178,13 +178,6 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons.lang.version}</version>
-        </dependency>
-
-        <!-- Apache Commons Math -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>${commons.math.version}</version>
         </dependency>
 
         <!-- Apache Commons Codec  -->
@@ -214,7 +207,7 @@
             <version>${poi.ooxml.version}</version>
         </dependency>
 
-
+        <!-- icon libraries -->
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
@@ -329,6 +322,21 @@
             <version>1.5.0</version>
         </dependency>
 
+        <!-- orbital dynamics and math libraries -->
+        <dependency>
+            <groupId>org.orekit</groupId>
+            <artifactId>orekit</artifactId>
+            <version>10.3</version>
+        </dependency>
+
+        <!-- Apache Commons Math -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${commons.math.version}</version>
+        </dependency>
+
+        <!-- testing libraries  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -351,9 +359,6 @@
     </dependencies>
 
     <build>
-
-        <!--        <finalName>trips</finalName>-->
-
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

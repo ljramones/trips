@@ -1,10 +1,9 @@
 package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ public class CSVExporter {
     }
 
 
-    public void exportAsCSV(@NotNull ExportOptions export, @NotNull List<AstrographicObject> astrographicObjects) {
+    public void exportAsCSV(@NotNull ExportOptions export, @NotNull List<StarObject> starObjects) {
 
         DataSetDescriptor dataSetDescriptor = export.getDataset();
 
@@ -40,8 +39,8 @@ public class CSVExporter {
             String headers = getHeaders();
             writer.write(headers);
             int i = 0;
-            for (AstrographicObject astrographicObject : astrographicObjects) {
-                String csvRecord = convertToCSV(astrographicObject);
+            for (StarObject starObject : starObjects) {
+                String csvRecord = convertToCSV(starObject);
                 writer.write(csvRecord);
                 i++;
             }
@@ -173,64 +172,64 @@ public class CSVExporter {
                 "\n";
     }
 
-    private @NotNull String convertToCSV(@NotNull AstrographicObject astrographicObject) {
+    private @NotNull String convertToCSV(@NotNull StarObject starObject) {
 
-        return removeCommas(astrographicObject.getId().toString()) + ", " +
-                removeCommas(astrographicObject.getDataSetName()) + ", " +
-                removeCommas(astrographicObject.getDisplayName()) + ", " +
-                removeCommas(astrographicObject.getConstellationName()) + ", " +
-                astrographicObject.getMass() + ", " +
-                astrographicObject.getActualMass() + ", " +
-                removeCommas(astrographicObject.getSource()) + ", " +
-                astrographicObject.getCatalogIdList() + ", " +
-                astrographicObject.getX() + ", " +
-                astrographicObject.getY() + ", " +
-                astrographicObject.getZ() + ", " +
-                astrographicObject.getRadius() + ", " +
-                astrographicObject.getRa() + ", " +
-                astrographicObject.getPmra() + ", " +
-                astrographicObject.getDeclination() + ", " +
-                astrographicObject.getPmdec() + ", " +
-                astrographicObject.getDec_deg() + ", " +
-                astrographicObject.getRs_cdeg() + ", " +
-                astrographicObject.getParallax() + ", " +
-                astrographicObject.getDistance() + ", " +
-                astrographicObject.getRadialVelocity() + ", " +
-                astrographicObject.getSpectralClass() + ", " +
-                astrographicObject.getOrthoSpectralClass() + ", " +
-                astrographicObject.getTemperature() + ", " +
-                astrographicObject.isRealStar() + ", " +
-                astrographicObject.getBprp() + ", " +
-                astrographicObject.getBpg() + ", " +
-                astrographicObject.getGrp() + ", " +
-                astrographicObject.getLuminosity() + ", " +
-                astrographicObject.getMagu() + ", " +
-                astrographicObject.getMagb() + ", " +
-                astrographicObject.getMagv() + ", " +
-                astrographicObject.getMagr() + ", " +
-                astrographicObject.getMagi() + ", " +
-                astrographicObject.isOther() + ", " +
-                astrographicObject.isAnomaly() + ", " +
-                astrographicObject.getPolity() + ", " +
-                astrographicObject.getWorldType() + ", " +
-                astrographicObject.getFuelType() + ", " +
-                astrographicObject.getPortType() + ", " +
-                astrographicObject.getPopulationType() + ", " +
-                astrographicObject.getTechType() + ", " +
-                astrographicObject.getProductType() + ", " +
-                astrographicObject.getMilSpaceType() + ", " +
-                astrographicObject.getMilPlanType() + ", " +
-                removeCommas(astrographicObject.getMiscText1()) + ", " +
-                removeCommas(astrographicObject.getMiscText2()) + ", " +
-                removeCommas(astrographicObject.getMiscText3()) + ", " +
-                removeCommas(astrographicObject.getMiscText4()) + ", " +
-                removeCommas(astrographicObject.getMiscText5()) + ", " +
-                astrographicObject.getMiscNum1() + ", " +
-                astrographicObject.getMiscNum2() + ", " +
-                astrographicObject.getMiscNum3() + ", " +
-                astrographicObject.getMiscNum4() + ", " +
-                astrographicObject.getMiscNum5() + ", " +
-                removeCommas(astrographicObject.getNotes()) +
+        return removeCommas(starObject.getId().toString()) + ", " +
+                removeCommas(starObject.getDataSetName()) + ", " +
+                removeCommas(starObject.getDisplayName()) + ", " +
+                removeCommas(starObject.getConstellationName()) + ", " +
+                starObject.getMass() + ", " +
+                starObject.getActualMass() + ", " +
+                removeCommas(starObject.getSource()) + ", " +
+                starObject.getCatalogIdList() + ", " +
+                starObject.getX() + ", " +
+                starObject.getY() + ", " +
+                starObject.getZ() + ", " +
+                starObject.getRadius() + ", " +
+                starObject.getRa() + ", " +
+                starObject.getPmra() + ", " +
+                starObject.getDeclination() + ", " +
+                starObject.getPmdec() + ", " +
+                starObject.getDec_deg() + ", " +
+                starObject.getRs_cdeg() + ", " +
+                starObject.getParallax() + ", " +
+                starObject.getDistance() + ", " +
+                starObject.getRadialVelocity() + ", " +
+                starObject.getSpectralClass() + ", " +
+                starObject.getOrthoSpectralClass() + ", " +
+                starObject.getTemperature() + ", " +
+                starObject.isRealStar() + ", " +
+                starObject.getBprp() + ", " +
+                starObject.getBpg() + ", " +
+                starObject.getGrp() + ", " +
+                starObject.getLuminosity() + ", " +
+                starObject.getMagu() + ", " +
+                starObject.getMagb() + ", " +
+                starObject.getMagv() + ", " +
+                starObject.getMagr() + ", " +
+                starObject.getMagi() + ", " +
+                starObject.isOther() + ", " +
+                starObject.isAnomaly() + ", " +
+                starObject.getPolity() + ", " +
+                starObject.getWorldType() + ", " +
+                starObject.getFuelType() + ", " +
+                starObject.getPortType() + ", " +
+                starObject.getPopulationType() + ", " +
+                starObject.getTechType() + ", " +
+                starObject.getProductType() + ", " +
+                starObject.getMilSpaceType() + ", " +
+                starObject.getMilPlanType() + ", " +
+                removeCommas(starObject.getMiscText1()) + ", " +
+                removeCommas(starObject.getMiscText2()) + ", " +
+                removeCommas(starObject.getMiscText3()) + ", " +
+                removeCommas(starObject.getMiscText4()) + ", " +
+                removeCommas(starObject.getMiscText5()) + ", " +
+                starObject.getMiscNum1() + ", " +
+                starObject.getMiscNum2() + ", " +
+                starObject.getMiscNum3() + ", " +
+                starObject.getMiscNum4() + ", " +
+                starObject.getMiscNum5() + ", " +
+                removeCommas(starObject.getNotes()) +
                 "\n";
     }
 

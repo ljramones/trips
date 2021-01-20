@@ -2,8 +2,8 @@ package com.teamgannon.trips.search;
 
 
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -16,36 +16,36 @@ import java.util.List;
 public class SearchService {
 
     private final TripsContext tripsContext;
-    private final AstrographicObjectRepository repository;
+    private final StarObjectRepository repository;
 
     public SearchService(
             TripsContext tripsContext,
-            AstrographicObjectRepository repository
+            StarObjectRepository repository
     ) {
         this.tripsContext = tripsContext;
         this.repository = repository;
     }
 
-    @NotNull List<AstrographicObject> findAllStarsFromSol(double distance) {
-        List<AstrographicObject> astrographicObjects = new ArrayList<>();
+    @NotNull List<StarObject> findAllStarsFromSol(double distance) {
+        List<StarObject> starObjects = new ArrayList<>();
 
 
-        return astrographicObjects;
+        return starObjects;
     }
 
 
-    @NotNull List<AstrographicObject> findAllStarsFromXYZ(double distance) {
-        List<AstrographicObject> astrographicObjects = new ArrayList<>();
+    @NotNull List<StarObject> findAllStarsFromXYZ(double distance) {
+        List<StarObject> starObjects = new ArrayList<>();
 
 
-        return astrographicObjects;
+        return starObjects;
     }
 
-    @NotNull List<AstrographicObject> FindStarsFromQuery(AstroSearchQuery astroSearchQuery) {
-        List<AstrographicObject> astrographicObjects = new ArrayList<>();
+    @NotNull List<StarObject> FindStarsFromQuery(AstroSearchQuery astroSearchQuery) {
+        List<StarObject> starObjects = new ArrayList<>();
 
 
-        return astrographicObjects;
+        return starObjects;
     }
 
 

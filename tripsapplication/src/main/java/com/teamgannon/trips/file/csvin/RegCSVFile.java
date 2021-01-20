@@ -7,6 +7,10 @@ import lombok.Data;
 @Data
 public class RegCSVFile {
 
+    private boolean readSuccess;
+
+    private String processMessage;
+
     private Dataset dataset;
 
     private DataSetDescriptor dataSetDescriptor;

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.file.csvin.model;
 
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.stardata.StarColor;
 import com.teamgannon.trips.stardata.StellarClassification;
 import com.teamgannon.trips.stardata.StellarFactory;
@@ -54,9 +54,9 @@ public class RBCSVStar {
         this.stellarFactory = stellarFactory;
     }
 
-    public @Nullable AstrographicObject toAstrographicObject() {
+    public @Nullable StarObject toAstrographicObject() {
         try {
-            AstrographicObject astro = new AstrographicObject();
+            StarObject astro = new StarObject();
 
             astro.setId(UUID.randomUUID());
 

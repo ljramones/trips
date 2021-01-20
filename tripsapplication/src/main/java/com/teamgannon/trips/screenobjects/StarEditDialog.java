@@ -1,6 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,7 +19,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class StarEditDialog extends Dialog<StarEditStatus> {
 
-    private final @NotNull AstrographicObject record;
+    private final @NotNull StarObject record;
 
     // UI elements
     private final Label recordIdLabel = new Label();
@@ -80,7 +80,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     ////////////////
 
-    public StarEditDialog(@NotNull AstrographicObject record) {
+    public StarEditDialog(@NotNull StarObject record) {
         this.record = record;
 
         VBox vBox = new VBox();

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.tableviews;
 
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -63,14 +63,14 @@ public class DataSetTable {
     private final TableColumn<StarEditRecord, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarEditRecord, String> commentCol = new TableColumn<>("comment");
 
-    private final Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
+    private final Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
 
     /**
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
     private final DatabaseManagementService databaseManagementService;
-    private List<AstrographicObject> astrographicObjects;
+    private List<StarObject> starObjects;
 
     private final String dataSetName;
 
@@ -83,18 +83,18 @@ public class DataSetTable {
      * the constructor that we use to show the data
      *
      * @param databaseManagementService the database management service
-     * @param astrographicObjects       the list of objects
+     * @param starObjects       the list of objects
      */
     public DataSetTable(DatabaseManagementService databaseManagementService,
-                        @NotNull List<AstrographicObject> astrographicObjects) {
+                        @NotNull List<StarObject> starObjects) {
 
         this.databaseManagementService = databaseManagementService;
 
-        this.astrographicObjects = astrographicObjects;
-        if (!astrographicObjects.isEmpty()) {
+        this.starObjects = starObjects;
+        if (!starObjects.isEmpty()) {
             MapUtils.populateMap(astrographicObjectMap,
-                    astrographicObjects,
-                    AstrographicObject::getId);
+                    starObjects,
+                    StarObject::getId);
         }
 
 
@@ -102,8 +102,8 @@ public class DataSetTable {
         // the actual ui component to hold these entries
         dialog = new Dialog<>();
 
-        dataSetName = astrographicObjects.get(0).getDataSetName();
-        totalPages = (int) ceil(astrographicObjects.size() / (float) PAGE_SIZE);  // bump to next integer
+        dataSetName = starObjects.get(0).getDataSetName();
+        totalPages = (int) ceil(starObjects.size() / (float) PAGE_SIZE);  // bump to next integer
 
         setTitle();
 
@@ -187,9 +187,9 @@ public class DataSetTable {
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
             final StarEditRecord selectedStarEditRecord = tableView.getSelectionModel().getSelectedItem();
-            AstrographicObject astrographicObject = databaseManagementService.getStar(selectedStarEditRecord.getId());
-            if (astrographicObject != null) {
-                StarEditDialog starEditDialog = new StarEditDialog(astrographicObject);
+            StarObject starObject = databaseManagementService.getStar(selectedStarEditRecord.getId());
+            if (starObject != null) {
+                StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
                 Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
                 if (statusOptional.isPresent()) {
@@ -383,18 +383,18 @@ public class DataSetTable {
      * add a new entry
      */
     private void addNewDataEntry() {
-        AstrographicObject astrographicObject = new AstrographicObject();
-        astrographicObject.setId(UUID.randomUUID());
-        astrographicObject.setDataSetName(dataSetName);
-        StarEditDialog editDialog = new StarEditDialog(astrographicObject);
+        StarObject starObject = new StarObject();
+        starObject.setId(UUID.randomUUID());
+        starObject.setDataSetName(dataSetName);
+        StarEditDialog editDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> status = editDialog.showAndWait();
         if (status.isPresent()) {
             StarEditStatus editResult = status.get();
             if (editResult.isChanged()) {
-                AstrographicObject astro = editResult.getRecord();
+                StarObject astro = editResult.getRecord();
                 log.info("star created={}", astro);
                 // add to the backing list for table view
-                astrographicObjects.add(astro);
+                starObjects.add(astro);
                 // add to our map which backs the list
                 astrographicObjectMap.put(astro.getId(), astro);
                 // add to the database
@@ -431,7 +431,7 @@ public class DataSetTable {
      * reset the list
      */
     private void resetList() {
-        astrographicObjects = new ArrayList<>(astrographicObjectMap.values());
+        starObjects = new ArrayList<>(astrographicObjectMap.values());
     }
 
 
@@ -442,12 +442,12 @@ public class DataSetTable {
      */
     private void loadData() {
         int pageSize = PAGE_SIZE;
-        int diff = astrographicObjects.size() - currentPosition;
+        int diff = starObjects.size() - currentPosition;
         if (diff < pageSize) {
             pageSize = diff;
         }
         for (int i = currentPosition; i < (currentPosition + pageSize); i++) {
-            AstrographicObject object = astrographicObjects.get(i);
+            StarObject object = starObjects.get(i);
             // check for a crap record
             if (object.getDisplayName() == null) {
                 continue;
@@ -618,9 +618,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.NAME;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDisplayName));
+            starObjects.sort(Comparator.comparing(StarObject::getDisplayName));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDistance).reversed());
         }
     }
 
@@ -633,9 +633,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.DISTANCE;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance));
+            starObjects.sort(Comparator.comparing(StarObject::getDistance));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDistance).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDistance).reversed());
         }
     }
 
@@ -648,9 +648,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.SPECTRA;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass));
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass).reversed());
         }
     }
 
@@ -663,9 +663,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.RADIUS;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRadius));
+            starObjects.sort(Comparator.comparing(StarObject::getRadius));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getSpectralClass).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass).reversed());
         }
     }
 
@@ -678,9 +678,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.RA;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRa));
+            starObjects.sort(Comparator.comparing(StarObject::getRa));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getRa).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getRa).reversed());
         }
     }
 
@@ -693,9 +693,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.DECLINATION;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDeclination));
+            starObjects.sort(Comparator.comparing(StarObject::getDeclination));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getDeclination).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDeclination).reversed());
         }
     }
 
@@ -708,9 +708,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.PARALLAX;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getParallax));
+            starObjects.sort(Comparator.comparing(StarObject::getParallax));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getParallax).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getParallax).reversed());
         }
     }
 
@@ -723,9 +723,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.X;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getX));
+            starObjects.sort(Comparator.comparing(StarObject::getX));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getX).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getX).reversed());
         }
     }
 
@@ -738,9 +738,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.Y;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getY));
+            starObjects.sort(Comparator.comparing(StarObject::getY));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getY).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getY).reversed());
         }
     }
 
@@ -753,9 +753,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.Z;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getZ));
+            starObjects.sort(Comparator.comparing(StarObject::getZ));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::getZ).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getZ).reversed());
         }
     }
 
@@ -768,9 +768,9 @@ public class DataSetTable {
         currentSortStrategy = SortParameterEnum.REAL;
         sortDirection = sortOrder;
         if (sortOrder.equals(SortType.ASCENDING)) {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::isRealStar));
+            starObjects.sort(Comparator.comparing(StarObject::isRealStar));
         } else {
-            astrographicObjects.sort(Comparator.comparing(AstrographicObject::isRealStar).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::isRealStar).reversed());
         }
     }
 

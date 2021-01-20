@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
@@ -134,15 +134,15 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
             } else {
                 if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
                     try {
-                        List<AstrographicObject> astrographicObjectList = service.runNativeQuery(queryToRun);
+                        List<StarObject> starObjectList = service.runNativeQuery(queryToRun);
                         AdvResultsSet advResultsSet = AdvResultsSet
                                 .builder()
                                 .queryValid(true)
                                 .plotStars(plotCheckBox.isSelected())
                                 .viewStars(viewCheckBox.isSelected())
                                 .dataSetDescriptor(dataSetDescriptorMap.get(datasetName))
-                                .resultsFound(astrographicObjectList.size() > 0)
-                                .starsFound(astrographicObjectList)
+                                .resultsFound(starObjectList.size() > 0)
+                                .starsFound(starObjectList)
                                 .build();
                         setResult(advResultsSet);
                     } catch (Exception e) {

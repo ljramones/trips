@@ -1,6 +1,6 @@
 package com.teamgannon.trips.listener;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 
 /**
  * Used to display a property set for a stellar object
@@ -9,6 +9,6 @@ import com.teamgannon.trips.jpa.model.AstrographicObject;
  */
 public interface StellarPropertiesDisplayerListener {
 
-    void displayStellarProperties(AstrographicObject astrographicObject);
+    void displayStellarProperties(StarObject starObject);
 
 }
