@@ -5,7 +5,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarMeasurementService;
@@ -58,11 +58,11 @@ public class RouteFinderOffline {
             // if we actually selected the option to route then do it
             if (routeFindingOptions.isSelected()) {
 
-                List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(currentDataset, routeFindingOptions.getMaxDistance());
+                List<StarObject> starObjects = databaseManagementService.getFromDatasetWithinLimit(currentDataset, routeFindingOptions.getMaxDistance());
 
-                Map<String, AstrographicObject> astroMap = astrographicObjects.stream().collect(Collectors.toMap(AstrographicObject::getDisplayName, astrographicObject -> astrographicObject, (a, b) -> b));
+                Map<String, StarObject> astroMap = starObjects.stream().collect(Collectors.toMap(StarObject::getDisplayName, astrographicObject -> astrographicObject, (a, b) -> b));
 
-                List<StarDisplayRecord> starsInView = astrographicObjects.stream().map(
+                List<StarDisplayRecord> starsInView = starObjects.stream().map(
                         astrographicObject -> StarDisplayRecord.fromAstrographicObject(astrographicObject, starDisplayPreferences))
                         .filter(Objects::nonNull).collect(Collectors.toList());
 
@@ -138,7 +138,7 @@ public class RouteFinderOffline {
                         List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
                         if (selectedRoutingMetrics.size() > 0) {
                             log.info("plotting selected routes:{}", selectedRoutingMetrics);
-                            List<AstrographicObject> plotList = gatherStars(possibleRoutes, astroMap);
+                            List<StarObject> plotList = gatherStars(possibleRoutes, astroMap);
 
                             // plot the stars and routes found
                             plot(selectedRoutingMetrics, plotList);
@@ -157,8 +157,8 @@ public class RouteFinderOffline {
 
     }
 
-    private List<AstrographicObject> gatherStars(PossibleRoutes possibleRoutes, Map<String, AstrographicObject> astroMap) {
-        List<AstrographicObject> starList = new ArrayList<>();
+    private List<StarObject> gatherStars(PossibleRoutes possibleRoutes, Map<String, StarObject> astroMap) {
+        List<StarObject> starList = new ArrayList<>();
         possibleRoutes
                 .getRoutes()
                 .stream()
@@ -176,7 +176,7 @@ public class RouteFinderOffline {
      * @param routeList the routes to plot
      * @param plotList  the list of stars to plot
      */
-    private void plot(List<RoutingMetric> routeList, List<AstrographicObject> plotList) {
+    private void plot(List<RoutingMetric> routeList, List<StarObject> plotList) {
 //        interstellarSpacePane.plotRouteDescriptors(routeList);
         log.info(routeList.toString());
         log.info("# of stars= " + plotList.size());

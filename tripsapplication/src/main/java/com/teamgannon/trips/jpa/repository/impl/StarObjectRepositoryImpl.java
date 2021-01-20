@@ -1,7 +1,7 @@
 package com.teamgannon.trips.jpa.repository.impl;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepositoryCustom;
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.jpa.repository.StarObjectRepositoryCustom;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.stardata.StellarType;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * Created by larrymitchell on 2017-04-19.
  */
 @Slf4j
-public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepositoryCustom {
+public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
 
     /**
      * the entity manager for getting elements from table
@@ -29,7 +29,7 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
     /**
      * the constructor needed for injecting the elasticsearch infrastructure
      */
-    public AstrographicObjectRepositoryImpl(EntityManager em) {
+    public StarObjectRepositoryImpl(EntityManager em) {
         this.em = em;
     }
 
@@ -40,16 +40,16 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
      * @return the list of AstrographicObjects found
      */
     @Override
-    public List<AstrographicObject> findBySearchQuery(@NotNull AstroSearchQuery astroSearchQuery) {
+    public List<StarObject> findBySearchQuery(@NotNull AstroSearchQuery astroSearchQuery) {
 
         // create the criteria builder to start putting all this together
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
         // create the base criteria query
-        CriteriaQuery<AstrographicObject> query = cb.createQuery(AstrographicObject.class);
+        CriteriaQuery<StarObject> query = cb.createQuery(StarObject.class);
 
         // create the root object
-        Root<AstrographicObject> astrographicObject = query.from(AstrographicObject.class);
+        Root<StarObject> astrographicObject = query.from(StarObject.class);
 
         // setup the list of predicates to apply
         List<Predicate> predicates = makeAstroQuery(astroSearchQuery, astrographicObject, cb);
@@ -57,18 +57,18 @@ public class AstrographicObjectRepositoryImpl implements AstrographicObjectRepos
         query.where(predicates.toArray(new Predicate[0]));
         query.orderBy(cb.asc(astrographicObject.get("displayName")));
 
-        TypedQuery<AstrographicObject> typedQuery = em.createQuery(query);
+        TypedQuery<StarObject> typedQuery = em.createQuery(query);
 
-        List<AstrographicObject> astrographicObjects = typedQuery.getResultList();
+        List<StarObject> starObjects = typedQuery.getResultList();
 
         // spit out the the number of objects found
-        log.info("number of objects found = {}", astrographicObjects.size());
+        log.info("number of objects found = {}", starObjects.size());
 
-        return astrographicObjects;
+        return starObjects;
     }
 
     private @NotNull List<Predicate> makeAstroQuery(@NotNull AstroSearchQuery astroSearchQuery,
-                                                    @NotNull Root<AstrographicObject> root,
+                                                    @NotNull Root<StarObject> root,
                                                     @NotNull CriteriaBuilder cb) {
 
         List<Predicate> predicates = new ArrayList<>();

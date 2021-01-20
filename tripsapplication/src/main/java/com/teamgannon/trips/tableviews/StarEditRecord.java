@@ -1,6 +1,6 @@
 package com.teamgannon.trips.tableviews;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,21 +38,21 @@ public class StarEditRecord {
      */
     private boolean dirty;
 
-    public static @NotNull StarEditRecord fromAstrographicObject(@NotNull AstrographicObject astrographicObject) {
+    public static @NotNull StarEditRecord fromAstrographicObject(@NotNull StarObject starObject) {
         StarEditRecord record = new StarEditRecord();
-        record.setId(astrographicObject.getId());
-        record.setDisplayName(astrographicObject.getDisplayName());
-        record.setDistanceToEarth(astrographicObject.getDistance());
-        record.setSpectra(astrographicObject.getSpectralClass());
-        record.setRadius(astrographicObject.getRadius());
-        record.setRa(astrographicObject.getRa());
-        record.setDeclination(astrographicObject.getDeclination());
-        record.setParallax(astrographicObject.getParallax());
-        record.setXCoord(astrographicObject.getX());
-        record.setYCoord(astrographicObject.getY());
-        record.setZCoord(astrographicObject.getZ());
-        record.setReal(astrographicObject.isRealStar());
-        record.setComment(astrographicObject.getNotes());
+        record.setId(starObject.getId());
+        record.setDisplayName(starObject.getDisplayName());
+        record.setDistanceToEarth(starObject.getDistance());
+        record.setSpectra(starObject.getSpectralClass());
+        record.setRadius(starObject.getRadius());
+        record.setRa(starObject.getRa());
+        record.setDeclination(starObject.getDeclination());
+        record.setParallax(starObject.getParallax());
+        record.setXCoord(starObject.getX());
+        record.setYCoord(starObject.getY());
+        record.setZCoord(starObject.getZ());
+        record.setReal(starObject.isRealStar());
+        record.setComment(starObject.getNotes());
         return record;
     }
 }

@@ -12,7 +12,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.listener.ContextSelectorListener;
 import com.teamgannon.trips.listener.DatabaseListener;
@@ -891,13 +891,13 @@ public class StarPlotManager {
      * @param starDisplayRecord the properties to edit
      */
     private @Nullable StarDisplayRecord editProperties(@NotNull StarDisplayRecord starDisplayRecord) {
-        AstrographicObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+        StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
         if (optionalStarDisplayRecord.isPresent()) {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
-                AstrographicObject record = status.getRecord();
+                StarObject record = status.getRecord();
                 StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record, starDisplayPreferences);
                 if (record1 != null) {
                     record1.setCoordinates(starDisplayRecord.getCoordinates());
@@ -926,8 +926,8 @@ public class StarPlotManager {
         MenuItem propertiesMenuItem = new MenuItem("Properties");
         propertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            AstrographicObject astrographicObject = databaseListener.getStar(starDisplayRecord.getRecordId());
-            displayProperties(astrographicObject);
+            StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+            displayProperties(starObject);
         });
         return propertiesMenuItem;
     }
@@ -936,12 +936,12 @@ public class StarPlotManager {
     /**
      * display properties for this star
      *
-     * @param astrographicObject the properties to display
+     * @param starObject the properties to display
      */
-    private void displayProperties(@NotNull AstrographicObject astrographicObject) {
-        log.info("Showing properties in side panes for:" + astrographicObject.getDisplayName());
+    private void displayProperties(@NotNull StarObject starObject) {
+        log.info("Showing properties in side panes for:" + starObject.getDisplayName());
         if (displayer != null) {
-            displayer.displayStellarProperties(astrographicObject);
+            displayer.displayStellarProperties(starObject);
         }
     }
 

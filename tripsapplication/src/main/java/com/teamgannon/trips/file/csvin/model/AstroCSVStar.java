@@ -1,6 +1,6 @@
 package com.teamgannon.trips.file.csvin.model;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.stardata.StarColor;
 import com.teamgannon.trips.stardata.StellarFactory;
 import javafx.scene.paint.Color;
@@ -168,9 +168,9 @@ public class AstroCSVStar {
      */
     private double miscNum5;
 
-    public @Nullable AstrographicObject toAstrographicObject() {
+    public @Nullable StarObject toAstrographicObject() {
         try {
-            AstrographicObject astro = new AstrographicObject();
+            StarObject astro = new StarObject();
 
             astro.setId(UUID.randomUUID());
 
@@ -178,47 +178,59 @@ public class AstroCSVStar {
             astro.setDisplayName(displayName.trim());
             astro.setConstellationName(constellationName.trim());
 
-            astro.setMass(Double.parseDouble(mass.trim()));
-            astro.setActualMass(Double.parseDouble(actualMass.trim()));
+            astro.setMass(parseDouble(mass.trim()));
+            astro.setActualMass(parseDouble(actualMass.trim()));
             astro.setNotes(notes.trim());
             astro.setSource(source.trim());
             List<String> catalogList = new ArrayList<>();
             catalogList.add(catalogIdList);
             astro.setCatalogIdList(catalogList);
 
-            astro.setX(Double.parseDouble(x.trim()));
-            astro.setY(Double.parseDouble(y.trim()));
-            astro.setZ(Double.parseDouble(z.trim()));
+            astro.setX(parseDouble(x.trim()));
+            astro.setY(parseDouble(y.trim()));
+            astro.setZ(parseDouble(z.trim()));
 
-            astro.setRadius(Double.parseDouble(radius.trim()));
-            astro.setRa(Double.parseDouble(ra.trim()));
-            astro.setPmra(Double.parseDouble(pmra.trim()));
-            astro.setDeclination(Double.parseDouble(declination.trim()));
-            astro.setPmdec(Double.parseDouble(pmdec.trim()));
-            astro.setDec_deg(Double.parseDouble(dec_deg.trim()));
-            astro.setRs_cdeg(Double.parseDouble(rs_cdeg.trim()));
+            astro.setRadius(parseDouble(radius.trim()));
+            astro.setRa(parseDouble(ra.trim()));
+            astro.setPmra(parseDouble(pmra.trim()));
+            astro.setDeclination(parseDouble(declination.trim()));
+            astro.setPmdec(parseDouble(pmdec.trim()));
+            astro.setDec_deg(parseDouble(dec_deg.trim()));
+            astro.setRs_cdeg(parseDouble(rs_cdeg.trim()));
 
-            astro.setParallax(Double.parseDouble(parallax.trim()));
-            astro.setDistance(Double.parseDouble(distance.trim()));
-            astro.setRadialVelocity(Double.parseDouble(radialVelocity.trim()));
+            astro.setParallax(parseDouble(parallax.trim()));
+            astro.setDistance(parseDouble(distance.trim()));
+            astro.setRadialVelocity(parseDouble(radialVelocity.trim()));
             astro.setSpectralClass(spectralClass.trim());
             astro.setOrthoSpectralClass(orthoSpectralClass.trim());
 
-            astro.setTemperature(Double.parseDouble(temperature.trim()));
+            astro.setTemperature(parseDouble(temperature.trim()));
             astro.setRealStar(Boolean.parseBoolean(realStar.trim()));
 
-            astro.setBprp(Double.parseDouble(bprp.trim()));
+            astro.setBprp(parseDouble(bprp.trim()));
 
 
             return astro;
 
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("failed to convert a RB CSV star object into a astrographic one: {}", e.getMessage());
+            log.error("failed to convert a CSV star object into a astrographic one: {}", e.getMessage());
             return null;
         }
 
     }
+
+    private double parseDouble(String string) {
+        if (string.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Double.parseDouble(string);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
 
     private @NotNull Color getColor(@NotNull StarColor starColor) {
         String[] colorRGB = starColor.color().split(",");
@@ -234,9 +246,9 @@ public class AstroCSVStar {
         String numbers = position.substring(1, position.length() - 1);
         String[] split = numbers.split(",");
 
-        xyz[0] = Double.parseDouble(split[0]);
-        xyz[1] = Double.parseDouble(split[1]);
-        xyz[2] = Double.parseDouble(split[2]);
+        xyz[0] = parseDouble(split[0]);
+        xyz[1] = parseDouble(split[1]);
+        xyz[2] = parseDouble(split[2]);
         if (xyz[0] == 0.0 && xyz[1] == 0.0 && xyz[2] == 0.0) {
             log.error("really?");
         }

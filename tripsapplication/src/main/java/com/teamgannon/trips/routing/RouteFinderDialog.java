@@ -1,7 +1,7 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -243,12 +243,12 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
                     showErrorAlert("Route Finding", "Destination is blank");
                     return;
                 }
-                List<AstrographicObject> originStarList = databaseManagementService.findStarsWithName(currentDataSet, originStarSelected);
+                List<StarObject> originStarList = databaseManagementService.findStarsWithName(currentDataSet, originStarSelected);
                 double originStarDistance = originStarList.get(0).getDistance();
                 if (originStarDistance > maxDistance) {
                     maxDistance = originStarDistance;
                 }
-                List<AstrographicObject> destStarList = databaseManagementService.findStarsWithName(currentDataSet, destinationStarSelected);
+                List<StarObject> destStarList = databaseManagementService.findStarsWithName(currentDataSet, destinationStarSelected);
                 double destStarDistance = destStarList.get(0).getDistance();
                 if (destStarDistance > maxDistance) {
                     maxDistance = destStarDistance;

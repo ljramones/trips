@@ -2,7 +2,7 @@ package com.teamgannon.trips.file.excel.normal;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
@@ -48,9 +48,9 @@ public class ExcelReader {
 
             Sheet dataSheet = workbook.getSheet("data");
 
-            List<AstrographicObject> astrographicObjectList = parseSheet(dataSet.getName(), dataSheet);
+            List<StarObject> starObjectList = parseSheet(dataSet.getName(), dataSheet);
 
-            excelFile.setAstrographicObjects(astrographicObjectList);
+            excelFile.setStarObjects(starObjectList);
             loadUpdater.updateLoadInfo("star data parsed");
 
             // close the workbook
@@ -94,10 +94,10 @@ public class ExcelReader {
      * @param sheet the sheet to parse
      * @return the parsed stars
      */
-    private List<AstrographicObject> parseSheet(@NotNull String datasetName, @NotNull Sheet sheet) {
+    private List<StarObject> parseSheet(@NotNull String datasetName, @NotNull Sheet sheet) {
         log.info("=> " + sheet.getSheetName());
 
-        List<AstrographicObject> starList = new ArrayList<>();
+        List<StarObject> starList = new ArrayList<>();
 
         // first row is the headers
         boolean firstRow = true;
@@ -184,8 +184,8 @@ public class ExcelReader {
             String notes = getCell(row, cell);
             star.setNotes(notes);
 
-            AstrographicObject astrographicObject = star.toAstrographicObject();
-            if (astrographicObject != null) {
+            StarObject starObject = star.toAstrographicObject();
+            if (starObject != null) {
                 starList.add(star.toAstrographicObject());
             }
         }

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,7 +102,7 @@ public class AstrographicTransformer {
      * @param starRecords       the star records to check
      * @param centerCoordinates teh center coordinates
      */
-    public ScalingParameters findMinMaxValues(@NotNull List<AstrographicObject> starRecords, double[] centerCoordinates) {
+    public ScalingParameters findMinMaxValues(@NotNull List<StarObject> starRecords, double[] centerCoordinates) {
 
         scalingParameters = new ScalingParameters();
         clearRanges();
@@ -110,7 +110,7 @@ public class AstrographicTransformer {
         this.centerCoordinates = centerCoordinates;
 
         // scan through the records and determine the range of x,y, and z data values
-        for (AstrographicObject starRecord : starRecords) {
+        for (StarObject starRecord : starRecords) {
             double[] ords = starRecord.getCoordinates();
 
             // check X limits, keep highest and lowest

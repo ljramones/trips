@@ -1,7 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -32,8 +32,8 @@ public class ObjectViewPane extends Pane {
 
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                AstrographicObject astrographicObject = databaseListener.getStar(newValue.getRecordId());
-                propertiesDisplayer.displayStellarProperties(astrographicObject);
+                StarObject starObject = databaseListener.getStar(newValue.getRecordId());
+                propertiesDisplayer.displayStellarProperties(starObject);
             }
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));

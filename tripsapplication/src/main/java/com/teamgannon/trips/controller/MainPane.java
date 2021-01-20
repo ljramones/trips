@@ -1098,13 +1098,13 @@ public class MainPane implements
     }
 
     @Override
-    public List<AstrographicObject> getAstrographicObjectsOnQuery() {
+    public List<StarObject> getAstrographicObjectsOnQuery() {
         return databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
     }
 
     @Override
-    public void updateStar(@NotNull AstrographicObject astrographicObject) {
-        databaseManagementService.updateStar(astrographicObject);
+    public void updateStar(@NotNull StarObject starObject) {
+        databaseManagementService.updateStar(starObject);
     }
 
     @Override
@@ -1113,13 +1113,13 @@ public class MainPane implements
     }
 
     @Override
-    public AstrographicObject getStar(@NotNull UUID starId) {
+    public StarObject getStar(@NotNull UUID starId) {
         return databaseManagementService.getStar(starId);
     }
 
     @Override
-    public void removeStar(@NotNull AstrographicObject astrographicObject) {
-        databaseManagementService.removeStar(astrographicObject);
+    public void removeStar(@NotNull StarObject starObject) {
+        databaseManagementService.removeStar(starObject);
     }
 
     @Override
@@ -1200,9 +1200,9 @@ public class MainPane implements
     }
 
     @Override
-    public void displayStellarProperties(@Nullable AstrographicObject astrographicObject) {
-        if (astrographicObject != null) {
-            starPropertiesPane.setStar(astrographicObject);
+    public void displayStellarProperties(@Nullable StarObject starObject) {
+        if (starObject != null) {
+            starPropertiesPane.setStar(starObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
         }
     }
@@ -1229,12 +1229,12 @@ public class MainPane implements
         routingPanel.setContext(descriptor);
 
         // do a search and cause the plot to show it
-        List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
+        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
-        if (!astrographicObjects.isEmpty()) {
+        if (!starObjects.isEmpty()) {
             if (showPlot) {
                 astrographicPlotter.drawAstrographicData(descriptor,
-                        astrographicObjects,
+                        starObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
                         tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -1242,7 +1242,7 @@ public class MainPane implements
                 );
             }
             if (showTable) {
-                showList(astrographicObjects);
+                showList(starObjects);
             }
             updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
             setContextDataSet(descriptor);
@@ -1278,12 +1278,12 @@ public class MainPane implements
         routingPanel.setContext(searchQuery.getDescriptor());
 
         // do a search and cause the plot to show it
-        List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
+        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
-        if (!astrographicObjects.isEmpty()) {
+        if (!starObjects.isEmpty()) {
             if (showPlot) {
                 astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor(),
-                        astrographicObjects,
+                        starObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
                         tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -1291,7 +1291,7 @@ public class MainPane implements
                 );
             }
             if (showTable) {
-                showList(astrographicObjects);
+                showList(starObjects);
             }
             updateStatus("Dataset loaded is: " + searchQuery.getDescriptor().getDataSetName());
 
@@ -1306,8 +1306,8 @@ public class MainPane implements
     @Override
     public void doExport(AstroSearchQuery newQuery) {
         DataSetDescriptor descriptor = newQuery.getDescriptor();
-        List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-        if (astrographicObjects.isEmpty()) {
+        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
+        if (starObjects.isEmpty()) {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
             return;
         }
@@ -1324,7 +1324,7 @@ public class MainPane implements
         fileChooser.setInitialDirectory(filesFolder);
         File file = fileChooser.showSaveDialog(null);
         if (file != null) {
-            DataSetDescriptor modDescriptor = databaseManagementService.recheckDescriptor(descriptor, astrographicObjects);
+            DataSetDescriptor modDescriptor = databaseManagementService.recheckDescriptor(descriptor, starObjects);
             ExportOptions exportOptions =
                     ExportOptions
                             .builder()
@@ -1333,15 +1333,15 @@ public class MainPane implements
                             .fileName(file.getAbsolutePath())
                             .exportFormat(ExportFileType.EXCEL)
                             .build();
-            dataExportService.exportDatasetOnQuery(exportOptions, astrographicObjects);
+            dataExportService.exportDatasetOnQuery(exportOptions, starObjects);
         } else {
             log.warn("file save cancelled");
         }
     }
 
-    private void showList(@NotNull List<AstrographicObject> astrographicObjects) {
-        if (astrographicObjects.size() > 0) {
-            new DataSetTable(databaseManagementService, astrographicObjects);
+    private void showList(@NotNull List<StarObject> starObjects) {
+        if (starObjects.size() > 0) {
+            new DataSetTable(databaseManagementService, starObjects);
         } else {
             showErrorAlert("Display Data table", "no data to show");
         }
@@ -1514,17 +1514,17 @@ public class MainPane implements
     }
 
     private void drawStars(@NotNull DataSetDescriptor dataSetDescriptor) {
-        List<AstrographicObject> astrographicObjects = databaseManagementService.getFromDatasetWithinLimit(
+        List<StarObject> starObjects = databaseManagementService.getFromDatasetWithinLimit(
                 dataSetDescriptor,
                 searchContext.getAstroSearchQuery().getUpperDistanceLimit());
-        log.info("DB Query returns {} stars", astrographicObjects.size());
+        log.info("DB Query returns {} stars", starObjects.size());
 
-        if (!astrographicObjects.isEmpty()) {
+        if (!starObjects.isEmpty()) {
             AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
             astroSearchQuery.zeroCenter();
             astrographicPlotter.drawAstrographicData(
                     tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
-                    astrographicObjects,
+                    starObjects,
                     astroSearchQuery.getCenterCoordinates(),
                     tripsContext.getAppViewPreferences().getColorPallete(),
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -1542,9 +1542,9 @@ public class MainPane implements
     private void showTableData() {
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
-            List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-            if (astrographicObjects.size() > 0) {
-                new DataSetTable(databaseManagementService, astrographicObjects);
+            List<StarObject> starObjects = getAstrographicObjectsOnQuery();
+            if (starObjects.size() > 0) {
+                new DataSetTable(databaseManagementService, starObjects);
             } else {
                 showErrorAlert("Show Data Table", "no data found");
             }
@@ -1571,9 +1571,9 @@ public class MainPane implements
                     log.error("How the hell did this happen");
                     return;
                 }
-                List<AstrographicObject> astrographicObjects = getAstrographicObjectsOnQuery();
-                if (astrographicObjects.size() > 0) {
-                    new DataSetTable(databaseManagementService, astrographicObjects);
+                List<StarObject> starObjects = getAstrographicObjectsOnQuery();
+                if (starObjects.size() > 0) {
+                    new DataSetTable(databaseManagementService, starObjects);
                     updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
                 } else {
                     showErrorAlert("Show Data Table", "No data to show");
@@ -1639,9 +1639,9 @@ public class MainPane implements
                 String datasetName = starSearchResults.getDataSetName();
                 String starName = starSearchResults.getNameToSearch();
                 log.info("name to search: {}", starSearchResults.getNameToSearch());
-                List<AstrographicObject> astrographicObjects = databaseManagementService.findStarsWithName(datasetName, starName);
-                log.info("number of stars found ={}", astrographicObjects.size());
-                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, astrographicObjects);
+                List<StarObject> starObjects = databaseManagementService.findStarsWithName(datasetName, starName);
+                log.info("number of stars found ={}", starObjects.size());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
                 showStarMatchesDialog.showAndWait();
             }
         }

@@ -1,6 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StarPropertiesPane extends Pane {
 
-    private @NotNull AstrographicObject record = new AstrographicObject();
+    private @NotNull StarObject record = new StarObject();
 
     // UI elements
     private final Label recordIdLabel = new Label();
@@ -80,7 +80,7 @@ public class StarPropertiesPane extends Pane {
         this.getChildren().add(vBox);
     }
 
-    public void setStar(@NotNull AstrographicObject record) {
+    public void setStar(@NotNull StarObject record) {
         this.record = record;
 
         // primary tab

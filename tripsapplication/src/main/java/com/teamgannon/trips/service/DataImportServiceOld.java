@@ -11,7 +11,7 @@ import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RBCsvReader;
 import com.teamgannon.trips.file.excel.rb.RBExcelReader;
 import com.teamgannon.trips.file.excel.rb.RBExcelFile;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
@@ -254,11 +254,11 @@ public class DataImportServiceOld {
             ObjectMapper objectMapper = new ObjectMapper();
 
             //read json file and convert to customer object
-            Set<AstrographicObject> astrographicObjectList = objectMapper.readValue(new File("customer.json"), new TypeReference<>() {
+            Set<StarObject> starObjectList = objectMapper.readValue(new File("customer.json"), new TypeReference<>() {
             });
 
             // now store
-            databaseManagementService.starBulkSave(astrographicObjectList);
+            databaseManagementService.starBulkSave(starObjectList);
 
         } catch (Exception e) {
             showErrorAlert("Duplicate Dataset", "This dataset was already loaded in the system ");
@@ -449,14 +449,14 @@ public class DataImportServiceOld {
      */
     private void extractDataset(@NotNull XSSFSheet mySheet) {
         updateStatus(String.format("starting import of %s dataset", mySheet.getSheetName()));
-        List<AstrographicObject> astrographicObjectList = new ArrayList<>();
+        List<StarObject> starObjectList = new ArrayList<>();
         for (Row row : mySheet) {
-            AstrographicObject astrographicObject = loadRow(row);
-            if (astrographicObject != null) {
-                astrographicObjectList.add(astrographicObject);
+            StarObject starObject = loadRow(row);
+            if (starObject != null) {
+                starObjectList.add(starObject);
             }
         }
-        databaseManagementService.addStars(astrographicObjectList);
+        databaseManagementService.addStars(starObjectList);
     }
 
     /**
@@ -465,9 +465,9 @@ public class DataImportServiceOld {
      * @param row the excel sheet row
      * @return the star data
      */
-    private @Nullable AstrographicObject loadRow(@NotNull Row row) {
+    private @Nullable StarObject loadRow(@NotNull Row row) {
         try {
-            AstrographicObject object = new AstrographicObject();
+            StarObject object = new StarObject();
             int column = 0;
 
             String uuid = readCell(row, column++);

@@ -11,9 +11,9 @@ import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.excel.rb.RBExcelFile;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.repository.AstrographicObjectRepository;
+import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
 import com.teamgannon.trips.routing.RouteDefinition;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
@@ -40,7 +40,7 @@ public class DataSetDescriptorFactory {
      * @param progressUpdater              an updater for any long loading progress
      * @param dataset                      the descriptor from the user for this dataset
      * @param dataSetDescriptorRepository  the data set repo to save this in
-     * @param astrographicObjectRepository the astrographic repo to save it in
+     * @param starObjectRepository the astrographic repo to save it in
      * @param chViewFile                   the ch view files
      * @return a dataset descriptor
      */
@@ -48,7 +48,7 @@ public class DataSetDescriptorFactory {
             @NotNull ProgressUpdater progressUpdater,
             @NotNull Dataset dataset,
             @NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
-            @NotNull AstrographicObjectRepository astrographicObjectRepository,
+            @NotNull StarObjectRepository starObjectRepository,
             @NotNull ChViewFile chViewFile) throws Exception {
 
         DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
@@ -69,7 +69,7 @@ public class DataSetDescriptorFactory {
 
         // process all the stellar records from chview and convert to our target objects
         Map<Integer, ChViewRecord> chViewRecordMap = chViewFile.getRecords();
-        Map<UUID, AstrographicObject> astrographicObjectMap = new HashMap<>();
+        Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
         double maxDistance = 0;
         progressUpdater.updateLoadInfo("Saving records in database");
         for (Integer recordId : chViewRecordMap.keySet()) {
@@ -79,12 +79,12 @@ public class DataSetDescriptorFactory {
             if (distance > maxDistance) {
                 maxDistance = distance;
             }
-            AstrographicObject astrographicObject = AstrographicObjectFactory.create(dataset, chViewRecord);
-            astrographicObjectMap.put(astrographicObject.getId(), astrographicObject);
+            StarObject starObject = AstrographicObjectFactory.create(dataset, chViewRecord);
+            astrographicObjectMap.put(starObject.getId(), starObject);
         }
 
         // save the astrographic records
-        astrographicObjectRepository.saveAll(astrographicObjectMap.values());
+        starObjectRepository.saveAll(astrographicObjectMap.values());
         String saveMessage = String.format("Number of records loaded for file:%s is %d",
                 chViewFile.getOriginalFileName(),
                 astrographicObjectMap.size());
@@ -112,7 +112,7 @@ public class DataSetDescriptorFactory {
 
     public static @NotNull DataSetDescriptor createDataSetDescriptor(
             @NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
-            @NotNull AstrographicObjectRepository astrographicObjectRepository,
+            @NotNull StarObjectRepository starObjectRepository,
             String author,
             @NotNull RBExcelFile excelFile) throws Exception {
 
@@ -128,12 +128,12 @@ public class DataSetDescriptorFactory {
             throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
         }
 
-        astrographicObjectRepository.saveAll(excelFile.getAstrographicObjects());
+        starObjectRepository.saveAll(excelFile.getStarObjects());
         log.info("Number of records load for file:{} is {}",
                 excelFile.getFileName(),
-                excelFile.getAstrographicObjects().size());
+                excelFile.getStarObjects().size());
 
-        Set<UUID> keySet = excelFile.getAstrographicObjects().stream().map(AstrographicObject::getId).collect(Collectors.toSet());
+        Set<UUID> keySet = excelFile.getStarObjects().stream().map(StarObject::getId).collect(Collectors.toSet());
 
         // set the records for this
         dataSetDescriptor.setAstrographicDataList(keySet);

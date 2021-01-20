@@ -3,9 +3,8 @@ package com.teamgannon.trips.file.csvin;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
-import com.teamgannon.trips.dialogs.dataset.LoadUpdater;
 import com.teamgannon.trips.file.csvin.model.RBCSVStar;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import com.teamgannon.trips.stardata.StellarFactory;
@@ -57,7 +56,7 @@ public class RBCsvReader {
             csvReader.skip(1);
 
             do {
-                Set<AstrographicObject> starSet = new HashSet<>();
+                Set<StarObject> starSet = new HashSet<>();
                 int loopCounter = 0;
                 for (int i = 0; i < 20000; i++) {
 
@@ -84,10 +83,10 @@ public class RBCsvReader {
                         log.error("Error getting distance for {}", star.getName());
                     }
                     try {
-                        AstrographicObject astrographicObject = star.toAstrographicObject();
-                        if (astrographicObject != null) {
-                            astrographicObject.setDataSetName(dataset.getName());
-                            starSet.add(astrographicObject);
+                        StarObject starObject = star.toAstrographicObject();
+                        if (starObject != null) {
+                            starObject.setDataSetName(dataset.getName());
+                            starSet.add(starObject);
                             rbCsvFile.incAccepts();
                         } else {
                             rbCsvFile.incRejects();

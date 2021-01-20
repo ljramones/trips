@@ -3,7 +3,6 @@ package com.teamgannon.trips.service.importservices.tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
-import com.teamgannon.trips.jpa.model.AstrographicObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import javafx.concurrent.Task;
@@ -59,7 +58,7 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
     private void updateFromDataset(Dataset dataset, JsonExportObj jsonExportObj) {
         jsonExportObj.getDescriptor().setDataSetName(dataset.getName());
         jsonExportObj.getDescriptor().setFileCreator(dataset.getAuthor());
-        jsonExportObj.getAstrographicObjectList().forEach(astrographicObject -> astrographicObject.setDataSetName(dataset.getName()));
+        jsonExportObj.getStarObjectList().forEach(astrographicObject -> astrographicObject.setDataSetName(dataset.getName()));
     }
 
 
