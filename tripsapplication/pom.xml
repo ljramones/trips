@@ -236,14 +236,6 @@
             <version>3.0.2</version>
         </dependency>
 
-        <!-- file loaders and exporters -->
-        <!-- csvfile parser -->
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>${opencsv.version}</version>
-        </dependency>
-
         <!-- Java FX support -->
         <dependency>
             <groupId>org.controlsfx</groupId>
@@ -275,19 +267,6 @@
             <artifactId>fxyz3d</artifactId>
             <version>0.5.2</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.fxyz3d</groupId>
-            <artifactId>fxyz3d-client</artifactId>
-            <version>0.5.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.fxyz3d</groupId>
-            <artifactId>fxyz3d-importers</artifactId>
-            <version>0.5.2</version>
-        </dependency>
-
 
         <!-- Java FX support third party -->
         <!-- Java FX Weaver dependencies -->

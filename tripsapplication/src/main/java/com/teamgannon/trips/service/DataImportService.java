@@ -22,8 +22,6 @@ public class DataImportService {
 
     private final @NotNull CHVDataImportService chvDataImportService;
     private final @NotNull JsonDataImportService jsonDataImportService;
-    private final @NotNull RBCSVDataImportService rbcsvDataImportService;
-    private final @NotNull RBExcelDataImportService rbExcelDataImportService;
     private final @NotNull CSVDataImportService csvDataImportService;
     private final @NotNull ExcelDataImportService excelDataImportService;
 
@@ -37,8 +35,6 @@ public class DataImportService {
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService);
         jsonDataImportService = new JsonDataImportService(databaseManagementService);
-        rbcsvDataImportService = new RBCSVDataImportService(databaseManagementService);
-        rbExcelDataImportService = new RBExcelDataImportService(databaseManagementService);
         csvDataImportService = new CSVDataImportService(databaseManagementService);
         excelDataImportService = new ExcelDataImportService(databaseManagementService);
     }
@@ -88,42 +84,6 @@ public class DataImportService {
                 // start the work
                 chvDataImportService.reset();
                 chvDataImportService.restart();
-            }
-
-            case "xlsx" -> {
-                currentlyRunning.set(true);
-                runningImportService = rbExcelDataImportService;
-                boolean queued = rbExcelDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
-                if (!queued) {
-                    log.error("failed to start import process");
-                    currentlyRunning.set(false);
-                    runningImportService = null;
-                    rbExcelDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
-                }
-                // start the work
-                rbExcelDataImportService.reset();
-                rbcsvDataImportService.restart();
-            }
-
-            case "rb.csv" -> {
-                currentlyRunning.set(true);
-                runningImportService = rbcsvDataImportService;
-                boolean queued = rbcsvDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
-                if (!queued) {
-                    log.error("failed to start import process");
-                    currentlyRunning.set(false);
-                    runningImportService = null;
-                    rbcsvDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
-                }
-                // start the work
-                rbcsvDataImportService.reset();
-                rbcsvDataImportService.restart();
             }
 
             case "trips.csv"-> {

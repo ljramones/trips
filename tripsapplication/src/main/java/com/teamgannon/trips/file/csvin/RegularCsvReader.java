@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -63,6 +64,8 @@ public class RegularCsvReader {
                 csvFile.setReadSuccess(false);
                 csvFile.setProcessMessage(message);
                 return csvFile;
+            } else {
+                csvFile.setDataSetDescriptor(createDescriptor(dataset));
             }
 
             // read stars
@@ -83,7 +86,6 @@ public class RegularCsvReader {
                     }
 
                     String[] lineRead = linePad(line.split(","), 56);
-                    System.out.println("name=   " + lineRead[2]);
                     loopCounter++;
                     AstroCSVStar star = AstroCSVStar
                             .builder()
@@ -151,7 +153,7 @@ public class RegularCsvReader {
                             maxDistance = distance;
                         }
                     } catch (NumberFormatException nfe) {
-                        log.error("Error getting distance for {}", star.getDisplayName());
+                        log.error("Error getting distance for {}, coordinates are ({},{},{})", star.getDisplayName(), star.getX(), star.getY(), star.getZ());
                     }
                     try {
                         StarObject starObject = star.toAstrographicObject();
@@ -187,11 +189,13 @@ public class RegularCsvReader {
 
         if (csvFile.isReadSuccess()) {
             csvFile.setMaxDistance(maxDistance);
-            progressUpdater.updateLoadInfo("load of dataset Complete");
+            csvFile.getDataSetDescriptor().setNumberStars(totalCount);
+            progressUpdater.updateLoadInfo("load of dataset complete with " + totalCount + " stars loaded");
         }
 
         return csvFile;
     }
+
 
     private double parseDouble(String string) {
         if (string.isEmpty()) {
@@ -214,6 +218,18 @@ public class RegularCsvReader {
             }
         });
         return pad;
+    }
+
+
+    private DataSetDescriptor createDescriptor(Dataset dataset) {
+        DataSetDescriptor descriptor = new DataSetDescriptor();
+        descriptor.setDataSetName(dataset.getName());
+        descriptor.setDatasetType(descriptor.getDatasetType());
+        descriptor.setFilePath(dataset.getFileSelected());
+        descriptor.setFileCreator(dataset.getAuthor());
+        descriptor.setFileOriginalDate(Instant.now().getEpochSecond());
+        descriptor.setFileNotes(dataset.getNotes());
+        return descriptor;
     }
 
     private @NotNull DataSetDescriptor transformDescriptor(@NotNull Dataset dataset, String[] descriptorVals) {

@@ -115,7 +115,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
         String datasetName = datasetChoices.getValue();
         if (!datasetName.isEmpty()) {
-            String queryPrefix = "SELECT * FROM ASTROGRAPHIC_OBJ WHERE ";
+            String queryPrefix = "SELECT * FROM STAR_OBJ WHERE ";
             String datasetQuery = "DATASETNAME='" + datasetName + "' ";
             String queryToRun = queryPrefix + datasetQuery;
 
