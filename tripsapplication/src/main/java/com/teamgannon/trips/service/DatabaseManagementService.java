@@ -6,10 +6,8 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.excel.normal.ExcelFile;
-import com.teamgannon.trips.file.excel.rb.RBExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
@@ -86,7 +84,7 @@ public class DatabaseManagementService {
      * constructor
      *
      * @param dataSetDescriptorRepository  the data descriptor repo
-     * @param starObjectRepository the astrographic objects
+     * @param starObjectRepository         the astrographic objects
      * @param graphColorsRepository        the graph colors
      * @param graphEnablesRepository       the graph enables
      * @param starDetailsPersistRepository the star details
@@ -138,25 +136,6 @@ public class DatabaseManagementService {
         return starObjects;
     }
 
-    public @NotNull DataSetDescriptor loadRBStarSet(@NotNull RBExcelFile excelFile) throws Exception {
-
-        // this method call actually saves the dataset in elasticsearch
-        return DataSetDescriptorFactory.createDataSetDescriptor(
-                dataSetDescriptorRepository,
-                starObjectRepository,
-                excelFile.getAuthor(),
-                excelFile
-        );
-    }
-
-    public @NotNull DataSetDescriptor loadRBCSVStarSet(@NotNull RBCsvFile rbCsvFile) throws Exception {
-        // this method call actually saves the dataset in elasticsearch
-        return DataSetDescriptorFactory.createDataSetDescriptor(
-                dataSetDescriptorRepository,
-                rbCsvFile
-        );
-    }
-
     public @NotNull DataSetDescriptor loadCSVFile(@NotNull RegCSVFile regCSVFile) throws Exception {
         return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
@@ -199,7 +178,7 @@ public class DatabaseManagementService {
     /**
      * filter the list to distance by selected distance
      *
-     * @param starObjects    the astrogrpic objects to display
+     * @param starObjects            the astrogrpic objects to display
      * @param centerCoordinates      the plot center coordinates
      * @param distanceFromCenterStar the distance frm the centre star to display
      * @return the fitlered list

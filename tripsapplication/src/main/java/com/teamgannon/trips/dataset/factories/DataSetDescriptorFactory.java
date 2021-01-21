@@ -8,13 +8,11 @@ import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.csvin.RBCsvFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
-import com.teamgannon.trips.file.excel.rb.RBExcelFile;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.repository.StarObjectRepository;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
+import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import com.teamgannon.trips.routing.RouteDefinition;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.scene.paint.Color;
@@ -23,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * A foctory used to create data descriptors from various formats
@@ -37,11 +34,11 @@ public class DataSetDescriptorFactory {
     /**
      * create a Dataset descriptor for chview files
      *
-     * @param progressUpdater              an updater for any long loading progress
-     * @param dataset                      the descriptor from the user for this dataset
-     * @param dataSetDescriptorRepository  the data set repo to save this in
-     * @param starObjectRepository the astrographic repo to save it in
-     * @param chViewFile                   the ch view files
+     * @param progressUpdater             an updater for any long loading progress
+     * @param dataset                     the descriptor from the user for this dataset
+     * @param dataSetDescriptorRepository the data set repo to save this in
+     * @param starObjectRepository        the astrographic repo to save it in
+     * @param chViewFile                  the ch view files
      * @return a dataset descriptor
      */
     public static @NotNull DataSetDescriptor createDataSetDescriptor(
@@ -109,42 +106,6 @@ public class DataSetDescriptorFactory {
         return dataSetDescriptor;
     }
 
-
-    public static @NotNull DataSetDescriptor createDataSetDescriptor(
-            @NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
-            @NotNull StarObjectRepository starObjectRepository,
-            String author,
-            @NotNull RBExcelFile excelFile) throws Exception {
-
-        DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
-
-        // parse excel file to create the basics for the data set to save
-        dataSetDescriptor.setDataSetName(excelFile.getFileName());
-        dataSetDescriptor.setFileCreator(author);
-        dataSetDescriptor.setTheme(createTheme("excel", excelFile));
-
-        // now validate whether the dataset actually exists already
-        if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
-            throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
-        }
-
-        starObjectRepository.saveAll(excelFile.getStarObjects());
-        log.info("Number of records load for file:{} is {}",
-                excelFile.getFileName(),
-                excelFile.getStarObjects().size());
-
-        Set<UUID> keySet = excelFile.getStarObjects().stream().map(StarObject::getId).collect(Collectors.toSet());
-
-        // set the records for this
-        dataSetDescriptor.setAstrographicDataList(keySet);
-
-        // save the data set which is cross referenced to the star records
-        dataSetDescriptorRepository.save(dataSetDescriptor);
-
-        return dataSetDescriptor;
-    }
-
-
     public static DataSetDescriptor createDataSetDescriptor(@NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
                                                             @NotNull RegCSVFile regCSVFile) throws Exception {
 
@@ -169,58 +130,6 @@ public class DataSetDescriptorFactory {
 
         return dataSetDescriptor;
     }
-
-
-    public static @NotNull DataSetDescriptor createDataSetDescriptor(@NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
-                                                                     @NotNull RBCsvFile rbCsvFile) throws Exception {
-
-        DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
-
-        // parse excel file to create the basics for the data set to save
-        Dataset dataset = rbCsvFile.getDataset();
-        dataSetDescriptor.setDataSetName(dataset.getName());
-        dataSetDescriptor.setFilePath(dataset.getFileSelected());
-        dataSetDescriptor.setFileCreator(dataset.getAuthor());
-        dataSetDescriptor.setNumberStars(rbCsvFile.getSize());
-        dataSetDescriptor.setFileNotes(dataset.getNotes());
-        dataSetDescriptor.setDistanceRange(rbCsvFile.getMaxDistance());
-        dataSetDescriptor.setDatasetType(dataset.getDataType().getDataFormatEnum().getValue());
-
-        Theme theme = new Theme();
-        theme.setThemeName("csv");
-        dataSetDescriptor.setTheme(theme);
-
-        // now validate whether the dataset actually exists already
-        if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
-            throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
-        }
-
-        log.info("Number of records load for file:{} is {}",
-                dataset.getFileSelected(),
-                rbCsvFile.getSize());
-
-
-        // save the data set which is cross referenced to the star records
-        dataSetDescriptorRepository.save(dataSetDescriptor);
-
-        return dataSetDescriptor;
-    }
-
-    private static @Nullable Theme createTheme(String themeName, RBCsvFile rbCsvFile) {
-        return extractTheme(themeName, null, CHViewPreferences.earthNormal());
-    }
-
-    /**
-     * create a theme for the RB Excel format
-     *
-     * @param themeName the theme name
-     * @param excelFile the imported excel file
-     * @return the theme
-     */
-    public static @Nullable Theme createTheme(String themeName, RBExcelFile excelFile) {
-        return extractTheme(themeName, null, CHViewPreferences.earthNormal());
-    }
-
 
     /**
      * create a theme for CHV files

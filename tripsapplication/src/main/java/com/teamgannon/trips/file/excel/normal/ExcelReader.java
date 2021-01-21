@@ -2,8 +2,8 @@ package com.teamgannon.trips.file.excel.normal;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -23,9 +23,10 @@ public class ExcelReader {
 
     /**
      * load the excel file
-     *  @param loadUpdater the load updater
+     *
+     * @param loadUpdater the load updater
      * @param dataSet
-     * @param file        the excel file in RB Format
+     * @param file        the excel file
      */
     public @NotNull ExcelFile loadFile(ProgressUpdater loadUpdater, Dataset dataSet, @NotNull File file) {
 
@@ -89,9 +90,8 @@ public class ExcelReader {
     /**
      * parse a workbook sheet
      *
-     *
      * @param datasetName the new datasetname
-     * @param sheet the sheet to parse
+     * @param sheet       the sheet to parse
      * @return the parsed stars
      */
     private List<StarObject> parseSheet(@NotNull String datasetName, @NotNull Sheet sheet) {

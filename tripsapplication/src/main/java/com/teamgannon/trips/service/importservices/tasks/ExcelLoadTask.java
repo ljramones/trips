@@ -35,7 +35,7 @@ public class ExcelLoadTask extends Task<FileProcessResult> implements ProgressUp
 
         File file = new File(dataSet.getFileSelected());
 
-        // load RB excel file
+        // load excel file
         ExcelFile excelFile = excelReader.loadFile(this, dataSet, file);
         try {
 
