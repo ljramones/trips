@@ -3,7 +3,7 @@ package com.teamgannon.trips.jpa.repository.impl;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.StarObjectRepositoryCustom;
 import com.teamgannon.trips.search.AstroSearchQuery;
-import com.teamgannon.trips.stardata.StellarType;
+import com.teamgannon.trips.stellarmodelling.StellarType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 

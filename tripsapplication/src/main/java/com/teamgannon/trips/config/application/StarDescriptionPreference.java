@@ -1,7 +1,7 @@
 package com.teamgannon.trips.config.application;
 
 import com.teamgannon.trips.jpa.model.StarDetailsPersist;
-import com.teamgannon.trips.stardata.StellarType;
+import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;

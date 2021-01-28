@@ -9,9 +9,9 @@ ADC_Keywords: Combined data ; Stars, bright
 
 Description:
     The  Bright  Star  Catalogue  (BSC) is widely used as a source of
-    basic astronomical and astrophysical data for stars brighter than
+    basic astronomical and astrophysical data for simStars brighter than
     magnitude 6.5.   The  catalog  contains  the  identifications  of
-    included stars in several other widely-used catalogs, double- and
+    included simStars in several other widely-used catalogs, double- and
     multiple-star  identifications,  indication  of  variability  and
     variable-star identifiers, equatorial positions for  B1900.0  and
     J2000.0,  galactic  coordinates,  UBVRI photoelectric photometric
@@ -19,17 +19,17 @@ Description:
     classification   system,   proper  motions  (J2000.0),  parallax,
     radial-   and   rotational-velocity   data,   and   multiple-star
     information  (number  of  components,  separation,  and magnitude
-    differences) for known nonsingle stars.  In addition to the  data
+    differences) for known nonsingle simStars.  In addition to the  data
     file, there is an extensive remarks file that gives more detailed
     information  on  individual  entries.   This information includes
     star  names,  colors,  spectra,   variability   details,   binary
     characteristics,  radial  and rotational velocities for companion
-    stars,  duplicity  information,  dynamical  parallaxes,   stellar
+    simStars,  duplicity  information,  dynamical  parallaxes,   stellar
     dimensions (radii and diameters), polarization, and membership in
     stellar groups and clusters.  The existence of remarks is flagged
     in the main data file.
 
-    The  BSC  contains  9110  objects,  of  which  9096 are stars (14
+    The  BSC  contains  9110  objects,  of  which  9096 are simStars (14
     objects catalogued in the original compilation of 1908 are  novae
     or  extragalactic objects that have been retained to preserve the
     numbering, but most of their data are omitted), while the remarks
@@ -133,7 +133,7 @@ Byte-by-byte Description of file: catalog.dat
      197  A1     ---       NoteFlag   [*] a star indicates that there is a note
                                         (file notes.dat)
 --------------------------------------------------------------------------------
-Note (1): These fields are all blanks for stars removed from
+Note (1): These fields are all blanks for simStars removed from
     the Bright Star Catalogue (see notes.dat).
 Note on r_IRflag:
   Blank if from NASA merged Infrared Catalogue, Schmitz et al., 1978;
@@ -169,7 +169,7 @@ Byte-by-byte Description of file: notes.dat
 --------------------------------------------------------------------------------
 Note on Category: the following abbreviations are used:
     C   - Colors;
-    D   - Double and multiple stars;
+    D   - Double and multiple simStars;
     DYN - Dynamical parallaxes;
     G   - Group membership;
     M   - Miscellaneous.
@@ -191,7 +191,7 @@ Historical Notes:
     1. The spectral type for HR 6397 is from Walborn and contained octal 032
        (control-Z) characters instead of square brackets around the "n".
     2. Two remarks have been added for 6985 and 8817
-    3. Byte 197 (NoteFlag) of "catalog" file corrected for stars
+    3. Byte 197 (NoteFlag) of "catalog" file corrected for simStars
          202 7126 7482 7614 8982 (removed asterisk)
          285  342  841  843  991 1181 1553 1652 2269 2271 (added asterisk)
         2837 3133 3962 4522 4789 6692 7076 7328 8306 8667 (added asterisk)

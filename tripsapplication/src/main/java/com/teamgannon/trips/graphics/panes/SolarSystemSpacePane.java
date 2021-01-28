@@ -44,11 +44,11 @@ public class SolarSystemSpacePane extends Pane {
 
     private final Group world = new Group();
 
-    private Group root = new Group();
+    private final Group root = new Group();
 
     private SubScene subScene;
 
-    PerspectiveCamera camera = new PerspectiveCamera(true);
+    private final PerspectiveCamera camera = new PerspectiveCamera(true);
 
     private static final double ROTATE_SECS = 60;
 
@@ -62,8 +62,6 @@ public class SolarSystemSpacePane extends Pane {
      */
     private boolean animationPlay = false;
 
-    private Label starNameLabel;
-
     private final Group starNameGroup = new Group();
 
     /**
@@ -71,11 +69,8 @@ public class SolarSystemSpacePane extends Pane {
      */
     private final Universe universe = new Universe();
 
-    private String systemName = "No System Selected";
-    private Button returnButton;
-    private StarDisplayRecord starDisplayRecord;
     private ContextSelectorListener contextSelectorListener;
-    private double depth;
+    private final double depth;
 
 
     public SolarSystemSpacePane(double sceneWidth,
@@ -194,8 +189,7 @@ public class SolarSystemSpacePane extends Pane {
      * @param starDisplayRecord object properties of this system
      */
     public void setSystemToDisplay(@NotNull StarDisplayRecord starDisplayRecord) {
-        this.starDisplayRecord = starDisplayRecord;
-        systemName = starDisplayRecord.getStarName();
+        String systemName = starDisplayRecord.getStarName();
         createScaleLegend(systemName);
     }
 
@@ -215,7 +209,7 @@ public class SolarSystemSpacePane extends Pane {
         titlePane.setPrefWidth(450);
         starNameGroup.getChildren().add(titlePane);
 
-        starNameLabel = new Label(starName);
+        Label starNameLabel = new Label(starName);
         starNameLabel.setFont(Font.font("Verdana", FontPosture.ITALIC, 20));
         starNameLabel.setTextFill(Color.WHEAT);
 
@@ -226,7 +220,7 @@ public class SolarSystemSpacePane extends Pane {
         titlePane.add(separator1, 1, 0);
 
         // setup return button to jump back to interstellar space
-        returnButton = new Button("Jump Back");
+        Button returnButton = new Button("Jump Back");
         returnButton.setOnAction(e -> jumpBackToInterstellarSpace());
         titlePane.add(returnButton, 2, 0);
 

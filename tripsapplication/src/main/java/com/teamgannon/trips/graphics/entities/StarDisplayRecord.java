@@ -3,7 +3,9 @@ package com.teamgannon.trips.graphics.entities;
 import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.stardata.StellarType;
+import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
+import com.teamgannon.trips.solarsysmodelling.utils.StarUtils;
+import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
 import lombok.Data;
@@ -40,6 +42,26 @@ public class StarDisplayRecord {
      * star radius
      */
     private double radius;
+
+    /**
+     * stellar mass
+     */
+    private double mass;
+
+    /**
+     * stellar luminosity
+     */
+    private double luminosity;
+
+    /**
+     * stellar surface temperature
+     */
+    private double temperature;
+
+    /**
+     * stellar magnitude
+     */
+    private double magnitude;
 
     /**
      * distance in LY
@@ -158,6 +180,7 @@ public class StarDisplayRecord {
             record.setDataSetName(starObject.getDataSetName());
             record.setDistance(starObject.getDistance());
             record.setSpectralClass(starObject.getSpectralClass());
+            record.setMass(starObject.getMass());
             record.setNotes(starObject.getNotes());
             double[] coords = starObject.getCoordinates();
             record.setActualCoordinates(coords);
@@ -206,4 +229,23 @@ public class StarDisplayRecord {
                 & (Math.abs(coordinates.getZ()) <= 1);
     }
 
+    public SimStar toSimStar() {
+
+        double sLuminosity;
+        double mass = this.mass;
+        double radius = getRadius();
+        double temperature = this.temperature;
+        if (luminosity != 0) {
+            sLuminosity = this.luminosity;
+        } else {
+            sLuminosity = StarUtils.stellarLuminosity(radius, temperature);
+        }
+        double sMagnitude = 0;
+        if (magnitude!=0) {
+            sMagnitude = this.magnitude;
+        } else {
+            sMagnitude = StarUtils.absoluteMagnitude(sLuminosity);
+        }
+        return new SimStar(mass, sLuminosity, radius, temperature, sMagnitude);
+    }
 }

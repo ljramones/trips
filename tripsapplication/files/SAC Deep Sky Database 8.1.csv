@@ -113,7 +113,7 @@ NGC705,UGC1345,GALXY,AND,1,52.7,36,9,13.6,12.3,92,4,1.2m,0.3m,117,Sa,,,,vF;vS;R;
 NGC708,UGC1348,GALXY,AND,1,52.8,36,9,12.7,14.9,92,4,3m,2.5m,35,E2,,,,F;pL;bM;4th of 4,H III 565;Brightest in group which incl NGC 703-4-5
 NGC709,ZwG522.40,GALXY,AND,1,52.8,36,13,14.3,99.9,92,4,1m,0.5m,130,S,,,,vF;pS;bet 2*;group sp,
 NGC710,UGC1349,GALXY,AND,1,52.9,36,3,13.7,14,92,4,1.3m,1.2m,,Sc,,,,vF;pS;2*S,
-NGC712,UGC1352,GALXY,AND,1,53.1,36,49,12.8,12.9,92,4,1.3m,1m,85,SO,,,,vF;R;am pB stars,
+NGC712,UGC1352,GALXY,AND,1,53.1,36,49,12.8,12.9,92,4,1.3m,1m,85,SO,,,,vF;R;am pB simStars,
 NGC714,UGC1358,GALXY,AND,1,53.5,36,13,13.1,12.3,92,4,1.5m,0.4m,112,Sa,,,,F;vS;R;2*13 p & np,
 NGC717,UGC1363,GALXY,AND,1,53.9,36,14,13.9,12.5,92,4,1.3m,0.2m,117,Sa,,,,vF;pS;*15 sf 1',
 NGC721,UGC1376,GALXY,AND,1,54.8,39,23,13.5,13.9,61,4,1.7m,1m,135,SBbc,,,,eF;pL,
@@ -246,7 +246,7 @@ NGC3378,ESO318-12,GALXY,ANT,10,46.7,-40,1,12.8,13.4,399,20,1.5m,1.4m,,SBbc,,,,cF
 NGC3449,ESO376-25,GALXY,ANT,10,52.9,-32,56,12.2,13.3,366,20,3.3m,1m,148,SBab,,,,F;S;R;*6-7 sf,
 PK308-12.1,He2-105,PLNNB,APS,14,15.5,-74,13,13.4,12,467,25,35s,,,,,14.7,,,
 NGC5612,ESO22-1,GALXY,APS,14,34,-78,23,12.1,12.6,467,25,1.9m,1.1m,63,Sab,,,,vF;E;gbM;r,
-IC4499,GCL30,GLOCL,APS,15,0.3,-82,13,10.1,99.9,467,25,7.6m,,,XI,,14.6,,Cl;vF;4' diam;3 F stars in neby?,Faint;iR haze 3' across--Hartung
+IC4499,GCL30,GLOCL,APS,15,0.3,-82,13,10.1,99.9,467,25,7.6m,,,XI,,14.6,,Cl;vF;4' diam;3 F simStars in neby?,Faint;iR haze 3' across--Hartung
 NGC5799,ESO67-6,GALXY,APS,15,5.6,-72,26,14.3,99.9,453,25,1.3m,0.9m,130,Sa,,,,eF;S;R;bM,
 NGC5833,ESO42-3,GALXY,APS,15,11.9,-72,52,12,14,468,25,3.1m,2.3m,128,Sbc,,,,F;cS;lE;glbM;am st,
 PK315-13.1,He2-131,PLNNB,APS,15,37.2,-71,55,11.8,6.8,453,25,4.9s,,,,,10.9,,,Low Excitation PLNNB
@@ -352,7 +352,7 @@ PK43-13.1,Abell67,PLNNB,AQL,19,58.4,3,3,16,99.9,252,16,69s,61s,,2b,,19.3,,,
 NGC6852,PK42-14.1,PLNNB,AQL,20,0.7,1,44,11.4,11.2,253,16,28s,,,4,,17.9,,F neb;am st,
 NGC6858,,ASTER,AQL,20,2.9,11,16,99.9,99.9,208,16,,,,,,,,Cl;cL;E;pRi;st13...,
 NGC6859,,3STAR,AQL,20,3.8,0,27,99.9,99.9,253,16,,,,,,,,vS Cl;*10p1s;s1'29'',
-NGC6863,,8STAR,AQL,20,5.1,-3,31,99.9,99.9,253,16,,,,,,,,Cl;S;vmC;st19,Small group of 8 stars hardly a cluster
+NGC6863,,8STAR,AQL,20,5.1,-3,31,99.9,99.9,253,16,,,,,,,,Cl;S;vmC;st19,Small group of 8 simStars hardly a cluster
 NGC6865,,GALXY,AQL,20,5.9,-9,2,14.6,99.9,298,16,0.8m,0.6m,130,SO,,,,F;S;E,
 NGC6900,MCG0-52-1,GALXY,AQL,20,21.6,-2,34,14,99.9,253,16,1m,0.8m,85,Sb,,,,vF;S;R,
 NGC6901,IC1316,GALXY,AQL,20,22.4,6,26,13.7,13.4,208,16,1.1m,0.4m,63,SBab,,,,eF,IC5000=IC1316
@@ -383,9 +383,9 @@ NGC6977,MCG-1-53-16,GALXY,AQR,20,52.5,-5,45,13.2,13.2,299,16,1.3m,0.9m,0,SBb,,,,
 NGC6978,MCG-1-53-17,GALXY,AQR,20,52.6,-5,43,13.3,13.1,299,16,1.5m,0.7m,130,Sb,,,,vF,
 NGC6980,,1STAR,AQR,20,52.8,-5,49,99.9,99.9,299,16,,,,,,,,vF;S;resolvable,
 NGC6981,M72,GLOCL,AQR,20,53.5,-12,32,9.2,12,299,16,5.9m,,,IX,,14.2,M,pB;pL;R;gmCM;rrr,3 deg WSW of NGC 7009
-NGC6994,M73,OPNCL,AQR,20,59,-12,38,9.7,99.9,299,16,2.8m,,,IV 1 p :b,4,10,M,Cl;eP;vlC;No neb,4 or 5 10th mag stars; Messier saw neby but there is none; not a cluster
+NGC6994,M73,OPNCL,AQR,20,59,-12,38,9.7,99.9,299,16,2.8m,,,IV 1 p :b,4,10,M,Cl;eP;vlC;No neb,4 or 5 10th mag simStars; Messier saw neby but there is none; not a cluster
 NGC7001,UGC11663,GALXY,AQR,21,1.1,0,12,12.9,13.3,254,16,1.4m,1.1m,162,Sab,,,,eF;S;E0,
-NGC7005,,ASTER,AQR,21,2,-12,53,99.9,99.9,299,16,,,,,,,,Cl;S;P;(neb),3 to 5 stars
+NGC7005,,ASTER,AQR,21,2,-12,53,99.9,99.9,299,16,,,,,,,,Cl;S;P;(neb),3 to 5 simStars
 NGC7009,PK37-34.1,PLNNB,AQR,21,4.2,-11,22,8.3,6.2,300,16,28s,23s,,4(6),,12.9,BCH,!!! vB;S;elliptic,Saturn Nebula;H IV 1;bright blue-green disk
 NGC7010,IC5082,GALXY,AQR,21,4.7,-12,20,14,99.9,300,16,1.9m,1m,50,Elliptical,,,,eF;pL;R;r,
 NGC7047,UGC11712,GALXY,AQR,21,16.5,0,50,13.4,12.9,255,16,1.2m,0.7m,107,Sb Ring,,,,eF;vS;biN;pf,
@@ -660,7 +660,7 @@ PK173-5.1,K2-1;SS38,PLNNB,AUR,5,8.1,30,48,13.7,15.5,97,5,2.2m,,,3,,18.8,,13''-pF
 King17,,OPNCL,AUR,5,8.5,39,5,99.9,99.9,65,5,1.5m,,,II 2m :b,25,14,,,
 NGC1790,,ASTER,AUR,5,10.9,52,4,99.9,99.9,40,1,,,,,,,,Cl;group of 8 or 9 st 10,
 NGC1798,OCL410,OPNCL,AUR,5,11.7,47,42,10,99.9,65,5,5m,,,I 1 m :b,,13,,S;Cl or Cl+ neb,
-Do16,,OPNCL,AUR,5,14.6,32,43,99.9,99.9,97,5,12m,,,III 2 p n,10,,,13''-pF; nRi; nC; 13 stars counted at 150X,
+Do16,,OPNCL,AUR,5,14.6,32,43,99.9,99.9,97,5,12m,,,III 2 p n,10,,,13''-pF; nRi; nC; 13 simStars counted at 150X,
 IC405,LBN795,BRTNB,AUR,5,16.5,34,21,10,99.9,97,5,50m,30m,,E,,,C,* 6.7 w pB;vL neb,Flaming Star nebula;variable AE Aur in center of neby
 Sh2-223,,SNREM,AUR,5,16.6,42,4,99.9,99.9,66,5,70m,10m,,,,,,10''- eF; L; vE 5X1 in PA 90; faint streamer,
 UGC3273,PGC17057,GALXY,AUR,5,17.7,53,33,14.3,14.7,40,1,1.9m,0.9m,45,Sm,,,,,
@@ -675,7 +675,7 @@ Cr62,,OPNCL,AUR,5,22.5,41,0,4.2,99.9,66,5,28m,,,IV 3 p,,,,11''-pB; vL; vlC; nRi;
 IC410,,BRTNB,AUR,5,22.7,33,25,7.5,99.9,97,5,50m,50m,,E,,,,Dif;many st inv,Incl cluster NGC 1893
 NGC1893,,OPNCL,AUR,5,22.7,33,25,7.5,99.9,97,5,11m,,,II 2 m n,60,9.3,,Cl;L;Ri;lC,In Aur OB2;20* mags 9...12;neby IC 410 invl
 Berk19,,OPNCL,AUR,5,24.1,29,34,11.4,99.9,97,5,7m,,,IV 2 p,40,14.7,,6'' F; pS; nRi; nC; 7* and fuzzy background,
-Do18,,OPNCL,AUR,5,24.1,33,23,99.9,99.9,97,5,12m,,,IV 2 p n,15,,,13''-pF; nRi; nC; 11 stars counted at 150X,
+Do18,,OPNCL,AUR,5,24.1,33,23,99.9,99.9,97,5,12m,,,IV 2 p n,15,,,13''-pF; nRi; nC; 11 simStars counted at 150X,
 Berk69,,OPNCL,AUR,5,24.4,32,36,99.9,99.9,97,5,5m,,,II 2m :b,30,14,,,
 NGC1896,,ASTER,AUR,5,25.5,29,10,99.9,99.9,97,5,,,,,,,,Cl;vL;Ri;vlC;st9..12,H VIII 4
 Berk70,,OPNCL,AUR,5,25.7,41,54,99.9,99.9,66,5,12m,,,IV 3 m,40,15,,,
@@ -1033,7 +1033,7 @@ Tombaugh5,,OPNCL,CAM,3,47.7,59,5,8.4,99.9,39,1,17m,,,III 2 m,60,11.6,,,
 UGC2855,PGC13880,GALXY,CAM,3,48.4,70,8,12.9,15,18,1,4.4m,2m,112,S(B)c,,,,,P w UGC 2866 at 10' south foll
 Czernik17,,OPNCL,CAM,3,52.3,61,58,99.9,99.9,18,1,5m,,,IV 1p :b,15,,,,
 Sh2-205,,BRTNB,CAM,3,53.2,53,4,99.9,99.9,39,1,80m,23m,,E,,,,,
-Kemble1,,ASTER,CAM,3,57.5,63,4,5,99.9,18,1,180m,,,,20,5,,8X42binoc-19* in chain about 4 deg long incl CL 1502,Kemble's Cascade; 3 deg chain of stars NW to SE; ends in NGC 1502
+Kemble1,,ASTER,CAM,3,57.5,63,4,5,99.9,18,1,180m,,,,20,5,,8X42binoc-19* in chain about 4 deg long incl CL 1502,Kemble's Cascade; 3 deg chain of simStars NW to SE; ends in NGC 1502
 NGC1469,UGC2909,GALXY,CAM,4,0.5,68,35,12.7,13.1,18,1,1.9m,0.8m,153,SO,,,,vF;vS;R;B* nr,
 NGC1485,UGC2933,GALXY,CAM,4,5.1,71,0,12.6,12.9,18,1,2.1m,0.7m,22,Sb,,,,eF;pS;R,
 NGC1501,PK144+6.1,PLNNB,CAM,4,7,60,55,12,11.6,39,1,56s,48s,,3,,14.4,B H,pB;pS;vlE;1'Diam,H IV 53;PK144+6.1
@@ -1080,7 +1080,7 @@ NGC2363,UGC3847,GALXY,CAM,7,28.5,69,12,15.5,99.9,21,1,1.6m,1m,20,Ir,,,,neb* or v
 NGC2366,UGC3851,GALXY,CAM,7,28.9,69,13,11.1,14.6,21,1,7.8m,2.6m,25,Ir,,,,vF;pL;mbM;vS*inv;curved tails,H III 748;P w NGC 2363
 NGC2403,UGC3918,GALXY,CAM,7,36.8,65,36,8.5,14.4,21,1,23.4m,11.8m,127,SBc,,,BCH,!! cB;eL;vmE;vgmbMN,H V 44;in M81 group;many well res irreg arms;broad bar
 NGC2404,,GX+DN,CAM,7,37.1,65,37,99.9,99.9,21,1,,,,E+*,,,,vF;vS,An HII region within the GALXY NGC 2403 on the NE side
-NGC2408,,ASTER,CAM,7,39.8,71,40,99.9,99.9,21,1,10m,,,,,,,Cl;vlC,Scattered group of stars 10 - 12 mag
+NGC2408,,ASTER,CAM,7,39.8,71,40,99.9,99.9,21,1,10m,,,,,,,Cl;vlC,Scattered group of simStars 10 - 12 mag
 UGC3975,PGC21698,GALXY,CAM,7,44.8,72,48,13.6,14.1,7,1,1.4m,1.3m,151,SBdm,,,,,
 UGC4013,Mrk10,GALXY,CAM,7,47.5,60,56,13.3,13.8,43,1,2m,0.9m,130,Sb,,,,,Seyfert;vF companion on east side
 NGC2441,UGC4036,GALXY,CAM,7,51.9,73,1,12.2,13.4,7,1,2m,1.8m,,SBb Ring,,,,vF;pS,
@@ -1153,7 +1153,7 @@ NGC2417,ESO123-15,GALXY,CAR,7,30.2,-62,15,12,13.7,446,24,2.8m,1.9m,81,Sbc,,,,vF;
 PK264-12.1,He2-5,PLNNB,CAR,7,47.4,-51,16,12.3,5.8,424,24,3.0s,,,,,14.7,,,
 NGC2502,ESO209-8,GALXY,CAR,7,55.9,-52,18,13.2,99.9,424,24,2.1m,1.3m,126,SBO,,,,pF;S;R;vgpmbM,
 NGC2516,OCL776,OPNCL,CAR,7,58.1,-60,45,3.8,99.9,424,24,21m,,,I 3 r,80,7,C,Cl;vB;vL;pRi;*7...13,
-NGC2609,ESO124-SC17,OPNCL,CAR,8,29.5,-61,7,99.9,99.9,447,25,,,,,,,,Cl;pS;lRi;lC,small cluster of 10 to 15 stars
+NGC2609,ESO124-SC17,OPNCL,CAR,8,29.5,-61,7,99.9,99.9,447,25,,,,,,,,Cl;pS;lRi;lC,small cluster of 10 to 15 simStars
 NGC2640,ESO165-2,GALXY,CAR,8,37.4,-55,7,12.7,99.9,425,25,2.2m,1.9m,104,E-S0 B,,,,pB;S;R;3 or 4 vS * p nr,
 NGC2714,ESO125-7,GALXY,CAR,8,53.5,-59,13,14,99.9,425,25,0.9m,0.9m,,E,,,,eF;S;R;pslbM,
 NGC2788B,ESO60-25,GALXY,CAR,9,3.6,-67,58,13.7,13.1,448,25,1.5m,0.4m,165,Sb,,,,,
@@ -1171,7 +1171,7 @@ PK278-4.1,He2-32,PLNNB,CAR,9,30.9,-57,36,16.1,99.9,426,25,56.0s,31.0s,,,,,,,
 IC2501,PK281-5.1,PLNNB,CAR,9,38.8,-60,6,11.3,3.1,426,25,2s,,,1,,14.5,,planetary;stellar,
 PK279-3.1,He2-36,PLNNB,CAR,9,43.5,-57,17,13.3,11.2,426,25,25s,,,,,11.5,,,
 Ru84,,OPNCL,CAR,9,49.1,-65,15,99.9,99.9,448,25,3.6m,,,II 1 p,20,11,,,
-NGC3036,ESO126-SC27,OPNCL,CAR,9,49.3,-62,41,99.9,99.9,448,25,,,,,,,,Cl;cL;lC,cluster of 20 to 25 stars
+NGC3036,ESO126-SC27,OPNCL,CAR,9,49.3,-62,41,99.9,99.9,448,25,,,,,,,,Cl;cL;lC,cluster of 20 to 25 simStars
 NGC3059,ESO37-7,GALXY,CAR,9,50.1,-73,55,11,13.5,465,25,3.8m,3.6m,,SBbc,,,,F;L;iR;glbM;S* inv,
 Ru86,,OPNCL,CAR,10,1.5,-59,31,99.9,99.9,426,25,12m,,,III 2 m,,12,,,
 NGC3114,OCL802,OPNCL,CAR,10,2.5,-60,8,4.2,99.9,426,25,35m,,,II 3 r,,7.3,,Cl;eL;lC;B;*9...14,
@@ -1244,7 +1244,7 @@ RCW58,,BRTNB,CAR,11,6.3,-65,32,99.9,99.9,449,25,7m,5m,,E,,,,,Ring shaped; Wolf-R
 NGC3572,OCL846,OPNCL,CAR,11,10.3,-60,15,6.6,99.9,427,25,7m,,,I 2 m n,35,7.9,,Cl;pRi;lC,In Car OB2
 Hogg10,,OPNCL,CAR,11,10.7,-60,23,6.9,99.9,427,25,3m,,,I 3 p,23,7.1,,,
 Tr18,Cr241,OPNCL,CAR,11,11.4,-60,39,6.9,99.9,427,25,12m,,,III 2 p,30,8.1,,,In CAR OB2
-Hogg11,,OPNCL,CAR,11,11.5,-60,22,8.1,99.9,427,25,1.5m,,,,10,8.3,,,In Carina OB2; part of Cr 240; 6 stars
+Hogg11,,OPNCL,CAR,11,11.5,-60,22,8.1,99.9,427,25,1.5m,,,,10,8.3,,,In Carina OB2; part of Cr 240; 6 simStars
 NGC3576,ESO129-EN5,BRTNB,CAR,11,11.5,-61,22,99.9,99.9,449,25,3m,3m,,E,,,,F;lE;1st of 6,
 Cr240,,OPNCL,CAR,11,11.7,-60,19,3.9,99.9,427,25,25m,,,III 1 p n,30,4.6,,,
 NGC3579,ESO129-EN8,BRTNB,CAR,11,12,-61,15,99.9,99.9,449,25,,,,E,,,,F;lE;sbM;2nd of 6,
@@ -1320,10 +1320,10 @@ NGC559,OCL322,OPNCL,CAS,1,29.5,63,19,9.5,99.9,16,1,4.4m,,,II 2 m,60,10.6,CH,Cl;B
 Sh2-188,LBN633,BRTNB,CAS,1,30.6,58,23,99.9,99.9,37,1,10m,3m,,E,,,,13''-vF;pL;E 3X1;2* invol at 100X with UHC,Crescent shaped with SE side brighter
 NGC581,M103,OPNCL,CAS,1,33.4,60,39,7.4,11,37,1,6m,,,III 2 p,40,10.6,M,Cl;pL;B;R;Ri;*10..11,in Cas OB8;incl Struve 131 6-9m 14''
 Czernik4,,OPNCL,CAS,1,35.6,61,29,99.9,99.9,16,1,3m,,,IV 2p :b,10,,,,
-Tr1,Cr15,OPNCL,CAS,1,35.7,61,17,8.1,99.9,16,1,4.5m,,,I 3 p,20,9.6,,S;pC; 13''-pF; sC; 17* mags 12 and fainter,2 10 mag * and haze of unresolved stars
+Tr1,Cr15,OPNCL,CAS,1,35.7,61,17,8.1,99.9,16,1,4.5m,,,I 3 p,20,9.6,,S;pC; 13''-pF; sC; 17* mags 12 and fainter,2 10 mag * and haze of unresolved simStars
 NGC609,OCL325,OPNCL,CAS,1,36.4,64,32,11,99.9,16,1,3m,,,II 3 r,77,14.4,,Cl;S;pRi;*14...,
 NGC629,,ASTER,CAS,1,39,72,52,99.9,99.9,4,1,,,,,,,,iF;3*+ neb,
-NGC637,OCL329,OPNCL,CAS,1,43.1,64,2,8.2,99.9,16,1,3.5m,,,I 3 p,20,10,H,Cl;pS;B & vF stars,H VII 49
+NGC637,OCL329,OPNCL,CAS,1,43.1,64,2,8.2,99.9,16,1,3.5m,,,I 3 p,20,10,H,Cl;pS;B & vF simStars,H VII 49
 NGC657,OCL337,OPNCL,CAS,1,43.8,55,53,99.9,99.9,37,1,7m,,,,40,7.1,,Cl;pRi;st12,
 NGC654,OCL330,OPNCL,CAS,1,44,61,53,6.5,99.9,16,1,5m,,,II 3 m,60,7.4,H,Cl;iF;Ri;1*6.7m,H VII 46;In Cas OB8?;50* mags 11..14
 NGC659,OCL332,OPNCL,CAS,1,44.4,60,40,7.9,99.9,37,1,5m,,,III 1 p,40,10.4,H,Cl;lRi;st B,H VIII 65;30* mags 12...
@@ -1359,7 +1359,7 @@ King4,,OPNCL,CAS,2,35,59,1,10.5,99.9,38,1,3m,,,III 1 p,20,12.9,,,
 Maffei1,,GALXY,CAS,2,36.3,59,39,11.4,10,38,1,5m,3m,,,,,,vF;pS,Very obscured infrared source
 Czernik11,,OPNCL,CAS,2,36.6,59,39,99.9,99.9,38,1,7m,,,I 2pn:b,20,,,,Superimposed on faint galaxy Maffei 1
 Berk65,,OPNCL,CAS,2,39,60,24,10.2,99.9,38,1,5m,,,I 2 p,20,10.8,,,
-NGC1027,OCL357,OPNCL,CAS,2,42.6,61,36,6.7,99.9,17,1,20m,,,III 2 p n,40,9.3,H,Cl;L;scatt stars; one 10th mag,H VIII 66;Scattered group 12*
+NGC1027,OCL357,OPNCL,CAS,2,42.6,61,36,6.7,99.9,17,1,20m,,,III 2 p n,40,9.3,H,Cl;L;scatt simStars; one 10th mag,H VIII 66;Scattered group 12*
 Czernik13,,OPNCL,CAS,2,44.7,62,20,10.4,99.9,17,1,6m,,,II 2 p,10,12.8,,,
 IC1848,OCL364,CL+NB,CAS,2,51.4,60,25,6.5,99.9,38,1,40m,10m,,IV 3 p n,10,7.1,,Cl;star following;in F neby,Neby descr: eL;vF;90' X 45'
 vdB8,LBN643,BRTNB,CAS,2,51.5,67,49,99.9,99.9,17,1,3.6m,0.7m,,R,,,,,
@@ -1368,7 +1368,7 @@ Cr33,,OPNCL,CAS,2,59.3,60,24,5.9,99.9,38,1,40.0m,,,,25,,,11'' pB; vL; scattered;
 Cr34,,OPNCL,CAS,2,59.4,60,34,6.8,99.9,38,1,25m,,,I 3 p,,7.9,,11''-pB; vL; scatt; 31* counted; dbl* on N side,
 IC1871,LBN675,BRTNB,CAS,3,3.2,60,28,99.9,99.9,38,1,4.0m,3.5m,,E,,,,* 9.3 nebs;chiefly faint,
 Berk66,,OPNCL,CAS,3,4.1,58,46,99.9,99.9,38,1,6m,,,I 3m :b,30,16,,,
-IC289,PK138+2.1,PLNNB,CAS,3,10.3,61,19,12,12.3,18,1,45s,30s,,4(2),,16.8,,pB;pL;R;bet 2 vF stars,
+IC289,PK138+2.1,PLNNB,CAS,3,10.3,61,19,12,12.3,18,1,45s,30s,,4(2),,16.8,,pB;pL;R;bet 2 vF simStars,
 Tr3,Cr36;Harvard1,OPNCL,CAS,3,11.9,63,11,7,99.9,18,1,23m,,,III 3 p,30,,,L;nC; 13''-B; pRi; 25* mags 11 to 13,
 NGC1343,UGC2792,GALXY,CAS,3,37.8,72,34,12.7,14.1,5,1,2.6m,1.6m,80,SB/P,,,,F;vS;iR;gbM;D*vnr,H III 694;heavy ringshaped nucleus;B blue neutral ring core
 NGC7438,,ASTER,CAS,22,57.4,54,22,99.9,99.9,58,3,,,,,,,,Cl;vL;E,
@@ -1389,7 +1389,7 @@ PK114-4.1,Abell82,PLNNB,CAS,23,45.8,57,4,15.2,99.9,35,3,94s,,,3b,,14.9,,13''-F;p
 PK113-6.1,Abell83,PLNNB,CAS,23,46.8,54,45,17.6,14.9,35,3,47.0s,,,2c,,21,,,
 PK112-10.1,Abell84,PLNNB,CAS,23,47.7,51,24,14.4,99.9,35,3,2.5m,2.0m,,3b,,18.5,,,
 King21,,OPNCL,CAS,23,49.9,62,43,9.8,99.9,15,3,2.5m,,,III 3 m,20,10,,13''-pF;pS; 17* at 135X,
-King12,,OPNCL,CAS,23,53,61,58,10,99.9,15,3,2m,,,I 2 p,15,10,,13''-pB;S;sE; 15* at 135X; D* invol,27 stars from 10...16 mag
+King12,,OPNCL,CAS,23,53,61,58,10,99.9,15,3,2m,,,I 2 p,15,10,,13''-pB;S;sE; 15* at 135X; D* invol,27 simStars from 10...16 mag
 Harvard21,,OPNCL,CAS,23,54.3,61,44,9,99.9,15,3,4m,,,IV 2 p,6,,,pRi;C; 13''-12* at 100X; mags 12 and fainter.,20 F*
 Czernik45,,OPNCL,CAS,23,55.8,64,37,99.9,99.9,15,3,3m,,,II 2p :b,8,,,,
 NGC7788,OCL275,OPNCL,CAS,23,56.7,61,24,9.4,99.9,15,3,9m,,,I 2 p,20,,,Cl;S;pRi;vC;st 10;13..,in Cas OB5?
@@ -3224,7 +3224,7 @@ PK64+5.1,BD+303639,PLNNB,CYG,19,34.8,30,31,9.6,6.9,118,8,35.0s,,,4,,12.5,,vF;S; 
 Sh2-91,,SNREM,CYG,19,35.6,29,37,99.9,99.9,118,8,120m,2m,,,,,,,Long; thin filament
 M1-92,,BRTNB,CYG,19,36.3,29,33,11.7,99.9,118,8,20.0s,4.0s,,R,,,,13''-pB;vS;nBM;sE in PA0 at 220X,Footprint Neb;looks like Dbl*;30'' East of * of equal mag
 NGC6811,OCL185,OPNCL,CYG,19,38.2,46,34,6.8,99.9,84,8,13m,,,IV 3 p,70,9.9,,Cl;L;pRi;lC;st11..14,
-NGC6819,OCL155,OPNCL,CYG,19,41.3,40,11,7.3,99.9,84,8,5m,,,I 1 r,,11.5,B,Cl;vL;vRi;*11...15,150 stars mags 11-16
+NGC6819,OCL155,OPNCL,CYG,19,41.3,40,11,7.3,99.9,84,8,5m,,,I 1 r,,11.5,B,Cl;vL;vRi;*11...15,150 simStars mags 11-16
 UGC11465,PGC63529,GALXY,CYG,19,41.7,50,38,13.8,13,55,3,1.3m,1.3m,,S(B)0,,,,,
 NGC6824,UGC11470,GALXY,CYG,19,43.7,56,7,12.2,12.8,55,3,1.9m,1.4m,60,Sab,,,,pB;iF;bM,H II 878
 NGC6826,PK83+12.1,PLNNB,CYG,19,44.8,50,32,8.8,6.9,55,3,27s,24s,,3a(2),,10.7,BCH,Planetary;B;pL;R;*11m,H IV 73;Blinking Planetary;PK83+12.1
@@ -3296,7 +3296,7 @@ PK69-3.1,K3-58,PLNNB,CYG,20,21.9,30,0,18.6,99.9,120,9,9.5s,6.5s,,?(3),,,,,
 NGC6910,OCL181,OPNCL,CYG,20,23.2,40,47,7.4,99.9,84,9,8m,,,I 2 p n,50,9.6,H,Cl;pB;pS;P;pC;*20.12,H VIII 56;In Gamma Cyg nebula and Cyg OB9
 Cr421,,OPNCL,CYG,20,23.3,41,42,10.1,99.9,84,9,6m,,,III 1 p n,22,,,13''-pF;pS;nRi;lC; 22* at 135X,
 NGC6916,UGC11554,GALXY,CYG,20,23.6,58,21,13.5,14.1,55,3,1.8m,1.2m,90,SBbc,,,,eeF;pS;F* nr p;v diffic,
-NGC6913,M29,OPNCL,CYG,20,23.9,38,32,6.6,11,120,9,7m,,,III 3 p n,50,8.6,M,Cl;P;lC;st L&S,About 20 stars mags 8...
+NGC6913,M29,OPNCL,CYG,20,23.9,38,32,6.6,11,120,9,7m,,,III 3 p n,50,8.6,M,Cl;P;lC;st L&S,About 20 simStars mags 8...
 Do8,,OPNCL,CYG,20,24.4,42,16,99.9,99.9,85,9,5m,,,I 2pn:b,20,,,,
 Berk89,,OPNCL,CYG,20,24.5,46,2,99.9,99.9,85,9,5m,,,III 1p :b,15,15,,,
 LDN889,,DRKNB,CYG,20,24.8,40,10,79.9,79.9,85,9,90m,20m,,4 Ir,,,,,Wide lane in IC 1318 following Gamma Cyg
@@ -3356,7 +3356,7 @@ Basel12,,OPNCL,CYG,21,10.6,46,14,99.9,99.9,85,9,7m,,,III 2p :b,20,,,,
 NGC7037,,ASTER,CYG,21,10.9,33,46,99.9,99.9,121,9,,,,,,,,Cl;pRi;iF;st11...15,
 Berk91,,OPNCL,CYG,21,11,48,32,99.9,99.9,85,9,5m,,,II 1p :b,20,16,,,
 NGC7039,OCL203,OPNCL,CYG,21,11.2,45,39,7.6,99.9,85,9,25m,,,III 2 p,50,11.3,,Cl;vL;pRi;E;st 10...,
-IC1369,Cr432,OPNCL,CYG,21,12.1,47,44,8.8,99.9,86,9,4m,,,I 1 m,40,12.1,,S;F;stars 13 mag,Barnard saw nebulosity-there is none
+IC1369,Cr432,OPNCL,CYG,21,12.1,47,44,8.8,99.9,86,9,4m,,,I 1 m,40,12.1,,S;F;simStars 13 mag,Barnard saw nebulosity-there is none
 B361,LDN970,DRKNB,CYG,21,12.9,47,22,79.9,79.9,86,9,17m,,,4 C G,,,,,Has faint preceding extension
 NGC7044,OCL198,OPNCL,CYG,21,12.9,42,29,12,99.9,86,9,6m,,,II 2 R,,15,H,Cl;vF;pL;vRi;vC;st 15...18,H VI 24
 Basel13,,OPNCL,CYG,21,13.2,46,34,99.9,99.9,86,9,10m,,,,,,,,
@@ -4028,7 +4028,7 @@ NGC6676,UGC11286,GALXY,DRA,18,33.2,66,58,14.4,13.5,30,3,1.6m,0.3m,142,Sbc,,,,eeF
 NGC6679,MCG11-22-56,GALXY,DRA,18,33.5,67,9,13.5,99.9,30,3,0.2m,0.2m,,Sc,,,,eF;close double,
 NGC6670,UGC11284,GALXY,DRA,18,33.6,59,53,15.5,99.9,54,3,0.5m,0.1m,75,S,,,,eeF;S;mE;v diffic,Triple system distorted
 NGC6677,UGC11288,GALXY,DRA,18,33.6,67,7,13.5,99.9,30,3,0.9m,0.4m,95,Sbc,,,,vF;vS;bet *v nr & vF D*,Double system w NGC 6679
-IC1291,UGC11283,GALXY,DRA,18,33.9,49,17,13,13.9,82,8,1.8m,1.4m,30,SBdm pec,,,,eF;vS;R;2 stars 12 mag nf and np,Br of 3;S-shaped;very patchy
+IC1291,UGC11283,GALXY,DRA,18,33.9,49,17,13,13.9,82,8,1.8m,1.4m,30,SBdm pec,,,,eF;vS;R;2 simStars 12 mag nf and np,Br of 3;S-shaped;very patchy
 NGC6689,NGC6690,GALXY,DRA,18,34.8,70,31,13,99.9,30,3,4m,1.3m,171,SBcd,,,,vF;pS;*8F7'dist,
 NGC6690,NGC6689,GALXY,DRA,18,34.8,70,31,12.5,14,30,3,4m,1.3m,171,SBcd,,,,pF;L;R;bet 2*,
 Kemble2,,ASTER,DRA,18,35,72,23,7,99.9,12,1,30m,,,,17,7,,,Fr. Lucian Kemble's ''Mini-Cassiopeia'' asterism
@@ -4482,7 +4482,7 @@ NGC1427,ESO358-52,GALXY,FOR,3,42.3,-35,24,10.9,13.2,356,18,3.8m,2.6m,76,E3,,,,pF
 NGC1428,ESO358-53,GALXY,FOR,3,42.4,-35,9,12.7,12.9,356,18,1.6m,0.8m,118,SO,,,,F,
 NGC1459,ESO482-43,GALXY,FOR,3,47,-25,31,12.8,13.4,312,18,1.7m,1.1m,167,SBbc,,,,eF;pS;gbM,
 NGC2129,OCL467,OPNCL,GEM,6,0.7,23,19,6.7,99.9,136,5,7m,,,III 3 p,40,7.4,H,Cl;pL;40 or 50* 8...15,H VIII 26
-IC2157,Cr80,OPNCL,GEM,6,4.8,24,4,8.4,99.9,136,5,7m,,,III 2 p,20,11.1,,Cl;S;about 20 F stars,
+IC2157,Cr80,OPNCL,GEM,6,4.8,24,4,8.4,99.9,136,5,7m,,,III 2 p,20,11.1,,Cl;S;about 20 F simStars,
 NGC2158,OCL468,OPNCL,GEM,6,7.4,24,6,8.6,99.9,136,5,5m,,,II 3 r,,12.4,B H,Cl;pS;mC;vRi;irr triangle * eS,H VI 17;150 F* on edge of M 35
 Sh2-247,LBN843,BRTNB,GEM,6,8.5,21,37,99.9,99.9,137,5,10m,10m,,E,,,,13''-eF;L;R; 5* invol at 100X with UHC filter,
 NGC2168,M35,OPNCL,GEM,6,8.9,24,21,5.1,12,137,5,28m,,,III 2 m,200,8.2,M,Cl;vL;eRi;pC;st9...16,Lord Rosse counted 300*;Orange * invl;NGC 2158 30' SW
@@ -4615,7 +4615,7 @@ NGC7412A,ESO290-28,GALXY,GRU,22,57.1,-42,48,13.9,14.3,415,23,3.8m,0.6m,91,SBd,,,
 IC1459,IC5265,GALXY,GRU,22,57.2,-36,28,10,13.2,384,23,5.1m,3.7m,40,E3,,,,F;pS;com;N=12 m,
 IC5267,ESO290-G026,GALXY,GRU,22,57.2,-43,24,10.5,13.7,415,23,5.4m,3.5m,140,Sa(s),,,,pB;S;R;mbM,Brightest in group
 NGC7424,ESO346-19,GALXY,GRU,22,57.3,-41,4,10.5,15.1,415,23,10m,8.2m,,SBc,,,,F;cL;vlE;vgmbM,
-IC5273,ESO346-G022,GALXY,GRU,22,59.4,-37,42,11.4,13,384,23,2.6m,1.7m,56,SBc,,,,vF;cL;lE;4 stars preceeding,Asymmetrical
+IC5273,ESO346-G022,GALXY,GRU,22,59.4,-37,42,11.4,13,384,23,2.6m,1.7m,56,SBc,,,,vF;cL;lE;4 simStars preceeding,Asymmetrical
 NGC7456,ESO346-26,GALXY,GRU,23,2.2,-39,34,11.8,14.1,415,23,5.1m,1.8m,23,Sc,,,,vF;L;mE34;vglbM,
 NGC7462,ESO346-28,GALXY,GRU,23,2.8,-40,50,11.7,12.8,415,23,4.3m,0.8m,75,SBbc,,,,cF;pS;vmE5;*11 np,
 NGC7470,ESO239-9,GALXY,GRU,23,5.2,-50,7,14.3,99.9,439,26,1.4m,0.9m,84,Sbc,,,,eF;pL;R;glbM;*11 np,
@@ -5158,7 +5158,7 @@ NGC5495,ESO511-10,GALXY,HYA,14,12.4,-27,7,12.8,13.2,332,21,1.5m,1.2m,,SBc,,,,vF;
 NGC5556,ESO446-50,GALXY,HYA,14,20.6,-29,15,11.8,14.4,372,21,4.1m,3.3m,148,SBcd,,,,eF;L;s* inv,
 NGC5592,ESO446-58,GALXY,HYA,14,23.9,-28,41,12.8,12.8,372,21,1.5m,0.8m,88,SBbc,,,,F;S;E;gvlbM;r,H III 924
 NGC5626,ESO447-8,GALXY,HYA,14,29.8,-29,45,13,12.9,372,21,1.2m,1m,127,Sa,,,,eF;S;R,
-NGC5694,GCL29,GLOCL,HYA,14,39.6,-26,32,10.2,99.9,332,21,3.6m,,,VII,,15.5,CH,cB;cS;R;psbM;r;* 9.5 sp,H II 196;Rich w eF stars;distant globular
+NGC5694,GCL29,GLOCL,HYA,14,39.6,-26,32,10.2,99.9,332,21,3.6m,,,VII,,15.5,CH,cB;cS;R;psbM;r;* 9.5 sp,H II 196;Rich w eF simStars;distant globular
 NGC602,ESO29-SC43,SMCCN,HYI,1,29.4,-73,33,99.9,99.9,461,24,1.5m,0.7m,,E+*,,,,B;S;R;psbM*;r,Two parts divided by dark rift
 NGC643A,ESO29-SC44,OPNCL,HYI,1,30.6,-76,3,12,99.9,461,24,2m,2m,,,,,,,
 NGC643,ESO29-SC50,SMCGC,HYI,1,35,-75,33,13.5,99.9,461,24,,,,,,,,vF;pS;R;vglbM,
@@ -5236,11 +5236,11 @@ NGC7227,UGC11942,GALXY,LAC,22,11.5,38,43,13.5,13.1,122,9,1.3m,0.6m,8,SO,,,,vF;vS
 NGC7228,UGC11945,GALXY,LAC,22,11.8,38,42,13.5,13.9,122,9,1.3m,1.3m,,SBa,,,,F;vS;R;lbM;sf of 2,
 NGC7231,UGC11951,GALXY,LAC,22,12.5,45,20,13,13.1,87,9,1.9m,0.7m,88,SBa,,,,eF;S;er,H II 606
 NGC7243,OCL221,OPNCL,LAC,22,15.1,49,54,6.4,99.9,87,9,21m,,,IV 2 p,40,8.5,BCH,Cl;L;P;lC;st vL,H VIII 75;Incl Struve 2890 D*
-NGC7245,OCL225,OPNCL,LAC,22,15.3,54,20,9.2,99.9,57,3,5m,,,II 1 p,,12.8,,Cl;C;st eS,H VI 29;50 vF stars
+NGC7245,OCL225,OPNCL,LAC,22,15.3,54,20,9.2,99.9,57,3,5m,,,II 1 p,,12.8,,Cl;C;st eS,H VI 29;50 vF simStars
 NGC7240,IC1441,GALXY,LAC,22,15.4,37,17,14.2,13.4,122,9,0.5m,0.5m,,E-SO,,,,eF;eS;* att n;p of 2,
 King9,,OPNCL,LAC,22,15.5,54,25,99.9,99.9,57,3,2.5m,,,I 1m:b,40,18,,,
 NGC7242,UGC11969,GALXY,LAC,22,15.7,37,18,14.6,99.9,122,9,2.3m,1.7m,30,Elliptical,,,,vF;S;lbM;f of 2,brightest in group;companion superimposed
-IC1442,OCL224,OPNCL,LAC,22,16.5,54,3,9.1,99.9,57,3,5m,,,II 2 m,20,11.4,,Cl of neb stars,
+IC1442,OCL224,OPNCL,LAC,22,16.5,54,3,9.1,99.9,57,3,5m,,,II 2 m,20,11.4,,Cl of neb simStars,
 NGC7248,UGC11972,GALXY,LAC,22,16.9,40,30,12.4,12.7,87,9,1.8m,0.9m,133,SO,,,,vF;vS;mbM,H III 863;UGC 11972;sev smaller galaxies near
 NGC7250,UGC11980,GALXY,LAC,22,18.3,40,34,12.6,12.8,87,9,1.7m,0.8m,157,Sd,,,,vF;S;mE165,H III 864;Disturbed?;UGC 11980
 NGC7263,MCG6-49-4,GALXY,LAC,22,21.8,36,21,14.5,13.3,123,9,0.6m,0.6m,,Sa,,,,F;S;R,
@@ -6051,7 +6051,7 @@ PK61+8.1,K3-27,PLNNB,LYR,19,14.5,28,41,14.3,99.9,118,8,16.4s,,,,,17.2,,,
 NGC6779,M56,GLOCL,LYR,19,16.6,30,11,8.3,12,118,8,5m,,,X,,13,M,B;L;iR;gvmCM;rrr,Stars 11...
 NGC6791,OCL142,OPNCL,LYR,19,20.7,37,51,9.5,99.9,118,8,16m,,,II 3 r,300,13,,vF;L;vRi;*F,
 NGC6792,UGC11429,GALXY,LYR,19,21,43,8,12.1,13.1,83,8,2.2m,1.3m,25,SBb,,,,F;E26;glbM;*9.5 sf,P w UGC 11430 at 12' PA 11
-NGC1520,ESO32-SC5,ASTER,MEN,3,57.5,-76,50,99.9,99.9,462,24,3m,2m,,,,,,Cl;pL;lRi;st9-10,12 stars of 9-10 mag a poor cluster
+NGC1520,ESO32-SC5,ASTER,MEN,3,57.5,-76,50,99.9,99.9,462,24,3m,2m,,,,,,Cl;pL;lRi;st9-10,12 simStars of 9-10 mag a poor cluster
 NGC1651,ESO55-SC30,LMCGC,MEN,4,37.5,-70,35,13,99.9,444,24,3m,,,,,,,pF;L;vlE;vglbM,
 NGC1673,ESO55-SC34,LMCOC,MEN,4,42.7,-69,49,14.1,99.9,444,24,1m,,,,,,,vF;S;att to*10,
 NGC1841,ESO004-SC15,GLOCL,MEN,4,45.4,-84,0,14,99.9,462,24,2.4m,,,,,,,pF;L;iR;vsbM;r,
@@ -6148,7 +6148,7 @@ Cr91,,OPNCL,MON,6,21.5,2,20,6.4,99.9,227,11,17m,,,IV 2 p,20,,,,
 Berk73,,OPNCL,MON,6,22.1,-6,19,99.9,99.9,272,11,3m,,,I 1p :b,15,16,,,
 Cr92,,OPNCL,MON,6,22.9,5,7,8.5,99.9,227,11,11m,,,,,,,,
 NGC2219,,OPNCL,MON,6,23.7,-4,41,99.9,99.9,227,11,8m,8m,,,,,,Cl;P;vlC;*6;11...12,
-NGC2225,,OPNCL,MON,6,26.6,-9,38,14,99.9,272,11,1.5m,,,1,,14,,Cl;P;lCM;*12...15,H VII 26;small scattered cluster;compressed core;40 stars
+NGC2225,,OPNCL,MON,6,26.6,-9,38,14,99.9,272,11,1.5m,,,1,,14,,Cl;P;lCM;*12...15,H VII 26;small scattered cluster;compressed core;40 simStars
 NGC2226,,OPNCL,MON,6,26.6,-9,39,14,99.9,272,11,1.5m,,,1,,,,S;v diffic;*10 close S,compressed core of NGC 2225
 NGC2232,OCL545,OPNCL,MON,6,28,-4,51,3.9,99.9,227,11,30m,,,IV 3 p,20,5,H,B* (10 MON) + Cl,H VIII 25
 NGC2236,OCL501,OPNCL,MON,6,29.7,6,50,8.5,99.9,182,11,7m,,,III 2 p,50,11,,Cl;pRi;pC;*10;12...15,H VII 5
@@ -6176,7 +6176,7 @@ NGC2252,OCL514,OPNCL,MON,6,34.7,5,22,7.7,99.9,227,12,20m,,,IV 2 p n,30,9,,Cl;vL;
 NGC2254,OCL500,OPNCL,MON,6,35.8,7,40,9.1,99.9,182,12,4m,,,I 2 p,50,11.9,,Cl;S;pC;iF;*11...13,H VII 22
 PK211-3.1,M1-6,PLNNB,MON,6,35.8,0,5,16.4,99.9,227,12,5.0s,,,,,15.8,,,
 Basel7,,OPNCL,MON,6,36.3,8,21,8.5,99.9,182,12,5m,,,IV 1p,15,10.4,,,
-Cr104,,OPNCL,MON,6,36.5,4,49,9.6,99.9,227,12,22m,,,IV 1 p n,15,,,,Archinal: a 20 min long 'integral sign' chain of stars
+Cr104,,OPNCL,MON,6,36.5,4,49,9.6,99.9,227,12,22m,,,IV 1 p n,15,,,,Archinal: a 20 min long 'integral sign' chain of simStars
 Tr5,Cr105,OPNCL,MON,6,36.5,9,29,10.9,99.9,182,12,8m,,,II 3 r n,150,17,,,One member is variable V 493 Mon--a red carbon star
 Cr106,,OPNCL,MON,6,37.1,5,57,4.6,99.9,182,12,45m,,,III 3 p,20,,,6''-pB; pL; not well detached; 20* mags 10 to 13,
 Cr107,,OPNCL,MON,6,37.7,4,44,5.1,99.9,227,12,35m,,,IV 3 p,15,7.1,,,
@@ -6222,7 +6222,7 @@ NGC2316,NGC2317,BRTNB,MON,6,59.7,-7,47,99.9,99.9,273,12,4m,,,R,,,,pF;S;R;r;S st 
 NGC2317,NGC2316,BRTNB,MON,6,59.7,-7,46,99.9,99.9,273,12,4m,,,R,,,,close Dneb w 2316,
 Biur13,,OPNCL,MON,7,0.3,0,14,99.9,99.9,228,12,5m,,,IV 1p :b,20,17,,,
 NGC2319,,ASTER,MON,7,0.5,3,3,99.9,99.9,228,12,,,,,,,,Cl of v sc st 8;9...,H VIII 1
-NGC2323,M50,OPNCL,MON,7,2.5,-8,23,5.9,12,273,12,16m,,,II 3 m,80,7.8,M,Cl;vL;Ri;pC,About 100 stars mags 9...14
+NGC2323,M50,OPNCL,MON,7,2.5,-8,23,5.9,12,273,12,16m,,,II 3 m,80,7.8,M,Cl;vL;Ri;pC,About 100 simStars mags 9...14
 Czernik27,,OPNCL,MON,7,3.3,6,25,99.9,99.9,183,12,5m,,,III 1p :b,15,,,,
 PK223-2.1,K1-8,BRTNB,MON,7,3.4,-10,34,13.1,99.9,273,12,79s,,,2,,16.8,,,Not a PLNNB;typical H II spectrum
 Bochum3,,OPNCL,MON,7,3.5,-5,0,9.9,99.9,228,12,4m,,,IV 1 p,25,11.2,,,
@@ -6377,7 +6377,7 @@ NGC6234,MCG1-43-7,GALXY,OPH,16,52,4,23,15.5,99.9,247,15,0.3m,0.3m,,Elliptical,,,
 NGC6240,IC4625,GALXY,OPH,16,53,2,24,12.9,13.7,247,15,2.1m,1m,20,Irp,,,,vF;pL;lE;dif,Strongly peculiar w loop and plume
 NGC6235,GCL48,GLOCL,OPH,16,53.4,-22,11,8.9,99.9,337,22,1.9m,,,X,,14,H,pB;cL;iR;rrr;*14..16,H II 584
 NGC6254,M10,GLOCL,OPH,16,57.1,-4,6,6.6,12,247,15,12.2m,,,VII,,12,M,B;vL;R;gvmBM;rrr,Lord Rosse reported dark lane in cluster
-B46,LDN1775,DRKNB,OPH,16,57.2,-22,44,79.9,79.9,337,22,12m,12m,,6 Ir G,,,,6'' prominent dark oval 15' X 10',30' north of 24 Oph; String of small stars in middle
+B46,LDN1775,DRKNB,OPH,16,57.2,-22,44,79.9,79.9,337,22,12m,12m,,6 Ir G,,,,6'' prominent dark oval 15' X 10',30' north of 24 Oph; String of small simStars in middle
 B47,LDN1792,DRKNB,OPH,16,59.7,-22,39,79.9,79.9,337,22,15m,15m,,5 Ir,,,,,Connected with B51 by two sharp lanes
 Pal15,,GLOCL,OPH,16,59.9,0,32,14,99.9,247,15,3.0m,,,,,17.1,,13''-eF; pS; R; low surface brightness; averted vizhlp,
 NGC6266,M62,GLOCL,OPH,17,1.2,-30,7,6.4,11,376,22,14.1m,,,IV,,13.2,M,vB;L;gmbM;rrr,Asymmetrical
@@ -6470,7 +6470,7 @@ PK7+7.1,M1-22,PLNNB,OPH,17,35.2,-18,34,13.3,99.9,338,15,9.3s,8.7s,,4,,21,,,
 PK5+6.1,M3-11,PLNNB,OPH,17,35.4,-20,57,17.7,13.1,338,22,7.0s,,,2,,17.2,,,
 PK5+5.1,M3-12,PLNNB,OPH,17,36.4,-21,31,14.8,9.8,338,22,6.7s,5.4s,,2,,,,,
 PK7+6.1,M1-23,PLNNB,OPH,17,37.4,-18,47,14.5,99.9,338,15,8.4s,6s,,2,,,,,
-NGC6402,M14,GLOCL,OPH,17,37.6,-3,15,7.6,12,248,15,6.7m,,,VIII,,14,M,B;vL;R;eRi;vgmbM,Many vF stars 14...
+NGC6402,M14,GLOCL,OPH,17,37.6,-3,15,7.6,12,248,15,6.7m,,,VIII,,14,M,B;vL;R;eRi;vgmbM,Many vF simStars 14...
 PK7+6.2,M1-24,PLNNB,OPH,17,38.2,-19,38,14.2,99.9,338,15,7.1s,5.8s,,2,,16,,,
 PK4+4.1,M1-25,PLNNB,OPH,17,38.5,-22,9,14,99.9,338,22,4.7s,4.6s,,2,,17.9,,,
 NGC6401,GCL73,GLOCL,OPH,17,38.6,-23,55,7.4,99.9,338,22,1m,,,IX,,,H,pB;pL;R;*12F inv,H I 44
@@ -6548,7 +6548,7 @@ Do21,Cr458,OPNCL,ORI,5,27.4,7,4,99.9,99.9,180,11,12m,,,IV 2 p,,,,,Skiff: not see
 NGC1924,MCG-1-14-11,GALXY,ORI,5,28,-5,19,12.5,13.1,225,11,1.6m,1.2m,130,SBbc Ring,,,,vF;pL;iR;st nr,H III 447
 NGC1927,,NONEX,ORI,5,28.7,-8,23,99.9,99.9,270,11,,,,,,,,diffuse nebulosity,
 B225,LDN1583,DRKNB,ORI,5,29,11,36,79.9,79.9,180,11,35m,5m,,5 Ir,,,,,South end of extension running S from B30
-B30,LDN1577,DRKNB,ORI,5,30.2,12,46,79.9,79.9,180,11,67m,,,5 Ir,,,,4''-low contrast dark area,Large dark area with few stars
+B30,LDN1577,DRKNB,ORI,5,30.2,12,46,79.9,79.9,180,11,67m,,,5 Ir,,,,4''-low contrast dark area,Large dark area with few simStars
 PK197-14.1,Abell10,PLNNB,ORI,5,31.8,6,56,15.2,12.8,180,11,34s,,,3,,20.2,,11''-vF; pS; nBM; averted vision helps,
 B31,LDN1582,DRKNB,ORI,5,32,12,46,79.9,79.9,180,11,30m,,,4 Ir,,,,,3 deg NW Lamba Ori; Extended NE and SW; the E. and darkest part of B 30
 B32,LDN1583,DRKNB,ORI,5,32.1,12,25,79.9,79.9,180,11,3m,,,,,,,,Dark projection from S. end of B 31 to the E.
@@ -6563,7 +6563,7 @@ NGC1976,M42,CL+NB,ORI,5,35.3,-5,23,4,11,225,11,90m,60m,,E+R,,,M,!!!;Theta Orioni
 NGC1977,OCL525,CL+NB,ORI,5,35.3,-4,51,7,99.9,225,11,20m,10m,,E+R,,,,nebula with star 42 Orionis,H V 30
 NGC1980,OCL529,CL+NB,ORI,5,35.4,-5,55,2.5,99.9,270,11,14m,14m,,III 3 m n:,,,H,vF;vvL;44 Ori invl,H V 31
 NGC1982,M43,BRTNB,ORI,5,35.5,-5,16,7,13,225,11,20m,15m,,E,,,M,!;vB;vL;R w tail;mbM*8,H III 1 ?;detached part of Orion Nebula
-Cr70,,OPNCL,ORI,5,36,-1,0,0.4,99.9,225,11,150m,,,II 3 m n,100,1.7,,4''-vB; eL; 120* at 17X; Belt stars are blue-white,Orion's belt stars
+Cr70,,OPNCL,ORI,5,36,-1,0,0.4,99.9,225,11,150m,,,II 3 m n,100,1.7,,4''-vB; eL; 120* at 17X; Belt simStars are blue-white,Orion's belt simStars
 NGC1990,LBN940,BRTNB,ORI,5,36.2,-1,12,99.9,99.9,226,11,50m,10m,,E+R,,,,eL;E;Epsilon orionis inv p;!,H V 34
 Sh2-264,,BRTNB,ORI,5,36.3,10,0,5,99.9,180,11,70m,,,E,,,,13''-F; vL; irF; 15* involved; UHC helps somewhat,Seems to apply to entire Lambda Ori neb
 NGC1999,LBN979,BRTNB,ORI,5,36.4,-6,43,99.9,99.9,271,11,2m,2m,,E+R,,,H,*10;11 inv in neb,H IV 33
@@ -7151,7 +7151,7 @@ NGC1545,OCL399,OPNCL,PER,4,20.9,50,15,6.2,99.9,39,1,18m,,,II 2 p,20,7.1,H,Cl;pRi
 NGC1548,,ASTER,PER,4,21.3,36,55,99.9,99.9,96,5,,,,IV 1 p,,,,Cl;vL;lRi;lC;*10..12,
 NGC1579,LBN766,BRTNB,PER,4,30.2,35,17,99.9,99.9,96,5,3m,3m,,R,,,,pB;vL;iR;mbM;*8 2' nf,H I 217;Dark lane invl
 NGC1582,OCL407,OPNCL,PER,4,31.8,43,47,7,99.9,65,5,37m,,,IV 2 p,20,9,,Cl;vL;pRi;lC;st L,H VIII 70
-B15,,DRKNB,PER,4,31.9,46,37,79.9,79.9,95,4,13m,,,5,,,,,Elliptical NW to SE; diameter 15' x 10'. Dark object seen against few stars.
+B15,,DRKNB,PER,4,31.9,46,37,79.9,79.9,95,4,13m,,,5,,,,,Elliptical NW to SE; diameter 15' x 10'. Dark object seen against few simStars.
 B16,,DRKNB,PER,4,32.5,46,36,79.9,79.9,95,4,5m,,,,,,,,Very small; elongated N and S; close to SE edge of B 15
 B17,,DRKNB,PER,4,32.5,46,31,79.9,79.9,95,4,5m,,,,,,,,Very small; elongated N and S; close to E edge of B 15
 NGC1605,OCL406,OPNCL,PER,4,34.9,45,16,10.7,99.9,65,5,5m,,,III 1 m,40,12.5,,Cl;vF;pS;C;st eS,H VI 26
@@ -7213,7 +7213,7 @@ NGC2087,ESO159-26,GALXY,PIC,5,44.3,-55,32,14.7,99.9,422,24,0.8m,0.6m,136,SBa,,,,
 NGC2101,ESO205-1,GALXY,PIC,5,46.4,-52,5,13.7,99.9,422,24,2m,1.3m,85,Ir B,,,,eF;pS;R;3* 10 sp,
 NGC2104,ESO205-2,GALXY,PIC,5,47.1,-51,33,13.2,99.9,422,24,2m,0.9m,160,SBp,,,,pB;pS;R;glbM,
 NGC2115,ESO205-6,GALXY,PIC,5,51.3,-50,35,14.1,99.9,422,24,1.2m,1m,68,Sa,,,,eeF;vS;3* 10 sp,
-NGC2132,ESO120-?22,ASTER,PIC,5,55.3,-59,55,99.9,99.9,422,24,4m,4m,,,,,,Cl;vlC;st L & S,group of bright stars
+NGC2132,ESO120-?22,ASTER,PIC,5,55.3,-59,55,99.9,99.9,422,24,4m,4m,,,,,,Cl;vlC;st L & S,group of bright simStars
 NGC2148,ESO120-24,GALXY,PIC,5,58.8,-59,8,13.8,13.5,422,24,1.1m,0.8m,150,Sb,,,,eF;S;R;*12 vnr,
 NGC2152,ESO205-15,GALXY,PIC,6,0.9,-50,44,14.8,99.9,422,24,1.1m,0.8m,69,SBa,,,,eeF;R;*15 att,
 NGC2178,ESO86-53,GALXY,PIC,6,2.8,-63,46,12.6,12.7,445,24,1.2m,1m,,Elliptical,,,,eF;vS;R,
@@ -7339,7 +7339,7 @@ NGC282,MCG5-3-15,GALXY,PSC,0,52.7,30,38,14.5,99.9,90,4,0.8m,0.6m,50,Elliptical,,
 NGC287,ZwG501.33,GALXY,PSC,0,53.5,32,29,15,99.9,90,4,0.8m,0.4m,15,Sa,,,,eF;S;R,
 NGC295,UGC562,GALXY,PSC,0,55.1,31,33,12.6,13.2,90,4,2.2m,1m,164,SBb,,,,F;S;R;* 10''n;296 nf,
 NGC296,UGC565,GALXY,PSC,0,55.4,31,41,15,13.6,90,4,1.1m,0.3m,148,Sc,,,,F;LF;* 10 nf 2',H II 214
-NGC305,,ASTER,PSC,0,56.3,12,4,99.9,99.9,172,10,,,,,,,,Cl;S;sc st,Corwin=six stars;no cluster
+NGC305,,ASTER,PSC,0,56.3,12,4,99.9,99.9,172,10,,,,,,,,Cl;S;sc st,Corwin=six simStars;no cluster
 NGC311,UGC592,GALXY,PSC,0,57.5,30,17,13,13.1,90,4,1.5m,0.8m,120,SO,,,,pF;vS;R;gbM,
 NGC313,,2STAR,PSC,0,57.8,30,22,99.9,99.9,90,4,,,,,,,,vF;eS;1' np 315,
 NGC315,UGC597,GALXY,PSC,0,57.8,30,21,11.2,13.2,90,4,3m,2.5m,40,E-SO,,,,pB;pL;R;gbM;* 9 nf 3',H II 210;UGC 597
@@ -7586,12 +7586,12 @@ NGC7787,UGC12849,GALXY,PSC,23,56.1,0,33,14.2,13.9,215,17,1.8m,0.5m,104,Sa,,,,vF;
 NGC7797,UGC12877,GALXY,PSC,23,59,3,38,13.7,13.4,215,17,1m,0.9m,10,Sbc,,,,eF;pS;iR;lbM,H III 867;UGC 12877
 NGC2200,ESO254-39,GALXY,PUP,6,13.3,-43,40,14.1,13.9,394,19,1m,0.9m,171,SBc,,,,eF;pS;R;vlbM,
 NGC2201,ESO254-40,GALXY,PUP,6,13.5,-43,42,13.4,13.6,394,19,1.4m,0.9m,113,SBb,,,,eF;S;R;pslbM,
-NGC2220,ESO255-**4,ASTER,PUP,6,21.2,-44,46,99.9,99.9,394,19,5m,,,,,,,Cl;B;P;*8...,group of pB stars
+NGC2220,ESO255-**4,ASTER,PUP,6,21.2,-44,46,99.9,99.9,394,19,5m,,,,,,,Cl;B;P;*8...,group of pB simStars
 NGC2298,GCL11,GLOCL,PUP,6,49,-36,0,9.4,99.9,360,19,6.8m,,,VI,,13.4,,B;pL;iR;gbM;rr,Stars eF
 NGC2310,ESO309-7,GALXY,PUP,6,53.9,-40,52,11.8,13,395,19,4.3m,0.8m,47,SO,,,,pB;pL;vmE 45 deg;pslbM,lenticular
 NGC2328,ESO309-16,GALXY,PUP,7,2.6,-42,4,12.8,13.4,395,19,1.6m,1.2m,115,E-SO Bar,,,,vF;S;vlE;bM;am st,
 Cr135,,OPNCL,PUP,7,17.4,-36,50,2.1,99.9,361,19,50m,,,IV 2 p,77,2.7,,13''-vB;vvL;nC;scattered 38* at 60X,
-Be135,,DRKNB,PUP,7,19,-44,35,79.9,79.9,395,19,13m,5m,,6 E,,,,13''-F; pL; E 3X1; dark nebula makes for few stars,Contains small reflection nebula
+Be135,,DRKNB,PUP,7,19,-44,35,79.9,79.9,395,19,13m,5m,,6 E,,,,13''-F; pL; E 3X1; dark nebula makes for few simStars,Contains small reflection nebula
 Mel66,Cr147,OPNCL,PUP,7,26.3,-47,41,7.8,99.9,395,19,10m,,,II 2 m,200,11.4,,13''-pB;L;pRi;irR; 27* mags 10... at 100X,
 Tr7,Cr146,OPNCL,PUP,7,27.3,-24,0,7.9,99.9,319,19,5m,,,II 3 p n,30,9.1,,13''-pF;pS;nRi;sC at 100X; 17*,
 NGC2396,OCL579,OPNCL,PUP,7,27.5,-11,43,7.4,99.9,274,12,10m,,,III 3 p,30,10,,Cl;vL;vlC,H VIII 36
@@ -7664,7 +7664,7 @@ Haffner17,,OPNCL,PUP,7,51.6,-31,49,99.9,99.9,362,19,1.6m,,,I 2p :b,20,15,,,
 NGC2477,OCL720,OPNCL,PUP,7,52.2,-38,32,5.8,99.9,362,19,27m,,,I 2 r :b,200,12,C,!;Cl;B;Ri;L;lC;*12,300 * to 12 mag;Shapley--richest of OPNCL
 Ru39,,OPNCL,PUP,7,52.3,-22,27,99.9,99.9,320,19,1.5m,,,III 1p :b,15,14,,,
 Sh2-311,LBN1067,BRTNB,PUP,7,52.4,-26,25,99.9,99.9,320,20,16m,12m,,E,,,,,Involved in cluster NGC 2467; dark lane near middle
-NGC2467,OCL668,CL+NB,PUP,7,52.5,-26,26,7.1,99.9,320,19,15m,,,I 3 m n:b,50,,,pB;vL;R;er;*8m,H IV 22;Scattered stars 8..12 w vF haze of nebulosity;in PUP OB1
+NGC2467,OCL668,CL+NB,PUP,7,52.5,-26,26,7.1,99.9,320,19,15m,,,I 3 m n:b,50,,,pB;vL;R;er;*8m,H IV 22;Scattered simStars 8..12 w vF haze of nebulosity;in PUP OB1
 Haffner18,,OPNCL,PUP,7,52.7,-26,23,9.3,99.9,320,19,1m,,,I 2pn:b,25,11,,,
 Haffner19,,OPNCL,PUP,7,52.7,-26,17,9.4,99.9,320,19,1.8m,,,I 3 p n,30,10.8,,,
 Ru41,,OPNCL,PUP,7,53.8,-26,58,99.9,99.9,320,19,1.1m,,,IV 1p :b,20,14,,,
@@ -7706,7 +7706,7 @@ NGC2542,,1STAR,PUP,8,11.3,-12,56,4.7,99.9,275,12,,,,,,,,nebulous *5,
 Ru54,,OPNCL,PUP,8,11.4,-31,57,99.9,99.9,362,20,2.5m,,,III 2p :b,20,15,,,
 NGC2546,OCL726,OPNCL,PUP,8,12.3,-37,36,6.3,99.9,362,20,41m,,,III 2 m,40,8.2,,Cl;B;L;lC;iE;*9...12,
 Ru55,,OPNCL,PUP,8,12.3,-32,34,7.8,99.9,362,20,17m,,,IV 2 p,12,8.6,,,
-Ru56,,OPNCL,PUP,8,12.6,-40,28,99.9,99.9,396,20,42m,,,IV 2 p,40,9,,10''-B; L; scattered; stars 10 to 12 mag; not much,
+Ru56,,OPNCL,PUP,8,12.6,-40,28,99.9,99.9,396,20,42m,,,IV 2 p,40,9,,10''-B; L; scattered; simStars 10 to 12 mag; not much,
 Haffner22,,OPNCL,PUP,8,12.7,-27,52,99.9,99.9,320,20,4.8m,,,II 1m:b,30,15,,,
 vdB-Ha23,,OPNCL,PUP,8,14.4,-36,24,99.9,99.9,362,20,13m,,,,15,,,,
 Ru57,,OPNCL,PUP,8,14.8,-26,58,99.9,99.9,320,20,5m,,,IV 2m :b,30,12,,,
@@ -8080,7 +8080,7 @@ PK26-2.3,Perek1-19,PLNNB,SCT,18,49.7,-7,2,15.2,9.5,295,16,4.0s,,,2,,16.4,,,
 B110,LDN530,DRKNB,SCT,18,50.2,-4,46,79.9,79.9,250,16,11m,10m,,6 Ir G,,,,,Part of B111
 NGC6704,OCL82,OPNCL,SCT,18,50.9,-5,12,9.2,99.9,250,16,6m,,,I 3 m,30,12.2,,Cl;B;60st13,
 B111,LDN534,DRKNB,SCT,18,51,-5,0,79.9,79.9,250,16,120m,120m,,3 Ir,,,,,Two crescent-shaped areas north of M11
-NGC6705,M11,OPNCL,SCT,18,51.1,-6,16,5.8,9,295,16,14m,,,I 2 r,500,8,M,!!Cl;vB;L;iR;Ri;*9..,500 stars to 14th mag;Wild duck cluster
+NGC6705,M11,OPNCL,SCT,18,51.1,-6,16,5.8,9,295,16,14m,,,I 2 r,500,8,M,!!Cl;vB;L;iR;Ri;*9..,500 simStars to 14th mag;Wild duck cluster
 B112,,DRKNB,SCT,18,51.2,-6,40,79.9,79.9,295,16,20m,20m,,4 Ir,,,,13''-dark lane runs south of CL M11,Lies south of M11
 B113,LDN548,DRKNB,SCT,18,51.4,-4,19,79.9,79.9,250,16,11m,11m,,5 Ir G,,,,,Part of B111
 NGC6712,GCL103,GLOCL,SCT,18,53.1,-8,42,8.2,99.9,295,16,4.3m,,,IX,,13.3,B H,pB;vL;irr;rrr,H I 47
@@ -8091,7 +8091,7 @@ B117a,LDN509,DRKNB,SCT,18,53.7,-4,50,79.9,79.9,295,16,7m,,,6,,,,,Round; very bla
 B118,LDN509,DRKNB,SCT,18,53.9,-7,27,79.9,79.9,295,16,2m,2m,,6 C G,,,,,Blacker than B 117; Definite; Member of group
 PK27-3.2,Vy1-4,PLNNB,SCT,18,54,-6,26,13.4,99.9,295,16,15.0s,,,1,,15.6,,,
 PK24-5.1,M4-11,PLNNB,SCT,18,54.3,-10,5,15,99.9,295,16,22s,20s,,2,,18.7,,,
-B119a,,DRKNB,SCT,18,54.6,-5,10,79.9,79.9,250,16,30m,,,3,,,,,Sprinkled with stars in its NW half; several dark lanes in SE part
+B119a,,DRKNB,SCT,18,54.6,-5,10,79.9,79.9,250,16,30m,,,3,,,,,Sprinkled with simStars in its NW half; several dark lanes in SE part
 IC1295,PK25-4.2,PLNNB,SCT,18,54.6,-8,50,12.7,13.4,295,16,102s,87s,,3b(2),,15,,pL;eF;0.4' ESE from NGC 6712,Often mislabeled IC 1298
 PK28-4.1,Perek1-20,PLNNB,SCT,18,57.3,-6,0,16.3,99.9,296,16,6.0s,,,4,,,,,
 PK28-3.1,Perek1-21,PLNNB,SCT,18,57.8,-5,28,16.9,99.9,251,16,10s,8s,,4,,,,,
@@ -8200,7 +8200,7 @@ PK19+3.1,M3-25,PLNNB,SER,18,15.3,-10,10,15.1,9.2,294,15,4.3s,3.5s,,,,,,,
 Tr32,Harvard19,OPNCL,SER,18,17.2,-13,21,12.2,99.9,294,15,4m,,,I 2m :b,50,11.8,,13''-pB; pS; nRi; lC; 21* and fuzzy background,
 NGC6604,OCL56,OPNCL,SER,18,18.1,-12,14,6.5,99.9,294,15,2m,,,I 3 p n,30,7.5,,Cl;lRi;lC,H VIII 15;In Ser OB2?
 NGC6605,OCL47,OPNCL,SER,18,18.4,-14,57,6,99.9,294,15,,,,,,,,Cl;lRi;lC;st10...12,H VIII 47;No cluster
-NGC6611,M16,CL+NB,SER,18,18.8,-13,47,6,12,294,15,7m,,,II 3 m n:a,60,11,M,L;B;scattered Cl;neb invl,In Ser OB1;Star Queen or Eagle Nebula;stars mags 8...
+NGC6611,M16,CL+NB,SER,18,18.8,-13,47,6,12,294,15,7m,,,II 3 m n:a,60,11,M,L;B;scattered Cl;neb invl,In Ser OB1;Star Queen or Eagle Nebula;simStars mags 8...
 PK24+3.1,M2-40,PLNNB,SER,18,21.4,-6,2,16.1,10.8,294,15,5.6s,4.5s,,2,,,,,
 PK31+5.1,K3-3,PLNNB,SER,18,27.1,1,15,14.6,99.9,250,15,1.0s,,,3,,,,,
 vdB123,LBN96,BRTNB,SER,18,30.4,1,14,99.9,99.9,250,16,10m,5m,,R,,,,,
@@ -8213,7 +8213,7 @@ LDN557,,DRKNB,SER,18,38.6,-1,47,79.9,79.9,250,16,60m,10m,,6 Ir,,,,,Irregular sha
 IC4756,Cr386,OPNCL,SER,18,39,5,27,4.6,99.9,250,16,39m,,,III 2 m,80,8.7,,vvL;scattered group of 80 * mags 7....,Naked eye from dark site
 Do33,,OPNCL,SER,18,40.7,-4,23,99.9,99.9,250,16,6m,,,III 2m :b,30,,,,
 Czernik38,,OPNCL,SER,18,49.7,4,58,99.9,99.9,250,16,14m,,,II 3 r,80,,,,
-Archinal1,,OPNCL,SER,18,54.7,5,33,99.9,99.9,250,16,1.5m,,,II 2 p,24,13.4,,,Includes 4 GSC stars; near IC 4756
+Archinal1,,OPNCL,SER,18,54.7,5,33,99.9,99.9,250,16,1.5m,,,II 2 p,24,13.4,,,Includes 4 GSC simStars; near IC 4756
 PK38+2.1,YM16,PLNNB,SER,18,54.8,6,2,14.2,99.9,205,16,5.1m,,,3b,,,,,
 NGC2969,MCG-1-25-21,GALXY,SEX,9,41.9,-8,36,13,99.9,278,13,1.4m,1.2m,40,Sc,,,,vF;pS;iR;vglbM,H III 527
 NGC2967,UGC5180,GALXY,SEX,9,42.1,0,20,11.6,13.8,233,13,2.8m,2.8m,,Sc,,,,pF;pL;R;vglbM,H II 275;B center part;2 main part. res.;massive arms w some branches
@@ -8298,9 +8298,9 @@ PK55-1.1,K3-43,PLNNB,SGE,19,40.4,18,49,18.5,99.9,162,16,2.7s,,,2,,,,,
 PK54-2.1,He2-444,PLNNB,SGE,19,41.5,17,45,16.5,99.9,162,16,10s,,,1,,17.7,,,
 PK53-3.1,Abell63,PLNNB,SGE,19,42.2,17,5,17.1,16.1,162,16,34.0s,,,2,,14.6,,,cent* variable UU Sge
 Roslund1,,OPNCL,SGE,19,45.1,17,35,99.9,99.9,162,16,3m,,,IV 1p :b,15,,,,
-Sh2-84,,BRTNB,SGE,19,49,18,24,99.9,99.9,162,16,15m,3m,,E,,,,13''-pF;pL;mE;S side B at 135X with UHC filter,V shaped neby; rich field of stars
+Sh2-84,,BRTNB,SGE,19,49,18,24,99.9,99.9,162,16,15m,3m,,E,,,,13''-pF;pL;mE;S side B at 135X with UHC filter,V shaped neby; rich field of simStars
 Harvard20,,OPNCL,SGE,19,53.1,18,21,7.7,99.9,162,16,7m,,,III 2 p,28,8.9,,pL;lC; 29* 11...,40 faint * in 12';has two centers
-NGC6838,M71,GLOCL,SGE,19,53.8,18,47,8.3,12,162,16,6.1m,,,,,12.1,M,Cl;vL;vRi;pmC;*11...16,Arrowhead shape; stars have few metals
+NGC6838,M71,GLOCL,SGE,19,53.8,18,47,8.3,12,162,16,6.1m,,,,,12.1,M,Cl;vL;vRi;pmC;*11...16,Arrowhead shape; simStars have few metals
 NGC6839,,ASTER,SGE,19,54.4,17,53,99.9,99.9,162,16,,,,,,,,Cl;vS;vC,
 Roslund3,,OPNCL,SGE,19,58.7,20,31,99.9,99.9,162,8,5m,,,IV 1p :b,20,,,,
 NGC6873,,ASTER,SGE,20,8.2,21,6,99.9,99.9,163,9,,,,,,,,Cl;lC;st10..13;D* inv,
@@ -8506,7 +8506,7 @@ PK11-5.1,M1-47,PLNNB,SGR,18,29.2,-21,47,13.1,99.9,340,22,4.8s,4.6s,,2,,15.3,,,
 PK13-3.1,M1-48,PLNNB,SGR,18,29.5,-19,6,15.7,99.9,340,15,4.9s,4.7s,,2,,,,,
 PK13-4.1,Perek2-14,PLNNB,SGR,18,30,-19,41,16,99.9,340,16,5.5s,4.6s,,2,,,,,
 NGC6638,GCL95,GLOCL,SGR,18,30.9,-25,30,9.2,99.9,340,22,2.2m,,,VI,,15,H,B;S;R;rr,H I 51
-NGC6634,,NONEX,SGR,18,31.4,-32,21,99.9,99.9,378,22,,,,,,,,neb w out stars,possibly same as M 69
+NGC6634,,NONEX,SGR,18,31.4,-32,21,99.9,99.9,378,22,,,,,,,,neb w out simStars,possibly same as M 69
 NGC6637,M69,GLOCL,SGR,18,31.4,-32,21,7.7,11,378,22,7.1m,,,V,,13.7,M,B;L;R;rrr;*14..16,
 NGC6647,OCL45,OPNCL,SGR,18,31.5,-17,21,8,99.9,340,16,,,,,,,,Cl;L;Ri;lC;st vS,H VIII 14
 IC4725,M25,OPNCL,SGR,18,31.8,-19,7,4.6,12,340,16,29m,,,I 2 p,30,6.7,M,Cl;pC,Contains U Sgr;Stars mags 6...10
@@ -8528,7 +8528,7 @@ PK16-4.2,M1-56,PLNNB,SGR,18,37.8,-17,5,13.5,9.5,340,16,10s,,,1,,16.2,,,
 PK4-11.1,M3-29,PLNNB,SGR,18,39.5,-30,41,13.1,8.8,378,22,8.4s,8.1s,,2,,15.5,,,
 Pal8,,GLOCL,SGR,18,41.5,-19,49,10.9,99.9,340,16,5.2m,,,X,,15.4,,,
 PK12-7.1,,PLNNB,SGR,18,42.6,-21,17,12,99.9,340,22,10s,,,,,,,,
-NGC6681,M70,GLOCL,SGR,18,43.2,-32,18,7.8,11,378,22,7.8m,,,V,,14,M,B;pL;R;gbM,Curved arc of stars to NE;* mags 14...
+NGC6681,M70,GLOCL,SGR,18,43.2,-32,18,7.8,11,378,22,7.8m,,,V,,14,M,B;pL;R;gbM,Curved arc of simStars to NE;* mags 14...
 PK14-7.1,M3-31,PLNNB,SGR,18,44.2,-19,54,14.2,99.9,340,16,7.0s,,,1,,17.4,,,
 PK4-11.2,He2-418,PLNNB,SGR,18,44.3,-30,19,15.1,99.9,378,22,13s,,,,,15.6,,,
 PK9-9.1,M3-32,PLNNB,SGR,18,44.7,-25,20,13.6,99.9,340,22,6.6s,5.3s,,2,,17.1,,,
@@ -8554,7 +8554,7 @@ PK19-13.1,DHW3,PLNNB,SGR,19,17.1,-18,2,15.6,99.9,341,16,34s,29s,,,,,,,
 PK25-11.1,Abell60,PLNNB,SGR,19,19.3,-12,15,15.4,16.6,296,16,76.0s,65.0s,,2b,,18.5,,,
 NGC6794,ESO338-5,GALXY,SGR,19,28.1,-38,55,12.9,13.7,379,22,1.7m,1.4m,,Sb Ring,,,,eF;pS;R;vgvlbM,
 Arp2,,GLOCL,SGR,19,28.8,-30,21,13.6,15.1,379,22,2.3m,2.2m,165,,,15.5,,,
-NGC6797,ESO525-**10,2STAR,SGR,19,29,-25,40,99.9,99.9,342,22,,,,,,,,neb w *9 att f,Corwin = 4 stars UK Schmidt
+NGC6797,ESO525-**10,2STAR,SGR,19,29,-25,40,99.9,99.9,342,22,,,,,,,,neb w *9 att f,Corwin = 4 simStars UK Schmidt
 PK4-22.1,He2-436,PLNNB,SGR,19,32.1,-34,13,14.1,99.9,379,22,10s,,,,,,,,
 PK9-21.1,K1-5,GALXY,SGR,19,32.4,-29,24,13.5,99.9,379,22,9m,0.2s,,3(6),,,,,Not a PLNNB;has spectrum of galaxy
 NGC6805,ESO338-14,GALXY,SGR,19,36.8,-37,33,13.3,13.3,379,22,1.1m,0.9m,163,Elliptical,,,,eF;R;vgbM,
@@ -9434,7 +9434,7 @@ Waterloo6,,OPNCL,VEL,8,40.4,-46,9,8.4,99.9,397,20,2.2m,,,II 3 p,8,9.2,,,
 Pismis7,,OPNCL,VEL,8,41.1,-38,42,99.9,99.9,363,20,2.5m,,,II 1m:b,35,13,,,
 Pismis8,,OPNCL,VEL,8,41.6,-46,17,9.5,99.9,397,20,2m,,,II 3 p,25,10.5,,,
 Ru67,,OPNCL,VEL,8,41.8,-43,23,9.1,99.9,397,20,6m,,,IV 3 p,35,10.7,,,
-IC2395,Cr192,OPNCL,VEL,8,42.5,-48,8,4.6,99.9,397,20,17m,,,II 3 p,40,5.5,,about 16 stars mags 9...,Cluster NGC 2670 in field 30' south
+IC2395,Cr192,OPNCL,VEL,8,42.5,-48,8,4.6,99.9,397,20,17m,,,II 3 p,40,5.5,,about 16 simStars mags 9...,Cluster NGC 2670 in field 30' south
 NGC2659,OCL752,OPNCL,VEL,8,42.6,-45,0,8.6,99.9,397,20,14m,,,III 3 m,80,9.7,,Cl;L;Ri;pmE;st11..14,In Vel OB1
 NGC2660,OCL759,OPNCL,VEL,8,42.6,-47,12,8.8,99.9,397,20,4m,,,I 3 m,70,11.7,,Cl;pS;mC;iR;gbM;*13...15,
 PK265-2.1,Velghe26,PLNNB,VEL,8,43.6,-46,8,17.5,99.9,397,20,5s,,,1,,,,,
@@ -9477,7 +9477,7 @@ Ru76,,OPNCL,VEL,9,24.3,-51,40,10.8,99.9,425,25,6m,,,III 2 p,20,12.5,,,
 PK275-2.2,He2-29,PLNNB,VEL,9,24.8,-54,36,13.3,99.9,425,25,14.0s,,,,,,,,
 NGC2899,PK277-3.1,PLNNB,VEL,9,27.1,-56,6,12.2,13.1,425,25,2m,,,,,15.9,,F;pL;R;gmbM;am 80st,
 Ru77,,OPNCL,VEL,9,27.1,-55,7,10.4,99.9,425,25,2m,,,II 3 p,35,12.5,,,
-IC2488,Cr208,OPNCL,VEL,9,27.4,-56,57,7.4,99.9,425,25,15m,,,II 2 m,70,10,,about 50 stars mags 11....,
+IC2488,Cr208,OPNCL,VEL,9,27.4,-56,57,7.4,99.9,425,25,15m,,,II 2 m,70,10,,about 50 simStars mags 11....,
 Ru78,,OPNCL,VEL,9,29.1,-53,42,99.9,99.9,425,25,3m,,,II 2m :b,30,15,,,
 Pismis14,,OPNCL,VEL,9,29.3,-52,42,99.9,99.9,425,25,1.5m,,,II 2p :b,12,14,,,
 NGC2910,OCL781,OPNCL,VEL,9,30.5,-52,55,7.2,99.9,426,25,5m,,,I 2 p,30,9.3,,Cl;cL;pRi;pC;*10..14,
@@ -9532,7 +9532,7 @@ NGC3330,OCL806,OPNCL,VEL,10,38.8,-54,7,7.4,99.9,427,25,7m,,,II 2 p,30,8.8,,Cl;P;
 PK285+1.2,He2-53,PLNNB,VEL,10,39.6,-57,7,15,99.9,427,25,5s,,,,,,,,
 PK285+2.1,Perek2-7,PLNNB,VEL,10,41.3,-56,10,15.4,99.9,427,25,9s,,,,,,,,
 PK286+2.1,He2-55,PLNNB,VEL,10,48.8,-56,3,12.7,99.9,427,25,18s,,,,,,,,
-NGC3446,ESO264-SC45,OPNCL,VEL,10,52.1,-45,8,99.9,99.9,400,20,7m,,,,,,,Cl;pL;P;lC;iF;st 9...13,small cluster of 10 to 15 stars
+NGC3446,ESO264-SC45,OPNCL,VEL,10,52.1,-45,8,99.9,99.9,400,20,7m,,,,,,,Cl;pL;P;lC;iF;st 9...13,small cluster of 10 to 15 simStars
 NGC3482,ESO264-56,GALXY,VEL,10,58.6,-46,35,13.5,99.9,400,20,1.9m,1.4m,14,SBa,,,,eF;S;R;gbM,
 NGC3776,ZwG12.45,GALXY,VIR,11,38.3,-3,21,15.5,99.9,237,13,0.3m,0.2m,155,Sb,,,,eF;vS,
 NGC3792,,2STAR,VIR,11,39.6,5,6,99.9,99.9,237,13,,,,,,,,vF;dif,
@@ -9792,7 +9792,7 @@ NGC4519,UGC7709,GALXY,VIR,12,33.5,8,39,11.8,13.9,194,14,2.9m,2.3m,145,SBcd Ring,
 NGC4522,UGC7711,GALXY,VIR,12,33.7,9,10,12.3,13.6,194,14,3.6m,1m,33,SBc,,,,eF;pL;lE;vlbM,edge on spiral
 IC3499,UGC7712,GALXY,VIR,12,33.8,11,0,13.3,12.7,194,14,1.4m,0.5m,125,Sa,,,,cS;E (wisps) 130 deg;bM,Member of Virgo group of galaxies
 NGC4520,IC799,GALXY,VIR,12,33.8,-7,23,13.9,99.9,284,14,1.4m,0.6m,70,E-SO,,,,vF;S;2vS* inv,H II 757
-NGC4526,NGC4560,GALXY,VIR,12,34,7,42,9.7,12.7,194,14,7m,2.5m,113,SBO,,,B H,vB;vL;mE120;psmbM,H I 31;lenticular;between two 7th mag stars
+NGC4526,NGC4560,GALXY,VIR,12,34,7,42,9.7,12.7,194,14,7m,2.5m,113,SBO,,,B H,vB;vL;mE120;psmbM,H I 31;lenticular;between two 7th mag simStars
 NGC4560,NGC4526,GALXY,VIR,12,34,7,42,10.6,99.9,194,14,7m,2.5m,113,SBO,,,,cB;pL;R;gbM,H I 119
 NGC4527,UGC7721,GALXY,VIR,12,34.1,2,39,10.5,13.1,239,14,5.9m,2.3m,67,SBbc,,,H,pB;L;pmE69;mbM;vseBN or *,H II 37;SN 1915a;NGC 4536 @ 29
 NGC4528,UGC7722,GALXY,VIR,12,34.1,11,19,12.1,12.5,194,14,1.6m,1m,5,SBO,,,,pF;cS;R;bM;*9 f 30sec,H II 67

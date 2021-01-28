@@ -1,4 +1,4 @@
-package com.teamgannon.trips.stardata;
+package com.teamgannon.trips.stellarmodelling;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class StellarFactory {
      *
      * @return the factory
      */
-    public static @NotNull StellarFactory getFactory() {
+    public static  StellarFactory getFactory() {
         return factory;
     }
 
@@ -68,7 +68,7 @@ public class StellarFactory {
      *
      * @return the star general description
      */
-    public static @NotNull StellarClassification createOClass() {
+    public static StellarClassification createOClass() {
         StellarClassification oClass = new StellarClassification();
         oClass.setStellarType(StellarType.O);
         oClass.setChromacity("blue");

@@ -55,10 +55,10 @@ public class RegularCsvReader {
                 String readLine = reader.readLine();
                 String[] descriptor = readLine.split(",");
                 csvFile.setDataSetDescriptor(transformDescriptor(dataset, descriptor));
-            } else if (!indicator[0].trim().equals("id")) {
+            } else if (!indicator[0].trim().equals("\uFEFFId")) {
                 // we handle the error case here
                 // since it is neither of the cases then we can't reliably know what kind of file was loaded.
-                String message = "This file is malformed, we did not find either a backup marker(dataSetName) or a load marker(id) in the first line, first position";
+                String message = "This file is malformed, we did not find either a backup marker(dataSetName) or a load marker(Id) in the first line, first position";
                 progressUpdater.updateLoadInfo(message);
                 log.error(message);
                 csvFile.setReadSuccess(false);
@@ -85,7 +85,8 @@ public class RegularCsvReader {
                         break;
                     }
 
-                    String[] lineRead = linePad(line.split(","), 56);
+                    String[] splitLine = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                    String[] lineRead = linePad(splitLine, 56);
                     loopCounter++;
                     AstroCSVStar star = AstroCSVStar
                             .builder()
@@ -151,6 +152,7 @@ public class RegularCsvReader {
                         double distance = Double.parseDouble(star.getDistance());
                         if (distance > maxDistance) {
                             maxDistance = distance;
+                            System.out.println("new distance=" + distance);
                         }
                     } catch (NumberFormatException nfe) {
                         log.error("Error getting distance for {}, coordinates are ({},{},{})", star.getDisplayName(), star.getX(), star.getY(), star.getZ());
@@ -179,6 +181,7 @@ public class RegularCsvReader {
 
             log.info("File load report: total:{}, accepts:{}, rejects:{}", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects());
             csvFile.setReadSuccess(true);
+
             csvFile.setProcessMessage(String.format("File load report: total:%d, accepts:%d, rejects:%d", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects()));
         } catch (IOException e) {
             progressUpdater.updateLoadInfo("failed to read file because: " + e.getMessage());
@@ -190,6 +193,7 @@ public class RegularCsvReader {
         if (csvFile.isReadSuccess()) {
             csvFile.setMaxDistance(maxDistance);
             csvFile.getDataSetDescriptor().setNumberStars(totalCount);
+            csvFile.getDataSetDescriptor().setDistanceRange(maxDistance);
             progressUpdater.updateLoadInfo("load of dataset complete with " + totalCount + " stars loaded");
         }
 

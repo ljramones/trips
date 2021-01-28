@@ -1,4 +1,4 @@
-package com.teamgannon.trips.stardata;
+package com.teamgannon.trips.stellarmodelling;
 
 /**
  * During the 1860s and 1870s, pioneering stellar spectroscopist Angelo Secchi created the Secchi classes in order
