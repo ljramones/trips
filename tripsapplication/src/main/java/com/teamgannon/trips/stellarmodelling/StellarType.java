@@ -1,4 +1,4 @@
-package com.teamgannon.trips.stardata;
+package com.teamgannon.trips.stellarmodelling;
 
 /**
  * The Harvard Spectral Classification spectral classificaiton type
@@ -116,6 +116,11 @@ public enum StellarType {
     M("M"),
 
     /**
+     * Dwarf M star, abbreviated dM, was also used, but sometimes it also included stars of spectral type K.
+     */
+    dM("dM"),
+
+    /**
      * Class W or WR represents the Wolf–Rayet stars, notable for spectra lacking hydrogen lines. Instead their
      * spectra are dominated by broad emission lines of highly ionized helium, nitrogen, carbon and sometimes
      * oxygen. They are thought to mostly be dying supergiants with their hydrogen layers blown away by stellar
@@ -123,7 +128,11 @@ public enum StellarType {
      * according to the relative strength of nitrogen and carbon emission lines in their spectra
      * (and outer layers).
      */
-    W("W"),
+    WN("WN"),
+
+    WO("WO"),
+
+    WC("WC"),
 
     /**
      * Class L dwarfs get their designation because they are cooler than M stars and L is the remaining letter
@@ -192,8 +201,35 @@ public enum StellarType {
      * C-J: A subtype of cool C stars with a high content of 13C.
      * C-H: Population II analogues of the C-R stars.
      * C-Hd: Hydrogen-deficient carbon stars, similar to late G supergiants with CH and C2 bands added.
+     * <p>
+     * C-R the old Harvard class R reborn: are still visible at the blue end of the spectrum, strong isotopic bands,
+     * no enhanced Ba line	medium disc pop I	0	red giants?	5100-2800	S Cam	~25
      */
-    C("C"),
+    CR("C-R"),
+
+    /**
+     * C-N:	the old Harvard class N reborn: heavy diffuse blue absorption, sometimes invisible in blue,
+     * s-process elements enhanced over solar abundance, weak isotopic bands	thin disc pop I	-2.2
+     * AGB	3100-2600	R Lep	~90
+     */
+    CB("C-N"),
+
+    // non-classical carbob stars
+    /**
+     * C-J:	very strong isotopic bands of C2 and CN	unknown	unknown	unknown	3900-2800	Y CVn	~20
+     */
+    CJ("C-J"),
+
+    /**
+     * C-H:	very strong CH absorption	halo pop II	-1.8	bright giants, mass transfer (all C-H:s are
+     * binary )	5000-4100	V Ari, TT CVn	~20
+     */
+    CH("C-H"),
+
+    /**
+     * C-Hd:	hydrogen lines and CH bands weak or absent	thin disc pop I	-3.5	unknown	?	HD 137613	~7
+     */
+    CHd("C-Hd"),
 
     /**
      * Class-S stars form a continuum between class-M stars and carbon stars. Those most similar to class-M stars
@@ -215,7 +251,75 @@ public enum StellarType {
      */
     S("S"),
 
-    Q("?");
+    /**
+     * A Q-Star, also known as a grey hole, is a hypothetical type of a compact, heavy neutron star with
+     * an exotic state of matter. Such a star can be smaller than the progenitor star's Schwarzschild radius
+     * and have a gravitational pull so strong that some, but not all light, cannot escape.[citation needed]
+     * The Q stands for a conserved particle number. A Q-Star may be mistaken for a stellar black hole.
+     */
+    Q("Q"),
+
+    /**
+     * Planetary nebula
+     * gas shell ejected by giant star prior to collapse to white dwarf
+     */
+    P("P"),
+
+    /**
+     * Zirconium Giant stars
+     * <p>
+     * These are related to late M giants that show absorption bands of zirconium oxide (ZrO) in their spectra
+     * and appear to form a bridge between M giant stars and carbon stars in the sequence
+     * <p>
+     * M → MS → S → SC → C
+     * <p>
+     * where the C/O ratio between carbon and oxygen shifts across the sequence from < 0.95 in S1 to 1.0 in
+     * SC1 and >1.1 in SC10 stars.
+     */
+    Z("Z"),
+
+    /**
+     * The class D (for Degenerate) is the modern classification used for white dwarfs—low-mass stars that are
+     * no longer undergoing nuclear fusion and have shrunk to planetary size, slowly cooling down.
+     * Class D is further divided into spectral types
+     * DA, DB, DC, DO, DQ, DX, and DZ.
+     * The letters are not related to the letters used in the classification of other stars,
+     * but instead indicate the composition of the white dwarf's visible outer layer or atmosphere.
+     *
+     * DA – a hydrogen-rich atmosphere or outer layer, indicated by strong Balmer hydrogen spectral lines.
+     */
+    DA("DA"),
+
+    /**
+     * DB – a helium-rich atmosphere, indicated by neutral helium, He I, spectral lines.
+     */
+    DB("DB"),
+
+    /**
+     * DC – no strong spectral lines indicating one of the above categories.
+     */
+    DC("DC"),
+
+    /**
+     * DO – a helium-rich atmosphere, indicated by ionized helium, He II, spectral lines.
+     */
+    DO("DO"),
+
+    /**
+     * DQ – a carbon-rich atmosphere, indicated by atomic or molecular carbon lines.
+     */
+    DQ("DQ"),
+
+    /**
+     * DX – spectral lines are insufficiently clear to classify into one of the above categories.
+     */
+    DX("DX"),
+
+    /**
+     * DZ – a metal-rich atmosphere, indicated by metal spectral lines (a merger of the obsolete white dwarf
+     * spectral types, DG, DK, and DM).
+     */
+    DZ("DZ");
 
     private final String className;
 

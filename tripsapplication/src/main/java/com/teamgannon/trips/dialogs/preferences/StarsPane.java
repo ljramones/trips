@@ -3,7 +3,7 @@ package com.teamgannon.trips.dialogs.preferences;
 import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.listener.PreferencesUpdaterListener;
-import com.teamgannon.trips.stardata.StellarType;
+import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

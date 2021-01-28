@@ -1,4 +1,4 @@
-package com.teamgannon.trips.stardata;
+package com.teamgannon.trips.stellarmodelling;
 
 /**
  * The Morgan-Keenan Luminosity Class star luminosity class
