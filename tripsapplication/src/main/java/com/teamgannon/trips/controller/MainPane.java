@@ -81,6 +81,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1198,7 +1200,11 @@ public class MainPane implements
     }
 
     private void saveTextToFile(String generatedReport, File file) {
-
+        try (PrintWriter out = new PrintWriter(file)) {
+            out.println(generatedReport);
+        } catch (FileNotFoundException e) {
+            log.error("Can't create file {} because of {}", file.getAbsolutePath(), e.getMessage());
+        }
     }
 
     @Override
