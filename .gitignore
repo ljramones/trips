@@ -16,6 +16,8 @@ buildNumber.properties
 
 token.txt
 
+files/csv/270LY-2021-01-29.csv
+
 logs/*
 .idea
 .mvn
