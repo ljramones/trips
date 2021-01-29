@@ -34,7 +34,7 @@ public class StarObject implements Serializable {
     /**
      * the dataset name which we are guaranteeing to be unique
      */
-    @Column(name="DATASETNAME")
+    @Column(name = "DATASETNAME")
     private String dataSetName;
 
     /**
@@ -403,7 +403,7 @@ public class StarObject implements Serializable {
 
     /////////////////  convertors  /////////////
 
-    public @org.jetbrains.annotations.NotNull List<String> getCatalogIdList() {
+    public List<String> getCatalogIdList() {
         if (catalogIdList == null) {
             return new ArrayList<>();
         }
@@ -413,11 +413,11 @@ public class StarObject implements Serializable {
         return Arrays.asList(catalogIdList.split("\\s*,\\s*"));
     }
 
-    public void setCatalogIdList(@org.jetbrains.annotations.NotNull List<String> stringList) {
+    public void setCatalogIdList(List<String> stringList) {
         catalogIdList = String.join(",", stringList);
     }
 
-    public double @org.jetbrains.annotations.NotNull [] getCoordinates() {
+    public double[] getCoordinates() {
         double[] coordinates = new double[3];
         coordinates[0] = x;
         coordinates[1] = y;

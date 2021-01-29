@@ -55,15 +55,6 @@ public class RegularCsvReader {
                 String readLine = reader.readLine();
                 String[] descriptor = readLine.split(",");
                 csvFile.setDataSetDescriptor(transformDescriptor(dataset, descriptor));
-            } else if (!indicator[0].trim().equals("\uFEFFId")) {
-                // we handle the error case here
-                // since it is neither of the cases then we can't reliably know what kind of file was loaded.
-                String message = "This file is malformed, we did not find either a backup marker(dataSetName) or a load marker(Id) in the first line, first position";
-                progressUpdater.updateLoadInfo(message);
-                log.error(message);
-                csvFile.setReadSuccess(false);
-                csvFile.setProcessMessage(message);
-                return csvFile;
             } else {
                 csvFile.setDataSetDescriptor(createDescriptor(dataset));
             }
@@ -80,7 +71,7 @@ public class RegularCsvReader {
                     String line = reader.readLine();
 
                     if (line == null) {
-                        System.out.println(">>> bad line");
+                        log.error(">>> Null line encountered at line={}", totalCount);
                         readComplete = true;
                         break;
                     }
@@ -152,7 +143,6 @@ public class RegularCsvReader {
                         double distance = Double.parseDouble(star.getDistance());
                         if (distance > maxDistance) {
                             maxDistance = distance;
-                            System.out.println("new distance=" + distance);
                         }
                     } catch (NumberFormatException nfe) {
                         log.error("Error getting distance for {}, coordinates are ({},{},{})", star.getDisplayName(), star.getX(), star.getY(), star.getZ());
@@ -253,7 +243,6 @@ public class RegularCsvReader {
                 descriptor.setNumberRoutes(Integer.parseInt(descriptorVals[8]));
             }
             descriptor.setThemeStr(putBackCommas(descriptorVals[9]));
-//            descriptor.setAstrographicDataList(new HashSet<>());
             if (!descriptorVals[11].equals("null")) {
                 descriptor.setRoutesStr(putBackCommas(descriptorVals[11]));
             } else {

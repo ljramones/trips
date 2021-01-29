@@ -6,13 +6,15 @@ import javafx.scene.paint.Color;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
 @Data
 public class StarDisplayPreferences implements Serializable {
 
-    private static final long serialVersionUID = -1370182140736011820L;
+    @Serial
+    private static final long serialVersionUID = 2286938075665280787L;
 
     /**
      * the map of stellar attributes
@@ -73,6 +75,11 @@ public class StarDisplayPreferences implements Serializable {
                 StellarType.Y,
                 Color.MEDIUMVIOLETRED,
                 .2f));
+        starMap.put(StellarType.D, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.D,
+                Color.MEDIUMVIOLETRED,
+                .2f));
         starMap.put(StellarType.Q, StarDescriptionPreference.createStarDescription(
                 UUID.randomUUID().toString(),
                 StellarType.Q,
@@ -120,6 +127,10 @@ public class StarDisplayPreferences implements Serializable {
         StarDescriptionPreference yStar = starMap.get(StellarType.Y);
         yStar.setColor(Color.MEDIUMVIOLETRED);
         yStar.setSize(0.2f);
+
+        StarDescriptionPreference dStar = starMap.get(StellarType.D);
+        dStar.setColor(Color.MEDIUMVIOLETRED);
+        dStar.setSize(0.2f);
 
         StarDescriptionPreference qStar = starMap.get(StellarType.Q);
         qStar.setColor(Color.MEDIUMVIOLETRED);

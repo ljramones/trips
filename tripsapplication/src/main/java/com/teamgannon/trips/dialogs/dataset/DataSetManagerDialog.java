@@ -40,7 +40,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final DataSetChangeListener dataSetChangeListener;
-    private final DataSetContext dataSetContext;
 
     private final ProgressBar loadProgressBar = new ProgressBar();
     private final Label progressText = new Label("    waiting for file selection");
@@ -56,8 +55,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final DataImportService dataImportService;
     private final Localization localization;
     private final DataExportService dataExportService;
-
-    private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
 
     private final TableView<DataSetDescriptor> tableView = new TableView<>();
 
@@ -77,7 +74,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
                                 DataExportService dataExportService) {
 
         this.dataSetChangeListener = dataSetChangeListener;
-        this.dataSetContext = dataSetContext;
         this.databaseManagementService = databaseManagementService;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataImportService = dataImportService;
@@ -90,8 +86,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
-
-        createSelectedDatasetContext(vBox);
 
         createTable(vBox);
 
@@ -118,41 +112,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         cancelLoad.setOnAction(this::cancelTaskLoad);
         loadingPanel.setVisible(false);
         vBox.getChildren().add(loadingPanel);
-    }
-
-    private void createSelectedDatasetContext(@NotNull VBox vBox) {
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER);
-        Label contextSettingLabel = new Label("Active Dataset: ");
-        contextSettingLabel.setFont(font);
-        hBox.getChildren().addAll(contextSettingLabel, new Separator(), descriptorComboBox);
-        vBox.getChildren().add(hBox);
-        vBox.getChildren().addAll(new Separator());
-        if (dataSetContext.isValidDescriptor()) {
-            descriptorComboBox.setValue(dataSetContext.getDescriptor());
-        }
-        descriptorComboBox.setCellFactory(new ComboBoxDatasetCellFactory());
-
-        // THIS IS NEEDED because providing a custom cell factory is NOT enough. You also need a specific set button cell
-        descriptorComboBox.setButtonCell(new ListCell<>() {
-
-            @Override
-            protected void updateItem(@Nullable DataSetDescriptor item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item != null) {
-                    setText(item.getDataSetName());
-                } else {
-                    setText(null);
-                }
-            }
-        });
-
-        descriptorComboBox.setOnAction(e -> dataSetChangeListener.setContextDataSet(descriptorComboBox.getValue()));
-
-        hBox.getChildren().add(new Separator());
-        Button okButton = new Button("Ok");
-        okButton.setOnAction(this::close);
-        hBox.getChildren().add(okButton);
     }
 
     /**
@@ -201,7 +160,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     private void createTable(@NotNull VBox vBox) {
 
-        vBox.getChildren().add(new Separator());
         HBox hBox = new HBox();
         Label titleLabel = new Label("Manage Datasets");
         titleLabel.setFont(font);
@@ -264,7 +222,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         // fill in table
         descriptors.forEach(descriptor -> {
             tableView.getItems().add(descriptor);
-            descriptorComboBox.getItems().add(descriptor);
         });
     }
 
@@ -354,6 +311,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
     @Override
     public void update(DataSetDescriptor descriptor) {
-        descriptorComboBox.getSelectionModel().select(descriptor);
     }
+
 }

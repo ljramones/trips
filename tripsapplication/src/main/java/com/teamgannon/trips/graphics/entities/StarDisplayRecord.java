@@ -165,7 +165,8 @@ public class StarDisplayRecord {
 
         StellarType stellarType;
         try {
-            stellarType = StellarType.valueOf(starObject.getOrthoSpectralClass());
+            String sClass = starObject.getOrthoSpectralClass().substring(0,1);
+            stellarType = StellarType.valueOf(sClass);
         } catch (Exception e) {
             stellarType = StellarType.M;
         }

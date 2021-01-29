@@ -64,14 +64,16 @@
             </Menu>
             <Menu mnemonicParsing="false" text="Star Data">
                 <MenuItem mnemonicParsing="false"
-                          onAction="#loadDataSetManager" text="Load Dataset..."/>
+                          onAction="#selectActiveDataset" text="Select Active Dataset..."/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#viewEditStarData" text="View/Edit Star Data"/>
+                          onAction="#runQuery" text="Select stars from current dataset..."/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#loadDataSetManager" text="Import dataset from a file..."/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#viewEditStarData" text="View/Edit selected Star Data"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#plotStars" text="Plot Stars"/>
                 <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#loadMuliple" text="Import Multiple Datasets from Excel"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#exportDatabase" text="Export Database to Excel"/>
                 <SeparatorMenuItem/>
@@ -113,9 +115,7 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#findInView" text="Select star in view..."/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#findInDatabase" text="Find star(s) in database..."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#runQuery" text="Simple Query..."/>
+                          onAction="#findInDataset" text="Find star(s) in dataset..."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#advancedSearch" text="Advanced Query..."/>
             </Menu>

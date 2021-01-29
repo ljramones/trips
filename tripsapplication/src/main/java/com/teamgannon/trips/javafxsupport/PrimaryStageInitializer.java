@@ -4,6 +4,7 @@ import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.controller.MainPane;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -45,6 +46,10 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
         stage.initStyle(StageStyle.DECORATED);
         stage.setResizable(true);
         stage.setTitle(title);
+
+        // load application icon
+        final Image appIcon = new Image("/images/tripsMac.ico");
+        stage.getIcons().add(appIcon);
 
         stage.show();
     }
