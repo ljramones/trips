@@ -43,6 +43,10 @@ public class DistanceReport {
         this.sourceStar = starDisplayRecord;
     }
 
+    public void findDistance(List<StarDisplayRecord> starList) {
+        starList.forEach(this::findDistance);
+    }
+
     /**
      * find a distance value
      *

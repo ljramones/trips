@@ -279,6 +279,10 @@ public enum StellarType {
     Z("Z"),
 
     /**
+     * generic white dwarf
+     */
+    D("D"),
+    /**
      * The class D (for Degenerate) is the modern classification used for white dwarfs—low-mass stars that are
      * no longer undergoing nuclear fusion and have shrunk to planetary size, slowly cooling down.
      * Class D is further divided into spectral types

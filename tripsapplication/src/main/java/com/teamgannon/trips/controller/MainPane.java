@@ -10,6 +10,7 @@ import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
 import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
@@ -30,6 +31,8 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.report.distance.DistanceReport;
+import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
@@ -873,6 +876,16 @@ public class MainPane implements
     }
 
 
+    public void selectActiveDataset(ActionEvent actionEvent) {
+        SelectActiveDatasetDialog dialog = new SelectActiveDatasetDialog(
+                this,
+                tripsContext.getDataSetContext(),
+                databaseManagementService);
+        // we throw away the result after returning
+        dialog.showAndWait();
+    }
+
+
     public void loadMuliple(ActionEvent actionEvent) {
         dataImportService.loadDatabase();
         // load datasets into the system
@@ -1074,8 +1087,13 @@ public class MainPane implements
     }
 
     public void simulate(ActionEvent actionEvent) {
-        interstellarSpacePane.simulateStars(40);
-        updateStatus("simulating 40 stars");
+        Optional<ButtonType> btnType = showConfirmationAlert("Simulate", "Simulate", "This function generates an array of “simulated” stars to learn the program and test functions without having to load a dataset. If you have loaded a dataset you probably don’t want to do this.");
+        if (btnType.isPresent()) {
+            if (btnType.get().equals(ButtonType.OK)) {
+                interstellarSpacePane.simulateStars(40);
+                updateStatus("simulating 40 stars");
+            }
+        }
     }
 
 
@@ -1154,18 +1172,33 @@ public class MainPane implements
     @Override
     public void generateDistanceReport(StarDisplayRecord starDescriptor) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        if (starsInView.size() > 0) {
-            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(stage, starsInView);
-            Optional<DistanceReportSelection> optionalStarDisplayRecord = selectDialog.showAndWait();
-            if (optionalStarDisplayRecord.isPresent()) {
-                DistanceReportSelection reportSelection = optionalStarDisplayRecord.get();
-                if (reportSelection.isSelected()) {
-                    generateDistanceReport(reportSelection.getRecord());
+        DistanceReport distanceReport = new DistanceReport(starDescriptor);
+        distanceReport.findDistance(starsInView);
+        distanceReport.generateReport();
+        DistanceReportDialog dialog = new DistanceReportDialog(stage, distanceReport);
+        Optional<DistanceReport> distanceReportOptional = dialog.showAndWait();
+        if (distanceReportOptional.isPresent()) {
+            distanceReport = distanceReportOptional.get();
+            if (distanceReport.isSaveSelected()) {
+                // save the file
+                FileChooser fileChooser = new FileChooser();
+
+                //Set extension filter for text files
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                //Show save file dialog
+                File file = fileChooser.showSaveDialog(stage);
+
+                if (file != null) {
+                    saveTextToFile(distanceReport.getGeneratedReport(), file);
                 }
             }
-        } else {
-            showWarningMessage("No Visible Stars", "There are no visible stars in the plot. Please plot some first");
         }
+    }
+
+    private void saveTextToFile(String generatedReport, File file) {
+
     }
 
     @Override
@@ -1530,7 +1563,7 @@ public class MainPane implements
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                     tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
             );
-            updateStatus("Dataset plotted is: " + dataSetDescriptor.getDataSetName());
+            updateStatus("Dataset plotted is selection from: " + dataSetDescriptor.getDataSetName());
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -1625,7 +1658,7 @@ public class MainPane implements
         System.exit(returnCode);
     }
 
-    public void findInDatabase(ActionEvent actionEvent) {
+    public void findInDataset(ActionEvent actionEvent) {
         List<String> datasetNames = searchContext.getDataSetNames();
         if (datasetNames.isEmpty()) {
             showErrorAlert("Find stars", "No datasets in database, please load first");

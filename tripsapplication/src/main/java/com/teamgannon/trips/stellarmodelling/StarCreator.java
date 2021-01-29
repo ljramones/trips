@@ -1,7 +1,9 @@
 package com.teamgannon.trips.stellarmodelling;
 
-import com.teamgannon.trips.solarsysmodelling.utils.spectralclass.StarModel;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ^((sd|sg|d|c|g))?(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\-R|C\-N|C\-J|C\-H|C\-Hd)(d(\.d)(\/d(\.d))?)?((0|Ia\+|Ia|Iab|Ib|II|III|IV|V|VII|VII))?((:|...|!|comp|e|\[e\]|er|eq|f|f\*|f\+|\(f\(|\(f\+\)|\(\(f\)\)|\(\(f\*\)\)|h|ha|He wk|k|m|n|nn|neb|p|pq|q|s|ss|sh|var|wl))?
@@ -9,62 +11,64 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StarCreator {
 
-    private String prefixPattern = "^(sd|sg|d|c|g)";
+    private String prefixPatternStr = "^(sd|sg|d|c|g)";
+    Pattern prefixPattern = Pattern.compile(prefixPatternStr);
 
-    private String classPattern = "(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
+    //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
+    private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
+    Pattern classPattern = Pattern.compile(classPatternStr);
 
-    private String yerkesPattern = "(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VII)";
+    private String yerkesPatternStr = "^(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VII)";
+    Pattern yerkesPattern = Pattern.compile(yerkesPatternStr);
 
-    private String pecularitiesPattern = "(:|...|!|comp|e|\\[e\\]|er|eq|f|f\\*|f\\+|\\(f\\(|\\(f\\+\\)|\\(\\(f\\)\\)|\\(\\(f\\*\\)\\)|h|ha|He wk|k|m|n|nn|neb|p|pq|q|s|ss|sh|var|wl)";
+    private String pecularitiesPatternStr = "^(:|...|!|comp|e|\\[e\\]|er|eq|f|f\\*|f\\+|\\(f\\(|\\(f\\+\\)|\\(\\(f\\)\\)|\\(\\(f\\*\\)\\)|h|ha|He wk|k|m|n|nn|neb|p|pq|q|s|ss|sh|var|wl)";
+    Pattern pecularitiesPattern = Pattern.compile(pecularitiesPatternStr);
 
-    public StarModel getStar(String spectralClass) {
-        StarModel starModel = new StarModel();
-        String spectralType = spectralClass.substring(0, 1);
-        try {
-            StellarType stellarType = StellarType.valueOf(spectralType);
-            starModel.setStellarClass(stellarType);
-        } catch (Exception e) {
-            return null;
-        }
-        return starModel;
-    }
-
+    /**
+     * create a stellar model based on the spectral classification
+     *
+     * @param spectralClassification the classification
+     * @return the stellar model
+     */
     public StarModel parseSpectral(String spectralClassification) {
+
         StarModel starModel = new StarModel();
-        String prefix = spectralClassification.substring(0, 1);
-        switch (prefix) {
-
-            case "s" -> {
-                String prefix1 = spectralClassification.substring(0, 2);
-                if (prefix1.equals("sd")) {
-                    log.info("sub dwarf");
-                } else if (prefix1.equals("sg")) {
-                    log.info("sub giant");
-                } else {
-                    log.error("improper spectral classification");
-                    return null;
-                }
-            }
-            case "d" -> {
-                log.info("dwarf");
-            }
-            case "c" -> {
-                log.info("supergiant");
-            }
-            case "g" -> {
-                log.info("giant");
-            }
-
-            default -> {
-                log.info("no prefix");
-            }
+        Matcher preMatcher = prefixPattern.matcher(spectralClassification);
+        if (preMatcher.find()) {
+            String prefix = preMatcher.group();
+            starModel.setStarType(prefix);
+            spectralClassification = spectralClassification.substring(prefix.length());
+            log.info("prefix is " + prefix);
+        }
+        Matcher spectralClassMatcher = classPattern.matcher(spectralClassification);
+        if (spectralClassMatcher.find()) {
+            String spectralClass = spectralClassMatcher.group();
+            starModel.setStarClass(spectralClass);
+            spectralClassification = spectralClassification.substring(spectralClass.length());
+            log.info("star is " + spectralClass);
+        }
+        Matcher yerkes = yerkesPattern.matcher(spectralClassification);
+        if (yerkes.find()) {
+            String yerkesClass = yerkes.group();
+            starModel.setLuminosityClass(yerkesClass);
+            spectralClassification = spectralClassification.substring(yerkesClass.length());
+            log.info("luminosity is " + yerkesClass);
+        }
+        Matcher pecular = pecularitiesPattern.matcher(spectralClassification);
+        if (pecular.find()) {
+            String percularitiesString = pecular.group();
+            starModel.setSpectralPecularities(percularitiesString);
+            spectralClassification = spectralClassification.substring(percularitiesString.length());
+            log.info("pecularities is " + percularitiesString);
         }
 
         return starModel;
     }
 
     public static void main(String[] arg) {
-
+        StarCreator starCreator = new StarCreator();
+        StarModel starModel = starCreator.parseSpectral("sgO3.5Ia+[e]");
+        log.info("done");
     }
 
 }
