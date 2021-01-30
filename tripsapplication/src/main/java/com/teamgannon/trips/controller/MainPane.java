@@ -37,7 +37,7 @@ import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteFinderInView;
-import com.teamgannon.trips.routing.RouteFinderOffline;
+import com.teamgannon.trips.routing.RouteFinderDataset;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
@@ -103,9 +103,30 @@ public class MainPane implements
         DataSetChangeListener,
         StatusUpdaterListener {
 
+    /**
+     * the current search context to display from
+     */
+    private final SearchContext searchContext;
+    /**
+     * the TRIPS application context
+     */
+    private final ApplicationContext appContext;
+    /**
+     * database management spring component service
+     */
+    private final DatabaseManagementService databaseManagementService;
+    /**
+     * star plotter component
+     */
+    private final AstrographicPlotter astrographicPlotter;
+    private final Localization localization;
+    private final @NotNull DataExportService dataExportService;
+    /**
+     * dataset lists
+     */
+    private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
     ////// injected properties
     public Pane mainPanel;
-
     public MenuBar menuBar;
     public CheckMenuItem togglePolitiesMenuitem;
     public CheckMenuItem toggleGridMenuitem;
@@ -119,7 +140,6 @@ public class MainPane implements
     public CheckMenuItem toggleTransitsMenuitem;
     public CheckMenuItem toggleTransitLengthsMenuitem;
     public CheckMenuItem toggleRoutesMenuitem;
-
     public ToolBar toolBar;
     public ToggleButton togglePolityBtn;
     public ToggleButton toggleStarBtn;
@@ -132,85 +152,47 @@ public class MainPane implements
     public ToggleButton toggleSettings;
     public ToggleButton toggleZoomInBtn;
     public ToggleButton toggleZoomOutBtn;
+
+    ////  local assets
     public CheckBox animationCheckbox;
     public SplitPane mainSplitPane;
     public HBox statusBar;
-
     public Label databaseStatus;
     public Label routingStatus;
     public Button plotButton;
     public VBox displayPane;
-
-    ////  local assets
-
-    private TitledPane datasetsPane;
-    private RoutingPanel routingPanel;
-    private StarPropertiesPane starPropertiesPane;
     public Accordion propertiesAccordion;
     public TitledPane stellarObjectPane;
-    private ObjectViewPane objectViewPane;
-    private VBox settingsPane;
-    private StackPane leftDisplayPane;
     public BorderPane leftBorderPane;
     public BorderPane rightBorderPane;
     public TitledPane objectsViewPane;
     public TitledPane routingPane;
-
-
-    /**
-     * the query dialog
-     */
-    private QueryDialog queryDialog;
-
-    /**
-     * the current search context to display from
-     */
-    private final SearchContext searchContext;
-
-
-    private Stage stage;
-    private FxWeaver fxWeaver;
-    private TripsContext tripsContext;
-
-    /**
-     * the TRIPS application context
-     */
-    private final ApplicationContext appContext;
-
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
     double depth = Universe.boxDepth;
     double spacing = 20;
-
+    private TitledPane datasetsPane;
+    private RoutingPanel routingPanel;
+    private StarPropertiesPane starPropertiesPane;
+    private ObjectViewPane objectViewPane;
+    private VBox settingsPane;
+    private StackPane leftDisplayPane;
+    /**
+     * the query dialog
+     */
+    private QueryDialog queryDialog;
+    private Stage stage;
+    private final FxWeaver fxWeaver;
+    private final TripsContext tripsContext;
     /**
      * interstellar space
      */
     private InterstellarSpacePane interstellarSpacePane;
-
     /**
      * solar system panes for showing the details of various solar systems
      */
     private SolarSystemSpacePane solarSystemSpacePane;
-
-    /**
-     * database management spring component service
-     */
-    private final DatabaseManagementService databaseManagementService;
-
-    /**
-     * star plotter component
-     */
-    private final AstrographicPlotter astrographicPlotter;
-    private final Localization localization;
-
     private DataImportService dataImportService;
-    private final @NotNull DataExportService dataExportService;
-
-    /**
-     * dataset lists
-     */
-    private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
-
     /**
      * list of routes
      */
@@ -226,6 +208,7 @@ public class MainPane implements
     private boolean routesOn = true;
     private boolean transitsOn = true;
     private boolean transitsLengthsOn = true;
+    private boolean helpModeOn = true;
 
     /////// data objects ///////////
     private boolean sidePaneOn = false;
@@ -452,12 +435,11 @@ public class MainPane implements
     private void setSliderControl() {
         DoubleProperty splitPaneDividerPosition = mainSplitPane.getDividers().get(0).positionProperty();
         splitPaneDividerPosition.addListener((obs, oldPos, newPos) -> {
+                    // this listener is invoked each time the slider is changed
+                    // we look at our confiuration and see if its allowed and them change it if the
+                    // operation is not
                     double pos = newPos.doubleValue();
-                    log.info("mouse moved::{}", pos);
                     toggleSettings.setSelected(pos < 0.95);
-//                    if (pos < .75) {
-//                        mainSplitPane.setDividerPosition(0, .75);
-//                    }
                     adjustSliderForSidePanel(pos);
                 }
         );
@@ -624,8 +606,8 @@ public class MainPane implements
         // now make sure that the divider does not go past the settings panel position
         adjustSliderForSidePanel(spPosition);
 
-        Double originalDims = Math.sqrt(originalHeight * originalWidth);
-        Double newDims = Math.sqrt(height * width);
+        double originalDims = Math.sqrt(originalHeight * originalWidth);
+        double newDims = Math.sqrt(height * width);
 
         if (originalDims < newDims) {
             interstellarSpacePane.zoomIn(2);
@@ -640,13 +622,17 @@ public class MainPane implements
             interstellarSpacePane.updateLabels();
         });
 
-
     }
 
+    /**
+     * this function adjusts the slider position so that it changes based on screen
+     * resize and prevents anyone from moving it with their mouse
+     *
+     * @param spPosition the current divider position
+     */
     private void adjustSliderForSidePanel(double spPosition) {
-        log.info("sidePane is "+sidePaneOn);
         if (!sidePaneOn) {
-            // this takes into consideration that the sidepane is closed and we
+            // this takes into consideration that the side-pane is closed and we
             // ensure it stays that way
             mainSplitPane.setDividerPosition(0, 1);
         } else {
@@ -656,7 +642,7 @@ public class MainPane implements
             } else {
                 double currentWidth = this.mainPanel.getWidth();
                 double exposedSettingsWidth = (1 - spPosition) * currentWidth;
-                log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
+//                log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
                 if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
                     double adjustedWidthRatio = 260 / currentWidth;
                     mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
@@ -893,6 +879,12 @@ public class MainPane implements
         toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
 
+    public void toggleHelpMode(ActionEvent actionEvent) {
+        helpModeOn = !helpModeOn;
+        statusBar.setVisible(!statusBar.isVisible());
+//        toggleStatusBarMenuitem.setSelected(statusBarOn);
+    }
+
     public void loadDataSetManager(ActionEvent actionEvent) {
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
@@ -978,9 +970,9 @@ public class MainPane implements
         }
     }
 
-    public void routeFinderOffline(ActionEvent actionEvent) {
-        RouteFinderOffline routeFinderOffline = new RouteFinderOffline(interstellarSpacePane);
-        routeFinderOffline.startRouteLocation(
+    public void routeFinderDataset(ActionEvent actionEvent) {
+        RouteFinderDataset routeFinderDataset = new RouteFinderDataset(interstellarSpacePane);
+        routeFinderDataset.startRouteLocation(
                 searchContext.getAstroSearchQuery().getDescriptor(),
                 databaseManagementService,
                 tripsContext.getAppViewPreferences().getStarDisplayPreferences()

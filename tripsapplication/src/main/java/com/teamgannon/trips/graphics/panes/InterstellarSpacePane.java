@@ -39,73 +39,55 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 @Slf4j
 public class InterstellarSpacePane extends Pane {
 
-    // mouse positions
-    private double mousePosX, mousePosY = 0;
-    private double mouseOldX, mouseOldY = 0;
-    private double mouseDeltaX, mouseDeltaY = 0;
-
+    private static final double ROTATE_SECS = 60;
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
-
     private final Group world = new Group();
-
-    @NotNull Group root = new Group();
-
     private final @NotNull SubScene subScene;
-
-    @NotNull PerspectiveCamera camera = new PerspectiveCamera(true);
-
-    private static final double ROTATE_SECS = 60;
-
     /**
      * animation rotator
      */
     private final @NotNull RotateTransition rotator;
-
-    /////////////////
-
     /**
      * our current plot
      */
     private final @NotNull CurrentPlot currentPlot;
-
-    /**
-     * the general color palette of the graph
-     */
-    private ColorPalette colorPalette;
-
-    /**
-     * star display specifics
-     */
-    private StarDisplayPreferences starDisplayPreferences;
-
-    /**
-     * animation toggle
-     */
-    private boolean animationPlay = false;
-
     /**
      * application context
      */
     private final @NotNull TripsContext tripsContext;
-
     /**
      * used to signal an update to the parent list view
      */
     private final ListUpdaterListener listUpdaterListener;
-
     /**
      * the grid plot manager
      */
     private final @NotNull GridPlotManager gridPlotManager;
-
     private final @NotNull RouteManager routeManager;
 
+    /////////////////
     private final @NotNull TransitManager transitManager;
-
     private final @NotNull StarPlotManager starPlotManager;
-
+    @NotNull Group root = new Group();
+    @NotNull PerspectiveCamera camera = new PerspectiveCamera(true);
+    // mouse positions
+    private double mousePosX, mousePosY = 0;
+    private double mouseOldX, mouseOldY = 0;
+    private double mouseDeltaX, mouseDeltaY = 0;
+    /**
+     * the general color palette of the graph
+     */
+    private ColorPalette colorPalette;
+    /**
+     * star display specifics
+     */
+    private StarDisplayPreferences starDisplayPreferences;
+    /**
+     * animation toggle
+     */
+    private boolean animationPlay = false;
     /**
      * offset to scene coordinates to account for the top UI plane
      */

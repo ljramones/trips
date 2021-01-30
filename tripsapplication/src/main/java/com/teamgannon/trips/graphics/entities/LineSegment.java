@@ -29,24 +29,6 @@ public class LineSegment {
     private double[] translatedTo;
 
     /**
-     * get a 3D From point in the translated coordinates
-     *
-     * @return the from point
-     */
-    public @NotNull Point3D getFrom() {
-        return new Point3D(translatedFrom[0], translatedFrom[1], translatedFrom[2]);
-    }
-
-    /**
-     * get a 3D To point in the translated coordinates
-     *
-     * @return the to point
-     */
-    public @NotNull Point3D getTo() {
-        return new Point3D(translatedTo[0], translatedTo[1], translatedTo[2]);
-    }
-
-    /**
      * create a transformed line segment
      *
      * @param transformer the transformer
@@ -66,6 +48,24 @@ public class LineSegment {
         lineSegment.translatedTo[2] += depth / 2.0;
 
         return lineSegment;
+    }
+
+    /**
+     * get a 3D From point in the translated coordinates
+     *
+     * @return the from point
+     */
+    public @NotNull Point3D getFrom() {
+        return new Point3D(translatedFrom[0], translatedFrom[1], translatedFrom[2]);
+    }
+
+    /**
+     * get a 3D To point in the translated coordinates
+     *
+     * @return the to point
+     */
+    public @NotNull Point3D getTo() {
+        return new Point3D(translatedTo[0], translatedTo[1], translatedTo[2]);
     }
 
 }

@@ -64,10 +64,10 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         lowerDistanceMeasure.setText("3");
 
         gridPane.add(colorLabel, 0, 3);
-        gridPane.add(colorPicker, 1,3);
+        gridPane.add(colorPicker, 1, 3);
 
         gridPane.add(lineWidthLabel, 0, 4);
-        gridPane.add(lineWidth, 1,4);
+        gridPane.add(lineWidth, 1, 4);
         lineWidth.setText(".4");
 
         vBox.getChildren().add(gridPane);

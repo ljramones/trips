@@ -71,43 +71,20 @@ public abstract class SystemObject {
     protected double eccentricity;
     protected double inclination;
 
-    /**
-     * @return The Standard Gravitational Parameter of this object.
-     */
-    public double mu() {
-        return massInKg() * G;
-    }
-
     public static double massInKg(double mass) {
         return mass * SUN_MASS;
-    }
-
-    public double massInKg() {
-        return massInKg(this.mass);
     }
 
     public static double massInGrams(double mass) {
         return mass * SUN_MASS_IN_GRAMS;
     }
 
-    public double massInGrams() {
-        return massInGrams(this.mass);
-    }
-
     public static double massInJupiterMasses(double mass) {
         return massInKg(mass) / JUPITER_MASS;
     }
 
-    public double massInJupiterMasses() {
-        return massInJupiterMasses(this.mass);
-    }
-
     public static double massInEarthMasses(double mass) {
         return massInKg(mass) / EARTH_MASS;
-    }
-
-    public double massInEarthMasses() {
-        return massInEarthMasses(this.mass);
     }
 
     /**
@@ -122,6 +99,37 @@ public abstract class SystemObject {
      */
     public static double periapsis(double sma, double ecc) {
         return sma * (1.0 - ecc);
+    }
+
+    public static double smaInMeters(double sma) {
+        return sma * EARTH_SMA;
+    }
+
+    public static double AUtoKm(double au) {
+        return au * KM_PER_AU;
+    }
+
+    /**
+     * @return The Standard Gravitational Parameter of this object.
+     */
+    public double mu() {
+        return massInKg() * G;
+    }
+
+    public double massInKg() {
+        return massInKg(this.mass);
+    }
+
+    public double massInGrams() {
+        return massInGrams(this.mass);
+    }
+
+    public double massInJupiterMasses() {
+        return massInJupiterMasses(this.mass);
+    }
+
+    public double massInEarthMasses() {
+        return massInEarthMasses(this.mass);
     }
 
     /**
@@ -152,16 +160,8 @@ public abstract class SystemObject {
         return periapsis(this.asMoonSMA, this.asMoonEccentricty);
     }
 
-    public static double smaInMeters(double sma) {
-        return sma * EARTH_SMA;
-    }
-
     public double smaInMeters() {
         return smaInMeters(this.sma);
-    }
-
-    public static double AUtoKm(double au) {
-        return au * KM_PER_AU;
     }
 
     /**

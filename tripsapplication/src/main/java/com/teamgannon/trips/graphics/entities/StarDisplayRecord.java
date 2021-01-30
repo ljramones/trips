@@ -108,6 +108,59 @@ public class StarDisplayRecord {
         init();
     }
 
+    public static @NotNull StarObject toAstrographicObject(@NotNull StarDisplayRecord displayRecord) {
+        StarObject object = new StarObject();
+
+        object.setId(displayRecord.getRecordId());
+        object.setDataSetName(displayRecord.getDataSetName());
+        object.setDisplayName(displayRecord.getStarName());
+        object.setNotes(displayRecord.getNotes());
+        object.setX(displayRecord.getX());
+        object.setY(displayRecord.getY());
+        object.setZ(displayRecord.getZ());
+        object.setRadius(displayRecord.getRadius());
+        object.setDistance(displayRecord.getDistance());
+        object.setSpectralClass(displayRecord.getSpectralClass());
+        object.setPolity(displayRecord.getPolity());
+
+        return object;
+    }
+
+    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull StarObject starObject,
+                                                                     @NotNull StarDisplayPreferences starDisplayPreferences) {
+        StarDisplayRecord record = new StarDisplayRecord();
+
+        StellarType stellarType;
+        try {
+            String sClass = starObject.getOrthoSpectralClass().substring(0, 1);
+            stellarType = StellarType.valueOf(sClass);
+        } catch (Exception e) {
+            stellarType = StellarType.M;
+        }
+
+        StarDescriptionPreference starDescriptionPreference = starDisplayPreferences.get(stellarType);
+        if (starDescriptionPreference != null) {
+            record.setRadius(starDescriptionPreference.getSize());
+            record.setStarColor(starDescriptionPreference.getColor());
+
+            record.setRecordId(starObject.getId());
+            record.setStarName(starObject.getDisplayName());
+            record.setDataSetName(starObject.getDataSetName());
+            record.setDistance(starObject.getDistance());
+            record.setSpectralClass(starObject.getSpectralClass());
+            record.setMass(starObject.getMass());
+            record.setNotes(starObject.getNotes());
+            double[] coords = starObject.getCoordinates();
+            record.setActualCoordinates(coords);
+            record.setPolity(starObject.getPolity());
+        } else {
+            log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
+            return null;
+        }
+
+        return record;
+    }
+
     public void init() {
         dataSetName = " ";
         starName = " ";
@@ -141,82 +194,28 @@ public class StarDisplayRecord {
         return record;
     }
 
-    public static @NotNull StarObject toAstrographicObject(@NotNull StarDisplayRecord displayRecord) {
-        StarObject object = new StarObject();
-
-        object.setId(displayRecord.getRecordId());
-        object.setDataSetName(displayRecord.getDataSetName());
-        object.setDisplayName(displayRecord.getStarName());
-        object.setNotes(displayRecord.getNotes());
-        object.setX(displayRecord.getX());
-        object.setY(displayRecord.getY());
-        object.setZ(displayRecord.getZ());
-        object.setRadius(displayRecord.getRadius());
-        object.setDistance(displayRecord.getDistance());
-        object.setSpectralClass(displayRecord.getSpectralClass());
-        object.setPolity(displayRecord.getPolity());
-
-        return object;
-    }
-
-    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull StarObject starObject,
-                                                                     @NotNull StarDisplayPreferences starDisplayPreferences) {
-        StarDisplayRecord record = new StarDisplayRecord();
-
-        StellarType stellarType;
-        try {
-            String sClass = starObject.getOrthoSpectralClass().substring(0,1);
-            stellarType = StellarType.valueOf(sClass);
-        } catch (Exception e) {
-            stellarType = StellarType.M;
-        }
-
-        StarDescriptionPreference starDescriptionPreference = starDisplayPreferences.get(stellarType);
-        if (starDescriptionPreference != null) {
-            record.setRadius(starDescriptionPreference.getSize());
-            record.setStarColor(starDescriptionPreference.getColor());
-
-            record.setRecordId(starObject.getId());
-            record.setStarName(starObject.getDisplayName());
-            record.setDataSetName(starObject.getDataSetName());
-            record.setDistance(starObject.getDistance());
-            record.setSpectralClass(starObject.getSpectralClass());
-            record.setMass(starObject.getMass());
-            record.setNotes(starObject.getNotes());
-            double[] coords = starObject.getCoordinates();
-            record.setActualCoordinates(coords);
-            record.setPolity(starObject.getPolity());
-        } else {
-            log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
-            return null;
-        }
-
-        return record;
-    }
-
-
-    public void setX(double x) {
-        actualCoordinates[0] = x;
-    }
-
     public double getX() {
         return actualCoordinates[0];
     }
 
-    public void setY(double y) {
-        actualCoordinates[1] = y;
+    public void setX(double x) {
+        actualCoordinates[0] = x;
     }
 
     public double getY() {
         return actualCoordinates[1];
     }
 
-    public void setZ(double z) {
-        actualCoordinates[2] = z;
+    public void setY(double y) {
+        actualCoordinates[1] = y;
     }
 
     public double getZ() {
         return actualCoordinates[2];
+    }
+
+    public void setZ(double z) {
+        actualCoordinates[2] = z;
     }
 
     /**
@@ -242,7 +241,7 @@ public class StarDisplayRecord {
             sLuminosity = StarUtils.stellarLuminosity(radius, temperature);
         }
         double sMagnitude = 0;
-        if (magnitude!=0) {
+        if (magnitude != 0) {
             sMagnitude = this.magnitude;
         } else {
             sMagnitude = StarUtils.absoluteMagnitude(sLuminosity);

@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
 
     private final static float LABEL_PREF_WIDTH = 200;
-    protected @NotNull GridPane planGrid = new GridPane();
     private final @NotNull DataSetDescriptor descriptor;
+    protected @NotNull GridPane planGrid = new GridPane();
 
     public DataSetDescribeDialog(@NotNull DataSetDescriptor descriptor) {
         this.descriptor = descriptor;

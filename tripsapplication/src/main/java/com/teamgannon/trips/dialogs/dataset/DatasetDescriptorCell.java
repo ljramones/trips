@@ -11,8 +11,8 @@ public class DatasetDescriptorCell extends ListCell<DataSetDescriptor> {
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
 
-   public DatasetDescriptorCell() {
-       super.setPrefWidth(100);
+    public DatasetDescriptorCell() {
+        super.setPrefWidth(100);
     }
 
     @Override
@@ -22,8 +22,7 @@ public class DatasetDescriptorCell extends ListCell<DataSetDescriptor> {
         super.updateItem(descriptor, empty);
         if (descriptor != null) {
             setText(descriptor.getDataSetName());
-        }
-        else {
+        } else {
             setText(null);
         }
     }

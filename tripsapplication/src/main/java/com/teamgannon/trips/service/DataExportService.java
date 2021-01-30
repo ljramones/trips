@@ -74,8 +74,8 @@ public class DataExportService {
     /**
      * do the actual export witht he defined objects
      *
-     * @param exportOptions       the options
-     * @param starObjects the objects to export
+     * @param exportOptions the options
+     * @param starObjects   the objects to export
      */
     private void exportExec(@NotNull ExportOptions exportOptions, List<StarObject> starObjects) {
         switch (exportOptions.getExportFormat()) {
@@ -89,8 +89,8 @@ public class DataExportService {
     /**
      * export a queried dataset based on options
      *
-     * @param exportOptions       the options
-     * @param starObjects the objects to export
+     * @param exportOptions the options
+     * @param starObjects   the objects to export
      */
     public void exportDatasetOnQuery(ExportOptions exportOptions, List<StarObject> starObjects) {
         log.info("exporting {} with {} stars ", exportOptions.getDataset(), starObjects.size());

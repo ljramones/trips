@@ -16,50 +16,41 @@ import java.util.*;
 public class CurrentPlot {
 
     /**
-     * the dataset descriptor for this plot
-     */
-    private DataSetDescriptor dataSetDescriptor;
-
-    /**
-     * whether the plot is currently active
-     */
-    private boolean plotActive = false;
-
-    /**
-     * the center coordinates for this plot
-     */
-    private double[] centerCoordinates;
-
-    /**
-     * th center star
-     */
-    private String centerStar;
-
-    /**
-     * the star display preferences
-     */
-    private StarDisplayPreferences starDisplayPreferences;
-
-    /**
-     * the polities
-     */
-    private CivilizationDisplayPreferences civilizationDisplayPreferences;
-
-    /**
-     * the list of stars
-     */
-    private @NotNull List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
-
-    /**
      * the lookout for drawn stars
      */
     private final Map<UUID, Node> starLookup = new HashMap<>();
-
     /**
      * a one way map form star id to label of the star
      */
     private final Map<UUID, Label> starToLabelLookup = new HashMap<>();
-
+    /**
+     * the dataset descriptor for this plot
+     */
+    private DataSetDescriptor dataSetDescriptor;
+    /**
+     * whether the plot is currently active
+     */
+    private boolean plotActive = false;
+    /**
+     * the center coordinates for this plot
+     */
+    private double[] centerCoordinates;
+    /**
+     * th center star
+     */
+    private String centerStar;
+    /**
+     * the star display preferences
+     */
+    private StarDisplayPreferences starDisplayPreferences;
+    /**
+     * the polities
+     */
+    private CivilizationDisplayPreferences civilizationDisplayPreferences;
+    /**
+     * the list of stars
+     */
+    private @NotNull List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
     /**
      * the color palette
      */

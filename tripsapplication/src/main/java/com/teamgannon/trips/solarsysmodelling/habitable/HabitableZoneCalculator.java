@@ -13,6 +13,20 @@ public class HabitableZoneCalculator {
 
     private final HabitableZoneFluxes fluxes = new HabitableZoneFluxes();
 
+    public static void main(String[] args) {
+        HabitableZoneCalculator hz = new HabitableZoneCalculator();
+        HabitableZoneFluxes habitableZoneFluxes = hz.findStellarFluxes(5780.0);
+        log.info(habitableZoneFluxes.toString());
+        Map<HabitableZoneTypesEnum, HabitableZone> zones = hz.getHabitableZones(5780.0, 1);
+        log.info(zones.toString());
+
+        double earthEffFlux = hz.flux(5780, 1);
+
+        double earthDistance = hz.auFromSeff(5780, earthEffFlux);
+
+        log.info("done");
+    }
+
     /**
      * Adapted from NASA Exoplanet Archive Insolation Flux formula.
      * (https://exoplanetarchive.ipac.caltech.edu/docs/poet_calculations.html)
@@ -49,26 +63,11 @@ public class HabitableZoneCalculator {
     }
 
 
+    /////////////////////////
+
     private HabitableZoneFluxes findStellarFluxes(double tempEffective) {
         fluxes.findStellarFluxes(tempEffective);
         return fluxes;
-    }
-
-
-    /////////////////////////
-
-    public static void main(String[] args) {
-        HabitableZoneCalculator hz = new HabitableZoneCalculator();
-        HabitableZoneFluxes habitableZoneFluxes = hz.findStellarFluxes(5780.0);
-        log.info(habitableZoneFluxes.toString());
-        Map<HabitableZoneTypesEnum, HabitableZone> zones = hz.getHabitableZones(5780.0, 1);
-        log.info(zones.toString());
-
-        double earthEffFlux = hz.flux(5780, 1);
-
-        double earthDistance = hz.auFromSeff(5780, earthEffFlux);
-
-        log.info("done");
     }
 
 }

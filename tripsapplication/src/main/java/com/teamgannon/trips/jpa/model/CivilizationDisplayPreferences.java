@@ -24,15 +24,12 @@ public class CivilizationDisplayPreferences implements Serializable {
     public static final String OTHER2 = "Other 2";
     public static final String OTHER3 = "Other 3";
     public static final String OTHER4 = "Other 4";
-
+    private static final long serialVersionUID = -3083652537359014304L;
     /**
      * id of the object
      */
     @Id
     private UUID id;
-
-    private static final long serialVersionUID = -3083652537359014304L;
-
     /**
      * storage tag
      */

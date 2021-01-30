@@ -1,6 +1,6 @@
 package com.teamgannon.trips.solarsysmodelling.utils;
 
-public class OrbitalDynamicsParabolicUtils implements OrbitalDynamics{
+public class OrbitalDynamicsParabolicUtils implements OrbitalDynamics {
 
     /**
      * periapsis distance - q

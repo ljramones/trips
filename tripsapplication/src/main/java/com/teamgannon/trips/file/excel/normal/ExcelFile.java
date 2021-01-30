@@ -1,8 +1,8 @@
 package com.teamgannon.trips.file.excel.normal;
 
 import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 

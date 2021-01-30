@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LinksPane extends Pane {
 
-    private LinkDisplayPreferences linksDefinition;
+    private final LinkDisplayPreferences linksDefinition;
 
     public LinksPane(@NotNull LinkDisplayPreferences linksDefinition, String style) {
         this.linksDefinition = linksDefinition;

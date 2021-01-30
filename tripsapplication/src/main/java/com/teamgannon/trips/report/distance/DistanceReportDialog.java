@@ -13,9 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DistanceReportDialog extends Dialog<DistanceReport> {
 
-    public @NotNull Button changeButton = new Button("Save");
-
     private final @NotNull DistanceReport report;
+    public @NotNull Button changeButton = new Button("Save");
 
     public DistanceReportDialog(@NotNull Stage stage,
                                 @NotNull DistanceReport report) {

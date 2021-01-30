@@ -15,7 +15,7 @@
     <logger name="org.springframework.integration" level="OFF"/>
     <logger name="org.springframework.oxm" level="OFF"/>
     <logger name="org.springframework.http" level="ERROR"/>
-    <logger name="org.elasticsearch.bootstrap" level="ERROR" />
+    <logger name="org.elasticsearch.bootstrap" level="ERROR"/>
 
     <include resource="logbackbase.xml"/>
 

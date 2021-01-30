@@ -30,7 +30,7 @@ public class ExcelDataImportService extends Service<FileProcessResult> implement
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
 
-    public ExcelDataImportService(DatabaseManagementService databaseManagementService)  {
+    public ExcelDataImportService(DatabaseManagementService databaseManagementService) {
         this.databaseManagementService = databaseManagementService;
     }
 

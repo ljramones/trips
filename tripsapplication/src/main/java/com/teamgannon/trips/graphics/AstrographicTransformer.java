@@ -181,7 +181,7 @@ public class AstrographicTransformer {
         double scalingFactor = Universe.boxHeight / maxValue;
 
         // determine the grid scale for 5 light year increments
-        double gridScale = scalingParameters.getYRange() / scaleIncrement * scalingFactor/2;
+        double gridScale = scalingParameters.getYRange() / scaleIncrement * scalingFactor / 2;
         if (gridScale <= 0) {
             log.error("gridScale ={}, scalingParameters={}", gridScale, scalingParameters);
         }

@@ -6,7 +6,7 @@ import javafx.scene.layout.Pane;
 
 public class RoutePane extends Pane {
 
-    private RouteDisplayPreferences routeDisplayPreferences;
+    private final RouteDisplayPreferences routeDisplayPreferences;
 
     public RoutePane(RouteDisplayPreferences routeDisplayPreferences, String style) {
         this.routeDisplayPreferences = routeDisplayPreferences;

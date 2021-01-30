@@ -75,7 +75,7 @@ public class Planet {
     private double lengthOfDay;
 
     /**
-     *Distance from Sun (106 km or 106 miles) - This is the average distance from the planet to the Sun in
+     * Distance from Sun (106 km or 106 miles) - This is the average distance from the planet to the Sun in
      * millions of kilometers or millions of miles, also known as the semi-major axis. All planets have orbits
      * which are elliptical, not perfectly circular, so there is a point in the orbit at which the planet is
      * closest to the Sun, the perihelion, and a point furthest from the Sun, the aphelion. The average distance

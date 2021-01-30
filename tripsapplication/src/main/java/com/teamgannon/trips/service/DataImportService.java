@@ -86,7 +86,7 @@ public class DataImportService {
                 chvDataImportService.restart();
             }
 
-            case "trips.csv"-> {
+            case "trips.csv" -> {
                 currentlyRunning.set(true);
                 runningImportService = csvDataImportService;
                 boolean queued = csvDataImportService.processDataSet(

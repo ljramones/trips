@@ -29,7 +29,7 @@ public class PolitySelectionPanel extends BasePane {
     private final CheckBox polity6 = new CheckBox(CivilizationDisplayPreferences.SLAASRIITHI);
     private final CheckBox polity7 = new CheckBox(CivilizationDisplayPreferences.OTHER1);
     private final CheckBox polity8 = new CheckBox(CivilizationDisplayPreferences.OTHER2);
-    private final CheckBox polity9 = new CheckBox( CivilizationDisplayPreferences.OTHER3);
+    private final CheckBox polity9 = new CheckBox(CivilizationDisplayPreferences.OTHER3);
     private final CheckBox polity10 = new CheckBox(CivilizationDisplayPreferences.OTHER4);
 
     public PolitySelectionPanel() {

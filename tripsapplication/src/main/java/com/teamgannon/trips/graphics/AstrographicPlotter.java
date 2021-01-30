@@ -6,10 +6,10 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.search.SearchContext;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
@@ -67,9 +67,9 @@ public class AstrographicPlotter {
     /**
      * draw the ch view file
      *
-     * @param starObjects the list of objects to draw
-     * @param centerCoordinates   the center of the plot
-     * @param colorPalette        the color palette to draw
+     * @param starObjects       the list of objects to draw
+     * @param centerCoordinates the center of the plot
+     * @param colorPalette      the color palette to draw
      */
     public void drawAstrographicData(@NotNull DataSetDescriptor dataSetDescriptor,
                                      @NotNull List<StarObject> starObjects,

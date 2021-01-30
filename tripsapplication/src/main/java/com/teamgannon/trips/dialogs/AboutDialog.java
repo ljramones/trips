@@ -44,17 +44,17 @@ public class AboutDialog extends Dialog<String> {
         gridPane.add(date, 0, 3);
         gridPane.add(new Label(localization.getReleaseDate()), 1, 3);
 
-        Label versionLabel =new Label("Version");
+        Label versionLabel = new Label("Version");
         versionLabel.setFont(font);
         gridPane.add(versionLabel, 0, 4);
         gridPane.add(new Label(localization.getVersion()), 1, 4);
 
-        Label projectPageLabel =new Label("ProjectPage");
+        Label projectPageLabel = new Label("ProjectPage");
         projectPageLabel.setFont(font);
         gridPane.add(projectPageLabel, 0, 5);
         gridPane.add(new Label(localization.getProjectPage()), 1, 5);
 
-        Label fileDirLabel =new Label("Data files Location");
+        Label fileDirLabel = new Label("Data files Location");
         File file = new File(localization.getFileDirectory());
         fileDirLabel.setFont(font);
         gridPane.add(fileDirLabel, 0, 6);

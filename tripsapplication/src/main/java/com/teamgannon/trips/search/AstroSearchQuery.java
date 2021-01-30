@@ -71,6 +71,21 @@ public class AstroSearchQuery {
     private @NotNull Set<String> milPlanTypes = new HashSet<>();
 
     private boolean recenter = false;
+    private double xMinus;
+    private double xPlus;
+    private double yPlus;
+    private double yMinus;
+    private double zMinus;
+    private double zPlus;
+    private UUID centrePoint;
+    private double[] centerCoordinates = new double[3];
+    private String centerStar = "Sol";
+
+    public AstroSearchQuery() {
+        centerCoordinates[0] = 0;
+        centerCoordinates[1] = 0;
+        centerCoordinates[2] = 0;
+    }
 
     public void clearPolities() {
         polities = new HashSet<>();
@@ -110,23 +125,6 @@ public class AstroSearchQuery {
 
     public void clearMilPlanTypes() {
         milPlanTypes = new HashSet<>();
-    }
-
-    private double xMinus;
-    private double xPlus;
-    private double yPlus;
-    private double yMinus;
-    private double zMinus;
-    private double zPlus;
-
-    private UUID centrePoint;
-    private double[] centerCoordinates = new double[3];
-    private String centerStar = "Sol";
-
-    public AstroSearchQuery() {
-        centerCoordinates[0] = 0;
-        centerCoordinates[1] = 0;
-        centerCoordinates[2] = 0;
     }
 
     public void setCenterRanging(@NotNull StarDisplayRecord star, double distance) {

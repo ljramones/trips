@@ -1,8 +1,8 @@
 package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;

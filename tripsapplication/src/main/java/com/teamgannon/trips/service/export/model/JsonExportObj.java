@@ -10,13 +10,12 @@ import java.util.List;
 public class JsonExportObj {
 
     /**
-     * the data descriptor for these object
-     */
-    private DataSetDescriptorDTO descriptor;
-
-    /**
      * the astrographic objects themselves
      */
     List<StarObject> starObjectList = new ArrayList<>();
+    /**
+     * the data descriptor for these object
+     */
+    private DataSetDescriptorDTO descriptor;
 
 }

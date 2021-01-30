@@ -2,8 +2,8 @@ package com.teamgannon.trips.service.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
@@ -26,35 +26,6 @@ public class JSONExporter {
     public JSONExporter(StatusUpdaterListener updaterListener) {
         this.updaterListener = updaterListener;
     }
-
-    public void exportAsJson(@NotNull ExportOptions export, List<StarObject> starObjects) {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.json"));
-
-            JsonExportObj jsonExportObj = new JsonExportObj();
-            jsonExportObj.setDescriptor(export.getDataset().toDataSetDescriptorDTO());
-            jsonExportObj.setStarObjectList(starObjects);
-
-            String jsonStr = objectMapper.writeValueAsString(jsonExportObj);
-            writer.write(jsonStr);
-
-            writer.flush();
-            writer.close();
-            showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was export to " + export.getFileName() + ".trips.json");
-
-        } catch (Exception e) {
-            log.error("caught error opening the file:{}", e.getMessage());
-            showErrorAlert(
-                    "Export Dataset as JSON file",
-                    export.getDataset().getDataSetName() +
-                            "failed to export:" + e.getMessage());
-        }
-    }
-
 
     public static void main(String[] args) {
         try {
@@ -82,6 +53,34 @@ public class JSONExporter {
             log.info("converted");
         } catch (Exception e) {
             log.error("failed to export as Json" + e.getMessage());
+        }
+    }
+
+    public void exportAsJson(@NotNull ExportOptions export, List<StarObject> starObjects) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.json"));
+
+            JsonExportObj jsonExportObj = new JsonExportObj();
+            jsonExportObj.setDescriptor(export.getDataset().toDataSetDescriptorDTO());
+            jsonExportObj.setStarObjectList(starObjects);
+
+            String jsonStr = objectMapper.writeValueAsString(jsonExportObj);
+            writer.write(jsonStr);
+
+            writer.flush();
+            writer.close();
+            showInfoMessage("Database Export", export.getDataset().getDataSetName()
+                    + " was export to " + export.getFileName() + ".trips.json");
+
+        } catch (Exception e) {
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Export Dataset as JSON file",
+                    export.getDataset().getDataSetName() +
+                            "failed to export:" + e.getMessage());
         }
     }
 

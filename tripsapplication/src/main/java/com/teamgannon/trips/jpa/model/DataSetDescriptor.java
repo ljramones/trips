@@ -1,6 +1,5 @@
 package com.teamgannon.trips.jpa.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
@@ -159,7 +158,7 @@ public class DataSetDescriptor implements Serializable {
      *
      * @param routes the list of routes
      */
-    public void setRoutes( List<Route> routes) {
+    public void setRoutes(List<Route> routes) {
         numberRoutes = routes.size();
         routesStr = new Route().convertToJson(routes);
     }

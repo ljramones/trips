@@ -51,6 +51,20 @@ public class Planet extends SystemObject implements Comparable<Planet> {
     private ArrayList<Planet> moons = new ArrayList<>();
     private ArrayList<AtmosphericChemical> atmosphere = new ArrayList<>();
 
+    public Planet(SimStar primary) {
+        this.primary = primary;
+    }
+
+    /**
+     * @param separation  The average distance between the two bodies.
+     * @param smallerBody The smaller body in this equation.
+     * @param largerBody  The larger body in this equation, usually the star.
+     * @return The orbital period of this binary pair in seconds.
+     */
+    public static double binaryOrbitalPeriod(double separation, SystemObject smallerBody, SystemObject largerBody) {
+        return Math.sqrt(Math.pow(smaInMeters(separation), 3.0) / (G * (smallerBody.massInKg() + largerBody.massInKg()))) * Math.PI * 2.0;
+    }
+
     @Override
     public int compareTo(@NotNull Planet p) {
         if (this.isMoon) {
@@ -77,11 +91,6 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             }
         }
         return 0;
-    }
-
-
-    public Planet(SimStar primary) {
-        this.primary = primary;
     }
 
     /**
@@ -490,16 +499,6 @@ public class Planet extends SystemObject implements Comparable<Planet> {
      */
     public double orbitalPeriod(SystemObject largerBody) {
         return Math.sqrt(Math.pow(smaInMeters(), 3.0) / largerBody.mu()) * Math.PI * 2.0;
-    }
-
-    /**
-     * @param separation  The average distance between the two bodies.
-     * @param smallerBody The smaller body in this equation.
-     * @param largerBody  The larger body in this equation, usually the star.
-     * @return The orbital period of this binary pair in seconds.
-     */
-    public static double binaryOrbitalPeriod(double separation, SystemObject smallerBody, SystemObject largerBody) {
-        return Math.sqrt(Math.pow(smaInMeters(separation), 3.0) / (G * (smallerBody.massInKg() + largerBody.massInKg()))) * Math.PI * 2.0;
     }
 
     /**

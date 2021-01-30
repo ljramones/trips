@@ -10,7 +10,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,6 @@ public class SearchPane extends Pane {
     private final @NotNull DataSetContext dataSetContext;
     private final DataSetChangeListener dataSetChangeListener;
     private final StellarDataUpdaterListener updater;
-    private DataSetPanel dataSetChoicePanel;
     private final @NotNull DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
@@ -39,6 +37,7 @@ public class SearchPane extends Pane {
     private final MilPlanetSelectionPanel milPlanetSelectionPanel = new MilPlanetSelectionPanel();
     private final ProductsSelectionPanel productsSelectionPanel = new ProductsSelectionPanel();
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
+    private DataSetPanel dataSetChoicePanel;
 
 
     /**

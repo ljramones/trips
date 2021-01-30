@@ -63,13 +63,12 @@ public class TransitManager {
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     private final SubScene subScene;
-
-    private InterstellarSpacePane interstellarSpacePane;
     /**
      * the listener to create routes on demand
      */
     private final RouteUpdaterListener routeUpdaterListener;
-    private ColorPalette colorPalette;
+    private final InterstellarSpacePane interstellarSpacePane;
+    private final ColorPalette colorPalette;
     /**
      * whether the transits are visible or not
      */

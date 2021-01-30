@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
     private final ApplicationPreferences preferences;
-    private TabPane tabPane;
-    private ButtonType buttonTypeOk;
     private final PreferencesUpdaterListener updater;
     private final TripsContext tripsContext;
+    private TabPane tabPane;
+    private ButtonType buttonTypeOk;
 
 
     public ViewPreferencesDialog(PreferencesUpdaterListener updater,

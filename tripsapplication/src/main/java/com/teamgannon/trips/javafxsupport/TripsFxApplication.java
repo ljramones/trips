@@ -17,6 +17,11 @@ public class TripsFxApplication extends Application {
 
     private ConfigurableApplicationContext context;
 
+    private static void exitApplication(WindowEvent event) {
+        Platform.exit();
+        System.exit(0);
+    }
+
     @Override
     public void init() throws Exception {
         ApplicationContextInitializer<GenericApplicationContext> initializer = this::initialize;
@@ -42,10 +47,5 @@ public class TripsFxApplication extends Application {
         context.registerBean(Application.class, () -> TripsFxApplication.this);
         context.registerBean(Parameters.class, this::getParameters);
         context.registerBean(HostServices.class, this::getHostServices);
-    }
-
-    private static void exitApplication(WindowEvent event) {
-        Platform.exit();
-        System.exit(0);
     }
 }

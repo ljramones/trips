@@ -6,7 +6,7 @@ import javafx.scene.layout.Pane;
 
 public class PositionPane extends Pane {
 
-    private PositionDisplayPreferences positionDisplayPreferences;
+    private final PositionDisplayPreferences positionDisplayPreferences;
 
     public PositionPane(PositionDisplayPreferences positionDisplayPreferences, String style) {
         this.positionDisplayPreferences = positionDisplayPreferences;

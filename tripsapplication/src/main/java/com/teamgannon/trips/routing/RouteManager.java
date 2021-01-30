@@ -35,9 +35,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
@@ -51,20 +48,26 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class RouteManager {
 
-    private DataSetDescriptor dataSetDescriptor;
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
-
     /**
      * the label display
      */
     private final Group labelDisplayGroup = new Group();
-
     private final SubScene subScene;
     private final InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
     private final CurrentPlot currentPlot;
-    private ColorPalette colorPalette;
-
+    /**
+     * used to keep track of node that are in the current route
+     */
+    private final List<Node> currentRouteNodePoints = new ArrayList<>();
+    /**
+     * the total set of all routes
+     */
+    private final Group routesGroup = new Group();
+    private final boolean routeLabelsOn = true;
+    private DataSetDescriptor dataSetDescriptor;
+    private final ColorPalette colorPalette;
     /**
      * this is the descriptor of the current route
      */
@@ -73,25 +76,11 @@ public class RouteManager {
      * the graphic portion of the current route
      */
     private Group currentRouteDisplay;
-
-    /**
-     * used to keep track of node that are in the current route
-     */
-    private final List<Node> currentRouteNodePoints = new ArrayList<>();
-
     /**
      * whether there is a route being traced, true is yes
      */
     private boolean routingActive = false;
-
-    /**
-     * the total set of all routes
-     */
-    private final Group routesGroup = new Group();
-
     private double controlPaneOffset;
-
-    private final boolean routeLabelsOn = true;
 
 
     ///////////////////////
@@ -235,7 +224,7 @@ public class RouteManager {
     private void makeRoutePermanent(@NotNull RouteDescriptor currentRoute) {
 //        // remove our hand drawn route
         routesGroup.getChildren().remove(currentRouteDisplay);
-        for (Node node: currentRouteNodePoints) {
+        for (Node node : currentRouteNodePoints) {
             shapeToLabel.remove(node);
         }
         currentRouteNodePoints.clear();
@@ -464,13 +453,13 @@ public class RouteManager {
      */
     private RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
-        int i=0;
+        int i = 0;
         for (UUID id : route.getRouteStars()) {
             StarDisplayRecord starDisplayRecord = getStar(id);
             if (starDisplayRecord != null) {
                 routeDescriptor.getRouteList().add(id);
                 routeDescriptor.getLineSegments().add(starDisplayRecord.getCoordinates());
-                if (i<route.getRouteLengths().size()) {
+                if (i < route.getRouteLengths().size()) {
                     routeDescriptor.getLengthList().add(route.getRouteLengths().get(i++));
                 }
             }

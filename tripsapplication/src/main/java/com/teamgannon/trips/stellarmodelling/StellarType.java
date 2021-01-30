@@ -289,7 +289,7 @@ public enum StellarType {
      * DA, DB, DC, DO, DQ, DX, and DZ.
      * The letters are not related to the letters used in the classification of other stars,
      * but instead indicate the composition of the white dwarf's visible outer layer or atmosphere.
-     *
+     * <p>
      * DA – a hydrogen-rich atmosphere or outer layer, indicated by strong Balmer hydrogen spectral lines.
      */
     DA("DA"),

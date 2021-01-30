@@ -39,13 +39,6 @@ import static java.lang.Math.floor;
 public class DataSetTable {
 
     private final int PAGE_SIZE = 50;
-
-    private int pageNumber = 1;
-
-    private int totalPages = 1;
-
-    private int currentPosition = 0;
-
     /**
      * the table view object
      */
@@ -62,20 +55,18 @@ public class DataSetTable {
     private final TableColumn<StarEditRecord, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarEditRecord, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarEditRecord, String> commentCol = new TableColumn<>("comment");
-
     private final Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
-
+    private final DatabaseManagementService databaseManagementService;
+    private final String dataSetName;
+    private final @NotNull Dialog<String> dialog;
+    private int pageNumber = 1;
+    private int totalPages = 1;
+    private int currentPosition = 0;
     /**
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
-    private final DatabaseManagementService databaseManagementService;
     private List<StarObject> starObjects;
-
-    private final String dataSetName;
-
-    private final @NotNull Dialog<String> dialog;
-
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private @NotNull SortType sortDirection = SortType.ASCENDING;
 
@@ -83,7 +74,7 @@ public class DataSetTable {
      * the constructor that we use to show the data
      *
      * @param databaseManagementService the database management service
-     * @param starObjects       the list of objects
+     * @param starObjects               the list of objects
      */
     public DataSetTable(DatabaseManagementService databaseManagementService,
                         @NotNull List<StarObject> starObjects) {
@@ -96,7 +87,6 @@ public class DataSetTable {
                     starObjects,
                     StarObject::getId);
         }
-
 
 
         // the actual ui component to hold these entries

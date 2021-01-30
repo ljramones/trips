@@ -4,9 +4,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
-<Pane fx:id="mainPanel"
+<Pane xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="mainPanel"
       xmlns="http://javafx.com/javafx/10.0.2-internal"
-      xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teamgannon.trips.controller.MainPane" maxHeight="900">
     <VBox>
         <MenuBar fx:id="menuBar" prefHeight="29">
@@ -103,7 +103,7 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#routeFinderInView" text="Route finder from A to B (in View)"/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#routeFinderOffline" text="Route finder from A to B (Offline)"/>
+                          onAction="#routeFinderDataset" text="Route finder from A to B (Entire Dataset)"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#routeFinderTree" text="Route finder from A to anywhere"/>
                 <SeparatorMenuItem/>
@@ -127,6 +127,8 @@
             <Menu mnemonicParsing="false" text="Help">
                 <MenuItem mnemonicParsing="false"
                           onAction="#aboutTrips" text="About Terran Republic Viewer"/>
+                <CheckMenuItem mnemonicParsing="false"
+                               onAction="#toggleHelpMode" text="Toggle help mode"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#howToSupport" text="How to get support"/>
                 <MenuItem mnemonicParsing="false"
@@ -165,9 +167,7 @@
             <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
                       onAction="#runAnimation" disable="true" text="animate"/>
         </ToolBar>
-        <VBox fx:id="displayPane">
-
-        </VBox>
-        <HBox fx:id="statusBar" prefHeight="50" minHeight="50"/>
+        <VBox fx:id="displayPane"/> <!-- all the magic happens here -->
+        <HBox fx:id="statusBar" prefHeight="80" minHeight="80"/>
     </VBox>
 </Pane>

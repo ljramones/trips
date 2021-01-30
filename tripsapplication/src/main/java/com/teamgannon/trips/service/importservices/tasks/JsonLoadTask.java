@@ -43,7 +43,7 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
             updateFromDataset(dataset, jsonExportObj);
             databaseManagementService.loadJsonFileSingleDS(this, jsonExportObj);
             processResult.setDataSetDescriptor(jsonExportObj.getDescriptor().toDataSetDescriptor());
-            processResult.setMessage("dataset loaded "+ dataset.getName());
+            processResult.setMessage("dataset loaded " + dataset.getName());
             processResult.setSuccess(true);
         } catch (Exception e) {
             log.error("Failed to read file for {}", dataset.getName());

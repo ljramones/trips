@@ -1,8 +1,8 @@
 package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.Platform;
@@ -112,7 +112,7 @@ public class ExcelExporter {
     private void writeDataDescriptor(@NotNull ExportOptions export, @NotNull XSSFWorkbook myWorkBook) {
         XSSFSheet mySheet = myWorkBook.createSheet("descriptor");
         writeDescriptorHeaders(mySheet);
-        writeDescriptorData(export.getDataset(),mySheet);
+        writeDescriptorData(export.getDataset(), mySheet);
 
     }
 

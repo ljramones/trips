@@ -13,6 +13,11 @@ import java.util.Random;
 
 @Slf4j
 class Utils {
+    public final static double ECCENTRICITY_COEFF = 0.077;
+    public final static double EARTH_SURF_PRES_IN_MILLIBARS = 1013.25;
+    public final static double EARTH_SURF_PRES_IN_MMHG = 760.0;
+    public final static double MMHG_TO_MILLIBARS = EARTH_SURF_PRES_IN_MILLIBARS / EARTH_SURF_PRES_IN_MMHG;
+    public final static double PPM_PRESSURE = EARTH_SURF_PRES_IN_MILLIBARS / 1000000.0;
     private static Utils instance;
     private static Random random;
     private static ArrayList<SimStar> MSimStars;
@@ -30,12 +35,6 @@ class Utils {
     private static Chemical[] Chemtable;
     private static long seed;
 
-    public final static double ECCENTRICITY_COEFF = 0.077;
-    public final static double EARTH_SURF_PRES_IN_MILLIBARS = 1013.25;
-    public final static double EARTH_SURF_PRES_IN_MMHG = 760.0;
-    public final static double MMHG_TO_MILLIBARS = EARTH_SURF_PRES_IN_MILLIBARS / EARTH_SURF_PRES_IN_MMHG;
-    public final static double PPM_PRESSURE = EARTH_SURF_PRES_IN_MILLIBARS / 1000000.0;
-
     private Utils() {
         seed = System.currentTimeMillis(); // 1528144920680 generates an Earthlike
         random = new Random(seed);
@@ -48,82 +47,6 @@ class Utils {
             instance = new Utils();
         }
         return instance;
-    }
-
-    public long getSeed() {
-        return seed;
-    }
-
-    public double randomNumber(double inner, double outer) {
-        return random.nextDouble() * (outer - inner) + inner;
-    }
-
-    public double randomEccentricity() {
-        return (1.0 - Math.pow(random.nextDouble(), ECCENTRICITY_COEFF));
-    }
-
-    public double about(double value, double variation) {
-        return value + (value * randomNumber(-variation, variation));
-    }
-
-    public SimStar randomStar() {
-        double roll = random.nextDouble();
-        if (roll <= 0.907) { // Main sequence stars
-            roll = random.nextDouble();
-            if (roll <= 0.751) { // M type main sequence stars
-                return MSimStars.get(random.nextInt(MSimStars.size())).deviate();
-            } else if (roll <= 0.887) { // K type main sequence stars
-                return KSimStars.get(random.nextInt(KSimStars.size())).deviate();
-            } else if (roll <= 0.960) { // G type main sequence stars
-                return GSimStars.get(random.nextInt(GSimStars.size())).deviate();
-            } else if (roll <= 0.991) { // F type main sequence stars
-                return FSimStars.get(random.nextInt(FSimStars.size())).deviate();
-            } else { // A type main sequence stars
-                return ASimStars.get(random.nextInt(ASimStars.size())).deviate();
-            }
-        } else if (roll <= 0.969) { // White dwarves
-            return White.get(random.nextInt(White.size())).deviate();
-        } else if (roll <= 0.998) { // Giants
-            return Giant.get(random.nextInt(Giant.size())).deviate();
-        } else { // Other stars
-            roll = random.nextDouble();
-            if (roll <= 0.785) { // B type stars
-                return BSimStars.get(random.nextInt(BSimStars.size())).deviate();
-            } else if (roll <= 0.999) { // O type stars
-                return OSimStars.get(random.nextInt(OSimStars.size())).deviate();
-            } else { // Specials and "odd" stars
-                roll = random.nextDouble();
-                if (roll <= 0.997) { // O type stars
-                    return OSimStars.get(random.nextInt(OSimStars.size())).deviate();
-                } else if (roll <= 0.998) { // Wolf Rayet type stars
-                    return WSimStars.get(random.nextInt(WSimStars.size())).deviate();
-                } else if (roll <= 0.999) { // C type stars
-                    return CSimStars.get(random.nextInt(CSimStars.size())).deviate();
-                } else { // S type stars
-                    return SSimStars.get(random.nextInt(SSimStars.size())).deviate();
-                }
-            }
-        }
-    }
-
-    public SimStar randomMStar() {
-        return MSimStars.get(random.nextInt(MSimStars.size())).deviate();
-    }
-
-    public SimStar randomKStar() {
-        return KSimStars.get(random.nextInt(KSimStars.size())).deviate();
-    }
-
-    public SimStar randomGStar() {
-        return GSimStars.get(random.nextInt(GSimStars.size())).deviate();
-    }
-
-    public SimStar randomFStar() {
-        return FSimStars.get(random.nextInt(FSimStars.size())).deviate();
-    }
-
-    public Chemical[] getChemicals() {
-        return Chemtable;
     }
 
     private static void loadStars() {
@@ -200,5 +123,81 @@ class Utils {
 //        Chemtable[12] = new Chemical(911, "N2", "N2", 28, 63.34, 77.40, 0.0012506, 1.99526e-05,3.13329
 //        Chemtable[12] = new Chemical(912, "O2", "O2", 32, 54.80, 90.20, 0.001429,  0.501187, 23.8232, 10, 0.0);
 //        Chemtable[12] = new Chemical(905, "CH3CH2OH", "Ethanol", 46.0000, 159.06, 351.66, 0.895, 0.001, 0.001, 0
+    }
+
+    public long getSeed() {
+        return seed;
+    }
+
+    public double randomNumber(double inner, double outer) {
+        return random.nextDouble() * (outer - inner) + inner;
+    }
+
+    public double randomEccentricity() {
+        return (1.0 - Math.pow(random.nextDouble(), ECCENTRICITY_COEFF));
+    }
+
+    public double about(double value, double variation) {
+        return value + (value * randomNumber(-variation, variation));
+    }
+
+    public SimStar randomStar() {
+        double roll = random.nextDouble();
+        if (roll <= 0.907) { // Main sequence stars
+            roll = random.nextDouble();
+            if (roll <= 0.751) { // M type main sequence stars
+                return MSimStars.get(random.nextInt(MSimStars.size())).deviate();
+            } else if (roll <= 0.887) { // K type main sequence stars
+                return KSimStars.get(random.nextInt(KSimStars.size())).deviate();
+            } else if (roll <= 0.960) { // G type main sequence stars
+                return GSimStars.get(random.nextInt(GSimStars.size())).deviate();
+            } else if (roll <= 0.991) { // F type main sequence stars
+                return FSimStars.get(random.nextInt(FSimStars.size())).deviate();
+            } else { // A type main sequence stars
+                return ASimStars.get(random.nextInt(ASimStars.size())).deviate();
+            }
+        } else if (roll <= 0.969) { // White dwarves
+            return White.get(random.nextInt(White.size())).deviate();
+        } else if (roll <= 0.998) { // Giants
+            return Giant.get(random.nextInt(Giant.size())).deviate();
+        } else { // Other stars
+            roll = random.nextDouble();
+            if (roll <= 0.785) { // B type stars
+                return BSimStars.get(random.nextInt(BSimStars.size())).deviate();
+            } else if (roll <= 0.999) { // O type stars
+                return OSimStars.get(random.nextInt(OSimStars.size())).deviate();
+            } else { // Specials and "odd" stars
+                roll = random.nextDouble();
+                if (roll <= 0.997) { // O type stars
+                    return OSimStars.get(random.nextInt(OSimStars.size())).deviate();
+                } else if (roll <= 0.998) { // Wolf Rayet type stars
+                    return WSimStars.get(random.nextInt(WSimStars.size())).deviate();
+                } else if (roll <= 0.999) { // C type stars
+                    return CSimStars.get(random.nextInt(CSimStars.size())).deviate();
+                } else { // S type stars
+                    return SSimStars.get(random.nextInt(SSimStars.size())).deviate();
+                }
+            }
+        }
+    }
+
+    public SimStar randomMStar() {
+        return MSimStars.get(random.nextInt(MSimStars.size())).deviate();
+    }
+
+    public SimStar randomKStar() {
+        return KSimStars.get(random.nextInt(KSimStars.size())).deviate();
+    }
+
+    public SimStar randomGStar() {
+        return GSimStars.get(random.nextInt(GSimStars.size())).deviate();
+    }
+
+    public SimStar randomFStar() {
+        return FSimStars.get(random.nextInt(FSimStars.size())).deviate();
+    }
+
+    public Chemical[] getChemicals() {
+        return Chemtable;
     }
 }

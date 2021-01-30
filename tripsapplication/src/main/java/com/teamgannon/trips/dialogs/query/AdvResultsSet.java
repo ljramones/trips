@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.query;
 
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Builder;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
