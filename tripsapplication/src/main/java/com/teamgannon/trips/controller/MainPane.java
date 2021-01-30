@@ -54,7 +54,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -972,29 +971,26 @@ public class MainPane implements
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
-        findStarInViewDialog.setOnShown(new EventHandler<DialogEvent>() {
-            @Override
-            public void handle(DialogEvent event) {
+        findStarInViewDialog.setOnShown(event -> {
 
-                //Values from screen
-                int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
-                int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
+            //Values from screen
+            int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
+            int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
 
-                //Values from stage
-                int width = (int) stage.getWidth();
-                int height = (int) stage.getHeight();
-                int stageMaxX = (int) stage.getX();
-                int stageMaxY = (int) stage.getY();
+            //Values from stage
+            int width = (int) stage.getWidth();
+            int height = (int) stage.getHeight();
+            int stageMaxX = (int) stage.getX();
+            int stageMaxY = (int) stage.getY();
 
-                //Maximal values your stage
-                int paneMaxX = screenMaxX - width;
-                int paneMaxY = screenMaxY - height;
+            //Maximal values your stage
+            int paneMaxX = screenMaxX - width;
+            int paneMaxY = screenMaxY - height;
 
-                //Check if the position of your stage is not out of screen
-                if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
-                    // Set stage where ever you want
-                    // future
-                }
+            //Check if the position of your stage is not out of screen
+            if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
+                // Set stage where ever you want
+                // future
             }
         });
         Optional<FindResults> optional = findStarInViewDialog.showAndWait();
@@ -1003,35 +999,36 @@ public class MainPane implements
             if (findResults.isSelected()) {
 
                 log.info("Value chose = {}", findResults.getRecord());
-                interstellarSpacePane.highlightStar(findResults.getRecord().getRecordId());
+
+                UUID recordId = findResults.getRecord().getRecordId();
+                interstellarSpacePane.highlightStar(recordId);
+                StarObject starObject = databaseManagementService.getStar(recordId);
+                displayStellarProperties(starObject);
             }
         }
     }
 
     public void runQuery(ActionEvent actionEvent) {
-        queryDialog.setOnShown(new EventHandler<DialogEvent>() {
-            @Override
-            public void handle(DialogEvent event) {
+        queryDialog.setOnShown(event -> {
 
-                //Values from screen
-                int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
-                int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
+            //Values from screen
+            int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
+            int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
 
-                //Values from stage
-                int width = (int) stage.getWidth();
-                int height = (int) stage.getHeight();
-                int stageMaxX = (int) stage.getX();
-                int stageMaxY = (int) stage.getY();
+            //Values from stage
+            int width = (int) stage.getWidth();
+            int height = (int) stage.getHeight();
+            int stageMaxX = (int) stage.getX();
+            int stageMaxY = (int) stage.getY();
 
-                //Maximal values your stage
-                int paneMaxX = screenMaxX - width;
-                int paneMaxY = screenMaxY - height;
+            //Maximal values your stage
+            int paneMaxX = screenMaxX - width;
+            int paneMaxY = screenMaxY - height;
 
-                //Check if the position of your stage is not out of screen
-                if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
-                    // Set stage where ever you want
-                    // future
-                }
+            //Check if the position of your stage is not out of screen
+            if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
+                // Set stage where ever you want
+                // future
             }
         });
         queryDialog.show();
@@ -1243,6 +1240,7 @@ public class MainPane implements
         if (starObject != null) {
             starPropertiesPane.setStar(starObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
+            toggleSidePane(null);
         }
     }
 
