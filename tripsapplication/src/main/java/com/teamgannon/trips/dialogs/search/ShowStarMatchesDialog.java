@@ -41,12 +41,10 @@ public class ShowStarMatchesDialog extends Dialog<String> {
     private final TableColumn<StarObject, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
-
+    private final List<StarObject> starObjects;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
-
-    private DatabaseManagementService databaseManagementService;
-    private final List<StarObject> starObjects;
+    private final DatabaseManagementService databaseManagementService;
 
     public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService, List<StarObject> starObjects) {
         this.databaseManagementService = databaseManagementService;

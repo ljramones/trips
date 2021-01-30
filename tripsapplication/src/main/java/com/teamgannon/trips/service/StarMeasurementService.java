@@ -38,7 +38,7 @@ public class StarMeasurementService {
                                                            @NotNull DistanceRoutes distanceRange) {
         List<TransitRoute> routeList = new ArrayList<>();
         for (StarDisplayRecord targetRecord : starsInView) {
-            if (targetRecord!=null) {
+            if (targetRecord != null) {
                 TransitRoute route = calcDistanceAndCheck(sourceRecord, targetRecord, distanceRange);
                 if (route.isGood()) {
                     routeList.add(route);

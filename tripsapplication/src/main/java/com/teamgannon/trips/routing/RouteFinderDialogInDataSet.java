@@ -1,7 +1,6 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -18,19 +17,18 @@ import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
+public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
 
     /*
      * the combobox for selection
      */
-//    private final @NotNull ComboBox<String> originCmb;
-//    private final @NotNull ComboBox<String> destinationCmb;
-
     private final TextField originCmb;
     private final TextField destinationCmb;
 
@@ -46,21 +44,20 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
     private final TextField lineWidthTextField = new TextField();
 
     private final ColorPicker colorPicker = new ColorPicker();
+    private final String currentDataSet;
+    private final DatabaseManagementService databaseManagementService;
 
-    private String currentDataSet;
-
-    private DatabaseManagementService databaseManagementService;
-
-    private final boolean offlineFlag;
-
-    private Set<String> searchValues;
-
-    public RouteFinderDialog(String currentDataSet,
-                             @NotNull DatabaseManagementService databaseManagementService) {
+    /**
+     * this constructor is used when we search an entire database
+     *
+     * @param currentDataSet            the dataset to use
+     * @param databaseManagementService the database management service
+     */
+    public RouteFinderDialogInDataSet(String currentDataSet,
+                                      @NotNull DatabaseManagementService databaseManagementService) {
 
         this.currentDataSet = currentDataSet;
         this.databaseManagementService = databaseManagementService;
-        this.offlineFlag = true;
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();
@@ -95,6 +92,7 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
         setupRestOfPanel(vBox, gridPane, font);
     }
 
+
     private String lookupStarName(String starToFind) {
         LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService);
         Stage theStage = (Stage) lookupStarDialog.getDialogPane().getScene().getWindow();
@@ -108,41 +106,6 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
             }
         }
         return null;
-    }
-
-
-    public RouteFinderDialog(@NotNull List<StarDisplayRecord> starsInView) {
-        this.offlineFlag = false;
-        this.setTitle("Enter parameters for Route location");
-
-        searchValues = convertList(starsInView);
-
-        VBox vBox = new VBox();
-        GridPane gridPane = new GridPane();
-
-        Font font = topOfPanel(vBox, gridPane);
-
-        originCmb = new TextField();
-        originCmb.setPromptText("origin star");
-
-//        originCmb = new ComboBox<>();
-//        originCmb.setPromptText("start typing");
-//        originCmb.setTooltip(new Tooltip());
-//        originCmb.getItems().addAll(searchValues);
-//        new ComboBoxAutoComplete<>(stage, originCmb);
-        gridPane.add(originCmb, 1, 1);
-
-        destinationCmb = new TextField();
-        destinationCmb.setPromptText("destination star");
-
-//        destinationCmb = new ComboBox<>();
-//        destinationCmb.setPromptText("start typing");
-//        destinationCmb.setTooltip(new Tooltip());
-//        destinationCmb.getItems().addAll(searchValues);
-//        new ComboBoxAutoComplete<>(stage, destinationCmb);
-        gridPane.add(destinationCmb, 1, 2);
-
-        setupRestOfPanel(vBox, gridPane, font);
     }
 
 
@@ -214,14 +177,6 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
         this.getDialogPane().setContent(vBox);
     }
 
-
-    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
-        for (StarDisplayRecord record : starsInView) {
-            starLookup.put(record.getStarName(), record);
-        }
-        return starLookup.keySet();
-    }
-
     private void cancelClicked(ActionEvent actionEvent) {
         setResult(RouteFindingOptions.builder().selected(false).build());
         log.info("cancel find routes clicked");
@@ -232,42 +187,6 @@ public class RouteFinderDialog extends Dialog<RouteFindingOptions> {
             String originStarSelected = originCmb.getText();
             String destinationStarSelected = destinationCmb.getText();
             double maxDistance = 20;
-
-            // this section is only used if we are searching offline and for this we need to search outside of the view
-            if (offlineFlag) {
-                if (originStarSelected.isEmpty()) {
-                    showErrorAlert("Route Finding", "Origin is blank");
-                    return;
-                }
-                if (destinationStarSelected.isEmpty()) {
-                    showErrorAlert("Route Finding", "Destination is blank");
-                    return;
-                }
-                List<StarObject> originStarList = databaseManagementService.findStarsWithName(currentDataSet, originStarSelected);
-                double originStarDistance = originStarList.get(0).getDistance();
-                if (originStarDistance > maxDistance) {
-                    maxDistance = originStarDistance;
-                }
-                List<StarObject> destStarList = databaseManagementService.findStarsWithName(currentDataSet, destinationStarSelected);
-                double destStarDistance = destStarList.get(0).getDistance();
-                if (destStarDistance > maxDistance) {
-                    maxDistance = destStarDistance;
-                }
-                // we add 10 ly to the radius
-                maxDistance += 10;
-            } else {
-                if (!searchValues.contains(originStarSelected)) {
-                    showErrorAlert("Find Route", String.format("Origin star <%s> is not present in view", originStarSelected));
-                    return;
-                }
-                if (!searchValues.contains(destinationStarSelected)) {
-                    showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
-                    return;
-                }
-            }
-
-//            String originStarSelected = originCmb.getValue();
-//            String destinationStarSelected = destinationCmb.getValue();
 
             setResult(
                     RouteFindingOptions

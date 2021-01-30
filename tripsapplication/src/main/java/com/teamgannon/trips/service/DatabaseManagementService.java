@@ -41,44 +41,36 @@ import java.util.stream.StreamSupport;
 public class DatabaseManagementService {
 
     private static final int MAX_REQUEST_SIZE = 9999;
-
-    @PersistenceContext
-    private EntityManager entityManager;
-
     /**
      * storage of data sets in DB
      */
     private final DataSetDescriptorRepository dataSetDescriptorRepository;
-
     /**
      * storage of astrographic objects in DB
      */
     private final StarObjectRepository starObjectRepository;
-
     /**
      * storage of graph colors in DB
      */
     private final GraphColorsRepository graphColorsRepository;
-
     /**
      * storage of graph enables in DB
      */
     private final GraphEnablesRepository graphEnablesRepository;
-
     /**
      * stores all teh star details
      */
     private final StarDetailsPersistRepository starDetailsPersistRepository;
-
     /**
      * civilization bases
      */
     private final CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository;
-
+    @PersistenceContext
+    private EntityManager entityManager;
     /**
      * trips prefs
      */
-    private TripsPrefsRepository tripsPrefsRepository;
+    private final TripsPrefsRepository tripsPrefsRepository;
 
     /**
      * constructor

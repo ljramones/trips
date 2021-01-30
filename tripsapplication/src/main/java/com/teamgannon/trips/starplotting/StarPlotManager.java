@@ -12,14 +12,9 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
-import com.teamgannon.trips.listener.ContextSelectorListener;
-import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.ListUpdaterListener;
-import com.teamgannon.trips.listener.RedrawListener;
-import com.teamgannon.trips.listener.ReportGenerator;
-import com.teamgannon.trips.listener.StellarPropertiesDisplayerListener;
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -32,12 +27,7 @@ import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -50,14 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 
@@ -68,113 +51,94 @@ public class StarPlotManager {
      * we do this to make the star size a constant size bigger x1.5
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+    private final static double RADIUS_MAX = 7;
 
+    ///////////////////
+    private final static double X_MAX = 300;
+    private final static double Y_MAX = 300;
+    private final static double Z_MAX = 300;
     /**
      * a graphics object group for extensions
      */
     private final Group extensionsGroup = new Group();
-
-    ///////////////////
     /**
      * the stellar group for display
      */
     private final Group stellarDisplayGroup = new Group();
-
     /**
      * used to control label visibility
      */
     private final Group labelDisplayGroup = new Group();
-
     /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
-
     private final Group world;
-
     private final SubScene subScene;
-
     /**
      * used to signal an update to the parent list view
      */
     private final ListUpdaterListener listUpdaterListener;
-
     /**
      * the redraw listener
      */
     private final RedrawListener redrawListener;
-
     /**
      * to make database changes
      */
     private final DatabaseListener databaseListener;
-
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
     private final ContextSelectorListener contextSelectorListener;
-
     /**
      * used to signal an update to the parent property panes
      */
     private final StellarPropertiesDisplayerListener displayer;
-
-
     /**
      * the report generator
      */
     private final ReportGenerator reportGenerator;
-
     /**
      * the current plot
      */
     private final CurrentPlot currentPlot;
-
     /**
      * our color palette
      */
     private final ColorPalette colorPalette;
-
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
-
+    private final Map<Node, Label> shapeToLabel = new HashMap<>();
+    private final Random random = new Random();
     /**
      * label state
      */
     private boolean labelsOn = true;
-
     /**
      * toggle state of polities
      */
     private boolean politiesOn = true;
-
     /**
      * reference to the Route Manager
      */
     private RouteManager routeManager;
-
     /**
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
-
     /**
      * the highlight rotator
      */
     private RotateTransition highlightRotator;
-
     /**
      * the civilization and
      */
     private CivilizationDisplayPreferences politiesPreferences;
-
-    private final Map<Node, Label> shapeToLabel = new HashMap<>();
-
     private double controlPaneOffset;
-
 
     /**
      * constructor
@@ -290,7 +254,8 @@ public class StarPlotManager {
 
     /**
      * the label to blink
-     * @param label the label to blink
+     *
+     * @param label      the label to blink
      * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
      */
     private void blinkStarLabel(Label label, int cycleCount) {
@@ -460,7 +425,6 @@ public class StarPlotManager {
         return star;
     }
 
-
     /**
      * create a star named with radius and color located at x,y,z
      *
@@ -507,7 +471,6 @@ public class StarPlotManager {
 
         return star;
     }
-
 
     public @NotNull Node drawStellarObject(@NotNull StarDisplayRecord record,
                                            @NotNull ColorPalette colorPalette,
@@ -592,12 +555,11 @@ public class StarPlotManager {
     public @NotNull Label createLabel(@NotNull StarDisplayRecord record,
                                       @NotNull ColorPalette colorPalette) {
         Label label = new Label(record.getStarName());
-        SerialFont serialFont= colorPalette.getLabelFont();
+        SerialFont serialFont = colorPalette.getLabelFont();
         label.setFont(serialFont.toFont());
         label.setTextFill(colorPalette.getLabelColor());
         return label;
     }
-
 
     /**
      * create a set of extensions for a set of stars
@@ -816,7 +778,6 @@ public class StarPlotManager {
         return menuItem;
     }
 
-
     private @NotNull MenuItem resetRoutingMenuItem() {
         MenuItem menuItem = new MenuItem("Reset Route");
         menuItem.setOnAction(this::resetRoute);
@@ -826,7 +787,6 @@ public class StarPlotManager {
     private void resetRoute(ActionEvent event) {
         routeManager.resetRoute();
     }
-
 
     /**
      * create a menuitem to remove a targeted item
@@ -842,7 +802,6 @@ public class StarPlotManager {
         return removeMenuItem;
     }
 
-
     /**
      * remove a star node form the db
      *
@@ -852,7 +811,6 @@ public class StarPlotManager {
         log.info("Removing object for:" + starDisplayRecord.getStarName());
         databaseListener.removeStar(starDisplayRecord.getRecordId());
     }
-
 
     /**
      * create an enter system object
@@ -885,6 +843,9 @@ public class StarPlotManager {
         return editPropertiesMenuItem;
     }
 
+
+    ///////////////////////// Simulate  /////////
+
     /**
      * edit a star in the database
      *
@@ -916,7 +877,6 @@ public class StarPlotManager {
         return null;
     }
 
-
     /**
      * create a menuitem to show properties
      *
@@ -932,7 +892,6 @@ public class StarPlotManager {
         return propertiesMenuItem;
     }
 
-
     /**
      * display properties for this star
      *
@@ -944,7 +903,6 @@ public class StarPlotManager {
             displayer.displayStellarProperties(starObject);
         }
     }
-
 
     /**
      * jump to the solar system selected
@@ -1007,16 +965,6 @@ public class StarPlotManager {
         });
 
     }
-
-
-    ///////////////////////// Simulate  /////////
-
-    private final Random random = new Random();
-
-    private final static double RADIUS_MAX = 7;
-    private final static double X_MAX = 300;
-    private final static double Y_MAX = 300;
-    private final static double Z_MAX = 300;
 
     /**
      * generate random stars

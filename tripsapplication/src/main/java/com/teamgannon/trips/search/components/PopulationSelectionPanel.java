@@ -105,7 +105,7 @@ public class PopulationSelectionPanel extends BasePane {
      * initialize the event handler
      */
     private void initEventHandler() {
-        EventHandler<ActionEvent> eh = (EventHandler<ActionEvent>) event -> {
+        EventHandler<ActionEvent> eh = event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
                 log.debug("Action performed on checkbox " + chk.getText());

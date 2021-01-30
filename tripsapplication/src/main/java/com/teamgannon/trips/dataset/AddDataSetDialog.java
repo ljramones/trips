@@ -35,9 +35,9 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final TextField fileSelected = new TextField();
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
-    public @NotNull Button addDataSetButton = new Button("Add Dataset");
     private final Localization localization;
     private final DatabaseManagementService databaseManagementService;
+    public @NotNull Button addDataSetButton = new Button("Add Dataset");
 
 
     public AddDataSetDialog(Localization localization,
@@ -72,7 +72,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         Button loadDataSetButton = new Button("Select File");
         loadDataSetButton.setOnAction(this::loadDataSetClicked);
         hBox.getChildren().add(loadDataSetButton);
-        gridPane.add(hBox,1,0);
+        gridPane.add(hBox, 1, 0);
 
         Label dataSetFileSelectedLabel = new Label("Dataset File:");
         dataSetFileSelectedLabel.setMinWidth(20);

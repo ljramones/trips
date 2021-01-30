@@ -54,7 +54,7 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
         MenuItem displayPlotMenuItem = new MenuItem("Plot and display data");
         displayPlotMenuItem.setOnAction((event) -> {
             log.info("plot and display star data!");
-            updater.showNewStellarData(descriptor,true, true);
+            updater.showNewStellarData(descriptor, true, true);
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");

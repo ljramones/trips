@@ -28,9 +28,8 @@ public class SelectActiveDatasetDialog extends Dialog<Integer> {
 
     private final DataSetChangeListener dataSetChangeListener;
     private final DataSetContext dataSetContext;
-    private DatabaseManagementService databaseManagementService;
-
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
+    private final DatabaseManagementService databaseManagementService;
 
 
     public SelectActiveDatasetDialog(DataSetChangeListener dataSetChangeListener,

@@ -11,18 +11,24 @@ import java.util.regex.Pattern;
 @Slf4j
 public class StarCreator {
 
-    private String prefixPatternStr = "^(sd|sg|d|c|g)";
+    private final String prefixPatternStr = "^(sd|sg|d|c|g)";
     Pattern prefixPattern = Pattern.compile(prefixPatternStr);
 
     //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
-    private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
+    private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
     Pattern classPattern = Pattern.compile(classPatternStr);
 
-    private String yerkesPatternStr = "^(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VII)";
+    private final String yerkesPatternStr = "^(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VII)";
     Pattern yerkesPattern = Pattern.compile(yerkesPatternStr);
 
-    private String pecularitiesPatternStr = "^(:|...|!|comp|e|\\[e\\]|er|eq|f|f\\*|f\\+|\\(f\\(|\\(f\\+\\)|\\(\\(f\\)\\)|\\(\\(f\\*\\)\\)|h|ha|He wk|k|m|n|nn|neb|p|pq|q|s|ss|sh|var|wl)";
+    private final String pecularitiesPatternStr = "^(:|...|!|comp|e|\\[e\\]|er|eq|f|f\\*|f\\+|\\(f\\(|\\(f\\+\\)|\\(\\(f\\)\\)|\\(\\(f\\*\\)\\)|h|ha|He wk|k|m|n|nn|neb|p|pq|q|s|ss|sh|var|wl)";
     Pattern pecularitiesPattern = Pattern.compile(pecularitiesPatternStr);
+
+    public static void main(String[] arg) {
+        StarCreator starCreator = new StarCreator();
+        StarModel starModel = starCreator.parseSpectral("sgO3.5Ia+[e]");
+        log.info("done");
+    }
 
     /**
      * create a stellar model based on the spectral classification
@@ -63,12 +69,6 @@ public class StarCreator {
         }
 
         return starModel;
-    }
-
-    public static void main(String[] arg) {
-        StarCreator starCreator = new StarCreator();
-        StarModel starModel = starCreator.parseSpectral("sgO3.5Ia+[e]");
-        log.info("done");
     }
 
 }

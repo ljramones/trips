@@ -82,6 +82,17 @@ public class RouteDescriptor {
     @Builder.Default
     private @NotNull List<Point3D> lineSegments = new ArrayList<>();
 
+    public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
+        return RouteDescriptor
+                .builder()
+                .name(route.getRouteName())
+                .maxLength(route.getRouteStars().size())
+                .color(Color.valueOf(route.getRouteColor()))
+                .routeNotes(route.getRouteNotes())
+                .startStar(route.getStartingStar())
+                .build();
+    }
+
     public void addLineSegment(Point3D point3D) {
         lineSegments.add(point3D);
     }
@@ -106,17 +117,6 @@ public class RouteDescriptor {
         route.setStartingStar(this.startStar);
         route.setRouteColor(this.color.toString());
         return route;
-    }
-
-    public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
-        return RouteDescriptor
-                .builder()
-                .name(route.getRouteName())
-                .maxLength(route.getRouteStars().size())
-                .color(Color.valueOf(route.getRouteColor()))
-                .routeNotes(route.getRouteNotes())
-                .startStar(route.getStartingStar())
-                .build();
     }
 
 

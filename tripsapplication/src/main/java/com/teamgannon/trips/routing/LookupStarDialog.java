@@ -35,14 +35,10 @@ public class LookupStarDialog extends Dialog<String> {
     private final TableColumn<StarObject, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
-
+    private final String starToLookup;
+    private final List<StarObject> starsFound;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
-
-
-    private final String starToLookup;
-
-    private final List<StarObject> starsFound;
 
 
     public LookupStarDialog(String starToLookup,

@@ -30,28 +30,20 @@ import static java.lang.Math.*;
 @Slf4j
 public class GridPlotManager {
 
+    private static final String scaleString = "Scale: 1 grid is %.2f ly square";
     private final @NotNull Map<Node, Label> shapeToLabel;
-
     private final Group scaleGroup = new Group();
     private final Group gridGroup = new Group();
-
     /**
      * used to control label visibility
      */
     private final Group labelDisplayGroup = new Group();
-
     private final double spacing;
     private final double width;
     private final double depth;
     private final ColorPalette colorPalette;
-
     private final SubScene subScene;
-
     private final double lineWidth;
-
-    private static final String scaleString = "Scale: 1 grid is %.2f ly square";
-
-
     private Label scaleText;
     private double controlPaneOffset;
 

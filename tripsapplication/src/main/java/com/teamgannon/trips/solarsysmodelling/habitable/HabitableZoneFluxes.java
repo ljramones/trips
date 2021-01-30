@@ -1,8 +1,6 @@
 package com.teamgannon.trips.solarsysmodelling.habitable;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.stream.IntStream;
@@ -43,7 +41,6 @@ public class HabitableZoneFluxes {
     };
 
 
-
     private double effectiveTemp;
 
     private double recentVenus;
@@ -82,8 +79,8 @@ public class HabitableZoneFluxes {
 
         this.recentVenus = seff[0];
         this.runawayGreenhouse = seff[1];
-        this.maxGreenhouse= seff[2];
-        this.earlyMars=seff[3];
+        this.maxGreenhouse = seff[2];
+        this.earlyMars = seff[3];
         this.runawayGreehouse_5ME = seff[4];
         this.runawayGreehouse_0_1ME = seff[5];
 

@@ -20,6 +20,22 @@ public class ExcelReader {
     // Create a DataFormatter to format and get each cell's value as String
     private final DataFormatter dataFormatter = new DataFormatter();
 
+    public static void main(String[] args) {
+        ExcelReader excelReader = new ExcelReader();
+        ProgressUpdater progressUpdater = new ProgressUpdater() {
+            @Override
+            public void updateLoadInfo(String message) {
+                log.info(message);
+            }
+        };
+
+        Dataset dataSet = new Dataset();
+        dataSet.setName("MyName");
+
+        ExcelFile excelFile = excelReader.loadFile(progressUpdater, dataSet, new File("/Users/larrymitchell/tripsnew/trips/files/larryx.trips.xlsx"));
+        log.info("done");
+
+    }
 
     /**
      * load the excel file
@@ -207,7 +223,6 @@ public class ExcelReader {
         }
     }
 
-
     private int parseInt(String val) {
         try {
             return Integer.parseInt(val);
@@ -222,23 +237,6 @@ public class ExcelReader {
         } catch (Exception e) {
             return 0;
         }
-    }
-
-    public static void main(String[] args) {
-        ExcelReader excelReader = new ExcelReader();
-        ProgressUpdater progressUpdater = new ProgressUpdater() {
-            @Override
-            public void updateLoadInfo(String message) {
-                log.info(message);
-            }
-        };
-
-        Dataset dataSet = new Dataset();
-        dataSet.setName("MyName");
-
-        ExcelFile excelFile = excelReader.loadFile(progressUpdater, dataSet, new File("/Users/larrymitchell/tripsnew/trips/files/larryx.trips.xlsx"));
-        log.info("done");
-
     }
 
 }

@@ -34,7 +34,7 @@ public class TransitRoute {
     }
 
     public @NotNull String getName() {
-        return source.getStarName()+","+target.getStarName();
+        return source.getStarName() + "," + target.getStarName();
     }
 
 }

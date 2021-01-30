@@ -11,27 +11,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class StarPropertiesPane extends Pane {
 
-    private @NotNull StarObject record = new StarObject();
-
     // UI elements
     private final Label recordIdLabel = new Label();
     private final Label dataSetLabel = new Label();
-
     private final Label starNameLabel = new Label();
     private final ColorPicker starColorPicker = new ColorPicker();
     private final Label radiusLabel = new Label();
     private final Label distanceNameLabel = new Label();
     private final Label spectralClassLabel = new Label();
     private final Label tempLabel = new Label();
-
     private final Label xLabel = new Label();
     private final Label yLabel = new Label();
     private final Label zLabel = new Label();
     private final TextArea notesArea = new TextArea();
+    private final Label raLabel = new Label();
 
     //////////
-
-    private final Label raLabel = new Label();
     private final Label pmraLabel = new Label();
     private final Label decLabel = new Label();
     private final Label pmdecLabel = new Label();
@@ -42,7 +37,6 @@ public class StarPropertiesPane extends Pane {
     private final Label bprpLabel = new Label();
     private final Label bpgLabel = new Label();
     private final Label grpLabel = new Label();
-
     /////////
     private final Label polityLabel = new Label();
     private final Label worldTypeLabel = new Label();
@@ -53,9 +47,9 @@ public class StarPropertiesPane extends Pane {
     private final Label prodField = new Label();
     private final Label milspaceLabel = new Label();
     private final Label milplanLabel = new Label();
-
     private final CheckBox anomalyCheckbox = new CheckBox();
     private final CheckBox otherCheckbox = new CheckBox();
+    private @NotNull StarObject record = new StarObject();
 
     public StarPropertiesPane() {
 
@@ -131,7 +125,7 @@ public class StarPropertiesPane extends Pane {
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
         gridPane.setHgap(5);
-        
+
         // items for right grid
         gridPane.add(new Label("ra"), 0, 1);
         raLabel.setText(Double.toString(record.getRa()));

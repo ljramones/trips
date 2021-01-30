@@ -20,11 +20,11 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class RouteFinderInView {
 
-    private DatabaseManagementService databaseManagementService;
     /**
      * used to plot the routes found
      */
     private final InterstellarSpacePane interstellarSpacePane;
+    private DatabaseManagementService databaseManagementService;
 
     /**
      * the constructor
@@ -39,13 +39,13 @@ public class RouteFinderInView {
      * start the location of routes
      */
     public void startRouteLocation(String currentDataSet, DatabaseManagementService databaseManagementService) {
-        RouteFinderDialog routeFinderDialog = new RouteFinderDialog(interstellarSpacePane.getCurrentStarsInView());
-        Stage theStage = (Stage) routeFinderDialog.getDialogPane().getScene().getWindow();
+        RouteFinderDialogInView routeFinderDialogInView = new RouteFinderDialogInView(interstellarSpacePane.getCurrentStarsInView());
+        Stage theStage = (Stage) routeFinderDialogInView.getDialogPane().getScene().getWindow();
         theStage.setAlwaysOnTop(true);
         theStage.toFront();
 
         // get the route location parameters from the dialog
-        Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialog.showAndWait();
+        Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialogInView.showAndWait();
         if (routeFindingOptionsOptional.isPresent()) {
             RouteFindingOptions routeFindingOptions = routeFindingOptionsOptional.get();
 

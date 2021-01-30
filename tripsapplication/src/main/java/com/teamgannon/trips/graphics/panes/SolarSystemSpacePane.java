@@ -33,44 +33,33 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
  */
 public class SolarSystemSpacePane extends Pane {
 
-    // mouse positions
-    private double mousePosX, mousePosY = 0;
-    private double mouseOldX, mouseOldY = 0;
-    private double mouseDeltaX, mouseDeltaY = 0;
-
+    private static final double ROTATE_SECS = 60;
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
-
     private final Group world = new Group();
-
     private final Group root = new Group();
-
-    private SubScene subScene;
-
     private final PerspectiveCamera camera = new PerspectiveCamera(true);
-
-    private static final double ROTATE_SECS = 60;
-
-    /**
-     * animation rotator
-     */
-    private RotateTransition rotator;
-
-    /**
-     * animation toggle
-     */
-    private boolean animationPlay = false;
-
     private final Group starNameGroup = new Group();
-
     /**
      * the universe model which holds detail about our pocket universe
      */
     private final Universe universe = new Universe();
-
-    private ContextSelectorListener contextSelectorListener;
     private final double depth;
+    // mouse positions
+    private double mousePosX, mousePosY = 0;
+    private double mouseOldX, mouseOldY = 0;
+    private double mouseDeltaX, mouseDeltaY = 0;
+    private final SubScene subScene;
+    /**
+     * animation rotator
+     */
+    private RotateTransition rotator;
+    /**
+     * animation toggle
+     */
+    private final boolean animationPlay = false;
+    private ContextSelectorListener contextSelectorListener;
 
 
     public SolarSystemSpacePane(double sceneWidth,

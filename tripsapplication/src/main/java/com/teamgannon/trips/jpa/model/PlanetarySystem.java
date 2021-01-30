@@ -20,7 +20,7 @@ public class PlanetarySystem {
     /**
      * the dataset name which we are guaranteeing to be unique
      */
-    @Column(name="DATASETNAME")
+    @Column(name = "DATASETNAME")
     private String dataSetName;
 
     @OneToMany

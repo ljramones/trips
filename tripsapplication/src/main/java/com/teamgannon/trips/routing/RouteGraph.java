@@ -93,7 +93,7 @@ public class RouteGraph {
 
         exporter.setVertexAttributeProvider((v) -> {
             Map<String, Attribute> map = new LinkedHashMap<>();
-            map.put("label", DefaultAttribute.createAttribute(v.toString()));
+            map.put("label", DefaultAttribute.createAttribute(v));
             return map;
         });
         Writer writer = new StringWriter();

@@ -18,11 +18,13 @@ import java.util.UUID;
 @Builder
 public class AstroCSVStar {
 
+    public String x;
+    public String y;
+    public String z;
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
     @Builder.Default
     private @NotNull StellarFactory stellarFactory = new StellarFactory();
-
     private String datasetName;
     private String displayName;
     private String constellationName;
@@ -31,11 +33,6 @@ public class AstroCSVStar {
     private String notes;
     private String source;
     private String catalogIdList;
-
-    public String x;
-    public String y;
-    public String z;
-
     private String radius;
     private String ra;
     private String pmra;

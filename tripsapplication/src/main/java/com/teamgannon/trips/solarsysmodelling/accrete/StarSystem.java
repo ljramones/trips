@@ -12,31 +12,28 @@ import java.util.ListIterator;
 @Data
 public class StarSystem {
 
-    private SimStar centralBody;
-    private ArrayList<Planet> planets = new ArrayList<>();
-    private ArrayList<Planet> failedPlanets = new ArrayList<>();
-    private ArrayList<Planet> escapedMoons = new ArrayList<>();
     static final double B = 1.2E-5; // used in critical mass calculations
     static final double PROTOPLANET_MASS = 1.0E-15; // TODO: This is in stellar masses, check the validity of this. Vesta is 1.3028E-10 by comparison.
     static final double DUST_DENSITY_COEFF = 2.0E-3;    // TODO: Read Dole's paper and figure out what "A" is.
     static final double ALPHA = 5.0;    // TODO: Used in density calcs (how and why?)
     static final double N = 3.0;    // TODO: Used in density calcs (how and why?)
     static final double K = 50.0; // K = gas/dust ratio TODO: is this accurate for a protoplanetary disk?
-
-    // planetary formation variables, these are mostly temporary
-    private boolean dustLeft = false;
     private final boolean doMoons;
     private final boolean verbose;
     private final boolean extraVerbose;
+    private final double outerPlanetLimit = 0.0;
     public boolean habitable = false;
-
+    private SimStar centralBody;
+    private ArrayList<Planet> planets = new ArrayList<>();
+    private ArrayList<Planet> failedPlanets = new ArrayList<>();
+    private ArrayList<Planet> escapedMoons = new ArrayList<>();
+    // planetary formation variables, these are mostly temporary
+    private boolean dustLeft = false;
     private double radiusInner = 0.0;
     private double radiusOuter = 0.0;
     private double reducedMass = 0.0;
     private double dustDensity = 0.0;
     private double cloudEccentricity = 0.0;
-    private final double outerPlanetLimit = 0.0;
-
     private DustRecord dustHead = null;
 
     public StarSystem(boolean doMoons, boolean verbose, boolean extraVerbose) {
@@ -63,6 +60,18 @@ public class StarSystem {
         checkPlanets();
         migratePlanets();
         setEnvironments();
+    }
+
+    public static double sumMassOfPlanets(ArrayList<Planet> p) {
+        if (p.size() == 0) {
+            return 0.0;
+        }
+        ListIterator<Planet> i = p.listIterator();
+        double x = 0.0;
+        while (i.hasNext()) {
+            x += i.next().mass; // TODO: Is this actually equal to dustMass + gasMass? Need to investigate further.
+        }
+        return x;
     }
 
     private void distributePlanetaryMasses() {
@@ -702,18 +711,6 @@ public class StarSystem {
             moons += planet.numberOfMoons();
         }
         return moons;
-    }
-
-    public static double sumMassOfPlanets(ArrayList<Planet> p) {
-        if (p.size() == 0) {
-            return 0.0;
-        }
-        ListIterator<Planet> i = p.listIterator();
-        double x = 0.0;
-        while (i.hasNext()) {
-            x += i.next().mass; // TODO: Is this actually equal to dustMass + gasMass? Need to investigate further.
-        }
-        return x;
     }
 
     public String toString() {

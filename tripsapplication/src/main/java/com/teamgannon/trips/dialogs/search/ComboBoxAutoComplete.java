@@ -16,23 +16,21 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- *
  * Uses a combobox tooltip as the suggestion for auto complete and updates the
  * combo box itens accordingly <br />
  * It does not work with space, space and escape cause the combobox to hide and
  * clean the filter ... Send me a PR if you want it to work with all characters
  * -> It should be a custom controller - I KNOW!
  *
- * @author wsiqueir
- *
  * @param <T>
+ * @author wsiqueir
  */
 public class ComboBoxAutoComplete<T> {
 
-    private Stage stage;
-    private ComboBox<T> cmb;
     String filter = "";
-    private ObservableList<T> originalItems;
+    private final Stage stage;
+    private final ComboBox<T> cmb;
+    private final ObservableList<T> originalItems;
 
     public ComboBoxAutoComplete(Stage stage,
                                 @NotNull ComboBox<T> cmb) {
@@ -63,7 +61,7 @@ public class ComboBoxAutoComplete<T> {
             cmb.getTooltip().hide();
         } else {
             Stream<T> itens = cmb.getItems().stream();
-            String txtUsr = unaccent(filter.toString().toLowerCase());
+            String txtUsr = unaccent(filter.toLowerCase());
             itens.filter(el -> unaccent(el.toString().toLowerCase()).contains(txtUsr)).forEach(filteredList::add);
             cmb.getTooltip().setText(txtUsr);
             double posX = stage.getX() + cmb.getBoundsInParent().getMinX();

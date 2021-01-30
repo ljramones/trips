@@ -188,7 +188,7 @@ public class OrbitalDynamicsUtils implements OrbitalDynamics {
      * mean anomaly
      * M = E - e sin(E)
      *
-     * @param angle the angle
+     * @param angle        the angle
      * @param eccentricity the eccentricity
      * @return mean anomaly
      */

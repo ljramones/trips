@@ -12,10 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public class DistanceSelectionPanel extends BasePane {
 
     private final @NotNull RangeSlider d2EarthSlider;
-    private DistanceRange distanceRange = DistanceRange.builder().lowValue(0).highValue(20).min(0).max(20).build();
-
     TextField lowRangeTextField = new TextField();
     TextField highRangeTextField = new TextField();
+    private DistanceRange distanceRange = DistanceRange.builder().lowValue(0).highValue(20).min(0).max(20).build();
 
 
     public DistanceSelectionPanel(double searchDistance, @NotNull DistanceRange distanceRange) {

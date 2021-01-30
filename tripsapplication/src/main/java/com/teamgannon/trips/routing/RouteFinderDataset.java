@@ -5,8 +5,8 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class RouteFinderOffline {
+public class RouteFinderDataset {
 
     /**
      * used to plot the routes found
      */
     private final InterstellarSpacePane interstellarSpacePane;
 
-    public RouteFinderOffline(InterstellarSpacePane interstellarSpacePane) {
+    public RouteFinderDataset(InterstellarSpacePane interstellarSpacePane) {
         this.interstellarSpacePane = interstellarSpacePane;
     }
 
@@ -39,14 +39,14 @@ public class RouteFinderOffline {
                                    DatabaseManagementService databaseManagementService,
                                    @NotNull StarDisplayPreferences starDisplayPreferences) {
 
-        RouteFinderDialog routeFinderDialog = new RouteFinderDialog(
+        RouteFinderDialogInDataSet routeFinderDialogInView = new RouteFinderDialogInDataSet(
                 currentDataset.getDataSetName(),
                 databaseManagementService);
-        Stage theStage = (Stage) routeFinderDialog.getDialogPane().getScene().getWindow();
+        Stage theStage = (Stage) routeFinderDialogInView.getDialogPane().getScene().getWindow();
         theStage.setAlwaysOnTop(true);
         theStage.toFront();
 
-        Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialog.showAndWait();
+        Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialogInView.showAndWait();
         if (routeFindingOptionsOptional.isPresent()) {
             log.info("selected");
 
