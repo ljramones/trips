@@ -87,7 +87,8 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         if (!stellarSet.isEmpty()) {
             List<String> spectralClasses = stellarSet.stream().map(StellarType::getValue).collect(Collectors.toList());
             Expression<String> exp = root.get("orthoSpectralClass");
-            Predicate predicate = exp.in(spectralClasses);
+            Expression<String> subString = cb.substring(exp, 0, 1);
+            Predicate predicate = subString.in(spectralClasses);
             predicates.add(predicate);
         }
 
