@@ -139,6 +139,7 @@ public class MainPane implements
     public Label databaseStatus;
     public Label routingStatus;
     public Button plotButton;
+    public VBox displayPane;
 
     ////  local assets
 
@@ -336,7 +337,18 @@ public class MainPane implements
         this.menuBar.setPrefWidth(Universe.boxWidth + 20);
         this.toolBar.setPrefWidth(Universe.boxWidth + 20);
 
+        /*
+        <SplitPane fx:id="mainSplitPane"
+                       dividerPositions="0.76"
+            />
+         */
+        this.mainSplitPane = new SplitPane();
+        this.mainSplitPane.setDividerPositions(1.0);
+//        this.mainSplitPane.lookupAll(".split-pane-divider")
+//                .forEach(div ->  div.setMouseTransparent(true) );
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
+
+        this.displayPane.getChildren().add(mainSplitPane);
     }
 
     /**
@@ -439,8 +451,16 @@ public class MainPane implements
      */
     private void setSliderControl() {
         DoubleProperty splitPaneDividerPosition = mainSplitPane.getDividers().get(0).positionProperty();
-        splitPaneDividerPosition.addListener((obs, oldPos, newPos)
-                -> toggleSettings.setSelected(newPos.doubleValue() < 0.95));
+        splitPaneDividerPosition.addListener((obs, oldPos, newPos) -> {
+                    double pos = newPos.doubleValue();
+                    log.info("mouse moved::{}", pos);
+                    toggleSettings.setSelected(pos < 0.95);
+//                    if (pos < .75) {
+//                        mainSplitPane.setDividerPosition(0, .75);
+//                    }
+                    adjustSliderForSidePanel(pos);
+                }
+        );
     }
 
     /**
@@ -600,19 +620,9 @@ public class MainPane implements
         this.mainSplitPane.setPrefHeight(height - 112);
         // control split-pane divider so it doesn't lag while resizing
         double spPosition = mainSplitPane.getDividers().get(0).getPosition();
-        if (spPosition > .95) {
-            // if the divider is all the way over then make sure it stays there
-            mainSplitPane.setDividerPosition(0, 1);
-        } else {
-            // now make sure that the divider does not go past the settings panel position
-            double currentWidth = this.mainPanel.getWidth();
-            double exposedSettingsWidth = (1 - spPosition) * currentWidth;
-            log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
-            if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
-                double adjustedWidthRatio = 260 / currentWidth;
-                mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
-            }
-        }
+
+        // now make sure that the divider does not go past the settings panel position
+        adjustSliderForSidePanel(spPosition);
 
         Double originalDims = Math.sqrt(originalHeight * originalWidth);
         Double newDims = Math.sqrt(height * width);
@@ -631,6 +641,28 @@ public class MainPane implements
         });
 
 
+    }
+
+    private void adjustSliderForSidePanel(double spPosition) {
+        log.info("sidePane is "+sidePaneOn);
+        if (!sidePaneOn) {
+            // this takes into consideration that the sidepane is closed and we
+            // ensure it stays that way
+            mainSplitPane.setDividerPosition(0, 1);
+        } else {
+            if (spPosition > .95) {
+                // if the divider is all the way over then make sure it stays there
+                mainSplitPane.setDividerPosition(0, 1);
+            } else {
+                double currentWidth = this.mainPanel.getWidth();
+                double exposedSettingsWidth = (1 - spPosition) * currentWidth;
+                log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
+                if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
+                    double adjustedWidthRatio = 260 / currentWidth;
+                    mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
+                }
+            }
+        }
     }
 
 
@@ -1711,6 +1743,5 @@ public class MainPane implements
         }
 
     }
-
 
 }

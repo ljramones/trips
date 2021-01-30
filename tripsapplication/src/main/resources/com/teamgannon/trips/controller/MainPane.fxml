@@ -165,8 +165,8 @@
             <CheckBox fx:id="animationCheckbox" mnemonicParsing="false"
                       onAction="#runAnimation" disable="true" text="animate"/>
         </ToolBar>
-        <VBox>
-            <SplitPane fx:id="mainSplitPane" dividerPositions="0.76"/>
+        <VBox fx:id="displayPane">
+
         </VBox>
         <HBox fx:id="statusBar" prefHeight="50" minHeight="50"/>
     </VBox>
