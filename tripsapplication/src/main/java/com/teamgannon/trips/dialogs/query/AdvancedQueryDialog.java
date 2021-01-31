@@ -35,7 +35,10 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final TextArea wherePart = new TextArea();
 
     private final CheckBox plotCheckBox = new CheckBox("Plot Results");
-    private final CheckBox viewCheckBox = new CheckBox("View Results");
+    private final CheckBox viewCheckBox = new CheckBox("View Results as table");
+
+    private ListView<String> fieldsView = new ListView<>();
+    private ListView<String> operatorsView = new ListView<>();
 
     private final TextArea queryErrors = new TextArea();
 
@@ -58,7 +61,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         gridPane.setHgap(5);
         gridPane.setPrefWidth(900);
 
-        Label datasetLabel = new Label("Dataset desired: ");
+        Label datasetLabel = new Label("Dataset to query: ");
         datasetLabel.setFont(font);
         gridPane.add(datasetLabel, 0, 1);
         datasetChoices.getItems().addAll(dataSetDescriptorMap.keySet());
@@ -67,16 +70,26 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
         Label queryLabel = new Label("Query to run::> ");
         queryLabel.setFont(font);
+        gridPane.add(queryLabel, 2, 1);
+
         Label queryPrefix = new Label("SELECT * FROM STARS WHERE ");
         queryPrefix.setFont(font);
+        gridPane.add(queryPrefix, 3, 1);
 
-        gridPane.add(queryLabel, 0, 2);
-        gridPane.add(queryPrefix, 1, 2);
+        fieldsView.setMinWidth(50);
+        fieldsView.setPlaceholder(new Label("No Content In List"));
+        gridPane.add(fieldsView, 0, 2 );
+
+        operatorsView.setMinWidth(50);
+        operatorsView.setPlaceholder(new Label("No Content In List"));
+        gridPane.add(operatorsView, 1, 2 );
+
         wherePart.setMinWidth(300);
-        gridPane.add(wherePart, 2, 2);
+        wherePart.setPromptText("Enter query expression, leaving it empty mean you want all stars");
+        gridPane.add(wherePart, 2, 2, 2, 1);
 
+        // check boxes
         gridPane.add(plotCheckBox, 0, 3);
-
         viewCheckBox.setSelected(true);
         gridPane.add(viewCheckBox, 1, 3);
         vBox.getChildren().add(gridPane);
@@ -116,7 +129,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         String datasetName = datasetChoices.getValue();
         if (!datasetName.isEmpty()) {
             String queryPrefix = "SELECT * FROM STAR_OBJ WHERE ";
-            String datasetQuery = "DATASETNAME='" + datasetName + "' ";
+            String datasetQuery = "DATA_SET_NAME='" + datasetName + "' ";
             String queryToRun = queryPrefix + datasetQuery;
 
             if (queryWherePart.isEmpty()) {
