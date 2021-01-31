@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsysmodelling.utils;
+package com.teamgannon.trips.stellarmodelling;
 
 
 import static java.lang.Math.log10;

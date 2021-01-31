@@ -69,12 +69,11 @@
                           onAction="#runQuery" text="Select stars from current dataset..."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#plotStars" text="Plot Stars"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#loadDataSetManager" text="Import dataset from a file..."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#viewEditStarData" text="View/Edit selected Star Data"/>
                 <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#loadDataSetManager" text="Import dataset from a file..."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#exportDatabase" text="Export Database to Excel"/>
                 <SeparatorMenuItem/>

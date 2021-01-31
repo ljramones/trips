@@ -1,5 +1,6 @@
 package com.teamgannon.trips.stellarmodelling;
 
+import javafx.scene.paint.Color;
 import lombok.Data;
 
 /**
@@ -14,7 +15,7 @@ public class StellarClassification {
 
     private StarColor starColor;
 
-    private StellarChromaticity stellarChromaticity;
+    private Color stellarChromaticity;
 
     private LuminosityClass luminosityClass;
 

@@ -1,9 +1,13 @@
 package com.teamgannon.trips.stellarmodelling;
 
+import javafx.scene.paint.Color;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The stellar factory
@@ -11,6 +15,17 @@ import java.util.Set;
  * Created by larrymitchell on 2017-02-19.
  */
 public class StellarFactory {
+
+    private final static Map<String, String> chromaticyMap = Stream.of(new String[][]{
+            {"O", "157,180,254"},
+            {"B", "170,191,255"},
+            {"A", "202,216,255"},
+            {"F", "255,255,255"},
+            {"G", "255,244,232"},
+            {"K", "255,222,180"},
+            {"M", "157,180,254"},
+            {"D", "255,189,111"},
+    }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     /**
      * the factory
@@ -78,7 +93,7 @@ public class StellarFactory {
         oClass.setStellarType(StellarType.O);
         oClass.setChromacity("blue");
         oClass.setStarColor(StarColor.O);
-        oClass.setStellarChromaticity(StellarChromaticity.O);
+        oClass.setStellarChromaticity(getColor(chromaticyMap.get("O")));
         oClass.setColor("blue");
         oClass.setLines(HydrogenLines.WEAK);
         oClass.setLowerTemperature(30000);
@@ -91,6 +106,18 @@ public class StellarFactory {
         oClass.setLowerRadius(6.6);
         oClass.setSequenceFraction(0.00003);
         return oClass;
+    }
+
+    private static Color getColor(String key) {
+        String[] colorParts = key.split(",");
+        try {
+            int red = Integer.parseInt(colorParts[0]);
+            int green = Integer.parseInt(colorParts[1]);
+            int blue = Integer.parseInt(colorParts[2]);
+            return Color.rgb(red, green, blue);
+        } catch (NumberFormatException nfe) {
+            return Color.MEDIUMVIOLETRED;
+        }
     }
 
     /**
@@ -140,7 +167,7 @@ public class StellarFactory {
         StellarClassification bClass = new StellarClassification();
         bClass.setStellarType(StellarType.B);
         bClass.setStarColor(StarColor.B);
-        bClass.setStellarChromaticity(StellarChromaticity.B);
+        bClass.setStellarChromaticity(getColor(chromaticyMap.get("B")));
         bClass.setColor("blue white");
         bClass.setChromacity("deep blue white");
         bClass.setLines(HydrogenLines.MEDIUM);
@@ -179,7 +206,7 @@ public class StellarFactory {
         aClass.setStellarType(StellarType.A);
 
         aClass.setStarColor(StarColor.A);
-        aClass.setStellarChromaticity(StellarChromaticity.A);
+        aClass.setStellarChromaticity(getColor(chromaticyMap.get("A")));
 
         aClass.setUpperTemperature(10000);
         aClass.setLowerTemperature(7500);
@@ -221,7 +248,7 @@ public class StellarFactory {
         fClass.setStellarType(StellarType.F);
 
         fClass.setStarColor(StarColor.F);
-        fClass.setStellarChromaticity(StellarChromaticity.F);
+        fClass.setStellarChromaticity(getColor(chromaticyMap.get("F")));
 
         fClass.setUpperTemperature(7500);
         fClass.setLowerTemperature(6000);
@@ -277,7 +304,7 @@ public class StellarFactory {
         gClass.setStellarType(StellarType.G);
 
         gClass.setStarColor(StarColor.G);
-        gClass.setStellarChromaticity(StellarChromaticity.G);
+        gClass.setStellarChromaticity(getColor(chromaticyMap.get("G")));
 
         gClass.setUpperTemperature(6000);
         gClass.setLowerTemperature(5200);
@@ -330,7 +357,7 @@ public class StellarFactory {
         kClass.setStellarType(StellarType.K);
 
         kClass.setStarColor(StarColor.K);
-        kClass.setStellarChromaticity(StellarChromaticity.K);
+        kClass.setStellarChromaticity(getColor(chromaticyMap.get("K")));
 
         kClass.setUpperTemperature(5200);
         kClass.setLowerTemperature(3700);
@@ -384,7 +411,7 @@ public class StellarFactory {
         mClass.setStellarType(StellarType.M);
 
         mClass.setStarColor(StarColor.M);
-        mClass.setStellarChromaticity(StellarChromaticity.M);
+        mClass.setStellarChromaticity(getColor(chromaticyMap.get("M")));
 
         mClass.setUpperTemperature(3700);
         mClass.setLowerTemperature(2400);
@@ -412,7 +439,7 @@ public class StellarFactory {
         qClass.setStellarType(StellarType.Q);
 
         qClass.setStarColor(StarColor.F);
-        qClass.setStellarChromaticity(StellarChromaticity.F);
+        qClass.setStellarChromaticity(getColor(chromaticyMap.get("F")));
 
         qClass.setUpperTemperature(7500);
         qClass.setLowerTemperature(6000);
