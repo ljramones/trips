@@ -37,13 +37,10 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final CheckBox plotCheckBox = new CheckBox("Plot Results");
     private final CheckBox viewCheckBox = new CheckBox("View Results as table");
 
-    private ListView<String> fieldsView = new ListView<>();
-    private ListView<String> operatorsView = new ListView<>();
-
     private final TextArea queryErrors = new TextArea();
 
     private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
-
+    QueryFields queryFields = new QueryFields();
     private final DatabaseManagementService service;
     private final @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap;
 
@@ -76,28 +73,41 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         queryPrefix.setFont(font);
         gridPane.add(queryPrefix, 3, 1);
 
-        fieldsView.setMinWidth(50);
-        fieldsView.setPlaceholder(new Label("No Content In List"));
-        gridPane.add(fieldsView, 0, 2 );
+        Label fieldsLabel = new Label("Field to query on");
+        fieldsLabel.setFont(font);
+        Label operatorsLabel = new Label("Operators to use");
+        operatorsLabel.setFont(font);
+        gridPane.add(fieldsLabel, 0, 2);
+        gridPane.add(operatorsLabel, 1, 2);
 
+        ListView<String> fieldsView = new ListView<>();
+        fieldsView.setMinWidth(50);
+
+        fieldsView.getItems().addAll(queryFields.getStarObjectFields());
+        gridPane.add(fieldsView, 0, 3);
+
+        ListView<String> operatorsView = new ListView<>();
         operatorsView.setMinWidth(50);
-        operatorsView.setPlaceholder(new Label("No Content In List"));
-        gridPane.add(operatorsView, 1, 2 );
+        operatorsView.getItems().addAll(queryFields.getOperators());
+        gridPane.add(operatorsView, 1, 3);
 
         wherePart.setMinWidth(300);
         wherePart.setPromptText("Enter query expression, leaving it empty mean you want all stars");
-        gridPane.add(wherePart, 2, 2, 2, 1);
+        gridPane.add(wherePart, 2, 3, 2, 1);
 
         // check boxes
-        gridPane.add(plotCheckBox, 0, 3);
+        gridPane.add(plotCheckBox, 0, 4);
         viewCheckBox.setSelected(true);
-        gridPane.add(viewCheckBox, 1, 3);
+        gridPane.add(viewCheckBox, 1, 4);
         vBox.getChildren().add(gridPane);
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
+        Button examplesButton = new Button("show examples");
+        examplesButton.setOnAction(this::showExamples);
+        hBox.getChildren().add(examplesButton);
         Button doQueryButton = new Button("run query");
-        doQueryButton.setOnAction(this::runquery);
+        doQueryButton.setOnAction(this::runQuery);
         hBox.getChildren().add(doQueryButton);
         Button cancelButton = new Button("dismiss");
         cancelButton.setOnAction(this::cancelReq);
@@ -113,6 +123,11 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         stage.setOnCloseRequest(this::close);
     }
 
+    private void showExamples(ActionEvent actionEvent) {
+        ExamplesDialog dialog = new ExamplesDialog(queryFields.getExamples());
+        dialog.show();
+    }
+
     private void close(WindowEvent windowEvent) {
         AdvResultsSet advResultsSet = AdvResultsSet.builder().dismissed(true).build();
         setResult(advResultsSet);
@@ -123,7 +138,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         setResult(advResultsSet);
     }
 
-    private void runquery(ActionEvent actionEvent) {
+    private void runQuery(ActionEvent actionEvent) {
         String queryWherePart = wherePart.getText();
 
         String datasetName = datasetChoices.getValue();
