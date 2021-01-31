@@ -26,8 +26,8 @@ public class StarCreator {
 
     public static void main(String[] arg) {
         StarCreator starCreator = new StarCreator();
-        StarModel starModel = starCreator.parseSpectral("sgO3.5Ia+[e]");
-        log.info("done");
+        StarModel starModel = starCreator.parseSpectral("G2V");
+        log.info(starModel.toString());
     }
 
     /**
@@ -42,7 +42,6 @@ public class StarCreator {
         Matcher preMatcher = prefixPattern.matcher(spectralClassification);
         if (preMatcher.find()) {
             String prefix = preMatcher.group();
-            starModel.setStarType(prefix);
             spectralClassification = spectralClassification.substring(prefix.length());
             log.info("prefix is " + prefix);
         }
@@ -70,5 +69,7 @@ public class StarCreator {
 
         return starModel;
     }
+
+
 
 }

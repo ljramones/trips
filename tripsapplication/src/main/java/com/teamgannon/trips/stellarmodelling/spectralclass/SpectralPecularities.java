@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsysmodelling.utils.spectralclass;
+package com.teamgannon.trips.stellarmodelling.spectralclass;
 
 import java.util.Map;
 import java.util.stream.Collectors;

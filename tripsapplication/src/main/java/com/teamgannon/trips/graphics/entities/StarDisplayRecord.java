@@ -4,7 +4,7 @@ import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
-import com.teamgannon.trips.solarsysmodelling.utils.StarUtils;
+import com.teamgannon.trips.stellarmodelling.StarUtils;
 import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
