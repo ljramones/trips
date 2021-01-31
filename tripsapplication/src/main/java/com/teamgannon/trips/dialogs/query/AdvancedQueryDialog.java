@@ -73,7 +73,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         queryPrefix.setFont(font);
         gridPane.add(queryPrefix, 3, 1);
 
-        Label fieldsLabel = new Label("Field to query on");
+        Label fieldsLabel = new Label("Fields to query on");
         fieldsLabel.setFont(font);
         Label operatorsLabel = new Label("Operators to use");
         operatorsLabel.setFont(font);
@@ -92,7 +92,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         gridPane.add(operatorsView, 1, 3);
 
         wherePart.setMinWidth(300);
-        wherePart.setPromptText("Enter query expression, leaving it empty mean you want all stars");
+        wherePart.setPromptText("Enter query expression, leaving it empty means you want all stars");
         gridPane.add(wherePart, 2, 3, 2, 1);
 
         // check boxes
