@@ -1,5 +1,4 @@
 spring:
-
   application:
     ui:
       title: Terran Republic Interstellar Plotter (TRIPS)
@@ -28,10 +27,10 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
   # spring default security
-  security:
-    user:
-      name: Caine
-      password: Mutiny
+#  security:
+#    user:
+#      name: Caine
+#      password: Mutiny
 
   # Enabling H2 Console
   h2:
