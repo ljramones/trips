@@ -36,8 +36,8 @@ import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
-import com.teamgannon.trips.routing.RouteFinderInView;
 import com.teamgannon.trips.routing.RouteFinderDataset;
+import com.teamgannon.trips.routing.RouteFinderInView;
 import com.teamgannon.trips.routing.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
@@ -1720,14 +1720,18 @@ public class MainPane implements
             AdvResultsSet advResultsSet = optional.get();
             if (!advResultsSet.isDismissed()) {
                 if (advResultsSet.isResultsFound()) {
-                    showList(advResultsSet.getStarsFound());
-                    astrographicPlotter.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
-                            advResultsSet.getStarsFound(),
-                            searchContext.getAstroSearchQuery().getCenterCoordinates(),
-                            tripsContext.getAppViewPreferences().getColorPallete(),
-                            tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                            tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                    );
+                    if (advResultsSet.isViewStars()) {
+                        showList(advResultsSet.getStarsFound());
+                    }
+                    if (advResultsSet.isPlotStars()) {
+                        astrographicPlotter.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
+                                advResultsSet.getStarsFound(),
+                                searchContext.getAstroSearchQuery().getCenterCoordinates(),
+                                tripsContext.getAppViewPreferences().getColorPallete(),
+                                tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                                tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                        );
+                    }
                 } else {
                     showInfoMessage("Advanced Query", "No stars were found to match query");
                 }
