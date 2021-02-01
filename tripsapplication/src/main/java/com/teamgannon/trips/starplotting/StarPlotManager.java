@@ -34,6 +34,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -637,8 +639,10 @@ public class StarPlotManager {
         final ContextMenu cm = new ContextMenu();
 
         MenuItem titleItem = new MenuItem(name);
+        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size:20; -fx-font-weight: bold");
         titleItem.setDisable(true);
         cm.getItems().add(titleItem);
+        cm.getItems().add(new SeparatorMenuItem());
 
         MenuItem setStarMenuItem = createSetStarMenuitem(star);
         cm.getItems().add(setStarMenuItem);
