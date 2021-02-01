@@ -26,22 +26,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
 
-  # spring default security
-#  security:
-#    user:
-#      name: Caine
-#      password: Mutiny
-
-  # Enabling H2 Console
-  h2:
-    console:
-      enabled: true
-
-      # Custom H2 Console URL
-      path: /h2
 app:
   title: Terran Republic Interstellar Plotting System (TRIPS)
-  version: v0.6.3
+  version: v0.6.4
   releaseDate: 7 Feb 2021
   contributors: LJ Ramones, CE Gannon, R Boatright
   projectPage: https://github.com/ljramones/trips

@@ -34,7 +34,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     private final @NotNull SearchPane searchPane;
     private final CheckBox plotDisplayCheckbox = new CheckBox("Plot Stars");
     private final CheckBox tableDisplayCheckbox = new CheckBox("Show Table");
-    private final CheckBox exportCheckbox = new CheckBox("Export Dataset");
+    private final CheckBox exportCheckbox = new CheckBox("Export Selection to Excel");
 
     /**
      * constructor
