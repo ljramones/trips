@@ -450,6 +450,8 @@ public class MainPane implements
      */
     private void setupStellarObjectListView() {
 
+        ScrollPane scrollPane = new ScrollPane();
+
         objectViewPane = new ObjectViewPane(
                 this,
                 this,
@@ -457,8 +459,10 @@ public class MainPane implements
                 this,
                 this);
 
+        scrollPane.setContent(objectViewPane);
+
         // setup model to display in case we turn on
-        objectsViewPane.setContent(objectViewPane);
+        objectsViewPane.setContent(scrollPane);
 
     }
 
@@ -1264,7 +1268,9 @@ public class MainPane implements
         if (starObject != null) {
             starPropertiesPane.setStar(starObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
-            toggleSidePane(null);
+            if (!sidePaneOn) {
+                toggleSidePane(null);
+            }
         }
     }
 
