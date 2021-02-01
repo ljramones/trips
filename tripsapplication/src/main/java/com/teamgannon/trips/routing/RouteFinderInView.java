@@ -58,7 +58,9 @@ public class RouteFinderInView {
                     String origin = routeFindingOptions.getOriginStar();
                     String destination = routeFindingOptions.getDestinationStar();
                     List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-                    RouteBuilderHelper routeBuilderHelper = new RouteBuilderHelper(starsInView);
+                    List<StarDisplayRecord> prunedStars = prune(starsInView, routeFindingOptions);
+
+                    RouteBuilderHelper routeBuilderHelper = new RouteBuilderHelper(prunedStars);
 
                     // check if the start star is present
                     if (!routeBuilderHelper.has(origin)) {
@@ -72,6 +74,7 @@ public class RouteFinderInView {
                         return;
                     }
 
+
                     // calculate the transits based on upper and lower bounds
                     StarMeasurementService starMeasurementService = new StarMeasurementService();
                     DistanceRoutes distanceRoutes = DistanceRoutes
@@ -79,7 +82,7 @@ public class RouteFinderInView {
                             .upperDistance(routeFindingOptions.getUpperBound())
                             .lowerDistance((routeFindingOptions.getLowerBound()))
                             .build();
-                    List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(distanceRoutes, starsInView);
+                    List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(distanceRoutes, prunedStars);
                     log.info("transits calculated");
 
                     // create a graph based on the transits available
@@ -160,6 +163,21 @@ public class RouteFinderInView {
             }
         }
     }
+
+    private List<StarDisplayRecord> prune(List<StarDisplayRecord> starsInView, RouteFindingOptions routeFindingOptions) {
+        List<StarDisplayRecord> prunedStars = new ArrayList<>();
+        for (StarDisplayRecord starDisplayRecord: starsInView) {
+            if (routeFindingOptions.getStarExclusions().contains(starDisplayRecord.getSpectralClass().substring(0,1))) {
+                continue;
+            }
+            if (routeFindingOptions.getPolityExclusions().contains(starDisplayRecord.getPolity())) {
+                continue;
+            }
+            prunedStars.add(starDisplayRecord);
+        }
+        return prunedStars;
+    }
+
 
     /**
      * plot the routes found
