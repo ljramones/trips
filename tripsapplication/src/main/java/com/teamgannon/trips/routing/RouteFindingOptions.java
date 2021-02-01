@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @Builder
 public class RouteFindingOptions {
@@ -25,6 +28,18 @@ public class RouteFindingOptions {
 
     @Builder.Default
     private int numberPaths = 3;
+
+    /**
+     * the stars to exclude when finding routes
+     */
+    @Builder.Default
+    private Set<String> starExclusions = new HashSet<>();
+
+    /**
+     * the polities that we want to exclude
+     */
+    @Builder.Default
+    private Set<String> polityExclusions = new HashSet<>();
 
     private boolean selected;
 
