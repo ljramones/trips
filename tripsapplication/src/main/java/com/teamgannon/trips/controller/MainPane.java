@@ -255,6 +255,8 @@ public class MainPane implements
 
         setDefaultSizesForUI();
 
+        setButtonFonts();
+
         setStatusPanel();
 
         // get colors from DB
@@ -284,6 +286,10 @@ public class MainPane implements
         loadDBPresets();
 
         showBeginningAlert();
+
+    }
+
+    private void setButtonFonts() {
 
     }
 
