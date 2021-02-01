@@ -103,8 +103,6 @@
                           onAction="#routeFinderInView" text="Route finder from A to B (in View)"/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#routeFinderDataset" text="Route finder from A to B (Entire Dataset)"/>
-                <!--                <MenuItem mnemonicParsing="false"-->
-                <!--                          onAction="#routeFinderTree" text="Route finder from A to anywhere"/>-->
                 <SeparatorMenuItem/>
                 <CheckMenuItem fx:id="toggleRoutesMenuitem"
                                mnemonicParsing="false"
