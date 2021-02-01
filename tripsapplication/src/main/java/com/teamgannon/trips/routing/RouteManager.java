@@ -538,4 +538,7 @@ public class RouteManager {
         this.controlPaneOffset = controlPaneOffset;
     }
 
+    public void removeRoute(StarDisplayRecord starDescriptor) {
+
+    }
 }

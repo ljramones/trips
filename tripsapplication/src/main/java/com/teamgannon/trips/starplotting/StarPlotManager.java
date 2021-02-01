@@ -34,8 +34,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -644,21 +642,34 @@ public class StarPlotManager {
         cm.getItems().add(titleItem);
         cm.getItems().add(new SeparatorMenuItem());
 
-        MenuItem setStarMenuItem = createSetStarMenuitem(star);
-        cm.getItems().add(setStarMenuItem);
+        MenuItem highlightStarMenuItem = createHighlightStarMenuitem(star);
+        cm.getItems().add(highlightStarMenuItem);
+
+        MenuItem propertiesMenuItem = createShowPropertiesMenuItem(star);
+        cm.getItems().add(propertiesMenuItem);
 
         MenuItem recenterMenuItem = createRecenterMenuitem(star);
         cm.getItems().add(recenterMenuItem);
 
-        MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
-        cm.getItems().add(jumpSystemMenuItem);
+        MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
+        cm.getItems().add(editPropertiesMenuItem);
+
+        MenuItem enterNotesItem = createNotesMenuItem(star);
+        cm.getItems().add(enterNotesItem);
+
+        MenuItem removeMenuItem = createRemoveMenuItem(star);
+        cm.getItems().add(removeMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
+
         MenuItem startRouteMenuItem = createRoutingMenuItem(star);
         cm.getItems().add(startRouteMenuItem);
 
         MenuItem continueRouteMenuItem = continueRoutingMenuItem(star);
         cm.getItems().add(continueRouteMenuItem);
+
+        MenuItem removeRouteMenuItem = removeRouteMenuItem(star);
+        cm.getItems().add(removeRouteMenuItem);
 
         MenuItem finishRouteMenuItem = finishRoutingMenuItem(star);
         cm.getItems().add(finishRouteMenuItem);
@@ -673,23 +684,13 @@ public class StarPlotManager {
 
         cm.getItems().add(new SeparatorMenuItem());
 
-        MenuItem propertiesMenuItem = createShowPropertiesMenuItem(star);
-        cm.getItems().add(propertiesMenuItem);
-
-        MenuItem enterNotesItem = createNotesMenuItem(star);
-        cm.getItems().add(enterNotesItem);
-        MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
-        cm.getItems().add(editPropertiesMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem removeMenuItem = createRemoveMenuItem(star);
-        cm.getItems().add(removeMenuItem);
+        MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
+        cm.getItems().add(jumpSystemMenuItem);
 
         return cm;
     }
 
-    private @NotNull MenuItem createSetStarMenuitem(@NotNull Node star) {
+    private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Highlight star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
@@ -773,6 +774,17 @@ public class StarPlotManager {
         return menuItem;
     }
 
+
+    private MenuItem removeRouteMenuItem(Node star) {
+        MenuItem menuItem = new MenuItem("Remove from Route");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            routeManager.removeRoute(starDescriptor);
+        });
+        return menuItem;
+    }
+
+
     private @NotNull MenuItem finishRoutingMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Finish Route");
         menuItem.setOnAction(event -> {
@@ -783,7 +795,7 @@ public class StarPlotManager {
     }
 
     private @NotNull MenuItem resetRoutingMenuItem() {
-        MenuItem menuItem = new MenuItem("Reset Route");
+        MenuItem menuItem = new MenuItem("Route: Start over");
         menuItem.setOnAction(this::resetRoute);
         return menuItem;
     }
