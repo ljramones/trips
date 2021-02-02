@@ -79,7 +79,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private void createButtons(@NotNull VBox vBox) {
         HBox hBox = new HBox();
 
-        ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType buttonTypeCancel = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         this.getDialogPane().getButtonTypes().add(buttonTypeCancel);
 
         vBox.getChildren().add(hBox);
