@@ -61,11 +61,16 @@ public class ExcelReader {
 
             DataSetDescriptor descriptor = extractDataDescriptor(dataSet, workbook);
             excelFile.setDescriptor(descriptor);
-            loadUpdater.updateLoadInfo("descripter parsed");
+            loadUpdater.updateLoadInfo("descriptor parsed");
 
             Sheet dataSheet = workbook.getSheet("data");
+            if (dataSheet == null) {
+                dataSheet = workbook.getSheet("Sheet1");
+            }
 
             List<StarObject> starObjectList = parseSheet(dataSet.getName(), dataSheet);
+
+            descriptor.setNumberStars((long) starObjectList.size());
 
             excelFile.setStarObjects(starObjectList);
             loadUpdater.updateLoadInfo("star data parsed");
@@ -84,21 +89,29 @@ public class ExcelReader {
     private DataSetDescriptor extractDataDescriptor(Dataset dataSet, Workbook workbook) {
         DataSetDescriptor descriptor = new DataSetDescriptor();
         Sheet descriptorSheet = workbook.getSheet("descriptor");
-        Row descriptorRow = descriptorSheet.getRow(1);
+        if (descriptorSheet != null) {
+            Row descriptorRow = descriptorSheet.getRow(1);
 
-        descriptor.setDataSetName(dataSet.getName());
-        descriptor.setFilePath(getCell(descriptorRow, 1));
-        descriptor.setFileCreator(getCell(descriptorRow, 2));
-        descriptor.setFileOriginalDate(parseLong(getCell(descriptorRow, 3)));
-        descriptor.setFileNotes(getCell(descriptorRow, 4));
-        descriptor.setDatasetType(getCell(descriptorRow, 5));
-        descriptor.setNumberStars(parseLong(getCell(descriptorRow, 6)));
-        descriptor.setDistanceRange(parseDouble(getCell(descriptorRow, 7)));
-        descriptor.setNumberRoutes(parseInt(getCell(descriptorRow, 8)));
-        descriptor.setThemeStr(getCell(descriptorRow, 9));
-        descriptor.setRoutesStr(getCell(descriptorRow, 11));
-        descriptor.setCustomDataDefsStr(getCell(descriptorRow, 12));
-        descriptor.setCustomDataValuesStr(getCell(descriptorRow, 13));
+            descriptor.setDataSetName(dataSet.getName());
+            descriptor.setFilePath(getCell(descriptorRow, 1));
+            descriptor.setFileCreator(getCell(descriptorRow, 2));
+            descriptor.setFileOriginalDate(parseLong(getCell(descriptorRow, 3)));
+            descriptor.setFileNotes(getCell(descriptorRow, 4));
+            descriptor.setDatasetType(getCell(descriptorRow, 5));
+            descriptor.setNumberStars(parseLong(getCell(descriptorRow, 6)));
+            descriptor.setDistanceRange(parseDouble(getCell(descriptorRow, 7)));
+            descriptor.setNumberRoutes(parseInt(getCell(descriptorRow, 8)));
+            descriptor.setThemeStr(getCell(descriptorRow, 9));
+            descriptor.setRoutesStr(getCell(descriptorRow, 11));
+            descriptor.setCustomDataDefsStr(getCell(descriptorRow, 12));
+            descriptor.setCustomDataValuesStr(getCell(descriptorRow, 13));
+        } else {
+            descriptor.setDataSetName(dataSet.getName());
+            descriptor.setFileCreator(dataSet.getAuthor());
+            descriptor.setFileNotes(dataSet.getNotes());
+            descriptor.setFilePath(dataSet.getFileSelected());
+            descriptor.setDatasetType(dataSet.getDataType().toString());
+        }
 
         return descriptor;
     }

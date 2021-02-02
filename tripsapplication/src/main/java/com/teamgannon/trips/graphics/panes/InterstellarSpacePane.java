@@ -72,6 +72,7 @@ public class InterstellarSpacePane extends Pane {
     private final @NotNull StarPlotManager starPlotManager;
     @NotNull Group root = new Group();
     @NotNull PerspectiveCamera camera = new PerspectiveCamera(true);
+
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
@@ -261,10 +262,11 @@ public class InterstellarSpacePane extends Pane {
 
     public void simulateStars(int numberStars) {
         starPlotManager.generateRandomStars(numberStars);
-        Platform.runLater(this::updateLabels);
+        Platform.runLater(this::run);
     }
 
     public void updateLabels() {
+
         starPlotManager.updateLabels(this);
 
         gridPlotManager.updateScale();
@@ -612,4 +614,7 @@ public class InterstellarSpacePane extends Pane {
         transitManager.setControlPaneOffset(controlPaneOffset);
     }
 
+    private void run() {
+        updateLabels();
+    }
 }
