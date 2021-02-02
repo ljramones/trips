@@ -418,53 +418,68 @@ public class TransitManager {
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
+
+        double width = interstellarSpacePane.getWidth();
+        double height = interstellarSpacePane.getHeight();
+
         shapeToLabel.forEach((node, label) -> {
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
-            //Clipping Logic
-            //if coordinates are outside of the scene it could
-            //stretch the screen so don't transform them
-            double xs = coordinates.getX();
-            double ys = coordinates.getY();
+            // we need to check if the coordinates work within the displayable area
+            if (!clip(coordinates, width, height)) {
 
-            double x = 0;
-            double y = 0;
+                //Clipping Logic
+                //if coordinates are outside of the scene it could
+                //stretch the screen so don't transform them
+                double xs = coordinates.getX();
+                double ys = coordinates.getY();
 
-            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
-            if (ofParent.getMinX() > 0) {
-                x = xs - ofParent.getMinX();
+                double x = 0;
+                double y = 0;
+
+                Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+                if (ofParent.getMinX() > 0) {
+                    x = xs - ofParent.getMinX();
+                } else {
+                    x = xs;
+                }
+                if (ofParent.getMinY() >= 0) {
+                    y = ys - ofParent.getMinY() - controlPaneOffset;
+                } else {
+                    y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
+                }
+
+                // is it left of the view?
+                if (x < 0) {
+                    x = 0;
+                }
+
+                // is it right of the view?
+                if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                    x = subScene.getWidth() - (label.getWidth() + 5);
+                }
+
+                // is it above the view?
+                if (y < 0) {
+                    y = 0;
+                }
+
+                // is it below the view
+                if ((y + label.getHeight()) > subScene.getHeight()) {
+                    y = subScene.getHeight() - (label.getHeight() + 5);
+                }
+
+                //update the local transform of the label.
+                label.getTransforms().setAll(new Translate(x, y));
             } else {
-                x = xs;
+                log.info("label:{} are {},{} is outside area", label, coordinates.getX(), coordinates.getY());
             }
-            if (ofParent.getMinY() >= 0) {
-                y = ys - ofParent.getMinY() - controlPaneOffset;
-            } else {
-                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
-            }
-
-            // is it left of the view?
-            if (x < 0) {
-                x = 0;
-            }
-
-            // is it right of the view?
-            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + 5);
-            }
-
-            // is it above the view?
-            if (y < 0) {
-                y = 0;
-            }
-
-            // is it below the view
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + 5);
-            }
-
-            //update the local transform of the label.
-            label.getTransforms().setAll(new Translate(x, y));
         });
+    }
+
+    private boolean clip(Point3D coordinates, double width, double height) {
+//        return abs(coordinates.getX()) < width/2 && abs(coordinates.getY()) < height/2;
+        return false;
     }
 
     public void setControlPaneOffset(double controlPaneOffset) {
