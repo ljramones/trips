@@ -179,7 +179,6 @@ public class CSVExporter {
                 removeCommas(starObject.getDisplayName()) + ", " +
                 removeCommas(starObject.getConstellationName()) + ", " +
                 starObject.getMass() + ", " +
-                starObject.getActualMass() + ", " +
                 removeCommas(starObject.getSource()) + ", " +
                 starObject.getCatalogIdList() + ", " +
                 starObject.getX() + ", " +
@@ -190,8 +189,6 @@ public class CSVExporter {
                 starObject.getPmra() + ", " +
                 starObject.getDeclination() + ", " +
                 starObject.getPmdec() + ", " +
-                starObject.getDec_deg() + ", " +
-                starObject.getRs_cdeg() + ", " +
                 starObject.getParallax() + ", " +
                 starObject.getDistance() + ", " +
                 starObject.getRadialVelocity() + ", " +

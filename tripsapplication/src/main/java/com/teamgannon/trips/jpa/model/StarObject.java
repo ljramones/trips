@@ -2,7 +2,10 @@ package com.teamgannon.trips.jpa.model;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -51,11 +54,6 @@ public class StarObject implements Serializable {
      * the collapsed mass value
      */
     private double mass = 0.0;
-
-    /**
-     * actual mass is Sol units
-     */
-    private double actualMass = 0.0;
 
     /**
      * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
@@ -126,16 +124,6 @@ public class StarObject implements Serializable {
      * Proper Motion in Dec direction in milli-arcseconds per year
      */
     private double pmdec = 0.0;
-
-    /**
-     * Declination in decimal degrees
-     */
-    private double dec_deg = 0.0;
-
-    /**
-     * Right ascension in decimal degrees
-     */
-    private double rs_cdeg = 0.0;
 
     /**
      * the parallax measurement n milli-arc-seconds
@@ -292,6 +280,41 @@ public class StarObject implements Serializable {
      */
     private String milPlanType;
 
+    /**
+     * the star's common name
+     */
+    private String commonName;
+
+    /**
+     * the Simbad id
+     */
+    private String simbadId;
+
+    /**
+     * age of the star
+     */
+    private double age;
+
+    /**
+     * star metallicity
+     */
+    private double metallicity;
+
+    /**
+     * galactic lattitude
+     */
+    private double galacticLat;
+
+    /**
+     * galactic longitude
+     */
+    private double galacticLong;
+
+    /**
+     * the id in the gaia catalog
+     */
+    private String gaiaId;
+
     /////////////   Miscellaneous   /////////////////////////////////////
 
     /**
@@ -372,8 +395,6 @@ public class StarObject implements Serializable {
         pmra = 0;
         declination = 0;
         pmdec = 0;
-        dec_deg = 0;
-        rs_cdeg = 0;
         parallax = 0;
         distance = 0;
         radialVelocity = 0;
@@ -398,6 +419,28 @@ public class StarObject implements Serializable {
         productType = "NA";
         milSpaceType = "NA";
         notes = "initial star file load";
+
+        simbadId = "";
+        commonName = "";
+        age = 0;
+        metallicity = 0;
+        galacticLat = 0.0;
+        galacticLong = 0.0;
+        gaiaId = "";
+
+        exoplanets = false;
+
+        miscNum1 = 0;
+        miscNum2 = 0;
+        miscNum3 = 0;
+        miscNum4 = 0;
+        miscNum5 = 0;
+
+        miscText1 = "";
+        miscText2 = "";
+        miscText3 = "";
+        miscText4 = "";
+        miscText5 = "";
     }
 
 

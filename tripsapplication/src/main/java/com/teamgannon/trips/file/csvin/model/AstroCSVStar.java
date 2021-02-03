@@ -176,7 +176,6 @@ public class AstroCSVStar {
             astro.setConstellationName(constellationName.trim());
 
             astro.setMass(parseDouble(mass.trim()));
-            astro.setActualMass(parseDouble(actualMass.trim()));
             astro.setNotes(notes.trim());
             astro.setSource(source.trim());
             List<String> catalogList = new ArrayList<>();
@@ -192,8 +191,6 @@ public class AstroCSVStar {
             astro.setPmra(parseDouble(pmra.trim()));
             astro.setDeclination(parseDouble(declination.trim()));
             astro.setPmdec(parseDouble(pmdec.trim()));
-            astro.setDec_deg(parseDouble(dec_deg.trim()));
-            astro.setRs_cdeg(parseDouble(rs_cdeg.trim()));
 
             astro.setParallax(parseDouble(parallax.trim()));
             astro.setDistance(parseDouble(distance.trim()));
@@ -206,11 +203,30 @@ public class AstroCSVStar {
 
             astro.setBprp(parseDouble(bprp.trim()));
 
-            astro.setMiscText1(miscText1);
-            astro.setMiscText2(miscText2);
+            astro.setCommonName(miscText1);
+//            astro.setMiscText1(miscText1);
+            astro.setSimbadId(miscText2);
+//            astro.setMiscText2(miscText2);
             astro.setMiscText3(miscText3);
-            astro.setMiscText4(miscText4);
-            astro.setMiscText5(miscText5);
+            try {
+                astro.setMetallicity(Double.parseDouble(miscText3));
+            }catch (NumberFormatException nfe) {
+                astro.setMetallicity(0);
+            }
+//            astro.setMiscText4(miscText4);
+            try {
+                String[] split= miscText4.split(" ");
+                double galLat = Double.parseDouble(split[1].trim());
+                double galLong = Double.parseDouble(split[2].trim());
+                astro.setGalacticLat(galLat);
+                astro.setGalacticLong(galLong);
+            } catch(Exception e) {
+                astro.setGalacticLat(0.0);
+                astro.setGalacticLong(0.0);
+            }
+
+//            astro.setMiscText5(miscText5);
+            astro.setGaiaId(miscText5);
 
             astro.setMiscNum1(miscNum1);
             astro.setMiscNum2(miscNum2);
