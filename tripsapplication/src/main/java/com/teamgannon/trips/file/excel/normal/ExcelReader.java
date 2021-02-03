@@ -77,6 +77,7 @@ public class ExcelReader {
 
             // close the workbook
             workbook.close();
+
             return excelFile;
 
         } catch (IOException e) {
@@ -212,6 +213,7 @@ public class ExcelReader {
 
             String notes = getCell(row, cell);
             star.setNotes(notes);
+//            System.out.println(star);
 
             StarObject starObject = star.toAstrographicObject();
             if (starObject != null) {

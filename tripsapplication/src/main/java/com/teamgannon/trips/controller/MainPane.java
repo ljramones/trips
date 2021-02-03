@@ -49,6 +49,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.model.ExportFileType;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
@@ -218,6 +219,7 @@ public class MainPane implements
     private double originalHeight = Universe.boxHeight;
     private double originalWidth = Universe.boxWidth;
 
+    private HostServices hostServices;
 
     /**
      * constructor
@@ -234,6 +236,7 @@ public class MainPane implements
     ) {
 
         this.fxWeaver = fxWeaver;
+        hostServices = fxWeaver.getBean(HostServices.class);
 
         this.tripsContext = tripsContext;
         this.searchContext = tripsContext.getSearchContext();
@@ -419,7 +422,7 @@ public class MainPane implements
         stellarObjectPane.setText("Stellar Object Properties");
         stellarObjectPane.setPrefHeight(500);
         stellarObjectPane.setMaxHeight(520);
-        starPropertiesPane = new StarPropertiesPane();
+        starPropertiesPane = new StarPropertiesPane(hostServices);
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
         propertiesAccordion.getPanes().add(stellarObjectPane);

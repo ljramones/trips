@@ -6,6 +6,7 @@ import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContextInitializer;
@@ -13,6 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 
 
+@Slf4j
 public class TripsFxApplication extends Application {
 
     private ConfigurableApplicationContext context;
@@ -28,6 +30,7 @@ public class TripsFxApplication extends Application {
         this.context = new SpringApplicationBuilder()
                 .sources(TripsSpringBootApplication.class)
                 .initializers(initializer)
+                .headless(false)
                 .run(getParameters().getRaw().toArray(new String[0]));
     }
 

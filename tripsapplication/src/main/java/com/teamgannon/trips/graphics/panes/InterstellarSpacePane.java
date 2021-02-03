@@ -45,22 +45,27 @@ public class InterstellarSpacePane extends Pane {
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
     private final Group world = new Group();
     private final @NotNull SubScene subScene;
+
     /**
      * animation rotator
      */
     private final @NotNull RotateTransition rotator;
+
     /**
      * our current plot
      */
     private final @NotNull CurrentPlot currentPlot;
+
     /**
      * application context
      */
     private final @NotNull TripsContext tripsContext;
+
     /**
      * used to signal an update to the parent list view
      */
     private final ListUpdaterListener listUpdaterListener;
+
     /**
      * the grid plot manager
      */
@@ -77,6 +82,7 @@ public class InterstellarSpacePane extends Pane {
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
+
     /**
      * the general color palette of the graph
      */
@@ -85,10 +91,12 @@ public class InterstellarSpacePane extends Pane {
      * star display specifics
      */
     private StarDisplayPreferences starDisplayPreferences;
+
     /**
      * animation toggle
      */
     private boolean animationPlay = false;
+
     /**
      * offset to scene coordinates to account for the top UI plane
      */
@@ -369,7 +377,6 @@ public class InterstellarSpacePane extends Pane {
         if (listUpdaterListener != null) {
             listUpdaterListener.clearList();
         }
-
     }
 
     /**
