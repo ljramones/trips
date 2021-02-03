@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.routing.RouteFindingOptions;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,6 +11,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,36 +24,49 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     private final @NotNull StarObject record;
 
-    // UI elements
+    // Overview Info
     private final Label recordIdLabel = new Label();
     private final Label dataSetLabel = new Label();
-    private final TextField starNameTextField = new TextField();
-    private final ColorPicker starColorPicker = new ColorPicker();
-    private final TextField radiusTextField = new TextField();
-    private final TextField distanceNameTextField = new TextField();
-    private final TextField spectralClassTextField = new TextField();
-    private final TextField tempTextField = new TextField();
 
+    private final TextField starNameTextField = new TextField();
+    private final TextField commonNameTextField = new TextField();
+    private final TextField constellationNameTextField = new TextField();
+    private final TextField spectralClassTextField = new TextField();
+    private final TextField distanceNameTextField = new TextField();
+    private final TextField metallicityTextfield = new TextField();
+    private final TextField ageTextfield = new TextField();
     private final TextField xTextField = new TextField();
     private final TextField yTextField = new TextField();
     private final TextField zTextField = new TextField();
     private final TextArea notesArea = new TextArea();
 
-    //////////
+    ////////// Other Info
 
+    private final TextField simbadIdTextField = new TextField();
+    private final TextField galacticCoorLatTextField = new TextField();
+    private final TextField galacticCoorLongTextField = new TextField();
+    private final TextField radiusTextField = new TextField();
+    private final TextField tempTextField = new TextField();
     private final TextField raLabel = new TextField();
-    private final TextField pmraLabel = new TextField();
     private final TextField decLabel = new TextField();
+    private final TextField pmraLabel = new TextField();
     private final TextField pmdecLabel = new TextField();
-    private final TextField decdegLabel = new TextField();
-    private final TextField rsLabel = new TextField();
     private final TextField parallaxLabel = new TextField();
     private final TextField radialVelocityLabel = new TextField();
     private final TextField bprpLabel = new TextField();
     private final TextField bpgLabel = new TextField();
     private final TextField grpLabel = new TextField();
 
-    /////////
+    private final TextField maguTextField = new TextField();
+    private final TextField magbTextField = new TextField();
+    private final TextField magvTextField = new TextField();
+    private final TextField magrTextField = new TextField();
+    private final TextField magiTextField = new TextField();
+
+    private final TextField gaiaIdTextField = new TextField();
+
+
+    ///////// fictional Info
     private final TextField polityTextField = new TextField();
     private final TextField worldTypeTextField = new TextField();
     private final TextField fuelTypeTextField = new TextField();
@@ -64,7 +80,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final CheckBox anomalyCheckbox = new CheckBox();
     private final CheckBox otherCheckbox = new CheckBox();
 
-    ////////////////
+    //////////////// User Specific
     private final TextField misc1TextField = new TextField();
     private final TextField misc2TextField = new TextField();
     private final TextField misc3TextField = new TextField();
@@ -77,11 +93,16 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final TextField miscNum4TextField = new TextField();
     private final TextField miscNum5TextField = new TextField();
 
+    private final Stage stage;
 
     ////////////////
 
     public StarEditDialog(@NotNull StarObject record) {
         this.record = record;
+
+        // set the dialog as a utility
+        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
 
         VBox vBox = new VBox();
 
@@ -91,15 +112,15 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         overviewTab.setContent(createOverviewTab());
         tabPane.getTabs().add(overviewTab);
 
-        Tab secondaryTab = new Tab("Secondary");
-        secondaryTab.setContent(createSecondaryTab());
-        tabPane.getTabs().add(secondaryTab);
-
-        Tab fictionalTab = new Tab("Fictional");
+        Tab fictionalTab = new Tab("Fictional Info");
         fictionalTab.setContent(createFictionalTab());
         tabPane.getTabs().add(fictionalTab);
 
-        Tab userTab = new Tab("User Special");
+        Tab secondaryTab = new Tab("Other Info");
+        secondaryTab.setContent(createSecondaryTab());
+        tabPane.getTabs().add(secondaryTab);
+
+        Tab userTab = new Tab("User Special Info");
         userTab.setContent(createUserTab());
         tabPane.getTabs().add(userTab);
 
@@ -111,13 +132,501 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         Button resetBtn = new Button("Cancel");
         resetBtn.setOnAction(this::cancelClicked);
         hBox.getChildren().add(resetBtn);
-        Button addBtn = new Button("Change");
+        Button addBtn = new Button("Update");
         addBtn.setOnAction(this::changeClicked);
         hBox.getChildren().add(addBtn);
         vBox.getChildren().add(hBox);
 
         this.setTitle("Change attributes for " + record.getDisplayName());
         this.getDialogPane().setContent(vBox);
+    }
+
+    private void close(WindowEvent windowEvent) {
+        StarEditStatus editStatus = new StarEditStatus();
+        editStatus.setChanged(false);
+        setResult(editStatus);
+    }
+
+    private @NotNull Pane createOverviewTab() {
+
+        // setup grid structure
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+
+        gridPane.add(new Label("Record id"), 0, 1);
+        recordIdLabel.setText(record.getId().toString());
+        gridPane.add(recordIdLabel, 1, 1);
+
+        Label datasetLabel = new Label("Data set name");
+        datasetLabel.setMinWidth(80);
+        gridPane.add(datasetLabel, 0, 2);
+        dataSetLabel.setText(record.getDataSetName());
+        gridPane.add(dataSetLabel, 1, 2);
+
+        //////////////////
+
+        // star name
+        gridPane.add(new Label("Star name"), 0, 3);
+        starNameTextField.setText(record.getDisplayName());
+        gridPane.add(starNameTextField, 1, 3);
+
+        // common name
+        gridPane.add(new Label("Common name"), 0, 4);
+        commonNameTextField.setText(record.getCommonName());
+        gridPane.add(commonNameTextField, 1, 4);
+
+        // constellation name
+        gridPane.add(new Label("Constellation name"), 0, 5);
+        constellationNameTextField.setText(record.getConstellationName());
+        gridPane.add(constellationNameTextField, 1, 5);
+
+        // spectral class
+        gridPane.add(new Label("Spectral class"), 0, 6);
+        spectralClassTextField.setText(record.getSpectralClass());
+        spectralClassTextField.setPromptText(" the spectral class as in O, A, etc.");
+        gridPane.add(spectralClassTextField, 1, 6);
+
+        // distance
+        gridPane.add(new Label("Distance"), 0, 7);
+        distanceNameTextField.setText(Double.toString(record.getDistance()));
+        distanceNameTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkDistance();
+            }
+        });
+        distanceNameTextField.setPromptText("the distance from Sol in ly, press enter");
+        gridPane.add(distanceNameTextField, 1, 7);
+
+        // metallicity
+        gridPane.add(new Label("Metallicity"), 0, 8);
+        metallicityTextfield.setText(Double.toString(record.getMetallicity()));
+        metallicityTextfield.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMetallicity();
+            }
+        });
+        metallicityTextfield.setPromptText("the metallicity, press enter");
+        gridPane.add(metallicityTextfield, 1, 8);
+
+        // age
+        gridPane.add(new Label("Age"), 0, 9);
+        ageTextfield.setText(Double.toString(record.getDistance()));
+        ageTextfield.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkAge();
+            }
+        });
+        ageTextfield.setPromptText("the age, press enter");
+        gridPane.add(ageTextfield, 1, 9);
+
+        // coordinates
+        gridPane.add(new Label("Coordinates"), 0, 10);
+        GridPane coordGrid = new GridPane();
+        gridPane.add(coordGrid, 1, 9);
+        xTextField.setText(Double.toString(record.getX()));
+        xTextField.setPromptText("X coordinate, press enter");
+        xTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkX();
+            }
+        });
+        coordGrid.add(xTextField, 0, 1);
+        yTextField.setText(Double.toString(record.getY()));
+        yTextField.setPromptText("Y coordinate, press enter");
+        yTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkY();
+            }
+        });
+        coordGrid.add(yTextField, 1, 1);
+        zTextField.setText(Double.toString(record.getZ()));
+        zTextField.setPromptText("Z coordinate, press enter");
+        zTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkZ();
+            }
+        });
+        coordGrid.add(zTextField, 2, 1);
+
+        // notes
+        gridPane.add(new Label("Notes"), 0, 11);
+        notesArea.setText(record.getNotes());
+        notesArea.setPromptText("Enter a description or general notes on this star");
+        gridPane.add(notesArea, 1, 11, 1, 3);
+
+        return gridPane;
+    }
+
+    private @NotNull Pane createFictionalTab() {
+
+        // setup grid structure
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+
+        // polity
+        gridPane.add(new Label("polity"), 0, 1);
+        polityTextField.setText(record.getPolity());
+        gridPane.add(polityTextField, 1, 1);
+
+        // world type
+        gridPane.add(new Label("world type"), 0, 2);
+        worldTypeTextField.setText(record.getWorldType());
+        gridPane.add(worldTypeTextField, 1, 2);
+
+        // fuel type
+        gridPane.add(new Label("fuel type"), 0, 3);
+        fuelTypeTextField.setText(record.getFuelType());
+        gridPane.add(fuelTypeTextField, 1, 3);
+
+        // tech type
+        gridPane.add(new Label("tech type"), 0, 4);
+        techTypeTextField.setText(record.getTechType());
+        gridPane.add(techTypeTextField, 1, 4);
+
+        // port type
+        gridPane.add(new Label("port type"), 0, 5);
+        portTypeTextField.setText(record.getPortType());
+        gridPane.add(portTypeTextField, 1, 5);
+
+        // population
+        gridPane.add(new Label("population type"), 0, 6);
+        popTypeTextField.setText(record.getPopulationType());
+        gridPane.add(popTypeTextField, 1, 6);
+
+        // product type
+        gridPane.add(new Label("product type"), 0, 7);
+        prodField.setText(record.getProductType());
+        gridPane.add(prodField, 1, 7);
+
+        // milspace type
+        gridPane.add(new Label("milspace type"), 0, 8);
+        milspaceTextField.setText(record.getMilSpaceType());
+        gridPane.add(milspaceTextField, 1, 8);
+
+        // milplan type
+        gridPane.add(new Label("milplan type"), 0, 9);
+        milplanTextField.setText(record.getMilPlanType());
+        gridPane.add(milplanTextField, 1, 9);
+
+        // anomaly
+        gridPane.add(new Label("anomaly"), 0, 10);
+        anomalyCheckbox.setSelected(record.isAnomaly());
+        anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
+        gridPane.add(anomalyCheckbox, 1, 10);
+
+        // other
+        gridPane.add(new Label("other"), 0, 11);
+        otherCheckbox.setSelected(record.isOther());
+        otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
+        gridPane.add(otherCheckbox, 1, 11);
+
+        return gridPane;
+    }
+
+    private @NotNull Pane createSecondaryTab() {
+
+        // setup grid structure
+        GridPane mGridPane = new GridPane();
+        mGridPane.setPadding(new Insets(10, 10, 10, 10));
+        mGridPane.setVgap(5);
+        mGridPane.setHgap(5);
+
+        GridPane leftGrid = new GridPane();
+        leftGrid.setPadding(new Insets(10, 10, 10, 10));
+        leftGrid.setVgap(5);
+        leftGrid.setHgap(5);
+        mGridPane.add(leftGrid, 0, 1);
+
+        GridPane rightGrid = new GridPane();
+        rightGrid.setPadding(new Insets(10, 10, 10, 10));
+        rightGrid.setVgap(5);
+        rightGrid.setHgap(5);
+        mGridPane.add(rightGrid, 1, 1);
+
+        // simbad id
+        leftGrid.add(new Label("Simbad Id"), 0, 2);
+        simbadIdTextField.setText(record.getSimbadId());
+        simbadIdTextField.setPromptText("the Simbad Id");
+        leftGrid.add(simbadIdTextField, 1, 2);
+
+        // galactic lat
+        leftGrid.add(new Label("Galactic Lat"), 0, 3);
+        galacticCoorLatTextField.setText(Double.toString(record.getGalacticLat()));
+        galacticCoorLatTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkGalacticLat();
+            }
+        });
+        galacticCoorLatTextField.setPromptText("the galactic latitude");
+        leftGrid.add(galacticCoorLatTextField, 1, 3);
+
+        // galactic long
+        leftGrid.add(new Label("Galactic Long"), 0, 4);
+        galacticCoorLongTextField.setText(Double.toString(record.getGalacticLong()));
+        galacticCoorLongTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkGalacticLong();
+            }
+        });
+        galacticCoorLongTextField.setPromptText("the galactic longitude");
+        leftGrid.add(galacticCoorLongTextField, 1, 4);
+
+        // radius
+        leftGrid.add(new Label("Radius"), 0, 5);
+        radiusTextField.setText(Double.toString(record.getRadius()));
+        radiusTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkRadius();
+            }
+        });
+        radiusTextField.setPromptText("the radius in Sol units");
+        leftGrid.add(radiusTextField, 1, 5);
+
+        // temperature
+        leftGrid.add(new Label("Temperature"), 0, 6);
+        tempTextField.setText(Double.toString(record.getTemperature()));
+        tempTextField.setPromptText("temperature, press enter");
+        tempTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkTemp();
+            }
+        });
+        tempTextField.setPromptText("the surface temperature of the star");
+        leftGrid.add(tempTextField, 1, 6);
+
+
+        // items for right grid
+        // RA
+        leftGrid.add(new Label("ra"), 0, 7);
+        raLabel.setText(Double.toString(record.getRa()));
+        raLabel.setPromptText("right ascension, press enter");
+        raLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkRa();
+            }
+        });
+        leftGrid.add(raLabel, 1, 7);
+
+        // declination
+        leftGrid.add(new Label("declination"), 0, 8);
+        decLabel.setText(Double.toString(record.getDeclination()));
+        decLabel.setPromptText("declination, press enter");
+        decLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkDeclination();
+            }
+        });
+        leftGrid.add(decLabel, 1, 8);
+
+        // PMRA
+        leftGrid.add(new Label("pmra"), 0, 9);
+        pmraLabel.setText(Double.toString(record.getPmra()));
+        pmraLabel.setPromptText("PMRA, press enter");
+        pmraLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkPmra();
+            }
+        });
+        leftGrid.add(pmraLabel, 1, 9);
+
+        // PMDEC
+        leftGrid.add(new Label("pmdec"), 0, 10);
+        pmdecLabel.setText(Double.toString(record.getPmdec()));
+        pmdecLabel.setPromptText("PMDEC, press enter");
+        pmdecLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkPmdec();
+            }
+        });
+        leftGrid.add(pmdecLabel, 1, 10);
+
+        // parallax
+        leftGrid.add(new Label("Parallax"), 0, 11);
+        parallaxLabel.setText(Double.toString(record.getParallax()));
+        parallaxLabel.setPromptText("parallax, press enter");
+        parallaxLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkParallax();
+            }
+        });
+        leftGrid.add(parallaxLabel, 1, 11);
+
+        // radial velocity
+        leftGrid.add(new Label("Radial velocity"), 0, 12);
+        radialVelocityLabel.setText(Double.toString(record.getRadialVelocity()));
+        radialVelocityLabel.setPromptText("radial velocity, press enter");
+        radialVelocityLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkRadialVel();
+            }
+        });
+        leftGrid.add(radialVelocityLabel, 1, 12);
+
+
+        ////////////////
+
+        // bprp
+        rightGrid.add(new Label("bprp"), 0, 1);
+        bprpLabel.setText(Double.toString(record.getBprp()));
+        bprpLabel.setPromptText("bprp, press enter");
+        bprpLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkBprp();
+            }
+        });
+        rightGrid.add(bprpLabel, 1, 1);
+
+        // brp
+        rightGrid.add(new Label("bpg"), 0, 2);
+        bpgLabel.setText(Double.toString(record.getBpg()));
+        bpgLabel.setPromptText("bpg, press enter");
+        bpgLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkBpg();
+            }
+        });
+        rightGrid.add(bpgLabel, 1, 2);
+
+        // grp
+        rightGrid.add(new Label("grp"), 0, 3);
+        grpLabel.setText(Double.toString(record.getGrp()));
+        grpLabel.setPromptText("grp, press enter");
+        grpLabel.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkGrp();
+            }
+        });
+        rightGrid.add(grpLabel, 1, 3);
+
+        // magu
+        rightGrid.add(new Label("magu"), 0, 4);
+        maguTextField.setText(Double.toString(record.getMagu()));
+        maguTextField.setPromptText("magu, press enter");
+        maguTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMagu();
+            }
+        });
+        rightGrid.add(maguTextField, 1, 4);
+
+        // magb
+        rightGrid.add(new Label("magb"), 0, 5);
+        magbTextField.setText(Double.toString(record.getMagb()));
+        magbTextField.setPromptText("magb, press enter");
+        magbTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMagb();
+            }
+        });
+        rightGrid.add(magbTextField, 1, 5);
+
+        // magv
+        rightGrid.add(new Label("magv"), 0, 6);
+        magvTextField.setText(Double.toString(record.getMagv()));
+        magvTextField.setPromptText("magv, press enter");
+        magvTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMagv();
+            }
+        });
+        rightGrid.add(magvTextField, 1, 6);
+
+        // magr
+        rightGrid.add(new Label("magr"), 0, 7);
+        magrTextField.setText(Double.toString(record.getMagr()));
+        magrTextField.setPromptText("magr, press enter");
+        magrTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMagr();
+            }
+        });
+        rightGrid.add(magrTextField, 1, 7);
+
+        // magi
+        rightGrid.add(new Label("magi"), 0, 8);
+        magiTextField.setText(Double.toString(record.getMagi()));
+        magiTextField.setPromptText("magi, press enter");
+        magiTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMagi();
+            }
+        });
+        rightGrid.add(magiTextField, 1, 8);
+
+        rightGrid.add(new Label("GAIA Id"), 0, 9);
+        gaiaIdTextField.setText(record.getGaiaId());
+        rightGrid.add(gaiaIdTextField, 1, 9);
+
+
+
+        return mGridPane;
+    }
+
+    private void checkMagi() {
+        try {
+            double value = Double.parseDouble(magiTextField.getText());
+            record.setMagi(value);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", magiTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMagr() {
+        try {
+            double value = Double.parseDouble(magrTextField.getText());
+            record.setMagr(value);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", magrTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMagv() {
+        try {
+            double value = Double.parseDouble(magvTextField.getText());
+            record.setMagv(value);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", magvTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMagb() {
+        try {
+            double value = Double.parseDouble(magbTextField.getText());
+            record.setMagb(value);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", magbTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkMagu() {
+        try {
+            double value = Double.parseDouble(maguTextField.getText());
+            record.setMagu(value);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", maguTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkGalacticLong() {
+        try {
+            double galLong = Double.parseDouble(galacticCoorLongTextField.getText());
+            record.setGalacticLong(galLong);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", galacticCoorLongTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkGalacticLat() {
+        try {
+            double galLat = Double.parseDouble(galacticCoorLatTextField.getText());
+            record.setGalacticLat(galLat);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", galacticCoorLatTextField.getText() + " is an invalid floating point number");
+        }
     }
 
     private @NotNull Pane createUserTab() {
@@ -206,62 +715,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         return gridPane;
     }
 
-    private @NotNull Pane createFictionalTab() {
-        // setup grid structure
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        gridPane.add(new Label("polity"), 0, 1);
-        polityTextField.setText(record.getPolity());
-        gridPane.add(polityTextField, 1, 1);
-
-        gridPane.add(new Label("world type"), 0, 2);
-        worldTypeTextField.setText(record.getWorldType());
-        gridPane.add(worldTypeTextField, 1, 2);
-
-        gridPane.add(new Label("fuel type"), 0, 3);
-        fuelTypeTextField.setText(record.getFuelType());
-        gridPane.add(fuelTypeTextField, 1, 3);
-
-        gridPane.add(new Label("tech type"), 0, 4);
-        techTypeTextField.setText(record.getTechType());
-        gridPane.add(techTypeTextField, 1, 4);
-
-        gridPane.add(new Label("port type"), 0, 5);
-        portTypeTextField.setText(record.getPortType());
-        gridPane.add(portTypeTextField, 1, 5);
-
-        gridPane.add(new Label("population type"), 0, 6);
-        popTypeTextField.setText(record.getPopulationType());
-        gridPane.add(popTypeTextField, 1, 6);
-
-        gridPane.add(new Label("product type"), 0, 7);
-        prodField.setText(record.getProductType());
-        gridPane.add(prodField, 1, 7);
-
-        gridPane.add(new Label("milspace type"), 0, 8);
-        milspaceTextField.setText(record.getMilSpaceType());
-        gridPane.add(milspaceTextField, 1, 8);
-
-        gridPane.add(new Label("milplan type"), 0, 9);
-        milplanTextField.setText(record.getMilPlanType());
-        gridPane.add(milplanTextField, 1, 9);
-
-        gridPane.add(new Label("anomaly"), 0, 10);
-        anomalyCheckbox.setSelected(record.isAnomaly());
-        anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
-        gridPane.add(anomalyCheckbox, 1, 10);
-
-        gridPane.add(new Label("other"), 0, 11);
-        otherCheckbox.setSelected(record.isOther());
-        otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
-        gridPane.add(otherCheckbox, 1, 11);
-
-        return gridPane;
-    }
-
     private void checkPolity() {
         record.setPolity(polityTextField.getText());
     }
@@ -298,107 +751,22 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         record.setMilPlanType(milspaceTextField.getText());
     }
 
-    private @NotNull Pane createSecondaryTab() {
+    private void checkAge() {
+        try {
+            double age = Double.parseDouble(ageTextfield.getText());
+            record.setMetallicity(age);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", ageTextfield.getText() + " is an invalid floating point number");
+        }
+    }
 
-        // setup grid structure
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        // items for right grid
-        gridPane.add(new Label("ra"), 0, 1);
-        raLabel.setText(Double.toString(record.getRa()));
-        raLabel.setPromptText("right ascension, press enter");
-        raLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkRa();
-            }
-        });
-        gridPane.add(raLabel, 1, 1);
-
-        gridPane.add(new Label("pmra"), 0, 2);
-        pmraLabel.setText(Double.toString(record.getPmra()));
-        pmraLabel.setPromptText("PMRA, press enter");
-        pmraLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkPmra();
-            }
-        });
-        gridPane.add(pmraLabel, 1, 2);
-
-        gridPane.add(new Label("declination"), 0, 3);
-        decLabel.setText(Double.toString(record.getDeclination()));
-        decLabel.setPromptText("declination, press enter");
-        decLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkDeclination();
-            }
-        });
-        gridPane.add(decLabel, 1, 3);
-
-        gridPane.add(new Label("pmdec"), 0, 4);
-        pmdecLabel.setText(Double.toString(record.getPmdec()));
-        pmdecLabel.setPromptText("PMDEC, press enter");
-        pmdecLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkPmdec();
-            }
-        });
-        gridPane.add(pmdecLabel, 1, 4);
-
-        gridPane.add(new Label("Parallax"), 0, 7);
-        parallaxLabel.setText(Double.toString(record.getParallax()));
-        parallaxLabel.setPromptText("parallax, press enter");
-        parallaxLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkParallax();
-            }
-        });
-        gridPane.add(parallaxLabel, 1, 7);
-
-        gridPane.add(new Label("Radial velocity"), 0, 8);
-        radialVelocityLabel.setText(Double.toString(record.getRadialVelocity()));
-        radialVelocityLabel.setPromptText("radial velocity, press enter");
-        radialVelocityLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkRadialVel();
-            }
-        });
-        gridPane.add(radialVelocityLabel, 1, 8);
-
-        gridPane.add(new Label("bprp"), 0, 9);
-        bprpLabel.setText(Double.toString(record.getBprp()));
-        bprpLabel.setPromptText("bprp, press enter");
-        bprpLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkBprp();
-            }
-        });
-        gridPane.add(bprpLabel, 1, 9);
-
-        gridPane.add(new Label("bpg"), 0, 10);
-        bpgLabel.setText(Double.toString(record.getBpg()));
-        bpgLabel.setPromptText("bpg, press enter");
-        bpgLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkBpg();
-            }
-        });
-        gridPane.add(bpgLabel, 1, 10);
-
-        gridPane.add(new Label("grp"), 0, 11);
-        grpLabel.setText(Double.toString(record.getGrp()));
-        grpLabel.setPromptText("grp, press enter");
-        grpLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkGrp();
-            }
-        });
-        gridPane.add(grpLabel, 1, 11);
-
-        return gridPane;
-
+    private void checkMetallicity() {
+        try {
+            double metallicity = Double.parseDouble(metallicityTextfield.getText());
+            record.setMetallicity(metallicity);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", metallicityTextfield.getText() + " is an invalid floating point number");
+        }
     }
 
     private void checkMiscNum1() {
@@ -527,97 +895,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
     }
 
-    private @NotNull Pane createOverviewTab() {
-
-        // setup grid structure
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        gridPane.add(new Label("Record id"), 0, 1);
-        recordIdLabel.setText(record.getId().toString());
-        gridPane.add(recordIdLabel, 1, 1);
-
-        gridPane.add(new Label("Data set name"), 0, 2);
-        dataSetLabel.setText(record.getDataSetName());
-        gridPane.add(dataSetLabel, 1, 2);
-
-        gridPane.add(new Label("Star name"), 0, 3);
-        starNameTextField.setText(record.getDisplayName());
-        gridPane.add(starNameTextField, 1, 3);
-
-        gridPane.add(new Label("Radius"), 0, 5);
-        radiusTextField.setText(Double.toString(record.getRadius()));
-        radiusTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkRadius();
-            }
-        });
-        radiusTextField.setPromptText("the radius in Sol units");
-        gridPane.add(radiusTextField, 1, 5);
-
-        gridPane.add(new Label("Distance"), 0, 6);
-        distanceNameTextField.setText(Double.toString(record.getDistance()));
-        distanceNameTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkDistance();
-            }
-        });
-        distanceNameTextField.setPromptText("the distance from Sol in ly, press enter");
-        gridPane.add(distanceNameTextField, 1, 6);
-
-        gridPane.add(new Label("Spectral class"), 0, 7);
-        spectralClassTextField.setText(record.getSpectralClass());
-        spectralClassTextField.setPromptText(" the spectral class as in O, A, etc.");
-        gridPane.add(spectralClassTextField, 1, 7);
-
-        gridPane.add(new Label("Temperature"), 0, 8);
-        tempTextField.setText(Double.toString(record.getTemperature()));
-        tempTextField.setPromptText("temperature, press enter");
-        tempTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkTemp();
-            }
-        });
-        tempTextField.setPromptText("the surface temperature of the star");
-        gridPane.add(tempTextField, 1, 8);
-
-        gridPane.add(new Label("Coordinates"), 0, 9);
-        GridPane coordGrid = new GridPane();
-        gridPane.add(coordGrid, 1, 9);
-        xTextField.setText(Double.toString(record.getX()));
-        xTextField.setPromptText("X coordinate, press enter");
-        xTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkX();
-            }
-        });
-        coordGrid.add(xTextField, 0, 1);
-        yTextField.setText(Double.toString(record.getY()));
-        yTextField.setPromptText("Y coordinate, press enter");
-        yTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkY();
-            }
-        });
-        coordGrid.add(yTextField, 1, 1);
-        zTextField.setText(Double.toString(record.getZ()));
-        zTextField.setPromptText("Z coordinate, press enter");
-        zTextField.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkZ();
-            }
-        });
-        coordGrid.add(zTextField, 2, 1);
-
-        gridPane.add(new Label("Notes"), 0, 10);
-        notesArea.setText(record.getNotes());
-        notesArea.setPromptText("Enter a description or general notes on this star");
-        gridPane.add(notesArea, 1, 10, 1, 3);
-
-        return gridPane;
-    }
 
     private void checkRadius() {
         try {
@@ -734,11 +1011,43 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         double grp = Double.parseDouble(grpLabel.getText());
         record.setGrp(grp);
 
+        record.setSimbadId(simbadIdTextField.getText());
+        record.setCommonName(commonNameTextField.getText());
+
+        double metallicity = Double.parseDouble(metallicityTextfield.getText());
+        record.setMetallicity(metallicity);
+
+        double age = Double.parseDouble(ageTextfield.getText());
+        record.setAge(age);
+
+        double galacticLat = Double.parseDouble(galacticCoorLatTextField.getText());
+        record.setGalacticLat(galacticLat);
+
+        double galacticLong = Double.parseDouble(galacticCoorLongTextField.getText());
+        record.setGalacticLong(galacticLong);
+
+        double magu = Double.parseDouble(maguTextField.getText());
+        record.setMagu(magu);
+
+        double magb = Double.parseDouble(magbTextField.getText());
+        record.setMagb(magb);
+
+        double magv = Double.parseDouble(magvTextField.getText());
+        record.setMagv(magv);
+
+        double magr = Double.parseDouble(magrTextField.getText());
+        record.setMagr(magr);
+
+        double magi = Double.parseDouble(magiTextField.getText());
+        record.setMagi(magi);
+
         record.setMiscText1(misc1TextField.getText());
         record.setMiscText2(misc2TextField.getText());
         record.setMiscText3(misc3TextField.getText());
         record.setMiscText4(misc4TextField.getText());
         record.setMiscText5(misc5TextField.getText());
+
+        record.setGaiaId(gaiaIdTextField.getText());
 
         double miscNum1 = Double.parseDouble(miscNum1TextField.getText());
         record.setMiscNum1(miscNum1);
@@ -754,7 +1063,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         double miscNum5 = Double.parseDouble(miscNum5TextField.getText());
         record.setMiscNum5(miscNum5);
-
 
     }
 
