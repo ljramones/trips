@@ -6,9 +6,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
+import org.orekit.propagation.semianalytical.dsst.utilities.hansen.HansenThirdBodyLinear;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -255,15 +257,18 @@ public class StarPropertiesPane extends Pane {
 
         // items for right grid
 
+        HBox hBox = new HBox();
         gridPane.add(new Label("Simbad Id"), 0, 1);
         simbadIdLabel.setText(record.getMiscText2());
-        gridPane.add(simbadIdLabel, 1, 1);
-        Button simbadButton = new Button("Info");
+        hBox.getChildren().add(simbadIdLabel);
+        hBox.getChildren().add(new Label("    "));
+        Button simbadButton = new Button("More\nInfo");
         simbadButton.setOnAction(event -> {
             String simbadRecord = URLEncoder.encode(record.getMiscText2(), StandardCharsets.UTF_8);
             hostServices.showDocument("http://simbad.u-strasbg.fr/simbad/sim-id?Ident=" + simbadRecord);
         });
-        gridPane.add(simbadButton, 2, 1);
+        hBox.getChildren().add(simbadButton);
+        gridPane.add(hBox, 1, 1);
 
         gridPane.add(new Label("Galactic coordinates"), 0, 2);
         galacticCoordinatesLabel.setText(record.getMiscText4());
