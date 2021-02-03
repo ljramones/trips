@@ -79,7 +79,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
         hBox1.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox1);
 
-        Button gotToStarButton = new Button("Select Distance");
+        Button gotToStarButton = new Button("Generate Transits");
         gotToStarButton.setOnAction(this::goToStarClicked);
         hBox1.getChildren().add(gotToStarButton);
 
