@@ -347,26 +347,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         });
         gridPane.add(pmdecLabel, 1, 4);
 
-        gridPane.add(new Label("dec_deg"), 0, 5);
-        decdegLabel.setText(Double.toString(record.getDec_deg()));
-        decdegLabel.setPromptText("dec_deg, press enter");
-        decdegLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkDecDeg();
-            }
-        });
-        gridPane.add(decdegLabel, 1, 5);
-
-        gridPane.add(new Label("rs_cdeg"), 0, 6);
-        rsLabel.setText(Double.toString(record.getRs_cdeg()));
-        rsLabel.setPromptText("rs-cdeg, press enter");
-        rsLabel.setOnKeyPressed(ke -> {
-            if (ke.getCode().equals(KeyCode.ENTER)) {
-                checkRsCdeg();
-            }
-        });
-        gridPane.add(rsLabel, 1, 6);
-
         gridPane.add(new Label("Parallax"), 0, 7);
         parallaxLabel.setText(Double.toString(record.getParallax()));
         parallaxLabel.setPromptText("parallax, press enter");
@@ -499,24 +479,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             record.setPmdec(pmdec);
         } catch (NumberFormatException nfe) {
             showErrorAlert("Edit Star Record", pmdecLabel.getText() + " is an invalid floating point number");
-        }
-    }
-
-    private void checkDecDeg() {
-        try {
-            double decdeg = Double.parseDouble(decdegLabel.getText());
-            record.setRs_cdeg(decdeg);
-        } catch (NumberFormatException nfe) {
-            showErrorAlert("Edit Star Record", decdegLabel.getText() + " is an invalid floating point number");
-        }
-    }
-
-    private void checkRsCdeg() {
-        try {
-            double rs = Double.parseDouble(rsLabel.getText());
-            record.setRs_cdeg(rs);
-        } catch (NumberFormatException nfe) {
-            showErrorAlert("Edit Star Record", rsLabel.getText() + " is an invalid floating point number");
         }
     }
 
@@ -756,12 +718,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         double pmdec = Double.parseDouble(pmdecLabel.getText());
         record.setPmdec(pmdec);
-
-        double decdeg = Double.parseDouble(decdegLabel.getText());
-        record.setRs_cdeg(decdeg);
-
-        double rs = Double.parseDouble(rsLabel.getText());
-        record.setRs_cdeg(rs);
 
         double parallax = Double.parseDouble(parallaxLabel.getText());
         record.setParallax(parallax);

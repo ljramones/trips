@@ -295,7 +295,6 @@ public class ExcelExporter {
         storeCell(row, column++, starObject.getDisplayName());
         storeCell(row, column++, starObject.getConstellationName());
         storeCell(row, column++, starObject.getMass());
-        storeCell(row, column++, starObject.getActualMass());
         storeCell(row, column++, starObject.getSource());
         storeCell(row, column++, starObject.getCatalogIdList());
         storeCell(row, column++, starObject.getX());
@@ -306,8 +305,6 @@ public class ExcelExporter {
         storeCell(row, column++, starObject.getPmra());
         storeCell(row, column++, starObject.getDeclination());
         storeCell(row, column++, starObject.getPmdec());
-        storeCell(row, column++, starObject.getDec_deg());
-        storeCell(row, column++, starObject.getRs_cdeg());
         storeCell(row, column++, starObject.getParallax());
         storeCell(row, column++, starObject.getDistance());
         storeCell(row, column++, starObject.getRadialVelocity());

@@ -43,9 +43,6 @@ public class AstrographicObjectFactory {
         // set the collapsed mass
         starObject.setMass(chViewRecord.getCollapsedMass());
 
-        // get the actual mass from the collapsed mass
-        starObject.setActualMass(chViewRecord.getUncollapsedMass());
-
         // mark that this is the first load of this object
         if (chViewRecord.getComment() != null) {
             starObject.setNotes(chViewRecord.getComment());
