@@ -69,6 +69,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         hBox1.getChildren().add(plotDisplayCheckbox);
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         plotDisplayCheckbox.setFont(font);
+        plotDisplayCheckbox.setSelected(true);
         hBox1.getChildren().add(new Separator());
         hBox1.getChildren().add(tableDisplayCheckbox);
         tableDisplayCheckbox.setFont(font);
