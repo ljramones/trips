@@ -206,6 +206,18 @@ public class AstroCSVStar {
 
             astro.setBprp(parseDouble(bprp.trim()));
 
+            astro.setMiscText1(miscText1);
+            astro.setMiscText2(miscText2);
+            astro.setMiscText3(miscText3);
+            astro.setMiscText4(miscText4);
+            astro.setMiscText5(miscText5);
+
+            astro.setMiscNum1(miscNum1);
+            astro.setMiscNum2(miscNum2);
+            astro.setMiscNum3(miscNum3);
+            astro.setMiscNum4(miscNum4);
+            astro.setMiscNum5(miscNum5);
+
 
             return astro;
 

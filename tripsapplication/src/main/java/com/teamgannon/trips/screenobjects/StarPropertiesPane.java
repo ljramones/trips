@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.StarObject;
+import javafx.application.HostServices;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -8,6 +9,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class StarPropertiesPane extends Pane {
 
@@ -58,8 +62,10 @@ public class StarPropertiesPane extends Pane {
 
 
     private @NotNull StarObject record = new StarObject();
+    private HostServices hostServices;
 
-    public StarPropertiesPane() {
+    public StarPropertiesPane(HostServices hostServices) {
+        this.hostServices = hostServices;
 
         VBox vBox = new VBox();
 
@@ -112,7 +118,7 @@ public class StarPropertiesPane extends Pane {
 
         // secondary tab
         simbadIdLabel.setText(record.getMiscText2());
-        galacticCoordinatesLabel.setText(record.getMiscText3());
+        galacticCoordinatesLabel.setText(record.getMiscText4());
         pmraLabel.setText(Double.toString(record.getPmra()));
         pmdecLabel.setText(Double.toString(record.getPmdec()));
         radialVelocityLabel.setText(Double.toString(record.getRadialVelocity()));
@@ -245,14 +251,22 @@ public class StarPropertiesPane extends Pane {
         gridPane.setVgap(5);
         gridPane.setHgap(5);
 
+//        HostServices hostServices = (HostServices) context.getBean("HostServices");
+
         // items for right grid
 
         gridPane.add(new Label("Simbad Id"), 0, 1);
         simbadIdLabel.setText(record.getMiscText2());
         gridPane.add(simbadIdLabel, 1, 1);
+        Button simbadButton = new Button("Info");
+        simbadButton.setOnAction(event -> {
+            String simbadRecord = URLEncoder.encode(record.getMiscText2(), StandardCharsets.UTF_8);
+            hostServices.showDocument("http://simbad.u-strasbg.fr/simbad/sim-id?Ident=" + simbadRecord);
+        });
+        gridPane.add(simbadButton, 2, 1);
 
         gridPane.add(new Label("Galactic coordinates"), 0, 2);
-        galacticCoordinatesLabel.setText(record.getMiscText3());
+        galacticCoordinatesLabel.setText(record.getMiscText4());
         gridPane.add(galacticCoordinatesLabel, 1, 2);
 
         gridPane.add(new Label("Pmra"), 0, 3);
