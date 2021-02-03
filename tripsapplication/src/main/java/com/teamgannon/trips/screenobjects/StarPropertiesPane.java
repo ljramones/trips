@@ -121,7 +121,6 @@ public class StarPropertiesPane extends Pane {
         anomalyCheckbox.setSelected(record.isAnomaly());
         otherCheckbox.setSelected(record.isOther());
 
-
         // other info tab
         starNameLabel3.setText(record.getDisplayName());
         commonNameLabel3.setText(record.getCommonName());
