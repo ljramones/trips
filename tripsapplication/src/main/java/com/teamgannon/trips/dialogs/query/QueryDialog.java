@@ -9,10 +9,7 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -55,11 +52,23 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                 dataSetChangeListener,
                 updater);
 
-        this.setHeight(1000);
-        this.setWidth(500);
+//        this.setHeight(1000);
+//        this.setWidth(500);
 
         VBox vBox = new VBox();
+        HBox hBox = new HBox();
+        hBox.setAlignment(Pos.CENTER);
+        vBox.getChildren().add(hBox);
 
+        Label explanationLabel = new Label("By default, this form returns all stars. You must click “Yes” on a category to have\n" +
+                "its checkboxes limit your selection. After you click Yes, then only the stars with\n" +
+                "the values you choose will be included in the selection.");
+        hBox.getChildren().add(explanationLabel);
+        hBox.setMinWidth(800);
+        explanationLabel.setFont(Font.font("Verdana", FontPosture.ITALIC, 10));
+
+        vBox.getChildren().add(explanationLabel);
+        vBox.getChildren().add(new Separator());
         vBox.getChildren().add(searchPane);
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10.0);
