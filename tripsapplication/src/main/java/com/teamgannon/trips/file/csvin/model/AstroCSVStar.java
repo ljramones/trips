@@ -210,17 +210,18 @@ public class AstroCSVStar {
             astro.setMiscText3(miscText3);
             try {
                 astro.setMetallicity(Double.parseDouble(miscText3));
-            }catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 astro.setMetallicity(0);
             }
 //            astro.setMiscText4(miscText4);
             try {
-                String[] split= miscText4.split(" ");
+
+                String[] split = miscText4.split("\\s+");
                 double galLat = Double.parseDouble(split[1].trim());
                 double galLong = Double.parseDouble(split[2].trim());
                 astro.setGalacticLat(galLat);
                 astro.setGalacticLong(galLong);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 astro.setGalacticLat(0.0);
                 astro.setGalacticLong(0.0);
             }
