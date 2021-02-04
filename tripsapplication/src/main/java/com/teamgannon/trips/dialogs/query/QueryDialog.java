@@ -47,7 +47,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                        @NotNull DataSetContext dataSetContext,
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
-        this.setTitle("Query and Search");
+        this.setTitle("Select stars from dataset");
 
         searchPane = new SearchPane(
                 searchContext,
