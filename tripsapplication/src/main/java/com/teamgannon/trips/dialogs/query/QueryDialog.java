@@ -52,20 +52,17 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                 dataSetChangeListener,
                 updater);
 
-//        this.setHeight(1000);
-//        this.setWidth(500);
-
         VBox vBox = new VBox();
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox);
 
-        Label explanationLabel = new Label("By default, this form returns all stars. You must click “Yes” on a category to have\n" +
-                "its checkboxes limit your selection. After you click Yes, then only the stars with\n" +
+        Label explanationLabel = new Label("By default, this form returns all stars. You must click “Yes” on a category to have " +
+                "its checkboxes limit your selection. After you click Yes, then only the stars with " +
                 "the values you choose will be included in the selection.");
         hBox.getChildren().add(explanationLabel);
         hBox.setMinWidth(800);
-        explanationLabel.setFont(Font.font("Verdana", FontPosture.ITALIC, 10));
+        explanationLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 10));
 
         vBox.getChildren().add(explanationLabel);
         vBox.getChildren().add(new Separator());

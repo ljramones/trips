@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -24,7 +25,12 @@ public class CivilizationDisplayPreferences implements Serializable {
     public static final String OTHER2 = "Other 2";
     public static final String OTHER3 = "Other 3";
     public static final String OTHER4 = "Other 4";
-    private static final long serialVersionUID = -3083652537359014304L;
+    public static final String NONE = "None";
+
+    @Serial
+    private static final long serialVersionUID = -3937969336190562493L;
+
+
     /**
      * id of the object
      */
