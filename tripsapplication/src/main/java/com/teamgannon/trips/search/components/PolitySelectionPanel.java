@@ -31,6 +31,7 @@ public class PolitySelectionPanel extends BasePane {
     private final CheckBox polity8 = new CheckBox(CivilizationDisplayPreferences.OTHER2);
     private final CheckBox polity9 = new CheckBox(CivilizationDisplayPreferences.OTHER3);
     private final CheckBox polity10 = new CheckBox(CivilizationDisplayPreferences.OTHER4);
+    private final CheckBox polity11 = new CheckBox(CivilizationDisplayPreferences.NONE);
 
     public PolitySelectionPanel() {
 
@@ -47,15 +48,16 @@ public class PolitySelectionPanel extends BasePane {
         planGrid.add(polity1, 2, 0);
         planGrid.add(polity2, 2, 1);
         planGrid.add(polity3, 2, 2);
+        planGrid.add(polity4, 2, 3);
 
-        planGrid.add(polity4, 3, 0);
-        planGrid.add(polity5, 3, 1);
-        planGrid.add(polity6, 3, 2);
+        planGrid.add(polity5, 3, 0);
+        planGrid.add(polity6, 3, 1);
+        planGrid.add(polity7, 3, 2);
+        planGrid.add(polity8, 3, 3);
 
-        planGrid.add(polity7, 4, 0);
-        planGrid.add(polity8, 4, 1);
-        planGrid.add(polity9, 4, 2);
-        planGrid.add(polity10, 4, 3);
+        planGrid.add(polity9, 4, 0);
+        planGrid.add(polity10, 4, 1);
+        planGrid.add(polity11, 4, 2);
 
         enable(false);
         clearSelected();
@@ -101,6 +103,9 @@ public class PolitySelectionPanel extends BasePane {
         if (polity10.isSelected()) {
             selections.add(polity10.getText());
         }
+        if (polity11.isSelected()) {
+            selections.add(polity11.getText());
+        }
 
         return selections;
     }
@@ -110,7 +115,7 @@ public class PolitySelectionPanel extends BasePane {
      * initialize the event handler
      */
     private void initEventHandler() {
-        EventHandler eh = (EventHandler<ActionEvent>) event -> {
+        EventHandler<ActionEvent> eh = event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
                 log.debug("Action performed on checkbox " + chk.getText());
@@ -146,6 +151,7 @@ public class PolitySelectionPanel extends BasePane {
         polity8.setDisable(!flag);
         polity9.setDisable(!flag);
         polity10.setDisable(!flag);
+        polity11.setDisable(!flag);
     }
 
     /**
@@ -162,6 +168,7 @@ public class PolitySelectionPanel extends BasePane {
         polity8.setSelected(false);
         polity9.setSelected(false);
         polity10.setSelected(false);
+        polity11.setSelected(false);
     }
 
 
