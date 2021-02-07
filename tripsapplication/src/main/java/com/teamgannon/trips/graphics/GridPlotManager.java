@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics;
 
+import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
@@ -31,9 +32,22 @@ import static java.lang.Math.*;
 public class GridPlotManager {
 
     private static final String scaleString = "Scale: 1 grid is %.2f ly square";
+
+    /**
+     * contains the labels so we can redraw when the display shifts
+     */
     private final @NotNull Map<Node, Label> shapeToLabel;
+
+    /**
+     * the drawing group for the scale
+     */
     private final Group scaleGroup = new Group();
+
+    /**
+     * the drawing group for the grid
+     */
     private final Group gridGroup = new Group();
+
     /**
      * used to control label visibility
      */
@@ -200,10 +214,15 @@ public class GridPlotManager {
     /**
      * rebuild the grid with the specified transformation characteristics
      *
-     * @param transformer  the transformer
-     * @param colorPalette the color palette
+     * @param transformer the transformer
+     * @param currentPlot the current plot summary
      */
-    public void rebuildGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
+    public void rebuildGrid(@NotNull AstrographicTransformer transformer, CurrentPlot currentPlot) {
+
+        // remember to clear the labels first
+        shapeToLabel.clear();
+        labelDisplayGroup.getChildren().clear();
+        log.info("CLEARED GRID LABELS!!");
 
         ScalingParameters parameters = transformer.getScalingParameters();
 
@@ -213,13 +232,13 @@ public class GridPlotManager {
         log.info("rebuilding grid scale increment: " + parameters.getScaleIncrement());
 
         // rebuild grid
-        createGrid(transformer, colorPalette);
+        createGrid(transformer, currentPlot);
 
         // now rebuild scale legend
         rebuildScaleLegend((int) parameters.getScaleIncrement());
     }
 
-    private void createGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
+    private void createGrid(@NotNull AstrographicTransformer transformer, @NotNull CurrentPlot currentPlot) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
         double minZ = parameters.getMinZ();
@@ -230,46 +249,56 @@ public class GridPlotManager {
         double maxX = parameters.getMaxX();
         double xDivs = ceil(parameters.getXRange() / 5);
 
-
         // create z division lines
-        drawXLineSegments(transformer, colorPalette, minZ, maxZ, xDivs, 0, 5);
-        drawXLineSegments(transformer, colorPalette, minZ, maxZ, xDivs, 0, -5);
+        drawXLineSegments(transformer, currentPlot, minZ, maxZ, xDivs, 0, 5);
+        drawXLineSegments(transformer, currentPlot, minZ, maxZ, xDivs, 0, -5);
 
         // create x division lines
-        drawZLineSegments(transformer, colorPalette, zDivs, minX, maxX, 0, 5);
-        drawZLineSegments(transformer, colorPalette, zDivs, minX, maxX, 0, -5);
+        drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, 5);
+        drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, -5);
 
         gridGroup.setVisible(true);
 
     }
 
 
-    private void drawZLineSegments(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette,
+    private void drawZLineSegments(@NotNull AstrographicTransformer transformer,
+                                   @NotNull CurrentPlot currentPlot,
                                    double zDivs, double minX, double maxX, double beginZ,
                                    double increment) {
+
+        // get zero plane based on star center coordinates
+        double yZero = currentPlot.getCenterCoordinates()[1];
+
         for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
-            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), 0, beginZ};
-            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), 0, beginZ};
+            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), yZero, beginZ};
+            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), yZero, beginZ};
             String label = Integer.toString((int) beginZ);
             LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
             Node gridLineSegmentX = createLineSegment(
                     lineSegmentX.getFrom(), lineSegmentX.getTo(),
-                    lineWidth, colorPalette.getGridColor(),
+                    lineWidth, currentPlot.getColorPalette().getGridColor(),
                     label, false);
             gridGroup.getChildren().add(gridLineSegmentX);
             beginZ += increment;
         }
     }
 
-    private void drawXLineSegments(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette, double minZ, double maxZ, double xDivs, double beginX, double increment) {
+    private void drawXLineSegments(@NotNull AstrographicTransformer transformer,
+                                   @NotNull CurrentPlot currentPlot,
+                                   double minZ, double maxZ, double xDivs, double beginX, double increment) {
+
+        // get zero plane based on star center coordinates
+        double yZero = currentPlot.getCenterCoordinates()[1];
+
         for (int i = 0; i < (ceil(xDivs / 2)); i++) {
-            double[] fromPointZ = new double[]{beginX, 0, signum(minZ) * ceil(abs(minZ))};
-            double[] toPointZ = new double[]{beginX, 0, signum(maxZ) * ceil(abs(maxZ))};
+            double[] fromPointZ = new double[]{beginX, yZero, signum(minZ) * ceil(abs(minZ))};
+            double[] toPointZ = new double[]{beginX, yZero, signum(maxZ) * ceil(abs(maxZ))};
             String label = Integer.toString((int) beginX);
             LineSegment lineSegmentZ = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
             Node gridLineSegmentZ = createLineSegment(
                     lineSegmentZ.getFrom(), lineSegmentZ.getTo(),
-                    lineWidth, colorPalette.getGridColor(),
+                    lineWidth, currentPlot.getColorPalette().getGridColor(),
                     label, true);
             gridGroup.getChildren().add(gridLineSegmentZ);
             beginX -= increment;

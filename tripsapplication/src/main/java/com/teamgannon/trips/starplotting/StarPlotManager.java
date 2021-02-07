@@ -337,7 +337,7 @@ public class StarPlotManager {
                     politiesOn);
 
             // create the extension stem tot he star from the grid
-            createExtension(record, colorPalette.getExtensionColor());
+            createExtension(record);
         }
         tripsContext.getCurrentPlot().addStar(record.getRecordId(), starNode);
 
@@ -522,27 +522,17 @@ public class StarPlotManager {
     }
 
     /**
-     * create a set of extensions for a set of stars
-     *
-     * @param recordList the list of stars
-     */
-    private void createExtensionGroup(@NotNull List<StarDisplayRecord> recordList, Color extensionColor) {
-        for (StarDisplayRecord record : recordList) {
-            createExtension(record, extensionColor);
-        }
-    }
-
-    /**
      * create an extension for an added star
      *
      * @param record         the star
-     * @param extensionColor the color of the extensions from grid to star
      */
-    private void createExtension(@NotNull StarDisplayRecord record, Color extensionColor) {
+    private void createExtension(@NotNull StarDisplayRecord record) {
+        double yZero = tripsContext.getCurrentPlot().getCenterCoordinates()[1];
         Point3D point3DFrom = record.getCoordinates();
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
+        Point3D point3DTo = new Point3D(point3DFrom.getX(), yZero, point3DFrom.getZ());
         double lineWidth = colorPalette.getStemLineWidth();
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo,
+                lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
