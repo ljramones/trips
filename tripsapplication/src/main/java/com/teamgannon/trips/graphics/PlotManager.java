@@ -208,7 +208,7 @@ public class PlotManager {
         log.info("New Plot Scaling parameters:" + scalingParameters);
 
         // rebuild the grid based on parameters
-        interstellarSpacePane.rebuildGrid(astrographicTransformer, colorPalette);
+        interstellarSpacePane.rebuildGrid(astrographicTransformer, currentPlot);
 
         // plot all stars
         for (StarObject starObject : starObjects) {

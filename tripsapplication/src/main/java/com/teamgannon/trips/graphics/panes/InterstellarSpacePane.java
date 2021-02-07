@@ -297,7 +297,7 @@ public class InterstellarSpacePane extends Pane {
 
     //////////////////////
 
-    public void rebuildGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
+    public void rebuildGrid(@NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
         gridPlotManager.rebuildGrid(transformer, colorPalette);
     }
 
