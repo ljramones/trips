@@ -4,7 +4,8 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
-import com.teamgannon.trips.graphics.CurrentPlot;
+import com.teamgannon.trips.config.application.CurrentPlot;
+import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -50,11 +51,6 @@ public class InterstellarSpacePane extends Pane {
      * animation rotator
      */
     private final @NotNull RotateTransition rotator;
-
-    /**
-     * our current plot
-     */
-    private final @NotNull CurrentPlot currentPlot;
 
     /**
      * application context
@@ -125,9 +121,6 @@ public class InterstellarSpacePane extends Pane {
         this.tripsContext = tripsContext;
         this.listUpdaterListener = listUpdaterListener;
 
-        currentPlot = new CurrentPlot();
-        currentPlot.setStarDisplayPreferences(starDisplayPreferences);
-
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
 
@@ -162,9 +155,8 @@ public class InterstellarSpacePane extends Pane {
                 databaseListener,
                 displayer,
                 contextSelectorListener,
-                starDisplayPreferences,
                 reportGenerator,
-                currentPlot,
+                tripsContext,
                 colorPalette
         );
 
@@ -174,7 +166,7 @@ public class InterstellarSpacePane extends Pane {
                 subScene,
                 this,
                 routeUpdaterListener,
-                currentPlot,
+                tripsContext,
                 colorPalette
         );
 
@@ -192,7 +184,7 @@ public class InterstellarSpacePane extends Pane {
                 subScene,
                 this,
                 routeUpdaterListener,
-                colorPalette
+                tripsContext
         );
 
         starPlotManager.setRouteManager(routeManager);
@@ -286,17 +278,6 @@ public class InterstellarSpacePane extends Pane {
     }
 
 
-    public void setStellarPreferences(StarDisplayPreferences starDisplayPreferences) {
-        this.starDisplayPreferences = starDisplayPreferences;
-        this.starPlotManager.setStarDisplayPreferences(starDisplayPreferences);
-    }
-
-    public void setCivilizationPreferences(CivilizationDisplayPreferences preferences) {
-        currentPlot.setCivilizationDisplayPreferences(preferences);
-        starPlotManager.setCivilizationDisplayPreferences(preferences);
-    }
-
-
     /**
      * finds all the transits for stars in view
      *
@@ -314,44 +295,14 @@ public class InterstellarSpacePane extends Pane {
         transitManager.clearTransits();
     }
 
-
-    /////////////////// SET DATASET CONTEXT  /////////////////
-
-    public void setDataSetContext(DataSetDescriptor datasetName) {
-        routeManager.setDatasetContext(datasetName);
-        transitManager.setDatasetContext(datasetName);
-    }
-
-    public void setupPlot(
-            DataSetDescriptor dataSetDescriptor,
-            double[] centerCoordinates,
-            StarDisplayPreferences starDisplayPreferences,
-            CivilizationDisplayPreferences civilizationDisplayPreferences) {
-
-        clearStars();
-
-        currentPlot.setDataSetDescriptor(dataSetDescriptor);
-        currentPlot.setCenterCoordinates(centerCoordinates);
-        currentPlot.setCivilizationDisplayPreferences(civilizationDisplayPreferences);
-        currentPlot.setPlotActive(true);
-
-        starPlotManager.setStarDisplayPreferences(starDisplayPreferences);
-
-        routeManager.setDatasetContext(dataSetDescriptor);
-    }
-
     //////////////////////
 
-    public @NotNull GridPlotManager getGridPlotManager() {
-        return gridPlotManager;
+    public void rebuildGrid(@NotNull AstrographicTransformer transformer, @NotNull ColorPalette colorPalette) {
+        gridPlotManager.rebuildGrid(transformer, colorPalette);
     }
 
     public void highlightStar(UUID starId) {
         starPlotManager.highlightStar(starId);
-    }
-
-    public void clearPlot() {
-        starPlotManager.clearStars();
     }
 
     public void changeColors(ColorPalette colorPalette) {
@@ -364,6 +315,13 @@ public class InterstellarSpacePane extends Pane {
     }
 
     //////////////////////////  public methods /////////////////////////////
+
+
+    public void clearAll() {
+        clearStars();
+        clearRoutes();
+        clearTransits();
+    }
 
     /**
      * clear the stars from the display
@@ -523,11 +481,6 @@ public class InterstellarSpacePane extends Pane {
         starPlotManager.toggleLabels(labelSetting);
     }
 
-    public boolean isPlotActive() {
-        return starPlotManager.isPlotActive();
-    }
-
-
     /**
      * start the rotation of Y-axis animation
      */
@@ -542,28 +495,8 @@ public class InterstellarSpacePane extends Pane {
 
     ///////////////////////////////////
 
-    /**
-     * draw a list of stars
-     *
-     * @param recordList the list of stars
-     */
-    public void plotStar(@NotNull List<StarDisplayRecord> recordList, String centerStar, ColorPalette colorPalette) {
-        starPlotManager.drawStar(recordList, centerStar, colorPalette);
-    }
-
-    /**
-     * draw a star
-     *
-     * @param record     the star record
-     * @param centerStar the name of the center star
-     */
-    public void plotStar(@NotNull StarDisplayRecord record,
-                         String centerStar,
-                         ColorPalette colorPalette,
-                         StarDisplayPreferences starDisplayPreferences) {
-
-
-        starPlotManager.drawStar(record, centerStar, colorPalette, starDisplayPreferences);
+    public void plotStars(CurrentPlot currentPlot) {
+        starPlotManager.drawStars(currentPlot);
     }
 
 
@@ -587,31 +520,9 @@ public class InterstellarSpacePane extends Pane {
         return rotate;
     }
 
-    private void doRotateAnimation() {
-
-    }
-
 
     ////////////// graphics helpers  /////////////////////////
 
-
-    /**
-     * set a fade transition on a node
-     *
-     * @param node the node to set
-     */
-    public void setFade(Node node, int cycleCount) {
-        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-        fader.setFromValue(1.0);
-        fader.setToValue(0.1);
-        fader.setCycleCount(cycleCount);
-        fader.setAutoReverse(true);
-        fader.play();
-    }
-
-    public @NotNull Parent getRoot() {
-        return root;
-    }
 
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;
@@ -624,4 +535,5 @@ public class InterstellarSpacePane extends Pane {
     private void run() {
         updateLabels();
     }
+
 }

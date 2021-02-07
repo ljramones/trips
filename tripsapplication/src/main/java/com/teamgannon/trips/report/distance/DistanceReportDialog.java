@@ -16,8 +16,11 @@ public class DistanceReportDialog extends Dialog<DistanceReport> {
     private final @NotNull DistanceReport report;
     public @NotNull Button changeButton = new Button("Save");
 
-    public DistanceReportDialog(@NotNull Stage stage,
-                                @NotNull DistanceReport report) {
+    public DistanceReportDialog(@NotNull DistanceReport report) {
+
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+
         this.report = report;
 
         this.setTitle("Distance Report Dialog for: " + report.getSourceStar().getStarName());

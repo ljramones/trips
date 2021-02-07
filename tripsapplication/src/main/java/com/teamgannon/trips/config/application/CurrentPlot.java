@@ -1,6 +1,5 @@
-package com.teamgannon.trips.graphics;
+package com.teamgannon.trips.config.application;
 
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -19,38 +18,47 @@ public class CurrentPlot {
      * the lookout for drawn stars
      */
     private final Map<UUID, Node> starLookup = new HashMap<>();
+
     /**
      * a one way map form star id to label of the star
      */
     private final Map<UUID, Label> starToLabelLookup = new HashMap<>();
+
     /**
      * the dataset descriptor for this plot
      */
     private DataSetDescriptor dataSetDescriptor;
+
     /**
      * whether the plot is currently active
      */
     private boolean plotActive = false;
+
     /**
      * the center coordinates for this plot
      */
     private double[] centerCoordinates;
+
     /**
      * th center star
      */
     private String centerStar;
+
     /**
      * the star display preferences
      */
     private StarDisplayPreferences starDisplayPreferences;
+
     /**
      * the polities
      */
     private CivilizationDisplayPreferences civilizationDisplayPreferences;
+
     /**
      * the list of stars
      */
     private @NotNull List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
+
     /**
      * the color palette
      */
@@ -88,12 +96,29 @@ public class CurrentPlot {
         return starLookup.keySet();
     }
 
-    public void clearStars() {
-        starLookup.clear();
-    }
 
     public Label getLabelForStar(UUID starId) {
         return starToLabelLookup.get(starId);
     }
 
+    public void clearPlot() {
+        starDisplayRecordList.clear();
+        starToLabelLookup.clear();
+        starLookup.clear();
+        plotActive = false;
+        centerCoordinates = new double[3];
+    }
+
+    public void setupPlot(DataSetDescriptor dataSetDescriptor, double[] centerCoordinates,
+                          String centerStar, ColorPalette colorPalette,
+                          StarDisplayPreferences starDisplayPreferences,
+                          CivilizationDisplayPreferences civilizationDisplayPreferences) {
+
+        this.dataSetDescriptor = dataSetDescriptor;
+        this.centerCoordinates = centerCoordinates;
+        this.centerStar = centerStar;
+        this.colorPalette = colorPalette;
+        this.starDisplayPreferences = starDisplayPreferences;
+        this.civilizationDisplayPreferences = civilizationDisplayPreferences;
+    }
 }

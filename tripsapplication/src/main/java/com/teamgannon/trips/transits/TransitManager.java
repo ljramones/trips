@@ -1,5 +1,6 @@
 package com.teamgannon.trips.transits;
 
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
@@ -63,28 +64,34 @@ public class TransitManager {
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     private final SubScene subScene;
+
     /**
      * the listener to create routes on demand
      */
     private final RouteUpdaterListener routeUpdaterListener;
+    private final TripsContext tripsContext;
     private final InterstellarSpacePane interstellarSpacePane;
-    private final ColorPalette colorPalette;
+
     /**
      * whether the transits are visible or not
      */
     private boolean transitsOn;
+
     /**
      * list of computed transits
      */
     private List<TransitRoute> transitRoutes;
+
     /**
      * the route descriptor
      */
     private @Nullable RouteDescriptor routeDescriptor;
+
     /**
      * used to track an active routing effort
      */
     private boolean routingActive = false;
+
     /**
      * current dataset
      */
@@ -104,13 +111,13 @@ public class TransitManager {
                           SubScene subScene,
                           InterstellarSpacePane interstellarSpacePane,
                           RouteUpdaterListener routeUpdaterListener,
-                          ColorPalette colorPalette) {
+                          TripsContext tripsContext) {
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
 
         // our graphics world
         this.routeUpdaterListener = routeUpdaterListener;
-        this.colorPalette = colorPalette;
+        this.tripsContext = tripsContext;
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
@@ -260,7 +267,7 @@ public class TransitManager {
 
     private @NotNull Label createLabel(@NotNull TransitRoute transitRoute) {
         Label label = new Label(String.format("%.2fly", transitRoute.getDistance()));
-        SerialFont serialFont = colorPalette.getLabelFont();
+        SerialFont serialFont = tripsContext.getCurrentPlot().getColorPalette().getLabelFont();
         label.setFont(serialFont.toFont());
         return label;
     }

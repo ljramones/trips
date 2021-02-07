@@ -24,13 +24,14 @@ import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
 import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
-import com.teamgannon.trips.graphics.AstrographicPlotter;
+import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.report.ReportManager;
 import com.teamgannon.trips.report.distance.DistanceReport;
 import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
@@ -102,7 +103,8 @@ public class MainPane implements
         ReportGenerator,
         DatabaseListener,
         DataSetChangeListener,
-        StatusUpdaterListener {
+        StatusUpdaterListener,
+        RoutingPanelListener{
 
     /**
      * the current search context to display from
@@ -119,7 +121,7 @@ public class MainPane implements
     /**
      * star plotter component
      */
-    private final AstrographicPlotter astrographicPlotter;
+    private PlotManager plotManager;
     private final Localization localization;
     private final @NotNull DataExportService dataExportService;
     /**
@@ -231,7 +233,6 @@ public class MainPane implements
                     @NotNull TripsContext tripsContext,
                     ApplicationContext appContext,
                     DatabaseManagementService databaseManagementService,
-                    AstrographicPlotter astrographicPlotter,
                     Localization localization
     ) {
 
@@ -243,7 +244,6 @@ public class MainPane implements
         this.appContext = appContext;
 
         this.databaseManagementService = databaseManagementService;
-        this.astrographicPlotter = astrographicPlotter;
         this.localization = localization;
 
         this.dataExportService = new DataExportService(databaseManagementService, this);
@@ -253,6 +253,9 @@ public class MainPane implements
     @FXML
     public void initialize() {
         log.info("initialize view");
+
+        this.plotManager = new PlotManager(tripsContext, databaseManagementService,
+                this,this,this);
 
         setButtons();
 
@@ -336,8 +339,6 @@ public class MainPane implements
          */
         this.mainSplitPane = new SplitPane();
         this.mainSplitPane.setDividerPositions(1.0);
-//        this.mainSplitPane.lookupAll(".split-pane-divider")
-//                .forEach(div ->  div.setMouseTransparent(true) );
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
 
         this.displayPane.getChildren().add(mainSplitPane);
@@ -676,7 +677,7 @@ public class MainPane implements
     private void getCivilizationsFromDB() {
         CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
         tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
-        interstellarSpacePane.setCivilizationPreferences(civilizationDisplayPreferences);
+        tripsContext.getCurrentPlot().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
 
@@ -705,7 +706,7 @@ public class MainPane implements
         StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
         starDisplayPreferences.setStars(starDetailsPersistList);
         tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
-        interstellarSpacePane.setStellarPreferences(starDisplayPreferences);
+        tripsContext.getCurrentPlot().setStarDisplayPreferences(starDisplayPreferences);
     }
 
 
@@ -776,7 +777,7 @@ public class MainPane implements
         interstellarSpacePane.toFront();
 
         // set the interstellar pane to be the drawing surface
-        astrographicPlotter.setInterstellarPane(interstellarSpacePane);
+        plotManager.setInterstellarPane(interstellarSpacePane);
 
     }
 
@@ -794,7 +795,7 @@ public class MainPane implements
 
 
     public void plotStars(ActionEvent actionEvent) {
-        showPlot();
+        plotManager.showPlot();
     }
 
     public void viewEditStarData(ActionEvent actionEvent) {
@@ -1207,38 +1208,8 @@ public class MainPane implements
 
     @Override
     public void generateDistanceReport(StarDisplayRecord starDescriptor) {
-        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        DistanceReport distanceReport = new DistanceReport(starDescriptor);
-        distanceReport.findDistance(starsInView);
-        distanceReport.generateReport();
-        DistanceReportDialog dialog = new DistanceReportDialog(stage, distanceReport);
-        Optional<DistanceReport> distanceReportOptional = dialog.showAndWait();
-        if (distanceReportOptional.isPresent()) {
-            distanceReport = distanceReportOptional.get();
-            if (distanceReport.isSaveSelected()) {
-                // save the file
-                FileChooser fileChooser = new FileChooser();
-
-                //Set extension filter for text files
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
-                fileChooser.getExtensionFilters().add(extFilter);
-
-                //Show save file dialog
-                File file = fileChooser.showSaveDialog(stage);
-
-                if (file != null) {
-                    saveTextToFile(distanceReport.getGeneratedReport(), file);
-                }
-            }
-        }
-    }
-
-    private void saveTextToFile(String generatedReport, File file) {
-        try (PrintWriter out = new PrintWriter(file)) {
-            out.println(generatedReport);
-        } catch (FileNotFoundException e) {
-            log.error("Can't create file {} because of {}", file.getAbsolutePath(), e.getMessage());
-        }
+        ReportManager reportManager = new ReportManager();
+        reportManager.generateDistanceReport(stage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
     }
 
     @Override
@@ -1309,7 +1280,7 @@ public class MainPane implements
 
         if (!starObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(descriptor,
+                plotManager.drawAstrographicData(descriptor,
                         starObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
@@ -1358,7 +1329,7 @@ public class MainPane implements
 
         if (!starObjects.isEmpty()) {
             if (showPlot) {
-                astrographicPlotter.drawAstrographicData(searchQuery.getDescriptor(),
+                plotManager.drawAstrographicData(searchQuery.getDescriptor(),
                         starObjects,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
@@ -1457,7 +1428,6 @@ public class MainPane implements
         tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
         dataSetsListView.getSelectionModel().select(descriptor);
         queryDialog.setDataSetContext(descriptor);
-        interstellarSpacePane.setDataSetContext(descriptor);
 
         plotButton.setDisable(false);
         toolBar.setTooltip(new Tooltip(null));
@@ -1482,7 +1452,7 @@ public class MainPane implements
         updateToggles(graphEnablesPersist);
 
         databaseManagementService.updateGraphEnables(graphEnablesPersist);
-        astrographicPlotter.changeGraphEnables(graphEnablesPersist);
+        plotManager.changeGraphEnables(graphEnablesPersist);
         log.debug("UPDATE GRAPH ENABLES!!!");
     }
 
@@ -1547,70 +1517,6 @@ public class MainPane implements
 
     /////////////////////  DISPLAY DATA   ///////////////////////////
 
-    /**
-     * show a loaded dataset in the plot menu
-     */
-    private void showPlot() {
-        List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
-        if (datasets.size() == 0) {
-            showErrorAlert("Plot Stars", "No datasets loaded, please load one");
-            return;
-        }
-
-        if (tripsContext.getDataSetContext().isValidDescriptor()) {
-            DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
-            drawStars(dataSetDescriptor);
-            routingPanel.setContext(dataSetDescriptor);
-        } else {
-
-            List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
-
-            ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
-            dialog.setTitle("Choice Data set to display");
-            dialog.setHeaderText("Select your choice - (Default display is 20 light years from Earth, use Show Stars filter to change)");
-
-            Optional<String> result = dialog.showAndWait();
-
-            if (result.isPresent()) {
-                String selected = result.get();
-
-                DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
-                if (dataSetDescriptor == null) {
-                    log.error("How the hell did this happen");
-                    return;
-                }
-
-                // update the routing table in the side panel
-                routingPanel.setContext(dataSetDescriptor);
-
-                drawStars(dataSetDescriptor);
-                setContextDataSet(dataSetDescriptor);
-            }
-        }
-    }
-
-    private void drawStars(@NotNull DataSetDescriptor dataSetDescriptor) {
-        List<StarObject> starObjects = databaseManagementService.getFromDatasetWithinLimit(
-                dataSetDescriptor,
-                searchContext.getAstroSearchQuery().getUpperDistanceLimit());
-        log.info("DB Query returns {} stars", starObjects.size());
-
-        if (!starObjects.isEmpty()) {
-            AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
-            astroSearchQuery.zeroCenter();
-            astrographicPlotter.drawAstrographicData(
-                    tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
-                    starObjects,
-                    astroSearchQuery.getCenterCoordinates(),
-                    tripsContext.getAppViewPreferences().getColorPallete(),
-                    tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                    tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-            );
-            updateStatus("Dataset plotted is selection from: " + dataSetDescriptor.getDataSetName());
-        } else {
-            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
-        }
-    }
 
     /**
      * show the data in a spreadsheet
@@ -1739,7 +1645,7 @@ public class MainPane implements
                         showList(advResultsSet.getStarsFound());
                     }
                     if (advResultsSet.isPlotStars()) {
-                        astrographicPlotter.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
+                        plotManager.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
                                 advResultsSet.getStarsFound(),
                                 searchContext.getAstroSearchQuery().getCenterCoordinates(),
                                 tripsContext.getAppViewPreferences().getColorPallete(),
@@ -1755,4 +1661,8 @@ public class MainPane implements
 
     }
 
+    @Override
+    public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
+        routingPanel.setContext(dataSetDescriptor);
+    }
 }

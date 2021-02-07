@@ -1,10 +1,11 @@
 package com.teamgannon.trips.starplotting;
 
+import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
-import com.teamgannon.trips.graphics.CurrentPlot;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -100,45 +101,41 @@ public class StarPlotManager {
      * the report generator
      */
     private final ReportGenerator reportGenerator;
-    /**
-     * the current plot
-     */
-    private final CurrentPlot currentPlot;
+
+
+    private TripsContext tripsContext;
     /**
      * our color palette
      */
-    private final ColorPalette colorPalette;
+    private ColorPalette colorPalette;
+
     /**
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
     private final Random random = new Random();
+
     /**
      * label state
      */
     private boolean labelsOn = true;
+
     /**
      * toggle state of polities
      */
     private boolean politiesOn = true;
+
     /**
      * reference to the Route Manager
      */
     private RouteManager routeManager;
-    /**
-     * star display specifics
-     */
-    private StarDisplayPreferences starDisplayPreferences;
-    /**
-     * the highlight rotator
-     */
-    private RotateTransition highlightRotator;
-    /**
-     * the civilization and
-     */
-    private CivilizationDisplayPreferences politiesPreferences;
+
+
+
     private double controlPaneOffset;
+
+    private StarDisplayPreferences starDisplayPreferences;
 
     /**
      * constructor
@@ -149,9 +146,8 @@ public class StarPlotManager {
      * @param databaseListener        the database listener
      * @param displayer               the displayer
      * @param contextSelectorListener the context selector
-     * @param starDisplayPreferences  the star display prefs
      * @param reportGenerator         the report generator
-     * @param currentPlot             the current plot
+     * @param tripsContext            the trips context
      * @param colorPalette            the color palette
      */
     public StarPlotManager(@NotNull Group sceneRoot,
@@ -162,9 +158,8 @@ public class StarPlotManager {
                            DatabaseListener databaseListener,
                            StellarPropertiesDisplayerListener displayer,
                            ContextSelectorListener contextSelectorListener,
-                           StarDisplayPreferences starDisplayPreferences,
                            ReportGenerator reportGenerator,
-                           CurrentPlot currentPlot,
+                           TripsContext tripsContext,
                            ColorPalette colorPalette) {
 
         this.world = world;
@@ -175,15 +170,13 @@ public class StarPlotManager {
         this.databaseListener = databaseListener;
         this.displayer = displayer;
         this.contextSelectorListener = contextSelectorListener;
-        this.starDisplayPreferences = starDisplayPreferences;
         this.reportGenerator = reportGenerator;
-        this.currentPlot = currentPlot;
+        this.tripsContext = tripsContext;
         this.colorPalette = colorPalette;
 
         world.getChildren().add(stellarDisplayGroup);
 
         sceneRoot.getChildren().add(labelDisplayGroup);
-//        world.getChildren().add(labelDisplayGroup);
 
         world.getChildren().add(extensionsGroup);
 
@@ -198,8 +191,8 @@ public class StarPlotManager {
      */
     public @NotNull List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
-        for (UUID id : currentPlot.getStarIds()) {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) currentPlot.getStar(id).getUserData();
+        for (UUID id : tripsContext.getCurrentPlot().getStarIds()) {
+            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) tripsContext.getCurrentPlot().getStar(id).getUserData();
             starsInView.add(starDisplayRecord);
         }
         starsInView.sort(Comparator.comparing(StarDisplayRecord::getStarName));
@@ -219,17 +212,6 @@ public class StarPlotManager {
         this.routeManager = routeManager;
     }
 
-    public void setStarDisplayPreferences(StarDisplayPreferences displayPreferences) {
-        this.starDisplayPreferences = displayPreferences;
-    }
-
-    public void setCivilizationDisplayPreferences(CivilizationDisplayPreferences politiesPreferences) {
-        this.politiesPreferences = politiesPreferences;
-    }
-
-    public @NotNull Group getExtensionsGroup() {
-        return extensionsGroup;
-    }
 
     /**
      * clear the stars from the display
@@ -246,7 +228,7 @@ public class StarPlotManager {
     }
 
     public void highlightStar(UUID starId) {
-        Label starGroup = currentPlot.getLabelForStar(starId);
+        Label starGroup = tripsContext.getCurrentPlot().getLabelForStar(starId);
         blinkStarLabel(starGroup, 60);
 
         log.info("mark point");
@@ -272,46 +254,20 @@ public class StarPlotManager {
         labelDisplayGroup.setVisible(starsOn);
     }
 
-    public boolean isPlotActive() {
-        return stellarDisplayGroup.getChildren().size() > 0;
-    }
 
-    /**
-     * draw a list of stars
-     *
-     * @param recordList the list of stars
-     */
-    public void drawStar(@NotNull List<StarDisplayRecord> recordList, String centerStar, @NotNull ColorPalette colorPalette) {
+    public void drawStars(CurrentPlot currentPlot) {
+        this.colorPalette = currentPlot.getColorPalette();
+        this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
 
-        for (StarDisplayRecord star : recordList) {
-            drawStar(star, centerStar, colorPalette, starDisplayPreferences);
+        for (StarDisplayRecord starDisplayRecord : currentPlot.getStarDisplayRecordList()) {
+            plotStar(starDisplayRecord, currentPlot.getCenterStar(),
+                    currentPlot.getColorPalette(), currentPlot.getStarDisplayPreferences(),
+                    currentPlot.getCivilizationDisplayPreferences());
         }
-        createExtensionGroup(recordList, colorPalette.getExtensionColor());
-
-        // there is an active plot on screen
-        currentPlot.setPlotActive(true);
-    }
-
-    /**
-     * draw a star
-     *
-     * @param record     the star record
-     * @param centerStar the name of the center star
-     */
-    public void drawStar(@NotNull StarDisplayRecord record,
-                         String centerStar,
-                         @NotNull ColorPalette colorPalette,
-                         StarDisplayPreferences starDisplayPreferences) {
-
-        currentPlot.addRecord(record.copy());
-        currentPlot.setCenterStar(centerStar);
-
-        plotStar(record, centerStar, colorPalette, starDisplayPreferences);
-
     }
 
     public void clearPlot() {
-        currentPlot.clearStars();
+        tripsContext.getCurrentPlot().clearPlot();
     }
 
     /**
@@ -323,7 +279,7 @@ public class StarPlotManager {
         this.labelsOn = labelSetting;
 
         // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
+        if (tripsContext.getCurrentPlot().isPlotActive()) {
 //            redrawPlot();
             labelDisplayGroup.setVisible(labelSetting);
         }
@@ -334,7 +290,7 @@ public class StarPlotManager {
         log.info("toggle polities: {}", polities);
 
         // we can only do this if there are plot element on screen
-        if (currentPlot.isPlotActive()) {
+        if (tripsContext.getCurrentPlot().isPlotActive()) {
 //            redrawPlot();
             politiesDisplayGroup.setVisible(polities);
         }
@@ -344,23 +300,25 @@ public class StarPlotManager {
         clearPlot();
         clearStars();
         log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
-        List<StarDisplayRecord> recordList = currentPlot.getStarDisplayRecordList();
+        List<StarDisplayRecord> recordList = tripsContext.getCurrentPlot().getStarDisplayRecordList();
         recordList.forEach(
                 starDisplayRecord -> plotStar(
                         starDisplayRecord,
-                        currentPlot.getCenterStar(),
+                        tripsContext.getCurrentPlot().getCenterStar(),
                         colorPalette,
-                        currentPlot.getStarDisplayPreferences()
+                        tripsContext.getCurrentPlot().getStarDisplayPreferences(),
+                        tripsContext.getCurrentPlot().getCivilizationDisplayPreferences()
                 )
         );
-        routeManager.plotRoutes(currentPlot.getDataSetDescriptor().getRoutes());
+        routeManager.plotRoutes(tripsContext.getCurrentPlot().getDataSetDescriptor().getRoutes());
         // re-plot routes
     }
 
     private void plotStar(@NotNull StarDisplayRecord record,
                           String centerStar,
                           @NotNull ColorPalette colorPalette,
-                          StarDisplayPreferences starDisplayPreferences) {
+                          StarDisplayPreferences starDisplayPreferences,
+                          CivilizationDisplayPreferences politiesPreferences) {
 
         Node starNode;
         // create a star for display
@@ -374,13 +332,14 @@ public class StarPlotManager {
                     record,
                     colorPalette,
                     starDisplayPreferences,
+                    politiesPreferences,
                     labelsOn,
                     politiesOn);
 
             // create the extension stem tot he star from the grid
             createExtension(record, colorPalette.getExtensionColor());
         }
-        currentPlot.addStar(record.getRecordId(), starNode);
+        tripsContext.getCurrentPlot().addStar(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
@@ -438,6 +397,7 @@ public class StarPlotManager {
     private @NotNull Node createStar(@NotNull StarDisplayRecord record,
                                      @NotNull ColorPalette colorPalette,
                                      StarDisplayPreferences starDisplayPreferences,
+                                     CivilizationDisplayPreferences politiesPreferences,
                                      boolean labelsOn,
                                      boolean politiesOn) {
 
@@ -517,7 +477,7 @@ public class StarPlotManager {
             Label label = createLabel(record, colorPalette);
             label.setLabelFor(sphere);
             labelDisplayGroup.getChildren().add(label);
-            currentPlot.mapLabelToStar(record.getRecordId(), label);
+            tripsContext.getCurrentPlot().mapLabelToStar(record.getRecordId(), label);
             shapeToLabel.put(sphere, label);
         }
 
@@ -1064,5 +1024,6 @@ public class StarPlotManager {
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;
     }
+
 
 }
