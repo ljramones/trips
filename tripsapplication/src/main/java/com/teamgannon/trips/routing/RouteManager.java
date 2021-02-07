@@ -16,9 +16,10 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.algorithms.StarMath;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
-import com.teamgannon.trips.graphics.CurrentPlot;
+import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
@@ -49,6 +50,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class RouteManager {
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
+
     /**
      * the label display
      */
@@ -56,30 +58,36 @@ public class RouteManager {
     private final SubScene subScene;
     private final InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
-    private final CurrentPlot currentPlot;
+
     /**
      * used to keep track of node that are in the current route
      */
     private final List<Node> currentRouteNodePoints = new ArrayList<>();
+
     /**
      * the total set of all routes
      */
     private final Group routesGroup = new Group();
     private final boolean routeLabelsOn = true;
     private DataSetDescriptor dataSetDescriptor;
+    private TripsContext tripsContext;
     private final ColorPalette colorPalette;
+
     /**
      * this is the descriptor of the current route
      */
     private RouteDescriptor currentRoute;
+
     /**
      * the graphic portion of the current route
      */
     private Group currentRouteDisplay;
+
     /**
      * whether there is a route being traced, true is yes
      */
     private boolean routingActive = false;
+
     private double controlPaneOffset;
 
 
@@ -95,14 +103,14 @@ public class RouteManager {
                         SubScene subScene,
                         InterstellarSpacePane interstellarSpacePane,
                         RouteUpdaterListener routeUpdaterListener,
-                        CurrentPlot currentPlot,
+                        TripsContext tripsContext,
                         ColorPalette colorPalette) {
 
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
 
         this.routeUpdaterListener = routeUpdaterListener;
-        this.currentPlot = currentPlot;
+        this.tripsContext = tripsContext;
         this.colorPalette = colorPalette;
 
         currentRouteDisplay = new Group();
@@ -123,14 +131,6 @@ public class RouteManager {
         return routingActive;
     }
 
-    /**
-     * set the data descriptor descriptor context
-     *
-     * @param dataSetDescriptor the new current context
-     */
-    public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
-        this.dataSetDescriptor = dataSetDescriptor;
-    }
 
     /**
      * clear the routes
@@ -441,7 +441,7 @@ public class RouteManager {
      * @return true means we can plot the whole route
      */
     public boolean checkIfRouteCanBePlotted(@NotNull Route route) {
-        return route.getRouteStars().stream().allMatch(currentPlot.getStarLookup()::containsKey);
+        return route.getRouteStars().stream().allMatch(tripsContext.getCurrentPlot().getStarLookup()::containsKey);
     }
 
     /**
@@ -475,7 +475,7 @@ public class RouteManager {
      * @return the embedded object
      */
     private @Nullable StarDisplayRecord getStar(UUID starId) {
-        Node star = currentPlot.getStar(starId);
+        Node star = tripsContext.getCurrentPlot().getStar(starId);
         if (star != null) {
             return (StarDisplayRecord) star.getUserData();
         } else {

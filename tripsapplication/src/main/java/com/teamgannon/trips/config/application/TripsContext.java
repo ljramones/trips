@@ -19,4 +19,9 @@ public class TripsContext {
 
     private @NotNull TripsPrefs tripsPrefs = new TripsPrefs();
 
+    /**
+     * this hold the current plot data
+     */
+    private @NotNull CurrentPlot currentPlot = new CurrentPlot();
+
 }
