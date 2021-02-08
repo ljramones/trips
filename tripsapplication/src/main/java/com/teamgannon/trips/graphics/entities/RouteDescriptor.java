@@ -151,11 +151,12 @@ public class RouteDescriptor {
         if (lastIndex > 1) {
             routeList.remove(lastIndex);
             lengthList.remove(lastIndex - 2);
-            lastStar = starDisplayRecords.get(lastIndex - 2);
+            lastStar = starDisplayRecords.get(lastIndex - 1);
             lineSegmentList.remove(lastIndex - 1);
             nameList.remove(lastIndex);
             starDisplayRecords.remove(lastIndex);
             labelList.remove(lastIndex - 1);
+            lineSegments.remove(lastIndex);
             return false;
         } else {
             routeList.clear();
@@ -173,7 +174,7 @@ public class RouteDescriptor {
 
     public Label getLastLabel() {
         int lastIndex = labelList.size() - 1;
-        if (lastIndex>=0) {
+        if (lastIndex >= 0) {
             return labelList.get(lastIndex);
         } else {
             return null;
