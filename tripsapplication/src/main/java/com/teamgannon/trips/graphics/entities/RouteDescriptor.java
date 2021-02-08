@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics.entities;
 import com.teamgannon.trips.routing.Route;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
@@ -72,6 +73,10 @@ public class RouteDescriptor {
     @Builder.Default
     private @NotNull List<Node> lineSegmentList = new ArrayList<>();
 
+    @Transient
+    @Builder.Default
+    private @NotNull List<Label> labelList = new ArrayList<>();
+
     /**
      * we keep track of the from star for calculations
      */
@@ -114,7 +119,7 @@ public class RouteDescriptor {
     }
 
     public void addLink(StarDisplayRecord record, Point3D starPosition,
-                        double routeLength, Node lineSegment) {
+                        double routeLength, Node lineSegment, Label lengthLabel) {
         if (starDisplayRecords.size() == 0) {
             startStar = record.getStarName();
             lastStar = record;
@@ -133,6 +138,8 @@ public class RouteDescriptor {
 
             routeList.add(record.getRecordId());
 
+            labelList.add(lengthLabel);
+
             nameList.add(record.getStarName());
             lastStar = record;
         }
@@ -144,14 +151,16 @@ public class RouteDescriptor {
         if (lastIndex > 1) {
             routeList.remove(lastIndex);
             lengthList.remove(lastIndex - 2);
-            lastStar = starDisplayRecords.get(lastIndex - 1);
+            lastStar = starDisplayRecords.get(lastIndex - 2);
             lineSegmentList.remove(lastIndex - 1);
             nameList.remove(lastIndex);
             starDisplayRecords.remove(lastIndex);
+            labelList.remove(lastIndex - 1);
             return false;
         } else {
             routeList.clear();
             lengthList.clear();
+            labelList.clear();
             startStar = starDisplayRecords.get(0).getStarName();
             lastStar = starDisplayRecords.get(0);
             lineSegmentList.clear();
@@ -159,6 +168,15 @@ public class RouteDescriptor {
             nameList.clear();
             starDisplayRecords.clear();
             return true;
+        }
+    }
+
+    public Label getLastLabel() {
+        int lastIndex = labelList.size() - 1;
+        if (lastIndex>=0) {
+            return labelList.get(lastIndex);
+        } else {
+            return null;
         }
     }
 
@@ -179,5 +197,6 @@ public class RouteDescriptor {
         route.setRouteColor(this.color.toString());
         return route;
     }
+
 
 }

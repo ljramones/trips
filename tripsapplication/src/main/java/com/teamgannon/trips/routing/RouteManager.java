@@ -50,6 +50,8 @@ public class RouteManager {
 
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    private final Map<Label, Node> reverseLabelLookup = new HashMap<>();
+
     /**
      * the label display
      */
@@ -163,7 +165,7 @@ public class RouteManager {
         log.info("Start charting the route:" + routeDescriptor);
         Point3D startStar = starDisplayRecord.getCoordinates();
         if (currentRoute != null) {
-            currentRoute.addLink(starDisplayRecord, startStar, 0, null);
+            currentRoute.addLink(starDisplayRecord, startStar, 0, null, null);
             routesGroup.getChildren().add(currentRouteDisplay);
             routesGroup.setVisible(true);
             routeUpdaterListener.routingStatus(true);
@@ -189,8 +191,13 @@ public class RouteManager {
         if (routingActive) {
             // get last line segment from list
             Node lineSegment = currentRoute.getLineSegmentList().get(currentRoute.getLineSegmentList().size() - 1);
+            Label label = currentRoute.getLastLabel();
+            if (label != null) {
+                removeLabel(label);
+            }
             // remove last entry
             if (!currentRoute.removeLast()) {
+
                 log.info("Remove last Routing step:{}", currentRoute);
             } else {
                 // no more elements
@@ -249,11 +256,13 @@ public class RouteManager {
             int size = currentRoute.getLineSegments().size();
             Point3D fromPoint = currentRoute.getLineSegments().get(size - 1);
 
-            double length = calculateDistance(currentRoute.getLastStar(), starDisplayRecord.getActualCoordinates());
+            double length = calculateDistance(currentRoute.getLastStar(),
+                    starDisplayRecord.getActualCoordinates());
             Label lengthLabel = createLabel(length);
-            Node lineSegment = createLineSegment(fromPoint, toStarLocation, currentRoute.getLineWidth(), currentRoute.getColor(), lengthLabel);
+            Node lineSegment = createLineSegment(fromPoint, toStarLocation, currentRoute.getLineWidth(),
+                    currentRoute.getColor(), lengthLabel);
 
-            currentRoute.addLink(starDisplayRecord, toStarLocation, length, lineSegment);
+            currentRoute.addLink(starDisplayRecord, toStarLocation, length, lineSegment, lengthLabel);
 
             currentRouteDisplay.getChildren().add(lineSegment);
             currentRouteDisplay.setVisible(true);
@@ -268,7 +277,8 @@ public class RouteManager {
         return StarMath.getDistance(fromStarCoords, toStarCoords);
     }
 
-    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target, double lineWeight, Color color, @NotNull Label lengthLabel) {
+    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target,
+                                            double lineWeight, Color color, @NotNull Label lengthLabel) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -302,6 +312,7 @@ public class RouteManager {
                     currentRouteNodePoints.add(pointSphere);
                 }
                 shapeToLabel.put(pointSphere, lengthLabel);
+                reverseLabelLookup.put(lengthLabel, pointSphere);
                 labelDisplayGroup.getChildren().add(lengthLabel);
             } else {
                 log.warn("what is <{}> present twice", lengthLabel.getText());
@@ -309,6 +320,18 @@ public class RouteManager {
         }
 
         return lineGroup;
+    }
+
+    /**
+     * remove the label from everything
+     *
+     * @param label the label
+     */
+    private void removeLabel(Label label) {
+        Node node = reverseLabelLookup.get(label);
+        shapeToLabel.remove(node);
+        reverseLabelLookup.remove(label);
+        labelDisplayGroup.getChildren().remove(label);
     }
 
     private @NotNull Sphere createPointSphere(@NotNull Label label) {
@@ -320,6 +343,7 @@ public class RouteManager {
         label.setLabelFor(sphere);
         labelDisplayGroup.getChildren().add(label);
         shapeToLabel.put(sphere, label);
+        reverseLabelLookup.put(label, sphere);
         return sphere;
     }
 
@@ -335,8 +359,13 @@ public class RouteManager {
      */
     public void resetRoute() {
         if (currentRoute != null) {
+            List<Label> labels = currentRoute.getLabelList();
+            for (Label label:labels) {
+                removeLabel(label);
+            }
             currentRoute.clear();
         }
+
         routesGroup.getChildren().remove(currentRouteDisplay);
         routingActive = false;
         createCurrentRouteDisplay();
