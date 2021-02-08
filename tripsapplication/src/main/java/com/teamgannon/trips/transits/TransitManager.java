@@ -1,7 +1,6 @@
 package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
@@ -147,6 +146,7 @@ public class TransitManager {
             transitRoutes.clear();
             transitsOn = false;
         }
+        shapeToLabel.clear();
 
         labelDisplayGroup.getChildren().clear();
         transitsLengthsOn = false;
@@ -428,8 +428,11 @@ public class TransitManager {
 
         double width = interstellarSpacePane.getWidth();
         double height = interstellarSpacePane.getHeight();
+        Bounds ofParent = interstellarSpacePane.getBoundsInParent();
 
-        shapeToLabel.forEach((node, label) -> {
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
             // we need to check if the coordinates work within the displayable area
@@ -441,10 +444,25 @@ public class TransitManager {
                 double xs = coordinates.getX();
                 double ys = coordinates.getY();
 
-                double x = 0;
-                double y = 0;
+                // configure visibility
+                if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
+                    label.setVisible(false);
+                    continue;
+                } else {
+                    label.setVisible(true);
+                }
+                if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
+                    label.setVisible(false);
+                    continue;
+                } else {
+                    label.setVisible(true);
+                }
 
-                Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+                ///////////////////
+
+                double x;
+                double y;
+
                 if (ofParent.getMinX() > 0) {
                     x = xs - ofParent.getMinX();
                 } else {
@@ -481,7 +499,7 @@ public class TransitManager {
             } else {
                 log.info("label:{} are {},{} is outside area", label, coordinates.getX(), coordinates.getY());
             }
-        });
+        }
     }
 
     private boolean clip(Point3D coordinates, double width, double height) {

@@ -143,6 +143,7 @@ public class RouteManager {
         // clear the routes
         routesGroup.getChildren().clear();
         labelDisplayGroup.getChildren().clear();
+        shapeToLabel.clear();
     }
 
     /**
@@ -528,7 +529,11 @@ public class RouteManager {
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
-        shapeToLabel.forEach((node, label) -> {
+        Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
             //Clipping Logic
@@ -537,10 +542,23 @@ public class RouteManager {
             double xs = coordinates.getX();
             double ys = coordinates.getY();
 
+            // configure visibility
+            if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+            if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+
             double x;
             double y;
 
-            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
             if (ofParent.getMinX() > 0) {
                 x = xs - ofParent.getMinX();
             } else {
@@ -574,7 +592,7 @@ public class RouteManager {
 
             //update the local transform of the label.
             label.getTransforms().setAll(new Translate(x, y));
-        });
+        }
 
     }
 

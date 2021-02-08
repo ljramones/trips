@@ -885,7 +885,6 @@ public class StarPlotManager {
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         Bounds ofParent = interstellarSpacePane.getBoundsInParent();
-        log.info("xmin={}, ymin={}, xmax={}, ymax={}, ", ofParent.getMinX(), ofParent.getMinY(), ofParent.getMaxX(), ofParent.getMaxY());
         for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
             Node node = entry.getKey();
             Label label = entry.getValue();
@@ -899,20 +898,19 @@ public class StarPlotManager {
 
             // configure visibility
             if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
-                log.info("label = {}, xs={}", label.getText(), xs);
                 label.setVisible(false);
                 continue;
             } else {
                 label.setVisible(true);
             }
             if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
-                log.info("label = {}, ys={}", label.getText(), ys);
                 label.setVisible(false);
                 continue;
             } else {
                 label.setVisible(true);
             }
 
+            ///////////////////
 
             double x;
             double y;
