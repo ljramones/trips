@@ -32,8 +32,6 @@ import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.report.ReportManager;
-import com.teamgannon.trips.report.distance.DistanceReport;
-import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
@@ -82,8 +80,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,30 +100,40 @@ public class MainPane implements
         DatabaseListener,
         DataSetChangeListener,
         StatusUpdaterListener,
-        RoutingPanelListener{
+        RoutingPanelListener {
+
+    private final static double SCREEN_PROPORTION = 0.60;
+
+    public final static double SIDE_PANEL_SIZE = 350;
 
     /**
      * the current search context to display from
      */
     private final SearchContext searchContext;
+
     /**
      * the TRIPS application context
      */
     private final ApplicationContext appContext;
+
     /**
      * database management spring component service
      */
     private final DatabaseManagementService databaseManagementService;
+
     /**
      * star plotter component
      */
     private PlotManager plotManager;
+
     private final Localization localization;
-    private final @NotNull DataExportService dataExportService;
+    private final DataExportService dataExportService;
+
     /**
      * dataset lists
      */
     private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
+
     ////// injected properties
     public Pane mainPanel;
     public MenuBar menuBar;
@@ -157,7 +163,6 @@ public class MainPane implements
     public ToggleButton toggleZoomOutBtn;
 
     ////  local assets
-    public CheckBox animationCheckbox;
     public SplitPane mainSplitPane;
     public HBox statusBar;
     public Label databaseStatus;
@@ -180,10 +185,12 @@ public class MainPane implements
     private ObjectViewPane objectViewPane;
     private VBox settingsPane;
     private StackPane leftDisplayPane;
+
     /**
      * the query dialog
      */
     private QueryDialog queryDialog;
+
     private Stage stage;
     private final FxWeaver fxWeaver;
     private final TripsContext tripsContext;
@@ -221,7 +228,7 @@ public class MainPane implements
     private double originalHeight = Universe.boxHeight;
     private double originalWidth = Universe.boxWidth;
 
-    private HostServices hostServices;
+    private final HostServices hostServices;
 
     /**
      * constructor
@@ -255,7 +262,7 @@ public class MainPane implements
         log.info("initialize view");
 
         this.plotManager = new PlotManager(tripsContext, databaseManagementService,
-                this,this,this);
+                this, this, this);
 
         setButtons();
 
@@ -332,11 +339,6 @@ public class MainPane implements
         this.menuBar.setPrefWidth(Universe.boxWidth + 20);
         this.toolBar.setPrefWidth(Universe.boxWidth + 20);
 
-        /*
-        <SplitPane fx:id="mainSplitPane"
-                       dividerPositions="0.76"
-            />
-         */
         this.mainSplitPane = new SplitPane();
         this.mainSplitPane.setDividerPositions(1.0);
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
@@ -367,7 +369,7 @@ public class MainPane implements
         leftBorderPane = new BorderPane();
         leftBorderPane.setMinWidth(0);
 
-        this.leftBorderPane.setPrefWidth(785.0);
+        this.leftBorderPane.setPrefWidth(Universe.boxWidth * 0.6);
 
         mainSplitPane.getItems().add(leftBorderPane);
 
@@ -395,7 +397,7 @@ public class MainPane implements
         rightBorderPane.setMinWidth(0);
         settingsPane = new VBox();
         settingsPane.setPrefHeight(588.0);
-        settingsPane.setPrefWidth(260.0);
+        settingsPane.setPrefWidth(SIDE_PANEL_SIZE);
 
         rightBorderPane.setRight(settingsPane);
 
@@ -405,7 +407,7 @@ public class MainPane implements
         // datasets pane
         datasetsPane = new TitledPane();
         datasetsPane.setText("DataSets Available");
-        datasetsPane.setMinWidth(200);
+        datasetsPane.setMinWidth(SIDE_PANEL_SIZE);
         datasetsPane.setMinHeight(200);
         datasetsPane.setMaxHeight(500);
         propertiesAccordion.getPanes().add(datasetsPane);
@@ -413,7 +415,7 @@ public class MainPane implements
         // objects in pane
         objectsViewPane = new TitledPane();
         objectsViewPane.setText("Objects in View");
-        objectsViewPane.setMinWidth(200);
+        objectsViewPane.setMinWidth(SIDE_PANEL_SIZE);
         objectsViewPane.setMinHeight(200);
         objectsViewPane.setMaxHeight(460);
         propertiesAccordion.getPanes().add(objectsViewPane);
@@ -421,6 +423,7 @@ public class MainPane implements
         // stellar pane
         stellarObjectPane = new TitledPane();
         stellarObjectPane.setText("Stellar Object Properties");
+        stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
         stellarObjectPane.setPrefHeight(500);
         stellarObjectPane.setMaxHeight(520);
         starPropertiesPane = new StarPropertiesPane(hostServices);
@@ -431,7 +434,7 @@ public class MainPane implements
         // routing pane
         routingPane = new TitledPane();
         routingPane.setText("Star Routing");
-        routingPane.setMinWidth(200);
+        routingPane.setMinWidth(SIDE_PANEL_SIZE);
         routingPane.setMinHeight(400);
         routingPane.setMaxHeight(400);
         routingPanel = new RoutingPanel();
@@ -491,7 +494,7 @@ public class MainPane implements
 
     public void toggleSidePane(boolean sidePanelOn) {
         if (sidePanelOn) {
-            mainSplitPane.setDividerPositions(0.76);
+            mainSplitPane.setDividerPositions(SCREEN_PROPORTION);
         } else {
             mainSplitPane.setDividerPositions(1.0);
         }
@@ -657,8 +660,8 @@ public class MainPane implements
                 double currentWidth = this.mainPanel.getWidth();
                 double exposedSettingsWidth = (1 - spPosition) * currentWidth;
 //                log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
-                if (exposedSettingsWidth > 262 || exposedSettingsWidth < 258) {
-                    double adjustedWidthRatio = 260 / currentWidth;
+                if (exposedSettingsWidth > SIDE_PANEL_SIZE || exposedSettingsWidth < SIDE_PANEL_SIZE) {
+                    double adjustedWidthRatio = SIDE_PANEL_SIZE / currentWidth;
                     mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
                 }
             }

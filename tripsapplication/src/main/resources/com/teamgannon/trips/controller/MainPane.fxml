@@ -7,9 +7,9 @@
 <Pane xmlns:fx="http://javafx.com/fxml/1"
       fx:id="mainPanel"
       xmlns="http://javafx.com/javafx/10.0.2-internal"
-      fx:controller="com.teamgannon.trips.controller.MainPane" maxHeight="900">
+      fx:controller="com.teamgannon.trips.controller.MainPane">
     <VBox>
-        <MenuBar fx:id="menuBar" prefHeight="29">
+        <MenuBar fx:id="menuBar" >
             <Menu mnemonicParsing="false" text="General">
                 <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
                 <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.beans.Observable;
 import javafx.scene.control.Label;
@@ -24,8 +25,8 @@ public class RoutingPanel extends Pane {
      * the constructor
      */
     public RoutingPanel() {
-        routingListView.setPrefHeight(500);
-        routingListView.setPrefWidth(255);
+        routingListView.setPrefHeight(700);
+        routingListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
         routingListView.setCellFactory(new RouteCellFactory());
         routingListView.getSelectionModel().selectedItemProperty().addListener(this::routingChanged);
         routingListView.setPlaceholder(new Label("No routes in this dataset"));
