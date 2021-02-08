@@ -1,5 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
+import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
@@ -21,8 +22,8 @@ public class ObjectViewPane extends Pane {
                           RedrawListener redrawListener) {
 
         stellarObjectsListView.setPrefHeight(600);
-        stellarObjectsListView.setPrefWidth(255);
-        stellarObjectsListView.setMaxHeight(600);
+        stellarObjectsListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
+        stellarObjectsListView.setMaxHeight(800);
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
                         databaseListener,
