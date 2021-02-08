@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.routing.Route;
 import javafx.geometry.Point3D;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
@@ -49,6 +50,13 @@ public class RouteDescriptor {
     private @NotNull List<UUID> routeList = new ArrayList<>();
 
     /**
+     * the list of stars in the route
+     */
+    @Builder.Default
+    @Transient
+    private List<StarDisplayRecord> starDisplayRecords = new ArrayList<>();
+
+    /**
      * list of star names
      */
     @Builder.Default
@@ -59,6 +67,10 @@ public class RouteDescriptor {
      */
     @Builder.Default
     private @NotNull List<Double> lengthList = new ArrayList<>();
+
+    @Transient
+    @Builder.Default
+    private @NotNull List<Node> lineSegmentList = new ArrayList<>();
 
     /**
      * we keep track of the from star for calculations
@@ -80,7 +92,7 @@ public class RouteDescriptor {
      * the list of line segments joined by 3D points
      */
     @Builder.Default
-    private @NotNull List<Point3D> lineSegments = new ArrayList<>();
+    private List<Point3D> lineSegments = new ArrayList<>();
 
     public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         return RouteDescriptor
@@ -101,6 +113,55 @@ public class RouteDescriptor {
         lengthList.add(length);
     }
 
+    public void addLink(StarDisplayRecord record, Point3D starPosition,
+                        double routeLength, Node lineSegment) {
+        if (starDisplayRecords.size() == 0) {
+            startStar = record.getStarName();
+            lastStar = record;
+            nameList.add(startStar);
+            lineSegments.add(starPosition);
+            routeList.add(record.getRecordId());
+            starDisplayRecords.add(record);
+        } else {
+            starDisplayRecords.add(record);
+
+            lineSegments.add(starPosition);
+            lineSegmentList.add(lineSegment);
+
+            lengthList.add(routeLength);
+            totalLength += routeLength;
+
+            routeList.add(record.getRecordId());
+
+            nameList.add(record.getStarName());
+            lastStar = record;
+        }
+
+    }
+
+    public boolean removeLast() {
+        int lastIndex = routeList.size() - 1;
+        if (lastIndex > 1) {
+            routeList.remove(lastIndex);
+            lengthList.remove(lastIndex - 2);
+            lastStar = starDisplayRecords.get(lastIndex - 1);
+            lineSegmentList.remove(lastIndex - 1);
+            nameList.remove(lastIndex);
+            starDisplayRecords.remove(lastIndex);
+            return false;
+        } else {
+            routeList.clear();
+            lengthList.clear();
+            startStar = starDisplayRecords.get(0).getStarName();
+            lastStar = starDisplayRecords.get(0);
+            lineSegmentList.clear();
+            lineSegments.clear();
+            nameList.clear();
+            starDisplayRecords.clear();
+            return true;
+        }
+    }
+
     public void clear() {
         name = "";
         routeList.clear();
@@ -118,6 +179,5 @@ public class RouteDescriptor {
         route.setRouteColor(this.color.toString());
         return route;
     }
-
 
 }

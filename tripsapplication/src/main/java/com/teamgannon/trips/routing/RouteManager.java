@@ -19,7 +19,6 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
-import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
@@ -58,6 +57,7 @@ public class RouteManager {
     private final SubScene subScene;
     private final InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
+    private Node lastNode;
 
     /**
      * used to keep track of node that are in the current route
@@ -70,7 +70,7 @@ public class RouteManager {
     private final Group routesGroup = new Group();
     private final boolean routeLabelsOn = true;
     private DataSetDescriptor dataSetDescriptor;
-    private TripsContext tripsContext;
+    private final TripsContext tripsContext;
     private final ColorPalette colorPalette;
 
     /**
@@ -88,6 +88,9 @@ public class RouteManager {
      */
     private boolean routingActive = false;
 
+    /**
+     * to deal with the offset based on the control panel
+     */
     private double controlPaneOffset;
 
 
@@ -142,15 +145,6 @@ public class RouteManager {
     }
 
     /**
-     * get the total routes being displayed
-     *
-     * @return the entire routes set
-     */
-    public @NotNull Node getRoutesGroup() {
-        return this.routesGroup;
-    }
-
-    /**
      * toggle the routes
      *
      * @param routesOn the status of the routes
@@ -168,11 +162,8 @@ public class RouteManager {
         currentRoute = routeDescriptor;
         log.info("Start charting the route:" + routeDescriptor);
         Point3D startStar = starDisplayRecord.getCoordinates();
-        UUID id = starDisplayRecord.getRecordId();
         if (currentRoute != null) {
-            currentRoute.getLineSegments().add(startStar);
-            currentRoute.getRouteList().add(id);
-            currentRoute.setLastStar(starDisplayRecord);
+            currentRoute.addLink(starDisplayRecord, startStar, 0, null);
             routesGroup.getChildren().add(currentRouteDisplay);
             routesGroup.setVisible(true);
             routeUpdaterListener.routingStatus(true);
@@ -194,6 +185,28 @@ public class RouteManager {
         }
     }
 
+    public void removeRoute(StarDisplayRecord starDescriptor) {
+        if (routingActive) {
+            // get last line segment from list
+            Node lineSegment = currentRoute.getLineSegmentList().get(currentRoute.getLineSegmentList().size() - 1);
+            // remove last entry
+            if (!currentRoute.removeLast()) {
+                log.info("Remove last Routing step:{}", currentRoute);
+            } else {
+                // no more elements
+                routingActive = false;
+                log.info("Removed all segments");
+                routeUpdaterListener.routingStatus(false);
+            }
+            // remove last line segment
+            currentRouteDisplay.getChildren().remove(lineSegment);
+            // remove label to line segment
+            shapeToLabel.remove(lineSegment);
+        } else {
+            showErrorAlert("Routing", "start a route first");
+        }
+    }
+
     /**
      * finish the route
      *
@@ -203,11 +216,6 @@ public class RouteManager {
         if (routingActive) {
             createRouteSegment(starDisplayRecord);
             routingActive = false;
-            //
-//            Group routeGraphic = createRoute(currentRoute);
-//            routesGroup.getChildren().add(routeGraphic);
-//            routesGroup.setVisible(true);
-            //
             makeRoutePermanent(currentRoute);
             updateLabels(interstellarSpacePane);
             routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
@@ -222,7 +230,6 @@ public class RouteManager {
      * @param currentRoute the current route
      */
     private void makeRoutePermanent(@NotNull RouteDescriptor currentRoute) {
-//        // remove our hand drawn route
         routesGroup.getChildren().remove(currentRouteDisplay);
         for (Node node : currentRouteNodePoints) {
             shapeToLabel.remove(node);
@@ -236,8 +243,6 @@ public class RouteManager {
 
 
     private void createRouteSegment(@NotNull StarDisplayRecord starDisplayRecord) {
-
-        UUID id = starDisplayRecord.getRecordId();
         Point3D toStarLocation = starDisplayRecord.getCoordinates();
 
         if (currentRoute != null) {
@@ -247,10 +252,8 @@ public class RouteManager {
             double length = calculateDistance(currentRoute.getLastStar(), starDisplayRecord.getActualCoordinates());
             Label lengthLabel = createLabel(length);
             Node lineSegment = createLineSegment(fromPoint, toStarLocation, currentRoute.getLineWidth(), currentRoute.getColor(), lengthLabel);
-            currentRoute.getLineSegments().add(toStarLocation);
-            currentRoute.getLengthList().add(length);
-            currentRoute.getRouteList().add(id);
-            currentRoute.setLastStar(starDisplayRecord);
+
+            currentRoute.addLink(starDisplayRecord, toStarLocation, length, lineSegment);
 
             currentRouteDisplay.getChildren().add(lineSegment);
             currentRouteDisplay.setVisible(true);
@@ -356,7 +359,6 @@ public class RouteManager {
         }
         currentRouteNodePoints.clear();
         currentRouteDisplay = new Group();
-
     }
 
     ////////////  redraw the routes
@@ -538,7 +540,5 @@ public class RouteManager {
         this.controlPaneOffset = controlPaneOffset;
     }
 
-    public void removeRoute(StarDisplayRecord starDescriptor) {
 
-    }
 }
