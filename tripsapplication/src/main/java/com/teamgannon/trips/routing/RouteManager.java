@@ -59,7 +59,6 @@ public class RouteManager {
     private final SubScene subScene;
     private final InterstellarSpacePane interstellarSpacePane;
     private final RouteUpdaterListener routeUpdaterListener;
-    private Node lastNode;
 
     /**
      * used to keep track of node that are in the current route
@@ -71,7 +70,6 @@ public class RouteManager {
      */
     private final Group routesGroup = new Group();
     private final boolean routeLabelsOn = true;
-    private DataSetDescriptor dataSetDescriptor;
     private final TripsContext tripsContext;
     private final ColorPalette colorPalette;
 
@@ -79,6 +77,8 @@ public class RouteManager {
      * this is the descriptor of the current route
      */
     private RouteDescriptor currentRoute;
+
+
 
     /**
      * the graphic portion of the current route
@@ -158,10 +158,11 @@ public class RouteManager {
 
     ///////////// routing functions
 
-    public void startRoute(RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord starDisplayRecord) {
+    public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord starDisplayRecord) {
         resetRoute();
         routingActive = true;
         currentRoute = routeDescriptor;
+        currentRoute.setDescriptor(dataSetDescriptor);
         log.info("Start charting the route:" + routeDescriptor);
         Point3D startStar = starDisplayRecord.getCoordinates();
         if (currentRoute != null) {
@@ -187,7 +188,7 @@ public class RouteManager {
         }
     }
 
-    public void removeRoute(StarDisplayRecord starDescriptor) {
+    public void removeRoute() {
         if (routingActive) {
             // get last line segment from list
             Node lineSegment = currentRoute.getLineSegmentList().get(currentRoute.getLineSegmentList().size() - 1);
@@ -225,7 +226,7 @@ public class RouteManager {
             routingActive = false;
             makeRoutePermanent(currentRoute);
             updateLabels(interstellarSpacePane);
-            routeUpdaterListener.newRoute(dataSetDescriptor, currentRoute);
+            routeUpdaterListener.newRoute(currentRoute.getDescriptor(), currentRoute);
         } else {
             showErrorAlert("Routing", "start a route first");
         }

@@ -20,7 +20,6 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import javafx.animation.FadeTransition;
-import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
@@ -130,7 +129,6 @@ public class StarPlotManager {
      * reference to the Route Manager
      */
     private RouteManager routeManager;
-
 
 
     private double controlPaneOffset;
@@ -524,7 +522,7 @@ public class StarPlotManager {
     /**
      * create an extension for an added star
      *
-     * @param record         the star
+     * @param record the star
      */
     private void createExtension(@NotNull StarDisplayRecord record) {
         double yZero = tripsContext.getCurrentPlot().getCenterCoordinates()[1];
@@ -710,7 +708,11 @@ public class StarPlotManager {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             RouteDialog dialog = new RouteDialog(starDescriptor);
             Optional<RouteDescriptor> result = dialog.showAndWait();
-            result.ifPresent(routeDescriptor -> routeManager.startRoute(routeDescriptor, starDescriptor));
+
+            result.ifPresent(routeDescriptor -> routeManager.startRoute(
+                    tripsContext.getCurrentPlot().getDataSetDescriptor(),
+                    routeDescriptor, starDescriptor)
+            );
         });
         return menuItem;
     }
@@ -726,10 +728,9 @@ public class StarPlotManager {
 
 
     private MenuItem removeRouteMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Remove from Route");
+        MenuItem menuItem = new MenuItem("Remove last link from route");
         menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.removeRoute(starDescriptor);
+            routeManager.removeRoute();
         });
         return menuItem;
     }
