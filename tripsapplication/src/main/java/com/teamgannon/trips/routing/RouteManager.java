@@ -79,7 +79,6 @@ public class RouteManager {
     private RouteDescriptor currentRoute;
 
 
-
     /**
      * the graphic portion of the current route
      */
@@ -361,7 +360,7 @@ public class RouteManager {
     public void resetRoute() {
         if (currentRoute != null) {
             List<Label> labels = currentRoute.getLabelList();
-            for (Label label:labels) {
+            for (Label label : labels) {
                 removeLabel(label);
             }
             currentRoute.clear();
@@ -404,8 +403,22 @@ public class RouteManager {
         routeList.forEach(this::plotRoute);
     }
 
-    public void plotRouteDescriptors(@NotNull List<RoutingMetric> routeDescriptorList) {
-        routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(this::plotRouteDescriptor);
+    /**
+     * used to plot routes that come from automated routing
+     *
+     *
+     * @param currentDataSet
+     * @param routeDescriptorList the list of things to plot
+     * @todo need to fill this up
+     */
+    public void plotRouteDescriptors(DataSetDescriptor currentDataSet, @NotNull List<RoutingMetric> routeDescriptorList) {
+        // plot route
+        routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(routeDescriptor -> {
+            plotRouteDescriptor(routeDescriptor);
+            routeUpdaterListener.newRoute(currentDataSet, routeDescriptor);
+        });
+        // update route and save
+
         updateLabels(interstellarSpacePane);
     }
 

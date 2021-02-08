@@ -981,7 +981,7 @@ public class MainPane implements
     public void routeFinderInView(ActionEvent actionEvent) {
         RouteFinderInView routeFinderInView = new RouteFinderInView(interstellarSpacePane);
         if (interstellarSpacePane.getCurrentStarsInView().size() > 2) {
-            routeFinderInView.startRouteLocation(searchContext.getAstroSearchQuery().getDescriptor().getDataSetName(), databaseManagementService);
+            routeFinderInView.startRouteLocation(searchContext.getAstroSearchQuery().getDescriptor());
         } else {
             showErrorAlert("Route Finder", "You need to have more than 2 stars on a plot to use.");
         }
