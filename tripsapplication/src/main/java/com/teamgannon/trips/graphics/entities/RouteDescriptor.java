@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.entities;
 
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.Route;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
@@ -56,6 +57,9 @@ public class RouteDescriptor {
     @Builder.Default
     @Transient
     private List<StarDisplayRecord> starDisplayRecords = new ArrayList<>();
+
+    @Transient
+    private DataSetDescriptor descriptor;
 
     /**
      * list of star names
