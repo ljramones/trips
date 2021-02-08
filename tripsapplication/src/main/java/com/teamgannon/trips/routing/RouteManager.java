@@ -406,10 +406,8 @@ public class RouteManager {
     /**
      * used to plot routes that come from automated routing
      *
-     *
-     * @param currentDataSet
+     * @param currentDataSet      current data descriptor
      * @param routeDescriptorList the list of things to plot
-     * @todo need to fill this up
      */
     public void plotRouteDescriptors(DataSetDescriptor currentDataSet, @NotNull List<RoutingMetric> routeDescriptorList) {
         // plot route
