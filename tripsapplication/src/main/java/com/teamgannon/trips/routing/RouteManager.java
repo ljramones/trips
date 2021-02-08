@@ -258,7 +258,9 @@ public class RouteManager {
 
             double length = calculateDistance(currentRoute.getLastStar(),
                     starDisplayRecord.getActualCoordinates());
-            Label lengthLabel = createLabel(length);
+
+            Label lengthLabel = createLabel((size == 1), length);
+
             Node lineSegment = createLineSegment(fromPoint, toStarLocation, currentRoute.getLineWidth(),
                     currentRoute.getColor(), lengthLabel);
 
@@ -347,8 +349,8 @@ public class RouteManager {
         return sphere;
     }
 
-    private @NotNull Label createLabel(double length) {
-        Label label = new Label(String.format("%.2fly", length));
+    private @NotNull Label createLabel(boolean firstLink, double length) {
+        Label label = new Label(((firstLink) ? "Start -> " : "") + String.format("%.2fly", length));
         SerialFont serialFont = colorPalette.getLabelFont();
         label.setFont(serialFont.toFont());
         return label;
@@ -413,10 +415,9 @@ public class RouteManager {
         // plot route
         routeDescriptorList.stream().map(RoutingMetric::getRouteDescriptor).forEach(routeDescriptor -> {
             plotRouteDescriptor(routeDescriptor);
+            // update route and save
             routeUpdaterListener.newRoute(currentDataSet, routeDescriptor);
         });
-        // update route and save
-
         updateLabels(interstellarSpacePane);
     }
 
@@ -463,7 +464,7 @@ public class RouteManager {
                 firstLink = false;
             } else {
                 double length = routeDescriptor.getLengthList().get(i++);
-                Label lengthLabel = createLabel(length);
+                Label lengthLabel = createLabel(firstLink, length);
                 // create the line segment
                 Node lineSegment = createLineSegment(previousPoint, point3D, 0.5, routeDescriptor.getColor(), lengthLabel);
                 // step along the segment

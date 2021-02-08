@@ -495,8 +495,10 @@ public class MainPane implements
     public void toggleSidePane(boolean sidePanelOn) {
         if (sidePanelOn) {
             mainSplitPane.setDividerPositions(SCREEN_PROPORTION);
+            interstellarSpacePane.shiftDisplayLeft(true);
         } else {
             mainSplitPane.setDividerPositions(1.0);
+            interstellarSpacePane.shiftDisplayLeft(false);
         }
     }
 

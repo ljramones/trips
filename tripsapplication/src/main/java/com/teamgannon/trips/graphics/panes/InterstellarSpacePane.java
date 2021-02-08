@@ -1,14 +1,13 @@
 package com.teamgannon.trips.graphics.panes;
 
+import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
-import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
@@ -17,11 +16,13 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitManager;
-import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
-import javafx.scene.*;
+import javafx.scene.Group;
+import javafx.scene.PerspectiveCamera;
+import javafx.scene.SceneAntialiasing;
+import javafx.scene.SubScene;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Background;
@@ -46,6 +47,8 @@ public class InterstellarSpacePane extends Pane {
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
     private final Group world = new Group();
     private final @NotNull SubScene subScene;
+
+    private boolean sidePanelShiftKludgeFirstTime = true;
 
     /**
      * animation rotator
@@ -391,6 +394,22 @@ public class InterstellarSpacePane extends Pane {
         starPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
         gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
         starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
+    }
+
+    public void shiftDisplayLeft(boolean shift) {
+        if (shift) {
+            log.info("shift display left!!");
+            camera.setTranslateX(300);
+        } else {
+            if (!sidePanelShiftKludgeFirstTime) {
+                log.info("shift display right!!");
+                camera.setTranslateX(-30);
+            } else{
+                sidePanelShiftKludgeFirstTime = false;
+            }
+        }
+        updateLabels();
+
     }
 
     /**
