@@ -220,6 +220,7 @@ public class StarPlotManager {
         stellarDisplayGroup.getChildren().clear();
         labelDisplayGroup.getChildren().clear();
         politiesDisplayGroup.getChildren().clear();
+        shapeToLabel.clear();
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
@@ -883,19 +884,39 @@ public class StarPlotManager {
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
-        shapeToLabel.forEach((node, label) -> {
+        Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+        log.info("xmin={}, ymin={}, xmax={}, ymax={}, ", ofParent.getMinX(), ofParent.getMinY(), ofParent.getMaxX(), ofParent.getMaxY());
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
-            //Clipping Logic
-            //if coordinates are outside of the scene it could
-            //stretch the screen so don't transform them
+            // Clipping Logic
+            // if coordinates are outside of the scene it could
+            // stretch the screen so don't transform them
             double xs = coordinates.getX();
             double ys = coordinates.getY();
+
+            // configure visibility
+            if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
+                log.info("label = {}, xs={}", label.getText(), xs);
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+            if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
+                log.info("label = {}, ys={}", label.getText(), ys);
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+
 
             double x;
             double y;
 
-            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
             if (ofParent.getMinX() > 0) {
                 x = xs - ofParent.getMinX();
             } else {
@@ -929,7 +950,7 @@ public class StarPlotManager {
 
             //update the local transform of the label.
             label.getTransforms().setAll(new Translate(x, y));
-        });
+        }
 
     }
 
