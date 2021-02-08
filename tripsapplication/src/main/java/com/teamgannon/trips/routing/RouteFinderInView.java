@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.service.model.TransitRoute;
@@ -37,8 +38,9 @@ public class RouteFinderInView {
 
     /**
      * start the location of routes
+     * @param currentDataSet
      */
-    public void startRouteLocation(String currentDataSet, DatabaseManagementService databaseManagementService) {
+    public void startRouteLocation(DataSetDescriptor currentDataSet) {
         RouteFinderDialogInView routeFinderDialogInView = new RouteFinderDialogInView(interstellarSpacePane.getCurrentStarsInView());
         Stage theStage = (Stage) routeFinderDialogInView.getDialogPane().getScene().getWindow();
         theStage.setAlwaysOnTop(true);
@@ -132,7 +134,6 @@ public class RouteFinderInView {
                             possibleRoutes.getRoutes().add(routingMetric);
                         }
 
-
                         DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
                         Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
                         stage.setAlwaysOnTop(true);
@@ -143,8 +144,7 @@ public class RouteFinderInView {
                             if (selectedRoutingMetrics.size() > 0) {
                                 log.info("plotting selected routes:{}", selectedRoutingMetrics);
                                 // plot the routes found
-                                plot(selectedRoutingMetrics);
-
+                                plot(currentDataSet, selectedRoutingMetrics);
                             }
                         }
 
@@ -182,9 +182,10 @@ public class RouteFinderInView {
     /**
      * plot the routes found
      *
+     * @param currentDataSet the data descriptor
      * @param routeList the routes to plot
      */
-    private void plot(List<RoutingMetric> routeList) {
-        interstellarSpacePane.plotRouteDescriptors(routeList);
+    private void plot(DataSetDescriptor currentDataSet, List<RoutingMetric> routeList) {
+        interstellarSpacePane.plotRouteDescriptors(currentDataSet, routeList);
     }
 }

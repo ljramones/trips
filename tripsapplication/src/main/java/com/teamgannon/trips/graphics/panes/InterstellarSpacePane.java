@@ -468,8 +468,8 @@ public class InterstellarSpacePane extends Pane {
         routeManager.plotRoutes(routes);
     }
 
-    public void plotRouteDescriptors(@NotNull List<RoutingMetric> routeDescriptorList) {
-        routeManager.plotRouteDescriptors(routeDescriptorList);
+    public void plotRouteDescriptors(DataSetDescriptor currentDataSet, @NotNull List<RoutingMetric> routeDescriptorList) {
+        routeManager.plotRouteDescriptors(currentDataSet, routeDescriptorList);
     }
 
     /**
