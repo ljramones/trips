@@ -66,6 +66,7 @@ public class StarObject implements Serializable {
      * the source catalog system used to hold this star
      * where did it come from?
      */
+    @Lob
     private String source;
 
     /**

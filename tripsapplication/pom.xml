@@ -207,6 +207,12 @@
             <version>${poi.ooxml.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.monitorjbl</groupId>
+            <artifactId>xlsx-streamer</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+
         <!-- icon libraries -->
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>

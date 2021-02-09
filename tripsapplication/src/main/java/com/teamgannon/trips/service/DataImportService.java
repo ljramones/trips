@@ -152,8 +152,8 @@ public class DataImportService {
     public void cancelCurrent() {
         if (currentlyRunning.get()) {
             if (runningImportService != null) {
-                runningImportService.cancelImport();
-                log.warn("import of current import was cancelled");
+                boolean result = runningImportService.cancelImport();
+                log.warn("import of current import was cancelled: {}", result);
             }
         }
     }

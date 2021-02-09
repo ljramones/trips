@@ -102,6 +102,7 @@ public class ExcelDataImportService extends Service<FileProcessResult> implement
 
     @Override
     public boolean cancelImport() {
+        log.info("Cancelling!!");
         return this.cancel();
     }
 

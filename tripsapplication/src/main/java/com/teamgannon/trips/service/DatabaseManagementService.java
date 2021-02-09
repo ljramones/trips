@@ -488,18 +488,9 @@ public class DatabaseManagementService {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
-
-    /**
-     * save all the stars for a saved standard excel file
-     *
-     * @param updater   the updaters
-     * @param excelFile the excel file we want to load
-     */
-    public void loadCSVDataSingelDataset(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
+    public void saveExcelDataSetDescriptor(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
         dataSetDescriptorRepository.save(excelFile.getDescriptor());
-        updater.updateLoadInfo("saved descriptor in database");
-        starObjectRepository.saveAll(excelFile.getStarObjects());
-        updater.updateLoadInfo("saved all stars in database");
+        updater.updateLoadInfo("saved descriptor in database, complete");
     }
 
     public void loadJsonFileSingleDS(ProgressUpdater updater, JsonExportObj jsonExportObj) {

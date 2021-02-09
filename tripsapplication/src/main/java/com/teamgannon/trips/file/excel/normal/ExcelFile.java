@@ -12,14 +12,9 @@ import java.util.List;
 @Data
 public class ExcelFile {
 
-    @NotNull List<StarObject> starObjects = new ArrayList<>();
     private String fileName;
     private String author;
 
     private DataSetDescriptor descriptor;
-
-    public void addStar(@NotNull AstroCSVStar star) {
-        starObjects.add(star.toAstrographicObject());
-    }
 
 }
