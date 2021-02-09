@@ -155,7 +155,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         Button closeDialogButton = new Button("Close");
         buttonBox.getChildren().add(closeDialogButton);
         closeDialogButton.setOnAction(this::close);
-
     }
 
     private void createTable(@NotNull VBox vBox) {
@@ -233,7 +232,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         }
         selectedDataset = null;
         updateTable();
-
     }
 
 

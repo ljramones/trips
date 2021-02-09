@@ -36,11 +36,11 @@ public class ExcelLoadTask extends Task<FileProcessResult> implements ProgressUp
         File file = new File(dataSet.getFileSelected());
 
         // load excel file
-        ExcelFile excelFile = excelReader.loadFile(this, dataSet, file);
+        ExcelFile excelFile = excelReader.loadFile(this, dataSet, file, databaseManagementService);
         try {
 
             DataSetDescriptor descriptor = excelFile.getDescriptor();
-            databaseManagementService.loadCSVDataSingelDataset(this, excelFile);
+            databaseManagementService.saveExcelDataSetDescriptor(this, excelFile);
             processResult.setDataSetDescriptor(descriptor);
             processResult.setSuccess(true);
             String msg = String.format("dataset %s loaded with %d stars", descriptor.getDataSetName(), descriptor.getNumberStars());

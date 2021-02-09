@@ -45,8 +45,6 @@ public class DataSetDescriptor implements Serializable {
 
     /**
      * name of the dataset file creator
-     * <p>
-     * e.g. “Rick Boatright”
      */
     @NotNull
     private String fileCreator;

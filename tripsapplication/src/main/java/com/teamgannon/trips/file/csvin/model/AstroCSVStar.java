@@ -27,9 +27,13 @@ public class AstroCSVStar {
     private @NotNull StellarFactory stellarFactory = new StellarFactory();
     private String datasetName;
     private String displayName;
+    private String commonName;
+    private String simbadId;
+    private String gaiaId;
     private String constellationName;
     private String mass;
-    private String actualMass;
+    private String age;
+    private String metallicity;
     private String notes;
     private String source;
     private String catalogIdList;
@@ -38,8 +42,7 @@ public class AstroCSVStar {
     private String pmra;
     private String declination;
     private String pmdec;
-    private String dec_deg;
-    private String rs_cdeg;
+
 
     private String parallax;
     private String distance;
@@ -66,7 +69,6 @@ public class AstroCSVStar {
     private String other;
     private String anomaly;
 
-    private String catalogid;
 
     /**
      * What polity does this object belong to.  Obviously, it has to be null or one of the polities listed in
@@ -161,6 +163,16 @@ public class AstroCSVStar {
     private double miscNum4;
 
     /**
+     * galactic Lat
+     */
+    private String galacticLattitude;
+
+    /**
+     * galactic long
+     */
+    private String galacticLongitude;
+
+    /**
      * for user custom use in future versions
      */
     private double miscNum5;
@@ -173,6 +185,9 @@ public class AstroCSVStar {
 
             astro.setDataSetName(datasetName);
             astro.setDisplayName(displayName.trim());
+            astro.setCommonName(commonName.trim());
+            astro.setSimbadId(simbadId.trim());
+            astro.setGaiaId(gaiaId.trim());
             astro.setConstellationName(constellationName.trim());
 
             astro.setMass(parseDouble(mass.trim()));
@@ -203,31 +218,24 @@ public class AstroCSVStar {
 
             astro.setBprp(parseDouble(bprp.trim()));
 
-            astro.setCommonName(miscText1);
-//            astro.setMiscText1(miscText1);
-            astro.setSimbadId(miscText2);
-//            astro.setMiscText2(miscText2);
+            astro.setMiscText1(miscText1);
+            astro.setMiscText2(miscText2);
             astro.setMiscText3(miscText3);
-            try {
-                astro.setMetallicity(Double.parseDouble(miscText3));
-            } catch (NumberFormatException nfe) {
-                astro.setMetallicity(0);
-            }
-//            astro.setMiscText4(miscText4);
+            astro.setMiscText4(miscText4);
             try {
 
-                String[] split = miscText4.split("\\s+");
-                double galLat = Double.parseDouble(split[1].trim());
-                double galLong = Double.parseDouble(split[2].trim());
+                double galLat = Double.parseDouble(galacticLattitude.trim());
                 astro.setGalacticLat(galLat);
+
+                double galLong = Double.parseDouble(galacticLongitude.trim());
                 astro.setGalacticLong(galLong);
+
             } catch (Exception e) {
                 astro.setGalacticLat(0.0);
                 astro.setGalacticLong(0.0);
             }
 
-//            astro.setMiscText5(miscText5);
-            astro.setGaiaId(miscText5);
+            astro.setMiscText5(miscText5);
 
             astro.setMiscNum1(miscNum1);
             astro.setMiscNum2(miscNum2);
