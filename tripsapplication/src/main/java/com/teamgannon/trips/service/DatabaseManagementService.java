@@ -106,7 +106,8 @@ public class DatabaseManagementService {
         starObjectRepository.deleteAll();
     }
 
-    public @NotNull DataSetDescriptor loadCHFile(@NotNull ProgressUpdater progressUpdater, @NotNull Dataset dataset, @NotNull ChViewFile chViewFile) throws Exception {
+    public @NotNull
+    DataSetDescriptor loadCHFile(@NotNull ProgressUpdater progressUpdater, @NotNull Dataset dataset, @NotNull ChViewFile chViewFile) throws Exception {
 
         // this method call actually saves the dataset in elasticsearch
         return DataSetDescriptorFactory.createDataSetDescriptor(
@@ -128,7 +129,8 @@ public class DatabaseManagementService {
         return starObjects;
     }
 
-    public @NotNull DataSetDescriptor loadCSVFile(@NotNull RegCSVFile regCSVFile) throws Exception {
+    public @NotNull
+    DataSetDescriptor loadCSVFile(@NotNull RegCSVFile regCSVFile) throws Exception {
         return DataSetDescriptorFactory.createDataSetDescriptor(
                 dataSetDescriptorRepository,
                 regCSVFile
@@ -175,7 +177,8 @@ public class DatabaseManagementService {
      * @param distanceFromCenterStar the distance frm the centre star to display
      * @return the fitlered list
      */
-    private @NotNull List<StarObject> filterByDistance(
+    private @NotNull
+    List<StarObject> filterByDistance(
             @NotNull List<StarObject> starObjects,
             double[] centerCoordinates,
             double distanceFromCenterStar) {
@@ -235,24 +238,41 @@ public class DatabaseManagementService {
      *
      * @return the list of all descriptors in the database
      */
-    public @NotNull List<DataSetDescriptor> getDataSets() {
+    public @NotNull
+    List<DataSetDescriptor> getDataSets() {
         Iterable<DataSetDescriptor> dataSetDescriptors = dataSetDescriptorRepository.findAll();
         List<DataSetDescriptor> descriptors = new ArrayList<>();
         dataSetDescriptors.forEach(descriptors::add);
         return descriptors;
     }
 
-    public @NotNull List<StarObject> getFromDataset(@NotNull DataSetDescriptor dataSetDescriptor) {
+    public List<StarObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
         // we can only effectively gather 500 at a time
-        return starObjectRepository.findByDataSetName(dataSetDescriptor.getDataSetName());
+        return toList(
+                starObjectRepository.findByDataSetName(
+                        dataSetDescriptor.getDataSetName(),
+                        PageRequest.of(0, MAX_REQUEST_SIZE)
+                )
+        );
     }
 
-    public @NotNull List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
+    public Page<StarObject> getFromDatasetByPage(DataSetDescriptor dataSetDescriptor, int pageNumber, int requestSize) {
+        // we can only effectively gather 500 at a time
+        return starObjectRepository.findByDataSetName(
+                dataSetDescriptor.getDataSetName(),
+                PageRequest.of(pageNumber, requestSize)
+        );
+    }
+
+
+    public @NotNull
+    List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
         return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
-    public @NotNull DataSetDescriptor getDatasetFromName(String dataSetName) {
+    public @NotNull
+    DataSetDescriptor getDatasetFromName(String dataSetName) {
         return dataSetDescriptorRepository.findByDataSetName(dataSetName);
     }
     ///////////////
@@ -294,7 +314,8 @@ public class DatabaseManagementService {
      * @param pageResult the page result
      * @return the list representation
      */
-    private @NotNull List<StarObject> toList(@NotNull Page<StarObject> pageResult) {
+    private @NotNull
+    List<StarObject> toList(@NotNull Page<StarObject> pageResult) {
         return pageResult.getContent();
     }
 
@@ -374,7 +395,8 @@ public class DatabaseManagementService {
         civilizationDisplayPreferencesRepository.save(preferences);
     }
 
-    public @NotNull ColorPalette getGraphColorsFromDB() {
+    public @NotNull
+    ColorPalette getGraphColorsFromDB() {
         Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
         GraphColorsPersist graphColorsPersist;
 
@@ -484,7 +506,8 @@ public class DatabaseManagementService {
      * @param starName    the star name to search
      * @return the list of matching stars
      */
-    public @NotNull List<StarObject> findStarsWithName(String datasetName, String starName) {
+    public @NotNull
+    List<StarObject> findStarsWithName(String datasetName, String starName) {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 

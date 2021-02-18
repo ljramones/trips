@@ -34,8 +34,6 @@ public class ExportDialog extends Dialog<ExportOptions> {
         this.setWidth(600);
 
         exportChoice.getItems().add(ExportFileType.CSV.toString());
-        exportChoice.getItems().add(ExportFileType.EXCEL.toString());
-        exportChoice.getItems().add(ExportFileType.JSON.toString());
 
         exportChoice.setValue(ExportFileType.CSV.toString());
 

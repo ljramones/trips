@@ -34,7 +34,7 @@ public class CSVExporter {
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
 
-            createDescriptorHeading(writer, dataSetDescriptor);
+//            createDescriptorHeading(writer, dataSetDescriptor);
 
             String headers = getHeaders();
             writer.write(headers);
@@ -116,9 +116,13 @@ public class CSVExporter {
         return "id," +
                 "dataSetName," +
                 "displayName," +
+                "commonName," +
+                "gaiaId," +
+                "simbadId," +
                 "constellationName," +
                 "mass," +
-                "actualMass," +
+                "age," +
+                "metallicity," +
                 "source," +
                 "catalogIdList," +
                 "X," +
@@ -129,8 +133,6 @@ public class CSVExporter {
                 "pmra," +
                 "declination," +
                 "pmdec," +
-                "dec_deg," +
-                "rs_cdeg," +
                 "parallax," +
                 "distance," +
                 "radialVelocity," +
@@ -168,7 +170,9 @@ public class CSVExporter {
                 "miscNum3," +
                 "miscNum4," +
                 "miscNum5," +
-                "notes" +
+                "Notes," +
+                "L," +
+                "B" +
                 "\n";
     }
 
@@ -177,10 +181,15 @@ public class CSVExporter {
         return removeCommas(starObject.getId().toString()) + ", " +
                 removeCommas(starObject.getDataSetName()) + ", " +
                 removeCommas(starObject.getDisplayName()) + ", " +
+                removeCommas(starObject.getCommonName()) + ", " +
+                removeCommas(starObject.getGaiaId()) + ", " +
+                removeCommas(starObject.getSimbadId()) + ", " +
                 removeCommas(starObject.getConstellationName()) + ", " +
                 starObject.getMass() + ", " +
+                starObject.getAge() + ", " +
+                starObject.getMetallicity() + ", " +
                 removeCommas(starObject.getSource()) + ", " +
-                starObject.getCatalogIdList() + ", " +
+                String.join("~", starObject.getCatalogIdList()) + ", " +
                 starObject.getX() + ", " +
                 starObject.getY() + ", " +
                 starObject.getZ() + ", " +
@@ -226,7 +235,9 @@ public class CSVExporter {
                 starObject.getMiscNum3() + ", " +
                 starObject.getMiscNum4() + ", " +
                 starObject.getMiscNum5() + ", " +
-                removeCommas(starObject.getNotes()) +
+                removeCommas(starObject.getNotes()) + ", " +
+                starObject.getGalacticLat() + ", " +
+                starObject.getGalacticLong() +
                 "\n";
     }
 

@@ -25,7 +25,7 @@ public interface StarObjectRepository
      * @param page                 the page to position by
      * @return the stars
      */
-    @NotNull Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
+     Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
 
     /**
      * this is the distance from Sol
@@ -34,7 +34,7 @@ public interface StarObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-    @NotNull Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
+     Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
@@ -42,7 +42,7 @@ public interface StarObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-    @NotNull List<StarObject> findByDataSetName(String dataSetName);
+    Page<StarObject> findByDataSetName(String dataSetName, Pageable page);
 
 
     /**
@@ -52,7 +52,7 @@ public interface StarObjectRepository
      * @param nameMatch   the partial match
      * @return the list of objects that match what we search for
      */
-    @NotNull List<StarObject> findByDataSetNameAndDisplayNameContainsIgnoreCase(String dataSetName, String nameMatch);
+    List<StarObject> findByDataSetNameAndDisplayNameContainsIgnoreCase(String dataSetName, String nameMatch);
 
 
     /**
@@ -61,7 +61,7 @@ public interface StarObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-    @NotNull List<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName);
+     List<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName);
 
     /**
      * delete all stars stored with a specific dataset name
@@ -77,9 +77,9 @@ public interface StarObjectRepository
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-    @NotNull List<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
+     List<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
 
-    @NotNull List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+     List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
             double xg,
             double xl,
@@ -88,4 +88,5 @@ public interface StarObjectRepository
             double zg,
             double zl
     );
+
 }
