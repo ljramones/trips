@@ -224,11 +224,19 @@ public class AstroCSVStar {
             astro.setMiscText4(miscText4);
             try {
 
-                double galLat = Double.parseDouble(galacticLattitude.trim());
-                astro.setGalacticLat(galLat);
+                if (galacticLattitude.isEmpty()) {
+                    astro.setGalacticLat(0);
+                } else {
+                    double galLat = Double.parseDouble(galacticLattitude.trim());
+                    astro.setGalacticLat(galLat);
+                }
 
-                double galLong = Double.parseDouble(galacticLongitude.trim());
-                astro.setGalacticLong(galLong);
+                if (galacticLongitude.isEmpty()) {
+                    astro.setGalacticLong(0);
+                } else {
+                    double galLong = Double.parseDouble(galacticLongitude.trim());
+                    astro.setGalacticLong(galLong);
+                }
 
             } catch (Exception e) {
                 astro.setGalacticLat(0.0);

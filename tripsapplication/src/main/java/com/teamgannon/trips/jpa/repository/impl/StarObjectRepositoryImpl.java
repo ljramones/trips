@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by larrymitchell on 2017-04-19.
@@ -31,6 +32,12 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
      */
     public StarObjectRepositoryImpl(EntityManager em) {
         this.em = em;
+    }
+
+    @Override
+    public Stream<StarObject> getAllFromDataset(String dataset) {
+
+        return null;
     }
 
     /**
@@ -66,6 +73,8 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
 
         return starObjects;
     }
+
+
 
     private @NotNull List<Predicate> makeAstroQuery(@NotNull AstroSearchQuery astroSearchQuery,
                                                     @NotNull Root<StarObject> root,

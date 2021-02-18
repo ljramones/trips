@@ -77,69 +77,71 @@ public class RegularCsvReader {
                     }
 
                     String[] splitLine = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-                    String[] lineRead = linePad(splitLine, 56);
+                    String[] lineRead = linePad(splitLine, splitLine.length);
                     loopCounter++;
                     AstroCSVStar star = AstroCSVStar
                             .builder()
                             // skip id lineRead[0]
                             // read dataset name
                             .datasetName(dataset.getName())
-                            .displayName(lineRead[2])
-                            .commonName(lineRead[3])
-                            .simbadId(lineRead[4])
-                            .galacticLattitude(lineRead[5])
-                            .constellationName(lineRead[6])
-                            .mass(lineRead[7])
-                            .source(lineRead[8])
-                            .catalogIdList(lineRead[9])
-                            .x(lineRead[10])
-                            .y(lineRead[11])
-                            .z(lineRead[12])
-                            .radius(lineRead[13])
-                            .ra(lineRead[14])
-                            .pmra(lineRead[15])
-                            .declination(lineRead[16])
-                            .pmdec(lineRead[17])
-                            .parallax(lineRead[18])
-                            .distance(lineRead[19])
-                            .radialVelocity(lineRead[20])
-                            .spectralClass(lineRead[21])
-                            .orthoSpectralClass(lineRead[22])
-                            .temperature(lineRead[23])
-                            .realStar(lineRead[24])
-                            .bprp(lineRead[25])
-                            .bpg(lineRead[26])
-                            .grp(lineRead[27])
-                            .luminosity(lineRead[28])
-                            .magu(lineRead[29])
-                            .magb(lineRead[30])
-                            .magv(lineRead[31])
-                            .magr(lineRead[32])
-                            .magi(lineRead[33])
-                            .other(lineRead[34])
-                            .anomaly(lineRead[35])
-                            .polity(lineRead[36])
-                            .worldType(lineRead[37])
-                            .fuelType(lineRead[38])
-                            .portType(lineRead[39])
-                            .populationType(lineRead[40])
-                            .techType(lineRead[41])
-                            .productType(lineRead[42])
-                            .milSpaceType(lineRead[43])
-                            .milPlanType(lineRead[44])
-                            .miscText1(lineRead[45])
-                            .miscText2(lineRead[46])
-                            .miscText3(lineRead[47])
-                            .miscText4(lineRead[48])
-                            .miscText5(lineRead[49])
-                            .miscNum1(parseDouble(lineRead[50]))
-                            .miscNum2(parseDouble(lineRead[51]))
-                            .miscNum3(parseDouble(lineRead[52]))
-                            .miscNum4(parseDouble(lineRead[53]))
-                            .miscNum5(parseDouble(lineRead[54]))
-                            .notes(lineRead[55])
-                            .galacticLattitude(lineRead[56])
-                            .galacticLattitude(lineRead[57])
+                            .displayName(testForNull(lineRead, 2))
+                            .commonName(testForNull(lineRead, 3))
+                            .simbadId(testForNull(lineRead, 4))
+                            .gaiaId(testForNull(lineRead, 5))
+                            .constellationName(testForNull(lineRead, 6))
+                            .mass(testForNull(lineRead, 7))
+                            .age(testForNull(lineRead, 8))
+                            .metallicity(testForNull(lineRead, 9))
+                            .source(testForNull(lineRead, 10))
+                            .catalogIdList(testForNull(lineRead, 11))
+                            .x(testForNull(lineRead, 12))
+                            .y(testForNull(lineRead, 13))
+                            .z(testForNull(lineRead, 14))
+                            .radius(testForNull(lineRead, 15))
+                            .ra(testForNull(lineRead, 16))
+                            .pmra(testForNull(lineRead, 17))
+                            .declination(testForNull(lineRead, 18))
+                            .pmdec(testForNull(lineRead, 19))
+                            .parallax(testForNull(lineRead, 20))
+                            .distance(testForNull(lineRead, 21))
+                            .radialVelocity(testForNull(lineRead, 22))
+                            .spectralClass(testForNull(lineRead, 23))
+                            .orthoSpectralClass(testForNull(lineRead, 24))
+                            .temperature(testForNull(lineRead, 25))
+                            .realStar(testForNull(lineRead, 26))
+                            .bprp(testForNull(lineRead, 27))
+                            .bpg(testForNull(lineRead, 28))
+                            .grp(testForNull(lineRead, 29))
+                            .luminosity(testForNull(lineRead, 30))
+                            .magu(testForNull(lineRead, 31))
+                            .magb(testForNull(lineRead, 32))
+                            .magv(testForNull(lineRead, 33))
+                            .magr(testForNull(lineRead, 34))
+                            .magi(testForNull(lineRead, 35))
+                            .other(testForNull(lineRead, 36))
+                            .anomaly(testForNull(lineRead, 37))
+                            .polity(testForNull(lineRead, 38))
+                            .worldType(testForNull(lineRead, 39))
+                            .fuelType(testForNull(lineRead, 40))
+                            .portType(testForNull(lineRead, 41))
+                            .populationType(testForNull(lineRead, 42))
+                            .techType(testForNull(lineRead, 43))
+                            .productType(testForNull(lineRead, 44))
+                            .milSpaceType(testForNull(lineRead, 45))
+                            .milPlanType(testForNull(lineRead, 46))
+                            .miscText1(testForNull(lineRead, 47))
+                            .miscText2(testForNull(lineRead, 48))
+                            .miscText3(testForNull(lineRead, 49))
+                            .miscText4(testForNull(lineRead, 50))
+                            .miscText5(testForNull(lineRead, 51))
+                            .miscNum1(parseDouble(testForNull(lineRead, 52)))
+                            .miscNum2(parseDouble(testForNull(lineRead, 53)))
+                            .miscNum3(parseDouble(testForNull(lineRead, 54)))
+                            .miscNum4(parseDouble(testForNull(lineRead, 55)))
+                            .miscNum5(parseDouble(testForNull(lineRead, 56)))
+                            .notes(testForNull(lineRead, 57))
+                            .galacticLattitude(testForNull(lineRead, 58))
+                            .galacticLongitude(testForNull(lineRead, 59))
                             .build();
                     try {
                         double distance = Double.parseDouble(star.getDistance());
@@ -190,6 +192,15 @@ public class RegularCsvReader {
         }
 
         return csvFile;
+    }
+
+    private String testForNull(String[] lineRead, int i) {
+        if (i >= lineRead.length) {
+            return "";
+        } else {
+            return lineRead[i];
+        }
+
     }
 
 
