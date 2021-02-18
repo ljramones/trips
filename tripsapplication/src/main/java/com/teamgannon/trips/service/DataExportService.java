@@ -64,25 +64,29 @@ public class DataExportService {
     }
 
     public void exportDataset(@NotNull ExportOptions exportOptions) {
-
-        List<StarObject> starObjects = databaseManagementService.getFromDataset(exportOptions.getDataset());
-
-        exportExec(exportOptions, starObjects);
-
+        exportExec(exportOptions, databaseManagementService);
     }
 
     /**
      * do the actual export witht he defined objects
      *
      * @param exportOptions the options
-     * @param starObjects   the objects to export
+     * @param databaseManagementService   the objects to export
      */
+    private void exportExec(@NotNull ExportOptions exportOptions, DatabaseManagementService databaseManagementService) {
+        switch (exportOptions.getExportFormat()) {
+
+            case CSV -> csvExporter.exportAsCSV(exportOptions, databaseManagementService);
+//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
+//            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
+        }
+    }
     private void exportExec(@NotNull ExportOptions exportOptions, List<StarObject> starObjects) {
         switch (exportOptions.getExportFormat()) {
 
             case CSV -> csvExporter.exportAsCSV(exportOptions, starObjects);
-            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
-            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
+//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
+//            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
     }
 
