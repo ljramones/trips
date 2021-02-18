@@ -250,8 +250,7 @@ public class AstroCSVStar {
             astro.setMiscNum3(miscNum3);
             astro.setMiscNum4(miscNum4);
             astro.setMiscNum5(miscNum5);
-
-
+            
             return astro;
 
         } catch (Exception e) {
