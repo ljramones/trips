@@ -4,10 +4,12 @@ import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.Platform;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.data.domain.Page;
 
 import java.io.Writer;
 import java.nio.file.Files;
@@ -20,14 +22,52 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 @Slf4j
 public class CSVExporter {
 
+    private final int PAGE_SIZE = 1000;
+
+    private int pageNumber = 0;
+    private int totalPages = 0;
+    private long totalElements = 0;
+
     private final StatusUpdaterListener updaterListener;
+    private DatabaseManagementService databaseManagementService;
 
     public CSVExporter(StatusUpdaterListener updaterListener) {
         this.updaterListener = updaterListener;
     }
 
-
     public void exportAsCSV(@NotNull ExportOptions export, @NotNull List<StarObject> starObjects) {
+        try {
+            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
+
+//            createDescriptorHeading(writer, dataSetDescriptor);
+
+            String headers = getHeaders();
+            writer.write(headers);
+
+            int i = 0;
+            for (StarObject starObject : starObjects) {
+                String csvRecord = convertToCSV(starObject);
+                writer.write(csvRecord);
+                i++;
+            }
+
+            writer.flush();
+            writer.close();
+            showInfoMessage("Database Export", export.getDataset().getDataSetName()
+                    + " was exported to " + export.getFileName() + ".trips.csv");
+
+        } catch (Exception e) {
+            log.error("caught error opening the file:{}", e.getMessage());
+            showErrorAlert(
+                    "Export Dataset as CSV file",
+                    export.getDataset() +
+                            "failed to export:" + e.getMessage()
+            );
+        }
+    }
+
+    public void exportAsCSV(@NotNull ExportOptions export, @NotNull DatabaseManagementService databaseManagementService) {
+        this.databaseManagementService = databaseManagementService;
 
         DataSetDescriptor dataSetDescriptor = export.getDataset();
 
@@ -38,11 +78,18 @@ public class CSVExporter {
 
             String headers = getHeaders();
             writer.write(headers);
-            int i = 0;
-            for (StarObject starObject : starObjects) {
-                String csvRecord = convertToCSV(starObject);
-                writer.write(csvRecord);
-                i++;
+
+            Page<StarObject> starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
+            totalElements = starObjectPage.getTotalElements();
+            totalPages = starObjectPage.getTotalPages();
+
+            for (int i = 0; i < totalPages; i++) {
+                starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
+                List<StarObject> starObjects = starObjectPage.getContent();
+                for (StarObject starObject : starObjects) {
+                    String csvRecord = convertToCSV(starObject);
+                    writer.write(csvRecord);
+                }
             }
             writer.flush();
             writer.close();
