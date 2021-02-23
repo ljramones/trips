@@ -45,14 +45,14 @@ public class ExcelLoadTask extends Task<FileProcessResult> implements ProgressUp
             processResult.setSuccess(true);
             String msg = String.format("dataset %s loaded with %d stars", descriptor.getDataSetName(), descriptor.getNumberStars());
             processResult.setMessage(msg);
-            updateLoadInfo(msg);
+            updateTaskInfo(msg);
 
         } catch (Exception e) {
             String msg = String.format("failed to load %s into system", dataSet.getName());
             log.error(msg);
             processResult.setSuccess(false);
             processResult.setMessage(msg);
-            updateLoadInfo(msg);
+            updateTaskInfo(msg);
         }
 
         return processResult;
@@ -60,8 +60,8 @@ public class ExcelLoadTask extends Task<FileProcessResult> implements ProgressUp
 
 
     @Override
-    public void updateLoadInfo(String message) {
-        updateMessage(message);
+    public void updateTaskInfo(String message) {
+        updateMessage(message + "  ");
     }
 
 }

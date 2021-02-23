@@ -1,161 +1,87 @@
-package com.teamgannon.trips.service.export;
+package com.teamgannon.trips.service.export.tasks;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import javafx.application.Platform;
+import com.teamgannon.trips.service.export.ExportResults;
+import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
+import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.data.domain.Page;
 
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
-
 @Slf4j
-public class CSVExporter {
+public class CSVQueryDataExportTask extends Task<ExportResults> implements ProgressUpdater {
 
-    private final int PAGE_SIZE = 1000;
+    private final ExportOptions export;
+    private final SearchContext searchContext;
+    private final DatabaseManagementService databaseManagementService;
 
-    private int pageNumber = 0;
-    private int totalPages = 0;
-    private long totalElements = 0;
-
-    private final StatusUpdaterListener updaterListener;
-    private DatabaseManagementService databaseManagementService;
-
-    public CSVExporter(StatusUpdaterListener updaterListener) {
-        this.updaterListener = updaterListener;
+    public CSVQueryDataExportTask(ExportOptions export, SearchContext searchContext, DatabaseManagementService databaseManagementService) {
+        this.export = export;
+        this.searchContext = searchContext;
+        this.databaseManagementService = databaseManagementService;
     }
 
-    public void exportAsCSV(@NotNull ExportOptions export, @NotNull List<StarObject> starObjects) {
+
+    @Override
+    protected ExportResults call() throws Exception {
+        ExportResults result = processCSVFile(export);
+        if (result.isSuccess()) {
+            log.info("New dataset {} added", export.getFileName());
+        } else {
+            log.error("load csv" + result.getMessage());
+        }
+
+        return result;
+    }
+
+    private ExportResults processCSVFile(ExportOptions export) {
+
+        ExportResults exportResults = ExportResults.builder().success(false).build();
         try {
             Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
 
-//            createDescriptorHeading(writer, dataSetDescriptor);
-
             String headers = getHeaders();
             writer.write(headers);
+
+            List<StarObject> starObjects = databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
 
             int i = 0;
             for (StarObject starObject : starObjects) {
                 String csvRecord = convertToCSV(starObject);
                 writer.write(csvRecord);
                 i++;
-            }
-
-            writer.flush();
-            writer.close();
-            showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was exported to " + export.getFileName() + ".trips.csv");
-
-        } catch (Exception e) {
-            log.error("caught error opening the file:{}", e.getMessage());
-            showErrorAlert(
-                    "Export Dataset as CSV file",
-                    export.getDataset() +
-                            "failed to export:" + e.getMessage()
-            );
-        }
-    }
-
-    public void exportAsCSV(@NotNull ExportOptions export, @NotNull DatabaseManagementService databaseManagementService) {
-        this.databaseManagementService = databaseManagementService;
-
-        DataSetDescriptor dataSetDescriptor = export.getDataset();
-
-        try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
-
-//            createDescriptorHeading(writer, dataSetDescriptor);
-
-            String headers = getHeaders();
-            writer.write(headers);
-
-            Page<StarObject> starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
-            totalElements = starObjectPage.getTotalElements();
-            totalPages = starObjectPage.getTotalPages();
-
-            for (int i = 0; i < totalPages; i++) {
-                starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
-                List<StarObject> starObjects = starObjectPage.getContent();
-                for (StarObject starObject : starObjects) {
-                    String csvRecord = convertToCSV(starObject);
-                    writer.write(csvRecord);
+                if ((i % 1001) == 0) {
+                    updateTaskInfo("1000 records stored, " + i + " so far ");
                 }
             }
+
             writer.flush();
             writer.close();
-            showInfoMessage("Database Export", export.getDataset().getDataSetName()
-                    + " was exported to " + export.getFileName() + ".trips.csv");
+            String msg = export.getDataset().getDataSetName()
+                    + " was exported to " + export.getFileName() + ".trips.csv";
 
+            exportResults.setSuccess(true);
+            exportResults.setMessage(msg);
         } catch (Exception e) {
             log.error("caught error opening the file:{}", e.getMessage());
-            showErrorAlert(
-                    "Export Dataset as CSV file",
-                    dataSetDescriptor.getDataSetName() +
-                            "failed to export:" + e.getMessage()
-            );
+            exportResults.setMessage(export.getDataset() +
+                    "failed to export:" + e.getMessage());
         }
+        return exportResults;
     }
 
-    private void createDescriptorHeading(@NotNull Writer writer, @NotNull DataSetDescriptor dataSetDescriptor) {
-        try {
-            String headers = getDescriptorHeaders();
-            writer.write(headers);
-            String csvRecord = convertToCSV(dataSetDescriptor);
-            writer.write(csvRecord);
-        } catch (Exception e) {
-            log.error("caught error opening the file:{}", e.getMessage());
-            showErrorAlert(
-                    "Export Dataset as CSV file",
-                    dataSetDescriptor.getDataSetName() +
-                            "failed to export:" + e.getMessage()
-            );
-        }
-    }
 
-    private @NotNull String convertToCSV(@NotNull DataSetDescriptor dataSetDescriptor) {
-        return removeCommas(dataSetDescriptor.getDataSetName()) + "," +
-                removeCommas(dataSetDescriptor.getFilePath()) + "," +
-                removeCommas(dataSetDescriptor.getFileCreator()) + "," +
-                dataSetDescriptor.getFileOriginalDate() + "," +
-                removeCommas(dataSetDescriptor.getFileNotes()) + "," +
-                removeCommas(dataSetDescriptor.getDatasetType()) + "," +
-                dataSetDescriptor.getNumberStars() + "," +
-                dataSetDescriptor.getDistanceRange() + "," +
-                dataSetDescriptor.getNumberRoutes() + "," +
-                removeCommas(dataSetDescriptor.getThemeStr()) + "," +
-                dataSetDescriptor.getAstrographicDataList() + "," +
-                removeCommas(dataSetDescriptor.getRoutesStr()) + "," +
-                removeCommas(dataSetDescriptor.getCustomDataDefsStr()) + "," +
-                removeCommas(dataSetDescriptor.getCustomDataValuesStr()) + ","
-                + "\n";
-    }
-
-    private @NotNull String getDescriptorHeaders() {
-        return "dataSetName," +
-                "filePath," +
-                "fileCreator," +
-                "fileOriginalDate," +
-                "fileNotes," +
-                "datasetType," +
-                "numberStars," +
-                "distanceRange," +
-                "numberRoutes," +
-                "themeStr," +
-                "astrographicDataList," +
-                "routesStr," +
-                "customDataDefsStr," +
-                "customDataValuesStr" +
-                "\n";
+    @Override
+    public void updateTaskInfo(String message) {
+        updateMessage(message + "  ");
     }
 
 
@@ -296,12 +222,5 @@ public class CSVExporter {
         return replaced;
     }
 
-
-    private void updateStatus(String status) {
-        new Thread(() -> Platform.runLater(() -> {
-            log.info(status);
-            updaterListener.updateStatus(status);
-        })).start();
-    }
 
 }

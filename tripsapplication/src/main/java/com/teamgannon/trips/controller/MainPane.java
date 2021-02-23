@@ -8,8 +8,8 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
+import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
@@ -45,7 +45,6 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.model.ExportFileType;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.application.HostServices;
@@ -65,7 +64,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -79,7 +77,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -930,13 +927,6 @@ public class MainPane implements
     }
 
 
-    public void loadMuliple(ActionEvent actionEvent) {
-        dataImportService.loadDatabase();
-        // load datasets into the system
-        SearchContext searchContext = tripsContext.getSearchContext();
-        loadDatasets(searchContext);
-    }
-
     public void exportDatabase(ActionEvent actionEvent) {
         dataExportService.exportDB();
     }
@@ -1357,38 +1347,9 @@ public class MainPane implements
 
     @Override
     public void doExport(AstroSearchQuery newQuery) {
-        DataSetDescriptor descriptor = newQuery.getDescriptor();
-        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-        if (starObjects.isEmpty()) {
-            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
-            return;
-        }
-        final FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select export file to import");
-        File filesFolder = new File(localization.getFileDirectory());
-        if (!filesFolder.exists()) {
-            boolean created = filesFolder.mkdirs();
-            if (!created) {
-                log.error("data files folder did not exist, but attempt to create directories failed");
-                showErrorAlert("Add Dataset ", "files folder did not exist, but attempt to create directories failed");
-            }
-        }
-        fileChooser.setInitialDirectory(filesFolder);
-        File file = fileChooser.showSaveDialog(null);
-        if (file != null) {
-            DataSetDescriptor modDescriptor = databaseManagementService.recheckDescriptor(descriptor, starObjects);
-            ExportOptions exportOptions =
-                    ExportOptions
-                            .builder()
-                            .doExport(true)
-                            .dataset(modDescriptor)
-                            .fileName(file.getAbsolutePath())
-                            .exportFormat(ExportFileType.EXCEL)
-                            .build();
-            dataExportService.exportDatasetOnQuery(exportOptions, starObjects);
-        } else {
-            log.warn("file save cancelled");
-        }
+        ExportQueryDialog exportQueryDialog = new ExportQueryDialog(searchContext, databaseManagementService,
+                dataExportService, this, localization);
+        exportQueryDialog.showAndWait();
     }
 
     private void showList(@NotNull List<StarObject> starObjects) {

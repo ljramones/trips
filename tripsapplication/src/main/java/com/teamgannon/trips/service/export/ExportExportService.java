@@ -2,8 +2,8 @@ package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
-import com.teamgannon.trips.dialogs.dataset.TaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -27,7 +27,7 @@ public class ExportExportService extends Service<FileProcessResult> {
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
-    private TaskComplete taskComplete;
+    private ImportTaskComplete importTaskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
@@ -40,14 +40,14 @@ public class ExportExportService extends Service<FileProcessResult> {
     public boolean processDataSet(Dataset dataset,
                                   StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete,
+                                  ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
                                   @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
-        this.taskComplete = taskComplete;
+        this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
         this.loadUpdateListener = loadUpdateListener;

@@ -68,7 +68,7 @@ public class DataSetDescriptorFactory {
         Map<Integer, ChViewRecord> chViewRecordMap = chViewFile.getRecords();
         Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
         double maxDistance = 0;
-        progressUpdater.updateLoadInfo("Saving records in database");
+        progressUpdater.updateTaskInfo("Saving records in database");
         for (Integer recordId : chViewRecordMap.keySet()) {
             ChViewRecord chViewRecord = chViewRecordMap.get(recordId);
             // distance check
@@ -86,7 +86,7 @@ public class DataSetDescriptorFactory {
                 chViewFile.getOriginalFileName(),
                 astrographicObjectMap.size());
         log.info(saveMessage);
-        progressUpdater.updateLoadInfo(saveMessage);
+        progressUpdater.updateTaskInfo(saveMessage);
 
         // set the records for this
         dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
@@ -101,7 +101,7 @@ public class DataSetDescriptorFactory {
         dataSetDescriptorRepository.save(dataSetDescriptor);
 
         log.info("Saved the data set descriptor named: {}", dataset);
-        progressUpdater.updateLoadInfo(message);
+        progressUpdater.updateTaskInfo(message);
 
         return dataSetDescriptor;
     }

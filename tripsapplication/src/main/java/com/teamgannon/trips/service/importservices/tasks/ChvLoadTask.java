@@ -33,7 +33,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
 
         File file = new File(dataset.getFileSelected());
 
-        // load chview file
+        // load chView file
         ChViewFile chViewFile = chviewReader.loadFile(this, file);
         if (chViewFile == null) {
             FileProcessResult result = new FileProcessResult();
@@ -60,7 +60,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
     @Override
-    public void updateLoadInfo(String message) {
-        updateMessage(message);
+    public void updateTaskInfo(String message) {
+        updateMessage(message + "  ");
     }
 }

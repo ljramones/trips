@@ -2,7 +2,7 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
-import com.teamgannon.trips.dialogs.dataset.TaskComplete;
+import com.teamgannon.trips.dialogs.dataset.ImportTaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.importservices.*;
@@ -42,9 +42,9 @@ public class DataImportService {
     public ImportResult processFile(@NotNull Dataset dataset,
                                     StatusUpdaterListener statusUpdaterListener,
                                     DataSetChangeListener dataSetChangeListener,
-                                    TaskComplete taskComplete,
+                                    ImportTaskComplete importTaskComplete,
                                     @NotNull Label progressText,
-                                    @NotNull ProgressBar loadProgressBar,
+                                    @NotNull ProgressBar importProgressBar,
                                     @NotNull Button cancelLoad,
                                     LoadUpdateListener loadUpdateListener) {
 
@@ -73,7 +73,7 @@ public class DataImportService {
                 runningImportService = chvDataImportService;
                 boolean queued = chvDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
+                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -91,7 +91,7 @@ public class DataImportService {
                 runningImportService = csvDataImportService;
                 boolean queued = csvDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
+                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -109,7 +109,7 @@ public class DataImportService {
                 runningImportService = excelDataImportService;
                 boolean queued = excelDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
+                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -127,7 +127,7 @@ public class DataImportService {
                 runningImportService = jsonDataImportService;
                 boolean queued = jsonDataImportService.processDataSet(
                         dataset, statusUpdaterListener, dataSetChangeListener,
-                        taskComplete, progressText, loadProgressBar, cancelLoad, loadUpdateListener);
+                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -162,10 +162,6 @@ public class DataImportService {
     public void complete(boolean status, Dataset dataset, String errorMessage) {
         currentlyRunning.set(false);
         runningImportService = null;
-    }
-
-    public void loadDatabase() {
-
     }
 
 }

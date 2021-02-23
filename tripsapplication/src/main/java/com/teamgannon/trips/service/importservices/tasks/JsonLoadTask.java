@@ -63,7 +63,7 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
 
 
     @Override
-    public void updateLoadInfo(String message) {
-        updateMessage(message);
+    public void updateTaskInfo(String message) {
+        updateMessage(message + "  ");
     }
 }

@@ -169,7 +169,7 @@ public class RegularCsvReader {
                 // save all the stars we've read so far
                 databaseManagementService.starBulkSave(starSet);
                 totalCount += loopCounter;
-                progressUpdater.updateLoadInfo(String.format("Saving %d  of total so far = %d", 20000, totalCount));
+                progressUpdater.updateTaskInfo(String.format("Saving %d  of total so far = %d", 20000, totalCount));
                 log.info("\n\nsaving {} entries, total count is {}\n\n", loopCounter, totalCount);
             } while (!readComplete); // the moment readComplete turns true, we stop
 
@@ -178,7 +178,7 @@ public class RegularCsvReader {
 
             csvFile.setProcessMessage(String.format("File load report: total:%d, accepts:%d, rejects:%d", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects()));
         } catch (IOException e) {
-            progressUpdater.updateLoadInfo("failed to read file because: " + e.getMessage());
+            progressUpdater.updateTaskInfo("failed to read file because: " + e.getMessage());
             log.error("failed to read file because: {}", e.getMessage());
             csvFile.setReadSuccess(false);
             csvFile.setProcessMessage("failed to read file because: " + e.getMessage());
@@ -188,7 +188,7 @@ public class RegularCsvReader {
             csvFile.setMaxDistance(maxDistance);
             csvFile.getDataSetDescriptor().setNumberStars(totalCount);
             csvFile.getDataSetDescriptor().setDistanceRange(maxDistance);
-            progressUpdater.updateLoadInfo("load of dataset complete with " + totalCount + " stars loaded");
+            progressUpdater.updateTaskInfo("load of dataset complete with " + totalCount + " stars loaded");
         }
 
         return csvFile;

@@ -139,6 +139,10 @@ public class DatabaseManagementService {
 
     ///////////////////////////////////////
 
+    public boolean starsAvailableForQuery(@NotNull SearchContext searchContext) {
+        return !getAstrographicObjectsOnQuery(searchContext).isEmpty();
+    }
+
     /**
      * get a set of astrographic objects based on a query
      *
@@ -513,14 +517,14 @@ public class DatabaseManagementService {
 
     public void saveExcelDataSetDescriptor(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
         dataSetDescriptorRepository.save(excelFile.getDescriptor());
-        updater.updateLoadInfo("saved descriptor in database, complete");
+        updater.updateTaskInfo("saved descriptor in database, complete");
     }
 
     public void loadJsonFileSingleDS(ProgressUpdater updater, JsonExportObj jsonExportObj) {
         dataSetDescriptorRepository.save(jsonExportObj.getDescriptor().toDataSetDescriptor());
-        updater.updateLoadInfo("saved descriptor in database");
+        updater.updateTaskInfo("saved descriptor in database");
         starObjectRepository.saveAll(jsonExportObj.getStarObjectList());
-        updater.updateLoadInfo("saved all stars in database");
+        updater.updateTaskInfo("saved all stars in database");
     }
 
     public DataSetDescriptor recheckDescriptor(DataSetDescriptor descriptor, List<StarObject> starObjects) {
