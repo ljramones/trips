@@ -37,7 +37,6 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
     private ExportTaskComplete exportTaskComplete;
     private Label progressText;
     private ProgressBar exportProgressionBar;
-    private Button cancelExportButton;
     private StatusUpdaterListener statusUpdaterListener;
 
     private ExportOptions export;
@@ -55,13 +54,14 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
                                     ProgressBar exportProgressionBar,
                                     Button cancelExportButton) {
 
+        this.export = export;
+
         this.searchContext = searchContext;
         this.databaseManagementService = databaseManagementService;
 
         this.exportTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.exportProgressionBar = exportProgressionBar;
-        this.cancelExportButton = cancelExportButton;
         this.statusUpdaterListener = statusUpdaterListener;
 
         progressText.textProperty().bind(this.messageProperty());

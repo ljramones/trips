@@ -2,7 +2,6 @@ package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
@@ -21,12 +20,6 @@ import static javafx.concurrent.Worker.State.RUNNING;
 @Slf4j
 public class CSVDataSetDataExportService extends Service<ExportResults> implements ExportTaskControl {
 
-    private final int PAGE_SIZE = 1000;
-
-    private int pageNumber = 0;
-    private int totalPages = 0;
-    private long totalElements = 0;
-
     private SearchContext searchContext;
 
     private final StatusUpdaterListener updaterListener;
@@ -35,7 +28,6 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
     private ExportTaskComplete exportTaskComplete;
     private Label progressText;
     private ProgressBar exportProgressionBar;
-    private Button cancelExportButton;
     private StatusUpdaterListener statusUpdaterListener;
 
     private ExportOptions export;
@@ -63,17 +55,13 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
         this.exportTaskComplete = exportTaskComplete;
         this.progressText = progressText;
         this.exportProgressionBar = exportProgressionBar;
-        this.cancelExportButton = cancelExportButton;
         this.statusUpdaterListener = statusUpdaterListener;
 
         progressText.textProperty().bind(this.messageProperty());
         exportProgressionBar.progressProperty().bind(this.progressProperty());
         cancelExportButton.disableProperty().bind(this.stateProperty().isNotEqualTo(RUNNING));
 
-        DataSetDescriptor dataSetDescriptor = export.getDataset();
-
         return true;
-
     }
 
     @Override

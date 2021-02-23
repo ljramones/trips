@@ -36,7 +36,7 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
         if (result.isSuccess()) {
             log.info("New dataset {} added", export.getFileName());
         } else {
-            log.error("load csv" + result.getMessage());
+            log.error("load csv: " + result.getMessage());
         }
 
         return result;

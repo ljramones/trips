@@ -140,7 +140,8 @@ public class DatabaseManagementService {
     ///////////////////////////////////////
 
     public boolean starsAvailableForQuery(@NotNull SearchContext searchContext) {
-        return !getAstrographicObjectsOnQuery(searchContext).isEmpty();
+        List<StarObject> starObjects = getAstrographicObjectsOnQuery(searchContext);
+        return !starObjects.isEmpty();
     }
 
     /**

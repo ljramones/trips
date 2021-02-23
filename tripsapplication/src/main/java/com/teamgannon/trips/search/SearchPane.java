@@ -116,20 +116,26 @@ public class SearchPane extends Pane {
 
     public void runQuery(boolean showPlot, boolean showTable, boolean doExport) {
 
-        // pull derived query
-        AstroSearchQuery newQuery = createSearchQuery();
-        log.info("New search request:{}", newQuery);
+        DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
 
-        // process file location for export if selected
-        if (doExport) {
-            updater.doExport(newQuery);
-        }
-
-        if (newQuery.getDescriptor() != null) {
-            // update main screen
-            updater.showNewStellarData(newQuery, showPlot, showTable);
+        if (descriptor == null) {
+            showErrorAlert("Run Query", "Please select a dataset first");
         } else {
-            showErrorAlert("Query Dialog", "You must specify a dataset!");
+            // pull derived query
+            AstroSearchQuery newQuery = createSearchQuery();
+            log.info("New search request:{}", newQuery);
+
+            // process file location for export if selected
+            if (doExport) {
+                updater.doExport(newQuery);
+            }
+
+            if (newQuery.getDescriptor() != null) {
+                // update main screen
+                updater.showNewStellarData(newQuery, showPlot, showTable);
+            } else {
+                showErrorAlert("Query Dialog", "You must specify a dataset!");
+            }
         }
     }
 

@@ -127,43 +127,59 @@ public class DataExportService {
     }
 
 
-    private boolean exportQueryExec(@NotNull ExportOptions exportOptions, SearchContext searchContext,
-                                    StatusUpdaterListener statusUpdaterListener,
-                                    ExportTaskComplete importTaskCompleteListener,
-                                    Label progressText,
-                                    ProgressBar exportProgressBar,
-                                    Button cancelExport) {
-
-        switch (exportOptions.getExportFormat()) {
-
-            case CSV -> {
-                return csvQueryExporterService.exportAsCSV(exportOptions, searchContext,
-                        databaseManagementService, statusUpdaterListener, importTaskCompleteListener,
-                        progressText, exportProgressBar, cancelExport);
-            }
-//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
-//            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
-        }
-        return false;
-    }
-
     /**
      * export a queried dataset based on options
      *
      * @param exportOptions the options
      * @param searchContext the search context to export
      */
-    public boolean exportDatasetOnQuery(ExportOptions exportOptions,
-                                        SearchContext searchContext,
-                                        StatusUpdaterListener statusUpdaterListener,
-                                        ExportTaskComplete importTaskCompleteListener,
-                                        Label progressText,
-                                        ProgressBar exportProgressBar,
-                                        Button cancelExport) {
+    public ExportResult exportDatasetOnQuery(ExportOptions exportOptions,
+                                             SearchContext searchContext,
+                                             StatusUpdaterListener statusUpdaterListener,
+                                             ExportTaskComplete importTaskCompleteListener,
+                                             Label progressText,
+                                             ProgressBar exportProgressBar,
+                                             Button cancelExport) {
 
-        return exportQueryExec(exportOptions, searchContext, statusUpdaterListener,
-                importTaskCompleteListener, progressText,
-                exportProgressBar, cancelExport);
+        if (currentlyRunning.get()) {
+            if (runningExportService != null) {
+                log.error("There is a current import happening, please wait for {} to finish", runningExportService.whoAmI());
+                return ExportResult
+                        .builder()
+                        .success(false)
+                        .message(String.format("There is a current import happening, please wait for %s to finish", runningExportService.whoAmI()))
+                        .build();
+
+            }
+        }
+        switch (exportOptions.getExportFormat()) {
+
+            case CSV -> {
+                currentlyRunning.set(true);
+                runningExportService = csvQueryExporterService;
+                boolean queued = csvQueryExporterService.exportAsCSV(exportOptions, searchContext,
+                        databaseManagementService, statusUpdaterListener, importTaskCompleteListener,
+                        progressText, exportProgressBar, cancelExport);
+                if (!queued) {
+                    log.error("failed to start import process");
+                    currentlyRunning.set(false);
+                    runningExportService = null;
+                    csvQueryExporterService.reset();
+                    return ExportResult
+                            .builder()
+                            .success(false)
+                            .message(String.format("failed to start the export for %s", exportOptions.getDataset().getDataSetName()))
+                            .build();
+
+                }
+                csvQueryExporterService.reset();
+                csvQueryExporterService.restart();
+                return ExportResult.builder().success(true).build();
+            }
+//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
+//            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
+        }
+        return ExportResult.builder().build();
     }
 
     public void cancelCurrent() {

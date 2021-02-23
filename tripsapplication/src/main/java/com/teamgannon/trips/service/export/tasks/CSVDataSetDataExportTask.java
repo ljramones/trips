@@ -51,7 +51,6 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
     private ExportResults processCSVFile(ExportOptions export) {
 
         ExportResults exportResults = ExportResults.builder().success(false).build();
-        DataSetDescriptor dataSetDescriptor = export.getDataset();
 
         log.info("about to process file");
         try {
