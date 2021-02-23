@@ -1,19 +1,23 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.service.export.CSVExporter;
-import com.teamgannon.trips.service.export.ExcelExporter;
-import com.teamgannon.trips.service.export.JSONExporter;
+import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.export.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.stage.FileChooser;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
@@ -27,23 +31,30 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 public class DataExportService {
 
     private final DatabaseManagementService databaseManagementService;
-    private final StatusUpdaterListener updaterListener;
+    private final StatusUpdaterListener statusUpdaterListener;
 
     private final @NotNull ExcelExporter excelExporter;
 
-    private final @NotNull CSVExporter csvExporter;
+    private final @NotNull CSVQueryExporterService csvQueryExporterService;
+    private final @NotNull CSVDataSetDataExportService csvDataSetDataExportService;
+
+    private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
     private final @NotNull JSONExporter jsonExporter;
 
+    private @Nullable ExportTaskControl runningExportService;
+
+
     public DataExportService(DatabaseManagementService databaseManagementService,
-                             StatusUpdaterListener updaterListener) {
+                             StatusUpdaterListener statusUpdaterListener) {
 
         this.databaseManagementService = databaseManagementService;
-        this.updaterListener = updaterListener;
+        this.statusUpdaterListener = statusUpdaterListener;
 
-        excelExporter = new ExcelExporter(databaseManagementService, updaterListener);
-        csvExporter = new CSVExporter(updaterListener);
-        jsonExporter = new JSONExporter(updaterListener);
+        excelExporter = new ExcelExporter(databaseManagementService, statusUpdaterListener);
+        csvQueryExporterService = new CSVQueryExporterService(statusUpdaterListener);
+        csvDataSetDataExportService = new CSVDataSetDataExportService(statusUpdaterListener);
+        jsonExporter = new JSONExporter(statusUpdaterListener);
     }
 
     public void exportDB() {
@@ -63,42 +74,110 @@ public class DataExportService {
         }
     }
 
-    public void exportDataset(@NotNull ExportOptions exportOptions) {
-        exportExec(exportOptions, databaseManagementService);
-    }
+    public ExportResult exportDataset(@NotNull ExportOptions exportOptions,
+                                      StatusUpdaterListener statusUpdaterListener,
+                                      ExportTaskComplete importTaskCompleteListener,
+                                      Label progressText,
+                                      ProgressBar exportProgressBar,
+                                      Button cancelExport) {
+        if (currentlyRunning.get()) {
+            if (runningExportService != null) {
+                log.error("There is a current import happening, please wait for {} to finish", runningExportService.whoAmI());
+                return ExportResult
+                        .builder()
+                        .success(false)
+                        .message(String.format("There is a current import happening, please wait for %s to finish", runningExportService.whoAmI()))
+                        .build();
 
-    /**
-     * do the actual export witht he defined objects
-     *
-     * @param exportOptions the options
-     * @param databaseManagementService   the objects to export
-     */
-    private void exportExec(@NotNull ExportOptions exportOptions, DatabaseManagementService databaseManagementService) {
+            }
+        }
+        // we keep the switch in case we want to
         switch (exportOptions.getExportFormat()) {
 
-            case CSV -> csvExporter.exportAsCSV(exportOptions, databaseManagementService);
+            case CSV -> {
+                currentlyRunning.set(true);
+                runningExportService = csvDataSetDataExportService;
+                boolean queued = csvDataSetDataExportService.exportAsCSV(
+                        exportOptions, databaseManagementService,
+                        statusUpdaterListener, importTaskCompleteListener, progressText,
+                        exportProgressBar, cancelExport);
+                if (!queued) {
+                    log.error("failed to start import process");
+                    currentlyRunning.set(false);
+                    runningExportService = null;
+                    csvDataSetDataExportService.reset();
+                    return ExportResult
+                            .builder()
+                            .success(false)
+                            .message(String.format("failed to start the export for %s", exportOptions.getDataset().getDataSetName()))
+                            .build();
+
+                }
+                csvDataSetDataExportService.reset();
+                csvDataSetDataExportService.restart();
+                return ExportResult.builder().success(true).build();
+            }
 //            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
 //            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
+
+
+        return ExportResult.builder().build();
+
     }
-    private void exportExec(@NotNull ExportOptions exportOptions, List<StarObject> starObjects) {
+
+
+    private boolean exportQueryExec(@NotNull ExportOptions exportOptions, SearchContext searchContext,
+                                    StatusUpdaterListener statusUpdaterListener,
+                                    ExportTaskComplete importTaskCompleteListener,
+                                    Label progressText,
+                                    ProgressBar exportProgressBar,
+                                    Button cancelExport) {
+
         switch (exportOptions.getExportFormat()) {
 
-            case CSV -> csvExporter.exportAsCSV(exportOptions, starObjects);
+            case CSV -> {
+                return csvQueryExporterService.exportAsCSV(exportOptions, searchContext,
+                        databaseManagementService, statusUpdaterListener, importTaskCompleteListener,
+                        progressText, exportProgressBar, cancelExport);
+            }
 //            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
 //            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
+        return false;
     }
 
     /**
      * export a queried dataset based on options
      *
      * @param exportOptions the options
-     * @param starObjects   the objects to export
+     * @param searchContext the search context to export
      */
-    public void exportDatasetOnQuery(ExportOptions exportOptions, List<StarObject> starObjects) {
-        log.info("exporting {} with {} stars ", exportOptions.getDataset(), starObjects.size());
-        exportExec(exportOptions, starObjects);
+    public boolean exportDatasetOnQuery(ExportOptions exportOptions,
+                                        SearchContext searchContext,
+                                        StatusUpdaterListener statusUpdaterListener,
+                                        ExportTaskComplete importTaskCompleteListener,
+                                        Label progressText,
+                                        ProgressBar exportProgressBar,
+                                        Button cancelExport) {
+
+        return exportQueryExec(exportOptions, searchContext, statusUpdaterListener,
+                importTaskCompleteListener, progressText,
+                exportProgressBar, cancelExport);
+    }
+
+    public void cancelCurrent() {
+        if (currentlyRunning.get()) {
+            if (runningExportService != null) {
+                boolean result = runningExportService.cancelExport();
+                log.warn("import of current export was cancelled: {}", result);
+            }
+        }
+    }
+
+    public void complete(boolean status, DataSetDescriptor dataset, String errorMessage) {
+        currentlyRunning.set(false);
+        runningExportService = null;
     }
 
 }

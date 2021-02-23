@@ -121,7 +121,7 @@ public class ChviewReader {
      * relies on the file being read into a byte buffer
      */
     private @Nullable ChViewFile parsefile(@NotNull ProgressUpdater progressUpdater, String fileName) {
-        progressUpdater.updateLoadInfo("reading front preamble");
+        progressUpdater.updateTaskInfo("reading front preamble");
         ChViewFile chViewFile = new ChViewFile();
         currentIndex = 0;
         chViewFile.setOriginalFileName(fileName);
@@ -141,7 +141,7 @@ public class ChviewReader {
         chViewFile.setNumberOfRecords(numberOfRecords);
 
         // read each file record
-        progressUpdater.updateLoadInfo("reading records");
+        progressUpdater.updateTaskInfo("reading records");
         for (int i = 0; i < numberOfRecords; i++) {
             ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex);
             if (chViewRecord == null) {
@@ -149,7 +149,7 @@ public class ChviewReader {
             }
             chViewFile.addRecord(chViewRecord);
             if (i % 100 == 0) {
-                progressUpdater.updateLoadInfo("read " + i + " records");
+                progressUpdater.updateTaskInfo("read " + i + " records");
             }
         }
 
@@ -159,7 +159,7 @@ public class ChviewReader {
         chViewFile.setComments(parsePreamble(fileContent, currentIndex));
 
         // return the JSON file
-        progressUpdater.updateLoadInfo("file read complete");
+        progressUpdater.updateTaskInfo("file read complete");
         return chViewFile;
     }
 

@@ -85,7 +85,7 @@ public class ExcelReader {
                 if (row == null) {
                     if (!starSet.isEmpty()) {
                         databaseManagementService.starBulkSave(starSet);
-                        loadUpdater.updateLoadInfo(totalCount + " stars loaded");
+                        loadUpdater.updateTaskInfo(totalCount + " stars loaded");
                         totalCount += starSet.size();
                         starSet.clear();
                     }
@@ -123,7 +123,7 @@ public class ExcelReader {
                     databaseManagementService.starBulkSave(starSet);
                     starSet.clear();
                     log.info(totalCount + " stars loaded so far");
-                    loadUpdater.updateLoadInfo(totalCount + " stars loaded so far");
+                    loadUpdater.updateTaskInfo(totalCount + " stars loaded so far");
                 }
 
                 log.debug("Parsed {} stars", starSet.size());
@@ -132,7 +132,7 @@ public class ExcelReader {
 
             if (!starSet.isEmpty()) {
                 databaseManagementService.starBulkSave(starSet);
-                loadUpdater.updateLoadInfo(totalCount + " stars loaded");
+                loadUpdater.updateTaskInfo(totalCount + " stars loaded");
                 totalCount += starSet.size();
             }
 

@@ -3,7 +3,7 @@ package com.teamgannon.trips.service.importservices;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
-import com.teamgannon.trips.dialogs.dataset.TaskComplete;
+import com.teamgannon.trips.dialogs.dataset.ImportTaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -25,7 +25,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
-    private TaskComplete taskComplete;
+    private ImportTaskComplete importTaskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
@@ -42,14 +42,14 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     public boolean processDataSet(Dataset dataset,
                                   StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
-                                  TaskComplete taskComplete,
+                                  ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
                                   @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
-        this.taskComplete = taskComplete;
+        this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
         this.loadUpdateListener = loadUpdateListener;
@@ -68,7 +68,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         statusUpdaterListener.updateStatus(message);
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        taskComplete.complete(true, dataset, fileProcessResult, "loaded");
+        importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
         dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
         // set context to newly loaded dataset
         dataSetChangeListener.setContextDataSet(fileProcessResult.getDataSetDescriptor());
@@ -81,7 +81,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         statusUpdaterListener.updateStatus("dataset load failed due to: " + getException().getMessage());
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        taskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + getException().getMessage());
+        importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + getException().getMessage());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         statusUpdaterListener.updateStatus("dataset load was cancelled for " + dataset.getName());
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        taskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
+        importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
     }
 
     private void unsetProgressControls() {

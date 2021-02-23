@@ -57,7 +57,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
                 processResult.setMessage(data);
                 processResult.setSuccess(true);
                 processResult.setDataSetDescriptor(dataSetDescriptor);
-                updateLoadInfo(String.format(" %s records loaded from dataset %s",
+                updateTaskInfo(String.format(" %s records loaded from dataset %s",
                         dataSetDescriptor.getNumberStars(),
                         dataSetDescriptor.getDataSetName()));
             } else {
@@ -73,7 +73,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
     @Override
-    public void updateLoadInfo(String message) {
-        updateMessage(message);
+    public void updateTaskInfo(String message) {
+        updateMessage(message + "  ");
     }
 }

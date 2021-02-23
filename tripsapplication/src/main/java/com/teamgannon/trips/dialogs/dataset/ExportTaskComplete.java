@@ -1,6 +1,10 @@
 package com.teamgannon.trips.dialogs.dataset;
 
-public interface TaskComplete {
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.service.export.ExportResult;
+import com.teamgannon.trips.service.export.ExportResults;
+
+public interface ExportTaskComplete {
     /**
      * signal completion of JavaFx Service
      *
@@ -9,5 +13,5 @@ public interface TaskComplete {
      * @param fileProcessResult the end result
      * @param errorMessage      whether there is an error message
      */
-    void complete(boolean status, Dataset dataset, FileProcessResult fileProcessResult, String errorMessage);
+    void complete(boolean status, DataSetDescriptor dataset, ExportResults fileProcessResult, String errorMessage);
 }

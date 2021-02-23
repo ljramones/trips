@@ -67,26 +67,26 @@ public class ExcelExportTask extends Task<FileProcessResult> implements Progress
 
             // write this initial page to the file
             writeToExcelFile(starObjectPage, sh);
-            updateLoadInfo("1000 written to file," + totalRowsWritten + " so far");
+            updateTaskInfo("1000 written to file," + totalRowsWritten + " so far");
 
             // for the remaining pages parse and write each to a file
             log.info("Total pages={}, total elements={}", totalPages, totalElements);
             for (int pageNumber = 0; pageNumber < totalPages - 1; pageNumber++) {
                 starObjectPage = databaseManagementService.getFromDatasetByPage(dataSet, pageNumber, requestSize);
                 writeToExcelFile(starObjectPage, sh);
-                updateLoadInfo("1000 written to file," + totalRowsWritten + " so far");
+                updateTaskInfo("1000 written to file," + totalRowsWritten + " so far");
             }
 
             // report the final result
             String msg = String.format("dataset %s exported with %d stars", fileToExport.getAbsoluteFile(), totalRowsWritten);
             processResult.setMessage(msg);
-            updateLoadInfo(msg);
+            updateTaskInfo(msg);
         } catch (Exception e) {
             String msg = String.format("failed to load %s into system", fileToExport.getAbsoluteFile());
             log.error(msg);
             processResult.setSuccess(false);
             processResult.setMessage(msg);
-            updateLoadInfo(msg);
+            updateTaskInfo(msg);
         }
         return processResult;
     }
@@ -127,7 +127,7 @@ public class ExcelExportTask extends Task<FileProcessResult> implements Progress
      * @param message the message to write
      */
     @Override
-    public void updateLoadInfo(String message) {
+    public void updateTaskInfo(String message) {
         updateMessage(message);
     }
 }

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.service;
+package com.teamgannon.trips.service.importservices;
 
 import lombok.Builder;
 import lombok.Data;

@@ -19,7 +19,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
-public class JSONExporter {
+public class JSONExporter implements ExportTaskControl {
 
     private final StatusUpdaterListener updaterListener;
 
@@ -84,4 +84,13 @@ public class JSONExporter {
         }
     }
 
+    @Override
+    public boolean cancelExport() {
+        return false;
+    }
+
+    @Override
+    public String whoAmI() {
+        return "JSON exporter";
+    }
 }

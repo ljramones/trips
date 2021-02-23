@@ -9,7 +9,9 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.ImportResult;
+import com.teamgannon.trips.service.export.ExportResult;
+import com.teamgannon.trips.service.export.ExportResults;
+import com.teamgannon.trips.service.importservices.ImportResult;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -34,16 +36,22 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplete, LoadUpdateListener {
+public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskComplete, ExportTaskComplete, LoadUpdateListener {
 
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final DataSetChangeListener dataSetChangeListener;
 
-    private final ProgressBar loadProgressBar = new ProgressBar();
-    private final Label progressText = new Label("    waiting for file selection");
-    private final Button cancelLoad = new Button("Cancel Loading");
+    private final HBox importLoadingPanel = new HBox();
+    private final ProgressBar importProgressBar = new ProgressBar();
+    private final Label importProgressText = new Label("    waiting for file selection");
+    private final Button cancelImport = new Button("Cancel Import");
+
+    private final HBox exportLoadingPanel = new HBox();
+    private final ProgressBar exportProgressBar = new ProgressBar();
+    private final Label exportProgressText = new Label("    waiting for file selection");
+    private final Button cancelExport = new Button("Cancel Export");
 
 
     /**
@@ -61,7 +69,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
     private final Button deleteButton = new Button("Delete");
     private final Button exportButton = new Button("Export");
 
-    private final HBox loadingPanel = new HBox();
 
     private @Nullable DataSetDescriptor selectedDataset;
 
@@ -93,26 +100,40 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
 
         updateTable();
 
-        createProgress(vBox);
+        createImportProgress(vBox);
+        createExportProgress(vBox);
 
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
-    private void createProgress(@NotNull VBox vBox) {
+    private void createImportProgress(@NotNull VBox vBox) {
         vBox.getChildren().add(new Separator());
-
-        loadingPanel.setAlignment(Pos.CENTER);
-        Label progressLabel = new Label("Data file loading progress:  ");
-        loadingPanel.getChildren().add(progressLabel);
-        loadingPanel.getChildren().add(loadProgressBar);
-        loadingPanel.getChildren().add(progressText);
-        loadingPanel.getChildren().add(cancelLoad);
-        cancelLoad.setOnAction(this::cancelTaskLoad);
-        loadingPanel.setVisible(false);
-        vBox.getChildren().add(loadingPanel);
+        importLoadingPanel.setAlignment(Pos.CENTER);
+        Label progressLabel = new Label("Data import loading progress:  ");
+        importLoadingPanel.getChildren().add(progressLabel);
+        importLoadingPanel.getChildren().add(importProgressBar);
+        importLoadingPanel.getChildren().add(importProgressText);
+        importLoadingPanel.getChildren().add(cancelImport);
+        cancelImport.setOnAction(this::cancelTaskImport);
+        importLoadingPanel.setVisible(false);
+        vBox.getChildren().add(importLoadingPanel);
     }
+
+    protected void createExportProgress(VBox vBox) {
+        vBox.getChildren().add(new Separator());
+        exportLoadingPanel.setAlignment(Pos.CENTER);
+        Label progressLabel = new Label("Data file export progress:  ");
+        exportLoadingPanel.getChildren().add(progressLabel);
+        exportLoadingPanel.getChildren().add(exportProgressBar);
+        exportLoadingPanel.getChildren().add(exportProgressText);
+        exportLoadingPanel.getChildren().add(cancelExport);
+        cancelExport.setOnAction(this::cancelTaskExport);
+        exportLoadingPanel.setVisible(false);
+        vBox.getChildren().add(exportLoadingPanel);
+    }
+
 
     /**
      * close the dialog from stage x button
@@ -245,7 +266,23 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
                 if (exportOptional.isPresent()) {
                     ExportOptions exportOptions = exportOptional.get();
                     if (exportOptions.isDoExport()) {
-                        dataExportService.exportDataset(exportOptions);
+
+                        exportProgressText.setText("  starting export of " + exportOptions.getDataset().getDataSetName() + " dataset");
+                        exportLoadingPanel.setVisible(true);
+                        exportProgressBar.setProgress(0);
+
+                        ExportResult success = dataExportService.exportDataset(
+                                exportOptions,
+                                statusUpdaterListener,
+                                this,
+                                exportProgressText,
+                                exportProgressBar,
+                                cancelExport);
+
+                        if (!success.isSuccess()) {
+                            showErrorAlert("export Dataset", success.getMessage());
+                        }
+
                     }
                 }
             } else {
@@ -266,22 +303,22 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
             // we test if the name is null
             // a null means it was cancelled and so we skip processing
             if (dataset.getName() == null) {
-                progressText.setText("  bad file, could not load");
+                importProgressText.setText("  bad file, could not load");
                 return;
             }
-            progressText.setText("  starting load of " + dataset.getName() + " file");
+            importProgressText.setText("  starting load of " + dataset.getName() + " file");
 
-            loadingPanel.setVisible(true);
-            loadProgressBar.setProgress(0);
+            importLoadingPanel.setVisible(true);
+            importProgressBar.setProgress(0);
 
             ImportResult success = dataImportService.processFile(
                     dataset,
                     statusUpdaterListener,
                     dataSetChangeListener,
                     this,
-                    progressText,
-                    loadProgressBar,
-                    cancelLoad,
+                    importProgressText,
+                    importProgressBar,
+                    cancelImport,
                     this);
 
             if (!success.isSuccess()) {
@@ -302,13 +339,27 @@ public class DataSetManagerDialog extends Dialog<Integer> implements TaskComplet
         dataImportService.complete(status, dataset, errorMessage);
     }
 
-    private void cancelTaskLoad(ActionEvent event) {
-        log.info("loading was cancelled");
+    private void cancelTaskImport(ActionEvent event) {
+        log.info("Import was cancelled");
         dataImportService.cancelCurrent();
+    }
+
+    private void cancelTaskExport(ActionEvent actionEvent) {
+        log.info("Export was cancelled");
+        dataExportService.cancelCurrent();
     }
 
     @Override
     public void update(DataSetDescriptor descriptor) {
+    }
+
+    @Override
+    public void complete(boolean status, DataSetDescriptor dataSetDescriptor, ExportResults fileProcessResult, String errorMessage) {
+        if (!status) {
+            showErrorAlert("Add Dataset",
+                    "failed to load dataset: " + dataSetDescriptor.getDataSetName() + ", because of " + errorMessage);
+        }
+        dataExportService.complete(status, dataSetDescriptor, errorMessage);
     }
 
 }
