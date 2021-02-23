@@ -3,7 +3,6 @@ package com.teamgannon.trips.dialogs;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
@@ -28,9 +27,7 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.util.Optional;
 
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
@@ -44,6 +41,8 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
     private final DataExportService dataExportService;
     private StatusUpdaterListener statusUpdaterListener;
     private Localization localization;
+
+    private File fileToStore;
 
 
     private final HBox exportLoadingPanel = new HBox();
@@ -114,7 +113,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         doExportButton.setOnAction(this::exportClicked);
         hBox.getChildren().add(doExportButton);
 
-        Button cancelButton = new Button("Cancel");
+        Button cancelButton = new Button("  Cancel");
         cancelButton.setOnAction(this::close);
         hBox.getChildren().add(cancelButton);
         vBox.getChildren().add(hBox);
@@ -143,7 +142,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         exportLoadingPanel.getChildren().add(exportProgressText);
         exportLoadingPanel.getChildren().add(cancelExport);
         cancelExport.setOnAction(this::cancelTaskExport);
-        exportLoadingPanel.setVisible(false);
+        exportLoadingPanel.setVisible(true);
         vBox.getChildren().add(exportLoadingPanel);
     }
 
@@ -163,6 +162,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         fileChooser.setTitle("Select Database to export as a CSV file");
         File file = fileChooser.showSaveDialog(null);
         if (file != null) {
+            fileToStore = file;
             fileNameTextField.setText(file.getAbsolutePath());
         } else {
             log.warn("file export cancelled");
@@ -179,53 +179,32 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
     }
 
     private void exportClicked(ActionEvent actionEvent) {
-        Optional<ButtonType> result = showConfirmationAlert(
-                "Main Pane",
-                "",
-                "You want to export this dataset");
-        if (result.isPresent()) {
-            ButtonType buttonType = result.get();
-            if (!buttonType.equals(ButtonType.OK)) {
-                return;
-            }
-        }
-        if (databaseManagementService.starsAvailableForQuery(searchContext)) {
+
+        if (!databaseManagementService.starsAvailableForQuery(searchContext)) {
             showErrorAlert(
                     "Astrographic data view error",
                     "No Astrographic data is available for export.");
             return;
         }
-        final FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select export file to import");
-        File filesFolder = new File(localization.getFileDirectory());
-        if (!filesFolder.exists()) {
-            boolean created = filesFolder.mkdirs();
-            if (!created) {
-                log.error("data files folder did not exist, but attempt to create directories failed");
-                showErrorAlert("Add Dataset ", "files folder did not exist, but attempt to create directories failed");
-                return;
-            }
-        }
-        fileChooser.setInitialDirectory(filesFolder);
-        File file = fileChooser.showSaveDialog(null);
-        if (file != null) {
+
+        if (fileToStore != null) {
             ExportOptions exportOptions = ExportOptions
                     .builder()
-                    .fileName(file.getAbsolutePath())
+                    .fileName(fileToStore.getAbsolutePath())
                     .exportFormat(ExportFileType.CSV)
                     .dataset(searchContext.getAstroSearchQuery().getDescriptor())
                     .doExport(true)
                     .build();
 
-            boolean success = dataExportService.exportDatasetOnQuery(exportOptions, searchContext,
+            ExportResult success = dataExportService.exportDatasetOnQuery(exportOptions, searchContext,
                     statusUpdaterListener, this, exportProgressText,
                     exportProgressBar, cancelExport);
-            if (!success) {
+            if (!success.isSuccess()) {
                 dataExportService.complete(false, exportOptions.getDataset(), "");
                 setResult(false);
             }
         } else {
-            log.warn("file save cancelled");
+            log.warn("selected file was null");
         }
     }
 
@@ -237,9 +216,10 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         } else {
             showErrorAlert("Add Dataset",
                     "failed to load dataset: " + dataSetDescriptor.getDataSetName() + ", because of " + errorMessage);
+            setResult(false);
         }
         dataExportService.complete(status, dataSetDescriptor, errorMessage);
-        setResult(false);
+
     }
 
 }
