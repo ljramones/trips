@@ -6,6 +6,9 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.stellarmodelling.StellarType;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -34,11 +37,6 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         this.em = em;
     }
 
-    @Override
-    public Stream<StarObject> getAllFromDataset(String dataset) {
-
-        return null;
-    }
 
     /**
      * find the list of AstrographicObject based on a search query
@@ -49,6 +47,48 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
     @Override
     public List<StarObject> findBySearchQuery(@NotNull AstroSearchQuery astroSearchQuery) {
 
+        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
+        int totalRows = typedQuery.getResultList().size();
+        log.info("number of records found={}", totalRows);
+
+        return typedQuery.getResultList();
+    }
+
+    /**
+     * get the star objects via a query as a series of pages
+     * @param astroSearchQuery the astro query
+     * @param page the page we want
+     * @return the page of objects
+     */
+    @Override
+    public Page<StarObject> findBySearchQueryPaged(AstroSearchQuery astroSearchQuery, Pageable page) {
+        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
+        int totalRows = typedQuery.getResultList().size();
+        log.info("number of records found={}", totalRows);
+
+        typedQuery.setFirstResult(page.getPageNumber() * page.getPageSize());
+        typedQuery.setMaxResults(page.getPageSize());
+        return new PageImpl<>(typedQuery.getResultList(), page, totalRows);
+    }
+
+
+    /**
+     * get star objects that match query as a Java 8 stream
+     *
+     * @param astroSearchQuery the astro query the query
+     * @return the stream of objects
+     * @TODO: 2021-02-24  Currently this fails on first read. No idea why. Don't use until I figure it out
+     */
+    public Stream<StarObject> findBySearchQueryStream(@NotNull AstroSearchQuery astroSearchQuery) {
+        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
+        int totalRows = typedQuery.getResultList().size();
+        log.info("number of records found={}", totalRows);
+
+        return typedQuery.getResultStream();
+    }
+
+
+    private TypedQuery<StarObject> getStarObjectTypedQuery(@NotNull AstroSearchQuery astroSearchQuery) {
         // create the criteria builder to start putting all this together
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
@@ -64,16 +104,8 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         query.where(predicates.toArray(new Predicate[0]));
         query.orderBy(cb.asc(astrographicObject.get("displayName")));
 
-        TypedQuery<StarObject> typedQuery = em.createQuery(query);
-
-        List<StarObject> starObjects = typedQuery.getResultList();
-
-        // spit out the the number of objects found
-        log.info("number of objects found = {}", starObjects.size());
-
-        return starObjects;
+        return em.createQuery(query);
     }
-
 
 
     private @NotNull List<Predicate> makeAstroQuery(@NotNull AstroSearchQuery astroSearchQuery,

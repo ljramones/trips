@@ -2,6 +2,10 @@ package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.search.AstroSearchQuery;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -11,8 +15,31 @@ import java.util.stream.Stream;
  */
 public interface StarObjectRepositoryCustom {
 
+    /**
+     * get a list of star objects
+     *
+     * @param astroSearchQuery the astro query
+     * @return the list of StarObjects
+     */
+    @Transactional
     List<StarObject> findBySearchQuery(AstroSearchQuery astroSearchQuery);
 
-    Stream<StarObject> getAllFromDataset(String dataset);
+    /**
+     * get a list of star objects
+     *
+     * @param astroSearchQuery the astro query
+     * @return the list of StarObjects
+     */
+    @Transactional(readOnly = true)
+    Page<StarObject> findBySearchQueryPaged(AstroSearchQuery astroSearchQuery, Pageable pageable);
+
+    /**
+     * same as above but by stream
+     *
+     * @param astroSearchQuery the astro query
+     * @return the stream of StarObjects
+     */
+    @Transactional(readOnly = true)
+    Stream<StarObject> findBySearchQueryStream(@NotNull AstroSearchQuery astroSearchQuery);
 
 }
