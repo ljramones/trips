@@ -28,3 +28,7 @@ TRIPS (Terran Interstellar Plotter System) is intended to be a stellar cartograp
 ## Contributing
 * [Helping with programming](https://github.com/ljramones/trips/wiki/Helping-With-Programming) 
 * [Helping with documentation](https://github.com/ljramones/trips/wiki/Documentation-Process)
+
+
+Normal people believe that if it ain't broke, don't fix it.
+Engineers believe that if it ain't broke, it doesn't have enough features yet.
