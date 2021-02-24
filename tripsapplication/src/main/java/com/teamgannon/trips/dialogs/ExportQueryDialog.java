@@ -47,7 +47,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
 
     private final HBox exportLoadingPanel = new HBox();
     private final ProgressBar exportProgressBar = new ProgressBar();
-    private final Label exportProgressText = new Label("    waiting for file selection");
+    private final Label exportProgressText = new Label("    waiting for file selection ");
     private final Button cancelExport = new Button("Cancel Export");
 
 
