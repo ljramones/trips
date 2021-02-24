@@ -38,7 +38,8 @@ public class RouteFinderInView {
 
     /**
      * start the location of routes
-     * @param currentDataSet
+     *
+     * @param currentDataSet the current dataset
      */
     public void startRouteLocation(DataSetDescriptor currentDataSet) {
         RouteFinderDialogInView routeFinderDialogInView = new RouteFinderDialogInView(interstellarSpacePane.getCurrentStarsInView());
@@ -166,8 +167,8 @@ public class RouteFinderInView {
 
     private List<StarDisplayRecord> prune(List<StarDisplayRecord> starsInView, RouteFindingOptions routeFindingOptions) {
         List<StarDisplayRecord> prunedStars = new ArrayList<>();
-        for (StarDisplayRecord starDisplayRecord: starsInView) {
-            if (routeFindingOptions.getStarExclusions().contains(starDisplayRecord.getSpectralClass().substring(0,1))) {
+        for (StarDisplayRecord starDisplayRecord : starsInView) {
+            if (routeFindingOptions.getStarExclusions().contains(starDisplayRecord.getSpectralClass().substring(0, 1))) {
                 continue;
             }
             if (routeFindingOptions.getPolityExclusions().contains(starDisplayRecord.getPolity())) {
@@ -183,7 +184,7 @@ public class RouteFinderInView {
      * plot the routes found
      *
      * @param currentDataSet the data descriptor
-     * @param routeList the routes to plot
+     * @param routeList      the routes to plot
      */
     private void plot(DataSetDescriptor currentDataSet, List<RoutingMetric> routeList) {
         interstellarSpacePane.plotRouteDescriptors(currentDataSet, routeList);

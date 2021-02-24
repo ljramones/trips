@@ -9,6 +9,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.Normalizer;
@@ -25,6 +26,7 @@ import java.util.stream.Stream;
  * @param <T>
  * @author wsiqueir
  */
+@Slf4j
 public class ComboBoxAutoComplete<T> {
 
     String filter = "";
@@ -46,29 +48,44 @@ public class ComboBoxAutoComplete<T> {
         ObservableList<T> filteredList = FXCollections.observableArrayList();
         KeyCode code = e.getCode();
 
-        if (code.isLetterKey()) {
-            filter += e.getText();
+        if (code.isDigitKey()) {
+            String txt = e.getText();
+            filter += txt;
         }
+
+        if (code.isLetterKey()) {
+            String txt = e.getText();
+            filter += txt;
+        }
+
+        if (code.isKeypadKey()) {
+            String txt = e.getText();
+            filter += txt;
+        }
+
         if (code == KeyCode.BACK_SPACE && filter.length() > 0) {
             filter = filter.substring(0, filter.length() - 1);
             cmb.getItems().setAll(originalItems);
         }
+
         if (code == KeyCode.ESCAPE) {
             filter = "";
         }
+
         if (filter.length() == 0) {
             filteredList = originalItems;
             cmb.getTooltip().hide();
         } else {
-            Stream<T> itens = cmb.getItems().stream();
-            String txtUsr = unaccent(filter.toLowerCase());
-            itens.filter(el -> unaccent(el.toString().toLowerCase()).contains(txtUsr)).forEach(filteredList::add);
+            Stream<T> items = cmb.getItems().stream();
+            String txtUsr = unAccent(filter.toLowerCase());
+            items.filter(el -> unAccent(el.toString().toLowerCase()).contains(txtUsr)).forEach(filteredList::add);
             cmb.getTooltip().setText(txtUsr);
             double posX = stage.getX() + cmb.getBoundsInParent().getMinX();
             double posY = stage.getY() + cmb.getBoundsInParent().getMinY();
             cmb.getTooltip().show(stage, posX, posY);
             cmb.show();
         }
+        log.info(filteredList.toString());
         cmb.getItems().setAll(filteredList);
     }
 
@@ -80,7 +97,7 @@ public class ComboBoxAutoComplete<T> {
         cmb.getSelectionModel().select(s);
     }
 
-    private String unaccent(@NotNull String s) {
+    private String unAccent(@NotNull String s) {
         String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
         return pattern.matcher(temp).replaceAll("");
