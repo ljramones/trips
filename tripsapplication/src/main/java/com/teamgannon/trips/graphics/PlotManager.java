@@ -23,6 +23,7 @@ import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -78,8 +79,10 @@ public class PlotManager {
     /**
      * show a loaded dataset in the plot menu
      */
-    public void showPlot() {
-        List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
+    public void showPlot(SearchContext searchContext) {
+
+        List<DataSetDescriptor> datasets = new ArrayList<>(searchContext.getDatasetDescriptors());
+
         if (datasets.size() == 0) {
             showErrorAlert("Plot Stars", "No datasets loaded, please load one");
             return;
@@ -87,7 +90,7 @@ public class PlotManager {
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
-            plotStars(dataSetDescriptor);
+            plotStars(dataSetDescriptor, searchContext.getAstroSearchQuery());
             routingPanelListener.updateRoutingPanel(dataSetDescriptor);
         } else {
 
@@ -111,7 +114,7 @@ public class PlotManager {
                 // update the routing table in the side panel
                 routingPanelListener.updateRoutingPanel(dataSetDescriptor);
 
-                plotStars(dataSetDescriptor);
+                plotStars(dataSetDescriptor, searchContext.getAstroSearchQuery());
                 dataSetChangeListener.setContextDataSet(dataSetDescriptor);
             }
         }
@@ -133,17 +136,15 @@ public class PlotManager {
      *
      * @param dataSetDescriptor the data descriptor
      */
-    public void plotStars(@NotNull DataSetDescriptor dataSetDescriptor) {
+    public void plotStars(@NotNull DataSetDescriptor dataSetDescriptor, AstroSearchQuery astroSearchQuery) {
 
+        // now query the data and plot
+        List<StarObject> starObjects = databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
 
-        // now query the data and plit
-        List<StarObject> starObjects = databaseManagementService.getFromDatasetWithinLimit(
-                dataSetDescriptor,
-                searchContext.getAstroSearchQuery().getUpperDistanceLimit());
         log.info("DB Query returns {} stars", starObjects.size());
 
         if (!starObjects.isEmpty()) {
-            AstroSearchQuery astroSearchQuery = searchContext.getAstroSearchQuery();
+
             astroSearchQuery.zeroCenter();
             drawAstrographicData(
                     tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),

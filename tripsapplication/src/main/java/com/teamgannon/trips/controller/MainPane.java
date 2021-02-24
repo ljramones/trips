@@ -797,7 +797,7 @@ public class MainPane implements
 
 
     public void plotStars(ActionEvent actionEvent) {
-        plotManager.showPlot();
+        plotManager.showPlot(searchContext);
     }
 
     public void viewEditStarData(ActionEvent actionEvent) {
