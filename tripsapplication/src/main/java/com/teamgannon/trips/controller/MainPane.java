@@ -1270,27 +1270,29 @@ public class MainPane implements
 
         routingPanel.setContext(descriptor);
 
-        // do a search and cause the plot to show it
-        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
+        if (showPlot || showTable) {
+            // do a search and cause the plot to show it
+            List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
-        if (!starObjects.isEmpty()) {
-            if (showPlot) {
-                plotManager.drawAstrographicData(descriptor,
-                        starObjects,
-                        searchQuery.getCenterCoordinates(),
-                        tripsContext.getAppViewPreferences().getColorPallete(),
-                        tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                        tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                );
-            }
-            if (showTable) {
-                showList(starObjects);
-            }
-            updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
-            setContextDataSet(descriptor);
+            if (!starObjects.isEmpty()) {
+                if (showPlot) {
+                    plotManager.drawAstrographicData(descriptor,
+                            starObjects,
+                            searchQuery.getCenterCoordinates(),
+                            tripsContext.getAppViewPreferences().getColorPallete(),
+                            tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                            tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                    );
+                }
+                if (showTable) {
+                    showList(starObjects);
+                }
+                updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
+                setContextDataSet(descriptor);
 
-        } else {
-            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
+            } else {
+                showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
+            }
         }
     }
 

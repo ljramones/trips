@@ -142,7 +142,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         exportLoadingPanel.getChildren().add(exportProgressText);
         exportLoadingPanel.getChildren().add(cancelExport);
         cancelExport.setOnAction(this::cancelTaskExport);
-        exportLoadingPanel.setVisible(true);
+        exportLoadingPanel.setVisible(false);
         vBox.getChildren().add(exportLoadingPanel);
     }
 
@@ -180,13 +180,6 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
 
     private void exportClicked(ActionEvent actionEvent) {
 
-        if (!databaseManagementService.starsAvailableForQuery(searchContext)) {
-            showErrorAlert(
-                    "Astrographic data view error",
-                    "No Astrographic data is available for export.");
-            return;
-        }
-
         if (fileToStore != null) {
             ExportOptions exportOptions = ExportOptions
                     .builder()
@@ -196,10 +189,14 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
                     .doExport(true)
                     .build();
 
+            exportLoadingPanel.setVisible(true);
+            exportProgressText.setText("Executing query for stars");
+
             ExportResult success = dataExportService.exportDatasetOnQuery(exportOptions, searchContext,
                     statusUpdaterListener, this, exportProgressText,
                     exportProgressBar, cancelExport);
             if (!success.isSuccess()) {
+                exportProgressText.setText("Failed to export data");
                 dataExportService.complete(false, exportOptions.getDataset(), "");
                 setResult(false);
             }
@@ -219,7 +216,6 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
             setResult(false);
         }
         dataExportService.complete(status, dataSetDescriptor, errorMessage);
-
     }
 
 }

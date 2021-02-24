@@ -1,14 +1,15 @@
 package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.StarObject;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * used to access the data
@@ -25,7 +26,7 @@ public interface StarObjectRepository
      * @param page                 the page to position by
      * @return the stars
      */
-     Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
+    Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
 
     /**
      * this is the distance from Sol
@@ -34,7 +35,7 @@ public interface StarObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-     Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
+    Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
@@ -43,6 +44,15 @@ public interface StarObjectRepository
      * @return the list of objects
      */
     Page<StarObject> findByDataSetName(String dataSetName, Pageable page);
+
+    /**
+     * get by dataset name
+     *
+     * @param dataset the data set name
+     * @return a stream of star objects
+     */
+    @Transactional
+    Stream<StarObject> findByDataSetName(String dataset);
 
 
     /**
@@ -61,7 +71,7 @@ public interface StarObjectRepository
      * @param dataSetName the name
      * @return the list of objects
      */
-     List<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName);
+    List<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName);
 
     /**
      * delete all stars stored with a specific dataset name
@@ -77,9 +87,31 @@ public interface StarObjectRepository
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-     List<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
+    List<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
 
-     List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+
+    List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+            String dataSetName,
+            double xg,
+            double xl,
+            double yg,
+            double yl,
+            double zg,
+            double zl
+    );
+
+    Page<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+            String dataSetName,
+            double xg,
+            double xl,
+            double yg,
+            double yl,
+            double zg,
+            double zl,
+            Pageable pageable
+    );
+
+    int countByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
             double xg,
             double xl,

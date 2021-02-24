@@ -20,19 +20,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 
 /**
- * Used to manage larger
+ * Used to manage all the database interactions
  * <p>
  * Created by larrymitchell on 2017-01-20.
  */
@@ -144,6 +146,35 @@ public class DatabaseManagementService {
         return !starObjects.isEmpty();
     }
 
+    public int countForQuery(@NotNull SearchContext searchContext) {
+        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
+
+        return starObjectRepository.countByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+                searchQuery.getDescriptor().getDataSetName(),
+                searchQuery.getXMinus(),
+                searchQuery.getXPlus(),
+                searchQuery.getYMinus(),
+                searchQuery.getYPlus(),
+                searchQuery.getZMinus(),
+                searchQuery.getZPlus()
+        );
+    }
+
+    public Page<StarObject> getStarsInVolumeOfSpace(@NotNull SearchContext searchContext, int maxNumber) {
+        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
+
+        return starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+                searchQuery.getDescriptor().getDataSetName(),
+                searchQuery.getXMinus(),
+                searchQuery.getXPlus(),
+                searchQuery.getYMinus(),
+                searchQuery.getYPlus(),
+                searchQuery.getZMinus(),
+                searchQuery.getZPlus(),
+                PageRequest.of(0, maxNumber)
+        );
+    }
+
     /**
      * get a set of astrographic objects based on a query
      *
@@ -172,6 +203,16 @@ public class DatabaseManagementService {
         starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
         return starObjects;
+    }
+
+    @Transactional(readOnly = true)
+    public Stream<StarObject> getStarStreamOnQuery(AstroSearchQuery searchQuery) {
+        return starObjectRepository.findBySearchQueryStream(searchQuery);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StarObject> getStarPaged(AstroSearchQuery searchQuery, Pageable pageable) {
+        return starObjectRepository.findBySearchQueryPaged(searchQuery, pageable);
     }
 
     /**

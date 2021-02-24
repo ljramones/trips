@@ -10,18 +10,23 @@ import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
 @Slf4j
 public class CSVQueryDataExportTask extends Task<ExportResults> implements ProgressUpdater {
 
+    private final static int PAGE_SIZE = 1000;
+
     private final ExportOptions export;
     private final SearchContext searchContext;
     private final DatabaseManagementService databaseManagementService;
+
+    private long lineCount = 0;
 
     public CSVQueryDataExportTask(ExportOptions export, SearchContext searchContext, DatabaseManagementService databaseManagementService) {
         this.export = export;
@@ -42,40 +47,58 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
         return result;
     }
 
-    private ExportResults processCSVFile(ExportOptions export) {
+    public ExportResults processCSVFile(ExportOptions export) {
 
         ExportResults exportResults = ExportResults.builder().success(false).build();
+
         try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
+            final Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
 
             String headers = getHeaders();
             writer.write(headers);
-
-            List<StarObject> starObjects = databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
-
-            int i = 0;
-            for (StarObject starObject : starObjects) {
-                String csvRecord = convertToCSV(starObject);
-                writer.write(csvRecord);
-                i++;
-                if ((i % 1001) == 0) {
-                    updateTaskInfo("1000 records stored, " + i + " so far ");
+            boolean done = false;
+            int pageNumber = 0;
+            do {
+                Page<StarObject> starObjectList = databaseManagementService.getStarPaged(searchContext.getAstroSearchQuery(), PageRequest.of(pageNumber++, PAGE_SIZE));
+                long count = starObjectList.getContent().size();
+                if (count > 0) {
+                    starObjectList.forEach(starObject -> {
+                        try {
+                            String csvRecord = convertToCSV(starObject);
+                            writer.write(csvRecord);
+                            checkCounter();
+                        } catch (Exception e) {
+                            log.error("bad record:{}", starObject.toString());
+                        }
+                    });
+                } else {
+                    done = true;
                 }
-            }
+            } while (!done);
+
+            log.info("data written, closing file");
 
             writer.flush();
             writer.close();
-            String msg = export.getDataset().getDataSetName()
-                    + " was exported to " + export.getFileName() + ".trips.csv";
+            String msg = export.getDataset().getDataSetName() + " was exported to " + export.getFileName() + ".trips.csv";
 
             exportResults.setSuccess(true);
             exportResults.setMessage(msg);
+
         } catch (Exception e) {
             log.error("caught error opening the file:{}", e.getMessage());
-            exportResults.setMessage(export.getDataset() +
-                    "failed to export:" + e.getMessage());
+            exportResults.setMessage(export.getDataset() + "failed to export:" + e.getMessage());
         }
+
         return exportResults;
+    }
+
+    private void checkCounter() {
+        lineCount++;
+        if ((lineCount % 1001) == 0) {
+            log.info(lineCount + " records so far ");
+            updateTaskInfo(lineCount + " records so far ");
+        }
     }
 
 
