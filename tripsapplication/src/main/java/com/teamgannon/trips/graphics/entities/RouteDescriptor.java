@@ -73,10 +73,16 @@ public class RouteDescriptor {
     @Builder.Default
     private @NotNull List<Double> lengthList = new ArrayList<>();
 
+    /**
+     * only during plotting, leave empty otherwise
+     */
     @Transient
     @Builder.Default
     private @NotNull List<Node> lineSegmentList = new ArrayList<>();
 
+    /**
+     * only during plotting, leave empty otherwise
+     */
     @Transient
     @Builder.Default
     private @NotNull List<Label> labelList = new ArrayList<>();
@@ -99,6 +105,7 @@ public class RouteDescriptor {
 
     /**
      * the list of line segments joined by 3D points
+     * only during plotting, leave empty otherwise
      */
     @Builder.Default
     private List<Point3D> lineSegments = new ArrayList<>();

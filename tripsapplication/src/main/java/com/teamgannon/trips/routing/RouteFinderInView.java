@@ -122,6 +122,7 @@ public class RouteFinderInView {
                                     origin, destination, Integer.toString(i++),
                                     color, routeFindingOptions.getLineWidth(), path);
 
+                            route.setDescriptor(currentDataSet);
                             routeList.add(route);
 
                             RoutingMetric routingMetric = RoutingMetric

@@ -7,10 +7,7 @@ import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 public class RouteBuilderHelper {
@@ -52,7 +49,16 @@ public class RouteBuilderHelper {
         route.setColor(color);
         route.setMaxLength(starList.length - 1);
         route.setStartStar(starList[0]);
+        StarDisplayRecord lastStar = starDisplayRecordMap.get(starList[starList.length - 1].trim());
+        route.setLastStar(lastStar);
         route.setLineWidth(lineWidth);
+
+        Arrays.stream(starList).forEach(name -> {
+            route.getNameList().add(name.trim());
+            StarDisplayRecord starDisplayRecord = starDisplayRecordMap.get(name.trim());
+            route.getRouteList().add(starDisplayRecord.getRecordId());
+        });
+
 
         // set segments
 
