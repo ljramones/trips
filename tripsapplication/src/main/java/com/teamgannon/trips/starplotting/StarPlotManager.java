@@ -35,14 +35,19 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Translate;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
 public class StarPlotManager {
@@ -279,7 +284,6 @@ public class StarPlotManager {
 
         // we can only do this if there are plot element on screen
         if (tripsContext.getCurrentPlot().isPlotActive()) {
-//            redrawPlot();
             labelDisplayGroup.setVisible(labelSetting);
         }
     }
@@ -290,7 +294,6 @@ public class StarPlotManager {
 
         // we can only do this if there are plot element on screen
         if (tripsContext.getCurrentPlot().isPlotActive()) {
-//            redrawPlot();
             politiesDisplayGroup.setVisible(polities);
         }
     }
@@ -309,8 +312,10 @@ public class StarPlotManager {
                         tripsContext.getCurrentPlot().getCivilizationDisplayPreferences()
                 )
         );
-        routeManager.plotRoutes(tripsContext.getCurrentPlot().getDataSetDescriptor().getRoutes());
+
         // re-plot routes
+        routeManager.plotRoutes(tripsContext.getCurrentPlot().getDataSetDescriptor().getRoutes());
+
     }
 
     private void plotStar(@NotNull StarDisplayRecord record,
@@ -636,7 +641,57 @@ public class StarPlotManager {
         MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
         cm.getItems().add(jumpSystemMenuItem);
 
+        MenuItem generateSolarSystemMenuItem = createGenerateSolarSystemItem(star);
+        cm.getItems().add(generateSolarSystemMenuItem);
+
         return cm;
+    }
+
+    private MenuItem createGenerateSolarSystemItem(Node star) {
+        MenuItem menuItem = new MenuItem("Generate Solar System");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            generateSolarSystem(starDescriptor);
+
+        });
+        return menuItem;
+    }
+
+    private void generateSolarSystem(StarDisplayRecord starDescriptor) {
+        StarObject starObject = databaseListener.getStar(starDescriptor.getRecordId());
+        SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
+        Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
+        if (solarSystemGenOptional.isPresent()) {
+            SolarSystemGenOptions solarSystemGenOptions = solarSystemGenOptional.get();
+            SolarSystemReport report = new SolarSystemReport(starObject, solarSystemGenOptions);
+            report.generateReport();
+            SolarSystemReportDialog reportDialog = new SolarSystemReportDialog(report);
+            Optional<SolarSystemReport> reportOptional = reportDialog.showAndWait();
+            if (reportOptional.isPresent()) {
+                SolarSystemReport saveReport = reportOptional.get();
+                if (saveReport.isSaveSelected()) {
+                    // save file
+                    final FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Save the generated solar system");
+                    File file = fileChooser.showSaveDialog(null);
+                    if (file != null) {
+                        saveTextToFile(saveReport.getGeneratedReport(), file);
+                    } else {
+                        log.warn("solar system generation save cancelled");
+                        showInfoMessage("Solar System Generation", "Save cancelled");
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void saveTextToFile(String generatedReport, File file) {
+        try (PrintWriter out = new PrintWriter(file)) {
+            out.println(generatedReport);
+        } catch (FileNotFoundException e) {
+            log.error("Can't create file {} because of {}", file.getAbsolutePath(), e.getMessage());
+        }
     }
 
     private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {

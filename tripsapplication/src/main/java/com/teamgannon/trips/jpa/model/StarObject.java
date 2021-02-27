@@ -1,6 +1,11 @@
 package com.teamgannon.trips.jpa.model;
 
+import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
+import com.teamgannon.trips.stellarmodelling.StarCreator;
+import com.teamgannon.trips.stellarmodelling.StarModel;
+import com.teamgannon.trips.stellarmodelling.StarUtils;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -18,6 +23,7 @@ import java.util.UUID;
  * <p>
  * Created by larrymitchell on 2017-03-28.
  */
+@Slf4j
 @Data
 @Entity(name = "STAR_OBJ")
 public class StarObject implements Serializable {
@@ -474,6 +480,41 @@ public class StarObject implements Serializable {
         x = coordinates[0];
         y = coordinates[1];
         z = coordinates[2];
+    }
+
+    public SimStar toSimStar() {
+
+        // create an idealized star model based on spectral class
+        StarCreator starCreator = new StarCreator();
+        StarModel starModel = starCreator.parseSpectral(spectralClass);
+
+        // generate  a sim star form the idealized star
+        SimStar simStar = starModel.toSimStar();
+
+        if (mass != 0) {
+            double sMass = StarUtils.relativeMass(mass);
+            simStar.setMass(sMass);
+        }
+
+        if (radius != 0) {
+            double sRadius = StarUtils.relativeRadius(radius);
+            simStar.setRadius(sRadius);
+        }
+
+        if (!luminosity.isEmpty()) {
+            try {
+                double dLuminosity = Double.parseDouble(luminosity);
+                simStar.setLuminosity(dLuminosity);
+            } catch (NumberFormatException nfe) {
+                log.error("luminosity value is bad:<{}>", luminosity);
+            }
+        }
+
+        if (temperature!= 0) {
+            simStar.setTemperature(temperature);
+        }
+
+        return simStar;
     }
 
 }

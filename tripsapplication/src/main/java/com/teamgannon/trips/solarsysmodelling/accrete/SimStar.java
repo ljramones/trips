@@ -49,6 +49,51 @@ public class SimStar extends SystemObject {
         }
     }
 
+    /**
+     * set the mass of the sim star
+     *
+     * @param mass the relative mass to the sun
+     */
+    public void setMass(double mass) {
+        this.mass = mass;
+    }
+
+    /**
+     * set the radius of the star
+     *
+     * @param radius the relative radius to the sun
+     */
+    public void setRadius(double radius) {
+        this.radius = radius;
+    }
+
+    /**
+     * set the luminosity
+     *
+     * @param luminosity the relative luminosity to the sun
+     */
+    public void setLuminosity(double luminosity) {
+        this.luminosity = luminosity;
+    }
+
+    /**
+     * set the temperature
+     *
+     * @param temperature the relative temperature to the sun
+     */
+    public void setTemperature(double temperature) {
+        this.temperature = temperature;
+    }
+
+    /**
+     * set the absolute magnitude
+     * @param absoluteMagnitude the relative ( :) ) absolute magnitude to the sun
+     */
+    public void setAbsoluteMagnitude(double absoluteMagnitude) {
+        this.absoluteMagnitude = absoluteMagnitude;
+    }
+
+
     public double stellarDustLimit() {
         return 200.0 * Math.pow(this.mass, 1.0 / 3.0);
     }
@@ -88,6 +133,7 @@ public class SimStar extends SystemObject {
 
         return s;
     }
+
 
     public String toString() {
         return stellarType + " (" + String.format("%1$,.2f", mass) + "sm)";

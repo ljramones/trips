@@ -1,6 +1,9 @@
 package com.teamgannon.trips.solarsysmodelling.accrete;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.stellarmodelling.StarCreator;
+import com.teamgannon.trips.stellarmodelling.StarModel;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,8 +43,8 @@ public class StarSystem {
         this.doMoons = doMoons;
         this.verbose = verbose;
         this.extraVerbose = extraVerbose;
-        // centralBody = Utils.instance().randomStar();
-        centralBody = Utils.instance().randomKStar();
+         centralBody = Utils.instance().randomStar();
+//        centralBody = Utils.instance().randomKStar();
         centralBody.setAge();
         distributePlanetaryMasses();
         checkPlanets();
@@ -49,12 +52,12 @@ public class StarSystem {
         setEnvironments();
     }
 
-    public StarSystem(StarDisplayRecord starDisplayRecord, boolean doMoons, boolean verbose, boolean extraVerbose) {
+    public StarSystem(StarObject starObject, boolean doMoons, boolean verbose, boolean extraVerbose) {
         this.doMoons = doMoons;
         this.verbose = verbose;
         this.extraVerbose = extraVerbose;
         // centralBody = Utils.instance().randomStar();
-        centralBody = starDisplayRecord.toSimStar();
+        centralBody = starObject.toSimStar();
         centralBody.setAge();
         distributePlanetaryMasses();
         checkPlanets();

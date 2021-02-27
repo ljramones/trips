@@ -84,7 +84,7 @@ class Utils {
             BufferedReader input = loadFile(filename);
             while ((line = Objects.requireNonNull(input).readLine()) != null) {
                 split = line.split(",");
-                s = new SimStar(Double.parseDouble(split[1]), Double.parseDouble(split[2]), Double.parseDouble(split[3]), Double.parseDouble(split[4]), Double.valueOf(split[6]));
+                s = new SimStar(Double.parseDouble(split[1]), Double.parseDouble(split[2]), Double.parseDouble(split[3]), Double.parseDouble(split[4]), Double.parseDouble(split[6]));
                 s.stellarType = split[0];
                 s.red = Integer.parseInt(split[9]);
                 s.green = Integer.parseInt(split[10]);
