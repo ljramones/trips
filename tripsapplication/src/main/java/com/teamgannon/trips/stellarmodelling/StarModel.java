@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 @Data
 public class StarModel {
 
-
     private StellarFactory factory = StellarFactory.getFactory();
 
     private StellarType stellarClass;
@@ -51,7 +50,7 @@ public class StarModel {
 
 
     public void setStarClass(String spectralClass) {
-        Pattern spectralSplit = Pattern.compile("[A-Z]+");
+        Pattern spectralSplit = Pattern.compile("^[A-Z]+");
         String[] split = spectralSplit.split(spectralClass);
         String sClass = spectralClass.substring(0, spectralClass.length() - split[1].length());
         StellarClassification stellarClassification = factory.getStellarClass(sClass);
@@ -74,12 +73,24 @@ public class StarModel {
         }
     }
 
+    public void setMassInFullUnits(double mass) {
+
+    }
+
     public double calcMean(double lower, double upper, double percentage) {
         return (upper - lower) * percentage + lower;
     }
 
     public SimStar toSimStar() {
         return new SimStar(this.mass, this.luminosity, this.radius, this.temperature, absoluteMagnitude);
+    }
+
+
+    public static void main(String[] args) {
+        //G8IV
+        StarModel starModel = new StarModel();
+        starModel.setStarClass("G8IV");
+        log.info(starModel.toString());
     }
 
 }

@@ -16,7 +16,6 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private final ApplicationPreferences preferences;
     private final PreferencesUpdaterListener updater;
     private final TripsContext tripsContext;
-    private TabPane tabPane;
     private ButtonType buttonTypeOk;
 
 
@@ -39,7 +38,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     }
 
     private void createTabPanes(@NotNull VBox vBox) {
-        tabPane = new TabPane();
+        TabPane tabPane = new TabPane();
         tabPane.setStyle("-fx-background-color: white");
 
         Tab displayTab = new Tab("Graph");

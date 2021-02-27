@@ -26,7 +26,7 @@ public class StarCreator {
 
     public static void main(String[] arg) {
         StarCreator starCreator = new StarCreator();
-        StarModel starModel = starCreator.parseSpectral("G2V");
+        StarModel starModel = starCreator.parseSpectral("G8IV");
         log.info(starModel.toString());
     }
 

@@ -3,8 +3,6 @@ package com.teamgannon.trips.graphics.entities;
 import com.teamgannon.trips.config.application.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
-import com.teamgannon.trips.stellarmodelling.StarUtils;
 import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.geometry.Point3D;
 import javafx.scene.paint.Color;
@@ -229,23 +227,4 @@ public class StarDisplayRecord {
                 & (Math.abs(coordinates.getZ()) <= 1);
     }
 
-    public SimStar toSimStar() {
-
-        double sLuminosity;
-        double mass = this.mass;
-        double radius = getRadius();
-        double temperature = this.temperature;
-        if (luminosity != 0) {
-            sLuminosity = this.luminosity;
-        } else {
-            sLuminosity = StarUtils.stellarLuminosity(radius, temperature);
-        }
-        double sMagnitude = 0;
-        if (magnitude != 0) {
-            sMagnitude = this.magnitude;
-        } else {
-            sMagnitude = StarUtils.absoluteMagnitude(sLuminosity);
-        }
-        return new SimStar(mass, sLuminosity, radius, temperature, sMagnitude);
-    }
 }
