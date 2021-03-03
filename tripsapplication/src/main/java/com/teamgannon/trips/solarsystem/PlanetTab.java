@@ -139,39 +139,39 @@ public class PlanetTab extends Tab {
         pane.setContent(gridPane);
 
         gridPane.add(new Label("Axial tilt"), 0, 0);
-        axialTiltLabel.setText(String.format("%.2g", planet.axialTilt()));
+        axialTiltLabel.setText(checkValue(planet.axialTilt()));
         gridPane.add(axialTiltLabel, 1, 0);
 
         gridPane.add(new Label("Radius"), 0, 1);
-        radiusLabel.setText(String.format("%.2g", planet.getRadius()));
+        radiusLabel.setText(checkValue(planet.getRadius()));
         gridPane.add(radiusLabel, 1, 1);
 
         gridPane.add(new Label("Core radius"), 0, 2);
-        coreRadiusLabel.setText(String.format("%.2g", planet.getCoreRadius()));
+        coreRadiusLabel.setText(checkValue(planet.getCoreRadius()));
         gridPane.add(coreRadiusLabel, 1, 2);
 
         gridPane.add(new Label("Orbital period"), 0, 3);
-        orbitalPeriodLabel.setText(String.format("%.2g", planet.getOrbitalPeriod()));
+        orbitalPeriodLabel.setText(checkValue(planet.getOrbitalPeriod()));
         gridPane.add(orbitalPeriodLabel, 1, 3);
 
         gridPane.add(new Label("RMS velocity"), 0, 4);
-        rmsVelocityLabel.setText(String.format("%.2g", planet.axialTilt()));
+        rmsVelocityLabel.setText(checkValue(planet.axialTilt()));
         gridPane.add(rmsVelocityLabel, 1, 4);
 
         gridPane.add(new Label("Escape velocity"), 0, 5);
-        escapeVelocityLabel.setText(String.format("%.2g", planet.getEscapeVelocity()));
+        escapeVelocityLabel.setText(checkValue(planet.getEscapeVelocity()));
         gridPane.add(escapeVelocityLabel, 1, 5);
 
         gridPane.add(new Label("Day length"), 0, 6);
-        dayLengthLabel.setText(String.format("%.2g", planet.getDayLength()));
+        dayLengthLabel.setText(checkValue(planet.getDayLength()));
         gridPane.add(dayLengthLabel, 1, 6);
 
         gridPane.add(new Label("Surface acceleration"), 0, 7);
-        surfaceAccelLabel.setText(String.format("%.2g", planet.getSurfaceAcceleration()));
+        surfaceAccelLabel.setText(checkValue(planet.getSurfaceAcceleration()));
         gridPane.add(surfaceAccelLabel, 1, 7);
 
         gridPane.add(new Label("Surface gravity"), 0, 8);
-        surfaceGravityLabel.setText(String.format("%.2g", planet.getSurfaceGravity()));
+        surfaceGravityLabel.setText(checkValue(planet.getSurfaceGravity()));
         gridPane.add(surfaceGravityLabel, 1, 8);
 
         gridPane.add(new Label("Orbital zone"), 0, 9);
@@ -191,43 +191,43 @@ public class PlanetTab extends Tab {
         pane.setContent(gridPane);
 
         gridPane.add(new Label("Exospheric temperature"), 0, 0);
-        exosphericTempLabel.setText(String.format("%.2g", planet.getExosphericTemperature()));
+        exosphericTempLabel.setText(checkValue(planet.getExosphericTemperature()));
         gridPane.add(exosphericTempLabel, 1, 0);
 
         gridPane.add(new Label("Estimated temperature"), 0, 1);
-        estimatedTempLabel.setText(String.format("%.2g", planet.getEstimatedTemperature()));
+        estimatedTempLabel.setText(checkValue(planet.getEstimatedTemperature()));
         gridPane.add(estimatedTempLabel, 1, 1);
 
         gridPane.add(new Label("Est. Terrestial temperature"), 0, 2);
-        estTerrestialTempLabel.setText(String.format("%.2g", planet.getExosphericTemperature()));
+        estTerrestialTempLabel.setText(checkValue(planet.getExosphericTemperature()));
         gridPane.add(estTerrestialTempLabel, 1, 2);
 
         gridPane.add(new Label("Surface temperature"), 0, 3);
-        surfaceTempLabel.setText(String.format("%.2g", planet.getSurfaceTemperature()));
+        surfaceTempLabel.setText(checkValue(planet.getSurfaceTemperature()));
         gridPane.add(surfaceTempLabel, 1, 3);
 
         gridPane.add(new Label("Low temperature"), 0, 4);
-        lowTempLabel.setText(String.format("%.2g", planet.getLowTemperature()));
+        lowTempLabel.setText(checkValue(planet.getLowTemperature()));
         gridPane.add(lowTempLabel, 1, 4);
 
         gridPane.add(new Label("High temperature"), 0, 5);
-        highTempLabel.setText(String.format("%.2g", planet.getHighTemperature()));
+        highTempLabel.setText(checkValue(planet.getHighTemperature()));
         gridPane.add(highTempLabel, 1, 5);
 
         gridPane.add(new Label("Min temperature"), 0, 6);
-        minTempLabel.setText(String.format("%.2g", planet.getMinTemperature()));
+        minTempLabel.setText(checkValue(planet.getMinTemperature()));
         gridPane.add(minTempLabel, 1, 6);
 
         gridPane.add(new Label("Max temperature"), 0, 7);
-        maxTempLabel.setText(String.format("%.2g", planet.getMaxTemperature()));
+        maxTempLabel.setText(checkValue(planet.getMaxTemperature()));
         gridPane.add(maxTempLabel, 1, 7);
 
         gridPane.add(new Label("Boiling point"), 0, 8);
-        boilingPointLabel.setText(String.format("%.2g", planet.getBoilingPoint()));
+        boilingPointLabel.setText(checkValue(planet.getBoilingPoint()));
         gridPane.add(boilingPointLabel, 1, 8);
 
         gridPane.add(new Label("Greenhouse rise"), 0, 9);
-        greenHouseRiseLabel.setText(String.format("%.2g", planet.getGreenhouseRise()));
+        greenHouseRiseLabel.setText(checkValue(planet.getGreenhouseRise()));
         gridPane.add(greenHouseRiseLabel, 1, 9);
 
         return pane;
@@ -242,34 +242,49 @@ public class PlanetTab extends Tab {
         pane.setContent(gridPane);
 
         gridPane.add(new Label("Volatile gas inventory"), 0, 0);
-        volatileGasInventoryLabel.setText(String.format("%.2g", planet.getVolatileGasInventory()));
+        volatileGasInventoryLabel.setText(checkValue(planet.getVolatileGasInventory()));
         gridPane.add(volatileGasInventoryLabel, 1, 0);
 
         gridPane.add(new Label("Surface pressure"), 0, 1);
-        surfacePressureLabel.setText(String.format("%.2g", planet.getSurfacePressure()));
+        surfacePressureLabel.setText(checkValue(planet.getSurfacePressure()));
         gridPane.add(surfacePressureLabel, 1, 1);
 
         gridPane.add(new Label("Min molecular weight"), 0, 2);
-        minMolecularWeightLabel.setText(String.format("%.2g", planet.getMinimumMolecularWeight()));
+        minMolecularWeightLabel.setText(checkValue(planet.getMinimumMolecularWeight()));
         gridPane.add(minMolecularWeightLabel, 1, 2);
 
         gridPane.add(new Label("Hydrosphere"), 0, 3);
-        hydrosphereLabel.setText(String.format("%.2g", planet.getHydrosphere()));
+        hydrosphereLabel.setText(checkValue(planet.getHydrosphere()));
         gridPane.add(hydrosphereLabel, 1, 3);
 
         gridPane.add(new Label("Cloud cover"), 0, 4);
-        cloudCoverLabel.setText(String.format("%.2g", planet.getCloudCover()));
+        cloudCoverLabel.setText(checkValue(planet.getCloudCover()));
         gridPane.add(cloudCoverLabel, 1, 4);
 
         gridPane.add(new Label("Ice cover"), 0, 5);
-        iceCoverLabel.setText(String.format("%.2g", planet.getIceCover()));
+        iceCoverLabel.setText(checkValue(planet.getIceCover()));
         gridPane.add(iceCoverLabel, 1, 5);
 
         gridPane.add(new Label("Albedo"), 0, 6);
-        albedoLabel.setText(String.format("%.2g", planet.getAlbedo()));
+        albedoLabel.setText(checkValue(planet.getAlbedo()));
         gridPane.add(albedoLabel, 1, 6);
 
         return pane;
+    }
+
+    private String checkValue(double value) {
+        try {
+            if (value > 10e10) {
+                return "--";
+            }
+            if (value > 10000 || value < 0.0001) {
+                return String.format("%.2g", value);
+            } else {
+                return String.format("%.2f", value);
+            }
+        } catch (NumberFormatException nfe) {
+            return "--";
+        }
     }
 
 }

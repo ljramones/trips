@@ -19,10 +19,7 @@ import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
-import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
-import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
-import com.teamgannon.trips.solarsystem.SolarSystemReport;
-import com.teamgannon.trips.solarsystem.SolarSystemReportDialog;
+import com.teamgannon.trips.solarsystem.*;
 import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -669,32 +666,10 @@ public class StarPlotManager {
             SolarSystemGenOptions solarSystemGenOptions = solarSystemGenOptional.get();
             SolarSystemReport report = new SolarSystemReport(starObject, solarSystemGenOptions);
             report.generateReport();
-            SolarSystemReportDialog reportDialog = new SolarSystemReportDialog(report);
-            Optional<SolarSystemReport> reportOptional = reportDialog.showAndWait();
-            if (reportOptional.isPresent()) {
-                SolarSystemReport saveReport = reportOptional.get();
-                if (saveReport.isSaveSelected()) {
-                    // save file
-                    final FileChooser fileChooser = new FileChooser();
-                    fileChooser.setTitle("Save the generated solar system");
-                    File file = fileChooser.showSaveDialog(null);
-                    if (file != null) {
-                        saveTextToFile(saveReport.getGeneratedReport(), file);
-                    } else {
-                        log.warn("solar system generation save cancelled");
-                        showInfoMessage("Solar System Generation", "Save cancelled");
-                    }
-                }
-            }
-        }
-    }
 
+            PlanetDialog planetDialog = new PlanetDialog(report);
+            planetDialog.showAndWait();
 
-    private void saveTextToFile(String generatedReport, File file) {
-        try (PrintWriter out = new PrintWriter(file)) {
-            out.println(generatedReport);
-        } catch (FileNotFoundException e) {
-            log.error("Can't create file {} because of {}", file.getAbsolutePath(), e.getMessage());
         }
     }
 
