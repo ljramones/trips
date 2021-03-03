@@ -1,6 +1,5 @@
-package com.teamgannon.trips.starplotting;
+package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -66,7 +65,7 @@ public class SolarSystemGenerationDialog extends Dialog<SolarSystemGenOptions> {
         verboseBox.setSelected(false);
         gridPane.add(verboseBox, 0, 2);
 
-        extraVerboseBox.setSelected(true);
+        extraVerboseBox.setSelected(false);
         gridPane.add(extraVerboseBox, 0, 3);
 
         return gridPane;

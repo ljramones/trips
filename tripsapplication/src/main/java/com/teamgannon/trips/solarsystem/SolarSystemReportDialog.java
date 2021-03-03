@@ -1,4 +1,4 @@
-package com.teamgannon.trips.starplotting;
+package com.teamgannon.trips.solarsystem;
 
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -47,12 +47,21 @@ public class SolarSystemReportDialog extends Dialog<SolarSystemReport> {
         changeButton.setOnAction(this::saveClicked);
         hBox.getChildren().add(changeButton);
 
+        Button detailsBtn = new Button("Details");
+        detailsBtn.setOnAction(this::details);
+        hBox.getChildren().add(detailsBtn);
+
         Button cancelBtn = new Button("Cancel");
         cancelBtn.setOnAction(this::cancel);
         hBox.getChildren().add(cancelBtn);
 
         // set the dialog as a utility so that the closing is cancelling
         stage.setOnCloseRequest(this::close);
+    }
+
+    private void details(ActionEvent actionEvent) {
+        PlanetDialog planetDialog = new PlanetDialog(report.getStarSystem());
+        planetDialog.showAndWait();
     }
 
     private void close(WindowEvent windowEvent) {

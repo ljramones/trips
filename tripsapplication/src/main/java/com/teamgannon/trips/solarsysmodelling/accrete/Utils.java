@@ -8,8 +8,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+
+import static java.lang.Math.pow;
 
 @Slf4j
 class Utils {
@@ -20,18 +23,18 @@ class Utils {
     public final static double PPM_PRESSURE = EARTH_SURF_PRES_IN_MILLIBARS / 1000000.0;
     private static Utils instance;
     private static Random random;
-    private static ArrayList<SimStar> MSimStars;
-    private static ArrayList<SimStar> KSimStars;
-    private static ArrayList<SimStar> GSimStars;
-    private static ArrayList<SimStar> FSimStars;
-    private static ArrayList<SimStar> ASimStars;
-    private static ArrayList<SimStar> BSimStars;
-    private static ArrayList<SimStar> OSimStars;
-    private static ArrayList<SimStar> WSimStars;
-    private static ArrayList<SimStar> CSimStars;
-    private static ArrayList<SimStar> SSimStars;
-    private static ArrayList<SimStar> White;
-    private static ArrayList<SimStar> Giant;
+    private static List<SimStar> MSimStars;
+    private static List<SimStar> KSimStars;
+    private static List<SimStar> GSimStars;
+    private static List<SimStar> FSimStars;
+    private static List<SimStar> ASimStars;
+    private static List<SimStar> BSimStars;
+    private static List<SimStar> OSimStars;
+    private static List<SimStar> WSimStars;
+    private static List<SimStar> CSimStars;
+    private static List<SimStar> SSimStars;
+    private static List<SimStar> White;
+    private static List<SimStar> Giant;
     private static Chemical[] Chemtable;
     private static long seed;
 
@@ -74,8 +77,8 @@ class Utils {
         return null;
     }
 
-    private static ArrayList<SimStar> loadStarType(String filename) {
-        ArrayList<SimStar> simStars = new ArrayList<>();
+    private static List<SimStar> loadStarType(String filename) {
+        List<SimStar> simStars = new ArrayList<>();
         SimStar s;
         String line;
         String[] split;
@@ -84,7 +87,13 @@ class Utils {
             BufferedReader input = loadFile(filename);
             while ((line = Objects.requireNonNull(input).readLine()) != null) {
                 split = line.split(",");
-                s = new SimStar(Double.parseDouble(split[1]), Double.parseDouble(split[2]), Double.parseDouble(split[3]), Double.parseDouble(split[4]), Double.parseDouble(split[6]));
+                s = new SimStar(
+                        Double.parseDouble(split[1]),
+                        Double.parseDouble(split[2]),
+                        Double.parseDouble(split[3]),
+                        Double.parseDouble(split[4]),
+                        Double.parseDouble(split[6])
+                );
                 s.stellarType = split[0];
                 s.red = Integer.parseInt(split[9]);
                 s.green = Integer.parseInt(split[10]);
@@ -134,7 +143,7 @@ class Utils {
     }
 
     public double randomEccentricity() {
-        return (1.0 - Math.pow(random.nextDouble(), ECCENTRICITY_COEFF));
+        return (1.0 - pow(random.nextDouble(), ECCENTRICITY_COEFF));
     }
 
     public double about(double value, double variation) {
