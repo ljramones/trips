@@ -1,5 +1,7 @@
 package com.teamgannon.trips.solarsysmodelling.accrete;
 
+import static java.lang.Math.*;
+
 public abstract class SystemObject {
     public final static double G = 6.67408E-11;
     public final static double SUN_MASS = 1.989E30; // Mass of the Sun in kg
@@ -171,7 +173,7 @@ public abstract class SystemObject {
      * @return The orbital period in seconds.
      */
     public double orbitalPeriod(double mu) {
-        return 2.0 * Math.PI * Math.sqrt(Math.pow(sma, 3.0) / mu);
+        return 2.0 * PI * sqrt(pow(sma, 3.0) / mu);
     }
 
     public int secondsToHoursRounded(double sec) {

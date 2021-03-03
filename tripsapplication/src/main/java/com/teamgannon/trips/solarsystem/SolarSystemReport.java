@@ -1,6 +1,5 @@
-package com.teamgannon.trips.starplotting;
+package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
 import lombok.Data;
@@ -30,6 +29,8 @@ public class SolarSystemReport {
      */
     private String generatedReport;
 
+    private StarSystem starSystem;
+
     public SolarSystemReport(StarObject starDisplayRecord, SolarSystemGenOptions options) {
         this.sourceStar = starDisplayRecord;
         this.options = options;
@@ -41,6 +42,7 @@ public class SolarSystemReport {
                 options.isVerbose(),
                 options.isExtraVerbose());
         this.generatedReport = starSystem.toString();
+        this.starSystem = starSystem;
     }
 
     /**

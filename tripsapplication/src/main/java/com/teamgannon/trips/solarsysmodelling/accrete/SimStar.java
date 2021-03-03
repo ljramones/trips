@@ -1,5 +1,7 @@
 package com.teamgannon.trips.solarsysmodelling.accrete;
 
+import static java.lang.Math.pow;
+
 public class SimStar extends SystemObject {
 
     /**
@@ -38,7 +40,7 @@ public class SimStar extends SystemObject {
 
     public void recalc() {
         // http://hyperphysics.phy-astr.gsu.edu/hbase/Astro/startime.html
-        this.lifeTime = 10E10 * Math.pow(this.mass, 2.5);
+        this.lifeTime = 10E10 * pow(this.mass, 2.5);
     }
 
     public void setAge() {
@@ -95,15 +97,15 @@ public class SimStar extends SystemObject {
 
 
     public double stellarDustLimit() {
-        return 200.0 * Math.pow(this.mass, 1.0 / 3.0);
+        return 200.0 * pow(this.mass, 1.0 / 3.0);
     }
 
     public double innermostPlanet() {
-        return 0.3 * Math.pow(mass, 1.0 / 3.0); // TODO: Check these numbers to ensure accuracy
+        return 0.3 * pow(mass, 1.0 / 3.0); // TODO: Check these numbers to ensure accuracy
     }
 
     public double outermostPlanet() {
-        return 50.0 * Math.pow(mass, 1.0 / 3.0); // TODO: Check these numbers to ensure accuracy
+        return 50.0 * pow(mass, 1.0 / 3.0); // TODO: Check these numbers to ensure accuracy
     }
 
     /**
