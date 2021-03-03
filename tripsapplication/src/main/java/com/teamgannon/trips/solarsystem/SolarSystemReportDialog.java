@@ -47,10 +47,6 @@ public class SolarSystemReportDialog extends Dialog<SolarSystemReport> {
         changeButton.setOnAction(this::saveClicked);
         hBox.getChildren().add(changeButton);
 
-        Button detailsBtn = new Button("Details");
-        detailsBtn.setOnAction(this::details);
-        hBox.getChildren().add(detailsBtn);
-
         Button cancelBtn = new Button("Cancel");
         cancelBtn.setOnAction(this::cancel);
         hBox.getChildren().add(cancelBtn);
@@ -59,10 +55,6 @@ public class SolarSystemReportDialog extends Dialog<SolarSystemReport> {
         stage.setOnCloseRequest(this::close);
     }
 
-    private void details(ActionEvent actionEvent) {
-        PlanetDialog planetDialog = new PlanetDialog(report.getStarSystem());
-        planetDialog.showAndWait();
-    }
 
     private void close(WindowEvent windowEvent) {
         report.setSave(false);
