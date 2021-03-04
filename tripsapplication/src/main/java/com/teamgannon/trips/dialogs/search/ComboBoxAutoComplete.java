@@ -48,17 +48,22 @@ public class ComboBoxAutoComplete<T> {
         ObservableList<T> filteredList = FXCollections.observableArrayList();
         KeyCode code = e.getCode();
 
+        if (code == KeyCode.MINUS) {
+            String txt = e.getText();
+            filter += txt;
+        }
+
+        if (code.isKeypadKey()) {
+            String txt = e.getText();
+            filter += txt;
+        }
+
         if (code.isDigitKey()) {
             String txt = e.getText();
             filter += txt;
         }
 
         if (code.isLetterKey()) {
-            String txt = e.getText();
-            filter += txt;
-        }
-
-        if (code.isKeypadKey()) {
             String txt = e.getText();
             filter += txt;
         }
