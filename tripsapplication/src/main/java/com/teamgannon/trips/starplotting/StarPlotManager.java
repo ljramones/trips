@@ -19,7 +19,10 @@ import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
-import com.teamgannon.trips.solarsystem.*;
+import com.teamgannon.trips.solarsystem.PlanetDialog;
+import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
+import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
+import com.teamgannon.trips.solarsystem.SolarSystemReport;
 import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -36,19 +39,14 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Translate;
-import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
 public class StarPlotManager {
@@ -106,6 +104,8 @@ public class StarPlotManager {
      * the report generator
      */
     private final ReportGenerator reportGenerator;
+
+    private FadeTransition fadeTransition;
 
 
     private TripsContext tripsContext;
@@ -235,7 +235,6 @@ public class StarPlotManager {
     public void highlightStar(UUID starId) {
         Label starGroup = tripsContext.getCurrentPlot().getLabelForStar(starId);
         blinkStarLabel(starGroup, 60);
-
         log.info("mark point");
     }
 
@@ -246,7 +245,10 @@ public class StarPlotManager {
      * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
      */
     private void blinkStarLabel(Label label, int cycleCount) {
-        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(1), label);
+        if (fadeTransition!=null) {
+            fadeTransition.stop();
+        }
+        fadeTransition = new FadeTransition(Duration.seconds(1), label);
         fadeTransition.setFromValue(1.0);
         fadeTransition.setToValue(0.0);
         fadeTransition.setCycleCount(cycleCount);
