@@ -224,7 +224,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         // coordinates
         gridPane.add(new Label("Coordinates"), 0, 10);
         GridPane coordGrid = new GridPane();
-        gridPane.add(coordGrid, 1, 9);
+        gridPane.add(coordGrid, 1, 10);
         xTextField.setText(Double.toString(record.getX()));
         xTextField.setPromptText("X coordinate, press enter");
         xTextField.setOnKeyPressed(ke -> {
@@ -268,58 +268,58 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         gridPane.setHgap(5);
 
         // polity
-        gridPane.add(new Label("polity"), 0, 1);
+        gridPane.add(new Label("Polity"), 0, 1);
         polityTextField.setText(record.getPolity());
         gridPane.add(polityTextField, 1, 1);
 
         // world type
-        gridPane.add(new Label("world type"), 0, 2);
+        gridPane.add(new Label("World Type"), 0, 2);
         worldTypeTextField.setText(record.getWorldType());
         gridPane.add(worldTypeTextField, 1, 2);
 
         // fuel type
-        gridPane.add(new Label("fuel type"), 0, 3);
+        gridPane.add(new Label("Fuel Type"), 0, 3);
         fuelTypeTextField.setText(record.getFuelType());
         gridPane.add(fuelTypeTextField, 1, 3);
 
         // tech type
-        gridPane.add(new Label("tech type"), 0, 4);
+        gridPane.add(new Label("Tech Type"), 0, 4);
         techTypeTextField.setText(record.getTechType());
         gridPane.add(techTypeTextField, 1, 4);
 
         // port type
-        gridPane.add(new Label("port type"), 0, 5);
+        gridPane.add(new Label("Port Type"), 0, 5);
         portTypeTextField.setText(record.getPortType());
         gridPane.add(portTypeTextField, 1, 5);
 
         // population
-        gridPane.add(new Label("population type"), 0, 6);
+        gridPane.add(new Label("Population Type"), 0, 6);
         popTypeTextField.setText(record.getPopulationType());
         gridPane.add(popTypeTextField, 1, 6);
 
         // product type
-        gridPane.add(new Label("product type"), 0, 7);
+        gridPane.add(new Label("Product Type"), 0, 7);
         prodField.setText(record.getProductType());
         gridPane.add(prodField, 1, 7);
 
         // milspace type
-        gridPane.add(new Label("milspace type"), 0, 8);
+        gridPane.add(new Label("Milspace Type"), 0, 8);
         milspaceTextField.setText(record.getMilSpaceType());
         gridPane.add(milspaceTextField, 1, 8);
 
         // milplan type
-        gridPane.add(new Label("milplan type"), 0, 9);
+        gridPane.add(new Label("Milplan Type"), 0, 9);
         milplanTextField.setText(record.getMilPlanType());
         gridPane.add(milplanTextField, 1, 9);
 
         // anomaly
-        gridPane.add(new Label("anomaly"), 0, 10);
+        gridPane.add(new Label("Anomaly"), 0, 10);
         anomalyCheckbox.setSelected(record.isAnomaly());
         anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
         gridPane.add(anomalyCheckbox, 1, 10);
 
         // other
-        gridPane.add(new Label("other"), 0, 11);
+        gridPane.add(new Label("Other"), 0, 11);
         otherCheckbox.setSelected(record.isOther());
         otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
         gridPane.add(otherCheckbox, 1, 11);
@@ -412,7 +412,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         leftGrid.add(raLabel, 1, 7);
 
         // declination
-        leftGrid.add(new Label("declination"), 0, 8);
+        leftGrid.add(new Label("Declination"), 0, 8);
         decLabel.setText(Double.toString(record.getDeclination()));
         decLabel.setPromptText("declination, press enter");
         decLabel.setOnKeyPressed(ke -> {
@@ -423,7 +423,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         leftGrid.add(decLabel, 1, 8);
 
         // PMRA
-        leftGrid.add(new Label("pmra"), 0, 9);
+        leftGrid.add(new Label("Pmra"), 0, 9);
         pmraLabel.setText(Double.toString(record.getPmra()));
         pmraLabel.setPromptText("PMRA, press enter");
         pmraLabel.setOnKeyPressed(ke -> {
