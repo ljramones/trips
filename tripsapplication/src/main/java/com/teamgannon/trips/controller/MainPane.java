@@ -1241,6 +1241,7 @@ public class MainPane implements
     @Override
     public void displayStellarProperties(@Nullable StarObject starObject) {
         if (starObject != null) {
+            toggleSidePane(true);
             starPropertiesPane.setStar(starObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
             if (!sidePaneOn) {
