@@ -434,7 +434,7 @@ public class MainPane implements
         routingPane.setMinWidth(SIDE_PANEL_SIZE);
         routingPane.setMinHeight(400);
         routingPane.setMaxHeight(400);
-        routingPanel = new RoutingPanel();
+        routingPanel = new RoutingPanel(this);
         routingPane.setContent(routingPanel);
         propertiesAccordion.getPanes().add(routingPane);
     }
@@ -989,10 +989,6 @@ public class MainPane implements
 
     }
 
-    public void routeFinderTree(ActionEvent actionEvent) {
-
-    }
-
     public void toggleRoutes(ActionEvent actionEvent) {
         this.routesOn = !routesOn;
         tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesOn);
@@ -1229,13 +1225,19 @@ public class MainPane implements
     @Override
     public void updateRoute(RouteDescriptor routeDescriptor) {
         log.info("update route");
+        String datasetName = searchContext.getAstroSearchQuery().getDescriptor().getDataSetName();
+        DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
+        searchContext.getAstroSearchQuery().setDescriptor(descriptor);
+        routingPanel.setContext(descriptor);
     }
 
     @Override
     public void deleteRoute(RouteDescriptor routeDescriptor) {
         log.info("delete route");
-
-        // delete from database @todo
+        DataSetDescriptor descriptor = searchContext.getAstroSearchQuery().getDescriptor();
+        descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
+        searchContext.getAstroSearchQuery().setDescriptor(descriptor);
+        routingPanel.setContext(descriptor);
     }
 
     @Override

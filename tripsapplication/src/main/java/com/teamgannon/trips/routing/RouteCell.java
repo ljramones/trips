@@ -1,5 +1,7 @@
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -7,13 +9,20 @@ import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 @Slf4j
 public class RouteCell extends ListCell<Route> {
 
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
+    private final RouteUpdaterListener routeUpdaterListener;
 
+    public RouteCell(RouteUpdaterListener routeUpdaterListener) {
+
+        this.routeUpdaterListener = routeUpdaterListener;
+    }
 
     @Override
     public void updateItem(@Nullable Route route, boolean empty) {
@@ -23,18 +32,24 @@ public class RouteCell extends ListCell<Route> {
         String name = null;
 
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem eitMenuItem = new MenuItem("Edit");
-        eitMenuItem.setOnAction((event) -> {
+        MenuItem editMenuItem = new MenuItem("Edit");
+        editMenuItem.setOnAction((event) -> {
             log.info("edit Route");
-//            updater.showNewStellarData(true, false);
+            editRoute(route);
         });
+        contextMenu.getItems().add(editMenuItem);
 
-        contextMenu.getItems().addAll(eitMenuItem);
+        MenuItem deleteMenuItem = new MenuItem("Delete");
+        deleteMenuItem.setOnAction(event -> {
+            log.info("delete Route");
+            deleteRoute(route);
+        });
+        contextMenu.getItems().add(deleteMenuItem);
 
         // Format name
         if (route != null && !empty) {
-            name = "Route: " + (index + 1) + ": " +
-                    route.getRouteName() + " has " +
+            name = "Route: " + (index + 1) + ": \n\t" +
+                    route.getRouteName() + "\n\t has " +
                     (route.getRouteStars().size() - 1) + " segments";
 
             log.info("show route:{}", name);
@@ -46,6 +61,21 @@ public class RouteCell extends ListCell<Route> {
 
         this.setText(name);
         setGraphic(null);
+    }
+
+    private void deleteRoute(Route route) {
+        routeUpdaterListener.deleteRoute(RouteDescriptor.toRouteDescriptor(route));
+    }
+
+    private void editRoute(Route route) {
+        RouteEditDialog routeEditDialog = new RouteEditDialog(route);
+        Optional<RouteChange> routeChangeOptional = routeEditDialog.showAndWait();
+        if (routeChangeOptional.isPresent()) {
+            RouteChange routeChange = routeChangeOptional.get();
+            if (routeChange.isChanged()) {
+                routeUpdaterListener.updateRoute(RouteDescriptor.toRouteDescriptor(route));
+            }
+        }
     }
 
 }
