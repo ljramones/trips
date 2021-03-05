@@ -485,10 +485,12 @@ public class InterstellarSpacePane extends Pane {
 
     public void redrawRoutes(@NotNull List<Route> routes) {
         routeManager.plotRoutes(routes);
+        updateLabels();
     }
 
     public void plotRouteDescriptors(DataSetDescriptor currentDataSet, @NotNull List<RoutingMetric> routeDescriptorList) {
         routeManager.plotRouteDescriptors(currentDataSet, routeDescriptorList);
+        updateLabels();
     }
 
     /**
