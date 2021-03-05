@@ -20,6 +20,12 @@ import java.util.UUID;
 public class RouteDescriptor {
 
     /**
+     * unique id for distinction purposes
+     */
+    @Builder.Default
+    private UUID id = UUID.randomUUID();
+
+    /**
      * name of the route
      */
     private String name;
@@ -113,6 +119,7 @@ public class RouteDescriptor {
     public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         return RouteDescriptor
                 .builder()
+                .id(route.getUuid())
                 .name(route.getRouteName())
                 .maxLength(route.getRouteStars().size())
                 .color(Color.valueOf(route.getRouteColor()))
@@ -201,6 +208,7 @@ public class RouteDescriptor {
 
     public @NotNull Route toRoute() {
         Route route = new Route();
+        route.setUuid(id);
         route.setRouteName(this.name);
         route.getRouteStars().addAll(routeList);
         route.getRouteLengths().addAll(lengthList);

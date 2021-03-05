@@ -34,6 +34,11 @@ public class Route implements Serializable {
     private static final long serialVersionUID = 6432469144778289966L;
 
     /**
+     * unique id for reference
+     */
+    private UUID uuid;
+
+    /**
      * Name given to this route.  May default to “Start star to End Star” when generated but it can be
      * user edited to anything.
      */

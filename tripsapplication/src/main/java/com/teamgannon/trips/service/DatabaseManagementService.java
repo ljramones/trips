@@ -602,4 +602,30 @@ public class DatabaseManagementService {
     public void saveTripsPrefs(TripsPrefs tripsPrefs) {
         tripsPrefsRepository.save(tripsPrefs);
     }
+
+    @Transactional
+    public DataSetDescriptor deleteRoute(String descriptorName, RouteDescriptor routeDescriptor) {
+        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
+        List<Route> routeList = descriptor.getRoutes();
+        List<Route> updatedRoutes = routeList.stream().filter(route -> !routeDescriptor.getId().equals(route.getUuid())).collect(Collectors.toList());
+        descriptor.setRoutes(updatedRoutes);
+        dataSetDescriptorRepository.save(descriptor);
+        return descriptor;
+    }
+
+    @Transactional
+    public DataSetDescriptor updateRoute(String descriptorName, RouteDescriptor routeDescriptor) {
+        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
+        List<Route> routeList = descriptor.getRoutes();
+        for (Route route : routeList) {
+            if (route.getUuid().equals(routeDescriptor.getId())) {
+                route.setRouteColor(routeDescriptor.getColor().toString());
+                route.setRouteName(routeDescriptor.getName());
+                route.setRouteNotes(routeDescriptor.getRouteNotes());
+            }
+        }
+        descriptor.setRoutes(routeList);
+        dataSetDescriptorRepository.save(descriptor);
+        return descriptor;
+    }
 }
