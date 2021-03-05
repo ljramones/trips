@@ -1229,6 +1229,7 @@ public class MainPane implements
         DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
         routingPanel.setContext(descriptor);
+        interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
     @Override
@@ -1238,6 +1239,7 @@ public class MainPane implements
         descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
         routingPanel.setContext(descriptor);
+        interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
     @Override

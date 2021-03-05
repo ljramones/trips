@@ -486,7 +486,12 @@ public class StarObject implements Serializable {
 
         // create an idealized star model based on spectral class
         StarCreator starCreator = new StarCreator();
-        StarModel starModel = starCreator.parseSpectral(spectralClass);
+        StarModel starModel;
+        if (!spectralClass.contains("ictional")) {
+            starModel = starCreator.parseSpectral(spectralClass);
+        } else {
+            starModel = starCreator.parseSpectral(orthoSpectralClass);
+        }
 
         // generate  a sim star form the idealized star
         SimStar simStar = starModel.toSimStar();
@@ -510,7 +515,7 @@ public class StarObject implements Serializable {
             }
         }
 
-        if (temperature!= 0) {
+        if (temperature != 0) {
             simStar.setTemperature(temperature);
         }
 
