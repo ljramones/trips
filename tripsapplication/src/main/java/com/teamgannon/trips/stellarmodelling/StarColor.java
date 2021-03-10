@@ -43,6 +43,17 @@ public enum StarColor {
     M("255,0,0"),
 
     /**
+     * degenerate star - white dwarfs
+     */
+    DA("255,255,255"),
+    DB("255,255,255"),
+    DO("255,255,255"),
+    DQ("255,255,255"),
+    DZ("255,255,255"),
+    DC("255,255,255"),
+    DX("255,255,255"),
+
+    /*
      * Add spectral classes for sub-stellar objects and 
      * "dead" stars that have cooled below visible.  
      * These classes where added to the MK spectral classes 

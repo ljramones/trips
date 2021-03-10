@@ -63,7 +63,7 @@ public class RouteFinderDataset {
                 Map<String, StarObject> astroMap = starObjects.stream().collect(Collectors.toMap(StarObject::getDisplayName, astrographicObject -> astrographicObject, (a, b) -> b));
 
                 List<StarDisplayRecord> starsInView = starObjects.stream().map(
-                        astrographicObject -> StarDisplayRecord.fromAstrographicObject(astrographicObject, starDisplayPreferences))
+                        astrographicObject -> StarDisplayRecord.fromStarObject(astrographicObject, starDisplayPreferences))
                         .filter(Objects::nonNull).collect(Collectors.toList());
 
                 RouteBuilderHelper routeBuilderHelper = new RouteBuilderHelper(starsInView);

@@ -4,19 +4,20 @@ import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarModel;
 import com.teamgannon.trips.stellarmodelling.StarUtils;
+import com.teamgannon.trips.stellarmodelling.StellarType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * an relational data model for astrographic objects
@@ -31,7 +32,24 @@ public class StarObject implements Serializable {
     public final static String SIMBAD_NO_ID = "UNDEFINED";
     public final static String SIMBAD_NO_TYPE = "UNDEFINED";
     public final static String POLITY_NOT_SET = "NOT+SET";
-    private static final long serialVersionUID = -5589152046288176364L;
+
+    @Serial
+    private static final long serialVersionUID = 5738228683010339187L;
+
+    /**
+     * match the pattern * nnn Con
+     * nnn for 3 digits
+     */
+    @Transient
+    Pattern flamsteedPattern = Pattern.compile("[\\*] +[0-9]{3} +[a-zA-Z]{3}");
+
+    /**
+     * match the pattern * ggg Con
+     * ggg for 3 characters
+     */
+    @Transient
+    Pattern bayerPattern = Pattern.compile("[\\*] +[a-zA-Z]{3} +[a-zA-Z]{3}");
+
 
     /**
      * id of the object
@@ -379,6 +397,11 @@ public class StarObject implements Serializable {
      */
     private boolean exoplanets;
 
+    /**
+     * this is a computed heuristic that tells us whether to show the label on the graphics display or not
+     */
+    private double displayScore = 0;
+
 
     ///////////////////////////////////////
 
@@ -448,6 +471,8 @@ public class StarObject implements Serializable {
         miscText3 = "";
         miscText4 = "";
         miscText5 = "";
+
+        displayScore = 0;
     }
 
 
@@ -463,8 +488,8 @@ public class StarObject implements Serializable {
         return Arrays.asList(catalogIdList.split("\\s*,\\s*"));
     }
 
-    public void setCatalogIdList(List<String> stringList) {
-        catalogIdList = String.join(",", stringList);
+    public void setCatalogIdList(String catalogIdList) {
+        this.catalogIdList = catalogIdList;
     }
 
     public double[] getCoordinates() {
@@ -480,6 +505,187 @@ public class StarObject implements Serializable {
         x = coordinates[0];
         y = coordinates[1];
         z = coordinates[2];
+    }
+
+
+    /**
+     * calculate the display score
+     */
+    public void calculateDisplayScore() {
+        displayScore = calculateBaseScore() * calculateLabelMultiplier();
+        System.out.println(String.format("Display name =%s, Spectral class = %s, score = %.3f", displayName, orthoSpectralClass, displayScore));
+    }
+
+    /**
+     * calculate the display score multiplier
+     * <p>
+     * PLX 3278
+     * |* alf Cen C
+     * |2E 1426.0-6227
+     * |2E  3278
+     * |2RE J142946-624031
+     * |2RE J1429-624
+     * |CCDM J14396-6050C
+     * |CSI-62-14263
+     * |CSV   2142
+     * |Ci 20  861
+     * |GEN# +6.10010551
+     * |GEN# +6.00105721
+     * |GJ   551
+     * |HIC  70890
+     * |HIP  70890
+     * |IRAS 14260-6227
+     * |JP11  5156
+     * |JP11  5155
+     * |JP11  5187
+     * |LFT 1110
+     * |LHS    49
+     * |LPM 526
+     * |LTT  5721
+     * |NAME Proxima Cen
+     * |NAME Proxima
+     * |NAME Proxima Centauri
+     * |NLTT 37460
+     * |PM 14263-6228
+     * |RE J1429-624
+     * |RE J142950-624056
+     * |V* V645 Cen
+     * |Zkh 211
+     * |[AOP94]  6
+     * |[FS2003] 0708
+     * |[GKL99] 301
+     * |[RHG95]  2291
+     * |2MASS J14294291-6240465
+     * |PLX 3278.00
+     * |1E 1425.9-6228
+     * |1ES 1426-62.4
+     * |1RXS J142947.9-624058
+     * |2EUVE J1429-62.6
+     * |EUVE J1429-62.6
+     * |EUVE J1430-62.6
+     * |RX J1429.7-6240
+     * |WDS J14396-6050C
+     * |PMSC 14328-6025C
+     * |Gaia DR2 5853498713160606720
+     * |WISEA J142937.35-624038.3
+     * |GALEX 6387417244251458613
+     * |PM J14297-6240
+     *
+     * @return the multiplier
+     */
+    private double calculateLabelMultiplier() {
+
+        double cumulativeTotal = 0;
+
+        // 1. Is there something in the Common Name field?
+        if (!commonName.isEmpty()) {
+            cumulativeTotal += 3;
+        }
+
+        // 2. Does the star have a Flamsteed catalog ID?
+        //      In the CatalogID field there will be a value of "* nnn Con"
+        //      where nnn is an integer and Con is a constellation Abbreviation
+        Matcher flamMatcher = flamsteedPattern.matcher(catalogIdList);
+        if (flamMatcher.find()) {
+            cumulativeTotal += 3;
+        }
+
+        // 3. Does the star have a Bayer catalog ID?
+        //      "* ggg Con" in CatalogID where GGG is
+        //      a greek letter abbreviation, a-z, or A-Q  and Con is a constellation abbreviation
+        Matcher bayerMatcher = bayerPattern.matcher(catalogIdList);
+        if (bayerMatcher.find()) {
+            cumulativeTotal += 3;
+        }
+
+        // 4. Is the star in the BD catalog?
+        //      BD and DM are the same thing
+        //      An entry in CatalogID staring with BD+ or BD-
+        if (catalogIdList.contains("BD+") || catalogIdList.contains("BD-")) {
+            cumulativeTotal += 1.5;
+        }
+
+        // 5. Is the star in the Gliese catalog?
+        //      "GJ " in Catalog ID
+        //      This is tricky. Alph Cen is GJ 559 But because it's binary, Alph Cen A is in GJ as GJ 559A and
+        //      "GJ 559" isn't in the base catalog right now, because Simbad doesn't list it.
+        if (catalogIdList.contains("GJ")) {
+            cumulativeTotal += 1.5;
+        }
+
+        // 6. Is the star in Hipparchos?
+        //      "HIP " in Catalog ID
+        //      Same problem. Alpha Cen A is HIP 71683  Alph Cen is not in HIP…
+        if (catalogIdList.contains("HIP")) {
+            cumulativeTotal += 1.5;
+        }
+
+
+        // 7. Is the star in Henry Draper?
+        //      "HD " in Catalog ID?
+        if (catalogIdList.contains("HD")) {
+            cumulativeTotal += 1.5;
+        }
+
+
+        // 8. If none of the above, make the multiplier one. (1)
+        if (cumulativeTotal == 0) {
+            cumulativeTotal = 1;
+        }
+
+        return cumulativeTotal;
+    }
+
+    private double calculateBaseScore() {
+        int base = 0;
+
+        StarModel starModel = new StarCreator().parseSpectral(orthoSpectralClass);
+
+        // process harvard spectral class
+        if (orthoSpectralClass.length() > 1) {
+            StellarType x = starModel.getStellarClass();
+            if (x == null) {
+                log.error("odd");
+            }
+            String harvardSpecClass = starModel.getStellarClass().getValue();
+
+            switch (harvardSpecClass) {
+                case "O" -> base += 2;
+                case "B" -> base += 2;
+                case "A" -> base += 2;
+                case "F" -> base += 4;
+                case "G" -> base += 5;
+                case "K" -> base += 4;
+                case "M" -> base += 3;
+                case "L" -> base += 1;
+                case "T" -> base += 1;
+                case "Y" -> base += 1;
+            }
+        }
+
+
+        // process luminosity
+        String luminosityValue = starModel.getLuminosityClass();
+        if (luminosityValue != null && !luminosityValue.isEmpty()) {
+            int lumNum = 1;
+            switch (luminosityValue) {
+                case "I" -> lumNum = 1;
+                case "II" -> lumNum = 2;
+                case "III" -> lumNum = 3;
+                case "IV" -> lumNum = 4;
+                case "V" -> lumNum = 5;
+                case "VI" -> lumNum = 6;
+                case "VII" -> lumNum = 7;
+                case "VIII" -> lumNum = 8;
+                case "IX" -> lumNum = 9;
+                case "X" -> lumNum = 10;
+            }
+            base += (11 - lumNum);
+        } else {
+            base += 1;
+        }
+
+        return base;
     }
 
     public SimStar toSimStar() {
@@ -522,4 +728,13 @@ public class StarObject implements Serializable {
         return simStar;
     }
 
+    public static void main(String[] args) {
+        StarObject starObject = new StarObject();
+        starObject.setCommonName("Some name");
+        starObject.setOrthoSpectralClass("G");
+        starObject.setCatalogIdList("PLX 3278|* 345 Cen|* alf Cen C|2E 1426.0-6227|HD werwer|BD+ 234234|BD- 234234|2E  3278|2RE J142946-624031|2RE J1429-624|CCDM J14396-6050C|CSI-62-14263|CSV   2142|Ci 20  861|GEN# +6.10010551|GEN# +6.00105721|GJ   551|HIC  70890|HIP  70890|IRAS 14260-6227|JP11  5156|JP11  5155|JP11  5187|LFT 1110|LHS    49|LPM 526|LTT  5721|NAME Proxima Cen|NAME Proxima|NAME Proxima Centauri|NLTT 37460|PM 14263-6228|RE J1429-624|RE J142950-624056|V* V645 Cen|Zkh 211|[AOP94]  6|[FS2003] 0708|[GKL99] 301|[RHG95]  2291|2MASS J14294291-6240465|PLX 3278.00|1E 1425.9-6228|1ES 1426-62.4|1RXS J142947.9-624058|2EUVE J1429-62.6|EUVE J1429-62.6|EUVE J1430-62.6|RX J1429.7-6240|WDS J14396-6050C|PMSC 14328-6025C|Gaia DR2 5853498713160606720|WISEA J142937.35-624038.3|GALEX 6387417244251458613|PM J14297-6240");
+        starObject.calculateDisplayScore();
+        log.info("display score=" + starObject.getDisplayScore());
+        log.info("done");
+    }
 }

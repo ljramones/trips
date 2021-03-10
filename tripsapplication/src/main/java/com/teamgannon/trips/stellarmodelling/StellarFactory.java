@@ -24,17 +24,28 @@ public class StellarFactory {
             {"G", "255,244,232"},
             {"K", "255,222,180"},
             {"M", "157,180,254"},
-            {"D", "255,189,111"},
+            {"L", "157,180,254"},
+            {"Y", "157,180,254"},
+            {"T", "157,180,254"},
+            {"DA", "202,216,255"},
+            {"DB", "202,216,255"},
+            {"DO", "202,216,255"},
+            {"DQ", "202,216,255"},
+            {"DZ", "202,216,255"},
+            {"DC", "202,216,255"},
+            {"DX", "202,216,255"},
     }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
     /**
      * the factory
      */
     private static StellarFactory factory;
+
     /**
      * the stellar map based on key = stellar type and the created stellar classification
      */
     private static Map<String, StellarClassification> stellarClassificationMap = new HashMap<>();
+
     /**
      * the set of stelaar classes
      */
@@ -434,9 +445,96 @@ public class StellarFactory {
         return mClass;
     }
 
+
+    private static StellarClassification createLClass() {
+        StellarClassification lClass = new StellarClassification();
+        lClass.setStellarType(StellarType.L);
+
+        lClass.setStarColor(StarColor.L);
+        lClass.setStellarChromaticity(getColor(chromaticyMap.get("L")));
+
+        lClass.setUpperTemperature(2400);
+        lClass.setLowerTemperature(1300);
+
+        lClass.setColor("red");
+        lClass.setChromacity("red");
+
+        lClass.setUpperMass(0.085);
+        lClass.setLowerMass(0.070);
+
+        lClass.setUpperRadius(0.110);
+        lClass.setLowerRadius(0.088);
+
+        lClass.setUpperLuminosity(0.00031);
+        lClass.setLowerLuminosity(0.00006);
+
+        lClass.setLines(HydrogenLines.VERY_WEAK);
+        lClass.setSequenceFraction(14.45);
+
+        return lClass;
+    }
+
+
+    private static StellarClassification createTClass() {
+        StellarClassification tClass = new StellarClassification();
+        tClass.setStellarType(StellarType.T);
+
+        tClass.setStarColor(StarColor.T);
+        tClass.setStellarChromaticity(getColor(chromaticyMap.get("T")));
+
+        tClass.setUpperTemperature(1300);
+        tClass.setLowerTemperature(700);
+
+        tClass.setColor("magenta");
+        tClass.setChromacity("magenta");
+
+        tClass.setUpperMass(0.085);
+        tClass.setLowerMass(0.070);
+
+        tClass.setUpperRadius(0.110);
+        tClass.setLowerRadius(0.088);
+
+        tClass.setUpperLuminosity(0.00031);
+        tClass.setLowerLuminosity(0.00006);
+
+        tClass.setLines(HydrogenLines.VERY_WEAK);
+        tClass.setSequenceFraction(12.45);
+
+        return tClass;
+    }
+
+    private static StellarClassification createYClass() {
+        StellarClassification yClass = new StellarClassification();
+        yClass.setStellarType(StellarType.Y);
+
+        yClass.setStarColor(StarColor.Y);
+        yClass.setStellarChromaticity(getColor(chromaticyMap.get("Y")));
+
+        yClass.setUpperTemperature(700);
+        yClass.setLowerTemperature(500);
+
+        yClass.setColor("infared");
+        yClass.setChromacity("infrared");
+
+        yClass.setUpperMass(0.065);
+        yClass.setLowerMass(0.040);
+
+        yClass.setUpperRadius(0.080);
+        yClass.setLowerRadius(0.050);
+
+        yClass.setUpperLuminosity(0.00006);
+        yClass.setLowerLuminosity(0.00001);
+
+        yClass.setLines(HydrogenLines.VERY_WEAK);
+        yClass.setSequenceFraction(10.45);
+
+        return yClass;
+    }
+
+
     private static StellarClassification createQClass() {
         StellarClassification qClass = new StellarClassification();
-        qClass.setStellarType(StellarType.Q);
+        qClass.setStellarType(StellarType.Y);
 
         qClass.setStarColor(StarColor.F);
         qClass.setStellarChromaticity(getColor(chromaticyMap.get("F")));
@@ -460,6 +558,207 @@ public class StellarFactory {
         qClass.setSequenceFraction(3);
         return qClass;
     }
+
+    ////////////////////  D Class stars
+
+
+    private static StellarClassification createDAClass() {
+        StellarClassification daClass = new StellarClassification();
+        daClass.setStellarType(StellarType.DA);
+
+        daClass.setStarColor(StarColor.DA);
+        daClass.setStellarChromaticity(getColor(chromaticyMap.get("DA")));
+
+        daClass.setUpperTemperature(50000);
+        daClass.setLowerTemperature(6000);
+
+        daClass.setColor("white");
+        daClass.setChromacity("white");
+
+        daClass.setUpperMass(0.45);
+        daClass.setLowerMass(0.08);
+
+        daClass.setUpperRadius(0.7);
+        daClass.setLowerRadius(0.1);
+
+        daClass.setUpperLuminosity(0.08);
+        daClass.setLowerLuminosity(0.001);
+
+        daClass.setLines(HydrogenLines.STRONG);
+        daClass.setSequenceFraction(29);
+
+        return daClass;
+    }
+
+    private static StellarClassification createDBClass() {
+        StellarClassification dbClass = new StellarClassification();
+        dbClass.setStellarType(StellarType.DB);
+
+        dbClass.setStarColor(StarColor.DB);
+        dbClass.setStellarChromaticity(getColor(chromaticyMap.get("DB")));
+
+        dbClass.setUpperTemperature(50000);
+        dbClass.setLowerTemperature(6000);
+
+        dbClass.setColor("white");
+        dbClass.setChromacity("white");
+
+        dbClass.setUpperMass(0.45);
+        dbClass.setLowerMass(0.08);
+
+        dbClass.setUpperRadius(0.7);
+        dbClass.setLowerRadius(0.1);
+
+        dbClass.setUpperLuminosity(0.08);
+        dbClass.setLowerLuminosity(0.001);
+
+        dbClass.setLines(HydrogenLines.STRONG);
+        dbClass.setSequenceFraction(5.1);
+
+        return dbClass;
+    }
+
+    private static StellarClassification createDOClass() {
+        StellarClassification doClass = new StellarClassification();
+        doClass.setStellarType(StellarType.DO);
+
+        doClass.setStarColor(StarColor.DO);
+        doClass.setStellarChromaticity(getColor(chromaticyMap.get("DO")));
+
+        doClass.setUpperTemperature(50000);
+        doClass.setLowerTemperature(6000);
+
+        doClass.setColor("white");
+        doClass.setChromacity("white");
+
+        doClass.setUpperMass(0.45);
+        doClass.setLowerMass(0.08);
+
+        doClass.setUpperRadius(0.7);
+        doClass.setLowerRadius(0.1);
+
+        doClass.setUpperLuminosity(0.08);
+        doClass.setLowerLuminosity(0.001);
+
+        doClass.setLines(HydrogenLines.MEDIUM);
+        doClass.setSequenceFraction(76.45);
+
+        return doClass;
+    }
+
+    private static StellarClassification createDQClass() {
+        StellarClassification dqClass = new StellarClassification();
+        dqClass.setStellarType(StellarType.DQ);
+
+        dqClass.setStarColor(StarColor.DQ);
+        dqClass.setStellarChromaticity(getColor(chromaticyMap.get("DQ")));
+
+        dqClass.setUpperTemperature(18000);
+        dqClass.setLowerTemperature(12000);
+
+        dqClass.setColor("white");
+        dqClass.setChromacity("white");
+
+        dqClass.setUpperMass(0.45);
+        dqClass.setLowerMass(0.08);
+
+        dqClass.setUpperRadius(0.7);
+        dqClass.setLowerRadius(0.1);
+
+        dqClass.setUpperLuminosity(0.08);
+        dqClass.setLowerLuminosity(0.001);
+
+        dqClass.setLines(HydrogenLines.WEAK);
+        dqClass.setSequenceFraction(0.02);
+
+        return dqClass;
+    }
+
+    private static StellarClassification createDZClass() {
+        StellarClassification dzClass = new StellarClassification();
+        dzClass.setStellarType(StellarType.DZ);
+
+        dzClass.setStarColor(StarColor.DZ);
+        dzClass.setStellarChromaticity(getColor(chromaticyMap.get("DZ")));
+
+        dzClass.setUpperTemperature(50000);
+        dzClass.setLowerTemperature(6000);
+
+        dzClass.setColor("white");
+        dzClass.setChromacity("white");
+
+        dzClass.setUpperMass(0.45);
+        dzClass.setLowerMass(0.08);
+
+        dzClass.setUpperRadius(0.7);
+        dzClass.setLowerRadius(0.1);
+
+        dzClass.setUpperLuminosity(0.08);
+        dzClass.setLowerLuminosity(0.001);
+
+        dzClass.setLines(HydrogenLines.WEAK);
+        dzClass.setSequenceFraction(76.45);
+
+        return dzClass;
+    }
+
+    private static StellarClassification createDCClass() {
+        StellarClassification dcClass = new StellarClassification();
+        dcClass.setStellarType(StellarType.DC);
+
+        dcClass.setStarColor(StarColor.DC);
+        dcClass.setStellarChromaticity(getColor(chromaticyMap.get("DC")));
+
+        dcClass.setUpperTemperature(50000);
+        dcClass.setLowerTemperature(6000);
+
+        dcClass.setColor("white");
+        dcClass.setChromacity("white");
+
+        dcClass.setUpperMass(0.45);
+        dcClass.setLowerMass(0.08);
+
+        dcClass.setUpperRadius(0.7);
+        dcClass.setLowerRadius(0.1);
+
+        dcClass.setUpperLuminosity(0.08);
+        dcClass.setLowerLuminosity(0.001);
+
+        dcClass.setLines(HydrogenLines.MEDIUM);
+        dcClass.setSequenceFraction(3.8);
+
+        return dcClass;
+    }
+
+    private static StellarClassification createDXClass() {
+        StellarClassification dxClass = new StellarClassification();
+        dxClass.setStellarType(StellarType.DX);
+
+        dxClass.setStarColor(StarColor.DX);
+        dxClass.setStellarChromaticity(getColor(chromaticyMap.get("DX")));
+
+        dxClass.setUpperTemperature(50000);
+        dxClass.setLowerTemperature(6000);
+
+        dxClass.setColor("white");
+        dxClass.setChromacity("white");
+
+        dxClass.setUpperMass(0.45);
+        dxClass.setLowerMass(0.08);
+
+        dxClass.setUpperRadius(0.7);
+        dxClass.setLowerRadius(0.1);
+
+        dxClass.setUpperLuminosity(0.08);
+        dxClass.setLowerLuminosity(0.001);
+
+        dxClass.setLines(HydrogenLines.VERY_WEAK);
+        dxClass.setSequenceFraction(76.45);
+
+        return dxClass;
+    }
+
+
 
     /**
      * create the stellar types
@@ -494,9 +793,51 @@ public class StellarFactory {
         stellarClassificationMap.put(mClass.getStellarType().toString(), mClass);
         stellarClasses.add(StellarType.M.toString());
 
+        StellarClassification lClass = createLClass();
+        stellarClassificationMap.put(lClass.getStellarType().toString(), lClass);
+        stellarClasses.add(StellarType.L.toString());
+
+        StellarClassification tClass = createTClass();
+        stellarClassificationMap.put(tClass.getStellarType().toString(), tClass);
+        stellarClasses.add(StellarType.T.toString());
+
+        StellarClassification yClass = createYClass();
+        stellarClassificationMap.put(yClass.getStellarType().toString(), yClass);
+        stellarClasses.add(StellarType.Y.toString());
+
         StellarClassification qClass = createQClass();
         stellarClassificationMap.put(qClass.getStellarType().toString(), qClass);
         stellarClasses.add(StellarType.Q.toString());
+
+        ////////////////// D class stars  ///////////////////
+
+        StellarClassification daClass = createDAClass();
+        stellarClassificationMap.put(daClass.getStellarType().toString(), daClass);
+        stellarClasses.add(StellarType.DA.toString());
+
+        StellarClassification dbClass = createDBClass();
+        stellarClassificationMap.put(dbClass.getStellarType().toString(), dbClass);
+        stellarClasses.add(StellarType.DB.toString());
+
+        StellarClassification doClass = createDOClass();
+        stellarClassificationMap.put(doClass.getStellarType().toString(), doClass);
+        stellarClasses.add(StellarType.DO.toString());
+
+        StellarClassification dqClass = createDQClass();
+        stellarClassificationMap.put(dqClass.getStellarType().toString(), dqClass);
+        stellarClasses.add(StellarType.DQ.toString());
+
+        StellarClassification dzClass = createDZClass();
+        stellarClassificationMap.put(dzClass.getStellarType().toString(), dzClass);
+        stellarClasses.add(StellarType.DZ.toString());
+
+        StellarClassification dcClass = createDCClass();
+        stellarClassificationMap.put(dcClass.getStellarType().toString(), dcClass);
+        stellarClasses.add(StellarType.DC.toString());
+
+        StellarClassification dxClass = createDXClass();
+        stellarClassificationMap.put(dxClass.getStellarType().toString(), dxClass);
+        stellarClasses.add(StellarType.DX.toString());
 
     }
 

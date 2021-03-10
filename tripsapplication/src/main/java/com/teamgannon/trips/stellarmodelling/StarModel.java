@@ -5,10 +5,7 @@ import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Data
@@ -50,25 +47,51 @@ public class StarModel {
 
 
     public void setStarClass(String spectralClass) {
-        Pattern spectralSplit = Pattern.compile("^[A-Z]+");
-        String[] split = spectralSplit.split(spectralClass);
-        String sClass = spectralClass.substring(0, spectralClass.length() - split[1].length());
-        StellarClassification stellarClassification = factory.getStellarClass(sClass);
-        if (split.length == 2) {
-            try {
-                stellarClass = stellarClassification.getStellarType();
-                chromaticity = stellarClassification.getStellarChromaticity();
-                hydrogenLines = stellarClassification.getLines();
-                percentageFractionOfWhole = stellarClassification.getSequenceFraction();
+        if (spectralClass.length() == 1) {
+            StellarClassification stellarClassification = factory.getStellarClass(spectralClass);
+            stellarClass = stellarClassification.getStellarType();
+        } else {
+            Pattern spectralSplit = Pattern.compile("^[A-Z]+");
+            String[] split = spectralSplit.split(spectralClass);
+            String sClass;
+            if (split.length == 0) {
+                sClass = spectralClass;
+            } else {
+                sClass = spectralClass.substring(0, spectralClass.length() - split[1].length());
+            }
+            StellarClassification stellarClassification = factory.getStellarClass(sClass);
+            if (stellarClassification != null) {
+                if (split.length == 2) {
+                    try {
+                        stellarClass = stellarClassification.getStellarType();
+                        chromaticity = stellarClassification.getStellarChromaticity();
+                        hydrogenLines = stellarClassification.getLines();
+                        percentageFractionOfWhole = stellarClassification.getSequenceFraction();
 
-                double multiplier = Double.parseDouble(split[1]);
-                mass = calcMean(stellarClassification.getUpperMass(), stellarClassification.getLowerMass(), multiplier / 10);
-                radius = calcMean(stellarClassification.getUpperRadius(), stellarClassification.getLowerRadius(), multiplier / 10);
-                luminosity = calcMean(stellarClassification.getUpperLuminosity(), stellarClassification.getLowerLuminosity(), multiplier / 10);
-                temperature = calcMean(stellarClassification.getUpperTemperature(), stellarClassification.getLowerTemperature(), multiplier / 10);
-                absoluteMagnitude = StarUtils.absoluteMagnitude(luminosity);
-                log.info("mass={}, radius = {}, luminosity={}, temperature={}", mass, radius, luminosity, temperature);
-            } catch (NullPointerException ignored) {
+                        double multiplier = Double.parseDouble(split[1]);
+                        mass = calcMean(stellarClassification.getUpperMass(), stellarClassification.getLowerMass(), multiplier / 10);
+                        radius = calcMean(stellarClassification.getUpperRadius(), stellarClassification.getLowerRadius(), multiplier / 10);
+                        luminosity = calcMean(stellarClassification.getUpperLuminosity(), stellarClassification.getLowerLuminosity(), multiplier / 10);
+                        temperature = calcMean(stellarClassification.getUpperTemperature(), stellarClassification.getLowerTemperature(), multiplier / 10);
+                        absoluteMagnitude = StarUtils.absoluteMagnitude(luminosity);
+//                        log.info("mass={}, radius = {}, luminosity={}, temperature={}", mass, radius, luminosity, temperature);
+                    } catch (NullPointerException ignored) {
+                    }
+                } else {
+                    stellarClass = stellarClassification.getStellarType();
+                    chromaticity = stellarClassification.getStellarChromaticity();
+                    hydrogenLines = stellarClassification.getLines();
+                    percentageFractionOfWhole = stellarClassification.getSequenceFraction();
+                    double multiplier = 5;
+                    mass = calcMean(stellarClassification.getUpperMass(), stellarClassification.getLowerMass(), multiplier / 10);
+                    radius = calcMean(stellarClassification.getUpperRadius(), stellarClassification.getLowerRadius(), multiplier / 10);
+                    luminosity = calcMean(stellarClassification.getUpperLuminosity(), stellarClassification.getLowerLuminosity(), multiplier / 10);
+                    temperature = calcMean(stellarClassification.getUpperTemperature(), stellarClassification.getLowerTemperature(), multiplier / 10);
+                    absoluteMagnitude = StarUtils.absoluteMagnitude(luminosity);
+//                    log.info("mass={}, radius = {}, luminosity={}, temperature={}", mass, radius, luminosity, temperature);
+                }
+            } else {
+                log.error("unable to find a stellar classification for {}", spectralClass);
             }
         }
     }

@@ -24,4 +24,9 @@ public class TripsContext {
      */
     private @NotNull CurrentPlot currentPlot = new CurrentPlot();
 
+    /**
+     * the constellation set
+     */
+    private ConstellationSet constellationSet = new ConstellationSet();
+
 }

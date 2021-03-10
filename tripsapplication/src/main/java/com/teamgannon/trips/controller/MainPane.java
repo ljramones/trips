@@ -1,10 +1,7 @@
 package com.teamgannon.trips.controller;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.ApplicationPreferences;
-import com.teamgannon.trips.config.application.Localization;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
-import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.*;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
@@ -76,7 +73,12 @@ import org.kordamp.ikonli.zondicons.Zondicons;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -297,10 +299,49 @@ public class MainPane implements
 
         showBeginningAlert();
 
+        loadConstellationFile();
+
+    }
+
+    /**
+     * load the constellation file
+     */
+    private void loadConstellationFile() {
+        try {
+            File constellationFile = ResourceUtils.getFile("classpath:files/constellation.csv");
+            BufferedReader reader = new BufferedReader(new FileReader(constellationFile));
+
+            boolean readComplete = false;
+            String line = reader.readLine();
+            do {
+                String[] parts = line.split(",");
+                Constellation constellation = Constellation
+                        .builder()
+                        .name(parts[0])
+                        .iauAbbr(parts[1])
+                        .nasaAbbr(parts[2])
+                        .brightestStar(parts[4])
+                        .build();
+
+                tripsContext.getConstellationSet().getConstellationList().add(constellation);
+
+                line = reader.readLine();
+                if (line == null) {
+                    readComplete = true;
+                }
+            } while (!readComplete); // the moment readComplete turns true, we stop
+
+            // setup
+            tripsContext.getConstellationSet().setup();
+
+            log.info("loaded constellation file");
+
+        } catch (IOException e) {
+            log.error("cannot load constellation file:" + e.getMessage());
+        }
     }
 
     private void setButtonFonts() {
-
     }
 
 
@@ -1276,6 +1317,9 @@ public class MainPane implements
         routingPanel.setContext(descriptor);
 
         if (showPlot || showTable) {
+            // get the distance range
+            double displayRadius = searchQuery.getUpperDistanceLimit();
+
             // do a search and cause the plot to show it
             List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
@@ -1283,6 +1327,7 @@ public class MainPane implements
                 if (showPlot) {
                     plotManager.drawAstrographicData(descriptor,
                             starObjects,
+                            displayRadius,
                             searchQuery.getCenterCoordinates(),
                             tripsContext.getAppViewPreferences().getColorPallete(),
                             tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -1330,9 +1375,13 @@ public class MainPane implements
         List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
         if (!starObjects.isEmpty()) {
+            // get the distance range
+            double displayRadius = searchQuery.getUpperDistanceLimit();
+
             if (showPlot) {
                 plotManager.drawAstrographicData(searchQuery.getDescriptor(),
                         starObjects,
+                        displayRadius,
                         searchQuery.getCenterCoordinates(),
                         tripsContext.getAppViewPreferences().getColorPallete(),
                         tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -1618,8 +1667,12 @@ public class MainPane implements
                         showList(advResultsSet.getStarsFound());
                     }
                     if (advResultsSet.isPlotStars()) {
+                        // get the distance range - in this case, pick a default @todo check this
+                        double displayRadius = searchContext.getAstroSearchQuery().getUpperDistanceLimit();
+
                         plotManager.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
                                 advResultsSet.getStarsFound(),
+                                displayRadius,
                                 searchContext.getAstroSearchQuery().getCenterCoordinates(),
                                 tripsContext.getAppViewPreferences().getColorPallete(),
                                 tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
