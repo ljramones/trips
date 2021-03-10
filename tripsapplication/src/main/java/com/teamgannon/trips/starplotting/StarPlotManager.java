@@ -340,7 +340,7 @@ public class StarPlotManager {
                     colorPalette,
                     starDisplayPreferences,
                     politiesPreferences,
-                    labelsOn,
+                    record.isDisplayLabel(),
                     politiesOn);
 
             // create the extension stem tot he star from the grid
@@ -863,7 +863,7 @@ public class StarPlotManager {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
                 StarObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromAstrographicObject(record, starDisplayPreferences);
+                StarDisplayRecord record1 = StarDisplayRecord.fromStarObject(record, starDisplayPreferences);
                 if (record1 != null) {
                     record1.setCoordinates(starDisplayRecord.getCoordinates());
                     log.info("Changed value: {}", record);

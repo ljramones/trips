@@ -67,6 +67,8 @@ public class StarsPane extends Pane {
     private final ColorPicker tClassColorPicker = new ColorPicker();
     private final ColorPicker yClassColorPicker = new ColorPicker();
 
+    private final TextField numberOfLabelsTextField = new TextField("30");
+
     private final @NotNull TitledPane starPane;
 
     public StarsPane(@NotNull StarDisplayPreferences starDisplayPreferences, PreferencesUpdaterListener updater) {
@@ -74,14 +76,14 @@ public class StarsPane extends Pane {
         this.updater = updater;
         VBox vBox = new VBox();
 
-        Pane pane1 = createStarPane(starDisplayPreferences.getStarMap());
+        Pane pane1 = createStarPane();
         starPane = new TitledPane(STAR_PANE_TITLE, pane1);
         vBox.getChildren().add(starPane);
 
         this.getChildren().add(vBox);
     }
 
-    private @NotNull Pane createStarPane(@NotNull Map<StellarType, StarDescriptionPreference> starMap) {
+    private @NotNull Pane createStarPane() {
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
@@ -96,7 +98,7 @@ public class StarsPane extends Pane {
         gridPane.add(colorValueHead, 2, 0);
         gridPane.add(colorPickerHead, 3, 0);
 
-        StarDescriptionPreference oStar = starMap.get(StellarType.O);
+        StarDescriptionPreference oStar = starDisplayPreferences.get(StellarType.O);
         Label oClassLabel = new Label("O Class:");
         oClassLabel.setFont(font);
         gridPane.add(oClassLabel, 0, 1);
@@ -113,7 +115,7 @@ public class StarsPane extends Pane {
             oClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference bStar = starMap.get(StellarType.B);
+        StarDescriptionPreference bStar = starDisplayPreferences.get(StellarType.B);
         Label bClassLabel = new Label("B Class:");
         bClassLabel.setFont(font);
         gridPane.add(bClassLabel, 0, 2);
@@ -130,7 +132,7 @@ public class StarsPane extends Pane {
             bClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference aStar = starMap.get(StellarType.A);
+        StarDescriptionPreference aStar = starDisplayPreferences.get(StellarType.A);
         Label aClassLabel = new Label("A Class:");
         aClassLabel.setFont(font);
         gridPane.add(aClassLabel, 0, 3);
@@ -147,7 +149,7 @@ public class StarsPane extends Pane {
             aClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference fStar = starMap.get(StellarType.F);
+        StarDescriptionPreference fStar = starDisplayPreferences.get(StellarType.F);
         Label fClassLabel = new Label("F Class:");
         fClassLabel.setFont(font);
         gridPane.add(fClassLabel, 0, 4);
@@ -164,7 +166,7 @@ public class StarsPane extends Pane {
             fClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference gStar = starMap.get(StellarType.G);
+        StarDescriptionPreference gStar = starDisplayPreferences.get(StellarType.G);
         Label gClassLabel = new Label("G Class:");
         gClassLabel.setFont(font);
         gridPane.add(gClassLabel, 0, 5);
@@ -181,7 +183,7 @@ public class StarsPane extends Pane {
             gClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference kStar = starMap.get(StellarType.K);
+        StarDescriptionPreference kStar = starDisplayPreferences.get(StellarType.K);
         Label kClassLabel = new Label("K Class:");
         kClassLabel.setFont(font);
         gridPane.add(kClassLabel, 0, 6);
@@ -198,7 +200,7 @@ public class StarsPane extends Pane {
             kClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference mStar = starMap.get(StellarType.M);
+        StarDescriptionPreference mStar = starDisplayPreferences.get(StellarType.M);
         Label mClassLabel = new Label("M Class:");
         mClassLabel.setFont(font);
         gridPane.add(mClassLabel, 0, 7);
@@ -215,7 +217,7 @@ public class StarsPane extends Pane {
             mClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference lStar = starMap.get(StellarType.L);
+        StarDescriptionPreference lStar = starDisplayPreferences.get(StellarType.L);
         Label lClassLabel = new Label("L Class:");
         lClassLabel.setFont(font);
         gridPane.add(lClassLabel, 0, 8);
@@ -232,7 +234,7 @@ public class StarsPane extends Pane {
             lClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference tStar = starMap.get(StellarType.T);
+        StarDescriptionPreference tStar = starDisplayPreferences.get(StellarType.T);
         Label tClassLabel = new Label("T Class:");
         tClassLabel.setFont(font);
         gridPane.add(tClassLabel, 0, 9);
@@ -249,7 +251,7 @@ public class StarsPane extends Pane {
             tClassColorTextField.setText(c.toString());
         });
 
-        StarDescriptionPreference yStar = starMap.get(StellarType.Y);
+        StarDescriptionPreference yStar = starDisplayPreferences.get(StellarType.Y);
         Label yClassLabel = new Label("Y Class:");
         yClassLabel.setFont(font);
         gridPane.add(yClassLabel, 0, 10);
@@ -266,6 +268,12 @@ public class StarsPane extends Pane {
             yClassColorTextField.setText(c.toString());
         });
 
+        Label numberOfStarLabelsLabel = new Label("# of Labels");
+        numberOfStarLabelsLabel.setFont(font);
+        numberOfLabelsTextField.setText(Integer.toString(starDisplayPreferences.getNumberOfVisibleLabels()));
+        gridPane.add(numberOfStarLabelsLabel, 0,11);
+        gridPane.add(numberOfLabelsTextField, 1, 11);
+
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
 
@@ -277,7 +285,7 @@ public class StarsPane extends Pane {
         addBtn.setOnAction(this::changeColorsClicked);
         hBox.getChildren().add(addBtn);
 
-        gridPane.add(hBox, 0, 11, 3, 1);
+        gridPane.add(hBox, 0, 13, 3, 1);
 
 
         /////////////////////
@@ -398,6 +406,13 @@ public class StarsPane extends Pane {
         StarDescriptionPreference yStar = starMap.get(StellarType.Y);
         yStar.setSize(Float.parseFloat(yClassRadiusTextField.getText()));
         yStar.setColor(yClassColorPicker.getValue());
+
+        try {
+            starDisplayPreferences.setNumberOfVisibleLabels(Integer.parseInt(numberOfLabelsTextField.getText()));
+        } catch(NumberFormatException nfe) {
+            showErrorAlert("Star Preferences", "Number of labels must be an integer!");
+            return;
+        }
 
         updater.changeStarPreferences(starDisplayPreferences);
 

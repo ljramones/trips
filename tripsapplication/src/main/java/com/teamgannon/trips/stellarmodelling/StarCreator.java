@@ -14,6 +14,12 @@ public class StarCreator {
     private final String prefixPatternStr = "^(sd|sg|d|c|g)";
     Pattern prefixPattern = Pattern.compile(prefixPatternStr);
 
+    private final String curlyBracketsStr= "\\{(.*?)\\}";
+    Pattern curlyBracketsPattern = Pattern.compile(curlyBracketsStr);
+
+    private final String regBracketsStr= "\\((.*?)\\)";
+    Pattern regBracketsPattern = Pattern.compile(regBracketsStr);
+
     //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
     private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
     Pattern classPattern = Pattern.compile(classPatternStr);
@@ -43,28 +49,42 @@ public class StarCreator {
         if (preMatcher.find()) {
             String prefix = preMatcher.group();
             spectralClassification = spectralClassification.substring(prefix.length());
-            log.info("prefix is " + prefix);
+//            log.info("prefix is " + prefix);
         }
         Matcher spectralClassMatcher = classPattern.matcher(spectralClassification);
         if (spectralClassMatcher.find()) {
             String spectralClass = spectralClassMatcher.group();
             starModel.setStarClass(spectralClass);
-            spectralClassification = spectralClassification.substring(spectralClass.length());
-            log.info("star is " + spectralClass);
+            spectralClassification = spectralClassification.substring(spectralClass.length()).trim();
+//            log.info("star is " + spectralClass);
+        }
+        Matcher curlyBracketsMatcher = curlyBracketsPattern.matcher(spectralClassification);
+        if (curlyBracketsMatcher.find()) {
+            String insideStr = curlyBracketsMatcher.group();
+            spectralClassification = spectralClassification.substring(insideStr.length());
+            insideStr = insideStr.substring(1, insideStr.length()-1);
+            spectralClassification = insideStr+spectralClassification;
+        }
+        Matcher regBracketsMatcher = regBracketsPattern.matcher(spectralClassification);
+        if (regBracketsMatcher.find()) {
+            String insideStr = regBracketsMatcher.group();
+            spectralClassification = spectralClassification.substring(insideStr.length());
+            insideStr = insideStr.substring(1, insideStr.length()-1);
+            spectralClassification = insideStr+spectralClassification;
         }
         Matcher yerkes = yerkesPattern.matcher(spectralClassification);
         if (yerkes.find()) {
             String yerkesClass = yerkes.group();
             starModel.setLuminosityClass(yerkesClass);
             spectralClassification = spectralClassification.substring(yerkesClass.length());
-            log.info("luminosity is " + yerkesClass);
+//            log.info("luminosity is " + yerkesClass);
         }
         Matcher pecular = pecularitiesPattern.matcher(spectralClassification);
         if (pecular.find()) {
             String percularitiesString = pecular.group();
             starModel.setSpectralPecularities(percularitiesString);
             spectralClassification = spectralClassification.substring(percularitiesString.length());
-            log.info("pecularities is " + percularitiesString);
+//            log.info("pecularities is " + percularitiesString);
         }
 
         return starModel;

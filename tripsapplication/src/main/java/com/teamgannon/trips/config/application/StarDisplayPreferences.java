@@ -22,6 +22,11 @@ public class StarDisplayPreferences implements Serializable {
     private @NotNull Map<StellarType, StarDescriptionPreference> starMap = new HashMap<>();
 
     /**
+     * the number of star labels to show onscreen
+     */
+    private int numberOfVisibleLabels = 30;
+
+    /**
      * the initial defaults if none exist
      */
     public void setDefaults() {

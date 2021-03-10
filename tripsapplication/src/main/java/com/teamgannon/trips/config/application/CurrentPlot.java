@@ -10,6 +10,7 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 @Data
 public class CurrentPlot {
@@ -65,12 +66,54 @@ public class CurrentPlot {
     private ColorPalette colorPalette;
 
     /**
+     * a treemap (red/black binary tree) for providing a sort for label validity
+     */
+    private SortedMap<Double, StarDisplayRecord> labelSort = new TreeMap<>(Comparator.reverseOrder());
+    /**
+     * the currently computed visible label set
+     */
+    private Set<StarDisplayRecord> visibleLabelsSet = new HashSet<>();
+
+    /**
      * add a record
      *
      * @param record the record
      */
     public void addRecord(StarDisplayRecord record) {
         starDisplayRecordList.add(record);
+        // put star display record into the label sort
+        labelSort.put(record.getCurrentLabelDisplayScore(), record);
+        System.out.printf("name=%s, score = %.3f, sort count=%d%n", record.getStarName(), record.getCurrentLabelDisplayScore(), labelSort.size());
+    }
+
+    /**
+     * once we have all the labels, we create a sub list that has the stars that we allow labels to show
+     *
+     * @param labelCount the user supplied count of labels to show
+     */
+    public void determineVisibleLabels(int labelCount) {
+        if (labelCount > starDisplayRecordList.size()) {
+            labelCount = starDisplayRecordList.size();
+        }
+        // get an iterator for the treemap to organize the labels in sequence based on score
+        Iterator<StarDisplayRecord> starIt = labelSort.values().stream().iterator();
+        // clear the old visible label map
+        visibleLabelsSet.clear();
+        // create a check set for the user count
+        IntStream.range(0, labelCount).mapToObj(i -> starIt.next()).forEach(next -> visibleLabelsSet.add(next));
+
+        // now set which labels will be displayed
+        starDisplayRecordList.stream().filter(this::isLabelVisible).forEach(record -> record.setDisplayLabel(true));
+    }
+
+    /**
+     * check if the label is visible
+     *
+     * @param record the star record to check
+     * @return true is the count is high enough and with the visible label user count
+     */
+    public boolean isLabelVisible(StarDisplayRecord record) {
+        return visibleLabelsSet.contains(record);
     }
 
     /**

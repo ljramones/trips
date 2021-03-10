@@ -193,9 +193,7 @@ public class AstroCSVStar {
             astro.setMass(parseDouble(mass.trim()));
             astro.setNotes(notes.trim());
             astro.setSource(source.trim());
-            List<String> catalogList = new ArrayList<>();
-            catalogList.add(catalogIdList);
-            astro.setCatalogIdList(catalogList);
+            astro.setCatalogIdList(catalogIdList);
 
             astro.setX(parseDouble(x.trim()));
             astro.setY(parseDouble(y.trim()));
@@ -250,6 +248,8 @@ public class AstroCSVStar {
             astro.setMiscNum3(miscNum3);
             astro.setMiscNum4(miscNum4);
             astro.setMiscNum5(miscNum5);
+
+            astro.calculateDisplayScore();
             
             return astro;
 

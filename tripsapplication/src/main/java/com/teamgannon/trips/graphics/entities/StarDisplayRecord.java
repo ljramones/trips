@@ -67,6 +67,21 @@ public class StarDisplayRecord {
     private double distance;
 
     /**
+     * taken from the star object in database
+     */
+    private double displayScore;
+
+    /**
+     * reflects the current display score based on distance
+     */
+    private double currentLabelDisplayScore;
+
+    /**
+     * this tells the system if a label is alowed to be displayed
+     */
+    private boolean displayLabel = false;
+
+    /**
      * From Simbad, We’re only storing ONE per object, and in reality we’re only interested in the first character
      * (OBAFGKMLTY) Objects which are sub-stellar such as planets should have a value of NULL.  We do not want
      * to try to use this field to code both spec class AND if something’s a planet or a black hole, or whatever.
@@ -124,8 +139,8 @@ public class StarDisplayRecord {
         return object;
     }
 
-    public static @Nullable StarDisplayRecord fromAstrographicObject(@NotNull StarObject starObject,
-                                                                     @NotNull StarDisplayPreferences starDisplayPreferences) {
+    public static @Nullable StarDisplayRecord fromStarObject(@NotNull StarObject starObject,
+                                                             @NotNull StarDisplayPreferences starDisplayPreferences) {
         StarDisplayRecord record = new StarDisplayRecord();
 
         StellarType stellarType;
@@ -151,6 +166,7 @@ public class StarDisplayRecord {
             double[] coords = starObject.getCoordinates();
             record.setActualCoordinates(coords);
             record.setPolity(starObject.getPolity());
+            record.setDisplayScore(starObject.getDisplayScore());
         } else {
             log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
             return null;
@@ -172,7 +188,21 @@ public class StarDisplayRecord {
     public @NotNull StarDisplayRecord copy() {
         StarDisplayRecord record = new StarDisplayRecord();
 
-        record.setNotes(notes);
+        record.setRecordId(recordId);
+        record.setDataSetName(dataSetName);
+        record.setStarName(starName);
+        record.setStarColor(new Color(starColor.getRed(), starColor.getGreen(), starColor.getBlue(), starColor.getOpacity()));
+        record.setRadius(radius);
+        record.setMass(mass);
+        record.setLuminosity(luminosity);
+        record.setTemperature(temperature);
+        record.setMagnitude(magnitude);
+        record.setDistance(distance);
+        record.setDisplayScore(displayScore);
+        record.setCurrentLabelDisplayScore(currentLabelDisplayScore);
+        record.setDisplayLabel(displayLabel);
+        record.setSpectralClass(spectralClass);
+        record.setPolity(polity);
         double[] newCoordinate = new double[3];
         newCoordinate[0] = actualCoordinates[0];
         newCoordinate[1] = actualCoordinates[1];
@@ -180,14 +210,7 @@ public class StarDisplayRecord {
         record.setActualCoordinates(newCoordinate);
         Point3D newPoint = new Point3D(coordinates.getX(), coordinates.getY(), coordinates.getZ());
         record.setCoordinates(newPoint);
-        record.setDataSetName(dataSetName);
-        record.setDistance(distance);
-        record.setRadius(radius);
-        record.setRecordId(recordId);
-        record.setSpectralClass(spectralClass);
-        record.setStarColor(new Color(starColor.getRed(), starColor.getGreen(), starColor.getBlue(), starColor.getOpacity()));
-        record.setStarName(starName);
-        record.setPolity(polity);
+        record.setNotes(notes);
 
         return record;
     }
@@ -225,6 +248,16 @@ public class StarDisplayRecord {
         return (Math.abs(coordinates.getX()) <= 1)
                 & (Math.abs(coordinates.getY()) <= 1)
                 & (Math.abs(coordinates.getZ()) <= 1);
+    }
+
+    /**
+     * calculate current display score
+     * Revised Display Factor =  Display Score * ( 2 * ( Display Radius / Distance from Center))
+     *
+     * @param displayRadius the max display radius
+     */
+    public void setCurrentLabelDisplayScore(double displayRadius) {
+        currentLabelDisplayScore = displayScore * (2 * (displayRadius / distance));
     }
 
 }

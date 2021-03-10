@@ -138,6 +138,9 @@ public class PlotManager {
      */
     public void plotStars(@NotNull DataSetDescriptor dataSetDescriptor, AstroSearchQuery astroSearchQuery) {
 
+        // get the distance range
+        double displayRadius = astroSearchQuery.getUpperDistanceLimit();
+
         // now query the data and plot
         List<StarObject> starObjects = databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
 
@@ -149,6 +152,7 @@ public class PlotManager {
             drawAstrographicData(
                     tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
                     starObjects,
+                    displayRadius,
                     astroSearchQuery.getCenterCoordinates(),
                     tripsContext.getAppViewPreferences().getColorPallete(),
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
@@ -177,11 +181,13 @@ public class PlotManager {
      * draw the ch view file
      *
      * @param starObjects       the list of objects to draw
+     * @param displayRadius     the max display radius
      * @param centerCoordinates the center of the plot
      * @param colorPalette      the color palette to draw
      */
     public void drawAstrographicData(@NotNull DataSetDescriptor dataSetDescriptor,
                                      @NotNull List<StarObject> starObjects,
+                                     double displayRadius,
                                      double[] centerCoordinates,
                                      @NotNull ColorPalette colorPalette,
                                      @NotNull StarDisplayPreferences starDisplayPreferences,
@@ -220,8 +226,9 @@ public class PlotManager {
 
                 // figure out what stars should be plotted in a sphere
                 if (drawable(starObject)) {
-                    StarDisplayRecord record = StarDisplayRecord.fromAstrographicObject(starObject, starDisplayPreferences);
+                    StarDisplayRecord record = StarDisplayRecord.fromStarObject(starObject, starDisplayPreferences);
                     if (record != null) {
+                        record.setCurrentLabelDisplayScore(displayRadius);
                         record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
                         currentPlot.addRecord(record.copy());
                     } else {
@@ -234,6 +241,8 @@ public class PlotManager {
                 log.error("Star color is invalid:{}", starObject);
             }
         }
+
+        currentPlot.determineVisibleLabels(starDisplayPreferences.getNumberOfVisibleLabels());
 
         // with our data now plot in interstellar
         interstellarSpacePane.plotStars(currentPlot);
