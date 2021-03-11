@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics.panes;
 import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
@@ -83,6 +84,12 @@ public class InterstellarSpacePane extends Pane {
     private double mouseDeltaX, mouseDeltaY = 0;
 
     /**
+     * set user sense to engineer mode
+     * false is pilot mode
+     */
+    private UserControls userControls = new UserControls();
+
+    /**
      * the general color palette of the graph
      */
     private ColorPalette colorPalette;
@@ -148,6 +155,7 @@ public class InterstellarSpacePane extends Pane {
         root.getChildren().add(this);
 
         handleMouseEvents();
+        handleKeyBoardEvents();
 
         this.starPlotManager = new StarPlotManager(
                 sceneRoot,
@@ -197,6 +205,7 @@ public class InterstellarSpacePane extends Pane {
 
     }
 
+
     private void setPerspectiveCamera() {
         camera.setNearClip(0.1);
         camera.setFarClip(10000.0);
@@ -213,6 +222,116 @@ public class InterstellarSpacePane extends Pane {
     public void resetView() {
         setInitialView();
         camera.setRotate(25);
+    }
+
+    /**
+     * set user controls
+     *
+     * @param userControls the user controls
+     */
+    public void changeUserControls(UserControls userControls) {
+        this.userControls = userControls;
+    }
+
+    private void handleKeyBoardEvents() {
+        log.info("Setting up keyboard handling");
+        subScene.setOnKeyPressed(event -> {
+            log.info("Keyboard Event Received: {}", event);
+            switch (event.getCode()) {
+                case Z:
+                    if (event.isShiftDown()) {
+                        log.info("shift pressed -> Z");
+//                        cameraXform.ry.setAngle(0.0);
+//                        cameraXform.rx.setAngle(0.0);
+//                        camera.setTranslateZ(-300.0);
+                    }
+//                    cameraXform2.t.setX(0.0);
+//                    cameraXform2.t.setY(0.0);
+                    break;
+                case X:
+                    if (event.isControlDown()) {
+                        log.info("control pressed -> X");
+//                        gridGroup.setVisible(!gridGroup.isVisible());
+                    }
+                    break;
+                case S:
+                    break;
+                case SPACE:
+                    break;
+                case UP:
+                    if (event.isControlDown() && event.isShiftDown()) {
+                        log.info("control and shift pressed -> up");
+//                        cameraXform2.t.setY(cameraXform2.t.getY() - 10.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown() && event.isShiftDown()) {
+                        log.info("alt and shift pressed -> up");
+//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 10.0 * ALT_MULTIPLIER);
+                    } else if (event.isControlDown()) {
+                        log.info("control pressed -> up");
+//                        cameraXform2.t.setY(cameraXform2.t.getY() - 1.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown()) {
+                        log.info("alt pressed -> up");
+//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 2.0 * ALT_MULTIPLIER);
+                    } else if (event.isShiftDown()) {
+                        log.info("shift pressed -> up");
+//                        double z = camera.getTranslateZ();
+//                        double newZ = z + 5.0 * SHIFT_MULTIPLIER;
+//                        camera.setTranslateZ(newZ);
+                    }
+                    break;
+                case DOWN:
+                    if (event.isControlDown() && event.isShiftDown()) {
+                        log.info("control shift pressed -> down");
+//                        cameraXform2.t.setY(cameraXform2.t.getY() + 10.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown() && event.isShiftDown()) {
+                        log.info("alt and shift pressed -> down");
+//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 10.0 * ALT_MULTIPLIER);
+                    } else if (event.isControlDown()) {
+                        log.info("control pressed -> down");
+//                        cameraXform2.t.setY(cameraXform2.t.getY() + 1.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown()) {
+                        log.info("alt pressed -> down");
+//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 2.0 * ALT_MULTIPLIER);
+                    } else if (event.isShiftDown()) {
+                        log.info("shift pressed -> down");
+//                        double z = camera.getTranslateZ();
+//                        double newZ = z - 5.0 * SHIFT_MULTIPLIER;
+//                        camera.setTranslateZ(newZ);
+                    }
+                    break;
+                case RIGHT:
+                    if (event.isControlDown() && event.isShiftDown()) {
+                        log.info("shift and control pressed -> right");
+//                        cameraXform2.t.setX(cameraXform2.t.getX() + 10.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown() && event.isShiftDown()) {
+                        log.info("shift and alt pressed -> right");
+//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 10.0 * ALT_MULTIPLIER);
+                    } else if (event.isControlDown()) {
+                        log.info("control pressed -> right");
+//                        cameraXform2.t.setX(cameraXform2.t.getX() + 1.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown()) {
+                        log.info("alt pressed -> right");
+//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 2.0 * ALT_MULTIPLIER);
+                    }
+                    break;
+                case LEFT:
+                    if (event.isControlDown() && event.isShiftDown()) {
+                        log.info("shift and control pressed -> left");
+//                        cameraXform2.t.setX(cameraXform2.t.getX() - 10.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown() && event.isShiftDown()) {
+                        log.info("shift and alt pressed -> right");
+//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 10.0 * ALT_MULTIPLIER);  // -
+                    } else if (event.isControlDown()) {
+                        log.info("control pressed -> right");
+//                        cameraXform2.t.setX(cameraXform2.t.getX() - 1.0 * CONTROL_MULTIPLIER);
+                    } else if (event.isAltDown()) {
+                        log.info("alt pressed -> right");
+//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 2.0 * ALT_MULTIPLIER);  // -
+                    }
+                    break;
+                default:
+                    log.info("keyboard Event is {}", event.getCode());
+            }
+        });
     }
 
     /**
@@ -235,6 +354,7 @@ public class InterstellarSpacePane extends Pane {
         );
 
         subScene.setOnMouseDragged((MouseEvent me) -> {
+                    int direction = userControls.isControlSense() ? +1 : -1;
                     mouseOldX = mousePosX;
                     mouseOldY = mousePosY;
                     mousePosX = me.getSceneX();
@@ -244,14 +364,18 @@ public class InterstellarSpacePane extends Pane {
                     double modifier = 1.0;
                     double modifierFactor = 0.1;
 
-                    if (me.isPrimaryButtonDown()) {
+                    if (me.isPrimaryButtonDown() && me.isControlDown()) {
+                        log.info("shift sideways");
+                        camera.setTranslateX(mousePosX);
+                        camera.setTranslateY(mousePosY);
+                    } else if (me.isPrimaryButtonDown()) {
                         if (me.isAltDown()) { //roll
-                            rotateZ.setAngle(((rotateZ.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                            rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
                         } else {
-                            rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
+                            rotateY.setAngle(((rotateY.getAngle() + direction * mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
                             rotateX.setAngle(
                                     clamp(
-                                            (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
+                                            (((rotateX.getAngle() - direction * mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
                                             -60,
                                             60
                                     )
@@ -261,7 +385,9 @@ public class InterstellarSpacePane extends Pane {
                     updateLabels();
                 }
         );
+
     }
+
 
     public void simulateStars(int numberStars) {
         starPlotManager.generateRandomStars(numberStars);
@@ -404,7 +530,7 @@ public class InterstellarSpacePane extends Pane {
             if (!sidePanelShiftKludgeFirstTime) {
                 log.info("shift display right!!");
                 camera.setTranslateX(-30);
-            } else{
+            } else {
                 sidePanelShiftKludgeFirstTime = false;
             }
         }
@@ -556,5 +682,6 @@ public class InterstellarSpacePane extends Pane {
     private void run() {
         updateLabels();
     }
+
 
 }

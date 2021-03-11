@@ -69,6 +69,11 @@ public class ApplicationPreferences implements Serializable {
     private @NotNull CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
 
     /**
+     * the user controls
+     */
+    private UserControls userControls;
+
+    /**
      * ctor
      */
     public ApplicationPreferences() {
