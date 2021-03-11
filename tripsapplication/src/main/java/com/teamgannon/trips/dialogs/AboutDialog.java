@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs;
 import com.teamgannon.trips.config.application.Localization;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -63,7 +64,8 @@ public class AboutDialog extends Dialog<String> {
         vBox.getChildren().add(gridPane);
 
         HBox hBox = new HBox();
-        Button resetBtn = new Button("Cancel");
+        hBox.setAlignment(Pos.CENTER);
+        Button resetBtn = new Button("Close");
         resetBtn.setOnAction(this::cancel);
         hBox.getChildren().add(resetBtn);
         vBox.getChildren().add(hBox);
