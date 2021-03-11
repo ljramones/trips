@@ -513,7 +513,7 @@ public class StarObject implements Serializable {
      */
     public void calculateDisplayScore() {
         displayScore = calculateBaseScore() * calculateLabelMultiplier();
-        System.out.println(String.format("Display name =%s, Spectral class = %s, score = %.3f", displayName, orthoSpectralClass, displayScore));
+//        System.out.println(String.format("Display name =%s, Spectral class = %s, score = %.3f", displayName, orthoSpectralClass, displayScore));
     }
 
     /**
