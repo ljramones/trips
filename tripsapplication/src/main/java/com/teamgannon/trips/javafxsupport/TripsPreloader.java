@@ -56,6 +56,11 @@ public class TripsPreloader extends Preloader {
         hBox4.getChildren().add(new Label("Please wait..."));
         loading.getChildren().add(hBox4);
 
+        HBox hBox5 = new HBox();
+        hBox5.setAlignment(Pos.CENTER);
+        hBox5.getChildren().add(new Label("Version v0.6.6"));
+        loading.getChildren().add(hBox5);
+
         BorderPane root = new BorderPane(loading);
         Scene scene = new Scene(root);
 
