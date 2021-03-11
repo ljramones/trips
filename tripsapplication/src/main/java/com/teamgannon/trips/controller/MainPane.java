@@ -1534,6 +1534,13 @@ public class MainPane implements
         databaseManagementService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
+    @Override
+    public void changeUserControlsPreferences(UserControls userControls) {
+        //  @todo
+        log.info("changed user controls");
+        interstellarSpacePane.changeUserControls(userControls);
+    }
+
 
     ///////////////////////
 

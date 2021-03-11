@@ -72,6 +72,11 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
                 new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), updater));
         tabPane.getTabs().add(civilizationTab);
 
+        Tab userControlsTab = new Tab("User Controls");
+        String style7 = "-fx-background-color: lightblue";
+        userControlsTab.setStyle(style7);
+        userControlsTab.setContent(new UserControlsPane(tripsContext.getAppViewPreferences().getUserControls(), updater));
+        tabPane.getTabs().add(userControlsTab);
         vBox.getChildren().add(tabPane);
     }
 

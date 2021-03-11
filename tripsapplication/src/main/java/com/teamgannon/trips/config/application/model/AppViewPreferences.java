@@ -1,6 +1,7 @@
 package com.teamgannon.trips.config.application.model;
 
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import lombok.Data;
@@ -28,5 +29,10 @@ public class AppViewPreferences {
      * the civilizations
      */
     private @NotNull CivilizationDisplayPreferences civilizationDisplayPreferences = new CivilizationDisplayPreferences();
+
+    /**
+     * the user controls
+     */
+    private @NotNull UserControls userControls = new UserControls();
 
 }
