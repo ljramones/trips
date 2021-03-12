@@ -83,7 +83,7 @@ public class CurrentPlot {
         starDisplayRecordList.add(record);
         // put star display record into the label sort
         labelSort.put(record.getCurrentLabelDisplayScore(), record);
-        System.out.printf("name=%s, score = %.3f, sort count=%d%n", record.getStarName(), record.getCurrentLabelDisplayScore(), labelSort.size());
+//        System.out.printf("name=%s, score = %.3f, sort count=%d%n", record.getStarName(), record.getCurrentLabelDisplayScore(), labelSort.size());
     }
 
     /**

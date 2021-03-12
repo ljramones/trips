@@ -69,6 +69,9 @@ public class RouteDialog extends Dialog<RouteDescriptor> {
         ButtonType buttonTypeOk = new ButtonType("Okay", ButtonBar.ButtonData.OK_DONE);
         this.getDialogPane().getButtonTypes().add(buttonTypeOk);
 
+        ButtonType buttonTypeCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        this.getDialogPane().getButtonTypes().add(buttonTypeCancel);
+
         setResultConverter(b -> {
             if (b == buttonTypeOk) {
                 double lineWidth = 0.5;

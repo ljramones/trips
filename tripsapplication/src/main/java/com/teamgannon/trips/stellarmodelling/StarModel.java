@@ -47,9 +47,24 @@ public class StarModel {
 
 
     public void setStarClass(String spectralClass) {
+        if (spectralClass.isEmpty()) {
+            log.error("spectral class cannot be null");
+            return;
+        }
+        if (spectralClass.equals("0")) {
+            log.error("used zero instead of O, changed to an O");
+            spectralClass = "O";
+        }
         if (spectralClass.length() == 1) {
             StellarClassification stellarClassification = factory.getStellarClass(spectralClass);
+            if (stellarClassification == null) {
+                log.error("spectral classification cannot be null");
+                return;
+            }
             stellarClass = stellarClassification.getStellarType();
+            if (stellarClass == null) {
+                log.info("bad stellar class:{}", spectralClass);
+            }
         } else {
             Pattern spectralSplit = Pattern.compile("^[A-Z]+");
             String[] split = spectralSplit.split(spectralClass);
@@ -57,7 +72,11 @@ public class StarModel {
             if (split.length == 0) {
                 sClass = spectralClass;
             } else {
-                sClass = spectralClass.substring(0, spectralClass.length() - split[1].length());
+                int remainingLength = spectralClass.length() - split[1].length();
+                if (remainingLength <= 0) {
+                    log.error("hmmm");
+                }
+                sClass = spectralClass.substring(0, remainingLength);
             }
             StellarClassification stellarClassification = factory.getStellarClass(sClass);
             if (stellarClassification != null) {

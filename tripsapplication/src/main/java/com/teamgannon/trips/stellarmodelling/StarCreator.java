@@ -83,7 +83,7 @@ public class StarCreator {
         if (pecular.find()) {
             String percularitiesString = pecular.group();
             starModel.setSpectralPecularities(percularitiesString);
-            spectralClassification = spectralClassification.substring(percularitiesString.length());
+//            spectralClassification = spectralClassification.substring(percularitiesString.length());
 //            log.info("pecularities is " + percularitiesString);
         }
 

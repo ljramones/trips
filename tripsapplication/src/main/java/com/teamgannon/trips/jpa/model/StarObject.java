@@ -641,6 +641,11 @@ public class StarObject implements Serializable {
 
         StarModel starModel = new StarCreator().parseSpectral(orthoSpectralClass);
 
+        if (starModel.getStellarClass()==null) {
+            log.error("could not find stellar class");
+            return 1;
+        }
+
         // process harvard spectral class
         if (orthoSpectralClass.length() > 1) {
             StellarType x = starModel.getStellarClass();

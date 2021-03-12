@@ -1,12 +1,17 @@
 package com.teamgannon.trips.config.application;
 
-import javafx.scene.input.KeyCode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Slf4j
 public class UserControls {
+
+    public final static double SLOW_SPEED = 0.05;
+    public final static double NORMAL_SPEED = 0.2;
+    public final static double FAST_SPEED = 2;
+    public final static double FASTEST_SPEED = 5;
+
 
     /**
      * true is engineer sense
@@ -17,20 +22,13 @@ public class UserControls {
      */
     private boolean controlSense = true;
 
-    /**
-     * move left
-     */
-    private KeyCode left;
+    private double slow = 0.05;
 
-    /**
-     * move right
-     */
-    private KeyCode right;
+    private double normal = 0.2;
 
-    /**
-     * what is the drag key
-     */
-    private KeyCode drag;
+    private double fast = 2;
+
+    private double veryFast = 5;
 
     public void reset() {
         controlSense = true;
