@@ -11,4 +11,6 @@ public interface StellarPropertiesDisplayerListener {
 
     void displayStellarProperties(StarObject starObject);
 
+    void clearData();
+
 }

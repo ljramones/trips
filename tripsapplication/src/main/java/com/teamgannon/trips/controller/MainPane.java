@@ -838,6 +838,7 @@ public class MainPane implements
 
 
     public void plotStars(ActionEvent actionEvent) {
+        clearData();
         plotManager.showPlot(searchContext);
     }
 
@@ -1293,6 +1294,11 @@ public class MainPane implements
                 toggleSidePane(null);
             }
         }
+    }
+
+    @Override
+    public void clearData() {
+        starPropertiesPane.clearData();
     }
 
     @Override

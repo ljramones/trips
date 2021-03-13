@@ -66,6 +66,8 @@ public class StarPropertiesPane extends Pane {
     private final Label bpgLabel = new Label();
     private final Label grpLabel = new Label();
 
+    private Button simbadButton = new Button("More\nInfo");
+
 
     private @NotNull StarObject record = new StarObject();
     private final HostServices hostServices;
@@ -145,6 +147,62 @@ public class StarPropertiesPane extends Pane {
         bpgLabel.setText(Double.toString(record.getBpg()));
         grpLabel.setText(Double.toString(record.getGrp()));
 
+        simbadButton.setDisable(record.getSimbadId().isEmpty());
+
+    }
+
+    public void clearData() {
+
+        // primary tab
+        starNameLabel1.setText("");
+        commonNameLabel1.setText("");
+        constellationNameLabel.setText("");
+        spectralClassLabel.setText("");
+        distanceNameLabel.setText("");
+        metallicityLabel.setText("");
+        ageLabel.setText("");
+        notesArea.setText("");
+
+        // fictional info tab
+        starNameLabel2.setText("");
+        commonNameLabel2.setText("");
+        polityLabel.setText("");
+        worldTypeLabel.setText("");
+        fuelTypeLabel.setText("");
+        techTypeLabel.setText("");
+        portTypeLabel.setText("");
+        popTypeLabel.setText("");
+        prodField.setText("");
+        milspaceLabel.setText("");
+        milplanLabel.setText("");
+        anomalyCheckbox.setSelected(false);
+        otherCheckbox.setSelected(false);
+
+        // other info tab
+        starNameLabel3.setText("");
+        commonNameLabel3.setText("");
+        simbadIdLabel.setText("");
+        galacticCoordinatesLabel.setText("");
+        radiusLabel.setText("");
+        raLabel.setText("");
+        decLabel.setText("");
+        pmraLabel.setText("");
+        pmdecLabel.setText("");
+        radialVelocityLabel.setText("");
+        parallaxLabel.setText("");
+        tempLabel.setText("");
+
+        maguLabel.setText("");
+        magbLabel.setText("");
+        magvLabel.setText("");
+        magrLabel.setText("");
+        magiLabel.setText("");
+
+        bprpLabel.setText("");
+        bpgLabel.setText("");
+        grpLabel.setText("");
+
+        simbadButton.setDisable(true);
     }
 
 
@@ -275,11 +333,16 @@ public class StarPropertiesPane extends Pane {
         simbadIdLabel.setText(record.getMiscText2());
         hBox.getChildren().add(simbadIdLabel);
         hBox.getChildren().add(new Label("    "));
-        Button simbadButton = new Button("More\nInfo");
+
         simbadButton.setOnAction(event -> {
             String simbadRecord = URLEncoder.encode(record.getSimbadId(), StandardCharsets.UTF_8);
             hostServices.showDocument("http://simbad.u-strasbg.fr/simbad/sim-id?Ident=" + simbadRecord);
         });
+        if (record.getSimbadId().isEmpty()) {
+            simbadButton.setDisable(true);
+        } else {
+            simbadButton.setDisable(false);
+        }
         hBox.getChildren().add(simbadButton);
         gridPane.add(hBox, 1, 3);
 
