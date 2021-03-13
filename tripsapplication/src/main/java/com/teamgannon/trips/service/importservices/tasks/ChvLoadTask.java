@@ -31,18 +31,19 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
     protected @NotNull FileProcessResult call() throws Exception {
         FileProcessResult processResult = new FileProcessResult();
 
-        File file = new File(dataset.getFileSelected());
-
-        // load chView file
-        ChViewFile chViewFile = chviewReader.loadFile(this, file);
-        if (chViewFile == null) {
-            FileProcessResult result = new FileProcessResult();
-            result.setDataSetDescriptor(null);
-            result.setSuccess(false);
-            result.setMessage("Failed to parse file");
-            return result;
-        }
         try {
+            File file = new File(dataset.getFileSelected());
+
+            // load chView file
+            ChViewFile chViewFile = chviewReader.loadFile(this, file);
+            if (chViewFile == null) {
+                FileProcessResult result = new FileProcessResult();
+                result.setDataSetDescriptor(null);
+                result.setSuccess(false);
+                result.setMessage("Failed to parse file");
+                return result;
+            }
+
             updateMessage("File load complete, about to save records in database");
             DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(this, dataset, chViewFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
@@ -54,7 +55,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
             updateProgress(dataSetDescriptor.getNumberStars(), dataSetDescriptor.getNumberStars());
         } catch (Exception e) {
             processResult.setSuccess(false);
-            processResult.setMessage("This dataset was already loaded in the system ");
+            processResult.setMessage("Unable to load this dataset into the system ");
         }
         return processResult;
     }
@@ -63,4 +64,5 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
     public void updateTaskInfo(String message) {
         updateMessage(message + "  ");
     }
+
 }

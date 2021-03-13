@@ -1,5 +1,7 @@
 package com.teamgannon.trips.jpa.model;
 
+import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarModel;
@@ -62,17 +64,17 @@ public class StarObject implements Serializable {
      * the dataset name which we are guaranteeing to be unique
      */
 //    @Column(name = "DATASETNAME")
-    private String dataSetName;
+    private String dataSetName = "";
 
     /**
      * name to use for display
      */
-    private String displayName;
+    private String displayName = "";
 
     /**
      * name of the constellation that this is part of
      */
-    private String constellationName;
+    private String constellationName = "";
 
     /**
      * the collapsed mass value
@@ -84,21 +86,21 @@ public class StarObject implements Serializable {
      * if we have to add custom fields in the custom object, but sometimes text notes make sense.
      */
     @Lob
-    private String notes;
+    private String notes = "";
 
     /**
      * the source catalog system used to hold this star
      * where did it come from?
      */
     @Lob
-    private String source;
+    private String source = "";
 
     /**
      * Same story. One object has names in many catalogs. The catalogIDs go in an array which can have
      * one to many entries.
      */
     @Lob
-    private String catalogIdList;
+    private String catalogIdList = "";
 
     /*
      * The cartesian coordinates of where the object is. Heliocentric (Sol at 0,0,0), Epoch J2000.0 the X axis
@@ -641,7 +643,7 @@ public class StarObject implements Serializable {
 
         StarModel starModel = new StarCreator().parseSpectral(orthoSpectralClass);
 
-        if (starModel.getStellarClass()==null) {
+        if (starModel.getStellarClass() == null) {
             log.error("could not find stellar class");
             return 1;
         }
@@ -731,6 +733,62 @@ public class StarObject implements Serializable {
         }
 
         return simStar;
+    }
+
+    public void fromChvRecord(Dataset dataset, ChViewRecord chViewRecord) {
+
+        // preset
+        init();
+
+        this.dataSetName = dataset.getName();
+        this.realStar = true;
+        this.displayName = chViewRecord.getStarName();
+
+
+        if (chViewRecord.getConstellation() != null) {
+            this.constellationName = chViewRecord.getConstellation();
+        } else {
+            this.constellationName = "";
+        }
+
+        // set the collapsed mass
+        this.mass = chViewRecord.getCollapsedMass();
+
+        // mark that this is the first load of this object
+        if (chViewRecord.getComment() != null) {
+            this.notes = chViewRecord.getComment();
+        } else {
+            this.notes = "";
+        }
+
+
+        this.setCoordinates(chViewRecord.getOrdinates());
+        this.setDistance(Double.parseDouble(chViewRecord.getDistanceToEarth()));
+
+        this.setRadius(chViewRecord.getRadius());
+
+        StarModel starModel = new StarCreator().parseSpectral(chViewRecord.getSpectra());
+        if (starModel.getStellarClass() == null) {
+            System.out.println("spectral class could not be verified, spectra = "
+                    + chViewRecord.getSpectra()
+                    + "\n\tchv record = " + chViewRecord);
+        }
+
+
+        this.setSpectralClass(chViewRecord.getSpectra());
+        this.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
+
+        switch (chViewRecord.getGroupNumber()) {
+            case 1 -> this.setPolity(CivilizationDisplayPreferences.ARAKUR);
+            case 2 -> this.setPolity(CivilizationDisplayPreferences.HKHRKH);
+            case 4 -> this.setPolity(CivilizationDisplayPreferences.KTOR);
+            case 8 -> this.setPolity(CivilizationDisplayPreferences.TERRAN);
+        }
+        this.setSource("CHView");
+
+        // figure out display score
+        calculateLabelMultiplier();
+
     }
 
     public static void main(String[] args) {

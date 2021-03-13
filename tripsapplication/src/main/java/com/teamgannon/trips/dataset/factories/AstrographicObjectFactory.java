@@ -40,6 +40,8 @@ public class AstrographicObjectFactory {
             starObject.setConstellationName("none specified");
         }
 
+
+
         // set the collapsed mass
         starObject.setMass(chViewRecord.getCollapsedMass());
 

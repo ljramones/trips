@@ -70,14 +70,20 @@ public class DataSetDescriptorFactory {
         double maxDistance = 0;
         progressUpdater.updateTaskInfo("Saving records in database");
         for (Integer recordId : chViewRecordMap.keySet()) {
-            ChViewRecord chViewRecord = chViewRecordMap.get(recordId);
-            // distance check
-            double distance = Double.parseDouble(chViewRecord.getDistanceToEarth());
-            if (distance > maxDistance) {
-                maxDistance = distance;
+            try {
+
+                ChViewRecord chViewRecord = chViewRecordMap.get(recordId);
+                // distance check
+                double distance = Double.parseDouble(chViewRecord.getDistanceToEarth());
+                if (distance > maxDistance) {
+                    maxDistance = distance;
+                }
+                StarObject starObject = new StarObject();
+                starObject.fromChvRecord(dataset, chViewRecord);
+                astrographicObjectMap.put(starObject.getId(), starObject);
+            } catch (Exception e) {
+                log.error("failed to translate to star object: {}", chViewRecordMap.get(recordId));
             }
-            StarObject starObject = AstrographicObjectFactory.create(dataset, chViewRecord);
-            astrographicObjectMap.put(starObject.getId(), starObject);
         }
 
         // save the astrographic records
