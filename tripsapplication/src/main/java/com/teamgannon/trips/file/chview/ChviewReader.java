@@ -1,9 +1,5 @@
 package com.teamgannon.trips.file.chview;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.chview.model.PseudoString;
@@ -22,8 +18,6 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 /**
  * Used to read the CHView file format
@@ -72,37 +66,10 @@ public class ChviewReader {
         return readCompleteFile(progressUpdater, file);
     }
 
-    public void exportJson(File file, ChViewFile chViewFile) {
-
-        try {
-            printJSONFile(file, chViewFile);
-        } catch (IOException e) {
-            log.error("failed to write the JSON file");
-        }
-    }
-
-    private void printJSONFile(File file, ChViewFile chViewFile) throws IOException {
-
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-            JsonGenerator jsonGenerator = objectMapper.getFactory().createGenerator(file, JsonEncoding.UTF8);
-            jsonGenerator.writeObject(chViewFile);
-            objectMapper.writeValue(file, chViewFile);
-
-            jsonGenerator.flush();
-            jsonGenerator.close();
-        } catch (IOException e) {
-            log.error("Failed to parse JSON because of : " + e);
-        }
-
-    }
-
     /**
      * read the complete file
      *
-     * @param progressUpdater
+     * @param progressUpdater the updateer
      * @param inputFile       the file name to read
      */
     private @Nullable ChViewFile readCompleteFile(@NotNull ProgressUpdater progressUpdater, @NotNull File inputFile) {
@@ -143,9 +110,9 @@ public class ChviewReader {
         // read each file record
         progressUpdater.updateTaskInfo("reading records");
         for (int i = 0; i < numberOfRecords; i++) {
-            ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex);
+            ChViewRecord chViewRecord = parseRecord(fileContent, currentIndex, progressUpdater);
             if (chViewRecord == null) {
-                return null;
+                continue;
             }
             chViewFile.addRecord(chViewRecord);
             if (i % 100 == 0) {
@@ -530,10 +497,11 @@ public class ChviewReader {
     /**
      * parse a single ChView star record
      *
-     * @param buffer the file content
+     * @param buffer          the file content
+     * @param progressUpdater
      * @return the parsed record
      */
-    private @Nullable ChViewRecord parseRecord(byte[] buffer, int index) {
+    private @Nullable ChViewRecord parseRecord(byte[] buffer, int index, @NotNull ProgressUpdater progressUpdater) {
 
         ChViewRecord chViewRecord = new ChViewRecord();
 
@@ -634,15 +602,32 @@ public class ChviewReader {
             if (buffer[currentIndex] != 0) {
                 currentIndex++;
                 log.debug(chViewRecord.toString());
-                chViewRecord.setSubsidiaryStar(parseRecord(buffer, currentIndex));
+                chViewRecord.setSubsidiaryStar(parseRecord(buffer, currentIndex, progressUpdater));
             }
 
             // get the stellar class
             String stellarClass = spectra.getValue().substring(0, 1);
+
+            // if its an Q or d, then make it and M
+            if (stellarClass.equals("Q") ||
+                    stellarClass.equals("d") ||
+                    stellarClass.equals("?") ||
+                    stellarClass.equals("Z") ||
+                    stellarClass.equals("X")
+            ) {
+                // these are not defined in standard spectral classification so force them to be M class.
+                stellarClass = "M";
+            }
+
+
             if (stellarFactory.classes(stellarClass)) {
 
                 // the stellar classification
                 StellarClassification stellarClassification = stellarFactory.getStellarClass(stellarClass);
+                if (stellarClassification == null) {
+                    log.error("Could not figure out stellar classification: spectra ={}", spectra);
+                    return null;
+                }
 
                 // get the star color and store it
                 Color starColor = getColor(stellarClassification.getStarColor());
@@ -661,8 +646,7 @@ public class ChviewReader {
 
         } catch (Exception e) {
             log.error("format corruption in file:" + e.getMessage());
-            showErrorAlert("Loading CHV file",
-                    "Encountered a corruption in file and was not about to continue");
+            progressUpdater.updateTaskInfo("Loading CHV file:Encountered a corruption in file and was not about to continue");
             return null;
         }
         return chViewRecord;
