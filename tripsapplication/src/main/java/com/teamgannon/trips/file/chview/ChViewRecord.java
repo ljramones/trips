@@ -6,6 +6,7 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,8 @@ import java.util.List;
 @Data
 public class ChViewRecord implements Serializable {
 
-    private static final long serialVersionUID = -5333213779999784607L;
+    @Serial
+    private static final long serialVersionUID = 1776042988655029775L;
 
     @Id
     private String id;
@@ -85,6 +87,11 @@ public class ChViewRecord implements Serializable {
      * Spectra |string |Spectra
      */
     private String spectra;
+
+    /**
+     * how we interpret this
+     */
+    private String orthoSpectra;
 
     /**
      * Mass |double |Collapsed mass

@@ -21,7 +21,7 @@ public class StarCreator {
     Pattern regBracketsPattern = Pattern.compile(regBracketsStr);
 
     //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
-    private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
+    private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|Unk|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
     Pattern classPattern = Pattern.compile(classPatternStr);
 
     private final String yerkesPatternStr = "^(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VIII|IX|X)";
@@ -43,6 +43,9 @@ public class StarCreator {
      * @return the stellar model
      */
     public StarModel parseSpectral(String spectralClassification) {
+        if (spectralClassification.equals("Unk")) {
+            log.info("Unknown");
+        }
 
         StarModel starModel = new StarModel();
         Matcher preMatcher = prefixPattern.matcher(spectralClassification);
@@ -84,7 +87,7 @@ public class StarCreator {
             String percularitiesString = pecular.group();
             starModel.setSpectralPecularities(percularitiesString);
 //            spectralClassification = spectralClassification.substring(percularitiesString.length());
-//            log.info("pecularities is " + percularitiesString);
+//            log.info("peculiarities is " + peculiaritiesString);
         }
 
         return starModel;

@@ -36,7 +36,7 @@ public class StarObject implements Serializable {
     public final static String POLITY_NOT_SET = "NOT+SET";
 
     @Serial
-    private static final long serialVersionUID = 5738228683010339187L;
+    private static final long serialVersionUID = -5403395729696357381L;
 
     /**
      * match the pattern * nnn Con
@@ -622,13 +622,11 @@ public class StarObject implements Serializable {
             cumulativeTotal += 1.5;
         }
 
-
         // 7. Is the star in Henry Draper?
         //      "HD " in Catalog ID?
         if (catalogIdList.contains("HD")) {
             cumulativeTotal += 1.5;
         }
-
 
         // 8. If none of the above, make the multiplier one. (1)
         if (cumulativeTotal == 0) {
@@ -767,7 +765,7 @@ public class StarObject implements Serializable {
 
         this.setRadius(chViewRecord.getRadius());
 
-        StarModel starModel = new StarCreator().parseSpectral(chViewRecord.getSpectra());
+        StarModel starModel = new StarCreator().parseSpectral(chViewRecord.getOrthoSpectra());
         if (starModel.getStellarClass() == null) {
             System.out.println("spectral class could not be verified, spectra = "
                     + chViewRecord.getSpectra()
@@ -776,7 +774,7 @@ public class StarObject implements Serializable {
 
 
         this.setSpectralClass(chViewRecord.getSpectra());
-        this.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
+        this.setOrthoSpectralClass(chViewRecord.getOrthoSpectra());
 
         switch (chViewRecord.getGroupNumber()) {
             case 1 -> this.setPolity(CivilizationDisplayPreferences.ARAKUR);
