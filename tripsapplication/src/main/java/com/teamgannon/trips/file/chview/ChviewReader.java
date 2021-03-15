@@ -607,25 +607,49 @@ public class ChviewReader {
 
             // get the stellar class
             String stellarClass = spectra.getValue().substring(0, 1);
+            if (stellarClass.equals("\"")) {
+                if (spectra.getValue().length()>=2) {
+                    stellarClass=  spectra.getValue().substring(1, 2);
+                }
+            }
+
+            chViewRecord.setOrthoSpectra(stellarClass);
 
             // if its an Q or d, then make it and M
             if (stellarClass.equals("Q") ||
                     stellarClass.equals("d") ||
-                    stellarClass.equals("?") ||
-                    stellarClass.equals("Z") ||
-                    stellarClass.equals("X")
+                    stellarClass.equals("p") ||
+                    stellarClass.equals("D") ||
+                    stellarClass.equals("R") ||
+                    stellarClass.equals("P")||
+                    stellarClass.equals("X")||
+                    stellarClass.equals("W")||
+                    stellarClass.equals("S")||
+                    stellarClass.equals("N")||
+                    stellarClass.equals("Z")||
+                    stellarClass.equals("C")
             ) {
+                System.out.println(chViewRecord);
                 // these are not defined in standard spectral classification so force them to be M class.
-                stellarClass = "M";
+                chViewRecord.setOrthoSpectra("DC");
+            }
+
+            if (stellarClass.equals("F")) {
+                log.info("found F");
+            }
+
+            if (stellarClass.equals("?")) {
+                // these are not defined in standard spectral classification so force them to be M class.
+                chViewRecord.setOrthoSpectra("Unk");
             }
 
 
-            if (stellarFactory.classes(stellarClass)) {
+            if (stellarFactory.classes(chViewRecord.getOrthoSpectra())) {
 
                 // the stellar classification
-                StellarClassification stellarClassification = stellarFactory.getStellarClass(stellarClass);
+                StellarClassification stellarClassification = stellarFactory.getStellarClass(chViewRecord.getOrthoSpectra());
                 if (stellarClassification == null) {
-                    log.error("Could not figure out stellar classification: spectra ={}", spectra);
+                    log.error("Could not figure out stellar classification: spectra ={}", chViewRecord.getOrthoSpectra());
                     return null;
                 }
 

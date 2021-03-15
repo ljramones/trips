@@ -24,6 +24,7 @@ public class StellarFactory {
             {"G", "255,244,232"},
             {"K", "255,222,180"},
             {"M", "157,180,254"},
+            {"Unknown", "157,180,254"},
             {"L", "157,180,254"},
             {"Y", "157,180,254"},
             {"T", "157,180,254"},
@@ -446,6 +447,36 @@ public class StellarFactory {
     }
 
 
+    private static StellarClassification createUnknownClass() {
+        StellarClassification mClass = new StellarClassification();
+        mClass.setStellarType(StellarType.Unk);
+
+        mClass.setStarColor(StarColor.Unknown);
+        mClass.setStellarChromaticity(getColor(chromaticyMap.get("Unknown")));
+
+        mClass.setUpperTemperature(3700);
+        mClass.setLowerTemperature(2400);
+
+        mClass.setColor("red");
+        mClass.setChromacity("red");
+
+        mClass.setUpperMass(0.45);
+        mClass.setLowerMass(0.08);
+
+        mClass.setUpperRadius(0.7);
+        mClass.setLowerRadius(0.1);
+
+        mClass.setUpperLuminosity(0.08);
+        mClass.setLowerLuminosity(0.001);
+
+        mClass.setLines(HydrogenLines.VERY_WEAK);
+        mClass.setSequenceFraction(76.45);
+
+        return mClass;
+    }
+
+
+
     private static StellarClassification createLClass() {
         StellarClassification lClass = new StellarClassification();
         lClass.setStellarType(StellarType.L);
@@ -808,6 +839,12 @@ public class StellarFactory {
         StellarClassification qClass = createQClass();
         stellarClassificationMap.put(qClass.getStellarType().toString(), qClass);
         stellarClasses.add(StellarType.Q.toString());
+
+        ////////////////// X class star  ///////////////////
+
+        StellarClassification unknownClass = createUnknownClass();
+        stellarClassificationMap.put(unknownClass.getStellarType().toString(), unknownClass);
+        stellarClasses.add(StellarType.Unk.toString());
 
         ////////////////// D class stars  ///////////////////
 

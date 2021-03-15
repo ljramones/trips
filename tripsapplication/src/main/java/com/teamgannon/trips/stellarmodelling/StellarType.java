@@ -121,6 +121,11 @@ public enum StellarType {
     dM("dM"),
 
     /**
+     * used for weird shit spectral classes
+     */
+    Unk("Unk"),
+
+    /**
      * Class W or WR represents the Wolf–Rayet stars, notable for spectra lacking hydrogen lines. Instead their
      * spectra are dominated by broad emission lines of highly ionized helium, nitrogen, carbon and sometimes
      * oxygen. They are thought to mostly be dying supergiants with their hydrogen layers blown away by stellar

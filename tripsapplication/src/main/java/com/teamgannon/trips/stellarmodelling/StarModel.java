@@ -55,6 +55,14 @@ public class StarModel {
             log.error("used zero instead of O, changed to an O");
             spectralClass = "O";
         }
+        if (spectralClass.equals("Unk")) {
+            StellarClassification stellarClassification = factory.getStellarClass(spectralClass);
+            stellarClass = stellarClassification.getStellarType();
+            chromaticity = stellarClassification.getStellarChromaticity();
+            hydrogenLines = stellarClassification.getLines();
+            percentageFractionOfWhole = stellarClassification.getSequenceFraction();
+            return;
+        }
         if (spectralClass.length() == 1) {
             StellarClassification stellarClassification = factory.getStellarClass(spectralClass);
             if (stellarClassification == null) {

@@ -53,6 +53,8 @@ public enum StarColor {
     DC("255,255,255"),
     DX("255,255,255"),
 
+    Unknown("255,0,0"),
+
     /*
      * Add spectral classes for sub-stellar objects and 
      * "dead" stars that have cooled below visible.  
