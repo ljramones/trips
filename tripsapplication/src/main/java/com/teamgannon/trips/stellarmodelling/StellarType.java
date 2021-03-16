@@ -193,6 +193,11 @@ public enum StellarType {
     Y("Y"),
 
     /**
+     * ggeneral C class (Crabon) star
+     */
+    C("C"),
+
+    /**
      * Originally classified as R and N stars, these are also known as 'carbon stars'. These are red giants, near
      * the end of their lives, in which there is an excess of carbon in the atmosphere. The old R and N classes
      * ran parallel to the normal classification system from roughly mid G to late M. These have more recently
@@ -269,6 +274,7 @@ public enum StellarType {
      * gas shell ejected by giant star prior to collapse to white dwarf
      */
     P("P"),
+
 
     /**
      * Zirconium Giant stars
