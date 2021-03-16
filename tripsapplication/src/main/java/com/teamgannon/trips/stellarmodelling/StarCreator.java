@@ -21,7 +21,7 @@ public class StarCreator {
     Pattern regBracketsPattern = Pattern.compile(regBracketsStr);
 
     //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
-    private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|Unk|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
+    private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|Unk|WN|WC|WR|S|D|DA|DQ|DB|DZ|DO|DC|DX|C|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
     Pattern classPattern = Pattern.compile(classPatternStr);
 
     private final String yerkesPatternStr = "^(0|Ia\\+|Ia|Iab|Ib|II|III|IV|V|VII|VIII|IX|X)";
@@ -32,7 +32,7 @@ public class StarCreator {
 
     public static void main(String[] arg) {
         StarCreator starCreator = new StarCreator();
-        StarModel starModel = starCreator.parseSpectral("G8IV");
+        StarModel starModel = starCreator.parseSpectral("Sw");
         log.info(starModel.toString());
     }
 

@@ -43,8 +43,34 @@ public enum StarColor {
     M("255,0,0"),
 
     /**
+     * Wolf-Rayet star N type
+     */
+    WN("187,204,255"),
+
+    /**
+     * Wolf-Rayet star C type
+     */
+    WC("187,204,255"),
+
+    /**
+     * Wolf-Rayet star O type
+     */
+    WO("187,204,255"),
+
+    /**
+     * S type star
+     */
+    S("187,204,255"),
+
+    /**
+     * C type star
+     */
+    C("255,0,0"),
+
+    /**
      * degenerate star - white dwarfs
      */
+    D("255,255,255"),
     DA("255,255,255"),
     DB("255,255,255"),
     DO("255,255,255"),

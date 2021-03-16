@@ -139,7 +139,7 @@ public class StarModel {
     public static void main(String[] args) {
         //G8IV
         StarModel starModel = new StarModel();
-        starModel.setStarClass("G8IV");
+        starModel.setStarClass("CHd");
         log.info(starModel.toString());
     }
 
