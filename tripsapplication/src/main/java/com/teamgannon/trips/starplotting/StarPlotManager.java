@@ -436,9 +436,7 @@ public class StarPlotManager {
                                            StarDisplayPreferences starDisplayPreferences,
                                            @NotNull CivilizationDisplayPreferences polityPreferences) {
 
-        Node node = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
-        node.setUserData(record);
-        return node;
+        return createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
     }
 
     /**
@@ -511,16 +509,17 @@ public class StarPlotManager {
         return sphere;
     }
 
-    private void setContextMenu(@NotNull StarDisplayRecord record, Node group) {
+    private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
+        star.setUserData(record);
         String polity = record.getPolity();
         if (polity.equals("NA")) {
             polity = "Non-aligned";
         }
-        ContextMenu starContextMenu = createPopup(record.getStarName() + " (" + polity + ")", group);
-        group.addEventHandler(
+        ContextMenu starContextMenu = createPopup(record.getStarName() + " (" + polity + ")", star);
+        star.addEventHandler(
                 MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(group, starContextMenu, e));
-        group.setOnMousePressed(event -> {
+                e -> starClickEventHandler(star, starContextMenu, e));
+        star.setOnMousePressed(event -> {
             Node node = (Node) event.getSource();
             StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
             log.info("mouse click detected! " + starDescriptor);
