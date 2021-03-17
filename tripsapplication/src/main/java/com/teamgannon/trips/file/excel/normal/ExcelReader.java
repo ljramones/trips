@@ -105,9 +105,9 @@ public class ExcelReader {
                     continue;
                 }
 
-                StarObject starObject = star.toAstrographicObject();
+                StarObject starObject = star.toStarObject();
                 if (starObject != null) {
-                    starSet.add(star.toAstrographicObject());
+                    starSet.add(star.toStarObject());
                 } else {
                     rejectCount++;
                     continue;
