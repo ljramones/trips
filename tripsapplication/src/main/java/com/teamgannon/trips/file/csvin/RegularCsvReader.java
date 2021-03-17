@@ -84,64 +84,64 @@ public class RegularCsvReader {
                             // skip id lineRead[0]
                             // read dataset name
                             .datasetName(dataset.getName())
-                            .displayName(testForNull(lineRead, 2))
-                            .commonName(testForNull(lineRead, 3))
-                            .simbadId(testForNull(lineRead, 4))
-                            .gaiaId(testForNull(lineRead, 5))
-                            .constellationName(testForNull(lineRead, 6))
-                            .mass(testForNull(lineRead, 7))
-                            .age(testForNull(lineRead, 8))
-                            .metallicity(testForNull(lineRead, 9))
-                            .source(testForNull(lineRead, 10))
-                            .catalogIdList(testForNull(lineRead, 11))
-                            .x(testForNull(lineRead, 12))
-                            .y(testForNull(lineRead, 13))
-                            .z(testForNull(lineRead, 14))
-                            .radius(testForNull(lineRead, 15))
-                            .ra(testForNull(lineRead, 16))
-                            .pmra(testForNull(lineRead, 17))
-                            .declination(testForNull(lineRead, 18))
-                            .pmdec(testForNull(lineRead, 19))
-                            .parallax(testForNull(lineRead, 20))
-                            .distance(testForNull(lineRead, 21))
-                            .radialVelocity(testForNull(lineRead, 22))
-                            .spectralClass(testForNull(lineRead, 23))
-                            .orthoSpectralClass(testForNull(lineRead, 24))
-                            .temperature(testForNull(lineRead, 25))
-                            .realStar(testForNull(lineRead, 26))
-                            .bprp(testForNull(lineRead, 27))
-                            .bpg(testForNull(lineRead, 28))
-                            .grp(testForNull(lineRead, 29))
-                            .luminosity(testForNull(lineRead, 30))
-                            .magu(testForNull(lineRead, 31))
-                            .magb(testForNull(lineRead, 32))
-                            .magv(testForNull(lineRead, 33))
-                            .magr(testForNull(lineRead, 34))
-                            .magi(testForNull(lineRead, 35))
-                            .other(testForNull(lineRead, 36))
-                            .anomaly(testForNull(lineRead, 37))
-                            .polity(testForNull(lineRead, 38))
-                            .worldType(testForNull(lineRead, 39))
-                            .fuelType(testForNull(lineRead, 40))
-                            .portType(testForNull(lineRead, 41))
-                            .populationType(testForNull(lineRead, 42))
-                            .techType(testForNull(lineRead, 43))
-                            .productType(testForNull(lineRead, 44))
-                            .milSpaceType(testForNull(lineRead, 45))
-                            .milPlanType(testForNull(lineRead, 46))
-                            .miscText1(testForNull(lineRead, 47))
-                            .miscText2(testForNull(lineRead, 48))
-                            .miscText3(testForNull(lineRead, 49))
-                            .miscText4(testForNull(lineRead, 50))
-                            .miscText5(testForNull(lineRead, 51))
-                            .miscNum1(parseDouble(testForNull(lineRead, 52)))
-                            .miscNum2(parseDouble(testForNull(lineRead, 53)))
-                            .miscNum3(parseDouble(testForNull(lineRead, 54)))
-                            .miscNum4(parseDouble(testForNull(lineRead, 55)))
-                            .miscNum5(parseDouble(testForNull(lineRead, 56)))
-                            .notes(testForNull(lineRead, 57))
-                            .galacticLattitude(testForNull(lineRead, 58))
-                            .galacticLongitude(testForNull(lineRead, 59))
+                            .displayName(testForNull(lineRead, 2, ""))
+                            .commonName(testForNull(lineRead, 3, ""))
+                            .simbadId(testForNull(lineRead, 4, ""))
+                            .gaiaId(testForNull(lineRead, 5, ""))
+                            .constellationName(testForNull(lineRead, 6, ""))
+                            .mass(testForNull(lineRead, 7, "0"))
+                            .age(testForNull(lineRead, 8, "0"))
+                            .metallicity(testForNull(lineRead, 9, "0"))
+                            .source(testForNull(lineRead, 10, ""))
+                            .catalogIdList(testForNull(lineRead, 11, ""))
+                            .x(testForNull(lineRead, 12, "0"))
+                            .y(testForNull(lineRead, 13, "0"))
+                            .z(testForNull(lineRead, 14, "0"))
+                            .radius(testForNull(lineRead, 15, "0"))
+                            .ra(testForNull(lineRead, 16, "0"))
+                            .pmra(testForNull(lineRead, 17, "0"))
+                            .declination(testForNull(lineRead, 18, "0"))
+                            .pmdec(testForNull(lineRead, 19, "0"))
+                            .parallax(testForNull(lineRead, 20, "0"))
+                            .distance(testForNull(lineRead, 21, "0"))
+                            .radialVelocity(testForNull(lineRead, 22, ""))
+                            .spectralClass(testForNull(lineRead, 23, ""))
+                            .orthoSpectralClass(testForNull(lineRead, 24, ""))
+                            .temperature(testForNull(lineRead, 25, "0"))
+                            .realStar(testForNull(lineRead, 26, "true"))
+                            .bprp(testForNull(lineRead, 27, "0"))
+                            .bpg(testForNull(lineRead, 28, "0"))
+                            .grp(testForNull(lineRead, 29, "0"))
+                            .luminosity(testForNull(lineRead, 30, ""))
+                            .magu(testForNull(lineRead, 31, "0"))
+                            .magb(testForNull(lineRead, 32, "0"))
+                            .magv(testForNull(lineRead, 33, "0"))
+                            .magr(testForNull(lineRead, 34, "0"))
+                            .magi(testForNull(lineRead, 35, "0"))
+                            .other(testForNull(lineRead, 36, "false"))
+                            .anomaly(testForNull(lineRead, 37, "false"))
+                            .polity(testForNull(lineRead, 38, "NA"))
+                            .worldType(testForNull(lineRead, 39, "NA"))
+                            .fuelType(testForNull(lineRead, 40, "NA"))
+                            .portType(testForNull(lineRead, 41, "NA"))
+                            .populationType(testForNull(lineRead, 42, "NA"))
+                            .techType(testForNull(lineRead, 43, "NA"))
+                            .productType(testForNull(lineRead, 44, "NA"))
+                            .milSpaceType(testForNull(lineRead, 45, "NA"))
+                            .milPlanType(testForNull(lineRead, 46, "NA"))
+                            .miscText1(testForNull(lineRead, 47, ""))
+                            .miscText2(testForNull(lineRead, 48, ""))
+                            .miscText3(testForNull(lineRead, 49, ""))
+                            .miscText4(testForNull(lineRead, 50, ""))
+                            .miscText5(testForNull(lineRead, 51, ""))
+                            .miscNum1(parseDouble(testForNull(lineRead, 52, "0")))
+                            .miscNum2(parseDouble(testForNull(lineRead, 53, "0")))
+                            .miscNum3(parseDouble(testForNull(lineRead, 54, "0")))
+                            .miscNum4(parseDouble(testForNull(lineRead, 55, "0")))
+                            .miscNum5(parseDouble(testForNull(lineRead, 56, "0")))
+                            .notes(testForNull(lineRead, 57, "none"))
+                            .galacticLattitude(testForNull(lineRead, 58, "0"))
+                            .galacticLongitude(testForNull(lineRead, 59, "0"))
                             .build();
                     try {
                         double distance = Double.parseDouble(star.getDistance());
@@ -152,7 +152,7 @@ public class RegularCsvReader {
                         log.error("Error getting distance for {}, coordinates are ({},{},{})", star.getDisplayName(), star.getX(), star.getY(), star.getZ());
                     }
                     try {
-                        StarObject starObject = star.toAstrographicObject();
+                        StarObject starObject = star.toStarObject();
                         if (starObject != null) {
                             starObject.setDataSetName(dataset.getName());
                             starSet.add(starObject);
@@ -194,11 +194,12 @@ public class RegularCsvReader {
         return csvFile;
     }
 
-    private String testForNull(String[] lineRead, int i) {
+    private String testForNull(String[] lineRead, int i, String optional) {
         if (i >= lineRead.length) {
             return "";
         } else {
-            return lineRead[i];
+            String value = lineRead[i].trim();
+            return value.isEmpty() ? optional : value;
         }
 
     }

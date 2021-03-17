@@ -181,7 +181,7 @@ public class AstroCSVStar {
      *
      * @return the star object
      */
-    public @Nullable StarObject toAstrographicObject() {
+    public @Nullable StarObject toStarObject() {
         try {
             StarObject astro = new StarObject();
 
