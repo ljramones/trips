@@ -655,16 +655,11 @@ public class StarObject implements Serializable {
             String harvardSpecClass = starModel.getStellarClass().getValue();
 
             switch (harvardSpecClass) {
-                case "O" -> base += 2;
-                case "B" -> base += 2;
-                case "A" -> base += 2;
-                case "F" -> base += 4;
+                case "O", "A", "B" -> base += 2;
+                case "F", "K" -> base += 4;
                 case "G" -> base += 5;
-                case "K" -> base += 4;
                 case "M" -> base += 3;
-                case "L" -> base += 1;
-                case "T" -> base += 1;
-                case "Y" -> base += 1;
+                case "L", "T", "Y" -> base += 1;
             }
         }
 

@@ -245,7 +245,7 @@ public class StarPlotManager {
      * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
      */
     private void blinkStarLabel(Label label, int cycleCount) {
-        if (fadeTransition!=null) {
+        if (fadeTransition != null) {
             fadeTransition.stop();
         }
         fadeTransition = new FadeTransition(Duration.seconds(1), label);
@@ -423,16 +423,6 @@ public class StarPlotManager {
             listUpdaterListener.updateList(record);
         }
 
-        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
-        star.addEventHandler(
-                MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
-
         star.setId("regularStar");
         star.setUserData(record);
 
@@ -446,9 +436,9 @@ public class StarPlotManager {
                                            StarDisplayPreferences starDisplayPreferences,
                                            @NotNull CivilizationDisplayPreferences polityPreferences) {
 
-        Group group = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
-        group.setUserData(record);
-        return group;
+        Node node = createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
+        node.setUserData(record);
+        return node;
     }
 
     /**
@@ -461,13 +451,12 @@ public class StarPlotManager {
      * @param polityPreferences the plo
      * @return the created object
      */
-    public @NotNull Group createStellarShape(@NotNull StarDisplayRecord record,
-                                             @NotNull ColorPalette colorPalette,
-                                             boolean labelsOn,
-                                             boolean politiesOn,
-                                             @NotNull CivilizationDisplayPreferences polityPreferences) {
+    public @NotNull Node createStellarShape(@NotNull StarDisplayRecord record,
+                                            @NotNull ColorPalette colorPalette,
+                                            boolean labelsOn,
+                                            boolean politiesOn,
+                                            @NotNull CivilizationDisplayPreferences polityPreferences) {
 
-        Group group = new Group();
 
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
@@ -478,7 +467,6 @@ public class StarPlotManager {
         sphere.setTranslateX(point3D.getX());
         sphere.setTranslateY(point3D.getY());
         sphere.setTranslateZ(point3D.getZ());
-        group.getChildren().add(sphere);
 
         if (labelsOn) {
             Label label = createLabel(record, colorPalette);
@@ -489,13 +477,12 @@ public class StarPlotManager {
         }
 
         if (politiesOn) {
-            if (!record.getPolity().equals("NA")) {
+            if (!record.getPolity().equals("NA") && !record.getPolity().isEmpty()) {
+
                 Color polityColor = polityPreferences.getColorForPolity(record.getPolity());
                 // add a polity indicator
                 double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
-                // group.getChildren().add(politySphere);
                 PhongMaterial polityMaterial = new PhongMaterial();
-//            polityMaterial.setDiffuseMap(earthImage);
                 polityMaterial.setDiffuseColor(new Color(polityColor.getRed(), polityColor.getGreen(), polityColor.getBlue(), 0.2));  // Note alpha of 0.6
                 polityMaterial.diffuseMapProperty();
                 Sphere politySphere = new Sphere(polityShellRadius);
@@ -503,13 +490,41 @@ public class StarPlotManager {
                 politySphere.setTranslateX(point3D.getX());
                 politySphere.setTranslateY(point3D.getY());
                 politySphere.setTranslateZ(point3D.getZ());
+
+                // set context menu
+                setContextMenu(record, politySphere);
+
                 politiesDisplayGroup.getChildren().add(politySphere);
                 politiesDisplayGroup.setVisible(true);
             } else {
+                // set context menu
+                setContextMenu(record, sphere);
                 log.debug("No polity to plot");
             }
+
+            // set polities to be visible
+            politiesDisplayGroup.setVisible(true);
+        } else {
+            // set context menu
+            setContextMenu(record, sphere);
         }
-        return group;
+        return sphere;
+    }
+
+    private void setContextMenu(@NotNull StarDisplayRecord record, Node group) {
+        String polity = record.getPolity();
+        if (polity.equals("NA")) {
+            polity = "Non-aligned";
+        }
+        ContextMenu starContextMenu = createPopup(record.getStarName() + " (" + polity + ")", group);
+        group.addEventHandler(
+                MouseEvent.MOUSE_CLICKED,
+                e -> starClickEventHandler(group, starContextMenu, e));
+        group.setOnMousePressed(event -> {
+            Node node = (Node) event.getSource();
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
+            log.info("mouse click detected! " + starDescriptor);
+        });
     }
 
     /**
@@ -914,6 +929,7 @@ public class StarPlotManager {
      * @param starDisplayRecord the properties of the star selected
      */
     private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
+
         if (contextSelectorListener != null) {
             contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
         }
