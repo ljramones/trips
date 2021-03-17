@@ -9,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -116,7 +114,6 @@ public class AstroCSVStar {
      */
     private String milPlanType;
 
-
     /**
      * for user custom use in future versions
      */
@@ -163,6 +160,11 @@ public class AstroCSVStar {
     private double miscNum4;
 
     /**
+     * for user custom use in future versions
+     */
+    private double miscNum5;
+
+    /**
      * galactic Lat
      */
     private String galacticLattitude;
@@ -172,11 +174,13 @@ public class AstroCSVStar {
      */
     private String galacticLongitude;
 
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum5;
 
+
+    /**
+     * conversion constructor
+     *
+     * @return the star object
+     */
     public @Nullable StarObject toAstrographicObject() {
         try {
             StarObject astro = new StarObject();
@@ -216,10 +220,28 @@ public class AstroCSVStar {
 
             astro.setBprp(parseDouble(bprp.trim()));
 
+            astro.setPolity(polity);
+            astro.setWorldType(worldType);
+            astro.setFuelType(fuelType);
+            astro.setPortType(portType);
+            astro.setPopulationType(populationType);
+            astro.setTechType(techType);
+            astro.setProductType(productType);
+            astro.setMilSpaceType(milSpaceType);
+            astro.setMilPlanType(milPlanType);
+
             astro.setMiscText1(miscText1);
             astro.setMiscText2(miscText2);
             astro.setMiscText3(miscText3);
             astro.setMiscText4(miscText4);
+            astro.setMiscText5(miscText5);
+
+            astro.setMiscNum1(miscNum1);
+            astro.setMiscNum2(miscNum2);
+            astro.setMiscNum3(miscNum3);
+            astro.setMiscNum4(miscNum4);
+            astro.setMiscNum5(miscNum5);
+
             try {
 
                 if (galacticLattitude.isEmpty()) {
@@ -250,7 +272,7 @@ public class AstroCSVStar {
             astro.setMiscNum5(miscNum5);
 
             astro.calculateDisplayScore();
-            
+
             return astro;
 
         } catch (Exception e) {

@@ -56,8 +56,9 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
 
     /**
      * get the star objects via a query as a series of pages
+     *
      * @param astroSearchQuery the astro query
-     * @param page the page we want
+     * @param page             the page we want
      * @return the page of objects
      */
     @Override
@@ -154,14 +155,35 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
             predicates.add(cb.isFalse(root.get("anomaly")));
         }
 
+
         // setup a predicate based on military space types
         Set<String> politySet = astroSearchQuery.getPolities();
         if (!politySet.isEmpty()) {
-            List<String> polityList = new ArrayList<>(politySet);
+            boolean noneSelected = politySet.contains("None");
+            List<String> polityList = politySet.stream().filter(polity -> !polity.equals("none")).collect(Collectors.toList());
+            if (noneSelected) {
+                log.info("None selected");
+                polityList.add("NA");
+            }
             Expression<String> exp = root.get("polity");
-            Predicate predicate = exp.in(polityList);
-            predicates.add(predicate);
+            // setup predicates for actual matches
+            Predicate setPredicate = null;
+            if (polityList.size() > 0) {
+                log.info("polities:" + polityList);
+                setPredicate = exp.in(polityList);
+                predicates.add(setPredicate);
+            }
+            // set predicate for empty polity accepted if it was selected
+//            if (noneSelected) {
+//                log.info("None selected");
+//                Predicate nonePredicate = cb.equal(root.get("polity"), "Terran");
+//                predicates.add(nonePredicate);
+////                if (setPredicate != null) {
+////                    Predicate jointPredicate = cb.or(setPredicate, nonePredicate);
+////                }
+//            }
         }
+
 
         // setup a predicate based on world types
         Set<String> worldTypesSet = astroSearchQuery.getWorldTypes();
