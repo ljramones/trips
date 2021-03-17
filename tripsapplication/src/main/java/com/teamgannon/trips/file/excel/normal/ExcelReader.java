@@ -155,84 +155,93 @@ public class ExcelReader {
         AstroCSVStar star = AstroCSVStar.builder().build();
         // fill
         star.setDatasetName(name);
-        star.setDisplayName(getValue(fieldList, i++));
-        star.setCommonName(getValue(fieldList, i++));
-        star.setSimbadId(getValue(fieldList, i++));
-        star.setGaiaId(getValue(fieldList, i++));
-        star.setConstellationName(getValue(fieldList, i++));
-        star.setMass(getValue(fieldList, i++));
-        star.setAge(getValue(fieldList, i++));
-        star.setMetallicity(getValue(fieldList, i++));
-        star.setSource(getValue(fieldList, i++));
-        star.setCatalogIdList(getValue(fieldList, i++));
+        star.setDisplayName(getValue(fieldList, i++, ""));
+        star.setCommonName(getValue(fieldList, i++, ""));
+        star.setSimbadId(getValue(fieldList, i++, ""));
+        star.setGaiaId(getValue(fieldList, i++, ""));
+        star.setConstellationName(getValue(fieldList, i++, ""));
+        star.setMass(getValue(fieldList, i++, "0.0"));
+        star.setAge(getValue(fieldList, i++, "0.0"));
+        star.setMetallicity(getValue(fieldList, i++, "0.0"));
+        star.setSource(getValue(fieldList, i++, ""));
+        star.setCatalogIdList(getValue(fieldList, i++, ""));
 
-        star.setX(getValue(fieldList, i++));
-        star.setY(getValue(fieldList, i++));
-        star.setZ(getValue(fieldList, i++));
+        star.setX(getValue(fieldList, i++, "0.0"));
+        star.setY(getValue(fieldList, i++, "0.0"));
+        star.setZ(getValue(fieldList, i++, "0.0"));
 
-        star.setRadius(getValue(fieldList, i++));
-        star.setRa(getValue(fieldList, i++));
-        star.setPmra(getValue(fieldList, i++));
-        star.setDeclination(getValue(fieldList, i++));
-        star.setPmdec(getValue(fieldList, i++));
+        star.setRadius(getValue(fieldList, i++, "0.0"));
+        star.setRa(getValue(fieldList, i++, "0.0"));
+        star.setPmra(getValue(fieldList, i++, "0.0"));
+        star.setDeclination(getValue(fieldList, i++, "0.0"));
+        star.setPmdec(getValue(fieldList, i++, "0.0"));
 
-        star.setParallax(getValue(fieldList, i++));
-        star.setDistance(getValue(fieldList, i++));
-        star.setRadialVelocity(getValue(fieldList, i++));
-        star.setSpectralClass(getValue(fieldList, i++));
-        star.setOrthoSpectralClass(getValue(fieldList, i++));
+        star.setParallax(getValue(fieldList, i++, "0.0"));
+        star.setDistance(getValue(fieldList, i++, "0.0"));
+        star.setRadialVelocity(getValue(fieldList, i++, "0.0"));
+        star.setSpectralClass(getValue(fieldList, i++, ""));
+        star.setOrthoSpectralClass(getValue(fieldList, i++, ""));
 
-        star.setTemperature(getValue(fieldList, i++));
-        star.setRealStar(getValue(fieldList, i++));
+        star.setTemperature(getValue(fieldList, i++, "0.0"));
+        star.setRealStar(getValue(fieldList, i++, "0.0"));
 
-        star.setBprp(getValue(fieldList, i++));
-        star.setBpg(getValue(fieldList, i++));
-        star.setGrp(getValue(fieldList, i++));
+        star.setBprp(getValue(fieldList, i++, "0.0"));
+        star.setBpg(getValue(fieldList, i++, "0.0"));
+        star.setGrp(getValue(fieldList, i++, "0.0"));
 
-        star.setLuminosity(getValue(fieldList, i++));
+        star.setLuminosity(getValue(fieldList, i++, ""));
 
-        star.setMagu(getValue(fieldList, i++));
-        star.setMagb(getValue(fieldList, i++));
-        star.setMagv(getValue(fieldList, i++));
-        star.setMagr(getValue(fieldList, i++));
-        star.setMagi(getValue(fieldList, i++));
+        star.setMagu(getValue(fieldList, i++, "0.0"));
+        star.setMagb(getValue(fieldList, i++, "0.0"));
+        star.setMagv(getValue(fieldList, i++, "0.0"));
+        star.setMagr(getValue(fieldList, i++, "0.0"));
+        star.setMagi(getValue(fieldList, i++, "0.0"));
 
-        star.setOther(getValue(fieldList, i++));
-        star.setAnomaly(getValue(fieldList, i++));
+        star.setOther(getValue(fieldList, i++, "false"));
+        star.setAnomaly(getValue(fieldList, i++, "false"));
 
-        star.setPolity(getValue(fieldList, i++));
-        star.setWorldType(getValue(fieldList, i++));
-        star.setFuelType(getValue(fieldList, i++));
-        star.setPortType(getValue(fieldList, i++));
-        star.setPopulationType(getValue(fieldList, i++));
-        star.setTechType(getValue(fieldList, i++));
-        star.setProductType(getValue(fieldList, i++));
-        star.setMilSpaceType(getValue(fieldList, i++));
-        star.setMilPlanType(getValue(fieldList, i++));
+        star.setPolity(getValue(fieldList, i++, "NA"));
+        star.setWorldType(getValue(fieldList, i++, "NA"));
+        star.setFuelType(getValue(fieldList, i++, "NA"));
+        star.setPortType(getValue(fieldList, i++, "NA"));
+        star.setPopulationType(getValue(fieldList, i++, "NA"));
+        star.setTechType(getValue(fieldList, i++, "NA"));
+        star.setProductType(getValue(fieldList, i++, "NA"));
+        star.setMilSpaceType(getValue(fieldList, i++, "NA"));
+        star.setMilPlanType(getValue(fieldList, i++, "NA"));
 
-        star.setMiscText1(getValue(fieldList, i++));
-        star.setMiscText2(getValue(fieldList, i++));
-        star.setMiscText3(getValue(fieldList, i++));
-        star.setMiscText4(getValue(fieldList, i++));
-        star.setMiscText5(getValue(fieldList, i++));
+        star.setMiscText1(getValue(fieldList, i++, "none"));
+        star.setMiscText2(getValue(fieldList, i++, "none"));
+        star.setMiscText3(getValue(fieldList, i++, "none"));
+        star.setMiscText4(getValue(fieldList, i++, "none"));
+        star.setMiscText5(getValue(fieldList, i++, "none"));
 
-        star.setMiscNum1(parseDouble(getValue(fieldList, i++)));
-        star.setMiscNum2(parseDouble(getValue(fieldList, i++)));
-        star.setMiscNum3(parseDouble(getValue(fieldList, i++)));
-        star.setMiscNum4(parseDouble(getValue(fieldList, i++)));
+        star.setMiscNum1(parseDouble(getValue(fieldList, i++, "0.0")));
+        star.setMiscNum2(parseDouble(getValue(fieldList, i++, "0.0")));
+        star.setMiscNum3(parseDouble(getValue(fieldList, i++, "0.0")));
+        star.setMiscNum4(parseDouble(getValue(fieldList, i++, "0.0")));
 
-        double miscNum5 = parseDouble(getValue(fieldList, i++));
+        double miscNum5 = parseDouble(getValue(fieldList, i++, "0.0"));
         star.setMiscNum5(miscNum5);
-        String notes = getValue(fieldList, i++);
+        String notes = getValue(fieldList, i++, "none");
         star.setNotes(notes);
 
-        star.setGalacticLattitude(getValue(fieldList, i++));
-        star.setGalacticLongitude(getValue(fieldList, i));
+        star.setGalacticLattitude(getValue(fieldList, i++, "0.0"));
+        star.setGalacticLongitude(getValue(fieldList, i, "0.0"));
         return star;
     }
 
-    public String getValue(List<String> fields, int i) {
-        return i >= fields.size() ? "" : fields.get(i).trim();
+    public String getValue(List<String> fields, int i, String optional) {
+        if (i >= fields.size()) {
+            return optional;
+        } else {
+            String value = fields.get(i).trim();
+            if (value.isEmpty()) {
+                return optional;
+            } else {
+                return value;
+            }
+        }
     }
 
     private DataSetDescriptor createDescriptor(Dataset dataSet) {
