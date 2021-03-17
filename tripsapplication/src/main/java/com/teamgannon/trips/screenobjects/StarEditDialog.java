@@ -1,7 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.routing.RouteFindingOptions;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -94,6 +93,17 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final TextField miscNum5TextField = new TextField();
 
     private final Stage stage;
+
+    private ComboBox<String> politiesComboBox = new ComboBox<>();
+    private ComboBox<String> worldComboBox = new ComboBox<>();
+    private ComboBox<String> fuelComboBox = new ComboBox<>();
+    private ComboBox<String> techComboBox = new ComboBox<>();
+    private ComboBox<String> portComboBox = new ComboBox<>();
+    private ComboBox<String> populationComboBox = new ComboBox<>();
+    private ComboBox<String> productComboBox = new ComboBox<>();
+    private ComboBox<String> milSpaceComboBox = new ComboBox<>();
+    private ComboBox<String> milPlanComboBox = new ComboBox<>();
+
 
     ////////////////
 
@@ -261,6 +271,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     private @NotNull Pane createFictionalTab() {
 
+        fillCombos();
+
         // setup grid structure
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
@@ -271,46 +283,55 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         gridPane.add(new Label("Polity"), 0, 1);
         polityTextField.setText(record.getPolity());
         gridPane.add(polityTextField, 1, 1);
+        gridPane.add(politiesComboBox, 2, 1);
 
         // world type
         gridPane.add(new Label("World Type"), 0, 2);
         worldTypeTextField.setText(record.getWorldType());
         gridPane.add(worldTypeTextField, 1, 2);
+        gridPane.add(worldComboBox, 2, 2);
 
         // fuel type
         gridPane.add(new Label("Fuel Type"), 0, 3);
         fuelTypeTextField.setText(record.getFuelType());
         gridPane.add(fuelTypeTextField, 1, 3);
+        gridPane.add(fuelComboBox, 2, 3);
 
         // tech type
         gridPane.add(new Label("Tech Type"), 0, 4);
         techTypeTextField.setText(record.getTechType());
         gridPane.add(techTypeTextField, 1, 4);
+        gridPane.add(techComboBox, 2, 4);
 
         // port type
         gridPane.add(new Label("Port Type"), 0, 5);
         portTypeTextField.setText(record.getPortType());
         gridPane.add(portTypeTextField, 1, 5);
+        gridPane.add(portComboBox, 2, 5);
 
         // population
         gridPane.add(new Label("Population Type"), 0, 6);
         popTypeTextField.setText(record.getPopulationType());
         gridPane.add(popTypeTextField, 1, 6);
+        gridPane.add(populationComboBox, 2, 6);
 
         // product type
         gridPane.add(new Label("Product Type"), 0, 7);
         prodField.setText(record.getProductType());
         gridPane.add(prodField, 1, 7);
+        gridPane.add(productComboBox, 2, 7);
 
         // milspace type
         gridPane.add(new Label("Milspace Type"), 0, 8);
         milspaceTextField.setText(record.getMilSpaceType());
         gridPane.add(milspaceTextField, 1, 8);
+        gridPane.add(milSpaceComboBox, 2, 8);
 
         // milplan type
         gridPane.add(new Label("Milplan Type"), 0, 9);
         milplanTextField.setText(record.getMilPlanType());
         gridPane.add(milplanTextField, 1, 9);
+        gridPane.add(milPlanComboBox, 2, 9);
 
         // anomaly
         gridPane.add(new Label("Anomaly"), 0, 10);
@@ -325,6 +346,55 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         gridPane.add(otherCheckbox, 1, 11);
 
         return gridPane;
+    }
+
+    private void fillCombos() {
+
+        // polities
+        politiesComboBox.getItems().addAll("Terran", "Dornani", "Ktor", "Arat Kur", "Hkh'Rkh", "Slaasrithi",
+                "Other 1", "Other 2", "Other 3", "Other 4", "NA");
+        politiesComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> polityTextField.setText(newValue));
+        politiesComboBox.getSelectionModel().select("NA");
+
+        // fuel type
+        fuelComboBox.getItems().addAll("H2", "Antimatter", "Gas Giant", "Water World", "NA");
+        fuelComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> fuelTypeTextField.setText(newValue));
+        fuelComboBox.getSelectionModel().select("NA");
+
+        // world type
+        worldComboBox.getItems().addAll("Green", "Grey", "Brown", "NA");
+        worldComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> worldTypeTextField.setText(newValue));
+        worldComboBox.getSelectionModel().select("NA");
+
+        // world type
+        portComboBox.getItems().addAll("A", "B", "C", "D", "E", "NA");
+        portComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> portTypeTextField.setText(newValue));
+        portComboBox.getSelectionModel().select("NA");
+
+        // military space side type
+        milSpaceComboBox.getItems().addAll("A", "B", "C", "D", "E", "NA");
+        milSpaceComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> milspaceTextField.setText(newValue));
+        milSpaceComboBox.getSelectionModel().select("NA");
+
+        // military planet side type
+        milPlanComboBox.getItems().addAll("A", "B", "C", "D", "E", "NA");
+        milPlanComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> milplanTextField.setText(newValue));
+        milPlanComboBox.getSelectionModel().select("NA");
+
+        // military planet side type
+        techComboBox.getItems().addAll("1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "NA");
+        techComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> techTypeTextField.setText(newValue));
+        techComboBox.getSelectionModel().select("NA");
+
+        // military planet side type
+        populationComboBox.getItems().addAll("1s", "10s", "100s", "1000s", "10\u2074", "10\u2075", "10\u2076", "10\u2077", "10\u2078", "10\u2079", "NA");
+        populationComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> popTypeTextField.setText(newValue));
+        populationComboBox.getSelectionModel().select("NA");
+
+        // world type
+        productComboBox.getItems().addAll("Agricultural", "Industry", "Services", "Raw Materials", "Bio", "Fossil Fuel", "Finished Goods", "Hi Tech", "Unique", "Energy (Nuke, AM or Fuel Cells \nat high export levels", "NA");
+        productComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> prodField.setText(newValue));
+        productComboBox.getSelectionModel().select("NA");
     }
 
     private @NotNull Pane createSecondaryTab() {
@@ -560,7 +630,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         rightGrid.add(new Label("GAIA Id"), 0, 9);
         gaiaIdTextField.setText(record.getGaiaId());
         rightGrid.add(gaiaIdTextField, 1, 9);
-
 
 
         return mGridPane;

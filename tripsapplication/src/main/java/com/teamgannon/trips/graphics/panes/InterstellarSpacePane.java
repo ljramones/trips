@@ -376,6 +376,7 @@ public class InterstellarSpacePane extends Pane {
         if (shift) {
             log.info("shift display left!!");
             camera.setTranslateX(300);
+            zoomOut(40);
         } else {
             if (!sidePanelShiftKludgeFirstTime) {
                 log.info("shift display right!!");
@@ -383,6 +384,7 @@ public class InterstellarSpacePane extends Pane {
             } else {
                 sidePanelShiftKludgeFirstTime = false;
             }
+            zoomIn(40);
         }
         updateLabels();
 
