@@ -82,6 +82,11 @@ public class StarDisplayRecord {
     private boolean displayLabel = false;
 
     /**
+     * force the label to be shown which is set in the DB
+     */
+    private boolean labelForced = false;
+
+    /**
      * From Simbad, We’re only storing ONE per object, and in reality we’re only interested in the first character
      * (OBAFGKMLTY) Objects which are sub-stellar such as planets should have a value of NULL.  We do not want
      * to try to use this field to code both spec class AND if something’s a planet or a black hole, or whatever.
@@ -135,6 +140,7 @@ public class StarDisplayRecord {
         object.setDistance(displayRecord.getDistance());
         object.setSpectralClass(displayRecord.getSpectralClass());
         object.setPolity(displayRecord.getPolity());
+        object.setForceLabelToBeShown(displayRecord.isLabelForced());
 
         return object;
     }
@@ -167,6 +173,7 @@ public class StarDisplayRecord {
             record.setActualCoordinates(coords);
             record.setPolity(starObject.getPolity());
             record.setDisplayScore(starObject.getDisplayScore());
+            record.setLabelForced(starObject.isForceLabelToBeShown());
         } else {
             log.error("unable to find stellar type for:{}, record ={}", stellarType, record);
             return null;
@@ -257,7 +264,13 @@ public class StarDisplayRecord {
      * @param displayRadius the max display radius
      */
     public void setCurrentLabelDisplayScore(double displayRadius) {
-        currentLabelDisplayScore = displayScore * (2 * (displayRadius / distance));
+        if (labelForced) {
+            currentLabelDisplayScore = displayScore * (2 * (displayRadius / distance));
+        } else {
+            // if the label is set as forced meaning it has to be displayed, then we set the label score as also set
+            // we always put the label in the set in order not to have
+            currentLabelDisplayScore = 1000;
+        }
     }
 
 }

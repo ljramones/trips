@@ -399,6 +399,13 @@ public class StarObject implements Serializable {
      */
     private boolean exoplanets;
 
+    ///////////////////////
+
+    /**
+     * there are times when we want to ensure that the label is always show and not part of the algorithm for display
+     */
+    private boolean forceLabelToBeShown = false;
+
     /**
      * this is a computed heuristic that tells us whether to show the label on the graphics display or not
      */
