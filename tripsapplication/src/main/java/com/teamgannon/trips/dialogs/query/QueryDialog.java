@@ -127,8 +127,10 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         if (!showPlot && !showTable && !doExport) {
             showErrorAlert("Query Request",
                     "Must select at least one target for data, plot, table, or export");
+            return;
         }
-        searchPane.runQuery(showPlot, showTable, doExport);
+        setResult(new AstroSearchQuery());
+        AstroSearchQuery newQuery = searchPane.runQuery(showPlot, showTable, doExport);
     }
 
 }

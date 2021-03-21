@@ -89,7 +89,6 @@ public class CurrentPlot {
         // sort the list in order, duplicates are keep
         starDisplayRecordList.sort(Comparator.comparing(StarDisplayRecord::getCurrentLabelDisplayScore).reversed());
 
-
         // create a check set for the user count
         IntStream.range(0, labelCount).mapToObj(i -> starDisplayRecordList.get(i)).forEach(starDisplayRecord -> starDisplayRecord.setDisplayLabel(true));
 

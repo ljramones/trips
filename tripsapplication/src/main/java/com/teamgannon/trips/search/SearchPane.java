@@ -114,7 +114,7 @@ public class SearchPane extends Pane {
         dataSetChoicePanel.updateDataContext(dataSetDescriptor);
     }
 
-    public void runQuery(boolean showPlot, boolean showTable, boolean doExport) {
+    public AstroSearchQuery runQuery(boolean showPlot, boolean showTable, boolean doExport) {
 
         DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
 
@@ -136,7 +136,9 @@ public class SearchPane extends Pane {
             } else {
                 showErrorAlert("Query Dialog", "You must specify a dataset!");
             }
+            return newQuery;
         }
+        return searchContext.getAstroSearchQuery();
     }
 
     ///////////////   Query Construction   //////////////////

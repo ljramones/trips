@@ -10,6 +10,8 @@ import javafx.scene.layout.Pane;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+
 @Slf4j
 public class ObjectViewPane extends Pane {
 
@@ -49,5 +51,6 @@ public class ObjectViewPane extends Pane {
 
     public void add(StarDisplayRecord starDisplayRecord) {
         stellarObjectsListView.getItems().add(starDisplayRecord);
+        stellarObjectsListView.getItems().sort(Comparator.comparing(StarDisplayRecord::getStarName));
     }
 }

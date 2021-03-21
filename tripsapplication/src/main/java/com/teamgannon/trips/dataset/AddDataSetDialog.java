@@ -80,9 +80,9 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         fileSelected.setPromptText("use button to navigate to file, or enter it");
         gridPane.add(fileSelected, 1, 1);
 
-
         Label dataSetNameLabel = new Label("Dataset Name:");
         gridPane.add(dataSetNameLabel, 0, 2);
+        dataSetName.setText("newDataset1");
         gridPane.add(dataSetName, 1, 2);
         dataSetName.setPromptText("Use \"Select File\" below of enter full path to file");
         Tooltip tooltipDataSetName = new Tooltip("Use \"Select File\" below of enter full path to file");
@@ -215,6 +215,8 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     public boolean chooseFile(@NotNull DataFileFormat dataFileFormat) {
         log.debug("Import a {} format file", dataFileFormat.getDataFormatEnum().getValue());
         final FileChooser fileChooser = new FileChooser();
+//        FileChooser.ExtensionFilter extFilter = selectExtensionFilter("TXT files (*.txt)", "*.txt");
+//        fileChooser.getExtensionFilters().add(extFilter);
         String title = String.format("Select %s file to import", dataFileFormat.getDataFormatEnum().getValue());
         fileChooser.setTitle(title);
         File filesFolder = new File(localization.getFileDirectory());
@@ -226,7 +228,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             }
         }
         fileChooser.setInitialDirectory(filesFolder);
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(dataFileFormat.getDataFormatEnum().getValue(), dataFileFormat.getSuffix());
+        FileChooser.ExtensionFilter filter = selectExtensionFilter("CSV files (*.csv)", "*.csv");
         fileChooser.setSelectedExtensionFilter(filter);
         File file = fileChooser.showOpenDialog(null);
         if (file != null) {
@@ -237,6 +239,11 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             log.warn("file selection cancelled");
             return false;
         }
+    }
+
+    @NotNull
+    private FileChooser.ExtensionFilter selectExtensionFilter(String formatType, String suffix) {
+        return new FileChooser.ExtensionFilter(formatType, suffix);
     }
 
     /**
