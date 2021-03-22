@@ -10,7 +10,6 @@ import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -36,6 +35,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Translate;
@@ -327,68 +327,21 @@ public class StarPlotManager {
                           StarDisplayPreferences starDisplayPreferences,
                           CivilizationDisplayPreferences politiesPreferences) {
 
-        Node starNode;
-        // create a star for display
-        if (record.getStarName().equals(centerStar)) {
-            // we use a special icon for the center of the diagram plot
-            starNode = createCentralPoint(record, colorPalette, starDisplayPreferences);
-            log.info("sol is at {}", record.getActualCoordinates());
-        } else {
-            // otherwise draw a regular star
-            starNode = createStar(
-                    record,
-                    colorPalette,
-                    starDisplayPreferences,
-                    politiesPreferences,
-                    record.isDisplayLabel(),
-                    politiesOn);
+        Node starNode = createStar(
+                record,
+                colorPalette,
+                starDisplayPreferences,
+                politiesPreferences,
+                record.isDisplayLabel(),
+                politiesOn);
 
-            // create the extension stem tot he star from the grid
-            createExtension(record);
-        }
+        // create the extension stem tot he star from the grid
+        createExtension(record);
+
         tripsContext.getCurrentPlot().addStar(record.getRecordId(), starNode);
 
         // draw the star on the pane
         stellarDisplayGroup.getChildren().add(starNode);
-    }
-
-    /**
-     * Draw the central star to the plot
-     *
-     * @param record                 the star record to show
-     * @param colorPalette           the color palette to use
-     * @param starDisplayPreferences the star display preferences
-     * @return the graphical object group representing the star
-     */
-    private @NotNull Node createCentralPoint(@NotNull StarDisplayRecord record,
-                                             @NotNull ColorPalette colorPalette,
-                                             StarDisplayPreferences starDisplayPreferences) {
-
-        Label label = StellarEntityFactory.createLabel(record, colorPalette);
-        labelDisplayGroup.getChildren().add(label);
-
-        Node star = StellarEntityFactory.drawCentralIndicator(
-                record,
-                colorPalette,
-                label,
-                starDisplayPreferences);
-
-        if (listUpdaterListener != null) {
-            listUpdaterListener.updateList(record);
-        }
-
-        ContextMenu starContextMenu = createPopup(record.getStarName(), star);
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
-
-        star.setId("central");
-        star.setUserData(record);
-        return star;
     }
 
     /**
@@ -411,12 +364,17 @@ public class StarPlotManager {
         Node star = drawStellarObject(
                 record,
                 colorPalette,
+                record.isCenter(),
                 labelsOn,
                 politiesOn,
                 starDisplayPreferences,
                 politiesPreferences);
 
-        Tooltip tooltip = new Tooltip(record.getStarName());
+        String polity = record.getPolity();
+        if (polity.equals("NA")) {
+            polity = "Non-Aligned";
+        }
+        Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
         Tooltip.install(star, tooltip);
 
         if (listUpdaterListener != null) {
@@ -429,49 +387,49 @@ public class StarPlotManager {
         return star;
     }
 
-    public @NotNull Node drawStellarObject(@NotNull StarDisplayRecord record,
-                                           @NotNull ColorPalette colorPalette,
-                                           boolean labelsOn,
-                                           boolean politiesOn,
-                                           StarDisplayPreferences starDisplayPreferences,
-                                           @NotNull CivilizationDisplayPreferences polityPreferences) {
-
-        return createStellarShape(record, colorPalette, labelsOn, politiesOn, polityPreferences);
-    }
-
     /**
      * create a stellar object
      *
      * @param record            the star record
+     * @param isCenter
      * @param colorPalette      the color palette to use
      * @param labelsOn          are labels on?
      * @param politiesOn        are polities on?
      * @param polityPreferences the plo
      * @return the created object
      */
-    public @NotNull Node createStellarShape(@NotNull StarDisplayRecord record,
-                                            @NotNull ColorPalette colorPalette,
-                                            boolean labelsOn,
-                                            boolean politiesOn,
-                                            @NotNull CivilizationDisplayPreferences polityPreferences) {
-
+    public @NotNull Node drawStellarObject(@NotNull StarDisplayRecord record,
+                                           @NotNull ColorPalette colorPalette,
+                                           boolean isCenter,
+                                           boolean labelsOn,
+                                           boolean politiesOn,
+                                           StarDisplayPreferences starDisplayPreferences,
+                                           @NotNull CivilizationDisplayPreferences polityPreferences) {
 
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(record.getStarColor());
         material.setSpecularColor(record.getStarColor());
-        Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
-        sphere.setMaterial(material);
+        Node starShape;
+        if (isCenter) {
+            Box box = new Box(4, 4, 4);
+            box.setMaterial(material);
+            starShape = box;
+        } else {
+            Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
+            sphere.setMaterial(material);
+            starShape = sphere;
+        }
         Point3D point3D = record.getCoordinates();
-        sphere.setTranslateX(point3D.getX());
-        sphere.setTranslateY(point3D.getY());
-        sphere.setTranslateZ(point3D.getZ());
+        starShape.setTranslateX(point3D.getX());
+        starShape.setTranslateY(point3D.getY());
+        starShape.setTranslateZ(point3D.getZ());
 
         if (labelsOn) {
             Label label = createLabel(record, colorPalette);
-            label.setLabelFor(sphere);
+            label.setLabelFor(starShape);
             labelDisplayGroup.getChildren().add(label);
             tripsContext.getCurrentPlot().mapLabelToStar(record.getRecordId(), label);
-            shapeToLabel.put(sphere, label);
+            shapeToLabel.put(starShape, label);
         }
 
         if (politiesOn) {
@@ -496,7 +454,7 @@ public class StarPlotManager {
                 politiesDisplayGroup.setVisible(true);
             } else {
                 // set context menu
-                setContextMenu(record, sphere);
+                setContextMenu(record, starShape);
                 log.debug("No polity to plot");
             }
 
@@ -504,9 +462,9 @@ public class StarPlotManager {
             politiesDisplayGroup.setVisible(true);
         } else {
             // set context menu
-            setContextMenu(record, sphere);
+            setContextMenu(record, starShape);
         }
-        return sphere;
+        return starShape;
     }
 
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
