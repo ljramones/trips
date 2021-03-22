@@ -7,11 +7,13 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.IntStream;
 
+@Slf4j
 @Data
 public class CurrentPlot {
 
@@ -72,6 +74,11 @@ public class CurrentPlot {
      * @param record the record
      */
     public void addRecord(StarDisplayRecord record) {
+
+        // center star is allows labeled
+        if (record.isCenter()) {
+            record.setDisplayLabel(true);
+        }
         starDisplayRecordList.add(record);
         // put star display record into the label sort
     }
