@@ -488,6 +488,7 @@ public class DataSetTable {
     private void spectraSortOrderChange(Observable o) {
         SortType sortType = spectraCol.getSortType();
         sortBySpectra(sortType);
+        moveFirst();
         log.info("re-sorted by spectra ");
     }
 
@@ -499,6 +500,7 @@ public class DataSetTable {
     private void radiusSortOrderChange(Observable o) {
         SortType sortType = radiusCol.getSortType();
         sortByRadius(sortType);
+        moveFirst();
         log.info("re-sorted by radius ");
     }
 
@@ -510,6 +512,7 @@ public class DataSetTable {
     private void raSortOrderChange(Observable o) {
         SortType sortType = raCol.getSortType();
         sortByRa(sortType);
+        moveFirst();
         log.info("re-sorted by RA ");
     }
 
@@ -521,6 +524,7 @@ public class DataSetTable {
     private void declinationSortOrderChange(Observable o) {
         SortType sortType = decCol.getSortType();
         sortByDeclination(sortType);
+        moveFirst();
         log.info("re-sorted by declination ");
     }
 
@@ -532,6 +536,7 @@ public class DataSetTable {
     private void parallaxSortOrderChange(Observable o) {
         SortType sortType = paraCol.getSortType();
         sortByParallax(sortType);
+        moveFirst();
         log.info("re-sorted by parallax ");
     }
 
@@ -543,6 +548,7 @@ public class DataSetTable {
     private void xSortOrderChange(Observable o) {
         SortType sortType = xCoordCol.getSortType();
         sortByX(sortType);
+        moveFirst();
         log.info("re-sorted by X ");
     }
 
@@ -554,6 +560,7 @@ public class DataSetTable {
     private void ySortOrderChange(Observable o) {
         SortType sortType = yCoordCol.getSortType();
         sortByY(sortType);
+        moveFirst();
         log.info("re-sorted by Y ");
     }
 
@@ -565,6 +572,7 @@ public class DataSetTable {
     private void zSortOrderChange(Observable o) {
         SortType sortType = zCoordCol.getSortType();
         sortByZ(sortType);
+        moveFirst();
         log.info("re-sorted by Z ");
     }
 
@@ -576,6 +584,7 @@ public class DataSetTable {
     private void realSortOrderChange(Observable o) {
         SortType sortType = realCol.getSortType();
         sortByReal(sortType);
+        moveFirst();
         log.info("re-sorted by real flag");
     }
 
