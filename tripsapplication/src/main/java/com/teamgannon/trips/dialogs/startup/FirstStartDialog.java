@@ -23,10 +23,16 @@ public class FirstStartDialog extends Dialog<Boolean> {
         vBox.getChildren().add(title);
         vBox.getChildren().add(new Separator());
         vBox.getChildren().add(new Label(
-                "TRIPS doesn’t load any data by default, you will\n" +
-                        "need to import a dataset before you start.\n" +
-                        "A dataset derived from the Gaia 2 data is included as \n" +
-                        "a CSV for you to use, or you can provide your own."));
+                """                                              
+                        TRIPS doesn’t load any data by default, you will
+                        need to import a dataset before you start.
+                                                
+                        A dataset derived from the Gaia 2 data is included as
+                        a CSV for you to use, or you can provide your own.
+                        
+                        
+                        """
+        ));
         vBox.getChildren().add(new Separator());
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
