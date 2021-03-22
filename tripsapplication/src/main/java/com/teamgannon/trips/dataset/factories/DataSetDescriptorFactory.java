@@ -96,10 +96,11 @@ public class DataSetDescriptorFactory {
 
         // set the records for this
         dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
-        String message = String.format("Dataset :%s has %d stars are range of %.3f",
-                dataSetDescriptor.getDataSetName(),
+        String message = String.format("Loaded %d stars within %.1f into dataset \"%s\"",
                 dataSetDescriptor.getNumberStars(),
-                dataSetDescriptor.getDistanceRange());
+                dataSetDescriptor.getDistanceRange(),
+                dataSetDescriptor.getDataSetName()
+        );
         log.info(message);
         dataSetDescriptor.setDistanceRange(maxDistance);
 
