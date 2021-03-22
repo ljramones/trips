@@ -23,8 +23,14 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
         vBox.getChildren().add(title);
         vBox.getChildren().add(new Separator());
         vBox.getChildren().add(new Label(
-                "“When the program starts, you must choose your data set. \n" +
-                        "Use “Star Data / Load data set” to choose a dataset."
+                """                       
+                        When the program starts
+                        Please import a dataset
+                            -->  Star Data/Import data set from a file....
+                        Then
+                            -->  Star Data/Select Active Dataset...    
+                                               
+                        """
         ));
         vBox.getChildren().add(new Separator());
         vBox.getChildren().add(onStartup);
