@@ -32,6 +32,8 @@ public class AddDataSetDialog extends Dialog<Dataset> {
 
     private final TextArea notes = new TextArea();
 
+    private Stage stage;
+
     private final TextField fileSelected = new TextField();
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
@@ -115,7 +117,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         hBox5.getChildren().add(cancelDataSetButton);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
 
@@ -215,8 +217,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     public boolean chooseFile(@NotNull DataFileFormat dataFileFormat) {
         log.debug("Import a {} format file", dataFileFormat.getDataFormatEnum().getValue());
         final FileChooser fileChooser = new FileChooser();
-//        FileChooser.ExtensionFilter extFilter = selectExtensionFilter("TXT files (*.txt)", "*.txt");
-//        fileChooser.getExtensionFilters().add(extFilter);
         String title = String.format("Select %s file to import", dataFileFormat.getDataFormatEnum().getValue());
         fileChooser.setTitle(title);
         File filesFolder = new File(localization.getFileDirectory());
@@ -228,9 +228,9 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             }
         }
         fileChooser.setInitialDirectory(filesFolder);
-        FileChooser.ExtensionFilter filter = selectExtensionFilter("CSV files (*.csv)", "*.csv");
-        fileChooser.setSelectedExtensionFilter(filter);
-        File file = fileChooser.showOpenDialog(null);
+        FileChooser.ExtensionFilter filter = selectExtensionFilter(dataFileFormat.getDataFormatEnum());
+        fileChooser.getExtensionFilters().add(filter);
+        File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             fileSelected.setText(file.getAbsolutePath());
             dataSet.setDataType(dataFileFormat);
@@ -242,8 +242,25 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     }
 
     @NotNull
-    private FileChooser.ExtensionFilter selectExtensionFilter(String formatType, String suffix) {
-        return new FileChooser.ExtensionFilter(formatType, suffix);
+    private FileChooser.ExtensionFilter selectExtensionFilter(DataFormatEnum dataFormatEnum) {
+        switch (dataFormatEnum) {
+
+            case CH_VIEW -> {
+                return new FileChooser.ExtensionFilter("CH View files (*.chv)", "*.chv");
+            }
+            case CSV -> {
+                return new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
+            }
+            case EXCEL -> {
+                return new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx");
+            }
+            case JSON -> {
+                return new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json");
+            }
+            default -> {
+                return new FileChooser.ExtensionFilter("All files (*.*)", "*.*");
+            }
+        }
     }
 
     /**
