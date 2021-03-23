@@ -257,7 +257,9 @@ public class GridPlotManager {
         drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, 5);
         drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, -5);
 
-        gridGroup.setVisible(true);
+        if (gridGroup.isVisible()) {
+            gridGroup.setVisible(true);
+        }
 
     }
 
