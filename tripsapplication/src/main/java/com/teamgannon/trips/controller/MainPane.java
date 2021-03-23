@@ -584,7 +584,11 @@ public class MainPane implements
         getCivilizationsFromDB();
         // get trips preferences
         getTripsPrefsFromDB();
+        // get transit prefs
+        getTransitPrefs();
     }
+
+
 
     private void showBeginningAlert() {
         if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
@@ -715,6 +719,11 @@ public class MainPane implements
     private void getTripsPrefsFromDB() {
         TripsPrefs tripsPrefs = databaseManagementService.getTripsPrefs();
         tripsContext.setTripsPrefs(tripsPrefs);
+    }
+
+    private void getTransitPrefs() {
+        TransitSettings transitSettings = databaseManagementService.getTransitSettings();
+        tripsContext.setTransitSettings(transitSettings);
     }
 
     private void getCivilizationsFromDB() {
@@ -974,7 +983,7 @@ public class MainPane implements
     }
 
     public void transitFinder(ActionEvent actionEvent) {
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog();
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService, tripsContext.getTransitSettings());
         Optional<DistanceRoutes> optionalDistanceRoutes = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalDistanceRoutes.isPresent()) {
             DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();

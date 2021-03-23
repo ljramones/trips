@@ -24,7 +24,7 @@ public class FirstStartDialog extends Dialog<Boolean> {
         vBox.getChildren().add(new Separator());
         vBox.getChildren().add(new Label(
                 """                                              
-                        TRIPS doesn’t load any data by default, you will
+                        TRIPS doesn't load any data by default, you will
                         need to import a dataset before you start.
                                                 
                         A dataset derived from the Gaia 2 data is included as

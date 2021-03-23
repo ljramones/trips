@@ -1,6 +1,7 @@
 package com.teamgannon.trips.config.application;
 
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
+import com.teamgannon.trips.jpa.model.TransitSettings;
 import com.teamgannon.trips.jpa.model.TripsPrefs;
 import com.teamgannon.trips.search.SearchContext;
 import lombok.Data;
@@ -18,6 +19,8 @@ public class TripsContext {
     private @NotNull DataSetContext dataSetContext = new DataSetContext();
 
     private @NotNull TripsPrefs tripsPrefs = new TripsPrefs();
+
+    private @NotNull TransitSettings transitSettings = new TransitSettings();
 
     /**
      * this hold the current plot data
