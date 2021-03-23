@@ -43,36 +43,50 @@ import java.util.stream.StreamSupport;
 public class DatabaseManagementService {
 
     private static final int MAX_REQUEST_SIZE = 9999;
+
+
     /**
      * storage of data sets in DB
      */
     private final DataSetDescriptorRepository dataSetDescriptorRepository;
+
     /**
      * storage of astrographic objects in DB
      */
     private final StarObjectRepository starObjectRepository;
+
     /**
      * storage of graph colors in DB
      */
     private final GraphColorsRepository graphColorsRepository;
+
     /**
      * storage of graph enables in DB
      */
     private final GraphEnablesRepository graphEnablesRepository;
+
     /**
      * stores all teh star details
      */
     private final StarDetailsPersistRepository starDetailsPersistRepository;
+
     /**
      * civilization bases
      */
     private final CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository;
+
     @PersistenceContext
     private EntityManager entityManager;
+
     /**
      * trips prefs
      */
     private final TripsPrefsRepository tripsPrefsRepository;
+
+    /**
+     * transit settings
+     */
+    private TransitSettingsRepository transitSettingsRepository;
 
     /**
      * constructor
@@ -89,7 +103,8 @@ public class DatabaseManagementService {
                                      GraphEnablesRepository graphEnablesRepository,
                                      StarDetailsPersistRepository starDetailsPersistRepository,
                                      CivilizationDisplayPreferencesRepository civilizationDisplayPreferencesRepository,
-                                     TripsPrefsRepository tripsPrefsRepository) {
+                                     TripsPrefsRepository tripsPrefsRepository,
+                                     TransitSettingsRepository transitSettingsRepository) {
 
         this.dataSetDescriptorRepository = dataSetDescriptorRepository;
         this.starObjectRepository = starObjectRepository;
@@ -98,6 +113,7 @@ public class DatabaseManagementService {
         this.starDetailsPersistRepository = starDetailsPersistRepository;
         this.civilizationDisplayPreferencesRepository = civilizationDisplayPreferencesRepository;
         this.tripsPrefsRepository = tripsPrefsRepository;
+        this.transitSettingsRepository = transitSettingsRepository;
     }
 
     /**
@@ -599,6 +615,23 @@ public class DatabaseManagementService {
         }
     }
 
+    public TransitSettings getTransitSettings() {
+        Optional<TransitSettings> transitSettingsOptional = transitSettingsRepository.findById("main");
+
+        if (transitSettingsOptional.isPresent()) {
+            return transitSettingsOptional.get();
+        } else {
+            TransitSettings transitSettings = new TransitSettings();
+            transitSettings.setId("main");
+            transitSettingsRepository.save(transitSettings);
+            return transitSettings;
+        }
+    }
+
+    public void setTransitSettings(TransitSettings transitSettings) {
+        transitSettingsRepository.save(transitSettings);
+    }
+
     public void saveTripsPrefs(TripsPrefs tripsPrefs) {
         tripsPrefsRepository.save(tripsPrefs);
     }
@@ -628,4 +661,7 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.save(descriptor);
         return descriptor;
     }
+
+
+
 }

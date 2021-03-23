@@ -1,6 +1,8 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
+import com.teamgannon.trips.jpa.model.TransitSettings;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -25,9 +27,15 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
     private final ColorPicker colorPicker = new ColorPicker();
 
     private final TextField lineWidth = new TextField();
+    private final DatabaseManagementService databaseManagementService;
+
+    private final TransitSettings transitSettings;
 
 
-    public FindTransitsBetweenStarsDialog() {
+    public FindTransitsBetweenStarsDialog(DatabaseManagementService databaseManagementService, TransitSettings transitSettings) {
+
+        this.databaseManagementService = databaseManagementService;
+        this.transitSettings = transitSettings;
 
         this.setTitle("Select a Range to Find Transits");
         this.setHeight(300);
@@ -57,18 +65,20 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
 
         gridPane.add(upperDistanceLabel, 0, 1);
         gridPane.add(upperDistanceMeasure, 1, 1);
-        upperDistanceMeasure.setText("8");
+        upperDistanceMeasure.setText(Double.toString(transitSettings.getUpperDistance()));
 
         gridPane.add(lowerDistanceLabel, 0, 2);
         gridPane.add(lowerDistanceMeasure, 1, 2);
-        lowerDistanceMeasure.setText("3");
+        lowerDistanceMeasure.setText(Double.toString(transitSettings.getLowerDistance()));
 
         gridPane.add(colorLabel, 0, 3);
         gridPane.add(colorPicker, 1, 3);
+        Color transitColor = Color.valueOf(transitSettings.getLineColor());
+        colorPicker.setValue(transitColor);
 
         gridPane.add(lineWidthLabel, 0, 4);
         gridPane.add(lineWidth, 1, 4);
-        lineWidth.setText(".4");
+        lineWidth.setText(Double.toString(transitSettings.getLineWidth()));
 
         vBox.getChildren().add(gridPane);
 
@@ -118,11 +128,25 @@ public class FindTransitsBetweenStarsDialog extends Dialog<DistanceRoutes> {
                     .lineWidth(transitLineWidth)
                     .selected(true)
                     .build();
+            TransitSettings transitSettings = gatherValues();
+            databaseManagementService.setTransitSettings(transitSettings);
             setResult(distanceRoutes);
         } catch (NumberFormatException nfe) {
             showErrorAlert("Find Distance Between Stars",
                     "Not a valid floating point:" + upperDistanceMeasure.getText());
         }
+    }
+
+    private TransitSettings gatherValues() {
+        try {
+            transitSettings.setUpperDistance(Double.parseDouble(upperDistanceMeasure.getText()));
+            transitSettings.setLowerDistance(Double.parseDouble(lowerDistanceMeasure.getText()));
+            transitSettings.setLineWidth(Double.parseDouble(lineWidth.getText()));
+            transitSettings.setLineColor(colorPicker.getValue().toString());
+        } catch (Exception e) {
+            showErrorAlert("Transit settings", "Must be a double value");
+        }
+        return transitSettings;
     }
 
 }
