@@ -108,7 +108,7 @@ public class StarPlotManager {
     private FadeTransition fadeTransition;
 
 
-    private TripsContext tripsContext;
+    private final TripsContext tripsContext;
     /**
      * our color palette
      */
