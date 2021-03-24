@@ -214,6 +214,7 @@ public class RouteDescriptor {
         route.getRouteLengths().addAll(lengthList);
         route.setRouteNotes(this.routeNotes);
         route.setStartingStar(this.startStar);
+        route.getRouteStarNames().addAll(this.nameList);
         route.setRouteColor(this.color.toString());
         return route;
     }

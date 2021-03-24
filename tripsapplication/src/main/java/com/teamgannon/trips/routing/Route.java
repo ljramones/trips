@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class Route implements Serializable {
      */
     private final static ObjectMapper mapper = new ObjectMapper();
 
+    @Serial
     private static final long serialVersionUID = 6432469144778289966L;
 
     /**
@@ -53,6 +55,11 @@ public class Route implements Serializable {
      * An array of star GUIDs which defines this route
      */
     private @NotNull List<UUID> routeStars = new ArrayList<>();
+
+    /**
+     * the list of star names in the route
+     */
+    private @NotNull List<String> routeStarNames = new ArrayList<>();
 
     /**
      * we calculate the route lengths when we create a route and store them so we don't have to
