@@ -21,11 +21,12 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class RouteFinderInView {
 
+    private static final int GRAPH_THRESHOLD = 1500;
+
     /**
      * used to plot the routes found
      */
     private final InterstellarSpacePane interstellarSpacePane;
-    private DatabaseManagementService databaseManagementService;
 
     /**
      * the constructor
@@ -51,7 +52,7 @@ public class RouteFinderInView {
         processRouteRequest(currentDataSet, theStage, routeFinderDialogInView);
     }
 
-    private boolean processRouteRequest(DataSetDescriptor currentDataSet, Stage theStage, RouteFinderDialogInView routeFinderDialogInView) {
+    private void processRouteRequest(DataSetDescriptor currentDataSet, Stage theStage, RouteFinderDialogInView routeFinderDialogInView) {
         Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialogInView.showAndWait();
         if (routeFindingOptionsOptional.isPresent()) {
             RouteFindingOptions routeFindingOptions = routeFindingOptionsOptional.get();
@@ -67,18 +68,20 @@ public class RouteFinderInView {
                     List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
                     List<StarDisplayRecord> prunedStars = prune(starsInView, routeFindingOptions);
 
+                    if (prunedStars.size()> GRAPH_THRESHOLD) {
+                        showErrorAlert("Route Finder", "There are too many stars to plan a route");
+                    }
+
                     RouteBuilderHelper routeBuilderHelper = new RouteBuilderHelper(prunedStars);
 
                     // check if the start star is present
                     if (!routeBuilderHelper.has(origin)) {
                         showErrorAlert("Route Finder", "The start star is not in route");
-                        return false;
                     }
 
                     // check if the destination star is present
                     if (!routeBuilderHelper.has(destination)) {
                         showErrorAlert("Route Finder", "The destination star is not in route");
-                        return false;
                     }
 
                     // calculate the transits based on upper and lower bounds
@@ -97,13 +100,11 @@ public class RouteFinderInView {
                         // check if the origin star and destination star are connected to each other
                         if (routeGraph.isConnected(origin, destination)) {
                             determineRoutesAndPlotOne(currentDataSet, theStage, routeFindingOptions, origin, destination, routeBuilderHelper, routeGraph);
-                            return true;
                         } else {
                             log.error("Source and destination stars do not have a path");
                             showErrorAlert("Route Finder from A to B",
                                     "Unable to find a route between source and destination based on supplied parameters.");
                             processRouteRequest(currentDataSet,theStage, routeFinderDialogInView);
-                            return false;
                         }
                     } catch (Exception e) {
                         showErrorAlert("Route Finder from A to B",
@@ -113,12 +114,9 @@ public class RouteFinderInView {
                 } catch (Exception e) {
                     log.error("failed to find routes:", e);
                     processRouteRequest(currentDataSet,theStage, routeFinderDialogInView);
-                    return false;
                 }
             }
-            return true;
         }
-        return true;
     }
 
     private void determineRoutesAndPlotOne(DataSetDescriptor currentDataSet, Stage theStage, RouteFindingOptions routeFindingOptions, String origin, String destination, RouteBuilderHelper routeBuilderHelper, RouteGraph routeGraph) {
