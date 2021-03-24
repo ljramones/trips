@@ -1308,6 +1308,7 @@ public class MainPane implements
     @Override
     public void clearData() {
         starPropertiesPane.clearData();
+        routingPanel.clearData();
     }
 
     @Override
@@ -1469,7 +1470,20 @@ public class MainPane implements
         plotButton.setDisable(false);
         toolBar.setTooltip(new Tooltip(null));
 
+        // clear all the current data
+        clearAll();
+
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
+    }
+
+    public void clearAll(){
+        clearData();
+        clearList();
+        clearInterstellar();
+    }
+
+    private void clearInterstellar() {
+        interstellarSpacePane.clearAll();
     }
 
     @Override

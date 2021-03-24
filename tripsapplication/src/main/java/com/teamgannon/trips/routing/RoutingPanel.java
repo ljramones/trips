@@ -61,4 +61,7 @@ public class RoutingPanel extends Pane {
 
     }
 
+    public void clearData() {
+        routingListView.getItems().clear();
+    }
 }
