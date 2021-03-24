@@ -216,6 +216,7 @@ public class RouteDescriptor {
         route.setRouteNotes(this.routeNotes);
         route.setStartingStar(this.startStar);
         route.getRouteStarNames().addAll(this.nameList);
+        route.setLineWidth(this.lineWidth);
         route.setRouteColor(this.color.toString());
         return route;
     }
