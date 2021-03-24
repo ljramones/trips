@@ -18,7 +18,7 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 15);
 
         VBox vBox = new VBox();
-        Label title = new Label("Terran Interstellar Plotting System");
+        Label title = new Label("Terran Republic Interstellar Plotting System");
         title.setFont(font);
         vBox.getChildren().add(title);
         vBox.getChildren().add(new Separator());
