@@ -123,6 +123,7 @@ public class RouteDescriptor {
                 .name(route.getRouteName())
                 .maxLength(route.getRouteStars().size())
                 .color(Color.valueOf(route.getRouteColor()))
+                .lineWidth(route.getLineWidth())
                 .routeNotes(route.getRouteNotes())
                 .startStar(route.getStartingStar())
                 .build();
