@@ -55,7 +55,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10.0);
         this.getDialogPane().setContent(vBox);
-        this.setTitle("Add a dataset dialog");
+        this.setTitle("Add a Dataset");
 
         GridPane gridPane = new GridPane();
         gridPane.setVgap(5);

@@ -78,6 +78,11 @@ public class Route implements Serializable {
     private String routeColor;
 
     /**
+     * the line width to draw
+     */
+    private double lineWidth;
+
+    /**
      * the star this route starts at
      */
     private String startingStar;

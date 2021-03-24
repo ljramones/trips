@@ -467,7 +467,7 @@ public class RouteManager {
                 double length = routeDescriptor.getLengthList().get(i++);
                 Label lengthLabel = createLabel(firstLink, length);
                 // create the line segment
-                Node lineSegment = createLineSegment(previousPoint, point3D, 0.5, routeDescriptor.getColor(), lengthLabel);
+                Node lineSegment = createLineSegment(previousPoint, point3D, routeDescriptor.getLineWidth(), routeDescriptor.getColor(), lengthLabel);
                 // step along the segment
                 previousPoint = point3D;
 

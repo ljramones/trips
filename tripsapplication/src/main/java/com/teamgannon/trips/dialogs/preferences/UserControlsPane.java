@@ -16,15 +16,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class UserControlsPane extends Pane {
 
-    private final static String USER_PANE_TITLE = "Change User Controls";
-    private final static String USER_PANE_TITLE_MODIFIED = "Change User Controls - *modified*";
+    private final static String USER_PANE_TITLE = "Mouse Drag Rotation Direction";
+    private final static String USER_PANE_TITLE_MODIFIED = "Mouse Drag Rotation Direction - *modified*";
     private final PreferencesUpdaterListener updater;
 
     private final UserControls userControls;
 
     private final @NotNull TitledPane controlsPane;
 
-    private final CheckBox userSenseCheckBox = new CheckBox("Engineer Sense");
+    private final CheckBox userSenseCheckBox = new CheckBox("Invert from default");
 
 
     public UserControlsPane(UserControls userControls, PreferencesUpdaterListener updater) {
