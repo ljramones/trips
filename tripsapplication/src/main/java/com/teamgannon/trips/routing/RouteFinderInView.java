@@ -48,6 +48,10 @@ public class RouteFinderInView {
         theStage.toFront();
 
         // get the route location parameters from the dialog
+        processRouteRequest(currentDataSet, theStage, routeFinderDialogInView);
+    }
+
+    private boolean processRouteRequest(DataSetDescriptor currentDataSet, Stage theStage, RouteFinderDialogInView routeFinderDialogInView) {
         Optional<RouteFindingOptions> routeFindingOptionsOptional = routeFinderDialogInView.showAndWait();
         if (routeFindingOptionsOptional.isPresent()) {
             RouteFindingOptions routeFindingOptions = routeFindingOptionsOptional.get();
@@ -67,16 +71,15 @@ public class RouteFinderInView {
 
                     // check if the start star is present
                     if (!routeBuilderHelper.has(origin)) {
-                        showErrorAlert("Route Finder", "The start star is not in the display");
-                        return;
+                        showErrorAlert("Route Finder", "The start star is not in route");
+                        return false;
                     }
 
                     // check if the destination star is present
                     if (!routeBuilderHelper.has(destination)) {
-                        showErrorAlert("Route Finder", "The destination star is not in the display");
-                        return;
+                        showErrorAlert("Route Finder", "The destination star is not in route");
+                        return false;
                     }
-
 
                     // calculate the transits based on upper and lower bounds
                     StarMeasurementService starMeasurementService = new StarMeasurementService();
@@ -93,75 +96,80 @@ public class RouteFinderInView {
 
                     // check if the origin star and destination star are connected to each other
                     if (routeGraph.isConnected(origin, destination)) {
-                        log.info("Source and destination stars have a path");
-
-                        // find the k shortest paths. We add one because the first is null
-                        List<String> kShortestPaths = routeGraph.findKShortestPaths(
-                                origin, destination, routeFindingOptions.getNumberPaths() + 1);
-                        kShortestPaths.forEach(System.out::println);
-
-                        PossibleRoutes possibleRoutes = new PossibleRoutes();
-                        possibleRoutes.setDesiredPath(String.format("Route %s to %s", origin, destination));
-
-                        List<RouteDescriptor> routeList = new ArrayList<>();
-                        List<String> pathToPlot = new ArrayList<>(kShortestPaths);
-                        int i = 1;
-                        // for each of our paths create a route
-                        for (String path : pathToPlot) {
-                            if (path.contains("null")) {
-                                // this is a dead path
-                                continue;
-                            }
-
-                            Color color = routeFindingOptions.getColor();
-                            if (i > 1) {
-                                color = Color.color(Math.random(), Math.random(), Math.random());
-                            }
-
-                            RouteDescriptor route = routeBuilderHelper.buildPath(
-                                    origin, destination, Integer.toString(i++),
-                                    color, routeFindingOptions.getLineWidth(), path);
-
-                            route.setDescriptor(currentDataSet);
-                            routeList.add(route);
-
-                            RoutingMetric routingMetric = RoutingMetric
-                                    .builder()
-                                    .totalLength(route.getTotalLength())
-                                    .routeDescriptor(route)
-                                    .path(path)
-                                    .rank(i - 1)
-                                    .numberOfSegments(route.getLineSegments().size())
-                                    .build();
-                            possibleRoutes.getRoutes().add(routingMetric);
-                        }
-
-                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
-                        Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
-                        stage.setAlwaysOnTop(true);
-                        stage.toFront();
-                        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
-                        if (optionalRoutingMetrics.isPresent()) {
-                            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
-                            if (selectedRoutingMetrics.size() > 0) {
-                                log.info("plotting selected routes:{}", selectedRoutingMetrics);
-                                // plot the routes found
-                                plot(currentDataSet, selectedRoutingMetrics);
-                            }
-                        }
-
+                        determineRoutesAndPlotOne(currentDataSet, theStage, routeFindingOptions, origin, destination, routeBuilderHelper, routeGraph);
+                        return true;
                     } else {
                         log.error("Source and destination stars do not have a path");
                         showErrorAlert("Route Finder form A to B",
                                 "Unable to find a route between source and destination based on supplied parameters.");
+                        return false;
                     }
-
-//                    routeGraph.exportGraphViz();
-                    log.info("export complete");
                 } catch (Exception e) {
                     log.error("failed to find routes:", e);
                     e.printStackTrace();
+                    return false;
                 }
+            }
+            return true;
+        }
+        return true;
+    }
+
+    private void determineRoutesAndPlotOne(DataSetDescriptor currentDataSet, Stage theStage, RouteFindingOptions routeFindingOptions, String origin, String destination, RouteBuilderHelper routeBuilderHelper, RouteGraph routeGraph) {
+        log.info("Source and destination stars have a path");
+
+        // find the k shortest paths. We add one because the first is null
+        List<String> kShortestPaths = routeGraph.findKShortestPaths(
+                origin, destination, routeFindingOptions.getNumberPaths() + 1);
+//                        kShortestPaths.forEach(System.out::println);
+
+        PossibleRoutes possibleRoutes = new PossibleRoutes();
+        possibleRoutes.setDesiredPath(String.format("Route %s to %s", origin, destination));
+
+        List<RouteDescriptor> routeList = new ArrayList<>();
+        List<String> pathToPlot = new ArrayList<>(kShortestPaths);
+        int i = 1;
+        // for each of our paths create a route
+        for (String path : pathToPlot) {
+            if (path.contains("null")) {
+                // this is a dead path
+                continue;
+            }
+
+            Color color = routeFindingOptions.getColor();
+            if (i > 1) {
+                color = Color.color(Math.random(), Math.random(), Math.random());
+            }
+
+            RouteDescriptor route = routeBuilderHelper.buildPath(
+                    origin, destination, Integer.toString(i++),
+                    color, routeFindingOptions.getLineWidth(), path);
+
+            route.setDescriptor(currentDataSet);
+            routeList.add(route);
+
+            RoutingMetric routingMetric = RoutingMetric
+                    .builder()
+                    .totalLength(route.getTotalLength())
+                    .routeDescriptor(route)
+                    .path(path)
+                    .rank(i - 1)
+                    .numberOfSegments(route.getLineSegments().size())
+                    .build();
+            possibleRoutes.getRoutes().add(routingMetric);
+        }
+
+        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
+        Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
+        stage.setAlwaysOnTop(true);
+        stage.toFront();
+        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
+        if (optionalRoutingMetrics.isPresent()) {
+            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
+            if (selectedRoutingMetrics.size() > 0) {
+                log.info("plotting selected routes:{}", selectedRoutingMetrics);
+                // plot the routes found
+                plot(currentDataSet, selectedRoutingMetrics);
             }
         }
     }
