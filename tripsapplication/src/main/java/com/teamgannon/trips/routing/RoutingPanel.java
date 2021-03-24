@@ -21,14 +21,12 @@ public class RoutingPanel extends Pane {
      * the set of routings
      */
     private final ListView<Route> routingListView = new ListView<>();
-    private final RouteUpdaterListener routeUpdaterListener;
 
     /**
      * the constructor
      */
     public RoutingPanel(RouteUpdaterListener routeUpdaterListener) {
-        this.routeUpdaterListener = routeUpdaterListener;
-        routingListView.setPrefHeight(700);
+        routingListView.setPrefHeight(800);
         routingListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
         routingListView.setCellFactory(new RouteCellFactory(routeUpdaterListener));
         routingListView.getSelectionModel().selectedItemProperty().addListener(this::routingChanged);
