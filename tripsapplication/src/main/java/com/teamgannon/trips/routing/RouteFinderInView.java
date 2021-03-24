@@ -93,20 +93,26 @@ public class RouteFinderInView {
 
                     // create a graph based on the transits available
                     RouteGraph routeGraph = new RouteGraph(transitRoutes);
-
-                    // check if the origin star and destination star are connected to each other
-                    if (routeGraph.isConnected(origin, destination)) {
-                        determineRoutesAndPlotOne(currentDataSet, theStage, routeFindingOptions, origin, destination, routeBuilderHelper, routeGraph);
-                        return true;
-                    } else {
-                        log.error("Source and destination stars do not have a path");
-                        showErrorAlert("Route Finder form A to B",
+                    try {
+                        // check if the origin star and destination star are connected to each other
+                        if (routeGraph.isConnected(origin, destination)) {
+                            determineRoutesAndPlotOne(currentDataSet, theStage, routeFindingOptions, origin, destination, routeBuilderHelper, routeGraph);
+                            return true;
+                        } else {
+                            log.error("Source and destination stars do not have a path");
+                            showErrorAlert("Route Finder from A to B",
+                                    "Unable to find a route between source and destination based on supplied parameters.");
+                            processRouteRequest(currentDataSet,theStage, routeFinderDialogInView);
+                            return false;
+                        }
+                    } catch (Exception e) {
+                        showErrorAlert("Route Finder from A to B",
                                 "Unable to find a route between source and destination based on supplied parameters.");
-                        return false;
+                        processRouteRequest(currentDataSet,theStage, routeFinderDialogInView);
                     }
                 } catch (Exception e) {
                     log.error("failed to find routes:", e);
-                    e.printStackTrace();
+                    processRouteRequest(currentDataSet,theStage, routeFinderDialogInView);
                     return false;
                 }
             }
