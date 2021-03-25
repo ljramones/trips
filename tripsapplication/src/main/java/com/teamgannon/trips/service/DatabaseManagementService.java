@@ -671,4 +671,10 @@ public class DatabaseManagementService {
             tripsPrefsRepository.save(tripsPrefs);
         }
     }
+
+    public void clearRoutesFromCurrent(DataSetDescriptor descriptor) {
+        DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(descriptor.getDataSetName());
+        descriptorCurrent.clearRoutes();
+        dataSetDescriptorRepository.save(descriptorCurrent);
+    }
 }

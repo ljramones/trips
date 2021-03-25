@@ -874,7 +874,10 @@ public class MainPane implements
 
     public void clearRoutes(ActionEvent actionEvent) {
         interstellarSpacePane.clearRoutes();
+        databaseManagementService.clearRoutesFromCurrent(searchContext.getAstroSearchQuery().getDescriptor());
+        routingPanel.clearData();
     }
+
 
     public void quit(ActionEvent actionEvent) {
         shutdown();
@@ -1474,7 +1477,7 @@ public class MainPane implements
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
         dataSetsListView.getSelectionModel().select(descriptor);
-        if (queryDialog!=null) {
+        if (queryDialog != null) {
             queryDialog.setDataSetContext(descriptor);
         }
 
