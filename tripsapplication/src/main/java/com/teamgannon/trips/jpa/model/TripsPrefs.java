@@ -14,4 +14,6 @@ public class TripsPrefs {
 
     private boolean showWelcomeDataReq;
 
+    private String datasetName;
+
 }

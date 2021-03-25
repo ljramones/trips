@@ -582,12 +582,13 @@ public class MainPane implements
         getStarDefinitionsFromDB();
         // get civilizations/polities
         getCivilizationsFromDB();
+
         // get trips preferences
         getTripsPrefsFromDB();
+
         // get transit prefs
         getTransitPrefs();
     }
-
 
 
     private void showBeginningAlert() {
@@ -719,6 +720,14 @@ public class MainPane implements
     private void getTripsPrefsFromDB() {
         TripsPrefs tripsPrefs = databaseManagementService.getTripsPrefs();
         tripsContext.setTripsPrefs(tripsPrefs);
+        String datasetName = tripsPrefs.getDatasetName();
+        if (datasetName != null) {
+            if (!datasetName.isEmpty()) {
+                DataSetDescriptor descriptor = databaseManagementService.getDatasetFromName(tripsPrefs.getDatasetName());
+                this.setContextDataSet(descriptor);
+                plotStars(null);
+            }
+        }
     }
 
     private void getTransitPrefs() {
@@ -1465,10 +1474,14 @@ public class MainPane implements
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
         dataSetsListView.getSelectionModel().select(descriptor);
-        queryDialog.setDataSetContext(descriptor);
+        if (queryDialog!=null) {
+            queryDialog.setDataSetContext(descriptor);
+        }
 
         plotButton.setDisable(false);
         toolBar.setTooltip(new Tooltip(null));
+
+        updatePersistentDataSet(descriptor);
 
         // clear all the current data
         clearAll();
@@ -1476,7 +1489,11 @@ public class MainPane implements
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
     }
 
-    public void clearAll(){
+    private void updatePersistentDataSet(DataSetDescriptor descriptor) {
+        databaseManagementService.updateDataSet(descriptor);
+    }
+
+    public void clearAll() {
         clearData();
         clearList();
         clearInterstellar();

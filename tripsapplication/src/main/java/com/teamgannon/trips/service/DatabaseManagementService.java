@@ -663,5 +663,12 @@ public class DatabaseManagementService {
     }
 
 
-
+    public void updateDataSet(DataSetDescriptor descriptor) {
+        Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
+        if (tripsPrefsOptional.isPresent()) {
+            TripsPrefs tripsPrefs = tripsPrefsOptional.get();
+            tripsPrefs.setDatasetName(descriptor.getDataSetName());
+            tripsPrefsRepository.save(tripsPrefs);
+        }
+    }
 }
