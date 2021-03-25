@@ -324,7 +324,13 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
             if (!success.isSuccess()) {
                 showErrorAlert("add Dataset", success.getMessage());
             }
-
+            Optional<ButtonType>  optionalButtonType = showConfirmationAlert("Data Management", "Done","if you want to load additional items, please say ok");
+            if (optionalButtonType.isPresent()) {
+                ButtonType buttonType = optionalButtonType.get();
+                if (!buttonType.equals(ButtonType.OK)) {
+                    setResult(1);
+                }
+            }
         }
         log.info("loaded data set dialog");
     }
