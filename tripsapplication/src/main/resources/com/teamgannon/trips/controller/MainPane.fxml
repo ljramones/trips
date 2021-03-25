@@ -14,7 +14,7 @@
                 <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
                 <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>
                 <MenuItem mnemonicParsing="false" onAction="#clearStars" text="Clear Stars"/>
-                <MenuItem mnemonicParsing="false" onAction="#clearRoutes" text="Clear Routes"/>
+                <MenuItem mnemonicParsing="false" onAction="#clearRoutes" text="Clear Routes for current dataset"/>
                 <MenuItem mnemonicParsing="false" onAction="#simulate" text="Simulate"/>
                 <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
             </Menu>
