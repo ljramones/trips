@@ -30,7 +30,12 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
      *
      * @param starsInView the stars in view
      */
-    public SelectStarForDistanceReportDialog(@NotNull Stage stage, @NotNull List<StarDisplayRecord> starsInView) {
+    public SelectStarForDistanceReportDialog(@NotNull List<StarDisplayRecord> starsInView) {
+
+        this.setTitle("Select a star for a distance report");
+        this.setHeight(300);
+        this.setWidth(500);
+        starChoice.setPrefWidth(300);
 
         if (!starsInView.isEmpty()) {
             MapUtils.populateMap(starDisplayRecordMap,
@@ -43,10 +48,6 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
                 starChoice.getItems().add(starDisplayRecord.getStarName());
             }
         }
-
-        this.setTitle("Select a star for a distance report");
-        this.setHeight(300);
-        this.setWidth(400);
 
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
@@ -74,7 +75,8 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
         cancelBtn.setOnAction(this::cancel);
         hBox.getChildren().add(cancelBtn);
 
-        // set the dialog as a utility so that the closing is cancelling
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
     }

@@ -26,7 +26,7 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
     public FindStarsWithNameMatchDialog(@NotNull List<String> datasetNames) {
         this.setTitle("Find a star in database");
         this.setHeight(500);
-        this.setWidth(300);
+        this.setWidth(500);
 
         datasets.getItems().addAll(datasetNames);
         datasets.getSelectionModel().select(0);

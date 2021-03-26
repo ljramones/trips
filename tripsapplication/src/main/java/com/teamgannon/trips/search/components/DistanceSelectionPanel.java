@@ -3,12 +3,15 @@ package com.teamgannon.trips.search.components;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
+import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.RangeSlider;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by larrymitchell on 2017-06-25.
  */
+@Slf4j
 public class DistanceSelectionPanel extends BasePane {
 
     private final @NotNull RangeSlider d2EarthSlider;
@@ -39,29 +42,49 @@ public class DistanceSelectionPanel extends BasePane {
             highRangeTextField.setText(String.format("%.2f", newValue.doubleValue()));
         });
 
+        final Tooltip tooltip = new Tooltip();
+        tooltip.setText(
+                """
+                        Please type a float point number for slider
+                        then enter a space to set the value
+                        """
+        );
+
         lowRangeTextField.setPromptText("enter low range");
+        lowRangeTextField.setTooltip(tooltip);
         lowRangeTextField.setText(String.format("%.2f", distanceRange.getLowValue()));
         lowRangeTextField.setPrefWidth(60);
         lowRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("^(\\d+(\\.\\d{0,2})?|\\.?\\d{1,2})$")) {
+            if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
+                log.info("raw low is<{}>", newValue);
                 try {
                     double lowValue = Double.parseDouble(newValue);
+                    log.info("set low value:" + lowValue);
                     d2EarthSlider.setLowValue(lowValue);
                 } catch (NumberFormatException ignored) {
+                    log.error("low value is not a number");
                 }
+            } else {
+                log.info("no match for low is:" + newValue);
             }
         });
 
         highRangeTextField.setPromptText("enter high range");
+        highRangeTextField.setTooltip(tooltip);
         highRangeTextField.setText(String.format("%.2f", distanceRange.getHighValue()));
         highRangeTextField.setPrefWidth(60);
         highRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("^(\\d+(\\.\\d{0,2})?|\\.?\\d{1,2})$")) {
+            if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
+                log.info("raw high is<{}>", newValue);
                 try {
                     double highValue = Double.parseDouble(newValue);
+                    log.info("set high value:" + highValue);
                     d2EarthSlider.setHighValue(highValue);
                 } catch (NumberFormatException ignored) {
+                    log.error("high value is not a number");
                 }
+            } else {
+                log.info("no match for high is:" + newValue);
             }
         });
 

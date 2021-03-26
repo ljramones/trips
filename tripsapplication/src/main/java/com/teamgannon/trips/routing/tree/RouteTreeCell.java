@@ -1,25 +1,28 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.tree;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.RouteChange;
+import com.teamgannon.trips.routing.RouteEditDialog;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.TreeCell;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 @Slf4j
-public class RouteCell extends ListCell<Route> {
+public class RouteTreeCell extends TreeCell<Route> {
 
     // We want to create a single Tooltip that will be reused, as needed. We will simply update the text
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
     private final RouteUpdaterListener routeUpdaterListener;
 
-    public RouteCell(RouteUpdaterListener routeUpdaterListener) {
+    public RouteTreeCell(RouteUpdaterListener routeUpdaterListener) {
         this.routeUpdaterListener = routeUpdaterListener;
     }
 
@@ -47,13 +50,7 @@ public class RouteCell extends ListCell<Route> {
 
         // Format name
         if (route != null && !empty) {
-            name = showRoute(index, route);
 
-            log.info("show route:{}", name);
-
-            tooltip.setText("tooltip here");
-            setTooltip(tooltip);
-            setContextMenu(contextMenu);
         }
 
         this.setText(name);
@@ -105,5 +102,4 @@ public class RouteCell extends ListCell<Route> {
             }
         }
     }
-
 }

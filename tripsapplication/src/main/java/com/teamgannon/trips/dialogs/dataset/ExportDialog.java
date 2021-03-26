@@ -5,7 +5,10 @@ import com.teamgannon.trips.service.model.ExportFileType;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -22,7 +25,6 @@ import java.io.File;
 @Slf4j
 public class ExportDialog extends Dialog<ExportOptions> {
 
-    private final ChoiceBox<String> exportChoice = new ChoiceBox<>();
 
     private final TextField fileNameTextField = new TextField();
     private final DataSetDescriptor selectedDataSet;
@@ -30,12 +32,8 @@ public class ExportDialog extends Dialog<ExportOptions> {
     public ExportDialog(DataSetDescriptor selectedDataSet) {
         this.selectedDataSet = selectedDataSet;
 
-        this.setTitle("Export Options");
+        this.setTitle("Export as CSV");
         this.setWidth(600);
-
-        exportChoice.getItems().add(ExportFileType.CSV.toString());
-
-        exportChoice.setValue(ExportFileType.CSV.toString());
 
         VBox vBox = new VBox();
 
@@ -45,11 +43,10 @@ public class ExportDialog extends Dialog<ExportOptions> {
         gridPane.setHgap(5);
         gridPane.setPrefWidth(450);
 
-        Label exportTypeLabel = new Label("Export Type");
+        Label exportTypeLabel = new Label("Export as CSV");
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         exportTypeLabel.setFont(font);
         gridPane.add(exportTypeLabel, 0, 1);
-        gridPane.add(exportChoice, 1, 1);
 
         gridPane.add(new Label("FileName"), 0, 2);
         fileNameTextField.setPrefWidth(300);
@@ -107,7 +104,7 @@ public class ExportDialog extends Dialog<ExportOptions> {
         ExportOptions options = ExportOptions
                 .builder()
                 .doExport(true)
-                .exportFormat(ExportFileType.valueOf(exportChoice.getValue()))
+                .exportFormat(ExportFileType.CSV)
                 .fileName(fileNameTextField.getText())
                 .dataset(selectedDataSet)
                 .build();

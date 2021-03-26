@@ -125,6 +125,16 @@ public class CurrentPlot {
         return starLookup.keySet();
     }
 
+    /**
+     * check if a star is present and visible on the plot
+     *
+     * @param id the star id
+     * @return triue is present and visible
+     */
+    public boolean isStarVisible(UUID id) {
+        return starLookup.containsKey(id);
+    }
+
 
     public Label getLabelForStar(UUID starId) {
         return starToLabelLookup.get(starId);
