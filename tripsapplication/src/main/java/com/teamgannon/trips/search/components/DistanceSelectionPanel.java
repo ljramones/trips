@@ -56,16 +56,16 @@ public class DistanceSelectionPanel extends BasePane {
         lowRangeTextField.setPrefWidth(60);
         lowRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
-                log.info("raw low is<{}>", newValue);
+//                log.info("raw low is<{}>", newValue);
                 try {
                     double lowValue = Double.parseDouble(newValue);
-                    log.info("set low value:" + lowValue);
+//                    log.info("set low value:" + lowValue);
                     d2EarthSlider.setLowValue(lowValue);
                 } catch (NumberFormatException ignored) {
-                    log.error("low value is not a number");
+//                    log.error("low value is not a number");
                 }
             } else {
-                log.info("no match for low is:" + newValue);
+//                log.info("no match for low is:" + newValue);
             }
         });
 
@@ -75,16 +75,16 @@ public class DistanceSelectionPanel extends BasePane {
         highRangeTextField.setPrefWidth(60);
         highRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
-                log.info("raw high is<{}>", newValue);
+//                log.info("raw high is<{}>", newValue);
                 try {
                     double highValue = Double.parseDouble(newValue);
-                    log.info("set high value:" + highValue);
+//                    log.info("set high value:" + highValue);
                     d2EarthSlider.setHighValue(highValue);
                 } catch (NumberFormatException ignored) {
-                    log.error("high value is not a number");
+//                    log.error("high value is not a number");
                 }
             } else {
-                log.info("no match for high is:" + newValue);
+//                log.info("no match for high is:" + newValue);
             }
         });
 

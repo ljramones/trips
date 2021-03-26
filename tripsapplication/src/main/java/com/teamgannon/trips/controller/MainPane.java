@@ -856,7 +856,7 @@ public class MainPane implements
 
 
     public void plotStars(ActionEvent actionEvent) {
-        clearData();
+//        clearData();
         plotManager.showPlot(searchContext);
     }
 
@@ -1342,10 +1342,12 @@ public class MainPane implements
      */
     @Override
     public void showNewStellarData(@NotNull AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
+
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
         DataSetDescriptor descriptor = searchQuery.getDescriptor();
+        setContextDataSet(descriptor);
 
         if (showPlot || showTable) {
             // get the distance range
@@ -1372,7 +1374,6 @@ public class MainPane implements
                     showList(starObjects);
                 }
                 updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
-                setContextDataSet(descriptor);
 
             } else {
                 showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -1478,6 +1479,11 @@ public class MainPane implements
 
     @Override
     public void setContextDataSet(@NotNull DataSetDescriptor descriptor) {
+        log.info("\nSETTING CONTEXT FOR DATA SET DESCRIPTOR\n");
+
+        // clear all the current data
+        clearAll();
+
         tripsContext.getDataSetContext().setDescriptor(descriptor);
         tripsContext.getDataSetContext().setValidDescriptor(true);
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
@@ -1492,9 +1498,6 @@ public class MainPane implements
 
         updatePersistentDataSet(descriptor);
 
-        // clear all the current data
-        clearAll();
-
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
     }
 
@@ -1503,6 +1506,7 @@ public class MainPane implements
     }
 
     public void clearAll() {
+        log.info("\n\n\n CLEARING ALL DATA \n\n\n");
         clearData();
         clearList();
         clearInterstellar();
