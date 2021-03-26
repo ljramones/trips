@@ -377,7 +377,7 @@ public class RouteManager {
     }
 
     private @NotNull Label createLabel(boolean firstLink, double length) {
-        Label label = new Label(((firstLink) ? " Start -> " : " ") + String.format("%.2f ly ", length));
+        Label label = new Label(((firstLink) ? " Start -> " : " ") + String.format("%.2f ", length));
         SerialFont serialFont = colorPalette.getLabelFont();
 
         label.setFont(serialFont.toFont());

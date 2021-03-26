@@ -266,7 +266,7 @@ public class TransitManager {
     }
 
     private @NotNull Label createLabel(@NotNull TransitRoute transitRoute) {
-        Label label = new Label(String.format("%.2fly", transitRoute.getDistance()));
+        Label label = new Label(String.format(" %.2f ", transitRoute.getDistance()));
         SerialFont serialFont = tripsContext.getCurrentPlot().getColorPalette().getLabelFont();
         label.setFont(serialFont.toFont());
         return label;
@@ -421,7 +421,7 @@ public class TransitManager {
         return "transit: "
                 + transitRoute.getSource().getStarName() + " <--> "
                 + transitRoute.getTarget().getStarName() + "is "
-                + String.format("%.2f", transitRoute.getDistance()) + "ly";
+                + String.format("%.2f", transitRoute.getDistance()) + " ";
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
