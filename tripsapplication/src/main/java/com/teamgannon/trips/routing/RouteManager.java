@@ -26,11 +26,15 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
@@ -308,6 +312,8 @@ public class RouteManager {
             pointSphere.setTranslateY(mid.getY());
             pointSphere.setTranslateZ(mid.getZ());
             lengthLabel.setTextFill(color);
+            Color backgroundColor = determineBckColor(color);
+            lengthLabel.setBackground(new Background(new BackgroundFill(backgroundColor, new CornerRadii(5.0), new Insets(0))));
             lineGroup.getChildren().add(pointSphere);
             if (!shapeToLabel.containsValue(lengthLabel)) {
                 if (routingActive) {
@@ -323,6 +329,26 @@ public class RouteManager {
         }
 
         return lineGroup;
+    }
+
+    private Color determineBckColor(Color color) {
+        int red = colorNorm(color.getRed());
+        int green = colorNorm(color.getGreen());
+        int blue = colorNorm(color.getBlue());
+        int sum = red + green + blue;
+        Color bckColor;
+        if (sum < 384) {
+//            log.info("dark color:{}", sum);
+            bckColor = Color.WHITE;
+        } else {
+//            log.info("light color:{}", sum);
+            bckColor = Color.DARKGRAY;
+        }
+        return bckColor;
+    }
+
+    private int colorNorm(double raw) {
+        return (int) (raw * 255.0);
     }
 
     /**
@@ -351,8 +377,9 @@ public class RouteManager {
     }
 
     private @NotNull Label createLabel(boolean firstLink, double length) {
-        Label label = new Label(((firstLink) ? "Start -> " : "") + String.format("%.2fly", length));
+        Label label = new Label(((firstLink) ? " Start -> " : " ") + String.format("%.2f ly ", length));
         SerialFont serialFont = colorPalette.getLabelFont();
+
         label.setFont(serialFont.toFont());
         return label;
     }
