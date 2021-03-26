@@ -25,6 +25,14 @@ public interface RouteUpdaterListener {
     void updateRoute(RouteDescriptor routeDescriptor);
 
     /**
+     * choose which routes to display
+     *
+     * @param routeDescriptor the route descriptor
+     * @param state           true is show, false is hide
+     */
+    void displayRoute(RouteDescriptor routeDescriptor, boolean state);
+
+    /**
      * triggered when a route is removed
      *
      * @param routeDescriptor the route descriptor

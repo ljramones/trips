@@ -1129,7 +1129,7 @@ public class MainPane implements
     public void distanceReport(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         if (starsInView.size() > 0) {
-            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(stage, starsInView);
+            SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(starsInView);
             Optional<DistanceReportSelection> optionalStarDisplayRecord = selectDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 DistanceReportSelection reportSelection = optionalStarDisplayRecord.get();
@@ -1281,7 +1281,7 @@ public class MainPane implements
     public void newRoute(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
         log.info("new route");
         databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
-        routingPanel.setContext(dataSetDescriptor);
+        routingPanel.setContext(dataSetDescriptor, plotManager.willRoutesShow(dataSetDescriptor));
         routingStatus(false);
     }
 
@@ -1291,8 +1291,13 @@ public class MainPane implements
         String datasetName = searchContext.getAstroSearchQuery().getDescriptor().getDataSetName();
         DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor);
+        routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
+    }
+
+    @Override
+    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
+        interstellarSpacePane.displayRoute(routeDescriptor, state);
     }
 
     @Override
@@ -1301,7 +1306,7 @@ public class MainPane implements
         DataSetDescriptor descriptor = searchContext.getAstroSearchQuery().getDescriptor();
         descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor);
+        routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
@@ -1342,8 +1347,6 @@ public class MainPane implements
 
         DataSetDescriptor descriptor = searchQuery.getDescriptor();
 
-        routingPanel.setContext(descriptor);
-
         if (showPlot || showTable) {
             // get the distance range
             double displayRadius = searchQuery.getUpperDistanceLimit();
@@ -1361,6 +1364,9 @@ public class MainPane implements
                             tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                             tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                     );
+
+                    //
+                    routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
                 }
                 if (showTable) {
                     showList(starObjects);
@@ -1397,8 +1403,6 @@ public class MainPane implements
     public void showNewStellarData(boolean showPlot, boolean showTable) {
         AstroSearchQuery searchQuery = tripsContext.getSearchContext().getAstroSearchQuery();
 
-        routingPanel.setContext(searchQuery.getDescriptor());
-
         // do a search and cause the plot to show it
         List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
@@ -1415,6 +1419,8 @@ public class MainPane implements
                         tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                         tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                 );
+                DataSetDescriptor descriptor = searchQuery.getDescriptor();
+                routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
             }
             if (showTable) {
                 showList(starObjects);
@@ -1745,6 +1751,6 @@ public class MainPane implements
 
     @Override
     public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
-        routingPanel.setContext(dataSetDescriptor);
+        routingPanel.setContext(dataSetDescriptor, plotManager.willRoutesShow(dataSetDescriptor));
     }
 }

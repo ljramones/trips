@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
@@ -708,4 +709,7 @@ public class InterstellarSpacePane extends Pane {
     }
 
 
+    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
+        routeManager.displayRoute(routeDescriptor,state);
+    }
 }

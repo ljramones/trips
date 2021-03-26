@@ -157,40 +157,6 @@ public class DatabaseManagementService {
 
     ///////////////////////////////////////
 
-    public boolean starsAvailableForQuery(@NotNull SearchContext searchContext) {
-        List<StarObject> starObjects = getAstrographicObjectsOnQuery(searchContext);
-        return !starObjects.isEmpty();
-    }
-
-    public int countForQuery(@NotNull SearchContext searchContext) {
-        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
-
-        return starObjectRepository.countByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
-                searchQuery.getDescriptor().getDataSetName(),
-                searchQuery.getXMinus(),
-                searchQuery.getXPlus(),
-                searchQuery.getYMinus(),
-                searchQuery.getYPlus(),
-                searchQuery.getZMinus(),
-                searchQuery.getZPlus()
-        );
-    }
-
-    public Page<StarObject> getStarsInVolumeOfSpace(@NotNull SearchContext searchContext, int maxNumber) {
-        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
-
-        return starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
-                searchQuery.getDescriptor().getDataSetName(),
-                searchQuery.getXMinus(),
-                searchQuery.getXPlus(),
-                searchQuery.getYMinus(),
-                searchQuery.getYPlus(),
-                searchQuery.getZMinus(),
-                searchQuery.getZPlus(),
-                PageRequest.of(0, maxNumber)
-        );
-    }
-
     /**
      * get a set of astrographic objects based on a query
      *
@@ -221,10 +187,6 @@ public class DatabaseManagementService {
         return starObjects;
     }
 
-    @Transactional(readOnly = true)
-    public Stream<StarObject> getStarStreamOnQuery(AstroSearchQuery searchQuery) {
-        return starObjectRepository.findBySearchQueryStream(searchQuery);
-    }
 
     @Transactional(readOnly = true)
     public Page<StarObject> getStarPaged(AstroSearchQuery searchQuery, Pageable pageable) {
@@ -263,26 +225,6 @@ public class DatabaseManagementService {
 
     //////////////////////////////////////
 
-    /**
-     * this is used to create
-     *
-     * @param dataSetDescriptor the descriptor to add
-     */
-    @Transactional
-    public void createDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
-        dataSetDescriptorRepository.save(dataSetDescriptor);
-    }
-
-    /**
-     * remove the data set and associated stars by name
-     *
-     * @param dataSetName the dataset to remove
-     */
-    @Transactional
-    public void removeDataSet(String dataSetName) {
-        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(dataSetName);
-        removeDataSet(descriptor);
-    }
 
     /**
      * remove the dataset by descriptor
@@ -356,16 +298,6 @@ public class DatabaseManagementService {
         } else {
             return starDetailsPersistList;
         }
-    }
-
-    /**
-     * update the star details
-     *
-     * @param starDetailsPersists the list of star details
-     */
-    @Transactional
-    public void updateStarDetails(@NotNull List<StarDetailsPersist> starDetailsPersists) {
-        starDetailsPersistRepository.saveAll(starDetailsPersists);
     }
 
     //////////////

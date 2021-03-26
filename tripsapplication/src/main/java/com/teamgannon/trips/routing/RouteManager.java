@@ -600,5 +600,13 @@ public class RouteManager {
         this.controlPaneOffset = controlPaneOffset;
     }
 
-
+    /**
+     * change the state of a displayed route
+     *
+     * @param routeDescriptor the route
+     * @param state           the state
+     */
+    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
+        log.info("Change state of route {} to {}", routeDescriptor.getName(), state);
+    }
 }

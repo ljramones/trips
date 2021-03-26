@@ -14,6 +14,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.RoutingPanelListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -23,9 +24,7 @@ import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -262,6 +261,23 @@ public class PlotManager {
 
         showInfoMessage("Load Astrographic Format", data);
         statusUpdaterListener.updateStatus(data);
+    }
+
+    public boolean willRouteShow(Route route) {
+        boolean allStarsVisible = true;
+        List<UUID> routeStars = route.getRouteStars();
+        for (UUID starId : routeStars) {
+            // the moment one star is not visible, the whole route is marked as not visible or won't show
+            allStarsVisible = currentPlot.isStarVisible(starId);
+        }
+        return allStarsVisible;
+    }
+
+    public Map<UUID, Boolean> willRoutesShow(DataSetDescriptor descriptor) {
+        Map<UUID, Boolean> visibleRouteMap;
+        List<Route> routeList = descriptor.getRoutes();
+        visibleRouteMap = routeList.stream().collect(Collectors.toMap(Route::getUuid, this::willRouteShow, (a, b) -> b));
+        return visibleRouteMap;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
