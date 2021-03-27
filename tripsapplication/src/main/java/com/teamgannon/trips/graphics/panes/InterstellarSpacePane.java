@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
@@ -42,12 +43,12 @@ import java.util.UUID;
 import static org.fxyz3d.geometry.MathUtils.clamp;
 
 @Slf4j
-public class InterstellarSpacePane extends Pane {
+public class InterstellarSpacePane extends Pane implements RotationController {
 
     private static final double ROTATE_SECS = 60;
-    private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
-    private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
-    private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
+    private final Rotate rotateX = new Rotate(105, Rotate.X_AXIS);
+    private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
+    private final Rotate rotateZ = new Rotate(30, Rotate.Z_AXIS);
     private final Group world = new Group();
     private final @NotNull SubScene subScene;
 
@@ -207,6 +208,12 @@ public class InterstellarSpacePane extends Pane {
 
     }
 
+    public void setRotationAngles(double xAngle, double yAngle, double zAngle) {
+        rotateX.setAngle(xAngle);
+        rotateY.setAngle(yAngle);
+        rotateZ.setAngle(zAngle);
+        updateLabels();
+    }
 
     private void setPerspectiveCamera() {
         camera.setNearClip(0.1);
@@ -223,7 +230,7 @@ public class InterstellarSpacePane extends Pane {
 
     public void resetView() {
         setInitialView();
-        camera.setRotate(25);
+//        camera.setRotate(25);
     }
 
     /**

@@ -182,28 +182,30 @@ public class GridPlotManager {
                 new Translate(-width / 2.0, 0, -depth / 2.0)
         );
 
-        // iterate over z dimension
-        int zDivisions = (int) ceil(width / gridIncrement);
+        // iterate over y dimension
+        int yDivisions = (int) ceil(width / gridIncrement);
         double x = 0.0;
-        for (int i = 0; i <= zDivisions; i++) {
+        for (int i = 0; i <= yDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
-            Point3D to = new Point3D(x, 0, depth);
+            Point3D to = new Point3D(x, depth, 0);
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
+                    from, to, lineWidth,
+                    colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
             gridGroup.getChildren().add(lineSegment);
             x += gridIncrement;
         }
 
         // iterate over x dimension
         int xDivisions = (int) ceil(depth / gridIncrement);
-        double z = 0.0;
+        double y = 0.0;
         for (int i = 0; i <= xDivisions; i++) {
-            Point3D from = new Point3D(0, 0, z);
-            Point3D to = new Point3D(width, 0, z);
+            Point3D from = new Point3D(0, y, 0);
+            Point3D to = new Point3D(width, y, 0);
             Node lineSegment = CustomObjectFactory.createLineSegment(
-                    from, to, lineWidth, colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
+                    from, to, lineWidth,
+                    colorPalette.getGridColor(), colorPalette.getLabelFont().toFont());
             gridGroup.getChildren().add(lineSegment);
-            z += gridIncrement;
+            y += gridIncrement;
         }
 
         gridGroup.setVisible(true);
@@ -241,21 +243,21 @@ public class GridPlotManager {
     private void createGrid(@NotNull AstrographicTransformer transformer, @NotNull CurrentPlot currentPlot) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
-        double minZ = parameters.getMinZ();
-        double maxZ = parameters.getMaxZ();
-        double zDivs = ceil(parameters.getZRange() / 5);
+        double minY = parameters.getMinY();
+        double maxY = parameters.getMaxY();
+        double yDivs = ceil(parameters.getYRange() / 5);
 
         double minX = parameters.getMinX();
         double maxX = parameters.getMaxX();
         double xDivs = ceil(parameters.getXRange() / 5);
 
-        // create z division lines
-        drawXLineSegments(transformer, currentPlot, minZ, maxZ, xDivs, 0, 5);
-        drawXLineSegments(transformer, currentPlot, minZ, maxZ, xDivs, 0, -5);
-
         // create x division lines
-        drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, 5);
-        drawZLineSegments(transformer, currentPlot, zDivs, minX, maxX, 0, -5);
+        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, 5);
+        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, -5);
+
+        // create y division lines
+        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, 5);
+        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, -5);
 
         if (gridGroup.isVisible()) {
             gridGroup.setVisible(true);
@@ -264,49 +266,65 @@ public class GridPlotManager {
     }
 
 
-    private void drawZLineSegments(@NotNull AstrographicTransformer transformer,
+    private void drawYLineSegments(@NotNull AstrographicTransformer transformer,
                                    @NotNull CurrentPlot currentPlot,
-                                   double zDivs, double minX, double maxX, double beginZ,
+                                   double yDivs, double minX, double maxX, double beginY,
                                    double increment) {
 
         // get zero plane based on star center coordinates
-        double yZero = currentPlot.getCenterCoordinates()[1];
+        double zZero = currentPlot.getCenterCoordinates()[1];
 
-        for (int i = 0; i < (ceil(zDivs / 2) + 1); i++) {
-            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), yZero, beginZ};
-            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), yZero, beginZ};
-            String label = Integer.toString((int) beginZ);
-            LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
-            Node gridLineSegmentX = createLineSegment(
-                    lineSegmentX.getFrom(), lineSegmentX.getTo(),
+        for (int i = 0; i < (ceil(yDivs / 2) + 1); i++) {
+            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), beginY, zZero};
+            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), beginY, zZero};
+            String label = Integer.toString((int) beginY);
+            LineSegment lineSegmentY = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
+            Node gridLineSegmentY = createLineSegment(
+                    lineSegmentY.getFrom(), lineSegmentY.getTo(),
                     lineWidth, currentPlot.getColorPalette().getGridColor(),
                     label, false);
-            gridGroup.getChildren().add(gridLineSegmentX);
-            beginZ += increment;
+            gridGroup.getChildren().add(gridLineSegmentY);
+            beginY += increment;
         }
     }
 
     private void drawXLineSegments(@NotNull AstrographicTransformer transformer,
                                    @NotNull CurrentPlot currentPlot,
-                                   double minZ, double maxZ, double xDivs, double beginX, double increment) {
+                                   double minY, double maxY, double xDivs, double beginX, double increment) {
 
         // get zero plane based on star center coordinates
-        double yZero = currentPlot.getCenterCoordinates()[1];
+        double zZero = currentPlot.getCenterCoordinates()[1];
 
         for (int i = 0; i < (ceil(xDivs / 2)); i++) {
-            double[] fromPointZ = new double[]{beginX, yZero, signum(minZ) * ceil(abs(minZ))};
-            double[] toPointZ = new double[]{beginX, yZero, signum(maxZ) * ceil(abs(maxZ))};
+            double[] fromPointZ = new double[]{beginX, signum(minY) * ceil(abs(minY)), zZero};
+            double[] toPointZ = new double[]{beginX, signum(maxY) * ceil(abs(maxY)), zZero};
             String label = Integer.toString((int) beginX);
-            LineSegment lineSegmentZ = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
-            Node gridLineSegmentZ = createLineSegment(
-                    lineSegmentZ.getFrom(), lineSegmentZ.getTo(),
+            LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
+            Node gridLineSegmentX = createLineSegment(
+                    lineSegmentX.getFrom(), lineSegmentX.getTo(),
                     lineWidth, currentPlot.getColorPalette().getGridColor(),
                     label, true);
-            gridGroup.getChildren().add(gridLineSegmentZ);
+            gridGroup.getChildren().add(gridLineSegmentX);
             beginX -= increment;
         }
     }
 
+
+    /////////////////////////////////////
+    // line segment
+    /////////////////////////////////////
+
+    /**
+     * create a line segment based on the
+     *
+     * @param origin the from point
+     * @param target the to point
+     * @param width  the linewidth
+     * @param color  the color of the line
+     * @param tag    the value to
+     * @param sense  which end to place a label
+     * @return the actual 3-d line
+     */
     public @NotNull Node createLineSegment(@NotNull Point3D origin,
                                            @NotNull Point3D target,
                                            double width,
@@ -369,7 +387,10 @@ public class GridPlotManager {
         return sphere;
     }
 
+    ///////////////////////////////////////////////////////////////////
     ////////////  label updates
+    ///////////////////////////////////////////////////////////////////
+
 
     /**
      * update labels

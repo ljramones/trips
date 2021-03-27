@@ -78,6 +78,7 @@ public class StarPropertiesPane extends Pane {
         VBox vBox = new VBox();
 
         TabPane tabPane = new TabPane();
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         Tab overviewTab = new Tab("Overview");
         overviewTab.setContent(createOverviewTab());

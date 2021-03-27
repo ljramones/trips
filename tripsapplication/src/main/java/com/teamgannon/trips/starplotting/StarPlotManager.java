@@ -506,9 +506,9 @@ public class StarPlotManager {
      * @param record the star
      */
     private void createExtension(@NotNull StarDisplayRecord record) {
-        double yZero = tripsContext.getCurrentPlot().getCenterCoordinates()[1];
+        double zZero = tripsContext.getCurrentPlot().getCenterCoordinates()[2];
         Point3D point3DFrom = record.getCoordinates();
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), yZero, point3DFrom.getZ());
+        Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), zZero);
         double lineWidth = colorPalette.getStemLineWidth();
         Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo,
                 lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
@@ -1031,7 +1031,7 @@ public class StarPlotManager {
 
     private void createExtension(double x, double y, double z, Color extensionColor) {
         Point3D point3DFrom = new Point3D(x, y, z);
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), 0, point3DFrom.getZ());
+        Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), 0);
         double lineWidth = 0.3;
         Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);

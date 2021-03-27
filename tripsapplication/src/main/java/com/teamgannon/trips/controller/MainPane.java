@@ -1757,4 +1757,10 @@ public class MainPane implements
     public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
         routingPanel.setContext(dataSetDescriptor, plotManager.willRoutesShow(dataSetDescriptor));
     }
+
+    public void rotate(ActionEvent actionEvent) {
+        RotationDialog rotationDialog = new RotationDialog(interstellarSpacePane);
+        rotationDialog.initModality(Modality.NONE);
+        rotationDialog.show();
+    }
 }
