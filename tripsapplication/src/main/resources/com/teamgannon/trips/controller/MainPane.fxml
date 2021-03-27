@@ -11,6 +11,7 @@
     <VBox>
         <MenuBar fx:id="menuBar" >
             <Menu mnemonicParsing="false" text="General">
+                <MenuItem mnemonicParsing="false" onAction="#rotate" text="Rotation Angles"/>
                 <MenuItem mnemonicParsing="false" onAction="#plotStars" text="Plot Stars"/>
                 <MenuItem mnemonicParsing="false" onAction="#plotRoutes" text="Plot Routes"/>
                 <MenuItem mnemonicParsing="false" onAction="#clearStars" text="Clear Stars"/>
