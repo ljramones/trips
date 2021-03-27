@@ -16,6 +16,7 @@ public class RotationDialog extends Dialog<Boolean> {
     private RotationController rotationController;
 
     private final Button setAnglesButton = new Button("set Angles");
+    private final Button resetButton = new Button("Reset view");
     private final Button dismissButton = new Button("Dismiss");
 
     private final TextField xAngleTextField = new TextField();
@@ -78,12 +79,19 @@ public class RotationDialog extends Dialog<Boolean> {
         setAnglesButton.setOnAction(this::setAnglesClicked);
         hBox.getChildren().add(setAnglesButton);
 
+        resetButton.setOnAction(this::resetView);
+        hBox.getChildren().add(resetButton);
+
         dismissButton.setOnAction(this::close);
         hBox.getChildren().add(dismissButton);
 
         // set the dialog as a utility
         Stage stage1 = (Stage) this.getDialogPane().getScene().getWindow();
         stage1.setOnCloseRequest(this::close);
+    }
+
+    private void resetView(ActionEvent actionEvent) {
+        rotationController.resetPosition();
     }
 
     private void plusZaction(ActionEvent actionEvent) {

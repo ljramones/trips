@@ -46,9 +46,13 @@ import static org.fxyz3d.geometry.MathUtils.clamp;
 public class InterstellarSpacePane extends Pane implements RotationController {
 
     private static final double ROTATE_SECS = 60;
+
+    // define the rest position of the image
     private final Rotate rotateX = new Rotate(105, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(30, Rotate.Z_AXIS);
+
+
     private final Group world = new Group();
     private final @NotNull SubScene subScene;
 
@@ -213,6 +217,11 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         rotateY.setAngle(yAngle);
         rotateZ.setAngle(zAngle);
         updateLabels();
+    }
+
+    public void resetPosition() {
+        setRotationAngles(105,0, 30);
+        setPerspectiveCamera();
     }
 
     private void setPerspectiveCamera() {
