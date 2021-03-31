@@ -132,6 +132,7 @@ public class TransitManager {
                 installGroup(visibilityGroup);
             }
         }
+        updateLabels(interstellarSpacePane);
 
         log.info("done transits");
     }
