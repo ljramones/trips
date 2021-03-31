@@ -1,7 +1,7 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.service.model.TransitRoute;
+import com.teamgannon.trips.transits.TransitRoute;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

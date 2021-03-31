@@ -1,17 +1,19 @@
 package com.teamgannon.trips.jpa.model;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
+import com.teamgannon.trips.transits.TransitDefinitions;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -23,11 +25,18 @@ import java.util.stream.Collectors;
  * <p>
  * Created by larrymitchell on 2017-03-28.
  */
+@Slf4j
 @Data
 @Entity
 public class DataSetDescriptor implements Serializable {
 
     private static final long serialVersionUID = 1132779255908975239L;
+
+    /**
+     * used for JSON serialization
+     */
+    @Transient
+    private final static ObjectMapper mapper = new ObjectMapper();
 
     /**
      * name for the dataset
@@ -114,6 +123,10 @@ public class DataSetDescriptor implements Serializable {
      */
     @Lob
     private String customDataValuesStr;
+
+    @Lob
+    @Column(length = 1000)
+    private String transitPreferencesStr;
 
     /**
      * since we can add a complex object like this, we convert between object and JSON
@@ -268,5 +281,34 @@ public class DataSetDescriptor implements Serializable {
 
         return dto;
     }
+
+    public TransitDefinitions getTransitDefinitions() {
+        if (transitPreferencesStr == null) {
+            TransitDefinitions transitDefinitions = new TransitDefinitions();
+            transitDefinitions.setSelected(false);
+            transitDefinitions.setDataSetName(dataSetName);
+            transitDefinitions.setTransitRangeDefs(new ArrayList<>());
+            return transitDefinitions;
+        }
+        try {
+            return mapper.readValue(transitPreferencesStr, new TypeReference<>() {
+            });
+        } catch (IOException e) {
+            log.error("couldn't deserialize this {} because of {}:", transitPreferencesStr, e.getMessage());
+            return null;
+        }
+    }
+
+    public void setTransitDefinitions(TransitDefinitions transitDefinitions) {
+        try {
+            String transitDefsStr = mapper.writeValueAsString(transitDefinitions);
+            log.debug("serialized as:" + transitDefsStr);
+            transitPreferencesStr = transitDefsStr;
+        } catch (IOException e) {
+            log.error("couldn't serialize this {} because of {}:", transitDefinitions, e.getMessage());
+            transitPreferencesStr = "";
+        }
+    }
+
 
 }

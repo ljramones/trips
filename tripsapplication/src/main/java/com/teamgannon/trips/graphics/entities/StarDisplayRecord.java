@@ -173,6 +173,11 @@ public class StarDisplayRecord {
             record.setActualCoordinates(coords);
             record.setPolity(starObject.getPolity());
             record.setDisplayScore(starObject.getDisplayScore());
+            if (starObject.isForceLabelToBeShown()) {
+                log.info("object forced");
+                record.setDisplayLabel(true);
+                record.setCurrentLabelDisplayScore(1000);
+            }
             record.setLabelForced(starObject.isForceLabelToBeShown());
         } else {
             log.error("unable to find stellar type for:{}, record ={}", stellarType, record);

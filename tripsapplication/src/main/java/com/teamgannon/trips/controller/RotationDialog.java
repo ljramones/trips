@@ -91,6 +91,12 @@ public class RotationDialog extends Dialog<Boolean> {
     }
 
     private void resetView(ActionEvent actionEvent) {
+        angleX = 105;
+        xAngleTextField.setText(Double.toString(angleX));
+        angleY = 0;
+        yAngleTextField.setText(Double.toString(angleY));
+        angleZ = 30;
+        zAngleTextField.setText(Double.toString(angleZ));
         rotationController.resetPosition();
     }
 

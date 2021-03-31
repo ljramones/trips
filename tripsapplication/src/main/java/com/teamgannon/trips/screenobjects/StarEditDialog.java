@@ -92,17 +92,17 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final TextField miscNum4TextField = new TextField();
     private final TextField miscNum5TextField = new TextField();
 
-    private final Stage stage;
+    private final ComboBox<String> politiesComboBox = new ComboBox<>();
+    private final ComboBox<String> worldComboBox = new ComboBox<>();
+    private final ComboBox<String> fuelComboBox = new ComboBox<>();
+    private final ComboBox<String> techComboBox = new ComboBox<>();
+    private final ComboBox<String> portComboBox = new ComboBox<>();
+    private final ComboBox<String> populationComboBox = new ComboBox<>();
+    private final ComboBox<String> productComboBox = new ComboBox<>();
+    private final ComboBox<String> milSpaceComboBox = new ComboBox<>();
+    private final ComboBox<String> milPlanComboBox = new ComboBox<>();
 
-    private ComboBox<String> politiesComboBox = new ComboBox<>();
-    private ComboBox<String> worldComboBox = new ComboBox<>();
-    private ComboBox<String> fuelComboBox = new ComboBox<>();
-    private ComboBox<String> techComboBox = new ComboBox<>();
-    private ComboBox<String> portComboBox = new ComboBox<>();
-    private ComboBox<String> populationComboBox = new ComboBox<>();
-    private ComboBox<String> productComboBox = new ComboBox<>();
-    private ComboBox<String> milSpaceComboBox = new ComboBox<>();
-    private ComboBox<String> milPlanComboBox = new ComboBox<>();
+    private  final CheckBox forceLabel = new CheckBox("Force Label to be seen");
 
 
     ////////////////
@@ -111,7 +111,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         this.record = record;
 
         // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
         VBox vBox = new VBox();
@@ -139,12 +139,15 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         // setup button boxes
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
+
         Button resetBtn = new Button("Cancel");
         resetBtn.setOnAction(this::cancelClicked);
         hBox.getChildren().add(resetBtn);
+
         Button addBtn = new Button("Update");
         addBtn.setOnAction(this::changeClicked);
         hBox.getChildren().add(addBtn);
+
         vBox.getChildren().add(hBox);
 
         this.setTitle("Change attributes for " + record.getDisplayName());
@@ -730,6 +733,9 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         misc5TextField.setText(record.getMiscText5());
         innerGridPane1.add(misc5TextField, 1, 5);
 
+        forceLabel.setSelected(record.isForceLabelToBeShown());
+        innerGridPane1.add(forceLabel, 0, 6, 2, 1);
+
         GridPane innerGridPane2 = new GridPane();
         innerGridPane2.setPadding(new Insets(10, 10, 10, 10));
         innerGridPane2.setVgap(5);
@@ -1132,6 +1138,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         double miscNum5 = Double.parseDouble(miscNum5TextField.getText());
         record.setMiscNum5(miscNum5);
+
+        record.setForceLabelToBeShown(forceLabel.isSelected());
 
     }
 

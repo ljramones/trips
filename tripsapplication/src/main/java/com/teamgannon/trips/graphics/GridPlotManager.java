@@ -53,6 +53,7 @@ public class GridPlotManager {
      */
     private final Group labelDisplayGroup = new Group();
     private final double spacing;
+    private double height;
     private final double width;
     private final double depth;
     private final ColorPalette colorPalette;
@@ -73,10 +74,11 @@ public class GridPlotManager {
                            @NotNull Group sceneRoot,
                            SubScene subScene,
                            double spacing,
-                           double width, double depth,
+                           double height, double width, double depth,
                            ColorPalette colorPalette) {
 
         this.spacing = spacing;
+        this.height = height;
         this.width = width;
         this.depth = depth;
         this.colorPalette = colorPalette;
@@ -183,7 +185,7 @@ public class GridPlotManager {
         );
 
         // iterate over y dimension
-        int yDivisions = (int) ceil(width / gridIncrement);
+        int yDivisions = (int) ceil(height / gridIncrement);
         double x = 0.0;
         for (int i = 0; i <= yDivisions; i++) {
             Point3D from = new Point3D(x, 0, 0);
@@ -196,7 +198,7 @@ public class GridPlotManager {
         }
 
         // iterate over x dimension
-        int xDivisions = (int) ceil(depth / gridIncrement);
+        int xDivisions = (int) ceil(width / gridIncrement);
         double y = 0.0;
         for (int i = 0; i <= xDivisions; i++) {
             Point3D from = new Point3D(0, y, 0);
@@ -224,7 +226,6 @@ public class GridPlotManager {
         // remember to clear the labels first
         shapeToLabel.clear();
         labelDisplayGroup.getChildren().clear();
-        log.info("CLEARED GRID LABELS!!");
 
         ScalingParameters parameters = transformer.getScalingParameters();
 
