@@ -69,21 +69,24 @@ public class TransitFilterPane extends Pane {
         Label enabledLabel = new Label("Show?");
         enabledLabel.setFont(font);
         gridPane.add(enabledLabel, 0, 1);
+        Label showLengthsLabel = new Label("Show?");
+        showLengthsLabel.setFont(font);
+        gridPane.add(showLengthsLabel, 1, 1);
         Label bandNameLabel = new Label("Band\nName");
         bandNameLabel.setFont(font);
-        gridPane.add(bandNameLabel, 1, 1);
+        gridPane.add(bandNameLabel, 2, 1);
         Label lowerRangeLabel = new Label("Lower\nRange");
         lowerRangeLabel.setFont(font);
-        gridPane.add(lowerRangeLabel, 2, 1);
+        gridPane.add(lowerRangeLabel, 3, 1);
         Label upperRangeLabel = new Label("Upper\nRange");
         upperRangeLabel.setFont(font);
-        gridPane.add(upperRangeLabel, 3, 1);
+        gridPane.add(upperRangeLabel, 4, 1);
         Label lineWidthLabel = new Label("Line\nWidth");
         lineWidthLabel.setFont(font);
-        gridPane.add(lineWidthLabel, 4, 1);
+        gridPane.add(lineWidthLabel, 5, 1);
         Label colorLabel = new Label("Color");
         colorLabel.setFont(font);
-        gridPane.add(colorLabel, 5, 1);
+        gridPane.add(colorLabel, 6, 1);
     }
 
     private void addTransitRef(GridPane gridPane, TransitRangeDef transitRangeDef, int row) {
@@ -96,21 +99,28 @@ public class TransitFilterPane extends Pane {
         });
         gridPane.add(showTransit, 0, row);
 
+        CheckBox showLabels = new CheckBox();
+        showLabels.setSelected(true);
+        showLabels.setOnAction(e -> {
+            transitManager.showLabels(transitRangeDef.getBandId(), showLabels.isSelected());
+        });
+        gridPane.add(showLabels, 1, row);
+
         // name
         Label nameLabel = new Label(transitRangeDef.getBandName());
-        gridPane.add(nameLabel, 1, row);
+        gridPane.add(nameLabel, 2, row);
 
         // lower range
         Label lowerRangeLabel = new Label(Double.toString(transitRangeDef.getLowerRange()));
-        gridPane.add(lowerRangeLabel, 2, row);
+        gridPane.add(lowerRangeLabel, 3, row);
 
         // upper range
         Label upperRangeLabel = new Label(Double.toString(transitRangeDef.getUpperRange()));
-        gridPane.add(upperRangeLabel, 3, row);
+        gridPane.add(upperRangeLabel, 4, row);
 
         // upper range
         Label lineWidthLabel = new Label(Double.toString(transitRangeDef.getLineWidth()));
-        gridPane.add(lineWidthLabel, 4, row);
+        gridPane.add(lineWidthLabel, 5, row);
 
         // upper range
         ColorPicker colorPicker = new ColorPicker();
@@ -118,7 +128,7 @@ public class TransitFilterPane extends Pane {
         colorPicker.setDisable(true);
         colorPicker.setOpacity(1.0);
         colorPicker.setStyle("-fx-opacity : 1.0; -fx-color-label-visible: false ;");
-        gridPane.add(colorPicker, 5, row);
+        gridPane.add(colorPicker, 6, row);
     }
 
 }

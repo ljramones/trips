@@ -200,6 +200,23 @@ public class TransitManager {
     }
 
     /**
+     * show the labels
+     *
+     * @param bandId the group id
+     * @param show   true is to show labels
+     */
+    public void showLabels(UUID bandId, boolean show) {
+        // transit
+        log.info("Transit:{} is {}", bandId, show);
+        // pull the associated group
+        TransitRouteVisibilityGroup visibilityGroup = transitMap.get(bandId);
+        // set it visible or not based on the status
+        if (visibilityGroup != null) {
+            visibilityGroup.toggleLabels(show);
+        }
+    }
+
+    /**
      * Is transit container group visible
      *
      * @return true is yes
@@ -272,4 +289,6 @@ public class TransitManager {
         }
 
     }
+
+
 }
