@@ -138,9 +138,9 @@ public class TransitManager {
     }
 
     /**
-     * install teh visibility group
+     * install the visibility group
      *
-     * @param visibilityGroup the visiblity group
+     * @param visibilityGroup the visibility group
      */
     private void installGroup(TransitRouteVisibilityGroup visibilityGroup) {
 
@@ -161,9 +161,6 @@ public class TransitManager {
      * @param visibilityGroup the visibility group to uninstall
      */
     private void uninstallGroup(TransitRouteVisibilityGroup visibilityGroup) {
-
-        // remove reference
-        transitMap.remove(visibilityGroup.getGroupId());
 
         // add this visibility group to the overall transit group
         transitGroup.getChildren().remove(visibilityGroup.getGroup());
@@ -253,6 +250,7 @@ public class TransitManager {
                 uninstallGroup(transitGroup);
             }
         }
+        transitMap.clear();
         transitsOn = false;
         transitMap.clear();
         labelDisplayGroup.getChildren().clear();
@@ -278,7 +276,7 @@ public class TransitManager {
     }
 
     /**
-     * itertae over the labels to redisplay
+     * iterate over the labels to redisplay
      *
      * @param interstellarSpacePane the interstellar pane
      */
@@ -290,6 +288,5 @@ public class TransitManager {
         }
 
     }
-
 
 }
