@@ -3,7 +3,8 @@ package com.teamgannon.trips.service;
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.service.model.TransitRoute;
+import com.teamgannon.trips.transits.TransitRoute;
+import com.teamgannon.trips.transits.TransitRangeDef;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,31 @@ public class StarMeasurementService {
         return allTransit;
     }
 
+    public @NotNull List<TransitRoute> calculateDistances(@NotNull TransitRangeDef transitRangeDef, @NotNull List<StarDisplayRecord> starsInView) {
+        lookupSourceTarget.clear();
+        List<TransitRoute> allTransit = new ArrayList<>();
+        for (StarDisplayRecord record : starsInView) {
+            List<TransitRoute> recordTransits = findStarsWithLimit(record, starsInView, transitRangeDef);
+            allTransit.addAll(recordTransits);
+        }
+        return allTransit;
+    }
+
+    private @NotNull List<TransitRoute> findStarsWithLimit(@NotNull StarDisplayRecord sourceRecord,
+                                                           @NotNull List<StarDisplayRecord> starsInView,
+                                                           @NotNull TransitRangeDef transitRangeDef) {
+        List<TransitRoute> routeList = new ArrayList<>();
+        for (StarDisplayRecord targetRecord : starsInView) {
+            if (targetRecord != null) {
+                TransitRoute route = calcDistanceAndCheck(sourceRecord, targetRecord, transitRangeDef);
+                if (route.isGood()) {
+                    routeList.add(route);
+                }
+            }
+        }
+        return routeList;
+    }
+
     private @NotNull List<TransitRoute> findStarsWithLimit(@NotNull StarDisplayRecord sourceRecord,
                                                            @NotNull List<StarDisplayRecord> starsInView,
                                                            @NotNull DistanceRoutes distanceRange) {
@@ -46,6 +72,41 @@ public class StarMeasurementService {
             }
         }
         return routeList;
+    }
+
+    private TransitRoute calcDistanceAndCheck(@NotNull StarDisplayRecord sourceRecord,
+                                              @NotNull StarDisplayRecord targetRecord,
+                                              @NotNull TransitRangeDef transitRangeDef) {
+        double[] sourceCoordinates = sourceRecord.getActualCoordinates();
+        double[] targetCoordinates = targetRecord.getActualCoordinates();
+        if (checkOffSourceTarget(sourceRecord.getStarName(), targetRecord.getStarName())) {
+            return TransitRoute.builder().good(false).build();
+        }
+        try {
+            double distance = StarMath.getDistance(sourceCoordinates, targetCoordinates);
+            if (checkInRange(transitRangeDef, distance)) {
+                // ok, we have a measure to save
+                System.out.printf("%s --> %s is %.2f ly%n",
+                        sourceRecord.getStarName(),
+                        targetRecord.getStarName(),
+                        distance
+                );
+                return TransitRoute
+                        .builder()
+                        .good(true)
+                        .source(sourceRecord)
+                        .target(targetRecord)
+                        .distance(distance)
+                        .lineWeight((transitRangeDef.getLineWidth()))
+                        .color(transitRangeDef.getBandColor())
+                        .build();
+            } else {
+                return TransitRoute.builder().good(false).build();
+            }
+        } catch (Exception e) {
+            log.error("failed to measure");
+        }
+        return TransitRoute.builder().good(false).build();
     }
 
     private TransitRoute calcDistanceAndCheck(@NotNull StarDisplayRecord sourceRecord,
@@ -107,6 +168,10 @@ public class StarMeasurementService {
 
     private boolean checkInRange(@NotNull DistanceRoutes distanceRange, double distance) {
         return distance < distanceRange.getUpperDistance() && distance > distanceRange.getLowerDistance();
+    }
+
+    private boolean checkInRange(@NotNull TransitRangeDef transitRangeDef, double distance) {
+        return distance < transitRangeDef.getUpperRange() && distance > transitRangeDef.getLowerRange();
     }
 
 }

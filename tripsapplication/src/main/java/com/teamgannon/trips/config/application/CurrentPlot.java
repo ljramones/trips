@@ -79,6 +79,9 @@ public class CurrentPlot {
         if (record.isCenter()) {
             record.setDisplayLabel(true);
         }
+        if (record.isLabelForced()) {
+            record.setCurrentLabelDisplayScore(1000);
+        }
         starDisplayRecordList.add(record);
         // put star display record into the label sort
     }
@@ -97,7 +100,10 @@ public class CurrentPlot {
         starDisplayRecordList.sort(Comparator.comparing(StarDisplayRecord::getCurrentLabelDisplayScore).reversed());
 
         // create a check set for the user count
-        IntStream.range(0, labelCount).mapToObj(i -> starDisplayRecordList.get(i)).forEach(starDisplayRecord -> starDisplayRecord.setDisplayLabel(true));
+        for (int i = 0; i < labelCount; i++) {
+            StarDisplayRecord starDisplayRecord = starDisplayRecordList.get(i);
+            starDisplayRecord.setDisplayLabel(true);
+        }
 
     }
 

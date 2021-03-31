@@ -16,6 +16,7 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
+import com.teamgannon.trips.transits.TransitDefinitions;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
@@ -29,7 +30,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 
@@ -269,14 +269,12 @@ public class DatabaseManagementService {
     }
 
 
-    public @NotNull
-    List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
+    public List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
         return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
-    public @NotNull
-    DataSetDescriptor getDatasetFromName(String dataSetName) {
+    public DataSetDescriptor getDatasetFromName(String dataSetName) {
         return dataSetDescriptorRepository.findByDataSetName(dataSetName);
     }
     ///////////////
@@ -286,6 +284,7 @@ public class DatabaseManagementService {
      *
      * @return the list of star details
      */
+    @Transactional
     public List<StarDetailsPersist> getStarDetails() {
         Iterable<StarDetailsPersist> starDetailsPersists = starDetailsPersistRepository.findAll();
         List<StarDetailsPersist> starDetailsPersistList = StreamSupport.stream(starDetailsPersists.spliterator(), false).collect(Collectors.toList());
@@ -330,6 +329,7 @@ public class DatabaseManagementService {
      */
     @Transactional
     public void addStar(@NotNull StarObject starObjectNew) {
+        starObjectNew.calculateDisplayScore();
         starObjectRepository.save(starObjectNew);
         Optional<StarObject> testGet = starObjectRepository.findById(starObjectNew.getId());
         if (testGet.isEmpty()) {
@@ -345,11 +345,13 @@ public class DatabaseManagementService {
      */
     @Transactional
     public void updateStar(@NotNull StarObject starObject) {
+        starObject.calculateDisplayScore();
         starObjectRepository.save(starObject);
     }
 
     //////////////////////////
 
+    @Transactional
     public GraphEnablesPersist getGraphEnablesFromDB() {
         Iterable<GraphEnablesPersist> graphEnables = graphEnablesRepository.findAll();
         GraphEnablesPersist graphEnablesPersist;
@@ -365,10 +367,12 @@ public class DatabaseManagementService {
         return graphEnablesPersist;
     }
 
+    @Transactional
     public void updateGraphEnables(@NotNull GraphEnablesPersist graphEnablesPersist) {
         graphEnablesRepository.save(graphEnablesPersist);
     }
 
+    @Transactional
     public CivilizationDisplayPreferences getCivilizationDisplayPreferences() {
         Optional<CivilizationDisplayPreferences> optionalCivilizationDisplayPreferences = civilizationDisplayPreferencesRepository.findByStorageTag("Main");
         CivilizationDisplayPreferences civilizationDisplayPreferences;
@@ -389,8 +393,8 @@ public class DatabaseManagementService {
         civilizationDisplayPreferencesRepository.save(preferences);
     }
 
-    public @NotNull
-    ColorPalette getGraphColorsFromDB() {
+    @Transactional
+    public ColorPalette getGraphColorsFromDB() {
         Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
         GraphColorsPersist graphColorsPersist;
 
@@ -408,6 +412,7 @@ public class DatabaseManagementService {
     }
 
 
+    @Transactional
     public void updateColors(@NotNull ColorPalette colorPalette) {
         Optional<GraphColorsPersist> graphColorsPersistOptional = graphColorsRepository.findById(colorPalette.getId());
         if (graphColorsPersistOptional.isPresent()) {
@@ -422,11 +427,13 @@ public class DatabaseManagementService {
      *
      * @param starDisplayPreferences the star preferences
      */
+    @Transactional
     public void updateStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
         List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
     }
 
+    @Transactional
     public void addRouteToDataSet(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
 
         // pull all routes
@@ -439,6 +446,7 @@ public class DatabaseManagementService {
 
     }
 
+    @Transactional
     public void updateNotesOnStar(@NotNull UUID recordId, String notes) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         if (objectOptional.isPresent()) {
@@ -457,6 +465,7 @@ public class DatabaseManagementService {
         return objectOptional.orElse(null);
     }
 
+    @Transactional
     public void removeStar(@NotNull UUID recordId) {
         starObjectRepository.deleteById(recordId);
     }
@@ -505,6 +514,7 @@ public class DatabaseManagementService {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
+    @Transactional
     public void saveExcelDataSetDescriptor(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
         dataSetDescriptorRepository.save(excelFile.getDescriptor());
         updater.updateTaskInfo("saved descriptor in database, complete");
@@ -534,6 +544,7 @@ public class DatabaseManagementService {
         return descriptor;
     }
 
+    @Transactional
     public TripsPrefs getTripsPrefs() {
         Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
         if (tripsPrefsOptional.isPresent()) {
@@ -547,6 +558,7 @@ public class DatabaseManagementService {
         }
     }
 
+    @Transactional
     public TransitSettings getTransitSettings() {
         Optional<TransitSettings> transitSettingsOptional = transitSettingsRepository.findById("main");
 
@@ -560,10 +572,12 @@ public class DatabaseManagementService {
         }
     }
 
+    @Transactional
     public void setTransitSettings(TransitSettings transitSettings) {
         transitSettingsRepository.save(transitSettings);
     }
 
+    @Transactional
     public void saveTripsPrefs(TripsPrefs tripsPrefs) {
         tripsPrefsRepository.save(tripsPrefs);
     }
@@ -595,6 +609,7 @@ public class DatabaseManagementService {
     }
 
 
+    @Transactional
     public void updateDataSet(DataSetDescriptor descriptor) {
         Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
         if (tripsPrefsOptional.isPresent()) {
@@ -604,9 +619,17 @@ public class DatabaseManagementService {
         }
     }
 
+    @Transactional
     public void clearRoutesFromCurrent(DataSetDescriptor descriptor) {
         DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(descriptor.getDataSetName());
         descriptorCurrent.clearRoutes();
+        dataSetDescriptorRepository.save(descriptorCurrent);
+    }
+
+    @Transactional
+    public void setTransitPreferences(TransitDefinitions transitDefinitions) {
+        DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(transitDefinitions.getDataSetName());
+        descriptorCurrent.setTransitDefinitions(transitDefinitions);
         dataSetDescriptorRepository.save(descriptorCurrent);
     }
 }

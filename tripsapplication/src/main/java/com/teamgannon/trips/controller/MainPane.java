@@ -14,7 +14,7 @@ import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.dialogs.search.FindStarsWithNameMatchDialog;
-import com.teamgannon.trips.dialogs.search.FindTransitsBetweenStarsDialog;
+import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.ShowStarMatchesDialog;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
@@ -44,6 +44,7 @@ import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
+import com.teamgannon.trips.transits.TransitDefinitions;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -173,6 +174,7 @@ public class MainPane implements
     public BorderPane leftBorderPane;
     public BorderPane rightBorderPane;
     public TitledPane objectsViewPane;
+    public TitledPane transitPane;
     public TitledPane routingPane;
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
@@ -180,6 +182,7 @@ public class MainPane implements
     double spacing = 20;
     private TitledPane datasetsPane;
     private RoutingPanel routingPanel;
+    private TransitFilterPane transitFilterPane;
     private StarPropertiesPane starPropertiesPane;
     private ObjectViewPane objectViewPane;
     private VBox settingsPane;
@@ -468,6 +471,16 @@ public class MainPane implements
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
         propertiesAccordion.getPanes().add(stellarObjectPane);
+
+        transitPane = new TitledPane();
+        transitPane.setText("Transit Control");
+        transitPane.setPrefWidth(SIDE_PANEL_SIZE);
+        transitPane.setPrefHeight(500);
+        transitPane.setMaxHeight(520);
+        transitFilterPane = new TransitFilterPane();
+        ScrollPane scrollPane2 = new ScrollPane(transitFilterPane);
+        transitPane.setContent(scrollPane2);
+        propertiesAccordion.getPanes().add(transitPane);
 
         // routing pane
         routingPane = new TitledPane();
@@ -995,12 +1008,13 @@ public class MainPane implements
     }
 
     public void transitFinder(ActionEvent actionEvent) {
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService, tripsContext.getTransitSettings());
-        Optional<DistanceRoutes> optionalDistanceRoutes = findTransitsBetweenStarsDialog.showAndWait();
-        if (optionalDistanceRoutes.isPresent()) {
-            DistanceRoutes distanceRoutes = optionalDistanceRoutes.get();
-            if (distanceRoutes.isSelected()) {
-                interstellarSpacePane.findTransits(distanceRoutes);
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService, tripsContext.getDataSetContext().getDescriptor().getTransitDefinitions());
+        Optional<TransitDefinitions> optionalTransitDefinitions = findTransitsBetweenStarsDialog.showAndWait();
+        if (optionalTransitDefinitions.isPresent()) {
+            TransitDefinitions transitDefinitions = optionalTransitDefinitions.get();
+            if (transitDefinitions.isSelected()) {
+                interstellarSpacePane.findTransits(transitDefinitions);
+                transitFilterPane.setFilter(transitDefinitions, interstellarSpacePane.getTransitManager());
             }
         }
     }
@@ -1506,7 +1520,6 @@ public class MainPane implements
     }
 
     public void clearAll() {
-        log.info("\n\n\n CLEARING ALL DATA \n\n\n");
         clearData();
         clearList();
         clearInterstellar();

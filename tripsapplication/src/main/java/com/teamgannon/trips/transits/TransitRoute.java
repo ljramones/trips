@@ -1,4 +1,4 @@
-package com.teamgannon.trips.service.model;
+package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Point3D;

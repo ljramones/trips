@@ -635,12 +635,46 @@ public class StarObject implements Serializable {
             cumulativeTotal += 1.5;
         }
 
-        // 8. If none of the above, make the multiplier one. (1)
+        // 8. is there an entry in polity?
+        if (!polity.trim().isEmpty()) {
+            cumulativeTotal += 3;
+        }
+
+        // check if any other fictional item is set
+        if (otherFictionalfieldsPresent()) {
+            cumulativeTotal += 3;
+        }
+
+        // 10. If none of the above, make the multiplier one. (1)
         if (cumulativeTotal == 0) {
             cumulativeTotal = 1;
         }
 
         return cumulativeTotal;
+    }
+
+    private boolean otherFictionalfieldsPresent() {
+        if (!worldType.trim().isEmpty()) {
+            return true;
+        }
+        if (!fuelType.trim().isEmpty()) {
+            return true;
+        }
+        if (!portType.trim().isEmpty()) {
+            return true;
+        }
+        if (!populationType.trim().isEmpty()) {
+            return true;
+        }
+        if (!techType.trim().isEmpty()) {
+            return true;
+        }
+
+        if (!milSpaceType.trim().isEmpty()) {
+            return true;
+        }
+
+        return !milPlanType.trim().isEmpty();
     }
 
     private double calculateBaseScore() {

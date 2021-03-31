@@ -6,7 +6,6 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.controller.RotationController;
-import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -18,6 +17,7 @@ import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
+import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
@@ -192,7 +192,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
                 world,
                 sceneRoot,
                 subScene,
-                spacing, sceneWidth, depth,
+                spacing,
+                sceneHeight, sceneWidth, depth,
                 colorPalette
         );
 
@@ -220,7 +221,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void resetPosition() {
-        setRotationAngles(105,0, 30);
+        setRotationAngles(105, 0, 30);
         setPerspectiveCamera();
     }
 
@@ -277,11 +278,11 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     /**
      * finds all the transits for stars in view
      *
-     * @param distanceRoutes the distance range selected
+     * @param transitDefinitions the distance range selected
      */
-    public void findTransits(@NotNull DistanceRoutes distanceRoutes) {
+    public void findTransits(TransitDefinitions transitDefinitions) {
         List<StarDisplayRecord> starsInView = getCurrentStarsInView();
-        transitManager.findTransits(distanceRoutes, starsInView);
+        transitManager.findTransits(transitDefinitions, starsInView);
     }
 
     /**
@@ -726,6 +727,10 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
 
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
-        routeManager.displayRoute(routeDescriptor,state);
+        routeManager.displayRoute(routeDescriptor, state);
+    }
+
+    public @NotNull TransitManager getTransitManager() {
+        return transitManager;
     }
 }
