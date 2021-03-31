@@ -534,6 +534,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         rotate.setToAngle(0);
         rotate.setInterpolator(Interpolator.LINEAR);
         rotate.setCycleCount(RotateTransition.INDEFINITE);
+        updateLabels();
         return rotate;
     }
 
@@ -560,15 +561,17 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      */
     private void handleUserEvents() {
 
+        // handle keyboard key press events
         subScene.setOnKeyPressed(this::keyEventHandler);
 
+        // handle mouse scroll events
         subScene.setOnScroll(this::mouseScrollEventHandler);
 
-        subScene.setOnMousePressed(this::mousePressEventHandler
-        );
+        // handle mouse press events
+        subScene.setOnMousePressed(this::mousePressEventHandler);
 
-        subScene.setOnMouseDragged(this::mouseDragEventHandler
-        );
+        // handle mouse drag events
+        subScene.setOnMouseDragged(this::mouseDragEventHandler);
 
     }
 
@@ -614,14 +617,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     private void rotateXY(int direction, double modifier, double mouseDeltaX, double mouseDeltaY) {
-        rotateY.setAngle(((rotateY.getAngle() + direction * mouseDeltaX * modifier) % 360 + 540) % 360 - 180); // +
-        rotateX.setAngle(
-                clamp(
-                        (((rotateX.getAngle() - direction * mouseDeltaY * modifier) % 360 + 540) % 360 - 180),
-                        -60,
-                        60
-                )
-        ); // -
+        rotateX.setAngle((rotateX.getAngle() + direction * mouseDeltaX * modifier)  % 360 );
+        rotateY.setAngle((rotateY.getAngle() - direction * mouseDeltaY * modifier)  % 360 );
     }
 
     private void roll(int direction, double modifier, double mouseDeltaX) {
