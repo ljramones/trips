@@ -252,7 +252,6 @@ public class TransitManager {
         }
         transitMap.clear();
         transitsOn = false;
-        transitMap.clear();
         labelDisplayGroup.getChildren().clear();
         transitsLengthsOn = false;
 
