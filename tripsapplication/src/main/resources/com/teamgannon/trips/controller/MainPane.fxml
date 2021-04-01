@@ -74,11 +74,6 @@
                 <SeparatorMenuItem/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#loadDataSetManager" text="Import dataset from a file..."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#exportDatabase" text="Export Database to Excel"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#copyDatabase" text="Create a new Dataset from existing"/>
             </Menu>
             <Menu mnemonicParsing="false" text="Transits">
                 <MenuItem mnemonicParsing="false"

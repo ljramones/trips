@@ -1493,7 +1493,6 @@ public class MainPane implements
 
     @Override
     public void setContextDataSet(@NotNull DataSetDescriptor descriptor) {
-        log.info("\nSETTING CONTEXT FOR DATA SET DESCRIPTOR\n");
 
         // clear all the current data
         clearAll();
