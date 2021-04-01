@@ -5,132 +5,144 @@
 <?import javafx.scene.shape.*?>
 
 <Group>
-  <children>
-    <MeshView id="mesh_id52">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            -0.07322234, 0.14435816, 0.2480318, -0.07223975, 0.21506286, 0.31874168, -0.07350636, 0.07364709, 0.3187416, -0.31001946, 0.1464791, 0.2492016, -0.072938316, 0.2150692, 0.17732199, -0.07420493, 0.07365341, 0.17732193
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-    <MeshView id="mesh_id31">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            -0.002954181, 0.1442408, 0.31772608, 0.068386115, 0.21431534, 0.31737676, 0.06711945, 0.07289961, 0.31737676, -0.0017325256, 0.14422989, 0.56502604, -0.07302782, 0.21558197, 0.3180754, -0.074294455, 0.07416623, 0.31807542
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-    <MeshView id="mesh_id51">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            0.06638786, 0.14464587, 0.24860409, 0.0666719, 0.21535683, 0.17789426, 0.0654052, 0.07394117, 0.17789426, 0.31298268, 0.14243707, 0.2473858, 0.06737053, 0.21535057, 0.3193139, 0.06610382, 0.073934905, 0.31931388
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-    <MeshView id="mesh_id45">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            -0.003985812, 0.14506398, 0.17792773, -0.0740594, 0.21640518, 0.17827702, -0.075326115, 0.07498951, 0.17827708, -0.0051623816, 0.14507447, -0.0602369, 0.06735449, 0.21513845, 0.17757839, 0.066087745, 0.07372277, 0.17757845
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-    <MeshView id="mesh_id27">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            -0.0027432493, 0.2152461, 0.24827746, 0.06761446, 0.21461587, 0.17721836, 0.06831293, 0.21460964, 0.31863806, 2.8774375E-4, 0.5536247, 0.24827743, -0.07379943, 0.21588255, 0.17791688, -0.07310093, 0.21587633, 0.3193366
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-    <MeshView id="mesh_id29">
-      <material>
-        <PhongMaterial diffuseColor="0xffffffff"/>
-      </material>
-      <mesh>
-        <TriangleMesh>
-          <points>
-            -0.0039501023, 0.07580057, 0.24621974, -0.07500637, 0.076437, 0.17585924, -0.07430781, 0.07643074, 0.31727883, -0.008947127, -0.48209766, 0.24621974, 0.06640762, 0.0751704, 0.17516066, 0.06710616, 0.07516414, 0.31658027
-          </points>
-          <texCoords>
-            0.0, 0.0
-          </texCoords>
-          <faces>
-            0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0, 0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
-          </faces>
-          <faceSmoothingGroups>
-            1, 0, 1, 0, 1, 0, 1, 0
-          </faceSmoothingGroups>
-        </TriangleMesh>
-      </mesh>
-    </MeshView>
-  </children>
+  <MeshView id="mesh_id52">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          -0.07322234, 0.14435816, 0.2480318, -0.07223975, 0.21506286, 0.31874168, -0.07350636, 0.07364709, 0.3187416,
+          -0.31001946, 0.1464791, 0.2492016, -0.072938316, 0.2150692, 0.17732199, -0.07420493, 0.07365341, 0.17732193
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
+  <MeshView id="mesh_id31">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          -0.002954181, 0.1442408, 0.31772608, 0.068386115, 0.21431534, 0.31737676, 0.06711945, 0.07289961, 0.31737676,
+          -0.0017325256, 0.14422989, 0.56502604, -0.07302782, 0.21558197, 0.3180754, -0.074294455, 0.07416623,
+          0.31807542
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
+  <MeshView id="mesh_id51">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          0.06638786, 0.14464587, 0.24860409, 0.0666719, 0.21535683, 0.17789426, 0.0654052, 0.07394117, 0.17789426,
+          0.31298268, 0.14243707, 0.2473858, 0.06737053, 0.21535057, 0.3193139, 0.06610382, 0.073934905, 0.31931388
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
+  <MeshView id="mesh_id45">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          -0.003985812, 0.14506398, 0.17792773, -0.0740594, 0.21640518, 0.17827702, -0.075326115, 0.07498951,
+          0.17827708, -0.0051623816, 0.14507447, -0.0602369, 0.06735449, 0.21513845, 0.17757839, 0.066087745,
+          0.07372277, 0.17757845
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
+  <MeshView id="mesh_id27">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          -0.0027432493, 0.2152461, 0.24827746, 0.06761446, 0.21461587, 0.17721836, 0.06831293, 0.21460964, 0.31863806,
+          2.8774375E-4, 0.5536247, 0.24827743, -0.07379943, 0.21588255, 0.17791688, -0.07310093, 0.21587633, 0.3193366
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
+  <MeshView id="mesh_id29">
+    <material>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
+    </material>
+    <mesh>
+      <TriangleMesh>
+        <points>
+          -0.0039501023, 0.07580057, 0.24621974, -0.07500637, 0.076437, 0.17585924, -0.07430781, 0.07643074, 0.31727883,
+          -0.008947127, -0.48209766, 0.24621974, 0.06640762, 0.0751704, 0.17516066, 0.06710616, 0.07516414, 0.31658027
+        </points>
+        <texCoords>
+          0.0, 0.0
+        </texCoords>
+        <faces>
+          0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0, 4, 0, 3, 0, 1, 0, 0, 0, 5, 0, 4, 0, 5, 0, 3, 0, 4, 0, 0,
+          0, 2, 0, 5, 0, 2, 0, 3, 0, 5, 0
+        </faces>
+        <faceSmoothingGroups>
+          1, 0, 1, 0, 1, 0, 1, 0
+        </faceSmoothingGroups>
+      </TriangleMesh>
+    </mesh>
+  </MeshView>
 </Group>

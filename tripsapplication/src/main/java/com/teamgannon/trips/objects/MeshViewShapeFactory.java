@@ -10,34 +10,26 @@ import java.io.IOException;
 @Slf4j
 public class MeshViewShapeFactory {
 
-    private final FXMLLoader fxmlLoader = new FXMLLoader();
-
     public Group starCentral() {
         try {
-
+            FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("centralStar.fxml"));
-            Group highlightStar = fxmlLoader.load();
-
-            log.info("highlight star loaded");
-            return highlightStar;
+            return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to laod the star:" + e.getMessage());
+            log.error("failed to load the star:" + e.getMessage());
             return null;
         }
     }
 
     public Group star4pt() {
         try {
-
+            FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("star4pt.fxml"));
-            Group highlightStar = fxmlLoader.load();
-
-            log.info("highlight star loaded");
-            return highlightStar;
+            return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to laod the star:" + e.getMessage());
+            log.error("failed to load the star:" + e.getMessage());
             return null;
         }
     }
@@ -45,42 +37,38 @@ public class MeshViewShapeFactory {
 
     public Group star5pt() {
         try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("star5pt.fxml"));
-            Group highlightStar = fxmlLoader.load();
-
-            log.info("highlight star loaded");
-            return highlightStar;
+            return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to laod the star:" + e.getMessage());
+            log.error("failed to load the star:" + e.getMessage());
             return null;
         }
     }
 
     public Group starMoravian() {
         try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("moravian.fxml"));
-            Group highlightStar = fxmlLoader.load();
-
-            log.info("highlight star loaded");
-            return highlightStar;
+            return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to laod the star:" + e.getMessage());
+            log.error("failed to load the star:" + e.getMessage());
             return null;
         }
     }
 
     public MeshView pyramid() {
         try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("pyramid.fxml"));
             MeshView pyramidModel = fxmlLoader.load();
             log.info("loaded");
             return pyramidModel;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             // exception handling
-            log.error("fail:"+e.getMessage());
+            log.error("fail:" + e.getMessage());
             return null;
         }
     }
