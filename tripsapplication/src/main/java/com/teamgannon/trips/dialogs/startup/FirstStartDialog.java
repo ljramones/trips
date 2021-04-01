@@ -29,8 +29,8 @@ public class FirstStartDialog extends Dialog<Boolean> {
                                                 
                         A dataset derived from the Gaia 2 data is included as
                         a CSV for you to use, or you can provide your own.
-                        
-                        
+                                                
+                                                
                         """
         ));
         vBox.getChildren().add(new Separator());

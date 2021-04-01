@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.PhongMaterial?>
+<?import javafx.scene.shape.MeshView?>
+<?import javafx.scene.shape.TriangleMesh?>
+
+<MeshView id="Pyramid">
+    <material>
+        <PhongMaterial>
+            <diffuseColor>
+                <Color red="0.3" green="0.6" blue="0.9" opacity="1.0"/>
+            </diffuseColor>
+        </PhongMaterial>
+    </material>
+    <mesh>
+        <TriangleMesh>
+            <points>0.0 1.0 1.0 1.0 1.0 0.0 0.0 1.0 -1.0 -1.0 1.0 0.0 0.0 -1.0 0.0</points>
+            <texCoords>0.0 0.0</texCoords>
+            <faces>0 0 4 0 1 0 1 0 4 0 2 0 2 0 4 0 3 0 3 0 4 0 0 0 0 0 1 0 2 0 0 0 2 0 3 0</faces>
+            <faceSmoothingGroups>1 2 4 8 16 16</faceSmoothingGroups>
+        </TriangleMesh>
+    </mesh>
+</MeshView>
