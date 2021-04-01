@@ -15,6 +15,7 @@ import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -77,7 +78,9 @@ public class StarPlotManager {
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
+
     private final Group world;
+
     private final SubScene subScene;
     /**
      * used to signal an update to the parent list view
@@ -141,6 +144,7 @@ public class StarPlotManager {
 
     private StarDisplayPreferences starDisplayPreferences;
 
+
     /**
      * constructor
      *
@@ -186,7 +190,16 @@ public class StarPlotManager {
 
         world.getChildren().add(politiesDisplayGroup);
 
+        MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
+        Group hightlightStar = meshViewShapeFactory.starCentral();
+        if (hightlightStar != null) {
+            log.info("loaded star");
+        } else {
+            log.error("failed :( ");
+        }
+
     }
+
 
     /**
      * get the plotted stars in view

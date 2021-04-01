@@ -2,7 +2,6 @@ package com.teamgannon.trips.solarsysmodelling.accrete;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +72,7 @@ public class Planet extends SystemObject implements Comparable<Planet> {
     }
 
     @Override
-    public int compareTo(@NotNull Planet p) {
+    public int compareTo(Planet p) {
         if (this.isMoon) {
             if (p.isMoon) {
                 if (p.asMoonSMA > this.asMoonSMA) {
