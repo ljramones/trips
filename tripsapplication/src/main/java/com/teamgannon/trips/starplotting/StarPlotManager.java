@@ -24,6 +24,7 @@ import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
 import javafx.animation.FadeTransition;
+import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
@@ -36,9 +37,9 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
+import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -142,7 +143,19 @@ public class StarPlotManager {
 
     private double controlPaneOffset;
 
+    private RotateTransition centralRotator = new RotateTransition();
+    ;
+
     private StarDisplayPreferences starDisplayPreferences;
+
+    private final static String CENTRAL_STAR = "centralStar";
+    private final static String MORAVIAN_STAR = "moravianStar";
+    private final static String FOUR_PT_STAR = "4PtStar";
+    private final static String FIVE_PT_STAR = "5PtStar";
+    private final static String PYRAMID = "pyramid";
+    private final Map<String, Group> specialObjects = new HashMap<>();
+
+    private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
 
 
     /**
@@ -190,13 +203,46 @@ public class StarPlotManager {
 
         world.getChildren().add(politiesDisplayGroup);
 
-        MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
-        Group hightlightStar = meshViewShapeFactory.starCentral();
-        if (hightlightStar != null) {
-            log.info("loaded star");
+        // special graphical objects in MeshView format
+        loadSpecialObjects();
+
+    }
+
+    private void loadSpecialObjects() {
+
+        // load central star
+        Group centralStar = meshViewShapeFactory.starCentral();
+        if (centralStar != null) {
+            specialObjects.put(CENTRAL_STAR, centralStar);
         } else {
-            log.error("failed :( ");
+            log.error("Unable to load the central star object");
         }
+
+        // load moravian star
+        Group moravianStar = meshViewShapeFactory.starMoravian();
+        if (moravianStar != null) {
+            specialObjects.put(MORAVIAN_STAR, moravianStar);
+        } else {
+            log.error("Unable to load the moravian star object");
+        }
+
+        // load 4 pt star star
+        Group fourPtStar = meshViewShapeFactory.star4pt();
+        if (fourPtStar != null) {
+            specialObjects.put(FOUR_PT_STAR, fourPtStar);
+        } else {
+            log.error("Unable to load the 4 pt star object");
+        }
+
+        // load 5 pt star star
+        Group fivePtStar = meshViewShapeFactory.star5pt();
+        if (fourPtStar != null) {
+            specialObjects.put(FIVE_PT_STAR, fivePtStar);
+        } else {
+            log.error("Unable to load the 5 pt star object");
+        }
+
+        log.info("All MeshView objects loaded");
 
     }
 
@@ -404,11 +450,11 @@ public class StarPlotManager {
      * create a stellar object
      *
      * @param record            the star record
-     * @param isCenter
+     * @param isCenter          flag that indicates that it is in the center
      * @param colorPalette      the color palette to use
      * @param labelsOn          are labels on?
      * @param politiesOn        are polities on?
-     * @param polityPreferences the plo
+     * @param polityPreferences the polity prefs
      * @return the created object
      */
     public @NotNull Node drawStellarObject(@NotNull StarDisplayRecord record,
@@ -424,9 +470,14 @@ public class StarPlotManager {
         material.setSpecularColor(record.getStarColor());
         Node starShape;
         if (isCenter) {
-            Box box = new Box(4, 4, 4);
-            box.setMaterial(material);
-            starShape = box;
+            Node centralStar = specialObjects.get(CENTRAL_STAR);
+            centralStar.setScaleX(30);
+            centralStar.setScaleY(30);
+            centralStar.setScaleZ(30);
+            centralStar.setRotationAxis(Rotate.X_AXIS);
+            centralStar.setRotate(90);
+//            setupFade(centralStar);
+            starShape = centralStar;
         } else {
             Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
             sphere.setMaterial(material);
@@ -478,6 +529,24 @@ public class StarPlotManager {
             setContextMenu(record, starShape);
         }
         return starShape;
+    }
+
+
+    private void setupRotateAnimation(Node node) {
+        centralRotator.setNode(node);
+        centralRotator.setAxis(Rotate.Y_AXIS);
+        centralRotator.setDuration(Duration.INDEFINITE);
+        centralRotator.play();
+    }
+
+
+    private void setupFade(Node node) {
+        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
+        fader.setFromValue(1.0);
+        fader.setToValue(0.1);
+        fader.setCycleCount(Timeline.INDEFINITE);
+        fader.setAutoReverse(true);
+        fader.play();
     }
 
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
@@ -1031,16 +1100,6 @@ public class StarPlotManager {
         shapeToLabel.put(sphere, label);
 
     }
-
-    private void setupFade(Node node) {
-        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-        fader.setFromValue(1.0);
-        fader.setToValue(0.1);
-        fader.setCycleCount(Timeline.INDEFINITE);
-        fader.setAutoReverse(true);
-        fader.play();
-    }
-
 
     private void createExtension(double x, double y, double z, Color extensionColor) {
         Point3D point3DFrom = new Point3D(x, y, z);

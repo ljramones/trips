@@ -7,7 +7,7 @@
 <Group>
   <MeshView id="meshes_1">
     <material>
-      <PhongMaterial diffuseColor="0xffffffff"/>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
     </material>
     <mesh>
       <TriangleMesh>
@@ -79,7 +79,7 @@
   </MeshView>
   <MeshView id="meshes_0">
     <material>
-      <PhongMaterial diffuseColor="0xffffffff"/>
+      <PhongMaterial diffuseColor="0xffff00ff" specularColor="0xffff00ff"/>
     </material>
     <mesh>
       <TriangleMesh>
