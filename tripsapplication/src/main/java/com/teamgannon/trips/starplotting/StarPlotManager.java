@@ -146,6 +146,8 @@ public class StarPlotManager {
 
     private RotateTransition centralRotator = new RotateTransition();
 
+    private Node highLightStar;
+
 
     private StarDisplayPreferences starDisplayPreferences;
 
@@ -236,25 +238,6 @@ public class StarPlotManager {
             log.error("Unable to load the central star object");
         }
 
-        // load moravian star
-        Node moravianStar = meshViewShapeFactory.starMoravian();
-        if (moravianStar != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(MORAVIAN_STAR)
-                    .id(UUID.randomUUID())
-                    .object(moravianStar)
-                    .xScale(30)
-                    .yScale(30)
-                    .zScale(30)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-            specialObjects.put(MORAVIAN_STAR, objectDefinition);
-        } else {
-            log.error("Unable to load the moravian star object");
-        }
-
         // load 4 pt star star
         Node fourPtStar = meshViewShapeFactory.star4pt();
         if (fourPtStar != null) {
@@ -317,111 +300,6 @@ public class StarPlotManager {
 
     }
 
-    public MeshObjectDefinition createTerranPolity() {
-        // load cube as Terran polity
-        MeshView polity1 = meshViewShapeFactory.cube();
-        if (polity1 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_TERRAN)
-                    .id(UUID.randomUUID())
-                    .object(polity1)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 1 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    public MeshObjectDefinition createDornaniPolity() {
-        // load tetrahedron as polity 2
-        MeshView polity2 = meshViewShapeFactory.tetrahedron();
-        if (polity2 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_DORNANI)
-                    .id(UUID.randomUUID())
-                    .object(polity2)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 2 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    private MeshObjectDefinition createKtorPolity() {
-        // load icosahedron as polity 3
-        MeshView polity3 = meshViewShapeFactory.icosahedron();
-        if (polity3 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_KTOR)
-                    .id(UUID.randomUUID())
-                    .object(polity3)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 3 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    private MeshObjectDefinition createAratKurPolity() {
-        // load icosahedron as polity 4
-        MeshView polity4 = meshViewShapeFactory.octahedron();
-        if (polity4 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_ARAT_KUR)
-                    .id(UUID.randomUUID())
-                    .object(polity4)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 4 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    private MeshObjectDefinition createHkhRkhPolity() {
-        // load icosahedron as polity 5
-        MeshView polity5 = meshViewShapeFactory.dodecahedron();
-        if (polity5 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_HKH_RKH)
-                    .id(UUID.randomUUID())
-                    .object(polity5)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 5 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
     /**
      * get the plotted stars in view
      *
@@ -467,10 +345,52 @@ public class StarPlotManager {
     }
 
     public void highlightStar(UUID starId) {
-        Label starGroup = tripsContext.getCurrentPlot().getLabelForStar(starId);
-        blinkStarLabel(starGroup, 60);
-        log.info("mark point");
+        // remove old star
+        if (highLightStar != null) {
+            stellarDisplayGroup.getChildren().remove(highLightStar);
+        }
+        // now create new one
+        Node starShape = tripsContext.getCurrentPlot().getStar(starId);
+        StarDisplayRecord record = (StarDisplayRecord) starShape.getUserData();
+
+        // make highLight star same as under lying one, with star record and context menu
+        highLightStar = createHighlightStar();
+        if (highLightStar != null) {
+            highLightStar.setUserData(record);
+            setContextMenu(record, highLightStar);
+
+            // superimpose this highlight over top of star
+            Point3D point3D = record.getCoordinates();
+            highLightStar.setTranslateX(point3D.getX());
+            highLightStar.setTranslateY(point3D.getY());
+            highLightStar.setTranslateZ(point3D.getZ());
+            highLightStar.setVisible(true);
+            stellarDisplayGroup.getChildren().add(highLightStar);
+
+            // now blink for 100 cycles
+            log.info("starting blink");
+//            blinkStar(highLightStar, 100);
+
+            log.info("mark point");
+        }
     }
+
+    private void blinkStar(Node starShape, int cycleCount) {
+        if (fadeTransition != null) {
+            fadeTransition.stop();
+        }
+        fadeTransition = new FadeTransition(Duration.seconds(1), starShape);
+        fadeTransition.setFromValue(1.0);
+        fadeTransition.setToValue(0.0);
+        fadeTransition.setCycleCount(cycleCount);
+        fadeTransition.setAutoReverse(true);
+        fadeTransition.setOnFinished(e -> {
+            log.info("highlight star expiring and will be removed");
+            stellarDisplayGroup.getChildren().add(starShape);
+        });
+        fadeTransition.play();
+    }
+
 
     /**
      * the label to blink
@@ -743,18 +663,6 @@ public class StarPlotManager {
         centralStar.setRotate(meshObjectDefinition.getRotateAngle());
         return centralStar;
     }
-
-    private Node createHighlightStar() {
-        MeshObjectDefinition meshObjectDefinition = specialObjects.get(MORAVIAN_STAR);
-        Node centralStar = meshObjectDefinition.getObject();
-        centralStar.setScaleX(meshObjectDefinition.getXScale());
-        centralStar.setScaleY(meshObjectDefinition.getYScale());
-        centralStar.setScaleZ(meshObjectDefinition.getZScale());
-        centralStar.setRotationAxis(meshObjectDefinition.getAxis());
-        centralStar.setRotate(meshObjectDefinition.getRotateAngle());
-        return centralStar;
-    }
-
 
     private void setupRotateAnimation(Node node) {
         centralRotator.setNode(node);
@@ -1338,6 +1246,144 @@ public class StarPlotManager {
 
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;
+    }
+
+
+    ///////////
+
+
+    private MeshObjectDefinition createTerranPolity() {
+        // load cube as Terran polity
+        MeshView polity1 = meshViewShapeFactory.cube();
+        if (polity1 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_TERRAN)
+                    .id(UUID.randomUUID())
+                    .object(polity1)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 1 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    public MeshObjectDefinition createDornaniPolity() {
+        // load tetrahedron as polity 2
+        MeshView polity2 = meshViewShapeFactory.tetrahedron();
+        if (polity2 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_DORNANI)
+                    .id(UUID.randomUUID())
+                    .object(polity2)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 2 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createKtorPolity() {
+        // load icosahedron as polity 3
+        MeshView polity3 = meshViewShapeFactory.icosahedron();
+        if (polity3 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_KTOR)
+                    .id(UUID.randomUUID())
+                    .object(polity3)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 3 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createAratKurPolity() {
+        // load icosahedron as polity 4
+        MeshView polity4 = meshViewShapeFactory.octahedron();
+        if (polity4 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_ARAT_KUR)
+                    .id(UUID.randomUUID())
+                    .object(polity4)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 4 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createHkhRkhPolity() {
+        // load icosahedron as polity 5
+        MeshView polity5 = meshViewShapeFactory.dodecahedron();
+        if (polity5 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_HKH_RKH)
+                    .id(UUID.randomUUID())
+                    .object(polity5)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 5 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+
+    private Node createHighlightStar() {
+        Group moravianStar = meshViewShapeFactory.starMoravian();
+        if (moravianStar != null) {
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(MORAVIAN_STAR)
+                    .id(UUID.randomUUID())
+                    .object(moravianStar)
+                    .xScale(30)
+                    .yScale(30)
+                    .zScale(30)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+            Node highLightStar = objectDefinition.getObject();
+            highLightStar.setScaleX(objectDefinition.getXScale());
+            highLightStar.setScaleY(objectDefinition.getYScale());
+            highLightStar.setScaleZ(objectDefinition.getZScale());
+            highLightStar.setRotationAxis(objectDefinition.getAxis());
+            highLightStar.setRotate(objectDefinition.getRotateAngle());
+            return highLightStar;
+        } else {
+            log.error("Unable to load the moravian star object");
+            return null;
+        }
+
     }
 
 
