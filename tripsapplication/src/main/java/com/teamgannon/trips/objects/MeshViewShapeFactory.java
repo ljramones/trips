@@ -22,7 +22,7 @@ public class MeshViewShapeFactory {
         }
     }
 
-    public Group star4pt() {
+    public MeshView star4pt() {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("star4pt.fxml"));
@@ -33,7 +33,6 @@ public class MeshViewShapeFactory {
             return null;
         }
     }
-
 
     public Group star5pt() {
         try {
@@ -131,7 +130,6 @@ public class MeshViewShapeFactory {
             return null;
         }
     }
-
 
 
 }

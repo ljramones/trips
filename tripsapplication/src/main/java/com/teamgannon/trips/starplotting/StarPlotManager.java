@@ -37,6 +37,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
@@ -144,7 +145,7 @@ public class StarPlotManager {
     private double controlPaneOffset;
 
     private RotateTransition centralRotator = new RotateTransition();
-    ;
+
 
     private StarDisplayPreferences starDisplayPreferences;
 
@@ -153,6 +154,12 @@ public class StarPlotManager {
     private final static String FOUR_PT_STAR = "4PtStar";
     private final static String FIVE_PT_STAR = "5PtStar";
     private final static String PYRAMID = "pyramid";
+    private final static String POLITY_TERRAN = "polity_1";
+    private final static String POLITY_DORNANI = "polity_2";
+    private final static String POLITY_KTOR = "polity_3";
+    private final static String POLITY_ARAT_KUR = "polity_4";
+    private final static String POLITY_HKH_RKH = "polity_5";
+
     private final Map<String, MeshObjectDefinition> specialObjects = new HashMap<>();
 
     private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
@@ -216,6 +223,7 @@ public class StarPlotManager {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
                     .builder()
                     .name(CENTRAL_STAR)
+                    .id(UUID.randomUUID())
                     .object(centralStar)
                     .xScale(30)
                     .yScale(30)
@@ -229,11 +237,12 @@ public class StarPlotManager {
         }
 
         // load moravian star
-        Group moravianStar = meshViewShapeFactory.starMoravian();
+        Node moravianStar = meshViewShapeFactory.starMoravian();
         if (moravianStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
                     .builder()
                     .name(MORAVIAN_STAR)
+                    .id(UUID.randomUUID())
                     .object(moravianStar)
                     .xScale(30)
                     .yScale(30)
@@ -247,11 +256,12 @@ public class StarPlotManager {
         }
 
         // load 4 pt star star
-        Group fourPtStar = meshViewShapeFactory.star4pt();
+        Node fourPtStar = meshViewShapeFactory.star4pt();
         if (fourPtStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
                     .builder()
                     .name(FOUR_PT_STAR)
+                    .id(UUID.randomUUID())
                     .object(fourPtStar)
                     .xScale(30)
                     .yScale(30)
@@ -270,6 +280,7 @@ public class StarPlotManager {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
                     .builder()
                     .name(FIVE_PT_STAR)
+                    .id(UUID.randomUUID())
                     .object(fivePtStar)
                     .xScale(30)
                     .yScale(30)
@@ -282,10 +293,134 @@ public class StarPlotManager {
             log.error("Unable to load the 5 pt star object");
         }
 
+
+        // load 5 pt star star
+        MeshView pyramid = meshViewShapeFactory.pyramid();
+        if (pyramid != null) {
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(PYRAMID)
+                    .id(UUID.randomUUID())
+                    .object(pyramid)
+                    .xScale(10)
+                    .yScale(10)
+                    .zScale(10)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(-90)
+                    .build();
+            specialObjects.put(PYRAMID, objectDefinition);
+        } else {
+            log.error("Unable to load the 5 pt star object");
+        }
+
         log.info("All MeshView objects loaded");
 
     }
 
+    public MeshObjectDefinition createTerranPolity() {
+        // load cube as Terran polity
+        MeshView polity1 = meshViewShapeFactory.cube();
+        if (polity1 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_TERRAN)
+                    .id(UUID.randomUUID())
+                    .object(polity1)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 1 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    public MeshObjectDefinition createDornaniPolity() {
+        // load tetrahedron as polity 2
+        MeshView polity2 = meshViewShapeFactory.tetrahedron();
+        if (polity2 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_DORNANI)
+                    .id(UUID.randomUUID())
+                    .object(polity2)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 2 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createKtorPolity() {
+        // load icosahedron as polity 3
+        MeshView polity3 = meshViewShapeFactory.icosahedron();
+        if (polity3 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_KTOR)
+                    .id(UUID.randomUUID())
+                    .object(polity3)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 3 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createAratKurPolity() {
+        // load icosahedron as polity 4
+        MeshView polity4 = meshViewShapeFactory.octahedron();
+        if (polity4 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_ARAT_KUR)
+                    .id(UUID.randomUUID())
+                    .object(polity4)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 4 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
+
+    private MeshObjectDefinition createHkhRkhPolity() {
+        // load icosahedron as polity 5
+        MeshView polity5 = meshViewShapeFactory.dodecahedron();
+        if (polity5 != null) {
+            return MeshObjectDefinition
+                    .builder()
+                    .name(POLITY_HKH_RKH)
+                    .id(UUID.randomUUID())
+                    .object(polity5)
+                    .xScale(1)
+                    .yScale(1)
+                    .zScale(1)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+        } else {
+            log.error("Unable to load the polity 5 object");
+            return MeshObjectDefinition.builder().build();
+        }
+    }
 
     /**
      * get the plotted stars in view
@@ -510,15 +645,8 @@ public class StarPlotManager {
         material.setSpecularColor(record.getStarColor());
         Node starShape;
         if (isCenter) {
-            MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
-            Node centralStar = meshObjectDefinition.getObject();
-            centralStar.setScaleX(meshObjectDefinition.getXScale());
-            centralStar.setScaleY(meshObjectDefinition.getYScale());
-            centralStar.setScaleZ(meshObjectDefinition.getZScale());
-            centralStar.setRotationAxis(meshObjectDefinition.getAxis());
-            centralStar.setRotate(meshObjectDefinition.getRotateAngle());
 //            setupFade(centralStar);
-            starShape = centralStar;
+            starShape = createCentralStar();
         } else {
             Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
             sphere.setMaterial(material);
@@ -540,22 +668,18 @@ public class StarPlotManager {
         if (politiesOn) {
             if (!record.getPolity().equals("NA") && !record.getPolity().isEmpty()) {
 
-                Color polityColor = polityPreferences.getColorForPolity(record.getPolity());
-                // add a polity indicator
-                double polityShellRadius = record.getRadius() * GRAPHICS_FUDGE_FACTOR * 1.5;
-                PhongMaterial polityMaterial = new PhongMaterial();
-                polityMaterial.setDiffuseColor(new Color(polityColor.getRed(), polityColor.getGreen(), polityColor.getBlue(), 0.2));  // Note alpha of 0.6
-                polityMaterial.diffuseMapProperty();
-                Sphere politySphere = new Sphere(polityShellRadius);
-                politySphere.setMaterial(polityMaterial);
-                politySphere.setTranslateX(point3D.getX());
-                politySphere.setTranslateY(point3D.getY());
-                politySphere.setTranslateZ(point3D.getZ());
+                MeshView polityObject = getPolityObject(record.getPolity(), polityPreferences);
 
-                // set context menu
-                setContextMenu(record, politySphere);
+                // attach polity object
+                polityObject.setTranslateX(point3D.getX());
+                polityObject.setTranslateY(point3D.getY());
+                polityObject.setTranslateZ(point3D.getZ());
 
-                politiesDisplayGroup.getChildren().add(politySphere);
+                // attach a context menu
+                setContextMenu(record, polityObject);
+
+                // set this polity object to the polities display
+                politiesDisplayGroup.getChildren().add(polityObject);
                 politiesDisplayGroup.setVisible(true);
             } else {
                 // set context menu
@@ -570,6 +694,65 @@ public class StarPlotManager {
             setContextMenu(record, starShape);
         }
         return starShape;
+    }
+
+
+    private MeshView getPolityObject(String polity, CivilizationDisplayPreferences polityPreferences) {
+        MeshObjectDefinition meshObjectDefinition = MeshObjectDefinition.builder().build();
+        Color polityColor = polityPreferences.getColorForPolity(polity);
+        switch (polity) {
+            case CivilizationDisplayPreferences.TERRAN, CivilizationDisplayPreferences.SLAASRIITHI -> {
+                meshObjectDefinition = createTerranPolity();
+            }
+            case CivilizationDisplayPreferences.DORNANI, CivilizationDisplayPreferences.OTHER1 -> {
+                meshObjectDefinition = createDornaniPolity();
+            }
+            case CivilizationDisplayPreferences.KTOR, CivilizationDisplayPreferences.OTHER3 -> {
+                meshObjectDefinition = createKtorPolity();
+            }
+            case CivilizationDisplayPreferences.ARAKUR, CivilizationDisplayPreferences.OTHER2 -> {
+                meshObjectDefinition = createAratKurPolity();
+            }
+            case CivilizationDisplayPreferences.HKHRKH, CivilizationDisplayPreferences.OTHER4 -> {
+                meshObjectDefinition = createHkhRkhPolity();
+            }
+        }
+        MeshView polityObject = (MeshView) meshObjectDefinition.getObject();
+
+        // set color
+        PhongMaterial material = (PhongMaterial) polityObject.getMaterial();
+        material.setDiffuseColor(polityColor);
+        material.setSpecularColor(polityColor);
+
+        // set size and orient
+        polityObject.setScaleX(meshObjectDefinition.getXScale());
+        polityObject.setScaleY(meshObjectDefinition.getYScale());
+        polityObject.setScaleZ(meshObjectDefinition.getZScale());
+        polityObject.setRotationAxis(meshObjectDefinition.getAxis());
+        polityObject.setRotate(meshObjectDefinition.getRotateAngle());
+        return polityObject;
+    }
+
+    private Node createCentralStar() {
+        MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
+        Node centralStar = meshObjectDefinition.getObject();
+        centralStar.setScaleX(meshObjectDefinition.getXScale());
+        centralStar.setScaleY(meshObjectDefinition.getYScale());
+        centralStar.setScaleZ(meshObjectDefinition.getZScale());
+        centralStar.setRotationAxis(meshObjectDefinition.getAxis());
+        centralStar.setRotate(meshObjectDefinition.getRotateAngle());
+        return centralStar;
+    }
+
+    private Node createHighlightStar() {
+        MeshObjectDefinition meshObjectDefinition = specialObjects.get(MORAVIAN_STAR);
+        Node centralStar = meshObjectDefinition.getObject();
+        centralStar.setScaleX(meshObjectDefinition.getXScale());
+        centralStar.setScaleY(meshObjectDefinition.getYScale());
+        centralStar.setScaleZ(meshObjectDefinition.getZScale());
+        centralStar.setRotationAxis(meshObjectDefinition.getAxis());
+        centralStar.setRotate(meshObjectDefinition.getRotateAngle());
+        return centralStar;
     }
 
 
