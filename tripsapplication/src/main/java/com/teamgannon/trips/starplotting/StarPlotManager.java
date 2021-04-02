@@ -1360,37 +1360,27 @@ public class StarPlotManager {
 
 
     private Node createHighlightStar(Color color) {
-        Group moravianStar = meshViewShapeFactory.starMoravian();
-        if (moravianStar != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(MORAVIAN_STAR)
-                    .id(UUID.randomUUID())
-                    .object(moravianStar)
-                    .xScale(30)
-                    .yScale(30)
-                    .zScale(30)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
-                    .build();
-            Node highLightStar = objectDefinition.getObject();
+        // load the moravian star
+        // we have to do this each time because it has to unique
+        Group highLightStar = meshViewShapeFactory.starMoravian();
+        if (highLightStar != null) {
 
             // extract the various meshviews and set the color to match
             // we need to do this because the moravian object is a group of mesh objects and
             // we need set the material color on each one.
-            Group meshGroup = (Group) highLightStar;
-            for (Node node : meshGroup.getChildren()) {
+            for (Node node : highLightStar.getChildren()) {
                 MeshView meshView = (MeshView) node;
                 PhongMaterial material = (PhongMaterial) meshView.getMaterial();
                 material.setSpecularColor(color);
                 material.setDiffuseColor(color);
             }
 
-            highLightStar.setScaleX(objectDefinition.getXScale());
-            highLightStar.setScaleY(objectDefinition.getYScale());
-            highLightStar.setScaleZ(objectDefinition.getZScale());
-            highLightStar.setRotationAxis(objectDefinition.getAxis());
-            highLightStar.setRotate(objectDefinition.getRotateAngle());
+            // now scale it and set it to show properly
+            highLightStar.setScaleX(30);
+            highLightStar.setScaleY(30);
+            highLightStar.setScaleZ(30);
+            highLightStar.setRotationAxis(Rotate.X_AXIS);
+            highLightStar.setRotate(90);
             return highLightStar;
         } else {
             log.error("Unable to load the moravian star object");
