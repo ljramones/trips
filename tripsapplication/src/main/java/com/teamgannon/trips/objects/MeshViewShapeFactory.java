@@ -63,14 +63,75 @@ public class MeshViewShapeFactory {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader();
             fxmlLoader.setLocation(this.getClass().getResource("pyramid.fxml"));
-            MeshView pyramidModel = fxmlLoader.load();
-            log.info("loaded");
-            return pyramidModel;
+            return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
             log.error("fail:" + e.getMessage());
             return null;
         }
     }
+
+    public MeshView cube() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(this.getClass().getResource("cube.fxml"));
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            // exception handling
+            log.error("fail:" + e.getMessage());
+            return null;
+        }
+    }
+
+    public MeshView dodecahedron() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(this.getClass().getResource("dodecahedron.fxml"));
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            // exception handling
+            log.error("fail:" + e.getMessage());
+            return null;
+        }
+    }
+
+    public MeshView icosahedron() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(this.getClass().getResource("icosahedron.fxml"));
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            // exception handling
+            log.error("fail:" + e.getMessage());
+            return null;
+        }
+    }
+
+    public MeshView octahedron() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(this.getClass().getResource("octahedron.fxml"));
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            // exception handling
+            log.error("fail:" + e.getMessage());
+            return null;
+        }
+    }
+
+
+    public MeshView tetrahedron() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(this.getClass().getResource("tetrahedron.fxml"));
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            // exception handling
+            log.error("fail:" + e.getMessage());
+            return null;
+        }
+    }
+
+
 
 }
