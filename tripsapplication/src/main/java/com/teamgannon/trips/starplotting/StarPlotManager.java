@@ -352,9 +352,10 @@ public class StarPlotManager {
         // now create new one
         Node starShape = tripsContext.getCurrentPlot().getStar(starId);
         StarDisplayRecord record = (StarDisplayRecord) starShape.getUserData();
+        Color color = record.getStarColor();
 
         // make highLight star same as under lying one, with star record and context menu
-        highLightStar = createHighlightStar();
+        highLightStar = createHighlightStar(color);
         if (highLightStar != null) {
             highLightStar.setUserData(record);
             setContextMenu(record, highLightStar);
@@ -1358,7 +1359,7 @@ public class StarPlotManager {
     }
 
 
-    private Node createHighlightStar() {
+    private Node createHighlightStar(Color color) {
         Group moravianStar = meshViewShapeFactory.starMoravian();
         if (moravianStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
@@ -1373,6 +1374,16 @@ public class StarPlotManager {
                     .rotateAngle(90)
                     .build();
             Node highLightStar = objectDefinition.getObject();
+
+            // extract the various meshviews and set the color to match
+            Group meshGroup = (Group) highLightStar;
+            for (Node node : meshGroup.getChildren()) {
+                MeshView meshView = (MeshView) node;
+                PhongMaterial material = (PhongMaterial) meshView.getMaterial();
+                material.setSpecularColor(color);
+                material.setDiffuseColor(color);
+            }
+
             highLightStar.setScaleX(objectDefinition.getXScale());
             highLightStar.setScaleY(objectDefinition.getYScale());
             highLightStar.setScaleZ(objectDefinition.getZScale());
