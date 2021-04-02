@@ -153,7 +153,7 @@ public class StarPlotManager {
     private final static String FOUR_PT_STAR = "4PtStar";
     private final static String FIVE_PT_STAR = "5PtStar";
     private final static String PYRAMID = "pyramid";
-    private final Map<String, Group> specialObjects = new HashMap<>();
+    private final Map<String, MeshObjectDefinition> specialObjects = new HashMap<>();
 
     private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
 
@@ -213,7 +213,17 @@ public class StarPlotManager {
         // load central star
         Group centralStar = meshViewShapeFactory.starCentral();
         if (centralStar != null) {
-            specialObjects.put(CENTRAL_STAR, centralStar);
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(CENTRAL_STAR)
+                    .object(centralStar)
+                    .xScale(30)
+                    .yScale(30)
+                    .zScale(30)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+            specialObjects.put(CENTRAL_STAR, objectDefinition);
         } else {
             log.error("Unable to load the central star object");
         }
@@ -221,7 +231,17 @@ public class StarPlotManager {
         // load moravian star
         Group moravianStar = meshViewShapeFactory.starMoravian();
         if (moravianStar != null) {
-            specialObjects.put(MORAVIAN_STAR, moravianStar);
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(MORAVIAN_STAR)
+                    .object(moravianStar)
+                    .xScale(30)
+                    .yScale(30)
+                    .zScale(30)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+            specialObjects.put(MORAVIAN_STAR, objectDefinition);
         } else {
             log.error("Unable to load the moravian star object");
         }
@@ -229,7 +249,17 @@ public class StarPlotManager {
         // load 4 pt star star
         Group fourPtStar = meshViewShapeFactory.star4pt();
         if (fourPtStar != null) {
-            specialObjects.put(FOUR_PT_STAR, fourPtStar);
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(FOUR_PT_STAR)
+                    .object(fourPtStar)
+                    .xScale(30)
+                    .yScale(30)
+                    .zScale(30)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+            specialObjects.put(FOUR_PT_STAR, objectDefinition);
         } else {
             log.error("Unable to load the 4 pt star object");
         }
@@ -237,7 +267,17 @@ public class StarPlotManager {
         // load 5 pt star star
         Group fivePtStar = meshViewShapeFactory.star5pt();
         if (fourPtStar != null) {
-            specialObjects.put(FIVE_PT_STAR, fivePtStar);
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name(FIVE_PT_STAR)
+                    .object(fivePtStar)
+                    .xScale(30)
+                    .yScale(30)
+                    .zScale(30)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(90)
+                    .build();
+            specialObjects.put(FIVE_PT_STAR, objectDefinition);
         } else {
             log.error("Unable to load the 5 pt star object");
         }
@@ -470,12 +510,13 @@ public class StarPlotManager {
         material.setSpecularColor(record.getStarColor());
         Node starShape;
         if (isCenter) {
-            Node centralStar = specialObjects.get(CENTRAL_STAR);
-            centralStar.setScaleX(30);
-            centralStar.setScaleY(30);
-            centralStar.setScaleZ(30);
-            centralStar.setRotationAxis(Rotate.X_AXIS);
-            centralStar.setRotate(90);
+            MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
+            Node centralStar = meshObjectDefinition.getObject();
+            centralStar.setScaleX(meshObjectDefinition.getXScale());
+            centralStar.setScaleY(meshObjectDefinition.getYScale());
+            centralStar.setScaleZ(meshObjectDefinition.getZScale());
+            centralStar.setRotationAxis(meshObjectDefinition.getAxis());
+            centralStar.setRotate(meshObjectDefinition.getRotateAngle());
 //            setupFade(centralStar);
             starShape = centralStar;
         } else {
