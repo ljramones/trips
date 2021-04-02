@@ -1376,6 +1376,8 @@ public class StarPlotManager {
             Node highLightStar = objectDefinition.getObject();
 
             // extract the various meshviews and set the color to match
+            // we need to do this because the moravian object is a group of mesh objects and
+            // we need set the material color on each one.
             Group meshGroup = (Group) highLightStar;
             for (Node node : meshGroup.getChildren()) {
                 MeshView meshView = (MeshView) node;
