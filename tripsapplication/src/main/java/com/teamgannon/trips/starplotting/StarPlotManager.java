@@ -659,20 +659,26 @@ public class StarPlotManager {
             case CivilizationDisplayPreferences.HKHRKH, CivilizationDisplayPreferences.OTHER4 -> {
                 meshObjectDefinition = createDornaniPolity();
             }
+            default -> {
+                log.error("unknown polity");
+            }
         }
         MeshView polityObject = (MeshView) meshObjectDefinition.getObject();
+        if (polityObject!=null) {
+            // set color
+            PhongMaterial material = (PhongMaterial) polityObject.getMaterial();
+            material.setDiffuseColor(polityColor);
+            material.setSpecularColor(polityColor);
 
-        // set color
-        PhongMaterial material = (PhongMaterial) polityObject.getMaterial();
-        material.setDiffuseColor(polityColor);
-        material.setSpecularColor(polityColor);
-
-        // set size and orient
-        polityObject.setScaleX(meshObjectDefinition.getXScale());
-        polityObject.setScaleY(meshObjectDefinition.getYScale());
-        polityObject.setScaleZ(meshObjectDefinition.getZScale());
-        polityObject.setRotationAxis(meshObjectDefinition.getAxis());
-        polityObject.setRotate(meshObjectDefinition.getRotateAngle());
+            // set size and orient
+            polityObject.setScaleX(meshObjectDefinition.getXScale());
+            polityObject.setScaleY(meshObjectDefinition.getYScale());
+            polityObject.setScaleZ(meshObjectDefinition.getZScale());
+            polityObject.setRotationAxis(meshObjectDefinition.getAxis());
+            polityObject.setRotate(meshObjectDefinition.getRotateAngle());
+        } else {
+            log.error("polity object is null: {}", meshObjectDefinition);
+        }
         return polityObject;
     }
 

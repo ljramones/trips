@@ -162,7 +162,7 @@ public class CivilizationPane extends Pane {
 
         other1ColorPicker.setValue(Color.valueOf(preferences.getOther1PolityColor()));
         other2ColorPicker.setValue(Color.valueOf(preferences.getOther2PolityColor()));
-        other3ColorPicker.setValue(Color.valueOf(preferences.getOther4PolityColor()));
+        other3ColorPicker.setValue(Color.valueOf(preferences.getOther3PolityColor()));
         other4ColorPicker.setValue(Color.valueOf(preferences.getOther4PolityColor()));
     }
 
