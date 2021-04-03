@@ -96,16 +96,16 @@ public class CivilizationDisplayPreferences implements Serializable {
      * reset the colors
      */
     public void reset() {
-        humanPolityColor = Color.BEIGE.toString();
-        dornaniPolityColor = Color.FUCHSIA.toString();
-        ktorPolityColor = Color.HONEYDEW.toString();
-        aratKurPolityColor = Color.ALICEBLUE.toString();
-        hkhRkhPolityColor = Color.LIGHTGREEN.toString();
+        humanPolityColor = Color.valueOf("25ff29").toString();
+        dornaniPolityColor = Color.MAGENTA.toString();
+        ktorPolityColor = Color.CYAN.toString();
+        aratKurPolityColor = Color.valueOf("ff69b4").toString();
+        hkhRkhPolityColor = Color.valueOf("FF0A0F").toString();
         slaasriithiPolityColor = Color.LIGHTCORAL.toString();
-        other1PolityColor = Color.LIGHTGOLDENRODYELLOW.toString();
-        other2PolityColor = Color.LIGHTSKYBLUE.toString();
-        other3PolityColor = Color.LIGHTGRAY.toString();
-        other4PolityColor = Color.LEMONCHIFFON.toString();
+        other1PolityColor = Color.valueOf("aa37ff").toString();
+        other2PolityColor = Color.valueOf("ffc502").toString();
+        other3PolityColor = Color.valueOf("0088dc").toString();
+        other4PolityColor = Color.valueOf("98bcf9").toString();
     }
 
     public @NotNull Color getColorForPolity(String polity) {
@@ -117,7 +117,7 @@ public class CivilizationDisplayPreferences implements Serializable {
             case CivilizationDisplayPreferences.HKHRKH -> Color.valueOf(hkhRkhPolityColor);
             case CivilizationDisplayPreferences.SLAASRIITHI -> Color.valueOf(slaasriithiPolityColor);
             case CivilizationDisplayPreferences.OTHER1 -> Color.valueOf(other1PolityColor);
-            case CivilizationDisplayPreferences.OTHER2 -> Color.valueOf(other3PolityColor);
+            case CivilizationDisplayPreferences.OTHER2 -> Color.valueOf(other2PolityColor);
             case CivilizationDisplayPreferences.OTHER3 -> Color.valueOf(other3PolityColor);
             case CivilizationDisplayPreferences.OTHER4 -> Color.valueOf(other4PolityColor);
             default -> Color.GRAY;

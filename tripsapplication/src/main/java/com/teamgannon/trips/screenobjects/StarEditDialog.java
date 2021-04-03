@@ -1,5 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
+import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -354,8 +355,18 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private void fillCombos() {
 
         // polities
-        politiesComboBox.getItems().addAll("Terran", "Dornani", "Ktor", "Arat Kur", "Hkh'Rkh", "Slaasrithi",
-                "Other 1", "Other 2", "Other 3", "Other 4", "NA");
+        politiesComboBox.getItems().addAll(
+                CivilizationDisplayPreferences.TERRAN,
+                CivilizationDisplayPreferences.DORNANI,
+                CivilizationDisplayPreferences.KTOR,
+                CivilizationDisplayPreferences.ARAKUR,
+                CivilizationDisplayPreferences.HKHRKH,
+                CivilizationDisplayPreferences.SLAASRIITHI,
+                CivilizationDisplayPreferences.OTHER1,
+                CivilizationDisplayPreferences.OTHER2,
+                CivilizationDisplayPreferences.OTHER3,
+                CivilizationDisplayPreferences.OTHER4,
+                "NA");
         politiesComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> polityTextField.setText(newValue));
         politiesComboBox.getSelectionModel().select("NA");
 
