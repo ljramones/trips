@@ -354,28 +354,26 @@ public class StarPlotManager {
         StarDisplayRecord record = (StarDisplayRecord) starShape.getUserData();
         Color color = record.getStarColor();
 
-        blinkStar(starShape, 100);
-
         // make highLight star same as under lying one, with star record and context menu
-//        highLightStar = createHighlightStar(color);
-//        if (highLightStar != null) {
-//            highLightStar.setUserData(record);
-//            setContextMenu(record, highLightStar);
-//
-//            // superimpose this highlight over top of star
-//            Point3D point3D = record.getCoordinates();
-//            highLightStar.setTranslateX(point3D.getX());
-//            highLightStar.setTranslateY(point3D.getY());
-//            highLightStar.setTranslateZ(point3D.getZ());
-//            highLightStar.setVisible(true);
-//            stellarDisplayGroup.getChildren().add(highLightStar);
-//
-//            // now blink for 100 cycles
-//            log.info("starting blink");
-////            blinkStar(highLightStar, 100);
-//
-//            log.info("mark point");
-//        }
+        highLightStar = createHighlightStar(color);
+        if (highLightStar != null) {
+            highLightStar.setUserData(record);
+            setContextMenu(record, highLightStar);
+
+            // superimpose this highlight over top of star
+            Point3D point3D = record.getCoordinates();
+            highLightStar.setTranslateX(point3D.getX());
+            highLightStar.setTranslateY(point3D.getY());
+            highLightStar.setTranslateZ(point3D.getZ());
+            highLightStar.setVisible(true);
+            stellarDisplayGroup.getChildren().add(highLightStar);
+
+            // now blink for 100 cycles
+            log.info("starting blink");
+            blinkStar(highLightStar, 100);
+
+            log.info("mark point");
+        }
     }
 
     private void blinkStar(Node starShape, int cycleCount) {
@@ -398,18 +396,18 @@ public class StarPlotManager {
         double yScale = starShape.getScaleY();
         double zScale = starShape.getScaleZ();
 
-        scaleTransition.setFromX(xScale*4);
-        scaleTransition.setFromY(yScale*4);
-        scaleTransition.setFromZ(zScale*5);
+        scaleTransition.setFromX(xScale*2);
+        scaleTransition.setFromY(yScale*2);
+        scaleTransition.setFromZ(zScale*2);
         scaleTransition.setToX(xScale/2);
         scaleTransition.setToY(yScale/2);
         scaleTransition.setToZ(zScale/2);
 
-        scaleTransition.setCycleCount(30);
+        scaleTransition.setCycleCount(cycleCount);
         scaleTransition.setAutoReverse(true);
         scaleTransition.setOnFinished(e -> {
             log.info("highlight star expiring and will be removed");
-//            stellarDisplayGroup.getChildren().remove(starShape);
+            stellarDisplayGroup.getChildren().remove(starShape);
         });
         scaleTransition.play();
         transitionState = new TransitionState(starShape, xScale, yScale, zScale);
