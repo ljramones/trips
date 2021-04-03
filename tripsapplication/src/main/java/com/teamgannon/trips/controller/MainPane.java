@@ -14,9 +14,7 @@ import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
 import com.teamgannon.trips.dialogs.search.FindStarsWithNameMatchDialog;
-import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.dialogs.search.ShowStarMatchesDialog;
-import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
@@ -44,24 +42,29 @@ import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
+import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -76,6 +79,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
+import javax.imageio.ImageIO;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -940,7 +944,7 @@ public class MainPane implements
 
     public void toggleStars(ActionEvent actionEvent) {
         if (starsOn) {
-            polities=false;
+            polities = false;
             interstellarSpacePane.togglePolities(polities);
         }
         this.starsOn = !starsOn;
@@ -1781,4 +1785,24 @@ public class MainPane implements
         rotationDialog.initModality(Modality.NONE);
         rotationDialog.show();
     }
+
+    public void onSnapShot(ActionEvent actionEvent) {
+        WritableImage image = interstellarSpacePane.snapshot(new SnapshotParameters(), null);
+
+        FileChooser saveFileChooser = new FileChooser();
+        saveFileChooser.setTitle("Save Plot Snapshot");
+        FileChooser.ExtensionFilter extFilter =
+                new FileChooser.ExtensionFilter("PNG files (*.png)", "*.png");
+        saveFileChooser.getExtensionFilters().add(extFilter);
+        saveFileChooser.setInitialDirectory(new File("."));
+        File file = saveFileChooser.showSaveDialog(stage);
+        if (file != null) {
+            try {
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+            } catch (IOException e) {
+                log.error("unable to save the snapshot file:" + e.getMessage());
+            }
+        }
+    }
+
 }
