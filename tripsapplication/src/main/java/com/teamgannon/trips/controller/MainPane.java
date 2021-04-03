@@ -903,11 +903,13 @@ public class MainPane implements
     }
 
     public void togglePolities(ActionEvent actionEvent) {
-        this.polities = !polities;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(polities);
-        interstellarSpacePane.togglePolities(polities);
-        togglePolitiesMenuitem.setSelected(polities);
-        togglePolityBtn.setSelected(polities);
+        if (this.starsOn) {
+            this.polities = !polities;
+            tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(polities);
+            interstellarSpacePane.togglePolities(polities);
+            togglePolitiesMenuitem.setSelected(polities);
+            togglePolityBtn.setSelected(polities);
+        }
     }
 
     public void toggleGrid(ActionEvent actionEvent) {
@@ -937,6 +939,10 @@ public class MainPane implements
     }
 
     public void toggleStars(ActionEvent actionEvent) {
+        if (starsOn) {
+            polities=false;
+            interstellarSpacePane.togglePolities(polities);
+        }
         this.starsOn = !starsOn;
         interstellarSpacePane.toggleStars(starsOn);
         toggleStarMenuitem.setSelected(starsOn);
