@@ -693,22 +693,22 @@ public class StarPlotManager {
         return centralStar;
     }
 
-    private void setupRotateAnimation(Node node) {
-        centralRotator.setNode(node);
-        centralRotator.setAxis(Rotate.Y_AXIS);
-        centralRotator.setDuration(Duration.INDEFINITE);
-        centralRotator.play();
-    }
-
-
-    private void setupFade(Node node) {
-        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-        fader.setFromValue(1.0);
-        fader.setToValue(0.1);
-        fader.setCycleCount(Timeline.INDEFINITE);
-        fader.setAutoReverse(true);
-        fader.play();
-    }
+//    private void setupRotateAnimation(Node node) {
+//        centralRotator.setNode(node);
+//        centralRotator.setAxis(Rotate.Y_AXIS);
+//        centralRotator.setDuration(Duration.INDEFINITE);
+//        centralRotator.play();
+//    }
+//
+//
+//    private void setupFade(Node node) {
+//        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
+//        fader.setFromValue(1.0);
+//        fader.setToValue(0.1);
+//        fader.setCycleCount(Timeline.INDEFINITE);
+//        fader.setAutoReverse(true);
+//        fader.play();
+//    }
 
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
         star.setUserData(record);
@@ -826,13 +826,14 @@ public class StarPlotManager {
         MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
         cm.getItems().add(editPropertiesMenuItem);
 
-        MenuItem enterNotesItem = createNotesMenuItem(star);
-        cm.getItems().add(enterNotesItem);
-
         MenuItem removeMenuItem = createRemoveMenuItem(star);
         cm.getItems().add(removeMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
+        MenuItem routingHeader = new MenuItem("Routing");
+        routingHeader.setStyle(" -fx-font-size:15; -fx-font-weight: bold");
+        routingHeader.setDisable(true);
+        cm.getItems().add(routingHeader);
 
         MenuItem startRouteMenuItem = createRoutingMenuItem(star);
         cm.getItems().add(startRouteMenuItem);
@@ -853,14 +854,6 @@ public class StarPlotManager {
 
         MenuItem distanceToMenuItem = distanceReportMenuItem(star);
         cm.getItems().add(distanceToMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem jumpSystemMenuItem = createEnterSystemItem(star);
-        cm.getItems().add(jumpSystemMenuItem);
-
-        MenuItem generateSolarSystemMenuItem = createGenerateSolarSystemItem(star);
-        cm.getItems().add(generateSolarSystemMenuItem);
 
         return cm;
     }
@@ -923,7 +916,7 @@ public class StarPlotManager {
     }
 
     private @NotNull MenuItem distanceReportMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Generate Distances from this star");
+        MenuItem menuItem = new MenuItem("Generate distance report from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             if (reportGenerator != null) {
@@ -1013,7 +1006,7 @@ public class StarPlotManager {
      * @return the menuitem supporting this action
      */
     private @NotNull MenuItem createRemoveMenuItem(@NotNull Node star) {
-        MenuItem removeMenuItem = new MenuItem("Remove");
+        MenuItem removeMenuItem = new MenuItem("Delete star");
         removeMenuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             removeNode(starDescriptor);
@@ -1052,7 +1045,7 @@ public class StarPlotManager {
      * @return the menuitem supporting this action
      */
     private @NotNull MenuItem createEditPropertiesMenuItem(@NotNull Node star) {
-        MenuItem editPropertiesMenuItem = new MenuItem("Edit");
+        MenuItem editPropertiesMenuItem = new MenuItem("Edit star");
         editPropertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
             StarDisplayRecord editRecord = editProperties(starDisplayRecord);
