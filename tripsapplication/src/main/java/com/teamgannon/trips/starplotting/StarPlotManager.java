@@ -377,19 +377,28 @@ public class StarPlotManager {
     }
 
     private void blinkStar(Node starShape, int cycleCount) {
-        if (fadeTransition != null) {
-            fadeTransition.stop();
-        }
-        fadeTransition = new FadeTransition(Duration.seconds(1), starShape);
-        fadeTransition.setFromValue(1.0);
-        fadeTransition.setToValue(0.0);
-        fadeTransition.setCycleCount(cycleCount);
-        fadeTransition.setAutoReverse(true);
-        fadeTransition.setOnFinished(e -> {
-            log.info("highlight star expiring and will be removed");
-            stellarDisplayGroup.getChildren().add(starShape);
-        });
-        fadeTransition.play();
+//        if (fadeTransition != null) {
+//            log.error("stop old fade transition");
+//            fadeTransition.stop();
+//        }
+        log.info("create new transition");
+
+        FadeTransition ft = new FadeTransition(Duration.millis(3000), starShape);
+        ft.setFromValue(1);
+        ft.setToValue(0);
+        ft.play();
+
+//        fadeTransition = new FadeTransition(Duration.seconds(1), starShape);
+//        fadeTransition.setFromValue(1.0);
+//        fadeTransition.setToValue(0.0);
+//        fadeTransition.setCycleCount(cycleCount);
+//        fadeTransition.setAutoReverse(true);
+//        fadeTransition.setOnFinished(e -> {
+//            log.info("highlight star expiring and will be removed");
+//            stellarDisplayGroup.getChildren().add(starShape);
+//        });
+//        log.info("start transition");
+//        fadeTransition.play();
     }
 
 
@@ -623,19 +632,19 @@ public class StarPlotManager {
         Color polityColor = polityPreferences.getColorForPolity(polity);
         switch (polity) {
             case CivilizationDisplayPreferences.TERRAN, CivilizationDisplayPreferences.SLAASRIITHI -> {
-                meshObjectDefinition = createTerranPolity();
+                meshObjectDefinition = createDornaniPolity();
             }
             case CivilizationDisplayPreferences.DORNANI, CivilizationDisplayPreferences.OTHER1 -> {
                 meshObjectDefinition = createDornaniPolity();
             }
             case CivilizationDisplayPreferences.KTOR, CivilizationDisplayPreferences.OTHER3 -> {
-                meshObjectDefinition = createKtorPolity();
+                meshObjectDefinition = createDornaniPolity();
             }
             case CivilizationDisplayPreferences.ARAKUR, CivilizationDisplayPreferences.OTHER2 -> {
-                meshObjectDefinition = createAratKurPolity();
+                meshObjectDefinition = createDornaniPolity();
             }
             case CivilizationDisplayPreferences.HKHRKH, CivilizationDisplayPreferences.OTHER4 -> {
-                meshObjectDefinition = createHkhRkhPolity();
+                meshObjectDefinition = createDornaniPolity();
             }
         }
         MeshView polityObject = (MeshView) meshObjectDefinition.getObject();
@@ -1358,7 +1367,12 @@ public class StarPlotManager {
         }
     }
 
-
+    /**
+     * create a highlight star
+     *
+     * @param color the color to display it as (used to match the star)
+     * @return the star to display
+     */
     private Node createHighlightStar(Color color) {
         // load the moravian star
         // we have to do this each time because it has to unique
