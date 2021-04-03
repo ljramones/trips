@@ -23,9 +23,7 @@ import com.teamgannon.trips.solarsystem.PlanetDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
-import javafx.animation.FadeTransition;
-import javafx.animation.RotateTransition;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
@@ -110,7 +108,9 @@ public class StarPlotManager {
      */
     private final ReportGenerator reportGenerator;
 
-    private FadeTransition fadeTransition;
+    private ScaleTransition scaleTransition;
+
+    private TransitionState transitionState;
 
 
     private final TripsContext tripsContext;
@@ -354,51 +354,66 @@ public class StarPlotManager {
         StarDisplayRecord record = (StarDisplayRecord) starShape.getUserData();
         Color color = record.getStarColor();
 
+        blinkStar(starShape, 100);
+
         // make highLight star same as under lying one, with star record and context menu
-        highLightStar = createHighlightStar(color);
-        if (highLightStar != null) {
-            highLightStar.setUserData(record);
-            setContextMenu(record, highLightStar);
-
-            // superimpose this highlight over top of star
-            Point3D point3D = record.getCoordinates();
-            highLightStar.setTranslateX(point3D.getX());
-            highLightStar.setTranslateY(point3D.getY());
-            highLightStar.setTranslateZ(point3D.getZ());
-            highLightStar.setVisible(true);
-            stellarDisplayGroup.getChildren().add(highLightStar);
-
-            // now blink for 100 cycles
-            log.info("starting blink");
-//            blinkStar(highLightStar, 100);
-
-            log.info("mark point");
-        }
+//        highLightStar = createHighlightStar(color);
+//        if (highLightStar != null) {
+//            highLightStar.setUserData(record);
+//            setContextMenu(record, highLightStar);
+//
+//            // superimpose this highlight over top of star
+//            Point3D point3D = record.getCoordinates();
+//            highLightStar.setTranslateX(point3D.getX());
+//            highLightStar.setTranslateY(point3D.getY());
+//            highLightStar.setTranslateZ(point3D.getZ());
+//            highLightStar.setVisible(true);
+//            stellarDisplayGroup.getChildren().add(highLightStar);
+//
+//            // now blink for 100 cycles
+//            log.info("starting blink");
+////            blinkStar(highLightStar, 100);
+//
+//            log.info("mark point");
+//        }
     }
 
     private void blinkStar(Node starShape, int cycleCount) {
-//        if (fadeTransition != null) {
-//            log.error("stop old fade transition");
-//            fadeTransition.stop();
-//        }
+        if (scaleTransition != null) {
+
+            log.info("stop old fade transition");
+            scaleTransition.stop();
+            if (transitionState != null) {
+                Node node = transitionState.getNode();
+                node.setScaleX(transitionState.getXScale());
+                node.setScaleY(transitionState.getYScale());
+                node.setScaleZ(transitionState.getZScale());
+            }
+        }
         log.info("create new transition");
 
-        FadeTransition ft = new FadeTransition(Duration.millis(3000), starShape);
-        ft.setFromValue(1);
-        ft.setToValue(0);
-        ft.play();
+        scaleTransition = new ScaleTransition(Duration.seconds(2), starShape);
+        double xScale = starShape.getScaleX();
 
-//        fadeTransition = new FadeTransition(Duration.seconds(1), starShape);
-//        fadeTransition.setFromValue(1.0);
-//        fadeTransition.setToValue(0.0);
-//        fadeTransition.setCycleCount(cycleCount);
-//        fadeTransition.setAutoReverse(true);
-//        fadeTransition.setOnFinished(e -> {
-//            log.info("highlight star expiring and will be removed");
-//            stellarDisplayGroup.getChildren().add(starShape);
-//        });
-//        log.info("start transition");
-//        fadeTransition.play();
+        double yScale = starShape.getScaleY();
+        double zScale = starShape.getScaleZ();
+
+        scaleTransition.setFromX(xScale*4);
+        scaleTransition.setFromY(yScale*4);
+        scaleTransition.setFromZ(zScale*5);
+        scaleTransition.setToX(xScale/2);
+        scaleTransition.setToY(yScale/2);
+        scaleTransition.setToZ(zScale/2);
+
+        scaleTransition.setCycleCount(30);
+        scaleTransition.setAutoReverse(true);
+        scaleTransition.setOnFinished(e -> {
+            log.info("highlight star expiring and will be removed");
+//            stellarDisplayGroup.getChildren().remove(starShape);
+        });
+        scaleTransition.play();
+        transitionState = new TransitionState(starShape, xScale, yScale, zScale);
+
     }
 
 
@@ -409,15 +424,15 @@ public class StarPlotManager {
      * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
      */
     private void blinkStarLabel(Label label, int cycleCount) {
-        if (fadeTransition != null) {
-            fadeTransition.stop();
-        }
-        fadeTransition = new FadeTransition(Duration.seconds(1), label);
-        fadeTransition.setFromValue(1.0);
-        fadeTransition.setToValue(0.0);
-        fadeTransition.setCycleCount(cycleCount);
-        fadeTransition.setAutoReverse(true);
-        fadeTransition.play();
+//        if (scaleTransition != null) {
+//            scaleTransition.stop();
+//        }
+//        scaleTransition = new FadeTransition(Duration.seconds(1), label);
+//        scaleTransition.setFromValue(1.0);
+//        scaleTransition.setToValue(0.0);
+//        scaleTransition.setCycleCount(cycleCount);
+//        scaleTransition.setAutoReverse(true);
+//        scaleTransition.play();
     }
 
     public void toggleStars(boolean starsOn) {
