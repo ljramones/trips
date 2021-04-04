@@ -1,6 +1,8 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.routing.RouteFindingOptions;
+import com.teamgannon.trips.routing.dialogs.LookupStarDialog;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;

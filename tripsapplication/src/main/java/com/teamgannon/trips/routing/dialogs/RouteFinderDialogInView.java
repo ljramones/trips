@@ -1,7 +1,8 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dialogs.search.ComboBoxAutoComplete;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.routing.RouteFindingOptions;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

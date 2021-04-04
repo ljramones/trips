@@ -4,7 +4,7 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteChange;
-import com.teamgannon.trips.routing.RouteEditDialog;
+import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;

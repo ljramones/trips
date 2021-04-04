@@ -730,4 +730,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     public @NotNull TransitManager getTransitManager() {
         return transitManager;
     }
+
+    public void setDataSetContext(DataSetDescriptor descriptor) {
+        starPlotManager.setDataSetContext(descriptor);
+    }
 }

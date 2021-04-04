@@ -94,6 +94,11 @@ public class RouteManager {
     private boolean routingActive = false;
 
     /**
+     * routing type
+     */
+    private RoutingType routingType = RoutingType.NONE;
+
+    /**
      * to deal with the offset based on the control panel
      */
     private double controlPaneOffset;
@@ -161,6 +166,18 @@ public class RouteManager {
     }
 
     ///////////// routing functions
+
+    public void setRoutingActive(boolean state) {
+        routingActive = state;
+    }
+
+    public void setRoutingType(RoutingType type) {
+        routingType = type;
+    }
+
+    public RoutingType getRoutingType() {
+        return routingType;
+    }
 
     public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord starDisplayRecord) {
         resetRoute();

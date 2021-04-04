@@ -13,17 +13,22 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RoutingType;
+import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
+import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.solarsystem.PlanetDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
-import javafx.animation.*;
+import javafx.animation.RotateTransition;
+import javafx.animation.ScaleTransition;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
@@ -40,6 +45,7 @@ import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
+import javafx.stage.Modality;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +172,11 @@ public class StarPlotManager {
 
     private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
 
+    private ContextAutomatedRoutingDialog automatedRoutingDialog;
+
+    private ContextManualRoutingDialog manualRoutingDialog;
+
+    private DataSetDescriptor currentDataSet;
 
     /**
      * constructor
@@ -396,12 +407,12 @@ public class StarPlotManager {
         double yScale = starShape.getScaleY();
         double zScale = starShape.getScaleZ();
 
-        scaleTransition.setFromX(xScale*2);
-        scaleTransition.setFromY(yScale*2);
-        scaleTransition.setFromZ(zScale*2);
-        scaleTransition.setToX(xScale/2);
-        scaleTransition.setToY(yScale/2);
-        scaleTransition.setToZ(zScale/2);
+        scaleTransition.setFromX(xScale * 2);
+        scaleTransition.setFromY(yScale * 2);
+        scaleTransition.setFromZ(zScale * 2);
+        scaleTransition.setToX(xScale / 2);
+        scaleTransition.setToY(yScale / 2);
+        scaleTransition.setToZ(zScale / 2);
 
         scaleTransition.setCycleCount(cycleCount);
         scaleTransition.setAutoReverse(true);
@@ -664,7 +675,7 @@ public class StarPlotManager {
             }
         }
         MeshView polityObject = (MeshView) meshObjectDefinition.getObject();
-        if (polityObject!=null) {
+        if (polityObject != null) {
             // set color
             PhongMaterial material = (PhongMaterial) polityObject.getMaterial();
             material.setDiffuseColor(polityColor);
@@ -692,23 +703,6 @@ public class StarPlotManager {
         centralStar.setRotate(meshObjectDefinition.getRotateAngle());
         return centralStar;
     }
-
-//    private void setupRotateAnimation(Node node) {
-//        centralRotator.setNode(node);
-//        centralRotator.setAxis(Rotate.Y_AXIS);
-//        centralRotator.setDuration(Duration.INDEFINITE);
-//        centralRotator.play();
-//    }
-//
-//
-//    private void setupFade(Node node) {
-//        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-//        fader.setFromValue(1.0);
-//        fader.setToValue(0.1);
-//        fader.setCycleCount(Timeline.INDEFINITE);
-//        fader.setAutoReverse(true);
-//        fader.play();
-//    }
 
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
         star.setUserData(record);
@@ -770,7 +764,18 @@ public class StarPlotManager {
     private void starClickEventHandler(Node star, @NotNull ContextMenu starContextMenu, @NotNull MouseEvent e) {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
-            starContextMenu.show(star, e.getScreenX(), e.getScreenY());
+            if (routeManager.isRoutingActive()) {
+                if (automatedRoutingDialog != null) {
+                    StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
+                    if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
+                        automatedRoutingDialog.setToStar(record.getStarName());
+                    } else if(routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
+
+                    }
+                }
+            } else {
+                starContextMenu.show(star, e.getScreenX(), e.getScreenY());
+            }
         }
         if (e.getButton() == MouseButton.MIDDLE) {
             log.info("Middle button pressed");
@@ -835,20 +840,11 @@ public class StarPlotManager {
         routingHeader.setDisable(true);
         cm.getItems().add(routingHeader);
 
-        MenuItem startRouteMenuItem = createRoutingMenuItem(star);
-        cm.getItems().add(startRouteMenuItem);
+        MenuItem automatedRouteMenuItem = createAutomatedRoutingMenuItem(star);
+        cm.getItems().add(automatedRouteMenuItem);
 
-        MenuItem continueRouteMenuItem = continueRoutingMenuItem(star);
-        cm.getItems().add(continueRouteMenuItem);
-
-        MenuItem removeRouteMenuItem = removeRouteMenuItem(star);
-        cm.getItems().add(removeRouteMenuItem);
-
-        MenuItem finishRouteMenuItem = finishRoutingMenuItem(star);
-        cm.getItems().add(finishRouteMenuItem);
-
-        MenuItem resetRouteMenuItem = resetRoutingMenuItem();
-        cm.getItems().add(resetRouteMenuItem);
+        MenuItem manualRouteMenuItem = createManualRoutingMenuItem(star);
+        cm.getItems().add(manualRouteMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
 
@@ -858,58 +854,55 @@ public class StarPlotManager {
         return cm;
     }
 
-    private MenuItem createGenerateSolarSystemItem(Node star) {
-        MenuItem menuItem = new MenuItem("Generate Solar System");
+    private MenuItem createManualRoutingMenuItem(Node star) {
+        MenuItem menuItem = new MenuItem("Build route on screen by clicking stars");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            generateSolarSystem(starDescriptor);
+            generateManualRoute(starDescriptor);
 
         });
         return menuItem;
     }
 
-    private void generateSolarSystem(StarDisplayRecord starDescriptor) {
-        StarObject starObject = databaseListener.getStar(starDescriptor.getRecordId());
-        SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
-        Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
-        if (solarSystemGenOptional.isPresent()) {
-            SolarSystemGenOptions solarSystemGenOptions = solarSystemGenOptional.get();
-            SolarSystemReport report = new SolarSystemReport(starObject, solarSystemGenOptions);
-            report.generateReport();
+    private void generateManualRoute(StarDisplayRecord starDescriptor) {
+        log.info("generate manual route");
+        manualRoutingDialog = new ContextManualRoutingDialog(starDescriptor);
+        manualRoutingDialog.initModality(Modality.NONE);
+        manualRoutingDialog.show();
+        // set the state for the routing so that clicks on stars don't invoke the context menu
+        routeManager.setRoutingActive(true);
+        routeManager.setRoutingType(RoutingType.MANUAL);
 
-            PlanetDialog planetDialog = new PlanetDialog(report);
-            planetDialog.showAndWait();
-
-        }
     }
+
+    private MenuItem createAutomatedRoutingMenuItem(Node star) {
+        MenuItem menuItem = new MenuItem("Run route finder/generator");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            generateAutomatedRoute(starDescriptor);
+
+        });
+        return menuItem;
+    }
+
+    private void generateAutomatedRoute(StarDisplayRecord starDescriptor) {
+        log.info("generate automated route");
+        automatedRoutingDialog = new ContextAutomatedRoutingDialog(
+                this, routeManager, currentDataSet, starDescriptor, getCurrentStarsInView());
+
+        automatedRoutingDialog.initModality(Modality.NONE);
+        automatedRoutingDialog.show();
+        // set the state for the routing so that clicks on stars don't invoke the context menu
+        routeManager.setRoutingActive(true);
+        routeManager.setRoutingType(RoutingType.AUTOMATIC);
+    }
+
 
     private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Highlight star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             highlightStar(starDescriptor.getRecordId());
-
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem createNotesMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Edit notes on this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
-            notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
-            Optional<String> notesOptional = notesDialog.showAndWait();
-            if (notesOptional.isPresent()) {
-                String notes = notesOptional.get();
-                if (!notes.isEmpty()) {
-                    // save notes in star
-                    databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
-                    // update the star notes on screen
-                    starDescriptor.setNotes(notes);
-                    star.setUserData(starDescriptor);
-                }
-            }
 
         });
         return menuItem;
@@ -933,49 +926,6 @@ public class StarPlotManager {
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             redrawListener.recenter(starDescriptor);
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem createRoutingMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Start Route");
-        menuItem.setOnAction(event -> {
-            boolean routingActive = routeManager.isRoutingActive();
-            if (routingActive) {
-                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                        "Restart Route?",
-                        "You have a route in progress, Ok will clear current?");
-
-                if ((buttonType.isEmpty()) || (buttonType.get() != ButtonType.OK)) {
-                    return;
-                }
-            }
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            RouteDialog dialog = new RouteDialog(starDescriptor);
-            Optional<RouteDescriptor> result = dialog.showAndWait();
-
-            result.ifPresent(routeDescriptor -> routeManager.startRoute(
-                    tripsContext.getCurrentPlot().getDataSetDescriptor(),
-                    routeDescriptor, starDescriptor)
-            );
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem continueRoutingMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Continue Route");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.continueRoute(starDescriptor);
-        });
-        return menuItem;
-    }
-
-
-    private MenuItem removeRouteMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Remove last link from route");
-        menuItem.setOnAction(event -> {
-            routeManager.removeRoute();
         });
         return menuItem;
     }
@@ -1024,20 +974,6 @@ public class StarPlotManager {
         databaseListener.removeStar(starDisplayRecord.getRecordId());
     }
 
-    /**
-     * create an enter system object
-     *
-     * @param star the star selected
-     * @return the menuitem
-     */
-    private @NotNull MenuItem createEnterSystemItem(@NotNull Node star) {
-        MenuItem removeMenuItem = new MenuItem("Enter System");
-        removeMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            jumpToSystem(starDescriptor);
-        });
-        return removeMenuItem;
-    }
 
     /**
      * crate a menuitem to edit a targeted item
@@ -1316,6 +1252,122 @@ public class StarPlotManager {
         }
     }
 
+    /**
+     * create a highlight star
+     *
+     * @param color the color to display it as (used to match the star)
+     * @return the star to display
+     */
+    private Node createHighlightStar(Color color) {
+        // load the moravian star
+        // we have to do this each time because it has to unique
+        Group highLightStar = meshViewShapeFactory.starMoravian();
+        if (highLightStar != null) {
+
+            // extract the various meshviews and set the color to match
+            // we need to do this because the moravian object is a group of mesh objects and
+            // we need set the material color on each one.
+            for (Node node : highLightStar.getChildren()) {
+                MeshView meshView = (MeshView) node;
+                PhongMaterial material = (PhongMaterial) meshView.getMaterial();
+                material.setSpecularColor(color);
+                material.setDiffuseColor(color);
+            }
+
+            // now scale it and set it to show properly
+            highLightStar.setScaleX(30);
+            highLightStar.setScaleY(30);
+            highLightStar.setScaleZ(30);
+            highLightStar.setRotationAxis(Rotate.X_AXIS);
+            highLightStar.setRotate(90);
+            return highLightStar;
+        } else {
+            log.error("Unable to load the moravian star object");
+            return null;
+        }
+
+    }
+
+    /////////////////////////////////////////////////////////////////////
+
+    private @NotNull MenuItem createRoutingMenuItem(@NotNull Node star) {
+        MenuItem menuItem = new MenuItem("Start Route");
+        menuItem.setOnAction(event -> {
+            boolean routingActive = routeManager.isRoutingActive();
+            if (routingActive) {
+                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
+                        "Restart Route?",
+                        "You have a route in progress, Ok will clear current?");
+
+                if ((buttonType.isEmpty()) || (buttonType.get() != ButtonType.OK)) {
+                    return;
+                }
+            }
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            RouteDialog dialog = new RouteDialog(starDescriptor);
+            Optional<RouteDescriptor> result = dialog.showAndWait();
+
+            result.ifPresent(routeDescriptor -> routeManager.startRoute(
+                    tripsContext.getCurrentPlot().getDataSetDescriptor(),
+                    routeDescriptor, starDescriptor)
+            );
+        });
+        return menuItem;
+    }
+
+    private @NotNull MenuItem continueRoutingMenuItem(@NotNull Node star) {
+        MenuItem menuItem = new MenuItem("Continue Route");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            routeManager.continueRoute(starDescriptor);
+        });
+        return menuItem;
+    }
+
+
+    private MenuItem removeRouteMenuItem(Node star) {
+        MenuItem menuItem = new MenuItem("Remove last link from route");
+        menuItem.setOnAction(event -> {
+            routeManager.removeRoute();
+        });
+        return menuItem;
+    }
+
+
+    private MenuItem createGenerateSolarSystemItem(Node star) {
+        MenuItem menuItem = new MenuItem("Generate Solar System");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            generateSolarSystem(starDescriptor);
+
+        });
+        return menuItem;
+    }
+
+
+    private @NotNull MenuItem createNotesMenuItem(@NotNull Node star) {
+        MenuItem menuItem = new MenuItem("Edit notes on this star");
+        menuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
+            notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
+            Optional<String> notesOptional = notesDialog.showAndWait();
+            if (notesOptional.isPresent()) {
+                String notes = notesOptional.get();
+                if (!notes.isEmpty()) {
+                    // save notes in star
+                    databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
+                    // update the star notes on screen
+                    starDescriptor.setNotes(notes);
+                    star.setUserData(starDescriptor);
+                }
+            }
+
+        });
+        return menuItem;
+    }
+
+
     private MeshObjectDefinition createKtorPolity() {
         // load icosahedron as polity 3
         MeshView polity3 = meshViewShapeFactory.icosahedron();
@@ -1380,39 +1432,59 @@ public class StarPlotManager {
     }
 
     /**
-     * create a highlight star
+     * create an enter system object
      *
-     * @param color the color to display it as (used to match the star)
-     * @return the star to display
+     * @param star the star selected
+     * @return the menuitem
      */
-    private Node createHighlightStar(Color color) {
-        // load the moravian star
-        // we have to do this each time because it has to unique
-        Group highLightStar = meshViewShapeFactory.starMoravian();
-        if (highLightStar != null) {
+    private @NotNull MenuItem createEnterSystemItem(@NotNull Node star) {
+        MenuItem removeMenuItem = new MenuItem("Enter System");
+        removeMenuItem.setOnAction(event -> {
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
+            jumpToSystem(starDescriptor);
+        });
+        return removeMenuItem;
+    }
 
-            // extract the various meshviews and set the color to match
-            // we need to do this because the moravian object is a group of mesh objects and
-            // we need set the material color on each one.
-            for (Node node : highLightStar.getChildren()) {
-                MeshView meshView = (MeshView) node;
-                PhongMaterial material = (PhongMaterial) meshView.getMaterial();
-                material.setSpecularColor(color);
-                material.setDiffuseColor(color);
-            }
+    public void clearRoutingFlag() {
+        routeManager.setRoutingActive(false);
+    }
 
-            // now scale it and set it to show properly
-            highLightStar.setScaleX(30);
-            highLightStar.setScaleY(30);
-            highLightStar.setScaleZ(30);
-            highLightStar.setRotationAxis(Rotate.X_AXIS);
-            highLightStar.setRotate(90);
-            return highLightStar;
-        } else {
-            log.error("Unable to load the moravian star object");
-            return null;
+    public void setDataSetContext(DataSetDescriptor descriptor) {
+        this.currentDataSet = descriptor;
+    }
+
+
+//    private void setupRotateAnimation(Node node) {
+//        centralRotator.setNode(node);
+//        centralRotator.setAxis(Rotate.Y_AXIS);
+//        centralRotator.setDuration(Duration.INDEFINITE);
+//        centralRotator.play();
+//    }
+//
+//
+//    private void setupFade(Node node) {
+//        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
+//        fader.setFromValue(1.0);
+//        fader.setToValue(0.1);
+//        fader.setCycleCount(Timeline.INDEFINITE);
+//        fader.setAutoReverse(true);
+//        fader.play();
+//    }
+
+    private void generateSolarSystem(StarDisplayRecord starDescriptor) {
+        StarObject starObject = databaseListener.getStar(starDescriptor.getRecordId());
+        SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
+        Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
+        if (solarSystemGenOptional.isPresent()) {
+            SolarSystemGenOptions solarSystemGenOptions = solarSystemGenOptional.get();
+            SolarSystemReport report = new SolarSystemReport(starObject, solarSystemGenOptions);
+            report.generateReport();
+
+            PlanetDialog planetDialog = new PlanetDialog(report);
+            planetDialog.showAndWait();
+
         }
-
     }
 
 

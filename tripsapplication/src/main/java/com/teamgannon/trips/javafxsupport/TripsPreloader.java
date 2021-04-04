@@ -30,7 +30,7 @@ public class TripsPreloader extends Preloader {
 
         HBox hBox1 = new HBox();
         hBox1.setAlignment(Pos.CENTER);
-        Label titleLabel = new Label("Terran Republic Interstellar \nPlotting System");
+        Label titleLabel = new Label("Terran Republic Interstellar \nPlotting System (TRIPS)");
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 20);
         titleLabel.setFont(font);
         hBox1.getChildren().add(titleLabel);

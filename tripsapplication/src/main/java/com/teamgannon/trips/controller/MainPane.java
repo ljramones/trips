@@ -32,7 +32,7 @@ import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.RouteFinderDataset;
 import com.teamgannon.trips.routing.RouteFinderInView;
-import com.teamgannon.trips.routing.RoutingPanel;
+import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
@@ -1511,6 +1511,7 @@ public class MainPane implements
         tripsContext.getDataSetContext().setValidDescriptor(true);
         tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
         tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
+        interstellarSpacePane.setDataSetContext(descriptor);
         dataSetsListView.getSelectionModel().select(descriptor);
         if (queryDialog != null) {
             queryDialog.setDataSetContext(descriptor);

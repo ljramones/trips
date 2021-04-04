@@ -1,6 +1,8 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.RouteChange;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
