@@ -1,8 +1,10 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.RouteCellFactory;
 import javafx.beans.Observable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;

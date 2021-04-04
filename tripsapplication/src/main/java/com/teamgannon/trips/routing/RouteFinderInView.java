@@ -5,6 +5,8 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
+import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInView;
 import com.teamgannon.trips.service.StarMeasurementService;
 import com.teamgannon.trips.transits.TransitRoute;
 import javafx.scene.paint.Color;

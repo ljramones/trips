@@ -1,5 +1,7 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.dialogs;
 
+import com.teamgannon.trips.routing.PossibleRoutes;
+import com.teamgannon.trips.routing.RoutingMetric;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;

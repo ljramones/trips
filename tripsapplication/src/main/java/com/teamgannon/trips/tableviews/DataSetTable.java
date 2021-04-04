@@ -44,7 +44,7 @@ public class DataSetTable {
      */
     private final TableView<StarEditRecord> tableView = new TableView<>();
     private final TableColumn<StarEditRecord, String> displayNameCol = new TableColumn<>("Display Name");
-    private final TableColumn<StarEditRecord, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth(ly)");
+    private final TableColumn<StarEditRecord, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth (LY)");
     private final TableColumn<StarEditRecord, String> spectraCol = new TableColumn<>("Spectra");
     private final TableColumn<StarEditRecord, Double> radiusCol = new TableColumn<>("Radius");
     private final TableColumn<StarEditRecord, Double> raCol = new TableColumn<>("RA");
@@ -286,7 +286,7 @@ public class DataSetTable {
      * update the title
      */
     private void setTitle() {
-        dialog.setTitle("Astrographic Records Table: for dataset:: " +
+        dialog.setTitle("Astrographic Records Table for dataset: " +
                 dataSetName + " - page: " + pageNumber + " of " + totalPages + " pages");
     }
 

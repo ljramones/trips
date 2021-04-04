@@ -1,7 +1,7 @@
 spring:
   application:
     ui:
-      title: Terran Republic Interstellar Plotter (TRIPS)
+      title: Terran Republic Interstellar Plotting System (TRIPS)
 
   # spring datasource requirements
   datasource:

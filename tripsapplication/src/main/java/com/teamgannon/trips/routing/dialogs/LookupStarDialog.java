@@ -1,4 +1,4 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
 import com.teamgannon.trips.jpa.model.StarObject;

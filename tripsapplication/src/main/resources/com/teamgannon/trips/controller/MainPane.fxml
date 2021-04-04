@@ -124,7 +124,7 @@
             </Menu>
             <Menu mnemonicParsing="false" text="Help">
                 <MenuItem mnemonicParsing="false"
-                          onAction="#aboutTrips" text="About Terran Republic Viewer"/>
+                          onAction="#aboutTrips" text="About TRIPS"/>
                 <CheckMenuItem mnemonicParsing="false"
                                onAction="#toggleHelpMode" text="Toggle help mode"/>
                 <MenuItem mnemonicParsing="false"
