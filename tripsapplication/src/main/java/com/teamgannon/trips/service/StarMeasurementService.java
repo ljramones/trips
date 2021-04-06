@@ -86,11 +86,6 @@ public class StarMeasurementService {
             double distance = StarMath.getDistance(sourceCoordinates, targetCoordinates);
             if (checkInRange(transitRangeDef, distance)) {
                 // ok, we have a measure to save
-                System.out.printf("%s --> %s is %.2f ly%n",
-                        sourceRecord.getStarName(),
-                        targetRecord.getStarName(),
-                        distance
-                );
                 return TransitRoute
                         .builder()
                         .good(true)
@@ -121,11 +116,6 @@ public class StarMeasurementService {
             double distance = StarMath.getDistance(sourceCoordinates, targetCoordinates);
             if (checkInRange(distanceRange, distance)) {
                 // ok, we have a measure to save
-                System.out.printf("%s --> %s is %.2f ly%n",
-                        sourceRecord.getStarName(),
-                        targetRecord.getStarName(),
-                        distance
-                );
                 return TransitRoute
                         .builder()
                         .good(true)

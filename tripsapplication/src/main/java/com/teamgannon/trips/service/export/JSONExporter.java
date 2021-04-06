@@ -45,7 +45,6 @@ public class JSONExporter implements ExportTaskControl {
 
             ObjectMapper mapper = new ObjectMapper();
             String jsonStr = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(dto);
-            System.out.println(jsonStr);
 
             DataSetDescriptorDTO dto1 = mapper.readValue(jsonStr, DataSetDescriptorDTO.class);
             DataSetDescriptor descriptor1 = dto1.toDataSetDescriptor();

@@ -67,7 +67,6 @@ public class FXMLExporter {
         File file = new File(filename);
         try {
             printWriter = new PrintWriter(file);
-            System.out.println("Saving FMXL to " + file.getAbsolutePath());
         } catch (FileNotFoundException ex) {
             throw new RuntimeException("Failed to export FXML to " + file.getAbsolutePath(), ex);
         }

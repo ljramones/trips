@@ -629,7 +629,6 @@ public class ChviewReader {
                     stellarClass.equals("Z")||
                     stellarClass.equals("C")
             ) {
-                System.out.println(chViewRecord);
                 // these are not defined in standard spectral classification so force them to be M class.
                 chViewRecord.setOrthoSpectra("DC");
             }

@@ -522,7 +522,6 @@ public class StarObject implements Serializable {
      */
     public void calculateDisplayScore() {
         displayScore = calculateBaseScore() * calculateLabelMultiplier();
-//        System.out.println(String.format("Display name =%s, Spectral class = %s, score = %.3f", displayName, orthoSpectralClass, displayScore));
     }
 
     /**
@@ -803,7 +802,7 @@ public class StarObject implements Serializable {
 
         StarModel starModel = new StarCreator().parseSpectral(chViewRecord.getOrthoSpectra());
         if (starModel.getStellarClass() == null) {
-            System.out.println("spectral class could not be verified, spectra = "
+            log.info("spectral class could not be verified, spectra = "
                     + chViewRecord.getSpectra()
                     + "\n\tchv record = " + chViewRecord);
         }

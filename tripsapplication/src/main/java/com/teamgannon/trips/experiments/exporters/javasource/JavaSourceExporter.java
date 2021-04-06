@@ -97,13 +97,10 @@ public class JavaSourceExporter {
 
     private static String computePackageName(String baseUrl) {
         // remove protocol from baseUrl
-        System.out.println("JavaSourceExporter.computePackageName   baseUrl = " + baseUrl);
         baseUrl = baseUrl.replaceAll("^[a-z]+:/+","/");
-        System.out.println("baseUrl = " + baseUrl);
         // try and work out package name from file
         StringBuilder packageName = new StringBuilder();
         String[] pathSegments = baseUrl.split(File.separatorChar == '\\'?"\\\\":"/");
-        System.out.println("pathSegments = " + Arrays.toString(pathSegments));
         loop: for (int i = pathSegments.length-1; i >= 0; i -- ) {
             switch (pathSegments[i]){
                 case "com":
@@ -126,7 +123,6 @@ public class JavaSourceExporter {
             // if we get all way to root of file system then we have failed
             if (i==0) packageName = null;
         }
-        System.out.println(" packageName = " + packageName);
         return packageName==null?null:packageName.toString();
     }
 

@@ -103,13 +103,13 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
-        Button examplesButton = new Button("show examples");
+        Button examplesButton = new Button("Show Examples");
         examplesButton.setOnAction(this::showExamples);
         hBox.getChildren().add(examplesButton);
-        Button doQueryButton = new Button("run query");
+        Button doQueryButton = new Button("Run Query");
         doQueryButton.setOnAction(this::runQuery);
         hBox.getChildren().add(doQueryButton);
-        Button cancelButton = new Button("dismiss");
+        Button cancelButton = new Button("Ok");
         cancelButton.setOnAction(this::cancelReq);
         hBox.getChildren().add(cancelButton);
         vBox.getChildren().add(hBox);
@@ -181,7 +181,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
                 }
             }
         } else {
-            showErrorAlert("Run Advanced Query", "you must enter a query");
+            showErrorAlert("Run Advanced Query", "You must enter a query");
         }
 
     }

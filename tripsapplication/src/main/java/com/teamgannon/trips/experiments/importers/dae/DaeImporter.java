@@ -131,7 +131,6 @@ public class DaeImporter extends Importer {
             e.printStackTrace();
         }
         long END = System.currentTimeMillis();
-        System.out.println("IMPORTED ["+url+"] in  "+((END-START))+"ms");
     }
 
     @Override

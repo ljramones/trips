@@ -44,7 +44,6 @@ public class DatabaseManagementService {
 
     private static final int MAX_REQUEST_SIZE = 9999;
 
-
     /**
      * storage of data sets in DB
      */
@@ -631,5 +630,25 @@ public class DatabaseManagementService {
         DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(transitDefinitions.getDataSetName());
         descriptorCurrent.setTransitDefinitions(transitDefinitions);
         dataSetDescriptorRepository.save(descriptorCurrent);
+    }
+
+    public boolean doesDatasetExist(String name) {
+        return dataSetDescriptorRepository.existsById(name);
+    }
+
+    public DataSetDescriptor changeDatasetName(DataSetDescriptor selectedDataset, String newName) {
+        if (dataSetDescriptorRepository.existsById(newName)) {
+            return null;
+        }
+        // get dataset based on name
+        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(selectedDataset.getDataSetName());
+
+        // remove old dataset
+        dataSetDescriptorRepository.delete(descriptor);
+
+        // save as new
+        descriptor.setDataSetName(newName);
+        dataSetDescriptorRepository.save(descriptor);
+        return descriptor;
     }
 }

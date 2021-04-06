@@ -98,7 +98,6 @@ public class RouteGraph {
         });
         Writer writer = new StringWriter();
         exporter.exportGraph(routingGraph, writer);
-        System.out.println(writer.toString());
     }
 
     /**
