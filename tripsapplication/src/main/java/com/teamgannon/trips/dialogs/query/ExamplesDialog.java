@@ -4,7 +4,6 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -20,6 +19,7 @@ import java.util.stream.Collectors;
 public class ExamplesDialog extends Dialog<Boolean> {
 
     public ExamplesDialog(List<String> examples) {
+        setTitle("SQL Examples");
 
         String text = examples.stream().map(item -> item + "\n").collect(Collectors.joining());
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
@@ -27,9 +27,6 @@ public class ExamplesDialog extends Dialog<Boolean> {
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
 
-        Label titleLabel = new Label("SQL Examples");
-        titleLabel.setFont(font);
-        vBox.getChildren().add(titleLabel);
         TextArea examplesTextArea = new TextArea();
         vBox.getChildren().add(examplesTextArea);
         examplesTextArea.setText(text);

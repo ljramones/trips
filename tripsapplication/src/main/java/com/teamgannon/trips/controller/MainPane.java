@@ -1651,7 +1651,7 @@ public class MainPane implements
             List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
 
             ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
-            dialog.setTitle("Choice Data set to display");
+            dialog.setTitle("Choose data set to display");
             dialog.setHeaderText("Select your choice - (Default display is 20 light years from Earth, use Show Stars filter to change)");
 
             Optional<String> result = dialog.showAndWait();
