@@ -765,12 +765,14 @@ public class StarPlotManager {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
             if (routeManager.isRoutingActive()) {
-                if (automatedRoutingDialog != null) {
-                    StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
-                    if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
+                StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
+                if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
+                    if (manualRoutingDialog != null) {
+                        manualRoutingDialog.addStar(record);
+                    }
+                } if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)){
+                    if (automatedRoutingDialog != null) {
                         automatedRoutingDialog.setToStar(record.getStarName());
-                    } else if(routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
-
                     }
                 }
             } else {
@@ -864,17 +866,6 @@ public class StarPlotManager {
         return menuItem;
     }
 
-    private void generateManualRoute(StarDisplayRecord starDescriptor) {
-        log.info("generate manual route");
-        manualRoutingDialog = new ContextManualRoutingDialog(starDescriptor);
-        manualRoutingDialog.initModality(Modality.NONE);
-        manualRoutingDialog.show();
-        // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setRoutingActive(true);
-        routeManager.setRoutingType(RoutingType.MANUAL);
-
-    }
-
     private MenuItem createAutomatedRoutingMenuItem(Node star) {
         MenuItem menuItem = new MenuItem("Run route finder/generator");
         menuItem.setOnAction(event -> {
@@ -897,6 +888,17 @@ public class StarPlotManager {
         routeManager.setRoutingType(RoutingType.AUTOMATIC);
     }
 
+    private void generateManualRoute(StarDisplayRecord starDescriptor) {
+        log.info("generate manual route");
+        manualRoutingDialog = new ContextManualRoutingDialog(
+                this,routeManager, currentDataSet, starDescriptor, getCurrentStarsInView());
+        manualRoutingDialog.initModality(Modality.NONE);
+        manualRoutingDialog.show();
+        // set the state for the routing so that clicks on stars don't invoke the context menu
+        routeManager.setRoutingActive(true);
+        routeManager.setRoutingType(RoutingType.MANUAL);
+
+    }
 
     private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Highlight star");
