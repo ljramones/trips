@@ -621,6 +621,7 @@ public class StarsPane extends Pane {
     }
 
     public void reset() {
-
+        resetColorsClicked(new ActionEvent());
+        updater.changeStarPreferences(starDisplayPreferences);
     }
 }

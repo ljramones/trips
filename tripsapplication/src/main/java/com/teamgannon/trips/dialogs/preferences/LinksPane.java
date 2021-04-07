@@ -67,6 +67,6 @@ public class LinksPane extends Pane {
     }
 
     public void reset() {
-
+           // not used currently
     }
 }

@@ -76,8 +76,12 @@ public class UserControlsPane extends Pane {
         updater.changeUserControlsPreferences(userControls);
     }
 
-
+    /**
+     * reset the controls to default
+     */
     public void reset() {
-
+        userControls.reset();
+        updater.changeUserControlsPreferences(userControls);
     }
+
 }
