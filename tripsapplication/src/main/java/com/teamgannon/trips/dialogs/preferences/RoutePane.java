@@ -14,4 +14,8 @@ public class RoutePane extends Pane {
 
         this.getChildren().add(new Label("Route"));
     }
+
+    public void reset() {
+
+    }
 }

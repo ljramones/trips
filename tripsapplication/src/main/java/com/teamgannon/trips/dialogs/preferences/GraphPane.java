@@ -398,4 +398,7 @@ public class GraphPane extends Pane {
         updater.changesGraphEnables(graphEnablesPersist);
     }
 
+    public void reset() {
+
+    }
 }

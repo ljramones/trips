@@ -77,4 +77,7 @@ public class UserControlsPane extends Pane {
     }
 
 
+    public void reset() {
+
+    }
 }
