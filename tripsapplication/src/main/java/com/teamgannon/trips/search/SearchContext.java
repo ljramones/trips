@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
+
 /**
  * Used to keep track of what we have searched for
  * <p>
@@ -46,11 +48,15 @@ public class SearchContext {
 
 
     public void removeDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
-        if (currentDataSet.equals(dataSetDescriptor.getDataSetName())) {
-            currentDataSet = null;
-            astroSearchQuery.setDescriptor(null);
+        if (currentDataSet != null) {
+            if (currentDataSet.equals(dataSetDescriptor.getDataSetName())) {
+                currentDataSet = null;
+                astroSearchQuery.setDescriptor(null);
+            }
+            dataSetDescriptorMap.remove(dataSetDescriptor.getDataSetName());
+        } else {
+            showErrorAlert("Search Context", "there seems to be a problem with the current selected dataset");
         }
-        dataSetDescriptorMap.remove(dataSetDescriptor.getDataSetName());
     }
 
     public void addDataSets(@NotNull List<DataSetDescriptor> dataSetDescriptors) {
