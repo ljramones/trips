@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
+import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -44,7 +45,10 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final DatabaseManagementService service;
     private final @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap;
 
-    public AdvancedQueryDialog(DatabaseManagementService service, @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap) {
+    public AdvancedQueryDialog(DatabaseManagementService service,
+                               DataSetContext dataSetContext,
+                               @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap) {
+
         this.service = service;
         this.dataSetDescriptorMap = dataSetDescriptorMap;
         VBox vBox = new VBox();
@@ -62,7 +66,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         datasetLabel.setFont(font);
         gridPane.add(datasetLabel, 0, 1);
         datasetChoices.getItems().addAll(dataSetDescriptorMap.keySet());
-        datasetChoices.getSelectionModel().selectFirst();
+        datasetChoices.getSelectionModel().select(dataSetContext.getDescriptor().getDataSetName());
         gridPane.add(datasetChoices, 1, 1);
 
         Label queryLabel = new Label("Query to run::> ");
