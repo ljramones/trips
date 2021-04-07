@@ -40,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.UUID;
 
-import static org.fxyz3d.geometry.MathUtils.clamp;
-
 @Slf4j
 public class InterstellarSpacePane extends Pane implements RotationController {
 
@@ -600,10 +598,12 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         double modifier = UserControls.NORMAL_SPEED;
 
         if (me.isPrimaryButtonDown() && me.isControlDown()) {
-            translateXY(mousePosX, mousePosY);
+            double width = getWidth();
+            double height = getHeight();
+            translateXY(width/2 - mousePosX, height/2 - mousePosY);
         } else if (me.isPrimaryButtonDown()) {
             if (me.isAltDown()) { //roll
-                roll(direction, modifier, mouseDeltaX); // +
+                roll(direction, modifier); // +
             } else {
                 rotateXY(direction, modifier, mouseDeltaX, mouseDeltaY);
             }
@@ -617,12 +617,16 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     private void rotateXY(int direction, double modifier, double mouseDeltaX, double mouseDeltaY) {
-        rotateX.setAngle((rotateX.getAngle() + direction * mouseDeltaX * modifier)  % 360 );
-        rotateY.setAngle((rotateY.getAngle() - direction * mouseDeltaY * modifier)  % 360 );
+        rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier) % 360));
+        rotateX.setAngle(((rotateX.getAngle() - direction * mouseDeltaY * modifier) % 360));
+
+
+//        rotateX.setAngle((rotateY.getAngle() - direction * mouseDeltaY * modifier)  % 360 );
+//        rotateY.setAngle((rotateX.getAngle() + direction * mouseDeltaX * modifier)  % 360 );
     }
 
-    private void roll(int direction, double modifier, double mouseDeltaX) {
-        rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier) % 360 + 540) % 360 - 180);
+    private void roll(int direction, double modifier) {
+        rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier)) % 360);
     }
 
     private void keyEventHandler(KeyEvent event) {
