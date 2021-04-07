@@ -170,4 +170,7 @@ public class CivilizationPane extends Pane {
         return preferences;
     }
 
+    public void reset() {
+
+    }
 }

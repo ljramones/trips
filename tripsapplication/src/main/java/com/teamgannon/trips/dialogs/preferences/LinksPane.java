@@ -66,4 +66,7 @@ public class LinksPane extends Pane {
         pane.add(gridColorPicker, 4, row);
     }
 
+    public void reset() {
+
+    }
 }

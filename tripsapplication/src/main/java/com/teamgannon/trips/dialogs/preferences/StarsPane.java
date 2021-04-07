@@ -620,4 +620,7 @@ public class StarsPane extends Pane {
         pane.add(link1, 4, row);
     }
 
+    public void reset() {
+
+    }
 }
