@@ -147,9 +147,7 @@ public class CivilizationPane extends Pane {
     }
 
     private void resetPolitiesClicked(ActionEvent actionEvent) {
-        preferences.reset();
-        setPreferences();
-        updater.changePolitiesPreferences(preferences);
+        reset();
     }
 
     private void setPreferences() {
@@ -171,6 +169,8 @@ public class CivilizationPane extends Pane {
     }
 
     public void reset() {
-
+        preferences.reset();
+        setPreferences();
+        updater.changePolitiesPreferences(preferences);
     }
 }

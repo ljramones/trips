@@ -16,6 +16,6 @@ public class RoutePane extends Pane {
     }
 
     public void reset() {
-
+        // nothing to do yet but we leave this for the future
     }
 }

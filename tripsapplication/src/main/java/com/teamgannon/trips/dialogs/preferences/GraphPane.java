@@ -399,6 +399,10 @@ public class GraphPane extends Pane {
     }
 
     public void reset() {
+        resetColorsClicked(new ActionEvent());
+        updater.updateGraphColors(colorPalette);
 
+        resetEnablesClicked(new ActionEvent());
+        updater.changesGraphEnables(graphEnablesPersist);
     }
 }
