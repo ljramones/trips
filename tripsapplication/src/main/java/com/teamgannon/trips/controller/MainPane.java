@@ -1746,7 +1746,7 @@ public class MainPane implements
     }
 
     public void advancedSearch(ActionEvent actionEvent) {
-        AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, searchContext.getDatasetMap());
+        AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, tripsContext.getDataSetContext(), searchContext.getDatasetMap());
         Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
         if (optional.isPresent()) {
             AdvResultsSet advResultsSet = optional.get();
