@@ -201,6 +201,7 @@ public class RouteManager {
      */
     public void continueRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         if (routingActive) {
+            log.info("route to {}", starDisplayRecord.getStarName());
             createRouteSegment(starDisplayRecord);
             updateLabels(interstellarSpacePane);
             log.info("Next Routing step:{}", currentRoute);
@@ -250,6 +251,15 @@ public class RouteManager {
             routeUpdaterListener.newRoute(currentRoute.getDescriptor(), currentRoute);
         } else {
             showErrorAlert("Routing", "start a route first");
+        }
+    }
+
+    public void finishRoute() {
+        if (routingActive) {
+            routingActive = false;
+            makeRoutePermanent(currentRoute);
+            updateLabels(interstellarSpacePane);
+            routeUpdaterListener.newRoute(currentRoute.getDescriptor(), currentRoute);
         }
     }
 
@@ -653,4 +663,6 @@ public class RouteManager {
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
         log.info("Change state of route {} to {}", routeDescriptor.getName(), state);
     }
+
+
 }

@@ -78,7 +78,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     private final CheckBox ktorCheckBox = new CheckBox("Ktor");
     private final CheckBox aratKurCheckBox = new CheckBox("Arat kur");
     private final CheckBox hkhRkhCheckBox = new CheckBox("Hkh'Rkh");
-    private final CheckBox slassrithiCheckBox = new CheckBox("Slaasrithi");
+    private final CheckBox slassrithiCheckBox = new CheckBox("Slaasriithi");
     private final CheckBox other1CheckBox = new CheckBox("Other 1");
     private final CheckBox other2CheckBox = new CheckBox("Other 2");
     private final CheckBox other3CheckBox = new CheckBox("Other 3");
@@ -88,6 +88,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     private static final int GRAPH_THRESHOLD = 1500;
 
     Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+
     private final StarPlotManager plotManager;
     private final RouteManager routeManager;
     private final DataSetDescriptor currentDataSet;
@@ -104,6 +105,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         this.routeManager = routeManager;
         this.currentDataSet = currentDataSet;
         this.starsInView = starsInView;
+
         // set the dialog as a utility
         stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
