@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
+
+import static java.lang.Math.abs;
 
 @Slf4j
 public class InterstellarSpacePane extends Pane implements RotationController {
@@ -112,6 +115,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * offset to scene coordinates to account for the top UI plane
      */
     private double controlPaneOffset;
+
+    private double deltaX;
 
 
     /**
@@ -389,21 +394,30 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void shiftDisplayLeft(boolean shift) {
+        double xPos = camera.getTranslateX();
+        log.info("x position={}", xPos);
+
         if (shift) {
-            log.info("shift display left!!");
-            camera.setTranslateX(300);
-            zoomOut(40);
+            double width = getWidth();
+            double halfNormal = width / 2.0;
+            double displayWidth = getWidth() - MainPane.SIDE_PANEL_SIZE;
+            double halfDisplay = displayWidth / 2.0;
+            deltaX = abs(halfDisplay - halfNormal);
+
+            log.info("normal={}, withSide={}", halfNormal, halfDisplay);
+            log.info("shift display left by {}", deltaX);
+            camera.setTranslateX(deltaX);
         } else {
             if (!sidePanelShiftKludgeFirstTime) {
                 log.info("shift display right!!");
-                camera.setTranslateX(-30);
+                camera.setTranslateX(-deltaX/6);
             } else {
                 sidePanelShiftKludgeFirstTime = false;
             }
-            zoomIn(40);
         }
         updateLabels();
-
+        xPos = camera.getTranslateX();
+        log.info("x position={}", xPos);
     }
 
     /**
@@ -600,7 +614,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         if (me.isPrimaryButtonDown() && me.isControlDown()) {
             double width = getWidth();
             double height = getHeight();
-            translateXY(width/2 - mousePosX, height/2 - mousePosY);
+            translateXY(width / 2 - mousePosX, height / 2 - mousePosY);
         } else if (me.isPrimaryButtonDown()) {
             if (me.isAltDown()) { //roll
                 roll(direction, modifier); // +
