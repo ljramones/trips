@@ -4,7 +4,8 @@ import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.routing.Route;
-import com.teamgannon.trips.routing.RouteCellFactory;
+import com.teamgannon.trips.routing.list.RouteCellFactory;
+import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.beans.Observable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -24,7 +25,7 @@ public class RoutingPanel extends Pane {
     /**
      * the set of routings
      */
-    private final ListView<Route> routingListView = new ListView<>();
+    private final ListView<RouteTree> routingListView = new ListView<>();
 
     /**
      * the constructor
@@ -57,9 +58,10 @@ public class RoutingPanel extends Pane {
             List<Route> routeList = descriptor.getRoutes();
             if (routeList.size() != 0) {
                 for (Route route : routeList) {
+                    RouteTree routeTree = RouteTree.createRouteTree(route);
                     boolean willShow = routeVisiblityMap.get(route.getUuid());
                     if (willShow) {
-                        routingListView.getItems().add(route);
+                        routingListView.getItems().add(routeTree);
                     }
                 }
                 log.info("adding routes");

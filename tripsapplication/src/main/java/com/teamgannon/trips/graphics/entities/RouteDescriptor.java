@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -126,6 +127,20 @@ public class RouteDescriptor {
                 .lineWidth(route.getLineWidth())
                 .routeNotes(route.getRouteNotes())
                 .startStar(route.getStartingStar())
+                .build();
+    }
+
+    public static RouteDescriptor toRouteDescriptor(@NotNull RouteTree routeTree) {
+        return RouteDescriptor
+                .builder()
+                .descriptor(routeTree.getDescriptor())
+                .id(routeTree.getUuid())
+                .name(routeTree.getRouteName())
+                .maxLength(routeTree.getRouteSegmentList().size())
+                .color(routeTree.getRouteColor())
+                .lineWidth(routeTree.getLineWidth())
+                .routeNotes(routeTree.getRouteNotes())
+                .startStar(routeTree.getStartingStar())
                 .build();
     }
 
