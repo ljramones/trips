@@ -17,6 +17,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -33,7 +34,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
     private ComboBox<String> destinationDisplayCmb;
 
     private Map<String, String> lookupNames = new HashMap<>();
-    private List<String> transformedName = new ArrayList<>();
 
     /**
      * our lookup
@@ -93,7 +93,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         stage.setOnCloseRequest(this::close);
 
         searchValues = convertList(starsInView);
-        setupTransformlist(searchValues);
 
         this.setTitle("Enter parameters for Route location");
 
@@ -129,18 +128,18 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
     }
 
-    private void setupTransformlist(Set<String> searchValues) {
-        searchValues.forEach(name -> {
-            String stransform = name.replace(' ', '-');
-            transformedName.add(stransform);
-            lookupNames.put(stransform, name);
-        });
-        Collections.sort(transformedName);
-    }
+//    private void setupTransformlist(Set<String> searchValues) {
+//        searchValues.forEach(name -> {
+//            String stransform = name.replace(' ', '-');
+//            transformedName.add(stransform);
+//            lookupNames.put(stransform, name);
+//        });
+//        Collections.sort(transformedName);
+//    }
 
-    private String getUntransformedName(String lookupVal) {
-        return lookupNames.get(lookupVal);
-    }
+//    private String getUntransformedName(String lookupVal) {
+//        return lookupNames.get(lookupVal);
+//    }
 
     private void setupPrimaryTab(Tab primaryTab) {
         VBox vBox = new VBox();
@@ -164,15 +163,17 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         originDisplayCmb = new ComboBox<>();
         originDisplayCmb.setPromptText("start typing");
         originDisplayCmb.setTooltip(new Tooltip());
-        originDisplayCmb.getItems().addAll(transformedName);
-        new ComboBoxAutoComplete<>(stage, originDisplayCmb);
+        originDisplayCmb.getItems().addAll(searchValues);
+        originDisplayCmb.setEditable(true);
+        TextFields.bindAutoCompletion(originDisplayCmb.getEditor(), originDisplayCmb.getItems());
         gridPane.add(originDisplayCmb, 1, 1);
 
         destinationDisplayCmb = new ComboBox<>();
         destinationDisplayCmb.setPromptText("start typing");
         destinationDisplayCmb.setTooltip(new Tooltip());
-        destinationDisplayCmb.getItems().addAll(transformedName);
-        new ComboBoxAutoComplete<>(stage, destinationDisplayCmb);
+        destinationDisplayCmb.getItems().addAll(searchValues);
+        destinationDisplayCmb.setEditable(true);
+        TextFields.bindAutoCompletion(destinationDisplayCmb.getEditor(), destinationDisplayCmb.getItems());
         gridPane.add(destinationDisplayCmb, 1, 2);
 
         Label upperBound = new Label("Upper limit for route length");
@@ -412,11 +413,11 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
             String destinationStarSelected = destinationDisplayCmb.getValue();
             double maxDistance = 20;
 
-            if (!searchValues.contains(getUntransformedName(originStarSelected))) {
+            if (!searchValues.contains(originStarSelected)) {
                 showErrorAlert("Find Route", String.format("Origin star <%s> is not present in view", originStarSelected));
                 return;
             }
-            if (!searchValues.contains(getUntransformedName(destinationStarSelected))) {
+            if (!searchValues.contains(destinationStarSelected)) {
                 showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
                 return;
             }
@@ -425,8 +426,8 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
                     RouteFindingOptions
                             .builder()
                             .selected(true)
-                            .originStar(getUntransformedName(originStarSelected))
-                            .destinationStar(getUntransformedName(destinationStarSelected))
+                            .originStar(originStarSelected)
+                            .destinationStar(destinationStarSelected)
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
