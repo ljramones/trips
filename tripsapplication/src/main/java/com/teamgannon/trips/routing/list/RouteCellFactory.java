@@ -1,12 +1,14 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.list;
 
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
 import org.jetbrains.annotations.NotNull;
 
-public class RouteCellFactory implements Callback<ListView<Route>, ListCell<Route>> {
+public class RouteCellFactory implements Callback<ListView<RouteTree>, ListCell<RouteTree>> {
 
     private RouteUpdaterListener routeUpdaterListener;
 
@@ -15,7 +17,7 @@ public class RouteCellFactory implements Callback<ListView<Route>, ListCell<Rout
     }
 
     @Override
-    public @NotNull ListCell<Route> call(ListView<Route> routeListView) {
+    public @NotNull ListCell<RouteTree> call(ListView<RouteTree> routeListView) {
         return new RouteCell(routeUpdaterListener);
     }
 

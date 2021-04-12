@@ -457,6 +457,7 @@ public class RouteManager {
     public void plotRoutes(@NotNull List<Route> routeList) {
         // clear existing routes
         routesGroup.getChildren().clear();
+        labelDisplayGroup.getChildren().clear();
         routeList.forEach(this::plotRoute);
     }
 

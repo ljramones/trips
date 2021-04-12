@@ -1,0 +1,4 @@
+
+.tree-table-row-cell:first-row .tree-table-cell {
+    -fx-text-fill: red ;
+}
