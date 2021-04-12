@@ -13,6 +13,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -64,7 +65,8 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
         cmb.setPromptText("start typing");
         cmb.setTooltip(new Tooltip());
         cmb.getItems().addAll(searchValues);
-        new ComboBoxAutoComplete<>(stage, cmb);
+        cmb.setEditable(true);
+        TextFields.bindAutoCompletion(cmb.getEditor(), cmb.getItems());
 
         hBox.getChildren().add(new Label("Star to go to:     "));
         hBox.getChildren().add(cmb);
@@ -91,9 +93,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
     }
 
     private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
-        for (StarDisplayRecord record : starsInView) {
-            starLookup.put(record.getStarName(), record);
-        }
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
         return starLookup.keySet();
     }
 

@@ -3,25 +3,30 @@ package com.teamgannon.trips.report.distance;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Dialog;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.apache.commons.collections4.MapUtils;
+import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSelection> {
 
-    private final ChoiceBox<String> starChoice = new ChoiceBox<>();
+    private final @NotNull ComboBox<String> cmb;
 
     private final Map<String, StarDisplayRecord> starDisplayRecordMap = new HashMap<>();
+
+    /**
+     * our lookup
+     */
+    private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
 
     public @NotNull Button generateButton = new Button("Generate");
 
@@ -35,7 +40,17 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
         this.setTitle("Select a star for a distance report");
         this.setHeight(300);
         this.setWidth(500);
-        starChoice.setPrefWidth(300);
+
+        Set<String> searchValues = convertList(starsInView);
+
+        cmb = new ComboBox<>();
+        cmb.setPromptText("start typing");
+        cmb.setTooltip(new Tooltip());
+        cmb.getItems().addAll(searchValues);
+        cmb.setEditable(true);
+        TextFields.bindAutoCompletion(cmb.getEditor(), cmb.getItems());
+
+        cmb.setPrefWidth(300);
 
         if (!starsInView.isEmpty()) {
             MapUtils.populateMap(starDisplayRecordMap,
@@ -43,23 +58,12 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
                     StarDisplayRecord::getStarName);
         }
 
-        if (starsInView.size() > 0) {
-            for (StarDisplayRecord starDisplayRecord : starsInView) {
-                starChoice.getItems().add(starDisplayRecord.getStarName());
-            }
-        }
-
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10.0);
         this.getDialogPane().setContent(vBox);
 
-        vBox.getChildren().add(starChoice);
-
-        // set the first one
-        if (starsInView.size() > 0) {
-            starChoice.setValue(starsInView.get(0).getStarName());
-        }
+        vBox.getChildren().add(cmb);
 
         HBox prefsBox = new HBox();
         vBox.getChildren().add(prefsBox);
@@ -81,6 +85,11 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
 
     }
 
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
+        return starLookup.keySet();
+    }
+
     private void close(WindowEvent windowEvent) {
         DistanceReportSelection reportSelection = DistanceReportSelection
                 .builder()
@@ -98,7 +107,7 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
     }
 
     private void generate(ActionEvent actionEvent) {
-        String selected = starChoice.getValue();
+        String selected = cmb.getValue();
         StarDisplayRecord record = starDisplayRecordMap.get(selected);
         DistanceReportSelection reportSelection = DistanceReportSelection
                 .builder()
