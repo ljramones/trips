@@ -820,17 +820,17 @@ public class StarObject implements Serializable {
         this.setSource("CHView");
 
         // figure out display score
-        calculateLabelMultiplier();
+//        calculateLabelMultiplier();
 
     }
 
-    public static void main(String[] args) {
-        StarObject starObject = new StarObject();
-        starObject.setCommonName("Some name");
-        starObject.setOrthoSpectralClass("G");
-        starObject.setCatalogIdList("PLX 3278|* 345 Cen|* alf Cen C|2E 1426.0-6227|HD werwer|BD+ 234234|BD- 234234|2E  3278|2RE J142946-624031|2RE J1429-624|CCDM J14396-6050C|CSI-62-14263|CSV   2142|Ci 20  861|GEN# +6.10010551|GEN# +6.00105721|GJ   551|HIC  70890|HIP  70890|IRAS 14260-6227|JP11  5156|JP11  5155|JP11  5187|LFT 1110|LHS    49|LPM 526|LTT  5721|NAME Proxima Cen|NAME Proxima|NAME Proxima Centauri|NLTT 37460|PM 14263-6228|RE J1429-624|RE J142950-624056|V* V645 Cen|Zkh 211|[AOP94]  6|[FS2003] 0708|[GKL99] 301|[RHG95]  2291|2MASS J14294291-6240465|PLX 3278.00|1E 1425.9-6228|1ES 1426-62.4|1RXS J142947.9-624058|2EUVE J1429-62.6|EUVE J1429-62.6|EUVE J1430-62.6|RX J1429.7-6240|WDS J14396-6050C|PMSC 14328-6025C|Gaia DR2 5853498713160606720|WISEA J142937.35-624038.3|GALEX 6387417244251458613|PM J14297-6240");
-        starObject.calculateDisplayScore();
-        log.info("display score=" + starObject.getDisplayScore());
-        log.info("done");
-    }
+//    public static void main(String[] args) {
+//        StarObject starObject = new StarObject();
+//        starObject.setCommonName("Some name");
+//        starObject.setOrthoSpectralClass("G");
+//        starObject.setCatalogIdList("PLX 3278|* 345 Cen|* alf Cen C|2E 1426.0-6227|HD werwer|BD+ 234234|BD- 234234|2E  3278|2RE J142946-624031|2RE J1429-624|CCDM J14396-6050C|CSI-62-14263|CSV   2142|Ci 20  861|GEN# +6.10010551|GEN# +6.00105721|GJ   551|HIC  70890|HIP  70890|IRAS 14260-6227|JP11  5156|JP11  5155|JP11  5187|LFT 1110|LHS    49|LPM 526|LTT  5721|NAME Proxima Cen|NAME Proxima|NAME Proxima Centauri|NLTT 37460|PM 14263-6228|RE J1429-624|RE J142950-624056|V* V645 Cen|Zkh 211|[AOP94]  6|[FS2003] 0708|[GKL99] 301|[RHG95]  2291|2MASS J14294291-6240465|PLX 3278.00|1E 1425.9-6228|1ES 1426-62.4|1RXS J142947.9-624058|2EUVE J1429-62.6|EUVE J1429-62.6|EUVE J1430-62.6|RX J1429.7-6240|WDS J14396-6050C|PMSC 14328-6025C|Gaia DR2 5853498713160606720|WISEA J142937.35-624038.3|GALEX 6387417244251458613|PM J14297-6240");
+//        starObject.calculateDisplayScore();
+//        log.info("display score=" + starObject.getDisplayScore());
+//        log.info("done");
+//    }
 }

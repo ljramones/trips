@@ -226,6 +226,7 @@ public class PlotManager {
 
                 // figure out what stars should be plotted in a sphere
                 if (drawable(starObject)) {
+                    starObject.calculateDisplayScore();
                     StarDisplayRecord record = StarDisplayRecord.fromStarObject(starObject, starDisplayPreferences);
                     if (record != null) {
                         record.setCurrentLabelDisplayScore(displayRadius);

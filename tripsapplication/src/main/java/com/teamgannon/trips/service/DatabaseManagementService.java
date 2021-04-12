@@ -328,7 +328,7 @@ public class DatabaseManagementService {
      */
     @Transactional
     public void addStar(@NotNull StarObject starObjectNew) {
-        starObjectNew.calculateDisplayScore();
+//        starObjectNew.calculateDisplayScore();
         starObjectRepository.save(starObjectNew);
         Optional<StarObject> testGet = starObjectRepository.findById(starObjectNew.getId());
         if (testGet.isEmpty()) {
@@ -344,7 +344,7 @@ public class DatabaseManagementService {
      */
     @Transactional
     public void updateStar(@NotNull StarObject starObject) {
-        starObject.calculateDisplayScore();
+//        starObject.calculateDisplayScore();
         starObjectRepository.save(starObject);
     }
 

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.starmodel;
+package com.teamgannon.trips.distance;
 
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
