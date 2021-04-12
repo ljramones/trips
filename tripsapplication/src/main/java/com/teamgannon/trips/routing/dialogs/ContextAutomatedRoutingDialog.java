@@ -23,6 +23,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,7 +40,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     private ComboBox<String> destinationDisplayCmb;
 
     private final Map<String, String> lookupNames = new HashMap<>();
-    private final List<String> transformedName = new ArrayList<>();
+//    private final List<String> transformedName = new ArrayList<>();
 
     /**
      * our lookup
@@ -110,8 +111,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
+
         searchValues = convertList(starsInView);
-        setupTransformlist(searchValues);
 
         fromStar.setText(fromStarDisplayRecord.getStarName());
 
@@ -154,7 +155,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
      * @param starName the star name
      */
     public void setToStar(String starName) {
-        destinationDisplayCmb.setValue(transformName(starName));
+        destinationDisplayCmb.setValue(starName);
         stage.toFront();
     }
 
@@ -167,9 +168,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
         double maxDistance = 20;
         String destinationStarSelected = destinationDisplayCmb.getValue();
-
-        String untransformed = getUntransformedName(destinationStarSelected);
-        if (!searchValues.contains(untransformed)) {
+        if (!searchValues.contains(destinationStarSelected)) {
             showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
             return;
         }
@@ -178,7 +177,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 .builder()
                 .selected(true)
                 .originStar(fromStar.getText())
-                .destinationStar(untransformed)
+                .destinationStar(destinationStarSelected)
                 .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                 .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                 .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
@@ -340,28 +339,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     }
 
     private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
-        for (StarDisplayRecord record : starsInView) {
-            starLookup.put(record.getStarName(), record);
-        }
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
         return starLookup.keySet();
-    }
-
-
-    private void setupTransformlist(Set<String> searchValues) {
-        searchValues.forEach(name -> {
-            String stransform = name.replace(' ', '-');
-            transformedName.add(stransform);
-            lookupNames.put(stransform, name);
-        });
-        Collections.sort(transformedName);
-    }
-
-    private String transformName(String name) {
-        return name.replace(' ', '-');
-    }
-
-    private String getUntransformedName(String lookupVal) {
-        return lookupNames.get(lookupVal);
     }
 
     private void setupPrimaryTab(Tab primaryTab) {
@@ -388,8 +367,9 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         destinationDisplayCmb = new ComboBox<>();
         destinationDisplayCmb.setPromptText("start typing");
         destinationDisplayCmb.setTooltip(new Tooltip());
-        destinationDisplayCmb.getItems().addAll(transformedName);
-        new ComboBoxAutoComplete<>(stage, destinationDisplayCmb);
+        destinationDisplayCmb.getItems().addAll(searchValues);
+        destinationDisplayCmb.setEditable(true);
+        TextFields.bindAutoCompletion(destinationDisplayCmb.getEditor(), destinationDisplayCmb.getItems());
         gridPane.add(destinationDisplayCmb, 1, 2);
 
         Label upperBound = new Label("Upper limit for route length");
