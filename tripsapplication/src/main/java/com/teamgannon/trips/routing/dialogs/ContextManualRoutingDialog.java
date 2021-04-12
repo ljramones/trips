@@ -32,11 +32,9 @@ import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 @Slf4j
 public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
-    private StarPlotManager plotManager;
-    private RouteManager routeManager;
-    private DataSetDescriptor currentDataSet;
+    private final RouteManager routeManager;
+    private final DataSetDescriptor currentDataSet;
     private final StarDisplayRecord starDisplayRecord;
-    private List<StarDisplayRecord> starsInView;
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -49,9 +47,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final GridPane grid = new GridPane();
 
-    private RouteDescriptor routeDescriptor;
-
-    private Button finishBtn = new Button("Finish route");
+    private final Button finishBtn = new Button("Finish route");
 
     private boolean startRouting = false;
 
@@ -59,19 +55,18 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
 
-    private Set<StarDisplayRecord> routeSet = new HashSet<>();
+    private final Set<StarDisplayRecord> routeSet = new HashSet<>();
 
     public ContextManualRoutingDialog(@NotNull StarPlotManager plotManager,
                                       @NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
                                       @NotNull StarDisplayRecord starDisplayRecord,
                                       @NotNull List<StarDisplayRecord> starsInView) {
-        this.plotManager = plotManager;
+
         this.routeManager = routeManager;
         this.currentDataSet = currentDataSet;
 
         this.starDisplayRecord = starDisplayRecord;
-        this.starsInView = starsInView;
         starDisplayRecordList.add(starDisplayRecord);
 
         // set the dialog as a utility
@@ -161,11 +156,13 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     }
 
     private void closeClicked(ActionEvent actionEvent) {
+        routeManager.setRoutingActive(false);
         setResult(false);
     }
 
 
     private void close(WindowEvent windowEvent) {
+        routeManager.setRoutingActive(false);
         setResult(false);
     }
 
@@ -201,7 +198,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                     "{} is not a valid double so defaulting to 0.5",
                     lineWidthTextField.getText());
         }
-        routeDescriptor = RouteDescriptor.builder()
+        RouteDescriptor routeDescriptor = RouteDescriptor.builder()
                 .name(routeName.getText())
                 .color(colorPicker.getValue())
                 .startStar(starDisplayRecord.getStarName())
