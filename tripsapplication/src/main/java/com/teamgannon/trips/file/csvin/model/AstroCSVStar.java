@@ -271,7 +271,8 @@ public class AstroCSVStar {
             astro.setMiscNum4(miscNum4);
             astro.setMiscNum5(miscNum5);
 
-            astro.calculateDisplayScore();
+            // this appears to slow down import by a lot
+//            astro.calculateDisplayScore();
 
             return astro;
 

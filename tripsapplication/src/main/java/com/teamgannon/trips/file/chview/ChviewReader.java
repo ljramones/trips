@@ -120,7 +120,6 @@ public class ChviewReader {
             }
         }
 
-
         parseLinks(fileContent, currentIndex);
 
         chViewFile.setComments(parsePreamble(fileContent, currentIndex));

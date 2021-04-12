@@ -599,7 +599,6 @@ public class StarPlotManager {
         material.setSpecularColor(record.getStarColor());
         Node starShape;
         if (isCenter) {
-//            setupFade(centralStar);
             starShape = createCentralStar();
         } else {
             Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
