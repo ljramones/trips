@@ -3,14 +3,18 @@ package com.teamgannon.trips.routing.tree.treemodel;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.Route;
+import javafx.beans.property.BooleanProperty;
 import javafx.scene.paint.Color;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
+@NoArgsConstructor
 public class RouteTree {
 
     /**
@@ -33,6 +37,8 @@ public class RouteTree {
      * the original route
      */
     private String embeddedRoute;
+
+    private boolean checked;
 
     /**
      * the star this route starts at
@@ -59,10 +65,24 @@ public class RouteTree {
      */
     private Color routeColor;
 
+    private int count = 0;
+
     /**
      * the line width to draw
      */
     private double lineWidth;
+
+    public String getRoute() {
+        return "Route: " + (count + 1) + ": \n\t" + this.getRouteName() + "\n\t has " +
+                (this.getRouteSegmentList().size()) + " segments\n" +
+                "\tlength of route =" + String.format("%.2f", this.getTotalLength()) + " ly\n" +
+                "\tRoute segments are \n"+
+                routeItinerary(this) + "\n";
+    }
+
+    private String routeItinerary(RouteTree routeTree) {
+        return routeTree.getRouteSegmentList().stream().map(routeSegment -> "\t\t" + routeSegment + "\n").collect(Collectors.joining());
+    }
 
     /**
      * the list of route segments
@@ -92,6 +112,7 @@ public class RouteTree {
 
         routeTree.setUuid(route.getUuid());
         routeTree.setRouteName(route.getRouteName());
+        routeTree.setChecked(true);
         routeTree.setRouteColor(Color.valueOf(route.getRouteColor()));
         routeTree.setRouteNotes(route.getRouteNotes());
         routeTree.setLineWidth(route.getLineWidth());
