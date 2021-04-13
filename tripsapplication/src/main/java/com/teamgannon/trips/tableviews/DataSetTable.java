@@ -159,7 +159,7 @@ public class DataSetTable {
     private void setupTable() {
 
         // allow the table to be editable
-        tableView.setPlaceholder(new Label("No rows to display"));
+        tableView.setPlaceholder(new Label("No stars to display"));
 
         // set selection model
         setSelectionModel();
@@ -218,8 +218,9 @@ public class DataSetTable {
         selectionModel.setSelectionMode(SelectionMode.SINGLE);
         ObservableList<StarEditRecord> selectedItems = selectionModel.getSelectedItems();
 
-        selectedItems.addListener((ListChangeListener<StarEditRecord>) change ->
-                log.info("Selection changed: " + change.getList()));
+        selectedItems.addListener((ListChangeListener<StarEditRecord>) change -> {
+            log.info("Selection is: " + change.getList());
+        });
     }
 
     private void setupTableColumns() {

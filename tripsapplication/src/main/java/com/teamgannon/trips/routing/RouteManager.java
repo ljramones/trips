@@ -70,6 +70,11 @@ public class RouteManager {
     private final List<Node> currentRouteNodePoints = new ArrayList<>();
 
     /**
+     * use this to map individual routes to their id
+     */
+    private final Map<UUID, Group> routeLookup = new HashMap<>();
+
+    /**
      * the total set of all routes
      */
     private final Group routesGroup = new Group();
@@ -151,6 +156,7 @@ public class RouteManager {
     public void clearRoutes() {
         // clear the routes
         routesGroup.getChildren().clear();
+        routeLookup.clear();
         labelDisplayGroup.getChildren().clear();
         shapeToLabel.clear();
     }
@@ -188,7 +194,8 @@ public class RouteManager {
         Point3D startStar = starDisplayRecord.getCoordinates();
         if (currentRoute != null) {
             currentRoute.addLink(starDisplayRecord, startStar, 0, null, null);
-            routesGroup.getChildren().add(currentRouteDisplay);
+            /// add to route lookup
+            addRoute(currentRoute, currentRouteDisplay);
             routesGroup.setVisible(true);
             routeUpdaterListener.routingStatus(true);
         }
@@ -421,6 +428,9 @@ public class RouteManager {
                 removeLabel(label);
             }
             currentRoute.clear();
+            Group routeToRemove = routeLookup.get(currentRoute.getId());
+            routeLookup.remove(currentRoute.getId());
+            routesGroup.getChildren().remove(routeToRemove);
         }
 
         routesGroup.getChildren().remove(currentRouteDisplay);
@@ -456,6 +466,7 @@ public class RouteManager {
      */
     public void plotRoutes(@NotNull List<Route> routeList) {
         // clear existing routes
+        routeLookup.clear();
         routesGroup.getChildren().clear();
         labelDisplayGroup.getChildren().clear();
         routeList.forEach(this::plotRoute);
@@ -489,7 +500,7 @@ public class RouteManager {
             // do actual plot
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
             Group routeGraphic = createRoute(routeDescriptor);
-            routesGroup.getChildren().add(routeGraphic);
+            addRoute(routeDescriptor, routeGraphic);
             routesGroup.setVisible(true);
         }
         updateLabels(interstellarSpacePane);
@@ -498,8 +509,13 @@ public class RouteManager {
 
     public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
         Group routeGraphic = createRoute(routeDescriptor);
-        routesGroup.getChildren().add(routeGraphic);
+        addRoute(routeDescriptor, routeGraphic);
         routesGroup.setVisible(true);
+    }
+
+    private void addRoute(RouteDescriptor routeDescriptor, Group route) {
+        routeLookup.put(routeDescriptor.getId(), route);
+        routesGroup.getChildren().add(route);
     }
 
     /**
@@ -663,7 +679,8 @@ public class RouteManager {
      */
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
         log.info("Change state of route {} to {}", routeDescriptor.getName(), state);
+        Group route = routeLookup.get(routeDescriptor.getId());
+        route.setVisible(state);
     }
-
 
 }
