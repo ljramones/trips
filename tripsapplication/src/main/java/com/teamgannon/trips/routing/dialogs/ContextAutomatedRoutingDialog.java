@@ -306,6 +306,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 log.info("plotting selected routes:{}", selectedRoutingMetrics);
                 // plot the routes found
                 plot(currentDataSet, selectedRoutingMetrics);
+                setResult(true);
             }
         }
     }

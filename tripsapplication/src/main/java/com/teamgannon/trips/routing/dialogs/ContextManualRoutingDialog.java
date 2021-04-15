@@ -34,8 +34,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     private List<StarDisplayRecord> starsInView;
     private StarDisplayRecord starDisplayRecord;
 
-    private final Label fromStar = new Label();
-
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final TextField routeName = new TextField();
@@ -57,6 +55,8 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     private final List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
 
     private final Set<StarDisplayRecord> routeSet = new HashSet<>();
+
+    private RouteDescriptor routeDescriptor;
 
     /**
      * true means this plot was part of an in plot context call
@@ -176,49 +176,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     }
 
-    private void resetRoute(ActionEvent actionEvent) {
-        if (!plottingContextMode) {
-            originDisplayCmb.setDisable(false);
-            originDisplayCmb.setValue("");
-            routeStartCoordinates.setText("0, 0, 0");
-            startButton.setDisable(false);
-        }
-        clearRoute();
-        for (int i = 1; i <= rowToAdd; i++) {
-            // removing rows
-            int rowNumber = anchorRow + i;
-            grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == rowNumber);
-        }
-        stage.sizeToScene();
-        finishBtn.setDisable(true);
-    }
-
-    private void clearRoute() {
-        routeManager.resetRoute();
-    }
-
-    private void selectStar(ActionEvent actionEvent) {
-        if (firstTime) {
-            String selectedStar = originDisplayCmb.getValue();
-            starDisplayRecord = starLookup.get(selectedStar);
-            startStarLabel.setText(starDisplayRecord.getStarName());
-
-            double x = starDisplayRecord.getX();
-            double y = starDisplayRecord.getY();
-            double z = starDisplayRecord.getZ();
-            routeStartCoordinates.setText(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
-
-            log.info("start star:{}", starDisplayRecord);
-            originDisplayCmb.setDisable(true);
-            firstTime = false;
-        }
-    }
-
-
-    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
-        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
-        return starLookup.keySet();
-    }
 
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
@@ -316,19 +273,71 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     }
 
+    private void resetRoute(ActionEvent actionEvent) {
+        if (!plottingContextMode) {
+            originDisplayCmb.setDisable(false);
+            originDisplayCmb.setValue("");
+            routeStartCoordinates.setText("0, 0, 0");
+            startButton.setDisable(false);
+        }
+        clearRoute();
+        for (int i = 1; i <= rowToAdd; i++) {
+            // removing rows
+            int rowNumber = anchorRow + i;
+            grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == rowNumber);
+        }
+        stage.sizeToScene();
+        finishBtn.setDisable(true);
+        routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
+    }
+
+    private void clearRoute() {
+        routeSet.clear();
+        routeManager.resetRoute();
+    }
+
+    private void selectStar(ActionEvent actionEvent) {
+        if (firstTime) {
+            String selectedStar = originDisplayCmb.getValue();
+            starDisplayRecord = starLookup.get(selectedStar);
+            startStarLabel.setText(starDisplayRecord.getStarName());
+
+            double x = starDisplayRecord.getX();
+            double y = starDisplayRecord.getY();
+            double z = starDisplayRecord.getZ();
+            routeStartCoordinates.setText(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
+
+            log.info("start star:{}", starDisplayRecord);
+            originDisplayCmb.setDisable(true);
+            firstTime = false;
+        }
+    }
+
+
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
+        return starLookup.keySet();
+    }
+
+
     private void finishRouteClicked(ActionEvent actionEvent) {
         log.info("save route");
         routeManager.finishRoute();
+        setResult(true);
     }
 
     private void closeClicked(ActionEvent actionEvent) {
-        routeManager.setRoutingActive(false);
+        if (routeManager.isRoutingActive()) {
+            routeManager.setRoutingActive(false);
+        }
         setResult(false);
     }
 
 
     private void close(WindowEvent windowEvent) {
-        routeManager.setRoutingActive(false);
+        if (routeManager.isRoutingActive()) {
+            routeManager.setRoutingActive(false);
+        }
         setResult(false);
     }
 
@@ -339,7 +348,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 // can't use this route
                 showErrorAlert("Manual Route finding", "You already have this star in the route.");
             } else {
-
                 routeManager.continueRoute(record);
                 routeSet.add(record);
                 starDisplayRecordList.add(record);
@@ -365,7 +373,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                     "{} is not a valid double so defaulting to 0.5",
                     lineWidthTextField.getText());
         }
-        RouteDescriptor routeDescriptor = RouteDescriptor.builder()
+        routeDescriptor = RouteDescriptor.builder()
                 .name(routeName.getText())
                 .color(colorPicker.getValue())
                 .startStar(starDisplayRecord.getStarName())
@@ -374,6 +382,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 .routeNotes(notes.getText())
                 .routeList(new ArrayList<>())
                 .build();
+        routeSet.add(starDisplayRecord);
         routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
         startRouting = true;
         startButton.setDisable(true);
