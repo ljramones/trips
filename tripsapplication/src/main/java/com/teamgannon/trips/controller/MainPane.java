@@ -1864,11 +1864,11 @@ public class MainPane implements
     }
 
     public void saveAsDataset(ActionEvent actionEvent) {
-        showErrorAlert("Save As", "This function is not yet implemented");
+        showWarningMessage("Save As", "This function is not yet implemented");
     }
 
     public void exportDataset(ActionEvent actionEvent) {
-        showErrorAlert("Export dataset", "This function is not yet implemented");
+        showWarningMessage("Export dataset", "This function is not yet implemented");
     }
 
     public void editStar(ActionEvent actionEvent) {
