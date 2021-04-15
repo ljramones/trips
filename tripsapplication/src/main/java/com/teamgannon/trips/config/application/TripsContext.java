@@ -22,6 +22,8 @@ public class TripsContext {
 
     private @NotNull TransitSettings transitSettings = new TransitSettings();
 
+    private boolean showWarningOnZoom = true;
+
     /**
      * this hold the current plot data
      */

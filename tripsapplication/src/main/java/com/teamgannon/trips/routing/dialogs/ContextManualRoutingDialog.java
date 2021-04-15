@@ -4,7 +4,6 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.starplotting.StarPlotManager;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,12 +18,10 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
@@ -34,7 +31,10 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final RouteManager routeManager;
     private final DataSetDescriptor currentDataSet;
-    private final StarDisplayRecord starDisplayRecord;
+    private List<StarDisplayRecord> starsInView;
+    private StarDisplayRecord starDisplayRecord;
+
+    private final Label fromStar = new Label();
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -44,6 +44,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     private final TextArea notes = new TextArea();
 
     private int rowToAdd = 1;
+    private int anchorRow = 7;
 
     private final GridPane grid = new GridPane();
 
@@ -57,21 +58,179 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final Set<StarDisplayRecord> routeSet = new HashSet<>();
 
-    public ContextManualRoutingDialog(@NotNull StarPlotManager plotManager,
-                                      @NotNull RouteManager routeManager,
+    /**
+     * true means this plot was part of an in plot context call
+     * false means it was called form outside of the plot
+     */
+    private boolean plottingContextMode;
+
+    private ComboBox<String> originDisplayCmb;
+
+    /**
+     * our lookup
+     */
+    private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
+
+    boolean firstTime = true;
+
+    private Label startStarLabel = new Label();
+
+    private Label routeStartCoordinates = new Label("0, 0, 0");
+
+    private final Button startButton = new Button("Start route");
+
+    public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
-                                      @NotNull StarDisplayRecord starDisplayRecord,
                                       @NotNull List<StarDisplayRecord> starsInView) {
+
+        this.plottingContextMode = false;
+
+        this.routeManager = routeManager;
+        this.currentDataSet = currentDataSet;
+
+        Set<String> searchValues = convertList(starsInView);
+
+        VBox vBox = new VBox();
+        this.getDialogPane().setContent(vBox);
+        vBox.getChildren().add(grid);
+
+        this.setTitle("Route Creation Dialog");
+        this.setHeaderText("Create an initial Route");
+
+        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setVgap(5);
+        grid.setHgap(5);
+
+        Label routeNameLabel = new Label("Route Name: ");
+        routeNameLabel.setFont(font);
+
+        grid.add(routeNameLabel, 1, 1);
+        routeName.setText("Route A");
+        grid.add(routeName, 2, 1);
+
+        Label routeColorLabel = new Label("Route Color: ");
+        routeColorLabel.setFont(font);
+
+        grid.add(routeColorLabel, 1, 2);
+        colorPicker.setValue(Color.CYAN);
+        grid.add(colorPicker, 2, 2);
+
+        Label routeLineWidthLabel = new Label("Route Line Width: ");
+        routeLineWidthLabel.setFont(font);
+
+        grid.add(routeLineWidthLabel, 1, 3);
+        lineWidthTextField.setText("0.5");
+        grid.add(lineWidthTextField, 2, 3);
+
+        Label routeStartLabel = new Label("Route Starts at: ");
+        routeStartLabel.setFont(font);
+
+        originDisplayCmb = new ComboBox<>();
+        originDisplayCmb.setPromptText("start typing");
+        originDisplayCmb.setTooltip(new Tooltip());
+        originDisplayCmb.getItems().addAll(searchValues);
+        originDisplayCmb.setEditable(true);
+        originDisplayCmb.setOnAction(this::selectStar);
+        TextFields.bindAutoCompletion(originDisplayCmb.getEditor(), originDisplayCmb.getItems());
+
+        grid.add(routeStartLabel, 1, 4);
+        grid.add(originDisplayCmb, 2, 4);
+
+        Label routeStartCoordinatesLabel = new Label("Route Start Coords: ");
+        routeStartCoordinatesLabel.setFont(font);
+        grid.add(routeStartCoordinatesLabel, 1, 5);
+        grid.add(routeStartCoordinates, 2, 5);
+
+        Label notesLabel = new Label("Notes: ");
+        notesLabel.setFont(font);
+        grid.add(notesLabel, 1, 6);
+        grid.add(notes, 2, 6);
+
+        Label startSegmentLabel = new Label("Start:");
+        startSegmentLabel.setFont(font);
+        grid.add(startSegmentLabel, 1, 7);
+        grid.add(startStarLabel, 2, 7);
+
+        HBox hBox = new HBox();
+        hBox.setAlignment(Pos.CENTER);
+
+        startButton.setOnAction(this::startRouteClicked);
+        hBox.getChildren().add(startButton);
+
+        finishBtn.setDisable(true);
+        finishBtn.setOnAction(this::finishRouteClicked);
+        hBox.getChildren().add(finishBtn);
+
+        Button resetBtn = new Button("Reset route");
+        resetBtn.setOnAction(this::resetRoute);
+        hBox.getChildren().add(resetBtn);
+
+        Button addBtn = new Button("Close");
+        addBtn.setOnAction(this::closeClicked);
+        hBox.getChildren().add(addBtn);
+        vBox.getChildren().add(hBox);
+
+        // set the dialog as a utility
+        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+
+    }
+
+    private void resetRoute(ActionEvent actionEvent) {
+        if (!plottingContextMode) {
+            originDisplayCmb.setDisable(false);
+            originDisplayCmb.setValue("");
+            routeStartCoordinates.setText("0, 0, 0");
+            startButton.setDisable(false);
+        }
+        clearRoute();
+        for (int i = 1; i <= rowToAdd; i++) {
+            // removing rows
+            int rowNumber = anchorRow + i;
+            grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == rowNumber);
+        }
+        stage.sizeToScene();
+        finishBtn.setDisable(true);
+    }
+
+    private void clearRoute() {
+        routeManager.resetRoute();
+    }
+
+    private void selectStar(ActionEvent actionEvent) {
+        if (firstTime) {
+            String selectedStar = originDisplayCmb.getValue();
+            starDisplayRecord = starLookup.get(selectedStar);
+            startStarLabel.setText(starDisplayRecord.getStarName());
+
+            double x = starDisplayRecord.getX();
+            double y = starDisplayRecord.getY();
+            double z = starDisplayRecord.getZ();
+            routeStartCoordinates.setText(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
+
+            log.info("start star:{}", starDisplayRecord);
+            originDisplayCmb.setDisable(true);
+            firstTime = false;
+        }
+    }
+
+
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
+        return starLookup.keySet();
+    }
+
+    public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
+                                      @NotNull DataSetDescriptor currentDataSet,
+                                      @NotNull StarDisplayRecord starDisplayRecord) {
+
+        this.plottingContextMode = true;
 
         this.routeManager = routeManager;
         this.currentDataSet = currentDataSet;
 
         this.starDisplayRecord = starDisplayRecord;
         starDisplayRecordList.add(starDisplayRecord);
-
-        // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
 
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
@@ -135,8 +294,11 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
 
-        Button resetBtn = new Button("Start route");
-        resetBtn.setOnAction(this::startRouteClicked);
+        startButton.setOnAction(this::startRouteClicked);
+        hBox.getChildren().add(startButton);
+
+        Button resetBtn = new Button("Reset route");
+        resetBtn.setOnAction(this::resetRoute);
         hBox.getChildren().add(resetBtn);
 
         finishBtn.setDisable(true);
@@ -147,6 +309,10 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         addBtn.setOnAction(this::closeClicked);
         hBox.getChildren().add(addBtn);
         vBox.getChildren().add(hBox);
+
+        // set the dialog as a utility
+        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
 
     }
 
@@ -167,6 +333,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     }
 
     public void addStar(StarDisplayRecord record) {
+        log.info("request to add star to manual plot:{}", record.getStarName());
         if (startRouting) {
             if (routeSet.contains(record)) {
                 // can't use this route
@@ -178,8 +345,8 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 starDisplayRecordList.add(record);
                 Label segmentNameLabel = new Label("segment" + rowToAdd + ":");
                 segmentNameLabel.setFont(font);
-                grid.add(segmentNameLabel, 1, 7 + rowToAdd);
-                grid.add(new Label(record.getStarName()), 2, 7 + rowToAdd);
+                grid.add(segmentNameLabel, 1, anchorRow + rowToAdd);
+                grid.add(new Label(record.getStarName()), 2, anchorRow + rowToAdd);
                 rowToAdd++;
                 stage.sizeToScene();
                 finishBtn.setDisable(false);
@@ -209,6 +376,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 .build();
         routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
         startRouting = true;
+        startButton.setDisable(true);
     }
 
 

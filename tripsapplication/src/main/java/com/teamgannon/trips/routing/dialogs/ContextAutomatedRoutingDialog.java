@@ -39,9 +39,6 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     private final Label fromStar = new Label();
     private ComboBox<String> destinationDisplayCmb;
 
-    private final Map<String, String> lookupNames = new HashMap<>();
-//    private final List<String> transformedName = new ArrayList<>();
-
     /**
      * our lookup
      */

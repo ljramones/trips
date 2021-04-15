@@ -29,17 +29,20 @@ import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.report.ReportManager;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
-import com.teamgannon.trips.routing.Route;
-import com.teamgannon.trips.routing.RouteFinderDataset;
-import com.teamgannon.trips.routing.RouteFinderInView;
+import com.teamgannon.trips.report.route.RouteReportDialog;
+import com.teamgannon.trips.routing.*;
+import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
+import com.teamgannon.trips.screenobjects.StarEditDialog;
+import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
@@ -124,6 +127,8 @@ public class MainPane implements
      * database management spring component service
      */
     private final DatabaseManagementService databaseManagementService;
+    public CheckMenuItem toggleRouteLengthsMenuitem;
+    public MenuItem showRoutesMenuitem;
 
     /**
      * star plotter component
@@ -222,6 +227,7 @@ public class MainPane implements
     private boolean starsOn = true;
     private boolean scaleOn = true;
     private boolean routesOn = true;
+    private boolean routesLengthsOn = true;
     private boolean transitsOn = true;
     private boolean transitsLengthsOn = true;
     private boolean helpModeOn = true;
@@ -471,7 +477,7 @@ public class MainPane implements
         stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
         stellarObjectPane.setPrefHeight(500);
         stellarObjectPane.setMaxHeight(520);
-        starPropertiesPane = new StarPropertiesPane(hostServices);
+        starPropertiesPane = new StarPropertiesPane(databaseManagementService, hostServices);
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
         propertiesAccordion.getPanes().add(stellarObjectPane);
@@ -1084,6 +1090,13 @@ public class MainPane implements
         toggleRoutesBtn.setSelected(routesOn);
     }
 
+    public void toggleRouteLengths(ActionEvent actionEvent) {
+        this.routesLengthsOn = !routesLengthsOn;
+        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesLengthsOn);
+        interstellarSpacePane.toggleRouteLengths(routesLengthsOn);
+        toggleRouteLengthsMenuitem.setSelected(routesLengthsOn);
+    }
+
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
@@ -1172,7 +1185,7 @@ public class MainPane implements
     }
 
     public void howToSupport(ActionEvent actionEvent) {
-        showWarningMessage("Get Support", "Not currently supported");
+        hostServices.showDocument("https://github.com/ljramones/trips/wiki");
     }
 
     public void checkUpdate(ActionEvent actionEvent) {
@@ -1185,6 +1198,16 @@ public class MainPane implements
      * @param actionEvent the specific action event
      */
     public void zoomIn(ActionEvent actionEvent) {
+        if (tripsContext.isShowWarningOnZoom()) {
+            ShowZoomWarning showZoomWarning = new ShowZoomWarning();
+            Optional<Boolean> optionalBoolean = showZoomWarning.showAndWait();
+            if (optionalBoolean.isPresent()) {
+                Boolean dontShowAgain = optionalBoolean.get();
+                if (dontShowAgain) {
+                    tripsContext.setShowWarningOnZoom(false);
+                }
+            }
+        }
         interstellarSpacePane.zoomIn();
     }
 
@@ -1194,6 +1217,16 @@ public class MainPane implements
      * @param actionEvent the specific action event
      */
     public void zoomOut(ActionEvent actionEvent) {
+        if (tripsContext.isShowWarningOnZoom()) {
+            ShowZoomWarning showZoomWarning = new ShowZoomWarning();
+            Optional<Boolean> optionalBoolean = showZoomWarning.showAndWait();
+            if (optionalBoolean.isPresent()) {
+                Boolean dontShowAgain = optionalBoolean.get();
+                if (dontShowAgain) {
+                    tripsContext.setShowWarningOnZoom(false);
+                }
+            }
+        }
         interstellarSpacePane.zoomOut();
     }
 
@@ -1806,4 +1839,75 @@ public class MainPane implements
         }
     }
 
+    public void saveDataset(ActionEvent actionEvent) {
+        log.info("Save requested");
+    }
+
+    public void saveAsDataset(ActionEvent actionEvent) {
+        showErrorAlert("Save As", "This function is not yet implemented");
+    }
+
+    public void exportDataset(ActionEvent actionEvent) {
+        showErrorAlert("Export dataset", "This function is not yet implemented");
+    }
+
+    public void editStar(ActionEvent actionEvent) {
+        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+        FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
+        Optional<FindResults> optional = findStarInViewDialog.showAndWait();
+        if (optional.isPresent()) {
+            FindResults findResults = optional.get();
+            StarDisplayRecord record = findResults.getRecord();
+            StarObject starObject = databaseManagementService.getStar(record.getRecordId());
+            StarEditDialog starEditDialog = new StarEditDialog(starObject);
+
+            Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
+            if (statusOptional.isPresent()) {
+                StarEditStatus starEditStatus = statusOptional.get();
+                if (starEditStatus.isChanged()) {
+                    // update the database
+                    databaseManagementService.updateStar(starEditStatus.getRecord());
+                }
+            }
+
+        }
+    }
+
+
+    public void showRoutes(ActionEvent actionEvent) {
+        toggleSidePane(null);
+        propertiesAccordion.setExpandedPane(routingPane);
+    }
+
+    public void editDeleteRoutes(ActionEvent actionEvent) {
+        showWarningMessage("Edit/Delete Routes", "THis function isn't implmented yet");
+    }
+
+    public void clickRoutes(ActionEvent actionEvent) {
+        RouteManager routeManager = interstellarSpacePane.getRouteManager();
+        ContextManualRoutingDialog manualRoutingDialog = new ContextManualRoutingDialog(
+                routeManager,
+                tripsContext.getDataSetContext().getDescriptor(),
+                interstellarSpacePane.getCurrentStarsInView()
+        );
+        manualRoutingDialog.initModality(Modality.NONE);
+        manualRoutingDialog.show();
+
+        StarPlotManager starPlotManager = interstellarSpacePane.getStarPlotManager();
+        starPlotManager.setManualRouting(manualRoutingDialog);
+
+        // set the state for the routing so that clicks on stars don't invoke the context menu
+        routeManager.setRoutingActive(true);
+        routeManager.setRoutingType(RoutingType.MANUAL);
+    }
+
+    public void routeListReport(ActionEvent actionEvent) {
+        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+        RouteReportDialog dialog = new RouteReportDialog(tripsContext.getDataSetContext(), dataSetDescriptorList);
+        dialog.showAndWait();
+    }
+
+    public void starPropertyReport(ActionEvent actionEvent) {
+        showWarningMessage("Star Propery Report", "This function hasn't been implemented.");
+    }
 }
