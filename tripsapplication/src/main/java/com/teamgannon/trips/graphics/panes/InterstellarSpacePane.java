@@ -482,6 +482,10 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         routeManager.toggleRoutes(routesOn);
     }
 
+    public void toggleRouteLengths(boolean routesLengthsOn) {
+        routeManager.toggleRouteLengths(routesLengthsOn);
+    }
+
     /**
      * toggle the transit view
      *
@@ -751,5 +755,14 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     public void setDataSetContext(DataSetDescriptor descriptor) {
         starPlotManager.setDataSetContext(descriptor);
+    }
+
+
+    public RouteManager getRouteManager() {
+        return routeManager;
+    }
+
+    public StarPlotManager getStarPlotManager() {
+        return starPlotManager;
     }
 }

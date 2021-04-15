@@ -1,19 +1,25 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.HostServices;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
+@Slf4j
 public class StarPropertiesPane extends Pane {
 
     // Overview
@@ -66,14 +72,18 @@ public class StarPropertiesPane extends Pane {
     private final Label bpgLabel = new Label();
     private final Label grpLabel = new Label();
 
+    private Button editButton = new Button("Edit Star");
+
     private Button simbadButton = new Button("More\nInfo");
 
 
     private @NotNull StarObject record = new StarObject();
     private final HostServices hostServices;
+    private final DatabaseManagementService databaseManagementService;
 
-    public StarPropertiesPane(HostServices hostServices) {
+    public StarPropertiesPane(DatabaseManagementService databaseManagementService, HostServices hostServices) {
         this.hostServices = hostServices;
+        this.databaseManagementService = databaseManagementService;
 
         VBox vBox = new VBox();
 
@@ -93,11 +103,32 @@ public class StarPropertiesPane extends Pane {
         tabPane.getTabs().add(secondaryTab);
 
         vBox.getChildren().add(tabPane);
+
+        editButton.setDisable(true);
+        editButton.setOnAction(this::editStar);
+
         this.getChildren().add(vBox);
+    }
+
+    private void editStar(ActionEvent actionEvent) {
+        if (record.getId() != null) {
+            log.info("edit star");
+            StarEditDialog starEditDialog = new StarEditDialog(record);
+            Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
+            if (statusOptional.isPresent()) {
+                StarEditStatus starEditStatus = statusOptional.get();
+                if (starEditStatus.isChanged()) {
+                    // update the database
+                    databaseManagementService.updateStar(starEditStatus.getRecord());
+                }
+            }
+        }
     }
 
     public void setStar(@NotNull StarObject record) {
         this.record = record;
+
+        editButton.setDisable(false);
 
         // primary tab
         starNameLabel1.setText(record.getDisplayName());
@@ -214,6 +245,8 @@ public class StarPropertiesPane extends Pane {
         gridPane.setPadding(new Insets(10, 10, 10, 10));
         gridPane.setVgap(5);
         gridPane.setHgap(5);
+
+        gridPane.add(editButton, 0, 0);
 
         gridPane.add(new Label("Star name"), 0, 1);
         starNameLabel1.setText(record.getDisplayName());

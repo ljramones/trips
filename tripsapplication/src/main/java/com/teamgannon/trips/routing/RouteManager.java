@@ -171,10 +171,18 @@ public class RouteManager {
         labelDisplayGroup.setVisible(routesOn);
     }
 
+    public void toggleRouteLengths(boolean routesLengthsOn) {
+        labelDisplayGroup.setVisible(routesLengthsOn);
+    }
+
     ///////////// routing functions
 
     public void setRoutingActive(boolean state) {
         routingActive = state;
+        if (!state) {
+            resetRoute();
+            routeUpdaterListener.routingStatus(state);
+        }
     }
 
     public void setRoutingType(RoutingType type) {
@@ -680,7 +688,11 @@ public class RouteManager {
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
         log.info("Change state of route {} to {}", routeDescriptor.getName(), state);
         Group route = routeLookup.get(routeDescriptor.getId());
-        route.setVisible(state);
+        if (route != null) {
+            route.setVisible(state);
+        } else {
+            log.error("requested route is null:{}", routeDescriptor);
+        }
     }
 
 }

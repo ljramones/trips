@@ -307,6 +307,24 @@ public class StarPlotManager {
             log.error("Unable to load the 5 pt star object");
         }
 
+        MeshView geometric0 = meshViewShapeFactory.geometric0();
+        if (geometric0 != null) {
+            MeshObjectDefinition objectDefinition = MeshObjectDefinition
+                    .builder()
+                    .name("geometric0")
+                    .id(UUID.randomUUID())
+                    .object(geometric0)
+                    .xScale(10)
+                    .yScale(10)
+                    .zScale(10)
+                    .axis(Rotate.X_AXIS)
+                    .rotateAngle(-90)
+                    .build();
+            specialObjects.put("geometric0", objectDefinition);
+        } else {
+            log.error("Unable to load the geometric object");
+        }
+
         log.info("All MeshView objects loaded");
 
     }
@@ -769,7 +787,8 @@ public class StarPlotManager {
                     if (manualRoutingDialog != null) {
                         manualRoutingDialog.addStar(record);
                     }
-                } if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)){
+                }
+                if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
                     if (automatedRoutingDialog != null) {
                         automatedRoutingDialog.setToStar(record.getStarName());
                     }
@@ -890,7 +909,10 @@ public class StarPlotManager {
     private void generateManualRoute(StarDisplayRecord starDescriptor) {
         log.info("generate manual route");
         manualRoutingDialog = new ContextManualRoutingDialog(
-                this,routeManager, currentDataSet, starDescriptor, getCurrentStarsInView());
+                routeManager,
+                currentDataSet,
+                starDescriptor
+        );
         manualRoutingDialog.initModality(Modality.NONE);
         manualRoutingDialog.show();
         // set the state for the routing so that clicks on stars don't invoke the context menu
@@ -1488,5 +1510,9 @@ public class StarPlotManager {
         }
     }
 
+
+    public void setManualRouting(ContextManualRoutingDialog manualRoutingDialog) {
+        this.manualRoutingDialog = manualRoutingDialog;
+    }
 
 }
