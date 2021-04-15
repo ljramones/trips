@@ -11,17 +11,17 @@
     <VBox>
         <MenuBar fx:id="menuBar" >
             <Menu mnemonicParsing="false" text="File">
-                <MenuItem mnemonicParsing="false"
+                <MenuItem fx:id="openDatasetMenuItem"
                           onAction="#selectActiveDataset" text="Open Dataset..."/>
-                <MenuItem mnemonicParsing="false"
+                <MenuItem fx:id="saveMenuItem"
                           onAction="#saveDataset" text="Save"/>
-                <MenuItem mnemonicParsing="false"
+                <MenuItem fx:id="saveAsMenuItem"
                           onAction="#saveAsDataset" text="Save As (Create new dataset)"/>
-                <MenuItem mnemonicParsing="false"
+                <MenuItem fx:id="exportDataSetMenuItem"
                           onAction="#exportDataset" text="Export dataset"/>
-                <MenuItem mnemonicParsing="false"
+                <MenuItem fx:id="importDataSetMenuItem"
                           onAction="#loadDataSetManager" text="Import dataset"/>
-                <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit"/>
+                <MenuItem fx:id="quitMenuItem" onAction="#quit" text="Quit"/>
             </Menu>
             <Menu mnemonicParsing="false" text="Edit">
                 <MenuItem mnemonicParsing="false"
@@ -134,7 +134,6 @@
                               onAction="#advancedSearch" text="Select stars using advanced search.."/>
                 </Menu>
             </Menu>
-
             <Menu mnemonicParsing="false" text="Reports">
                 <MenuItem mnemonicParsing="false"
                           onAction="#distanceReport"

@@ -194,7 +194,6 @@ public class RouteManager {
     }
 
     public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord starDisplayRecord) {
-        resetRoute();
         routingActive = true;
         currentRoute = routeDescriptor;
         currentRoute.setDescriptor(dataSetDescriptor);
@@ -442,9 +441,9 @@ public class RouteManager {
         }
 
         routesGroup.getChildren().remove(currentRouteDisplay);
-        routingActive = false;
         createCurrentRouteDisplay();
         resetCurrentRoute();
+        routeLookup.put(currentRoute.getId(), currentRouteDisplay);
 
         log.info("Resetting the route");
     }

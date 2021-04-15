@@ -62,6 +62,9 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -129,6 +132,12 @@ public class MainPane implements
     private final DatabaseManagementService databaseManagementService;
     public CheckMenuItem toggleRouteLengthsMenuitem;
     public MenuItem showRoutesMenuitem;
+    public MenuItem openDatasetMenuItem;
+    public MenuItem saveMenuItem;
+    public MenuItem saveAsMenuItem;
+    public MenuItem exportDataSetMenuItem;
+    public MenuItem importDataSetMenuItem;
+    public MenuItem quitMenuItem;
 
     /**
      * star plotter component
@@ -273,6 +282,8 @@ public class MainPane implements
     public void initialize() {
         log.info("initialize view");
 
+        setMnemonics();
+
         this.plotManager = new PlotManager(tripsContext, databaseManagementService,
                 this, this, this);
 
@@ -314,6 +325,15 @@ public class MainPane implements
 
         loadConstellationFile();
 
+    }
+
+    private void setMnemonics() {
+        openDatasetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
+        saveMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
+        saveAsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
+        exportDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
+        importDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
+        quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
 
     /**
