@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
-import static org.fxyz3d.geometry.MathUtils.clamp;
 
 /**
  * This is used to display a solar system
@@ -142,12 +141,10 @@ public class SolarSystemSpacePane extends Pane {
                         } else {
                             rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
                             rotateX.setAngle(
-                                    clamp(
-                                            (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180),
-                                            -60,
-                                            60
-                                    )
-                            ); // -
+                                    (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180)
+
+
+                                    ); // -
                         }
                     }
                     updateLabels();
