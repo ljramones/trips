@@ -15,7 +15,6 @@ spring:
     driverClassName: org.h2.Driver
     username: sa
     password:
-    continue-on-error: true
 
   jpa:
     databasePlatform: org.hibernate.dialect.H2Dialect
@@ -25,11 +24,14 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  sql:
+    init:
+      continue-on-error: true
 
 app:
   title: Terran Republic Interstellar Plotting System (TRIPS)
-  version: v0.6.8
-  releaseDate: 21 March 2021
+  version: v0.6.9
+  releaseDate: 6 June 2021
   contributors: LJ Ramones, CE Gannon, R Boatright
   projectPage: https://github.com/ljramones/trips
   fileDirectory: files

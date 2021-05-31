@@ -184,7 +184,7 @@
             <ToggleButton fx:id="toggleRoutesBtn" mnemonicParsing="false" textFill="dodgerblue"
                           onAction="#toggleRoutes" text="Routes"/>
             <ToggleButton fx:id="toggleTransitsBtn" mnemonicParsing="false" textFill="dodgerblue"
-                          onAction="#toggleTransitAction" text="Transits"/>
+                          onAction="#toggleTransitAction" text="Links"/>
             <Separator/>
             <ToggleButton fx:id="toggleStarBtn" mnemonicParsing="false" textFill="blueviolet"
                           onAction="#toggleStars" text="Stars"/>
