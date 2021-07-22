@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -503,15 +504,75 @@ public class RouteManager {
      * @param route the route to plot
      */
     public void plotRoute(@NotNull Route route) {
-        if (checkIfRouteCanBePlotted(route)) {
+        if (checkIfWholeRouteCanBePlotted(route)) {
             // do actual plot
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
             Group routeGraphic = createRoute(routeDescriptor);
             addRoute(routeDescriptor, routeGraphic);
             routesGroup.setVisible(true);
+        } else {
+            List<RouteDescriptor> partialRoutes = getPartialRoutes(route);
+            log.info("number of partial routes:{}", partialRoutes.size());
         }
         updateLabels(interstellarSpacePane);
         log.info("Plot done");
+    }
+
+    private List<RouteDescriptor> getPartialRoutes(Route route) {
+        List<RouteDescriptor> routeDescriptorList = new ArrayList<>();
+        Set<UUID> visibleStarList = route.getRouteStars()
+                .stream()
+                .filter(starId ->
+                        tripsContext.getCurrentPlot()
+                                .getStarLookup()
+                                .containsKey(starId))
+                .collect(Collectors.toSet());
+
+
+        RouteDescriptor routeDescriptor = RouteDescriptor.builder().build();
+        boolean newRoute = true;
+        List<UUID> routeStars = route.getRouteStars();
+        for (int i = 0; i < routeStars.size(); i++) {
+            UUID starToMatch = routeStars.get(i);
+            if (visibleStarList.contains(starToMatch)) {
+                if (i == (routeStars.size() - 1)) {
+                    // if this is the last star then skip since there is no segment to join with this one
+                    continue; // should be end of loop
+                }
+                // get the next star in series and see if its there
+                UUID nextStar = routeStars.get(i + 1);
+                if (visibleStarList.contains(nextStar)) {
+                    // ok this stars form a segment, so let copy them
+                    if (newRoute) {
+                        routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
+                        // add route stars
+                        routeDescriptor.getRouteList().add(routeStars.get(i));
+                        routeDescriptor.getRouteList().add(routeStars.get(i + 1));
+                        // add names
+                        routeDescriptor.getNameList().add(route.getRouteStarNames().get(i));
+                        routeDescriptor.getNameList().add(route.getRouteStarNames().get(i + 1));
+                        // add length list
+                        routeDescriptor.getLengthList().add(route.getRouteLengths().get(i));
+                        routeDescriptor.getLengthList().add(route.getRouteLengths().get(i + 1));
+
+                        // add to the list
+                        routeDescriptorList.add(routeDescriptor);
+                        newRoute = false;
+                    } else {
+                        routeDescriptor.getRouteList().add(routeStars.get(i + 1));
+                        routeDescriptor.getNameList().add(route.getRouteStarNames().get(i + 1));
+                        routeDescriptor.getLengthList().add(route.getRouteLengths().get(i + 1));
+                    }
+                } else {
+                    // break partial route
+                    newRoute = false;
+                }
+            } else {
+                // break partial route
+                newRoute = false;
+            }
+        }
+        return routeDescriptorList;
     }
 
     public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
@@ -563,7 +624,7 @@ public class RouteManager {
      * @param route the route definition
      * @return true means we can plot the whole route
      */
-    public boolean checkIfRouteCanBePlotted(@NotNull Route route) {
+    public boolean checkIfWholeRouteCanBePlotted(@NotNull Route route) {
         return route.getRouteStars().stream().allMatch(tripsContext.getCurrentPlot().getStarLookup()::containsKey);
     }
 
