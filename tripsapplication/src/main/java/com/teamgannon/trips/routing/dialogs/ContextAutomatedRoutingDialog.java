@@ -1,12 +1,11 @@
 package com.teamgannon.trips.routing.dialogs;
 
-import com.teamgannon.trips.dialogs.search.ComboBoxAutoComplete;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.*;
-import com.teamgannon.trips.service.StarMeasurementService;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitRoute;
 import javafx.event.ActionEvent;
@@ -173,8 +172,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         RouteFindingOptions routeFindingOptions = RouteFindingOptions
                 .builder()
                 .selected(true)
-                .originStar(fromStar.getText())
-                .destinationStar(destinationStarSelected)
+                .originStarName(fromStar.getText())
+                .destinationStarName(destinationStarSelected)
                 .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                 .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                 .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
@@ -198,8 +197,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 log.info("find route between stars");
 
                 // setup our initials
-                String origin = routeFindingOptions.getOriginStar();
-                String destination = routeFindingOptions.getDestinationStar();
+                String origin = routeFindingOptions.getOriginStarName();
+                String destination = routeFindingOptions.getDestinationStarName();
 
                 List<StarDisplayRecord> prunedStars = prune(starsInView, routeFindingOptions);
 
@@ -230,7 +229,9 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 log.info("transits calculated");
 
                 // create a graph based on the transits available
-                RouteGraph routeGraph = new RouteGraph(transitRoutes);
+                RouteGraph routeGraph = new RouteGraph();
+                routeGraph.calculateGraphForTransit(transitRoutes);
+
                 try {
                     // check if the origin star and destination star are connected to each other
                     if (routeGraph.isConnected(origin, destination)) {

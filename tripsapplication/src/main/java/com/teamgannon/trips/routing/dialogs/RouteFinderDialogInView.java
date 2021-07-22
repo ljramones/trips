@@ -1,6 +1,5 @@
 package com.teamgannon.trips.routing.dialogs;
 
-import com.teamgannon.trips.dialogs.search.ComboBoxAutoComplete;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.routing.RouteFindingOptions;
 import javafx.event.ActionEvent;
@@ -426,8 +425,8 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
                     RouteFindingOptions
                             .builder()
                             .selected(true)
-                            .originStar(originStarSelected)
-                            .destinationStar(destinationStarSelected)
+                            .originStarName(originStarSelected)
+                            .destinationStarName(destinationStarSelected)
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))

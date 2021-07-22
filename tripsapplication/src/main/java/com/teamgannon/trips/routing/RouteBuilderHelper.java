@@ -18,7 +18,7 @@ public class RouteBuilderHelper {
     private final Map<String, StarDisplayRecord> starDisplayRecordMap = new HashMap<>();
 
     /**
-     * the cotr
+     * the ctor
      *
      * @param starDisplayRecordList the stars in the plot
      */

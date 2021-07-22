@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
+import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.beans.Observable;
@@ -20,7 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
-public class LookupStarDialog extends Dialog<String> {
+public class LookupStarDialog extends Dialog<StarSearchResults> {
 
     private final TableView<StarObject> tableView = new TableView<>();
     private final TableColumn<StarObject, String> displayNameCol = new TableColumn<>("Display Name");
@@ -36,6 +37,7 @@ public class LookupStarDialog extends Dialog<String> {
     private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
     private final String starToLookup;
+    private final String datasetName;
     private final List<StarObject> starsFound;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
@@ -45,6 +47,7 @@ public class LookupStarDialog extends Dialog<String> {
                             String datasetName,
                             @NotNull DatabaseManagementService databaseManagementService) {
         this.starToLookup = starToLookup;
+        this.datasetName = datasetName;
 
         starsFound = databaseManagementService.findStarsWithName(datasetName, starToLookup);
 
@@ -174,16 +177,25 @@ public class LookupStarDialog extends Dialog<String> {
     }
 
     private void close(WindowEvent windowEvent) {
-        setResult("dismiss");
+        StarSearchResults results = StarSearchResults.builder().starsFound(false).build();
+        setResult(results);
     }
 
     private void dismiss() {
-        setResult("dismiss");
+        StarSearchResults results = StarSearchResults.builder().starsFound(false).build();
+        setResult(results);
+
     }
 
     private void selectName() {
         StarObject starObject = tableView.getSelectionModel().getSelectedItem();
-        setResult(starObject.getDisplayName());
+        StarSearchResults results =  StarSearchResults.builder()
+                .starsFound(true)
+                .dataSetName(datasetName)
+                .starObject(starObject)
+                .nameToSearch(starObject.getDisplayName())
+                .build();
+        setResult(results);
     }
 
     ///////////////////  Sorting operators   ///////////////

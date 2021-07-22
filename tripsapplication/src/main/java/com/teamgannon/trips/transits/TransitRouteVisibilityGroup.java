@@ -9,7 +9,7 @@ import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
-import com.teamgannon.trips.service.StarMeasurementService;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;

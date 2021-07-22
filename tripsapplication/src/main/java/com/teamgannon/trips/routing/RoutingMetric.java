@@ -1,8 +1,11 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.routing.model.SparseStarRecord;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.Map;
 
 @Data
 @Builder
@@ -17,5 +20,7 @@ public class RoutingMetric {
     private int numberOfSegments;
 
     private double totalLength;
+
+    private Map<String, SparseStarRecord> starRecordMap;
 
 }

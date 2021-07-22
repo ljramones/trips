@@ -12,7 +12,6 @@ import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -21,7 +20,6 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.util.Callback;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,11 +54,11 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         routingTableView.setPrefHeight(800);
         routingTableView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
 
-        TableColumn<RouteTree, Boolean> showRouteCol = getCheckBoxColumn();
+        TableColumn<RouteTree, Boolean> showRouteCol = createCheckBoxColumn();
 
-        TableColumn<RouteTree, Color> colorCol = getRouteColorTableColumn();
+        TableColumn<RouteTree, Color> colorCol = createRouteColorTableColumn();
 
-        TableColumn<RouteTree, String> routeCol = getRouteTableColumn();
+        TableColumn<RouteTree, String> routeCol = createRouteTableColumn();
 
         routingTableView.getColumns().addAll(showRouteCol, colorCol, routeCol);
 
@@ -125,14 +123,14 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     }
 
     @NotNull
-    private TableColumn<RouteTree, String> getRouteTableColumn() {
+    private TableColumn<RouteTree, String> createRouteTableColumn() {
         TableColumn<RouteTree, String> routeCol = new TableColumn<>("Route");
         routeCol.setCellValueFactory(new PropertyValueFactory<>("route"));
         return routeCol;
     }
 
     @NotNull
-    private TableColumn<RouteTree, Color> getRouteColorTableColumn() {
+    private TableColumn<RouteTree, Color> createRouteColorTableColumn() {
         TableColumn<RouteTree, Color> colorCol = new TableColumn<>("Color");
         colorCol.setPrefWidth(65);
         colorCol.setCellValueFactory(new PropertyValueFactory<>("routeColor"));
@@ -144,14 +142,22 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         return colorCol;
     }
 
-    private TableColumn<RouteTree, Boolean> getCheckBoxColumn() {
+    private TableColumn<RouteTree, Boolean> createCheckBoxColumn() {
         TableColumn<RouteTree, Boolean> tableColumn = new TableColumn<>("Show?");
         tableColumn.setCellFactory(column -> {
             CheckBoxTableCell<RouteTree, Boolean> checkBoxTableCell = new CheckBoxTableCell<>();
             final BooleanProperty selected = new SimpleBooleanProperty(true);
             checkBoxTableCell.setSelectedStateCallback(index -> selected);
+
             selected.addListener((obs, wasSelected, isSelected) -> {
-                final RouteTree routeTree = routingTableView.getSelectionModel().getSelectedItem();
+                RouteTree routeTree;
+                routeTree = routingTableView.getSelectionModel().getSelectedItem();
+                if (routeTree == null) {
+                    TableRow<RouteTree> tableRow = checkBoxTableCell.getTableRow();
+                    if (tableRow != null) {
+                        routeTree = tableRow.getItem();
+                    }
+                }
                 if (routeTree != null) {
                     routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
                 }
@@ -210,5 +216,18 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         routeTree.setRouteColor(color);
         routeUpdaterListener.updateRoute(RouteTree.toRouteDescriptor(routeTree));
         log.info(routeTree.getRoute());
+    }
+
+    private void handleCheckboxEvent(ObservableValue<? extends Boolean> obs, Boolean wasSelected, Boolean
+            isSelected) {
+        RouteTree routeTree;
+        if (wasSelected) {
+            routeTree = routingTableView.getSelectionModel().getSelectedItem();
+        } else {
+            routeTree = null;
+        }
+        if (routeTree != null) {
+            routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
+        }
     }
 }

@@ -7,7 +7,7 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInView;
-import com.teamgannon.trips.service.StarMeasurementService;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.transits.TransitRoute;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -64,8 +64,8 @@ public class RouteFinderInView {
                     log.info("find route between stars");
 
                     // setup our initials
-                    String origin = routeFindingOptions.getOriginStar();
-                    String destination = routeFindingOptions.getDestinationStar();
+                    String origin = routeFindingOptions.getOriginStarName();
+                    String destination = routeFindingOptions.getDestinationStarName();
                     List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
                     List<StarDisplayRecord> prunedStars = prune(starsInView, routeFindingOptions);
 
@@ -96,7 +96,8 @@ public class RouteFinderInView {
                     log.info("transits calculated");
 
                     // create a graph based on the transits available
-                    RouteGraph routeGraph = new RouteGraph(transitRoutes);
+                    RouteGraph routeGraph = new RouteGraph();
+                    routeGraph.calculateGraphForTransit(transitRoutes);
                     try {
                         // check if the origin star and destination star are connected to each other
                         if (routeGraph.isConnected(origin, destination)) {
@@ -120,7 +121,13 @@ public class RouteFinderInView {
         }
     }
 
-    private void determineRoutesAndPlotOne(DataSetDescriptor currentDataSet, Stage theStage, RouteFindingOptions routeFindingOptions, String origin, String destination, RouteBuilderHelper routeBuilderHelper, RouteGraph routeGraph) {
+    private void determineRoutesAndPlotOne(DataSetDescriptor currentDataSet,
+                                           Stage theStage,
+                                           RouteFindingOptions routeFindingOptions,
+                                           String origin,
+                                           String destination,
+                                           RouteBuilderHelper routeBuilderHelper,
+                                           RouteGraph routeGraph) {
         log.info("Source and destination stars have a path");
 
         // find the k shortest paths. We add one because the first is null
