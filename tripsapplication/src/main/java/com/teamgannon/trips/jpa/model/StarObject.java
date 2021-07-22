@@ -2,6 +2,7 @@ package com.teamgannon.trips.jpa.model;
 
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
+import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarModel;
@@ -822,6 +823,14 @@ public class StarObject implements Serializable {
         // figure out display score
 //        calculateLabelMultiplier();
 
+    }
+
+    public SparseStarRecord toSparseStarRecord() {
+        SparseStarRecord sparseStarRecord = new SparseStarRecord();
+        sparseStarRecord.setRecordId(this.id);
+        sparseStarRecord.setStarName(this.getDisplayName());
+        sparseStarRecord.setActualCoordinates(new double[]{x, y, z});
+        return sparseStarRecord;
     }
 
 //    public static void main(String[] args) {

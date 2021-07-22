@@ -1,5 +1,6 @@
 package com.teamgannon.trips.routing;
 
+import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
@@ -16,9 +17,12 @@ public class RouteFindingOptions {
 
     private double lowerBound;
 
-    private String originStar;
+    private StarObject originStar;
+    private StarObject destinationStar;
 
-    private String destinationStar;
+    private String originStarName;
+
+    private String destinationStarName;
 
     @Builder.Default
     private double lineWidth = 0.5;

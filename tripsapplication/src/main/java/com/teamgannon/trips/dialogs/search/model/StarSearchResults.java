@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.search.model;
 
+import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,5 +13,7 @@ public class StarSearchResults {
     private String dataSetName;
 
     private String nameToSearch;
+
+    private StarObject starObject;
 
 }

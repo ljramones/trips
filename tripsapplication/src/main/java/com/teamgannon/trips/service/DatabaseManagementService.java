@@ -12,10 +12,12 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
 import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
+import com.teamgannon.trips.support.LogExecutionTime;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 
@@ -265,6 +268,26 @@ public class DatabaseManagementService {
                 dataSetDescriptor.getDataSetName(),
                 PageRequest.of(pageNumber, requestSize)
         );
+    }
+
+    @LogExecutionTime
+    @Transactional(readOnly = true)
+    public Map<String, SparseStarRecord> getFromDatasetWithinRanges(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
+        final Map<String,SparseStarRecord> starRecordHashMap = new HashMap<>();
+        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance);
+
+        starObjectStream.forEach(starObject -> {
+            SparseStarRecord sparseStarRecord= starObject.toSparseStarRecord();
+            starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
+        });
+
+        return starRecordHashMap;
+    }
+
+    @LogExecutionTime
+    @Transactional(readOnly = true)
+    public List<StarObject> getStarsBasedOnId(List<UUID> starIdList) {
+        return starObjectRepository.findByIdIn(starIdList);
     }
 
 

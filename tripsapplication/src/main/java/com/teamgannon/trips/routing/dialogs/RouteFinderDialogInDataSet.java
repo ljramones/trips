@@ -1,8 +1,9 @@
 package com.teamgannon.trips.routing.dialogs;
 
+import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.routing.RouteFindingOptions;
-import com.teamgannon.trips.routing.dialogs.LookupStarDialog;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -33,6 +34,9 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
      */
     private final TextField originCmb;
     private final TextField destinationCmb;
+
+    private StarObject originStar;
+    private StarObject destinationStar;
 
     /**
      * our lookup
@@ -71,9 +75,10 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         gridPane.add(originCmb, 1, 1);
         Button lookupButton1 = new Button("Lookup");
         lookupButton1.setOnAction(event -> {
-            String starName = lookupStarName(originCmb.getText());
-            if (starName != null) {
-                originCmb.setText(starName);
+            StarSearchResults starObject = lookupStarName(originCmb.getText());
+            if (starObject != null) {
+                originCmb.setText(starObject.getNameToSearch());
+                originStar = starObject.getStarObject();
             }
         });
         gridPane.add(lookupButton1, 2, 1);
@@ -84,9 +89,10 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         Button lookupButton2 = new Button("Lookup");
         lookupButton2.setOnAction(event -> {
 
-            String starName = lookupStarName(destinationCmb.getText());
+            StarSearchResults starName = lookupStarName(destinationCmb.getText());
             if (starName != null) {
-                destinationCmb.setText(starName);
+                destinationCmb.setText(starName.getNameToSearch());
+                destinationStar = starName.getStarObject();
             }
         });
         gridPane.add(lookupButton2, 2, 2);
@@ -95,19 +101,24 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
     }
 
 
-    private String lookupStarName(String starToFind) {
-        LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService);
-        Stage theStage = (Stage) lookupStarDialog.getDialogPane().getScene().getWindow();
-        theStage.setAlwaysOnTop(true);
-        theStage.toFront();
-        Optional<String> optStarSelect = lookupStarDialog.showAndWait();
-        if (optStarSelect.isPresent()) {
-            String starSelected = optStarSelect.get();
-            if (!starSelected.equals("dismiss")) {
-                return starSelected;
+    private StarSearchResults lookupStarName(String starToFind) {
+        if (starToFind.isEmpty()) {
+            showErrorAlert("Star to Lookup","Please enter a star name");
+            return null;
+        } else {
+            LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService);
+            Stage theStage = (Stage) lookupStarDialog.getDialogPane().getScene().getWindow();
+            theStage.setAlwaysOnTop(true);
+            theStage.toFront();
+            Optional<StarSearchResults> optStarSelect = lookupStarDialog.showAndWait();
+            if (optStarSelect.isPresent()) {
+                StarSearchResults starSelected = optStarSelect.get();
+                if (starSelected.isStarsFound()) {
+                    return starSelected;
+                }
             }
+            return null;
         }
-        return null;
     }
 
 
@@ -194,8 +205,10 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
                     RouteFindingOptions
                             .builder()
                             .selected(true)
-                            .originStar(originStarSelected)
-                            .destinationStar(destinationStarSelected)
+                            .originStarName(originStarSelected)
+                            .originStar(originStar)
+                            .destinationStarName(destinationStarSelected)
+                            .destinationStar(destinationStar)
                             .upperBound(Double.parseDouble(upperLengthLengthTextField.getText()))
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))

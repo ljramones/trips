@@ -1097,7 +1097,7 @@ public class MainPane implements
         routeFinderDataset.startRouteLocation(
                 searchContext.getAstroSearchQuery().getDescriptor(),
                 databaseManagementService,
-                tripsContext.getAppViewPreferences().getStarDisplayPreferences()
+                this
         );
 
     }

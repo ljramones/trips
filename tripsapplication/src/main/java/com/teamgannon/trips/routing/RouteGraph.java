@@ -1,6 +1,9 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.routing.model.SparseStarRecord;
+import com.teamgannon.trips.routing.model.SparseTransit;
+import com.teamgannon.trips.support.LogExecutionTime;
 import com.teamgannon.trips.transits.TransitRoute;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -8,31 +11,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
-import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.alg.shortestpath.YenKShortestPath;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
-import org.jgrapht.nio.Attribute;
-import org.jgrapht.nio.DefaultAttribute;
-import org.jgrapht.nio.dot.DOTExporter;
 
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data
 @Slf4j
 public class RouteGraph {
 
-    /**
-     * our discovered transits
-     */
-    private final @NotNull List<TransitRoute> transitRoutes;
 
     /**
      * the graph constructed
@@ -42,29 +31,23 @@ public class RouteGraph {
     /**
      * our connectivity graph
      */
-    private final @NotNull ConnectivityInspector<String, DefaultEdge> connectivityInspector;
-
-    /**
-     * our shortest path graph
-     */
-    private final @NotNull DijkstraShortestPath<String, DefaultEdge> dijkstraAlg;
+    private ConnectivityInspector<String, DefaultEdge> connectivityInspector;
 
     /**
      * our Yen k shortest paths
      */
-    private final @NotNull YenKShortestPath<String, DefaultEdge> kShortedPaths;
+    private YenKShortestPath<String, DefaultEdge> kShortedPaths;
 
 
     /**
      * the ctor
-     *
-     * @param transitRoutes the transits to map to a graph
      */
-    public RouteGraph(@NotNull List<TransitRoute> transitRoutes) {
-        this.transitRoutes = transitRoutes;
+    public RouteGraph() {
 
         routingGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
+    }
 
+    public void calculateGraphForTransit(List<TransitRoute> transitRoutes) {
         for (TransitRoute transitRoute : transitRoutes) {
             StarDisplayRecord source = transitRoute.getSource();
             StarDisplayRecord destination = transitRoute.getTarget();
@@ -75,30 +58,55 @@ public class RouteGraph {
         }
 
         // setup a connectivity inspector
+        calculateGraphPaths();
+    }
+
+    public Double findEdges(String from, String to) {
+        DefaultEdge edge = routingGraph.getEdge(from.trim(), to);
+        if (edge != null) {
+            return routingGraph.getEdgeWeight(edge);
+        } else {
+            return null;
+        }
+    }
+
+    @LogExecutionTime
+    public boolean calculateGraphForSparseTransits(List<SparseTransit> sparseTransitList) {
+
+        for (SparseTransit transitRoute : sparseTransitList) {
+            try {
+                SparseStarRecord source = transitRoute.getSource();
+                SparseStarRecord destination = transitRoute.getTarget();
+                if (source.getStarName().equals(destination.getStarName())) {
+                    log.info("hmmm, this will form a loop - bad -> skip");
+                    continue;
+                }
+                routingGraph.addVertex(source.getStarName());
+                routingGraph.addVertex(destination.getStarName());
+                DefaultEdge e1 = routingGraph.addEdge(source.getStarName(), destination.getStarName());
+                if (e1 != null) {
+                    routingGraph.setEdgeWeight(e1, transitRoute.getDistance());
+                } else {
+                    log.error("edge is null!?");
+                }
+            } catch (Exception e) {
+                log.error("caught error on creating graph: " + e.getMessage());
+                return false;
+            }
+        }
+        calculateGraphPaths();
+        return true;
+
+    }
+
+    private void calculateGraphPaths() {
+        // setup a connectivity inspector
         connectivityInspector = new ConnectivityInspector<>(routingGraph);
 
-        // determine shortest paths
-        dijkstraAlg = new DijkstraShortestPath<>(routingGraph);
-
+        // determine k shortest paths
         kShortedPaths = new YenKShortestPath<>(routingGraph);
-
     }
 
-    /**
-     * export our grah in GraphViz format for plotting
-     */
-    public void exportGraphViz() {
-        DOTExporter<String, DefaultEdge> exporter =
-                new DOTExporter<>();
-
-        exporter.setVertexAttributeProvider((v) -> {
-            Map<String, Attribute> map = new LinkedHashMap<>();
-            map.put("label", DefaultAttribute.createAttribute(v));
-            return map;
-        });
-        Writer writer = new StringWriter();
-        exporter.exportGraph(routingGraph, writer);
-    }
 
     /**
      * tells us whether a path exists between the origin star and destination star
@@ -109,28 +117,6 @@ public class RouteGraph {
      */
     public boolean isConnected(String originStar, String destinationStar) {
         return connectivityInspector.pathExists(originStar, destinationStar);
-    }
-
-    /**
-     * get the connected set from the origin point
-     *
-     * @param vertexToLook the vertex to find connectivity
-     * @return the set of connections
-     */
-    public Set<String> getConnectedTo(String vertexToLook) {
-        return connectivityInspector.connectedSetOf(vertexToLook);
-    }
-
-    /**
-     * find the shortest path
-     *
-     * @param origin      the star
-     * @param destination the destination
-     * @return the path found
-     */
-    public String findShortestPath(@NotNull String origin, String destination) {
-        ShortestPathAlgorithm.SingleSourcePaths<String, DefaultEdge> originPaths = dijkstraAlg.getPaths(origin);
-        return originPaths.getPath(destination).toString();
     }
 
     /**

@@ -29,6 +29,14 @@ public interface StarObjectRepository
     Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
 
     /**
+     * find by a list of ids
+     *
+     * @param astrographicDataList the list of stars to search for
+     * @return the stars
+     */
+    List<StarObject> findByIdIn(Collection<UUID> astrographicDataList);
+
+    /**
      * this is the distance from Sol
      *
      * @param limitDistance the distance to search
@@ -87,7 +95,7 @@ public interface StarObjectRepository
      * @param limitDistance the distance to search
      * @return the list of applicable stars
      */
-    List<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance);
+    Stream<StarObject> findByDataSetNameAndDistanceIsLessThanEqual(String dataSetName, double limitDistance);
 
 
     List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(

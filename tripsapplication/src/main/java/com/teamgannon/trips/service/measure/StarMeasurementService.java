@@ -1,4 +1,4 @@
-package com.teamgannon.trips.service;
+package com.teamgannon.trips.service.measure;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
