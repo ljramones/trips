@@ -87,6 +87,11 @@ public class Route implements Serializable {
      */
     private String startingStar;
 
+    /**
+     * the total length of the route, so I don't need to recalculate this
+     */
+    private double totalLength;
+
     ////////////
 
     public String convertToJson() {
