@@ -69,7 +69,7 @@ public class ChviewReader {
     /**
      * read the complete file
      *
-     * @param progressUpdater the updateer
+     * @param progressUpdater the updater
      * @param inputFile       the file name to read
      */
     private @Nullable ChViewFile readCompleteFile(@NotNull ProgressUpdater progressUpdater, @NotNull File inputFile) {
@@ -497,7 +497,7 @@ public class ChviewReader {
      * parse a single ChView star record
      *
      * @param buffer          the file content
-     * @param progressUpdater
+     * @param progressUpdater a thread safe updater control
      * @return the parsed record
      */
     private @Nullable ChViewRecord parseRecord(byte[] buffer, int index, @NotNull ProgressUpdater progressUpdater) {
@@ -510,18 +510,18 @@ public class ChviewReader {
 
             // first problem is to find boundary of where star record actially starts
             // there might be a proper place name  followed by a star name
-            //  OR .. there might not be a star name
+            //  OR ... there might not be a star name
             // the stupid developer who write the original program seems to have had
             // convention where both names and strings were stored as strings
             // a name starts with a length followed by a 00 byte then the actual name.
-            // a float/double (does he even know the difference??) is a lenth followed by
+            // a float/double (does he even know the difference??) is a length followed by
             // the value,no 00
 
             // so we need to figure out whether there is a place and a star or just a star
             // we scan until we see the dToEarth which should be a float/double.
             // if we encounter two string link objects prior to that then we have
             // a place and a star followed by a distance
-            // else if only one prioer to the dToEarth then the place is null and
+            // else if only one prior to the dToEarth then the place is null and
             // there is only a star name.
             // Damn, who programs like this??
 
@@ -542,7 +542,7 @@ public class ChviewReader {
                 chViewRecord.setDistanceToEarth(dToEarth.getValue());
 
             } else {
-                // this is the only other valid case or we really screwed up the pointers
+                // this is the only other valid case, or we really screwed up the pointers
                 if (!string2.isName()) {
                     chViewRecord.setStarName(string1.getValue());
                     chViewRecord.setDistanceToEarth(string2.getValue());
@@ -607,25 +607,25 @@ public class ChviewReader {
             // get the stellar class
             String stellarClass = spectra.getValue().substring(0, 1);
             if (stellarClass.equals("\"")) {
-                if (spectra.getValue().length()>=2) {
-                    stellarClass=  spectra.getValue().substring(1, 2);
+                if (spectra.getValue().length() >= 2) {
+                    stellarClass = spectra.getValue().substring(1, 2);
                 }
             }
 
             chViewRecord.setOrthoSpectra(stellarClass);
 
-            // if its an Q or d, then make it and M
+            // if it's an Q or d, then make it and M
             if (stellarClass.equals("Q") ||
                     stellarClass.equals("d") ||
                     stellarClass.equals("p") ||
                     stellarClass.equals("D") ||
                     stellarClass.equals("R") ||
-                    stellarClass.equals("P")||
-                    stellarClass.equals("X")||
-                    stellarClass.equals("W")||
-                    stellarClass.equals("S")||
-                    stellarClass.equals("N")||
-                    stellarClass.equals("Z")||
+                    stellarClass.equals("P") ||
+                    stellarClass.equals("X") ||
+                    stellarClass.equals("W") ||
+                    stellarClass.equals("S") ||
+                    stellarClass.equals("N") ||
+                    stellarClass.equals("Z") ||
                     stellarClass.equals("C")
             ) {
                 // these are not defined in standard spectral classification so force them to be M class.
@@ -744,7 +744,7 @@ public class ChviewReader {
         int lengthDiscovered = 0;
         int paddingCounter = 0;
 
-        // scan for first non zero
+        // scan for first non-zero
         int j = scanNonZero(buffer, i);
         paddingCounter += Math.abs(j - i);
         i = j;
@@ -840,8 +840,8 @@ public class ChviewReader {
     /**
      * Read a String from the buffer
      * <p>
-     * Strings: are saved a a 1 byte length determinator followed by that many bytes of data. This does not
-     * include the null terminator. If the string is longer that 254 then a byte containing FF is stored with
+     * Strings: are saved a 1 byte length determinator followed by that many bytes of data. This does not
+     * include the null terminator. If the string is longer than 254 then a byte containing FF is stored with
      * two bytes following containing the actual length.
      *
      * @param buffer the buffer to read from
@@ -897,7 +897,7 @@ public class ChviewReader {
         for (int i = 0; i < length; ++i) {
             if (buffer[index + i] < 0) {
                 log.error("Bad ASCII character at index=" + index + i);
-                // I threw this error as a help to parsing so I would know why the parser failed
+                // I threw this error as a help to parsing, so I would know why the parser failed
                 throw new IllegalArgumentException();
             }
             stringBuilder.append((char) buffer[index + i]);

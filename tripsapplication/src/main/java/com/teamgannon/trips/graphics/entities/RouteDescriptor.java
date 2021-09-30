@@ -180,6 +180,11 @@ public class RouteDescriptor {
 
     }
 
+    public double findTotalLength() {
+        lengthList.forEach(length -> totalLength += length);
+        return totalLength;
+    }
+
     public boolean removeLast() {
         int lastIndex = routeList.size() - 1;
         if (lastIndex > 1) {
@@ -224,6 +229,7 @@ public class RouteDescriptor {
 
     public @NotNull Route toRoute() {
         Route route = new Route();
+
         route.setUuid(id);
         route.setRouteName(this.name);
         route.getRouteStars().addAll(routeList);
@@ -233,6 +239,8 @@ public class RouteDescriptor {
         route.getRouteStarNames().addAll(this.nameList);
         route.setLineWidth(this.lineWidth);
         route.setRouteColor(this.color.toString());
+        route.setTotalLength(getTotalLength());
+
         return route;
     }
 
