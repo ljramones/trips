@@ -11,7 +11,7 @@ import com.teamgannon.trips.file.excel.normal.ExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
-import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;

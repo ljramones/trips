@@ -1,9 +1,9 @@
 package com.teamgannon.trips.routing.tree.treemodel;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.routing.Route;
-import javafx.beans.property.BooleanProperty;
+import com.teamgannon.trips.routing.model.Route;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,6 +41,14 @@ public class RouteTree {
     private boolean checked;
 
     /**
+     * the visibility of the route
+     * FULL : all stars in the route visible
+     * PARTIAL: only a limited number of stars visible
+     * INVISIBLE: none of the stars visible
+     */
+    private RouteVisibility visibility;
+
+    /**
      * the star this route starts at
      */
     private String startingStar;
@@ -76,7 +84,7 @@ public class RouteTree {
         return "Route: " + (count + 1) + ": \n\t" + this.getRouteName() + "\n\t has " +
                 (this.getRouteSegmentList().size()) + " segments\n" +
                 "\tlength of route =" + String.format("%.2f", this.getTotalLength()) + " ly\n" +
-                "\tRoute segments are \n"+
+                "\tRoute segments are \n" +
                 routeItinerary(this) + "\n";
     }
 
@@ -99,6 +107,7 @@ public class RouteTree {
                 .lineWidth(routeTree.getLineWidth())
                 .routeNotes(routeTree.getRouteNotes())
                 .maxLength(routeTree.getRouteSegmentList().size())
+                .visibility(routeTree.getVisibility())
                 .totalLength(routeTree.getTotalLength())
                 .build();
     }
@@ -107,10 +116,11 @@ public class RouteTree {
         routeSegmentList.add(routeSegment);
     }
 
-    public static RouteTree createRouteTree(Route route) {
+    public static RouteTree createRouteTree(Route route, RouteVisibility routeVisibility) {
         RouteTree routeTree = new RouteTree();
 
         routeTree.setUuid(route.getUuid());
+        routeTree.setVisibility(routeVisibility);
         routeTree.setRouteName(route.getRouteName());
         routeTree.setChecked(true);
         routeTree.setRouteColor(Color.valueOf(route.getRouteColor()));

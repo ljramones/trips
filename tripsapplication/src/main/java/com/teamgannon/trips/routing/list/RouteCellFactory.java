@@ -1,7 +1,6 @@
 package com.teamgannon.trips.routing.list;
 
 import com.teamgannon.trips.listener.RouteUpdaterListener;
-import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;

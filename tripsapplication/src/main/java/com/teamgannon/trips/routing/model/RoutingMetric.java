@@ -1,4 +1,4 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.model;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.routing.model.SparseStarRecord;

@@ -1,6 +1,6 @@
 package com.teamgannon.trips.routing.dialogs;
 
-import com.teamgannon.trips.routing.RouteChange;
+import com.teamgannon.trips.routing.model.RouteChange;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;

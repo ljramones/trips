@@ -2,7 +2,7 @@ package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.routing.RouteFindingOptions;
+import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
 import com.teamgannon.trips.service.graphsearch.GraphSearchComplete;

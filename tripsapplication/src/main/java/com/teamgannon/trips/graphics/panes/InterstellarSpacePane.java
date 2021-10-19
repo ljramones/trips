@@ -14,9 +14,9 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.routing.RoutingMetric;
+import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
@@ -187,8 +187,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
                 subScene,
                 this,
                 routeUpdaterListener,
-                tripsContext,
-                colorPalette
+                tripsContext
         );
 
         this.gridPlotManager = new GridPlotManager(
@@ -272,7 +271,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         gridPlotManager.updateScale();
         gridPlotManager.updateLabels(this);
 
-        routeManager.updateLabels(this);
+        routeManager.updateLabels();
 
         transitManager.updateLabels(this);
     }
@@ -746,7 +745,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
 
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
-        routeManager.displayRoute(routeDescriptor, state);
+        routeManager.changeDisplayStateOfRoute(routeDescriptor, state);
     }
 
     public @NotNull TransitManager getTransitManager() {

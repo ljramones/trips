@@ -2,7 +2,7 @@ package com.teamgannon.trips.service.graphsearch;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.routing.RouteFindingOptions;
+import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.graphsearch.task.LargeGraphSearchTask;
 import javafx.concurrent.Service;
@@ -12,8 +12,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-
-import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
 public class LargeGraphSearchService extends Service<GraphRouteResult> {

@@ -18,7 +18,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.routing.RoutingType;
+import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
@@ -781,7 +781,7 @@ public class StarPlotManager {
     private void starClickEventHandler(Node star, @NotNull ContextMenu starContextMenu, @NotNull MouseEvent e) {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
-            if (routeManager.isRoutingActive()) {
+            if (routeManager.isManualRoutingActive()) {
                 StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
                 if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
                     if (manualRoutingDialog != null) {
@@ -902,7 +902,7 @@ public class StarPlotManager {
         automatedRoutingDialog.initModality(Modality.NONE);
         automatedRoutingDialog.show();
         // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setRoutingActive(true);
+        routeManager.setManualRoutingActive(true);
         routeManager.setRoutingType(RoutingType.AUTOMATIC);
     }
 
@@ -916,7 +916,7 @@ public class StarPlotManager {
         manualRoutingDialog.initModality(Modality.NONE);
         manualRoutingDialog.show();
         // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setRoutingActive(true);
+        routeManager.setManualRoutingActive(true);
         routeManager.setRoutingType(RoutingType.MANUAL);
 
     }
@@ -1316,7 +1316,7 @@ public class StarPlotManager {
     private @NotNull MenuItem createRoutingMenuItem(@NotNull Node star) {
         MenuItem menuItem = new MenuItem("Start Route");
         menuItem.setOnAction(event -> {
-            boolean routingActive = routeManager.isRoutingActive();
+            boolean routingActive = routeManager.isManualRoutingActive();
             if (routingActive) {
                 Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
                         "Restart Route?",
@@ -1470,7 +1470,7 @@ public class StarPlotManager {
     }
 
     public void clearRoutingFlag() {
-        routeManager.setRoutingActive(false);
+        routeManager.setManualRoutingActive(false);
     }
 
     public void setDataSetContext(DataSetDescriptor descriptor) {

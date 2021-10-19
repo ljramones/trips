@@ -2,7 +2,7 @@ package com.teamgannon.trips.routing.list;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
-import com.teamgannon.trips.routing.RouteChange;
+import com.teamgannon.trips.routing.model.RouteChange;
 import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.scene.control.ContextMenu;

@@ -1,8 +1,9 @@
 package com.teamgannon.trips.report.route;
 
 import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -84,7 +85,7 @@ public class RouteReportDialog extends Dialog<Boolean> {
         StringBuilder report = new StringBuilder(dataSetDescription);
         List<Route> routeList = descriptor.getRoutes();
         for (Route route : routeList) {
-            RouteTree routeTree = RouteTree.createRouteTree(route);
+            RouteTree routeTree = RouteTree.createRouteTree(route, RouteVisibility.FULL);
             report.append(routeTree.getRoute());
         }
 

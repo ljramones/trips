@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.RouteManager;
@@ -327,16 +328,16 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     }
 
     private void closeClicked(ActionEvent actionEvent) {
-        if (routeManager.isRoutingActive()) {
-            routeManager.setRoutingActive(false);
+        if (routeManager.isManualRoutingActive()) {
+            routeManager.setManualRoutingActive(false);
         }
         setResult(false);
     }
 
 
     private void close(WindowEvent windowEvent) {
-        if (routeManager.isRoutingActive()) {
-            routeManager.setRoutingActive(false);
+        if (routeManager.isManualRoutingActive()) {
+            routeManager.setManualRoutingActive(false);
         }
         setResult(false);
     }
@@ -379,6 +380,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 .startStar(starDisplayRecord.getStarName())
                 .lineSegments(new ArrayList<>())
                 .lineWidth(lineWidth)
+                .visibility(RouteVisibility.FULL)
                 .routeNotes(notes.getText())
                 .routeList(new ArrayList<>())
                 .build();

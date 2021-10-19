@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
@@ -45,6 +45,16 @@ public class RouteDescriptor {
      * width of the routing line
      */
     private double lineWidth;
+
+    /**
+     * whether the entire route is fully or partially visible or not at all
+     * <p>
+     * FULL is that entire route is visible
+     * PARTIAL is that only some stars are visible
+     * INVISIBLE means none of the route is visible
+     */
+    private RouteVisibility visibility;
+
 
     /**
      * defined color of route
