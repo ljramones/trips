@@ -31,7 +31,11 @@ import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.report.route.RouteReportDialog;
 import com.teamgannon.trips.routing.*;
+import com.teamgannon.trips.routing.automation.RouteFinderDataset;
+import com.teamgannon.trips.routing.automation.RouteFinderInView;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
+import com.teamgannon.trips.routing.model.Route;
+import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
@@ -1358,7 +1362,7 @@ public class MainPane implements
     public void newRoute(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
         log.info("new route");
         databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
-        routingPanel.setContext(dataSetDescriptor, plotManager.willRoutesShow(dataSetDescriptor));
+        routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
         routingStatus(false);
     }
 
@@ -1368,7 +1372,7 @@ public class MainPane implements
         String datasetName = searchContext.getAstroSearchQuery().getDescriptor().getDataSetName();
         DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
+        routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
@@ -1383,7 +1387,7 @@ public class MainPane implements
         DataSetDescriptor descriptor = searchContext.getAstroSearchQuery().getDescriptor();
         descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
+        routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
@@ -1445,7 +1449,7 @@ public class MainPane implements
                     );
 
                     //
-                    routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
+                    routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
                 }
                 if (showTable) {
                     showList(starObjects);
@@ -1498,7 +1502,7 @@ public class MainPane implements
                         tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                 );
                 DataSetDescriptor descriptor = searchQuery.getDescriptor();
-                routingPanel.setContext(descriptor, plotManager.willRoutesShow(descriptor));
+                routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
             }
             if (showTable) {
                 showList(starObjects);
@@ -1831,7 +1835,7 @@ public class MainPane implements
 
     @Override
     public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
-        routingPanel.setContext(dataSetDescriptor, plotManager.willRoutesShow(dataSetDescriptor));
+        routingPanel.setContext(dataSetDescriptor,  plotManager.getRouteVisibility());
     }
 
     public void rotate(ActionEvent actionEvent) {
@@ -1917,7 +1921,7 @@ public class MainPane implements
         starPlotManager.setManualRouting(manualRoutingDialog);
 
         // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setRoutingActive(true);
+        routeManager.setManualRoutingActive(true);
         routeManager.setRoutingType(RoutingType.MANUAL);
     }
 

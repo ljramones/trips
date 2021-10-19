@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
-import com.teamgannon.trips.routing.Route;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import lombok.Data;

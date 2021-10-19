@@ -2,10 +2,11 @@ package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
-import com.teamgannon.trips.routing.Route;
-import com.teamgannon.trips.routing.RouteChange;
+import com.teamgannon.trips.routing.model.Route;
+import com.teamgannon.trips.routing.model.RouteChange;
 import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.table.ColorTableCell;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
@@ -56,11 +57,13 @@ public class RoutingPanel extends Pane implements RoutingCallback {
 
         TableColumn<RouteTree, Boolean> showRouteCol = createCheckBoxColumn();
 
+        TableColumn<RouteTree, String> showStatusCol = createStatusColumn();
+
         TableColumn<RouteTree, Color> colorCol = createRouteColorTableColumn();
 
         TableColumn<RouteTree, String> routeCol = createRouteTableColumn();
 
-        routingTableView.getColumns().addAll(showRouteCol, colorCol, routeCol);
+        routingTableView.getColumns().addAll(showRouteCol, showStatusCol, colorCol, routeCol);
 
         setSelectionModel();
 
@@ -68,6 +71,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
 
         this.getChildren().add(routingTableView);
     }
+
 
     private void setTableContextMenu() {
         final ContextMenu tableContextMenu = new ContextMenu();
@@ -129,6 +133,13 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         return routeCol;
     }
 
+
+    private TableColumn<RouteTree, String> createStatusColumn() {
+        TableColumn<RouteTree, String> routeCol = new TableColumn<>("Visibility");
+        routeCol.setCellValueFactory(new PropertyValueFactory<>("visibility"));
+        return routeCol;
+    }
+
     @NotNull
     private TableColumn<RouteTree, Color> createRouteColorTableColumn() {
         TableColumn<RouteTree, Color> colorCol = new TableColumn<>("Color");
@@ -184,7 +195,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
      * @param descriptor        the descriptor
      * @param routeVisiblityMap a map of which routes are visible
      */
-    public void setContext(@Nullable DataSetDescriptor descriptor, Map<UUID, Boolean> routeVisiblityMap) {
+    public void setContext(@Nullable DataSetDescriptor descriptor, Map<UUID, RouteVisibility> routeVisiblityMap) {
 
         routingTableView.getItems().clear();
 
@@ -192,11 +203,9 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             List<Route> routeList = descriptor.getRoutes();
             if (routeList.size() != 0) {
                 for (Route route : routeList) {
-                    RouteTree routeTree = RouteTree.createRouteTree(route);
-                    boolean willShow = routeVisiblityMap.get(route.getUuid());
-                    if (willShow) {
-                        routingTableView.getItems().add(routeTree);
-                    }
+                    RouteVisibility routeVisibility = routeVisiblityMap.get(route.getUuid());
+                    RouteTree routeTree = RouteTree.createRouteTree(route, routeVisibility);
+                    routingTableView.getItems().add(routeTree);
                 }
                 log.info("adding routes");
             }

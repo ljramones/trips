@@ -1,11 +1,8 @@
 package com.teamgannon.trips.service.graphsearch;
 
-import com.teamgannon.trips.routing.PossibleRoutes;
-import com.teamgannon.trips.routing.model.SparseStarRecord;
+import com.teamgannon.trips.routing.model.PossibleRoutes;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.Map;
 
 @Data
 @Builder

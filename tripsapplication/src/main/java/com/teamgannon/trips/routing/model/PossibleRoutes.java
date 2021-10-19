@@ -1,4 +1,4 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.model;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

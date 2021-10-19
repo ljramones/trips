@@ -1,4 +1,4 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.model;
 
 import com.teamgannon.trips.dataset.enums.GridLines;
 import javafx.scene.paint.Color;

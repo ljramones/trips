@@ -1,6 +1,8 @@
 package com.teamgannon.trips.config.application;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -11,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 @Slf4j
 @Data
@@ -67,6 +68,11 @@ public class CurrentPlot {
      */
     private ColorPalette colorPalette;
 
+    /**
+     * the List of current routes and whether they are visible or not
+     */
+    private Map<UUID, RouteDescriptor> routeDescriptorMap = new HashMap<>();
+
 
     /**
      * add a record
@@ -85,6 +91,50 @@ public class CurrentPlot {
         starDisplayRecordList.add(record);
         // put star display record into the label sort
     }
+
+    /**
+     * add a route to the plot
+     *
+     * @param routeDescriptor the route descriptor to add
+     */
+    public void addRoute(RouteDescriptor routeDescriptor) {
+        routeDescriptorMap.put(routeDescriptor.getId(), routeDescriptor);
+    }
+
+    /**
+     * remove a route from the plot
+     *
+     * @param routeDescriptor the route descriptor to remove
+     */
+    public void removeRoute(RouteDescriptor routeDescriptor) {
+        routeDescriptorMap.remove(routeDescriptor.getId());
+    }
+
+    /**
+     * get a reoute based on id
+     *
+     * @param id the id to look up
+     * @return the route descriptor or null if not found
+     */
+    public RouteDescriptor getRoute(UUID id) {
+        return routeDescriptorMap.get(id);
+    }
+
+    /**
+     * get all the routes as a List
+     *
+     * @return the routes
+     */
+    public List<RouteDescriptor> getRoutes() {
+        return new ArrayList<>(routeDescriptorMap.values());
+    }
+
+    public Map<UUID, RouteVisibility> getVisibilityMap() {
+        Map<UUID, RouteVisibility> visibilityMap = new HashMap<>();
+        routeDescriptorMap.forEach((key, value) -> visibilityMap.put(key, value.getVisibility()));
+        return visibilityMap;
+    }
+
 
     /**
      * once we have all the labels, we create a sub list that has the stars that we allow labels to show

@@ -1,7 +1,8 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.automation;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
@@ -60,27 +61,36 @@ public class RouteBuilderHelper {
         });
 
 
-        // set segments
+        // default to Full visibility unless we discover that a star is missing
+        route.setVisibility(RouteVisibility.FULL);
 
+        // set segments
         double totalLength = 0;
         boolean first = true;
         double[] coordinates1 = new double[3];
         for (String star : starList) {
             StarDisplayRecord starDisplayRecord = starDisplayRecordMap.get(star.trim());
-            if (first) {
-                first = false;
-                coordinates1 = starDisplayRecord.getActualCoordinates();
-            } else {
-                double[] coordinates2 = starDisplayRecord.getActualCoordinates();
-                double lengthValue = StarMath.getDistance(coordinates1, coordinates2);
-                totalLength += lengthValue;
-                coordinates1 = coordinates2;
-                route.addLengthSegment(lengthValue);
-            }
-            route.addLineSegment(starDisplayRecord.getCoordinates());
+            if (starDisplayRecord != null) {
+                if (first) {
+                    first = false;
+                    coordinates1 = starDisplayRecord.getActualCoordinates();
+                } else {
+                    double[] coordinates2 = starDisplayRecord.getActualCoordinates();
+                    double lengthValue = StarMath.getDistance(coordinates1, coordinates2);
+                    totalLength += lengthValue;
+                    coordinates1 = coordinates2;
+                    route.addLengthSegment(lengthValue);
+                }
+                route.addLineSegment(starDisplayRecord.getCoordinates());
 
+            } else {
+                log.warn("Star: {} is missing on plot", star.trim());
+                route.setVisibility(RouteVisibility.PARTIAL);
+            }
         }
         route.setTotalLength(totalLength);
+
+        // we assume that routes created usingthis method are at least partially visible
 
         return route;
     }

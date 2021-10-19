@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.CurrentPlot;
 import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
@@ -14,7 +15,6 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.RoutingPanelListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.routing.Route;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -264,21 +264,8 @@ public class PlotManager {
         statusUpdaterListener.updateStatus(data);
     }
 
-    public boolean willRouteShow(Route route) {
-        boolean allStarsVisible = true;
-        List<UUID> routeStars = route.getRouteStars();
-        for (UUID starId : routeStars) {
-            // the moment one star is not visible, the whole route is marked as not visible or won't show
-            allStarsVisible = currentPlot.isStarVisible(starId);
-        }
-        return allStarsVisible;
-    }
-
-    public Map<UUID, Boolean> willRoutesShow(DataSetDescriptor descriptor) {
-        Map<UUID, Boolean> visibleRouteMap;
-        List<Route> routeList = descriptor.getRoutes();
-        visibleRouteMap = routeList.stream().collect(Collectors.toMap(Route::getUuid, this::willRouteShow, (a, b) -> b));
-        return visibleRouteMap;
+    public Map<UUID, RouteVisibility> getRouteVisibility() {
+        return currentPlot.getVisibilityMap();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////

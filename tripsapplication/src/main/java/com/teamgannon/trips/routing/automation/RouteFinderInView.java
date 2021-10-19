@@ -1,4 +1,4 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.automation;
 
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -7,6 +7,9 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInView;
+import com.teamgannon.trips.routing.model.PossibleRoutes;
+import com.teamgannon.trips.routing.model.RouteFindingOptions;
+import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.transits.TransitRoute;
 import javafx.scene.paint.Color;

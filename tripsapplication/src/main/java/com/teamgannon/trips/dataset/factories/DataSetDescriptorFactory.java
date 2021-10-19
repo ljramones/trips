@@ -13,7 +13,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
-import com.teamgannon.trips.routing.RouteDefinition;
+import com.teamgannon.trips.routing.model.RouteDefinition;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;

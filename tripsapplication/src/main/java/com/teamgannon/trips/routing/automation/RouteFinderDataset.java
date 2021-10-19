@@ -1,17 +1,19 @@
-package com.teamgannon.trips.routing;
+package com.teamgannon.trips.routing.automation;
 
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInDataSet;
 import com.teamgannon.trips.routing.dialogs.RouteLoadingInfoDialog;
+import com.teamgannon.trips.routing.model.PossibleRoutes;
+import com.teamgannon.trips.routing.model.RouteFindingOptions;
+import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
