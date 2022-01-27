@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.ImportTaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.service.importservices.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -30,15 +31,17 @@ public class DataImportService {
     private @Nullable ImportTaskControl runningImportService;
 
 
-    public DataImportService(DatabaseManagementService databaseManagementService) {
+    public DataImportService(DatabaseManagementService databaseManagementService,
+                             CSVDataImportService csvDataImportService) {
 
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService);
         jsonDataImportService = new JsonDataImportService(databaseManagementService);
-        csvDataImportService = new CSVDataImportService(databaseManagementService);
         excelDataImportService = new ExcelDataImportService(databaseManagementService);
+        this.csvDataImportService = csvDataImportService;
     }
 
+    @TrackExecutionTime
     public ImportResult processFile(@NotNull Dataset dataset,
                                     StatusUpdaterListener statusUpdaterListener,
                                     DataSetChangeListener dataSetChangeListener,

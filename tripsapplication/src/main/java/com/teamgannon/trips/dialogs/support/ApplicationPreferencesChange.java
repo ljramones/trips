@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.support;
 
-import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

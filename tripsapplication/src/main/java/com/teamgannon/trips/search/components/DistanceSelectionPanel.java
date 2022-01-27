@@ -55,17 +55,12 @@ public class DistanceSelectionPanel extends BasePane {
         lowRangeTextField.setText(String.format("%.2f", distanceRange.getLowValue()));
         lowRangeTextField.setPrefWidth(60);
         lowRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
-//                log.info("raw low is<{}>", newValue);
+            if (newValue.matches("^([0-9]{1,2}\\.?[0-9]{0,2})$")) {
                 try {
                     double lowValue = Double.parseDouble(newValue);
-//                    log.info("set low value:" + lowValue);
                     d2EarthSlider.setLowValue(lowValue);
                 } catch (NumberFormatException ignored) {
-//                    log.error("low value is not a number");
                 }
-            } else {
-//                log.info("no match for low is:" + newValue);
             }
         });
 
@@ -74,17 +69,13 @@ public class DistanceSelectionPanel extends BasePane {
         highRangeTextField.setText(String.format("%.2f", distanceRange.getHighValue()));
         highRangeTextField.setPrefWidth(60);
         highRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.matches("^[+]?([0-9]{0,3}\\.[0-9]{0,2}[\s]+)")) {
-//                log.info("raw high is<{}>", newValue);
+            log.info("hi value={}", newValue);
+            if (newValue.matches("^([0-9]{1,3}\\.?[0-9]{0,2})$")) {
                 try {
                     double highValue = Double.parseDouble(newValue);
-//                    log.info("set high value:" + highValue);
                     d2EarthSlider.setHighValue(highValue);
                 } catch (NumberFormatException ignored) {
-//                    log.error("high value is not a number");
                 }
-            } else {
-//                log.info("no match for high is:" + newValue);
             }
         });
 

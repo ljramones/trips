@@ -4,16 +4,9 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.5</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-
     <groupId>com.teamgannon.trips</groupId>
     <artifactId>trips</artifactId>
-    <version>0.6.9</version>
+    <version>0.7.1</version>
 
     <name>Terran Republic Interstellar Plotter</name>
     <description>
@@ -62,7 +55,7 @@
             <roles>
                 <role>Star Wrangler</role>
             </roles>
-            <timezone>TBD</timezone>
+            <timezone>EST</timezone>
             <properties>
             </properties>
         </contributor>
@@ -84,18 +77,21 @@
     </mailingLists>
 
     <organization>
-        <name>Chuck Gannon's Terran Republic Viewer</name>
+        <name>Chuck Gannon's Terran Republic Interstellar Plotting System</name>
         <url>http://www.charlesegannon.com</url>
     </organization>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <java.version>15</java.version>
-        <maven.compiler.target>15</maven.compiler.target>
-        <maven.compiler.source>15</maven.compiler.source>
+        <java.version>17.0.1</java.version>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
 
-        <javafx.version>16</javafx.version>
+        <camel.version>3.13.0</camel.version>
+        <spring.boot.version>2.6.3</spring.boot.version>
+
+        <javafx.version>17.0.1</javafx.version>
         <fxweaver.version>1.3.0</fxweaver.version>
 
         <lombok.version>1.18.20</lombok.version>
@@ -106,7 +102,9 @@
         <commons.math.version>3.6.1</commons.math.version>
         <commons-codec.version>20041127.091804</commons-codec.version>
 
-        <orekit.version>10.3.1</orekit.version>
+        <orekit.version>11.0.2</orekit.version>
+
+        <metrics.version>4.2.7</metrics.version>
 
         <jackson-databind.version>2.12.4</jackson-databind.version>
 
@@ -116,12 +114,12 @@
         <org.jgrapht.core.version>1.5.1</org.jgrapht.core.version>
         <org.jgrapht.ext.version>1.0.1</org.jgrapht.ext.version>
 
-        <controlsfx.version>11.1.0</controlsfx.version>
+        <controlsfx.version>11.1.1</controlsfx.version>
 
         <poi.ooxml.version>5.0.0</poi.ooxml.version>
         <xlsx-streamer.version>2.2.0</xlsx-streamer.version>
 
-        <jsqlparser.version>4.1</jsqlparser.version>
+        <jsqlparser.version>4.3</jsqlparser.version>
     </properties>
 
     <dependencyManagement>
@@ -140,7 +138,24 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- spring boot dependencies -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- pull in all the camel spring boot dependencies -->
+<!--            <dependency>-->
+<!--                <groupId>org.apache.camel.springboot</groupId>-->
+<!--                <artifactId>camel-spring-boot-dependencies</artifactId>-->
+<!--                <version>${camel.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
         </dependencies>
+
     </dependencyManagement>
 
     <dependencies>
@@ -167,13 +182,11 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
         </dependency>
 
         <!-- SQL parsing support -->
@@ -202,14 +215,13 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.version}</version>
+            <version>1.15</version>
         </dependency>
 
-        <!-- Commons project for IO -->
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons.io.version}</version>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.5.2</version>
         </dependency>
 
         <!-- POI is used to read and write EXCEL Files -->
@@ -225,10 +237,35 @@
             <version>${poi.ooxml.version}</version>
         </dependency>
 
+        <!-- tracking metrics -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.10.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.0.0</version>
+        </dependency>
+
         <dependency>
             <groupId>com.monitorjbl</groupId>
             <artifactId>xlsx-streamer</artifactId>
             <version>${xlsx-streamer.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dustinredmond.fxtrayicon</groupId>
+            <artifactId>FXTrayIcon</artifactId>
+            <version>3.1.2</version>
         </dependency>
 
         <!-- icon libraries -->
@@ -367,7 +404,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.7</version>
         </dependency>
 
         <dependency>
@@ -380,53 +416,14 @@
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version>
         </dependency>
-
     </dependencies>
 
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-compiler-plugin</artifactId>-->
-<!--                <version>3.8.1</version>-->
-<!--                <configuration>-->
-<!--                    <source>15</source>-->
-<!--                    <target>15</target>-->
-<!--                    &lt;!&ndash;                    <release>16</release>&ndash;&gt;-->
-<!--                    <fork>true</fork>-->
-<!--                    <compilerArgs>-->
-<!--                        <arg>&#45;&#45;enable-preview</arg>-->
-<!--                        <arg>-Xlint:all</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>-->
-<!--                        <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>-->
-<!--                    </compilerArgs>-->
-<!--                    &lt;!&ndash;for unmappable characters in classes&ndash;&gt;-->
-<!--                    <encoding>UTF-8</encoding>-->
-<!--                    <showDeprecation>true</showDeprecation>-->
-<!--                    <showWarnings>true</showWarnings>-->
-<!--                    &lt;!&ndash;for lombok annotations to resolve&ndash;&gt;-->
-<!--                    &lt;!&ndash;contradictory to maven, intelliJ fails with this&ndash;&gt;-->
-<!--                    <annotationProcessorPaths>-->
-<!--                        <path>-->
-<!--                            <groupId>org.projectlombok</groupId>-->
-<!--                            <artifactId>lombok</artifactId>-->
-<!--                            <version>1.18.18</version>-->
-<!--                        </path>-->
-<!--                    </annotationProcessorPaths>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
                 <executions>
                     <execution>
                         <goals>

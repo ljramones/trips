@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search;
 
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,16 @@ public class SearchContext {
 
     private final Map<String, DataSetDescriptor> dataSetDescriptorMap = new HashMap<>();
     private @Nullable String currentDataSet;
+
     private AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
+
+    public DataSetContext getDataSetContext() {
+        return astroSearchQuery.getDataSetContext();
+    }
+
+    public DataSetDescriptor getDataSetDescriptor() {
+        return astroSearchQuery.getDataSetContext().getDescriptor();
+    }
 
     public void setCurrentDataSet(String currentDataSet) {
         this.currentDataSet = currentDataSet;

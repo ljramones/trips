@@ -185,7 +185,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
                     .builder()
                     .fileName(fileToStore.getAbsolutePath())
                     .exportFormat(ExportFileType.CSV)
-                    .dataset(searchContext.getAstroSearchQuery().getDescriptor())
+                    .dataset(searchContext.getDataSetDescriptor())
                     .doExport(true)
                     .build();
 
@@ -212,7 +212,7 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
             setResult(true);
         } else {
             showErrorAlert("Add Dataset",
-                    "failed to load dataset: " + dataSetDescriptor.getDataSetName() + ", because of " + errorMessage);
+                    "failed to export dataset: " + dataSetDescriptor.getDataSetName() + ", because of " + errorMessage);
             setResult(false);
         }
         dataExportService.complete(status, dataSetDescriptor, errorMessage);

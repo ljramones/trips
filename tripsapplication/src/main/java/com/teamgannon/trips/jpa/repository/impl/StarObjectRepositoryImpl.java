@@ -116,7 +116,7 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         List<Predicate> predicates = new ArrayList<>();
         log.info("created the predicates");
 
-        predicates.add(cb.equal(root.get("dataSetName"), astroSearchQuery.getDescriptor().getDataSetName()));
+        predicates.add(cb.equal(root.get("dataSetName"), astroSearchQuery.getDataSetContext().getDescriptor().getDataSetName()));
 
         // create a query with a range limit
         predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getUpperDistanceLimit()));

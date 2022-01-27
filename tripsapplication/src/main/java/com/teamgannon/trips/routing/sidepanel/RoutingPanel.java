@@ -5,9 +5,10 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteChange;
-import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.table.ColorTableCell;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.beans.Observable;
@@ -39,16 +40,28 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class RoutingPanel extends Pane implements RoutingCallback {
 
     /**
-     * the set of routings
+     * the table view of the routes
      */
     private final TableView<RouteTree> routingTableView = new TableView<>();
+
+    /**
+     * route update listener - used to handle route events
+     */
     private final RouteUpdaterListener routeUpdaterListener;
+
+    /**
+     * status update listener - used to handle status events
+     */
+    private final StatusUpdaterListener statusUpdaterListener;
 
     /**
      * the constructor
      */
-    public RoutingPanel(RouteUpdaterListener routeUpdaterListener) {
+    public RoutingPanel(RouteUpdaterListener routeUpdaterListener,
+                        StatusUpdaterListener statusUpdaterListener) {
+
         this.routeUpdaterListener = routeUpdaterListener;
+        this.statusUpdaterListener = statusUpdaterListener;
 
         routingTableView.setPlaceholder(new Label("No routes in this dataset"));
         routingTableView.setEditable(true);
@@ -56,12 +69,16 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         routingTableView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
 
         TableColumn<RouteTree, Boolean> showRouteCol = createCheckBoxColumn();
+        showRouteCol.setPrefWidth(80);
 
         TableColumn<RouteTree, String> showStatusCol = createStatusColumn();
+        showRouteCol.setPrefWidth(40);
 
         TableColumn<RouteTree, Color> colorCol = createRouteColorTableColumn();
+        colorCol.setPrefWidth(60);
 
         TableColumn<RouteTree, String> routeCol = createRouteTableColumn();
+        routeCol.setPrefWidth(300);
 
         routingTableView.getColumns().addAll(showRouteCol, showStatusCol, colorCol, routeCol);
 
@@ -86,6 +103,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                     RouteChange routeChange = routeChangeOptional.get();
                     if (routeChange.isChanged()) {
                         routeUpdaterListener.updateRoute(RouteTree.toRouteDescriptor(routeTree));
+                        statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was edited");
                     }
                 }
             } else {
@@ -106,6 +124,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                     ButtonType buttonType = buttonTypeOptional.get();
                     if (buttonType.equals(ButtonType.OK)) {
                         routeUpdaterListener.deleteRoute(RouteTree.toRouteDescriptor(routeTree));
+                        statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was deleted");
                     }
                 }
             } else {
@@ -171,6 +190,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                 }
                 if (routeTree != null) {
                     routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
+                    statusUpdaterListener.updateStatus(routeTree.getRouteName() + " is " + (isSelected ? "shown" : "not shown"));
                 }
             });
             return checkBoxTableCell;
@@ -181,6 +201,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             RouteTree routeTree = event.getRowValue();
             RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(routeTree);
             routeUpdaterListener.displayRoute(routeDescriptor, routeTree.isChecked());
+            statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was edited");
         });
         return tableColumn;
     }
@@ -192,18 +213,27 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     /**
      * set the dataset context
      *
-     * @param descriptor        the descriptor
-     * @param routeVisiblityMap a map of which routes are visible
+     * @param descriptor         the descriptor
+     * @param routeVisibilityMap a map of which routes are visible
      */
-    public void setContext(@Nullable DataSetDescriptor descriptor, Map<UUID, RouteVisibility> routeVisiblityMap) {
+    public void setContext(@Nullable DataSetDescriptor descriptor,
+                           Map<UUID, RouteVisibility> routeVisibilityMap) {
 
         routingTableView.getItems().clear();
 
         if (descriptor != null) {
             List<Route> routeList = descriptor.getRoutes();
             if (routeList.size() != 0) {
+                // we compare the descriptor routes to what we have actually plotted
+                // some of all of the potential routes might be present
+                // we also want to note routes that aren't plotted
                 for (Route route : routeList) {
-                    RouteVisibility routeVisibility = routeVisiblityMap.get(route.getUuid());
+                    // iterate each of the DB routes, look up the associated plotted route and mark visiblity
+                    // if a db route is not in the visibility list, then mark it as not visible
+                    // get the visibility list
+                    //     a route plotted in full has the original UUID
+                    //     a partial route has a new id since there ma
+                    RouteVisibility routeVisibility = routeVisibilityMap.get(route.getUuid());
                     RouteTree routeTree = RouteTree.createRouteTree(route, routeVisibility);
                     routingTableView.getItems().add(routeTree);
                 }

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.search;
 
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.stellarmodelling.StellarType;
@@ -24,7 +25,7 @@ public class AstroSearchQuery {
     /**
      * this is used for context since multiple datasets can be used
      */
-    private DataSetDescriptor descriptor;
+    private DataSetContext dataSetContext;
 
     /**
      * this is intended to be used to determine how far out the sphere that we search should be
@@ -85,6 +86,8 @@ public class AstroSearchQuery {
         centerCoordinates[0] = 0;
         centerCoordinates[1] = 0;
         centerCoordinates[2] = 0;
+        dataSetContext = new DataSetContext(new DataSetDescriptor());
+        dataSetContext.setValidDescriptor(false);
     }
 
     public void clearPolities() {
@@ -257,7 +260,7 @@ public class AstroSearchQuery {
     }
 
     public void setDescriptor(DataSetDescriptor descriptor) {
-        this.descriptor = descriptor;
+        dataSetContext.setDataDescriptor(descriptor);
     }
 
     public void zeroCenter() {

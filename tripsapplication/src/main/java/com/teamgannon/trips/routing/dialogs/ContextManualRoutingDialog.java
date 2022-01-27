@@ -43,7 +43,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     private final TextArea notes = new TextArea();
 
     private int rowToAdd = 1;
-    private int anchorRow = 7;
+    private final int anchorRow = 7;
 
     private final GridPane grid = new GridPane();
 
@@ -63,7 +63,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
      * true means this plot was part of an in plot context call
      * false means it was called form outside of the plot
      */
-    private boolean plottingContextMode;
+    private final boolean plottingContextMode;
 
     private ComboBox<String> originDisplayCmb;
 
@@ -74,9 +74,9 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     boolean firstTime = true;
 
-    private Label startStarLabel = new Label();
+    private final Label startStarLabel = new Label();
 
-    private Label routeStartCoordinates = new Label("0, 0, 0");
+    private final Label routeStartCoordinates = new Label("0, 0, 0");
 
     private final Button startButton = new Button("Start route");
 
@@ -378,7 +378,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 .name(routeName.getText())
                 .color(colorPicker.getValue())
                 .startStar(starDisplayRecord.getStarName())
-                .lineSegments(new ArrayList<>())
+                .routeCoordinates(new ArrayList<>())
                 .lineWidth(lineWidth)
                 .visibility(RouteVisibility.FULL)
                 .routeNotes(notes.getText())

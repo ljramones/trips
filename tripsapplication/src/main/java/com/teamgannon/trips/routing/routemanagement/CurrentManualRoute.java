@@ -60,13 +60,11 @@ public class CurrentManualRoute {
     public CurrentManualRoute(TripsContext tripsContext,
                               RouteDisplay routeDisplay,
                               RouteGraphicsUtil routeGraphicsUtil,
-                              RouteBuilderUtils routeBuilderUtils,
-                              RouteUpdaterListener routeUpdaterListener) {
+                              RouteBuilderUtils routeBuilderUtils) {
         this.tripsContext = tripsContext;
         this.routeDisplay = routeDisplay;
         this.routeGraphicsUtil = routeGraphicsUtil;
         this.routeBuilderUtils = routeBuilderUtils;
-        this.routeUpdaterListener = routeUpdaterListener;
     }
 
     /**
@@ -108,6 +106,13 @@ public class CurrentManualRoute {
             routeDisplay.toggleRouteVisibility(true);
             routeUpdaterListener.routingStatus(true);
         }
+    }
+
+    private Group getCurrentRouteDisplay(){
+        if (currentRouteDisplay== null) {
+            currentRouteDisplay = new Group();
+        }
+        return currentRouteDisplay;
     }
 
     /**
@@ -276,7 +281,7 @@ public class CurrentManualRoute {
     }
 
     public int getNumberSegments() {
-        return currentRoute.getLineSegments().size();
+        return currentRoute.getRouteCoordinates().size();
     }
 
     public void addRouteSegment(Node lineSegment) {
@@ -293,7 +298,7 @@ public class CurrentManualRoute {
     }
 
     public Point3D getLastPoint() {
-        return currentRoute.getLineSegments().get(getNumberSegments() - 1);
+        return currentRoute.getRouteCoordinates().get(getNumberSegments() - 1);
     }
 
     public StarDisplayRecord getLastStar() {

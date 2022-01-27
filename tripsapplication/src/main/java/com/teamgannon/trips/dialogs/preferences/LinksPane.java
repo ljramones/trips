@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.LinkDescriptor;
-import com.teamgannon.trips.config.application.LinkDisplayPreferences;
+import com.teamgannon.trips.config.application.model.LinkDescriptor;
+import com.teamgannon.trips.config.application.model.LinkDisplayPreferences;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.support;
 
 
-import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

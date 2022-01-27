@@ -1,6 +1,5 @@
 package com.teamgannon.trips.search;
 
-import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
@@ -20,11 +19,10 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 public class SearchPane extends Pane {
 
-    private final @NotNull SearchContext searchContext;
-    private final @NotNull DataSetContext dataSetContext;
+    private final SearchContext searchContext;
     private final DataSetChangeListener dataSetChangeListener;
     private final StellarDataUpdaterListener updater;
-    private final @NotNull DistanceSelectionPanel d2EarthSlider;
+    private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
     private final PolitySelectionPanel politySelectionPanel = new PolitySelectionPanel();
@@ -43,16 +41,13 @@ public class SearchPane extends Pane {
     /**
      * constructor
      *
-     * @param searchContext  the search context
-     * @param dataSetContext the data set context
-     * @param updater        the data updater
+     * @param searchContext the search context
+     * @param updater       the data updater
      */
     public SearchPane(@NotNull SearchContext searchContext,
-                      @NotNull DataSetContext dataSetContext,
                       DataSetChangeListener dataSetChangeListener,
                       StellarDataUpdaterListener updater) {
         this.searchContext = searchContext;
-        this.dataSetContext = dataSetContext;
         this.dataSetChangeListener = dataSetChangeListener;
         this.updater = updater;
 
@@ -63,8 +58,11 @@ public class SearchPane extends Pane {
                 .highValue(20)
                 .max(20)
                 .build();
-        if (dataSetContext.getDescriptor() != null) {
-            distanceRange.setMax(dataSetContext.getDescriptor().getDistanceRange());
+
+        DataSetDescriptor descriptor = searchContext.getDataSetDescriptor();
+        if (searchContext.getDataSetDescriptor() != null) {
+            log.info("Dataset distance range:{}", descriptor.getDistanceRange());
+            distanceRange.setMax(descriptor.getDistanceRange());
         }
 
         d2EarthSlider = new DistanceSelectionPanel(searchContext.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
@@ -82,7 +80,7 @@ public class SearchPane extends Pane {
         queryBox.setVgap(5);
         queryBox.setHgap(5);
 
-        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetContext, dataSetChangeListener);
+        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetChangeListener);
         queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
         queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
         queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);
@@ -114,6 +112,11 @@ public class SearchPane extends Pane {
         dataSetChoicePanel.updateDataContext(dataSetDescriptor);
     }
 
+
+    public void removeDataset(DataSetDescriptor dataSetDescriptor) {
+        dataSetChoicePanel.removeDataset(dataSetDescriptor);
+    }
+
     public AstroSearchQuery runQuery(boolean showPlot, boolean showTable, boolean doExport) {
 
         DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
@@ -130,7 +133,7 @@ public class SearchPane extends Pane {
                 updater.doExport(newQuery);
             }
 
-            if (newQuery.getDescriptor() != null) {
+            if (newQuery.getDataSetContext().getDescriptor() != null) {
                 // update main screen
                 updater.showNewStellarData(newQuery, showPlot, showTable);
             } else {

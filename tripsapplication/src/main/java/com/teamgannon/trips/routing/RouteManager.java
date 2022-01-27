@@ -17,10 +17,12 @@ package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.routing.model.RoutingType;
@@ -29,30 +31,40 @@ import javafx.scene.Group;
 import javafx.scene.SubScene;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Slf4j
+@Component
 public class RouteManager {
 
     /**
      * holds all the route display vars
      */
-    private final RouteDisplay routeDisplay;
+    private RouteDisplay routeDisplay;
+    private final TripsContext tripsContext;
 
     /**
      * a listener for handling route update events
      */
-    private final RouteUpdaterListener routeUpdaterListener;
+    private RouteUpdaterListener routeUpdaterListener;
 
-    private final CurrentManualRoute currentManualRoute;
+    /**
+     * utility class for creating manual routes
+     */
+    private CurrentManualRoute currentManualRoute;
 
-    private final RouteBuilderUtils routeBuilderUtils;
+    /**
+     * Utility class for drawing the routes
+     */
+    private RouteBuilderUtils routeBuilderUtils;
 
-    private final PartialRouteUtils partialRouteUtils;
-
-    private final RouteGraphicsUtil routeGraphicsUtil;
+    /**
+     * Utility class for creating partial routes
+     */
+    private PartialRouteUtils partialRouteUtils;
 
     /**
      * routing type
@@ -64,26 +76,31 @@ public class RouteManager {
     /**
      * the constructor
      *
-     * @param routeUpdaterListener the route update listener
      */
-    public RouteManager(@NotNull Group world,
-                        @NotNull Group sceneRoot,
-                        SubScene subScene,
-                        InterstellarSpacePane interstellarSpacePane,
-                        RouteUpdaterListener routeUpdaterListener,
-                        TripsContext tripsContext) {
+    public RouteManager(TripsContext tripsContext) {
+        this.tripsContext = tripsContext;
+    }
+
+
+    public void setGraphics(Group sceneRoot,
+                            Group world,
+                            SubScene subScene,
+                            InterstellarSpacePane interstellarSpacePane) {
 
         routeDisplay = new RouteDisplay(tripsContext, subScene, interstellarSpacePane);
-        routeGraphicsUtil = new RouteGraphicsUtil(routeDisplay);
+        RouteGraphicsUtil routeGraphicsUtil = new RouteGraphicsUtil(routeDisplay);
         routeBuilderUtils = new RouteBuilderUtils(tripsContext, routeDisplay, routeGraphicsUtil);
 
-        currentManualRoute = new CurrentManualRoute(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils, routeUpdaterListener);
+        currentManualRoute = new CurrentManualRoute(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils);
         partialRouteUtils = new PartialRouteUtils(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils);
-
-        this.routeUpdaterListener = routeUpdaterListener;
 
         world.getChildren().add(routeDisplay.getRoutesGroup());
         sceneRoot.getChildren().add(routeDisplay.getLabelDisplayGroup());
+    }
+
+    public void setListeners(RouteUpdaterListener routeUpdaterListener) {
+        this.routeUpdaterListener = routeUpdaterListener;
+        this.currentManualRoute.setRouteUpdaterListener(routeUpdaterListener);
     }
 
     /////////////// general
@@ -103,6 +120,7 @@ public class RouteManager {
     public void clearRoutes() {
         // clear the routes
         routeDisplay.clear();
+        tripsContext.getCurrentPlot().clearRoutes();
     }
 
     /**
@@ -123,7 +141,6 @@ public class RouteManager {
         routeDisplay.toggleRouteLengths(routesLengthsFlag);
     }
 
-
     /**
      * set the routing type
      *
@@ -142,10 +159,29 @@ public class RouteManager {
         return routingType;
     }
 
-    ///////////// routing functions
+    /**
+     * set the control offset for the screen
+     * this is required since the screen coordinates are global and calculation has to take into account the control
+     * panel height on top of the scree
+     *
+     * @param controlPaneOffset the height of the control plane
+     */
+    public void setControlPaneOffset(double controlPaneOffset) {
+        routeDisplay.setControlPaneOffset(controlPaneOffset);
+    }
 
     /**
-     * set whether we are engaged in an active manul routing plot function
+     * change the state of a displayed route
+     *
+     * @param routeDescriptor the route
+     * @param state           the state
+     */
+    public void changeDisplayStateOfRoute(RouteDescriptor routeDescriptor, boolean state) {
+        routeDisplay.changeDisplayStateOfRoute(routeDescriptor, state);
+    }
+
+    /**
+     * set whether we are engaged in an active manual routing plot function
      *
      * @param state the state - true is active, false is inactive
      */
@@ -157,15 +193,26 @@ public class RouteManager {
         }
     }
 
+    /**
+     * update the labels for all routes
+     */
+    public void updateLabels() {
+        routeDisplay.updateLabels();
+    }
 
-    ////////////  redraw the routes
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Plotting routines
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * plot the routes
-     * this is usually caused by a request to do a fresh replot of all routes
+     * this is usually caused by a request to do a fresh re-plot of all routes
      *
      * @param routeList the list of routes
      */
+    @TrackExecutionTime
     public void plotRoutes(@NotNull List<Route> routeList) {
         // clear existing routes
         routeDisplay.clear();
@@ -178,6 +225,7 @@ public class RouteManager {
      * @param currentDataSet      current data descriptor
      * @param routeDescriptorList the list of things to plot
      */
+    @TrackExecutionTime
     public void plotRouteDescriptors(DataSetDescriptor currentDataSet,
                                      @NotNull List<RoutingMetric> routeDescriptorList) {
         // plot route
@@ -187,7 +235,7 @@ public class RouteManager {
             // update route and save
             routeUpdaterListener.newRoute(currentDataSet, routeDescriptor);
         }
-      //  routeDisplay.
+        //  routeDisplay
         routeDisplay.updateLabels();
     }
 
@@ -196,14 +244,19 @@ public class RouteManager {
      *
      * @param route the route to plot
      */
+    @TrackExecutionTime
     public void plotRoute(@NotNull Route route) {
         if (checkIfWholeRouteCanBePlotted(route)) {
-            // do actual plot
+            // handle a full route
             log.info(">>>route {} is a full route", route.getRouteName());
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
+            routeDescriptor.setVisibility(RouteVisibility.FULL);
             Group routeGraphic = routeBuilderUtils.createRoute(routeDescriptor);
             routeDisplay.addRouteToDisplay(routeDescriptor, routeGraphic);
             routeDisplay.toggleRouteVisibility(true);
+
+            // register route in current plot
+            tripsContext.getCurrentPlot().addRoute(routeDescriptor.getId(), routeDescriptor);
         } else {
             //  figure out what part of the partial route is here
             log.info(">>>route {} is a partial route", route.getRouteName());
@@ -212,7 +265,6 @@ public class RouteManager {
         routeDisplay.updateLabels();
         log.info("Plot done");
     }
-
 
     /**
      * plot a route descriptor
@@ -233,61 +285,17 @@ public class RouteManager {
         return routeBuilderUtils.checkIfWholeRouteCanBePlotted(route);
     }
 
-    /**
-     * convert a database description of a route to a graphical one.
-     * check that all the stars in the original route are present because we can't display the route
-     *
-     * @param route the db description of a route
-     * @return the graphical descriptor
-     */
-    private RouteDescriptor toRouteDescriptor(@NotNull Route route) {
-        RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
-        int i = 0;
-        for (UUID id : route.getRouteStars()) {
-            StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(id);
-            if (starDisplayRecord != null) {
-                routeDescriptor.getRouteList().add(id);
-                routeDescriptor.getLineSegments().add(starDisplayRecord.getCoordinates());
-                if (i < route.getRouteLengths().size()) {
-                    routeDescriptor.getLengthList().add(route.getRouteLengths().get(i++));
-                }
-            }
-        }
-
-        return routeDescriptor;
-    }
-
-    /**
-     * set the control offset for the screen
-     * this is required since the screen coordinates are global and calculation has to take into account the controal
-     * panel height on top of the scree
-     *
-     * @param controlPaneOffset the height of the cotnrol plane
-     */
-    public void setControlPaneOffset(double controlPaneOffset) {
-        routeDisplay.setControlPaneOffset(controlPaneOffset);
-    }
-
-    /**
-     * change the state of a displayed route
-     *
-     * @param routeDescriptor the route
-     * @param state           the state
-     */
-    public void changeDisplayStateOfRoute(RouteDescriptor routeDescriptor, boolean state) {
-        routeDisplay.changeDisplayStateOfRoute(routeDescriptor, state);
-    }
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Manual routing
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * start the route from a selected star
      *
      * @param dataSetDescriptor the data set descriptor
-     * @param routeDescriptor   the route decriptor which is filled before
+     * @param routeDescriptor   the route descriptor which is filled before
      * @param firstPlottedStar  the star to plot to
      */
     public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord firstPlottedStar) {
@@ -297,14 +305,14 @@ public class RouteManager {
     /**
      * continue the route
      *
-     * @param starDisplayRecord the the star to route to
+     * @param starDisplayRecord the star to route to
      */
     public void continueRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         currentManualRoute.continueRoute(starDisplayRecord);
     }
 
     /**
-     * remoe the current manual route
+     * remove the current manual route
      */
     public void removeRoute() {
         currentManualRoute.removeRoute();
@@ -330,11 +338,36 @@ public class RouteManager {
         currentManualRoute.resetRoute();
     }
 
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Utility routines
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * update the labels for all routes
+     * convert a database description of a route to a graphical one.
+     * check that all the stars in the original route are present because we can't display the route
+     *
+     * @param route the db description of a route
+     * @return the graphical descriptor
      */
-    public void updateLabels() {
-        routeDisplay.updateLabels();
+    private RouteDescriptor toRouteDescriptor(@NotNull Route route) {
+        RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
+        int i = 0;
+        for (UUID id : route.getRouteStars()) {
+            StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(id);
+            if (starDisplayRecord != null) {
+                routeDescriptor.getRouteList().add(id);
+                routeDescriptor.getRouteCoordinates().add(starDisplayRecord.getCoordinates());
+                if (i < route.getRouteLengths().size()) {
+                    routeDescriptor.getLengthList().add(route.getRouteLengths().get(i++));
+                }
+            }
+        }
+
+        return routeDescriptor;
     }
+
 
 }

@@ -2,14 +2,22 @@ package com.teamgannon.trips.jpa.model;
 
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import javafx.scene.paint.Color;
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.util.Objects;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 public class GraphColorsPersist {
 
@@ -41,8 +49,14 @@ public class GraphColorsPersist {
      */
     private String legendColor = Color.BEIGE.toString();
 
+    /**
+     * the extension stem width
+     */
     private double stemLineWidth = 0.5;
 
+    /**
+     * the width of the grid lines
+     */
     private double gridLineWidth = 0.5;
 
 
@@ -84,5 +98,18 @@ public class GraphColorsPersist {
         stemLineWidth = graphColors.getStemLineWidth();
         gridLineWidth = graphColors.getGridLineWidth();
         labelFont = graphColors.getLabelFont().toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        GraphColorsPersist that = (GraphColorsPersist) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

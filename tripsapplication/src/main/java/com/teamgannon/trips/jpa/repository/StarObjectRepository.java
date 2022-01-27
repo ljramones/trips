@@ -43,7 +43,8 @@ public interface StarObjectRepository
      * @param page          the limit of pages to search for
      * @return the stars
      */
-    Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(String dataSetName, double limitDistance, Pageable page);
+    Page<StarObject> findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(
+            String dataSetName, double limitDistance, Pageable page);
 
     /**
      * find all objects by dataset name
@@ -97,6 +98,14 @@ public interface StarObjectRepository
      */
     Stream<StarObject> findByDataSetNameAndDistanceIsLessThanEqual(String dataSetName, double limitDistance);
 
+    /**
+     * get a count of the stars under a specified range
+     *
+     * @param dataSetName   the dataset name
+     * @param limitDistance the max distance
+     * @return the count of starts
+     */
+    long countByDataSetNameAndDistanceIsLessThanEqual(String dataSetName, double limitDistance);
 
     List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
@@ -128,5 +137,11 @@ public interface StarObjectRepository
             double zg,
             double zl
     );
+
+    List<StarObject> findByCatalogIdListContainsIgnoreCase(String catalogId);
+
+    List<StarObject> findByCommonNameContainsIgnoreCase(String commonName);
+
+    List<StarObject> findByConstellationName(String constellationName);
 
 }

@@ -1,10 +1,11 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.measure.PerformanceMeasure;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,11 +18,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -38,11 +38,6 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
     private StarObject originStar;
     private StarObject destinationStar;
 
-    /**
-     * our lookup
-     */
-    private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
-
     private final TextField upperLengthLengthTextField = new TextField();
     private final TextField lowerLengthLengthTextField = new TextField();
 
@@ -51,6 +46,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
 
     private final ColorPicker colorPicker = new ColorPicker();
     private final String currentDataSet;
+    private final StarMeasurementService starMeasurementService;
     private final DatabaseManagementService databaseManagementService;
 
     /**
@@ -60,9 +56,11 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
      * @param databaseManagementService the database management service
      */
     public RouteFinderDialogInDataSet(String currentDataSet,
+                                      StarMeasurementService starMeasurementService,
                                       @NotNull DatabaseManagementService databaseManagementService) {
 
         this.currentDataSet = currentDataSet;
+        this.starMeasurementService = starMeasurementService;
         this.databaseManagementService = databaseManagementService;
 
         VBox vBox = new VBox();
@@ -103,7 +101,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
 
     private StarSearchResults lookupStarName(String starToFind) {
         if (starToFind.isEmpty()) {
-            showErrorAlert("Star to Lookup","Please enter a star name");
+            showErrorAlert("Star to Lookup", "Please enter a star name");
             return null;
         } else {
             LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService);
@@ -178,6 +176,10 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
 
+        Button howLongBtn = new Button("How Long will this take?");
+        howLongBtn.setOnAction(this::findOutHowLong);
+        hBox.getChildren().add(howLongBtn);
+
         Button resetBtn = new Button("Find Route(s)");
         resetBtn.setOnAction(this::findRoutesClicked);
         hBox.getChildren().add(resetBtn);
@@ -188,11 +190,46 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         vBox.getChildren().add(hBox);
 
         this.getDialogPane().setContent(vBox);
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
     }
+
+    private void close(WindowEvent windowEvent) {
+        setResult(RouteFindingOptions.builder().selected(false).build());
+    }
+
 
     private void cancelClicked(ActionEvent actionEvent) {
         setResult(RouteFindingOptions.builder().selected(false).build());
         log.info("cancel find routes clicked");
+    }
+
+
+    private void findOutHowLong(ActionEvent actionEvent) {
+        if (originStar == null || destinationStar == null) {
+            showErrorAlert("Error in long route determination", "Both origin and destination should be set");
+            log.error("Error in long route determination, both origin and destination should be set");
+        } else {
+            log.info("find out how many stars this query will take");
+            double[] originCoords = originStar.getCoordinates();
+            double[] destinationCoords = destinationStar.getCoordinates();
+            double distance = starMeasurementService.calculateDistance(originCoords, destinationCoords);
+            log.info("distance between {} and {} is {} ly", originStar.getDisplayName(), destinationStar.getDisplayName(), distance);
+
+            long starCount = databaseManagementService.getCountOfDatasetWithinLimit(currentDataSet, distance);
+            log.info("number of stars:{}", starCount);
+            PerformanceMeasure performanceMeasure = starMeasurementService.calculateTimeToDoSearch(starCount);
+            performanceMeasure.setDistance(distance);
+            log.info("time required to find a route through {} stars is {} secs",
+                    String.format("%,d", starCount),
+                    String.format("%,.2f", performanceMeasure.getTimeToDoRouteSearch())
+            );
+            SearchPerformanceDialog searchPerformanceDialog = new SearchPerformanceDialog(performanceMeasure);
+            searchPerformanceDialog.showAndWait();
+        }
+
     }
 
     private void findRoutesClicked(ActionEvent actionEvent) {

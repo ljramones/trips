@@ -1,25 +1,13 @@
 package com.teamgannon.trips.routing.routemanagement;
 
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.routing.model.Route;
-import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.Sphere;
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +28,7 @@ public class RouteBuilderUtils {
     /**
      * constructor
      *
-     * @param routeDisplay       the route display
+     * @param routeDisplay the route display
      */
     public RouteBuilderUtils(TripsContext tripsContext,
                              RouteDisplay routeDisplay,
@@ -76,7 +64,6 @@ public class RouteBuilderUtils {
         return route.getRouteStars().stream().allMatch(tripsContext.getCurrentPlot().getStarLookup()::containsKey);
     }
 
-
     /**
      * plot a route descriptor
      *
@@ -84,9 +71,14 @@ public class RouteBuilderUtils {
      */
     public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
         Group routeGraphic = createRoute(routeDescriptor);
+
+        // affix the route to the display
         routeDisplay.addRouteToDisplay(routeDescriptor, routeGraphic);
         routeDisplay.toggleRouteVisibility(true);
         routeDisplay.setManualRoutingActive(false);
+
+        // register the route in the current plot
+        tripsContext.getCurrentPlot().addRoute(routeDescriptor.getId(), routeDescriptor);
     }
 
     /**
@@ -101,7 +93,7 @@ public class RouteBuilderUtils {
 
         int i = 0;
         Point3D previousPoint = new Point3D(0, 0, 0);
-        for (Point3D point3D : routeDescriptor.getLineSegments()) {
+        for (Point3D point3D : routeDescriptor.getRouteCoordinates()) {
             if (firstLink) {
                 previousPoint = point3D;
                 firstLink = false;

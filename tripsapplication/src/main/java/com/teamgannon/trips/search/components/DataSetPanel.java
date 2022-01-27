@@ -1,6 +1,5 @@
 package com.teamgannon.trips.search.components;
 
-import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
@@ -30,11 +29,9 @@ public class DataSetPanel extends BasePane {
     /**
      * constructor
      *
-     * @param searchContext  the search context
-     * @param dataSetContext the dataset context
+     * @param searchContext the search context
      */
     public DataSetPanel(@NotNull SearchContext searchContext,
-                        @NotNull DataSetContext dataSetContext,
                         DataSetChangeListener dataSetChangeListener) {
 
         this.searchContext = searchContext;
@@ -46,9 +43,9 @@ public class DataSetPanel extends BasePane {
         }
 
         Label rowLabel = createLabel("DataSet to use: ");
-        if (dataSetContext.isValidDescriptor()) {
-            datasetChoiceBox.setValue(dataSetContext.getDescriptor().getDataSetName());
-            searchContext.getAstroSearchQuery().setDescriptor(dataSetContext.getDescriptor());
+        if (searchContext.getDataSetContext().isValidDescriptor()) {
+            datasetChoiceBox.setValue(searchContext.getDataSetDescriptor().getDataSetName());
+            searchContext.getAstroSearchQuery().setDescriptor(searchContext.getDataSetDescriptor());
         }
         datasetChoiceBox.getSelectionModel()
                 .selectedItemProperty()
@@ -104,5 +101,13 @@ public class DataSetPanel extends BasePane {
     public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         datasets.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
         datasetChoiceBox.getItems().add(dataSetDescriptor.getDataSetName());
+    }
+
+    public void removeDataset(DataSetDescriptor dataSetDescriptor) {
+        datasetChoiceBox.getItems().remove(dataSetDescriptor.getDataSetName());
+        String name= dataSetDescriptor.getDataSetName();
+        if (datasetChoiceBox.getValue().equals(name)) {
+            datasetChoiceBox.getSelectionModel().select(0);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.file.csvin.model;
 
+import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.stellarmodelling.StarColor;
 import com.teamgannon.trips.stellarmodelling.StellarFactory;
@@ -175,7 +176,6 @@ public class AstroCSVStar {
     private String galacticLongitude;
 
 
-
     /**
      * conversion constructor
      *
@@ -199,18 +199,32 @@ public class AstroCSVStar {
             astro.setSource(source.trim());
             astro.setCatalogIdList(catalogIdList);
 
-            astro.setX(parseDouble(x.trim()));
-            astro.setY(parseDouble(y.trim()));
-            astro.setZ(parseDouble(z.trim()));
+            astro.setRa(parseDouble(ra.trim()));
+            astro.setDeclination(parseDouble(declination.trim()));
+            astro.setDistance(parseDouble(distance.trim()));
+
+            // if the xyz coordinates aren't defined then calculate them from the RA and dec
+            if (x.trim().isEmpty() && y.trim().isEmpty() && z.trim().isEmpty()) {
+                // calculate form RA and dec
+                calculateXYZ(astro);
+            } else {
+                // xyz are there
+                astro.setX(parseDouble(x.trim()));
+                astro.setY(parseDouble(y.trim()));
+                astro.setZ(parseDouble(z.trim()));
+
+                if (astro.getX() == 0 && astro.getY() == 0 && astro.getZ() == 0 && astro.getDistance() > 0) {
+                    calculateXYZ(astro);
+                }
+            }
 
             astro.setRadius(parseDouble(radius.trim()));
-            astro.setRa(parseDouble(ra.trim()));
+
             astro.setPmra(parseDouble(pmra.trim()));
-            astro.setDeclination(parseDouble(declination.trim()));
             astro.setPmdec(parseDouble(pmdec.trim()));
 
             astro.setParallax(parseDouble(parallax.trim()));
-            astro.setDistance(parseDouble(distance.trim()));
+
             astro.setRadialVelocity(parseDouble(radialVelocity.trim()));
             astro.setSpectralClass(spectralClass.trim());
             astro.setOrthoSpectralClass(orthoSpectralClass.trim());
@@ -284,6 +298,13 @@ public class AstroCSVStar {
 
     }
 
+    private void calculateXYZ(StarObject astro) {
+        double[] coordinates = StarMath.getPosition(astro.getRa(), astro.getDeclination(), astro.getDistance());
+        astro.setX(coordinates[0]);
+        astro.setY(coordinates[1]);
+        astro.setZ(coordinates[2]);
+    }
+
     private double parseDouble(String string) {
         if (string.isEmpty()) {
             return 0;
@@ -319,6 +340,5 @@ public class AstroCSVStar {
 
         return xyz;
     }
-
 
 }

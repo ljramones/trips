@@ -3,20 +3,77 @@ package com.teamgannon.trips.service.measure;
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.transits.TransitRoute;
+import com.teamgannon.trips.measure.OshiMeasure;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.transits.TransitRangeDef;
+import com.teamgannon.trips.transits.TransitRoute;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
+@Component
 public class StarMeasurementService {
 
     private final Set<String> lookupSourceTarget = new HashSet<>();
+    private final OshiMeasure oshiMeasure;
+
+    private Random random = new Random();
+
+    public StarMeasurementService(OshiMeasure oshiMeasure) {
+        this.oshiMeasure = oshiMeasure;
+    }
+
+    public PerformanceMeasure calculateTimeToDoSearch(long starCount) {
+        double timeFor1MDistCalcs = benchmark();
+        int numberOfProcessors = oshiMeasure.numberOfLogicalProcessors();
+        long memory = oshiMeasure.getAvailableMemoryInMb();
+        long totalPathsWorstCase = starCount * starCount / 2;
+        double costForCalcsPerprocessor = totalPathsWorstCase * timeFor1MDistCalcs;
+        double costForCalcs = costForCalcsPerprocessor / numberOfProcessors * 200; // 70 is an arbitrary to scale the application
+        log.info("cost for calcs ={}", costForCalcs);
+
+        return PerformanceMeasure
+                .builder()
+                .numberProcessors(numberOfProcessors)
+                .numbersOfStars(starCount)
+                .worseCasePaths(totalPathsWorstCase)
+                .timeToDoRouteSearch(costForCalcs)
+                .memorySize(memory)
+                .build();
+    }
+
+    private double benchmark() {
+        double distance = 23;
+        double[] origin = randomCoordinates(distance);
+        double[] destination = randomCoordinates(distance / 21);
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            origin[0] += 0.001;
+            origin[1] -= 0.001;
+            origin[2] += 0.002;
+            destination[0] += 0.0011;
+            destination[1] -= 0.0012;
+            destination[2] += 0.0021;
+            distance = StarMath.getDistance(origin, destination);
+        }
+        long endTime = System.currentTimeMillis();
+        return (endTime - startTime) / 1000.0 / 1000000;
+    }
+
+    private double[] randomCoordinates(double distance) {
+        double[] array = new double[3];
+        array[0] = random.nextDouble() + distance;
+        array[1] = random.nextDouble() - distance;
+        array[2] = random.nextDouble() + distance / 2;
+        return array;
+    }
+
+    public double calculateDistance(double[] origin, double[] destination) {
+        return StarMath.getDistance(origin, destination);
+    }
 
     /**
      * calculate the distances between all the stars in view
@@ -24,6 +81,7 @@ public class StarMeasurementService {
      * @param distance    the distance measure
      * @param starsInView the list of stars in view
      */
+    @TrackExecutionTime
     public @NotNull List<TransitRoute> calculateDistances(@NotNull DistanceRoutes distance, @NotNull List<StarDisplayRecord> starsInView) {
         lookupSourceTarget.clear();
         List<TransitRoute> allTransit = new ArrayList<>();
@@ -34,6 +92,7 @@ public class StarMeasurementService {
         return allTransit;
     }
 
+    @TrackExecutionTime
     public @NotNull List<TransitRoute> calculateDistances(@NotNull TransitRangeDef transitRangeDef, @NotNull List<StarDisplayRecord> starsInView) {
         lookupSourceTarget.clear();
         List<TransitRoute> allTransit = new ArrayList<>();
@@ -44,6 +103,7 @@ public class StarMeasurementService {
         return allTransit;
     }
 
+    @TrackExecutionTime
     private @NotNull List<TransitRoute> findStarsWithLimit(@NotNull StarDisplayRecord sourceRecord,
                                                            @NotNull List<StarDisplayRecord> starsInView,
                                                            @NotNull TransitRangeDef transitRangeDef) {
@@ -59,6 +119,7 @@ public class StarMeasurementService {
         return routeList;
     }
 
+    @TrackExecutionTime
     private @NotNull List<TransitRoute> findStarsWithLimit(@NotNull StarDisplayRecord sourceRecord,
                                                            @NotNull List<StarDisplayRecord> starsInView,
                                                            @NotNull DistanceRoutes distanceRange) {

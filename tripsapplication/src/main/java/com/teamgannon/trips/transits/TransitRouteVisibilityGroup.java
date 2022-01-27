@@ -3,6 +3,7 @@ package com.teamgannon.trips.transits;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
@@ -38,6 +39,21 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Slf4j
 @Data
 public class TransitRouteVisibilityGroup {
+
+    /**
+     * TRIPS application context
+     */
+    private TripsContext tripsContext;
+
+    /**
+     * star measurement service
+     */
+    private final StarMeasurementService starMeasurementService;
+
+    /**
+     * reference to the interstellar pane
+     */
+    private InterstellarSpacePane interstellarSpacePane;
 
     /**
      * whether this is currently visible
@@ -76,7 +92,9 @@ public class TransitRouteVisibilityGroup {
      */
     private final Map<String, TransitRoute> transitRouteMap = new HashMap<>();
 
-
+    /**
+     * transit links
+     */
     private List<TransitRoute> transitRouteList = new ArrayList<>();
 
     /**
@@ -84,8 +102,12 @@ public class TransitRouteVisibilityGroup {
      */
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    /**
+     * used to make label appear always flat to the glass pane
+     */
     private SubScene subScene;
-    private InterstellarSpacePane interstellarSpacePane;
+
+
     /**
      * the transit range ref used to describe any of this
      */
@@ -108,7 +130,6 @@ public class TransitRouteVisibilityGroup {
     private final List<TransitRoute> currentRouteList = new ArrayList<>();
 
     private final RouteUpdaterListener routeUpdaterListener;
-    private TripsContext tripsContext;
 
     /**
      * current dataset
@@ -125,7 +146,9 @@ public class TransitRouteVisibilityGroup {
      *
      * @param transitRangeDef the transit group definition
      */
-    public TransitRouteVisibilityGroup(SubScene subScene, InterstellarSpacePane interstellarSpacePane,
+    public TransitRouteVisibilityGroup(SubScene subScene,
+                                       InterstellarSpacePane interstellarSpacePane,
+                                       StarMeasurementService starMeasurementService,
                                        double controlPaneOffset,
                                        TransitRangeDef transitRangeDef,
                                        RouteUpdaterListener routeUpdaterListener,
@@ -133,6 +156,7 @@ public class TransitRouteVisibilityGroup {
     ) {
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
+        this.starMeasurementService = starMeasurementService;
         this.controlPaneOffset = controlPaneOffset;
         this.transitRangeDef = transitRangeDef;
         this.routeUpdaterListener = routeUpdaterListener;
@@ -168,7 +192,6 @@ public class TransitRouteVisibilityGroup {
     /////////////////////////////////////////
 
     public void plotTransit(TransitRangeDef transitRangeDef, List<StarDisplayRecord> starsInView) {
-        StarMeasurementService starMeasurementService = new StarMeasurementService();
         List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(transitRangeDef, starsInView);
         log.info("# of routes found is {}", transitRoutes.size());
 
@@ -422,15 +445,18 @@ public class TransitRouteVisibilityGroup {
     private void createRoute(@NotNull Node transitSegment) {
         TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
         RouteDialog dialog = new RouteDialog(transitRoute.getSource());
-        Optional<RouteDescriptor> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            currentRouteList.clear();
-            routingActive = true;
-            routeDescriptor = result.get();
-            routeDescriptor.setStartStar(transitRoute.getSource().getStarName());
-            routeDescriptor.getRouteList().add(transitRoute.getSource().getRecordId());
-            currentRouteList.add(transitRoute);
-            log.info("new route");
+        Optional<RouteSelector> resultOptional = dialog.showAndWait();
+        if (resultOptional.isPresent()) {
+            RouteSelector routeSelector = resultOptional.get();
+            if (routeSelector.isSelected()) {
+                currentRouteList.clear();
+                routingActive = true;
+                routeDescriptor = routeSelector.getRouteDescriptor();
+                routeDescriptor.setStartStar(transitRoute.getSource().getStarName());
+                routeDescriptor.getRouteList().add(transitRoute.getSource().getRecordId());
+                currentRouteList.add(transitRoute);
+                log.info("new route");
+            }
         }
     }
 
@@ -442,7 +468,7 @@ public class TransitRouteVisibilityGroup {
                 currentRouteList.add(transitRoute);
                 log.info("add to route");
             } else {
-                showErrorAlert("Transit Routing", "start a route first");
+                showErrorAlert("Link Routing", "start a route first");
             }
         });
         return menuItem;
@@ -457,7 +483,7 @@ public class TransitRouteVisibilityGroup {
                 constructRoute();
                 log.info("complete route");
             } else {
-                showErrorAlert("Transit Routing", "start a route first");
+                showErrorAlert("Link Routing", "start a route first");
             }
         });
         return menuItem;
@@ -466,7 +492,7 @@ public class TransitRouteVisibilityGroup {
     private void constructRoute() {
         log.info("validate the ");
         for (TransitRoute transitRoute : currentRouteList) {
-            routeDescriptor.getLineSegments().add(transitRoute.getTargetEndpoint());
+            routeDescriptor.getRouteCoordinates().add(transitRoute.getTargetEndpoint());
             routeDescriptor.getRouteList().add(transitRoute.getTarget().getRecordId());
         }
         routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);

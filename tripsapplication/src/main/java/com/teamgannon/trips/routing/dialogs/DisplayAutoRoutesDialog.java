@@ -25,8 +25,10 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
     private final TableView<RoutingMetric> routingChoicesTable = new TableView<>();
 
     private final List<RoutingMetric> selectedRoutingMetrics = new ArrayList<>();
+    private final PossibleRoutes possibleRoutes;
 
     public DisplayAutoRoutesDialog(@NotNull Stage stage, @NotNull PossibleRoutes possibleRoutes) {
+        this.possibleRoutes = possibleRoutes;
         this.setTitle("Select Routes to Plot");
 
         VBox vBox = new VBox();
@@ -62,10 +64,10 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
     private void updateTable(@NotNull PossibleRoutes possibleRoutes) {
         routingChoicesTable.getItems().clear();
         possibleRoutes.getRoutes().forEach(metric -> routingChoicesTable.getItems().add(metric));
+
     }
 
     private void createTable(@NotNull VBox vBox) {
-
         routingChoicesTable.setPrefWidth(750);
 
         TableColumn<RoutingMetric, String> rankColumn = new TableColumn<>("Rank");
@@ -96,9 +98,12 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
 
         vBox.getChildren().add(routingChoicesTable);
 
+        selectionModel.selectFirst();
+        selectedRoutingMetrics.add(possibleRoutes.getRoutes().get(1));
     }
 
     private void onChanged(ListChangeListener.@NotNull Change<? extends RoutingMetric> change) {
+        selectedRoutingMetrics.clear();
         ObservableList<RoutingMetric> selectedItems = (ObservableList<RoutingMetric>) change.getList();
         if (selectedItems.size() != 0) {
             selectedRoutingMetrics.addAll(selectedItems);

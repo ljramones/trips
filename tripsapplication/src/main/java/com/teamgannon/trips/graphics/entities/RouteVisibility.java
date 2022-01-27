@@ -2,14 +2,14 @@ package com.teamgannon.trips.graphics.entities;
 
 public enum RouteVisibility {
 
-    FULL("Full"),
-    PARTIAL("Partial"),
-    INVISIBLE("Invisible");
+    FULL("Fully"),
+    PARTIAL("Partially"),
+    OFFSCREEN("Not visible on this plot");
 
-    private String visibility;
+    private final String visibility;
 
-    RouteVisibility(String visiblity) {
-        this.visibility = visiblity;
+    RouteVisibility(String visibility) {
+        this.visibility = visibility;
     }
 
     public String getVisibility() {

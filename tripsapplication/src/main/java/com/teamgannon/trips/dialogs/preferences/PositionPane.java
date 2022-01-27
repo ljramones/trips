@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.PositionDisplayPreferences;
+import com.teamgannon.trips.config.application.model.PositionDisplayPreferences;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 

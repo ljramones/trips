@@ -1,37 +1,100 @@
 package com.teamgannon.trips.config.application;
 
+import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
+import com.teamgannon.trips.config.application.model.DataSetContext;
+import com.teamgannon.trips.constellation.Constellation;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.TransitSettings;
 import com.teamgannon.trips.jpa.model.TripsPrefs;
 import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import lombok.Data;
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @Data
+@Component
 public class TripsContext {
 
-    private @NotNull AppViewPreferences appViewPreferences = new AppViewPreferences();
+    private final DatabaseManagementService databaseManagementService;
 
-    private @NotNull ApplicationPreferences appPreferences = new ApplicationPreferences();
+    public TripsContext(DatabaseManagementService databaseManagementService) {
+        this.databaseManagementService = databaseManagementService;
+    }
 
-    private @NotNull SearchContext searchContext = new SearchContext();
+    private ScreenSize screenSize = ScreenSize
+            .builder()
+            .sceneWidth(Universe.boxWidth)
+            .sceneHeight(Universe.boxHeight)
+            .depth(Universe.boxDepth)
+            .spacing(20)
+            .build();
 
-    private @NotNull DataSetContext dataSetContext = new DataSetContext();
+    private AppViewPreferences appViewPreferences = new AppViewPreferences();
 
-    private @NotNull TripsPrefs tripsPrefs = new TripsPrefs();
+    private ApplicationPreferences appPreferences = new ApplicationPreferences();
 
-    private @NotNull TransitSettings transitSettings = new TransitSettings();
+    private SearchContext searchContext = new SearchContext();
+
+    private TripsPrefs tripsPrefs = new TripsPrefs();
+
+    private TransitSettings transitSettings = new TransitSettings();
 
     private boolean showWarningOnZoom = true;
+
+    public DataSetDescriptor getDataSetDescriptor() {
+        try {
+            return searchContext.getAstroSearchQuery().getDataSetContext().getDescriptor();
+        } catch (Exception e) {
+            log.error("No dataset descriptor available:" + e.getMessage());
+            return null;
+        }
+    }
+
+    public void setDataSetContext(DataSetContext dataSetContext) {
+        getSearchContext().setCurrentDataSet(dataSetContext.getDescriptor().getDataSetName());
+        searchContext.getAstroSearchQuery().setDataSetContext(dataSetContext);
+        databaseManagementService.updateDataSet(dataSetContext.getDescriptor());
+    }
 
     /**
      * this hold the current plot data
      */
-    private @NotNull CurrentPlot currentPlot = new CurrentPlot();
+    private CurrentPlot currentPlot = new CurrentPlot();
 
     /**
      * the constellation set
      */
-    private ConstellationSet constellationSet = new ConstellationSet();
+    private Map<String, Constellation> constellationMap = new HashMap<>();
 
+    /**
+     * the data set context
+     *
+     * @return the data set context
+     */
+    public DataSetContext getDataSetContext() {
+        return searchContext.getDataSetContext();
+    }
+
+    public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
+        searchContext.removeDataSet(dataSetDescriptor);
+        if (tripsPrefs.getDatasetName() != null) {
+            if (tripsPrefs.getDatasetName().equals(dataSetDescriptor.getDataSetName())) {
+                tripsPrefs.setDatasetName(null);
+            }
+        }
+        databaseManagementService.saveTripsPrefs(tripsPrefs);
+        databaseManagementService.removeDataSet(dataSetDescriptor);
+    }
+
+    public void addDataSet(DataSetDescriptor dataSetDescriptor) {
+        searchContext.addDataSet(dataSetDescriptor);
+    }
 }

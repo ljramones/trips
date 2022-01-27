@@ -1,6 +1,8 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -32,7 +34,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
     private ComboBox<String> originDisplayCmb;
     private ComboBox<String> destinationDisplayCmb;
 
-    private Map<String, String> lookupNames = new HashMap<>();
 
     /**
      * our lookup
@@ -48,8 +49,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
     private final ColorPicker colorPicker = new ColorPicker();
 
     private final Set<String> searchValues;
-
-    private final Stage stage;
 
     // star types
     private final CheckBox oCheckBox = new CheckBox("O");
@@ -88,7 +87,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
      */
     public RouteFinderDialogInView(@NotNull List<StarDisplayRecord> starsInView) {
         // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
         searchValues = convertList(starsInView);
@@ -126,19 +125,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         this.getDialogPane().setContent(vBox);
 
     }
-
-//    private void setupTransformlist(Set<String> searchValues) {
-//        searchValues.forEach(name -> {
-//            String stransform = name.replace(' ', '-');
-//            transformedName.add(stransform);
-//            lookupNames.put(stransform, name);
-//        });
-//        Collections.sort(transformedName);
-//    }
-
-//    private String getUntransformedName(String lookupVal) {
-//        return lookupNames.get(lookupVal);
-//    }
 
     private void setupPrimaryTab(Tab primaryTab) {
         VBox vBox = new VBox();
@@ -193,10 +179,16 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         gridPane.add(lineWidthTextField, 1, 5);
         lineWidthTextField.setText("0.5");
 
+
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
+
+
+        Button colorButton = new Button("color");
+        colorButton.setOnAction(this::pickColor);
+
         gridPane.add(routeColor, 0, 6);
-        gridPane.add(colorPicker, 1, 6);
+        gridPane.add(colorButton, 1, 6);
         colorPicker.setValue(Color.AQUA);
 
         Label numberPaths = new Label("number of paths to find");
@@ -205,6 +197,17 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         gridPane.add(numPathsToFindTextField, 1, 7);
         numPathsToFindTextField.setText("3");
 
+    }
+
+    private void pickColor(ActionEvent actionEvent) {
+        ColorChoiceDialog dialog = new ColorChoiceDialog();
+        Optional<ColorChoice> colorChoiceOptional = dialog.showAndWait();
+        if (colorChoiceOptional.isPresent()) {
+            ColorChoice colorChoice = colorChoiceOptional.get();
+            if (colorChoice.isSelected()) {
+                colorPicker.setValue(colorChoice.getSwatch());
+            }
+        }
     }
 
     private void setupStarTab(Tab starTab) {
@@ -302,7 +305,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
         other4CheckBox.setMinWidth(100);
         vBox2.getChildren().add(other4CheckBox);
-
 
     }
 

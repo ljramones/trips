@@ -24,26 +24,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements GraphSearchComplete {
 
-    private DataSetDescriptor currentDataset;
     private StatusUpdaterListener statusUpdaterListener;
-    private final RouteFindingOptions routeFindingOptions;
 
     private final ProgressBar searchProgressBar = new ProgressBar();
     private final Label searchProgressText = new Label("waiting for graph selection");
 
-    private LargeGraphSearchService largeGraphSearchService = new LargeGraphSearchService();
+    private LargeGraphSearchService largeGraphSearchService;
 
     private final Button finishBtn = new Button("Finish");
     private final Button cancelBtn = new Button("Cancel");
 
     public RouteLoadingInfoDialog(DataSetDescriptor currentDataset,
                                   DatabaseManagementService databaseManagementService,
+                                  LargeGraphSearchService largeGraphSearchService,
                                   StatusUpdaterListener statusUpdaterListener,
                                   RouteFindingOptions routeFindingOptions) {
 
-        this.currentDataset = currentDataset;
+        this.largeGraphSearchService = largeGraphSearchService;
         this.statusUpdaterListener = statusUpdaterListener;
-        this.routeFindingOptions = routeFindingOptions;
 
         VBox vBox = new VBox();
 
@@ -53,7 +51,6 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
 
         Label statusButtonLabel = new Label("Status: ");
         statusButtonLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
-
 
         gridPane.add(statusButtonLabel, 0, 0);
         gridPane.add(searchProgressText, 1, 0);
@@ -81,7 +78,15 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
 
     }
 
-    private void startSearch(DataSetDescriptor currentDataset, DatabaseManagementService databaseManagementService, RouteFindingOptions routeFindingOptions) {
+    private void startSearch(DataSetDescriptor currentDataset,
+                             DatabaseManagementService databaseManagementService,
+                             RouteFindingOptions routeFindingOptions) {
+
+        // always reset the task state
+        largeGraphSearchService.reset();
+//        largeGraphSearchService.restart();
+
+        // start the background task running
         largeGraphSearchService.processGraphSearch(
                 routeFindingOptions,
                 currentDataset,
@@ -96,7 +101,7 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
 
 
     private void finishClicked(ActionEvent actionEvent) {
-        GraphRouteResult routeResult =  largeGraphSearchService.getValue();
+        GraphRouteResult routeResult = largeGraphSearchService.getValue();
         setResult(routeResult);
         log.info("finish find routes clicked");
     }

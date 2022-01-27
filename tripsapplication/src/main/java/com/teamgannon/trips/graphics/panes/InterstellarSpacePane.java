@@ -1,10 +1,11 @@
 package com.teamgannon.trips.graphics.panes;
 
-import com.teamgannon.trips.config.application.CurrentPlot;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.ScreenSize;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
@@ -14,8 +15,8 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
@@ -37,6 +38,7 @@ import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +46,7 @@ import java.util.UUID;
 import static java.lang.Math.abs;
 
 @Slf4j
+@Component
 public class InterstellarSpacePane extends Pane implements RotationController {
 
     private static final double ROTATE_SECS = 60;
@@ -72,13 +75,18 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     /**
      * used to signal an update to the parent list view
      */
-    private final ListUpdaterListener listUpdaterListener;
+    private ListUpdaterListener listUpdaterListener;
+    private StellarPropertiesDisplayerListener stellarPropertiesDisplayerListener;
+    private DatabaseListener databaseListener;
+    private ContextSelectorListener contextSelectorListener;
+    private RedrawListener redrawListener;
+    private ReportGenerator reportGenerator;
 
     /**
      * the grid plot manager
      */
-    private final @NotNull GridPlotManager gridPlotManager;
-    private final @NotNull RouteManager routeManager;
+    private GridPlotManager gridPlotManager;
+    private RouteManager routeManager;
 
     /////////////////
     private final @NotNull TransitManager transitManager;
@@ -101,6 +109,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * the general color palette of the graph
      */
     private ColorPalette colorPalette;
+
     /**
      * star display specifics
      */
@@ -117,29 +126,26 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private double controlPaneOffset;
 
     private double deltaX;
+    private RouteUpdaterListener routeUpdaterListener;
 
 
     /**
      * constructor for the Graphics Pane
      *
-     * @param sceneWidth  the width
-     * @param sceneHeight the height
+     * @param tripsContext the application context
      */
-    public InterstellarSpacePane(double sceneWidth,
-                                 double sceneHeight,
-                                 double depth,
-                                 double spacing,
-                                 @NotNull TripsContext tripsContext,
-                                 RouteUpdaterListener routeUpdaterListener,
-                                 ListUpdaterListener listUpdaterListener,
-                                 StellarPropertiesDisplayerListener displayer,
-                                 DatabaseListener databaseListener,
-                                 ContextSelectorListener contextSelectorListener,
-                                 RedrawListener redrawListener,
-                                 ReportGenerator reportGenerator) {
+    public InterstellarSpacePane(TripsContext tripsContext,
+                                 StarPlotManager starPlotManager,
+                                 RouteManager routeManager,
+                                 GridPlotManager gridPlotManager,
+                                 @NotNull TransitManager transitManager) {
 
         this.tripsContext = tripsContext;
-        this.listUpdaterListener = listUpdaterListener;
+        this.transitManager = transitManager;
+        ScreenSize screenSize = tripsContext.getScreenSize();
+        this.starPlotManager = starPlotManager;
+        this.routeManager = routeManager;
+        this.gridPlotManager = gridPlotManager;
 
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
@@ -147,7 +153,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
 
-        subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
+        subScene = new SubScene(world, screenSize.getSceneWidth(), screenSize.getSceneHeight(), true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
         setInitialView();
@@ -167,53 +173,53 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         // event setup
         handleUserEvents();
 
-        this.starPlotManager = new StarPlotManager(
-                sceneRoot,
-                world,
-                subScene,
-                listUpdaterListener,
-                redrawListener,
-                databaseListener,
-                displayer,
-                contextSelectorListener,
-                reportGenerator,
-                tripsContext,
-                colorPalette
-        );
+        // setup star plot manager
+        starPlotManager.setGraphics(sceneRoot, world, subScene);
 
-        this.routeManager = new RouteManager(
-                world,
-                sceneRoot,
-                subScene,
-                this,
-                routeUpdaterListener,
-                tripsContext
-        );
+        // setup route manager
+        routeManager.setGraphics(sceneRoot, world, subScene, this);
 
-        this.gridPlotManager = new GridPlotManager(
-                world,
-                sceneRoot,
-                subScene,
-                spacing,
-                sceneHeight, sceneWidth, depth,
-                colorPalette
-        );
+        // setup grid manager
+        gridPlotManager.setGraphics(sceneRoot, world, subScene);
 
-        this.transitManager = new TransitManager(
-                world,
-                sceneRoot,
-                subScene,
-                this,
-                routeUpdaterListener,
-                tripsContext
-        );
-
-        starPlotManager.setRouteManager(routeManager);
+        // setup transsit manager
+        this.transitManager.setGraphics(sceneRoot, world, subScene, this);
 
         // create a rotation animation
         rotator = createRotateAnimation();
 
+        log.info("startup complete");
+
     }
+
+    public void setlisteners(RouteUpdaterListener routeUpdaterListener,
+                             ListUpdaterListener listUpdaterListener,
+                             StellarPropertiesDisplayerListener stellarPropertiesDisplayerListener,
+                             DatabaseListener databaseListener,
+                             ContextSelectorListener contextSelectorListener,
+                             RedrawListener redrawListener,
+                             ReportGenerator reportGenerator) {
+        this.routeUpdaterListener = routeUpdaterListener;
+        this.listUpdaterListener = listUpdaterListener;
+        this.stellarPropertiesDisplayerListener = stellarPropertiesDisplayerListener;
+        this.databaseListener = databaseListener;
+        this.contextSelectorListener = contextSelectorListener;
+        this.redrawListener = redrawListener;
+        this.reportGenerator = reportGenerator;
+
+        starPlotManager.setListeners(listUpdaterListener,
+                redrawListener,
+                databaseListener,
+                stellarPropertiesDisplayerListener,
+                contextSelectorListener,
+                reportGenerator);
+
+        routeManager.setListeners(routeUpdaterListener);
+
+        transitManager.setListeners(routeUpdaterListener);
+
+    }
+
 
     public void setRotationAngles(double xAngle, double yAngle, double zAngle) {
         rotateX.setAngle(xAngle);
@@ -296,8 +302,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     //////////////////////
 
-    public void rebuildGrid(@NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
-        gridPlotManager.rebuildGrid(transformer, colorPalette);
+    public void rebuildGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
+        gridPlotManager.rebuildGrid(centerCoordinates, transformer, colorPalette);
     }
 
     public void highlightStar(UUID starId) {
@@ -409,7 +415,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         } else {
             if (!sidePanelShiftKludgeFirstTime) {
                 log.info("shift display right!!");
-                camera.setTranslateX(-deltaX/6);
+                camera.setTranslateX(-deltaX / 6);
             } else {
                 sidePanelShiftKludgeFirstTime = false;
             }
@@ -528,7 +534,9 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     ///////////////////////////////////
 
     public void plotStars(CurrentPlot currentPlot) {
-        starPlotManager.drawStars(currentPlot);
+        boolean showStems = tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayStems() &&
+                tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayGrid();
+        starPlotManager.drawStars(currentPlot, showStems);
     }
 
 
@@ -751,11 +759,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     public @NotNull TransitManager getTransitManager() {
         return transitManager;
     }
-
-    public void setDataSetContext(DataSetDescriptor descriptor) {
-        starPlotManager.setDataSetContext(descriptor);
-    }
-
 
     public RouteManager getRouteManager() {
         return routeManager;

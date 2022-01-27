@@ -1,13 +1,18 @@
 package com.teamgannon.trips.jpa.model;
 
-import lombok.Data;
+import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 public class Planet {
 
@@ -169,6 +174,19 @@ public class Planet {
     private double eccentricAnomaly;
 
     @OneToMany
+    @ToString.Exclude
     private Set<Moon> moons = new HashSet<>();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Planet planet = (Planet) o;
+        return id != null && Objects.equals(id, planet.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

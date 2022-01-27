@@ -125,7 +125,7 @@ public class RouteDescriptor {
      * only during plotting, leave empty otherwise
      */
     @Builder.Default
-    private List<Point3D> lineSegments = new ArrayList<>();
+    private List<Point3D> routeCoordinates = new ArrayList<>();
 
     public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         return RouteDescriptor
@@ -155,7 +155,7 @@ public class RouteDescriptor {
     }
 
     public void addLineSegment(Point3D point3D) {
-        lineSegments.add(point3D);
+        routeCoordinates.add(point3D);
     }
 
     public void addLengthSegment(Double length) {
@@ -168,13 +168,13 @@ public class RouteDescriptor {
             startStar = record.getStarName();
             lastStar = record;
             nameList.add(startStar);
-            lineSegments.add(starPosition);
+            routeCoordinates.add(starPosition);
             routeList.add(record.getRecordId());
             starDisplayRecords.add(record);
         } else {
             starDisplayRecords.add(record);
 
-            lineSegments.add(starPosition);
+            routeCoordinates.add(starPosition);
             lineSegmentList.add(lineSegment);
 
             lengthList.add(routeLength);
@@ -205,7 +205,7 @@ public class RouteDescriptor {
             nameList.remove(lastIndex);
             starDisplayRecords.remove(lastIndex);
             labelList.remove(lastIndex - 1);
-            lineSegments.remove(lastIndex);
+            routeCoordinates.remove(lastIndex);
             return false;
         } else {
             routeList.clear();
@@ -214,7 +214,7 @@ public class RouteDescriptor {
             startStar = starDisplayRecords.get(0).getStarName();
             lastStar = starDisplayRecords.get(0);
             lineSegmentList.clear();
-            lineSegments.clear();
+            routeCoordinates.clear();
             nameList.clear();
             starDisplayRecords.clear();
             return true;
@@ -234,7 +234,7 @@ public class RouteDescriptor {
         name = "";
         routeList.clear();
         color = Color.LIGHTCORAL;
-        lineSegments.clear();
+        routeCoordinates.clear();
     }
 
     public @NotNull Route toRoute() {

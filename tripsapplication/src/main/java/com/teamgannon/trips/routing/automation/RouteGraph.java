@@ -3,7 +3,6 @@ package com.teamgannon.trips.routing.automation;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.routing.model.SparseTransit;
-import com.teamgannon.trips.support.LogExecutionTime;
 import com.teamgannon.trips.transits.TransitRoute;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 @Data
 @Slf4j
 public class RouteGraph {
-
 
     /**
      * the graph constructed
@@ -43,7 +41,6 @@ public class RouteGraph {
      * the ctor
      */
     public RouteGraph() {
-
         routingGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
     }
 
@@ -70,7 +67,7 @@ public class RouteGraph {
         }
     }
 
-    @LogExecutionTime
+
     public boolean calculateGraphForSparseTransits(List<SparseTransit> sparseTransitList) {
 
         for (SparseTransit transitRoute : sparseTransitList) {

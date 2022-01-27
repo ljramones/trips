@@ -22,5 +22,4 @@ public class Universe {
 
     public double solCentreZ = 0;
 
-
 }

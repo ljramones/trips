@@ -88,7 +88,7 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
         statusUpdaterListener.updateStatus("dataset export was cancelled for " + export.getFileName());
         unsetProgressControls();
         ExportResults exportResults = this.getValue();
-        exportTaskComplete.complete(false, searchContext.getAstroSearchQuery().getDescriptor(), exportResults, "dataset load cancelled");
+        exportTaskComplete.complete(false, searchContext.getDataSetDescriptor(), exportResults, "dataset load cancelled");
 
     }
 
