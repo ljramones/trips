@@ -32,7 +32,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
 
     private final TextArea notes = new TextArea();
 
-    private Stage stage;
+    private final Stage stage;
 
     private final TextField fileSelected = new TextField();
     private final Dataset dataSet = new Dataset();

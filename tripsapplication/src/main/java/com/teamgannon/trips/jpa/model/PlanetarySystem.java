@@ -1,13 +1,18 @@
 package com.teamgannon.trips.jpa.model;
 
-import lombok.Data;
+import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 public class PlanetarySystem {
 
@@ -24,10 +29,23 @@ public class PlanetarySystem {
     private String dataSetName;
 
     @OneToMany
+    @ToString.Exclude
     private Set<Planet> planets = new HashSet<>();
 
     @OneToMany
+    @ToString.Exclude
     private Set<AsteroidBelt> asteroidBelts = new HashSet<>();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        PlanetarySystem that = (PlanetarySystem) o;
+        return systemId != null && Objects.equals(systemId, that.systemId);
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

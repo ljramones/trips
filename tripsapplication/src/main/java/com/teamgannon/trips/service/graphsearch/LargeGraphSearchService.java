@@ -12,8 +12,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class LargeGraphSearchService extends Service<GraphRouteResult> {
 
     private RouteFindingOptions routeFindingOptions;
@@ -83,7 +85,6 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
         statusUpdaterListener.updateStatus("graph search was cancelled for " + "graph search name TBD");
         unsetProgressControls();
         graphSearchComplete.complete(false, "cancelled for " + "graph search name TBD");
-
     }
 
     private void unsetProgressControls() {

@@ -36,7 +36,6 @@ public class LookupStarDialog extends Dialog<StarSearchResults> {
     private final TableColumn<StarObject, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
-    private final String starToLookup;
     private final String datasetName;
     private final List<StarObject> starsFound;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
@@ -46,7 +45,6 @@ public class LookupStarDialog extends Dialog<StarSearchResults> {
     public LookupStarDialog(String starToLookup,
                             String datasetName,
                             @NotNull DatabaseManagementService databaseManagementService) {
-        this.starToLookup = starToLookup;
         this.datasetName = datasetName;
 
         starsFound = databaseManagementService.findStarsWithName(datasetName, starToLookup);

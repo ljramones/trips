@@ -8,8 +8,9 @@ import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.transits.TransitDefinitions;
-import lombok.Data;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -26,7 +27,10 @@ import java.util.stream.Collectors;
  * Created by larrymitchell on 2017-03-28.
  */
 @Slf4j
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 public class DataSetDescriptor implements Serializable {
 
@@ -310,5 +314,16 @@ public class DataSetDescriptor implements Serializable {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        DataSetDescriptor that = (DataSetDescriptor) o;
+        return dataSetName != null && Objects.equals(dataSetName, that.dataSetName);
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

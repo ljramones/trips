@@ -175,8 +175,10 @@ public class RouteDisplay {
     }
 
     public void addRouteToDisplay(RouteDescriptor routeDescriptor, Group routeToAdd) {
-        routeLookup.put(routeDescriptor.getId(), routeToAdd);
-        routesGroup.getChildren().add(routeToAdd);
+        if (routeDescriptor != null) {
+            routeLookup.put(routeDescriptor.getId(), routeToAdd);
+            routesGroup.getChildren().add(routeToAdd);
+        }
     }
 
     public void removeRouteFromDisplay(Group routeToRemove) {

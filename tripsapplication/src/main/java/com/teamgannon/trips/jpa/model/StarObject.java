@@ -8,17 +8,17 @@ import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarModel;
 import com.teamgannon.trips.stellarmodelling.StarUtils;
 import com.teamgannon.trips.stellarmodelling.StellarType;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,8 +28,19 @@ import java.util.regex.Pattern;
  * Created by larrymitchell on 2017-03-28.
  */
 @Slf4j
-@Data
+@Getter
+@Setter
+@ToString
 @Entity(name = "STAR_OBJ")
+@Table(indexes = {
+        @Index(columnList = "displayName ASC"),
+        @Index(columnList = "constellationName ASC"),
+        @Index(columnList = "distance DESC"),
+        @Index(columnList = "orthoSpectralClass ASC"),
+        @Index(columnList = "realStar"),
+        @Index(columnList = "commonName ASC"),
+        @Index(columnList = "exoplanets")
+})
 public class StarObject implements Serializable {
 
     public final static String SIMBAD_NO_ID = "UNDEFINED";
@@ -842,4 +853,17 @@ public class StarObject implements Serializable {
 //        log.info("display score=" + starObject.getDisplayScore());
 //        log.info("done");
 //    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        StarObject that = (StarObject) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

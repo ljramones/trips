@@ -58,7 +58,7 @@ public class DynamicsCalculator {
         kepler = new KeplerianPropagator(orbit);
 
         // this is default mode
-        kepler.setSlaveMode();
+//        kepler.setSlaveMode();
     }
 
 

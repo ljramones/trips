@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.ApplicationPreferences;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import com.teamgannon.trips.support.AlertFactory;

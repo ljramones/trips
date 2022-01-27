@@ -18,13 +18,12 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
-    private final @NotNull RegularCsvReader regularCsvReader;
+    private final RegularCsvReader regularCsvReader;
 
-    public CSVLoadTask(Dataset dataSet, DatabaseManagementService databaseManagementService) {
-        this.dataSet = dataSet;
+    public CSVLoadTask(DatabaseManagementService databaseManagementService, Dataset loadDataset) {
         this.databaseManagementService = databaseManagementService;
-
-        regularCsvReader = new RegularCsvReader(databaseManagementService);
+        this.dataSet = loadDataset;
+        this.regularCsvReader = new RegularCsvReader(databaseManagementService);
     }
 
     @Override
@@ -40,13 +39,14 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     }
 
 
-    public @NotNull FileProcessResult processCSVFile(@NotNull Dataset dataset) {
+    public FileProcessResult processCSVFile(@NotNull Dataset dataset) {
+        log.info("beginning processing of dataset={}", dataset);
         FileProcessResult processResult = new FileProcessResult();
 
         File file = new File(dataset.getFileSelected());
         // read records
         RegCSVFile regCSVFile = regularCsvReader.loadFile(this, file, dataset);
-
+        log.info("finished processing of dataset");
         try {
             if (regCSVFile.isReadSuccess()) {
                 updateMessage(" File load complete, about to save records in database ");
@@ -76,4 +76,6 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     public void updateTaskInfo(String message) {
         updateMessage(message + "  ");
     }
+
+
 }

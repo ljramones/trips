@@ -24,6 +24,10 @@ public class ColorPalette {
 
     private double gridLineWidth = 0.5;
 
+    public ColorPalette() {
+        setDefaults();
+    }
+
     public static @NotNull ColorPalette defaultColors() {
         ColorPalette palette = new ColorPalette();
         palette.assignColors(GraphColorsPersist.defaults());

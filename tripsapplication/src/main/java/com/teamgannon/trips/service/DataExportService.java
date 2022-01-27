@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.dataset.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.export.*;
 import javafx.scene.control.Button;
@@ -57,6 +58,7 @@ public class DataExportService {
         jsonExporter = new JSONExporter(statusUpdaterListener);
     }
 
+    @TrackExecutionTime
     public void exportDB() {
         Optional<ButtonType> result = showConfirmationAlert(
                 "Data Export Service", "Entire Database",
@@ -74,6 +76,7 @@ public class DataExportService {
         }
     }
 
+    @TrackExecutionTime
     public ExportResult exportDataset(@NotNull ExportOptions exportOptions,
                                       StatusUpdaterListener statusUpdaterListener,
                                       ExportTaskComplete importTaskCompleteListener,
@@ -91,7 +94,7 @@ public class DataExportService {
 
             }
         }
-        // we keep the switch in case we want to
+        // we keep the switch in case we want to add more varieties of export
         switch (exportOptions.getExportFormat()) {
 
             case CSV -> {
@@ -133,6 +136,7 @@ public class DataExportService {
      * @param exportOptions the options
      * @param searchContext the search context to export
      */
+    @TrackExecutionTime
     public ExportResult exportDatasetOnQuery(ExportOptions exportOptions,
                                              SearchContext searchContext,
                                              StatusUpdaterListener statusUpdaterListener,

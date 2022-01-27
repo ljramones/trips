@@ -2,17 +2,22 @@ package com.teamgannon.trips.algorithms;
 
 import com.teamgannon.trips.DistanceRange;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.signum;
+
 public class StarMath {
 
     /**
      * parsecs to light years for conversion
      */
     public final static double ParSecToLightYear = 3.26;
+
     /**
      * the right ascension and declination of the galactic center
      */
     private static final String galacticCenterRA = "17h 45.66m"; // hours minutes
     private static final String galacticCenterDec = "-28 56.3";  // degrees minutes
+
     /***
      * the right ascension and declination of the galactic north pole
      */
@@ -48,14 +53,38 @@ public class StarMath {
      * @param distance       the distance in light years
      * @return the xyz coordinates
      */
-    public double[] getPosition(double rightAscension, double declination, double distance) {
+    public static double[] getPosition(double rightAscension, double declination, double distance) {
         double[] coordinates = new double[3];
 
+        // x
         coordinates[0] = distance * Math.cos(rightAscension) * Math.cos(declination);
-        coordinates[0] = distance * Math.sin(rightAscension) * Math.cos(declination);
-        coordinates[0] = distance * Math.sin(rightAscension);
+        // y
+        coordinates[1] = distance * Math.sin(rightAscension) * Math.cos(declination);
+        // z
+        coordinates[2] = distance * Math.sin(rightAscension);
 
         return coordinates;
+    }
+
+    /**
+     * get the position based on used right ascension in hms and declination based on dms with distance
+     *
+     * @param raHours    right ascension in hours
+     * @param raMinutes  right ascension in minutes
+     * @param raSeconds  right ascension in seconds
+     * @param decDegrees declination in degrees
+     * @param decMinutes declination in minutes
+     * @param decSecnds  declination in  seconds
+     * @param distance   the distance in ly
+     * @return the x,y,z coordinates
+     */
+    public static double[] getPosition(double raHours, double raMinutes, double raSeconds,
+                                       double decDegrees, double decMinutes, double decSecnds,
+                                       double distance) {
+
+        double rightAscension = (raHours * 15) + (raMinutes * .25) + (raSeconds * 0.004166);
+        double declination = (abs(decDegrees) + (decMinutes / 60) + (decSecnds / 3600)) * signum(decDegrees);
+        return getPosition(rightAscension, declination, distance);
     }
 
     /**
@@ -64,7 +93,7 @@ public class StarMath {
      * @param ep1950coor coordinates in epoch 1950 coordinates
      * @return galactic coordinates
      */
-    public double[] epoch1950ToGalacticCoordinates(double[] ep1950coor) {
+    public static double[] epoch1950ToGalacticCoordinates(double[] ep1950coor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = -(0.0672 * ep1950coor[0]) - (0.8727 * ep1950coor[1]) - (0.4835 * ep1950coor[2]);
@@ -81,7 +110,7 @@ public class StarMath {
      * @param ep2000coor coordinates in epoch 2000 format
      * @return galactic coordinates
      */
-    public double[] epoch2000ToGalacticCoordinates(double[] ep2000coor) {
+    public static double[] epoch2000ToGalacticCoordinates(double[] ep2000coor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = -(0.0550 * ep2000coor[0]) - (0.8732 * ep2000coor[1]) - (0.4839 * ep2000coor[2]);
@@ -97,7 +126,7 @@ public class StarMath {
      * @param galCoor the galactic coordinates
      * @return the equatorial (solar) coordinates
      */
-    public double[] galacticToSolarCoordinates(double[] galCoor) {
+    public static double[] galacticToEquatorialCoordinates(double[] galCoor) {
         double[] coordinates = new double[3];
 
         coordinates[0] = galCoor[0] - 27058;
@@ -113,14 +142,14 @@ public class StarMath {
      * @param parallax the parallax
      * @return the distance in lightyears
      */
-    public double distanceFromParallaxSecs(double parallax) throws Exception {
+    public static double distanceFromParallaxSecs(double parallax) throws Exception {
         if (parallax < 0) {
             throw new Exception("parallax cannot be negative");
         }
         return ParSecToLightYear / parallax;
     }
 
-    public DistanceRange distanceFromParallax(double parallax, double sigma) throws Exception {
+    public static DistanceRange distanceFromParallax(double parallax, double sigma) throws Exception {
         double base = distanceFromParallaxSecs(parallax);
         double variation = distanceFromParallaxSecs(sigma);
         DistanceRange range = new DistanceRange();
@@ -129,7 +158,7 @@ public class StarMath {
         return range;
     }
 
-    public double distanceFromParallaxMilliSecs(double parallax) throws Exception {
+    public static double distanceFromParallaxMilliSecs(double parallax) throws Exception {
         if (parallax < 0) {
             throw new Exception("parallax cannot be negative");
         }
@@ -144,7 +173,7 @@ public class StarMath {
      * @return the distance range
      * @throws Exception if the parallax is bad
      */
-    public DistanceRange distanceFromParallaxMilliSecs(double parallax, double sigma) throws Exception {
+    public static DistanceRange distanceFromParallaxMilliSecs(double parallax, double sigma) throws Exception {
         double base = distanceFromParallaxMilliSecs(parallax);
         double variation = distanceFromParallaxMilliSecs(sigma);
         DistanceRange range = new DistanceRange();
@@ -160,7 +189,7 @@ public class StarMath {
      * @param parsec the value in parsec
      * @return the amount of light years
      */
-    public double parsecToLy(double parsec) {
+    public static double parsecToLy(double parsec) {
         return parsec * ParSecToLightYear;
     }
 

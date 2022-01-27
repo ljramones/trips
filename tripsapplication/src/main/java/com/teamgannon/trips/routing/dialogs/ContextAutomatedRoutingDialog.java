@@ -29,6 +29,7 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
@@ -93,11 +94,13 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
     private final StarPlotManager plotManager;
     private final RouteManager routeManager;
+    private final StarMeasurementService starMeasurementService;
     private final DataSetDescriptor currentDataSet;
     private final List<StarDisplayRecord> starsInView;
 
     public ContextAutomatedRoutingDialog(@NotNull StarPlotManager plotManager,
                                          @NotNull RouteManager routeManager,
+                                         StarMeasurementService starMeasurementService,
                                          @NotNull DataSetDescriptor currentDataSet,
                                          @NotNull StarDisplayRecord fromStarDisplayRecord,
                                          @NotNull List<StarDisplayRecord> starsInView) {
@@ -105,13 +108,13 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
         this.plotManager = plotManager;
         this.routeManager = routeManager;
+        this.starMeasurementService = starMeasurementService;
         this.currentDataSet = currentDataSet;
         this.starsInView = starsInView;
 
         // set the dialog as a utility
         stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
-
 
         searchValues = convertList(starsInView);
 
@@ -148,6 +151,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         vBox.getChildren().add(hBox);
 
         this.getDialogPane().setContent(vBox);
+
     }
 
     /**
@@ -224,7 +228,6 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 }
 
                 // calculate the transits based on upper and lower bounds
-                StarMeasurementService starMeasurementService = new StarMeasurementService();
                 DistanceRoutes distanceRoutes = DistanceRoutes
                         .builder()
                         .upperDistance(routeFindingOptions.getUpperBound())
@@ -296,7 +299,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                     .routeDescriptor(route)
                     .path(path)
                     .rank(i - 1)
-                    .numberOfSegments(route.getLineSegments().size())
+                    .numberOfSegments(route.getRouteCoordinates().size())
                     .build();
             possibleRoutes.getRoutes().add(routingMetric);
         }

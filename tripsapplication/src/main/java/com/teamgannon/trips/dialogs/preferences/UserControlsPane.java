@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.UserControls;
+import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;

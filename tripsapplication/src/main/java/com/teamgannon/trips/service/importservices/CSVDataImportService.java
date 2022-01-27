@@ -15,11 +15,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
+@Component
 public class CSVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
+
 
     private final DatabaseManagementService databaseManagementService;
     private Dataset dataset;
@@ -36,7 +39,8 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
-        return new CSVLoadTask(dataset, databaseManagementService);
+        log.info("calling csv import task");
+        return new CSVLoadTask(databaseManagementService, dataset);
     }
 
     public boolean processDataSet(Dataset dataset,
@@ -68,6 +72,9 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         statusUpdaterListener.updateStatus(message);
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
+        if (fileProcessResult == null) {
+            log.error("why is fileProcessResult null.");
+        }
         importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
         dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
         // set context to newly loaded dataset

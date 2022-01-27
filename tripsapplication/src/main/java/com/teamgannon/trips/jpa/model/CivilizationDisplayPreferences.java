@@ -1,7 +1,8 @@
 package com.teamgannon.trips.jpa.model;
 
 import javafx.scene.paint.Color;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Column;
@@ -9,9 +10,13 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Entity
 public class CivilizationDisplayPreferences implements Serializable {
 
@@ -125,4 +130,16 @@ public class CivilizationDisplayPreferences implements Serializable {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        CivilizationDisplayPreferences that = (CivilizationDisplayPreferences) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

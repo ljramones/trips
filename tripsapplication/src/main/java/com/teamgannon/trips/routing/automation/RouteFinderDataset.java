@@ -3,7 +3,6 @@ package com.teamgannon.trips.routing.automation;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
-import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInDataSet;
 import com.teamgannon.trips.routing.dialogs.RouteLoadingInfoDialog;
@@ -12,6 +11,8 @@ import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
+import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,12 +26,13 @@ public class RouteFinderDataset {
      * used to plot the routes found
      */
     private final InterstellarSpacePane interstellarSpacePane;
+    private final LargeGraphSearchService largeGraphSearchService;
     private DataSetDescriptor currentDataset;
-    private RouteManager routeManager;
-    private StatusUpdaterListener statusUpdaterListener;
 
-    public RouteFinderDataset(InterstellarSpacePane interstellarSpacePane) {
+    public RouteFinderDataset(InterstellarSpacePane interstellarSpacePane,
+                              LargeGraphSearchService largeGraphSearchService) {
         this.interstellarSpacePane = interstellarSpacePane;
+        this.largeGraphSearchService = largeGraphSearchService;
     }
 
     /**
@@ -38,12 +40,14 @@ public class RouteFinderDataset {
      */
     public void startRouteLocation(DataSetDescriptor currentDataset,
                                    DatabaseManagementService databaseManagementService,
+                                   StarMeasurementService starMeasurementService,
                                    StatusUpdaterListener statusUpdaterListener) {
+
         this.currentDataset = currentDataset;
-        this.statusUpdaterListener = statusUpdaterListener;
 
         RouteFinderDialogInDataSet routeFinderDialogInView = new RouteFinderDialogInDataSet(
                 currentDataset.getDataSetName(),
+                starMeasurementService,
                 databaseManagementService);
 
         Stage theStage = (Stage) routeFinderDialogInView.getDialogPane().getScene().getWindow();
@@ -59,7 +63,10 @@ public class RouteFinderDataset {
             // if we actually selected the option to route then do it
             if (routeFindingOptions.isSelected()) {
 
-                RouteLoadingInfoDialog routeLoadingInfoDialog = new RouteLoadingInfoDialog(currentDataset, databaseManagementService, statusUpdaterListener, routeFindingOptions);
+                RouteLoadingInfoDialog routeLoadingInfoDialog = new RouteLoadingInfoDialog(
+                        currentDataset, databaseManagementService,
+                        largeGraphSearchService,
+                        statusUpdaterListener, routeFindingOptions);
                 Optional<GraphRouteResult> routeResultOptional = routeLoadingInfoDialog.showAndWait();
 
                 if (routeResultOptional.isPresent()) {

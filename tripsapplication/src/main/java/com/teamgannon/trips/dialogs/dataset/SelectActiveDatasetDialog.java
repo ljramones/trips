@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.dataset;
 
 
-import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.service.DatabaseManagementService;

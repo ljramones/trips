@@ -1,7 +1,5 @@
 package com.teamgannon.trips.config.application.model;
 
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
-import com.teamgannon.trips.config.application.UserControls;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.RouteDisplayPreferences;
+import com.teamgannon.trips.config.application.model.RouteDisplayPreferences;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 

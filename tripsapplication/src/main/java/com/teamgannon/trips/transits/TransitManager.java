@@ -1,80 +1,57 @@
 package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.SubScene;
-import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
+@Component
 public class TransitManager {
-
-
-    /**
-     * lookup for transits
-     */
-    private final Map<String, TransitRoute> transitRouteMap = new HashMap<>();
-
-    /**
-     * used to track the current rout list
-     */
-    private final List<TransitRoute> currentRouteList = new ArrayList<>();
 
     /**
      * the transit map which is associated with a specific id
      */
-    private Map<UUID, TransitRouteVisibilityGroup> transitMap = new HashMap<>();
+    private final Map<UUID, TransitRouteVisibilityGroup> transitMap = new HashMap<>();
 
     /**
      * the graphical element controlling transits
      */
-    private final @NotNull Group transitGroup;
+    private Group transitGroup;
 
     /**
      * the label display
      */
     private final Group labelDisplayGroup = new Group();
 
-    private final Map<Node, Label> shapeToLabel = new HashMap<>();
-
-    private final SubScene subScene;
+    /**
+     * subscene used to display labels in a flat glass manner
+     */
+    private SubScene subScene;
 
     /**
      * the listener to create routes on demand
      */
-    private final RouteUpdaterListener routeUpdaterListener;
+    private RouteUpdaterListener routeUpdaterListener;
     private final TripsContext tripsContext;
-    private final InterstellarSpacePane interstellarSpacePane;
+    private final StarMeasurementService starMeasurementService;
+    private InterstellarSpacePane interstellarSpacePane;
 
     /**
      * whether the transits are visible or not
      */
     private boolean transitsOn;
-
-    /**
-     * the route descriptor
-     */
-    private @Nullable RouteDescriptor routeDescriptor;
-
-    /**
-     * used to track an active routing effort
-     */
-    private boolean routingActive = false;
-
-    /**
-     * current dataset
-     */
-    private DataSetDescriptor dataSetDescriptor;
 
     private boolean transitsLengthsOn = true;
     private double controlPaneOffset;
@@ -85,22 +62,29 @@ public class TransitManager {
     /**
      * constructor
      */
-    public TransitManager(@NotNull Group world,
-                          @NotNull Group sceneRoot,
-                          SubScene subScene,
-                          InterstellarSpacePane interstellarSpacePane,
-                          RouteUpdaterListener routeUpdaterListener,
-                          TripsContext tripsContext) {
-        this.subScene = subScene;
-        this.interstellarSpacePane = interstellarSpacePane;
+    public TransitManager(TripsContext tripsContext,
+                          StarMeasurementService starMeasurementService) {
 
         // our graphics world
-        this.routeUpdaterListener = routeUpdaterListener;
         this.tripsContext = tripsContext;
+        this.starMeasurementService = starMeasurementService;
+    }
+
+    public void setGraphics(Group sceneRoot,
+                            Group world,
+                            SubScene subScene,
+                            InterstellarSpacePane interstellarSpacePane) {
+
+        this.interstellarSpacePane = interstellarSpacePane;
+
+        this.subScene = subScene;
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
+    }
 
+    public void setListeners(RouteUpdaterListener routeUpdaterListener) {
+        this.routeUpdaterListener = routeUpdaterListener;
     }
 
 
@@ -122,7 +106,8 @@ public class TransitManager {
         for (TransitRangeDef transitRangeDef : transitRangeDefList) {
             if (transitRangeDef.isEnabled()) {
                 // create a transit visibilty group
-                TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(subScene, interstellarSpacePane,
+                TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(
+                        subScene, interstellarSpacePane, starMeasurementService,
                         controlPaneOffset, transitRangeDef, routeUpdaterListener, tripsContext);
 
                 // plot the visibility group
@@ -188,7 +173,7 @@ public class TransitManager {
      */
     public void showTransit(UUID bandId, boolean show) {
         // transit
-        log.info("Transit:{} is {}", bandId, show);
+        log.info("Link:{} is {}", bandId, show);
         // pull the associated group
         TransitRouteVisibilityGroup visibilityGroup = transitMap.get(bandId);
         // set it visible or not based on the status
@@ -205,7 +190,7 @@ public class TransitManager {
      */
     public void showLabels(UUID bandId, boolean show) {
         // transit
-        log.info("Transit:{} is {}", bandId, show);
+        log.info("Link:{} is {}", bandId, show);
         // pull the associated group
         TransitRouteVisibilityGroup visibilityGroup = transitMap.get(bandId);
         // set it visible or not based on the status
@@ -230,21 +215,12 @@ public class TransitManager {
         labelDisplayGroup.setVisible(transitsLengthsOn);
     }
 
-    /**
-     * set dataset descriptor context
-     *
-     * @param dataSetDescriptor the dataset descriptor
-     */
-    public void setDatasetContext(DataSetDescriptor dataSetDescriptor) {
-        this.dataSetDescriptor = dataSetDescriptor;
-    }
 
     /**
      * clears all transits
      */
     public void clearTransits() {
         transitGroup.getChildren().clear();
-        transitRouteMap.clear();
         for (TransitRouteVisibilityGroup transitGroup : transitMap.values()) {
             if (transitGroup != null) {
                 uninstallGroup(transitGroup);
@@ -254,10 +230,6 @@ public class TransitManager {
         transitsOn = false;
         labelDisplayGroup.getChildren().clear();
         transitsLengthsOn = false;
-
-        routeDescriptor = null;
-        currentRouteList.clear();
-        routingActive = false;
     }
 
     /**
@@ -285,7 +257,6 @@ public class TransitManager {
                     interstellarSpacePane.getWidth(), interstellarSpacePane.getHeight(),
                     interstellarSpacePane.getBoundsInParent());
         }
-
     }
 
 }

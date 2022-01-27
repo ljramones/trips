@@ -1,10 +1,10 @@
 package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.CurrentPlot;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -149,7 +149,7 @@ public class PlotManager {
 
             astroSearchQuery.zeroCenter();
             drawAstrographicData(
-                    tripsContext.getSearchContext().getAstroSearchQuery().getDescriptor(),
+                    tripsContext.getDataSetDescriptor(),
                     starObjects,
                     displayRadius,
                     astroSearchQuery.getCenterCoordinates(),
@@ -204,8 +204,7 @@ public class PlotManager {
         // setup the star plot
         currentPlot.setupPlot(
                 dataSetDescriptor, centerCoordinates,
-                centerStar, colorPalette,
-                starDisplayPreferences, civilizationDisplayPreferences
+                centerStar, colorPalette
         );
 
         // find the min/max values to plot
@@ -214,7 +213,7 @@ public class PlotManager {
         log.info("New Plot Scaling parameters:" + scalingParameters);
 
         // rebuild the grid based on parameters
-        interstellarSpacePane.rebuildGrid(astrographicTransformer, currentPlot);
+        interstellarSpacePane.rebuildGrid(centerCoordinates, astrographicTransformer, currentPlot);
 
 
         // plot all stars

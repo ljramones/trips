@@ -1,6 +1,5 @@
 package com.teamgannon.trips.dialogs.dataset;
 
-import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -20,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -73,7 +73,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
     private @Nullable DataSetDescriptor selectedDataset;
 
     public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
-                                DataSetContext dataSetContext,
                                 DatabaseManagementService databaseManagementService,
                                 StatusUpdaterListener statusUpdaterListener,
                                 DataImportService dataImportService,
@@ -114,6 +113,8 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         Label progressLabel = new Label("Data import loading progress:  ");
         importLoadingPanel.getChildren().add(progressLabel);
         importLoadingPanel.getChildren().add(importProgressBar);
+        importProgressText.setFont(font);
+        importProgressText.setTextFill(Color.RED);
         importLoadingPanel.getChildren().add(importProgressText);
         importLoadingPanel.getChildren().add(cancelImport);
         cancelImport.setOnAction(this::cancelTaskImport);
@@ -324,20 +325,24 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
             if (!success.isSuccess()) {
                 showErrorAlert("add Dataset", success.getMessage());
             }
-            Optional<ButtonType>  optionalButtonType = showConfirmationAlert("Data Management", "Done","if you want to load additional items, please say ok");
+        }
+        log.info("loaded data set dialog");
+    }
+
+    public void complete(boolean status,
+                         @NotNull Dataset dataset,
+                         FileProcessResult fileProcessResult,
+                         String errorMessage) {
+        if (status) {
+            updateTable();
+            importProgressText.setTextFill(Color.LIGHTGREEN);
+            Optional<ButtonType> optionalButtonType = showConfirmationAlert("Data Management", "Done", "if you want to load additional items, please say ok");
             if (optionalButtonType.isPresent()) {
                 ButtonType buttonType = optionalButtonType.get();
                 if (!buttonType.equals(ButtonType.OK)) {
                     setResult(1);
                 }
             }
-        }
-        log.info("loaded data set dialog");
-    }
-
-    public void complete(boolean status, @NotNull Dataset dataset, FileProcessResult fileProcessResult, String errorMessage) {
-        if (status) {
-            updateTable();
         } else {
             showErrorAlert("Add Dataset",
                     "failed to load dataset: " + dataset.getName() + ", because of " + errorMessage);

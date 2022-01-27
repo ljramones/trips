@@ -1,7 +1,9 @@
 package com.teamgannon.trips.graphics;
 
-import com.teamgannon.trips.config.application.CurrentPlot;
+import com.teamgannon.trips.config.application.ScreenSize;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.LineSegment;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
@@ -22,13 +24,16 @@ import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.ceil;
 
 @Slf4j
+@Component
 public class GridPlotManager {
 
     private static final String scaleString = "Scale: 1 grid is %.2f ly square";
@@ -36,7 +41,7 @@ public class GridPlotManager {
     /**
      * contains the labels so we can redraw when the display shifts
      */
-    private final @NotNull Map<Node, Label> shapeToLabel;
+    private final Map<Node, Label> shapeToLabel;
 
     /**
      * the drawing group for the scale
@@ -53,11 +58,11 @@ public class GridPlotManager {
      */
     private final Group labelDisplayGroup = new Group();
     private final double spacing;
-    private double height;
+    private final double height;
     private final double width;
     private final double depth;
     private final ColorPalette colorPalette;
-    private final SubScene subScene;
+    private SubScene subScene;
     private final double lineWidth;
     private Label scaleText;
     private double controlPaneOffset;
@@ -66,27 +71,26 @@ public class GridPlotManager {
     /**
      * constructor
      *
-     * @param spacing the spacing
-     * @param width   the screen width
-     * @param depth   the screen depth
+     * @param tripsContext the trips application context
      */
-    public GridPlotManager(@NotNull Group world,
-                           @NotNull Group sceneRoot,
-                           SubScene subScene,
-                           double spacing,
-                           double height, double width, double depth,
-                           ColorPalette colorPalette) {
+    public GridPlotManager(TripsContext tripsContext) {
 
-        this.spacing = spacing;
-        this.height = height;
-        this.width = width;
-        this.depth = depth;
-        this.colorPalette = colorPalette;
+        ScreenSize screenSize = tripsContext.getScreenSize();
+
+        this.spacing = screenSize.getSpacing();
+        this.height = screenSize.getSceneHeight();
+        this.width = screenSize.getSceneWidth();
+        this.depth = screenSize.getDepth();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.shapeToLabel = new HashMap<>();
-        this.subScene = subScene;
 
         this.lineWidth = 0.5;
+    }
 
+    public void setGraphics(Group sceneRoot,
+                            Group world,
+                            SubScene subScene) {
+        this.subScene = subScene;
         sceneRoot.getChildren().add(scaleGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
         world.getChildren().add(gridGroup);
@@ -94,7 +98,6 @@ public class GridPlotManager {
         buildInitialGrid();
         buildInitialScaleLegend();
     }
-
 
     //////////////   public controls  //////////////////
 
@@ -218,10 +221,11 @@ public class GridPlotManager {
     /**
      * rebuild the grid with the specified transformation characteristics
      *
-     * @param transformer the transformer
-     * @param currentPlot the current plot summary
+     * @param centerCoordinates the center of the
+     * @param transformer       the transformer
+     * @param currentPlot       the current plot summary
      */
-    public void rebuildGrid(@NotNull AstrographicTransformer transformer, CurrentPlot currentPlot) {
+    public void rebuildGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, CurrentPlot currentPlot) {
 
         // remember to clear the labels first
         shapeToLabel.clear();
@@ -235,13 +239,13 @@ public class GridPlotManager {
         log.info("rebuilding grid scale increment: " + parameters.getScaleIncrement());
 
         // rebuild grid
-        createGrid(transformer, currentPlot);
+        createGrid(centerCoordinates, transformer, currentPlot);
 
         // now rebuild scale legend
         rebuildScaleLegend((int) parameters.getScaleIncrement());
     }
 
-    private void createGrid(@NotNull AstrographicTransformer transformer, @NotNull CurrentPlot currentPlot) {
+    private void createGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, @NotNull CurrentPlot currentPlot) {
 
         ScalingParameters parameters = transformer.getScalingParameters();
         double minY = parameters.getMinY();
@@ -252,13 +256,22 @@ public class GridPlotManager {
         double maxX = parameters.getMaxX();
         double xDivs = ceil(parameters.getXRange() / 5);
 
-        // create x division lines
-        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, 5);
-        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, -5);
+        double xCenter = centerCoordinates[0];
+        double yCenter = centerCoordinates[1];
+        double zCenter = centerCoordinates[2];
 
-        // create y division lines
-        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, 5);
-        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, -5);
+        drawXLineSegments(transformer, currentPlot, centerCoordinates);
+        drawYSegment(transformer, currentPlot, centerCoordinates);
+
+
+//
+//        // create x division lines
+//        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, 5);
+//        drawXLineSegments(transformer, currentPlot, minY, maxY, xDivs, 0, -5);
+//
+//        // create y division lines
+//        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, zCenter, 5);
+//        drawYLineSegments(transformer, currentPlot, yDivs, minX, maxX, 0, zCenter,-5);
 
         if (gridGroup.isVisible()) {
             gridGroup.setVisible(true);
@@ -266,48 +279,63 @@ public class GridPlotManager {
 
     }
 
+    private void drawXLineSegments(AstrographicTransformer transformer, CurrentPlot currentPlot, double[] centerCoordinates) {
+        ScalingParameters parameters = transformer.getScalingParameters();
+        double scaleIncrement = 5.0;
+        double yDivsPos = ceil(parameters.getMaxX() / scaleIncrement);
+        double yDivsNeg = abs(ceil(parameters.getMinY() / scaleIncrement));
 
-    private void drawYLineSegments(@NotNull AstrographicTransformer transformer,
-                                   @NotNull CurrentPlot currentPlot,
-                                   double yDivs, double minX, double maxX, double beginY,
-                                   double increment) {
+        double incY = 0;
+        for (int i = 0; i < yDivsPos; i++) {
+            double[] fromPointX = new double[]{parameters.getMinX(), centerCoordinates[1] + incY, centerCoordinates[2]};
+            double[] toPointX = new double[]{parameters.getMaxX(), centerCoordinates[1] + incY, centerCoordinates[2]};
+            drawLine(String.valueOf((int) incY), transformer, fromPointX, toPointX, currentPlot, false);
+            incY += scaleIncrement;
+        }
 
-        // get zero plane based on star center coordinates
-        double zZero = currentPlot.getCenterCoordinates()[1];
+        double decY = 0;
+        for (int i = 0; i < yDivsNeg; i++) {
+            double[] fromPointX = new double[]{parameters.getMinX(), centerCoordinates[1] - decY, centerCoordinates[2]};
+            double[] toPointX = new double[]{parameters.getMaxX(), centerCoordinates[1] - decY, centerCoordinates[2]};
+            drawLine(String.valueOf(-1 * (int) decY), transformer, fromPointX, toPointX, currentPlot, false);
+            decY += scaleIncrement;
+        }
 
-        for (int i = 0; i < (ceil(yDivs / 2) + 1); i++) {
-            double[] fromPointX = new double[]{signum(minX) * ceil(abs(minX)), beginY, zZero};
-            double[] toPointX = new double[]{signum(maxX) * ceil(abs(maxX)), beginY, zZero};
-            String label = Integer.toString((int) beginY);
-            LineSegment lineSegmentY = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
-            Node gridLineSegmentY = createLineSegment(
-                    lineSegmentY.getFrom(), lineSegmentY.getTo(),
-                    lineWidth, currentPlot.getColorPalette().getGridColor(),
-                    label, false);
-            gridGroup.getChildren().add(gridLineSegmentY);
-            beginY += increment;
+
+    }
+
+
+    private void drawYSegment(AstrographicTransformer transformer, CurrentPlot currentPlot, double[] centerCoordinates) {
+        ScalingParameters parameters = transformer.getScalingParameters();
+        double scaleIncrement = 5.0;
+        double xDivsPos = ceil(parameters.getMaxY() / scaleIncrement);
+        double xDivsNeg = abs(ceil(parameters.getMinX() / scaleIncrement));
+
+        double incX = 0;
+        for (int i = 0; i < xDivsPos; i++) {
+            double[] fromPointX = new double[]{centerCoordinates[0] + incX, parameters.getMinY(), centerCoordinates[2]};
+            double[] toPointX = new double[]{centerCoordinates[0] + incX, parameters.getMaxY(), centerCoordinates[2]};
+            drawLine(String.valueOf((int) incX), transformer, fromPointX, toPointX, currentPlot, true);
+            incX += scaleIncrement;
+        }
+
+        double decX = 0;
+        for (int i = 0; i < xDivsPos; i++) {
+            double[] fromPointX = new double[]{centerCoordinates[0] - decX, parameters.getMinY(), centerCoordinates[2]};
+            double[] toPointX = new double[]{centerCoordinates[0] - decX, parameters.getMaxY(), centerCoordinates[2]};
+            drawLine(String.valueOf(-1 * (int) decX), transformer, fromPointX, toPointX, currentPlot, true);
+            decX += scaleIncrement;
         }
     }
 
-    private void drawXLineSegments(@NotNull AstrographicTransformer transformer,
-                                   @NotNull CurrentPlot currentPlot,
-                                   double minY, double maxY, double xDivs, double beginX, double increment) {
 
-        // get zero plane based on star center coordinates
-        double zZero = currentPlot.getCenterCoordinates()[1];
-
-        for (int i = 0; i < (ceil(xDivs / 2)); i++) {
-            double[] fromPointZ = new double[]{beginX, signum(minY) * ceil(abs(minY)), zZero};
-            double[] toPointZ = new double[]{beginX, signum(maxY) * ceil(abs(maxY)), zZero};
-            String label = Integer.toString((int) beginX);
-            LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointZ, toPointZ);
-            Node gridLineSegmentX = createLineSegment(
-                    lineSegmentX.getFrom(), lineSegmentX.getTo(),
-                    lineWidth, currentPlot.getColorPalette().getGridColor(),
-                    label, true);
-            gridGroup.getChildren().add(gridLineSegmentX);
-            beginX -= increment;
-        }
+    private void drawLine(String value, AstrographicTransformer transformer, double[] fromPointX, double[] toPointX, CurrentPlot currentPlot, boolean sense) {
+        LineSegment lineSegmentX = LineSegment.getTransformedLine(transformer, width, depth, fromPointX, toPointX);
+        Node gridLineSegmentX = createLineSegment(
+                lineSegmentX.getFrom(), lineSegmentX.getTo(),
+                lineWidth, currentPlot.getColorPalette().getGridColor(),
+                value, sense);
+        gridGroup.getChildren().add(gridLineSegmentX);
     }
 
 

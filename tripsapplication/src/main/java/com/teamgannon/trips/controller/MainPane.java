@@ -1,24 +1,29 @@
 package com.teamgannon.trips.controller;
 
+import com.dustinredmond.fxtrayicon.FXTrayIcon;
 import com.teamgannon.trips.algorithms.Universe;
-import com.teamgannon.trips.config.application.*;
-import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.Localization;
+import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.model.*;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
+import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
 import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
-import com.teamgannon.trips.dialogs.search.FindStarInViewDialog;
-import com.teamgannon.trips.dialogs.search.FindStarsWithNameMatchDialog;
-import com.teamgannon.trips.dialogs.search.ShowStarMatchesDialog;
+import com.teamgannon.trips.dialogs.search.*;
+import com.teamgannon.trips.dialogs.search.model.ConstellationSelected;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
 import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
+import com.teamgannon.trips.dialogs.utility.EquatorialToGalacticCoordsDialog;
+import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
+import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -26,11 +31,12 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.measure.OshiMeasure;
 import com.teamgannon.trips.report.ReportManager;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
 import com.teamgannon.trips.report.distance.SelectStarForDistanceReportDialog;
 import com.teamgannon.trips.report.route.RouteReportDialog;
-import com.teamgannon.trips.routing.*;
+import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.automation.RouteFinderDataset;
 import com.teamgannon.trips.routing.automation.RouteFinderInView;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
@@ -46,6 +52,8 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
@@ -62,6 +70,12 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -87,13 +101,15 @@ import org.kordamp.ikonli.zondicons.Zondicons;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ResourceUtils;
 
 import javax.imageio.ImageIO;
-import java.io.BufferedReader;
+import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -201,7 +217,6 @@ public class MainPane implements
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
     double depth = Universe.boxDepth;
-    double spacing = 20;
     private TitledPane datasetsPane;
     private RoutingPanel routingPanel;
     private TransitFilterPane transitFilterPane;
@@ -216,17 +231,21 @@ public class MainPane implements
     private QueryDialog queryDialog;
 
     private Stage stage;
-    private final FxWeaver fxWeaver;
+    private final OshiMeasure oshiMeasure;
+    private final StarMeasurementService starMeasurementService;
+    private final LargeGraphSearchService largeGraphSearchService;
+    private final RouteFinderInView routeFinderInView;
     private final TripsContext tripsContext;
+
     /**
      * interstellar space
      */
-    private InterstellarSpacePane interstellarSpacePane;
+    private final InterstellarSpacePane interstellarSpacePane;
     /**
      * solar system panes for showing the details of various solar systems
      */
-    private SolarSystemSpacePane solarSystemSpacePane;
-    private DataImportService dataImportService;
+    private final SolarSystemSpacePane solarSystemSpacePane;
+    private final DataImportService dataImportService;
     /**
      * list of routes
      */
@@ -262,20 +281,33 @@ public class MainPane implements
      * @param tripsContext our trips context
      */
     public MainPane(FxWeaver fxWeaver,
-                    @NotNull TripsContext tripsContext,
+                    OshiMeasure oshiMeasure,
+                    StarMeasurementService starMeasurementService,
+                    LargeGraphSearchService largeGraphSearchService,
+                    RouteFinderInView routeFinderInView,
+                    TripsContext tripsContext,
                     ApplicationContext appContext,
                     DatabaseManagementService databaseManagementService,
+                    DataImportService dataImportService,
+                    InterstellarSpacePane interstellarSpacePane,
+                    SolarSystemSpacePane solarSystemSpacePane,
                     Localization localization
     ) {
 
-        this.fxWeaver = fxWeaver;
         hostServices = fxWeaver.getBean(HostServices.class);
+        this.oshiMeasure = oshiMeasure;
+        this.starMeasurementService = starMeasurementService;
+        this.largeGraphSearchService = largeGraphSearchService;
+        this.routeFinderInView = routeFinderInView;
 
         this.tripsContext = tripsContext;
+        this.dataImportService = dataImportService;
+        this.interstellarSpacePane = interstellarSpacePane;
         this.searchContext = tripsContext.getSearchContext();
         this.appContext = appContext;
 
         this.databaseManagementService = databaseManagementService;
+        this.solarSystemSpacePane = solarSystemSpacePane;
         this.localization = localization;
 
         this.dataExportService = new DataExportService(databaseManagementService, this);
@@ -297,6 +329,7 @@ public class MainPane implements
 
         setButtonFonts();
 
+        // set up the status panel
         setStatusPanel();
 
         // get colors from DB
@@ -327,8 +360,6 @@ public class MainPane implements
 
         showBeginningAlert();
 
-        loadConstellationFile();
-
     }
 
     private void setMnemonics() {
@@ -340,43 +371,6 @@ public class MainPane implements
         quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
 
-    /**
-     * load the constellation file
-     */
-    private void loadConstellationFile() {
-        try {
-            File constellationFile = ResourceUtils.getFile("classpath:files/constellation.csv");
-            BufferedReader reader = new BufferedReader(new FileReader(constellationFile));
-
-            boolean readComplete = false;
-            String line = reader.readLine();
-            do {
-                String[] parts = line.split(",");
-                Constellation constellation = Constellation
-                        .builder()
-                        .name(parts[0])
-                        .iauAbbr(parts[1])
-                        .nasaAbbr(parts[2])
-                        .brightestStar(parts[4])
-                        .build();
-
-                tripsContext.getConstellationSet().getConstellationList().add(constellation);
-
-                line = reader.readLine();
-                if (line == null) {
-                    readComplete = true;
-                }
-            } while (!readComplete); // the moment readComplete turns true, we stop
-
-            // setup
-            tripsContext.getConstellationSet().setup();
-
-            log.info("loaded constellation file");
-
-        } catch (IOException e) {
-            log.error("cannot load constellation file:" + e.getMessage());
-        }
-    }
 
     private void setButtonFonts() {
     }
@@ -507,7 +501,7 @@ public class MainPane implements
         propertiesAccordion.getPanes().add(stellarObjectPane);
 
         transitPane = new TitledPane();
-        transitPane.setText("Transit Control");
+        transitPane.setText("Link Control");
         transitPane.setPrefWidth(SIDE_PANEL_SIZE);
         transitPane.setPrefHeight(500);
         transitPane.setMaxHeight(520);
@@ -522,7 +516,7 @@ public class MainPane implements
         routingPane.setMinWidth(SIDE_PANEL_SIZE);
         routingPane.setMinHeight(400);
         routingPane.setMaxHeight(400);
-        routingPanel = new RoutingPanel(this);
+        routingPanel = new RoutingPanel(this, this);
         routingPane.setContent(routingPanel);
         propertiesAccordion.getPanes().add(routingPane);
     }
@@ -603,12 +597,13 @@ public class MainPane implements
         databaseStatus = new Label("Waiting for a dataset to be selected");
         databaseStatus.setFont(statusFont);
         databaseStatus.setTextFill(Color.BLUE);
+        databaseStatus.setMinWidth(500);
         gridPane.add(databaseStatus, 1, 0);
 
         // put a unique divider
         gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
 
-        Label routingStatusLabel = new Label("Routing State: ");
+        Label routingStatusLabel = new Label(" Routing State: ");
         routingStatusLabel.setFont(labelFont);
         routingStatusLabel.setTextFill(Color.BLACK);
         gridPane.add(routingStatusLabel, 3, 0);
@@ -623,10 +618,13 @@ public class MainPane implements
     }
 
     private void loadDBPresets() {
+
         // get graph enables from DB
         getGraphEnablesFromDB();
+
         // get Star definitions from DB
         getStarDefinitionsFromDB();
+
         // get civilizations/polities
         getCivilizationsFromDB();
 
@@ -679,13 +677,111 @@ public class MainPane implements
         stage.widthProperty().addListener(stageSizeListener);
         stage.heightProperty().addListener(stageSizeListener);
 
-        queryDialog = new QueryDialog(searchContext, tripsContext.getDataSetContext(), this, this);
+        queryDialog = new QueryDialog(searchContext, this, this);
         queryDialog.initModality(Modality.NONE);
 
-        this.dataImportService = new DataImportService(databaseManagementService);
+        try {
+            File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+            FileInputStream fis = new FileInputStream(imageFileIcon);
+            Image applicationIcon = new Image(fis);
+            if (applicationIcon != null) {
+                stage.getIcons().add(applicationIcon);
+            } else {
+                log.error("Application Icon was not found!");
+            }
+        } catch (Exception e) {
+            log.error("Caught exception:" + e.getMessage());
+        }
+
+        createAWTTray();
+
+        //createTrayIcon(stage);
     }
 
+    private void createAWTTray() {
+        TrayIcon trayIcon = null;
+        if (SystemTray.isSupported()) {
+            try {
+                // get the SystemTray instance
+                SystemTray tray = SystemTray.getSystemTray();
+                // load an image
+                File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+                java.awt.Image image = Toolkit.getDefaultToolkit().getImage(imageFileIcon.getAbsolutePath());
+                // create a action listener to listen for default action executed on the tray icon
+                ActionListener listener = e -> log.info("action performed");
+                // create a popup menu
+                PopupMenu popup = new PopupMenu();
+                // create menu item for the default action
+                java.awt.MenuItem defaultItem = new java.awt.MenuItem("Menu example");
+                defaultItem.addActionListener(listener);
+                popup.add(defaultItem);
+                /// ... add other items
+                // construct a TrayIcon
+                trayIcon = new TrayIcon(image, "Tray Demo", popup);
+                // set the TrayIcon properties
+                trayIcon.addActionListener(listener);
 
+                // add the tray image
+                tray.add(trayIcon);
+            } catch (Exception e) {
+                log.error("failed to add tray icon:" + e.getMessage());
+            }
+            // ...
+        } else {
+            // disable tray option in your application or
+            // perform other actions
+            log.error("TrayIcon not supported");
+
+        }
+    }
+
+    private void createTrayIcon(@NotNull Stage stage) {
+        if (FXTrayIcon.isSupported()) {
+            log.info("TrayIcon is supported");
+        } else {
+            log.error("TrayIcon is only partially supported on this platform");
+        }
+        // Pass in the app's main stage, and path to the icon image
+        FXTrayIcon trayIcon = new FXTrayIcon(stage, getIcon());
+        trayIcon.show();
+
+        // By default, the FXTrayIcon's tooltip will be the parent stage's title,
+        // that we used in the constructor
+        // This method can override this
+        trayIcon.setTrayIconTooltip("Terran Republic Interstellar Plotting System");
+
+        // We can now add JavaFX MenuItems to the menu
+        MenuItem menuItemTest = new MenuItem("Create some JavaFX component!");
+        menuItemTest.setOnAction(e ->
+                new Alert(Alert.AlertType.INFORMATION,
+                        "We just ran some JavaFX code from an AWT MenuItem!").showAndWait());
+        trayIcon.addMenuItem(menuItemTest);
+
+        // We can also nest menus, below is an Options menu with sub-items
+        Menu menuOptions = new Menu("Options");
+        MenuItem miOn = new MenuItem("On");
+        miOn.setOnAction(e -> System.out.println("Options -> On clicked"));
+        MenuItem miOff = new MenuItem("Off");
+        miOff.setOnAction(e -> System.out.println("Options -> Off clicked"));
+        menuOptions.getItems().addAll(miOn, miOff);
+        trayIcon.addMenuItem(menuOptions);
+    }
+
+    /**
+     * Test icon used for FXTrayIcon runnable tests
+     *
+     * @return URL to an example icon PNG
+     */
+    public URL getIcon() {
+        return getClass().getResource("images/tripsWin.ico");
+    }
+
+    /**
+     * resize trips
+     *
+     * @param height the height to change to
+     * @param width  the width to change to
+     */
     private void resizeTrips(double height, double width) {
 
         if (Double.isNaN(height)) {
@@ -693,7 +789,7 @@ public class MainPane implements
         } else {
             height -= 10;
         }
-        log.info("Height: " + height + " Width: " + width);
+        log.trace("Height: " + height + " Width: " + width);
 
         interstellarSpacePane.resize(width, height);
 
@@ -864,20 +960,13 @@ public class MainPane implements
      */
     private void createInterstellarSpace(ColorPalette colorPalette) {
 
-        // create main graphics display pane
-        interstellarSpacePane = new InterstellarSpacePane(sceneWidth,
-                sceneHeight,
-                depth,
-                spacing,
-                tripsContext,
+        interstellarSpacePane.setlisteners(this,
                 this,
                 this,
                 this,
                 this,
                 this,
-                this,
-                this
-        );
+                this);
 
         leftDisplayPane.getChildren().add(interstellarSpacePane);
 
@@ -893,7 +982,6 @@ public class MainPane implements
      * create the solar space drawing area
      */
     private void createSolarSystemSpace() {
-        solarSystemSpacePane = new SolarSystemSpacePane(leftDisplayPane.getMaxWidth(), leftDisplayPane.getMaxHeight(), depth);
         solarSystemSpacePane.setContextUpdater(this);
         leftDisplayPane.getChildren().add(solarSystemSpacePane);
     }
@@ -903,8 +991,12 @@ public class MainPane implements
 
 
     public void plotStars(ActionEvent actionEvent) {
-//        clearData();
-        plotManager.showPlot(searchContext);
+
+        if (tripsContext.getSearchContext().getDataSetDescriptor() != null) {
+            plotManager.showPlot(searchContext);
+        } else {
+            showErrorAlert("Plot stars", "there isn't a dataset selected to plot. Please select one.");
+        }
     }
 
     public void viewEditStarData(ActionEvent actionEvent) {
@@ -921,7 +1013,7 @@ public class MainPane implements
 
     public void clearRoutes(ActionEvent actionEvent) {
         interstellarSpacePane.clearRoutes();
-        databaseManagementService.clearRoutesFromCurrent(searchContext.getAstroSearchQuery().getDescriptor());
+        databaseManagementService.clearRoutesFromCurrent(searchContext.getDataSetDescriptor());
         routingPanel.clearData();
     }
 
@@ -1021,7 +1113,6 @@ public class MainPane implements
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
                 this,
-                tripsContext.getDataSetContext(),
                 databaseManagementService,
                 this,
                 dataImportService,
@@ -1034,12 +1125,16 @@ public class MainPane implements
 
 
     public void selectActiveDataset(ActionEvent actionEvent) {
-        SelectActiveDatasetDialog dialog = new SelectActiveDatasetDialog(
-                this,
-                tripsContext.getDataSetContext(),
-                databaseManagementService);
-        // we throw away the result after returning
-        dialog.showAndWait();
+        if (tripsContext.getDataSetContext().getDescriptor() != null) {
+            SelectActiveDatasetDialog dialog = new SelectActiveDatasetDialog(
+                    this,
+                    tripsContext.getDataSetContext(),
+                    databaseManagementService);
+            // we throw away the result after returning
+            dialog.showAndWait();
+        } else {
+            showErrorAlert("Select a Dataset", "THere are no datasets to select.");
+        }
     }
 
 
@@ -1048,7 +1143,8 @@ public class MainPane implements
     }
 
     public void transitFinder(ActionEvent actionEvent) {
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService, tripsContext.getDataSetContext().getDescriptor().getTransitDefinitions());
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService,
+                tripsContext.getDataSetDescriptor().getTransitDefinitions());
         Optional<TransitDefinitions> optionalTransitDefinitions = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalTransitDefinitions.isPresent()) {
             TransitDefinitions transitDefinitions = optionalTransitDefinitions.get();
@@ -1088,19 +1184,19 @@ public class MainPane implements
     }
 
     public void routeFinderInView(ActionEvent actionEvent) {
-        RouteFinderInView routeFinderInView = new RouteFinderInView(interstellarSpacePane);
         if (interstellarSpacePane.getCurrentStarsInView().size() > 2) {
-            routeFinderInView.startRouteLocation(searchContext.getAstroSearchQuery().getDescriptor());
+            routeFinderInView.startRouteLocation(searchContext.getDataSetDescriptor());
         } else {
             showErrorAlert("Route Finder", "You need to have more than 2 stars on a plot to use.");
         }
     }
 
     public void routeFinderDataset(ActionEvent actionEvent) {
-        RouteFinderDataset routeFinderDataset = new RouteFinderDataset(interstellarSpacePane);
+        RouteFinderDataset routeFinderDataset = new RouteFinderDataset(interstellarSpacePane, largeGraphSearchService);
         routeFinderDataset.startRouteLocation(
-                searchContext.getAstroSearchQuery().getDescriptor(),
+                searchContext.getDataSetDescriptor(),
                 databaseManagementService,
+                starMeasurementService,
                 this
         );
 
@@ -1162,29 +1258,34 @@ public class MainPane implements
     }
 
     public void runQuery(ActionEvent actionEvent) {
-        queryDialog.setOnShown(event -> {
+        if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
+            log.error("There aren't any datasets so don't show");
+            showErrorAlert("Search Query", "There aren't any datasets to search on.\nPlease import one first");
+        } else {
+            queryDialog.setOnShown(event -> {
 
-            //Values from screen
-            int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
-            int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
+                //Values from screen
+                int screenMaxX = (int) Screen.getPrimary().getVisualBounds().getMaxX();
+                int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
 
-            //Values from stage
-            int width = (int) stage.getWidth();
-            int height = (int) stage.getHeight();
-            int stageMaxX = (int) stage.getX();
-            int stageMaxY = (int) stage.getY();
+                //Values from stage
+                int width = (int) stage.getWidth();
+                int height = (int) stage.getHeight();
+                int stageMaxX = (int) stage.getX();
+                int stageMaxY = (int) stage.getY();
 
-            //Maximal values your stage
-            int paneMaxX = screenMaxX - width;
-            int paneMaxY = screenMaxY - height;
+                //Maximal values your stage
+                int paneMaxX = screenMaxX - width;
+                int paneMaxY = screenMaxY - height;
 
-            //Check if the position of your stage is not out of screen
-            if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
-                // Set stage where ever you want
-                // future
-            }
-        });
-        queryDialog.show();
+                //Check if the position of your stage is not out of screen
+                if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
+                    // Set stage where ever you want
+                    // future
+                }
+            });
+            queryDialog.show();
+        }
     }
 
     public void distanceReport(ActionEvent actionEvent) {
@@ -1281,8 +1382,8 @@ public class MainPane implements
     @Override
     public void selectSolarSystemSpace(@NotNull StarDisplayRecord starDisplayRecord) {
         log.info("Showing a solar system");
+        solarSystemSpacePane.reset();
         solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
-        solarSystemSpacePane.render();
         solarSystemSpacePane.toFront();
         updateStatus("Selected Solarsystem space: " + starDisplayRecord.getStarName());
     }
@@ -1369,10 +1470,10 @@ public class MainPane implements
     @Override
     public void updateRoute(RouteDescriptor routeDescriptor) {
         log.info("update route");
-        String datasetName = searchContext.getAstroSearchQuery().getDescriptor().getDataSetName();
+        String datasetName = searchContext.getDataSetDescriptor().getDataSetName();
         DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
+        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
@@ -1384,10 +1485,12 @@ public class MainPane implements
     @Override
     public void deleteRoute(RouteDescriptor routeDescriptor) {
         log.info("delete route");
-        DataSetDescriptor descriptor = searchContext.getAstroSearchQuery().getDescriptor();
+        DataSetDescriptor descriptor = searchContext.getDataSetDescriptor();
         descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
+        // clear the route from the plot
+        tripsContext.getCurrentPlot().removeRoute(routeDescriptor);
+        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
@@ -1427,38 +1530,42 @@ public class MainPane implements
         log.info(searchQuery.toString());
         searchContext.setAstroSearchQuery(searchQuery);
 
-        DataSetDescriptor descriptor = searchQuery.getDescriptor();
-        setContextDataSet(descriptor);
+        DataSetDescriptor descriptor = searchQuery.getDataSetContext().getDescriptor();
+        if (descriptor != null) {
+            setContextDataSet(descriptor);
 
-        if (showPlot || showTable) {
-            // get the distance range
-            double displayRadius = searchQuery.getUpperDistanceLimit();
+            if (showPlot || showTable) {
+                // get the distance range
+                double displayRadius = searchQuery.getUpperDistanceLimit();
 
-            // do a search and cause the plot to show it
-            List<StarObject> starObjects = getAstrographicObjectsOnQuery();
+                // do a search and cause the plot to show it
+                List<StarObject> starObjects = getAstrographicObjectsOnQuery();
 
-            if (!starObjects.isEmpty()) {
-                if (showPlot) {
-                    plotManager.drawAstrographicData(descriptor,
-                            starObjects,
-                            displayRadius,
-                            searchQuery.getCenterCoordinates(),
-                            tripsContext.getAppViewPreferences().getColorPallete(),
-                            tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                            tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                    );
+                if (!starObjects.isEmpty()) {
+                    if (showPlot) {
+                        plotManager.drawAstrographicData(descriptor,
+                                starObjects,
+                                displayRadius,
+                                searchQuery.getCenterCoordinates(),
+                                tripsContext.getAppViewPreferences().getColorPallete(),
+                                tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                                tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                        );
 
-                    //
-                    routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
+                        //
+                        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
+                    }
+                    if (showTable) {
+                        showList(starObjects);
+                    }
+                    updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
+
+                } else {
+                    showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
                 }
-                if (showTable) {
-                    showList(starObjects);
-                }
-                updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
-
-            } else {
-                showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
             }
+        } else {
+            showErrorAlert("Show query data", "Data descriptor is null which shouldn't happen.\nPlease select a dataset.");
         }
     }
 
@@ -1493,7 +1600,7 @@ public class MainPane implements
             double displayRadius = searchQuery.getUpperDistanceLimit();
 
             if (showPlot) {
-                plotManager.drawAstrographicData(searchQuery.getDescriptor(),
+                plotManager.drawAstrographicData(searchQuery.getDataSetContext().getDescriptor(),
                         starObjects,
                         displayRadius,
                         searchQuery.getCenterCoordinates(),
@@ -1501,16 +1608,16 @@ public class MainPane implements
                         tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                         tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                 );
-                DataSetDescriptor descriptor = searchQuery.getDescriptor();
-                routingPanel.setContext(descriptor,  plotManager.getRouteVisibility());
+                DataSetDescriptor descriptor = searchQuery.getDataSetContext().getDescriptor();
+                routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
             }
             if (showTable) {
                 showList(starObjects);
             }
-            updateStatus("Dataset loaded is: " + searchQuery.getDescriptor().getDataSetName());
+            updateStatus("Dataset loaded is: " + searchQuery.getDataSetContext().getDescriptor().getDataSetName());
 
             // highlight the data set used
-            setContextDataSet(searchQuery.getDescriptor());
+            setContextDataSet(searchQuery.getDataSetContext().getDescriptor());
 
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -1534,8 +1641,14 @@ public class MainPane implements
 
     @Override
     public void addDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
-        searchContext.addDataSet(dataSetDescriptor);
+
+        // add dataset to trips context
+        tripsContext.addDataSet(dataSetDescriptor);
+
+        // add to side panel
         addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+
+        // update the query dialog
         queryDialog.updateDataContext(dataSetDescriptor);
         updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " loaded");
     }
@@ -1547,10 +1660,12 @@ public class MainPane implements
                 "Are you sure you want to remove: " + dataSetDescriptor.getDataSetName());
 
         if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
-            searchContext.removeDataSet(dataSetDescriptor);
 
             // remove from database
-            databaseManagementService.removeDataSet(dataSetDescriptor);
+            tripsContext.removeDataSet(dataSetDescriptor);
+
+            // update the query dialong
+            queryDialog.removeDataset(dataSetDescriptor);
 
             // redisplay the datasets
             addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
@@ -1564,12 +1679,12 @@ public class MainPane implements
         // clear all the current data
         clearAll();
 
-        tripsContext.getDataSetContext().setDescriptor(descriptor);
-        tripsContext.getDataSetContext().setValidDescriptor(true);
-        tripsContext.getSearchContext().getAstroSearchQuery().setDescriptor(descriptor);
-        tripsContext.getSearchContext().setCurrentDataSet(descriptor.getDataSetName());
-        interstellarSpacePane.setDataSetContext(descriptor);
+        // update the trips context and write through to the database
+        tripsContext.setDataSetContext(new DataSetContext(descriptor));
+
+        // update the side panel
         dataSetsListView.getSelectionModel().select(descriptor);
+
         if (queryDialog != null) {
             queryDialog.setDataSetContext(descriptor);
         }
@@ -1577,13 +1692,7 @@ public class MainPane implements
         plotButton.setDisable(false);
         toolBar.setTooltip(new Tooltip(null));
 
-        updatePersistentDataSet(descriptor);
-
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
-    }
-
-    private void updatePersistentDataSet(DataSetDescriptor descriptor) {
-        databaseManagementService.updateDataSet(descriptor);
     }
 
     public void clearAll() {
@@ -1718,7 +1827,7 @@ public class MainPane implements
 
                 DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
                 if (dataSetDescriptor == null) {
-                    log.error("How the hell did this happen");
+                    log.error("Dataset Descriptor is null. How the hell did this happen");
                     return;
                 }
                 List<StarObject> starObjects = getAstrographicObjectsOnQuery();
@@ -1781,7 +1890,7 @@ public class MainPane implements
             showErrorAlert("Find stars", "No datasets in database, please load first");
             return;
         }
-        FindStarsWithNameMatchDialog findStarsWithNameMatchDialog = new FindStarsWithNameMatchDialog(datasetNames);
+        FindStarsWithNameMatchDialog findStarsWithNameMatchDialog = new FindStarsWithNameMatchDialog(datasetNames, tripsContext.getSearchContext().getDataSetDescriptor());
         Optional<StarSearchResults> optional = findStarsWithNameMatchDialog.showAndWait();
         if (optional.isPresent()) {
             StarSearchResults starSearchResults = optional.get();
@@ -1803,30 +1912,35 @@ public class MainPane implements
     }
 
     public void advancedSearch(ActionEvent actionEvent) {
-        AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, tripsContext.getDataSetContext(), searchContext.getDatasetMap());
-        Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
-        if (optional.isPresent()) {
-            AdvResultsSet advResultsSet = optional.get();
-            if (!advResultsSet.isDismissed()) {
-                if (advResultsSet.isResultsFound()) {
-                    if (advResultsSet.isViewStars()) {
-                        showList(advResultsSet.getStarsFound());
-                    }
-                    if (advResultsSet.isPlotStars()) {
-                        // get the distance range - in this case, pick a default @todo check this
-                        double displayRadius = searchContext.getAstroSearchQuery().getUpperDistanceLimit();
+        if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
+            log.error("There are no datasets in this database to search on");
+            showErrorAlert("Query Stars", "There aren't any datasets to search on.\nPlease import one first");
+        } else {
+            AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, tripsContext);
+            Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
+            if (optional.isPresent()) {
+                AdvResultsSet advResultsSet = optional.get();
+                if (!advResultsSet.isDismissed()) {
+                    if (advResultsSet.isResultsFound()) {
+                        if (advResultsSet.isViewStars()) {
+                            showList(advResultsSet.getStarsFound());
+                        }
+                        if (advResultsSet.isPlotStars()) {
+                            // get the distance range - in this case, pick a default @todo check this
+                            double displayRadius = searchContext.getAstroSearchQuery().getUpperDistanceLimit();
 
-                        plotManager.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
-                                advResultsSet.getStarsFound(),
-                                displayRadius,
-                                searchContext.getAstroSearchQuery().getCenterCoordinates(),
-                                tripsContext.getAppViewPreferences().getColorPallete(),
-                                tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                                tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                        );
+                            plotManager.drawAstrographicData(advResultsSet.getDataSetDescriptor(),
+                                    advResultsSet.getStarsFound(),
+                                    displayRadius,
+                                    searchContext.getAstroSearchQuery().getCenterCoordinates(),
+                                    tripsContext.getAppViewPreferences().getColorPallete(),
+                                    tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
+                                    tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
+                            );
+                        }
+                    } else {
+                        showInfoMessage("Advanced Query", "No stars were found to match query");
                     }
-                } else {
-                    showInfoMessage("Advanced Query", "No stars were found to match query");
                 }
             }
         }
@@ -1835,7 +1949,7 @@ public class MainPane implements
 
     @Override
     public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
-        routingPanel.setContext(dataSetDescriptor,  plotManager.getRouteVisibility());
+        routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
     }
 
     public void rotate(ActionEvent actionEvent) {
@@ -1911,7 +2025,7 @@ public class MainPane implements
         RouteManager routeManager = interstellarSpacePane.getRouteManager();
         ContextManualRoutingDialog manualRoutingDialog = new ContextManualRoutingDialog(
                 routeManager,
-                tripsContext.getDataSetContext().getDescriptor(),
+                tripsContext.getDataSetDescriptor(),
                 interstellarSpacePane.getCurrentStarsInView()
         );
         manualRoutingDialog.initModality(Modality.NONE);
@@ -1927,11 +2041,112 @@ public class MainPane implements
 
     public void routeListReport(ActionEvent actionEvent) {
         List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
-        RouteReportDialog dialog = new RouteReportDialog(tripsContext.getDataSetContext(), dataSetDescriptorList);
+        RouteReportDialog dialog = new RouteReportDialog(tripsContext.getDataSetDescriptor(), dataSetDescriptorList);
         dialog.showAndWait();
     }
 
     public void starPropertyReport(ActionEvent actionEvent) {
-        showWarningMessage("Star Propery Report", "This function hasn't been implemented.");
+        showWarningMessage("Star Property Report", "This function hasn't been implemented.");
+    }
+
+    public void getInventory(ActionEvent actionEvent) {
+        String physicalInventory = oshiMeasure.getComputerInventory();
+        InventoryReport inventoryReport = new InventoryReport(physicalInventory);
+        ReportManager reportManager = new ReportManager();
+        reportManager.generateComputerInventoryReport(stage, inventoryReport);
+    }
+
+    /**
+     * find by catalog id
+     *
+     * @param actionEvent an event we don't use.
+     */
+    public void findByCatalogId(ActionEvent actionEvent) {
+        log.info("find a star by catalog id");
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindStarByCatalogIdDialog dialog = new FindStarByCatalogIdDialog(
+                datasetNames,
+                tripsContext.getSearchContext().getDataSetDescriptor());
+        Optional<StarSearchResults> resultsOptional = dialog.showAndWait();
+        if (resultsOptional.isPresent()) {
+            StarSearchResults results = resultsOptional.get();
+            if (results.isStarsFound()) {
+                log.info("found");
+                String datasetName = results.getDataSetName();
+                String catalogId = results.getNameToSearch();
+                log.info("name to search: {}", results.getNameToSearch());
+                List<StarObject> starObjects = databaseManagementService.findStarsWithCatalogId(datasetName, catalogId);
+                log.info("number of stars found ={}", starObjects.size());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+                showStarMatchesDialog.showAndWait();
+            }
+        }
+    }
+
+    public void findByCommonName(ActionEvent actionEvent) {
+        log.info("find a star by common name");
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindStarByCommonNameDialog dialog = new FindStarByCommonNameDialog(
+                datasetNames,
+                tripsContext.getSearchContext().getDataSetDescriptor());
+        Optional<StarSearchResults> resultsOptional = dialog.showAndWait();
+        if (resultsOptional.isPresent()) {
+            StarSearchResults results = resultsOptional.get();
+            if (results.isStarsFound()) {
+                log.info("found");
+                String datasetName = results.getDataSetName();
+                String commonName = results.getNameToSearch();
+                log.info("name to search: {}", results.getNameToSearch());
+                List<StarObject> starObjects = databaseManagementService.findStarsByCommonName(datasetName, commonName);
+                log.info("number of stars found ={}", starObjects.size());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+                showStarMatchesDialog.showAndWait();
+            }
+        }
+    }
+
+    public void findByConstellation(ActionEvent actionEvent) {
+        FindAllByConstellationDialog dialog = new FindAllByConstellationDialog(tripsContext);
+        Optional<ConstellationSelected> optional = dialog.showAndWait();
+        if (optional.isPresent()) {
+            ConstellationSelected selected = optional.get();
+            if (selected.isSelected()) {
+                List<StarObject> starObjectList = databaseManagementService.findStarsByConstellation(selected.getConstellation());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjectList);
+                showStarMatchesDialog.showAndWait();
+            }
+        }
+    }
+
+    public void loadExoPlanets(ActionEvent actionEvent) {
+        // @TODO finish this
+    }
+
+    public void findDistance(ActionEvent actionEvent) {
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindDistanceDialog dialog = new FindDistanceDialog(datasetNames, tripsContext.getSearchContext().getDataSetDescriptor(), databaseManagementService);
+        dialog.showAndWait();
+    }
+
+    public void findXYZ(ActionEvent actionEvent) {
+        RADecToXYZDialog dialog = new RADecToXYZDialog();
+        dialog.showAndWait();
+    }
+
+    public void findGalacticCoords(ActionEvent actionEvent) {
+        EquatorialToGalacticCoordsDialog dialog = new EquatorialToGalacticCoordsDialog();
+        dialog.showAndWait();
     }
 }

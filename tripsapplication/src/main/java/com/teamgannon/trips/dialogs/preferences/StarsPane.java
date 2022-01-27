@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.StarDescriptionPreference;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
+import com.teamgannon.trips.config.application.model.StarDescriptionPreference;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.event.ActionEvent;

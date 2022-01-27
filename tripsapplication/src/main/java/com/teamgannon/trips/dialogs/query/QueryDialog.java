@@ -1,6 +1,5 @@
 package com.teamgannon.trips.dialogs.query;
 
-import com.teamgannon.trips.config.application.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
@@ -36,12 +35,10 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     /**
      * constructor
      *
-     * @param searchContext  the search context
-     * @param dataSetContext the data set context
-     * @param updater        the data updater
+     * @param searchContext the search context
+     * @param updater       the data updater
      */
     public QueryDialog(@NotNull SearchContext searchContext,
-                       @NotNull DataSetContext dataSetContext,
                        StellarDataUpdaterListener updater,
                        DataSetChangeListener dataSetChangeListener) {
 
@@ -49,7 +46,6 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
         searchPane = new SearchPane(
                 searchContext,
-                dataSetContext,
                 dataSetChangeListener,
                 updater);
 
@@ -114,6 +110,10 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         searchPane.updateDataContext(dataSetDescriptor);
+    }
+
+    public void removeDataset(DataSetDescriptor dataSetDescriptor) {
+        searchPane.removeDataset(dataSetDescriptor);
     }
 
     private void close(WindowEvent we) {

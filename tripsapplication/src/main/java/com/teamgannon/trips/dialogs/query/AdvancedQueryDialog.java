@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
-import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -20,11 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.util.validation.Validation;
 import net.sf.jsqlparser.util.validation.ValidationError;
 import net.sf.jsqlparser.util.validation.feature.DatabaseType;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -43,14 +42,13 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
     QueryFields queryFields = new QueryFields();
     private final DatabaseManagementService service;
-    private final @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap;
+    private final TripsContext tripsContext;
 
     public AdvancedQueryDialog(DatabaseManagementService service,
-                               DataSetContext dataSetContext,
-                               @NotNull Map<String, DataSetDescriptor> dataSetDescriptorMap) {
+                               TripsContext tripsContext) {
 
         this.service = service;
-        this.dataSetDescriptorMap = dataSetDescriptorMap;
+        this.tripsContext = tripsContext;
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
 
@@ -65,10 +63,8 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         Label datasetLabel = new Label("Dataset to query: ");
         datasetLabel.setFont(font);
         gridPane.add(datasetLabel, 0, 1);
-        datasetChoices.getItems().addAll(dataSetDescriptorMap.keySet());
-        datasetChoices.getSelectionModel().select(dataSetContext.getDescriptor().getDataSetName());
         gridPane.add(datasetChoices, 1, 1);
-
+        updateDatasetDescriptors();
         Label queryLabel = new Label("Query to run::> ");
         queryLabel.setFont(font);
         gridPane.add(queryLabel, 2, 1);
@@ -127,6 +123,15 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         stage.setOnCloseRequest(this::close);
     }
 
+    public void updateDatasetDescriptors() {
+        datasetChoices.getItems().addAll(tripsContext.getSearchContext().getDatasetMap().keySet());
+        if (tripsContext.getDataSetDescriptor()!=null) {
+            datasetChoices.getSelectionModel().select(tripsContext.getDataSetDescriptor().getDataSetName());
+        } else {
+            datasetChoices.getSelectionModel().select(0);
+        }
+    }
+
     private void showExamples(ActionEvent actionEvent) {
         ExamplesDialog dialog = new ExamplesDialog(queryFields.getExamples());
         dialog.show();
@@ -172,7 +177,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
                                 .queryValid(true)
                                 .plotStars(plotCheckBox.isSelected())
                                 .viewStars(viewCheckBox.isSelected())
-                                .dataSetDescriptor(dataSetDescriptorMap.get(datasetName))
+                                .dataSetDescriptor(tripsContext.getSearchContext().getDatasetMap().get(datasetName))
                                 .resultsFound(starObjectList.size() > 0)
                                 .starsFound(starObjectList)
                                 .build();

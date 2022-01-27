@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -23,13 +24,13 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
     private final TextField starName = new TextField();
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
 
-    public FindStarsWithNameMatchDialog(@NotNull List<String> datasetNames) {
+    public FindStarsWithNameMatchDialog(@NotNull List<String> datasetNames, DataSetDescriptor dataSetDescriptor) {
         this.setTitle("Find a star in database");
         this.setHeight(500);
         this.setWidth(500);
 
         datasets.getItems().addAll(datasetNames);
-        datasets.getSelectionModel().select(0);
+        datasets.getSelectionModel().select(dataSetDescriptor.getDataSetName());
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();

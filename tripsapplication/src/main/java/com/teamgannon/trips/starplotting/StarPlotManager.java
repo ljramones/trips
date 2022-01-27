@@ -1,11 +1,12 @@
 package com.teamgannon.trips.starplotting;
 
-import com.teamgannon.trips.config.application.CurrentPlot;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.SerialFont;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
+import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -16,13 +17,15 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
+import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
+import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.solarsystem.PlanetDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
@@ -50,76 +53,96 @@ import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
+@Component
 public class StarPlotManager {
 
     /**
      * we do this to make the star size a constant size bigger x1.5
      */
     private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+
+    /**
+     * put a limit on how big a radius should be
+     */
     private final static double RADIUS_MAX = 7;
 
     ///////////////////
     private final static double X_MAX = 300;
     private final static double Y_MAX = 300;
     private final static double Z_MAX = 300;
+
     /**
      * a graphics object group for extensions
      */
     private final Group extensionsGroup = new Group();
+
     /**
      * the stellar group for display
      */
     private final Group stellarDisplayGroup = new Group();
+
     /**
      * used to control label visibility
      */
     private final Group labelDisplayGroup = new Group();
+
     /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
 
-    private final Group world;
+    private Group world;
 
-    private final SubScene subScene;
+    private SubScene subScene;
+
     /**
      * used to signal an update to the parent list view
      */
-    private final ListUpdaterListener listUpdaterListener;
+    private ListUpdaterListener listUpdaterListener;
+
     /**
      * the redraw listener
      */
-    private final RedrawListener redrawListener;
+    private RedrawListener redrawListener;
+
     /**
      * to make database changes
      */
-    private final DatabaseListener databaseListener;
+    private DatabaseListener databaseListener;
+
     /**
      * used to an update to the parent controlling which graphics
      * panes is being displayed
      */
-    private final ContextSelectorListener contextSelectorListener;
+    private ContextSelectorListener contextSelectorListener;
+
     /**
      * used to signal an update to the parent property panes
      */
-    private final StellarPropertiesDisplayerListener displayer;
+    private StellarPropertiesDisplayerListener displayer;
+
     /**
      * the report generator
      */
-    private final ReportGenerator reportGenerator;
+    private ReportGenerator reportGenerator;
 
     private ScaleTransition scaleTransition;
 
     private TransitionState transitionState;
 
-
+    /**
+     * the global context of TRIPS
+     */
     private final TripsContext tripsContext;
+
     /**
      * our color palette
      */
@@ -130,6 +153,10 @@ public class StarPlotManager {
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
+
+    /**
+     * source of reasonably random numbers
+     */
     private final Random random = new Random();
 
     /**
@@ -143,19 +170,33 @@ public class StarPlotManager {
     private boolean politiesOn = true;
 
     /**
+     * flag for the extensions from the plane to the star to show height above or below
+     */
+    private boolean extensionsVisible = true;
+
+    /**
      * reference to the Route Manager
      */
     private RouteManager routeManager;
+
+    /**
+     * a utility class to measure specific star qualities
+     */
+    private final StarMeasurementService starMeasurementService;
 
 
     private double controlPaneOffset;
 
     private RotateTransition centralRotator = new RotateTransition();
 
+    /**
+     * used as a control for highlighting stars
+     */
     private Node highLightStar;
 
 
     private StarDisplayPreferences starDisplayPreferences;
+
 
     private final static String CENTRAL_STAR = "centralStar";
     private final static String MORAVIAN_STAR = "moravianStar";
@@ -168,52 +209,45 @@ public class StarPlotManager {
     private final static String POLITY_ARAT_KUR = "polity_4";
     private final static String POLITY_HKH_RKH = "polity_5";
 
+    /**
+     * the special objects
+     */
     private final Map<String, MeshObjectDefinition> specialObjects = new HashMap<>();
 
+    /**
+     * used to create 3d mesh objects
+     */
     private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
+
 
     private ContextAutomatedRoutingDialog automatedRoutingDialog;
 
     private ContextManualRoutingDialog manualRoutingDialog;
 
-    private DataSetDescriptor currentDataSet;
-
     /**
      * constructor
      *
-     * @param world                   the graphics world
-     * @param listUpdaterListener     the list updater
-     * @param redrawListener          the redraw listener
-     * @param databaseListener        the database listener
-     * @param displayer               the displayer
-     * @param contextSelectorListener the context selector
-     * @param reportGenerator         the report generator
-     * @param tripsContext            the trips context
-     * @param colorPalette            the color palette
+     * @param tripsContext the trips context
      */
-    public StarPlotManager(@NotNull Group sceneRoot,
-                           @NotNull Group world,
-                           SubScene subScene,
-                           ListUpdaterListener listUpdaterListener,
-                           RedrawListener redrawListener,
-                           DatabaseListener databaseListener,
-                           StellarPropertiesDisplayerListener displayer,
-                           ContextSelectorListener contextSelectorListener,
-                           ReportGenerator reportGenerator,
-                           TripsContext tripsContext,
-                           ColorPalette colorPalette) {
+    public StarPlotManager(TripsContext tripsContext,
+                           RouteManager routeManager,
+                           StarMeasurementService starMeasurementService) {
+
+        this.tripsContext = tripsContext;
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.routeManager = routeManager;
+        this.starMeasurementService = starMeasurementService;
+
+        // special graphical objects in MeshView format
+        loadSpecialObjects();
+    }
+
+    public void setGraphics(Group sceneRoot,
+                            Group world,
+                            SubScene subScene) {
 
         this.world = world;
         this.subScene = subScene;
-
-        this.listUpdaterListener = listUpdaterListener;
-        this.redrawListener = redrawListener;
-        this.databaseListener = databaseListener;
-        this.displayer = displayer;
-        this.contextSelectorListener = contextSelectorListener;
-        this.reportGenerator = reportGenerator;
-        this.tripsContext = tripsContext;
-        this.colorPalette = colorPalette;
 
         world.getChildren().add(stellarDisplayGroup);
 
@@ -222,12 +256,23 @@ public class StarPlotManager {
         world.getChildren().add(extensionsGroup);
 
         world.getChildren().add(politiesDisplayGroup);
-
-        // special graphical objects in MeshView format
-        loadSpecialObjects();
-
     }
 
+    public void setListeners(ListUpdaterListener listUpdaterListener,
+                             RedrawListener redrawListener,
+                             DatabaseListener databaseListener,
+                             StellarPropertiesDisplayerListener displayer,
+                             ContextSelectorListener contextSelectorListener,
+                             ReportGenerator reportGenerator) {
+        this.listUpdaterListener = listUpdaterListener;
+        this.redrawListener = redrawListener;
+        this.databaseListener = databaseListener;
+        this.displayer = displayer;
+        this.contextSelectorListener = contextSelectorListener;
+        this.reportGenerator = reportGenerator;
+    }
+
+    @TrackExecutionTime
     private void loadSpecialObjects() {
 
         // load central star
@@ -287,7 +332,6 @@ public class StarPlotManager {
             log.error("Unable to load the 5 pt star object");
         }
 
-
         // load 5 pt star star
         MeshView pyramid = meshViewShapeFactory.pyramid();
         if (pyramid != null) {
@@ -326,7 +370,6 @@ public class StarPlotManager {
         }
 
         log.info("All MeshView objects loaded");
-
     }
 
     /**
@@ -334,6 +377,7 @@ public class StarPlotManager {
      *
      * @return the list of star display records
      */
+    @TrackExecutionTime
     public @NotNull List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
         for (UUID id : tripsContext.getCurrentPlot().getStarIds()) {
@@ -352,11 +396,6 @@ public class StarPlotManager {
     public void toggleExtensions(boolean extensionsOn) {
         extensionsGroup.setVisible(extensionsOn);
     }
-
-    public void setRouteManager(RouteManager routeManager) {
-        this.routeManager = routeManager;
-    }
-
 
     /**
      * clear the stars from the display
@@ -443,34 +482,16 @@ public class StarPlotManager {
 
     }
 
-
-    /**
-     * the label to blink
-     *
-     * @param label      the label to blink
-     * @param cycleCount the number of times on a 1 second interval to perform. Null is infinite
-     */
-    private void blinkStarLabel(Label label, int cycleCount) {
-//        if (scaleTransition != null) {
-//            scaleTransition.stop();
-//        }
-//        scaleTransition = new FadeTransition(Duration.seconds(1), label);
-//        scaleTransition.setFromValue(1.0);
-//        scaleTransition.setToValue(0.0);
-//        scaleTransition.setCycleCount(cycleCount);
-//        scaleTransition.setAutoReverse(true);
-//        scaleTransition.play();
-    }
-
     public void toggleStars(boolean starsOn) {
         stellarDisplayGroup.setVisible(starsOn);
         labelDisplayGroup.setVisible(starsOn);
     }
 
-
-    public void drawStars(CurrentPlot currentPlot) {
+    @TrackExecutionTime
+    public void drawStars(@NotNull CurrentPlot currentPlot, boolean extensionsVisible) {
         this.colorPalette = currentPlot.getColorPalette();
         this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
+        this.extensionsVisible = extensionsVisible;
 
         for (StarDisplayRecord starDisplayRecord : currentPlot.getStarDisplayRecordList()) {
             plotStar(starDisplayRecord, currentPlot.getCenterStar(),
@@ -507,26 +528,7 @@ public class StarPlotManager {
         }
     }
 
-    private void redrawPlot() {
-        clearPlot();
-        clearStars();
-        log.info("redrawing plot: labels= {}, polities = {}", labelsOn, politiesOn);
-        List<StarDisplayRecord> recordList = tripsContext.getCurrentPlot().getStarDisplayRecordList();
-        recordList.forEach(
-                starDisplayRecord -> plotStar(
-                        starDisplayRecord,
-                        tripsContext.getCurrentPlot().getCenterStar(),
-                        colorPalette,
-                        tripsContext.getCurrentPlot().getStarDisplayPreferences(),
-                        tripsContext.getCurrentPlot().getCivilizationDisplayPreferences()
-                )
-        );
-
-        // re-plot routes
-        routeManager.plotRoutes(tripsContext.getCurrentPlot().getDataSetDescriptor().getRoutes());
-
-    }
-
+    @TrackExecutionTime
     private void plotStar(@NotNull StarDisplayRecord record,
                           String centerStar,
                           @NotNull ColorPalette colorPalette,
@@ -768,7 +770,9 @@ public class StarPlotManager {
                 lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
-        extensionsGroup.setVisible(true);
+        if (extensionsVisible) {
+            extensionsGroup.setVisible(true);
+        }
     }
 
     /**
@@ -855,6 +859,7 @@ public class StarPlotManager {
         cm.getItems().add(removeMenuItem);
 
         cm.getItems().add(new SeparatorMenuItem());
+
         MenuItem routingHeader = new MenuItem("Routing");
         routingHeader.setStyle(" -fx-font-size:15; -fx-font-weight: bold");
         routingHeader.setDisable(true);
@@ -870,6 +875,14 @@ public class StarPlotManager {
 
         MenuItem distanceToMenuItem = distanceReportMenuItem(star);
         cm.getItems().add(distanceToMenuItem);
+
+        cm.getItems().add((new SeparatorMenuItem()));
+
+        MenuItem jumpIntoSystem = createEnterSystemItem(star);
+        cm.getItems().add(jumpIntoSystem);
+
+        MenuItem generateSolarSystem = createGenerateSolarSystemItem(star);
+        cm.getItems().add(generateSolarSystem);
 
         return cm;
     }
@@ -897,7 +910,8 @@ public class StarPlotManager {
     private void generateAutomatedRoute(StarDisplayRecord starDescriptor) {
         log.info("generate automated route");
         automatedRoutingDialog = new ContextAutomatedRoutingDialog(
-                this, routeManager, currentDataSet, starDescriptor, getCurrentStarsInView());
+                this, routeManager, starMeasurementService,
+                getCurrentDataSet(), starDescriptor, getCurrentStarsInView());
 
         automatedRoutingDialog.initModality(Modality.NONE);
         automatedRoutingDialog.show();
@@ -910,7 +924,7 @@ public class StarPlotManager {
         log.info("generate manual route");
         manualRoutingDialog = new ContextManualRoutingDialog(
                 routeManager,
-                currentDataSet,
+                getCurrentDataSet(),
                 starDescriptor
         );
         manualRoutingDialog.initModality(Modality.NONE);
@@ -919,6 +933,10 @@ public class StarPlotManager {
         routeManager.setManualRoutingActive(true);
         routeManager.setRoutingType(RoutingType.MANUAL);
 
+    }
+
+    private DataSetDescriptor getCurrentDataSet() {
+        return tripsContext.getDataSetDescriptor();
     }
 
     private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {
@@ -948,7 +966,11 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Recenter on this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            redrawListener.recenter(starDescriptor);
+            if (starDescriptor != null) {
+                redrawListener.recenter(starDescriptor);
+            } else {
+                showErrorAlert("Recenter on star", "The star you selected was bull!");
+            }
         });
         return menuItem;
     }
@@ -1328,12 +1350,16 @@ public class StarPlotManager {
             }
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             RouteDialog dialog = new RouteDialog(starDescriptor);
-            Optional<RouteDescriptor> result = dialog.showAndWait();
-
-            result.ifPresent(routeDescriptor -> routeManager.startRoute(
-                    tripsContext.getCurrentPlot().getDataSetDescriptor(),
-                    routeDescriptor, starDescriptor)
-            );
+            Optional<RouteSelector> resultOptional = dialog.showAndWait();
+            if (resultOptional.isPresent()) {
+                RouteSelector routeSelector = resultOptional.get();
+                if (routeSelector.isSelected()) {
+                    RouteDescriptor routeDescriptor = routeSelector.getRouteDescriptor();
+                    routeManager.startRoute(
+                            tripsContext.getCurrentPlot().getDataSetDescriptor(),
+                            routeDescriptor, starDescriptor);
+                }
+            }
         });
         return menuItem;
     }
@@ -1358,7 +1384,7 @@ public class StarPlotManager {
 
 
     private MenuItem createGenerateSolarSystemItem(Node star) {
-        MenuItem menuItem = new MenuItem("Generate Solar System");
+        MenuItem menuItem = new MenuItem("Generate Simulated Solar System from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             generateSolarSystem(starDescriptor);
@@ -1473,27 +1499,6 @@ public class StarPlotManager {
         routeManager.setManualRoutingActive(false);
     }
 
-    public void setDataSetContext(DataSetDescriptor descriptor) {
-        this.currentDataSet = descriptor;
-    }
-
-
-//    private void setupRotateAnimation(Node node) {
-//        centralRotator.setNode(node);
-//        centralRotator.setAxis(Rotate.Y_AXIS);
-//        centralRotator.setDuration(Duration.INDEFINITE);
-//        centralRotator.play();
-//    }
-//
-//
-//    private void setupFade(Node node) {
-//        FadeTransition fader = new FadeTransition(Duration.seconds(5), node);
-//        fader.setFromValue(1.0);
-//        fader.setToValue(0.1);
-//        fader.setCycleCount(Timeline.INDEFINITE);
-//        fader.setAutoReverse(true);
-//        fader.play();
-//    }
 
     private void generateSolarSystem(StarDisplayRecord starDescriptor) {
         StarObject starObject = databaseListener.getStar(starDescriptor.getRecordId());

@@ -9,9 +9,9 @@ import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PartialRouteUtils {
 
-    private TripsContext tripsContext;
-    private RouteDisplay routeDisplay;
-    private RouteGraphicsUtil routeGraphicsUtil;
-    private RouteBuilderUtils routeBuilderUtils;
+    private final TripsContext tripsContext;
+    private final RouteDisplay routeDisplay;
+    private final RouteGraphicsUtil routeGraphicsUtil;
+    private final RouteBuilderUtils routeBuilderUtils;
 
     public PartialRouteUtils(TripsContext tripsContext,
                              RouteDisplay routeDisplay,
@@ -45,6 +45,9 @@ public class PartialRouteUtils {
             Group partialRouteGraphic = createPartialRoutes(partialRoutes);
             addPartialRoutes(partialRoutes, partialRouteGraphic);
             routeDisplay.toggleRouteVisibility(true);
+
+            // add the partial routes to the current display
+            tripsContext.getCurrentPlot().addRoutes(route.getUuid(), partialRoutes);
         } else {
             log.info("!!!!!route {} is not visible in this view port", route.getRouteName());
         }
@@ -56,7 +59,7 @@ public class PartialRouteUtils {
      * @param partialRoutes the list of partial routes
      * @return the group with the partial routes
      */
-    private Group createPartialRoutes(List<RouteDescriptor> partialRoutes) {
+    private @NotNull Group createPartialRoutes(List<RouteDescriptor> partialRoutes) {
         Group route = new Group();
         boolean firstLink = true;
 
@@ -64,7 +67,7 @@ public class PartialRouteUtils {
         for (RouteDescriptor routeDescriptor : partialRoutes) {
             int i = 0;
             Point3D previousPoint = new Point3D(0, 0, 0);
-            for (Point3D point3D : routeDescriptor.getLineSegments()) {
+            for (Point3D point3D : routeDescriptor.getRouteCoordinates()) {
                 if (firstLink) {
                     previousPoint = point3D;
                     firstLink = false;
@@ -105,7 +108,7 @@ public class PartialRouteUtils {
      * @param route the complete route
      * @return the lsit of partial routes
      */
-    private List<RouteDescriptor> getPartialRoutes(Route route) {
+    private List<RouteDescriptor> getPartialRoutes(@NotNull Route route) {
         List<RouteDescriptor> routeDescriptorList = new ArrayList<>();
         Set<UUID> visibleStarList = route.getRouteStars()
                 .stream()
@@ -113,26 +116,30 @@ public class PartialRouteUtils {
                         .getStarLookup()
                         .containsKey(starId)).collect(Collectors.toSet());
 
-
         // creating this here is mostly to get around the stupid compile warnings
         RouteDescriptor routeDescriptor = RouteDescriptor.builder().build();
+        routeDescriptor.setId(route.getUuid());
+        routeDescriptor.setName(route.getRouteName());
+        routeDescriptor.setLineWidth(route.getLineWidth());
+        routeDescriptor.setRouteNotes(route.getRouteNotes());
+        routeDescriptor.setColor(Color.valueOf(route.getRouteColor()));
 
         // this is the case where none of the stars in this route are visible
         if (visibleStarList.isEmpty()) {
-            routeDescriptor.setName(route.getRouteName());
-            routeDescriptor.setVisibility(RouteVisibility.INVISIBLE);
-            routeDescriptor.setLineWidth(route.getLineWidth());
-            routeDescriptor.setRouteNotes(route.getRouteNotes());
+            routeDescriptor.setVisibility(RouteVisibility.OFFSCREEN);
         } else {
-
+            routeDescriptor.setVisibility(RouteVisibility.PARTIAL);
             // need to reset in the loop or a new loop can't start after we mark the first as complete
             boolean newRoute = true;
+            boolean routeInProgress = false;
             List<UUID> routeStars = route.getRouteStars();
-            for (int i = 0; i < routeStars.size(); i++) {
+            int i = 0;
+            while (i < routeStars.size()) {
                 UUID starToMatch = routeStars.get(i);
                 if (visibleStarList.contains(starToMatch)) {
                     if (i == (routeStars.size() - 1)) {
                         // if this is the last star then skip since there is no segment to join with this one
+                        i++;
                         continue; // should be end of loop
                     }
                     // get the next star in series and see if its there
@@ -140,26 +147,39 @@ public class PartialRouteUtils {
                     if (visibleStarList.contains(nextStar)) {
                         // ok these stars form a segment, so let copy them
                         if (newRoute) {
+                            // beginning of route is always here for first star and its pair
                             routeDescriptor.setDescriptor(tripsContext.getDataSetContext().getDescriptor());
 
-                            // @todo the route name isn't being set properly when created
-                            routeDescriptor.setName(route.getRouteName());
-                            routeDescriptor.setStartStar(route.getRouteStarNames().get(i));
-                            routeDescriptor.setLineWidth(route.getLineWidth());
-                            routeDescriptor.setRouteNotes(route.getRouteNotes());
-
-                            StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i));
-                            if (starDisplayRecord != null) {
-                                Point3D coordinates = starDisplayRecord.getCoordinates();
-                                if (coordinates != null) {
-                                    routeDescriptor.getLineSegments().add(coordinates);
+                            StarDisplayRecord firstStarDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i));
+                            StarDisplayRecord nextStarDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i + 1));
+                            if (firstStarDisplayRecord != null && nextStarDisplayRecord != null) {
+                                // all of this is supposed to set up the start of a route
+                                // first/start star
+                                routeDescriptor.setStartStar(firstStarDisplayRecord.getStarName());
+                                Point3D firstStarCoordinates = firstStarDisplayRecord.getCoordinates();
+                                if (firstStarCoordinates != null) {
+                                    routeDescriptor.getRouteCoordinates().add(firstStarCoordinates);
                                 } else {
-                                    log.error("why are the coordinates empty for this star: {}", starDisplayRecord.getStarName());
+                                    log.error("why are the coordinates empty for this star: {}, " +
+                                                    "no point in trying to draw as this is a corrupt segment",
+                                            firstStarDisplayRecord.getStarName());
+                                    return routeDescriptorList;
                                 }
 
-                                // add route stars
+                                Point3D nextStarCoordinates = nextStarDisplayRecord.getCoordinates();
+                                if (nextStarCoordinates != null) {
+                                    routeDescriptor.getRouteCoordinates().add(nextStarCoordinates);
+                                } else {
+                                    log.error("why are the coordinates empty for this star: {}, " +
+                                                    "no point in trying to draw as this is a corrupt segment",
+                                            nextStarDisplayRecord.getStarName());
+                                    return routeDescriptorList;
+                                }
+
+                                // add route stars and its next segment
                                 routeDescriptor.getRouteList().add(routeStars.get(i));
                                 routeDescriptor.getRouteList().add(routeStars.get(i + 1));
+                                routeDescriptor.setVisibility(RouteVisibility.PARTIAL);
                                 // add star records
                                 routeDescriptor.getStarDisplayRecords().add(routeBuilderUtils.getStar(routeStars.get(i)));
                                 routeDescriptor.getStarDisplayRecords().add(routeBuilderUtils.getStar(routeStars.get(i + 1)));
@@ -170,52 +190,81 @@ public class PartialRouteUtils {
                                 routeDescriptor.getLengthList().add(route.getRouteLengths().get(i));
                                 routeDescriptor.getLengthList().add(route.getRouteLengths().get(i + 1));
 
-                                routeDescriptor.setVisibility(RouteVisibility.PARTIAL);
-
-                                // add to the list
+                                // add to the list, note this is only part of it but we have to start the addition
                                 routeDescriptorList.add(routeDescriptor);
+
+                                // since we add two starts here, advance the counter by 1 to take this into account
+                                i++;
+
+                                // set route in progress
+                                routeInProgress = true;
+                                log.info("Added first two stars");
                             } else {
-                                log.error("Why is this star <{}> not found, it should be there", routeStars.get(i));
+                                log.error("Why is this star <{}> not found, it should be there, plot is corrupt!!", routeStars.get(i));
+                                return routeDescriptorList;
                             }
                             newRoute = false;
                         } else {
-                            routeDescriptor.getRouteList().add(routeStars.get(i + 1));
-                            StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i + 1));
-                            if (starDisplayRecord != null) {
-                                Point3D coordinates = starDisplayRecord.getCoordinates();
-                                if (coordinates != null) {
-                                    routeDescriptor.getLineSegments().add(coordinates);
-                                } else {
-                                    log.error("why are the coordinates empty for this star: {}", starDisplayRecord.getStarName());
-                                }
-                            } else {
-                                log.error("Why is this star <{}> not found, it should be there", routeStars.get(i));
-                            }
-                            routeDescriptor.getNameList().add(route.getRouteStarNames().get(i + 1));
-                            routeDescriptor.getLengthList().add(route.getRouteLengths().get(i + 1));
-                            routeDescriptor.getStarDisplayRecords().add(routeBuilderUtils.getStar(routeStars.get(i + 1)));
-                            // we get doing this so that we catch the last star
-                            routeDescriptor.setLastStar(routeBuilderUtils.getStar(routeStars.get(i + 1)));
+                            // rest of stars in the route clock in here
+                            saveStarInRoute(route, routeDescriptor, routeStars, i);
                         }
                     } else {
                         // break partial route
+                        if (routeInProgress) {
+                            saveStarInRoute(route, routeDescriptor, routeStars, i);
+                            routeInProgress = false;
+                        }
+
                         newRoute = false;
                     }
                 } else {
                     // break partial route
-                    newRoute = false;
+                    if (routeInProgress) {
+                        newRoute = false;
+                    }
                 }
+                i++;
             }
             // fix up the partial routes
             for (RouteDescriptor descriptor : routeDescriptorList) {
                 double maxLength = descriptor.getLengthList().stream().mapToDouble(length -> length).filter(length -> length >= 0).max().orElse(0);
                 descriptor.setMaxLength(maxLength);
-                log.info("*>> {} stars in route {}", descriptor.getNameList().size(), descriptor.getName());
+                String nameList = descriptor.getNameList().stream().map(name -> name + ", ").collect(Collectors.joining());
+                log.info("*>> {} stars in route {} is {} ly and is composed of {}", descriptor.getNameList().size(), descriptor.getName(), maxLength, nameList);
             }
         }
 
         // return list
         return routeDescriptorList;
+    }
+
+    /**
+     * save a route star in the route with it values
+     *
+     * @param route           the route
+     * @param routeDescriptor the new route descriptor
+     * @param routeStars      the route stars in the entire route
+     * @param i               the current position
+     */
+    private void saveStarInRoute(Route route, @NotNull RouteDescriptor routeDescriptor, @NotNull List<UUID> routeStars, int i) {
+
+        routeDescriptor.getRouteList().add(routeStars.get(i));
+        StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i));
+        if (starDisplayRecord != null) {
+            Point3D coordinates = starDisplayRecord.getCoordinates();
+            if (coordinates != null) {
+                routeDescriptor.getRouteCoordinates().add(coordinates);
+            } else {
+                log.error("why are the coordinates empty for this star: {}", starDisplayRecord.getStarName());
+            }
+        } else {
+            log.error("Why is this star <{}> not found, it should be there", routeStars.get(i));
+        }
+        routeDescriptor.getNameList().add(route.getRouteStarNames().get(i));
+        routeDescriptor.getLengthList().add(route.getRouteLengths().get(i));
+        routeDescriptor.getStarDisplayRecords().add(routeBuilderUtils.getStar(routeStars.get(i)));
+        // we get doing this so that we catch the last star
+        routeDescriptor.setLastStar(routeBuilderUtils.getStar(routeStars.get(i)));
     }
 
 }

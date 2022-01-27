@@ -1,23 +1,25 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.algorithms.StarMath;
-import com.teamgannon.trips.config.application.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.excel.normal.ExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.jpa.repository.*;
+import com.teamgannon.trips.measure.TrackExecutionTime;
+import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
-import com.teamgannon.trips.support.LogExecutionTime;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -121,11 +123,13 @@ public class DatabaseManagementService {
     /**
      * drop all the tables
      */
+    @TrackExecutionTime
     public void dropDatabase() {
         log.info("Dropping database");
         starObjectRepository.deleteAll();
     }
 
+    @TrackExecutionTime
     public @NotNull
     DataSetDescriptor loadCHFile(@NotNull ProgressUpdater progressUpdater, @NotNull Dataset dataset, @NotNull ChViewFile chViewFile) throws Exception {
 
@@ -139,6 +143,7 @@ public class DatabaseManagementService {
         );
     }
 
+    @TrackExecutionTime
     public List<StarObject> runNativeQuery(String queryToRun) {
         Query query = entityManager.createNativeQuery(queryToRun, StarObject.class);
         List<StarObject> starObjects = query.getResultList();
@@ -149,6 +154,7 @@ public class DatabaseManagementService {
         return starObjects;
     }
 
+    @TrackExecutionTime
     public @NotNull
     DataSetDescriptor loadCSVFile(@NotNull RegCSVFile regCSVFile) throws Exception {
         return DataSetDescriptorFactory.createDataSetDescriptor(
@@ -165,13 +171,14 @@ public class DatabaseManagementService {
      * @param searchContext the search context
      * @return the list of objects
      */
+    @TrackExecutionTime
     public List<StarObject> getAstrographicObjectsOnQuery(@NotNull SearchContext searchContext) {
         AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
         List<StarObject> starObjects;
         if (searchQuery.isRecenter()) {
             starObjects
                     = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
-                    searchQuery.getDescriptor().getDataSetName(),
+                    searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
                     searchQuery.getYMinus(),
@@ -190,6 +197,7 @@ public class DatabaseManagementService {
     }
 
 
+    @TrackExecutionTime
     @Transactional(readOnly = true)
     public Page<StarObject> getStarPaged(AstroSearchQuery searchQuery, Pageable pageable) {
         return starObjectRepository.findBySearchQueryPaged(searchQuery, pageable);
@@ -203,6 +211,7 @@ public class DatabaseManagementService {
      * @param distanceFromCenterStar the distance frm the centre star to display
      * @return the fitlered list
      */
+    @TrackExecutionTime
     private @NotNull
     List<StarObject> filterByDistance(
             @NotNull List<StarObject> starObjects,
@@ -244,6 +253,7 @@ public class DatabaseManagementService {
      *
      * @return the list of all descriptors in the database
      */
+    @TrackExecutionTime
     public @NotNull
     List<DataSetDescriptor> getDataSets() {
         Iterable<DataSetDescriptor> dataSetDescriptors = dataSetDescriptorRepository.findAll();
@@ -252,6 +262,7 @@ public class DatabaseManagementService {
         return descriptors;
     }
 
+    @TrackExecutionTime
     public List<StarObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
         // we can only effectively gather 500 at a time
         return toList(
@@ -262,6 +273,7 @@ public class DatabaseManagementService {
         );
     }
 
+    @TrackExecutionTime
     public Page<StarObject> getFromDatasetByPage(DataSetDescriptor dataSetDescriptor, int pageNumber, int requestSize) {
         // we can only effectively gather 500 at a time
         return starObjectRepository.findByDataSetName(
@@ -270,32 +282,45 @@ public class DatabaseManagementService {
         );
     }
 
-    @LogExecutionTime
+    @TrackExecutionTime
     @Transactional(readOnly = true)
     public Map<String, SparseStarRecord> getFromDatasetWithinRanges(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
-        final Map<String,SparseStarRecord> starRecordHashMap = new HashMap<>();
+        final Map<String, SparseStarRecord> starRecordHashMap = new HashMap<>();
         Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance);
 
         starObjectStream.forEach(starObject -> {
-            SparseStarRecord sparseStarRecord= starObject.toSparseStarRecord();
+            SparseStarRecord sparseStarRecord = starObject.toSparseStarRecord();
             starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
         });
 
         return starRecordHashMap;
     }
 
-    @LogExecutionTime
+    /**
+     * get a count of the number of stars based on a limit
+     *
+     * @param datasetName the dataset name
+     * @param distance    the limit
+     * @return the count
+     */
+    public long getCountOfDatasetWithinLimit(String datasetName, double distance) {
+        return starObjectRepository.countByDataSetNameAndDistanceIsLessThanEqual(datasetName, distance);
+    }
+
+
+    @TrackExecutionTime
     @Transactional(readOnly = true)
     public List<StarObject> getStarsBasedOnId(List<UUID> starIdList) {
         return starObjectRepository.findByIdIn(starIdList);
     }
 
-
+    @TrackExecutionTime
     public List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
         return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
+    @TrackExecutionTime
     public DataSetDescriptor getDatasetFromName(String dataSetName) {
         return dataSetDescriptorRepository.findByDataSetName(dataSetName);
     }
@@ -306,6 +331,7 @@ public class DatabaseManagementService {
      *
      * @return the list of star details
      */
+    @TrackExecutionTime
     @Transactional
     public List<StarDetailsPersist> getStarDetails() {
         Iterable<StarDetailsPersist> starDetailsPersists = starDetailsPersistRepository.findAll();
@@ -329,6 +355,7 @@ public class DatabaseManagementService {
      * @param pageResult the page result
      * @return the list representation
      */
+    @TrackExecutionTime
     private @NotNull
     List<StarObject> toList(@NotNull Page<StarObject> pageResult) {
         return pageResult.getContent();
@@ -339,6 +366,7 @@ public class DatabaseManagementService {
      *
      * @param starObject the astrographic object
      */
+    @TrackExecutionTime
     @Transactional
     public void removeStar(@NotNull StarObject starObject) {
         starObjectRepository.delete(starObject);
@@ -349,6 +377,7 @@ public class DatabaseManagementService {
      *
      * @param starObjectNew the star to add
      */
+    @TrackExecutionTime
     @Transactional
     public void addStar(@NotNull StarObject starObjectNew) {
 //        starObjectNew.calculateDisplayScore();
@@ -365,6 +394,7 @@ public class DatabaseManagementService {
      *
      * @param starObject the star to update
      */
+    @TrackExecutionTime
     @Transactional
     public void updateStar(@NotNull StarObject starObject) {
 //        starObject.calculateDisplayScore();
@@ -373,6 +403,7 @@ public class DatabaseManagementService {
 
     //////////////////////////
 
+    @TrackExecutionTime
     @Transactional
     public GraphEnablesPersist getGraphEnablesFromDB() {
         Iterable<GraphEnablesPersist> graphEnables = graphEnablesRepository.findAll();
@@ -389,11 +420,13 @@ public class DatabaseManagementService {
         return graphEnablesPersist;
     }
 
+    @TrackExecutionTime
     @Transactional
     public void updateGraphEnables(@NotNull GraphEnablesPersist graphEnablesPersist) {
         graphEnablesRepository.save(graphEnablesPersist);
     }
 
+    @TrackExecutionTime
     @Transactional
     public CivilizationDisplayPreferences getCivilizationDisplayPreferences() {
         Optional<CivilizationDisplayPreferences> optionalCivilizationDisplayPreferences = civilizationDisplayPreferencesRepository.findByStorageTag("Main");
@@ -411,10 +444,12 @@ public class DatabaseManagementService {
         return civilizationDisplayPreferences;
     }
 
+    @TrackExecutionTime
     public void updateCivilizationDisplayPreferences(@NotNull CivilizationDisplayPreferences preferences) {
         civilizationDisplayPreferencesRepository.save(preferences);
     }
 
+    @TrackExecutionTime
     @Transactional
     public ColorPalette getGraphColorsFromDB() {
         Iterable<GraphColorsPersist> graphColors = graphColorsRepository.findAll();
@@ -433,7 +468,7 @@ public class DatabaseManagementService {
         return colorPalette;
     }
 
-
+    @TrackExecutionTime
     @Transactional
     public void updateColors(@NotNull ColorPalette colorPalette) {
         Optional<GraphColorsPersist> graphColorsPersistOptional = graphColorsRepository.findById(colorPalette.getId());
@@ -449,12 +484,14 @@ public class DatabaseManagementService {
      *
      * @param starDisplayPreferences the star preferences
      */
+    @TrackExecutionTime
     @Transactional
     public void updateStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
         List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
     }
 
+    @TrackExecutionTime
     @Transactional
     public void addRouteToDataSet(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
 
@@ -468,6 +505,7 @@ public class DatabaseManagementService {
 
     }
 
+    @TrackExecutionTime
     @Transactional
     public void updateNotesOnStar(@NotNull UUID recordId, String notes) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
@@ -482,11 +520,13 @@ public class DatabaseManagementService {
         }
     }
 
+    @TrackExecutionTime
     public StarObject getStar(@NotNull UUID recordId) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         return objectOptional.orElse(null);
     }
 
+    @TrackExecutionTime
     @Transactional
     public void removeStar(@NotNull UUID recordId) {
         starObjectRepository.deleteById(recordId);
@@ -509,6 +549,7 @@ public class DatabaseManagementService {
      *
      * @param starObjectList the list of stars to save
      */
+    @TrackExecutionTime
     @Transactional
     public void addStars(@NotNull List<StarObject> starObjectList) {
         starObjectRepository.saveAll(starObjectList);
@@ -519,6 +560,7 @@ public class DatabaseManagementService {
      *
      * @param starSet the star set
      */
+    @TrackExecutionTime
     @Transactional
     public void starBulkSave(@NotNull Set<StarObject> starSet) {
         starObjectRepository.saveAll(starSet);
@@ -531,17 +573,20 @@ public class DatabaseManagementService {
      * @param starName    the star name to search
      * @return the list of matching stars
      */
+    @TrackExecutionTime
     public @NotNull
     List<StarObject> findStarsWithName(String datasetName, String starName) {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
+    @TrackExecutionTime
     @Transactional
     public void saveExcelDataSetDescriptor(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
         dataSetDescriptorRepository.save(excelFile.getDescriptor());
         updater.updateTaskInfo("saved descriptor in database, complete");
     }
 
+    @TrackExecutionTime
     public void loadJsonFileSingleDS(ProgressUpdater updater, JsonExportObj jsonExportObj) {
         dataSetDescriptorRepository.save(jsonExportObj.getDescriptor().toDataSetDescriptor());
         updater.updateTaskInfo("saved descriptor in database");
@@ -566,6 +611,7 @@ public class DatabaseManagementService {
         return descriptor;
     }
 
+    @TrackExecutionTime
     @Transactional
     public TripsPrefs getTripsPrefs() {
         Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
@@ -580,6 +626,7 @@ public class DatabaseManagementService {
         }
     }
 
+    @TrackExecutionTime
     @Transactional
     public TransitSettings getTransitSettings() {
         Optional<TransitSettings> transitSettingsOptional = transitSettingsRepository.findById("main");
@@ -599,11 +646,13 @@ public class DatabaseManagementService {
         transitSettingsRepository.save(transitSettings);
     }
 
+    @TrackExecutionTime
     @Transactional
     public void saveTripsPrefs(TripsPrefs tripsPrefs) {
         tripsPrefsRepository.save(tripsPrefs);
     }
 
+    @TrackExecutionTime
     @Transactional
     public DataSetDescriptor deleteRoute(String descriptorName, RouteDescriptor routeDescriptor) {
         DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
@@ -614,6 +663,7 @@ public class DatabaseManagementService {
         return descriptor;
     }
 
+    @TrackExecutionTime
     @Transactional
     public DataSetDescriptor updateRoute(String descriptorName, RouteDescriptor routeDescriptor) {
         DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
@@ -630,7 +680,7 @@ public class DatabaseManagementService {
         return descriptor;
     }
 
-
+    @TrackExecutionTime
     @Transactional
     public void updateDataSet(DataSetDescriptor descriptor) {
         Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
@@ -641,6 +691,7 @@ public class DatabaseManagementService {
         }
     }
 
+    @TrackExecutionTime
     @Transactional
     public void clearRoutesFromCurrent(DataSetDescriptor descriptor) {
         DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(descriptor.getDataSetName());
@@ -648,6 +699,7 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.save(descriptorCurrent);
     }
 
+    @TrackExecutionTime
     @Transactional
     public void setTransitPreferences(TransitDefinitions transitDefinitions) {
         DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(transitDefinitions.getDataSetName());
@@ -655,10 +707,12 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.save(descriptorCurrent);
     }
 
+    @TrackExecutionTime
     public boolean doesDatasetExist(String name) {
         return dataSetDescriptorRepository.existsById(name);
     }
 
+    @TrackExecutionTime
     public DataSetDescriptor changeDatasetName(DataSetDescriptor selectedDataset, String newName) {
         if (dataSetDescriptorRepository.existsById(newName)) {
             return null;
@@ -674,4 +728,23 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.save(descriptor);
         return descriptor;
     }
+
+    public SolarSystemDescription getSolarSystem(StarDisplayRecord starDisplayRecord) {
+        SolarSystemDescription solarSystemDescription = new SolarSystemDescription();
+        solarSystemDescription.setStarDisplayRecord(starDisplayRecord);
+        return solarSystemDescription;
+    }
+
+    public List<StarObject> findStarsWithCatalogId(String datasetName, String catalogId) {
+        return starObjectRepository.findByCatalogIdListContainsIgnoreCase(catalogId);
+    }
+
+    public List<StarObject> findStarsByCommonName(String datasetName, String commonName) {
+        return starObjectRepository.findByCommonNameContainsIgnoreCase(commonName);
+    }
+
+    public List<StarObject> findStarsByConstellation(String constellation) {
+        return starObjectRepository.findByConstellationName(constellation);
+    }
+
 }

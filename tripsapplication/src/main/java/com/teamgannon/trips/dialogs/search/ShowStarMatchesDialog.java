@@ -30,6 +30,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
 
     private final TableView<StarObject> tableView = new TableView<>();
     private final TableColumn<StarObject, String> displayNameCol = new TableColumn<>("Display Name");
+    private final TableColumn<StarObject, Double> catalogIdCol = new TableColumn<>("Catalog Id List");
     private final TableColumn<StarObject, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth(ly)");
     private final TableColumn<StarObject, String> spectraCol = new TableColumn<>("Spectra");
     private final TableColumn<StarObject, Double> radiusCol = new TableColumn<>("Radius");
@@ -102,6 +103,11 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         displayNameCol.setSortType(TableColumn.SortType.ASCENDING);
         displayNameCol.sortTypeProperty().addListener(this::displayNameSortOrderChange);
 
+        catalogIdCol.setMinWidth(100);
+        catalogIdCol.setCellValueFactory(new PropertyValueFactory<>("catalogIdList"));
+        catalogIdCol.setSortType(TableColumn.SortType.ASCENDING);
+        catalogIdCol.sortTypeProperty().addListener(this::catalogIdSortOrderChange);
+
         distanceToEarthCol.setMinWidth(120);
         distanceToEarthCol.setCellValueFactory(new PropertyValueFactory<>("distance"));
         distanceToEarthCol.sortTypeProperty().addListener(this::distanceSortOrderChange);
@@ -148,12 +154,13 @@ public class ShowStarMatchesDialog extends Dialog<String> {
 
         // add the columns
         tableView.getColumns()
-                .addAll(displayNameCol, distanceToEarthCol, spectraCol,
+                .addAll(displayNameCol, catalogIdCol, distanceToEarthCol, spectraCol,
                         radiusCol, raCol, decCol, paraCol,
                         xCoordCol, yCoordCol, zCoordCol,
                         realCol, commentCol
                 );
     }
+
 
     private void setupContextMenu() {
         final ContextMenu tableContextMenu = new ContextMenu();
@@ -246,6 +253,13 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         sortByName(sortType);
         log.info("re-sorted by display name ");
     }
+
+    private void catalogIdSortOrderChange(Observable observable) {
+        TableColumn.SortType sortType = catalogIdCol.getSortType();
+        sortByName(sortType);
+        log.info("re-sorted by catalogId name ");
+    }
+
 
     /**
      * distance sort event trigger

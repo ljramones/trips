@@ -1,13 +1,14 @@
 package com.teamgannon.trips.graphics.panes;
 
-import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.config.application.ScreenSize;
+import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.listener.ContextSelectorListener;
+import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.animation.RotateTransition;
-import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.SceneAntialiasing;
-import javafx.scene.SubScene;
+import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -20,7 +21,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.transform.Rotate;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
@@ -30,47 +33,88 @@ import java.util.HashMap;
  * <p>
  * Created by larrymitchell on 2017-02-05.
  */
+@Slf4j
+@Component
 public class SolarSystemSpacePane extends Pane {
 
+    /**
+     * rotation angle controls
+     */
     private static final double ROTATE_SECS = 60;
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
-    private final Group world = new Group();
-    private final Group root = new Group();
-    private final PerspectiveCamera camera = new PerspectiveCamera(true);
-    private final Group starNameGroup = new Group();
-    /**
-     * the universe model which holds detail about our pocket universe
-     */
-    private final Universe universe = new Universe();
-    private final double depth;
+    private final TripsContext tripsContext;
+    private final DatabaseManagementService databaseManagementService;
+
     // mouse positions
     private double mousePosX, mousePosY = 0;
     private double mouseOldX, mouseOldY = 0;
     private double mouseDeltaX, mouseDeltaY = 0;
+
+    /**
+     * graphical groups
+     */
+    private final Group world = new Group();
+    private final Group root = new Group();
+    private final Group starNameGroup = new Group();
+
+    /**
+     * contains all the entities in the solar system
+     */
+    private final Group systemEntityGroup = new Group();
+
+    /**
+     * the subscene which is used for a glass pane flat screen
+     */
     private final SubScene subScene;
+
+    /**
+     * the perspective camera for selecting views on the scene
+     */
+    private final PerspectiveCamera camera = new PerspectiveCamera(true);
+
+    /**
+     * the depth of the screen in pixels
+     */
+    private final double depth;
+
+
     /**
      * animation rotator
      */
     private RotateTransition rotator;
+
     /**
      * animation toggle
      */
     private final boolean animationPlay = false;
+
+    /**
+     * signals a switch of context from solarsystem space to interstellarspace
+     */
     private ContextSelectorListener contextSelectorListener;
 
 
-    public SolarSystemSpacePane(double sceneWidth,
-                                double sceneHeight,
-                                double depth) {
+    /**
+     * constructor
+     *
+     * @param tripsContext              the trips context
+     * @param databaseManagementService the database management service
+     */
+    public SolarSystemSpacePane(TripsContext tripsContext,
+                                DatabaseManagementService databaseManagementService) {
 
-        this.depth = depth;
+        this.tripsContext = tripsContext;
+        ScreenSize screenSize = tripsContext.getScreenSize();
+        this.databaseManagementService = databaseManagementService;
+
+        this.depth = screenSize.getDepth();
 
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
 
-        subScene = new SubScene(world, sceneWidth, sceneHeight, true, SceneAntialiasing.BALANCED);
+        subScene = new SubScene(world, screenSize.getSceneWidth(), screenSize.getSceneHeight(), true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
         setInitialView();
@@ -93,13 +137,126 @@ public class SolarSystemSpacePane extends Pane {
     }
 
     /**
-     * set the initial view
+     * call to update the labels
      */
-    public void setInitialView() {
-        setPerspectiveCamera();
+    public void updateLabels() {
+
     }
 
 
+    /**
+     * set the system to show
+     *
+     * @param starDisplayRecord object properties of this system
+     */
+    public void setSystemToDisplay(@NotNull StarDisplayRecord starDisplayRecord) {
+        String systemName = starDisplayRecord.getStarName();
+        createScaleLegend(systemName);
+
+        // get the solar system description
+        SolarSystemDescription solarSystemDescription = databaseManagementService.getSolarSystem(starDisplayRecord);
+
+        // render the solar system
+        render(solarSystemDescription);
+    }
+
+
+    /**
+     * used to draw the target System
+     */
+    private void render(SolarSystemDescription solarSystemDescription) {
+        // figure out size of solar system to get scaling factors
+
+        // plot central star
+
+        // iterate through all the planets
+
+        // iterate through all the other objects
+
+        log.info("system rendered");
+    }
+
+    private Node createStar(StarDisplayRecord starDisplayRecord) {
+        return null;
+    }
+
+    private Node createPlanet(PlanetDescription planetDescription) {
+        return null;
+    }
+
+
+    /**
+     * reset the system
+     */
+    public void reset() {
+        // clear group to redraw
+        starNameGroup.getChildren().clear();
+    }
+
+    // ---------------------- helpers -------------------------- //
+
+    /**
+     * setup the context selector listener
+     *
+     * @param contextSelectorListener the context selector listener
+     */
+    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
+        this.contextSelectorListener = contextSelectorListener;
+    }
+
+    /////////////////////////////////////
+
+    /**
+     * set the initial view
+     */
+    private void setInitialView() {
+        setPerspectiveCamera();
+    }
+
+    /**
+     * create the scale legend
+     *
+     * @param starName the star name
+     */
+    private void createScaleLegend(String starName) {
+        // clear group to redraw
+        starNameGroup.getChildren().clear();
+
+        GridPane titlePane = new GridPane();
+        titlePane.setPrefWidth(450);
+        starNameGroup.getChildren().add(titlePane);
+
+        Label starNameLabel = new Label(starName);
+        starNameLabel.setFont(Font.font("Verdana", FontPosture.ITALIC, 20));
+        starNameLabel.setTextFill(Color.WHEAT);
+
+        titlePane.add(starNameLabel, 0, 0);
+
+        Separator separator1 = new Separator();
+        separator1.setMinWidth(40.0);
+        titlePane.add(separator1, 1, 0);
+
+        // setup return button to jump back to interstellar space
+        Button returnButton = new Button("Jump Back");
+        returnButton.setOnAction(e -> jumpBackToInterstellarSpace());
+        titlePane.add(returnButton, 2, 0);
+
+        titlePane.setTranslateX(subScene.getWidth() - 430);
+        titlePane.setTranslateY(subScene.getHeight() - 30);
+        titlePane.setTranslateZ(0);
+    }
+
+    /**
+     * jump back to the interstellar space
+     */
+    private void jumpBackToInterstellarSpace() {
+        // there is no specific context at the moment.  We assume the same interstellar space we came form
+        contextSelectorListener.selectInterstellarSpace(new HashMap<>());
+    }
+
+    /**
+     * set the perspective camera parameters
+     */
     private void setPerspectiveCamera() {
         camera.setNearClip(0.1);
         camera.setFarClip(10000.0);
@@ -142,9 +299,7 @@ public class SolarSystemSpacePane extends Pane {
                             rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
                             rotateX.setAngle(
                                     (((rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180)
-
-
-                                    ); // -
+                            ); // -
                         }
                     }
                     updateLabels();
@@ -163,65 +318,4 @@ public class SolarSystemSpacePane extends Pane {
         camera.setTranslateZ(newZ);
     }
 
-
-    public void updateLabels() {
-
-    }
-
-
-    /**
-     * set the system to show
-     *
-     * @param starDisplayRecord object properties of this system
-     */
-    public void setSystemToDisplay(@NotNull StarDisplayRecord starDisplayRecord) {
-        String systemName = starDisplayRecord.getStarName();
-        createScaleLegend(systemName);
-    }
-
-    /**
-     * used to draw the target System
-     */
-    public void render() {
-
-    }
-
-    // ---------------------- helpers -------------------------- //
-
-
-    private void createScaleLegend(String starName) {
-
-        GridPane titlePane = new GridPane();
-        titlePane.setPrefWidth(450);
-        starNameGroup.getChildren().add(titlePane);
-
-        Label starNameLabel = new Label(starName);
-        starNameLabel.setFont(Font.font("Verdana", FontPosture.ITALIC, 20));
-        starNameLabel.setTextFill(Color.WHEAT);
-
-        titlePane.add(starNameLabel, 0, 0);
-
-        Separator separator1 = new Separator();
-        separator1.setMinWidth(40.);
-        titlePane.add(separator1, 1, 0);
-
-        // setup return button to jump back to interstellar space
-        Button returnButton = new Button("Jump Back");
-        returnButton.setOnAction(e -> jumpBackToInterstellarSpace());
-        titlePane.add(returnButton, 2, 0);
-
-        titlePane.setTranslateX(subScene.getWidth() - 430);
-        titlePane.setTranslateY(subScene.getHeight() - 30);
-        titlePane.setTranslateZ(0);
-
-    }
-
-    private void jumpBackToInterstellarSpace() {
-        // there is no specific context at the moment.  We assume the same interstellar space we came form
-        contextSelectorListener.selectInterstellarSpace(new HashMap<>());
-    }
-
-    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
-        this.contextSelectorListener = contextSelectorListener;
-    }
 }

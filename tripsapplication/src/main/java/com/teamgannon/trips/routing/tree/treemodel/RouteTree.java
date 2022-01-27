@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,13 +24,13 @@ public class RouteTree {
     private UUID uuid;
 
     /**
-     * Name given to this route.  May default to “Start star to End Star” when generated but it can be
+     * Name given to this route.  May default to “Start star to End Star” when generated, but it can be
      * user edited to anything.
      */
     private String routeName;
 
     /**
-     * the embded descriptor
+     * the embedded descriptor
      */
     private DataSetDescriptor descriptor;
 
@@ -38,6 +39,9 @@ public class RouteTree {
      */
     private String embeddedRoute;
 
+    /**
+     * whether this is displayed or not
+     */
     private boolean checked;
 
     /**
@@ -120,7 +124,7 @@ public class RouteTree {
         RouteTree routeTree = new RouteTree();
 
         routeTree.setUuid(route.getUuid());
-        routeTree.setVisibility(routeVisibility);
+        routeTree.setVisibility(Objects.requireNonNullElse(routeVisibility, RouteVisibility.OFFSCREEN));
         routeTree.setRouteName(route.getRouteName());
         routeTree.setChecked(true);
         routeTree.setRouteColor(Color.valueOf(route.getRouteColor()));

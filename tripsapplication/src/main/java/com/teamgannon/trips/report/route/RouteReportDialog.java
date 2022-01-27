@@ -1,6 +1,6 @@
 package com.teamgannon.trips.report.route;
 
-import com.teamgannon.trips.config.application.DataSetContext;
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.model.Route;
@@ -33,9 +33,7 @@ public class RouteReportDialog extends Dialog<Boolean> {
 
     private final ChoiceBox<String> dataSetChoice;
 
-    private Stage stage;
-
-    public RouteReportDialog(DataSetContext dataSetContext, List<DataSetDescriptor> dataSetDescriptorList) {
+    public RouteReportDialog(DataSetDescriptor dataSetDescriptor, List<DataSetDescriptor> dataSetDescriptorList) {
 
         setTitle("Run Route Report for a Dataset");
         setWidth(200);
@@ -49,7 +47,7 @@ public class RouteReportDialog extends Dialog<Boolean> {
         dataSetChoice = new ChoiceBox<>();
         dataSetChoice.setPrefWidth(175);
         dataSetChoice.getItems().addAll(keySet);
-        dataSetChoice.setValue(dataSetContext.getDescriptor().getDataSetName());
+        dataSetChoice.setValue(dataSetDescriptor.getDataSetName());
         hBox1.setSpacing(10);
         hBox1.getChildren().addAll(new Label("Dataset to use:"), dataSetChoice);
         vBox.getChildren().add(hBox1);
@@ -68,7 +66,7 @@ public class RouteReportDialog extends Dialog<Boolean> {
 
         this.getDialogPane().setContent(vBox);
 
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
     }

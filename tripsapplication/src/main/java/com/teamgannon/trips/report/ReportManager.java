@@ -1,5 +1,7 @@
 package com.teamgannon.trips.report;
 
+import com.teamgannon.trips.dialogs.inventory.ComputerInventoryDialog;
+import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.listener.ReportGenerator;
 import com.teamgannon.trips.report.distance.DistanceReport;
@@ -27,19 +29,35 @@ public class ReportManager  {
             distanceReport = distanceReportOptional.get();
             if (distanceReport.isSaveSelected()) {
                 // save the file
-                FileChooser fileChooser = new FileChooser();
-
-                //Set extension filter for text files
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
-                fileChooser.getExtensionFilters().add(extFilter);
-
-                //Show save file dialog
-                File file = fileChooser.showSaveDialog(stage);
-
-                if (file != null) {
-                    saveTextToFile(distanceReport.getGeneratedReport(), file);
-                }
+               fileSave(stage, distanceReport.getGeneratedReport());
             }
+        }
+    }
+
+    public void generateComputerInventoryReport(Stage stage, InventoryReport inventoryReport) {
+        ComputerInventoryDialog dialog = new ComputerInventoryDialog(inventoryReport);
+        Optional<InventoryReport> inventoryReportOptional = dialog.showAndWait();
+        if (inventoryReportOptional.isPresent()) {
+            inventoryReport = inventoryReportOptional.get();
+            if (inventoryReport.isSaveSelected()) {
+                // save the file
+                fileSave(stage, inventoryReport.getInventoryDescription());
+            }
+        }
+    }
+
+    private void fileSave(Stage stage, String report) {
+        FileChooser fileChooser = new FileChooser();
+
+        //Set extension filter for text files
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
+        fileChooser.getExtensionFilters().add(extFilter);
+
+        //Show save file dialog
+        File file = fileChooser.showSaveDialog(stage);
+
+        if (file != null) {
+            saveTextToFile(report, file);
         }
     }
 
