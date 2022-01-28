@@ -108,8 +108,8 @@ public class CurrentManualRoute {
         }
     }
 
-    private Group getCurrentRouteDisplay(){
-        if (currentRouteDisplay== null) {
+    private Group getCurrentRouteDisplay() {
+        if (currentRouteDisplay == null) {
             currentRouteDisplay = new Group();
         }
         return currentRouteDisplay;
@@ -170,7 +170,7 @@ public class CurrentManualRoute {
         if (routeDisplay.isManualRoutingActive()) {
             createRouteSegment(endingStar);
             routeDisplay.setManualRoutingActive(false);
-            makeRoutePermanent(getCurrentRoute());
+            //makeRoutePermanent(getCurrentRoute());
             routeDisplay.updateLabels();
             routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
         } else {
@@ -181,9 +181,9 @@ public class CurrentManualRoute {
     public void finishRoute() {
         if (routeDisplay.isManualRoutingActive()) {
             routeDisplay.setManualRoutingActive(false);
-            makeRoutePermanent(getCurrentRoute());
-            routeDisplay.updateLabels();
             routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
+            //makeRoutePermanent(getCurrentRoute());
+            routeDisplay.updateLabels();
         }
     }
 
