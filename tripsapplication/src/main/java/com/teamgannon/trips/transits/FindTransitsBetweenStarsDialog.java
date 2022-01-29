@@ -32,13 +32,13 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
 
     private final DatabaseManagementService databaseManagementService;
 
-    private TransitDefinitions transitDefinitions;
+    private final TransitDefinitions transitDefinitions;
 
     private final GridPane gridPane = new GridPane();
 
     private int currentRow = 0;
 
-    private Stage stage;
+    private final Stage stage;
 
 
     public FindTransitsBetweenStarsDialog(DatabaseManagementService databaseManagementService, TransitDefinitions transitDefinitions) {
