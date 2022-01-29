@@ -2,6 +2,8 @@ package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.measure.PerformanceMeasure;
@@ -48,6 +50,8 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
     private final String currentDataSet;
     private final StarMeasurementService starMeasurementService;
     private final DatabaseManagementService databaseManagementService;
+
+   private Button colorButton = new Button("color");
 
     /**
      * this constructor is used when we search an entire database
@@ -164,8 +168,9 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
         gridPane.add(routeColor, 0, 6);
-        gridPane.add(colorPicker, 1, 6);
         colorPicker.setValue(Color.AQUA);
+        colorButton.setOnAction(this::setColor);
+        gridPane.add(colorButton, 1, 6);
 
         Label numberPaths = new Label("number of paths to find");
         numberPaths.setFont(font);
@@ -195,6 +200,20 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
     }
+
+
+    private void setColor(ActionEvent actionEvent) {
+        ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
+        Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
+        if (colorChoiceOptional.isPresent()) {
+            ColorChoice colorChoice = colorChoiceOptional.get();
+            if (colorChoice.isSelected()) {
+                colorPicker.setValue(colorChoice.getSwatch());
+                colorButton.setTextFill(colorChoice.getSwatch());
+            }
+        }
+    }
+
 
     private void close(WindowEvent windowEvent) {
         setResult(RouteFindingOptions.builder().selected(false).build());

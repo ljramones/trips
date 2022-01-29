@@ -21,6 +21,8 @@ public class ColorChoiceDialog extends Dialog<ColorChoice> {
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
+        stage.toFront();
+        stage.setAlwaysOnTop(true);
 
         this.setTitle("Select a Color");
         this.setHeight(400);
@@ -33,17 +35,19 @@ public class ColorChoiceDialog extends Dialog<ColorChoice> {
 
         // setup colors
         RadioButton greenButton = new RadioButton("Green");
+        colorGroup.getToggles().add(greenButton);
         greenButton.setTextFill(Color.GREEN);
         gridPane.add(greenButton, 0, 0);
 
-        RadioButton redButton = new RadioButton("Green");
+        RadioButton redButton = new RadioButton("Red");
+        colorGroup.getToggles().add(redButton);
         redButton.setTextFill(Color.RED);
         gridPane.add(redButton, 1, 0);
 
-        RadioButton blueButton = new RadioButton("Green");
+        RadioButton blueButton = new RadioButton("Blue");
+        colorGroup.getToggles().add(blueButton);
         blueButton.setTextFill(Color.BLUE);
         gridPane.add(blueButton, 2, 0);
-
 
         // setup acceptance button
         HBox hBox = new HBox(6);
@@ -61,7 +65,13 @@ public class ColorChoiceDialog extends Dialog<ColorChoice> {
 
     private Color getSelectedColor() {
         RadioButton radioButton = (RadioButton) colorGroup.getSelectedToggle();
-        return (Color) radioButton.getTextFill();
+        String colorString = radioButton.getText();
+        return switch (colorString) {
+            case "Red" -> Color.RED;
+            case "Green" -> Color.GREEN;
+            case "Blue" -> Color.BLUE;
+            default -> Color.CYAN;
+        };
     }
 
     private void close(WindowEvent windowEvent) {

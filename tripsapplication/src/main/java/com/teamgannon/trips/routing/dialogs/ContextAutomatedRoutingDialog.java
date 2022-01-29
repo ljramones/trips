@@ -7,6 +7,8 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.*;
 import com.teamgannon.trips.routing.automation.RouteBuilderHelper;
 import com.teamgannon.trips.routing.automation.RouteGraph;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.PossibleRoutes;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.routing.model.RoutingMetric;
@@ -56,6 +58,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     private final TextField lineWidthTextField = new TextField();
 
     private final ColorPicker colorPicker = new ColorPicker();
+
+    private Button colorButton = new Button("Color");
 
     private final Set<String> searchValues;
 
@@ -400,8 +404,10 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
         gridPane.add(routeColor, 0, 6);
-        gridPane.add(colorPicker, 1, 6);
+
         colorPicker.setValue(Color.AQUA);
+        colorButton.setOnAction(this::setColor);
+        gridPane.add(colorButton, 1, 6);
 
         Label numberPaths = new Label("number of paths to find");
         numberPaths.setFont(font);
@@ -409,6 +415,18 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         gridPane.add(numPathsToFindTextField, 1, 7);
         numPathsToFindTextField.setText("3");
 
+    }
+
+    private void setColor(ActionEvent actionEvent) {
+        ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
+        Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
+        if (colorChoiceOptional.isPresent()) {
+            ColorChoice colorChoice = colorChoiceOptional.get();
+            if (colorChoice.isSelected()) {
+                colorPicker.setValue(colorChoice.getSwatch());
+                colorButton.setTextFill(colorChoice.getSwatch());
+            }
+        }
     }
 
     private void setupStarTab(Tab starTab) {

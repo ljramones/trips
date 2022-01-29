@@ -5,6 +5,8 @@ import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
+import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -80,6 +82,8 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final Button startButton = new Button("Start route");
 
+    private Button colorButton = new Button("Color");
+
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
                                       @NotNull List<StarDisplayRecord> starsInView) {
@@ -114,7 +118,8 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
         grid.add(routeColorLabel, 1, 2);
         colorPicker.setValue(Color.CYAN);
-        grid.add(colorPicker, 2, 2);
+        colorButton.setOnAction(this::setColor);
+        grid.add(colorButton, 2, 2);
 
         Label routeLineWidthLabel = new Label("Route Line Width: ");
         routeLineWidthLabel.setFont(font);
@@ -177,6 +182,18 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     }
 
+    private void setColor(ActionEvent actionEvent) {
+        ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
+        Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
+        if (colorChoiceOptional.isPresent()) {
+            ColorChoice colorChoice = colorChoiceOptional.get();
+            if (colorChoice.isSelected()) {
+                colorPicker.setValue(colorChoice.getSwatch());
+                colorButton.setTextFill(colorChoice.getSwatch());
+            }
+        }
+    }
+
 
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
@@ -218,7 +235,9 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
         grid.add(routeColorLabel, 1, 2);
         colorPicker.setValue(Color.CYAN);
-        grid.add(colorPicker, 2, 2);
+
+        colorButton.setOnAction(this::setColor);
+        grid.add(colorButton, 2, 2);
 
         Label routeLineWidthLabel = new Label("Route Line Width: ");
         routeLineWidthLabel.setFont(font);
@@ -273,6 +292,8 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage.setOnCloseRequest(this::close);
 
     }
+
+
 
     private void resetRoute(ActionEvent actionEvent) {
         if (!plottingContextMode) {

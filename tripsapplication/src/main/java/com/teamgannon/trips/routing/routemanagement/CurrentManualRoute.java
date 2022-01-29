@@ -170,7 +170,6 @@ public class CurrentManualRoute {
         if (routeDisplay.isManualRoutingActive()) {
             createRouteSegment(endingStar);
             routeDisplay.setManualRoutingActive(false);
-            //makeRoutePermanent(getCurrentRoute());
             routeDisplay.updateLabels();
             routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
         } else {
@@ -182,25 +181,8 @@ public class CurrentManualRoute {
         if (routeDisplay.isManualRoutingActive()) {
             routeDisplay.setManualRoutingActive(false);
             routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
-            //makeRoutePermanent(getCurrentRoute());
             routeDisplay.updateLabels();
         }
-    }
-
-    /**
-     * make the route permanent
-     *
-     * @param currentRoute the current route
-     */
-    public void makeRoutePermanent(@NotNull RouteDescriptor currentRoute) {
-        routeDisplay.removeRouteFromDisplay(getCurrentRouteDisplay());
-        for (Node node : getCurrentRouteNodePoints()) {
-            routeDisplay.removeObject(node);
-        }
-        clear();
-
-        // create a new one based on descriptor
-        routeBuilderUtils.plotRouteDescriptor(currentRoute);
     }
 
 

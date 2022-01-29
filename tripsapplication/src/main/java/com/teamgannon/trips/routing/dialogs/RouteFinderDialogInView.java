@@ -79,6 +79,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
     Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
+    Button colorButton = new Button("color");
 
     /**
      * this data set is used when we want to search the stars in the 3d display
@@ -183,8 +184,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
 
-
-        Button colorButton = new Button("color");
         colorButton.setOnAction(this::pickColor);
 
         gridPane.add(routeColor, 0, 6);
@@ -206,6 +205,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
             ColorChoice colorChoice = colorChoiceOptional.get();
             if (colorChoice.isSelected()) {
                 colorPicker.setValue(colorChoice.getSwatch());
+                colorButton.setTextFill(colorChoice.getSwatch());
             }
         }
     }
