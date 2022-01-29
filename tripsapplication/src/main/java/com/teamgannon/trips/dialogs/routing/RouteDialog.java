@@ -36,6 +36,8 @@ public class RouteDialog extends Dialog<RouteSelector> {
 
     private final StarDisplayRecord starDisplayRecord;
 
+    private Button colorButton = new Button("Color");
+
     /**
      * constructor
      *
@@ -71,7 +73,9 @@ public class RouteDialog extends Dialog<RouteSelector> {
         Label routeColorLabel = new Label("Route Color: ");
         routeColorLabel.setFont(font);
         grid.add(routeColorLabel, 1, 2);
-        grid.add(colorPicker, 2, 2);
+
+        colorButton.setOnAction(this::setColor);
+        grid.add(colorButton, 2, 2);
 
         Label routeLineWidthLabel = new Label("Route Line Width: ");
         routeColorLabel.setFont(font);
@@ -111,6 +115,19 @@ public class RouteDialog extends Dialog<RouteSelector> {
         cancelButton.setOnAction(this::cancelClicked);
         hBox.getChildren().add(cancelButton);
 
+    }
+
+
+    private void setColor(ActionEvent actionEvent) {
+        ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
+        Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
+        if (colorChoiceOptional.isPresent()) {
+            ColorChoice colorChoice = colorChoiceOptional.get();
+            if (colorChoice.isSelected()) {
+                colorPicker.setValue(colorChoice.getSwatch());
+                colorButton.setTextFill(colorChoice.getSwatch());
+            }
+        }
     }
 
     private void cancelClicked(ActionEvent actionEvent) {
