@@ -54,7 +54,7 @@ public class ColorChoiceDialog extends Dialog<ColorChoice> {
         yellowButton.setTextFill(Color.YELLOW);
         gridPane.add(yellowButton, 0, 1);
 
-        RadioButton redButton = new RadioButton("Yellow");
+        RadioButton redButton = new RadioButton("Red");
         colorGroup.getToggles().add(redButton);
         redButton.setTextFill(Color.RED);
         gridPane.add(redButton, 1, 1);
