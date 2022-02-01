@@ -233,6 +233,9 @@ public class RouteManager {
     @TrackExecutionTime
     public void plotRouteDescriptors(DataSetDescriptor currentDataSet,
                                      @NotNull List<RoutingMetric> routeDescriptorList) {
+
+        routeDisplay.clear();
+        routeSegments.clear();
         // plot route
         for (RoutingMetric routingMetric : routeDescriptorList) {
             RouteDescriptor routeDescriptor = routingMetric.getRouteDescriptor();
