@@ -70,6 +70,7 @@ public class RouteBuilderUtils {
      * @param routeDescriptor the route descriptor
      */
     public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
+
         Group routeGraphic = createRoute(routeDescriptor);
 
         // affix the route to the display
