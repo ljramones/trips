@@ -131,4 +131,7 @@ public class TransitFilterPane extends Pane {
         gridPane.add(colorPicker, 6, row);
     }
 
+    public void clear() {
+         this.getChildren().clear();
+    }
 }

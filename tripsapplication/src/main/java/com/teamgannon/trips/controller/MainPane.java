@@ -216,7 +216,6 @@ public class MainPane implements
     public TitledPane routingPane;
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
-    double depth = Universe.boxDepth;
     private TitledPane datasetsPane;
     private RoutingPanel routingPanel;
     private TransitFilterPane transitFilterPane;
@@ -1181,6 +1180,7 @@ public class MainPane implements
         toggleTransitsBtn.setSelected(false);
         toggleTransitsMenuitem.setSelected(false);
         toggleTransitLengthsMenuitem.setSelected(false);
+        transitFilterPane.clear();
     }
 
     public void routeFinderInView(ActionEvent actionEvent) {
