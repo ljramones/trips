@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics.entities;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.model.Route;
+import com.teamgannon.trips.routing.model.RouteSegment;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
@@ -54,7 +55,6 @@ public class RouteDescriptor {
      * INVISIBLE means none of the route is visible
      */
     private RouteVisibility visibility;
-
 
     /**
      * defined color of route
@@ -126,6 +126,59 @@ public class RouteDescriptor {
      */
     @Builder.Default
     private List<Point3D> routeCoordinates = new ArrayList<>();
+
+
+    public void mutateCoordinates(RouteSegment routeSegment) {
+        Point3D from = routeCoordinates.get(routeSegment.getIndexA());
+        double xFrom = from.getX() + 2;
+        double yFrom = from.getY() + 2;
+        double zFrom = from.getZ() + 2;
+        from = new Point3D(xFrom, yFrom, zFrom);
+
+        Point3D to = routeCoordinates.get(routeSegment.getIndexB());
+        double xTo = to.getX() + 2;
+        double yTo = to.getY() + 2;
+        double zTo = to.getZ() + 2;
+        to = new Point3D(xTo, yTo, zTo);
+
+        routeCoordinates.set(routeSegment.getIndexA(), from);
+        routeCoordinates.set(routeSegment.getIndexB(), to);
+    }
+
+    public List<RouteSegment> getRouteSegments() {
+        List<RouteSegment> segments = new ArrayList<>();
+        boolean first = true;
+        Point3D fromPoint = null;
+        int i = 0;
+        for (Point3D point3D : routeCoordinates) {
+            if (first) {
+                fromPoint = point3D;
+                first = false;
+                i++;
+            } else {
+                if (fromPoint != null) {
+                    double fromPointX = fromPoint.getX();
+                    double fromPointY = fromPoint.getY();
+                    double fromPointZ = fromPoint.getZ();
+                    double[] fromPoint3d = new double[]{fromPointX, fromPointY, fromPointZ};
+
+                    double toPointX = point3D.getX();
+                    double toPointY = point3D.getY();
+                    double toPointZ = point3D.getZ();
+                    double[] toPoint3d = new double[]{toPointX, toPointY, toPointZ};
+
+                    RouteSegment routeSegment = new RouteSegment();
+                    routeSegment.setPointA(fromPoint3d);
+                    routeSegment.setIndexA(i - 1);
+                    routeSegment.setPointB(toPoint3d);
+                    routeSegment.setIndexB(i);
+                    segments.add(routeSegment);
+                    i++;
+                }
+            }
+        }
+        return segments;
+    }
 
     public static RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         return RouteDescriptor

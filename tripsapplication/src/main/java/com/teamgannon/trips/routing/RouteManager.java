@@ -24,6 +24,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.Route;
+import com.teamgannon.trips.routing.model.RouteSegment;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.routing.routemanagement.*;
@@ -33,7 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -71,11 +74,12 @@ public class RouteManager {
      */
     private RoutingType routingType = RoutingType.NONE;
 
+    private Set<RouteSegment> routeSegments = new HashSet<>();
+
     ///////////////////////
 
     /**
      * the constructor
-     *
      */
     public RouteManager(TripsContext tripsContext) {
         this.tripsContext = tripsContext;
@@ -216,6 +220,7 @@ public class RouteManager {
     public void plotRoutes(@NotNull List<Route> routeList) {
         // clear existing routes
         routeDisplay.clear();
+        routeSegments.clear();
         routeList.forEach(this::plotRoute);
     }
 
@@ -251,6 +256,21 @@ public class RouteManager {
             log.info(">>>route {} is a full route", route.getRouteName());
             RouteDescriptor routeDescriptor = toRouteDescriptor(route);
             routeDescriptor.setVisibility(RouteVisibility.FULL);
+            List<RouteSegment> routeSegmentList = routeDescriptor.getRouteSegments();
+
+            // @TODO look for an existing match in the global list and adjust this segment if it matches
+            // then save to global list
+            for (RouteSegment routeSegment : routeSegmentList) {
+                if (routeSegments.contains(routeSegment)) {
+                    // adjust route segment by a line width and a few pixels, then store the adjusted route segment
+                    log.info("need to adjust this route segment:{}", routeSegment);
+                    routeDescriptor.mutateCoordinates(routeSegment);
+                } else {
+                    // no match so add to segment
+                    routeSegments.add(routeSegment);
+                    log.info("no match on this route segment:{}", routeSegment);
+                }
+            }
             Group routeGraphic = routeBuilderUtils.createRoute(routeDescriptor);
             routeDisplay.addRouteToDisplay(routeDescriptor, routeGraphic);
             routeDisplay.toggleRouteVisibility(true);
