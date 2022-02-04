@@ -82,9 +82,18 @@ public class RouteDisplay {
     public RouteDisplay(TripsContext tripsContext,
                         SubScene subScene,
                         InterstellarSpacePane interstellarSpacePane) {
+        log.info("\n\n\nInitializing the Route Display\n\n\n");
         this.tripsContext = tripsContext;
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
+    }
+
+    public boolean isManualRoutingActive() {
+        return manualRoutingActive;
+    }
+
+    public void setManualRoutingActive(boolean flag) {
+        manualRoutingActive = flag;
     }
 
     public ColorPalette getColorPallete() {

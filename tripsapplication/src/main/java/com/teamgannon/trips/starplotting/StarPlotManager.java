@@ -134,8 +134,14 @@ public class StarPlotManager {
      */
     private ReportGenerator reportGenerator;
 
+    /**
+     * the scale transition
+     */
     private ScaleTransition scaleTransition;
 
+    /**
+     * the transition state
+     */
     private TransitionState transitionState;
 
     /**
@@ -786,6 +792,7 @@ public class StarPlotManager {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
             if (routeManager.isManualRoutingActive()) {
+                log.info("Manual Routing is active");
                 StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
                 if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
                     if (manualRoutingDialog != null) {
@@ -798,6 +805,7 @@ public class StarPlotManager {
                     }
                 }
             } else {
+                log.info("Manual routing is not active");
                 starContextMenu.show(star, e.getScreenX(), e.getScreenY());
             }
         }
@@ -916,7 +924,7 @@ public class StarPlotManager {
         automatedRoutingDialog.initModality(Modality.NONE);
         automatedRoutingDialog.show();
         // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setManualRoutingActive(true);
+//        routeManager.setManualRoutingActive(true);
         routeManager.setRoutingType(RoutingType.AUTOMATIC);
     }
 

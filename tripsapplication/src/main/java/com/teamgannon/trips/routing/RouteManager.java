@@ -240,7 +240,9 @@ public class RouteManager {
         // plot route
         for (RoutingMetric routingMetric : routeDescriptorList) {
             RouteDescriptor routeDescriptor = routingMetric.getRouteDescriptor();
-            plotRouteDescriptor(routeDescriptor);
+
+            Route route = routeDescriptor.toRoute();
+            plotRoute(route);
             // update route and save
             routeUpdaterListener.newRoute(currentDataSet, routeDescriptor);
         }

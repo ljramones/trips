@@ -122,6 +122,7 @@ public class CurrentManualRoute {
      */
     public void continueRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         if (routeDisplay.isManualRoutingActive()) {
+            log.info("manual routing active");
             log.info("route to {}", starDisplayRecord.getStarName());
             createRouteSegment(starDisplayRecord);
             routeDisplay.updateLabels();
@@ -135,7 +136,9 @@ public class CurrentManualRoute {
      * remoe the current manual route
      */
     public void removeRoute() {
+        log.info("removing route");
         if (routeDisplay.isManualRoutingActive()) {
+            log.info("manual routing is active so go ahead");
             // get last line segment from list
             Node lineSegment = getLastSegment();
             Label label = getLastLabel();
@@ -167,7 +170,9 @@ public class CurrentManualRoute {
      * @param endingStar the star record to terminate at
      */
     public void finishRoute(@NotNull StarDisplayRecord endingStar) {
+        log.info("finishing route");
         if (routeDisplay.isManualRoutingActive()) {
+            log.info("manual routing is active so finish it");
             createRouteSegment(endingStar);
             routeDisplay.setManualRoutingActive(false);
             routeDisplay.updateLabels();
@@ -178,10 +183,14 @@ public class CurrentManualRoute {
     }
 
     public void finishRoute() {
+        log.info("Fininshing manual route");
         if (routeDisplay.isManualRoutingActive()) {
+            log.info("manual route is active, so turn it off");
             routeDisplay.setManualRoutingActive(false);
             routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
             routeDisplay.updateLabels();
+        } else {
+            log.info("Manual routing is not active");
         }
     }
 
@@ -239,6 +248,7 @@ public class CurrentManualRoute {
     public void resetRoute() {
 
         if (routeDisplay.isManualRoutingActive()) {
+            log.info("manual routing is active, so reset it");
             List<Label> labels = getLabels();
             for (Label label : labels) {
                 routeDisplay.removeLabel(label);
