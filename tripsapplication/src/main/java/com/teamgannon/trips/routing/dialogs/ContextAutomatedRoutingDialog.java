@@ -308,7 +308,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
             possibleRoutes.getRoutes().add(routingMetric);
         }
 
-        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
+        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
         Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
         stage.setAlwaysOnTop(true);
         stage.toFront();
