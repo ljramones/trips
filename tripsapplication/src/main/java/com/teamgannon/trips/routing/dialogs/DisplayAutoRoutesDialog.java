@@ -27,7 +27,15 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
     private final List<RoutingMetric> selectedRoutingMetrics = new ArrayList<>();
     private final PossibleRoutes possibleRoutes;
 
-    public DisplayAutoRoutesDialog(@NotNull Stage stage, @NotNull PossibleRoutes possibleRoutes) {
+    public DisplayAutoRoutesDialog(@NotNull PossibleRoutes possibleRoutes) {
+
+        // set the dialog as a utility
+        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(this::close);
+
+        stage.setAlwaysOnTop(true);
+        stage.toFront();
+
         this.possibleRoutes = possibleRoutes;
         this.setTitle("Select Routes to Plot");
 
@@ -55,9 +63,6 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
         this.getDialogPane().setContent(vBox);
 
         updateTable(possibleRoutes);
-
-        // set the dialog as a utility
-        stage.setOnCloseRequest(this::close);
     }
 
 

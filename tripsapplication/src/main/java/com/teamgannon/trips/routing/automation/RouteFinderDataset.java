@@ -77,11 +77,7 @@ public class RouteFinderDataset {
                     }
                     if (graphRouteResult.isRouteFound()) {
                         PossibleRoutes possibleRoutes = graphRouteResult.getPossibleRoutes();
-
-                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(theStage, possibleRoutes);
-                        Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
-                        stage.setAlwaysOnTop(true);
-                        stage.toFront();
+                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
                         Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
                         if (optionalRoutingMetrics.isPresent()) {
                             List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
