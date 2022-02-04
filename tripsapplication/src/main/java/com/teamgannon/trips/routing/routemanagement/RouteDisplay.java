@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.routing.model.RouteSegment;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -14,9 +15,7 @@ import javafx.scene.transform.Translate;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Data
@@ -26,6 +25,10 @@ public class RouteDisplay {
      * the subscene for managing the display plane
      */
     private final SubScene subScene;
+
+    /**
+     * reference to the drawing screen
+     */
     private InterstellarSpacePane interstellarSpacePane;
 
     /**
@@ -73,6 +76,11 @@ public class RouteDisplay {
      */
     private boolean manualRoutingActive = false;
 
+    /**
+     * a map of the route segments for separating the route segments
+     */
+    private Set<RouteSegment> routeSegments = new HashSet<>();
+
 
     /**
      * constructor
@@ -115,6 +123,21 @@ public class RouteDisplay {
         routeLabelsOn = false;
         routeLookup.clear();
         routesGroup.getChildren().clear();
+        routeSegments.clear();
+    }
+
+    /**
+     * check if a route segment is present
+     *
+     * @param routeSegment the route segment
+     * @return true if there
+     */
+    public boolean contains(RouteSegment routeSegment) {
+        return routeSegments.contains(routeSegment);
+    }
+
+    public void addSegment(RouteSegment routeSegment) {
+        routeSegments.add(routeSegment);
     }
 
 
