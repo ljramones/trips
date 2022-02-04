@@ -351,6 +351,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void plotRoutes(@NotNull List<Route> routeList) {
+        routeManager.clearRoutes();
         routeManager.plotRoutes(routeList);
     }
 
@@ -501,6 +502,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void redrawRoutes(@NotNull List<Route> routes) {
+        routeManager.clearRoutes();
         routeManager.plotRoutes(routes);
         updateLabels();
     }
