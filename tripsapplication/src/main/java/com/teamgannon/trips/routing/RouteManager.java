@@ -74,7 +74,6 @@ public class RouteManager {
      */
     private RoutingType routingType = RoutingType.NONE;
 
-    private Set<RouteSegment> routeSegments = new HashSet<>();
 
     ///////////////////////
 
@@ -124,7 +123,6 @@ public class RouteManager {
     public void clearRoutes() {
         // clear the routes
         routeDisplay.clear();
-        routeSegments.clear();
         tripsContext.getCurrentPlot().clearRoutes();
     }
 
@@ -206,9 +204,6 @@ public class RouteManager {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Plotting routines
     //
@@ -267,13 +262,13 @@ public class RouteManager {
             // @TODO look for an existing match in the global list and adjust this segment if it matches
             // then save to global list
             for (RouteSegment routeSegment : routeSegmentList) {
-                if (routeSegments.contains(routeSegment)) {
+                if (routeDisplay.contains(routeSegment)) {
                     // adjust route segment by a line width and a few pixels, then store the adjusted route segment
                     log.info("need to adjust this route segment:{}", routeSegment);
                     routeDescriptor.mutateCoordinates(routeSegment);
                 } else {
                     // no match so add to segment
-                    routeSegments.add(routeSegment);
+                    routeDisplay.addSegment(routeSegment);
                     log.info("no match on this route segment:{}", routeSegment);
                 }
             }
@@ -293,15 +288,6 @@ public class RouteManager {
     }
 
     /**
-     * plot a route descriptor
-     *
-     * @param routeDescriptor the route descriptor
-     */
-    public void plotRouteDescriptor(@NotNull RouteDescriptor routeDescriptor) {
-        routeBuilderUtils.plotRouteDescriptor(routeDescriptor);
-    }
-
-    /**
      * this checks if all the stars on the route can be seen for a route
      *
      * @param route the route definition
@@ -311,9 +297,6 @@ public class RouteManager {
         return routeBuilderUtils.checkIfWholeRouteCanBePlotted(route);
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Manual routing
