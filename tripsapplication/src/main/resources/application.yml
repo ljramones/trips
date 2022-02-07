@@ -36,3 +36,4 @@ app:
   projectPage: https://github.com/ljramones/trips
   fileDirectory: files
   programdata: files/programdata/
+  scriptDirectory: files/scriptfiles/

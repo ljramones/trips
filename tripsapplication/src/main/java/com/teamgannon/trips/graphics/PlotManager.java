@@ -75,6 +75,10 @@ public class PlotManager {
         this.routingPanelListener = routingPanelListener;
     }
 
+    public void plotByConstellation(String constellationName) {
+
+    }
+
     /**
      * show a loaded dataset in the plot menu
      */

@@ -204,6 +204,14 @@
                           text="Calculate Galactic Coordinates from Equatorial .."/>
             </Menu>
             <Menu mnemonicParsing="false"
+                  text="Scripting"
+                  fx:id="scriptingMenu">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#scriptEditing"
+                          text="Script Editor"/>
+                <SeparatorMenuItem/>
+            </Menu>
+            <Menu mnemonicParsing="false"
                   text="Help">
                 <MenuItem mnemonicParsing="false"
                           onAction="#aboutTrips"
@@ -218,6 +226,7 @@
                           onAction="#getInventory"
                           text="Get Computer Description"/>
             </Menu>
+
             <Menu mnemonicParsing="false"
                   text="Leftover"
                   disable="true">

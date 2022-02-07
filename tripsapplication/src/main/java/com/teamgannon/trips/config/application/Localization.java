@@ -26,6 +26,9 @@ public class Localization {
     @Value("${app.fileDirectory:unknown}")
     private String fileDirectory;
 
+    @Value("${app.scriptDirectory:unknown}")
+    private String scriptDirectory;
+
     @Value("${app.programdata}")
     private String programdata;
 
