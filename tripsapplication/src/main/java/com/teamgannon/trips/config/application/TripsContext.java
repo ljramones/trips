@@ -47,6 +47,8 @@ public class TripsContext {
 
     private TransitSettings transitSettings = new TransitSettings();
 
+    private ScriptContext scriptContext = new ScriptContext();
+
     private boolean showWarningOnZoom = true;
 
     public DataSetDescriptor getDataSetDescriptor() {

@@ -47,6 +47,9 @@ import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
+import com.teamgannon.trips.scripting.ScriptDialog;
+import com.teamgannon.trips.scripting.engine.GroovyScriptingEngine;
+import com.teamgannon.trips.scripting.engine.PythonScriptEngine;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
@@ -158,6 +161,7 @@ public class MainPane implements
     public MenuItem exportDataSetMenuItem;
     public MenuItem importDataSetMenuItem;
     public MenuItem quitMenuItem;
+    public Menu scriptingMenu;
 
     /**
      * star plotter component
@@ -166,6 +170,7 @@ public class MainPane implements
 
     private final Localization localization;
     private final DataExportService dataExportService;
+
 
     /**
      * dataset lists
@@ -310,7 +315,6 @@ public class MainPane implements
         this.localization = localization;
 
         this.dataExportService = new DataExportService(databaseManagementService, this);
-
     }
 
     @FXML
@@ -997,6 +1001,7 @@ public class MainPane implements
             showErrorAlert("Plot stars", "there isn't a dataset selected to plot. Please select one.");
         }
     }
+
 
     public void viewEditStarData(ActionEvent actionEvent) {
         showTableData();
@@ -2149,4 +2154,14 @@ public class MainPane implements
         EquatorialToGalacticCoordsDialog dialog = new EquatorialToGalacticCoordsDialog();
         dialog.showAndWait();
     }
+
+    public void scriptEditing(ActionEvent actionEvent) {
+        GroovyScriptingEngine groovyScriptEngine = (GroovyScriptingEngine)appContext.getBean("groovyScriptEngine");
+        PythonScriptEngine pythonScriptEngine = (PythonScriptEngine)appContext.getBean("pythonScriptEngine");
+        ScriptDialog dialog = new ScriptDialog(this, groovyScriptEngine, pythonScriptEngine,
+                scriptingMenu, tripsContext, localization, databaseManagementService);
+        dialog.showAndWait();
+    }
+
+
 }
