@@ -11,11 +11,6 @@
 
     <!-- the specific loggers -->
     <logger name="org.springframework" level="INFO"/>
-    <logger name="org.springframework.security.oauth2" level="INFO"/>
-    <logger name="org.springframework.integration" level="OFF"/>
-    <logger name="org.springframework.oxm" level="OFF"/>
-    <logger name="org.springframework.http" level="ERROR"/>
-    <logger name="org.elasticsearch.bootstrap" level="ERROR"/>
 
     <include resource="logbackbase.xml"/>
 

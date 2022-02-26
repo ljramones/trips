@@ -44,7 +44,7 @@ import java.util.stream.StreamSupport;
  * Created by larrymitchell on 2017-01-20.
  */
 @Slf4j
-@Service
+@Service("dbservice")
 public class DatabaseManagementService {
 
     private static final int MAX_REQUEST_SIZE = 9999;

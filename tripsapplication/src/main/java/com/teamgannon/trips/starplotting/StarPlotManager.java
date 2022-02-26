@@ -12,7 +12,7 @@ import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.graphics.panes.StarSelectionModel;
+import com.teamgannon.trips.graphics.entities.StarSelectionModel;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
