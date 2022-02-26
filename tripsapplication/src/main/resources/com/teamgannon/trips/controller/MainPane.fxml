@@ -12,6 +12,9 @@
         <MenuBar fx:id="menuBar">
             <Menu mnemonicParsing="false"
                   text="File">
+                <MenuItem fx:id="importDataSetMenuItem"
+                          onAction="#loadDataSetManager"
+                          text="Import/Load dataset"/>
                 <MenuItem fx:id="openDatasetMenuItem"
                           onAction="#selectActiveDataset"
                           text="Open Dataset..."/>
@@ -25,9 +28,6 @@
                 <MenuItem fx:id="exportDataSetMenuItem"
                           onAction="#exportDataset"
                           text="Export dataset"/>
-                <MenuItem fx:id="importDataSetMenuItem"
-                          onAction="#loadDataSetManager"
-                          text="Import/Load dataset"/>
                 <SeparatorMenuItem/>
                 <MenuItem fx:id="quitMenuItem"
                           onAction="#quit"
