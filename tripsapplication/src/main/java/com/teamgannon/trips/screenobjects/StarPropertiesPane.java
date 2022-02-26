@@ -5,7 +5,6 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.application.HostServices;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -120,6 +119,8 @@ public class StarPropertiesPane extends Pane {
                 if (starEditStatus.isChanged()) {
                     // update the database
                     databaseManagementService.updateStar(starEditStatus.getRecord());
+                    setStar(starEditStatus.getRecord());
+                    this.getScene().getWindow().setWidth(this.getScene().getWindow().getWidth() + 0.001);
                 }
             }
         }

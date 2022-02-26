@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @Slf4j
-public class SelectActiveDatasetDialog extends Dialog<Integer> {
+public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -97,12 +97,10 @@ public class SelectActiveDatasetDialog extends Dialog<Integer> {
             }
         });
 
-        descriptorComboBox.setOnAction(e -> stellarDataUpdaterListener.showNewStellarData(descriptorComboBox.getValue(), true, false));
-
-        hBox.getChildren().add(new Separator());
-        Button okButton = new Button("Ok");
-        okButton.setOnAction(this::close);
-        hBox.getChildren().add(okButton);
+        descriptorComboBox.setOnAction(e -> {
+            stellarDataUpdaterListener.showNewStellarData(descriptorComboBox.getValue(), true, false);
+            setResult(true);
+        });
 
     }
 
@@ -112,17 +110,8 @@ public class SelectActiveDatasetDialog extends Dialog<Integer> {
      * @param we the windows event
      */
     private void close(WindowEvent we) {
-        setResult(1);
+        setResult(true);
     }
 
-
-    /**
-     * close triggered by button event
-     *
-     * @param actionEvent the action event
-     */
-    private void close(ActionEvent actionEvent) {
-        setResult(1);
-    }
 
 }
