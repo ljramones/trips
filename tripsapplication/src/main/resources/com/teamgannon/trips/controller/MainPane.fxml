@@ -192,6 +192,18 @@
                           text="Load/Import Exoplanets .."/>
             </Menu>
             <Menu mnemonicParsing="false"
+                  text="Galactic"
+                  disable="false">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#showGalacticNeighorhood"
+                          disable="false"
+                          text="Show Galactic Neighbourhood .."/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#showInterstellarSpace"
+                          disable="false"
+                          text="Go to Interstellar Space .."/>
+            </Menu>
+            <Menu mnemonicParsing="false"
                   text="Utilities">
                 <MenuItem mnemonicParsing="false"
                           onAction="#findDistance"

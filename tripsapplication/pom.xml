@@ -149,13 +149,13 @@
                 <scope>import</scope>
             </dependency>
             <!-- pull in all the camel spring boot dependencies -->
-<!--            <dependency>-->
-<!--                <groupId>org.apache.camel.springboot</groupId>-->
-<!--                <artifactId>camel-spring-boot-dependencies</artifactId>-->
-<!--                <version>${camel.version}</version>-->
-<!--                <type>pom</type>-->
-<!--                <scope>import</scope>-->
-<!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>org.apache.camel.springboot</groupId>-->
+            <!--                <artifactId>camel-spring-boot-dependencies</artifactId>-->
+            <!--                <version>${camel.version}</version>-->
+            <!--                <type>pom</type>-->
+            <!--                <scope>import</scope>-->
+            <!--            </dependency>-->
         </dependencies>
 
     </dependencyManagement>
@@ -239,6 +239,19 @@
             <version>5.5.2</version>
         </dependency>
 
+        <!-- toxic libs dependencies -->
+        <dependency>
+            <groupId>toxi</groupId>
+            <artifactId>core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>toxi</groupId>
+            <artifactId>physics</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- POI is used to read and write EXCEL Files -->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -268,7 +281,13 @@
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
-            <version>6.0.0</version>
+            <version>6.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo5</artifactId>
+            <version>5.2.1</version>
         </dependency>
 
         <dependency>

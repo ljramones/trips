@@ -4,6 +4,7 @@ package com.teamgannon.trips.dialogs.dataset;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
+import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -26,17 +27,17 @@ public class SelectActiveDatasetDialog extends Dialog<Integer> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final DataSetChangeListener dataSetChangeListener;
+    private final StellarDataUpdaterListener stellarDataUpdaterListener;
     private final DataSetContext dataSetContext;
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
     private final DatabaseManagementService databaseManagementService;
 
 
-    public SelectActiveDatasetDialog(DataSetChangeListener dataSetChangeListener,
+    public SelectActiveDatasetDialog(StellarDataUpdaterListener stellarDataUpdaterListener,
                                      DataSetContext dataSetContext,
                                      DatabaseManagementService databaseManagementService) {
 
-        this.dataSetChangeListener = dataSetChangeListener;
+        this.stellarDataUpdaterListener = stellarDataUpdaterListener;
         this.dataSetContext = dataSetContext;
         this.databaseManagementService = databaseManagementService;
 
@@ -96,7 +97,7 @@ public class SelectActiveDatasetDialog extends Dialog<Integer> {
             }
         });
 
-        descriptorComboBox.setOnAction(e -> dataSetChangeListener.setContextDataSet(descriptorComboBox.getValue()));
+        descriptorComboBox.setOnAction(e -> stellarDataUpdaterListener.showNewStellarData(descriptorComboBox.getValue(), true, false));
 
         hBox.getChildren().add(new Separator());
         Button okButton = new Button("Ok");

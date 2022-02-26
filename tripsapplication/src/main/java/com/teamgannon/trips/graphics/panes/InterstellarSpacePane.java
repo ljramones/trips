@@ -126,6 +126,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private double controlPaneOffset;
 
     private double deltaX;
+
     private RouteUpdaterListener routeUpdaterListener;
 
 

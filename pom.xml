@@ -14,9 +14,6 @@
     <description>"The TRIPS Project"</description>
     <url>http://www.chuckgannon.com</url>
 
-
-
-
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
@@ -26,7 +23,51 @@
 
     <modules>
         <module>tripsapplication</module>
-<!--        <module>install</module>-->
+        <!--        <module>install</module>-->
     </modules>
+
+
+    <build>
+        <plugins>
+            <!-- used to install the toxilibs jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.1</version>
+                <executions>
+                    <execution>
+                        <id>install-core</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>toxi</groupId>
+                            <artifactId>core</artifactId>
+                            <version>1.0.0</version>
+                            <packaging>jar</packaging>
+                            <file>${basedir}/3rdpartylibs/core-1.0.0.jar</file>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-physics</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>toxi</groupId>
+                            <artifactId>physics</artifactId>
+                            <version>1.0.0</version>
+                            <packaging>jar</packaging>
+                            <file>${basedir}/3rdpartylibs/physics-1.0.0.jar</file>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

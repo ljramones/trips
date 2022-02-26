@@ -1,4 +1,4 @@
-package com.teamgannon.trips.graphics.panes;
+package com.teamgannon.trips.graphics.entities;
 
 import javafx.scene.Node;
 import lombok.Data;

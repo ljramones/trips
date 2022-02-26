@@ -27,6 +27,7 @@ import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.graphics.panes.GalacticSpacePlane;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.jpa.model.*;
@@ -242,13 +243,20 @@ public class MainPane implements
     private final TripsContext tripsContext;
 
     /**
+     * galactic space
+     */
+    private final GalacticSpacePlane galacticSpacePlane;
+
+    /**
      * interstellar space
      */
     private final InterstellarSpacePane interstellarSpacePane;
+
     /**
      * solar system panes for showing the details of various solar systems
      */
     private final SolarSystemSpacePane solarSystemSpacePane;
+
     private final DataImportService dataImportService;
     /**
      * list of routes
@@ -293,6 +301,7 @@ public class MainPane implements
                     ApplicationContext appContext,
                     DatabaseManagementService databaseManagementService,
                     DataImportService dataImportService,
+                    GalacticSpacePlane galacticSpacePlane,
                     InterstellarSpacePane interstellarSpacePane,
                     SolarSystemSpacePane solarSystemSpacePane,
                     Localization localization
@@ -306,6 +315,7 @@ public class MainPane implements
 
         this.tripsContext = tripsContext;
         this.dataImportService = dataImportService;
+        this.galacticSpacePlane = galacticSpacePlane;
         this.interstellarSpacePane = interstellarSpacePane;
         this.searchContext = tripsContext.getSearchContext();
         this.appContext = appContext;
@@ -456,6 +466,9 @@ public class MainPane implements
 
         // create the interstellar space
         createInterstellarSpace(tripsContext.getAppViewPreferences().getColorPallete());
+
+        // create galactic space
+        createGalacticSpace(tripsContext.getAppViewPreferences().getColorPallete());
     }
 
     /**
@@ -955,6 +968,16 @@ public class MainPane implements
         String newText = newValue == null ? "null" : newValue.toString();
     }
 
+    /**
+     * create the galactic plane
+     *
+     * @param colorPalette the Galactic Space plane
+     */
+    private void createGalacticSpace(ColorPalette colorPalette) {
+        leftDisplayPane.getChildren().add(galacticSpacePlane);
+        // force it back
+        galacticSpacePlane.toBack();
+    }
 
     /**
      * create a interstellar space drawing area
@@ -987,6 +1010,7 @@ public class MainPane implements
     private void createSolarSystemSpace() {
         solarSystemSpacePane.setContextUpdater(this);
         leftDisplayPane.getChildren().add(solarSystemSpacePane);
+        solarSystemSpacePane.toBack();
     }
 
 
@@ -1136,8 +1160,9 @@ public class MainPane implements
                     databaseManagementService);
             // we throw away the result after returning
             dialog.showAndWait();
+
         } else {
-            showErrorAlert("Select a Dataset", "THere are no datasets to select.");
+            showErrorAlert("Select a Dataset", "There are no datasets to select.");
         }
     }
 
@@ -1622,7 +1647,7 @@ public class MainPane implements
             updateStatus("Dataset loaded is: " + searchQuery.getDataSetContext().getDescriptor().getDataSetName());
 
             // highlight the data set used
-            setContextDataSet(searchQuery.getDataSetContext().getDescriptor());
+//            setContextDataSet(searchQuery.getDataSetContext().getDescriptor());
 
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -2156,12 +2181,19 @@ public class MainPane implements
     }
 
     public void scriptEditing(ActionEvent actionEvent) {
-        GroovyScriptingEngine groovyScriptEngine = (GroovyScriptingEngine)appContext.getBean("groovyScriptEngine");
-        PythonScriptEngine pythonScriptEngine = (PythonScriptEngine)appContext.getBean("pythonScriptEngine");
+        GroovyScriptingEngine groovyScriptEngine = (GroovyScriptingEngine) appContext.getBean("groovyScriptEngine");
+        PythonScriptEngine pythonScriptEngine = (PythonScriptEngine) appContext.getBean("pythonScriptEngine");
         ScriptDialog dialog = new ScriptDialog(this, groovyScriptEngine, pythonScriptEngine,
                 scriptingMenu, tripsContext, localization, databaseManagementService);
         dialog.showAndWait();
     }
 
 
+    public void showGalacticNeighorhood(ActionEvent actionEvent) {
+        galacticSpacePlane.toFront();
+    }
+
+    public void showInterstellarSpace(ActionEvent actionEvent) {
+        interstellarSpacePane.toFront();
+    }
 }
