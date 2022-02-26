@@ -1038,7 +1038,11 @@ public class StarPlotManager {
         editPropertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
             StarDisplayRecord editRecord = editProperties(starDisplayRecord);
-            star.setUserData(editRecord);
+            if (editRecord!= null) {
+                star.setUserData(editRecord);
+            } else {
+                log.error("Why is the edit record a null!!");
+            }
 
         });
         return editPropertiesMenuItem;
@@ -1070,12 +1074,12 @@ public class StarPlotManager {
                 }
                 return record1;
             } else {
-                log.error("no return");
-                return null;
+                log.warn("no return");
+                return starDisplayRecord;
             }
         }
         log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
-        return null;
+        return starDisplayRecord;
     }
 
     /**
