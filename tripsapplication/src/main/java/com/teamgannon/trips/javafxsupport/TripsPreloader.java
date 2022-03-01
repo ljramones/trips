@@ -58,7 +58,7 @@ public class TripsPreloader extends Preloader {
 
         HBox hBox5 = new HBox();
         hBox5.setAlignment(Pos.CENTER);
-        hBox5.getChildren().add(new Label("Version v0.7.1 - January 17, 2022"));
+        hBox5.getChildren().add(new Label("Version v0.7.2 - March 7, 2022"));
         loading.getChildren().add(hBox5);
 
         BorderPane root = new BorderPane(loading);

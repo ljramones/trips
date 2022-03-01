@@ -63,7 +63,6 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
         cmb = new ComboBox<>();
         cmb.setPromptText("start typing");
-        cmb.setTooltip(new Tooltip());
         cmb.getItems().addAll(searchValues);
         cmb.setEditable(true);
         TextFields.bindAutoCompletion(cmb.getEditor(), cmb.getItems());
@@ -109,10 +108,12 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
 
     private void goToStarClicked(ActionEvent actionEvent) {
         String value = cmb.getValue();
-        if (value != null) {
+        if (!value.isEmpty()) {
             StarDisplayRecord record = starLookup.get(value);
             FindResults findResults = FindResults.builder().selected(true).record(record).build();
             setResult(findResults);
+        } else {
+            log.info("blank so ignore");
         }
     }
 

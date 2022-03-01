@@ -3,7 +3,9 @@ package com.teamgannon.trips.report.distance;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -45,7 +47,6 @@ public class SelectStarForDistanceReportDialog extends Dialog<DistanceReportSele
 
         cmb = new ComboBox<>();
         cmb.setPromptText("start typing");
-        cmb.setTooltip(new Tooltip());
         cmb.getItems().addAll(searchValues);
         cmb.setEditable(true);
         TextFields.bindAutoCompletion(cmb.getEditor(), cmb.getItems());

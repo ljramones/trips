@@ -377,7 +377,6 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
         destinationDisplayCmb = new ComboBox<>();
         destinationDisplayCmb.setPromptText("start typing");
-        destinationDisplayCmb.setTooltip(new Tooltip());
         destinationDisplayCmb.getItems().addAll(searchValues);
         destinationDisplayCmb.setEditable(true);
         TextFields.bindAutoCompletion(destinationDisplayCmb.getEditor(), destinationDisplayCmb.getItems());

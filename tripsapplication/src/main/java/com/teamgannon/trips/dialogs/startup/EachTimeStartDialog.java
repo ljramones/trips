@@ -26,9 +26,9 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
                 """                       
                         When the program starts
                         Please import a dataset
-                            -->  Star Data/Import data set from a file....
+                            -->  File/Import/Load data set
                         Then
-                            -->  Star Data/Select Active Dataset...    
+                            -->  File/Open Dataset...    
                                                
                         """
         ));

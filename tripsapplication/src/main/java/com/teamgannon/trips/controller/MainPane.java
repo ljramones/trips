@@ -154,15 +154,8 @@ public class MainPane implements
      * database management spring component service
      */
     private final DatabaseManagementService databaseManagementService;
-    public CheckMenuItem toggleRouteLengthsMenuitem;
-    public MenuItem showRoutesMenuitem;
-    public MenuItem openDatasetMenuItem;
-    public MenuItem saveMenuItem;
-    public MenuItem saveAsMenuItem;
-    public MenuItem exportDataSetMenuItem;
-    public MenuItem importDataSetMenuItem;
-    public MenuItem quitMenuItem;
-    public Menu scriptingMenu;
+
+
 
     /**
      * star plotter component
@@ -181,6 +174,17 @@ public class MainPane implements
     ////// injected properties
     public Pane mainPanel;
     public MenuBar menuBar;
+
+    public CheckMenuItem toggleRouteLengthsMenuitem;
+    public MenuItem showRoutesMenuitem;
+    public MenuItem openDatasetMenuItem;
+    public MenuItem saveMenuItem;
+    public MenuItem saveAsMenuItem;
+    public MenuItem exportDataSetMenuItem;
+    public MenuItem importDataSetMenuItem;
+    public MenuItem quitMenuItem;
+    public Menu scriptingMenu;
+
     public CheckMenuItem togglePolitiesMenuitem;
     public CheckMenuItem toggleGridMenuitem;
     public CheckMenuItem toggleLabelsMenuitem;
@@ -396,23 +400,18 @@ public class MainPane implements
         final Image toggleRoutesBtnGraphic = new Image("/images/buttons/tb_routes.gif");
         final ImageView toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
         toggleRoutesBtn.setGraphic(toggleRoutesBtnImage);
-        toggleRoutesBtn.setTooltip(new Tooltip("Toggle routes"));
 
         FontIcon fontIconZoomIn = new FontIcon(Zondicons.ZOOM_IN);
         toggleZoomInBtn.setGraphic(fontIconZoomIn);
-        toggleZoomInBtn.setTooltip(new Tooltip("Zoom in"));
 
         FontIcon fontIconZoomOut = new FontIcon(Zondicons.ZOOM_OUT);
         toggleZoomOutBtn.setGraphic(fontIconZoomOut);
-        toggleZoomOutBtn.setTooltip(new Tooltip("Zoom out"));
 
         final Image toggleGridBtnGraphic = new Image("/images/buttons/tb_grid.gif");
         final ImageView toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
         toggleGridBtn.setGraphic(toggleGridBtnImage);
-        toggleGridBtn.setTooltip(new Tooltip("Toggle grid"));
 
         plotButton.setDisable(true);
-        toolBar.setTooltip(new Tooltip("Select Dataset to enable plot"));
     }
 
     private void setDefaultSizesForUI() {
@@ -1720,7 +1719,6 @@ public class MainPane implements
         }
 
         plotButton.setDisable(false);
-        toolBar.setTooltip(new Tooltip(null));
 
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
     }
@@ -2025,17 +2023,21 @@ public class MainPane implements
         Optional<FindResults> optional = findStarInViewDialog.showAndWait();
         if (optional.isPresent()) {
             FindResults findResults = optional.get();
-            StarDisplayRecord record = findResults.getRecord();
-            StarObject starObject = databaseManagementService.getStar(record.getRecordId());
-            StarEditDialog starEditDialog = new StarEditDialog(starObject);
+            if (findResults.isSelected()) {
+                StarDisplayRecord record = findResults.getRecord();
+                StarObject starObject = databaseManagementService.getStar(record.getRecordId());
+                StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
-            Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
-            if (statusOptional.isPresent()) {
-                StarEditStatus starEditStatus = statusOptional.get();
-                if (starEditStatus.isChanged()) {
-                    // update the database
-                    databaseManagementService.updateStar(starEditStatus.getRecord());
+                Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
+                if (statusOptional.isPresent()) {
+                    StarEditStatus starEditStatus = statusOptional.get();
+                    if (starEditStatus.isChanged()) {
+                        // update the database
+                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                    }
                 }
+            } else {
+                log.info("cancel request to edit star");
             }
 
         }
