@@ -142,7 +142,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private void addChoices() {
         addFormat(DataFormatEnum.CH_VIEW, "chv");
         addFormat(DataFormatEnum.CSV, "trips.csv");
-        addFormat(DataFormatEnum.EXCEL, "trips.xlsx");
         addFormat(DataFormatEnum.JSON, "json");
     }
 
@@ -250,9 +249,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             }
             case CSV -> {
                 return new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
-            }
-            case EXCEL -> {
-                return new FileChooser.ExtensionFilter("Excel files (*.xlsx)", "*.xlsx");
             }
             case JSON -> {
                 return new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json");

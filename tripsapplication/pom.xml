@@ -89,7 +89,7 @@
         <maven.compiler.source>17</maven.compiler.source>
 
         <camel.version>3.13.0</camel.version>
-        <spring.boot.version>2.6.3</spring.boot.version>
+        <spring.boot.version>2.6.4</spring.boot.version>
 
         <javafx.version>17.0.1</javafx.version>
         <fxweaver.version>1.3.0</fxweaver.version>
@@ -106,7 +106,7 @@
 
         <orekit.version>11.0.2</orekit.version>
 
-        <metrics.version>4.2.7</metrics.version>
+        <metrics.version>4.2.8</metrics.version>
 
         <jackson-databind.version>2.12.4</jackson-databind.version>
 
@@ -252,19 +252,6 @@
             <version>1.0.0</version>
         </dependency>
 
-        <!-- POI is used to read and write EXCEL Files -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${poi.ooxml.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>${poi.ooxml.version}</version>
-        </dependency>
-
         <!-- tracking metrics -->
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -281,7 +268,7 @@
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
-            <version>6.1.0</version>
+            <version>6.1.2</version>
         </dependency>
 
         <dependency>
@@ -407,6 +394,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>${commons.math.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
         </dependency>
 
         <dependency>

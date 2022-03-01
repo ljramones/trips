@@ -331,6 +331,13 @@ public class RouteManager {
     }
 
     /**
+     * remove the last segment
+     */
+    public StarDisplayRecord removeLastSegment()  {
+       return currentManualRoute.removeLastSegment();
+    }
+
+    /**
      * finish the route
      *
      * @param endingStar the star record to terminate at

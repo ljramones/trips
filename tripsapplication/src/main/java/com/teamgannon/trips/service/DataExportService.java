@@ -32,9 +32,6 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 public class DataExportService {
 
     private final DatabaseManagementService databaseManagementService;
-    private final StatusUpdaterListener statusUpdaterListener;
-
-    private final @NotNull ExcelExporter excelExporter;
 
     private final @NotNull CSVQueryExporterService csvQueryExporterService;
     private final @NotNull CSVDataSetDataExportService csvDataSetDataExportService;
@@ -50,9 +47,7 @@ public class DataExportService {
                              StatusUpdaterListener statusUpdaterListener) {
 
         this.databaseManagementService = databaseManagementService;
-        this.statusUpdaterListener = statusUpdaterListener;
 
-        excelExporter = new ExcelExporter(databaseManagementService, statusUpdaterListener);
         csvQueryExporterService = new CSVQueryExporterService(statusUpdaterListener);
         csvDataSetDataExportService = new CSVDataSetDataExportService(statusUpdaterListener);
         jsonExporter = new JSONExporter(statusUpdaterListener);
@@ -68,7 +63,7 @@ public class DataExportService {
             fileChooser.setTitle("Export entire database to export as a Excel file");
             File file = fileChooser.showSaveDialog(null);
             if (file != null) {
-                excelExporter.exportEntireDB(file.getAbsolutePath());
+                log.info("\n\n\n\nThis will be replaced by the compact export option!!!\n\n\n\n");
             } else {
                 log.warn("file export cancelled");
                 showInfoMessage("Database export", "Export cancelled");
@@ -120,7 +115,6 @@ public class DataExportService {
                 csvDataSetDataExportService.restart();
                 return ExportResult.builder().success(true).build();
             }
-//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
 //            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
 
@@ -180,7 +174,6 @@ public class DataExportService {
                 csvQueryExporterService.restart();
                 return ExportResult.builder().success(true).build();
             }
-//            case EXCEL -> excelExporter.exportAsExcel(exportOptions, starObjects);
 //            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
         }
         return ExportResult.builder().build();

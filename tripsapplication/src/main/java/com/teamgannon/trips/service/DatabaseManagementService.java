@@ -7,7 +7,6 @@ import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
-import com.teamgannon.trips.file.excel.normal.ExcelFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.*;
@@ -577,13 +576,6 @@ public class DatabaseManagementService {
     public @NotNull
     List<StarObject> findStarsWithName(String datasetName, String starName) {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
-    }
-
-    @TrackExecutionTime
-    @Transactional
-    public void saveExcelDataSetDescriptor(@NotNull ProgressUpdater updater, @NotNull ExcelFile excelFile) {
-        dataSetDescriptorRepository.save(excelFile.getDescriptor());
-        updater.updateTaskInfo("saved descriptor in database, complete");
     }
 
     @TrackExecutionTime

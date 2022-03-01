@@ -148,7 +148,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
         originDisplayCmb = new ComboBox<>();
         originDisplayCmb.setPromptText("start typing");
-        originDisplayCmb.setTooltip(new Tooltip());
         originDisplayCmb.getItems().addAll(searchValues);
         originDisplayCmb.setEditable(true);
         TextFields.bindAutoCompletion(originDisplayCmb.getEditor(), originDisplayCmb.getItems());
@@ -156,7 +155,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
         destinationDisplayCmb = new ComboBox<>();
         destinationDisplayCmb.setPromptText("start typing");
-        destinationDisplayCmb.setTooltip(new Tooltip());
         destinationDisplayCmb.getItems().addAll(searchValues);
         destinationDisplayCmb.setEditable(true);
         TextFields.bindAutoCompletion(destinationDisplayCmb.getEditor(), destinationDisplayCmb.getItems());

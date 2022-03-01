@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.UUID;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -39,6 +40,8 @@ public class CurrentManualRoute {
      * the graphic portion of the current route
      */
     private Group currentRouteDisplay;
+
+    private final Stack<StarDisplayRecord> starNameStack = new Stack<>();
 
     /**
      * whether there is a route being traced, true is yes
@@ -94,7 +97,9 @@ public class CurrentManualRoute {
      * @param routeDescriptor   the route decriptor which is filled before
      * @param firstPlottedStar  the star to plot to
      */
-    public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord firstPlottedStar) {
+    public void startRoute(DataSetDescriptor dataSetDescriptor,
+                           RouteDescriptor routeDescriptor,
+                           @NotNull StarDisplayRecord firstPlottedStar) {
         setup(dataSetDescriptor, routeDescriptor);
 
         log.info("Start charting the route:" + routeDescriptor);
@@ -118,13 +123,14 @@ public class CurrentManualRoute {
     /**
      * continue the route
      *
-     * @param starDisplayRecord the the star to route to
+     * @param starDisplayRecord the star to route to
      */
     public void continueRoute(@NotNull StarDisplayRecord starDisplayRecord) {
         if (routeDisplay.isManualRoutingActive()) {
             log.info("manual routing active");
             log.info("route to {}", starDisplayRecord.getStarName());
             createRouteSegment(starDisplayRecord);
+            starNameStack.push(starDisplayRecord);
             routeDisplay.updateLabels();
             log.info("Next Routing step:{}", getCurrentRoute());
         } else {
@@ -197,9 +203,9 @@ public class CurrentManualRoute {
 
     /**
      * route segment helper
-     * used to extend a route by one segement from last plot position to a target star
+     * used to extend a route by one segment from last plot position to a target star
      *
-     * @param destinationStar the destinationt to plot to
+     * @param destinationStar the destination to plot to
      */
     private void createRouteSegment(@NotNull StarDisplayRecord destinationStar) {
         Point3D toStarLocation = destinationStar.getCoordinates();
@@ -255,8 +261,13 @@ public class CurrentManualRoute {
             }
             clear();
             Group routeToRemove = routeDisplay.getRoute(getRouteId());
-            routeDisplay.removeRouteId(getRouteId());
-            routeDisplay.removeRouteFromDisplay(routeToRemove);
+            if (routeToRemove != null) {
+                routeDisplay.removeRouteId(getRouteId());
+                routeDisplay.removeRouteFromDisplay(routeToRemove);
+            } else {
+                log.error("route to remove is null");
+            }
+            starNameStack.clear();
         }
 
         routeDisplay.removeRouteFromDisplay(getCurrentRouteDisplay());
@@ -279,14 +290,27 @@ public class CurrentManualRoute {
     public void addRouteSegment(Node lineSegment) {
         currentRouteDisplay.getChildren().add(lineSegment);
         currentRouteDisplay.setVisible(true);
+        log.info("add:: number of segments={}", getNumberSegments());
     }
 
     public void removeRouteSegment(Node lineSegment) {
         currentRouteDisplay.getChildren().remove(lineSegment);
     }
 
+    public StarDisplayRecord removeLastSegment() {
+        log.info("remove (before):: number of segments={}", getNumberSegments());
+        currentRouteDisplay.getChildren().remove(getNumberSegments() - 2);
+        removeLastPoint();
+        log.info("remove (after):: number of segments={}", getNumberSegments());
+        return starNameStack.pop();
+    }
+
     public Node getLastSegment() {
-        return currentRoute.getLineSegmentList().get(getNumberSegments() - 1);
+        return currentRoute.getLineSegmentList().get(getNumberSegments() - 2);
+    }
+
+    public void removeLastPoint() {
+        currentRoute.getRouteCoordinates().remove(getNumberSegments() - 1);
     }
 
     public Point3D getLastPoint() {
@@ -318,7 +342,12 @@ public class CurrentManualRoute {
     }
 
     public UUID getRouteId() {
-        return currentRoute.getId();
+        if (currentRoute != null) {
+            return currentRoute.getId();
+        } else {
+            log.error("current route is null");
+            return null;
+        }
     }
 
 }

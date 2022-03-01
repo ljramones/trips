@@ -33,8 +33,9 @@ import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final RouteManager routeManager;
+
     private final DataSetDescriptor currentDataSet;
-    private List<StarDisplayRecord> starsInView;
+
     private StarDisplayRecord starDisplayRecord;
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
@@ -63,7 +64,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     /**
      * true means this plot was part of an in plot context call
-     * false means it was called form outside of the plot
+     * false means it was called from outside of the plot
      */
     private final boolean plottingContextMode;
 
@@ -82,7 +83,9 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
     private final Button startButton = new Button("Start route");
 
-    private Button colorButton = new Button("Color");
+    private final Button removeLastBtn = new Button("Remove last segment");
+
+    private final Button colorButton = new Button("Color");
 
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
@@ -133,7 +136,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
         originDisplayCmb = new ComboBox<>();
         originDisplayCmb.setPromptText("start typing");
-        originDisplayCmb.setTooltip(new Tooltip());
         originDisplayCmb.getItems().addAll(searchValues);
         originDisplayCmb.setEditable(true);
         originDisplayCmb.setOnAction(this::selectStar);
@@ -171,6 +173,10 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         resetBtn.setOnAction(this::resetRoute);
         hBox.getChildren().add(resetBtn);
 
+        removeLastBtn.setOnAction(this::removeRouteSegment);
+        hBox.getChildren().add(removeLastBtn);
+        removeLastBtn.setDisable(true);
+
         Button addBtn = new Button("Close");
         addBtn.setOnAction(this::closeClicked);
         hBox.getChildren().add(addBtn);
@@ -181,6 +187,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage.setOnCloseRequest(this::close);
 
     }
+
 
     private void setColor(ActionEvent actionEvent) {
         ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
@@ -278,6 +285,10 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         resetBtn.setOnAction(this::resetRoute);
         hBox.getChildren().add(resetBtn);
 
+        removeLastBtn.setOnAction(this::removeRouteSegment);
+        hBox.getChildren().add(removeLastBtn);
+        removeLastBtn.setDisable(true);
+
         finishBtn.setDisable(true);
         finishBtn.setOnAction(this::finishRouteClicked);
         hBox.getChildren().add(finishBtn);
@@ -292,7 +303,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage.setOnCloseRequest(this::close);
 
     }
-
 
 
     private void resetRoute(ActionEvent actionEvent) {
@@ -311,11 +321,24 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage.sizeToScene();
         finishBtn.setDisable(true);
         routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
+        removeLastBtn.setDisable(true);
+    }
+
+
+    private void removeRouteSegment(ActionEvent actionEvent) {
+        log.info("remove last star segment");
+        StarDisplayRecord lastStar = routeManager.removeLastSegment();
+        boolean wasThere = routeSet.remove(lastStar);
+        log.info("removing {}, was there={}", lastStar.getStarName(), wasThere);
+        grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == (anchorRow + rowToAdd - 1));
+        rowToAdd--;
+        stage.sizeToScene();
     }
 
     private void clearRoute() {
         routeSet.clear();
         routeManager.resetRoute();
+        removeLastBtn.setDisable(true);
     }
 
     private void selectStar(ActionEvent actionEvent) {
@@ -332,19 +355,19 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
             log.info("start star:{}", starDisplayRecord);
             originDisplayCmb.setDisable(true);
             firstTime = false;
+            removeLastBtn.setDisable(false);
         }
     }
-
 
     private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
         starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
         return starLookup.keySet();
     }
 
-
     private void finishRouteClicked(ActionEvent actionEvent) {
         log.info("save route");
         routeManager.finishRoute();
+        removeLastBtn.setDisable(true);
         setResult(true);
     }
 
@@ -380,6 +403,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
                 rowToAdd++;
                 stage.sizeToScene();
                 finishBtn.setDisable(false);
+                removeLastBtn.setDisable(false);
             }
         } else {
             showWarningMessage("Add Route", "Please press start to select parameters for route.");
@@ -410,6 +434,5 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         startRouting = true;
         startButton.setDisable(true);
     }
-
 
 }

@@ -24,7 +24,6 @@ public class DataImportService {
     private final @NotNull CHVDataImportService chvDataImportService;
     private final @NotNull JsonDataImportService jsonDataImportService;
     private final @NotNull CSVDataImportService csvDataImportService;
-    private final @NotNull ExcelDataImportService excelDataImportService;
 
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
@@ -37,7 +36,6 @@ public class DataImportService {
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService);
         jsonDataImportService = new JsonDataImportService(databaseManagementService);
-        excelDataImportService = new ExcelDataImportService(databaseManagementService);
         this.csvDataImportService = csvDataImportService;
     }
 
@@ -105,24 +103,6 @@ public class DataImportService {
                 // start the work
                 csvDataImportService.reset();
                 csvDataImportService.restart();
-            }
-
-            case "trips.xlsx" -> {
-                currentlyRunning.set(true);
-                runningImportService = excelDataImportService;
-                boolean queued = excelDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
-                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
-                if (!queued) {
-                    log.error("failed to start import process");
-                    currentlyRunning.set(false);
-                    runningImportService = null;
-                    excelDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
-                }
-                // start the work
-                excelDataImportService.reset();
-                excelDataImportService.restart();
             }
 
             case "json" -> {
