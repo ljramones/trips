@@ -207,9 +207,14 @@ public class RouteDisplay {
     }
 
     public void addRouteToDisplay(RouteDescriptor routeDescriptor, Group routeToAdd) {
+        log.info("\n\n\n\nAdd new route to display\n\n\n\n");
         if (routeDescriptor != null) {
-            routeLookup.put(routeDescriptor.getId(), routeToAdd);
-            routesGroup.getChildren().add(routeToAdd);
+            if (!routesGroup.getChildren().contains(routeToAdd)) {
+                routeLookup.put(routeDescriptor.getId(), routeToAdd);
+                routesGroup.getChildren().add(routeToAdd);
+            } else {
+                log.error("Already contains route={}", routeDescriptor);
+            }
         }
     }
 

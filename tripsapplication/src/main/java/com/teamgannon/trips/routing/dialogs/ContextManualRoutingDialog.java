@@ -32,34 +32,89 @@ import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 @Slf4j
 public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
+    /**
+     * the route manager for handling all the routes
+     */
     private final RouteManager routeManager;
 
+    /**
+     * the current dataset
+     */
     private final DataSetDescriptor currentDataSet;
 
+    /**
+     * a star display record
+     */
     private StarDisplayRecord starDisplayRecord;
 
+    /**
+     * font for the UI
+     */
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
+    /**
+     * the orute name
+     */
     private final TextField routeName = new TextField();
+
+    /**
+     * the line width
+     */
     private final TextField lineWidthTextField = new TextField();
+
+    /**
+     * the color picker
+     */
     private final ColorPicker colorPicker = new ColorPicker();
+
+    /**
+     * the notes area
+     */
     private final TextArea notes = new TextArea();
 
+    /**
+     * the current row for adding stars
+     */
     private int rowToAdd = 1;
+
+    /**
+     * the anchor row where the selected stars are displayed
+     */
     private final int anchorRow = 7;
 
+    /**
+     * the grid pane to add components
+     */
     private final GridPane grid = new GridPane();
 
+    /**
+     * the finish button
+     */
     private final Button finishBtn = new Button("Finish route");
 
+    /**
+     * whether we have started to create a route
+     */
     private boolean startRouting = false;
 
+    /**
+     * the stage
+     */
     private final Stage stage;
 
+    /**
+     * the list of stars
+     */
     private final List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
 
+    /**
+     * the route set
+     */
     private final Set<StarDisplayRecord> routeSet = new HashSet<>();
 
+    /**
+     * the route descriptor
+     */
     private RouteDescriptor routeDescriptor;
 
     /**
@@ -68,6 +123,9 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
      */
     private final boolean plottingContextMode;
 
+    /**
+     * the origin display combo
+     */
     private ComboBox<String> originDisplayCmb;
 
     /**
@@ -75,18 +133,43 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
      */
     private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
 
+    /**
+     * whether this is the first time or not
+     */
     boolean firstTime = true;
 
+    /**
+     * the start label
+     */
     private final Label startStarLabel = new Label();
 
+    /**
+     * the start coordinates
+     */
     private final Label routeStartCoordinates = new Label("0, 0, 0");
 
+    /**
+     * the start plotting button
+     */
     private final Button startButton = new Button("Start route");
 
+    /**
+     * the remove last segment button
+     */
     private final Button removeLastBtn = new Button("Remove last segment");
 
+    /**
+     * the color button
+     */
     private final Button colorButton = new Button("Color");
 
+    /**
+     * the constructor
+     *
+     * @param routeManager   the route manager
+     * @param currentDataSet the current dataset
+     * @param starsInView    the list of stars in view
+     */
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
                                       @NotNull List<StarDisplayRecord> starsInView) {
@@ -186,9 +269,18 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
+        clearRoute();
     }
 
+    private void createRoute() {
 
+    }
+
+    /**
+     * set the color for the route
+     *
+     * @param actionEvent the event
+     */
     private void setColor(ActionEvent actionEvent) {
         ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
         Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
@@ -302,6 +394,14 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         stage = (Stage) this.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(this::close);
 
+//        clearRoute();
+    }
+
+
+    private void clearRoute() {
+        routeSet.clear();
+        routeManager.resetRoute();
+        removeLastBtn.setDisable(true);
     }
 
 
@@ -333,12 +433,6 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == (anchorRow + rowToAdd - 1));
         rowToAdd--;
         stage.sizeToScene();
-    }
-
-    private void clearRoute() {
-        routeSet.clear();
-        routeManager.resetRoute();
-        removeLastBtn.setDisable(true);
     }
 
     private void selectStar(ActionEvent actionEvent) {

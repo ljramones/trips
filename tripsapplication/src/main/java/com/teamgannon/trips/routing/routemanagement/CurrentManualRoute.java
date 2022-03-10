@@ -41,6 +41,9 @@ public class CurrentManualRoute {
      */
     private Group currentRouteDisplay;
 
+    /**
+     * stack order collection of stars entered
+     */
     private final Stack<StarDisplayRecord> starNameStack = new Stack<>();
 
     /**
@@ -78,6 +81,9 @@ public class CurrentManualRoute {
         currentRoute = null;
         currentRouteDisplay.getChildren().clear();
         routeDisplay.setManualRoutingActive(false);
+        //
+        currentRouteNodePoints.clear();
+        starNameStack.clear();
     }
 
     public void setup(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor) {
@@ -247,31 +253,40 @@ public class CurrentManualRoute {
         return StarMath.getDistance(fromStarCoords, toStarCoords);
     }
 
+    /**
+     * reset current route
+     */
+    public void resetRoute() {
+        resetRoute(currentRoute);
+    }
 
     /**
      * reset the route and remove the parts that were partially drawn
      */
-    public void resetRoute() {
+    public void resetRoute(RouteDescriptor theRoute) {
 
         if (routeDisplay.isManualRoutingActive()) {
             log.info("manual routing is active, so reset it");
-            List<Label> labels = getLabels();
-            for (Label label : labels) {
-                routeDisplay.removeLabel(label);
-            }
-            clear();
-            Group routeToRemove = routeDisplay.getRoute(getRouteId());
-            if (routeToRemove != null) {
-                routeDisplay.removeRouteId(getRouteId());
-                routeDisplay.removeRouteFromDisplay(routeToRemove);
+            if (currentRoute != null) {
+                List<Label> labels = getLabels();
+                for (Label label : labels) {
+                    routeDisplay.removeLabel(label);
+                }
+                clear();
+                Group routeToRemove = routeDisplay.getRoute(getRouteId());
+                if (routeToRemove != null) {
+                    routeDisplay.removeRouteId(getRouteId());
+                    routeDisplay.removeRouteFromDisplay(routeToRemove);
+                } else {
+                    log.error("route to remove is null");
+                }
+                routeDisplay.removeRouteFromDisplay(getCurrentRouteDisplay());
             } else {
-                log.error("route to remove is null");
+                currentRoute = theRoute;
             }
+
             starNameStack.clear();
         }
-
-        routeDisplay.removeRouteFromDisplay(getCurrentRouteDisplay());
-        routeDisplay.addRouteToDisplay(getCurrentRoute(), getCurrentRouteDisplay());
 
         log.info("Resetting the route");
     }
@@ -349,5 +364,6 @@ public class CurrentManualRoute {
             return null;
         }
     }
+
 
 }
