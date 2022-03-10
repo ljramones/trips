@@ -36,6 +36,36 @@
                 <version>2.5.1</version>
                 <executions>
                     <execution>
+                        <id>install-aelfred</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>aelfred</groupId>
+                            <artifactId>aelfred</artifactId>
+                            <version>1.0.0</version>
+                            <packaging>jar</packaging>
+                            <file>${basedir}/3rdpartylibs/aelfred-1.0.0.jar</file>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-acme</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>Acme</groupId>
+                            <artifactId>acme</artifactId>
+                            <version>1.0.0</version>
+                            <packaging>jar</packaging>
+                            <file>${basedir}/3rdpartylibs/acme-1.0.0.jar</file>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>install-core</id>
                         <phase>validate</phase>
                         <goals>

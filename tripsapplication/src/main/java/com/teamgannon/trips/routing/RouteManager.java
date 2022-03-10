@@ -34,9 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -47,6 +45,10 @@ public class RouteManager {
      * holds all the route display vars
      */
     private RouteDisplay routeDisplay;
+
+    /**
+     * the tripscontext
+     */
     private final TripsContext tripsContext;
 
     /**
@@ -74,6 +76,8 @@ public class RouteManager {
      */
     private RoutingType routingType = RoutingType.NONE;
 
+    private RouteGraphicsUtil routeGraphicsUtil;
+
 
     ///////////////////////
 
@@ -91,7 +95,7 @@ public class RouteManager {
                             InterstellarSpacePane interstellarSpacePane) {
 
         routeDisplay = new RouteDisplay(tripsContext, subScene, interstellarSpacePane);
-        RouteGraphicsUtil routeGraphicsUtil = new RouteGraphicsUtil(routeDisplay);
+        routeGraphicsUtil = new RouteGraphicsUtil(routeDisplay);
         routeBuilderUtils = new RouteBuilderUtils(tripsContext, routeDisplay, routeGraphicsUtil);
 
         currentManualRoute = new CurrentManualRoute(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils);
@@ -191,7 +195,7 @@ public class RouteManager {
     public void setManualRoutingActive(boolean state) {
         routeDisplay.setManualRoutingActive(state);
         if (!state) {
-            resetRoute();
+//            resetRoute();
             routeUpdaterListener.routingStatus(state);
         }
     }
@@ -201,6 +205,17 @@ public class RouteManager {
      */
     public void updateLabels() {
         routeDisplay.updateLabels();
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    //      Manual platting
+    //
+    //////////////////////////////////////////////////////////////////////////////////////
+
+    public void initializeManualRoute() {
+
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,6 +326,7 @@ public class RouteManager {
      * @param firstPlottedStar  the star to plot to
      */
     public void startRoute(DataSetDescriptor dataSetDescriptor, RouteDescriptor routeDescriptor, @NotNull StarDisplayRecord firstPlottedStar) {
+        currentManualRoute.resetRoute(routeDescriptor);
         currentManualRoute.startRoute(dataSetDescriptor, routeDescriptor, firstPlottedStar);
     }
 
@@ -333,8 +349,8 @@ public class RouteManager {
     /**
      * remove the last segment
      */
-    public StarDisplayRecord removeLastSegment()  {
-       return currentManualRoute.removeLastSegment();
+    public StarDisplayRecord removeLastSegment() {
+        return currentManualRoute.removeLastSegment();
     }
 
     /**
