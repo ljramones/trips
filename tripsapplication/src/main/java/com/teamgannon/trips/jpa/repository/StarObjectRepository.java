@@ -107,6 +107,14 @@ public interface StarObjectRepository
      */
     long countByDataSetNameAndDistanceIsLessThanEqual(String dataSetName, double limitDistance);
 
+    /**
+     * get a count on the number of stars in this data set
+     *
+     * @param dataSetName name of the datset
+     * @return the count
+     */
+    long countByDataSetName(String dataSetName);
+
     List<StarObject> findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
             String dataSetName,
             double xg,

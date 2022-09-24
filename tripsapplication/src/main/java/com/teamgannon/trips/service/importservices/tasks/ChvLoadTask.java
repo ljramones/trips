@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service.importservices.tasks;
 
-import com.teamgannon.trips.dialogs.dataset.Dataset;
-import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;

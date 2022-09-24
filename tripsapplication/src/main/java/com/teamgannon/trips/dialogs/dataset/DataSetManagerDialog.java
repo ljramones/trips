@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.dataset;
 
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
+import com.teamgannon.trips.dialogs.dataset.model.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
@@ -258,6 +259,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
 
     private void exportDB(ActionEvent actionEvent) {
+
         Optional<ButtonType> result = showConfirmationAlert("Main Pane", "", "You want to export this dataset");
         if ((result.isPresent()) && (result.get() == ButtonType.OK)) {
             if (selectedDataset != null) {

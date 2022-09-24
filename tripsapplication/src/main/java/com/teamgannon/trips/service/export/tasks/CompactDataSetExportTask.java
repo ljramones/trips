@@ -1,6 +1,6 @@
 package com.teamgannon.trips.service.export.tasks;
 
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;

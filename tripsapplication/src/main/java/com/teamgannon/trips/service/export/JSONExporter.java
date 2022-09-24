@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service.export;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.StatusUpdaterListener;

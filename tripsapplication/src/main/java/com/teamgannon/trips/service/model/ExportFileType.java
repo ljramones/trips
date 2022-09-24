@@ -3,7 +3,9 @@ package com.teamgannon.trips.service.model;
 public enum ExportFileType {
 
     CSV("csv"),
-    JSON("json");
+
+    JSON("json"),
+    COMPACT("cpt");
 
     private final String fileType;
 

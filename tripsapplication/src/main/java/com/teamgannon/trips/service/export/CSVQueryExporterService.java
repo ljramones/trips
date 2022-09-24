@@ -1,9 +1,7 @@
 package com.teamgannon.trips.service.export;
 
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -15,15 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.data.domain.Page;
 
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j

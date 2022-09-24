@@ -1,14 +1,13 @@
 package com.teamgannon.trips.dialogs.dataset;
 
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.model.ExportFileType;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -29,10 +28,17 @@ public class ExportDialog extends Dialog<ExportOptions> {
     private final TextField fileNameTextField = new TextField();
     private final DataSetDescriptor selectedDataSet;
 
+    private ComboBox<ExportFileType> exportChoice = new ComboBox<>();
+
+
     public ExportDialog(DataSetDescriptor selectedDataSet) {
         this.selectedDataSet = selectedDataSet;
+        this.setWidth(700);
 
-        this.setTitle("Export as CSV");
+        this.exportChoice.setItems(FXCollections.observableArrayList( ExportFileType.values()));
+        this.exportChoice.getSelectionModel().select(ExportFileType.COMPACT);
+
+        this.setTitle("Export Dataset");
         this.setWidth(600);
 
         VBox vBox = new VBox();
@@ -43,16 +49,17 @@ public class ExportDialog extends Dialog<ExportOptions> {
         gridPane.setHgap(5);
         gridPane.setPrefWidth(450);
 
-        Label exportTypeLabel = new Label("Export as CSV");
+        Label exportTypeLabel = new Label("Export type");
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
         exportTypeLabel.setFont(font);
         gridPane.add(exportTypeLabel, 0, 1);
+        gridPane.add(exportChoice, 1, 1);
 
         gridPane.add(new Label("FileName"), 0, 2);
         fileNameTextField.setPrefWidth(300);
         gridPane.add(fileNameTextField, 1, 2);
 
-        Button fileDialogButton = new Button("Pick file and location");
+        Button fileDialogButton = new Button("Pick file \nand location");
         fileDialogButton.setFont(font);
         gridPane.add(fileDialogButton, 0, 2);
         fileDialogButton.setOnAction(event -> {
@@ -104,7 +111,7 @@ public class ExportDialog extends Dialog<ExportOptions> {
         ExportOptions options = ExportOptions
                 .builder()
                 .doExport(true)
-                .exportFormat(ExportFileType.CSV)
+                .exportFormat(exportChoice.getSelectionModel().getSelectedItem())
                 .fileName(fileNameTextField.getText())
                 .dataset(selectedDataSet)
                 .build();

@@ -1,7 +1,6 @@
 package com.teamgannon.trips.service.export.tasks;
 
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.export.ExportResults;
