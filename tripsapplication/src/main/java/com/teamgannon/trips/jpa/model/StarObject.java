@@ -1,6 +1,6 @@
 package com.teamgannon.trips.jpa.model;
 
-import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
@@ -176,7 +176,7 @@ public class StarObject implements Serializable {
 
     /**
      * the star's radial velocity
-     * Radial velocity from Sol in km/year
+     * from Sol in km/year
      */
     private double radialVelocity = 0.0;
 
@@ -498,6 +498,10 @@ public class StarObject implements Serializable {
 
 
     /////////////////  convertors  /////////////
+
+    public String getRawCatalogIdList() {
+        return catalogIdList;
+    }
 
     public List<String> getCatalogIdList() {
         if (catalogIdList == null) {

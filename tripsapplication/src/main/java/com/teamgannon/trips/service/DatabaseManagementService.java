@@ -4,8 +4,9 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
-import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
+import com.teamgannon.trips.file.compact.CompactFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -162,6 +163,15 @@ public class DatabaseManagementService {
         );
     }
 
+    @TrackExecutionTime
+    public @NotNull
+    DataSetDescriptor loadCompactFile(CompactFile compactFile) throws Exception {
+        return DataSetDescriptorFactory.createDataSetDescriptor(
+                dataSetDescriptorRepository,
+                compactFile
+        );
+    }
+
     ///////////////////////////////////////
 
     /**
@@ -304,6 +314,16 @@ public class DatabaseManagementService {
      */
     public long getCountOfDatasetWithinLimit(String datasetName, double distance) {
         return starObjectRepository.countByDataSetNameAndDistanceIsLessThanEqual(datasetName, distance);
+    }
+
+    /**
+     * return the count of the dataset for export
+     *
+     * @param datasetName the dataset name
+     * @return the count
+     */
+    public long getCountOfDataset(String datasetName) {
+        return starObjectRepository.countByDataSetName(datasetName);
     }
 
 
@@ -739,4 +759,12 @@ public class DatabaseManagementService {
         return starObjectRepository.findByConstellationName(constellation);
     }
 
+    /**
+     * used to create a descriptor that we read in
+     *
+     * @param descriptor the descriptor
+     */
+    public void saveDescriptor(DataSetDescriptor descriptor) {
+        dataSetDescriptorRepository.save(descriptor);
+    }
 }

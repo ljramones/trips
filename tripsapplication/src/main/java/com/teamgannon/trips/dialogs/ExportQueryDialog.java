@@ -1,8 +1,8 @@
 package com.teamgannon.trips.dialogs;
 
 import com.teamgannon.trips.config.application.Localization;
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;

@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * The new model for the database
+ * The new model for the dataset descriptor
  * <p>
  * Created by larrymitchell on 2017-03-28.
  */
@@ -32,7 +32,8 @@ import java.util.stream.Collectors;
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class DataSetDescriptor implements Serializable {
+public class
+DataSetDescriptor implements Serializable {
 
     private static final long serialVersionUID = 1132779255908975239L;
 
@@ -107,7 +108,7 @@ public class DataSetDescriptor implements Serializable {
      * this is actually a command separated list of UUIDs
      * we have to convert back and forth between a set of UUIDs and a string on getter and setter methods
      * because although JPA allows lists adn sets through ElementCollection, it is a pain in the ass to use
-     * and completely error prone
+     * and completely error-prone
      */
     @Lob
     private String astrographicDataList;

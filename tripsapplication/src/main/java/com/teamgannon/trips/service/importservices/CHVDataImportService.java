@@ -1,9 +1,9 @@
 package com.teamgannon.trips.service.importservices;
 
-import com.teamgannon.trips.dialogs.dataset.Dataset;
-import com.teamgannon.trips.dialogs.dataset.FileProcessResult;
-import com.teamgannon.trips.dialogs.dataset.ImportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.LoadUpdateListener;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;

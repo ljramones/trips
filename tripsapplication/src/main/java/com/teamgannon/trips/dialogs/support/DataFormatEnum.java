@@ -6,6 +6,7 @@ public enum DataFormatEnum {
 
     CH_VIEW("chview import"),
     CSV("csv import"),
+    CPT("Compact import"),
     JSON("json import");
 
     private final String value;

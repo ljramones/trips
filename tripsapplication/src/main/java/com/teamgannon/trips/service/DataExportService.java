@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service;
 
-import com.teamgannon.trips.dialogs.dataset.ExportOptions;
-import com.teamgannon.trips.dialogs.dataset.ExportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
@@ -36,6 +36,8 @@ public class DataExportService {
     private final @NotNull CSVQueryExporterService csvQueryExporterService;
     private final @NotNull CSVDataSetDataExportService csvDataSetDataExportService;
 
+    private final @NotNull KryoDataExportService kryoDataExportService;
+
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
     private final @NotNull JSONExporter jsonExporter;
@@ -50,6 +52,7 @@ public class DataExportService {
 
         csvQueryExporterService = new CSVQueryExporterService(statusUpdaterListener);
         csvDataSetDataExportService = new CSVDataSetDataExportService(statusUpdaterListener);
+        kryoDataExportService = new KryoDataExportService(statusUpdaterListener);
         jsonExporter = new JSONExporter(statusUpdaterListener);
     }
 
@@ -116,8 +119,30 @@ public class DataExportService {
                 return ExportResult.builder().success(true).build();
             }
 //            case JSON -> jsonExporter.exportAsJson(exportOptions, starObjects);
-        }
+            case COMPACT -> {
+                currentlyRunning.set(true);
+                runningExportService = kryoDataExportService;
+                boolean queued = kryoDataExportService.exportAsCompact(
+                        exportOptions, databaseManagementService,
+                        statusUpdaterListener, importTaskCompleteListener, progressText,
+                        exportProgressBar, cancelExport);
+                if (!queued) {
+                    log.error("failed to start import process");
+                    currentlyRunning.set(false);
+                    runningExportService = null;
+                    kryoDataExportService.reset();
+                    return ExportResult
+                            .builder()
+                            .success(false)
+                            .message(String.format("failed to start the export for %s", exportOptions.getDataset().getDataSetName()))
+                            .build();
 
+                }
+                kryoDataExportService.reset();
+                kryoDataExportService.restart();
+                return ExportResult.builder().success(true).build();
+            }
+        }
 
         return ExportResult.builder().build();
 

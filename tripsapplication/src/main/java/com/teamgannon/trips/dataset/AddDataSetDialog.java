@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dataset;
 
 import com.teamgannon.trips.config.application.Localization;
-import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -141,6 +141,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
 
     private void addChoices() {
         addFormat(DataFormatEnum.CH_VIEW, "chv");
+        addFormat(DataFormatEnum.CPT, "trips.cpt");
         addFormat(DataFormatEnum.CSV, "trips.csv");
         addFormat(DataFormatEnum.JSON, "json");
     }
@@ -249,6 +250,9 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             }
             case CSV -> {
                 return new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
+            }
+            case CPT -> {
+                return new FileChooser.ExtensionFilter("CPT files (*.cpt)", "*.cpt");
             }
             case JSON -> {
                 return new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json");

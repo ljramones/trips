@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dataset.factories;
 
-import com.teamgannon.trips.dialogs.dataset.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
