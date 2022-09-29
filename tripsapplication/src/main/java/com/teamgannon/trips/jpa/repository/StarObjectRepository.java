@@ -3,7 +3,9 @@ package com.teamgannon.trips.jpa.repository;
 import com.teamgannon.trips.jpa.model.StarObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
@@ -27,6 +29,15 @@ public interface StarObjectRepository
      * @return the stars
      */
     Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
+
+    /**
+     * find by an alias for this star
+     *
+     * @param alias the alias to find
+     * @return the stars that matches
+     */
+    @Query("SELECT s FROM STAR_OBJ s JOIN s.aliasList t WHERE t = LOWER(:alias)")
+    List<StarObject> retrieveByAlias(@Param("alias") String alias);
 
     /**
      * find by a list of ids

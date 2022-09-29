@@ -28,6 +28,17 @@ spring:
     init:
       continue-on-error: true
 
+server:
+  servlet:
+    context-path=/employee-management:logging:
+  level:
+    reactor:
+      netty:
+        http:
+          client:
+            HttpClient=DEBUG:
+    org:
+      springframework=DEBUG:
 app:
   title: Terran Republic Interstellar Plotting System (TRIPS)
   version: v0.7.2
@@ -37,3 +48,6 @@ app:
   fileDirectory: files
   programdata: files/programdata/
   scriptDirectory: files/scriptfiles/
+
+
+

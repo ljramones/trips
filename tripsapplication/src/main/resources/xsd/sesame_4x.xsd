@@ -1,0 +1,136 @@
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <!-- Define a few useful data types -->
+    <xs:simpleType name="lon">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+            <xs:maxExclusive value="360"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="lat">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="-90"/>
+            <xs:maxInclusive value="90"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="err">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="sexapos">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9: .]*[+\-][0-9: .]*"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="bibcode">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[12][089][0-9][0-9][A-Za-z][A-Za-z0-9&amp;.]*"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="veqr">
+        <!-- Value, error, quality, reference -->
+        <xs:sequence>
+            <xs:element name="v" type="xs:decimal"/>
+            <!--value-->
+            <xs:element name="e" type="err" minOccurs="0"/>
+            <!--error-->
+            <xs:element name="q" type="xs:token" minOccurs="0"/>
+            <!--Quality, A=best-->
+            <xs:element name="r" type="bibcode" minOccurs="0"/>
+            <!--Reference-->
+        </xs:sequence>
+        <xs:attribute name="band" type="xs:token"/>
+    </xs:complexType>
+    <!-- Proper motion is a bit complex -->
+    <xs:complexType name="pmVector">
+        <!-- Various components of proper motion -->
+        <xs:sequence>
+            <xs:element name="v" type="xs:decimal"/>
+            <!--value-->
+            <xs:element name="e" type="err" minOccurs="0"/>
+            <!--error-->
+            <xs:element name="q" type="xs:token" minOccurs="0"/>
+            <!--Quality, A=best-->
+            <xs:element name="r" type="bibcode" minOccurs="0"/>
+            <!--Reference-->
+            <xs:element name="pa" type="lon"/>
+            <!--Position angle-->
+            <xs:element name="pmRA" type="xs:decimal"/>
+            <!--X component-->
+            <xs:element name="epmRA" type="err" minOccurs="0"/>
+            <!--error-->
+            <xs:element name="pmDE" type="xs:decimal"/>
+            <!--Y component-->
+            <xs:element name="epmDE" type="err" minOccurs="0"/>
+            <!--error-->
+        </xs:sequence>
+    </xs:complexType>
+    <!-- Sesame is the root element -->
+    <xs:element name="Sesame">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- A result from Sesame contains one or more Targets -->
+                <xs:element ref="Target" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <!-- Details about 1 target, with possible solutions from revolvers -->
+    <xs:element name="Target">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- name is the original name given as input -->
+                <xs:element name="name">
+                    <!-- The option could be used for case sensitivity, pattern, ... -->
+                    <xs:complexType>
+                        <xs:simpleContent>
+                            <xs:extension base="xs:string">
+                                <xs:attribute name="option" type="xs:string"/>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="INFO" minOccurs="0" maxOccurs="unbounded" type="xs:string"/>
+                <xs:element name="ERROR" minOccurs="0" maxOccurs="unbounded" type="xs:string"/>
+                <xs:element ref="Resolver" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="option" type="xs:string"/>
+        </xs:complexType>
+    </xs:element>
+    <!-- result contains the sub-elements ra dec name source -->
+    <xs:element name="Resolver">
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="INFO" type="xs:string"/>
+                <xs:element name="ERROR" type="xs:string"/>
+                <xs:element name="oid" type="xs:nonNegativeInteger"/>
+                <xs:element name="otype" type="xs:token"/>
+                <xs:element name="jpos" type="sexapos"/>
+                <!-- accuracy limited to 0.1arcsec -->
+                <xs:element name="jradeg" type="lon"/>
+                <xs:element name="jdedeg" type="lat"/>
+                <xs:element name="refPos" type="bibcode"/>
+                <xs:element name="errRAmas" type="err"/>
+                <xs:element name="errDEmas" type="err"/>
+                <xs:element name="pm" type="pmVector"/>
+
+                <!-- unit="mas/yr" -->
+                <xs:element name="MType" type="xs:token"/>
+                <xs:element name="spType" type="xs:token"/>
+                <xs:element name="spNum" type="xs:token"/>
+                <xs:element name="Vel" type="veqr"/>
+
+                <!-- unit="km/s" -->
+                <xs:element name="z" type="veqr"/>
+                <xs:element name="mag" type="veqr"/>
+                <xs:element name="plx" type="veqr"/>
+
+                <!-- unit="mas" -->
+                <xs:element name="oname" type="xs:string"/>
+                <xs:element name="alias" type="xs:string"/>
+                <xs:element name="nrefs" type="xs:nonNegativeInteger"/>
+            </xs:choice>
+            <xs:attribute name="name" type="xs:string" use="required"/>
+            <xs:attribute name="code" type="xs:string"/>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

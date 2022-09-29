@@ -19,6 +19,7 @@ import com.teamgannon.trips.dialogs.search.*;
 import com.teamgannon.trips.dialogs.search.model.ConstellationSelected;
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.dialogs.sesame.SesameNameResolverDialog;
 import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
 import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
 import com.teamgannon.trips.dialogs.utility.EquatorialToGalacticCoordsDialog;
@@ -154,7 +155,6 @@ public class MainPane implements
      * database management spring component service
      */
     private final DatabaseManagementService databaseManagementService;
-
 
 
     /**
@@ -2197,5 +2197,10 @@ public class MainPane implements
 
     public void showInterstellarSpace(ActionEvent actionEvent) {
         interstellarSpacePane.toFront();
+    }
+
+    public void findInSesame(ActionEvent actionEvent) {
+        SesameNameResolverDialog dialog = new SesameNameResolverDialog();
+        Optional<List<String>> resultOpt = dialog.showAndWait();
     }
 }
