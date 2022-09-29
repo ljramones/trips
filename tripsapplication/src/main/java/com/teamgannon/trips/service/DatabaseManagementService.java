@@ -751,12 +751,56 @@ public class DatabaseManagementService {
         return starObjectRepository.findByCatalogIdListContainsIgnoreCase(catalogId);
     }
 
+    /**
+     * find stars by the common name if it exists
+     *
+     * @param datasetName the dataset name
+     * @param commonName  the common name
+     * @return the stars that match
+     */
     public List<StarObject> findStarsByCommonName(String datasetName, String commonName) {
         return starObjectRepository.findByCommonNameContainsIgnoreCase(commonName);
     }
 
+    /**
+     * find all the stars in a constellation
+     *
+     * @param constellation the constellation
+     * @return the list of stars
+     */
     public List<StarObject> findStarsByConstellation(String constellation) {
         return starObjectRepository.findByConstellationName(constellation);
+    }
+
+    /**
+     * add an alias list to the star
+     *
+     * @param starObjectId the id
+     * @param aliasList    the list of alias names
+     * @return true means we could find the star we want vs false is that we can't find the star
+     */
+    public boolean addAliasToStar(UUID starObjectId, Set<String> aliasList) {
+        Optional<StarObject> starObjectRetOpt = starObjectRepository.findById(starObjectId);
+        if (starObjectRetOpt.isPresent()) {
+            StarObject starObjectRet = starObjectRetOpt.get();
+            starObjectRet.getAliasList().addAll(aliasList);
+            starObjectRepository.save(starObjectRet);
+            return true;
+        } else {
+            log.error("Star: id={} does not exist", starObjectId);
+            return false;
+        }
+    }
+
+    /**
+     * add an alias list to the star
+     *
+     * @param starObject the star to add to
+     * @param aliasList  the alias list
+     * @return true means we could find the star we want vs false is that we can't find the star
+     */
+    public boolean addAliasToStar(StarObject starObject, Set<String> aliasList) {
+        return addAliasToStar(starObject.getId(), aliasList);
     }
 
     /**

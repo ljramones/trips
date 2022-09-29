@@ -48,7 +48,7 @@ public class StarObject implements Serializable {
     public final static String POLITY_NOT_SET = "NOT+SET";
 
     @Serial
-    private static final long serialVersionUID = -5403395729696357381L;
+    private static final long serialVersionUID = -633076232127463398L;
 
     /**
      * match the pattern * nnn Con
@@ -82,6 +82,12 @@ public class StarObject implements Serializable {
      * name to use for display
      */
     private String displayName = "";
+
+    /**
+     * list of alias names for this
+     */
+    @ElementCollection
+    private Set<String> aliasList = new HashSet<>();
 
     /**
      * name of the constellation that this is part of
