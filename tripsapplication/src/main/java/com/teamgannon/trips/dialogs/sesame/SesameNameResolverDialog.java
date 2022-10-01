@@ -23,7 +23,9 @@ import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -161,6 +163,8 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
                     }
                 }
 
+                // sort list
+                Collections.sort(aliasList);
                 log.info("done scanning, alias list=" + aliasList);
                 aliasBox.setText(String.join(",\n", aliasList));
 

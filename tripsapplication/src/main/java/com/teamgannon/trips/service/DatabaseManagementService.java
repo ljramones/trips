@@ -329,7 +329,7 @@ public class DatabaseManagementService {
 
     @TrackExecutionTime
     @Transactional(readOnly = true)
-    public List<StarObject> getStarsBasedOnId(List<UUID> starIdList) {
+    public List<StarObject> getStarsBasedOnId(List<String> starIdList) {
         return starObjectRepository.findByIdIn(starIdList);
     }
 
@@ -416,8 +416,12 @@ public class DatabaseManagementService {
     @TrackExecutionTime
     @Transactional
     public void updateStar(@NotNull StarObject starObject) {
-//        starObject.calculateDisplayScore();
-        starObjectRepository.save(starObject);
+        StarObject object = starObjectRepository.save(starObject);
+        if (starObject.getId().equals(object.getId())) {
+            log.info("same");
+        } else {
+            log.error("not same, org={}, new={}", starObject.getId(), object.getId());
+        }
     }
 
     //////////////////////////
@@ -526,7 +530,7 @@ public class DatabaseManagementService {
 
     @TrackExecutionTime
     @Transactional
-    public void updateNotesOnStar(@NotNull UUID recordId, String notes) {
+    public void updateNotesOnStar(@NotNull String recordId, String notes) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         if (objectOptional.isPresent()) {
             StarObject object = objectOptional.get();
@@ -540,14 +544,14 @@ public class DatabaseManagementService {
     }
 
     @TrackExecutionTime
-    public StarObject getStar(@NotNull UUID recordId) {
+    public StarObject getStar(@NotNull String recordId) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         return objectOptional.orElse(null);
     }
 
     @TrackExecutionTime
     @Transactional
-    public void removeStar(@NotNull UUID recordId) {
+    public void removeStar(@NotNull String recordId) {
         starObjectRepository.deleteById(recordId);
     }
 
@@ -593,6 +597,7 @@ public class DatabaseManagementService {
      * @return the list of matching stars
      */
     @TrackExecutionTime
+    @Transactional
     public @NotNull
     List<StarObject> findStarsWithName(String datasetName, String starName) {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
@@ -779,7 +784,7 @@ public class DatabaseManagementService {
      * @param aliasList    the list of alias names
      * @return true means we could find the star we want vs false is that we can't find the star
      */
-    public boolean addAliasToStar(UUID starObjectId, Set<String> aliasList) {
+    public boolean addAliasToStar(String starObjectId, Set<String> aliasList) {
         Optional<StarObject> starObjectRetOpt = starObjectRepository.findById(starObjectId);
         if (starObjectRetOpt.isPresent()) {
             StarObject starObjectRet = starObjectRetOpt.get();
@@ -810,5 +815,9 @@ public class DatabaseManagementService {
      */
     public void saveDescriptor(DataSetDescriptor descriptor) {
         dataSetDescriptorRepository.save(descriptor);
+    }
+
+    public Optional<StarObject> findId(String id) {
+       return starObjectRepository.findById(id);
     }
 }

@@ -56,10 +56,6 @@
                           text="Choose a star by name from entire dataset"/>
                 <SeparatorMenuItem/>
                 <MenuItem mnemonicParsing="false"
-                          onAction="#findInSesame"
-                          text="lookup a name in the Sesame Name Resolver"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
                           onAction="#editStar"
                           text="Edit star data"/>
                 <MenuItem mnemonicParsing="false"
@@ -196,15 +192,12 @@
                           text="Load/Import Exoplanets .."/>
             </Menu>
             <Menu mnemonicParsing="false"
-                  text="Galactic"
-                  disable="false">
+                  text="Galactic">
                 <MenuItem mnemonicParsing="false"
                           onAction="#showGalacticNeighorhood"
-                          disable="false"
                           text="Show Galactic Neighbourhood .."/>
                 <MenuItem mnemonicParsing="false"
                           onAction="#showInterstellarSpace"
-                          disable="false"
                           text="Go to Interstellar Space .."/>
             </Menu>
             <Menu mnemonicParsing="false"
@@ -226,6 +219,12 @@
                           onAction="#scriptEditing"
                           text="Script Editor"/>
                 <SeparatorMenuItem/>
+            </Menu>
+            <Menu mnemonicParsing="false"
+                  text="Admin">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#findInSesame"
+                          text="lookup a name in the Sesame Name Resolver"/>
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Help">

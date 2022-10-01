@@ -15,8 +15,7 @@ public class StarObjectSerializer extends Serializer<StarObject> {
     public void write(Kryo kryo, Output output, StarObject starObject) {
 
         // UUID
-        output.writeLong(starObject.getId().getMostSignificantBits());
-        output.writeLong(starObject.getId().getLeastSignificantBits());
+        output.writeString(starObject.getId());
 
         // dataset name
         output.writeString(starObject.getDataSetName());
@@ -128,7 +127,7 @@ public class StarObjectSerializer extends Serializer<StarObject> {
         StarObject starObject = new StarObject();
 
         // reconstruct the UUID
-        starObject.setId(new UUID(input.readLong(), input.readLong()));
+        starObject.setId(input.readString());
 
         // dataset
         starObject.setDataSetName(input.readString());

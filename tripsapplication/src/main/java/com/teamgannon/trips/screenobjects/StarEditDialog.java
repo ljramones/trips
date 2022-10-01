@@ -2,6 +2,7 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.utility.SesameResolver;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,6 +16,8 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -65,6 +68,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
     private final TextField gaiaIdTextField = new TextField();
 
+    private final TextArea aliasTextArea = new TextArea();
 
     ///////// fictional Info
     private final TextField polityTextField = new TextField();
@@ -103,7 +107,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final ComboBox<String> milSpaceComboBox = new ComboBox<>();
     private final ComboBox<String> milPlanComboBox = new ComboBox<>();
 
-    private  final CheckBox forceLabel = new CheckBox("Force Label to be seen");
+    private final CheckBox forceLabel = new CheckBox("Force Label to be seen");
 
 
     ////////////////
@@ -550,6 +554,9 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         });
         leftGrid.add(radialVelocityLabel, 1, 12);
 
+        Button updateAliasBtn = new Button("Update Alias List");
+        updateAliasBtn.setOnAction(this::updateAliasList);
+        leftGrid.add(updateAliasBtn, 0, 13, 2, 1);
 
         ////////////////
 
@@ -645,8 +652,23 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         gaiaIdTextField.setText(record.getGaiaId());
         rightGrid.add(gaiaIdTextField, 1, 9);
 
+        // the alias list for the star
+        rightGrid.add(new Label("Alias list"), 0, 10);
+        rightGrid.add(aliasTextArea, 1, 10);
+        if (!record.getAliasList().isEmpty()) {
+            aliasTextArea.setText(String.join(", ", record.getAliasList()));
+        }
+
 
         return mGridPane;
+    }
+
+    private void updateAliasList(ActionEvent actionEvent) {
+        SesameResolver resolver = new SesameResolver();
+        List<String> aliasList = resolver.findAliases(record.getDisplayName());
+        aliasTextArea.setText(String.join(", ", aliasList));
+        record.getAliasList().addAll(aliasList);
+        log.info("record updated");
     }
 
     private void checkMagi() {

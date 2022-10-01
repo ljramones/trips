@@ -10,6 +10,7 @@ import javafx.scene.control.Label;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.python.antlr.ast.Str;
 
 import java.util.*;
 
@@ -20,12 +21,12 @@ public class CurrentPlot {
     /**
      * the lookout for drawn stars
      */
-    private final Map<UUID, Node> starLookup = new HashMap<>();
+    private final Map<String, Node> starLookup = new HashMap<>();
 
     /**
      * a one way map form star id to label of the star
      */
-    private final Map<UUID, Label> starToLabelLookup = new HashMap<>();
+    private final Map<String, Label> starToLabelLookup = new HashMap<>();
 
     /**
      * the dataset descriptor for this plot
@@ -209,7 +210,7 @@ public class CurrentPlot {
      * @param starId the guid for the star
      * @return the star
      */
-    public Node getStar(UUID starId) {
+    public Node getStar(String starId) {
         return starLookup.get(starId);
     }
 
@@ -219,7 +220,7 @@ public class CurrentPlot {
      * @param id   the id of the star
      * @param star the star
      */
-    public void addStar(UUID id, Node star) {
+    public void addStar(String id, Node star) {
         starLookup.put(id, star);
     }
 
@@ -228,7 +229,7 @@ public class CurrentPlot {
      *
      * @return the set of ids
      */
-    public @NotNull Set<UUID> getStarIds() {
+    public @NotNull Set<String> getStarIds() {
         return starLookup.keySet();
     }
 
@@ -250,7 +251,7 @@ public class CurrentPlot {
      * @param starId    the star id
      * @param starLabel the label for the star
      */
-    public void mapLabelToStar(UUID starId, Label starLabel) {
+    public void mapLabelToStar(String starId, Label starLabel) {
         starToLabelLookup.put(starId, starLabel);
     }
 

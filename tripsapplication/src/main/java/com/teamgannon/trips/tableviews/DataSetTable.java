@@ -55,7 +55,7 @@ public class DataSetTable {
     private final TableColumn<StarEditRecord, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarEditRecord, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarEditRecord, String> commentCol = new TableColumn<>("comment");
-    private final Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
+    private final Map<String, StarObject> astrographicObjectMap = new HashMap<>();
     private final DatabaseManagementService databaseManagementService;
     private final String dataSetName;
     private final @NotNull Dialog<String> dialog;
@@ -375,7 +375,7 @@ public class DataSetTable {
      */
     private void addNewDataEntry() {
         StarObject starObject = new StarObject();
-        starObject.setId(UUID.randomUUID());
+        starObject.setId(UUID.randomUUID().toString());
         starObject.setDataSetName(dataSetName);
         StarEditDialog editDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> status = editDialog.showAndWait();
@@ -405,7 +405,7 @@ public class DataSetTable {
      */
     private void removeFromDB(@NotNull StarEditRecord starEditRecord) {
 
-        UUID id = starEditRecord.getId();
+        String id = starEditRecord.getId();
         astrographicObjectMap.remove(id);
 
         // remove from DB

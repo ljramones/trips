@@ -307,7 +307,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         gridPlotManager.rebuildGrid(centerCoordinates, transformer, colorPalette);
     }
 
-    public void highlightStar(UUID starId) {
+    public void highlightStar(String starId) {
         starPlotManager.highlightStar(starId);
     }
 

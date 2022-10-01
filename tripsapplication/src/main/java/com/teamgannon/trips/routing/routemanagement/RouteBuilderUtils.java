@@ -45,7 +45,7 @@ public class RouteBuilderUtils {
      * @param starId the id
      * @return the embedded object
      */
-    public @Nullable StarDisplayRecord getStar(UUID starId) {
+    public @Nullable StarDisplayRecord getStar(String starId) {
         Node star = tripsContext.getCurrentPlot().getStar(starId);
         if (star != null) {
             return (StarDisplayRecord) star.getUserData();

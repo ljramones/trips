@@ -78,7 +78,7 @@ public class AstroSearchQuery {
     private double yMinus;
     private double zMinus;
     private double zPlus;
-    private UUID centrePoint;
+    private String centrePoint;
     private double[] centerCoordinates = new double[3];
     private String centerStar = "Sol";
 

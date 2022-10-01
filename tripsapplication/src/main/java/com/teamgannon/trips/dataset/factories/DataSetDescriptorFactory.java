@@ -67,7 +67,7 @@ public class DataSetDescriptorFactory {
 
         // process all the stellar records from chview and convert to our target objects
         Map<Integer, ChViewRecord> chViewRecordMap = chViewFile.getRecords();
-        Map<UUID, StarObject> astrographicObjectMap = new HashMap<>();
+        Map<String, StarObject> astrographicObjectMap = new HashMap<>();
         double maxDistance = 0;
         progressUpdater.updateTaskInfo("Saving records in database");
         for (Integer recordId : chViewRecordMap.keySet()) {
@@ -105,7 +105,7 @@ public class DataSetDescriptorFactory {
         log.info(message);
         dataSetDescriptor.setDistanceRange(maxDistance);
 
-        // save the data set which is cross referenced to the star records
+        // save the data set which is cross-referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);
 
         log.info("Saved the data set descriptor named: {}", dataset);

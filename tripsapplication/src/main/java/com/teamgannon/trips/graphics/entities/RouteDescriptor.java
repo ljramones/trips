@@ -66,7 +66,7 @@ public class RouteDescriptor {
      * list of ordered routes, min length is 2
      */
     @Builder.Default
-    private @NotNull List<UUID> routeList = new ArrayList<>();
+    private @NotNull List<String> routeList = new ArrayList<>();
 
     /**
      * the list of stars in the route

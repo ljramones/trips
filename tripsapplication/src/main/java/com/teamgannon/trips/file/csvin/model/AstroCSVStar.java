@@ -185,7 +185,7 @@ public class AstroCSVStar {
         try {
             StarObject astro = new StarObject();
 
-            astro.setId(UUID.randomUUID());
+            astro.setId(UUID.randomUUID().toString());
 
             astro.setDataSetName(datasetName);
             astro.setDisplayName(displayName.trim());

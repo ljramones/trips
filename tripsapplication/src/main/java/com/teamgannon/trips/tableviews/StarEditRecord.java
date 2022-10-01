@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 public class StarEditRecord {
 
-    private UUID id;
+    private String id;
 
     private String displayName;
 

@@ -7,7 +7,7 @@ import java.util.UUID;
 @Data
 public class SparseStarRecord {
 
-    private UUID recordId;
+    private String recordId;
 
     private String starName;
 

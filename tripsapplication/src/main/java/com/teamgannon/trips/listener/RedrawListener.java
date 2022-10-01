@@ -11,5 +11,5 @@ public interface RedrawListener {
 
     void recenter(StarDisplayRecord starId);
 
-    void highlightStar(UUID starId);
+    void highlightStar(String starId);
 }

@@ -110,7 +110,7 @@ public class PartialRouteUtils {
      */
     private List<RouteDescriptor> getPartialRoutes(@NotNull Route route) {
         List<RouteDescriptor> routeDescriptorList = new ArrayList<>();
-        Set<UUID> visibleStarList = route.getRouteStars()
+        Set<String> visibleStarList = route.getRouteStars()
                 .stream()
                 .filter(starId -> tripsContext.getCurrentPlot()
                         .getStarLookup()
@@ -132,10 +132,10 @@ public class PartialRouteUtils {
             // need to reset in the loop or a new loop can't start after we mark the first as complete
             boolean newRoute = true;
             boolean routeInProgress = false;
-            List<UUID> routeStars = route.getRouteStars();
+            List<String> routeStars = route.getRouteStars();
             int i = 0;
             while (i < routeStars.size()) {
-                UUID starToMatch = routeStars.get(i);
+                String starToMatch = routeStars.get(i);
                 if (visibleStarList.contains(starToMatch)) {
                     if (i == (routeStars.size() - 1)) {
                         // if this is the last star then skip since there is no segment to join with this one
@@ -143,7 +143,7 @@ public class PartialRouteUtils {
                         continue; // should be end of loop
                     }
                     // get the next star in series and see if its there
-                    UUID nextStar = routeStars.get(i + 1);
+                    String nextStar = routeStars.get(i + 1);
                     if (visibleStarList.contains(nextStar)) {
                         // ok these stars form a segment, so let copy them
                         if (newRoute) {
@@ -246,7 +246,7 @@ public class PartialRouteUtils {
      * @param routeStars      the route stars in the entire route
      * @param i               the current position
      */
-    private void saveStarInRoute(Route route, @NotNull RouteDescriptor routeDescriptor, @NotNull List<UUID> routeStars, int i) {
+    private void saveStarInRoute(Route route, @NotNull RouteDescriptor routeDescriptor, @NotNull List<String> routeStars, int i) {
 
         routeDescriptor.getRouteList().add(routeStars.get(i));
         StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(routeStars.get(i));
