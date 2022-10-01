@@ -10,7 +10,7 @@ import java.util.UUID;
 @Builder
 public class StarDistanceMeasure {
 
-    private UUID starId;
+    private String starId;
 
     private String starName;
 

@@ -1278,7 +1278,7 @@ public class MainPane implements
 
                 log.info("Value chose = {}", findResults.getRecord());
 
-                UUID recordId = findResults.getRecord().getRecordId();
+                String recordId = findResults.getRecord().getRecordId();
                 interstellarSpacePane.highlightStar(recordId);
                 StarObject starObject = databaseManagementService.getStar(recordId);
                 displayStellarProperties(starObject);
@@ -1428,12 +1428,12 @@ public class MainPane implements
     }
 
     @Override
-    public void updateNotesForStar(@NotNull UUID recordId, String notes) {
+    public void updateNotesForStar(@NotNull String recordId, String notes) {
         databaseManagementService.updateNotesOnStar(recordId, notes);
     }
 
     @Override
-    public StarObject getStar(@NotNull UUID starId) {
+    public StarObject getStar(@NotNull String starId) {
         return databaseManagementService.getStar(starId);
     }
 
@@ -1443,7 +1443,7 @@ public class MainPane implements
     }
 
     @Override
-    public void removeStar(@NotNull UUID recordId) {
+    public void removeStar(@NotNull String recordId) {
         databaseManagementService.removeStar(recordId);
     }
 
@@ -1467,7 +1467,7 @@ public class MainPane implements
     }
 
     @Override
-    public void highlightStar(UUID starId) {
+    public void highlightStar(String starId) {
         interstellarSpacePane.highlightStar(starId);
     }
 

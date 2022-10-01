@@ -168,19 +168,24 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
             final StarObject starObject = tableView.getSelectionModel().getSelectedItem();
-            StarEditDialog starEditDialog = new StarEditDialog(starObject);
+            Optional<StarObject> starObjectOptional = databaseManagementService.findId(starObject.getId());
+            if (starObjectOptional.isPresent()) {
+                StarEditDialog starEditDialog = new StarEditDialog(starObjectOptional.get());
 
-            Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
-            if (statusOptional.isPresent()) {
-                StarEditStatus starEditStatus = statusOptional.get();
-                if (starEditStatus.isChanged()) {
-                    // update the database
-                    databaseManagementService.updateStar(starEditStatus.getRecord());
-                    // load data base on were we are
-                    loadData();
+                Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
+                if (statusOptional.isPresent()) {
+                    StarEditStatus starEditStatus = statusOptional.get();
+                    if (starEditStatus.isChanged()) {
+                        // update the database
+                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                        // load database on were we are
+                        loadData();
+                    }
                 }
-            }
 
+            } else {
+                log.error("Could not find star by id:{}, should never happen", starObject.getId());
+            }
         });
 
         final MenuItem deleteSelectedMenuItem = new MenuItem("Delete selected");
@@ -201,7 +206,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      */
     private void removeFromDB(@NotNull StarObject starObject) {
 
-        UUID id = starObject.getId();
+        String id = starObject.getId();
 
         // remove from DB
         databaseManagementService.removeStar(id);
@@ -216,8 +221,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         selectionModel.setSelectionMode(SelectionMode.SINGLE);
         ObservableList<StarObject> selectedItems = selectionModel.getSelectedItems();
 
-        selectedItems.addListener((ListChangeListener<StarObject>) change ->
-                log.info("Selection changed: " + change.getList()));
+        selectedItems.addListener((ListChangeListener<StarObject>) change -> log.info("Selection changed: " + change.getList()));
     }
 
     private void close(ActionEvent actionEvent) {
@@ -228,7 +232,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      * load the data
      */
     private void loadData() {
-
+        tableView.getItems().clear();
         for (StarObject starObject : starObjects) {
             // check for a crap record
             if (starObject.getDisplayName() == null) {

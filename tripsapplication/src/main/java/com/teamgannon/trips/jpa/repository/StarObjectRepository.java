@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Created by larrymitchell on 2017-03-28.
  */
 public interface StarObjectRepository
-        extends PagingAndSortingRepository<StarObject, UUID>, StarObjectRepositoryCustom {
+        extends PagingAndSortingRepository<StarObject, String>, StarObjectRepositoryCustom {
 
     /**
      * find by a list of ids
@@ -28,7 +28,7 @@ public interface StarObjectRepository
      * @param page                 the page to position by
      * @return the stars
      */
-    Page<StarObject> findByIdIn(Collection<UUID> astrographicDataList, Pageable page);
+    Page<StarObject> findByIdIn(Collection<String> astrographicDataList, Pageable page);
 
     /**
      * find by an alias for this star
@@ -45,7 +45,7 @@ public interface StarObjectRepository
      * @param astrographicDataList the list of stars to search for
      * @return the stars
      */
-    List<StarObject> findByIdIn(Collection<UUID> astrographicDataList);
+    List<StarObject> findByIdIn(Collection<String> astrographicDataList);
 
     /**
      * this is the distance from Sol

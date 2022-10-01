@@ -390,7 +390,7 @@ public class RouteManager {
     private RouteDescriptor toRouteDescriptor(@NotNull Route route) {
         RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(route);
         int i = 0;
-        for (UUID id : route.getRouteStars()) {
+        for (String id : route.getRouteStars()) {
             StarDisplayRecord starDisplayRecord = routeBuilderUtils.getStar(id);
             if (starDisplayRecord != null) {
                 routeDescriptor.getRouteList().add(id);

@@ -13,6 +13,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 @Getter
 @Setter
 @ToString
+@DynamicUpdate
 @Entity(name = "STAR_OBJ")
 @Table(indexes = {
         @Index(columnList = "displayName ASC"),
@@ -69,8 +71,7 @@ public class StarObject implements Serializable {
      * id of the object
      */
     @Id
-    @GeneratedValue
-    private UUID id;
+    private String id;
 
     /**
      * the dataset name which we are guaranteeing to be unique
@@ -85,8 +86,10 @@ public class StarObject implements Serializable {
 
     /**
      * list of alias names for this
+     * <p>
+     * EAGER is undesirable but needed because of underlying hibernate lazy load error
      */
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> aliasList = new HashSet<>();
 
     /**
@@ -438,7 +441,7 @@ public class StarObject implements Serializable {
     }
 
     private void init() {
-        id = UUID.randomUUID();
+        id = UUID.randomUUID().toString();
         dataSetName = "not specified";
         realStar = true;
         displayName = "no name";

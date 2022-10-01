@@ -20,7 +20,7 @@ public class StarDisplayRecord {
     /**
      * database Id
      */
-    private UUID recordId;
+    private String recordId;
 
     /**
      * the dataset name which we are guaranteeing to be unique

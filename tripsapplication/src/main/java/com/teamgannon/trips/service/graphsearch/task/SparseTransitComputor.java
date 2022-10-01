@@ -223,7 +223,7 @@ public class SparseTransitComputor {
             double y = random.nextDouble() * 200 * (random.nextBoolean() ? +1 : -1);
             double z = random.nextDouble() * 200 * (random.nextBoolean() ? +1 : -1);
             SparseStarRecord starRecord = new SparseStarRecord();
-            starRecord.setRecordId(UUID.randomUUID());
+            starRecord.setRecordId(UUID.randomUUID().toString());
             starRecord.setStarName(faker.funnyName().name());
             starRecord.setActualCoordinates(new double[]{x, y, z});
             list.add(starRecord);

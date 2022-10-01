@@ -373,8 +373,8 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
                 .build();
     }
 
-    private List<UUID> getRouteStarList(RouteDescriptor route, Map<String, SparseStarRecord> sparseStarRecordList) {
-        List<UUID> routeStars = new ArrayList<>();
+    private List<String> getRouteStarList(RouteDescriptor route, Map<String, SparseStarRecord> sparseStarRecordList) {
+        List<String> routeStars = new ArrayList<>();
         for (String name : route.getNameList()) {
             SparseStarRecord sparseStarRecord = sparseStarRecordList.get(name.trim());
             routeStars.add(sparseStarRecord.getRecordId());

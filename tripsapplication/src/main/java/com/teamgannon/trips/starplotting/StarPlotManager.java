@@ -386,7 +386,7 @@ public class StarPlotManager {
     @TrackExecutionTime
     public @NotNull List<StarDisplayRecord> getCurrentStarsInView() {
         List<StarDisplayRecord> starsInView = new ArrayList<>();
-        for (UUID id : tripsContext.getCurrentPlot().getStarIds()) {
+        for (String id : tripsContext.getCurrentPlot().getStarIds()) {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) tripsContext.getCurrentPlot().getStar(id).getUserData();
             starsInView.add(starDisplayRecord);
         }
@@ -418,7 +418,7 @@ public class StarPlotManager {
         extensionsGroup.getChildren().clear();
     }
 
-    public void highlightStar(UUID starId) {
+    public void highlightStar(String starId) {
         // remove old star
         if (highLightStar != null) {
             stellarDisplayGroup.getChildren().remove(highLightStar);

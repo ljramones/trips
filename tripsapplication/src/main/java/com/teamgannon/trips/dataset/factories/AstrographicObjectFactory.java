@@ -26,7 +26,7 @@ public class AstrographicObjectFactory {
     public static @NotNull StarObject create(@NotNull Dataset dataset, @NotNull ChViewRecord chViewRecord) {
         StarObject starObject = new StarObject();
 
-        starObject.setId(UUID.randomUUID());
+        starObject.setId(UUID.randomUUID().toString());
 
         starObject.setDataSetName(dataset.getName());
 

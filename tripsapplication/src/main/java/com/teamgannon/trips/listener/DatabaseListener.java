@@ -27,7 +27,7 @@ public interface DatabaseListener {
      * @param recordId the id
      * @param notes    the fields field
      */
-    void updateNotesForStar(UUID recordId, String notes);
+    void updateNotesForStar(String recordId, String notes);
 
     /**
      * get a star by UUID
@@ -35,7 +35,7 @@ public interface DatabaseListener {
      * @param starId the id
      * @return the star
      */
-    StarObject getStar(UUID starId);
+    StarObject getStar(String starId);
 
     /**
      * remove the specified star
@@ -49,5 +49,5 @@ public interface DatabaseListener {
      *
      * @param id the id
      */
-    void removeStar(UUID id);
+    void removeStar(String id);
 }
