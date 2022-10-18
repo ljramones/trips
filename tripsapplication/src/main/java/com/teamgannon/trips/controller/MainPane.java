@@ -10,6 +10,8 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
+import com.teamgannon.trips.dialogs.db.CompareDBDialog;
+import com.teamgannon.trips.dialogs.db.DBComparison;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
@@ -114,8 +116,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.*;
@@ -2202,5 +2206,21 @@ public class MainPane implements
     public void findInSesame(ActionEvent actionEvent) {
         SesameNameResolverDialog dialog = new SesameNameResolverDialog();
         Optional<List<String>> resultOpt = dialog.showAndWait();
+    }
+
+    public void compareDB(ActionEvent actionEvent) {
+
+        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+        if (!dataSetDescriptorList.isEmpty()) {
+            List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
+            CompareDBDialog dialog = new CompareDBDialog(databaseManagementService, dataSetNames);
+            Optional<DBComparison> dbComparisonOptional = dialog.showAndWait();
+            if (dbComparisonOptional.isPresent()) {
+                DBComparison dbComparison = dbComparisonOptional.get();
+            }
+        } else {
+            showErrorAlert("Compare Datasets", "There are no datasets in this database!");
+        }
+
     }
 }

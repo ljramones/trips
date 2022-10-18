@@ -225,6 +225,10 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#findInSesame"
                           text="lookup a name in the Sesame Name Resolver"/>
+                <MenuItem mnemonicParsing="=false"
+                          onAction="#compareDB"
+                          text="Compare Databases"
+                />
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Help">
