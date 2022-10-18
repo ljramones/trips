@@ -818,6 +818,18 @@ public class DatabaseManagementService {
     }
 
     public Optional<StarObject> findId(String id) {
-       return starObjectRepository.findById(id);
+        return starObjectRepository.findById(id);
+    }
+
+    @Transactional
+    public List<String> compareStars(String sourceSelection, String targetSelection) {
+        List<String> starsNotFound;
+        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection);
+        starsNotFound = starObjectStream.map(StarObject::getDisplayName)
+                .filter(displayName -> starObjectRepository
+                        .findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, displayName).isEmpty())
+                .collect(Collectors.toList());
+
+        return starsNotFound;
     }
 }

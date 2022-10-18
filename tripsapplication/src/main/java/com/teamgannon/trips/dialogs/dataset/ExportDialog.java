@@ -33,7 +33,6 @@ public class ExportDialog extends Dialog<ExportOptions> {
 
     public ExportDialog(DataSetDescriptor selectedDataSet) {
         this.selectedDataSet = selectedDataSet;
-        this.setWidth(700);
 
         this.exportChoice.setItems(FXCollections.observableArrayList( ExportFileType.values()));
         this.exportChoice.getSelectionModel().select(ExportFileType.COMPACT);
