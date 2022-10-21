@@ -1,6 +1,5 @@
 package com.teamgannon.trips.dialogs.db;
 
-import javafx.scene.control.Dialog;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +9,7 @@ import java.util.Set;
 @Slf4j
 @Data
 @Builder
-public class DBComparison  {
+public class DBComparison {
 
     /**
      * the database we want to compare from
@@ -25,7 +24,7 @@ public class DBComparison  {
     /**
      * this entires in the source database that we didn't find
      */
-    private Set<String> namesNotFound;
+    private Set<DBReference> namesNotFound;
 
     /**
      * did we do a comparison

@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
+import com.teamgannon.trips.dialogs.db.DBReference;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.compact.CompactFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
@@ -822,12 +823,15 @@ public class DatabaseManagementService {
     }
 
     @Transactional
-    public List<String> compareStars(String sourceSelection, String targetSelection) {
-        List<String> starsNotFound;
+    public List<DBReference> compareStars(String sourceSelection, String targetSelection) {
+        List<DBReference> starsNotFound;
         Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection);
-        starsNotFound = starObjectStream.map(StarObject::getDisplayName)
-                .filter(displayName -> starObjectRepository
-                        .findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, displayName).isEmpty())
+
+        starsNotFound = starObjectStream.filter(starObject ->
+                        !starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, starObject.getDisplayName()).isEmpty())
+                .map(
+                        starObject ->
+                                DBReference.builder().id(starObject.getId()).displayName(starObject.getDisplayName()).build())
                 .collect(Collectors.toList());
 
         return starsNotFound;
