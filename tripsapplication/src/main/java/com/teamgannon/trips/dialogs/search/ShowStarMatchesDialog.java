@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
+import com.teamgannon.trips.dialogs.search.model.SingleStarSelection;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -19,13 +20,10 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
-public class ShowStarMatchesDialog extends Dialog<String> {
+public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
 
 
     private final TableView<StarObject> tableView = new TableView<>();
@@ -61,13 +59,17 @@ public class ShowStarMatchesDialog extends Dialog<String> {
         hBox2.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox2);
 
+        Button selectButton = new Button("Select");
+        selectButton.setOnAction(this::select);
+        hBox2.getChildren().add(selectButton);
+
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
 
         this.getDialogPane().setContent(vBox);
 
-        // setup the table structure
+        // set up the table structure
         setupTable();
 
         // load data
@@ -79,8 +81,18 @@ public class ShowStarMatchesDialog extends Dialog<String> {
 
     }
 
+    private void select(ActionEvent actionEvent) {
+
+        StarObject starObject = tableView.getSelectionModel().getSelectedItem();
+        if (starObject != null) {
+            SingleStarSelection singleStarSelection = new SingleStarSelection(true, starObject);
+            setResult(singleStarSelection);
+        }
+    }
+
     private void close(WindowEvent windowEvent) {
-        setResult("dismiss");
+        SingleStarSelection singleStarSelection = new SingleStarSelection(false, null);
+        setResult(singleStarSelection);
     }
 
     private void setupTable() {
@@ -225,7 +237,8 @@ public class ShowStarMatchesDialog extends Dialog<String> {
     }
 
     private void close(ActionEvent actionEvent) {
-        setResult("dismiss");
+        SingleStarSelection singleStarSelection = new SingleStarSelection(false, null);
+        setResult(singleStarSelection);
     }
 
     /**
@@ -379,7 +392,7 @@ public class ShowStarMatchesDialog extends Dialog<String> {
      * resort the list with the current sorting strategy and direction
      */
     private void reSort() {
-        switch (currentSortStrategy) {
+        switch (Objects.requireNonNull(currentSortStrategy)) {
             case NAME -> sortByName(sortDirection);
             case DISTANCE -> sortByDistance(sortDirection);
             case SPECTRA -> sortBySpectra(sortDirection);

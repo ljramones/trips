@@ -276,23 +276,23 @@
         </dependency>
 
         <!-- toxic libs dependencies -->
-        <dependency>
-            <groupId>toxi</groupId>
-            <artifactId>core</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>toxi</groupId>-->
+<!--            <artifactId>core</artifactId>-->
+<!--            <version>1.0.0</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>toxi</groupId>
-            <artifactId>physics</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>toxi</groupId>-->
+<!--            <artifactId>physics</artifactId>-->
+<!--            <version>1.0.0</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>Acme</groupId>
-            <artifactId>acme</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>Acme</groupId>-->
+<!--            <artifactId>acme</artifactId>-->
+<!--            <version>1.0.0</version>-->
+<!--        </dependency>-->
 
         <!-- tracking metrics -->
         <dependency>

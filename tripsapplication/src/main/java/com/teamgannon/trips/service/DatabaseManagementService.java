@@ -91,7 +91,7 @@ public class DatabaseManagementService {
     /**
      * transit settings
      */
-    private TransitSettingsRepository transitSettingsRepository;
+    private final TransitSettingsRepository transitSettingsRepository;
 
     /**
      * constructor
@@ -184,6 +184,30 @@ public class DatabaseManagementService {
     @TrackExecutionTime
     public List<StarObject> getAstrographicObjectsOnQuery(@NotNull SearchContext searchContext) {
         AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
+        List<StarObject> starObjects;
+        if (searchQuery.isRecenter()) {
+            starObjects
+                    = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+                    searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
+                    searchQuery.getXMinus(),
+                    searchQuery.getXPlus(),
+                    searchQuery.getYMinus(),
+                    searchQuery.getYPlus(),
+                    searchQuery.getZMinus(),
+                    searchQuery.getZPlus()
+            );
+
+        } else {
+            starObjects = starObjectRepository.findBySearchQuery(searchQuery);
+        }
+        log.info("New DB Query returns {} stars", starObjects.size());
+        starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        log.info("Filtered by distance Query returns {} stars", starObjects.size());
+        return starObjects;
+    }
+
+    @TrackExecutionTime
+    public List<StarObject> getAstrographicObjectsOnQuery(@NotNull AstroSearchQuery searchQuery, @NotNull SearchContext searchContext) {
         List<StarObject> starObjects;
         if (searchQuery.isRecenter()) {
             starObjects
@@ -356,7 +380,7 @@ public class DatabaseManagementService {
     public List<StarDetailsPersist> getStarDetails() {
         Iterable<StarDetailsPersist> starDetailsPersists = starDetailsPersistRepository.findAll();
         List<StarDetailsPersist> starDetailsPersistList = StreamSupport.stream(starDetailsPersists.spliterator(), false).collect(Collectors.toList());
-        if (starDetailsPersistList.size() == 0) {
+        if (starDetailsPersistList.isEmpty()) {
             StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
             starDisplayPreferences.setDefaults();
             List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();

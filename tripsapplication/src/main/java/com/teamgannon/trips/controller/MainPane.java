@@ -2223,4 +2223,31 @@ public class MainPane implements
         }
 
     }
+
+    /**
+     * find stars related to the selected star
+     *
+     * @param actionEvent an event we don't use.
+     */
+    public void findRelatedStars(ActionEvent actionEvent) {
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindRelatedStarsbyDistance findRelatedStarsbyDistanceDialog = new FindRelatedStarsbyDistance(databaseManagementService, datasetNames, tripsContext.getSearchContext().getDataSetDescriptor());
+        Optional<StarSearchResults> optional = findRelatedStarsbyDistanceDialog.showAndWait();
+        if (optional.isPresent()) {
+            StarSearchResults starSearchResults = optional.get();
+            if (starSearchResults.isStarsFound()) {
+                String datasetName = starSearchResults.getDataSetName();
+                String starName = starSearchResults.getNameToSearch();
+                log.info("name to search: {}", starSearchResults.getNameToSearch());
+//                List<StarObject> starObjects = databaseManagementService.findStarsWithName(datasetName, starName);
+//                log.info("number of stars found ={}", starObjects.size());
+//                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+//                showStarMatchesDialog.showAndWait();
+            }
+        }
+    }
 }

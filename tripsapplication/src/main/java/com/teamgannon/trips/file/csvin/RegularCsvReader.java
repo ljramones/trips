@@ -156,7 +156,7 @@ public class RegularCsvReader {
                 // skip id lineRead[0]
                 // read dataset name
                 .datasetName(dataset.getName())
-                .displayName(testForNull(lineRead, 2, ""))
+                .displayName(reduceSpaces(testForNull(lineRead, 2, "")))
                 .commonName(testForNull(lineRead, 3, ""))
                 .simbadId(testForNull(lineRead, 4, ""))
                 .gaiaId(testForNull(lineRead, 5, ""))
@@ -216,6 +216,11 @@ public class RegularCsvReader {
                 .galacticLongitude(testForNull(lineRead, 59, "0"))
                 .build();
     }
+
+    private String reduceSpaces(String string) {
+        return string.replaceAll("\\s+", " ");
+    }
+
 
     private String testForNull(String[] lineRead, int i, String optional) {
         if (i >= lineRead.length) {
