@@ -1,7 +1,8 @@
 package com.teamgannon.trips.dialogs.search;
 
+import com.teamgannon.trips.dialogs.search.model.MultipleStarSearchResults;
 import com.teamgannon.trips.dialogs.search.model.SingleStarSelection;
-import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.dialogs.search.model.StarDistances;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -26,7 +27,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static java.lang.Double.parseDouble;
 
 @Slf4j
-public class FindRelatedStarsbyDistance extends Dialog<StarSearchResults> {
+public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults> {
 
     // the star we want to search with
     private final TextField starName = new TextField();
@@ -61,7 +62,7 @@ public class FindRelatedStarsbyDistance extends Dialog<StarSearchResults> {
         gridPane.add(datasetLabel, 0, 2);
         gridPane.add(datasets, 1, 2);
 
-        Label distanceLabel = new Label("Please distance from star (in ly): ");
+        Label distanceLabel = new Label("Please distance from star (in ly, must be > 3 ly): ");
         distanceLabel.setFont(font);
         gridPane.add(distanceLabel, 0, 3);
         gridPane.add(distance, 1, 3);
@@ -87,21 +88,26 @@ public class FindRelatedStarsbyDistance extends Dialog<StarSearchResults> {
     }
 
     private void close(WindowEvent windowEvent) {
-        StarSearchResults findResults = StarSearchResults.builder().starsFound(false).build();
+        MultipleStarSearchResults findResults = MultipleStarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
     }
 
     private void searchStarClicked(ActionEvent actionEvent) {
         String nameToSearch = starName.getText();
         String dataSetName = datasets.getValue();
-        try {
-            parseDouble(distance.getText());
-        } catch (NumberFormatException nfe) {
-            showErrorAlert("find star", "You must enter a valid distance");
-            return;
-        }
-        Double distanceToSearch = parseDouble(distance.getText());
+
         if (!nameToSearch.isEmpty()) {
+            double distanceToSearch = 0.0;
+            try {
+                distanceToSearch = parseDouble(distance.getText());
+                if (distanceToSearch < 3.0) {
+                    showErrorAlert("find star", "You must enter a valid distance > 3 light years");
+                    return;
+                }
+            } catch (NumberFormatException nfe) {
+                showErrorAlert("find star", "You must enter a valid distance > 3 ly");
+                return;
+            }
 
             List<StarObject> starObjects = databaseManagementService.findStarsWithName(dataSetName, nameToSearch);
             log.info("number of stars found ={}", starObjects.size());
@@ -113,25 +119,25 @@ public class FindRelatedStarsbyDistance extends Dialog<StarSearchResults> {
                     StarObject starObject = starSelection.get().getStarObject();
                     log.info("star selection ={}", starObject.getDisplayName());
 
-                    return;
+                    List<StarDistances> relatedStars = databaseManagementService.findStarsWithinDistance(dataSetName, starObject, distanceToSearch);
 
-//
-//            StarSearchResults findResults = StarSearchResults
-//                    .builder()
-//                    .starsFound(true)
-//                    .nameToSearch(nameToSearch)
-//                    .dataSetName(dataSetName)
-//                    .build();
-//            setResult(findResults);
+                    MultipleStarSearchResults findResults = MultipleStarSearchResults
+                            .builder()
+                            .starsFound(true)
+                            .nameToSearch(nameToSearch)
+                            .dataSetName(dataSetName)
+                            .starObjects(relatedStars)
+                            .build();
+                    setResult(findResults);
                 }
             }
         } else {
-            showErrorAlert("find star", "You must enter a partial name");
+            showErrorAlert("find star", "You must enter a full or partial name");
         }
     }
 
     private void close(ActionEvent actionEvent) {
-        StarSearchResults findResults = StarSearchResults.builder().starsFound(false).build();
+        MultipleStarSearchResults findResults = MultipleStarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
     }
 }

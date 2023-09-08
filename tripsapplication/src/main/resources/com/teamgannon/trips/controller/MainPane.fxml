@@ -231,8 +231,11 @@
                           text="lookup a name in the Sesame Name Resolver"/>
                 <MenuItem mnemonicParsing="=false"
                           onAction="#compareDB"
-                          text="Compare Databases"
-                />
+                          text="Compare Databases"/>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#Load10ParsecStars"
+                          text="Load 10 Parsec Stars"/>
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Help">

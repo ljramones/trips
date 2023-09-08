@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static com.teamgannon.trips.astrogation.Coordinates.calculateEquatorialCoordinates;
+
 @Slf4j
 public class RegularCsvReader {
 
@@ -126,6 +128,8 @@ public class RegularCsvReader {
             loadStats.incLoopCounter();
             AstroCSVStar star = parseAstroCSVStar(loadStats.getDataSet(), lineRead);
             try {
+
+                // keep track for the max distance
                 double distance = Double.parseDouble(star.getDistance());
                 if (distance > loadStats.getMaxDistance()) {
                     loadStats.setMaxDistance(distance);
@@ -137,6 +141,12 @@ public class RegularCsvReader {
                 StarObject starObject = star.toStarObject();
                 if (starObject != null) {
                     starObject.setDataSetName(loadStats.getDataSet().getName());
+                    // calculate the equatorial coordinates and replace the read in values from the star data in file
+                    double[] coordinates = calculateEquatorialCoordinates(starObject.getRa(), starObject.getDeclination(), starObject.getDistance());
+                    // replace the star values
+                    starObject.setX(coordinates[0]);
+                    starObject.setY(coordinates[1]);
+                    starObject.setZ(coordinates[2]);
                     astroCSVStarSet.add(starObject);
                     loadStats.getCsvFile().incAccepts();
                 } else {

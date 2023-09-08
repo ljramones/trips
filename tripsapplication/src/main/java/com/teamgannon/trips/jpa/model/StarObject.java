@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
         @Index(columnList = "orthoSpectralClass ASC"),
         @Index(columnList = "realStar"),
         @Index(columnList = "commonName ASC"),
+        @Index(columnList = "simbadId ASC"),
+        @Index(columnList = "gaiaId ASC"),
         @Index(columnList = "exoplanets")
 })
 public class StarObject implements Serializable {
@@ -50,7 +52,7 @@ public class StarObject implements Serializable {
     public final static String POLITY_NOT_SET = "NOT+SET";
 
     @Serial
-    private static final long serialVersionUID = -633076232127463398L;
+    private static final long serialVersionUID = -751366073413071183L;
 
     /**
      * match the pattern * nnn Con
@@ -83,6 +85,27 @@ public class StarObject implements Serializable {
      * name to use for display
      */
     private String displayName = "";
+
+    /**
+     * name of the system
+     */
+    private String systemName = "";
+
+    /**
+     * the epoch of the star normally J2000
+     * but in some cases can be J2016
+     */
+    private String epoch = "";
+
+    /**
+     * updated by external gaia data files
+     */
+    private boolean gaiaUpdated = false;
+
+    /**
+     * update date from gaia data files
+     */
+    private String gaiaUpdatedDate = "";
 
     /**
      * list of alias names for this
@@ -419,6 +442,11 @@ public class StarObject implements Serializable {
      * a flag that tells us if this system has exoplanets
      */
     private boolean exoplanets;
+
+    /**
+     * the number of exoplanets
+     */
+    private int numExoplanets;
 
     ///////////////////////
 

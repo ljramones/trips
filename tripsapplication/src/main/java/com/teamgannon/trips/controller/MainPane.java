@@ -12,15 +12,15 @@ import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
 import com.teamgannon.trips.dialogs.db.CompareDBDialog;
 import com.teamgannon.trips.dialogs.db.DBComparison;
+import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsDialog;
+import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsResults;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.dialogs.preferences.ViewPreferencesDialog;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
 import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.dialogs.search.*;
-import com.teamgannon.trips.dialogs.search.model.ConstellationSelected;
-import com.teamgannon.trips.dialogs.search.model.FindResults;
-import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.dialogs.search.model.*;
 import com.teamgannon.trips.dialogs.sesame.SesameNameResolverDialog;
 import com.teamgannon.trips.dialogs.startup.EachTimeStartDialog;
 import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
@@ -114,6 +114,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -2236,18 +2237,103 @@ public class MainPane implements
             return;
         }
         FindRelatedStarsbyDistance findRelatedStarsbyDistanceDialog = new FindRelatedStarsbyDistance(databaseManagementService, datasetNames, tripsContext.getSearchContext().getDataSetDescriptor());
-        Optional<StarSearchResults> optional = findRelatedStarsbyDistanceDialog.showAndWait();
+        Optional<MultipleStarSearchResults> optional = findRelatedStarsbyDistanceDialog.showAndWait();
         if (optional.isPresent()) {
-            StarSearchResults starSearchResults = optional.get();
+            MultipleStarSearchResults starSearchResults = optional.get();
             if (starSearchResults.isStarsFound()) {
-                String datasetName = starSearchResults.getDataSetName();
-                String starName = starSearchResults.getNameToSearch();
+
+                List<StarDistances> starDistancesList = starSearchResults.getStarObjects();
                 log.info("name to search: {}", starSearchResults.getNameToSearch());
-//                List<StarObject> starObjects = databaseManagementService.findStarsWithName(datasetName, starName);
-//                log.info("number of stars found ={}", starObjects.size());
-//                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
-//                showStarMatchesDialog.showAndWait();
+
+                log.info("number of stars found ={}", starDistancesList.size());
+
+                if (starDistancesList.size() < 2) {
+                    showErrorAlert("Find related stars", "No stars found");
+                    return;
+                }
+
+                // generate report
+                String report = createRelatedStarsDistanceReport(starDistancesList);
+
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save Generated Distances of Related Stars to File");
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+                File selectedFile = fileChooser.showSaveDialog(stage);
+
+                if (selectedFile != null) {
+                    try (FileWriter writer = new FileWriter(selectedFile)) {
+                        writer.write(report);
+                    } catch (IOException ex) {
+                        System.err.println("An error occurred while saving the file: " + ex.getMessage());
+                    }
+                }
+
             }
         }
+    }
+
+    private String createRelatedStarsDistanceReport(List<StarDistances> starDistancesList) {
+        StringBuilder string = new StringBuilder();
+        for (StarDistances starDistance : starDistancesList) {
+            StarObject star = starDistance.getStarObject();
+            string.append(String.format("Name = %s, " +
+                            "spectral class = %s, " +
+                            "temperature = %5.1f, " +
+                            "mass = %5.1f," +
+                            "distance from Sol =%5.1f, " +
+                            "declination = %4.1f, " +
+                            "ra = %4.1f, " +
+                            "Simbad id = %s, " +
+                            "coordinates = (%5.1f, %5.1f, %5.1f), " +
+                            "distance = %3.1f ly\n",
+                    star.getDisplayName(),
+                    star.getSpectralClass(),
+                    star.getTemperature(),
+                    star.getMass(),
+                    star.getDistance(),
+                    star.getDeclination(),
+                    star.getRa(),
+                    star.getSimbadId(),
+                    star.getX(),
+                    star.getY(),
+                    star.getZ(),
+                    starDistance.getDistance()));
+        }
+
+        return string.toString();
+    }
+
+    /**
+     * find stars related to the selected star
+     *
+     * @param actionEvent an event we don't use.
+     */
+    public void Load10ParsecStars(ActionEvent actionEvent) {
+        log.info("Load 10 parsec stars");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a File containing the 10 parsec stars volume of space");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Data Files", "*.dat"));
+
+        File selectedFile = fileChooser.showOpenDialog(stage);
+
+        if (selectedFile != null) {
+            List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            if (!dataSetDescriptorList.isEmpty()) {
+                List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
+                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService, dataSetNames);
+                Optional<Load10ParsecStarsResults> optional = dialog.showAndWait();
+                if (optional.isPresent()) {
+                    Load10ParsecStarsResults results = optional.get();
+                    if (results.isStarsLoaded()) {
+                        log.info("stars loaded");
+                    }
+                }
+            } else {
+                showErrorAlert("Load 10 parsec stars", "There are no datasets in this database!");
+            }
+        }
+
+
     }
 }

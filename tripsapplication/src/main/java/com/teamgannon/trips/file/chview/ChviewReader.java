@@ -508,7 +508,7 @@ public class ChviewReader {
             // set the record number
             chViewRecord.setRecordNumber(recordNumber++);
 
-            // first problem is to find boundary of where star record actially starts
+            // first problem is to find boundary of where star record actually starts
             // there might be a proper place name  followed by a star name
             //  OR ... there might not be a star name
             // the stupid developer who write the original program seems to have had

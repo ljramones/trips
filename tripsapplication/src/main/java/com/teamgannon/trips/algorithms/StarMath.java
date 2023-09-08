@@ -40,7 +40,7 @@ public class StarMath {
         );
     }
 
-    public static boolean inSphere(double[] a, double[] b, double distance) throws Exception {
+    public static boolean inSphere(double[] a, double[] b, double distance) {
         double calcDistance = getDistance(a, b);
         return !(calcDistance >= distance);
     }

@@ -2,10 +2,12 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.db.DBReference;
+import com.teamgannon.trips.dialogs.search.model.StarDistances;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.file.compact.CompactFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
@@ -207,7 +209,8 @@ public class DatabaseManagementService {
     }
 
     @TrackExecutionTime
-    public List<StarObject> getAstrographicObjectsOnQuery(@NotNull AstroSearchQuery searchQuery, @NotNull SearchContext searchContext) {
+    public List<StarDistances> getAstrographicObjectsOnQuery(@NotNull AstroSearchQuery searchQuery) {
+        List<StarDistances> starDistances;
         List<StarObject> starObjects;
         if (searchQuery.isRecenter()) {
             starObjects
@@ -225,9 +228,9 @@ public class DatabaseManagementService {
             starObjects = starObjectRepository.findBySearchQuery(searchQuery);
         }
         log.info("New DB Query returns {} stars", starObjects.size());
-        starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        starDistances = filterByDistanceIncludeDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
-        return starObjects;
+        return starDistances;
     }
 
 
@@ -260,6 +263,30 @@ public class DatabaseManagementService {
                 starPosition[2] = object.getZ();
                 if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
                     filterList.add(object);
+                }
+            } catch (Exception e) {
+                log.error("error in finding distance:", e);
+            }
+        });
+        return filterList;
+    }
+
+    private @NotNull
+    List<StarDistances> filterByDistanceIncludeDistance(
+            @NotNull List<StarObject> starObjects,
+            double[] centerCoordinates,
+            double distanceFromCenterStar) {
+        List<StarDistances> filterList = new ArrayList<>();
+        starObjects.forEach(object -> {
+            try {
+                double[] starPosition = new double[3];
+                starPosition[0] = object.getX();
+                starPosition[1] = object.getY();
+                starPosition[2] = object.getZ();
+                double distance = StarMath.getDistance(centerCoordinates, starPosition);
+                if (!(distance >= distanceFromCenterStar)) {
+                    StarDistances starDistance = new StarDistances(object, distance);
+                    filterList.add(starDistance);
                 }
             } catch (Exception e) {
                 log.error("error in finding distance:", e);
@@ -628,6 +655,10 @@ public class DatabaseManagementService {
         return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
     }
 
+    public List<StarObject> findStarWithName(String datasetName, String starName) {
+        return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+    }
+
     @TrackExecutionTime
     public void loadJsonFileSingleDS(ProgressUpdater updater, JsonExportObj jsonExportObj) {
         dataSetDescriptorRepository.save(jsonExportObj.getDescriptor().toDataSetDescriptor());
@@ -859,5 +890,41 @@ public class DatabaseManagementService {
                 .collect(Collectors.toList());
 
         return starsNotFound;
+    }
+
+    public List<StarDistances> findStarsWithinDistance(String dataSetName, StarObject starObject, Double distanceToSearch) {
+        AstroSearchQuery searchQuery = new AstroSearchQuery();
+        searchQuery.setRecenter(true);
+        searchQuery.setCenterStar(starObject.getDisplayName());
+        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(dataSetName);
+        searchQuery.setDescriptor(descriptor);
+        DataSetContext dataSetContext = new DataSetContext(descriptor);
+
+        searchQuery.setDataSetContext(dataSetContext);
+        double[] center = starObject.getCoordinates();
+        searchQuery.setCenterCoordinates(center);
+
+        searchQuery.setUpperDistanceLimit(distanceToSearch);
+
+        double xMinus = center[0] - distanceToSearch;
+        double xPlus = center[0] + distanceToSearch;
+        searchQuery.setXMinus(xMinus);
+        searchQuery.setXPlus(xPlus);
+
+        double yMinus = center[1] - distanceToSearch;
+        double yPlus = center[1] + distanceToSearch;
+        searchQuery.setYMinus(yMinus);
+        searchQuery.setYPlus(yPlus);
+
+        double zMinus = center[2] - distanceToSearch;
+        double zPlus = center[2] + distanceToSearch;
+        searchQuery.setZMinus(zMinus);
+        searchQuery.setZPlus(zPlus);
+
+        return getAstrographicObjectsOnQuery(searchQuery);
+    }
+
+    public List<DataSetDescriptor> getDescriptors() {
+        return dataSetDescriptorRepository.findAllByOrderByDataSetNameAsc();
     }
 }
