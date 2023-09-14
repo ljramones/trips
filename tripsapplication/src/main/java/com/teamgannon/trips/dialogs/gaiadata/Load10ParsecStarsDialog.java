@@ -4,7 +4,6 @@ import com.teamgannon.trips.dialogs.dataset.ComboBoxDatasetCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
-
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -28,8 +27,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private final File selectedFile;
     private final DatabaseManagementService databaseManagementService;
-
-    private final List<String> dataSetNames;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
     private Label recordCountLabel;
@@ -68,6 +65,8 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     private StarRecord currentStarRecord;
     private List<StarRecord> records;
     private List<StarObject> starObjectList;
+    private Button loadStarButton;
+    private Button addStarButton;
 
     /**
      * constructor
@@ -80,7 +79,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
         this.selectedFile = selectedFile;
         this.databaseManagementService = databaseManagementService;
-        this.dataSetNames = dataSetNames;
 
         initializeDialog();
         initializeUIComponents();
@@ -219,9 +217,11 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         vBox.getChildren().addAll(hBox1);
         Button nextButton = new Button("Begin/Next");
         nextButton.setOnAction(this::nextStarClicked);
-        Button loadStarButton = new Button("Update Star in DB");
+        loadStarButton = new Button("Update Star in DB");
+        loadStarButton.setDisable(true);
         loadStarButton.setOnAction(this::replaceStarClicked);
-        Button addStarButton = new Button("Add Star in DB");
+        addStarButton = new Button("Add Star in DB");
+        addStarButton.setDisable(true);
         addStarButton.setOnAction(this::addStarClicked);
 
         hBox1.getChildren().addAll(nextButton, loadStarButton, addStarButton);
@@ -314,10 +314,13 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         starObjectList = getStarObjectsMatchingName(record.getSystemName(), record.getObjName());
 
         if (!starObjectList.isEmpty()) {
+            loadStarButton.setDisable(false);
             updateUIWithRecord(record);
         } else {
+            addStarButton.setDisable(false);
             logAndDisplayError(String.format("Record %d named %s is not in the database\n", recordCount, record.getObjName()));
             updateUIForMissingStar(record);
+            currentStarRecord = record;
         }
     }
 
@@ -334,6 +337,8 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
         // Update the current file record
         currentStarRecord = record;
+        log.info("Current Star Record, at next ==" + currentStarRecord.getObjName());
+
 
         // Update the UI fields with the star details from the loaded record
         starNameLoaded.setText(record.getObjName());
@@ -385,7 +390,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private void logAndDisplayError(String error) {
         textArea.appendText(error);
-       log.error(error);
+        log.error(error);
     }
 
     private void clearStarFields() {
@@ -406,8 +411,11 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void nextStarClicked(ActionEvent actionEvent) {
+        addStarButton.setDisable(true);
+        loadStarButton.setDisable(true);
         if (!starsLoaded) {
             records = load10PcFile.loadFile(selectedFile);
+            starsLoaded = true;
         }
 
         for (; recordCount < records.size(); recordCount++) {
@@ -418,6 +426,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
                 handleStarType(record);
                 return;
             } else {
+                currentStarRecord = null;
                 logAndDisplayError(String.format("Record %d named %s is not a star, it is a %s\n", recordCount, record.getObjName(), record.getObjType()));
             }
         }
@@ -446,13 +455,19 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void addStarClicked(ActionEvent actionEvent) {
+        if (currentStarRecord == null) {
+            log.error("No star record selected");
+            return;
+        } else {
+            log.info("Current Star Record, before add ==" + currentStarRecord.getObjName());
+        }
         Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, currentStarRecord);
         Optional<Boolean> result = dialog.showAndWait();
         result.ifPresent(this::handleAddStarResult);
     }
 
     private void handleAddStarResult(Boolean aBoolean) {
-       log.info("Add star result: " + aBoolean);
+        log.info("Add star result: " + aBoolean);
     }
 
     private void replaceStarClicked(ActionEvent actionEvent) {

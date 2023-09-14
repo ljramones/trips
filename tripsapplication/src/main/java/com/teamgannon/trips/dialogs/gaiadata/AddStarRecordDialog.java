@@ -10,7 +10,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import lombok.extern.slf4j.Slf4j;
 
+import static com.teamgannon.trips.dialogs.gaiadata.StarObjectUtils.replaceOrAddSubstringStartingWith;
+
+@Slf4j
 public class AddStarRecordDialog extends Dialog<Boolean> {
 
     /**
@@ -216,9 +220,11 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
 
         Label notesLabel = new Label("Notes");
         rightPane.add(notesLabel, 0, 10);
-        TextField notesField = new TextField();
+        TextArea notesField = new TextArea();
+        notesField.setPrefRowCount(4);
+        notesField.setWrapText(true);
         notesField.setText(starRecord.getCom());
-        rightPane.add(notesField, 1, 10);
+        rightPane.add(notesField, 1, 10, 2, 4);
     }
 
     private void dismissClicked(ActionEvent actionEvent) {
@@ -227,11 +233,28 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
 
     private void saveStarClicked(ActionEvent actionEvent) {
         if (starObject != null) {
+            StringBuilder catalogIdList = new StringBuilder();
+            String gjValue = starRecord.getGJ();
+            if (gjValue != null && !gjValue.trim().isEmpty()) {
+                catalogIdList.append(gjValue).append("|");
+            }
+
+            String hdValue = starRecord.getHD();
+            if (hdValue != null && !hdValue.trim().isEmpty()) {
+                catalogIdList.append(hdValue).append("|");
+            }
+
+            String hipValue = starRecord.getHIP();
+            if (hipValue != null && !hipValue.trim().isEmpty()) {
+                catalogIdList.append(hipValue);
+            }
+            starObject.setCatalogIdList(catalogIdList.toString());
+            log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
+
             service.updateStar(starObject);
         }
         setResult(true);
     }
-
 
     private void close(WindowEvent windowEvent) {
         setResult(false);
