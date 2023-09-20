@@ -1,8 +1,8 @@
 "LongCode	"," ShortCode	 ", Code Description
 "Unknown	 ","	 ? 	","	 	 Object of unknown nature"
 "IR	"," IR 	"," 	 Infra-Red source"
-IR>30um," FIR	 ","	 Far-IR source (ëÈ >= 30 åµm)"
-"IR<10um	"," NIR	", Near-IR source (ëÈ < 10 åµm)
+IR>30um," FIR	 ","	 Far-IR source (ï¿½ï¿½ >= 30 ï¿½m)"
+"IR<10um	"," NIR	", Near-IR source (ï¿½ï¿½ < 10 ï¿½m)
 "Red	"," red	 ","	 Very red source"
 "RedExtreme	 ","	 ERO	 ","	 Extremely Red Object"
 Blue," blu	 ", Blue object
@@ -25,7 +25,7 @@ Candidates,"	 ..?	 ","	 Candidate objects"
 "Candidate_Pec*	 ","	 Pec?	 ","	 Possible Peculiar Star"
 "Candidate_YSO	 ","	 Y*?	 ","	 Young Stellar Object Candidate"
 "Candidate_pMS*	 ","	 pr?	 ","	 Pre-main sequence Star Candidate"
-"Candidate_TTau*	 "," TT?	","	 T Tau star Candidate"
+"Candidate_TTau*	 "," TT?	","	 T Tau starPositionDescriptor Candidate"
 "Candidate_C*	 ","	 C*?	 ","	 Possible Carbon Star"
 "Candidate_S*	 ","	 S*?	 ", Possible S Star
 "Candidate_OH	 ","OH?	", Possible Star with envelope of OH/IR type
@@ -36,11 +36,11 @@ Candidates,"	 ..?	 ","	 Candidate objects"
 "Candidate_HB*	 ","	 HB?	", Possible Horizontal Branch Star
 "Candidate_RRLyr	 ","RR?	","	 Possible Star of RR Lyr type"
 "Candidate_Cepheid	 ","Ce?	 ","	 Possible Cepheid"
-"Candidate_RGB*	","	 RB?	 ","	 Possible Red Giant Branch star"
-Candidate_SG*," sg?	 ","	 Possible Supergiant star"
-"Candidate_RSG*	 "," s?r	", Possible Red supergiant star
-"Candidate_YSG*	"," s?y	", Possible Yellow supergiant star
-Candidate_BSG*," s?b	 ", Possible Blue supergiant star
+"Candidate_RGB*	","	 RB?	 ","	 Possible Red Giant Branch starPositionDescriptor"
+Candidate_SG*," sg?	 ","	 Possible Supergiant starPositionDescriptor"
+"Candidate_RSG*	 "," s?r	", Possible Red supergiant starPositionDescriptor
+"Candidate_YSG*	"," s?y	", Possible Yellow supergiant starPositionDescriptor
+Candidate_BSG*," s?b	 ", Possible Blue supergiant starPositionDescriptor
 "Candidate_AGB*	"," AB?	","	 Asymptotic Giant Branch Star candidate"
 "Candidate_LP*	 ","	 LP?	 ", Long Period Variable candidate
 "Candidate_Mi*	 "," Mi?	","	 Mira candidate"
@@ -51,10 +51,10 @@ Candidate_BSG*," s?b	 ", Possible Blue supergiant star
 "Candidate_NS	 ","	 N*?	", Neutron Star Candidate
 "Candidate_BH	 ","BH?	","	 Black Hole Candidate"
 "Candidate_SN*	 ","	 SN?	",SuperNova Candidate
-"Candidate_low-mass*	 ","	 LM?	",Low-mass star candidate
+"Candidate_low-mass*	 ","	 LM?	",Low-mass starPositionDescriptor candidate
 "Candidate_brownD*	 ","	 BD?	 ","	 Brown Dwarf Candidate"
 "multiple_object	 "," mul	","	 Composite object"
-"Cl*?	 "," C?*	 ","	 Possible (open) star cluster"
+"Cl*?	 "," C?*	 ","	 Possible (open) starPositionDescriptor cluster"
 "GlCl?	 "," Gl?	","	 Possible Globular Cluster"
 "Cl*	","	 Cl*	 ","	 Cluster of Stars"
 "GlCl	 "," GlC	 ", Globular Cluster
@@ -62,7 +62,7 @@ Candidate_BSG*," s?b	 ", Possible Blue supergiant star
 "Assoc*	","	 As*	 ", Association of Stars
 "Stream*	 ","St*	 ","	 Stellar Stream"
 "MouvGroup	 ","MGr	 ","	 Moving Group"
-"**	 "," ** 	 ", Double or multiple star
+"**	 "," ** 	 ", Double or multiple starPositionDescriptor
 "EB*	"," EB*	 ","	 Eclipsing binary"
 "EB*Algol	"," Al*	 ", Eclipsing binary of Algol type (detached)
 EB*betLyr,"	 bL*	 ","	 Eclipsing binary of beta Lyr type (semi-detached)"
@@ -107,25 +107,25 @@ HH," HH 	 ","	 Herbig-Haro Object"
 "Pec*	"," Pe*	 ", Peculiar Star
 "HB*	 ","	 HB*	", Horizontal Branch Star
 "YSO	 "," Y*O	 ", Young Stellar Object
-"Ae*	 ","	 Ae*	 ","	 Herbig Ae/Be star"
+"Ae*	 ","	 Ae*	 ","	 Herbig Ae/Be starPositionDescriptor"
 Em*," Em*	 ", Emission-line Star
 "Be*	 ","	 Be*	 ","	 Be Star"
 "BlueStraggler	","	 BS*	 ",Blue Straggler Star
-"RGB*	 "," RG*	", Red Giant Branch star
+"RGB*	 "," RG*	", Red Giant Branch starPositionDescriptor
 "AGB*	 "," AB*	 ",Asymptotic Giant Branch Star (He-burning)
 "C*	 "," C* 	"," 	 Carbon Star"
 "S*	 "," S* 	 "," 	 S Star"
-"SG*	"," sg*	 ","	 Evolved supergiant star"
-"RedSG*	"," s*r	", Red supergiant star
-"YellowSG*	"," s*y	 ",Yellow supergiant star
-"BlueSG*	","s*b	 ","	 Blue supergiant star"
+"SG*	"," sg*	 ","	 Evolved supergiant starPositionDescriptor"
+"RedSG*	"," s*r	", Red supergiant starPositionDescriptor
+"YellowSG*	"," s*y	 ",Yellow supergiant starPositionDescriptor
+"BlueSG*	","s*b	 ","	 Blue supergiant starPositionDescriptor"
 post-AGB*," pA*	 ","	 Post-AGB Star (proto-PN)"
 "WD*	 ","WD*	","	 White Dwarf"
 "pulsWD*	"," ZZ*	 ","	 Pulsating White Dwarf"
-"low-mass*	 "," LM*	 ","	 Low-mass star (M<1solMass)"
+"low-mass*	 "," LM*	 ","	 Low-mass starPositionDescriptor (M<1solMass)"
 "brownD*	 "," BD*	","	 Brown Dwarf (M<0.08solMass)"
 "Neutron*	"," N* 	", Confirmed Neutron Star
-"OH/IR	 "," OH*	 ", OH/IR star
+"OH/IR	 "," OH*	 ", OH/IR starPositionDescriptor
 "CH	 "," CH*	 ","	 Star with envelope of CH type"
 "pMS*	"," pr*	 ", Pre-main sequence Star
 "TTau*	 ","	 TT*	 ","	 T Tau-type Star"
@@ -156,7 +156,7 @@ PulsV*delSct,"	 dS*	 ","	 Variable Star of delta Sct type"
 "deltaCep	","cC*	 ", Classical Cepheid (delta Cep type)
 "gammaDor	"," gD*	 ", Variable Star of gamma Dor type
 "pulsV*SX	 "," SX*	 ",Variable Star of SX Phe type (subdwarf)
-"LPV*	","LP*	", Long-period variable star
+"LPV*	","LP*	", Long-period variable starPositionDescriptor
 "Mira	 ","	 Mi*	", Variable Star of Mira Cet type
 "semi-regV*	","	 sr*	", Semi-regular pulsating Star
 "SN	","	 SN*	",SuperNova

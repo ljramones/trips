@@ -42,7 +42,17 @@ import java.util.regex.Pattern;
         @Index(columnList = "realStar"),
         @Index(columnList = "commonName ASC"),
         @Index(columnList = "simbadId ASC"),
-        @Index(columnList = "gaiaId ASC"),
+        @Index(columnList = "hipCatId ASC"),
+        @Index(columnList = "hdCatId ASC"),
+        @Index(columnList = "glieseCatId ASC"),
+        @Index(columnList = "tycho2CatId ASC"),
+        @Index(columnList = "gaiaDR2CatId ASC"),
+        @Index(columnList = "gaiaDR3CatId ASC"),
+        @Index(columnList = "gaiaEDR3CatId ASC"),
+        @Index(columnList = "twoMassCatId ASC"),
+        @Index(columnList = "csiCatId ASC"),
+        @Index(columnList = "bayerCatId ASC"),
+        @Index(columnList = "flamsteedCatId ASC"),
         @Index(columnList = "exoplanets")
 })
 public class StarObject implements Serializable {
@@ -85,6 +95,11 @@ public class StarObject implements Serializable {
      * name to use for display
      */
     private String displayName = "";
+
+    /**
+     * the star's common name
+     */
+    private String commonName;
 
     /**
      * name of the system
@@ -141,10 +156,95 @@ public class StarObject implements Serializable {
 
     /**
      * Same story. One object has names in many catalogs. The catalogIDs go in an array which can have
-     * one to many entries.
+     * one-to-many entries.
      */
     @Lob
     private String catalogIdList = "";
+
+    /**
+     * the Simbad id
+     */
+    private String simbadId;
+
+    /**
+     * the Bayer catalog id
+     * validated by the BayerChecker based on greek letter for first part
+     * and genitive form of the constellation for the second part
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String bayerCatId = "";
+
+    /**
+     * the gliese catalog id - GJ
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String glieseCatId = "";
+
+    /**
+     * the hipparcos catalog id - HIP
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String hipCatId = "";
+
+    /**
+     * the henry draper catalog id - HD
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String hdCatId = "";
+
+    /**
+     * the flamsteed catalog id
+     * the flamsteed format has a number as the first part
+     * and the genitive form of the constellation as the second part
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String flamsteedCatId = "";
+
+    /**
+     * the Tycho 2 catalog id - TYC2
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String tycho2CatId = "";
+
+    /**
+     * the id in the gaia catalog
+     */
+    private String gaiaDR2CatId;
+
+
+    /**
+     * the Gaia DR3 catalog id - Gaia DR3
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String gaiaDR3CatId = "";
+
+    /**
+     * the Gaia EDR3 catalog id - Gaia EDR3
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String gaiaEDR3CatId = "";
+
+    /**
+     * the 2MASS catalog id - 2MASS
+     * <p>
+     * this is dervied form catalog ids or directly, not read in
+     */
+    private String twoMassCatId = "";
+
+    /**
+     * the CSI catalog id - CSI
+     * <p>
+     * this is derived form catalog ids or directly, not read in
+     */
+    private String csiCatId = "";
 
     /*
      * The cartesian coordinates of where the object is. Heliocentric (Sol at 0,0,0), Epoch J2000.0 the X axis
@@ -157,17 +257,23 @@ public class StarObject implements Serializable {
 
     /**
      * X position, X axis is a line from Sol to the galactic center at that J Date
+     * <p>
+     * this is calculated directly from RA, dec and distance
      */
     private double x = 0.0;
 
     /**
      * Y position, Y axis is perpendicular, through sol, and oriented so that the X and Y axis
      * define the plane of the earth’s orbit
+     * <p>
+     * this is calculated directly from RA, dec and distance
      */
     private double y = 0.0;
 
     /**
      * Z position, Z axis is through Sol at right angles to the XY plane
+     * <p>
+     * this is calculated directly from RA, dec and distance
      */
     private double z = 0.0;
 
@@ -177,27 +283,39 @@ public class StarObject implements Serializable {
     private double radius = 0.0;
 
     /**
-     * expressed as right ascension in HHMMSS
+     * expressed as right ascension in degrees
      */
     private double ra = 0.0;
 
     /**
-     * Proper Motion in RA direction in milli-arcseconds per year
-     */
-    private double pmra = 0.0;
-
-    /**
-     * expressed Declination in DDMMSS
+     * expressed Declination in degrees
      */
     private double declination = 0.0;
 
     /**
-     * Proper Motion in Dec direction in milli-arcseconds per year
+     * galactic latitude
+     */
+    private double galacticLat;
+
+    /**
+     * galactic longitude
+     */
+    private double galacticLong;
+
+    /**
+     * Proper Motion in RA direction in degrees
+     */
+    private double pmra = 0.0;
+
+    /**
+     * Proper Motion in Dec direction in degrees
      */
     private double pmdec = 0.0;
 
     /**
      * the parallax measurement n milli-arc-seconds
+     * <p>
+     * We don't need this, we have the distance measure
      */
     private double parallax = 0.0;
 
@@ -228,6 +346,8 @@ public class StarObject implements Serializable {
 
     /**
      * this is a one character descriptor of spectralClass
+     * <p>
+     * this is derived from spectralClass
      */
     private String orthoSpectralClass;
 
@@ -352,16 +472,6 @@ public class StarObject implements Serializable {
     private String milPlanType;
 
     /**
-     * the star's common name
-     */
-    private String commonName;
-
-    /**
-     * the Simbad id
-     */
-    private String simbadId;
-
-    /**
      * age of the star
      */
     private double age;
@@ -370,21 +480,6 @@ public class StarObject implements Serializable {
      * star metallicity
      */
     private double metallicity;
-
-    /**
-     * galactic lattitude
-     */
-    private double galacticLat;
-
-    /**
-     * galactic longitude
-     */
-    private double galacticLong;
-
-    /**
-     * the id in the gaia catalog
-     */
-    private String gaiaId;
 
     /////////////   Miscellaneous   /////////////////////////////////////
 
@@ -440,6 +535,7 @@ public class StarObject implements Serializable {
 
     /**
      * a flag that tells us if this system has exoplanets
+     * flag is set on read of number of exoplanets
      */
     private boolean exoplanets;
 
@@ -452,11 +548,15 @@ public class StarObject implements Serializable {
 
     /**
      * there are times when we want to ensure that the label is always show and not part of the algorithm for display
+     * <p>
+     * not from file
      */
     private boolean forceLabelToBeShown = false;
 
     /**
      * this is a computed heuristic that tells us whether to show the label on the graphics display or not
+     * <p>
+     * not from file
      */
     private double displayScore = 0;
 
@@ -475,6 +575,7 @@ public class StarObject implements Serializable {
         displayName = "no name";
         source = "no source identified";
         catalogIdList = "NA";
+        epoch = "J2000";
         x = 0;
         y = 0;
         z = 0;
@@ -509,12 +610,22 @@ public class StarObject implements Serializable {
         notes = "initial star file load";
 
         simbadId = "";
+        bayerCatId = "";
+        flamsteedCatId = "";
+        gaiaDR3CatId = "";
+        gaiaEDR3CatId = "";
+        csiCatId = "";
+        twoMassCatId = "";
+        tycho2CatId = "";
+        hipCatId = "";
+        hdCatId = "";
+        glieseCatId = "";
         commonName = "";
         age = 0;
         metallicity = 0;
         galacticLat = 0.0;
         galacticLong = 0.0;
-        gaiaId = "";
+        gaiaDR2CatId = "";
 
         exoplanets = false;
 
@@ -579,58 +690,6 @@ public class StarObject implements Serializable {
 
     /**
      * calculate the display score multiplier
-     * <p>
-     * PLX 3278
-     * |* alf Cen C
-     * |2E 1426.0-6227
-     * |2E  3278
-     * |2RE J142946-624031
-     * |2RE J1429-624
-     * |CCDM J14396-6050C
-     * |CSI-62-14263
-     * |CSV   2142
-     * |Ci 20  861
-     * |GEN# +6.10010551
-     * |GEN# +6.00105721
-     * |GJ   551
-     * |HIC  70890
-     * |HIP  70890
-     * |IRAS 14260-6227
-     * |JP11  5156
-     * |JP11  5155
-     * |JP11  5187
-     * |LFT 1110
-     * |LHS    49
-     * |LPM 526
-     * |LTT  5721
-     * |NAME Proxima Cen
-     * |NAME Proxima
-     * |NAME Proxima Centauri
-     * |NLTT 37460
-     * |PM 14263-6228
-     * |RE J1429-624
-     * |RE J142950-624056
-     * |V* V645 Cen
-     * |Zkh 211
-     * |[AOP94]  6
-     * |[FS2003] 0708
-     * |[GKL99] 301
-     * |[RHG95]  2291
-     * |2MASS J14294291-6240465
-     * |PLX 3278.00
-     * |1E 1425.9-6228
-     * |1ES 1426-62.4
-     * |1RXS J142947.9-624058
-     * |2EUVE J1429-62.6
-     * |EUVE J1429-62.6
-     * |EUVE J1430-62.6
-     * |RX J1429.7-6240
-     * |WDS J14396-6050C
-     * |PMSC 14328-6025C
-     * |Gaia DR2 5853498713160606720
-     * |WISEA J142937.35-624038.3
-     * |GALEX 6387417244251458613
-     * |PM J14297-6240
      *
      * @return the multiplier
      */
@@ -732,6 +791,7 @@ public class StarObject implements Serializable {
     private double calculateBaseScore() {
         int base = 0;
 
+//        log.info("display name = <{}>, orthoSpectralClass = <{}>", displayName, orthoSpectralClass);
         StarModel starModel = new StarCreator().parseSpectral(orthoSpectralClass);
 
         if (starModel.getStellarClass() == null) {
@@ -884,16 +944,6 @@ public class StarObject implements Serializable {
         sparseStarRecord.setActualCoordinates(new double[]{x, y, z});
         return sparseStarRecord;
     }
-
-//    public static void main(String[] args) {
-//        StarObject starObject = new StarObject();
-//        starObject.setCommonName("Some name");
-//        starObject.setOrthoSpectralClass("G");
-//        starObject.setCatalogIdList("PLX 3278|* 345 Cen|* alf Cen C|2E 1426.0-6227|HD werwer|BD+ 234234|BD- 234234|2E  3278|2RE J142946-624031|2RE J1429-624|CCDM J14396-6050C|CSI-62-14263|CSV   2142|Ci 20  861|GEN# +6.10010551|GEN# +6.00105721|GJ   551|HIC  70890|HIP  70890|IRAS 14260-6227|JP11  5156|JP11  5155|JP11  5187|LFT 1110|LHS    49|LPM 526|LTT  5721|NAME Proxima Cen|NAME Proxima|NAME Proxima Centauri|NLTT 37460|PM 14263-6228|RE J1429-624|RE J142950-624056|V* V645 Cen|Zkh 211|[AOP94]  6|[FS2003] 0708|[GKL99] 301|[RHG95]  2291|2MASS J14294291-6240465|PLX 3278.00|1E 1425.9-6228|1ES 1426-62.4|1RXS J142947.9-624058|2EUVE J1429-62.6|EUVE J1429-62.6|EUVE J1430-62.6|RX J1429.7-6240|WDS J14396-6050C|PMSC 14328-6025C|Gaia DR2 5853498713160606720|WISEA J142937.35-624038.3|GALEX 6387417244251458613|PM J14297-6240");
-//        starObject.calculateDisplayScore();
-//        log.info("display score=" + starObject.getDisplayScore());
-//        log.info("done");
-//    }
 
     @Override
     public boolean equals(Object o) {

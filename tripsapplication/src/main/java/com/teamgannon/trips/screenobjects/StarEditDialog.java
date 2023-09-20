@@ -649,7 +649,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         rightGrid.add(magiTextField, 1, 8);
 
         rightGrid.add(new Label("GAIA Id"), 0, 9);
-        gaiaIdTextField.setText(record.getGaiaId());
+        gaiaIdTextField.setText(record.getGaiaDR2CatId());
         rightGrid.add(gaiaIdTextField, 1, 9);
 
         // the alias list for the star
@@ -1155,7 +1155,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         record.setMiscText4(misc4TextField.getText());
         record.setMiscText5(misc5TextField.getText());
 
-        record.setGaiaId(gaiaIdTextField.getText());
+        record.setGaiaDR2CatId(gaiaIdTextField.getText());
 
         double miscNum1 = Double.parseDouble(miscNum1TextField.getText());
         record.setMiscNum1(miscNum1);

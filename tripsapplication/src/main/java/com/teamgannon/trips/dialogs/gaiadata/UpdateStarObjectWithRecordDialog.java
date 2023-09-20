@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.gaiadata;
 
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
@@ -12,21 +13,44 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.teamgannon.trips.dialogs.gaiadata.StarObjectUtils.*;
+import static com.teamgannon.trips.dialogs.gaiadata.CatalogUtils.*;
 
 @Slf4j
 public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
 
 
     private final DatabaseManagementService service;
+    private final DataSetDescriptor dataSetDescriptor;
     private final StarRecord starRecord;
     private final StarObject starObject;
     private VBox vBox;
     private GridPane gridPane;
+    private TextField sysTransferField;
+    private TextField raTransferField;
+    private TextField decTransferField;
+    private TextField distanceTransferField;
+    private TextField spectralTypeTransferField;
+    private TextField xTransferField;
+    private TextField yTransferField;
+    private TextField zTransferField;
+    private TextField numExoplanetsTransferField;
+    private TextField nameTransferField;
+    private TextField epochTransferField;
+    private TextField glieseTransferField;
+    private TextField simbadTransferField;
+    private TextField pmraTransferField;
+    private TextField pmdecTransferField;
+    private TextField rvTransferField;
+    private TextArea notesTransferField;
+    private TextField commonNameTransferField;
 
 
-    public UpdateStarObjectWithRecordDialog(DatabaseManagementService service, StarRecord starRecord, StarObject starObject) {
+    public UpdateStarObjectWithRecordDialog(DatabaseManagementService service,
+                                            DataSetDescriptor dataSetDescriptor,
+                                            StarRecord starRecord,
+                                            StarObject starObject) {
         this.service = service;
+        this.dataSetDescriptor = dataSetDescriptor;
         this.starRecord = starRecord;
         this.starObject = starObject;
 
@@ -87,7 +111,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField nameField = new TextField();
         nameField.setText(starRecord.getObjName());
         Button nameCopyButton = new Button("-->");
-        TextField nameTransferField = new TextField();
+        nameTransferField = new TextField();
         nameTransferField.setText(starObject.getDisplayName());
         nameCopyButton.setOnAction(actionEvent -> {
             nameTransferField.setText(starRecord.getObjName());
@@ -101,7 +125,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         Label raLabel = new Label("RA");
         TextField raField = new TextField();
         Button raCopyButton = new Button("-->");
-        TextField raTransferField = new TextField();
+        raTransferField = new TextField();
         raTransferField.setText(starObject.getRa() + "");
         raCopyButton.setOnAction(actionEvent -> {
             raTransferField.setText(starRecord.getRAdeg() + "");
@@ -117,7 +141,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField decField = new TextField();
         decField.setText(starRecord.getDEdeg() + "");
         Button decCopyButton = new Button("-->");
-        TextField decTransferField = new TextField();
+        decTransferField = new TextField();
         decTransferField.setText(starObject.getDeclination() + "");
         decCopyButton.setOnAction(actionEvent -> {
             decTransferField.setText(starRecord.getDEdeg() + "");
@@ -132,7 +156,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField distanceField = new TextField();
         distanceField.setText(starRecord.getDistance() + "");
         Button distanceCopyButton = new Button("-->");
-        TextField distanceTransferField = new TextField();
+        distanceTransferField = new TextField();
         distanceTransferField.setText(starObject.getDistance() + "");
         distanceCopyButton.setOnAction(actionEvent -> {
             distanceTransferField.setText(starRecord.getDistance() + "");
@@ -147,7 +171,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField spectralTypeField = new TextField();
         spectralTypeField.setText(starRecord.getSpType());
         Button spectralTypeCopyButton = new Button("-->");
-        TextField spectralTypeTransferField = new TextField();
+        spectralTypeTransferField = new TextField();
         spectralTypeTransferField.setText(starObject.getSpectralClass());
         spectralTypeCopyButton.setOnAction(actionEvent -> {
             spectralTypeTransferField.setText(starRecord.getSpType());
@@ -162,7 +186,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField xField = new TextField();
         xField.setText(starRecord.getCoordinates()[0] + "");
         Button xCopyButton = new Button("-->");
-        TextField xTransferField = new TextField();
+        xTransferField = new TextField();
         xTransferField.setText(starObject.getX() + "");
         xCopyButton.setOnAction(actionEvent -> {
             xTransferField.setText(starRecord.getCoordinates()[0] + "");
@@ -177,7 +201,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField yField = new TextField();
         yField.setText(starRecord.getCoordinates()[1] + "");
         Button yCopyButton = new Button("-->");
-        TextField yTransferField = new TextField();
+        yTransferField = new TextField();
         yTransferField.setText(starObject.getY() + "");
         yCopyButton.setOnAction(actionEvent -> {
             yTransferField.setText(starRecord.getCoordinates()[1] + "");
@@ -192,7 +216,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField zField = new TextField();
         zField.setText(starRecord.getCoordinates()[2] + "");
         Button zCopyButton = new Button("-->");
-        TextField zTransferField = new TextField();
+        zTransferField = new TextField();
         zTransferField.setText(starObject.getZ() + "");
         zCopyButton.setOnAction(actionEvent -> {
             zTransferField.setText(starRecord.getCoordinates()[2] + "");
@@ -207,7 +231,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField numExoplanetsField = new TextField();
         numExoplanetsField.setText(starRecord.getNexopl() + "");
         Button numExoplanetsCopyButton = new Button("-->");
-        TextField numExoplanetsTransferField = new TextField();
+        numExoplanetsTransferField = new TextField();
         numExoplanetsTransferField.setText(starObject.getNumExoplanets() + "");
         numExoplanetsCopyButton.setOnAction(actionEvent -> {
             numExoplanetsTransferField.setText(starRecord.getNexopl() + "");
@@ -234,7 +258,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField systemNameField = new TextField();
         systemNameField.setText(starRecord.getSystemName());
         Button sysCopyButton = new Button("-->");
-        TextField sysTransferField = new TextField();
+        sysTransferField = new TextField();
         sysTransferField.setText(starObject.getSystemName());
         sysCopyButton.setOnAction(actionEvent -> {
             sysTransferField.setText(starRecord.getSystemName());
@@ -249,7 +273,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField epochField = new TextField();
         epochField.setText(starRecord.getEpoch() + "");
         Button epochCopyButton = new Button("-->");
-        TextField epochTransferField = new TextField();
+        epochTransferField = new TextField();
         epochTransferField.setText(starObject.getEpoch());
         epochCopyButton.setOnAction(actionEvent -> {
             epochTransferField.setText(starRecord.getEpoch() + "");
@@ -264,7 +288,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField pmraField = new TextField();
         pmraField.setText(starRecord.getPmRA() + "");
         Button pmraCopyButton = new Button("-->");
-        TextField pmraTransferField = new TextField();
+        pmraTransferField = new TextField();
         pmraTransferField.setText(starObject.getPmra() + "");
         pmraCopyButton.setOnAction(actionEvent -> {
             pmraTransferField.setText(starRecord.getPmRA() + "");
@@ -279,7 +303,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField pmdecField = new TextField();
         pmdecField.setText(starRecord.getPmDE() + "");
         Button pmdecCopyButton = new Button("-->");
-        TextField pmdecTransferField = new TextField();
+        pmdecTransferField = new TextField();
         pmdecTransferField.setText(starObject.getPmdec() + "");
         pmdecCopyButton.setOnAction(actionEvent -> {
             pmdecTransferField.setText(starRecord.getPmDE() + "");
@@ -294,7 +318,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField rvField = new TextField();
         rvField.setText(starRecord.getRV() + "");
         Button rvCopyButton = new Button("-->");
-        TextField rvTransferField = new TextField();
+        rvTransferField = new TextField();
         rvTransferField.setText(starObject.getRadialVelocity() + "");
         rvCopyButton.setOnAction(actionEvent -> {
             rvTransferField.setText(starRecord.getRV() + "");
@@ -309,7 +333,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField simbadField = new TextField();
         simbadField.setText(starRecord.getSIMBAD());
         Button simbadCopyButton = new Button("-->");
-        TextField simbadTransferField = new TextField();
+        simbadTransferField = new TextField();
         simbadTransferField.setText(starObject.getSimbadId());
         simbadCopyButton.setOnAction(actionEvent -> {
             simbadTransferField.setText(starRecord.getSIMBAD());
@@ -324,7 +348,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField commonNameField = new TextField();
         commonNameField.setText(starRecord.getCommon());
         Button commonNameCopyButton = new Button("-->");
-        TextField commonNameTransferField = new TextField();
+        commonNameTransferField = new TextField();
         commonNameTransferField.setText(starObject.getCommonName());
         commonNameCopyButton.setOnAction(actionEvent -> {
             commonNameTransferField.setText(starRecord.getCommon());
@@ -339,8 +363,8 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         TextField glieseField = new TextField();
         glieseField.setText(starRecord.getGJ());
         Button glieseCopyButton = new Button("-->");
-        TextField glieseTransferField = new TextField();
-        glieseTransferField.setText(getGlieseId(starObject.getCatalogIdList()));
+        glieseTransferField = new TextField();
+        glieseTransferField.setText(getGlieseId(starObject.getRawCatalogIdList()));
         glieseCopyButton.setOnAction(actionEvent -> {
             glieseTransferField.setText(starRecord.getGJ());
         });
@@ -355,7 +379,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         hdField.setText(starRecord.getHD());
         Button hdCopyButton = new Button("-->");
         TextField hdTransferField = new TextField();
-        hdTransferField.setText(getHDId(starObject.getCatalogIdList()));
+        hdTransferField.setText(getHDId(starObject.getRawCatalogIdList()));
         hdCopyButton.setOnAction(actionEvent -> {
             hdTransferField.setText(starRecord.getHD());
         });
@@ -370,7 +394,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         hipField.setText(starRecord.getHIP());
         Button hipCopyButton = new Button("-->");
         TextField hipTransferField = new TextField();
-        hipTransferField.setText(getHipId(starObject.getCatalogIdList()));
+        hipTransferField.setText(getHipId(starObject.getRawCatalogIdList()));
         hipCopyButton.setOnAction(actionEvent -> {
             hipTransferField.setText(starRecord.getHIP());
         });
@@ -386,7 +410,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         notesField.setPrefRowCount(2);
         notesField.setText(starRecord.getCom());
         Button notesCopyButton = new Button("-->");
-        TextArea notesTransferField = new TextArea();
+        notesTransferField = new TextArea();
         notesTransferField.setPrefRowCount(6);
         notesTransferField.setWrapText(true);
         notesTransferField.setText(starObject.getNotes());
@@ -405,6 +429,27 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
 
     private void updateStarClicked(ActionEvent actionEvent) {
         if (starObject != null) {
+
+            starObject.setDisplayName(nameTransferField.getText());
+            starObject.setSystemName(sysTransferField.getText());
+            starObject.setRa(Double.parseDouble(raTransferField.getText()));
+            starObject.setDeclination(Double.parseDouble(decTransferField.getText()));
+            starObject.setDistance(Double.parseDouble(distanceTransferField.getText()));
+            starObject.setSpectralClass(spectralTypeTransferField.getText());
+            starObject.setOrthoSpectralClass(spectralTypeTransferField.getText().substring(0, 1));
+            starObject.setEpoch(epochTransferField.getText());
+            starObject.setPmra(Double.parseDouble(pmraTransferField.getText()));
+            starObject.setPmdec(Double.parseDouble(pmdecTransferField.getText()));
+            starObject.setRadialVelocity(Double.parseDouble(rvTransferField.getText()));
+            starObject.setSimbadId(simbadTransferField.getText());
+            starObject.setCommonName(commonNameTransferField.getText());
+            starObject.setX(Double.parseDouble(xTransferField.getText()));
+            starObject.setY(Double.parseDouble(yTransferField.getText()));
+            starObject.setZ(Double.parseDouble(zTransferField.getText()));
+            starObject.setNumExoplanets(Integer.parseInt(numExoplanetsTransferField.getText()));
+            starObject.setExoplanets(Integer.parseInt(numExoplanetsTransferField.getText()) > 0);
+            starObject.setNotes(notesTransferField.getText());
+
             // replace the various catalog entries with updates
             String replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(starObject.getRawCatalogIdList(), "GJ", starRecord.getGJ());
             replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(replaceSubstringStartingWith, "HD", starRecord.getHD());
@@ -412,6 +457,8 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
             starObject.setCatalogIdList(replaceSubstringStartingWith);
             starObject.setNotes(starObject.getNotes() + ", " + starRecord.getCom());
             log.info("update: catalog id List: {}", replaceSubstringStartingWith);
+            starObject.setCatalogIdList(replaceSubstringStartingWith);
+            log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
             service.updateStar(starObject);
         }
         setResult(true);

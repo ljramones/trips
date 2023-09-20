@@ -11,6 +11,14 @@ import org.orekit.utils.TimeStampedPVCoordinates;
 @Slf4j
 public class Coordinates {
 
+
+    // Constants for the North Galactic Pole and the Galactic Center in degrees
+    private static final double ALPHA_NGP = 192.85948;
+    private static final double DELTA_NGP = 27.12825;
+    private static final double ALPHA_GC = 266.40510;
+    private static final double THETA = 122.93192;
+
+
     private static final double[][] TRANSFORMATION_MATRIX = {
             {-0.0548755604, -0.8734370902, -0.4838350155},
             {0.4941094279, -0.4448296298, 0.7469822445},
@@ -72,6 +80,29 @@ public class Coordinates {
         double y = distance * Math.cos(dec) * Math.sin(ra);
         double z = distance * Math.sin(dec);
         return new double[]{x, y, z};
+    }
+
+    public static double[] equatorialToGalactic(double ra, double dec) {
+        // Convert input angles from degrees to radians
+        ra = Math.toRadians(ra);
+        dec = Math.toRadians(dec);
+
+        double sinB = Math.sin(Math.toRadians(DELTA_NGP)) * Math.sin(dec) +
+                Math.cos(Math.toRadians(DELTA_NGP)) * Math.cos(dec) *
+                        Math.cos(ra - Math.toRadians(ALPHA_NGP));
+        double b = Math.asin(sinB);
+
+        double cosBLsinLTheta = Math.cos(dec) * Math.sin(ra - Math.toRadians(ALPHA_NGP));
+        double cosBLcosLTheta = Math.sin(dec) - sinB * Math.sin(Math.toRadians(DELTA_NGP));
+
+        double l = THETA + Math.toDegrees(Math.atan2(cosBLsinLTheta, cosBLcosLTheta));
+
+        // Adjust l to be in the range [0°, 360°]
+        if (l < 0) {
+            l += 360;
+        }
+
+        return new double[]{l, Math.toDegrees(b)};
     }
 
     /**

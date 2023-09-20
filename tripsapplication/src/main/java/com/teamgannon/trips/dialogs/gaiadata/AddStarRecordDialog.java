@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.gaiadata;
 
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.event.ActionEvent;
@@ -12,8 +13,6 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.teamgannon.trips.dialogs.gaiadata.StarObjectUtils.replaceOrAddSubstringStartingWith;
-
 @Slf4j
 public class AddStarRecordDialog extends Dialog<Boolean> {
 
@@ -22,6 +21,7 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
      */
     private final DatabaseManagementService service;
 
+    private final DataSetDescriptor dataSetDescriptor;
     /**
      * the star record
      */
@@ -37,6 +37,7 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
      */
     private GridPane gridPane;
 
+
     /**
      * the star object
      */
@@ -45,11 +46,13 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
     /**
      * constructor
      *
-     * @param service    the database service
-     * @param starRecord the star record
+     * @param service           the database service
+     * @param dataSetDescriptor the data set descriptor
+     * @param starRecord        the star record
      */
-    public AddStarRecordDialog(DatabaseManagementService service, StarRecord starRecord) {
+    public AddStarRecordDialog(DatabaseManagementService service, DataSetDescriptor dataSetDescriptor, StarRecord starRecord) {
         this.service = service;
+        this.dataSetDescriptor = dataSetDescriptor;
         this.starRecord = starRecord;
 
         initializeDialog();
@@ -225,6 +228,7 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
         notesField.setWrapText(true);
         notesField.setText(starRecord.getCom());
         rightPane.add(notesField, 1, 10, 2, 4);
+
     }
 
     private void dismissClicked(ActionEvent actionEvent) {
@@ -232,27 +236,54 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
     }
 
     private void saveStarClicked(ActionEvent actionEvent) {
-        if (starObject != null) {
-            StringBuilder catalogIdList = new StringBuilder();
-            String gjValue = starRecord.getGJ();
-            if (gjValue != null && !gjValue.trim().isEmpty()) {
-                catalogIdList.append(gjValue).append("|");
-            }
 
-            String hdValue = starRecord.getHD();
-            if (hdValue != null && !hdValue.trim().isEmpty()) {
-                catalogIdList.append(hdValue).append("|");
-            }
-
-            String hipValue = starRecord.getHIP();
-            if (hipValue != null && !hipValue.trim().isEmpty()) {
-                catalogIdList.append(hipValue);
-            }
-            starObject.setCatalogIdList(catalogIdList.toString());
-            log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
-
-            service.updateStar(starObject);
+        starObject.setDisplayName(starRecord.getObjName());
+        starObject.setSystemName(starRecord.getSystemName());
+        starObject.setRa(starRecord.getRAdeg());
+        starObject.setDeclination(starRecord.getDEdeg());
+        starObject.setDistance(starRecord.getDistance());
+        starObject.setSpectralClass(starRecord.getSpType());
+        if (starRecord.getSpType() != null && !starRecord.getSpType().isEmpty()) {
+            starObject.setSpectralClass(starRecord.getSpType().substring(0, 1));
+        } else {
+            starObject.setSpectralClass("M");
         }
+        starObject.setOrthoSpectralClass(starObject.getSpectralClass().substring(0, 1));
+        starObject.setEpoch(starRecord.getEpoch() + "");
+        starObject.setPmra(starRecord.getPmRA());
+        starObject.setPmdec(starRecord.getPmDE());
+        starObject.setRadialVelocity(starRecord.getRV());
+        starObject.setSimbadId(starRecord.getSIMBAD());
+        starObject.setCommonName(starRecord.getCommon());
+        starObject.setX(starRecord.getCoordinates()[0]);
+        starObject.setY(starRecord.getCoordinates()[1]);
+        starObject.setZ(starRecord.getCoordinates()[2]);
+        starObject.setNumExoplanets(starRecord.getNexopl());
+        starObject.setExoplanets(starRecord.getNexopl() > 0);
+        starObject.setNotes(starRecord.getCom());
+
+        starObject.setDataSetName(dataSetDescriptor.getDataSetName());
+
+        StringBuilder catalogIdList = new StringBuilder();
+        String gjValue = starRecord.getGJ();
+        if (gjValue != null && !gjValue.trim().isEmpty()) {
+            catalogIdList.append(gjValue).append("|");
+        }
+
+        String hdValue = starRecord.getHD();
+        if (hdValue != null && !hdValue.trim().isEmpty()) {
+            catalogIdList.append(hdValue).append("|");
+        }
+
+        String hipValue = starRecord.getHIP();
+        if (hipValue != null && !hipValue.trim().isEmpty()) {
+            catalogIdList.append(hipValue);
+        }
+        starObject.setCatalogIdList(catalogIdList.toString());
+        log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
+
+        service.updateStar(starObject);
+
         setResult(true);
     }
 

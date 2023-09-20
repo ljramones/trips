@@ -29,7 +29,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     private final DatabaseManagementService databaseManagementService;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
-    private Label recordCountLabel;
     private VBox vBox;
     private GridPane gridPane;
 
@@ -68,6 +67,11 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     private Button loadStarButton;
     private Button addStarButton;
 
+
+    private Label currentCounterLabel = new Label("0");
+
+    private Label totalCounterLabel = new Label("?");
+
     /**
      * constructor
      *
@@ -102,7 +106,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the UI components
+     * set up the UI components
      */
     private void initializeUIComponents() {
         // Initialize UI components like descriptorComboBox, starSelector, etc.
@@ -141,7 +145,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the header definitions
+     * set up the header definitions
      */
     private void setupHeaderDefinitions() {
         // Star database entry
@@ -169,7 +173,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the dataset selector
+     * set up the dataset selector
      */
     private void setupUIDataSetSelector() {
         Label dataSetLabel = new Label("Select Dataset");
@@ -208,7 +212,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the control buttons
+     * set up the control buttons
      */
     private void setupUIControlButtons() {
         // first Button box
@@ -240,11 +244,19 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void setupUIStatus() {
-        Label statusLabel = new Label("Status: ");
+        gridPane.add(new Separator(), 0, 4);
+        Label statusLabel = new Label("Current Record");
         statusLabel.setFont(font);
-        gridPane.add(statusLabel, 0, 4);
-        recordCountLabel = new Label("0");
-        gridPane.add(recordCountLabel, 1, 4);
+        gridPane.add(statusLabel, 0, 5);
+        currentCounterLabel.setFont(font);
+        gridPane.add(currentCounterLabel, 1, 5);
+
+        // counters
+        Label totalLabel = new Label("Total Records");
+        totalLabel.setFont(font);
+        gridPane.add(totalLabel, 3, 5);
+        totalCounterLabel.setFont(font);
+        gridPane.add(totalCounterLabel, 4, 5);
     }
 
     private void setupUILoadedRecord() {
@@ -349,9 +361,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         yLoaded.setText(Double.toString(record.getCoordinates()[1]));
         zLoaded.setText(Double.toString(record.getCoordinates()[2]));
 
-        // Update the record count label
-        recordCountLabel.setText(Integer.toString(recordCount));
-
         // Increment the record count for the next iteration
         recordCount++;
     }
@@ -379,9 +388,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         xLoaded.setText(Double.toString(record.getCoordinates()[0]));
         yLoaded.setText(Double.toString(record.getCoordinates()[1]));
         zLoaded.setText(Double.toString(record.getCoordinates()[2]));
-
-        // Update the record count label
-        recordCountLabel.setText(Integer.toString(recordCount));
 
         // Increment the record count for the next iteration
         recordCount++;
@@ -415,10 +421,12 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         loadStarButton.setDisable(true);
         if (!starsLoaded) {
             records = load10PcFile.loadFile(selectedFile);
+            totalCounterLabel.setText(Integer.toString(records.size()));
             starsLoaded = true;
         }
 
         for (; recordCount < records.size(); recordCount++) {
+            currentCounterLabel.setText(Integer.toString(recordCount));
             StarRecord record = records.get(recordCount);
             clearStarFields();
 
@@ -461,24 +469,26 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         } else {
             log.info("Current Star Record, before add ==" + currentStarRecord.getObjName());
         }
-        Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, currentStarRecord);
+        Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord);
         Optional<Boolean> result = dialog.showAndWait();
         result.ifPresent(this::handleAddStarResult);
     }
 
     private void handleAddStarResult(Boolean aBoolean) {
         log.info("Add star result: " + aBoolean);
+        addStarButton.setDisable(true);
     }
 
     private void replaceStarClicked(ActionEvent actionEvent) {
         // the starObject is probably not correct
-        Dialog<Boolean> dialog = new UpdateStarObjectWithRecordDialog(databaseManagementService, currentStarRecord, starObjectList.get(0));
+        Dialog<Boolean> dialog = new UpdateStarObjectWithRecordDialog(databaseManagementService,descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord, starObjectList.get(0));
         Optional<Boolean> result = dialog.showAndWait();
         result.ifPresent(this::handleUpdateStarResult);
     }
 
     private void handleUpdateStarResult(Boolean aBoolean) {
         log.info("Update star result: " + aBoolean);
+        loadStarButton.setDisable(true);
     }
 
     private void close(ActionEvent actionEvent) {

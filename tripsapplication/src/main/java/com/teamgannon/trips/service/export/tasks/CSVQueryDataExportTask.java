@@ -178,7 +178,7 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
                 removeCommas(starObject.getDataSetName()) + ", " +
                 removeCommas(starObject.getDisplayName()) + ", " +
                 removeCommas(starObject.getCommonName()) + ", " +
-                removeCommas(starObject.getGaiaId()) + ", " +
+                removeCommas(starObject.getGaiaDR2CatId()) + ", " +
                 removeCommas(starObject.getSimbadId()) + ", " +
                 removeCommas(starObject.getConstellationName()) + ", " +
                 starObject.getMass() + ", " +

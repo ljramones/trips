@@ -93,27 +93,22 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 "dataSetName," +
                 "displayName," +
                 "commonName," +
-                "gaiaId," +
-                "simbadId," +
+                "System Name," +
+                "Epoch," +
                 "constellationName," +
                 "mass," +
-                "age," +
-                "metallicity," +
+                "notes," +
                 "source," +
                 "catalogIdList," +
-                "X," +
-                "Y," +
-                "Z," +
+                "simbadId," +
                 "radius," +
                 "ra," +
-                "pmra," +
                 "declination," +
+                "pmra," +
                 "pmdec," +
-                "parallax," +
                 "distance," +
                 "radialVelocity," +
                 "spectralClass," +
-                "orthoSpectralClass," +
                 "temperature," +
                 "realStar," +
                 "bprp," +
@@ -136,6 +131,8 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 "productType," +
                 "milSpaceType," +
                 "milPlanType," +
+                "age," +
+                "metallicity," +
                 "miscText1," +
                 "miscText2," +
                 "miscText3," +
@@ -146,39 +143,32 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 "miscNum3," +
                 "miscNum4," +
                 "miscNum5," +
-                "Notes," +
-                "L," +
-                "B" +
+                "numExoplanets" +
                 "\n";
     }
 
     private @NotNull String convertToCSV(@NotNull StarObject starObject) {
 
-        return removeCommas(starObject.getId().toString()) + ", " +
+        return removeCommas(starObject.getId()) + ", " +
                 removeCommas(starObject.getDataSetName()) + ", " +
                 removeCommas(starObject.getDisplayName()) + ", " +
                 removeCommas(starObject.getCommonName()) + ", " +
-                removeCommas(starObject.getGaiaId()) + ", " +
-                removeCommas(starObject.getSimbadId()) + ", " +
+                removeCommas(starObject.getSystemName()) + ", " +
+                removeCommas(starObject.getEpoch()) + ", " +
                 removeCommas(starObject.getConstellationName()) + ", " +
                 starObject.getMass() + ", " +
-                starObject.getAge() + ", " +
-                starObject.getMetallicity() + ", " +
+                removeCommas(starObject.getNotes()) + ", " +
                 removeCommas(starObject.getSource()) + ", " +
                 String.join("~", starObject.getCatalogIdList()) + ", " +
-                starObject.getX() + ", " +
-                starObject.getY() + ", " +
-                starObject.getZ() + ", " +
+                removeCommas(starObject.getSimbadId()) + ", " +
                 starObject.getRadius() + ", " +
                 starObject.getRa() + ", " +
-                starObject.getPmra() + ", " +
                 starObject.getDeclination() + ", " +
+                starObject.getPmra() + ", " +
                 starObject.getPmdec() + ", " +
-                starObject.getParallax() + ", " +
                 starObject.getDistance() + ", " +
                 starObject.getRadialVelocity() + ", " +
                 starObject.getSpectralClass() + ", " +
-                starObject.getOrthoSpectralClass() + ", " +
                 starObject.getTemperature() + ", " +
                 starObject.isRealStar() + ", " +
                 starObject.getBprp() + ", " +
@@ -201,6 +191,8 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 starObject.getProductType() + ", " +
                 starObject.getMilSpaceType() + ", " +
                 starObject.getMilPlanType() + ", " +
+                starObject.getAge() + ", " +
+                starObject.getMetallicity() + ", " +
                 removeCommas(starObject.getMiscText1()) + ", " +
                 removeCommas(starObject.getMiscText2()) + ", " +
                 removeCommas(starObject.getMiscText3()) + ", " +
@@ -211,9 +203,7 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 starObject.getMiscNum3() + ", " +
                 starObject.getMiscNum4() + ", " +
                 starObject.getMiscNum5() + ", " +
-                removeCommas(starObject.getNotes()) + ", " +
-                starObject.getGalacticLat() + ", " +
-                starObject.getGalacticLong() +
+                starObject.getNumExoplanets() +
                 "\n";
     }
 

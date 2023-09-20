@@ -468,6 +468,7 @@ public class DatabaseManagementService {
     @TrackExecutionTime
     @Transactional
     public void updateStar(@NotNull StarObject starObject) {
+        log.info(">>>>updating star={}, name={}, common ={}", starObject.getId(), starObject.getDisplayName(), starObject.getCommonName());
         StarObject object = starObjectRepository.save(starObject);
         if (starObject.getId().equals(object.getId())) {
             log.info("same");

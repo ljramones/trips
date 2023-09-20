@@ -3,6 +3,7 @@ package com.teamgannon.trips.file.csvin.model;
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.stellarmodelling.StarColor;
+import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StellarFactory;
 import javafx.scene.paint.Color;
 import lombok.*;
@@ -17,53 +18,62 @@ import java.util.UUID;
 @Builder
 public class AstroCSVStar {
 
-    public String x;
-    public String y;
-    public String z;
+
     @Getter(value = AccessLevel.NONE)
     @Setter(value = AccessLevel.NONE)
     @Builder.Default
     private @NotNull StellarFactory stellarFactory = new StellarFactory();
+
     private String datasetName;
     private String displayName;
     private String commonName;
+    private String systemName;
+    private String epoch;
     private String simbadId;
-    private String gaiaId;
+    private String bayerCatId;
+    private String glieseCatId;
+    private String hipCatId;
+    private String hdCatId;
+    private String flamsteedCatId;
+    private String tycho2CatId;
+    private String gaiaDR2CatId;
+    private String gaiaDR3CatId;
+    private String gaiaEDR3CatId;
+    private String twoMassCatId;
+    private String csiCatId;
     private String constellationName;
-    private String mass;
-    private String age;
-    private String metallicity;
+    private double mass;
+    private double age;
+    private double metallicity;
     private String notes;
     private String source;
     private String catalogIdList;
     private String radius;
-    private String ra;
-    private String pmra;
-    private String declination;
-    private String pmdec;
+    private double ra;
+    private double pmra;
+    private double declination;
+    private double pmdec;
 
 
-    private String parallax;
-    private String distance;
-    private String radialVelocity;
+    private double distance;
+    private double radialVelocity;
     private String spectralClass;
-    private String orthoSpectralClass;
 
     private String temperature;
     private String realStar;
 
-    private String bprp;
-    private String bpg;
-    private String grp;
-    private String temp;
+    private double bprp;
+    private double bpg;
+    private double grp;
+    private double temp;
 
     private String luminosity;
 
-    private String magu;
-    private String magb;
-    private String magv;
-    private String magr;
-    private String magi;
+    private double magu;
+    private double magb;
+    private double magv;
+    private double magr;
+    private double magi;
 
     private String other;
     private String anomaly;
@@ -166,14 +176,10 @@ public class AstroCSVStar {
     private double miscNum5;
 
     /**
-     * galactic Lat
+     * number of exoplanets
      */
-    private String galacticLattitude;
+    private int numExoplanets;
 
-    /**
-     * galactic long
-     */
-    private String galacticLongitude;
 
 
     /**
@@ -190,49 +196,42 @@ public class AstroCSVStar {
             astro.setDataSetName(datasetName);
             astro.setDisplayName(displayName.trim());
             astro.setCommonName(commonName.trim());
-            astro.setSimbadId(simbadId.trim());
-            astro.setGaiaId(gaiaId.trim());
+            astro.setSystemName(systemName.trim());
+            astro.setEpoch(epoch.trim());
             astro.setConstellationName(constellationName.trim());
-
-            astro.setMass(parseDouble(mass.trim()));
+            astro.setMass(mass);
             astro.setNotes(notes.trim());
             astro.setSource(source.trim());
             astro.setCatalogIdList(catalogIdList);
 
-            astro.setRa(parseDouble(ra.trim()));
-            astro.setDeclination(parseDouble(declination.trim()));
-            astro.setDistance(parseDouble(distance.trim()));
-
-            // if the xyz coordinates aren't defined then calculate them from the RA and dec
-            if (x.trim().isEmpty() && y.trim().isEmpty() && z.trim().isEmpty()) {
-                // calculate form RA and dec
-                calculateXYZ(astro);
-            } else {
-                // xyz are there
-                astro.setX(parseDouble(x.trim()));
-                astro.setY(parseDouble(y.trim()));
-                astro.setZ(parseDouble(z.trim()));
-
-                if (astro.getX() == 0 && astro.getY() == 0 && astro.getZ() == 0 && astro.getDistance() > 0) {
-                    calculateXYZ(astro);
-                }
-            }
-
+            astro.setSimbadId(simbadId.trim());
             astro.setRadius(parseDouble(radius.trim()));
-
-            astro.setPmra(parseDouble(pmra.trim()));
-            astro.setPmdec(parseDouble(pmdec.trim()));
-
-            astro.setParallax(parseDouble(parallax.trim()));
-
-            astro.setRadialVelocity(parseDouble(radialVelocity.trim()));
+            astro.setRa(ra);
+            astro.setDeclination(declination);
+            astro.setPmra(pmra);
+            astro.setPmdec(pmdec);
+            astro.setDistance(distance);
+            astro.setRadialVelocity(radialVelocity);
             astro.setSpectralClass(spectralClass.trim());
-            astro.setOrthoSpectralClass(orthoSpectralClass.trim());
+            astro.setOrthoSpectralClass(spectralClass.trim().substring(0,1));
 
             astro.setTemperature(parseDouble(temperature.trim()));
             astro.setRealStar(Boolean.parseBoolean(realStar.trim()));
 
-            astro.setBprp(parseDouble(bprp.trim()));
+            astro.setBprp(bprp);
+            astro.setBpg(bpg);
+            astro.setGrp(grp);
+
+            astro.setLuminosity(luminosity.trim());
+
+            astro.setMagu(magu);
+            astro.setMagb(magb);
+            astro.setMagv(magv);
+            astro.setMagr(magr);
+            astro.setMagi(magi);
+
+            astro.setOther(Boolean.parseBoolean(other.trim()));
+            astro.setAnomaly(Boolean.parseBoolean(anomaly.trim()));
 
             astro.setPolity(polity);
             astro.setWorldType(worldType);
@@ -243,6 +242,10 @@ public class AstroCSVStar {
             astro.setProductType(productType);
             astro.setMilSpaceType(milSpaceType);
             astro.setMilPlanType(milPlanType);
+
+            astro.setAge(age);
+            astro.setMetallicity(metallicity);
+
 
             astro.setMiscText1(miscText1);
             astro.setMiscText2(miscText2);
@@ -256,37 +259,13 @@ public class AstroCSVStar {
             astro.setMiscNum4(miscNum4);
             astro.setMiscNum5(miscNum5);
 
-            try {
-
-                if (galacticLattitude.isEmpty()) {
-                    astro.setGalacticLat(0);
-                } else {
-                    double galLat = Double.parseDouble(galacticLattitude.trim());
-                    astro.setGalacticLat(galLat);
-                }
-
-                if (galacticLongitude.isEmpty()) {
-                    astro.setGalacticLong(0);
-                } else {
-                    double galLong = Double.parseDouble(galacticLongitude.trim());
-                    astro.setGalacticLong(galLong);
-                }
-
-            } catch (Exception e) {
-                astro.setGalacticLat(0.0);
-                astro.setGalacticLong(0.0);
-            }
-
-            astro.setMiscText5(miscText5);
-
             astro.setMiscNum1(miscNum1);
             astro.setMiscNum2(miscNum2);
             astro.setMiscNum3(miscNum3);
             astro.setMiscNum4(miscNum4);
             astro.setMiscNum5(miscNum5);
 
-            // this appears to slow down import by a lot
-//            astro.calculateDisplayScore();
+            astro.setNumExoplanets(numExoplanets);
 
             return astro;
 
@@ -298,13 +277,6 @@ public class AstroCSVStar {
 
     }
 
-    private void calculateXYZ(StarObject astro) {
-        double[] coordinates = StarMath.getPosition(astro.getRa(), astro.getDeclination(), astro.getDistance());
-        astro.setX(coordinates[0]);
-        astro.setY(coordinates[1]);
-        astro.setZ(coordinates[2]);
-    }
-
     private double parseDouble(String string) {
         if (string.isEmpty()) {
             return 0;
@@ -314,31 +286,6 @@ public class AstroCSVStar {
         } catch (NumberFormatException e) {
             return 0;
         }
-    }
-
-
-    private @NotNull Color getColor(@NotNull StarColor starColor) {
-        String[] colorRGB = starColor.color().split(",");
-        return Color.rgb(
-                Integer.parseInt(colorRGB[0]),
-                Integer.parseInt(colorRGB[1]),
-                Integer.parseInt(colorRGB[2])
-        );
-    }
-
-    private double @NotNull [] parseCoordinate(@NotNull String position) {
-        double[] xyz = new double[3];
-        String numbers = position.substring(1, position.length() - 1);
-        String[] split = numbers.split(",");
-
-        xyz[0] = parseDouble(split[0]);
-        xyz[1] = parseDouble(split[1]);
-        xyz[2] = parseDouble(split[2]);
-        if (xyz[0] == 0.0 && xyz[1] == 0.0 && xyz[2] == 0.0) {
-            log.error("really?");
-        }
-
-        return xyz;
     }
 
 }

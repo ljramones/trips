@@ -3,7 +3,7 @@ package com.teamgannon.trips.service.importservices.tasks;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
-import com.teamgannon.trips.file.csvin.RegularCsvReader;
+import com.teamgannon.trips.file.csvin.RegularStarCatalogCsvReader;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
@@ -18,12 +18,12 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
-    private final RegularCsvReader regularCsvReader;
+    private final RegularStarCatalogCsvReader regularStarCatalogCsvReader;
 
     public CSVLoadTask(DatabaseManagementService databaseManagementService, Dataset loadDataset) {
         this.databaseManagementService = databaseManagementService;
         this.dataSet = loadDataset;
-        this.regularCsvReader = new RegularCsvReader(databaseManagementService);
+        this.regularStarCatalogCsvReader = new RegularStarCatalogCsvReader(databaseManagementService);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
 
         File file = new File(dataset.getFileSelected());
         // read records
-        RegCSVFile regCSVFile = regularCsvReader.loadFile(this, file, dataset);
+        RegCSVFile regCSVFile = regularStarCatalogCsvReader.loadFile(this, file, dataset);
         log.info("finished processing of dataset");
         try {
             if (regCSVFile.isReadSuccess()) {

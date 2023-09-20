@@ -6,8 +6,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.teamgannon.trips.jpa.model.StarObject;
 
-import java.util.UUID;
-
 public class StarObjectSerializer extends Serializer<StarObject> {
 
 
@@ -104,7 +102,7 @@ public class StarObjectSerializer extends Serializer<StarObject> {
         output.writeDouble(starObject.getGalacticLong());
 
         // gaiaId
-        output.writeString(starObject.getGaiaId());
+        output.writeString(starObject.getGaiaDR2CatId());
 
         // miscText1, miscText2, miscText3, miscText4, miscText5
         output.writeString(starObject.getMiscText1());
@@ -216,7 +214,7 @@ public class StarObjectSerializer extends Serializer<StarObject> {
         starObject.setGalacticLong(input.readDouble());
 
         // gaiaId
-        starObject.setGaiaId(input.readString());
+        starObject.setGaiaDR2CatId(input.readString());
 
         // miscText1, miscText2, miscText3, miscText4, miscText5
         starObject.setMiscText1(input.readString());

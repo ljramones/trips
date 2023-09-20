@@ -21,10 +21,10 @@ public class ShowZoomWarning extends Dialog<Boolean> {
 
         String warning =
                 """
-                        This button zooms in (or out) on the set of stars currently selected.
+                        This button zooms in (or out) on the set of starPositionDescriptors currently selected.
                                                
-                        If you want more, or fewer stars, a larger, or smaller radius, go to
-                        View / Select stars to display or press (Some shortcut key) 
+                        If you want more, or fewer starPositionDescriptors, a larger, or smaller radius, go to
+                        View / Select starPositionDescriptors to display or press (Some shortcut key) 
                         """;
 
 
