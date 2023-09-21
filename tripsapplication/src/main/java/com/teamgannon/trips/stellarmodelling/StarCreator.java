@@ -20,6 +20,8 @@ public class StarCreator {
     private final String regBracketsStr= "\\((.*?)\\)";
     Pattern regBracketsPattern = Pattern.compile(regBracketsStr);
 
+    private static final String STELLAR_CLASS = "OBAFGKMLTPQYS";
+
     //private String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|WN|WC|WR|DA|DQ|DB|DZ|DO|DC|DX|C\\-R|C\\-N|C\\-J|C\\-H|C\\-Hd)d(\\.d)";
     private final String classPatternStr = "^(O|B|A|F|G|K|M|L|T|Y|P|Q|Unk|WN|WC|WR|S|D|DA|DQ|DB|DZ|DO|DC|DX|C|C\\-R|C\\-N|C\\-J|C\\-H||C\\-Hd)(\\d(\\.\\d)?)?";
     Pattern classPattern = Pattern.compile(classPatternStr);
@@ -34,6 +36,10 @@ public class StarCreator {
         StarCreator starCreator = new StarCreator();
         StarModel starModel = starCreator.parseSpectral("Sw");
         log.info(starModel.toString());
+    }
+
+    public static boolean isValidStarType(char ch) {
+        return STELLAR_CLASS.contains(Character.toString(ch));
     }
 
     /**

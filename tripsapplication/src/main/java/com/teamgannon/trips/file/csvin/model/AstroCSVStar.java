@@ -213,7 +213,7 @@ public class AstroCSVStar {
             astro.setDistance(distance);
             astro.setRadialVelocity(radialVelocity);
             astro.setSpectralClass(spectralClass.trim());
-            astro.setOrthoSpectralClass(spectralClass.trim().substring(0,1));
+            astro.setOrthoSpectralClass(getOrthoSpectralClass(spectralClass.trim().substring(0,1)));
 
             astro.setTemperature(parseDouble(temperature.trim()));
             astro.setRealStar(Boolean.parseBoolean(realStar.trim()));
@@ -275,6 +275,32 @@ public class AstroCSVStar {
             return null;
         }
 
+    }
+
+    private String getOrthoSpectralClass(String spectralClass) {
+
+        // this should never happen but we hedge our bets
+        if (spectralClass.isEmpty()) {
+            log.error("spectral class cannot be empty");
+            return "M";
+        }
+
+        if (StarCreator.isValidStarType(spectralClass.charAt(0))) {
+            return spectralClass;
+        } else {
+            if (spectralClass.length()>2 && spectralClass.charAt(0) == ('d')) {
+                if (StarCreator.isValidStarType(spectralClass.charAt(1))) {
+                    return spectralClass.substring(1, 2);
+                } else {
+                    return "M";
+                }
+            }
+            if (spectralClass.equals("Unk")) {
+                return "M";
+            }
+        }
+
+        return "M";
     }
 
     private double parseDouble(String string) {

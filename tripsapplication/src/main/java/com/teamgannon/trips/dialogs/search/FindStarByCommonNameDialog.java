@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.search;
 
+import com.teamgannon.trips.dialogs.search.model.CatalogIdEnum;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.event.ActionEvent;
@@ -16,7 +17,9 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 

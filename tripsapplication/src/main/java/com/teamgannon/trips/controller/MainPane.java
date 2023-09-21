@@ -386,9 +386,6 @@ public class MainPane implements
 
     private void setMnemonics() {
         openDatasetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
-        saveMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
-        saveAsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
-        exportDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
         importDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
         quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
@@ -2334,6 +2331,28 @@ public class MainPane implements
             }
         }
 
+
+    }
+
+    public void FindCatalogId(ActionEvent actionEvent) {
+        log.info("Find catalog id");
+        List<String> datasetNames = searchContext.getDataSetNames();
+        if (datasetNames.isEmpty()) {
+            showErrorAlert("Find stars", "No datasets in database, please load first");
+            return;
+        }
+        FindByCatalogIdDialog dialog = new FindByCatalogIdDialog(
+                databaseManagementService,
+                datasetNames,
+                tripsContext.getSearchContext().getDataSetDescriptor());
+        Optional<StarSearchResults> resultsOptional = dialog.showAndWait();
+        if (resultsOptional.isPresent()) {
+            StarSearchResults results = resultsOptional.get();
+            if (results.isStarsFound()) {
+                log.info("found, star found = {}", results.getStarObject());
+
+            }
+        }
 
     }
 }

@@ -162,4 +162,28 @@ public interface StarObjectRepository
 
     List<StarObject> findByConstellationName(String constellationName);
 
+   StarObject findByBayerCatIdAndDataSetName(String bayerId, String dataSetName);
+
+   StarObject findByFlamsteedCatIdAndDataSetName(String flamsteedId, String dataSetName);
+
+   StarObject findByGlieseCatIdAndDataSetName(String glieseId, String dataSetName);
+
+   StarObject findByHipCatIdAndDataSetName(String hipparcosId, String dataSetName);
+
+    StarObject findByHdCatIdAndDataSetName(String henryDraperId, String dataSetName);
+
+    StarObject findByCsiCatIdAndDataSetName(String csiId, String dataSetName);
+
+    StarObject findByTycho2CatIdAndDataSetName(String tycId, String dataSetName);
+
+    StarObject findByTwoMassCatIdAndDataSetName(String twoMassId, String dataSetName);
+
+    StarObject findByGaiaDR2CatIdAndDataSetName(String gaiaDr2Id, String dataSetName);
+
+    StarObject findByGaiaDR3CatIdAndDataSetName(String gaiaDr3Id, String dataSetName);
+
+    StarObject findByGaiaEDR3CatIdAndDataSetName(String gaiaEdr3Id, String dataSetName);
+
+
+
 }

@@ -14,20 +14,15 @@
                   text="File">
                 <MenuItem fx:id="importDataSetMenuItem"
                           onAction="#loadDataSetManager"
-                          text="Import/Load dataset"/>
+                          text="Import/Load or Manage dataset(s)"/>
                 <MenuItem fx:id="openDatasetMenuItem"
                           onAction="#selectActiveDataset"
                           text="Open Dataset..."/>
                 <MenuItem fx:id="saveMenuItem"
                           onAction="#saveDataset"
                           text="Save"/>
-                <MenuItem fx:id="saveAsMenuItem"
-                          onAction="#saveAsDataset"
-                          text="Save As (Create new dataset)"/>
                 <SeparatorMenuItem/>
-                <MenuItem fx:id="exportDataSetMenuItem"
-                          onAction="#exportDataset"
-                          text="Export dataset"/>
+
                 <SeparatorMenuItem/>
                 <MenuItem fx:id="quitMenuItem"
                           onAction="#quit"
@@ -135,6 +130,12 @@
                 <SeparatorMenuItem/>
                 <MenuItem onAction="#onSnapShot"
                           text="Take Snapshot picture of plot"/>
+            </Menu>
+            <Menu mnemonicParsing="false"
+                  text="Search">
+                <MenuItem mnemonicParsing="false"
+                          onAction="#FindCatalogId"
+                          text="Find a star by catalog id"/>
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Tools">

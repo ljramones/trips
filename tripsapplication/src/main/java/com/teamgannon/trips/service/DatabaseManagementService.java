@@ -809,9 +809,57 @@ public class DatabaseManagementService {
         return solarSystemDescription;
     }
 
+    ///////////////////////////////////////////////////////////
+
     public List<StarObject> findStarsWithCatalogId(String datasetName, String catalogId) {
         return starObjectRepository.findByCatalogIdListContainsIgnoreCase(catalogId);
     }
+
+    public StarObject findStarWithBayerId(String datasetName, String bayerId) {
+        return starObjectRepository.findByBayerCatIdAndDataSetName(bayerId, datasetName);
+    }
+
+    public StarObject findStarWithFlamsteedId(String datasetName, String flamsteedId) {
+        return starObjectRepository.findByFlamsteedCatIdAndDataSetName(flamsteedId, datasetName);
+    }
+
+    public StarObject findStarWithGJId(String datasetName, String gjId) {
+        return starObjectRepository.findByGlieseCatIdAndDataSetName(gjId, datasetName);
+    }
+
+    public StarObject findStarWithHDId(String datasetName, String hdId) {
+        return starObjectRepository.findByHdCatIdAndDataSetName(hdId, datasetName);
+    }
+
+    public StarObject findStarWithHipId(String datasetName, String hipId) {
+        return starObjectRepository.findByHipCatIdAndDataSetName(hipId, datasetName);
+    }
+
+    public StarObject findWithCsiId(String datasetName, String csiId) {
+        return starObjectRepository.findByCsiCatIdAndDataSetName(csiId, datasetName);
+    }
+
+    public StarObject findWithTychoId(String datasetName, String tychoId) {
+        return starObjectRepository.findByTycho2CatIdAndDataSetName(tychoId, datasetName);
+    }
+
+    public StarObject findWithTwoMassId(String datasetName, String twoMassId) {
+        return starObjectRepository.findByTwoMassCatIdAndDataSetName(twoMassId, datasetName);
+    }
+
+    public StarObject findWithGaiaDR2Id(String datasetName, String gaiaDr2Id) {
+        return starObjectRepository.findByGaiaDR2CatIdAndDataSetName(gaiaDr2Id, datasetName);
+    }
+
+    public StarObject findWithGaiaDR3Id(String datasetName, String gaiaDr3Id) {
+        return starObjectRepository.findByGaiaDR3CatIdAndDataSetName(gaiaDr3Id, datasetName);
+    }
+
+    public StarObject findWithGaiaEDR3Id(String datasetName, String gaiaEdr3Id) {
+        return starObjectRepository.findByGaiaEDR3CatIdAndDataSetName(gaiaEdr3Id, datasetName);
+    }
+
+    ///////////////////////////////////////////////////////////
 
     /**
      * find stars by the common name if it exists

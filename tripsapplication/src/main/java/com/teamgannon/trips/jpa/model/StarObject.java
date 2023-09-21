@@ -752,7 +752,7 @@ public class StarObject implements Serializable {
         }
 
         // check if any other fictional item is set
-        if (otherFictionalfieldsPresent()) {
+        if (otherFictionalFieldsPresent()) {
             cumulativeTotal += 3;
         }
 
@@ -764,7 +764,7 @@ public class StarObject implements Serializable {
         return cumulativeTotal;
     }
 
-    private boolean otherFictionalfieldsPresent() {
+    private boolean otherFictionalFieldsPresent() {
         if (!worldType.trim().isEmpty()) {
             return true;
         }
@@ -802,9 +802,6 @@ public class StarObject implements Serializable {
         // process harvard spectral class
         if (orthoSpectralClass.length() > 1) {
             StellarType x = starModel.getStellarClass();
-            if (x == null) {
-                log.error("odd");
-            }
             String harvardSpecClass = starModel.getStellarClass().getValue();
 
             switch (harvardSpecClass) {
@@ -846,7 +843,7 @@ public class StarObject implements Serializable {
         // create an idealized star model based on spectral class
         StarCreator starCreator = new StarCreator();
         StarModel starModel;
-        if (!spectralClass.contains("ictional")) {
+        if (!spectralClass.contains("fictional")) {
             starModel = starCreator.parseSpectral(spectralClass);
         } else {
             starModel = starCreator.parseSpectral(orthoSpectralClass);
