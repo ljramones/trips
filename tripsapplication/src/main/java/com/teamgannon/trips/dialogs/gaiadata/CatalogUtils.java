@@ -15,9 +15,9 @@ public class CatalogUtils {
     public static final String GJ = "GJ";
     public static final String TYC2 = "TYC2";
     public static final String TWO_MASS = "2MASS";
-    public static final String GAIADR2 = "GAIA DR2";
-    public static final String GAIADR3 = "GAIA DR3";
-    public static final String GAIAEDR3 = "GAIA EDR3";
+    public static final String GAIADR2 = "Gaia DR2";
+    public static final String GAIADR3 = "Gaia DR3";
+    public static final String GAIAEDR3 = "Gaia EDR3";
     public static final String CSI = "CSI";
 
 
@@ -185,7 +185,7 @@ public class CatalogUtils {
         starObject.setHdCatId(searchCatalogs(catItems, HD));
         starObject.setGlieseCatId(searchCatalogs(catItems, GJ));
         starObject.setTwoMassCatId(searchCatalogs(catItems, TWO_MASS));
-//        starObject.setGaiaDR2CatId(searchCatalogs(catItems, GAIADR2));
+        starObject.setGaiaDR2CatId(searchCatalogs(catItems, GAIADR2));
         starObject.setGaiaDR3CatId(searchCatalogs(catItems, GAIADR3));
         starObject.setGaiaEDR3CatId(searchCatalogs(catItems, GAIAEDR3));
         starObject.setCsiCatId(searchCatalogs(catItems, CSI));
@@ -245,4 +245,18 @@ public class CatalogUtils {
         starObject.setCatalogIdList(replaceQuotesWithSpaceAndTrim(starObject.getRawCatalogIdList()));
     }
 
+    public static void setGaiaDR2Id(StarObject starObject) {
+        if (starObject.getRawCatalogIdList() == null || starObject.getRawCatalogIdList().isEmpty()) {
+            return;
+        }
+
+        // reduce multiple spaces to 1
+        starObject.setCatalogIdList(reduceMultipleSpaces(starObject.getRawCatalogIdList()));
+
+        List<String> catItems = extractCatalogItems(starObject.getRawCatalogIdList());
+        if (catItems.isEmpty()) {
+            return;
+        }
+        starObject.setGaiaDR2CatId(searchCatalogs(catItems, GAIADR2));
+    }
 }

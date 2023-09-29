@@ -454,6 +454,12 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
             String replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(starObject.getRawCatalogIdList(), "GJ", starRecord.getGJ());
             replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(replaceSubstringStartingWith, "HD", starRecord.getHD());
             replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(replaceSubstringStartingWith, "HIP", starRecord.getHIP());
+            replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(replaceSubstringStartingWith, "Gaia DR2", starRecord.getHIP());
+            if (starObject.getGaiaDR2CatId() != null && !starObject.getGaiaDR2CatId().isEmpty()) {
+                starObject.setGaiaDR2CatId("Gaia DR2 "+starRecord.getGaiaDR2());
+                replaceSubstringStartingWith = replaceOrAddSubstringStartingWith(replaceSubstringStartingWith, "Gaia DR2", starObject.getGaiaDR2CatId());
+            }
+
             starObject.setCatalogIdList(replaceSubstringStartingWith);
             starObject.setNotes(starObject.getNotes() + ", " + starRecord.getCom());
             log.info("update: catalog id List: {}", replaceSubstringStartingWith);

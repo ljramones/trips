@@ -1,6 +1,7 @@
 package com.teamgannon.trips.service.export.tasks;
 
 import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
+import com.teamgannon.trips.dialogs.gaiadata.CatalogUtils;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.export.ExportResults;
@@ -101,6 +102,7 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 "source," +
                 "catalogIdList," +
                 "simbadId," +
+                "Gaia DR2," +
                 "radius," +
                 "ra," +
                 "declination," +
@@ -149,6 +151,11 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
 
     private @NotNull String convertToCSV(@NotNull StarObject starObject) {
 
+        // set the Gaia DR2 id if it is not set - note this is to get around a weird edge condition
+        if (starObject.getGaiaDR2CatId() == null || starObject.getGaiaDR2CatId().isEmpty()) {
+            CatalogUtils.setGaiaDR2Id(starObject);
+        }
+
         return removeCommas(starObject.getId()) + ", " +
                 removeCommas(starObject.getDataSetName()) + ", " +
                 removeCommas(starObject.getDisplayName()) + ", " +
@@ -161,6 +168,7 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 removeCommas(starObject.getSource()) + ", " +
                 String.join("~", starObject.getCatalogIdList()) + ", " +
                 removeCommas(starObject.getSimbadId()) + ", " +
+                removeCommas(starObject.getGaiaDR2CatId()) + ", " +
                 starObject.getRadius() + ", " +
                 starObject.getRa() + ", " +
                 starObject.getDeclination() + ", " +

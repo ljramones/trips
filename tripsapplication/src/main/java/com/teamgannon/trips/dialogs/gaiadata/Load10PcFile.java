@@ -44,14 +44,6 @@ public class Load10PcFile {
                 record.setDistance(parsecToLightYears(record.getPlx()));
                 double[] coord = calculateEquatorialCoordinates(record.getRAdeg(), record.getDEdeg(), record.getDistance());
                 record.setCoordinates(coord);
-                log.info("name: {} ra: {} dec: {} distance: {} x: {} y: {} z: {}",
-                        record.getObjName(),
-                        record.getRAdeg(),
-                        record.getDEdeg(),
-                        record.getDistance(),
-                        coord[0],
-                        coord[1],
-                        coord[2]);
                 record.setE_plx(safeParseDouble(line.substring(123, 131)));
                 record.setR_plx(line.substring(132, 163).trim());
                 record.setPmRA(safeParseDouble(line.substring(164, 180)));
@@ -87,14 +79,22 @@ public class Load10PcFile {
                 record.setGJ(line.substring(562, 572).trim());
                 record.setHD(line.substring(573, 585).trim());
                 record.setHIP(line.substring(586, 596).trim());
-                record.setCom(line.substring(597, 945).trim());
+                if (line.length() >= 945) {
+                    record.setCom(line.substring(597, 945).trim());
+                } else if (line.length() > 597) {
+                    record.setCom(line.substring(597).trim());
+                } else {
+                    // Handle the case where the length is less than or equal to 597, if necessary.
+                    // For example, you can set an empty string or a default value.
+                    record.setCom("");
+                }
 
                 // Print or process the record as needed
                 records.add(record);
             }
             return records;
         } catch (IOException e) {
-            System.err.println("error reading file: " + file);
+            log.error("error reading file: {}, because of {}", file, e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -116,6 +116,9 @@ public class Load10PcFile {
     }
 
     public int safeParseInt(String str) {
+        if (str.equals("---")) {
+            return 0;
+        }
         str = str.trim();
         try {
             return Integer.parseInt(str);

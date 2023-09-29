@@ -215,19 +215,25 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
         hdField.setText(starRecord.getHD());
         rightPane.add(hdField, 1, 8);
 
+        Label gaiadr2Label = new Label("Gaia DR2 Id");
+        rightPane.add(gaiadr2Label, 0, 9);
+        TextField gaiadr2Field = new TextField();
+        hdField.setText("Gaia DR2 " + starRecord.getGaiaDR2());
+        rightPane.add(gaiadr2Field, 1, 9);
+
         Label hipLabel = new Label("Hip Id");
-        rightPane.add(hipLabel, 0, 9);
+        rightPane.add(hipLabel, 0, 10);
         TextField hipField = new TextField();
         hipField.setText(starRecord.getHIP());
-        rightPane.add(hipField, 1, 9);
+        rightPane.add(hipField, 1, 10);
 
         Label notesLabel = new Label("Notes");
-        rightPane.add(notesLabel, 0, 10);
+        rightPane.add(notesLabel, 0, 11);
         TextArea notesField = new TextArea();
         notesField.setPrefRowCount(4);
         notesField.setWrapText(true);
         notesField.setText(starRecord.getCom());
-        rightPane.add(notesField, 1, 10, 2, 4);
+        rightPane.add(notesField, 1, 11, 2, 4);
 
     }
 
@@ -277,8 +283,16 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
 
         String hipValue = starRecord.getHIP();
         if (hipValue != null && !hipValue.trim().isEmpty()) {
-            catalogIdList.append(hipValue);
+            catalogIdList.append(hipValue).append("|");
         }
+
+        long gaiaDr2Value = starRecord.getGaiaDR2();
+        if (gaiaDr2Value != 0) {
+            String catId = "Gaia DR2 " + gaiaDr2Value;
+            catalogIdList.append(catId);
+            starObject.setGaiaDR2CatId(catId);
+        }
+
         starObject.setCatalogIdList(catalogIdList.toString());
         log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
 
