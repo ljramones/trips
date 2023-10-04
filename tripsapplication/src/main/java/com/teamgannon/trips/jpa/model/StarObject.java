@@ -388,6 +388,16 @@ public class StarObject implements Serializable {
     private String luminosity;
 
     /**
+     * Apparent magnitude
+     */
+    private String apparentMagnitude;
+
+    /**
+     * Absolute magnitude
+     */
+    private String absoluteMagnitude;
+
+    /**
      * Magnitude in the astronomic "U" band
      */
     private double magu = 0.0;

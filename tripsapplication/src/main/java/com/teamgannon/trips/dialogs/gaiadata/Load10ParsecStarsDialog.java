@@ -36,7 +36,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private int recordCount = 0;
 
-    private final Load10PcFile load10PcFile = new Load10PcFile();
+    private final Load10PcCSVFile load10PcCSVFile = new Load10PcCSVFile();
 
     private final ComboBox<String> starSelector = new ComboBox<>();
 
@@ -79,7 +79,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
      * @param databaseManagementService the database service
      * @param dataSetNames              the dataset names
      */
-    public Load10ParsecStarsDialog(File selectedFile, DatabaseManagementService databaseManagementService, List<String> dataSetNames) {
+    public Load10ParsecStarsDialog(File selectedFile, DatabaseManagementService databaseManagementService) {
 
         this.selectedFile = selectedFile;
         this.databaseManagementService = databaseManagementService;
@@ -123,7 +123,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the record comparisons
+     * set up the record comparisons
      */
     private void setupRecordComparisons() {
         setupHeaderDefinitions();
@@ -201,7 +201,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     /**
-     * setup the processing log
+     * set up the processing log
      */
     private void setupUIProcessingLog() {
         vBox.getChildren().add(new Separator());
@@ -244,7 +244,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void setupUIStatus() {
-        gridPane.add(new Separator(), 0, 4);
+        gridPane.add(new Separator(), 0, 4, 8, 1);
         Label statusLabel = new Label("Current Record");
         statusLabel.setFont(font);
         gridPane.add(statusLabel, 0, 5);
@@ -420,7 +420,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         addStarButton.setDisable(true);
         loadStarButton.setDisable(true);
         if (!starsLoaded) {
-            records = load10PcFile.loadFile(selectedFile);
+            records = load10PcCSVFile.loadFile(selectedFile);
             totalCounterLabel.setText(Integer.toString(records.size()));
             starsLoaded = true;
         }

@@ -14,7 +14,7 @@ import static com.teamgannon.trips.astrogation.Coordinates.calculateEquatorialCo
 import static com.teamgannon.trips.astrogation.Coordinates.parsecToLightYears;
 
 @Slf4j
-public class Load10PcFile {
+public class Load10PcCSVFile {
 
     /**
      * load the file

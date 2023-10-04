@@ -101,18 +101,20 @@ public class Planet {
     private double magnitude;
 
     /**
-     *
+     * the albedo of the world
      */
     private double geometricAlbedo;
 
 
     /**
+     * the surface temperature of the world
      * in K
      */
     private double surfaceTemp;
 
     // Orbital characteristics
     /**
+     * a (m) : semi-major axis
      * a : semi-major axis (m)
      */
     private double semiMajorAxis;

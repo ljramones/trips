@@ -189,14 +189,6 @@
                           text="Star Property Report"/>
             </Menu>
             <Menu mnemonicParsing="false"
-                  text="Planets"
-                  disable="true">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#loadExoPlanets"
-                          disable="true"
-                          text="Load/Import Exoplanets .."/>
-            </Menu>
-            <Menu mnemonicParsing="false"
                   text="Galactic">
                 <MenuItem mnemonicParsing="false"
                           onAction="#showGalacticNeighorhood"
@@ -237,6 +229,9 @@
                 <MenuItem mnemonicParsing="false"
                           onAction="#Load10ParsecStars"
                           text="Load 10 Parsec Stars"/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#loadExoPlanets"
+                          text="Load/Import Exoplanets .."/>
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Help">

@@ -12,6 +12,7 @@ import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
 import com.teamgannon.trips.dialogs.db.CompareDBDialog;
 import com.teamgannon.trips.dialogs.db.DBComparison;
+import com.teamgannon.trips.dialogs.exoplanets.LoadExoPlanetsFileDialog;
 import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsDialog;
 import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsResults;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
@@ -59,6 +60,7 @@ import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
@@ -266,6 +268,7 @@ public class MainPane implements
      */
     private final SolarSystemSpacePane solarSystemSpacePane;
 
+    private final ExoPlanetService exoPlanetService;
     private final DataImportService dataImportService;
     /**
      * list of routes
@@ -308,6 +311,7 @@ public class MainPane implements
                     RouteFinderInView routeFinderInView,
                     TripsContext tripsContext,
                     ApplicationContext appContext,
+                    ExoPlanetService exoPlanetService,
                     DatabaseManagementService databaseManagementService,
                     DataImportService dataImportService,
                     GalacticSpacePlane galacticSpacePlane,
@@ -323,6 +327,7 @@ public class MainPane implements
         this.routeFinderInView = routeFinderInView;
 
         this.tripsContext = tripsContext;
+        this.exoPlanetService = exoPlanetService;
         this.dataImportService = dataImportService;
         this.galacticSpacePlane = galacticSpacePlane;
         this.interstellarSpacePane = interstellarSpacePane;
@@ -2161,7 +2166,24 @@ public class MainPane implements
     }
 
     public void loadExoPlanets(ActionEvent actionEvent) {
-        // @TODO finish this
+        log.info("Load ExoPlanets");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a File containing the known exoplanets");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Data Files", "*.csv"));
+
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile != null) {
+            List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            if (!dataSetDescriptorList.isEmpty()) {
+                List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
+                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService);
+                dialog.showAndWait();
+            } else {
+                showErrorAlert("Load ExoPlanets File", "There are no datasets in this database!");
+            }
+        }
+
     }
 
     public void findDistance(ActionEvent actionEvent) {
@@ -2317,8 +2339,7 @@ public class MainPane implements
         if (selectedFile != null) {
             List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
             if (!dataSetDescriptorList.isEmpty()) {
-                List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService, dataSetNames);
+                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService);
                 Optional<Load10ParsecStarsResults> optional = dialog.showAndWait();
                 if (optional.isPresent()) {
                     Load10ParsecStarsResults results = optional.get();

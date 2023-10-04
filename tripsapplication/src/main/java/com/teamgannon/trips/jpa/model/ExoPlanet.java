@@ -251,6 +251,7 @@ public class ExoPlanet {
 
     /**
      * * - `molecules`: Molecules detected in the exoplanet's atmosphere.
+     * e.g. C, CH4, CO, CO2, CrH, Fe, FeH, H2O, Mg2SiO4, NH3, O, SiO
      */
     private String molecules;
 
