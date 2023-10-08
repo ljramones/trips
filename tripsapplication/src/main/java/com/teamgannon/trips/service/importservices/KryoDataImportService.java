@@ -7,6 +7,7 @@ import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.importservices.tasks.CSVLoadTask;
 import com.teamgannon.trips.service.importservices.tasks.KryoLoadTask;
 import javafx.concurrent.Service;
@@ -23,6 +24,7 @@ import static javafx.concurrent.Worker.State.RUNNING;
 public class KryoDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
     private final DatabaseManagementService databaseManagementService;
+    private final DatasetService datasetService;
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
@@ -31,8 +33,10 @@ public class KryoDataImportService extends Service<FileProcessResult> implements
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
 
-    public KryoDataImportService(DatabaseManagementService databaseManagementService) {
+    public KryoDataImportService(DatabaseManagementService databaseManagementService,
+                                 DatasetService datasetService) {
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
     }
 
 
@@ -77,7 +81,7 @@ public class KryoDataImportService extends Service<FileProcessResult> implements
     @Override
     protected Task<FileProcessResult> createTask() {
         log.info("calling csv import task");
-        return new KryoLoadTask(databaseManagementService, dataset);
+        return new KryoLoadTask(databaseManagementService, datasetService, dataset);
     }
 
     @Override

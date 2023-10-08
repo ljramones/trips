@@ -33,12 +33,13 @@ public class DataImportService {
 
 
     public DataImportService(DatabaseManagementService databaseManagementService,
+                             DatasetService datasetService,
                              CSVDataImportService csvDataImportService) {
 
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService);
         jsonDataImportService = new JsonDataImportService(databaseManagementService);
-        this.kryoDataImportService = new KryoDataImportService(databaseManagementService);
+        this.kryoDataImportService = new KryoDataImportService(databaseManagementService, datasetService);
         this.csvDataImportService = csvDataImportService;
     }
 

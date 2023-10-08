@@ -9,6 +9,7 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.export.ExportResult;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.ImportResult;
@@ -60,6 +61,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
      */
     private final DatabaseManagementService databaseManagementService;
 
+    private final DatasetService datasetService;
     private final StatusUpdaterListener statusUpdaterListener;
     private final DataImportService dataImportService;
     private final Localization localization;
@@ -75,6 +77,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
     public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DatabaseManagementService databaseManagementService,
+                                DatasetService datasetService,
                                 StatusUpdaterListener statusUpdaterListener,
                                 DataImportService dataImportService,
                                 Localization localization,
@@ -82,6 +85,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
         this.dataSetChangeListener = dataSetChangeListener;
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
         this.statusUpdaterListener = statusUpdaterListener;
         this.dataImportService = dataImportService;
         this.localization = localization;
@@ -239,7 +243,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         tableView.getItems().clear();
 
         // get descriptors
-        List<DataSetDescriptor> descriptors = databaseManagementService.getDataSets();
+        List<DataSetDescriptor> descriptors = datasetService.getDataSets();
 
         // fill in table
         descriptors.forEach(descriptor -> {
@@ -297,7 +301,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
     private void addDataSet(ActionEvent actionEvent) {
 
-        AddDataSetDialog dialog = new AddDataSetDialog(localization, databaseManagementService);
+        AddDataSetDialog dialog = new AddDataSetDialog(localization, databaseManagementService, datasetService);
         Optional<Dataset> optionalDataSet = dialog.showAndWait();
 
         if (optionalDataSet.isPresent()) {

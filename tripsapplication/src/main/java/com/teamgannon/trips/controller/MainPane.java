@@ -57,9 +57,7 @@ import com.teamgannon.trips.scripting.engine.GroovyScriptingEngine;
 import com.teamgannon.trips.scripting.engine.PythonScriptEngine;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
-import com.teamgannon.trips.service.DataExportService;
-import com.teamgannon.trips.service.DataImportService;
-import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.*;
 import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
@@ -269,6 +267,9 @@ public class MainPane implements
     private final SolarSystemSpacePane solarSystemSpacePane;
 
     private final ExoPlanetService exoPlanetService;
+    private final DatasetService datasetService;
+    private final StarService starService;
+    private final BulkLoadService bulkLoadService;
     private final DataImportService dataImportService;
     /**
      * list of routes
@@ -313,6 +314,9 @@ public class MainPane implements
                     ApplicationContext appContext,
                     ExoPlanetService exoPlanetService,
                     DatabaseManagementService databaseManagementService,
+                    DatasetService datasetService,
+                    StarService starService,
+                    BulkLoadService bulkLoadService,
                     DataImportService dataImportService,
                     GalacticSpacePlane galacticSpacePlane,
                     InterstellarSpacePane interstellarSpacePane,
@@ -328,6 +332,9 @@ public class MainPane implements
 
         this.tripsContext = tripsContext;
         this.exoPlanetService = exoPlanetService;
+        this.datasetService = datasetService;
+        this.starService = starService;
+        this.bulkLoadService = bulkLoadService;
         this.dataImportService = dataImportService;
         this.galacticSpacePlane = galacticSpacePlane;
         this.interstellarSpacePane = interstellarSpacePane;
@@ -888,7 +895,7 @@ public class MainPane implements
         String datasetName = tripsPrefs.getDatasetName();
         if (datasetName != null) {
             if (!datasetName.isEmpty()) {
-                DataSetDescriptor descriptor = databaseManagementService.getDatasetFromName(tripsPrefs.getDatasetName());
+                DataSetDescriptor descriptor = datasetService.getDatasetFromName(tripsPrefs.getDatasetName());
                 this.setContextDataSet(descriptor);
                 plotStars(null);
             }
@@ -947,7 +954,7 @@ public class MainPane implements
 
     private @NotNull List<DataSetDescriptor> loadDataSetView() {
 
-        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
 
         for (DataSetDescriptor descriptor : dataSetDescriptorList) {
             if (descriptor.getRoutesStr() != null) {
@@ -1047,7 +1054,7 @@ public class MainPane implements
 
     public void clearRoutes(ActionEvent actionEvent) {
         interstellarSpacePane.clearRoutes();
-        databaseManagementService.clearRoutesFromCurrent(searchContext.getDataSetDescriptor());
+        datasetService.clearRoutesFromCurrent(searchContext.getDataSetDescriptor());
         routingPanel.clearData();
     }
 
@@ -1148,6 +1155,7 @@ public class MainPane implements
         DataSetManagerDialog dialog = new DataSetManagerDialog(
                 this,
                 databaseManagementService,
+                datasetService,
                 this,
                 dataImportService,
                 localization,
@@ -1163,7 +1171,8 @@ public class MainPane implements
             SelectActiveDatasetDialog dialog = new SelectActiveDatasetDialog(
                     this,
                     tripsContext.getDataSetContext(),
-                    databaseManagementService);
+                    databaseManagementService,
+                    datasetService);
             // we throw away the result after returning
             dialog.showAndWait();
 
@@ -1178,7 +1187,9 @@ public class MainPane implements
     }
 
     public void transitFinder(ActionEvent actionEvent) {
-        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog = new FindTransitsBetweenStarsDialog(databaseManagementService,
+        FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog
+                = new FindTransitsBetweenStarsDialog(databaseManagementService,
+                datasetService,
                 tripsContext.getDataSetDescriptor().getTransitDefinitions());
         Optional<TransitDefinitions> optionalTransitDefinitions = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalTransitDefinitions.isPresent()) {
@@ -1498,7 +1509,7 @@ public class MainPane implements
     @Override
     public void newRoute(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
         log.info("new route");
-        databaseManagementService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
+        datasetService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
         routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
         routingStatus(false);
     }
@@ -1507,7 +1518,7 @@ public class MainPane implements
     public void updateRoute(RouteDescriptor routeDescriptor) {
         log.info("update route");
         String datasetName = searchContext.getDataSetDescriptor().getDataSetName();
-        DataSetDescriptor descriptor = databaseManagementService.updateRoute(datasetName, routeDescriptor);
+        DataSetDescriptor descriptor = datasetService.updateRoute(datasetName, routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
         routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
@@ -1522,7 +1533,7 @@ public class MainPane implements
     public void deleteRoute(RouteDescriptor routeDescriptor) {
         log.info("delete route");
         DataSetDescriptor descriptor = searchContext.getDataSetDescriptor();
-        descriptor = databaseManagementService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
+        descriptor = datasetService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
         searchContext.getAstroSearchQuery().setDescriptor(descriptor);
         // clear the route from the plot
         tripsContext.getCurrentPlot().removeRoute(routeDescriptor);
@@ -1843,7 +1854,7 @@ public class MainPane implements
                 showErrorAlert("Show Data Table", "no data found");
             }
         } else {
-            List<DataSetDescriptor> datasets = databaseManagementService.getDataSets();
+            List<DataSetDescriptor> datasets = datasetService.getDataSets();
             if (datasets.size() == 0) {
                 showErrorAlert("Plot Stars", "No datasets loaded, please load one");
                 return;
@@ -2079,7 +2090,7 @@ public class MainPane implements
     }
 
     public void routeListReport(ActionEvent actionEvent) {
-        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
         RouteReportDialog dialog = new RouteReportDialog(tripsContext.getDataSetDescriptor(), dataSetDescriptorList);
         dialog.showAndWait();
     }
@@ -2174,10 +2185,10 @@ public class MainPane implements
 
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile != null) {
-            List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
             if (!dataSetDescriptorList.isEmpty()) {
                 List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService);
+                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService, datasetService);
                 dialog.showAndWait();
             } else {
                 showErrorAlert("Load ExoPlanets File", "There are no datasets in this database!");
@@ -2230,7 +2241,7 @@ public class MainPane implements
 
     public void compareDB(ActionEvent actionEvent) {
 
-        List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
         if (!dataSetDescriptorList.isEmpty()) {
             List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
             CompareDBDialog dialog = new CompareDBDialog(databaseManagementService, dataSetNames);
@@ -2337,9 +2348,9 @@ public class MainPane implements
         File selectedFile = fileChooser.showOpenDialog(stage);
 
         if (selectedFile != null) {
-            List<DataSetDescriptor> dataSetDescriptorList = databaseManagementService.getDataSets();
+            List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
             if (!dataSetDescriptorList.isEmpty()) {
-                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService);
+                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService, datasetService);
                 Optional<Load10ParsecStarsResults> optional = dialog.showAndWait();
                 if (optional.isPresent()) {
                     Load10ParsecStarsResults results = optional.get();

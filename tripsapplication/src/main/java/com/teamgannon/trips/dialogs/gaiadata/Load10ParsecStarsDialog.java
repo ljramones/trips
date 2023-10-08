@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.dataset.ComboBoxDatasetCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -27,6 +28,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private final File selectedFile;
     private final DatabaseManagementService databaseManagementService;
+    private final DatasetService datasetService;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
     private VBox vBox;
@@ -77,12 +79,15 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
      *
      * @param selectedFile              the file to load
      * @param databaseManagementService the database service
-     * @param dataSetNames              the dataset names
+     * @param datasetService            the dataset service
      */
-    public Load10ParsecStarsDialog(File selectedFile, DatabaseManagementService databaseManagementService) {
+    public Load10ParsecStarsDialog(File selectedFile,
+                                   DatabaseManagementService databaseManagementService,
+                                   DatasetService datasetService) {
 
         this.selectedFile = selectedFile;
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
 
         initializeDialog();
         initializeUIComponents();
@@ -179,7 +184,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         Label dataSetLabel = new Label("Select Dataset");
         dataSetLabel.setFont(font);
         gridPane.add(dataSetLabel, 0, 0);
-        descriptorComboBox.getItems().addAll(databaseManagementService.getDescriptors());
+        descriptorComboBox.getItems().addAll(datasetService.getDescriptors());
         descriptorComboBox.getSelectionModel().selectFirst();
         gridPane.add(descriptorComboBox, 1, 0);
 

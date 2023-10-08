@@ -5,6 +5,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -29,6 +30,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
      * the database management service
      */
     private final DatabaseManagementService databaseManagementService;
+    private final DatasetService datasetService;
 
     private final File selectedFile;
     private VBox vBox;
@@ -61,11 +63,15 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
      *
      * @param databaseManagementService the database management service
      */
-    public LoadExoPlanetsFileDialog(File selectedFile, ExoPlanetService exoPlanetService, DatabaseManagementService databaseManagementService) {
+    public LoadExoPlanetsFileDialog(File selectedFile,
+                                    ExoPlanetService exoPlanetService,
+                                    DatabaseManagementService databaseManagementService,
+                                    DatasetService datasetService) {
         this.selectedFile = selectedFile;
         this.exoPlanetService = exoPlanetService;
 
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
 
         initializeDialog();
         initializeUIComponents();
@@ -175,7 +181,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
         Label dataSetLabel = new Label("Select Dataset");
         dataSetLabel.setFont(font);
         gridPane.add(dataSetLabel, 0, 0);
-        descriptorComboBox.getItems().addAll(databaseManagementService.getDescriptors());
+        descriptorComboBox.getItems().addAll(datasetService.getDescriptors());
         descriptorComboBox.getSelectionModel().selectFirst();
         gridPane.add(descriptorComboBox, 1, 0);
 

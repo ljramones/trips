@@ -6,6 +6,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -31,15 +32,18 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
     private final DataSetContext dataSetContext;
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
     private final DatabaseManagementService databaseManagementService;
+    private final DatasetService datasetService;
 
 
     public SelectActiveDatasetDialog(StellarDataUpdaterListener stellarDataUpdaterListener,
                                      DataSetContext dataSetContext,
-                                     DatabaseManagementService databaseManagementService) {
+                                     DatabaseManagementService databaseManagementService,
+                                     DatasetService datasetService) {
 
         this.stellarDataUpdaterListener = stellarDataUpdaterListener;
         this.dataSetContext = dataSetContext;
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -60,7 +64,7 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
     private void updateTable() {
 
         // get descriptors
-        List<DataSetDescriptor> descriptors = databaseManagementService.getDataSets();
+        List<DataSetDescriptor> descriptors = datasetService.getDataSets();
 
         // fill in table
         descriptors.forEach(descriptor -> {

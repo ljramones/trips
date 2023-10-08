@@ -11,6 +11,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.file.compact.StarObjectSerializer;
+import com.teamgannon.trips.service.DatasetService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,10 +27,14 @@ public class KryoLoadTask extends Task<FileProcessResult> implements ProgressUpd
 
     private final int PAGE_SIZE = 20000;
 
+    private final DatasetService datasetService;
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
-    public KryoLoadTask(DatabaseManagementService databaseManagementService, Dataset dataSet) {
+    public KryoLoadTask(DatabaseManagementService databaseManagementService,
+                        DatasetService datasetService,
+                        Dataset dataSet) {
+        this.datasetService = datasetService;
         this.dataSet = dataSet;
         this.databaseManagementService = databaseManagementService;
     }
@@ -110,7 +115,7 @@ public class KryoLoadTask extends Task<FileProcessResult> implements ProgressUpd
             input.close();
 
             // set success criteria to report
-            databaseManagementService.saveDescriptor(descriptor);
+            datasetService.saveDescriptor(descriptor);
             processResult.setDataSetDescriptor(descriptor);
             processResult.setSuccess(true);
             processResult.setMessage(String.format("Loaded %d records from %s file", numberToRead, dataSet.getFileSelected()));

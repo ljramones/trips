@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -39,14 +40,17 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     private final Localization localization;
     private final DatabaseManagementService databaseManagementService;
+    private final DatasetService datasetService;
     public @NotNull Button addDataSetButton = new Button("Add Dataset");
 
 
     public AddDataSetDialog(Localization localization,
-                            DatabaseManagementService databaseManagementService) {
+                            DatabaseManagementService databaseManagementService,
+                            DatasetService datasetService) {
 
         this.localization = localization;
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
 
         this.setHeight(400);
         this.setWidth(400);
@@ -163,7 +167,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
             showErrorAlert("Add Dataset", "Dataset name cannot be empty!");
             return;
         }
-        if (databaseManagementService.hasDataSet(dataSet.getName())) {
+        if (datasetService.hasDataSet(dataSet.getName())) {
             showErrorAlert("Add Dataset", "A dataset with this name already exists!");
             return;
         }

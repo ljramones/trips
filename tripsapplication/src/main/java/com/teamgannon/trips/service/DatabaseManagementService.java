@@ -132,6 +132,20 @@ public class DatabaseManagementService {
         starObjectRepository.deleteAll();
     }
 
+
+
+    @TrackExecutionTime
+    @Transactional
+    public void updateDataSet(DataSetDescriptor descriptor) {
+        Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
+        if (tripsPrefsOptional.isPresent()) {
+            TripsPrefs tripsPrefs = tripsPrefsOptional.get();
+            tripsPrefs.setDatasetName(descriptor.getDataSetName());
+            tripsPrefsRepository.save(tripsPrefs);
+        }
+    }
+
+
     @TrackExecutionTime
     public @NotNull
     DataSetDescriptor loadCHFile(@NotNull ProgressUpdater progressUpdater, @NotNull Dataset dataset, @NotNull ChViewFile chViewFile) throws Exception {
@@ -297,7 +311,6 @@ public class DatabaseManagementService {
 
     //////////////////////////////////////
 
-
     /**
      * remove the dataset by descriptor
      *
@@ -309,19 +322,6 @@ public class DatabaseManagementService {
         dataSetDescriptorRepository.delete(descriptor);
     }
 
-    /**
-     * get the data sets
-     *
-     * @return the list of all descriptors in the database
-     */
-    @TrackExecutionTime
-    public @NotNull
-    List<DataSetDescriptor> getDataSets() {
-        Iterable<DataSetDescriptor> dataSetDescriptors = dataSetDescriptorRepository.findAll();
-        List<DataSetDescriptor> descriptors = new ArrayList<>();
-        dataSetDescriptors.forEach(descriptors::add);
-        return descriptors;
-    }
 
     @TrackExecutionTime
     public List<StarObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
@@ -391,10 +391,6 @@ public class DatabaseManagementService {
         return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
-    @TrackExecutionTime
-    public DataSetDescriptor getDatasetFromName(String dataSetName) {
-        return dataSetDescriptorRepository.findByDataSetName(dataSetName);
-    }
     ///////////////
 
     /**
@@ -569,20 +565,6 @@ public class DatabaseManagementService {
 
     @TrackExecutionTime
     @Transactional
-    public void addRouteToDataSet(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
-
-        // pull all routes
-        List<Route> routeList = dataSetDescriptor.getRoutes();
-        // convert to a Route and add to current list
-        routeList.add(routeDescriptor.toRoute());
-        // overwrite the list of routes
-        dataSetDescriptor.setRoutes(routeList);
-        dataSetDescriptorRepository.save(dataSetDescriptor);
-
-    }
-
-    @TrackExecutionTime
-    @Transactional
     public void updateNotesOnStar(@NotNull String recordId, String notes) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         if (objectOptional.isPresent()) {
@@ -608,16 +590,6 @@ public class DatabaseManagementService {
         starObjectRepository.deleteById(recordId);
     }
 
-
-    /**
-     * does a dataset with this name exist?
-     *
-     * @param name the dataset name that we are looking for
-     * @return true if we found one
-     */
-    public boolean hasDataSet(String name) {
-        return dataSetDescriptorRepository.findByDataSetName(name) != null;
-    }
 
 
     /**
@@ -726,82 +698,6 @@ public class DatabaseManagementService {
         tripsPrefsRepository.save(tripsPrefs);
     }
 
-    @TrackExecutionTime
-    @Transactional
-    public DataSetDescriptor deleteRoute(String descriptorName, RouteDescriptor routeDescriptor) {
-        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
-        List<Route> routeList = descriptor.getRoutes();
-        List<Route> updatedRoutes = routeList.stream().filter(route -> !routeDescriptor.getId().equals(route.getUuid())).collect(Collectors.toList());
-        descriptor.setRoutes(updatedRoutes);
-        dataSetDescriptorRepository.save(descriptor);
-        return descriptor;
-    }
-
-    @TrackExecutionTime
-    @Transactional
-    public DataSetDescriptor updateRoute(String descriptorName, RouteDescriptor routeDescriptor) {
-        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(descriptorName);
-        List<Route> routeList = descriptor.getRoutes();
-        for (Route route : routeList) {
-            if (route.getUuid().equals(routeDescriptor.getId())) {
-                route.setRouteColor(routeDescriptor.getColor().toString());
-                route.setRouteName(routeDescriptor.getName());
-                route.setRouteNotes(routeDescriptor.getRouteNotes());
-            }
-        }
-        descriptor.setRoutes(routeList);
-        dataSetDescriptorRepository.save(descriptor);
-        return descriptor;
-    }
-
-    @TrackExecutionTime
-    @Transactional
-    public void updateDataSet(DataSetDescriptor descriptor) {
-        Optional<TripsPrefs> tripsPrefsOptional = tripsPrefsRepository.findById("main");
-        if (tripsPrefsOptional.isPresent()) {
-            TripsPrefs tripsPrefs = tripsPrefsOptional.get();
-            tripsPrefs.setDatasetName(descriptor.getDataSetName());
-            tripsPrefsRepository.save(tripsPrefs);
-        }
-    }
-
-    @TrackExecutionTime
-    @Transactional
-    public void clearRoutesFromCurrent(DataSetDescriptor descriptor) {
-        DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(descriptor.getDataSetName());
-        descriptorCurrent.clearRoutes();
-        dataSetDescriptorRepository.save(descriptorCurrent);
-    }
-
-    @TrackExecutionTime
-    @Transactional
-    public void setTransitPreferences(TransitDefinitions transitDefinitions) {
-        DataSetDescriptor descriptorCurrent = dataSetDescriptorRepository.findByDataSetName(transitDefinitions.getDataSetName());
-        descriptorCurrent.setTransitDefinitions(transitDefinitions);
-        dataSetDescriptorRepository.save(descriptorCurrent);
-    }
-
-    @TrackExecutionTime
-    public boolean doesDatasetExist(String name) {
-        return dataSetDescriptorRepository.existsById(name);
-    }
-
-    @TrackExecutionTime
-    public DataSetDescriptor changeDatasetName(DataSetDescriptor selectedDataset, String newName) {
-        if (dataSetDescriptorRepository.existsById(newName)) {
-            return null;
-        }
-        // get dataset based on name
-        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(selectedDataset.getDataSetName());
-
-        // remove old dataset
-        dataSetDescriptorRepository.delete(descriptor);
-
-        // save as new
-        descriptor.setDataSetName(newName);
-        dataSetDescriptorRepository.save(descriptor);
-        return descriptor;
-    }
 
     public SolarSystemDescription getSolarSystem(StarDisplayRecord starDisplayRecord) {
         SolarSystemDescription solarSystemDescription = new SolarSystemDescription();
@@ -913,14 +809,6 @@ public class DatabaseManagementService {
         return addAliasToStar(starObject.getId(), aliasList);
     }
 
-    /**
-     * used to create a descriptor that we read in
-     *
-     * @param descriptor the descriptor
-     */
-    public void saveDescriptor(DataSetDescriptor descriptor) {
-        dataSetDescriptorRepository.save(descriptor);
-    }
 
     public Optional<StarObject> findId(String id) {
         return starObjectRepository.findById(id);
@@ -973,7 +861,4 @@ public class DatabaseManagementService {
         return getAstrographicObjectsOnQuery(searchQuery);
     }
 
-    public List<DataSetDescriptor> getDescriptors() {
-        return dataSetDescriptorRepository.findAllByOrderByDataSetNameAsc();
-    }
 }

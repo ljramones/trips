@@ -1,6 +1,7 @@
 package com.teamgannon.trips.transits;
 
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.DatasetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,6 +33,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
 
     private final DatabaseManagementService databaseManagementService;
 
+    private final DatasetService datasetService;
     private final TransitDefinitions transitDefinitions;
 
     private final GridPane gridPane = new GridPane();
@@ -41,9 +43,12 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
     private final Stage stage;
 
 
-    public FindTransitsBetweenStarsDialog(DatabaseManagementService databaseManagementService, TransitDefinitions transitDefinitions) {
+    public FindTransitsBetweenStarsDialog(DatabaseManagementService databaseManagementService,
+                                          DatasetService datasetService,
+                                          TransitDefinitions transitDefinitions) {
 
         this.databaseManagementService = databaseManagementService;
+        this.datasetService = datasetService;
         this.transitDefinitions = transitDefinitions;
         transitDefinitions.getTransitRangeDefs().sort(Comparator.comparing(TransitRangeDef::getBandName));
 
@@ -188,7 +193,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
         List<TransitRangeDef> transitRangeDefs = getValues();
         transitDefinitions.setTransitRangeDefs(transitRangeDefs);
         transitDefinitions.setSelected(true);
-        databaseManagementService.setTransitPreferences(transitDefinitions);
+        datasetService.setTransitPreferences(transitDefinitions);
         setResult(transitDefinitions);
     }
 
