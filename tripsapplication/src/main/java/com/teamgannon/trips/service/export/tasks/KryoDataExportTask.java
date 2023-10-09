@@ -8,6 +8,7 @@ import com.teamgannon.trips.file.compact.StarObjectSerializer;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.concurrent.Task;
@@ -26,10 +27,14 @@ public class KryoDataExportTask extends Task<ExportResults> implements ProgressU
 
     private final ExportOptions export;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
-    public KryoDataExportTask(ExportOptions export, DatabaseManagementService databaseManagementService) {
+    public KryoDataExportTask(ExportOptions export,
+                              DatabaseManagementService databaseManagementService,
+                              StarService starService) {
         this.export = export;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
     }
 
     @Override
@@ -53,7 +58,7 @@ public class KryoDataExportTask extends Task<ExportResults> implements ProgressU
         ExportResults exportResults = ExportResults.builder().success(false).build();
 
         try {
-            Long count = databaseManagementService.getCountOfDataset(export.getDataset().getDataSetName());
+            Long count = starService.getCountOfDataset(export.getDataset().getDataSetName());
 
             Kryo kryo = new Kryo();
 
@@ -71,11 +76,11 @@ public class KryoDataExportTask extends Task<ExportResults> implements ProgressU
 
             int total = 0;
             int pageNumber = 0;
-            Page<StarObject> starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
+            Page<StarObject> starObjectPage = starService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
             int totalPages = starObjectPage.getTotalPages();
 
             for (int i = 0; i < totalPages; i++) {
-                starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
+                starObjectPage = starService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
                 List<StarObject> starObjects = starObjectPage.getContent();
                 for (StarObject starObject : starObjects) {
                     kryo.writeObjectOrNull(output, starObject, StarObject.class);

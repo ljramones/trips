@@ -6,6 +6,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.routing.automation.RouteGraph;
 import com.teamgannon.trips.routing.model.*;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
     private final DataSetDescriptor currentDataset;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
     private final RouteFindingOptions routeFindingOptions;
 
     private final AtomicInteger globalCounter = new AtomicInteger(0);
@@ -31,11 +33,13 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
     public LargeGraphSearchTask(DataSetDescriptor currentDataset,
                                 DatabaseManagementService databaseManagementService,
+                                StarService starService,
                                 RouteFindingOptions routeFindingOptions) {
 
         this.currentDataset = currentDataset;
 
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.routeFindingOptions = routeFindingOptions;
 
         Map<String, Integer> collisionMap = new ConcurrentHashMap<>();
@@ -139,7 +143,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
         updateTaskInfo("searching for the star volume between origin and destination");
         long time0 = System.currentTimeMillis();
-        Map<String, SparseStarRecord> sparseStarRecordList = databaseManagementService.getFromDatasetWithinRanges(currentDataset, maxDistance);
+        Map<String, SparseStarRecord> sparseStarRecordList = starService.getFromDatasetWithinRanges(currentDataset, maxDistance);
         long time1 = System.currentTimeMillis();
         log.info("query took={} ms", time1 - time0);
         updateTaskInfo(String.format("%d stars found in volume in %d ms", sparseStarRecordList.size(), time1 - time0));

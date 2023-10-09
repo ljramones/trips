@@ -5,6 +5,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -66,6 +67,7 @@ public class DataSetTable {
      * the underlying windows component that the dialog belongs to
      */
     private Window window;
+    private final StarService starService;
     private List<StarObject> starObjects;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private @NotNull SortType sortDirection = SortType.ASCENDING;
@@ -77,9 +79,11 @@ public class DataSetTable {
      * @param starObjects               the list of objects
      */
     public DataSetTable(DatabaseManagementService databaseManagementService,
+                        StarService starService,
                         @NotNull List<StarObject> starObjects) {
 
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
 
         this.starObjects = starObjects;
         if (!starObjects.isEmpty()) {
@@ -177,7 +181,7 @@ public class DataSetTable {
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
             final StarEditRecord selectedStarEditRecord = tableView.getSelectionModel().getSelectedItem();
-            StarObject starObject = databaseManagementService.getStar(selectedStarEditRecord.getId());
+            StarObject starObject = starService.getStar(selectedStarEditRecord.getId());
             if (starObject != null) {
                 StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
@@ -186,7 +190,7 @@ public class DataSetTable {
                     StarEditStatus starEditStatus = statusOptional.get();
                     if (starEditStatus.isChanged()) {
                         // update the database
-                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                        starService.updateStar(starEditStatus.getRecord());
                         // resort
                         reSort();
                         // load data base on were we are
@@ -389,7 +393,7 @@ public class DataSetTable {
                 // add to our map which backs the list
                 astrographicObjectMap.put(astro.getId(), astro);
                 // add to the database
-                databaseManagementService.addStar(astro);
+                starService.addStar(astro);
                 // now that we added an entry, we resort and reset the page views
                 reSort();
                 moveFirst();
@@ -409,7 +413,7 @@ public class DataSetTable {
         astrographicObjectMap.remove(id);
 
         // remove from DB
-        databaseManagementService.removeStar(id);
+        starService.removeStar(id);
 
         resetList();
         reSort();

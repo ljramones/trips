@@ -7,6 +7,7 @@ import com.teamgannon.trips.listener.ContextSelectorListener;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.SolarSystemService;
 import javafx.animation.RotateTransition;
 import javafx.scene.*;
 import javafx.scene.control.Button;
@@ -45,6 +46,7 @@ public class SolarSystemSpacePane extends Pane {
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
     private final TripsContext tripsContext;
+    private final SolarSystemService solarSystemService;
     private final DatabaseManagementService databaseManagementService;
 
     // mouse positions
@@ -103,9 +105,11 @@ public class SolarSystemSpacePane extends Pane {
      * @param databaseManagementService the database management service
      */
     public SolarSystemSpacePane(TripsContext tripsContext,
-                                DatabaseManagementService databaseManagementService) {
+                                DatabaseManagementService databaseManagementService,
+                                SolarSystemService solarSystemService) {
 
         this.tripsContext = tripsContext;
+        this.solarSystemService = solarSystemService;
         ScreenSize screenSize = tripsContext.getScreenSize();
         this.databaseManagementService = databaseManagementService;
 
@@ -154,7 +158,7 @@ public class SolarSystemSpacePane extends Pane {
         createScaleLegend(systemName);
 
         // get the solar system description
-        SolarSystemDescription solarSystemDescription = databaseManagementService.getSolarSystem(starDisplayRecord);
+        SolarSystemDescription solarSystemDescription = solarSystemService.getSolarSystem(starDisplayRecord);
 
         // render the solar system
         render(solarSystemDescription);

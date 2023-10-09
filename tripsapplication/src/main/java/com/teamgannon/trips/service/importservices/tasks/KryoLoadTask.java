@@ -12,6 +12,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.file.compact.StarObjectSerializer;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.service.StarService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,13 +28,16 @@ public class KryoLoadTask extends Task<FileProcessResult> implements ProgressUpd
 
     private final int PAGE_SIZE = 20000;
 
+    private final StarService starService;
     private final DatasetService datasetService;
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
     public KryoLoadTask(DatabaseManagementService databaseManagementService,
+                        StarService starService,
                         DatasetService datasetService,
                         Dataset dataSet) {
+        this.starService = starService;
         this.datasetService = datasetService;
         this.dataSet = dataSet;
         this.databaseManagementService = databaseManagementService;
@@ -104,7 +108,7 @@ public class KryoLoadTask extends Task<FileProcessResult> implements ProgressUpd
                     updateTaskInfo(String.format("Loaded %d of %d", total, numberToRead));
 
                     // bulk save 20,000 records
-                    databaseManagementService.starBulkSave(pageList);
+                    starService.starBulkSave(pageList);
                     pageList.clear();
                 } catch (KryoException e) {
                     log.error("buffer underflow: actual count = {}", i);

@@ -10,6 +10,7 @@ import com.teamgannon.trips.routing.model.PossibleRoutes;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
@@ -40,6 +41,7 @@ public class RouteFinderDataset {
      */
     public void startRouteLocation(DataSetDescriptor currentDataset,
                                    DatabaseManagementService databaseManagementService,
+                                   StarService starService,
                                    StarMeasurementService starMeasurementService,
                                    StatusUpdaterListener statusUpdaterListener) {
 
@@ -48,7 +50,8 @@ public class RouteFinderDataset {
         RouteFinderDialogInDataSet routeFinderDialogInView = new RouteFinderDialogInDataSet(
                 currentDataset.getDataSetName(),
                 starMeasurementService,
-                databaseManagementService);
+                databaseManagementService,
+                starService);
 
         Stage theStage = (Stage) routeFinderDialogInView.getDialogPane().getScene().getWindow();
         theStage.setAlwaysOnTop(true);
@@ -65,6 +68,7 @@ public class RouteFinderDataset {
 
                 RouteLoadingInfoDialog routeLoadingInfoDialog = new RouteLoadingInfoDialog(
                         currentDataset, databaseManagementService,
+                        starService,
                         largeGraphSearchService,
                         statusUpdaterListener, routeFindingOptions);
                 Optional<GraphRouteResult> routeResultOptional = routeLoadingInfoDialog.showAndWait();

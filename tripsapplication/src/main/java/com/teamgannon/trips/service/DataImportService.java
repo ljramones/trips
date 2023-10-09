@@ -1,8 +1,8 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
-import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
@@ -23,6 +23,7 @@ public class DataImportService {
 
     private final @NotNull CHVDataImportService chvDataImportService;
     private final @NotNull JsonDataImportService jsonDataImportService;
+    private final BulkLoadService bulkLoadService;
     private final @NotNull CSVDataImportService csvDataImportService;
 
     private final @NotNull KryoDataImportService kryoDataImportService;
@@ -33,13 +34,16 @@ public class DataImportService {
 
 
     public DataImportService(DatabaseManagementService databaseManagementService,
+                             StarService starService,
+                             BulkLoadService bulkLoadService,
                              DatasetService datasetService,
                              CSVDataImportService csvDataImportService) {
 
         // importer services are pre-created
-        chvDataImportService = new CHVDataImportService(databaseManagementService);
-        jsonDataImportService = new JsonDataImportService(databaseManagementService);
-        this.kryoDataImportService = new KryoDataImportService(databaseManagementService, datasetService);
+        chvDataImportService = new CHVDataImportService(databaseManagementService, bulkLoadService);
+        jsonDataImportService = new JsonDataImportService(databaseManagementService, bulkLoadService);
+        this.bulkLoadService = bulkLoadService;
+        this.kryoDataImportService = new KryoDataImportService(databaseManagementService, starService, datasetService);
         this.csvDataImportService = csvDataImportService;
     }
 
@@ -92,7 +96,7 @@ public class DataImportService {
             }
 
 
-            case "trips.cpt" ->{
+            case "trips.cpt" -> {
                 currentlyRunning.set(true);
                 runningImportService = kryoDataImportService;
                 boolean queued = kryoDataImportService.processDataSet(

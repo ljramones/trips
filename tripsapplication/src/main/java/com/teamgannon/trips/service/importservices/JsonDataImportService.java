@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.JsonLoadTask;
 import javafx.concurrent.Service;
@@ -23,6 +24,7 @@ public class JsonDataImportService extends Service<FileProcessResult> implements
 
 
     private final DatabaseManagementService databaseManagementService;
+    private final BulkLoadService bulkLoadService;
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
@@ -31,8 +33,10 @@ public class JsonDataImportService extends Service<FileProcessResult> implements
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
 
-    public JsonDataImportService(DatabaseManagementService databaseManagementService) {
+    public JsonDataImportService(DatabaseManagementService databaseManagementService,
+                                 BulkLoadService bulkLoadService) {
         this.databaseManagementService = databaseManagementService;
+        this.bulkLoadService = bulkLoadService;
     }
 
 
@@ -70,7 +74,7 @@ public class JsonDataImportService extends Service<FileProcessResult> implements
 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
-        return new JsonLoadTask(dataset, databaseManagementService);
+        return new JsonLoadTask(dataset, databaseManagementService, bulkLoadService);
     }
 
     public boolean processDataSet(Dataset dataset, StatusUpdaterListener statusUpdaterListener,

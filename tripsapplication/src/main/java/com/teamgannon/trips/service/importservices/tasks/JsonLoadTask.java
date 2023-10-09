@@ -3,6 +3,7 @@ package com.teamgannon.trips.service.importservices.tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.export.model.JsonExportObj;
 import javafx.concurrent.Task;
@@ -16,10 +17,14 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
 
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
+    private final BulkLoadService bulkLoadService;
 
-    public JsonLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService) {
+    public JsonLoadTask(Dataset dataset,
+                        DatabaseManagementService databaseManagementService,
+                        BulkLoadService bulkLoadService) {
         this.dataset = dataset;
         this.databaseManagementService = databaseManagementService;
+        this.bulkLoadService = bulkLoadService;
     }
 
     @Override
@@ -41,7 +46,7 @@ public class JsonLoadTask extends Task<FileProcessResult> implements ProgressUpd
             ObjectMapper obj = new ObjectMapper();
             JsonExportObj jsonExportObj = obj.readValue(Paths.get(dataset.getFileSelected()).toFile(), JsonExportObj.class);
             updateFromDataset(dataset, jsonExportObj);
-            databaseManagementService.loadJsonFileSingleDS(this, jsonExportObj);
+            bulkLoadService.loadJsonFileSingleDS(this, jsonExportObj);
             processResult.setDataSetDescriptor(jsonExportObj.getDescriptor().toDataSetDescriptor());
             processResult.setMessage("dataset loaded " + dataset.getName());
             processResult.setSuccess(true);

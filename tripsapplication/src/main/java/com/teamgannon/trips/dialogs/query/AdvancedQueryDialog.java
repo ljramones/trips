@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -42,12 +43,15 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
     QueryFields queryFields = new QueryFields();
     private final DatabaseManagementService service;
+    private final StarService starService;
     private final TripsContext tripsContext;
 
     public AdvancedQueryDialog(DatabaseManagementService service,
+                               StarService starService,
                                TripsContext tripsContext) {
 
         this.service = service;
+        this.starService = starService;
         this.tripsContext = tripsContext;
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
@@ -171,7 +175,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
             } else {
                 if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
                     try {
-                        List<StarObject> starObjectList = service.runNativeQuery(queryToRun);
+                        List<StarObject> starObjectList = starService.runNativeQuery(queryToRun);
                         AdvResultsSet advResultsSet = AdvResultsSet
                                 .builder()
                                 .queryValid(true)

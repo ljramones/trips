@@ -6,6 +6,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -40,13 +41,17 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
     private final TableColumn<StarObject, Double> zCoordCol = new TableColumn<>("Z");
     private final TableColumn<StarObject, String> realCol = new TableColumn<>("Real");
     private final TableColumn<StarObject, String> commentCol = new TableColumn<>("comment");
+    private final StarService starService;
     private final List<StarObject> starObjects;
     private @NotNull SortParameterEnum currentSortStrategy = SortParameterEnum.NAME;
     private TableColumn.@NotNull SortType sortDirection = TableColumn.SortType.ASCENDING;
     private final DatabaseManagementService databaseManagementService;
 
-    public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService, List<StarObject> starObjects) {
+    public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService,
+                                 StarService starService,
+                                 List<StarObject> starObjects) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.starObjects = starObjects;
         this.setTitle("Show discovered stars");
         this.setHeight(700);
@@ -180,7 +185,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
         final MenuItem editSelectedMenuItem = new MenuItem("Edit selected");
         editSelectedMenuItem.setOnAction(event -> {
             final StarObject starObject = tableView.getSelectionModel().getSelectedItem();
-            Optional<StarObject> starObjectOptional = databaseManagementService.findId(starObject.getId());
+            Optional<StarObject> starObjectOptional = starService.findId(starObject.getId());
             if (starObjectOptional.isPresent()) {
                 StarEditDialog starEditDialog = new StarEditDialog(starObjectOptional.get());
 
@@ -189,7 +194,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
                     StarEditStatus starEditStatus = statusOptional.get();
                     if (starEditStatus.isChanged()) {
                         // update the database
-                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                        starService.updateStar(starEditStatus.getRecord());
                         // load database on were we are
                         loadData();
                     }
@@ -221,7 +226,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
         String id = starObject.getId();
 
         // remove from DB
-        databaseManagementService.removeStar(id);
+        starService.removeStar(id);
 
         loadData();
 

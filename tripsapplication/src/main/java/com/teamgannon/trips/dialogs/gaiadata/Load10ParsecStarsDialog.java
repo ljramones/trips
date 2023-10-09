@@ -5,6 +5,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -28,6 +29,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private final File selectedFile;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
     private final DatasetService datasetService;
 
     private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
@@ -83,10 +85,12 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
      */
     public Load10ParsecStarsDialog(File selectedFile,
                                    DatabaseManagementService databaseManagementService,
+                                   StarService starService,
                                    DatasetService datasetService) {
 
         this.selectedFile = selectedFile;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.datasetService = datasetService;
 
         initializeDialog();
@@ -447,7 +451,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private List<StarObject> getStarObjectsMatchingName(String systemName, String objName) {
         String dataSetName = descriptorComboBox.getSelectionModel().getSelectedItem().getDataSetName();
-        return databaseManagementService.findStarWithName(dataSetName, objName);
+        return starService.findStarWithName(dataSetName, objName);
     }
 
     /**
@@ -474,7 +478,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         } else {
             log.info("Current Star Record, before add ==" + currentStarRecord.getObjName());
         }
-        Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord);
+        Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, starService, descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord);
         Optional<Boolean> result = dialog.showAndWait();
         result.ifPresent(this::handleAddStarResult);
     }
@@ -486,7 +490,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
     private void replaceStarClicked(ActionEvent actionEvent) {
         // the starObject is probably not correct
-        Dialog<Boolean> dialog = new UpdateStarObjectWithRecordDialog(databaseManagementService,descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord, starObjectList.get(0));
+        Dialog<Boolean> dialog = new UpdateStarObjectWithRecordDialog(databaseManagementService,starService, descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord, starObjectList.get(0));
         Optional<Boolean> result = dialog.showAndWait();
         result.ifPresent(this::handleUpdateStarResult);
     }

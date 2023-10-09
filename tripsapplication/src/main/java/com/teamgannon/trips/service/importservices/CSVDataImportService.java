@@ -6,7 +6,9 @@ import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.importservices.tasks.CSVLoadTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -25,6 +27,8 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
 
 
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
+    private final BulkLoadService bulkLoadService;
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
@@ -33,14 +37,18 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     private ProgressBar loadProgressBar;
     private LoadUpdateListener loadUpdateListener;
 
-    public CSVDataImportService(DatabaseManagementService databaseManagementService) {
+    public CSVDataImportService(DatabaseManagementService databaseManagementService,
+                                StarService starService,
+                                BulkLoadService bulkLoadService) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
+        this.bulkLoadService = bulkLoadService;
     }
 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
         log.info("calling csv import task");
-        return new CSVLoadTask(databaseManagementService, dataset);
+        return new CSVLoadTask(databaseManagementService, starService, bulkLoadService, dataset);
     }
 
     public boolean processDataSet(Dataset dataset,

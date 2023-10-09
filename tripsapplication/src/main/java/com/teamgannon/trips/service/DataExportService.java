@@ -33,6 +33,7 @@ public class DataExportService {
 
     private final DatabaseManagementService databaseManagementService;
 
+    private final StarService starService;
     private final @NotNull CSVQueryExporterService csvQueryExporterService;
     private final @NotNull CSVDataSetDataExportService csvDataSetDataExportService;
 
@@ -46,9 +47,11 @@ public class DataExportService {
 
 
     public DataExportService(DatabaseManagementService databaseManagementService,
+                             StarService starService,
                              StatusUpdaterListener statusUpdaterListener) {
 
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
 
         csvQueryExporterService = new CSVQueryExporterService(statusUpdaterListener);
         csvDataSetDataExportService = new CSVDataSetDataExportService(statusUpdaterListener);
@@ -100,6 +103,7 @@ public class DataExportService {
                 runningExportService = csvDataSetDataExportService;
                 boolean queued = csvDataSetDataExportService.exportAsCSV(
                         exportOptions, databaseManagementService,
+                        starService,
                         statusUpdaterListener, importTaskCompleteListener, progressText,
                         exportProgressBar, cancelExport);
                 if (!queued) {
@@ -124,6 +128,7 @@ public class DataExportService {
                 runningExportService = kryoDataExportService;
                 boolean queued = kryoDataExportService.exportAsCompact(
                         exportOptions, databaseManagementService,
+                        starService,
                         statusUpdaterListener, importTaskCompleteListener, progressText,
                         exportProgressBar, cancelExport);
                 if (!queued) {
@@ -181,7 +186,10 @@ public class DataExportService {
                 currentlyRunning.set(true);
                 runningExportService = csvQueryExporterService;
                 boolean queued = csvQueryExporterService.exportAsCSV(exportOptions, searchContext,
-                        databaseManagementService, statusUpdaterListener, importTaskCompleteListener,
+                        databaseManagementService,
+                        starService,
+                        statusUpdaterListener,
+                        importTaskCompleteListener,
                         progressText, exportProgressBar, cancelExport);
                 if (!queued) {
                     log.error("failed to start import process");

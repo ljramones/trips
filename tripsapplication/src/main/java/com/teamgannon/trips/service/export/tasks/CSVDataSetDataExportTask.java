@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.dialogs.gaiadata.CatalogUtils;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.concurrent.Task;
@@ -24,10 +25,14 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
 
     private final ExportOptions export;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
-    public CSVDataSetDataExportTask(ExportOptions export, DatabaseManagementService databaseManagementService) {
+    public CSVDataSetDataExportTask(ExportOptions export,
+                                    DatabaseManagementService databaseManagementService,
+                                    StarService starService) {
         this.export = export;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
     }
 
 
@@ -63,11 +68,11 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
 
             int total = 0;
             int pageNumber = 0;
-            Page<StarObject> starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
+            Page<StarObject> starObjectPage = starService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
             int totalPages = starObjectPage.getTotalPages();
 
             for (int i = 0; i < totalPages; i++) {
-                starObjectPage = databaseManagementService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
+                starObjectPage = starService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
                 List<StarObject> starObjects = starObjectPage.getContent();
                 for (StarObject starObject : starObjects) {
                     String csvRecord = convertToCSV(starObject);

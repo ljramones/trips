@@ -10,7 +10,9 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.TransitSettings;
 import com.teamgannon.trips.jpa.model.TripsPrefs;
 import com.teamgannon.trips.search.SearchContext;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.SystemPreferencesService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,9 +26,15 @@ import java.util.Map;
 public class TripsContext {
 
     private final DatabaseManagementService databaseManagementService;
+    private final SystemPreferencesService systemPreferencesService;
+    private final BulkLoadService bulkLoadService;
 
-    public TripsContext(DatabaseManagementService databaseManagementService) {
+    public TripsContext(DatabaseManagementService databaseManagementService,
+                        SystemPreferencesService systemPreferencesService,
+                        BulkLoadService bulkLoadService) {
         this.databaseManagementService = databaseManagementService;
+        this.systemPreferencesService = systemPreferencesService;
+        this.bulkLoadService = bulkLoadService;
     }
 
     private ScreenSize screenSize = ScreenSize
@@ -63,7 +71,7 @@ public class TripsContext {
     public void setDataSetContext(DataSetContext dataSetContext) {
         getSearchContext().setCurrentDataSet(dataSetContext.getDescriptor().getDataSetName());
         searchContext.getAstroSearchQuery().setDataSetContext(dataSetContext);
-        databaseManagementService.updateDataSet(dataSetContext.getDescriptor());
+        systemPreferencesService.updateDataSet(dataSetContext.getDescriptor());
     }
 
     /**
@@ -92,8 +100,8 @@ public class TripsContext {
                 tripsPrefs.setDatasetName(null);
             }
         }
-        databaseManagementService.saveTripsPrefs(tripsPrefs);
-        databaseManagementService.removeDataSet(dataSetDescriptor);
+        systemPreferencesService.saveTripsPrefs(tripsPrefs);
+        bulkLoadService.removeDataSet(dataSetDescriptor);
     }
 
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {

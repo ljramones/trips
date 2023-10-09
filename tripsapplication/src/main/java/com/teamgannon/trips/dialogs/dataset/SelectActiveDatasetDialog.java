@@ -3,13 +3,17 @@ package com.teamgannon.trips.dialogs.dataset;
 
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
-import javafx.event.ActionEvent;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -17,6 +21,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Callback;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +35,9 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
     private final StellarDataUpdaterListener stellarDataUpdaterListener;
     private final DataSetContext dataSetContext;
-    private final ComboBox<DataSetDescriptor> descriptorComboBox = new ComboBox<>();
+    private final ListView<DataSetDescriptor> descriptorListView = new ListView<>();
     private final DatabaseManagementService databaseManagementService;
     private final DatasetService datasetService;
-
 
     public SelectActiveDatasetDialog(StellarDataUpdaterListener stellarDataUpdaterListener,
                                      DataSetContext dataSetContext,
@@ -47,7 +51,7 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
-        this.setHeight(500);
+        this.setHeight(200);
 
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
@@ -62,60 +66,75 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
     }
 
     private void updateTable() {
-
         // get descriptors
         List<DataSetDescriptor> descriptors = datasetService.getDataSets();
-
         // fill in table
-        descriptors.forEach(descriptor -> {
-            descriptorComboBox.getItems().add(descriptor);
-        });
-
+        descriptorListView.setItems(FXCollections.observableArrayList(descriptors));
     }
-
 
     private void createSelectedDatasetContext(@NotNull VBox vBox) {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         Label contextSettingLabel = new Label("Active Dataset: ");
         contextSettingLabel.setFont(font);
-        hBox.getChildren().addAll(contextSettingLabel, new Separator(), descriptorComboBox);
+        hBox.getChildren().addAll(contextSettingLabel, new Separator(), descriptorListView);
         vBox.getChildren().add(hBox);
         vBox.getChildren().addAll(new Separator());
-        if (dataSetContext.isValidDescriptor()) {
-            descriptorComboBox.setValue(dataSetContext.getDescriptor());
-        }
-        descriptorComboBox.setCellFactory(new ComboBoxDatasetCellFactory());
 
-        // THIS IS NEEDED because providing a custom cell factory is NOT enough. You also need a specific set button cell
-        descriptorComboBox.setButtonCell(new ListCell<>() {
+        // Set the maximum height of the ListView.
+        descriptorListView.setMaxHeight(500); // You can adjust this value as needed.
 
+        // Set the cell factory and the mouse click handler as before.
+        descriptorListView.setCellFactory(new Callback<>() {
             @Override
-            protected void updateItem(@Nullable DataSetDescriptor item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item != null) {
-                    setText(item.getDataSetName());
-                } else {
-                    setText(null);
-                }
+            public ListCell<DataSetDescriptor> call(ListView<DataSetDescriptor> param) {
+                return new ListCell<>() {
+                    @Override
+                    protected void updateItem(DataSetDescriptor item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null && !empty) {
+                            setText(item.getDataSetName());
+                        } else {
+                            setText(null);
+                        }
+                    }
+                };
             }
         });
 
-        descriptorComboBox.setOnAction(e -> {
-            stellarDataUpdaterListener.showNewStellarData(descriptorComboBox.getValue(), true, false);
-            setResult(true);
+        descriptorListView.setOnMouseClicked(mouseEvent -> {
+            DataSetDescriptor selected = descriptorListView.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                log.info("selected dataset: {}", selected.getDataSetName());
+                stellarDataUpdaterListener.showNewStellarData(selected, true, false);
+                setResult(true);
+            }
         });
 
+        descriptorListView.itemsProperty().addListener((observable, oldValue, newValue) -> {
+            // Calculate and set the preferred height of the ListView.
+            int itemsCount = newValue.size();
+            double cellHeight = 25; // Adjust this value based on your cell's actual height.
+            double newHeight = itemsCount * cellHeight;
+
+            // Set a maximum limit to the height.
+            double maxHeight = 500; // Set this to the maximum height you want for the ListView.
+            if (newHeight > maxHeight) {
+                newHeight = maxHeight;
+            }
+
+            // Update the height of the ListView.
+            descriptorListView.setPrefHeight(newHeight);
+
+            // Optionally: Adjust the dialog's height if needed.
+            // You might need to consider other UI elements' heights and margins in your calculation.
+            SelectActiveDatasetDialog.this.getDialogPane().setPrefHeight(newHeight + 100); // Adjust the additional height as needed.
+        });
     }
 
-    /**
-     * close the dialog from stage x button
-     *
-     * @param we the windows event
-     */
+
+
     private void close(WindowEvent we) {
         setResult(true);
     }
-
-
 }

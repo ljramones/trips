@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
 import com.teamgannon.trips.service.graphsearch.GraphSearchComplete;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
@@ -29,6 +30,7 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
     private final ProgressBar searchProgressBar = new ProgressBar();
     private final Label searchProgressText = new Label("waiting for graph selection");
 
+    private final StarService starService;
     private LargeGraphSearchService largeGraphSearchService;
 
     private final Button finishBtn = new Button("Finish");
@@ -36,9 +38,11 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
 
     public RouteLoadingInfoDialog(DataSetDescriptor currentDataset,
                                   DatabaseManagementService databaseManagementService,
+                                  StarService starService,
                                   LargeGraphSearchService largeGraphSearchService,
                                   StatusUpdaterListener statusUpdaterListener,
                                   RouteFindingOptions routeFindingOptions) {
+        this.starService = starService;
 
         this.largeGraphSearchService = largeGraphSearchService;
         this.statusUpdaterListener = statusUpdaterListener;
@@ -91,6 +95,7 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
                 routeFindingOptions,
                 currentDataset,
                 databaseManagementService,
+                starService,
                 statusUpdaterListener,
                 this,
                 searchProgressText,

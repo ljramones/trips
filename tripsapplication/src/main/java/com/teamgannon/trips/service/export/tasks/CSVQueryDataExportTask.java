@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import javafx.concurrent.Task;
@@ -25,13 +26,17 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
     private final ExportOptions export;
     private final SearchContext searchContext;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
     private long lineCount = 0;
 
-    public CSVQueryDataExportTask(ExportOptions export, SearchContext searchContext, DatabaseManagementService databaseManagementService) {
+    public CSVQueryDataExportTask(ExportOptions export, SearchContext searchContext,
+                                  DatabaseManagementService databaseManagementService,
+                                  StarService starService) {
         this.export = export;
         this.searchContext = searchContext;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
     }
 
 
@@ -59,7 +64,7 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
             boolean done = false;
             int pageNumber = 0;
             do {
-                Page<StarObject> starObjectList = databaseManagementService.getStarPaged(searchContext.getAstroSearchQuery(), PageRequest.of(pageNumber++, PAGE_SIZE));
+                Page<StarObject> starObjectList = starService.getStarPaged(searchContext.getAstroSearchQuery(), PageRequest.of(pageNumber++, PAGE_SIZE));
                 long count = starObjectList.getContent().size();
                 if (count > 0) {
                     starObjectList.forEach(starObject -> {

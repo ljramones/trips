@@ -7,6 +7,7 @@ import com.teamgannon.trips.dialogs.utility.model.StarSelectionObject;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -28,6 +29,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
 
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
     private final DistanceCalculationObject distanceCalculationObject = DistanceCalculationObject.builder().build();
 
@@ -40,8 +42,12 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
 
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
 
-    public FindDistanceDialog(List<String> datasetNames, DataSetDescriptor dataSetDescriptor, DatabaseManagementService databaseManagementService) {
+    public FindDistanceDialog(List<String> datasetNames,
+                              DataSetDescriptor dataSetDescriptor,
+                              DatabaseManagementService databaseManagementService,
+                              StarService starService) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
 
         datasets.getItems().addAll(datasetNames);
         datasets.getSelectionModel().select(dataSetDescriptor.getDataSetName());
@@ -130,7 +136,7 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
         if (toStar.isEmpty()) {
             showErrorAlert("Find Distance Dialog", "To star can't be blank!");
         } else {
-            List<StarObject> starObjectList = databaseManagementService.findStarsWithName(datasets.getValue(), toStar);
+            List<StarObject> starObjectList = starService.findStarsWithName(datasets.getValue(), toStar);
             // select the star we want
             ShowStarMatchesBasicDialog dialog = new ShowStarMatchesBasicDialog(starObjectList);
             Optional<StarSelectionObject> optionalStarSelectionObject = dialog.showAndWait();
@@ -149,7 +155,7 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
         if (fromStar.isEmpty()) {
             showErrorAlert("Find Distance Dialog", "From star can't be blank!");
         } else {
-            List<StarObject> starObjectList = databaseManagementService.findStarsWithName(datasets.getValue(), fromStar);
+            List<StarObject> starObjectList = starService.findStarsWithName(datasets.getValue(), fromStar);
             // select the star we want
             ShowStarMatchesBasicDialog dialog = new ShowStarMatchesBasicDialog(starObjectList);
             Optional<StarSelectionObject> optionalStarSelectionObject = dialog.showAndWait();

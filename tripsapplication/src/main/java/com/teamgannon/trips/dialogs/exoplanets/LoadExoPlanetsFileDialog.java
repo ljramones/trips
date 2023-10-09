@@ -6,6 +6,7 @@ import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -30,6 +31,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
      * the database management service
      */
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
     private final DatasetService datasetService;
 
     private final File selectedFile;
@@ -66,11 +68,13 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
     public LoadExoPlanetsFileDialog(File selectedFile,
                                     ExoPlanetService exoPlanetService,
                                     DatabaseManagementService databaseManagementService,
+                                    StarService starService,
                                     DatasetService datasetService) {
         this.selectedFile = selectedFile;
         this.exoPlanetService = exoPlanetService;
 
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.datasetService = datasetService;
 
         initializeDialog();
@@ -257,7 +261,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
             if (!exoPlanetService.existsByName(record.getName())) {
                 textArea.appendText("Planet " + record.getName() + " doesn't exist creating\n");
                 String datasetName = descriptorComboBox.getSelectionModel().getSelectedItem().getDataSetName();
-                List<StarObject> starObjects = databaseManagementService.findStarWithName(datasetName, record.getStarName());
+                List<StarObject> starObjects = starService.findStarWithName(datasetName, record.getStarName());
                 if (!starObjects.isEmpty()) {
                     // there are already stars with this name
                     textArea.appendText("Star " + record.getStarName() + " exists\n");

@@ -2,6 +2,7 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.application.HostServices;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -77,10 +78,14 @@ public class StarPropertiesPane extends Pane {
 
 
     private @NotNull StarObject record = new StarObject();
+    private final StarService starService;
     private final HostServices hostServices;
     private final DatabaseManagementService databaseManagementService;
 
-    public StarPropertiesPane(DatabaseManagementService databaseManagementService, HostServices hostServices) {
+    public StarPropertiesPane(DatabaseManagementService databaseManagementService,
+                              StarService starService,
+                              HostServices hostServices) {
+        this.starService = starService;
         this.hostServices = hostServices;
         this.databaseManagementService = databaseManagementService;
 
@@ -118,7 +123,7 @@ public class StarPropertiesPane extends Pane {
                 StarEditStatus starEditStatus = statusOptional.get();
                 if (starEditStatus.isChanged()) {
                     // update the database
-                    databaseManagementService.updateStar(starEditStatus.getRecord());
+                    starService.updateStar(starEditStatus.getRecord());
                     setStar(starEditStatus.getRecord());
                     this.getScene().getWindow().setWidth(this.getScene().getWindow().getWidth() + 0.001);
                 }

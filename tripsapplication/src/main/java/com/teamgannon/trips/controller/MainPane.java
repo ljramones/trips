@@ -268,6 +268,8 @@ public class MainPane implements
 
     private final ExoPlanetService exoPlanetService;
     private final DatasetService datasetService;
+    private final SystemPreferencesService systemPreferencesService;
+    private final TransitService transitService;
     private final StarService starService;
     private final BulkLoadService bulkLoadService;
     private final DataImportService dataImportService;
@@ -315,6 +317,8 @@ public class MainPane implements
                     ExoPlanetService exoPlanetService,
                     DatabaseManagementService databaseManagementService,
                     DatasetService datasetService,
+                    SystemPreferencesService systemPreferencesService,
+                    TransitService transitService,
                     StarService starService,
                     BulkLoadService bulkLoadService,
                     DataImportService dataImportService,
@@ -333,6 +337,8 @@ public class MainPane implements
         this.tripsContext = tripsContext;
         this.exoPlanetService = exoPlanetService;
         this.datasetService = datasetService;
+        this.systemPreferencesService = systemPreferencesService;
+        this.transitService = transitService;
         this.starService = starService;
         this.bulkLoadService = bulkLoadService;
         this.dataImportService = dataImportService;
@@ -345,7 +351,7 @@ public class MainPane implements
         this.solarSystemSpacePane = solarSystemSpacePane;
         this.localization = localization;
 
-        this.dataExportService = new DataExportService(databaseManagementService, this);
+        this.dataExportService = new DataExportService(databaseManagementService, starService, this);
     }
 
     @FXML
@@ -355,7 +361,7 @@ public class MainPane implements
         setMnemonics();
 
         this.plotManager = new PlotManager(tripsContext, databaseManagementService,
-                this, this, this);
+                starService, this, this, this);
 
         setButtons();
 
@@ -452,7 +458,7 @@ public class MainPane implements
     }
 
     private void getGraphColorsFromDB() {
-        ColorPalette colorPalette = databaseManagementService.getGraphColorsFromDB();
+        ColorPalette colorPalette = systemPreferencesService.getGraphColorsFromDB();
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
 
@@ -524,7 +530,7 @@ public class MainPane implements
         stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
         stellarObjectPane.setPrefHeight(500);
         stellarObjectPane.setMaxHeight(520);
-        starPropertiesPane = new StarPropertiesPane(databaseManagementService, hostServices);
+        starPropertiesPane = new StarPropertiesPane(databaseManagementService, starService, hostServices);
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
         propertiesAccordion.getPanes().add(stellarObjectPane);
@@ -680,7 +686,7 @@ public class MainPane implements
                 if (onStart) {
                     log.info("selected is true");
                     tripsPrefs.setShowWelcomeDataReq(true);
-                    databaseManagementService.saveTripsPrefs(tripsPrefs);
+                    systemPreferencesService.saveTripsPrefs(tripsPrefs);
                 } else {
                     log.info("selected is false");
                 }
@@ -890,7 +896,7 @@ public class MainPane implements
 
 
     private void getTripsPrefsFromDB() {
-        TripsPrefs tripsPrefs = databaseManagementService.getTripsPrefs();
+        TripsPrefs tripsPrefs = systemPreferencesService.getTripsPrefs();
         tripsContext.setTripsPrefs(tripsPrefs);
         String datasetName = tripsPrefs.getDatasetName();
         if (datasetName != null) {
@@ -903,19 +909,19 @@ public class MainPane implements
     }
 
     private void getTransitPrefs() {
-        TransitSettings transitSettings = databaseManagementService.getTransitSettings();
+        TransitSettings transitSettings = transitService.getTransitSettings();
         tripsContext.setTransitSettings(transitSettings);
     }
 
     private void getCivilizationsFromDB() {
-        CivilizationDisplayPreferences civilizationDisplayPreferences = databaseManagementService.getCivilizationDisplayPreferences();
+        CivilizationDisplayPreferences civilizationDisplayPreferences = systemPreferencesService.getCivilizationDisplayPreferences();
         tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
         tripsContext.getCurrentPlot().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
 
     public void getGraphEnablesFromDB() {
-        GraphEnablesPersist graphEnablesPersist = databaseManagementService.getGraphEnablesFromDB();
+        GraphEnablesPersist graphEnablesPersist = systemPreferencesService.getGraphEnablesFromDB();
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
@@ -935,7 +941,7 @@ public class MainPane implements
      * get the star definitions from the db
      */
     private void getStarDefinitionsFromDB() {
-        List<StarDetailsPersist> starDetailsPersistList = databaseManagementService.getStarDetails();
+        List<StarDetailsPersist> starDetailsPersistList = systemPreferencesService.getStarDetails();
         StarDisplayPreferences starDisplayPreferences = new StarDisplayPreferences();
         starDisplayPreferences.setStars(starDetailsPersistList);
         tripsContext.getAppViewPreferences().setStarDisplayPreferences(starDisplayPreferences);
@@ -1243,6 +1249,7 @@ public class MainPane implements
         routeFinderDataset.startRouteLocation(
                 searchContext.getDataSetDescriptor(),
                 databaseManagementService,
+                starService,
                 starMeasurementService,
                 this
         );
@@ -1298,7 +1305,7 @@ public class MainPane implements
 
                 String recordId = findResults.getRecord().getRecordId();
                 interstellarSpacePane.highlightStar(recordId);
-                StarObject starObject = databaseManagementService.getStar(recordId);
+                StarObject starObject = starService.getStar(recordId);
                 displayStellarProperties(starObject);
             }
         }
@@ -1437,32 +1444,32 @@ public class MainPane implements
 
     @Override
     public List<StarObject> getAstrographicObjectsOnQuery() {
-        return databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
+        return starService.getAstrographicObjectsOnQuery(searchContext);
     }
 
     @Override
     public void updateStar(@NotNull StarObject starObject) {
-        databaseManagementService.updateStar(starObject);
+        starService.updateStar(starObject);
     }
 
     @Override
     public void updateNotesForStar(@NotNull String recordId, String notes) {
-        databaseManagementService.updateNotesOnStar(recordId, notes);
+        starService.updateNotesOnStar(recordId, notes);
     }
 
     @Override
     public StarObject getStar(@NotNull String starId) {
-        return databaseManagementService.getStar(starId);
+        return starService.getStar(starId);
     }
 
     @Override
     public void removeStar(@NotNull StarObject starObject) {
-        databaseManagementService.removeStar(starObject);
+        starService.removeStar(starObject);
     }
 
     @Override
     public void removeStar(@NotNull String recordId) {
-        databaseManagementService.removeStar(recordId);
+        starService.removeStar(recordId);
     }
 
     @Override
@@ -1625,6 +1632,7 @@ public class MainPane implements
      */
     @Override
     public void showNewStellarData(@NotNull DataSetDescriptor dataSetDescriptor, boolean showPlot, boolean showTable) {
+        log.info("showing new stellar data: {}, showPlot: {}, showTable: {}", dataSetDescriptor.getDataSetName(), showPlot, showTable);
         setContextDataSet(dataSetDescriptor);
         showNewStellarData(showPlot, showTable);
     }
@@ -1680,7 +1688,7 @@ public class MainPane implements
 
     private void showList(@NotNull List<StarObject> starObjects) {
         if (starObjects.size() > 0) {
-            new DataSetTable(databaseManagementService, starObjects);
+            new DataSetTable(databaseManagementService, starService, starObjects);
         } else {
             showErrorAlert("Display Data table", "no data to show");
         }
@@ -1756,7 +1764,7 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
 
         // colors changes so update db
-        databaseManagementService.updateColors(colorPalette);
+        systemPreferencesService.updateColors(colorPalette);
         interstellarSpacePane.changeColors(colorPalette);
         log.debug("UPDATE COLORS!!!");
     }
@@ -1767,7 +1775,7 @@ public class MainPane implements
 
         updateToggles(graphEnablesPersist);
 
-        databaseManagementService.updateGraphEnables(graphEnablesPersist);
+        systemPreferencesService.updateGraphEnables(graphEnablesPersist);
         plotManager.changeGraphEnables(graphEnablesPersist);
         log.debug("UPDATE GRAPH ENABLES!!!");
     }
@@ -1820,12 +1828,12 @@ public class MainPane implements
 
     @Override
     public void changeStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
-        databaseManagementService.updateStarPreferences(starDisplayPreferences);
+        systemPreferencesService.updateStarPreferences(starDisplayPreferences);
     }
 
     @Override
     public void changePolitiesPreferences(@NotNull CivilizationDisplayPreferences civilizationDisplayPreferences) {
-        databaseManagementService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
+        systemPreferencesService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
 
     @Override
@@ -1849,7 +1857,7 @@ public class MainPane implements
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             List<StarObject> starObjects = getAstrographicObjectsOnQuery();
             if (starObjects.size() > 0) {
-                new DataSetTable(databaseManagementService, starObjects);
+                new DataSetTable(databaseManagementService, starService, starObjects);
             } else {
                 showErrorAlert("Show Data Table", "no data found");
             }
@@ -1878,7 +1886,7 @@ public class MainPane implements
                 }
                 List<StarObject> starObjects = getAstrographicObjectsOnQuery();
                 if (starObjects.size() > 0) {
-                    new DataSetTable(databaseManagementService, starObjects);
+                    new DataSetTable(databaseManagementService, starService, starObjects);
                     updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
                 } else {
                     showErrorAlert("Show Data Table", "No data to show");
@@ -1944,9 +1952,9 @@ public class MainPane implements
                 String datasetName = starSearchResults.getDataSetName();
                 String starName = starSearchResults.getNameToSearch();
                 log.info("name to search: {}", starSearchResults.getNameToSearch());
-                List<StarObject> starObjects = databaseManagementService.findStarsWithName(datasetName, starName);
+                List<StarObject> starObjects = starService.findStarsWithName(datasetName, starName);
                 log.info("number of stars found ={}", starObjects.size());
-                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
                 showStarMatchesDialog.showAndWait();
             }
         }
@@ -1962,7 +1970,7 @@ public class MainPane implements
             log.error("There are no datasets in this database to search on");
             showErrorAlert("Query Stars", "There aren't any datasets to search on.\nPlease import one first");
         } else {
-            AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, tripsContext);
+            AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, starService, tripsContext);
             Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
             if (optional.isPresent()) {
                 AdvResultsSet advResultsSet = optional.get();
@@ -2043,7 +2051,7 @@ public class MainPane implements
             FindResults findResults = optional.get();
             if (findResults.isSelected()) {
                 StarDisplayRecord record = findResults.getRecord();
-                StarObject starObject = databaseManagementService.getStar(record.getRecordId());
+                StarObject starObject = starService.getStar(record.getRecordId());
                 StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
                 Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
@@ -2051,7 +2059,7 @@ public class MainPane implements
                     StarEditStatus starEditStatus = statusOptional.get();
                     if (starEditStatus.isChanged()) {
                         // update the database
-                        databaseManagementService.updateStar(starEditStatus.getRecord());
+                        starService.updateStar(starEditStatus.getRecord());
                     }
                 }
             } else {
@@ -2129,9 +2137,9 @@ public class MainPane implements
                 String datasetName = results.getDataSetName();
                 String catalogId = results.getNameToSearch();
                 log.info("name to search: {}", results.getNameToSearch());
-                List<StarObject> starObjects = databaseManagementService.findStarsWithCatalogId(datasetName, catalogId);
+                List<StarObject> starObjects = starService.findStarsWithCatalogId(datasetName, catalogId);
                 log.info("number of stars found ={}", starObjects.size());
-                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
                 showStarMatchesDialog.showAndWait();
             }
         }
@@ -2155,9 +2163,9 @@ public class MainPane implements
                 String datasetName = results.getDataSetName();
                 String commonName = results.getNameToSearch();
                 log.info("name to search: {}", results.getNameToSearch());
-                List<StarObject> starObjects = databaseManagementService.findStarsByCommonName(datasetName, commonName);
+                List<StarObject> starObjects = starService.findStarsByCommonName(datasetName, commonName);
                 log.info("number of stars found ={}", starObjects.size());
-                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
                 showStarMatchesDialog.showAndWait();
             }
         }
@@ -2169,8 +2177,8 @@ public class MainPane implements
         if (optional.isPresent()) {
             ConstellationSelected selected = optional.get();
             if (selected.isSelected()) {
-                List<StarObject> starObjectList = databaseManagementService.findStarsByConstellation(selected.getConstellation());
-                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjectList);
+                List<StarObject> starObjectList = starService.findStarsByConstellation(selected.getConstellation());
+                ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjectList);
                 showStarMatchesDialog.showAndWait();
             }
         }
@@ -2188,7 +2196,7 @@ public class MainPane implements
             List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
             if (!dataSetDescriptorList.isEmpty()) {
                 List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService, datasetService);
+                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService, starService, datasetService);
                 dialog.showAndWait();
             } else {
                 showErrorAlert("Load ExoPlanets File", "There are no datasets in this database!");
@@ -2203,7 +2211,7 @@ public class MainPane implements
             showErrorAlert("Find stars", "No datasets in database, please load first");
             return;
         }
-        FindDistanceDialog dialog = new FindDistanceDialog(datasetNames, tripsContext.getSearchContext().getDataSetDescriptor(), databaseManagementService);
+        FindDistanceDialog dialog = new FindDistanceDialog(datasetNames, tripsContext.getSearchContext().getDataSetDescriptor(), databaseManagementService, starService);
         dialog.showAndWait();
     }
 
@@ -2244,7 +2252,7 @@ public class MainPane implements
         List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
         if (!dataSetDescriptorList.isEmpty()) {
             List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-            CompareDBDialog dialog = new CompareDBDialog(databaseManagementService, dataSetNames);
+            CompareDBDialog dialog = new CompareDBDialog(databaseManagementService, starService, dataSetNames);
             Optional<DBComparison> dbComparisonOptional = dialog.showAndWait();
             if (dbComparisonOptional.isPresent()) {
                 DBComparison dbComparison = dbComparisonOptional.get();
@@ -2266,7 +2274,7 @@ public class MainPane implements
             showErrorAlert("Find stars", "No datasets in database, please load first");
             return;
         }
-        FindRelatedStarsbyDistance findRelatedStarsbyDistanceDialog = new FindRelatedStarsbyDistance(databaseManagementService, datasetNames, tripsContext.getSearchContext().getDataSetDescriptor());
+        FindRelatedStarsbyDistance findRelatedStarsbyDistanceDialog = new FindRelatedStarsbyDistance(databaseManagementService, starService, datasetNames, tripsContext.getSearchContext().getDataSetDescriptor());
         Optional<MultipleStarSearchResults> optional = findRelatedStarsbyDistanceDialog.showAndWait();
         if (optional.isPresent()) {
             MultipleStarSearchResults starSearchResults = optional.get();
@@ -2350,7 +2358,7 @@ public class MainPane implements
         if (selectedFile != null) {
             List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
             if (!dataSetDescriptorList.isEmpty()) {
-                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService, datasetService);
+                Load10ParsecStarsDialog dialog = new Load10ParsecStarsDialog(selectedFile, databaseManagementService, starService, datasetService);
                 Optional<Load10ParsecStarsResults> optional = dialog.showAndWait();
                 if (optional.isPresent()) {
                     Load10ParsecStarsResults results = optional.get();
@@ -2375,6 +2383,7 @@ public class MainPane implements
         }
         FindByCatalogIdDialog dialog = new FindByCatalogIdDialog(
                 databaseManagementService,
+                starService,
                 datasetNames,
                 tripsContext.getSearchContext().getDataSetDescriptor());
         Optional<StarSearchResults> resultsOptional = dialog.showAndWait();

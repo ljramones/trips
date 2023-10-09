@@ -4,6 +4,7 @@ import com.teamgannon.trips.dataset.enums.SortParameterEnum;
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -44,10 +45,11 @@ public class LookupStarDialog extends Dialog<StarSearchResults> {
 
     public LookupStarDialog(String starToLookup,
                             String datasetName,
-                            @NotNull DatabaseManagementService databaseManagementService) {
+                            @NotNull DatabaseManagementService databaseManagementService,
+                            @NotNull StarService starService) {
         this.datasetName = datasetName;
 
-        starsFound = databaseManagementService.findStarsWithName(datasetName, starToLookup);
+        starsFound = starService.findStarsWithName(datasetName, starToLookup);
 
         this.setTitle("Show stars that match: " + starToLookup);
         this.setHeight(700);

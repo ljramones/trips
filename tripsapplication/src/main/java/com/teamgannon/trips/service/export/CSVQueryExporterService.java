@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.export.tasks.CSVQueryDataExportTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -24,6 +25,7 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
     private final StatusUpdaterListener updaterListener;
     private DatabaseManagementService databaseManagementService;
 
+    private StarService starService;
     private ExportTaskComplete exportTaskComplete;
     private Label progressText;
     private ProgressBar exportProgressionBar;
@@ -38,6 +40,7 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
     public boolean exportAsCSV(ExportOptions export,
                                     SearchContext searchContext,
                                     DatabaseManagementService databaseManagementService,
+                                    StarService starService,
                                     StatusUpdaterListener statusUpdaterListener,
                                     ExportTaskComplete importTaskComplete,
                                     Label progressText,
@@ -48,6 +51,7 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
 
         this.searchContext = searchContext;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
 
         this.exportTaskComplete = importTaskComplete;
         this.progressText = progressText;
@@ -63,7 +67,7 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
 
     @Override
     protected Task<ExportResults> createTask() {
-        return new CSVQueryDataExportTask(export, searchContext, databaseManagementService);
+        return new CSVQueryDataExportTask(export, searchContext, databaseManagementService, starService);
     }
 
 

@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.gaiadata;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -20,6 +21,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
 
 
     private final DatabaseManagementService service;
+    private final StarService starService;
     private final DataSetDescriptor dataSetDescriptor;
     private final StarRecord starRecord;
     private final StarObject starObject;
@@ -46,10 +48,12 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
 
 
     public UpdateStarObjectWithRecordDialog(DatabaseManagementService service,
+                                            StarService starService,
                                             DataSetDescriptor dataSetDescriptor,
                                             StarRecord starRecord,
                                             StarObject starObject) {
         this.service = service;
+        this.starService = starService;
         this.dataSetDescriptor = dataSetDescriptor;
         this.starRecord = starRecord;
         this.starObject = starObject;
@@ -465,7 +469,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
             log.info("update: catalog id List: {}", replaceSubstringStartingWith);
             starObject.setCatalogIdList(replaceSubstringStartingWith);
             log.info("add: catalog id List: {}", starObject.getRawCatalogIdList());
-            service.updateStar(starObject);
+            starService.updateStar(starObject);
         }
         setResult(true);
     }

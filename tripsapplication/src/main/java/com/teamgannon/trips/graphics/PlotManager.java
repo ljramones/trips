@@ -18,6 +18,7 @@ import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.geometry.Point3D;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
@@ -45,6 +46,7 @@ public class PlotManager {
     private final CurrentPlot currentPlot;
 
     private final AstrographicTransformer astrographicTransformer;
+    private final StarService starService;
     private final DataSetChangeListener dataSetChangeListener;
     private final StatusUpdaterListener statusUpdaterListener;
     private final RoutingPanelListener routingPanelListener;
@@ -61,6 +63,7 @@ public class PlotManager {
      */
     public PlotManager(@NotNull TripsContext tripsContext,
                        DatabaseManagementService databaseManagementService,
+                       StarService starService,
                        DataSetChangeListener dataSetChangeListener,
                        StatusUpdaterListener statusUpdaterListener,
                        RoutingPanelListener routingPanelListener) {
@@ -70,6 +73,7 @@ public class PlotManager {
         this.searchContext = tripsContext.getSearchContext();
         this.databaseManagementService = databaseManagementService;
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
+        this.starService = starService;
         this.dataSetChangeListener = dataSetChangeListener;
         this.statusUpdaterListener = statusUpdaterListener;
         this.routingPanelListener = routingPanelListener;
@@ -145,7 +149,7 @@ public class PlotManager {
         double displayRadius = astroSearchQuery.getUpperDistanceLimit();
 
         // now query the data and plot
-        List<StarObject> starObjects = databaseManagementService.getAstrographicObjectsOnQuery(searchContext);
+        List<StarObject> starObjects = starService.getAstrographicObjectsOnQuery(searchContext);
 
         log.info("DB Query returns {} stars", starObjects.size());
 

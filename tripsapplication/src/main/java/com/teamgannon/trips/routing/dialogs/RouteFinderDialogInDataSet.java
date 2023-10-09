@@ -6,6 +6,7 @@ import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.measure.PerformanceMeasure;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.event.ActionEvent;
@@ -50,8 +51,9 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
     private final String currentDataSet;
     private final StarMeasurementService starMeasurementService;
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
-   private Button colorButton = new Button("color");
+    private Button colorButton = new Button("color");
 
     /**
      * this constructor is used when we search an entire database
@@ -61,11 +63,13 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
      */
     public RouteFinderDialogInDataSet(String currentDataSet,
                                       StarMeasurementService starMeasurementService,
-                                      @NotNull DatabaseManagementService databaseManagementService) {
+                                      @NotNull DatabaseManagementService databaseManagementService,
+                                      StarService starService) {
 
         this.currentDataSet = currentDataSet;
         this.starMeasurementService = starMeasurementService;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
 
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();
@@ -108,7 +112,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
             showErrorAlert("Star to Lookup", "Please enter a star name");
             return null;
         } else {
-            LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService);
+            LookupStarDialog lookupStarDialog = new LookupStarDialog(starToFind, currentDataSet, databaseManagementService, starService);
             Stage theStage = (Stage) lookupStarDialog.getDialogPane().getScene().getWindow();
             theStage.setAlwaysOnTop(true);
             theStage.toFront();
@@ -237,7 +241,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
             double distance = starMeasurementService.calculateDistance(originCoords, destinationCoords);
             log.info("distance between {} and {} is {} ly", originStar.getDisplayName(), destinationStar.getDisplayName(), distance);
 
-            long starCount = databaseManagementService.getCountOfDatasetWithinLimit(currentDataSet, distance);
+            long starCount = starService.getCountOfDatasetWithinLimit(currentDataSet, distance);
             log.info("number of stars:{}", starCount);
             PerformanceMeasure performanceMeasure = starMeasurementService.calculateTimeToDoSearch(starCount);
             performanceMeasure.setDistance(distance);

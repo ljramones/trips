@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.db.DBReference;
 import com.teamgannon.trips.dialogs.search.model.StarDistances;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
@@ -36,12 +37,511 @@ public class StarService {
     private static final int MAX_REQUEST_SIZE = 9999;
 
     private final StarObjectRepository starObjectRepository;
-    private final DatasetService datasetService;
+
+    private final DataSetDescriptorRepository dataSetDescriptorRepository;
+
 
     public StarService(StarObjectRepository starObjectRepository,
-                       DatasetService datasetService) {
+                       DataSetDescriptorRepository dataSetDescriptorRepository) {
         this.starObjectRepository = starObjectRepository;
-        this.datasetService = datasetService;
+        this.dataSetDescriptorRepository = dataSetDescriptorRepository;
     }
+
+
+    /**
+     * get a list of all the data sets
+     * @param queryToRun the query to run
+     * @return the list of data sets
+     */
+    @TrackExecutionTime
+    public List<StarObject> runNativeQuery(String queryToRun) {
+        Query query = entityManager.createNativeQuery(queryToRun, StarObject.class);
+        List<StarObject> starObjects = query.getResultList();
+        for (StarObject starObject : starObjects) {
+            log.info(starObject.toString());
+        }
+        log.info("number of elements=" + starObjects.size());
+        return starObjects;
+    }
+
+
+    /**
+     * get a set of astrographic objects based on a query
+     *
+     * @param searchContext the search context
+     * @return the list of objects
+     */
+    @TrackExecutionTime
+    public List<StarObject> getAstrographicObjectsOnQuery(@NotNull SearchContext searchContext) {
+        AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
+        List<StarObject> starObjects;
+        if (searchQuery.isRecenter()) {
+            starObjects
+                    = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+                    searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
+                    searchQuery.getXMinus(),
+                    searchQuery.getXPlus(),
+                    searchQuery.getYMinus(),
+                    searchQuery.getYPlus(),
+                    searchQuery.getZMinus(),
+                    searchQuery.getZPlus()
+            );
+
+        } else {
+            starObjects = starObjectRepository.findBySearchQuery(searchQuery);
+        }
+        log.info("New DB Query returns {} stars", starObjects.size());
+        starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        log.info("Filtered by distance Query returns {} stars", starObjects.size());
+        return starObjects;
+    }
+
+    @TrackExecutionTime
+    public List<StarDistances> getAstrographicObjectsOnQuery(@NotNull AstroSearchQuery searchQuery) {
+        List<StarDistances> starDistances;
+        List<StarObject> starObjects;
+        if (searchQuery.isRecenter()) {
+            starObjects
+                    = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+                    searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
+                    searchQuery.getXMinus(),
+                    searchQuery.getXPlus(),
+                    searchQuery.getYMinus(),
+                    searchQuery.getYPlus(),
+                    searchQuery.getZMinus(),
+                    searchQuery.getZPlus()
+            );
+
+        } else {
+            starObjects = starObjectRepository.findBySearchQuery(searchQuery);
+        }
+        log.info("New DB Query returns {} stars", starObjects.size());
+        starDistances = filterByDistanceIncludeDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        log.info("Filtered by distance Query returns {} stars", starObjects.size());
+        return starDistances;
+    }
+
+    @TrackExecutionTime
+    @Transactional(readOnly = true)
+    public Page<StarObject> getStarPaged(AstroSearchQuery searchQuery, Pageable pageable) {
+        return starObjectRepository.findBySearchQueryPaged(searchQuery, pageable);
+    }
+
+
+    /**
+     * filter the list to distance by selected distance
+     *
+     * @param starObjects            the astrogrpic objects to display
+     * @param centerCoordinates      the plot center coordinates
+     * @param distanceFromCenterStar the distance frm the centre star to display
+     * @return the fitlered list
+     */
+    @TrackExecutionTime
+    private @NotNull
+    List<StarObject> filterByDistance(
+            @NotNull List<StarObject> starObjects,
+            double[] centerCoordinates,
+            double distanceFromCenterStar) {
+        List<StarObject> filterList = new ArrayList<>();
+        starObjects.forEach(object -> {
+            try {
+                double[] starPosition = new double[3];
+                starPosition[0] = object.getX();
+                starPosition[1] = object.getY();
+                starPosition[2] = object.getZ();
+                if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
+                    filterList.add(object);
+                }
+            } catch (Exception e) {
+                log.error("error in finding distance:", e);
+            }
+        });
+        return filterList;
+    }
+
+    private @NotNull
+    List<StarDistances> filterByDistanceIncludeDistance(
+            @NotNull List<StarObject> starObjects,
+            double[] centerCoordinates,
+            double distanceFromCenterStar) {
+        List<StarDistances> filterList = new ArrayList<>();
+        starObjects.forEach(object -> {
+            try {
+                double[] starPosition = new double[3];
+                starPosition[0] = object.getX();
+                starPosition[1] = object.getY();
+                starPosition[2] = object.getZ();
+                double distance = StarMath.getDistance(centerCoordinates, starPosition);
+                if (!(distance >= distanceFromCenterStar)) {
+                    StarDistances starDistance = new StarDistances(object, distance);
+                    filterList.add(starDistance);
+                }
+            } catch (Exception e) {
+                log.error("error in finding distance:", e);
+            }
+        });
+        return filterList;
+    }
+
+
+    @TrackExecutionTime
+    public List<StarObject> getFromDataset(DataSetDescriptor dataSetDescriptor) {
+        // we can only effectively gather 500 at a time
+        return toList(
+                starObjectRepository.findByDataSetName(
+                        dataSetDescriptor.getDataSetName(),
+                        PageRequest.of(0, MAX_REQUEST_SIZE)
+                )
+        );
+    }
+
+    @TrackExecutionTime
+    public Page<StarObject> getFromDatasetByPage(DataSetDescriptor dataSetDescriptor, int pageNumber, int requestSize) {
+        // we can only effectively gather 500 at a time
+        return starObjectRepository.findByDataSetName(
+                dataSetDescriptor.getDataSetName(),
+                PageRequest.of(pageNumber, requestSize)
+        );
+    }
+
+    @TrackExecutionTime
+    @Transactional(readOnly = true)
+    public Map<String, SparseStarRecord> getFromDatasetWithinRanges(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
+        final Map<String, SparseStarRecord> starRecordHashMap = new HashMap<>();
+        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance);
+
+        starObjectStream.forEach(starObject -> {
+            SparseStarRecord sparseStarRecord = starObject.toSparseStarRecord();
+            starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
+        });
+
+        return starRecordHashMap;
+    }
+
+    /**
+     * get a count of the number of stars based on a limit
+     *
+     * @param datasetName the dataset name
+     * @param distance    the limit
+     * @return the count
+     */
+    public long getCountOfDatasetWithinLimit(String datasetName, double distance) {
+        return starObjectRepository.countByDataSetNameAndDistanceIsLessThanEqual(datasetName, distance);
+    }
+
+
+    /**
+     * return the count of the dataset for export
+     *
+     * @param datasetName the dataset name
+     * @return the count
+     */
+    public long getCountOfDataset(String datasetName) {
+        return starObjectRepository.countByDataSetName(datasetName);
+    }
+
+    @TrackExecutionTime
+    @Transactional(readOnly = true)
+    public List<StarObject> getStarsBasedOnId(List<String> starIdList) {
+        return starObjectRepository.findByIdIn(starIdList);
+    }
+
+    @TrackExecutionTime
+    public List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
+        // we can only effectively gather 500 at a time
+        return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
+    }
+
+    /**
+     * helper method to return page as list
+     *
+     * @param pageResult the page result
+     * @return the list representation
+     */
+    @TrackExecutionTime
+    private @NotNull
+    List<StarObject> toList(@NotNull Page<StarObject> pageResult) {
+        return pageResult.getContent();
+    }
+
+    /**
+     * remove the star from the db
+     *
+     * @param starObject the astrographic object
+     */
+    @TrackExecutionTime
+    @Transactional
+    public void removeStar(@NotNull StarObject starObject) {
+        starObjectRepository.delete(starObject);
+    }
+
+    /**
+     * add a new star
+     *
+     * @param starObjectNew the star to add
+     */
+    @TrackExecutionTime
+    @Transactional
+    public void addStar(@NotNull StarObject starObjectNew) {
+//        starObjectNew.calculateDisplayScore();
+        starObjectRepository.save(starObjectNew);
+        Optional<StarObject> testGet = starObjectRepository.findById(starObjectNew.getId());
+        if (testGet.isEmpty()) {
+            log.error("why didn't this save work");
+        }
+    }
+
+    /**
+     * update the star
+     *
+     * @param starObject the star to update
+     */
+    @TrackExecutionTime
+    @Transactional
+    public void updateStar(@NotNull StarObject starObject) {
+        log.info(">>>>updating star={}, name={}, common ={}", starObject.getId(), starObject.getDisplayName(), starObject.getCommonName());
+        StarObject object = starObjectRepository.save(starObject);
+        if (starObject.getId().equals(object.getId())) {
+            log.info("same");
+        } else {
+            log.error("not same, org={}, new={}", starObject.getId(), object.getId());
+        }
+    }
+
+    @TrackExecutionTime
+    @Transactional
+    public void updateNotesOnStar(@NotNull String recordId, String notes) {
+        Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
+        if (objectOptional.isPresent()) {
+            StarObject object = objectOptional.get();
+            object.setNotes(notes);
+            starObjectRepository.save(object);
+
+            getStar(recordId);
+        } else {
+            log.error("Attempt to set notes on a non existent star: {}", recordId);
+        }
+    }
+
+    @TrackExecutionTime
+    public StarObject getStar(@NotNull String recordId) {
+        Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
+        return objectOptional.orElse(null);
+    }
+
+    @TrackExecutionTime
+    @Transactional
+    public void removeStar(@NotNull String recordId) {
+        starObjectRepository.deleteById(recordId);
+    }
+
+    /**
+     * store a bulk of stars
+     *
+     * @param starObjectList the list of stars to save
+     */
+    @TrackExecutionTime
+    @Transactional
+    public void addStars(@NotNull List<StarObject> starObjectList) {
+        starObjectRepository.saveAll(starObjectList);
+    }
+
+    /**
+     * save a large number of stars at once
+     *
+     * @param starSet the star set
+     */
+    @TrackExecutionTime
+    @Transactional
+    public void starBulkSave(@NotNull Set<StarObject> starSet) {
+        starObjectRepository.saveAll(starSet);
+    }
+
+    /**
+     * find a set of stars that match our search term
+     *
+     * @param datasetName the dataset to search in
+     * @param starName    the star name to search
+     * @return the list of matching stars
+     */
+    @TrackExecutionTime
+    @Transactional
+    public @NotNull
+    List<StarObject> findStarsWithName(String datasetName, String starName) {
+        return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+    }
+
+    public List<StarObject> findStarWithName(String datasetName, String starName) {
+        return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+    }
+
+    public DataSetDescriptor recheckDescriptor(DataSetDescriptor descriptor, List<StarObject> starObjects) {
+        double max = 0;
+        long numberStars = 0L;
+        for (StarObject star : starObjects) {
+            if (star.getDistance() > max) {
+                max = star.getDistance();
+            }
+            numberStars++;
+        }
+        descriptor.setDistanceRange(max);
+        descriptor.setNumberStars(numberStars);
+        descriptor.clearRoutes();
+        descriptor.resetDate();
+
+        return descriptor;
+    }
+
+    public List<StarObject> findStarsWithCatalogId(String datasetName, String catalogId) {
+        return starObjectRepository.findByCatalogIdListContainsIgnoreCase(catalogId);
+    }
+
+    public StarObject findStarWithBayerId(String datasetName, String bayerId) {
+        return starObjectRepository.findByBayerCatIdAndDataSetName(bayerId, datasetName);
+    }
+
+    public StarObject findStarWithFlamsteedId(String datasetName, String flamsteedId) {
+        return starObjectRepository.findByFlamsteedCatIdAndDataSetName(flamsteedId, datasetName);
+    }
+
+    public StarObject findStarWithGJId(String datasetName, String gjId) {
+        return starObjectRepository.findByGlieseCatIdAndDataSetName(gjId, datasetName);
+    }
+
+    public StarObject findStarWithHDId(String datasetName, String hdId) {
+        return starObjectRepository.findByHdCatIdAndDataSetName(hdId, datasetName);
+    }
+
+    public StarObject findStarWithHipId(String datasetName, String hipId) {
+        return starObjectRepository.findByHipCatIdAndDataSetName(hipId, datasetName);
+    }
+
+    public StarObject findWithCsiId(String datasetName, String csiId) {
+        return starObjectRepository.findByCsiCatIdAndDataSetName(csiId, datasetName);
+    }
+
+    public StarObject findWithTychoId(String datasetName, String tychoId) {
+        return starObjectRepository.findByTycho2CatIdAndDataSetName(tychoId, datasetName);
+    }
+
+    public StarObject findWithTwoMassId(String datasetName, String twoMassId) {
+        return starObjectRepository.findByTwoMassCatIdAndDataSetName(twoMassId, datasetName);
+    }
+
+    public StarObject findWithGaiaDR2Id(String datasetName, String gaiaDr2Id) {
+        return starObjectRepository.findByGaiaDR2CatIdAndDataSetName(gaiaDr2Id, datasetName);
+    }
+
+    public StarObject findWithGaiaDR3Id(String datasetName, String gaiaDr3Id) {
+        return starObjectRepository.findByGaiaDR3CatIdAndDataSetName(gaiaDr3Id, datasetName);
+    }
+
+    public StarObject findWithGaiaEDR3Id(String datasetName, String gaiaEdr3Id) {
+        return starObjectRepository.findByGaiaEDR3CatIdAndDataSetName(gaiaEdr3Id, datasetName);
+    }
+
+    /**
+     * find stars by the common name if it exists
+     *
+     * @param datasetName the dataset name
+     * @param commonName  the common name
+     * @return the stars that match
+     */
+    public List<StarObject> findStarsByCommonName(String datasetName, String commonName) {
+        return starObjectRepository.findByCommonNameContainsIgnoreCase(commonName);
+    }
+
+    /**
+     * find all the stars in a constellation
+     *
+     * @param constellation the constellation
+     * @return the list of stars
+     */
+    public List<StarObject> findStarsByConstellation(String constellation) {
+        return starObjectRepository.findByConstellationName(constellation);
+    }
+
+    /**
+     * add an alias list to the star
+     *
+     * @param starObjectId the id
+     * @param aliasList    the list of alias names
+     * @return true means we could find the star we want vs false is that we can't find the star
+     */
+    public boolean addAliasToStar(String starObjectId, Set<String> aliasList) {
+        Optional<StarObject> starObjectRetOpt = starObjectRepository.findById(starObjectId);
+        if (starObjectRetOpt.isPresent()) {
+            StarObject starObjectRet = starObjectRetOpt.get();
+            starObjectRet.getAliasList().addAll(aliasList);
+            starObjectRepository.save(starObjectRet);
+            return true;
+        } else {
+            log.error("Star: id={} does not exist", starObjectId);
+            return false;
+        }
+    }
+
+    /**
+     * add an alias list to the star
+     *
+     * @param starObject the star to add to
+     * @param aliasList  the alias list
+     * @return true means we could find the star we want vs false is that we can't find the star
+     */
+    public boolean addAliasToStar(StarObject starObject, Set<String> aliasList) {
+        return addAliasToStar(starObject.getId(), aliasList);
+    }
+
+    public Optional<StarObject> findId(String id) {
+        return starObjectRepository.findById(id);
+    }
+
+    @Transactional
+    public List<DBReference> compareStars(String sourceSelection, String targetSelection) {
+        List<DBReference> starsNotFound;
+        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection);
+
+        starsNotFound = starObjectStream.filter(starObject ->
+                        !starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, starObject.getDisplayName()).isEmpty())
+                .map(
+                        starObject ->
+                                DBReference.builder().id(starObject.getId()).displayName(starObject.getDisplayName()).build())
+                .collect(Collectors.toList());
+
+        return starsNotFound;
+    }
+
+    public List<StarDistances> findStarsWithinDistance(String dataSetName, StarObject starObject, Double distanceToSearch) {
+        AstroSearchQuery searchQuery = new AstroSearchQuery();
+        searchQuery.setRecenter(true);
+        searchQuery.setCenterStar(starObject.getDisplayName());
+        DataSetDescriptor descriptor = dataSetDescriptorRepository.findByDataSetName(dataSetName);
+        searchQuery.setDescriptor(descriptor);
+        DataSetContext dataSetContext = new DataSetContext(descriptor);
+
+        searchQuery.setDataSetContext(dataSetContext);
+        double[] center = starObject.getCoordinates();
+        searchQuery.setCenterCoordinates(center);
+
+        searchQuery.setUpperDistanceLimit(distanceToSearch);
+
+        double xMinus = center[0] - distanceToSearch;
+        double xPlus = center[0] + distanceToSearch;
+        searchQuery.setXMinus(xMinus);
+        searchQuery.setXPlus(xPlus);
+
+        double yMinus = center[1] - distanceToSearch;
+        double yPlus = center[1] + distanceToSearch;
+        searchQuery.setYMinus(yMinus);
+        searchQuery.setYPlus(yPlus);
+
+        double zMinus = center[2] - distanceToSearch;
+        double zPlus = center[2] + distanceToSearch;
+        searchQuery.setZMinus(zMinus);
+        searchQuery.setZPlus(zPlus);
+
+        return getAstrographicObjectsOnQuery(searchQuery);
+    }
+
 
 }

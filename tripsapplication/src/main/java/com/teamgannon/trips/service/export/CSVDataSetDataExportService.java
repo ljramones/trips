@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.export.tasks.CSVDataSetDataExportTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -24,6 +25,7 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
     private final StatusUpdaterListener updaterListener;
     private DatabaseManagementService databaseManagementService;
 
+    private StarService starService;
     private ExportTaskComplete exportTaskComplete;
     private Label progressText;
     private ProgressBar exportProgressionBar;
@@ -38,11 +40,12 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
 
     @Override
     protected Task<ExportResults> createTask() {
-        return new CSVDataSetDataExportTask(export, databaseManagementService);
+        return new CSVDataSetDataExportTask(export, databaseManagementService, starService);
     }
 
     public boolean exportAsCSV(@NotNull ExportOptions export,
                                @NotNull DatabaseManagementService databaseManagementService,
+                               StarService starService,
                                StatusUpdaterListener statusUpdaterListener,
                                ExportTaskComplete exportTaskComplete,
                                Label progressText,
@@ -51,6 +54,7 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
 
         this.export = export;
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.exportTaskComplete = exportTaskComplete;
         this.progressText = progressText;
         this.exportProgressionBar = exportProgressionBar;

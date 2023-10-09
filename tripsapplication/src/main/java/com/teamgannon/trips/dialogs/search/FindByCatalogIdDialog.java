@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -31,10 +32,15 @@ public class FindByCatalogIdDialog extends Dialog<StarSearchResults> {
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
     private final ChoiceBox<String> catalogIdSelection = new ChoiceBox<>();
     private final DatabaseManagementService service;
+    private final StarService starService;
 
-    public FindByCatalogIdDialog(DatabaseManagementService service, List<String> datasetNames, DataSetDescriptor dataSetDescriptor) {
+    public FindByCatalogIdDialog(DatabaseManagementService service,
+                                 StarService starService,
+                                 List<String> datasetNames,
+                                 DataSetDescriptor dataSetDescriptor) {
 
         this.service = service;
+        this.starService = starService;
         this.setTitle("Find a star by Catalog Id in database");
         this.setHeight(500);
         this.setWidth(500);
@@ -115,50 +121,50 @@ public class FindByCatalogIdDialog extends Dialog<StarSearchResults> {
 
                 // Handle HIPPARCOS case
                 log.info("Selected: HIPPARCOS");
-                starObject = service.findStarWithHipId(dataSetName, nameToSearch.trim());
+                starObject = starService.findStarWithHipId(dataSetName, nameToSearch.trim());
             }
             case HD -> {
                 // Handle HD case
                 log.info("Selected: Henry Draper");
-                starObject = service.findStarWithHDId(dataSetName, nameToSearch.trim());
+                starObject = starService.findStarWithHDId(dataSetName, nameToSearch.trim());
                 log.info("star object: {}", starObject);
             }
             case BAYER -> {
                 // Handle BAYER case
                 log.info("Selected: Bayer");
-                starObject = service.findStarWithBayerId(dataSetName, nameToSearch.trim());
+                starObject = starService.findStarWithBayerId(dataSetName, nameToSearch.trim());
             }
             case FLAMSTEED -> {
                 log.info("Selected: Flamsteed");
-                starObject = service.findStarWithFlamsteedId(dataSetName, nameToSearch.trim());
+                starObject = starService.findStarWithFlamsteedId(dataSetName, nameToSearch.trim());
             }
             case GLIESE -> {
                 log.info("Selected: GLIESE");
-                starObject = service.findStarWithGJId(dataSetName, nameToSearch.trim());
+                starObject = starService.findStarWithGJId(dataSetName, nameToSearch.trim());
             }
             case GAIADR2 -> {
                 log.info("Selected: GAIADR2");
-                starObject = service.findWithGaiaDR2Id(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithGaiaDR2Id(dataSetName, nameToSearch.trim());
             }
             case GAIADR3 -> {
                 log.info("Selected: GAIADR3");
-                starObject = service.findWithGaiaDR3Id(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithGaiaDR3Id(dataSetName, nameToSearch.trim());
             }
             case GAIAEDR3 -> {
                 log.info("Selected: GAIAEDR3");
-                starObject = service.findWithGaiaEDR3Id(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithGaiaEDR3Id(dataSetName, nameToSearch.trim());
             }
             case TYCHO2 -> {
                 log.info("Selected: TYCHO2");
-                starObject = service.findWithTychoId(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithTychoId(dataSetName, nameToSearch.trim());
             }
             case CSI -> {
                 log.info("Selected: CSI");
-                starObject = service.findWithCsiId(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithCsiId(dataSetName, nameToSearch.trim());
             }
             case TWO_MASS -> {
                 log.info("Selected: TWO_MASS");
-                starObject = service.findWithTwoMassId(dataSetName, nameToSearch.trim());
+                starObject = starService.findWithTwoMassId(dataSetName, nameToSearch.trim());
             }
             default ->
                 // Handle default or other case

@@ -5,7 +5,9 @@ import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.file.csvin.RegularStarCatalogCsvReader;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -15,15 +17,20 @@ import java.io.File;
 @Slf4j
 public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpdater {
 
+    private final BulkLoadService bulkLoadService;
     private final Dataset dataSet;
     private final DatabaseManagementService databaseManagementService;
 
     private final RegularStarCatalogCsvReader regularStarCatalogCsvReader;
 
-    public CSVLoadTask(DatabaseManagementService databaseManagementService, Dataset loadDataset) {
+    public CSVLoadTask(DatabaseManagementService databaseManagementService,
+                       StarService starService,
+                       BulkLoadService bulkLoadService,
+                       Dataset loadDataset) {
         this.databaseManagementService = databaseManagementService;
+        this.bulkLoadService = bulkLoadService;
         this.dataSet = loadDataset;
-        this.regularStarCatalogCsvReader = new RegularStarCatalogCsvReader(databaseManagementService);
+        this.regularStarCatalogCsvReader = new RegularStarCatalogCsvReader(databaseManagementService, starService);
     }
 
     @Override
@@ -50,7 +57,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
         try {
             if (regCSVFile.isReadSuccess()) {
                 updateMessage(" File load complete, about to save records in database ");
-                DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCSVFile(regCSVFile);
+                DataSetDescriptor dataSetDescriptor = bulkLoadService.loadCSVFile(regCSVFile);
                 String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
                         dataSetDescriptor.getNumberStars(),
                         dataSetDescriptor.getDataSetName());

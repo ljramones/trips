@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.task.LargeGraphSearchTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -21,6 +22,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     private RouteFindingOptions routeFindingOptions;
     private DataSetDescriptor currentDataset;
     private DatabaseManagementService databaseManagementService;
+    private StarService starService;
     private StatusUpdaterListener statusUpdaterListener;
 
     private GraphSearchComplete graphSearchComplete;
@@ -30,6 +32,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     public boolean processGraphSearch(RouteFindingOptions routeFindingOptions,
                                       DataSetDescriptor currentDataset,
                                       DatabaseManagementService databaseManagementService,
+                                      StarService starService,
                                       StatusUpdaterListener statusUpdaterListener,
                                       GraphSearchComplete graphSearchComplete,
                                       @NotNull Label progressText,
@@ -39,6 +42,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
         this.currentDataset = currentDataset;
 
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.statusUpdaterListener = statusUpdaterListener;
         this.graphSearchComplete = graphSearchComplete;
         this.progressText = progressText;
@@ -59,7 +63,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
 
     @Override
     protected Task<GraphRouteResult> createTask() {
-        return new LargeGraphSearchTask(currentDataset, databaseManagementService, routeFindingOptions);
+        return new LargeGraphSearchTask(currentDataset, databaseManagementService, starService, routeFindingOptions);
     }
 
     @Override

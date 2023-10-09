@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.file.chview.ChviewReader;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,17 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
 
     private final Dataset dataset;
     private final DatabaseManagementService databaseManagementService;
+    private final BulkLoadService bulkLoadService;
 
     private final @NotNull ChviewReader chviewReader;
 
-    public ChvLoadTask(Dataset dataset, DatabaseManagementService databaseManagementService) {
+    public ChvLoadTask(Dataset dataset,
+                       DatabaseManagementService databaseManagementService,
+                       BulkLoadService bulkLoadService) {
         this.dataset = dataset;
         this.databaseManagementService = databaseManagementService;
+        this.bulkLoadService = bulkLoadService;
+
 
         this.chviewReader = new ChviewReader();
     }
@@ -45,7 +51,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
             }
 
             updateMessage("File load complete, about to save records in database");
-            DataSetDescriptor dataSetDescriptor = databaseManagementService.loadCHFile(this, dataset, chViewFile);
+            DataSetDescriptor dataSetDescriptor = bulkLoadService.loadCHFile(this, dataset, chViewFile);
             String data = String.format("%s records loaded from dataset %s, Use plot to see data.",
                     dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());

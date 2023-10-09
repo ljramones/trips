@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.search.model.StarDistances;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -38,9 +39,14 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
     // the dataset we want to search with
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
-    public FindRelatedStarsbyDistance(DatabaseManagementService databaseManagementService, @NotNull List<String> datasetNames, DataSetDescriptor dataSetDescriptor) {
+    public FindRelatedStarsbyDistance(DatabaseManagementService databaseManagementService,
+                                      StarService starService,
+                                      @NotNull List<String> datasetNames,
+                                      DataSetDescriptor dataSetDescriptor) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         this.setTitle("Find Related Stars by Distance");
         this.setHeight(500);
         this.setWidth(500);
@@ -109,9 +115,9 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
                 return;
             }
 
-            List<StarObject> starObjects = databaseManagementService.findStarsWithName(dataSetName, nameToSearch);
+            List<StarObject> starObjects = starService.findStarsWithName(dataSetName, nameToSearch);
             log.info("number of stars found ={}", starObjects.size());
-            ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starObjects);
+            ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
             Optional<SingleStarSelection> starSelection = showStarMatchesDialog.showAndWait();
             if (starSelection.isPresent()) {
                 if (starSelection.get().isSelected()) {
@@ -119,7 +125,7 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
                     StarObject starObject = starSelection.get().getStarObject();
                     log.info("star selection ={}", starObject.getDisplayName());
 
-                    List<StarDistances> relatedStars = databaseManagementService.findStarsWithinDistance(dataSetName, starObject, distanceToSearch);
+                    List<StarDistances> relatedStars = starService.findStarsWithinDistance(dataSetName, starObject, distanceToSearch);
 
                     MultipleStarSearchResults findResults = MultipleStarSearchResults
                             .builder()

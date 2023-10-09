@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.db;
 
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,14 +30,17 @@ public class CompareDBDialog extends Dialog<DBComparison> {
 
     private final TextArea nameDiffsTextArea = new TextArea();
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
     private Label diffsDBLabel = new Label("DB Diffs");
 
     private final DBComparison dbComparison = DBComparison.builder().build();
 
     public CompareDBDialog(DatabaseManagementService databaseManagementService,
+                           StarService starService,
                            List<String> dataSetList) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
         sourceDBComboBox.getItems().addAll(dataSetList);
         sourceDBComboBox.getSelectionModel().select(0);
         targetDBComboBox.getItems().addAll(dataSetList);
@@ -125,7 +129,7 @@ public class CompareDBDialog extends Dialog<DBComparison> {
 
         // get the differences for the two databases
         log.info("start comparison ...");
-        List<DBReference> namesNotFound = databaseManagementService.compareStars(sourceSelection, targetSelection);
+        List<DBReference> namesNotFound = starService.compareStars(sourceSelection, targetSelection);
         dbComparison.setNamesNotFound(new HashSet<>(namesNotFound));
         log.info("comparison complete, number of missing is {}", namesNotFound.size());
 

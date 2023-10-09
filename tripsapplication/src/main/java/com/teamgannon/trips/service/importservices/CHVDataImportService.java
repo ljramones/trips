@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ChvLoadTask;
 import javafx.concurrent.Service;
@@ -22,6 +23,7 @@ import static javafx.concurrent.Worker.State.RUNNING;
 public class CHVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
     private final DatabaseManagementService databaseManagementService;
+    private final BulkLoadService bulkLoadService;
     private Dataset dataset;
     private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
@@ -31,13 +33,16 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private LoadUpdateListener loadUpdateListener;
 
 
-    public CHVDataImportService(DatabaseManagementService databaseManagementService) {
+    public CHVDataImportService(DatabaseManagementService databaseManagementService,
+                                BulkLoadService bulkLoadService) {
         this.databaseManagementService = databaseManagementService;
+
+        this.bulkLoadService = bulkLoadService;
     }
 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
-        return new ChvLoadTask(dataset, databaseManagementService);
+        return new ChvLoadTask(dataset, databaseManagementService, bulkLoadService);
     }
 
     public boolean processDataSet(Dataset dataset,

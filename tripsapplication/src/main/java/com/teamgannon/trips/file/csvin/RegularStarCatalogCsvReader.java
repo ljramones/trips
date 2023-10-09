@@ -6,6 +6,7 @@ import com.teamgannon.trips.file.csvin.model.LoadStats;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,11 @@ import static com.teamgannon.trips.dialogs.gaiadata.CatalogUtils.setCatalogIds;
 public class RegularStarCatalogCsvReader {
 
     private final DatabaseManagementService databaseManagementService;
+    private final StarService starService;
 
-    public RegularStarCatalogCsvReader(DatabaseManagementService databaseManagementService) {
+    public RegularStarCatalogCsvReader(DatabaseManagementService databaseManagementService, StarService starService) {
         this.databaseManagementService = databaseManagementService;
+        this.starService = starService;
     }
 
     public RegCSVFile loadFile(@NotNull ProgressUpdater progressUpdater,
@@ -84,7 +87,7 @@ public class RegularStarCatalogCsvReader {
                 log.info("Metrics:: time to load 2000 records from file = {}", (end - start));
 
                 // save all the stars we've read so far
-                databaseManagementService.starBulkSave(starSet);
+                starService.starBulkSave(starSet);
                 loadStats.addToTotalCount(loadStats.getLoopCounter());
                 progressUpdater.updateTaskInfo(String.format("--> %d loaded so far, please wait ", loadStats.getTotalCount()));
                 log.info("\n\nsaving {} entries, total count is {}\n\n", loadStats.getLoopCounter(), loadStats.getTotalCount());
