@@ -188,15 +188,15 @@
                           onAction="#starPropertyReport"
                           text="Star Property Report"/>
             </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Galactic">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#showGalacticNeighorhood"
-                          text="Show Galactic Neighbourhood .."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#showInterstellarSpace"
-                          text="Go to Interstellar Space .."/>
-            </Menu>
+<!--            <Menu mnemonicParsing="false"-->
+<!--                  text="Galactic">-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#showGalacticNeighorhood"-->
+<!--                          text="Show Galactic Neighbourhood .."/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#showInterstellarSpace"-->
+<!--                          text="Go to Interstellar Space .."/>-->
+<!--            </Menu>-->
             <Menu mnemonicParsing="false"
                   text="Utilities">
                 <MenuItem mnemonicParsing="false"
@@ -209,29 +209,29 @@
                           onAction="#findGalacticCoords"
                           text="Calculate Galactic Coordinates from Equatorial .."/>
             </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Scripting"
-                  fx:id="scriptingMenu">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#scriptEditing"
-                          text="Script Editor"/>
-                <SeparatorMenuItem/>
-            </Menu>
+<!--            <Menu mnemonicParsing="false"-->
+<!--                  text="Scripting"-->
+<!--                  fx:id="scriptingMenu">-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#scriptEditing"-->
+<!--                          text="Script Editor"/>-->
+<!--                <SeparatorMenuItem/>-->
+<!--            </Menu>-->
             <Menu mnemonicParsing="false"
                   text="Admin">
                 <MenuItem mnemonicParsing="false"
                           onAction="#findInSesame"
                           text="lookup a name in the Sesame Name Resolver"/>
-                <MenuItem mnemonicParsing="=false"
-                          onAction="#compareDB"
-                          text="Compare Databases"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#Load10ParsecStars"
-                          text="Load 10 Parsec Stars"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#loadExoPlanets"
-                          text="Load/Import Exoplanets .."/>
+<!--                <MenuItem mnemonicParsing="=false"-->
+<!--                          onAction="#compareDB"-->
+<!--                          text="Compare Databases"/>-->
+<!--                <SeparatorMenuItem/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#Load10ParsecStars"-->
+<!--                          text="Load 10 Parsec Stars"/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#loadExoPlanets"-->
+<!--                          text="Load/Import Exoplanets .."/>-->
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Help">
@@ -249,27 +249,27 @@
                           text="Get Computer Description"/>
             </Menu>
 
-            <Menu mnemonicParsing="false"
-                  text="Leftover"
-                  disable="true">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#plotRoutes"
-                          text="Plot Routes"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#clearStars"
-                          text="Clear Stars"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#simulate"
-                          text="Simulate"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#viewEditStarData"
-                          text="View/Edit selected Star Data"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#rotate"
-                          text="Rotation Angles"/>
-            </Menu>
+<!--            <Menu mnemonicParsing="false"-->
+<!--                  text="Leftover"-->
+<!--                  disable="true">-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#plotRoutes"-->
+<!--                          text="Plot Routes"/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#clearStars"-->
+<!--                          text="Clear Stars"/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#simulate"-->
+<!--                          text="Simulate"/>-->
+<!--                <SeparatorMenuItem/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#viewEditStarData"-->
+<!--                          text="View/Edit selected Star Data"/>-->
+<!--                <SeparatorMenuItem/>-->
+<!--                <MenuItem mnemonicParsing="false"-->
+<!--                          onAction="#rotate"-->
+<!--                          text="Rotation Angles"/>-->
+<!--            </Menu>-->
         </MenuBar>
         <ToolBar fx:id="toolBar"
                  minHeight="40"
