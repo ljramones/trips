@@ -15,5 +15,6 @@ public class MultipleStarSearchResults {
 
     private String nameToSearch;
 
+    @Builder.Default
     private List<StarDistances> starObjects = new ArrayList<>();
 }

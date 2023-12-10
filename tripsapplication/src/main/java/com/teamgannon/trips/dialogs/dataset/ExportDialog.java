@@ -35,7 +35,7 @@ public class ExportDialog extends Dialog<ExportOptions> {
         this.selectedDataSet = selectedDataSet;
 
         this.exportChoice.setItems(FXCollections.observableArrayList( ExportFileType.values()));
-        this.exportChoice.getSelectionModel().select(ExportFileType.COMPACT);
+        this.exportChoice.getSelectionModel().select(ExportFileType.CSV);
 
         this.setTitle("Export Dataset");
         this.setWidth(600);

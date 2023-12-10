@@ -5,9 +5,7 @@ import java.util.Arrays;
 public enum DataFormatEnum {
 
     CH_VIEW("chview import"),
-    CSV("csv import"),
-    CPT("Compact import"),
-    JSON("json import");
+    CSV("csv import");
 
     private final String value;
 

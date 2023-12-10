@@ -1,11 +1,7 @@
 package com.teamgannon.trips.service;
 
-import com.teamgannon.trips.dataset.factories.DataSetDescriptorFactory;
-import com.teamgannon.trips.file.compact.CompactFile;
-import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.TripsPrefs;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.Route;
@@ -17,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,7 +25,6 @@ public class DatasetService {
     public DatasetService(DataSetDescriptorRepository dataSetDescriptorRepository) {
         this.dataSetDescriptorRepository = dataSetDescriptorRepository;
     }
-
 
 
     /**

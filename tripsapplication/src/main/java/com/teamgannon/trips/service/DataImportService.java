@@ -22,11 +22,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DataImportService {
 
     private final @NotNull CHVDataImportService chvDataImportService;
-    private final @NotNull JsonDataImportService jsonDataImportService;
     private final BulkLoadService bulkLoadService;
     private final @NotNull CSVDataImportService csvDataImportService;
 
-    private final @NotNull KryoDataImportService kryoDataImportService;
 
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
@@ -41,9 +39,7 @@ public class DataImportService {
 
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService, bulkLoadService);
-        jsonDataImportService = new JsonDataImportService(databaseManagementService, bulkLoadService);
         this.bulkLoadService = bulkLoadService;
-        this.kryoDataImportService = new KryoDataImportService(databaseManagementService, starService, datasetService);
         this.csvDataImportService = csvDataImportService;
     }
 
@@ -95,25 +91,6 @@ public class DataImportService {
                 chvDataImportService.restart();
             }
 
-
-            case "trips.cpt" -> {
-                currentlyRunning.set(true);
-                runningImportService = kryoDataImportService;
-                boolean queued = kryoDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
-                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
-                if (!queued) {
-                    log.error("failed to start import process");
-                    currentlyRunning.set(false);
-                    runningImportService = null;
-                    kryoDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
-                }
-                // start the work
-                kryoDataImportService.reset();
-                kryoDataImportService.restart();
-            }
-
             case "trips.csv" -> {
                 currentlyRunning.set(true);
                 runningImportService = csvDataImportService;
@@ -130,24 +107,6 @@ public class DataImportService {
                 // start the work
                 csvDataImportService.reset();
                 csvDataImportService.restart();
-            }
-
-            case "json" -> {
-                currentlyRunning.set(true);
-                runningImportService = jsonDataImportService;
-                boolean queued = jsonDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
-                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
-                if (!queued) {
-                    log.error("failed to start import process");
-                    currentlyRunning.set(false);
-                    runningImportService = null;
-                    jsonDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
-                }
-                // start the work
-                jsonDataImportService.reset();
-                jsonDataImportService.restart();
             }
 
             default -> {

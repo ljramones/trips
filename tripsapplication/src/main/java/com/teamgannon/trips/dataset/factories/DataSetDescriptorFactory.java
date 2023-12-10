@@ -8,7 +8,6 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.file.chview.model.CHViewPreferences;
 import com.teamgannon.trips.file.chview.model.ChViewFile;
-import com.teamgannon.trips.file.compact.CompactFile;
 import com.teamgannon.trips.file.csvin.RegCSVFile;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
@@ -138,28 +137,6 @@ public class DataSetDescriptorFactory {
 
         return dataSetDescriptor;
     }
-
-    public static DataSetDescriptor createDataSetDescriptor(@NotNull DataSetDescriptorRepository dataSetDescriptorRepository,
-                                                            @NotNull CompactFile compactFile) throws Exception {
-        Dataset dataset = compactFile.getDataset();
-        DataSetDescriptor dataSetDescriptor = new DataSetDescriptor();
-        dataSetDescriptor.setDataSetName(dataset.getName());
-        dataSetDescriptor.setDatasetType(dataset.getDataType().toString());
-        dataSetDescriptor.setRoutes(new ArrayList<>());
-        dataSetDescriptor.setNumberRoutes(0);
-        dataSetDescriptor.setNumberStars(compactFile.getNumberOfStars());
-        dataSetDescriptor.setDistanceRange(compactFile.getDistanceRange());
-
-        if (dataSetDescriptorRepository.existsById(dataSetDescriptor.getDataSetName())) {
-            throw new Exception("This dataset:{" + dataSetDescriptor.getDataSetName() + "} already exists");
-        }
-
-        // save the data set which is cross-referenced to the star records
-        dataSetDescriptorRepository.save(dataSetDescriptor);
-
-        return dataSetDescriptor;
-    }
-
 
     /**
      * create a theme for CHV files
