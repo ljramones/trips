@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.ClearDataEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
@@ -11,6 +12,7 @@ import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteChange;
 import com.teamgannon.trips.routing.table.ColorTableCell;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -270,4 +273,15 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
         }
     }
+
+
+    /**
+     * This method is an event listener that is triggered when a clear data event occurs.
+     * It runs on the JavaFX Application thread and calls the clearData() method.
+     */
+    @EventListener
+    public void onClearDataEvent(ClearDataEvent event) {
+        Platform.runLater(this::clearData);
+    }
+
 }

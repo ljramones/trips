@@ -28,6 +28,8 @@ import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
 import com.teamgannon.trips.dialogs.utility.EquatorialToGalacticCoordsDialog;
 import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
 import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
+import com.teamgannon.trips.events.ClearDataEvent;
+import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -132,7 +134,6 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Component
 public class MainPane implements
         ListUpdaterListener,
-        StellarPropertiesDisplayerListener,
         StellarDataUpdaterListener,
         ListSelectorActionsListener,
         PreferencesUpdaterListener,
@@ -330,7 +331,8 @@ public class MainPane implements
                     SolarSystemSpacePane solarSystemSpacePane,
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
-                    RoutingPanel routingPanel
+                    RoutingPanel routingPanel,
+                    StarPropertiesPane starPropertiesPane
     ) {
 
         hostServices = fxWeaver.getBean(HostServices.class);
@@ -357,6 +359,7 @@ public class MainPane implements
         this.localization = localization;
         this.eventPublisher = eventPublisher;
         this.routingPanel = routingPanel;
+        this.starPropertiesPane = starPropertiesPane;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
     }
@@ -541,7 +544,6 @@ public class MainPane implements
         stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
         stellarObjectPane.setPrefHeight(500);
         stellarObjectPane.setMaxHeight(520);
-        starPropertiesPane = new StarPropertiesPane(databaseManagementService, starService, hostServices);
         ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
         stellarObjectPane.setContent(scrollPane);
         propertiesAccordion.getPanes().add(stellarObjectPane);
@@ -591,7 +593,7 @@ public class MainPane implements
         ScrollPane scrollPane = new ScrollPane();
 
         objectViewPane = new ObjectViewPane(
-                this,
+                eventPublisher,
                 this,
                 this,
                 this,
@@ -963,7 +965,7 @@ public class MainPane implements
     private void loadDatasets(@NotNull SearchContext searchContext) {
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
-        if (dataSets.size() > 0) {
+        if (!dataSets.isEmpty()) {
             searchContext.addDataSets(dataSets);
         }
     }
@@ -1017,7 +1019,6 @@ public class MainPane implements
     private void createInterstellarSpace(ColorPalette colorPalette) {
 
         interstellarSpacePane.setlisteners(this,
-                this,
                 this,
                 this,
                 this,
@@ -1317,7 +1318,8 @@ public class MainPane implements
                 String recordId = findResults.getRecord().getRecordId();
                 interstellarSpacePane.highlightStar(recordId);
                 StarObject starObject = starService.getStar(recordId);
-                displayStellarProperties(starObject);
+                eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
+//                displayStellarProperties(starObject);
             }
         }
     }
@@ -1559,24 +1561,6 @@ public class MainPane implements
         interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
     }
 
-    @Override
-    public void displayStellarProperties(@Nullable StarObject starObject) {
-        if (starObject != null) {
-            toggleSidePane(true);
-            starPropertiesPane.setStar(starObject);
-            propertiesAccordion.setExpandedPane(stellarObjectPane);
-            if (!sidePaneOn) {
-                toggleSidePane(null);
-            }
-        }
-    }
-
-    @Override
-    public void clearData() {
-        starPropertiesPane.clearData();
-        routingPanel.clearData();
-    }
-
     /**
      * redisplay data based on the selected filter criteria
      *
@@ -1755,11 +1739,6 @@ public class MainPane implements
         updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
     }
 
-    public void clearAll() {
-        clearData();
-        clearList();
-        clearInterstellar();
-    }
 
     private void clearInterstellar() {
         interstellarSpacePane.clearAll();
@@ -2402,14 +2381,47 @@ public class MainPane implements
         }
     }
 
+    ////////////////////////////////////////////////////
+
+    public void clearAll() {
+        clearData();
+        clearList();
+        clearInterstellar();
+    }
+
     public void updateStatus(String message) {
         databaseStatus.setText(message);
     }
+
+    public void displayStellarProperties(@Nullable StarObject starObject) {
+        if (starObject != null) {
+            toggleSidePane(true);
+//            starPropertiesPane.setStar(starObject);
+            propertiesAccordion.setExpandedPane(stellarObjectPane);
+            if (!sidePaneOn) {
+                toggleSidePane(null);
+            }
+        }
+    }
+
+    public void clearData() {
+        eventPublisher.publishEvent(new ClearDataEvent(this));
+    }
+
+
 
     @EventListener
     public void onStatusUpdateEvent(StatusUpdateEvent event) {
         Platform.runLater(() -> {
             updateStatus(event.getStatus());
+        });
+    }
+
+    @EventListener
+    public void onDisplayStarEvent(DisplayStarEvent event) {
+        Platform.runLater(() -> {
+            log.info("MAIN PANE ::: Received display star event, star is:{}", event.getStarObject().getDisplayName());
+            displayStellarProperties(event.getStarObject());
         });
     }
 }

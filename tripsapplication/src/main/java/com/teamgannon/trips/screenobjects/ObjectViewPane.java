@@ -1,14 +1,19 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.listener.DatabaseListener;
+import com.teamgannon.trips.listener.ListSelectorActionsListener;
+import com.teamgannon.trips.listener.RedrawListener;
+import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Comparator;
 
@@ -17,7 +22,7 @@ public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
 
-    public ObjectViewPane(@NotNull StellarPropertiesDisplayerListener propertiesDisplayer,
+    public ObjectViewPane(ApplicationEventPublisher eventPublisher,
                           @NotNull DatabaseListener databaseListener,
                           ListSelectorActionsListener listSelectorActionsListener,
                           ReportGenerator reportGenerator,
@@ -36,7 +41,8 @@ public class ObjectViewPane extends Pane {
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 StarObject starObject = databaseListener.getStar(newValue.getRecordId());
-                propertiesDisplayer.displayStellarProperties(starObject);
+//                stellarPropertiesDisplayerListener.displayStellarProperties(starObject);
+                eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
             }
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));

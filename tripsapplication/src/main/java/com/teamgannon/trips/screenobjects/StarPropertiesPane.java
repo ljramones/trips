@@ -1,9 +1,11 @@
 package com.teamgannon.trips.screenobjects;
 
+import com.teamgannon.trips.events.ClearDataEvent;
+import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -13,13 +15,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
+import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Slf4j
+@Component
 public class StarPropertiesPane extends Pane {
 
     // Overview
@@ -72,23 +78,19 @@ public class StarPropertiesPane extends Pane {
     private final Label bpgLabel = new Label();
     private final Label grpLabel = new Label();
 
-    private Button editButton = new Button("Edit Star");
+    private final Button editButton = new Button("Edit Star");
 
-    private Button simbadButton = new Button("More\nInfo");
+    private final Button simbadButton = new Button("More\nInfo");
 
 
     private @NotNull StarObject record = new StarObject();
     private final StarService starService;
     private final HostServices hostServices;
-    private final DatabaseManagementService databaseManagementService;
 
-    public StarPropertiesPane(DatabaseManagementService databaseManagementService,
-                              StarService starService,
-                              HostServices hostServices) {
+    public StarPropertiesPane(StarService starService,
+                              FxWeaver fxWeaver) {
         this.starService = starService;
-        this.hostServices = hostServices;
-        this.databaseManagementService = databaseManagementService;
-
+        this.hostServices = fxWeaver.getBean(HostServices.class);
         VBox vBox = new VBox();
 
         TabPane tabPane = new TabPane();
@@ -186,9 +188,11 @@ public class StarPropertiesPane extends Pane {
         grpLabel.setText(Double.toString(record.getGrp()));
 
         simbadButton.setDisable(record.getSimbadId().isEmpty());
-
     }
 
+    /**
+     * Clears the data displayed in the UI components.
+     */
     public void clearData() {
 
         // primary tab
@@ -458,4 +462,35 @@ public class StarPropertiesPane extends Pane {
         return gridPane;
     }
 
+
+    /**
+     * Listens for the ClearDataEvent and clears the data asynchronously on the JavaFX Application Thread.
+     * This method is annotated with EventListener to indicate that it is an event listener for the ClearDataEvent.
+     * It uses the Platform.runLater() method to execute the clearData() method on the JavaFX Application Thread.
+     * <p>
+     * // Trigger the ClearDataEvent
+     * EventManager.triggerEvent(new ClearDataEvent());
+     * <p>
+     * // The onClearDataEvent() method will be automatically called on the JavaFX Application Thread
+     * // and the data will be cleared.
+     */
+    @EventListener
+    public void onClearDataEvent(ClearDataEvent event) {
+        Platform.runLater(this::clearData);
+    }
+
+    /**
+     * Listens for a DisplayStarEvent and updates the star object on the UI thread.
+     *
+     * @param event The DisplayStarEvent to be handled.
+     */
+    @EventListener
+    public void onDisplayStarEvent(DisplayStarEvent event) {
+        Platform.runLater(() -> {
+            log.info("STAR PROPERTIES PANE ::: Receive a display star event: star is:{}", event.getStarObject().getDisplayName());
+            setStar(event.getStarObject());
+        });
+    }
 }
+
+

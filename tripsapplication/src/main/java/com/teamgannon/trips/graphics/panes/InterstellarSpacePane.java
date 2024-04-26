@@ -76,7 +76,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * used to signal an update to the parent list view
      */
     private ListUpdaterListener listUpdaterListener;
-    private StellarPropertiesDisplayerListener stellarPropertiesDisplayerListener;
     private DatabaseListener databaseListener;
     private ContextSelectorListener contextSelectorListener;
     private RedrawListener redrawListener;
@@ -195,14 +194,12 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     public void setlisteners(RouteUpdaterListener routeUpdaterListener,
                              ListUpdaterListener listUpdaterListener,
-                             StellarPropertiesDisplayerListener stellarPropertiesDisplayerListener,
                              DatabaseListener databaseListener,
                              ContextSelectorListener contextSelectorListener,
                              RedrawListener redrawListener,
                              ReportGenerator reportGenerator) {
         this.routeUpdaterListener = routeUpdaterListener;
         this.listUpdaterListener = listUpdaterListener;
-        this.stellarPropertiesDisplayerListener = stellarPropertiesDisplayerListener;
         this.databaseListener = databaseListener;
         this.contextSelectorListener = contextSelectorListener;
         this.redrawListener = redrawListener;
@@ -211,7 +208,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         starPlotManager.setListeners(listUpdaterListener,
                 redrawListener,
                 databaseListener,
-                stellarPropertiesDisplayerListener,
                 contextSelectorListener,
                 reportGenerator);
 

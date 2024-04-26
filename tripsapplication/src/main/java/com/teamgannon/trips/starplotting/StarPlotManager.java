@@ -7,12 +7,13 @@ import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
+import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.graphics.entities.StarSelectionModel;
+import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
@@ -53,6 +54,7 @@ import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -125,14 +127,10 @@ public class StarPlotManager {
     private ContextSelectorListener contextSelectorListener;
 
     /**
-     * used to signal an update to the parent property panes
-     */
-    private StellarPropertiesDisplayerListener displayer;
-
-    /**
      * the report generator
      */
     private ReportGenerator reportGenerator;
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * the scale transition
@@ -237,12 +235,14 @@ public class StarPlotManager {
      */
     public StarPlotManager(TripsContext tripsContext,
                            RouteManager routeManager,
-                           StarMeasurementService starMeasurementService) {
+                           StarMeasurementService starMeasurementService,
+                           ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.routeManager = routeManager;
         this.starMeasurementService = starMeasurementService;
+        this.eventPublisher = eventPublisher;
 
         // special graphical objects in MeshView format
         loadSpecialObjects();
@@ -267,13 +267,11 @@ public class StarPlotManager {
     public void setListeners(ListUpdaterListener listUpdaterListener,
                              RedrawListener redrawListener,
                              DatabaseListener databaseListener,
-                             StellarPropertiesDisplayerListener displayer,
                              ContextSelectorListener contextSelectorListener,
                              ReportGenerator reportGenerator) {
         this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
-        this.displayer = displayer;
         this.contextSelectorListener = contextSelectorListener;
         this.reportGenerator = reportGenerator;
     }
@@ -1038,7 +1036,7 @@ public class StarPlotManager {
         editPropertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
             StarDisplayRecord editRecord = editProperties(starDisplayRecord);
-            if (editRecord!= null) {
+            if (editRecord != null) {
                 star.setUserData(editRecord);
             } else {
                 log.error("Why is the edit record a null!!");
@@ -1104,9 +1102,10 @@ public class StarPlotManager {
      */
     private void displayProperties(@NotNull StarObject starObject) {
         log.info("Showing properties in side panes for:" + starObject.getDisplayName());
-        if (displayer != null) {
-            displayer.displayStellarProperties(starObject);
-        }
+//        if (displayer != null) {
+//            displayer.displayStellarProperties(starObject);
+        eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
+//        }
     }
 
     /**
