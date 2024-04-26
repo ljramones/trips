@@ -33,7 +33,7 @@ public class SystemPreferencesService {
     private final GraphEnablesRepository graphEnablesRepository;
 
     /**
-     * stores all teh star details
+     * stores all the star details
      */
     private final StarDetailsPersistRepository starDetailsPersistRepository;
 

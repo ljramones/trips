@@ -8,7 +8,7 @@ import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
-import com.teamgannon.trips.events.HighlightStarEvent;
+import com.teamgannon.trips.events.ClearListEvent;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -40,7 +40,7 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -77,7 +77,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     /**
      * used to signal an update to the parent list view
      */
-    private ListUpdaterListener listUpdaterListener;
     private DatabaseListener databaseListener;
     private ContextSelectorListener contextSelectorListener;
     private RedrawListener redrawListener;
@@ -90,6 +89,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     @Getter
     private RouteManager routeManager;
 
+    private final ApplicationEventPublisher eventPublisher;
     /////////////////
     @Getter
     private final @NotNull TransitManager transitManager;
@@ -142,12 +142,14 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * @param tripsContext the application context
      */
     public InterstellarSpacePane(TripsContext tripsContext,
+                                 ApplicationEventPublisher eventPublisher,
                                  StarPlotManager starPlotManager,
                                  RouteManager routeManager,
                                  GridPlotManager gridPlotManager,
                                  @NotNull TransitManager transitManager) {
 
         this.tripsContext = tripsContext;
+        this.eventPublisher = eventPublisher;
         this.transitManager = transitManager;
         ScreenSize screenSize = tripsContext.getScreenSize();
         this.starPlotManager = starPlotManager;
@@ -200,19 +202,17 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void setlisteners(RouteUpdaterListener routeUpdaterListener,
-                             ListUpdaterListener listUpdaterListener,
                              DatabaseListener databaseListener,
                              ContextSelectorListener contextSelectorListener,
                              RedrawListener redrawListener,
                              ReportGenerator reportGenerator) {
         this.routeUpdaterListener = routeUpdaterListener;
-        this.listUpdaterListener = listUpdaterListener;
         this.databaseListener = databaseListener;
         this.contextSelectorListener = contextSelectorListener;
         this.redrawListener = redrawListener;
         this.reportGenerator = reportGenerator;
 
-        starPlotManager.setListeners(listUpdaterListener,
+        starPlotManager.setListeners(
                 redrawListener,
                 databaseListener,
                 contextSelectorListener,
@@ -335,9 +335,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         clearRoutes();
 
         // clear the list
-        if (listUpdaterListener != null) {
-            listUpdaterListener.clearList();
-        }
+        eventPublisher.publishEvent(new ClearListEvent(this));
     }
 
     /**

@@ -28,10 +28,7 @@ import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
 import com.teamgannon.trips.dialogs.utility.EquatorialToGalacticCoordsDialog;
 import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
 import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
-import com.teamgannon.trips.events.ClearDataEvent;
-import com.teamgannon.trips.events.DisplayStarEvent;
-import com.teamgannon.trips.events.HighlightStarEvent;
-import com.teamgannon.trips.events.StatusUpdateEvent;
+import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -134,7 +131,6 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Slf4j
 @Component
 public class MainPane implements
-        ListUpdaterListener,
         StellarDataUpdaterListener,
         ListSelectorActionsListener,
         PreferencesUpdaterListener,
@@ -143,7 +139,7 @@ public class MainPane implements
         RedrawListener,
         ReportGenerator,
         DatabaseListener,
-        DataSetChangeListener{
+        DataSetChangeListener {
 
     private final static double SCREEN_PROPORTION = 0.60;
 
@@ -332,6 +328,7 @@ public class MainPane implements
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
                     RoutingPanel routingPanel,
+                    ObjectViewPane objectViewPane,
                     StarPropertiesPane starPropertiesPane
     ) {
 
@@ -359,6 +356,7 @@ public class MainPane implements
         this.localization = localization;
         this.eventPublisher = eventPublisher;
         this.routingPanel = routingPanel;
+        this.objectViewPane = objectViewPane;
         this.starPropertiesPane = starPropertiesPane;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
@@ -590,7 +588,6 @@ public class MainPane implements
 
         ScrollPane scrollPane = new ScrollPane();
 
-        objectViewPane = new ObjectViewPane(eventPublisher);
         objectViewPane.setListeners(this,
                 this,
                 this,
@@ -1015,7 +1012,7 @@ public class MainPane implements
      */
     private void createInterstellarSpace(ColorPalette colorPalette) {
 
-        interstellarSpacePane.setlisteners(this,
+        interstellarSpacePane.setlisteners(
                 this,
                 this,
                 this,
@@ -1482,14 +1479,8 @@ public class MainPane implements
         starService.removeStar(recordId);
     }
 
-    @Override
-    public void updateList(StarDisplayRecord starDisplayRecord) {
-        objectViewPane.add(starDisplayRecord);
-    }
-
-    @Override
     public void clearList() {
-        objectViewPane.clear();
+        eventPublisher.publishEvent(new ClearListEvent(this));
     }
 
     @Override
@@ -2394,7 +2385,6 @@ public class MainPane implements
     public void clearData() {
         eventPublisher.publishEvent(new ClearDataEvent(this));
     }
-
 
 
     @EventListener

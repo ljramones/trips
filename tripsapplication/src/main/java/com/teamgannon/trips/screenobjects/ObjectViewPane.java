@@ -1,23 +1,28 @@
 package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.ClearListEvent;
 import com.teamgannon.trips.events.DisplayStarEvent;
+import com.teamgannon.trips.events.UpdateSidePanelListEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.listener.ReportGenerator;
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 
 @Slf4j
+@Component
 public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
@@ -71,7 +76,32 @@ public class ObjectViewPane extends Pane {
 
 
     public void add(StarDisplayRecord starDisplayRecord) {
-        stellarObjectsListView.getItems().add(starDisplayRecord);
-        stellarObjectsListView.getItems().sort(Comparator.comparing(StarDisplayRecord::getStarName));
+        Platform.runLater(() -> {
+            log.info("Add star display record: " + starDisplayRecord.getStarName());
+            stellarObjectsListView.getItems().add(starDisplayRecord);
+            stellarObjectsListView.getItems().sort(Comparator.comparing(StarDisplayRecord::getStarName));
+        });
+    }
+
+    /**
+     * An event listener method that listens for the occurrence of a ClearListEvent event.
+     * Once the event is received, this method clears the list of items in the stellarObjectsListView.
+     *
+     * @param event the ClearListEvent to handle
+     */
+    @EventListener
+    public void onClearListEvent(ClearListEvent event) {
+        Platform.runLater(() -> {
+            log.info("OBJECT VIEW PANE ::: Received clear list event");
+            clear();
+        });
+    }
+
+    @EventListener
+    public void onUpdateSidePanelListEvent(UpdateSidePanelListEvent event) {
+        Platform.runLater(() -> {
+            log.info("OBJECT VIEW PANE ::: Received add to list event");
+            add(event.getStarDisplayRecord());
+        });
     }
 }

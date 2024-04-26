@@ -9,6 +9,7 @@ import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.events.HighlightStarEvent;
+import com.teamgannon.trips.events.UpdateSidePanelListEvent;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -109,11 +110,6 @@ public class StarPlotManager {
     private SubScene subScene;
 
     /**
-     * used to signal an update to the parent list view
-     */
-    private ListUpdaterListener listUpdaterListener;
-
-    /**
      * the redraw listener
      */
     private RedrawListener redrawListener;
@@ -125,7 +121,7 @@ public class StarPlotManager {
 
     /**
      * used to an update to the parent controlling which graphics
-     * panes is being displayed
+     * panes are being displayed
      */
     private ContextSelectorListener contextSelectorListener;
 
@@ -133,7 +129,7 @@ public class StarPlotManager {
      * the report generator
      */
     private ReportGenerator reportGenerator;
-    private ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the scale transition
@@ -184,7 +180,7 @@ public class StarPlotManager {
     /**
      * reference to the Route Manager
      */
-    private RouteManager routeManager;
+    private final RouteManager routeManager;
 
     /**
      * a utility class to measure specific star qualities
@@ -194,7 +190,7 @@ public class StarPlotManager {
 
     private double controlPaneOffset;
 
-    private RotateTransition centralRotator = new RotateTransition();
+    private final RotateTransition centralRotator = new RotateTransition();
 
     /**
      * used as a control for highlighting stars
@@ -267,12 +263,10 @@ public class StarPlotManager {
         world.getChildren().add(politiesDisplayGroup);
     }
 
-    public void setListeners(ListUpdaterListener listUpdaterListener,
-                             RedrawListener redrawListener,
+    public void setListeners(RedrawListener redrawListener,
                              DatabaseListener databaseListener,
                              ContextSelectorListener contextSelectorListener,
                              ReportGenerator reportGenerator) {
-        this.listUpdaterListener = listUpdaterListener;
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
         this.contextSelectorListener = contextSelectorListener;
@@ -566,7 +560,7 @@ public class StarPlotManager {
      * @param colorPalette           the color palette to use
      * @param starDisplayPreferences the star preferences
      * @param labelsOn               whether labels are on or off
-     * @param politiesOn             whether we polities on or off
+     * @param politiesOn             whether the polities on or off
      * @return the star to plot
      */
     private @NotNull Node createStar(@NotNull StarDisplayRecord record,
@@ -591,11 +585,7 @@ public class StarPlotManager {
         }
         Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
         Tooltip.install(star, tooltip);
-
-        if (listUpdaterListener != null) {
-            listUpdaterListener.updateList(record);
-        }
-
+        eventPublisher.publishEvent(new UpdateSidePanelListEvent(this, record));
         star.setId("regularStar");
         star.setUserData(record);
 
@@ -1104,10 +1094,7 @@ public class StarPlotManager {
      */
     private void displayProperties(@NotNull StarObject starObject) {
         log.info("Showing properties in side panes for:" + starObject.getDisplayName());
-//        if (displayer != null) {
-//            displayer.displayStellarProperties(starObject);
         eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
-//        }
     }
 
     /**
