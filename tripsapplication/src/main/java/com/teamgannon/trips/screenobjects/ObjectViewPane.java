@@ -21,16 +21,31 @@ import java.util.Comparator;
 public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
+    private final ApplicationEventPublisher eventPublisher;
+    private DatabaseListener databaseListener;
+    private ListSelectorActionsListener listSelectorActionsListener;
+    private ReportGenerator reportGenerator;
+    private RedrawListener redrawListener;
 
-    public ObjectViewPane(ApplicationEventPublisher eventPublisher,
-                          @NotNull DatabaseListener databaseListener,
-                          ListSelectorActionsListener listSelectorActionsListener,
-                          ReportGenerator reportGenerator,
-                          RedrawListener redrawListener) {
+    public ObjectViewPane(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
 
         stellarObjectsListView.setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
         stellarObjectsListView.setMaxHeight(800);
+
+    }
+
+    public void setListeners(DatabaseListener databaseListener,
+                             ListSelectorActionsListener listSelectorActionsListener,
+                             ReportGenerator reportGenerator,
+                             RedrawListener redrawListener) {
+
+        this.databaseListener = databaseListener;
+        this.listSelectorActionsListener = listSelectorActionsListener;
+        this.reportGenerator = reportGenerator;
+        this.redrawListener = redrawListener;
+
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
                         databaseListener,

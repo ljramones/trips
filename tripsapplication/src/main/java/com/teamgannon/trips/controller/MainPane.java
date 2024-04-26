@@ -590,9 +590,8 @@ public class MainPane implements
 
         ScrollPane scrollPane = new ScrollPane();
 
-        objectViewPane = new ObjectViewPane(
-                eventPublisher,
-                this,
+        objectViewPane = new ObjectViewPane(eventPublisher);
+        objectViewPane.setListeners(this,
                 this,
                 this,
                 this);
