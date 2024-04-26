@@ -36,12 +36,12 @@ public class ObjectViewPane extends Pane {
                         databaseListener,
                         listSelectorActionsListener,
                         reportGenerator,
-                        redrawListener));
+                        redrawListener,
+                        eventPublisher));
 
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 StarObject starObject = databaseListener.getStar(newValue.getRecordId());
-//                stellarPropertiesDisplayerListener.displayStellarProperties(starObject);
                 eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
             }
         });

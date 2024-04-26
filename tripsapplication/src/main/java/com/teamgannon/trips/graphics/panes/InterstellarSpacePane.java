@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
+import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -36,12 +37,13 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
 
 import static java.lang.Math.abs;
 
@@ -85,13 +87,18 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * the grid plot manager
      */
     private GridPlotManager gridPlotManager;
+    @Getter
     private RouteManager routeManager;
 
     /////////////////
+    @Getter
     private final @NotNull TransitManager transitManager;
+    @Getter
     private final @NotNull StarPlotManager starPlotManager;
-    @NotNull Group root = new Group();
-    @NotNull PerspectiveCamera camera = new PerspectiveCamera(true);
+    @NotNull
+    Group root = new Group();
+    @NotNull
+    PerspectiveCamera camera = new PerspectiveCamera(true);
 
     // mouse positions
     private double mousePosX, mousePosY = 0;
@@ -212,9 +219,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
                 reportGenerator);
 
         routeManager.setListeners(routeUpdaterListener);
-
         transitManager.setListeners(routeUpdaterListener);
-
     }
 
 
@@ -301,10 +306,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     public void rebuildGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
         gridPlotManager.rebuildGrid(centerCoordinates, transformer, colorPalette);
-    }
-
-    public void highlightStar(String starId) {
-        starPlotManager.highlightStar(starId);
     }
 
     public void changeColors(ColorPalette colorPalette) {
@@ -644,7 +645,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier) % 360));
         rotateX.setAngle(((rotateX.getAngle() - direction * mouseDeltaY * modifier) % 360));
 
-
 //        rotateX.setAngle((rotateY.getAngle() - direction * mouseDeltaY * modifier)  % 360 );
 //        rotateY.setAngle((rotateX.getAngle() + direction * mouseDeltaX * modifier)  % 360 );
     }
@@ -750,20 +750,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         }
     }
 
-
     public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
         routeManager.changeDisplayStateOfRoute(routeDescriptor, state);
     }
 
-    public @NotNull TransitManager getTransitManager() {
-        return transitManager;
-    }
-
-    public RouteManager getRouteManager() {
-        return routeManager;
-    }
-
-    public StarPlotManager getStarPlotManager() {
-        return starPlotManager;
-    }
 }

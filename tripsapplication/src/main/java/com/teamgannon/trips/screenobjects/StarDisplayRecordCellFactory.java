@@ -9,6 +9,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.util.Callback;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 public class StarDisplayRecordCellFactory implements Callback<ListView<StarDisplayRecord>, ListCell<StarDisplayRecord>> {
 
@@ -16,15 +17,18 @@ public class StarDisplayRecordCellFactory implements Callback<ListView<StarDispl
     private final ListSelectorActionsListener listSelectorActionsListener;
     private final ReportGenerator reportGenerator;
     private final RedrawListener redrawListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     public StarDisplayRecordCellFactory(DatabaseListener databaseListener,
                                         ListSelectorActionsListener listSelectorActionsListener,
                                         ReportGenerator reportGenerator,
-                                        RedrawListener redrawListener) {
+                                        RedrawListener redrawListener,
+                                        ApplicationEventPublisher eventPublisher) {
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
         this.reportGenerator = reportGenerator;
         this.redrawListener = redrawListener;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -33,7 +37,8 @@ public class StarDisplayRecordCellFactory implements Callback<ListView<StarDispl
                 databaseListener,
                 listSelectorActionsListener,
                 reportGenerator,
-                redrawListener);
+                redrawListener,
+                eventPublisher);
     }
 
 }

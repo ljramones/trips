@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.events.DisplayStarEvent;
+import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -33,6 +34,7 @@ import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
 import javafx.animation.RotateTransition;
 import javafx.animation.ScaleTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
@@ -55,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -421,12 +424,12 @@ public class StarPlotManager {
         if (highLightStar != null) {
             stellarDisplayGroup.getChildren().remove(highLightStar);
         }
-        // now create new one
+        // now create a new one
         Node starShape = tripsContext.getCurrentPlot().getStar(starId);
         StarDisplayRecord record = (StarDisplayRecord) starShape.getUserData();
         Color color = record.getStarColor();
 
-        // make highLight star same as under lying one, with star record and context menu
+        // make highLight star same as under-lying one, with the star record and context menu
         highLightStar = createHighlightStar(color);
         if (highLightStar != null) {
             highLightStar.setUserData(record);
@@ -949,8 +952,7 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Highlight star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            highlightStar(starDescriptor.getRecordId());
-
+            eventPublisher.publishEvent(new HighlightStarEvent(this, starDescriptor.getRecordId()));
         });
         return menuItem;
     }
@@ -1531,4 +1533,12 @@ public class StarPlotManager {
         this.manualRoutingDialog = manualRoutingDialog;
     }
 
+
+    @EventListener
+    public void onHighlightStarEvent(HighlightStarEvent event) {
+        Platform.runLater(() -> {
+            log.info("STAR PLOT MANAGER ::: Received highlight star event, star id is:{}", event.getRecordId());
+            highlightStar(event.getRecordId());
+        });
+    }
 }

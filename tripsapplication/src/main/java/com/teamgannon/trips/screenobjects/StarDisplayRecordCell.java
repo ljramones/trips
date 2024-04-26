@@ -1,5 +1,6 @@
 package com.teamgannon.trips.screenobjects;
 
+import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
@@ -11,6 +12,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final ListSelectorActionsListener listSelectorActionsListener;
     private final ReportGenerator reportGenerator;
     private final RedrawListener redrawListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor for this cell
@@ -36,12 +39,14 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     public StarDisplayRecordCell(DatabaseListener databaseListener,
                                  ListSelectorActionsListener listSelectorActionsListener,
                                  ReportGenerator reportGenerator,
-                                 RedrawListener redrawListener) {
+                                 RedrawListener redrawListener,
+                                 ApplicationEventPublisher eventPublisher) {
 
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
         this.reportGenerator = reportGenerator;
         this.redrawListener = redrawListener;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -59,7 +64,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem highlightMenuItem = new MenuItem("Highlight this star");
         highlightMenuItem.setOnAction((event) -> {
             log.info("Highlight on {}", starDisplayRecord.getStarName());
-            redrawListener.highlightStar(starDisplayRecord.getRecordId());
+            eventPublisher.publishEvent(new HighlightStarEvent(this, starDisplayRecord.getRecordId()));
         });
 
 

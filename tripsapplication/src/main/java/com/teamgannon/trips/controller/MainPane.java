@@ -30,6 +30,7 @@ import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
 import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
 import com.teamgannon.trips.events.ClearDataEvent;
 import com.teamgannon.trips.events.DisplayStarEvent;
+import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -1316,7 +1317,7 @@ public class MainPane implements
                 log.info("Value chose = {}", findResults.getRecord());
 
                 String recordId = findResults.getRecord().getRecordId();
-                interstellarSpacePane.highlightStar(recordId);
+                eventPublisher.publishEvent(new HighlightStarEvent(this, recordId));
                 StarObject starObject = starService.getStar(recordId);
                 eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
 //                displayStellarProperties(starObject);
@@ -1502,11 +1503,6 @@ public class MainPane implements
         query.setCenterRanging(starId, query.getUpperDistanceLimit());
         log.info("New Center Range: {}", query.getCenterRangingCube());
         showNewStellarData(query, true, false);
-    }
-
-    @Override
-    public void highlightStar(String starId) {
-        interstellarSpacePane.highlightStar(starId);
     }
 
     @Override
