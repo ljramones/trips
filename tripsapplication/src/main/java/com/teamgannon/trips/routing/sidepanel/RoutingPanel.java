@@ -1,11 +1,11 @@
 package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteChange;
@@ -22,9 +22,11 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -47,21 +49,20 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     /**
      * route update listener - used to handle route events
      */
-    private final RouteUpdaterListener routeUpdaterListener;
+    @Setter
+    private RouteUpdaterListener routeUpdaterListener;
 
     /**
      * status update listener - used to handle status events
      */
-    private final StatusUpdaterListener statusUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor
      */
-    public RoutingPanel(RouteUpdaterListener routeUpdaterListener,
-                        StatusUpdaterListener statusUpdaterListener) {
+    public RoutingPanel(ApplicationEventPublisher eventPublisher) {
 
-        this.routeUpdaterListener = routeUpdaterListener;
-        this.statusUpdaterListener = statusUpdaterListener;
+        this.eventPublisher = eventPublisher;
 
         routingTableView.setPlaceholder(new Label("No routes in this dataset"));
         routingTableView.setEditable(true);
@@ -103,7 +104,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                     RouteChange routeChange = routeChangeOptional.get();
                     if (routeChange.isChanged()) {
                         routeUpdaterListener.updateRoute(RouteTree.toRouteDescriptor(routeTree));
-                        statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was edited");
+                        eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was edited"));
                     }
                 }
             } else {
@@ -124,7 +125,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                     ButtonType buttonType = buttonTypeOptional.get();
                     if (buttonType.equals(ButtonType.OK)) {
                         routeUpdaterListener.deleteRoute(RouteTree.toRouteDescriptor(routeTree));
-                        statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was deleted");
+                        eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was deleted"));
                     }
                 }
             } else {
@@ -190,7 +191,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                 }
                 if (routeTree != null) {
                     routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
-                    statusUpdaterListener.updateStatus(routeTree.getRouteName() + " is " + (isSelected ? "shown" : "not shown"));
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " is " + (isSelected ? "shown" : "not shown")));
                 }
             });
             return checkBoxTableCell;
@@ -201,7 +202,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             RouteTree routeTree = event.getRowValue();
             RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(routeTree);
             routeUpdaterListener.displayRoute(routeDescriptor, routeTree.isChecked());
-            statusUpdaterListener.updateStatus(routeTree.getRouteName() + " was edited");
+            eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was edited"));
         });
         return tableColumn;
     }

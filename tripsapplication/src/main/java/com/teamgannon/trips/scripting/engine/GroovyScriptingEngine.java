@@ -1,6 +1,5 @@
 package com.teamgannon.trips.scripting.engine;
 
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
@@ -8,6 +7,7 @@ import groovy.lang.Script;
 import groovy.util.GroovyScriptEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.groovy.jsr223.GroovyScriptEngineFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import javax.script.ScriptEngine;
@@ -20,14 +20,15 @@ import java.util.List;
 @Component("groovyScriptEngine")
 public class GroovyScriptingEngine {
 
-    private StatusUpdaterListener statusUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final GroovyClassLoader loader;
     private final GroovyShell shell;
     private final GroovyScriptEngine engine;
     private final ScriptEngine engineFromFactory;
 
-    public GroovyScriptingEngine() {
+    public GroovyScriptingEngine(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
         loader = new GroovyClassLoader(this.getClass().getClassLoader());
         shell = new GroovyShell(loader, new Binding());
 
@@ -40,10 +41,6 @@ public class GroovyScriptingEngine {
         engine = new GroovyScriptEngine(new URL[]{url}, this.getClass().getClassLoader());
         engineFromFactory = new GroovyScriptEngineFactory().getScriptEngine();
 
-    }
-
-    public void setUpdateListener(StatusUpdaterListener listener) {
-        this.statusUpdaterListener = listener;
     }
 
 

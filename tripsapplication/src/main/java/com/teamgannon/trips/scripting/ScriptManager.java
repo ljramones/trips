@@ -27,8 +27,6 @@ public class ScriptManager {
         this.groovyScriptEngine = groovyScriptEngine;
         this.pythonScriptEngine = pythonScriptEngine;
 
-        groovyScriptEngine.setUpdateListener(mainPane);
-        pythonScriptEngine.setUpdateListener(mainPane);
     }
 
     public void loadScriptsFromDB() {

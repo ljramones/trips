@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service.graphsearch;
 
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -23,7 +24,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     private DataSetDescriptor currentDataset;
     private DatabaseManagementService databaseManagementService;
     private StarService starService;
-    private StatusUpdaterListener statusUpdaterListener;
+    private ApplicationEventPublisher eventPublisher;
 
     private GraphSearchComplete graphSearchComplete;
     private Label progressText;
@@ -33,7 +34,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
                                       DataSetDescriptor currentDataset,
                                       DatabaseManagementService databaseManagementService,
                                       StarService starService,
-                                      StatusUpdaterListener statusUpdaterListener,
+                                      ApplicationEventPublisher eventPublisher,
                                       GraphSearchComplete graphSearchComplete,
                                       @NotNull Label progressText,
                                       @NotNull ProgressBar loadProgressBar,
@@ -43,7 +44,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
 
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
-        this.statusUpdaterListener = statusUpdaterListener;
+        this.eventPublisher = eventPublisher;
         this.graphSearchComplete = graphSearchComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
@@ -70,7 +71,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     protected void succeeded() {
         log.info("graph search found");
         String message = String.format("new graph search found -> %s", "graph search name TBD");
-        statusUpdaterListener.updateStatus(message);
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
         graphSearchComplete.complete(true, "some message");
     }
@@ -78,7 +79,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     @Override
     protected void failed() {
         log.error("graph search failed due to: " + getException().getMessage());
-        statusUpdaterListener.updateStatus("graph search failed due to: " + getException().getMessage());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "graph search failed due to: " + getException().getMessage()));
         unsetProgressControls();
         graphSearchComplete.complete(false, "some message");
     }
@@ -86,7 +87,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     @Override
     protected void cancelled() {
         log.warn("graph search cancelled");
-        statusUpdaterListener.updateStatus("graph search was cancelled for " + "graph search name TBD");
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "graph search was cancelled for " + "graph search name TBD"));
         unsetProgressControls();
         graphSearchComplete.complete(false, "cancelled for " + "graph search name TBD");
     }

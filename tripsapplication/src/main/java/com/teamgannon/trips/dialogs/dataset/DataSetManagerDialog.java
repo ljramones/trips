@@ -5,7 +5,6 @@ import com.teamgannon.trips.dataset.AddDataSetDialog;
 import com.teamgannon.trips.dialogs.dataset.model.*;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -30,6 +29,7 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,10 +62,10 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
     private final DatabaseManagementService databaseManagementService;
 
     private final DatasetService datasetService;
-    private final StatusUpdaterListener statusUpdaterListener;
     private final DataImportService dataImportService;
     private final Localization localization;
     private final DataExportService dataExportService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final TableView<DataSetDescriptor> tableView = new TableView<>();
 
@@ -78,7 +78,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
     public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
                                 DatabaseManagementService databaseManagementService,
                                 DatasetService datasetService,
-                                StatusUpdaterListener statusUpdaterListener,
+                                ApplicationEventPublisher eventPublisher,
                                 DataImportService dataImportService,
                                 Localization localization,
                                 DataExportService dataExportService) {
@@ -86,10 +86,10 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         this.dataSetChangeListener = dataSetChangeListener;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
-        this.statusUpdaterListener = statusUpdaterListener;
         this.dataImportService = dataImportService;
         this.localization = localization;
         this.dataExportService = dataExportService;
+        this.eventPublisher = eventPublisher;
 
         this.setTitle("Dataset Management Dialog");
         this.setWidth(700);
@@ -280,8 +280,8 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
                         ExportResult success = dataExportService.exportDataset(
                                 exportOptions,
-                                statusUpdaterListener,
                                 this,
+                                eventPublisher,
                                 exportProgressText,
                                 exportProgressBar,
                                 cancelExport);
@@ -320,7 +320,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
             ImportResult success = dataImportService.processFile(
                     dataset,
-                    statusUpdaterListener,
                     dataSetChangeListener,
                     this,
                     importProgressText,

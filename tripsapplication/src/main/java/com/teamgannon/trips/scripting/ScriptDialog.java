@@ -3,7 +3,6 @@ package com.teamgannon.trips.scripting;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.ScriptContext;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.scripting.engine.GroovyScriptingEngine;
 import com.teamgannon.trips.scripting.engine.PythonScriptEngine;
 import com.teamgannon.trips.scripting.model.ScriptEngineEnum;
@@ -24,6 +23,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,7 +37,6 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 @Slf4j
 public class ScriptDialog extends Dialog<Boolean> {
 
-    private final StatusUpdaterListener statusUpdaterListener;
     private final GroovyScriptingEngine groovyScriptEngine;
     private final PythonScriptEngine pythonScriptEngine;
     private final Menu scriptingMenu;
@@ -50,23 +49,22 @@ public class ScriptDialog extends Dialog<Boolean> {
     private final TextArea outputTextArea = new TextArea();
 
     private final Stage stage;
+    private final ApplicationEventPublisher eventPublisher;
 
     private ScriptFile activeScriptfile = ScriptFile.builder().build();
 
     private ToggleGroup engineToggleGroup = new ToggleGroup();
 
 
-    public ScriptDialog(StatusUpdaterListener statusUpdaterListener,
+    public ScriptDialog(ApplicationEventPublisher eventPublisher,
                         GroovyScriptingEngine groovyScriptEngine,
                         PythonScriptEngine pythonScriptEngine,
                         Menu scriptingMenu,
                         TripsContext tripsContext,
                         Localization localization,
                         DatabaseManagementService databaseManagementService) {
-
+        this.eventPublisher = eventPublisher;
         this.activeScriptfile.setEngineType(ScriptEngineEnum.NONE);
-
-        this.statusUpdaterListener = statusUpdaterListener;
         this.groovyScriptEngine = groovyScriptEngine;
         this.pythonScriptEngine = pythonScriptEngine;
         this.scriptingMenu = scriptingMenu;
@@ -259,7 +257,7 @@ public class ScriptDialog extends Dialog<Boolean> {
                 String output = groovyScriptEngine.runAScript(activeScriptfile.getName(), activeScriptfile.getContents(), new ArrayList<>());
                 log.info(output);
             } else {
-                log.error("No Engine define for: "+activeScriptfile.getName());
+                log.error("No Engine define for: " + activeScriptfile.getName());
             }
         });
         scriptingMenu.getItems().add(menuItem);
@@ -284,7 +282,7 @@ public class ScriptDialog extends Dialog<Boolean> {
                     outputTextArea.setText(output);
                     log.info(output);
                 } else {
-                    showErrorAlert("Script Dialog","No script engine to run");
+                    showErrorAlert("Script Dialog", "No script engine to run");
                 }
             }
         }

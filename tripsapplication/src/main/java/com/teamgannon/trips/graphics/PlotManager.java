@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -14,7 +15,6 @@ import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.listener.RoutingPanelListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -24,6 +24,7 @@ import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,7 +49,7 @@ public class PlotManager {
     private final AstrographicTransformer astrographicTransformer;
     private final StarService starService;
     private final DataSetChangeListener dataSetChangeListener;
-    private final StatusUpdaterListener statusUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
     private final RoutingPanelListener routingPanelListener;
 
     /**
@@ -65,7 +66,7 @@ public class PlotManager {
                        DatabaseManagementService databaseManagementService,
                        StarService starService,
                        DataSetChangeListener dataSetChangeListener,
-                       StatusUpdaterListener statusUpdaterListener,
+                       ApplicationEventPublisher eventPublisher,
                        RoutingPanelListener routingPanelListener) {
 
         this.tripsContext = tripsContext;
@@ -75,7 +76,7 @@ public class PlotManager {
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
         this.starService = starService;
         this.dataSetChangeListener = dataSetChangeListener;
-        this.statusUpdaterListener = statusUpdaterListener;
+        this.eventPublisher = eventPublisher;
         this.routingPanelListener = routingPanelListener;
     }
 
@@ -165,7 +166,7 @@ public class PlotManager {
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                     tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
             );
-            statusUpdaterListener.updateStatus("Dataset plotted is selection from: " + dataSetDescriptor.getDataSetName());
+            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset plotted is selection from: " + dataSetDescriptor.getDataSetName()));
         } else {
             showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
         }
@@ -268,7 +269,7 @@ public class PlotManager {
                 dataSetDescriptor.getDataSetName());
 
         showInfoMessage("Load Astrographic Format", data);
-        statusUpdaterListener.updateStatus(data);
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, data));
     }
 
     public Map<UUID, RouteVisibility> getRouteVisibility() {

@@ -28,6 +28,7 @@ import com.teamgannon.trips.dialogs.startup.FirstStartDialog;
 import com.teamgannon.trips.dialogs.utility.EquatorialToGalacticCoordsDialog;
 import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
 import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -107,6 +108,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.zondicons.Zondicons;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -139,7 +142,6 @@ public class MainPane implements
         ReportGenerator,
         DatabaseListener,
         DataSetChangeListener,
-        StatusUpdaterListener,
         RoutingPanelListener {
 
     private final static double SCREEN_PROPORTION = 0.60;
@@ -168,6 +170,7 @@ public class MainPane implements
     private PlotManager plotManager;
 
     private final Localization localization;
+    private final ApplicationEventPublisher eventPublisher;
     private final DataExportService dataExportService;
 
 
@@ -325,7 +328,9 @@ public class MainPane implements
                     GalacticSpacePlane galacticSpacePlane,
                     InterstellarSpacePane interstellarSpacePane,
                     SolarSystemSpacePane solarSystemSpacePane,
-                    Localization localization
+                    Localization localization,
+                    ApplicationEventPublisher eventPublisher,
+                    RoutingPanel routingPanel
     ) {
 
         hostServices = fxWeaver.getBean(HostServices.class);
@@ -350,8 +355,10 @@ public class MainPane implements
         this.databaseManagementService = databaseManagementService;
         this.solarSystemSpacePane = solarSystemSpacePane;
         this.localization = localization;
+        this.eventPublisher = eventPublisher;
+        this.routingPanel = routingPanel;
 
-        this.dataExportService = new DataExportService(databaseManagementService, starService, this);
+        this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
     }
 
     @FXML
@@ -360,8 +367,12 @@ public class MainPane implements
 
         setMnemonics();
 
-        this.plotManager = new PlotManager(tripsContext, databaseManagementService,
-                starService, this, this, this);
+        this.plotManager = new PlotManager(tripsContext,
+                databaseManagementService,
+                starService,
+                this,
+                eventPublisher,
+                this);
 
         setButtons();
 
@@ -551,7 +562,7 @@ public class MainPane implements
         routingPane.setMinWidth(SIDE_PANEL_SIZE);
         routingPane.setMinHeight(400);
         routingPane.setMaxHeight(400);
-        routingPanel = new RoutingPanel(this, this);
+        routingPanel.setRouteUpdaterListener(this);
         routingPane.setContent(routingPanel);
         propertiesAccordion.getPanes().add(routingPane);
     }
@@ -1162,7 +1173,7 @@ public class MainPane implements
                 this,
                 databaseManagementService,
                 datasetService,
-                this,
+                eventPublisher,
                 dataImportService,
                 localization,
                 dataExportService);
@@ -1251,7 +1262,7 @@ public class MainPane implements
                 databaseManagementService,
                 starService,
                 starMeasurementService,
-                this
+                eventPublisher
         );
 
     }
@@ -1566,11 +1577,6 @@ public class MainPane implements
         routingPanel.clearData();
     }
 
-    @Override
-    public void updateStatus(String message) {
-        databaseStatus.setText(message);
-    }
-
     /**
      * redisplay data based on the selected filter criteria
      *
@@ -1682,7 +1688,7 @@ public class MainPane implements
     @Override
     public void doExport(AstroSearchQuery newQuery) {
         ExportQueryDialog exportQueryDialog = new ExportQueryDialog(searchContext, databaseManagementService,
-                dataExportService, this, localization);
+                dataExportService, localization, eventPublisher);
         exportQueryDialog.showAndWait();
     }
 
@@ -2228,7 +2234,7 @@ public class MainPane implements
     public void scriptEditing(ActionEvent actionEvent) {
         GroovyScriptingEngine groovyScriptEngine = (GroovyScriptingEngine) appContext.getBean("groovyScriptEngine");
         PythonScriptEngine pythonScriptEngine = (PythonScriptEngine) appContext.getBean("pythonScriptEngine");
-        ScriptDialog dialog = new ScriptDialog(this, groovyScriptEngine, pythonScriptEngine,
+        ScriptDialog dialog = new ScriptDialog(eventPublisher, groovyScriptEngine, pythonScriptEngine,
                 scriptingMenu, tripsContext, localization, databaseManagementService);
         dialog.showAndWait();
     }
@@ -2394,6 +2400,16 @@ public class MainPane implements
 
             }
         }
+    }
 
+    public void updateStatus(String message) {
+        databaseStatus.setText(message);
+    }
+
+    @EventListener
+    public void onStatusUpdateEvent(StatusUpdateEvent event) {
+        Platform.runLater(() -> {
+            updateStatus(event.getStatus());
+        });
     }
 }

@@ -2,7 +2,7 @@ package com.teamgannon.trips.service.export;
 
 import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
@@ -14,49 +14,45 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
-public class CSVQueryExporterService extends Service<ExportResults> implements ExportTaskControl{
+public class CSVQueryExporterService extends Service<ExportResults> implements ExportTaskControl {
 
     private SearchContext searchContext;
 
-    private final StatusUpdaterListener updaterListener;
     private DatabaseManagementService databaseManagementService;
 
     private StarService starService;
+    private ApplicationEventPublisher eventPublisher;
     private ExportTaskComplete exportTaskComplete;
     private Label progressText;
     private ProgressBar exportProgressionBar;
-    private StatusUpdaterListener statusUpdaterListener;
 
     private ExportOptions export;
 
-    public CSVQueryExporterService(StatusUpdaterListener updaterListener) {
-        this.updaterListener = updaterListener;
-    }
-
     public boolean exportAsCSV(ExportOptions export,
-                                    SearchContext searchContext,
-                                    DatabaseManagementService databaseManagementService,
-                                    StarService starService,
-                                    StatusUpdaterListener statusUpdaterListener,
-                                    ExportTaskComplete importTaskComplete,
-                                    Label progressText,
-                                    ProgressBar exportProgressionBar,
-                                    Button cancelExportButton) {
+                               SearchContext searchContext,
+                               DatabaseManagementService databaseManagementService,
+                               StarService starService,
+                               ApplicationEventPublisher eventPublisher,
+                               ExportTaskComplete importTaskComplete,
+                               Label progressText,
+                               ProgressBar exportProgressionBar,
+                               Button cancelExportButton) {
 
         this.export = export;
 
         this.searchContext = searchContext;
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
+        this.eventPublisher = eventPublisher;
 
         this.exportTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.exportProgressionBar = exportProgressionBar;
-        this.statusUpdaterListener = statusUpdaterListener;
 
         progressText.textProperty().bind(this.messageProperty());
         exportProgressionBar.progressProperty().bind(this.progressProperty());
@@ -78,14 +74,13 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
         ExportResults fileProcessResult = this.getValue();
         exportTaskComplete.complete(true, export.getDataset(), fileProcessResult, "exported");
         // set context to newly loaded dataset
-        statusUpdaterListener.updateStatus("exported " + export.getDataset().getDataSetName() + " to file " + export.getFileName());
-
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "exported " + export.getDataset().getDataSetName() + " to file " + export.getFileName()));
     }
 
     @Override
     protected void failed() {
         log.error("dataset export failed due to: " + getException().getMessage());
-        statusUpdaterListener.updateStatus("dataset export failed due to: " + getException().getMessage());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset export failed due to: " + getException().getMessage()));
         unsetProgressControls();
         ExportResults fileProcessResult = this.getValue();
         exportTaskComplete.complete(false, export.getDataset(), fileProcessResult, "dataset export failed due to: " + getException().getMessage());
@@ -94,7 +89,7 @@ public class CSVQueryExporterService extends Service<ExportResults> implements E
     @Override
     protected void cancelled() {
         log.warn("dataset export cancelled");
-        statusUpdaterListener.updateStatus("dataset export was cancelled for " + export.getFileName());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset export was cancelled for " + export.getFileName()));
         unsetProgressControls();
         ExportResults exportResults = this.getValue();
         exportTaskComplete.complete(false, searchContext.getDataSetDescriptor(), exportResults, "dataset load cancelled");

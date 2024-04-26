@@ -2,10 +2,10 @@ package com.teamgannon.trips.service.importservices;
 
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
-import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
@@ -17,6 +17,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import static javafx.concurrent.Worker.State.RUNNING;
@@ -29,8 +30,8 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     private final DatabaseManagementService databaseManagementService;
     private final StarService starService;
     private final BulkLoadService bulkLoadService;
+    private final ApplicationEventPublisher eventPublisher;
     private Dataset dataset;
-    private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
@@ -39,10 +40,12 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
 
     public CSVDataImportService(DatabaseManagementService databaseManagementService,
                                 StarService starService,
-                                BulkLoadService bulkLoadService) {
+                                BulkLoadService bulkLoadService,
+                                ApplicationEventPublisher eventPublisher) {
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
         this.bulkLoadService = bulkLoadService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -52,14 +55,12 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     }
 
     public boolean processDataSet(Dataset dataset,
-                                  StatusUpdaterListener statusUpdaterListener,
                                   DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
                                   @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
-        this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
@@ -77,7 +78,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     protected void succeeded() {
         log.info("dataset loaded");
         String message = String.format("new Dataset loaded -> %s", dataset.getName());
-        statusUpdaterListener.updateStatus(message);
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         if (fileProcessResult == null) {
@@ -93,7 +94,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void failed() {
         log.error("dataset load failed due to: " + getException().getMessage());
-        statusUpdaterListener.updateStatus("dataset load failed due to: " + getException().getMessage());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load failed due to: " + getException().getMessage()));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + getException().getMessage());
@@ -102,7 +103,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void cancelled() {
         log.warn("dataset load cancelled");
-        statusUpdaterListener.updateStatus("dataset load was cancelled for " + dataset.getName());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load was cancelled for " + dataset.getName()));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");

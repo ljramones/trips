@@ -4,15 +4,18 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
-import com.teamgannon.trips.service.importservices.*;
+import com.teamgannon.trips.service.importservices.CHVDataImportService;
+import com.teamgannon.trips.service.importservices.CSVDataImportService;
+import com.teamgannon.trips.service.importservices.ImportResult;
+import com.teamgannon.trips.service.importservices.ImportTaskControl;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,15 +30,16 @@ public class DataImportService {
 
 
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
+    private final ApplicationEventPublisher eventPublisher;
 
     private @Nullable ImportTaskControl runningImportService;
 
 
     public DataImportService(DatabaseManagementService databaseManagementService,
-                             StarService starService,
                              BulkLoadService bulkLoadService,
-                             DatasetService datasetService,
-                             CSVDataImportService csvDataImportService) {
+                             CSVDataImportService csvDataImportService,
+                             ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
 
         // importer services are pre-created
         chvDataImportService = new CHVDataImportService(databaseManagementService, bulkLoadService);
@@ -45,7 +49,6 @@ public class DataImportService {
 
     @TrackExecutionTime
     public ImportResult processFile(@NotNull Dataset dataset,
-                                    StatusUpdaterListener statusUpdaterListener,
                                     DataSetChangeListener dataSetChangeListener,
                                     ImportTaskComplete importTaskComplete,
                                     @NotNull Label progressText,
@@ -77,7 +80,9 @@ public class DataImportService {
                 currentlyRunning.set(true);
                 runningImportService = chvDataImportService;
                 boolean queued = chvDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
+                        dataset,
+                        eventPublisher,
+                        dataSetChangeListener,
                         importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
@@ -95,7 +100,7 @@ public class DataImportService {
                 currentlyRunning.set(true);
                 runningImportService = csvDataImportService;
                 boolean queued = csvDataImportService.processDataSet(
-                        dataset, statusUpdaterListener, dataSetChangeListener,
+                        dataset, dataSetChangeListener,
                         importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");

@@ -2,7 +2,6 @@ package com.teamgannon.trips.routing.automation;
 
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInDataSet;
 import com.teamgannon.trips.routing.dialogs.RouteLoadingInfoDialog;
@@ -16,6 +15,7 @@ import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +29,7 @@ public class RouteFinderDataset {
     private final InterstellarSpacePane interstellarSpacePane;
     private final LargeGraphSearchService largeGraphSearchService;
     private DataSetDescriptor currentDataset;
+    private ApplicationEventPublisher eventPublisher;
 
     public RouteFinderDataset(InterstellarSpacePane interstellarSpacePane,
                               LargeGraphSearchService largeGraphSearchService) {
@@ -43,9 +44,10 @@ public class RouteFinderDataset {
                                    DatabaseManagementService databaseManagementService,
                                    StarService starService,
                                    StarMeasurementService starMeasurementService,
-                                   StatusUpdaterListener statusUpdaterListener) {
+                                   ApplicationEventPublisher eventPublisher) {
 
         this.currentDataset = currentDataset;
+        this.eventPublisher = eventPublisher;
 
         RouteFinderDialogInDataSet routeFinderDialogInView = new RouteFinderDialogInDataSet(
                 currentDataset.getDataSetName(),
@@ -70,7 +72,8 @@ public class RouteFinderDataset {
                         currentDataset, databaseManagementService,
                         starService,
                         largeGraphSearchService,
-                        statusUpdaterListener, routeFindingOptions);
+                        eventPublisher,
+                        routeFindingOptions);
                 Optional<GraphRouteResult> routeResultOptional = routeLoadingInfoDialog.showAndWait();
 
                 if (routeResultOptional.isPresent()) {

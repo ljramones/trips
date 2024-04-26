@@ -4,7 +4,6 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -25,6 +24,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
 
@@ -39,8 +39,8 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
     private final SearchContext searchContext;
     private final DatabaseManagementService databaseManagementService;
     private final DataExportService dataExportService;
-    private StatusUpdaterListener statusUpdaterListener;
     private Localization localization;
+    private final ApplicationEventPublisher eventPublisher;
 
     private File fileToStore;
 
@@ -57,20 +57,19 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
      * @param searchContext             the saerch context to do the export on
      * @param databaseManagementService the database management service
      * @param dataExportService         the data export service
-     * @param statusUpdaterListener     for reporting status
      * @param localization              for localization
      */
     public ExportQueryDialog(SearchContext searchContext,
                              DatabaseManagementService databaseManagementService,
                              DataExportService dataExportService,
-                             StatusUpdaterListener statusUpdaterListener,
-                             Localization localization) {
+                             Localization localization,
+                             ApplicationEventPublisher eventPublisher) {
 
         this.searchContext = searchContext;
         this.databaseManagementService = databaseManagementService;
         this.dataExportService = dataExportService;
-        this.statusUpdaterListener = statusUpdaterListener;
         this.localization = localization;
+        this.eventPublisher = eventPublisher;
 
         this.setTitle("Export Options");
         this.setWidth(600);
@@ -192,9 +191,14 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
             exportLoadingPanel.setVisible(true);
             exportProgressText.setText("Executing query for stars");
 
-            ExportResult success = dataExportService.exportDatasetOnQuery(exportOptions, searchContext,
-                    statusUpdaterListener, this, exportProgressText,
-                    exportProgressBar, cancelExport);
+            ExportResult success = dataExportService.exportDatasetOnQuery(
+                    exportOptions,
+                    searchContext,
+                    eventPublisher,
+                    this,
+                    exportProgressText,
+                    exportProgressBar,
+                    cancelExport);
             if (!success.isSuccess()) {
                 exportProgressText.setText("Failed to export data");
                 dataExportService.complete(false, exportOptions.getDataset(), "");

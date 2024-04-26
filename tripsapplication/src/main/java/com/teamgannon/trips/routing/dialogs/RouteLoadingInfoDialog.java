@@ -1,7 +1,6 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
@@ -21,17 +20,17 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Slf4j
 public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements GraphSearchComplete {
-
-    private StatusUpdaterListener statusUpdaterListener;
 
     private final ProgressBar searchProgressBar = new ProgressBar();
     private final Label searchProgressText = new Label("waiting for graph selection");
 
     private final StarService starService;
     private LargeGraphSearchService largeGraphSearchService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final Button finishBtn = new Button("Finish");
     private final Button cancelBtn = new Button("Cancel");
@@ -40,12 +39,12 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
                                   DatabaseManagementService databaseManagementService,
                                   StarService starService,
                                   LargeGraphSearchService largeGraphSearchService,
-                                  StatusUpdaterListener statusUpdaterListener,
+                                  ApplicationEventPublisher eventPublisher,
                                   RouteFindingOptions routeFindingOptions) {
         this.starService = starService;
 
         this.largeGraphSearchService = largeGraphSearchService;
-        this.statusUpdaterListener = statusUpdaterListener;
+        this.eventPublisher = eventPublisher;
 
         VBox vBox = new VBox();
 
@@ -96,7 +95,7 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
                 currentDataset,
                 databaseManagementService,
                 starService,
-                statusUpdaterListener,
+                eventPublisher,
                 this,
                 searchProgressText,
                 searchProgressBar,

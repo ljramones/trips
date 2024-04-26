@@ -3,10 +3,12 @@ package com.teamgannon.trips.service;
 import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
 import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.search.SearchContext;
-import com.teamgannon.trips.service.export.*;
+import com.teamgannon.trips.service.export.CSVDataSetDataExportService;
+import com.teamgannon.trips.service.export.CSVQueryExporterService;
+import com.teamgannon.trips.service.export.ExportResult;
+import com.teamgannon.trips.service.export.ExportTaskControl;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
@@ -15,6 +17,7 @@ import javafx.stage.FileChooser;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
 import java.util.Optional;
@@ -40,17 +43,19 @@ public class DataExportService {
     private final AtomicBoolean currentlyRunning = new AtomicBoolean(false);
 
     private @Nullable ExportTaskControl runningExportService;
+    private ApplicationEventPublisher eventPublisher;
 
 
     public DataExportService(DatabaseManagementService databaseManagementService,
                              StarService starService,
-                             StatusUpdaterListener statusUpdaterListener) {
+                             ApplicationEventPublisher eventPublisher) {
 
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
+        this.eventPublisher = eventPublisher;
 
-        csvQueryExporterService = new CSVQueryExporterService(statusUpdaterListener);
-        csvDataSetDataExportService = new CSVDataSetDataExportService(statusUpdaterListener);
+        csvQueryExporterService = new CSVQueryExporterService();
+        csvDataSetDataExportService = new CSVDataSetDataExportService();
     }
 
     @TrackExecutionTime
@@ -73,8 +78,8 @@ public class DataExportService {
 
     @TrackExecutionTime
     public ExportResult exportDataset(@NotNull ExportOptions exportOptions,
-                                      StatusUpdaterListener statusUpdaterListener,
                                       ExportTaskComplete importTaskCompleteListener,
+                                      ApplicationEventPublisher eventPublisher,
                                       Label progressText,
                                       ProgressBar exportProgressBar,
                                       Button cancelExport) {
@@ -98,8 +103,11 @@ public class DataExportService {
                 boolean queued = csvDataSetDataExportService.exportAsCSV(
                         exportOptions, databaseManagementService,
                         starService,
-                        statusUpdaterListener, importTaskCompleteListener, progressText,
-                        exportProgressBar, cancelExport);
+                        eventPublisher,
+                        importTaskCompleteListener,
+                        progressText,
+                        exportProgressBar,
+                        cancelExport);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -133,11 +141,12 @@ public class DataExportService {
     @TrackExecutionTime
     public ExportResult exportDatasetOnQuery(ExportOptions exportOptions,
                                              SearchContext searchContext,
-                                             StatusUpdaterListener statusUpdaterListener,
+                                             ApplicationEventPublisher eventPublisher,
                                              ExportTaskComplete importTaskCompleteListener,
                                              Label progressText,
                                              ProgressBar exportProgressBar,
                                              Button cancelExport) {
+        this.eventPublisher = eventPublisher;
 
         if (currentlyRunning.get()) {
             if (runningExportService != null) {
@@ -158,7 +167,7 @@ public class DataExportService {
                 boolean queued = csvQueryExporterService.exportAsCSV(exportOptions, searchContext,
                         databaseManagementService,
                         starService,
-                        statusUpdaterListener,
+                        eventPublisher,
                         importTaskCompleteListener,
                         progressText, exportProgressBar, cancelExport);
                 if (!queued) {

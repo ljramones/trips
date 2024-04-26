@@ -5,7 +5,6 @@ import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -13,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
@@ -25,7 +25,6 @@ public class ExportExportService extends Service<FileProcessResult> {
     private final DatabaseManagementService databaseManagementService;
 
     private Dataset dataset;
-    private StatusUpdaterListener statusUpdaterListener;
     private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
@@ -33,19 +32,17 @@ public class ExportExportService extends Service<FileProcessResult> {
     private LoadUpdateListener loadUpdateListener;
 
     public ExportExportService(DatabaseManagementService databaseManagementService) {
-
         this.databaseManagementService = databaseManagementService;
     }
 
     public boolean processDataSet(Dataset dataset,
-                                  StatusUpdaterListener statusUpdaterListener,
+                                  ApplicationEventPublisher eventPublisher,
                                   DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
                                   @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
-        this.statusUpdaterListener = statusUpdaterListener;
         this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;

@@ -4,8 +4,8 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StatusUpdaterListener;
 import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ChvLoadTask;
@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
@@ -25,7 +26,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private final DatabaseManagementService databaseManagementService;
     private final BulkLoadService bulkLoadService;
     private Dataset dataset;
-    private StatusUpdaterListener statusUpdaterListener;
+    private ApplicationEventPublisher eventPublisher;
     private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
@@ -46,7 +47,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     }
 
     public boolean processDataSet(Dataset dataset,
-                                  StatusUpdaterListener statusUpdaterListener,
+                                  ApplicationEventPublisher eventPublisher,
                                   DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
@@ -54,7 +55,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
                                   @NotNull Button cancelLoad,
                                   LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
-        this.statusUpdaterListener = statusUpdaterListener;
+        this.eventPublisher = eventPublisher;
         this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
@@ -72,7 +73,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void succeeded() {
         log.info("dataset loaded");
-        statusUpdaterListener.updateStatus(String.format("new Dataset loaded -> %s", dataset.getName()));
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, String.format("new Dataset loaded -> %s", dataset.getName())));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
@@ -85,7 +86,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void failed() {
         log.error("dataset load failed due to: " + getException().getMessage());
-        statusUpdaterListener.updateStatus("dataset load failed due to: " + getException().getMessage());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load failed due to: " + getException().getMessage()));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + getException().getMessage());
@@ -94,7 +95,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void cancelled() {
         log.warn("dataset load cancelled");
-        statusUpdaterListener.updateStatus("dataset laod was cancelled for " + dataset.getName());
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset laod was cancelled for " + dataset.getName()));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
