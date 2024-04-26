@@ -143,8 +143,7 @@ public class MainPane implements
         RedrawListener,
         ReportGenerator,
         DatabaseListener,
-        DataSetChangeListener,
-        RoutingPanelListener {
+        DataSetChangeListener{
 
     private final static double SCREEN_PROPORTION = 0.60;
 
@@ -372,11 +371,9 @@ public class MainPane implements
         setMnemonics();
 
         this.plotManager = new PlotManager(tripsContext,
-                databaseManagementService,
                 starService,
-                this,
-                eventPublisher,
-                this);
+                eventPublisher);
+        plotManager.setDataSetChangeListener(this);
 
         setButtons();
 
@@ -1980,11 +1977,6 @@ public class MainPane implements
             }
         }
 
-    }
-
-    @Override
-    public void updateRoutingPanel(DataSetDescriptor dataSetDescriptor) {
-        routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
     }
 
     public void rotate(ActionEvent actionEvent) {

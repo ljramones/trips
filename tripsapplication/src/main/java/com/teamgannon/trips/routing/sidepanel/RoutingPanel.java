@@ -2,6 +2,7 @@ package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.events.ClearDataEvent;
+import com.teamgannon.trips.events.RoutingPanelUpdateEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
@@ -84,7 +85,10 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         TableColumn<RouteTree, String> routeCol = createRouteTableColumn();
         routeCol.setPrefWidth(300);
 
-        routingTableView.getColumns().addAll(showRouteCol, showStatusCol, colorCol, routeCol);
+        routingTableView.getColumns().add(showRouteCol);
+        routingTableView.getColumns().add(showStatusCol);
+        routingTableView.getColumns().add(colorCol);
+        routingTableView.getColumns().add(routeCol);
 
         setSelectionModel();
 
@@ -227,7 +231,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
 
         if (descriptor != null) {
             List<Route> routeList = descriptor.getRoutes();
-            if (routeList.size() != 0) {
+            if (!routeList.isEmpty()) {
                 // we compare the descriptor routes to what we have actually plotted
                 // some of all of the potential routes might be present
                 // we also want to note routes that aren't plotted
@@ -284,4 +288,13 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         Platform.runLater(this::clearData);
     }
 
+    @EventListener
+    public void onRoutingPanelUpdateEvent(RoutingPanelUpdateEvent event) {
+        Platform.runLater(() -> {
+            log.info("ROUTING PANEL UPDATE event received ::: descriptor:{}", event.getDataSetDescriptor().getDataSetName());
+            this.setContext(event.getDataSetDescriptor(), event.getRouteVisibilityMap());
+        });
+    }
 }
+
+

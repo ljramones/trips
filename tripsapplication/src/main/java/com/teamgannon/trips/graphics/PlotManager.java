@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.events.RoutingPanelUpdateEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -14,14 +15,13 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.RoutingPanelListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
-import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
 import javafx.geometry.Point3D;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,7 +33,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 /**
- * This plots a astrographic list of object to the panes
+ * This plots an astrographic list of object to the panes
  * <p>
  * Created by larrymitchell on 2017-02-13.
  */
@@ -42,15 +42,14 @@ public class PlotManager {
 
     private final SearchContext searchContext;
     private final TripsContext tripsContext;
-    private final DatabaseManagementService databaseManagementService;
 
     private final CurrentPlot currentPlot;
 
     private final AstrographicTransformer astrographicTransformer;
     private final StarService starService;
-    private final DataSetChangeListener dataSetChangeListener;
+    @Setter
+    private DataSetChangeListener dataSetChangeListener;
     private final ApplicationEventPublisher eventPublisher;
-    private final RoutingPanelListener routingPanelListener;
 
     /**
      * the drawing surface for the astrographic plotter
@@ -62,22 +61,16 @@ public class PlotManager {
      *
      * @param tripsContext the trips context
      */
-    public PlotManager(@NotNull TripsContext tripsContext,
-                       DatabaseManagementService databaseManagementService,
+    public PlotManager(TripsContext tripsContext,
                        StarService starService,
-                       DataSetChangeListener dataSetChangeListener,
-                       ApplicationEventPublisher eventPublisher,
-                       RoutingPanelListener routingPanelListener) {
+                       ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
         this.currentPlot = tripsContext.getCurrentPlot();
         this.searchContext = tripsContext.getSearchContext();
-        this.databaseManagementService = databaseManagementService;
         this.astrographicTransformer = new AstrographicTransformer(tripsContext.getAppPreferences().getGridsize());
         this.starService = starService;
-        this.dataSetChangeListener = dataSetChangeListener;
         this.eventPublisher = eventPublisher;
-        this.routingPanelListener = routingPanelListener;
     }
 
     public void plotByConstellation(String constellationName) {
@@ -91,7 +84,7 @@ public class PlotManager {
 
         List<DataSetDescriptor> datasets = new ArrayList<>(searchContext.getDatasetDescriptors());
 
-        if (datasets.size() == 0) {
+        if (datasets.isEmpty()) {
             showErrorAlert("Plot Stars", "No datasets loaded, please load one");
             return;
         }
@@ -99,7 +92,7 @@ public class PlotManager {
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             DataSetDescriptor dataSetDescriptor = tripsContext.getDataSetContext().getDescriptor();
             plotStars(dataSetDescriptor, searchContext.getAstroSearchQuery());
-            routingPanelListener.updateRoutingPanel(dataSetDescriptor);
+            eventPublisher.publishEvent(new RoutingPanelUpdateEvent(this, dataSetDescriptor, getRouteVisibility()));
         } else {
 
             List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
@@ -120,7 +113,7 @@ public class PlotManager {
                 }
 
                 // update the routing table in the side panel
-                routingPanelListener.updateRoutingPanel(dataSetDescriptor);
+                eventPublisher.publishEvent(new RoutingPanelUpdateEvent(this, dataSetDescriptor, getRouteVisibility()));
 
                 plotStars(dataSetDescriptor, searchContext.getAstroSearchQuery());
                 dataSetChangeListener.setContextDataSet(dataSetDescriptor);
