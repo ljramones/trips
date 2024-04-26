@@ -17,16 +17,13 @@ import java.io.File;
 public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpdater {
 
     private final Dataset dataset;
-    private final DatabaseManagementService databaseManagementService;
     private final BulkLoadService bulkLoadService;
 
     private final @NotNull ChviewReader chviewReader;
 
     public ChvLoadTask(Dataset dataset,
-                       DatabaseManagementService databaseManagementService,
                        BulkLoadService bulkLoadService) {
         this.dataset = dataset;
-        this.databaseManagementService = databaseManagementService;
         this.bulkLoadService = bulkLoadService;
 
 

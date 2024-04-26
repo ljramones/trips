@@ -35,14 +35,14 @@ public class DataImportService {
     private @Nullable ImportTaskControl runningImportService;
 
 
-    public DataImportService(DatabaseManagementService databaseManagementService,
-                             BulkLoadService bulkLoadService,
+    public DataImportService(BulkLoadService bulkLoadService,
                              CSVDataImportService csvDataImportService,
+                             CHVDataImportService chvDataImportService,
                              ApplicationEventPublisher eventPublisher) {
+        this.chvDataImportService = chvDataImportService;
         this.eventPublisher = eventPublisher;
 
         // importer services are pre-created
-        chvDataImportService = new CHVDataImportService(databaseManagementService, bulkLoadService);
         this.bulkLoadService = bulkLoadService;
         this.csvDataImportService = csvDataImportService;
     }
@@ -81,9 +81,12 @@ public class DataImportService {
                 runningImportService = chvDataImportService;
                 boolean queued = chvDataImportService.processDataSet(
                         dataset,
-                        eventPublisher,
                         dataSetChangeListener,
-                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
+                        importTaskComplete,
+                        progressText,
+                        importProgressBar,
+                        cancelLoad,
+                        loadUpdateListener);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);

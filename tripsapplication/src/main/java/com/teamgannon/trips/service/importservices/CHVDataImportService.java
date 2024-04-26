@@ -17,16 +17,17 @@ import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
+@org.springframework.stereotype.Service
 public class CHVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
-    private final DatabaseManagementService databaseManagementService;
+    private final ApplicationEventPublisher eventPublisher;
     private final BulkLoadService bulkLoadService;
     private Dataset dataset;
-    private ApplicationEventPublisher eventPublisher;
     private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
@@ -34,20 +35,18 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private LoadUpdateListener loadUpdateListener;
 
 
-    public CHVDataImportService(DatabaseManagementService databaseManagementService,
+    public CHVDataImportService(ApplicationEventPublisher eventPublisher,
                                 BulkLoadService bulkLoadService) {
-        this.databaseManagementService = databaseManagementService;
-
+        this.eventPublisher = eventPublisher;
         this.bulkLoadService = bulkLoadService;
     }
 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
-        return new ChvLoadTask(dataset, databaseManagementService, bulkLoadService);
+        return new ChvLoadTask(dataset, bulkLoadService);
     }
 
     public boolean processDataSet(Dataset dataset,
-                                  ApplicationEventPublisher eventPublisher,
                                   DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
@@ -55,7 +54,6 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
                                   @NotNull Button cancelLoad,
                                   LoadUpdateListener loadUpdateListener) {
         this.dataset = dataset;
-        this.eventPublisher = eventPublisher;
         this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
