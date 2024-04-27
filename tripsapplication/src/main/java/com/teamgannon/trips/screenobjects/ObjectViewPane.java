@@ -77,7 +77,7 @@ public class ObjectViewPane extends Pane {
 
     public void add(StarDisplayRecord starDisplayRecord) {
         Platform.runLater(() -> {
-            log.info("Add star display record: " + starDisplayRecord.getStarName());
+//            log.debug("Add star display record: " + starDisplayRecord.getStarName());
             stellarObjectsListView.getItems().add(starDisplayRecord);
             stellarObjectsListView.getItems().sort(Comparator.comparing(StarDisplayRecord::getStarName));
         });
@@ -100,7 +100,7 @@ public class ObjectViewPane extends Pane {
     @EventListener
     public void onUpdateSidePanelListEvent(UpdateSidePanelListEvent event) {
         Platform.runLater(() -> {
-            log.info("OBJECT VIEW PANE ::: Received add to list event");
+//            log.debug("OBJECT VIEW PANE ::: Received add to list event");
             add(event.getStarDisplayRecord());
         });
     }
