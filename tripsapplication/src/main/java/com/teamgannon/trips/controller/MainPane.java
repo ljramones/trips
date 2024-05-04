@@ -137,7 +137,6 @@ public class MainPane implements
         ContextSelectorListener,
         RouteUpdaterListener,
         RedrawListener,
-        ReportGenerator,
         DatabaseListener,
         DataSetChangeListener {
 
@@ -590,7 +589,6 @@ public class MainPane implements
 
         objectViewPane.setListeners(this,
                 this,
-                this,
                 this);
 
         scrollPane.setContent(objectViewPane);
@@ -1016,7 +1014,6 @@ public class MainPane implements
                 this,
                 this,
                 this,
-                this,
                 this);
 
         leftDisplayPane.getChildren().add(interstellarSpacePane);
@@ -1351,13 +1348,13 @@ public class MainPane implements
 
     public void distanceReport(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
-        if (starsInView.size() > 0) {
+        if (!starsInView.isEmpty()) {
             SelectStarForDistanceReportDialog selectDialog = new SelectStarForDistanceReportDialog(starsInView);
             Optional<DistanceReportSelection> optionalStarDisplayRecord = selectDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 DistanceReportSelection reportSelection = optionalStarDisplayRecord.get();
                 if (reportSelection.isSelected()) {
-                    generateDistanceReport(reportSelection.getRecord());
+                    eventPublisher.publishEvent(new DistanceReportEvent(this, reportSelection.getRecord()));
                 }
             }
         } else {
@@ -1490,12 +1487,6 @@ public class MainPane implements
         query.setCenterRanging(starId, query.getUpperDistanceLimit());
         log.info("New Center Range: {}", query.getCenterRangingCube());
         showNewStellarData(query, true, false);
-    }
-
-    @Override
-    public void generateDistanceReport(StarDisplayRecord starDescriptor) {
-        ReportManager reportManager = new ReportManager();
-        reportManager.generateDistanceReport(stage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
     }
 
     @Override
@@ -2384,6 +2375,15 @@ public class MainPane implements
 
     public void clearData() {
         eventPublisher.publishEvent(new ClearDataEvent(this));
+    }
+
+    @EventListener
+    public void onDistanceReportEvent(DistanceReportEvent event) {
+        Platform.runLater(() -> {
+            StarDisplayRecord starDescriptor = event.getStarDisplayRecord();
+            ReportManager reportManager = new ReportManager();
+            reportManager.generateDistanceReport(stage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
+        });
     }
 
 

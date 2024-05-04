@@ -9,7 +9,6 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
-import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -29,7 +28,6 @@ public class ObjectViewPane extends Pane {
     private final ApplicationEventPublisher eventPublisher;
     private DatabaseListener databaseListener;
     private ListSelectorActionsListener listSelectorActionsListener;
-    private ReportGenerator reportGenerator;
     private RedrawListener redrawListener;
 
     public ObjectViewPane(ApplicationEventPublisher eventPublisher) {
@@ -43,19 +41,16 @@ public class ObjectViewPane extends Pane {
 
     public void setListeners(DatabaseListener databaseListener,
                              ListSelectorActionsListener listSelectorActionsListener,
-                             ReportGenerator reportGenerator,
                              RedrawListener redrawListener) {
 
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
-        this.reportGenerator = reportGenerator;
         this.redrawListener = redrawListener;
 
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
                         databaseListener,
                         listSelectorActionsListener,
-                        reportGenerator,
                         redrawListener,
                         eventPublisher));
 

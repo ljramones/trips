@@ -3,7 +3,6 @@ package com.teamgannon.trips.report;
 import com.teamgannon.trips.dialogs.inventory.ComputerInventoryDialog;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.listener.ReportGenerator;
 import com.teamgannon.trips.report.distance.DistanceReport;
 import com.teamgannon.trips.report.distance.DistanceReportDialog;
 import javafx.stage.FileChooser;

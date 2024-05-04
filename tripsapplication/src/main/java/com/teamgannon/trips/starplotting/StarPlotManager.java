@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.events.DisplayStarEvent;
+import com.teamgannon.trips.events.DistanceReportEvent;
 import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.events.UpdateSidePanelListEvent;
 import com.teamgannon.trips.graphics.StarNotesDialog;
@@ -19,7 +20,9 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.listener.ContextSelectorListener;
+import com.teamgannon.trips.listener.DatabaseListener;
+import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
@@ -128,7 +131,6 @@ public class StarPlotManager {
     /**
      * the report generator
      */
-    private ReportGenerator reportGenerator;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -265,12 +267,10 @@ public class StarPlotManager {
 
     public void setListeners(RedrawListener redrawListener,
                              DatabaseListener databaseListener,
-                             ContextSelectorListener contextSelectorListener,
-                             ReportGenerator reportGenerator) {
+                             ContextSelectorListener contextSelectorListener) {
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
         this.contextSelectorListener = contextSelectorListener;
-        this.reportGenerator = reportGenerator;
     }
 
     @TrackExecutionTime
@@ -951,11 +951,7 @@ public class StarPlotManager {
         MenuItem menuItem = new MenuItem("Generate distance report from this star");
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            if (reportGenerator != null) {
-                reportGenerator.generateDistanceReport(starDescriptor);
-            } else {
-                log.error("report generator should not be null --> bug");
-            }
+            eventPublisher.publishEvent(new DistanceReportEvent(this, starDescriptor));
         });
         return menuItem;
     }

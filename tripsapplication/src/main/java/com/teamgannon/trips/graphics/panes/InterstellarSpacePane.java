@@ -15,7 +15,10 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.listener.*;
+import com.teamgannon.trips.listener.ContextSelectorListener;
+import com.teamgannon.trips.listener.DatabaseListener;
+import com.teamgannon.trips.listener.RedrawListener;
+import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
@@ -80,7 +83,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private DatabaseListener databaseListener;
     private ContextSelectorListener contextSelectorListener;
     private RedrawListener redrawListener;
-    private ReportGenerator reportGenerator;
 
     /**
      * the grid plot manager
@@ -204,19 +206,16 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     public void setlisteners(RouteUpdaterListener routeUpdaterListener,
                              DatabaseListener databaseListener,
                              ContextSelectorListener contextSelectorListener,
-                             RedrawListener redrawListener,
-                             ReportGenerator reportGenerator) {
+                             RedrawListener redrawListener) {
         this.routeUpdaterListener = routeUpdaterListener;
         this.databaseListener = databaseListener;
         this.contextSelectorListener = contextSelectorListener;
         this.redrawListener = redrawListener;
-        this.reportGenerator = reportGenerator;
 
         starPlotManager.setListeners(
                 redrawListener,
                 databaseListener,
-                contextSelectorListener,
-                reportGenerator);
+                contextSelectorListener);
 
         routeManager.setListeners(routeUpdaterListener);
         transitManager.setListeners(routeUpdaterListener);

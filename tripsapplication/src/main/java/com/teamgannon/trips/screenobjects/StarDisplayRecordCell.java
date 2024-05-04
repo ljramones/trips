@@ -1,12 +1,12 @@
 package com.teamgannon.trips.screenobjects;
 
+import com.teamgannon.trips.events.DistanceReportEvent;
 import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
-import com.teamgannon.trips.listener.ReportGenerator;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -27,7 +27,6 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
 
     private final DatabaseListener databaseListener;
     private final ListSelectorActionsListener listSelectorActionsListener;
-    private final ReportGenerator reportGenerator;
     private final RedrawListener redrawListener;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -38,13 +37,11 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
      */
     public StarDisplayRecordCell(DatabaseListener databaseListener,
                                  ListSelectorActionsListener listSelectorActionsListener,
-                                 ReportGenerator reportGenerator,
                                  RedrawListener redrawListener,
                                  ApplicationEventPublisher eventPublisher) {
 
         this.databaseListener = databaseListener;
         this.listSelectorActionsListener = listSelectorActionsListener;
-        this.reportGenerator = reportGenerator;
         this.redrawListener = redrawListener;
         this.eventPublisher = eventPublisher;
     }
@@ -89,7 +86,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem distanceReportMenuItem = new MenuItem("Generate distance report");
         distanceReportMenuItem.setOnAction((event) -> {
             log.info("generate distance report {}", starDisplayRecord.getStarName());
-            reportGenerator.generateDistanceReport(starDisplayRecord);
+            eventPublisher.publishEvent(new DistanceReportEvent(this, starDisplayRecord));
         });
 
         contextMenu.getItems().addAll(recenterMenuItem, highlightMenuItem, editMenuItem, distanceReportMenuItem);
