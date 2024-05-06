@@ -7,10 +7,7 @@ import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
-import com.teamgannon.trips.events.DisplayStarEvent;
-import com.teamgannon.trips.events.DistanceReportEvent;
-import com.teamgannon.trips.events.HighlightStarEvent;
-import com.teamgannon.trips.events.UpdateSidePanelListEvent;
+import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.StarNotesDialog;
 import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -20,7 +17,6 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.ContextSelectorListener;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
@@ -121,12 +117,6 @@ public class StarPlotManager {
      * to make database changes
      */
     private DatabaseListener databaseListener;
-
-    /**
-     * used to an update to the parent controlling which graphics
-     * panes are being displayed
-     */
-    private ContextSelectorListener contextSelectorListener;
 
     /**
      * the report generator
@@ -266,11 +256,9 @@ public class StarPlotManager {
     }
 
     public void setListeners(RedrawListener redrawListener,
-                             DatabaseListener databaseListener,
-                             ContextSelectorListener contextSelectorListener) {
+                             DatabaseListener databaseListener) {
         this.redrawListener = redrawListener;
         this.databaseListener = databaseListener;
-        this.contextSelectorListener = contextSelectorListener;
     }
 
     @TrackExecutionTime
@@ -1099,10 +1087,11 @@ public class StarPlotManager {
      * @param starDisplayRecord the properties of the star selected
      */
     private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
-
-        if (contextSelectorListener != null) {
-            contextSelectorListener.selectSolarSystemSpace(starDisplayRecord);
-        }
+        eventPublisher.publishEvent(new ContextSelectorEvent(
+                this,
+                ContextSelectionType.SOLARSYSTEM,
+                starDisplayRecord,
+                null));
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {

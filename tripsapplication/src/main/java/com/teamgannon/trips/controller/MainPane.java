@@ -63,7 +63,6 @@ import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
-import com.teamgannon.trips.support.AlertFactory;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.transits.TransitDefinitions;
@@ -122,7 +121,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -133,7 +131,6 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 public class MainPane implements
         StellarDataUpdaterListener,
         PreferencesUpdaterListener,
-        ContextSelectorListener,
         RouteUpdaterListener,
         RedrawListener,
         DatabaseListener,
@@ -1010,7 +1007,6 @@ public class MainPane implements
         interstellarSpacePane.setlisteners(
                 this,
                 this,
-                this,
                 this);
 
         leftDisplayPane.getChildren().add(interstellarSpacePane);
@@ -1027,7 +1023,6 @@ public class MainPane implements
      * create the solar space drawing area
      */
     private void createSolarSystemSpace() {
-        solarSystemSpacePane.setContextUpdater(this);
         leftDisplayPane.getChildren().add(solarSystemSpacePane);
         solarSystemSpacePane.toBack();
     }
@@ -1427,21 +1422,6 @@ public class MainPane implements
 
     /////////////////////////////  LISTENERS  ///////////////////////////////
 
-    @Override
-    public void selectInterstellarSpace(Map<String, String> objectProperties) {
-        log.info("Showing interstellar Space");
-        interstellarSpacePane.toFront();
-        updateStatus("Selected Interstellar space");
-    }
-
-    @Override
-    public void selectSolarSystemSpace(@NotNull StarDisplayRecord starDisplayRecord) {
-        log.info("Showing a solar system");
-        solarSystemSpacePane.reset();
-        solarSystemSpacePane.setSystemToDisplay(starDisplayRecord);
-        solarSystemSpacePane.toFront();
-        updateStatus("Selected Solarsystem space: " + starDisplayRecord.getStarName());
-    }
 
     @Override
     public List<StarObject> getAstrographicObjectsOnQuery() {
@@ -1869,7 +1849,7 @@ public class MainPane implements
 
     private void shutdown() {
         log.debug("Exit selection");
-        Optional<ButtonType> result = AlertFactory.showConfirmationAlert(
+        Optional<ButtonType> result = showConfirmationAlert(
                 "Exit Application",
                 "Exit Application?",
                 "Are you sure you want to leave?");
@@ -2398,4 +2378,26 @@ public class MainPane implements
             displayStellarProperties(event.getStarObject());
         });
     }
+
+    @EventListener
+    public void onContextSelectorEvent(ContextSelectorEvent event) {
+        Platform.runLater(() -> {
+            switch (event.getContextSelectionType()) {
+                case INTERSTELLAR -> {
+                    log.info("Showing interstellar Space");
+                    interstellarSpacePane.toFront();
+                    updateStatus("Selected Interstellar space");
+                }
+                case SOLARSYSTEM -> {
+                    log.info("Showing a solar system");
+                    solarSystemSpacePane.reset();
+                    solarSystemSpacePane.setSystemToDisplay(event.getStarDisplayRecord());
+                    solarSystemSpacePane.toFront();
+                    updateStatus("Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName());
+                }
+                default -> log.error("Unexpected value: {}", event.getContextSelectionType());
+            }
+        });
+    }
+
 }

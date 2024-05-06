@@ -2,8 +2,9 @@ package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.ScreenSize;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.events.ContextSelectionType;
+import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.listener.ContextSelectorListener;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -24,6 +25,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.transform.Rotate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -46,6 +48,7 @@ public class SolarSystemSpacePane extends Pane {
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
     private final TripsContext tripsContext;
+    private final ApplicationEventPublisher eventPublisher;
     private final SolarSystemService solarSystemService;
     private final DatabaseManagementService databaseManagementService;
 
@@ -93,22 +96,18 @@ public class SolarSystemSpacePane extends Pane {
     private final boolean animationPlay = false;
 
     /**
-     * signals a switch of context from solarsystem space to interstellarspace
-     */
-    private ContextSelectorListener contextSelectorListener;
-
-
-    /**
      * constructor
      *
      * @param tripsContext              the trips context
      * @param databaseManagementService the database management service
      */
     public SolarSystemSpacePane(TripsContext tripsContext,
+                                ApplicationEventPublisher eventPublisher,
                                 DatabaseManagementService databaseManagementService,
                                 SolarSystemService solarSystemService) {
 
         this.tripsContext = tripsContext;
+        this.eventPublisher = eventPublisher;
         this.solarSystemService = solarSystemService;
         ScreenSize screenSize = tripsContext.getScreenSize();
         this.databaseManagementService = databaseManagementService;
@@ -199,14 +198,6 @@ public class SolarSystemSpacePane extends Pane {
 
     // ---------------------- helpers -------------------------- //
 
-    /**
-     * setup the context selector listener
-     *
-     * @param contextSelectorListener the context selector listener
-     */
-    public void setContextUpdater(ContextSelectorListener contextSelectorListener) {
-        this.contextSelectorListener = contextSelectorListener;
-    }
 
     /////////////////////////////////////
 
@@ -255,7 +246,11 @@ public class SolarSystemSpacePane extends Pane {
      */
     private void jumpBackToInterstellarSpace() {
         // there is no specific context at the moment.  We assume the same interstellar space we came form
-        contextSelectorListener.selectInterstellarSpace(new HashMap<>());
+        eventPublisher.publishEvent(new ContextSelectorEvent(
+                this,
+                ContextSelectionType.INTERSTELLAR,
+                null,
+                new HashMap<>()));
     }
 
     /**

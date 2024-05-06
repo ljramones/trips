@@ -15,7 +15,6 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.listener.ContextSelectorListener;
 import com.teamgannon.trips.listener.DatabaseListener;
 import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.listener.RouteUpdaterListener;
@@ -81,7 +80,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
      * used to signal an update to the parent list view
      */
     private DatabaseListener databaseListener;
-    private ContextSelectorListener contextSelectorListener;
     private RedrawListener redrawListener;
 
     /**
@@ -205,17 +203,14 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     public void setlisteners(RouteUpdaterListener routeUpdaterListener,
                              DatabaseListener databaseListener,
-                             ContextSelectorListener contextSelectorListener,
                              RedrawListener redrawListener) {
         this.routeUpdaterListener = routeUpdaterListener;
         this.databaseListener = databaseListener;
-        this.contextSelectorListener = contextSelectorListener;
         this.redrawListener = redrawListener;
 
         starPlotManager.setListeners(
                 redrawListener,
-                databaseListener,
-                contextSelectorListener);
+                databaseListener);
 
         routeManager.setListeners(routeUpdaterListener);
         transitManager.setListeners(routeUpdaterListener);
