@@ -5,7 +5,6 @@ import com.teamgannon.trips.events.HighlightStarEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
@@ -26,22 +25,17 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
 
 
     private final DatabaseListener databaseListener;
-    private final ListSelectorActionsListener listSelectorActionsListener;
     private final RedrawListener redrawListener;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor for this cell
-     *
-     * @param listSelectorActionsListener the listener
      */
     public StarDisplayRecordCell(DatabaseListener databaseListener,
-                                 ListSelectorActionsListener listSelectorActionsListener,
                                  RedrawListener redrawListener,
                                  ApplicationEventPublisher eventPublisher) {
 
         this.databaseListener = databaseListener;
-        this.listSelectorActionsListener = listSelectorActionsListener;
         this.redrawListener = redrawListener;
         this.eventPublisher = eventPublisher;
     }
@@ -55,7 +49,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem recenterMenuItem = new MenuItem("Center on this star");
         recenterMenuItem.setOnAction((event) -> {
             log.info("recenter on {}", starDisplayRecord.getStarName());
-            listSelectorActionsListener.recenter(starDisplayRecord);
+            redrawListener.recenter(starDisplayRecord);
         });
 
         MenuItem highlightMenuItem = new MenuItem("Highlight this star");

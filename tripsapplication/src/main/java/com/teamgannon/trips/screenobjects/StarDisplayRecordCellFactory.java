@@ -2,7 +2,6 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.ListSelectorActionsListener;
 import com.teamgannon.trips.listener.RedrawListener;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -15,16 +14,13 @@ import org.springframework.context.ApplicationEventPublisher;
 public class StarDisplayRecordCellFactory implements Callback<ListView<StarDisplayRecord>, ListCell<StarDisplayRecord>> {
 
     private final DatabaseListener databaseListener;
-    private final ListSelectorActionsListener listSelectorActionsListener;
     private final RedrawListener redrawListener;
     private final ApplicationEventPublisher eventPublisher;
 
     public StarDisplayRecordCellFactory(DatabaseListener databaseListener,
-                                        ListSelectorActionsListener listSelectorActionsListener,
                                         RedrawListener redrawListener,
                                         ApplicationEventPublisher eventPublisher) {
         this.databaseListener = databaseListener;
-        this.listSelectorActionsListener = listSelectorActionsListener;
         this.redrawListener = redrawListener;
         this.eventPublisher = eventPublisher;
     }
@@ -33,7 +29,6 @@ public class StarDisplayRecordCellFactory implements Callback<ListView<StarDispl
     public @NotNull ListCell<StarDisplayRecord> call(ListView<StarDisplayRecord> routeListView) {
         return new StarDisplayRecordCell(
                 databaseListener,
-                listSelectorActionsListener,
                 redrawListener,
                 eventPublisher);
     }

@@ -132,7 +132,6 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Component
 public class MainPane implements
         StellarDataUpdaterListener,
-        ListSelectorActionsListener,
         PreferencesUpdaterListener,
         ContextSelectorListener,
         RouteUpdaterListener,
@@ -587,9 +586,7 @@ public class MainPane implements
 
         ScrollPane scrollPane = new ScrollPane();
 
-        objectViewPane.setListeners(this,
-                this,
-                this);
+        objectViewPane.setListeners(this, this);
 
         scrollPane.setContent(objectViewPane);
 
