@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
+import com.teamgannon.trips.events.CivilizationDisplayPreferencesChangeEvent;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
-import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,11 +16,14 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import lombok.Getter;
+import org.springframework.context.ApplicationEventPublisher;
 
 public class CivilizationPane extends Pane {
 
+    @Getter
     private final CivilizationDisplayPreferences preferences;
-    private final PreferencesUpdaterListener updater;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final ColorPicker humanColorPicker = new ColorPicker();
     private final ColorPicker dornaniColorPicker = new ColorPicker();
@@ -33,9 +36,11 @@ public class CivilizationPane extends Pane {
     private final ColorPicker other3ColorPicker = new ColorPicker();
     private final ColorPicker other4ColorPicker = new ColorPicker();
 
-    public CivilizationPane(CivilizationDisplayPreferences preferences, PreferencesUpdaterListener updater) {
+    public CivilizationPane(CivilizationDisplayPreferences preferences,
+                            ApplicationEventPublisher eventPublisher) {
+
         this.preferences = preferences;
-        this.updater = updater;
+        this.eventPublisher = eventPublisher;
 
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
@@ -142,8 +147,7 @@ public class CivilizationPane extends Pane {
         preferences.setOther3PolityColor(other3ColorPicker.getValue().toString());
         preferences.setOther4PolityColor(other4ColorPicker.getValue().toString());
 
-        updater.changePolitiesPreferences(preferences);
-
+        eventPublisher.publishEvent(new CivilizationDisplayPreferencesChangeEvent(this, preferences));
     }
 
     private void resetPolitiesClicked(ActionEvent actionEvent) {
@@ -164,13 +168,9 @@ public class CivilizationPane extends Pane {
         other4ColorPicker.setValue(Color.valueOf(preferences.getOther4PolityColor()));
     }
 
-    public CivilizationDisplayPreferences getPreferences() {
-        return preferences;
-    }
-
     public void reset() {
         preferences.reset();
         setPreferences();
-        updater.changePolitiesPreferences(preferences);
+        eventPublisher.publishEvent(new CivilizationDisplayPreferencesChangeEvent(this, preferences));
     }
 }

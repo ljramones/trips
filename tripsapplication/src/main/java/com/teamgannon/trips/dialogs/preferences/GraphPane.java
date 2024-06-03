@@ -3,8 +3,9 @@ package com.teamgannon.trips.dialogs.preferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
+import com.teamgannon.trips.events.ColorPaletteChangeEvent;
+import com.teamgannon.trips.events.GraphEnablesPersistEvent;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.listener.PreferencesUpdaterListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,6 +22,7 @@ import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -31,12 +33,12 @@ public class GraphPane extends Pane {
 
     private final static String COLOR_PANE_TITLE = "Change Graph Colors";
     private final static String COLOR_PANE_TITLE_MODIFIED = "Change Graph Colors - *modified*";
-    private final PreferencesUpdaterListener updater;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final ColorPalette colorPalette;
 
     private final GraphEnablesPersist graphEnablesPersist;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final TitledPane colorPane = new TitledPane();
 
@@ -63,11 +65,12 @@ public class GraphPane extends Pane {
     private final Label fontLabel = new Label(labelFont.getName());
     private SerialFont labelSerialFont = new SerialFont(labelFont);
 
-    public GraphPane(PreferencesUpdaterListener updater, @NotNull TripsContext tripsContext) {
-        this.updater = updater;
+    public GraphPane(TripsContext tripsContext,
+                     ApplicationEventPublisher eventPublisher) {
 
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         graphEnablesPersist = tripsContext.getAppViewPreferences().getGraphEnablesPersist();
+        this.eventPublisher = eventPublisher;
 
         VBox vBox = new VBox();
 
@@ -313,7 +316,8 @@ public class GraphPane extends Pane {
         colorPalette.setGridLineWidth(Double.parseDouble(gridLineWidthTextField.getText()));
         colorPalette.setLabelFont(labelSerialFont);
 
-        updater.updateGraphColors(colorPalette);
+//        updater.updateGraphColors(colorPalette);
+        sendColorPaletteChangeEvent(colorPalette);
     }
 
 
@@ -395,14 +399,26 @@ public class GraphPane extends Pane {
         graphEnablesPersist.setDisplayStems(displayStemCheckbox.isSelected());
         graphEnablesPersist.setDisplayLabels(displayLabelCheckbox.isSelected());
         graphEnablesPersist.setDisplayLegend(displayLegendCheckbox.isSelected());
-        updater.changesGraphEnables(graphEnablesPersist);
+//        updater.changesGraphEnables(graphEnablesPersist);
+        sendGraphEnablesPersistEvent(graphEnablesPersist);
     }
 
     public void reset() {
         resetColorsClicked(new ActionEvent());
-        updater.updateGraphColors(colorPalette);
+        sendColorPaletteChangeEvent(colorPalette);
+//        updater.updateGraphColors(colorPalette);
 
         resetEnablesClicked(new ActionEvent());
-        updater.changesGraphEnables(graphEnablesPersist);
+        sendGraphEnablesPersistEvent(graphEnablesPersist);
+//        updater.changesGraphEnables(graphEnablesPersist);
     }
+
+    private void sendColorPaletteChangeEvent(ColorPalette colorPalette) {
+        eventPublisher.publishEvent(new ColorPaletteChangeEvent(this, colorPalette));
+    }
+
+    private void sendGraphEnablesPersistEvent(GraphEnablesPersist graphEnablesPersist) {
+        eventPublisher.publishEvent(new GraphEnablesPersistEvent(this, graphEnablesPersist));
+    }
+
 }

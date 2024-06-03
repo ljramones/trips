@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.model.UserControls;
-import com.teamgannon.trips.listener.PreferencesUpdaterListener;
+import com.teamgannon.trips.events.UserControlsChangeEvent;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,12 +13,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 public class UserControlsPane extends Pane {
 
     private final static String USER_PANE_TITLE = "Mouse Drag Rotation Direction";
     private final static String USER_PANE_TITLE_MODIFIED = "Mouse Drag Rotation Direction - *modified*";
-    private final PreferencesUpdaterListener updater;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private final UserControls userControls;
 
@@ -27,9 +29,11 @@ public class UserControlsPane extends Pane {
     private final CheckBox userSenseCheckBox = new CheckBox("Invert from default");
 
 
-    public UserControlsPane(UserControls userControls, PreferencesUpdaterListener updater) {
+    public UserControlsPane(UserControls userControls,
+                            ApplicationEventPublisher eventPublisher) {
+
         this.userControls = userControls;
-        this.updater = updater;
+        this.eventPublisher = eventPublisher;
 
         VBox vBox = new VBox();
 
@@ -73,7 +77,7 @@ public class UserControlsPane extends Pane {
 
     private void changeColorsClicked(ActionEvent actionEvent) {
         userControls.setControlSense(userSenseCheckBox.isSelected());
-        updater.changeUserControlsPreferences(userControls);
+        eventPublisher.publishEvent(new UserControlsChangeEvent(this, userControls));
     }
 
     /**
@@ -81,7 +85,7 @@ public class UserControlsPane extends Pane {
      */
     public void reset() {
         userControls.reset();
-        updater.changeUserControlsPreferences(userControls);
+        eventPublisher.publishEvent(new UserControlsChangeEvent(this, userControls));
     }
 
 }

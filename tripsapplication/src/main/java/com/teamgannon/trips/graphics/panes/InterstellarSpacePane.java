@@ -9,6 +9,8 @@ import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.events.ClearListEvent;
+import com.teamgannon.trips.events.ColorPaletteChangeEvent;
+import com.teamgannon.trips.events.UserControlsChangeEvent;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
@@ -43,6 +45,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -256,6 +259,11 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         this.userControls = userControls;
     }
 
+    @EventListener
+    public void onUserControlsChangeEvent(UserControlsChangeEvent event) {
+        changeUserControls(event.getUserControls());
+    }
+
     /**
      * simulate stars
      *
@@ -305,6 +313,11 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     public void changeColors(ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
+    }
+
+    @EventListener
+    public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
+        changeColors(event.getColorPalette());
     }
 
     public List<StarDisplayRecord> getCurrentStarsInView() {

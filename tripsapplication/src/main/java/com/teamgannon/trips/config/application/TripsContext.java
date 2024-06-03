@@ -6,6 +6,8 @@ import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.constellation.Constellation;
+import com.teamgannon.trips.events.ColorPaletteChangeEvent;
+import com.teamgannon.trips.events.GraphEnablesPersistEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.TransitSettings;
 import com.teamgannon.trips.jpa.model.TripsPrefs;
@@ -15,6 +17,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SystemPreferencesService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -106,5 +109,16 @@ public class TripsContext {
 
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
         searchContext.addDataSet(dataSetDescriptor);
+    }
+
+    @EventListener
+    public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
+        getAppViewPreferences().setColorPallete(event.getColorPalette());
+        log.info("Color palette changed to " + event.getColorPalette());
+    }
+
+    @EventListener
+    public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
+        getAppViewPreferences().setGraphEnablesPersist(event.getGraphEnablesPersist());
     }
 }

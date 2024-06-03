@@ -4,7 +4,10 @@ import com.dustinredmond.fxtrayicon.FXTrayIcon;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.*;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
+import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.DataSetContext;
+import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
@@ -130,7 +133,6 @@ import static com.teamgannon.trips.support.AlertFactory.*;
 @Component
 public class MainPane implements
         StellarDataUpdaterListener,
-        PreferencesUpdaterListener,
         RouteUpdaterListener,
         RedrawListener,
         DatabaseListener,
@@ -227,10 +229,10 @@ public class MainPane implements
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
     private TitledPane datasetsPane;
-    private RoutingPanel routingPanel;
+    private final RoutingPanel routingPanel;
     private TransitFilterPane transitFilterPane;
-    private StarPropertiesPane starPropertiesPane;
-    private ObjectViewPane objectViewPane;
+    private final StarPropertiesPane starPropertiesPane;
+    private final ObjectViewPane objectViewPane;
     private VBox settingsPane;
     private StackPane leftDisplayPane;
 
@@ -366,6 +368,7 @@ public class MainPane implements
         this.plotManager = new PlotManager(tripsContext,
                 starService,
                 eventPublisher);
+
         plotManager.setDataSetChangeListener(this);
 
         setButtons();
@@ -1066,7 +1069,7 @@ public class MainPane implements
 
     public void showApplicationPreferences(ActionEvent actionEvent) {
         ApplicationPreferences applicationPreferences = tripsContext.getAppPreferences();
-        ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(this, tripsContext, applicationPreferences);
+        ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(tripsContext, applicationPreferences, eventPublisher);
         viewPreferencesDialog.showAndWait();
     }
 
@@ -1628,7 +1631,7 @@ public class MainPane implements
     }
 
     private void showList(@NotNull List<StarObject> starObjects) {
-        if (starObjects.size() > 0) {
+        if (!starObjects.isEmpty()) {
             new DataSetTable(databaseManagementService, starService, starObjects);
         } else {
             showErrorAlert("Display Data table", "no data to show");
@@ -1641,7 +1644,7 @@ public class MainPane implements
         // add dataset to trips context
         tripsContext.addDataSet(dataSetDescriptor);
 
-        // add to side panel
+        // add to side-panel
         addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
 
         // update the query dialog
@@ -1695,25 +1698,9 @@ public class MainPane implements
         interstellarSpacePane.clearAll();
     }
 
-    @Override
-    public void updateGraphColors(@NotNull ColorPalette colorPalette) {
-        tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
-
-        // colors changes so update db
-        systemPreferencesService.updateColors(colorPalette);
-        interstellarSpacePane.changeColors(colorPalette);
-        log.debug("UPDATE COLORS!!!");
-    }
-
-    @Override
-    public void changesGraphEnables(@NotNull GraphEnablesPersist graphEnablesPersist) {
-        tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
-
-        updateToggles(graphEnablesPersist);
-
-        systemPreferencesService.updateGraphEnables(graphEnablesPersist);
-        plotManager.changeGraphEnables(graphEnablesPersist);
-        log.debug("UPDATE GRAPH ENABLES!!!");
+    @EventListener
+    public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
+        updateToggles(event.getGraphEnablesPersist());
     }
 
     /**
@@ -1762,24 +1749,6 @@ public class MainPane implements
         toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
 
-    @Override
-    public void changeStarPreferences(@NotNull StarDisplayPreferences starDisplayPreferences) {
-        systemPreferencesService.updateStarPreferences(starDisplayPreferences);
-    }
-
-    @Override
-    public void changePolitiesPreferences(@NotNull CivilizationDisplayPreferences civilizationDisplayPreferences) {
-        systemPreferencesService.updateCivilizationDisplayPreferences(civilizationDisplayPreferences);
-    }
-
-    @Override
-    public void changeUserControlsPreferences(UserControls userControls) {
-        //  @todo
-        log.info("changed user controls");
-        interstellarSpacePane.changeUserControls(userControls);
-    }
-
-
     ///////////////////////
 
     /////////////////////  DISPLAY DATA   ///////////////////////////
@@ -1792,14 +1761,14 @@ public class MainPane implements
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
             List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-            if (starObjects.size() > 0) {
+            if (!starObjects.isEmpty()) {
                 new DataSetTable(databaseManagementService, starService, starObjects);
             } else {
                 showErrorAlert("Show Data Table", "no data found");
             }
         } else {
             List<DataSetDescriptor> datasets = datasetService.getDataSets();
-            if (datasets.size() == 0) {
+            if (datasets.isEmpty()) {
                 showErrorAlert("Plot Stars", "No datasets loaded, please load one");
                 return;
             }
@@ -1821,7 +1790,7 @@ public class MainPane implements
                     return;
                 }
                 List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-                if (starObjects.size() > 0) {
+                if (!starObjects.isEmpty()) {
                     new DataSetTable(databaseManagementService, starService, starObjects);
                     updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
                 } else {
@@ -1934,7 +1903,6 @@ public class MainPane implements
                 }
             }
         }
-
     }
 
     public void rotate(ActionEvent actionEvent) {

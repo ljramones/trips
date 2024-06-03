@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface CivilizationDisplayPreferencesRepository extends PagingAndSortingRepository<CivilizationDisplayPreferences, String> {
 
-    @NotNull Optional<CivilizationDisplayPreferences> findByStorageTag(String s);
+    @NotNull
+    Optional<CivilizationDisplayPreferences> findByStorageTag(String s);
 
 }

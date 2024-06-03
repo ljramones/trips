@@ -1,7 +1,10 @@
 package com.teamgannon.trips.jpa.model;
 
 import javafx.scene.paint.Color;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,73 +36,25 @@ public class CivilizationDisplayPreferences implements Serializable {
     public static final String NONE = "None";
 
     @Serial
-    private static final long serialVersionUID = -3937969336190562493L;
+    private static final long serialVersionUID = 2463297545433929036L;
 
-
-    /**
-     * id of the object
-     */
     @Id
-    private UUID id;
-    /**
-     * storage tag
-     */
+    private String id = UUID.randomUUID().toString();  // Initialize with a new UUID
+
     @Column(unique = true)
     private @NotNull String storageTag = "Main";
 
-    /**
-     * color of human polity
-     */
     private String humanPolityColor = Color.BEIGE.toString();
-
-    /**
-     * color of Dornani polity
-     */
     private String dornaniPolityColor = Color.FUCHSIA.toString();
-
-    /**
-     * color of Ktor polity
-     */
     private String ktorPolityColor = Color.HONEYDEW.toString();
-
-    /**
-     * color of Arat kur
-     */
     private String aratKurPolityColor = Color.ALICEBLUE.toString();
-
-    /**
-     * color Hrk'Rkh polity
-     */
     private String hkhRkhPolityColor = Color.LIGHTGREEN.toString();
-
-    /**
-     * color of Slaasriithi polity
-     */
     private String slaasriithiPolityColor = Color.LIGHTCORAL.toString();
-
-    /**
-     * custom polity 1
-     */
     private String other1PolityColor = Color.LIGHTGOLDENRODYELLOW.toString();
-
-    /**
-     * custom polity 2
-     */
     private String other2PolityColor = Color.LIGHTSKYBLUE.toString();
-
-    /**
-     * custom polity 3
-     */
     private String other3PolityColor = Color.LIGHTGRAY.toString();
-
-    /**
-     * custom polity 4
-     */
     private String other4PolityColor = Color.LEMONCHIFFON.toString();
 
-    /**
-     * reset the colors
-     */
     public void reset() {
         humanPolityColor = Color.valueOf("25ff29").toString();
         dornaniPolityColor = Color.MAGENTA.toString();
@@ -143,3 +98,4 @@ public class CivilizationDisplayPreferences implements Serializable {
         return getClass().hashCode();
     }
 }
+

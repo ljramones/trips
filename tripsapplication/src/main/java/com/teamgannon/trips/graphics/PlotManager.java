@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.events.GraphEnablesPersistEvent;
 import com.teamgannon.trips.events.RoutingPanelUpdateEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
@@ -25,6 +26,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -289,6 +291,11 @@ public class PlotManager {
     }
 
     public void changeGraphEnables(GraphEnablesPersist graphEnablesPersist) {
+    }
+
+    @EventListener
+    public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
+
     }
 
 }

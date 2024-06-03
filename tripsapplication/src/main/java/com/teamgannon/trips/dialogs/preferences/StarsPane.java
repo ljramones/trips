@@ -2,7 +2,7 @@ package com.teamgannon.trips.dialogs.preferences;
 
 import com.teamgannon.trips.config.application.model.StarDescriptionPreference;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
-import com.teamgannon.trips.listener.PreferencesUpdaterListener;
+import com.teamgannon.trips.events.StarDisplayPreferencesChangeEvent;
 import com.teamgannon.trips.stellarmodelling.StellarType;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -19,6 +19,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 
@@ -29,7 +30,8 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class StarsPane extends Pane {
     private final static String STAR_PANE_TITLE = "Change Star Colors";
     private final static String STAR_PANE_TITLE_MODIFIED = "Change Star Colors - *modified*";
-    private final PreferencesUpdaterListener updater;
+
+    private final ApplicationEventPublisher eventPublisher;
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
     private final @NotNull StarDisplayPreferences starDisplayPreferences;
@@ -71,9 +73,10 @@ public class StarsPane extends Pane {
 
     private final @NotNull TitledPane starPane;
 
-    public StarsPane(@NotNull StarDisplayPreferences starDisplayPreferences, PreferencesUpdaterListener updater) {
+    public StarsPane(@NotNull StarDisplayPreferences starDisplayPreferences,
+                     ApplicationEventPublisher eventPublisher) {
         this.starDisplayPreferences = starDisplayPreferences;
-        this.updater = updater;
+        this.eventPublisher = eventPublisher;
         VBox vBox = new VBox();
 
         Pane pane1 = createStarPane();
@@ -271,7 +274,7 @@ public class StarsPane extends Pane {
         Label numberOfStarLabelsLabel = new Label("# of Labels");
         numberOfStarLabelsLabel.setFont(font);
         numberOfLabelsTextField.setText(Integer.toString(starDisplayPreferences.getNumberOfVisibleLabels()));
-        gridPane.add(numberOfStarLabelsLabel, 0,11);
+        gridPane.add(numberOfStarLabelsLabel, 0, 11);
         gridPane.add(numberOfLabelsTextField, 1, 11);
 
         HBox hBox = new HBox();
@@ -409,12 +412,12 @@ public class StarsPane extends Pane {
 
         try {
             starDisplayPreferences.setNumberOfVisibleLabels(Integer.parseInt(numberOfLabelsTextField.getText()));
-        } catch(NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             showErrorAlert("Star Preferences", "Number of labels must be an integer!");
             return;
         }
 
-        updater.changeStarPreferences(starDisplayPreferences);
+        eventPublisher.publishEvent(new StarDisplayPreferencesChangeEvent(this, starDisplayPreferences));
 
     }
 
@@ -622,6 +625,6 @@ public class StarsPane extends Pane {
 
     public void reset() {
         resetColorsClicked(new ActionEvent());
-        updater.changeStarPreferences(starDisplayPreferences);
+        eventPublisher.publishEvent(new StarDisplayPreferencesChangeEvent(this, starDisplayPreferences));
     }
 }

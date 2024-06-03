@@ -1,8 +1,7 @@
 package com.teamgannon.trips.dialogs.preferences;
 
-import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.listener.PreferencesUpdaterListener;
+import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.support.AlertFactory;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -13,6 +12,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -21,7 +21,7 @@ import java.util.Optional;
 public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
     private final ApplicationPreferences preferences;
-    private final PreferencesUpdaterListener updater;
+    private final ApplicationEventPublisher eventPublisher;
     private final TripsContext tripsContext;
     private ButtonType buttonTypeOk;
 
@@ -33,13 +33,13 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
     private UserControlsPane userControlsPane;
 
 
-    public ViewPreferencesDialog(PreferencesUpdaterListener updater,
-                                 TripsContext tripsContext,
-                                 ApplicationPreferences preferences) {
-        this.updater = updater;
+    public ViewPreferencesDialog(TripsContext tripsContext,
+                                 ApplicationPreferences preferences,
+                                 ApplicationEventPublisher eventPublisher) {
         this.tripsContext = tripsContext;
 
         this.preferences = preferences;
+        this.eventPublisher = eventPublisher;
         this.setTitle("View Preferences");
 
         VBox vBox = new VBox();
@@ -64,7 +64,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         Tab displayTab = new Tab("Graph");
         String style1 = "-fx-background-color: lightgreen";
         displayTab.setStyle(style1);
-        graphPane = new GraphPane(updater, tripsContext);
+        graphPane = new GraphPane(tripsContext, eventPublisher);
         displayTab.setContent(graphPane);
         tabPane.getTabs().add(displayTab);
 
@@ -78,7 +78,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         Tab starsTab = new Tab("Stars");
         String style3 = "-fx-background-color: aquamarine";
         starsTab.setStyle(style3);
-        starsPane = new StarsPane(tripsContext.getAppViewPreferences().getStarDisplayPreferences(), updater);
+        starsPane = new StarsPane(tripsContext.getAppViewPreferences().getStarDisplayPreferences(), eventPublisher);
         starsTab.setContent(starsPane);
         tabPane.getTabs().add(starsTab);
 
@@ -92,14 +92,14 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         Tab civilizationTab = new Tab("Civilization");
         String style6 = "-fx-background-color: limegreen";
         civilizationTab.setStyle(style6);
-        civilizationPane = new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), updater);
+        civilizationPane = new CivilizationPane(tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences(), eventPublisher);
         civilizationTab.setContent(civilizationPane);
         tabPane.getTabs().add(civilizationTab);
 
         Tab userControlsTab = new Tab("User Controls");
         String style7 = "-fx-background-color: lightblue";
         userControlsTab.setStyle(style7);
-        userControlsPane = new UserControlsPane(tripsContext.getAppViewPreferences().getUserControls(), updater);
+        userControlsPane = new UserControlsPane(tripsContext.getAppViewPreferences().getUserControls(), eventPublisher);
         userControlsTab.setContent(userControlsPane);
         tabPane.getTabs().add(userControlsTab);
         vBox.getChildren().add(tabPane);

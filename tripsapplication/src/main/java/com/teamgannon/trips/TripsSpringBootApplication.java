@@ -21,6 +21,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @SpringBootApplication
+@EnableAspectJAutoProxy(exposeProxy = true)
 public class TripsSpringBootApplication implements CommandLineRunner {
 
     /**
@@ -50,7 +52,7 @@ public class TripsSpringBootApplication implements CommandLineRunner {
     }
 
     /**
-     * for an example usage.
+     * for example, usage.
      * <p/>
      * <strong>MUST be in scope prototype!</strong>
      */
@@ -66,6 +68,5 @@ public class TripsSpringBootApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("TRIPS UP and Running!!");
     }
-
 
 }

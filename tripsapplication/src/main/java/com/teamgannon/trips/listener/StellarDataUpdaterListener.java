@@ -6,7 +6,7 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 public interface StellarDataUpdaterListener {
 
     /**
-     * do a plot update based on new search query
+     * do a plot update based on a new search query
      *
      * @param searchQuery the search query
      * @param showPlot    show the graphical plot
