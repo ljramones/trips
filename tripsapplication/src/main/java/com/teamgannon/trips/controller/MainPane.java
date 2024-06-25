@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.controller.statusbar.StatusBarController;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
@@ -77,11 +78,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -94,10 +92,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -137,6 +131,12 @@ public class MainPane implements
         RedrawListener,
         DatabaseListener,
         DataSetChangeListener {
+
+    @FXML
+    private StatusBarController statusBarController;
+
+    @FXML
+    private HBox statusBar;
 
     private final static double SCREEN_PROPORTION = 0.60;
 
@@ -214,9 +214,6 @@ public class MainPane implements
 
     ////  local assets
     public SplitPane mainSplitPane;
-    public HBox statusBar;
-    public Label databaseStatus;
-    public Label routingStatus;
     public Button plotButton;
     public VBox displayPane;
     public Accordion propertiesAccordion;
@@ -326,6 +323,7 @@ public class MainPane implements
                     ApplicationEventPublisher eventPublisher,
                     RoutingPanel routingPanel,
                     ObjectViewPane objectViewPane,
+                    StatusBarController statusBarController,
                     StarPropertiesPane starPropertiesPane
     ) {
 
@@ -354,9 +352,11 @@ public class MainPane implements
         this.eventPublisher = eventPublisher;
         this.routingPanel = routingPanel;
         this.objectViewPane = objectViewPane;
+        this.statusBarController = statusBarController;
         this.starPropertiesPane = starPropertiesPane;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
+
     }
 
     @FXML
@@ -376,9 +376,6 @@ public class MainPane implements
         setDefaultSizesForUI();
 
         setButtonFonts();
-
-        // set up the status panel
-        setStatusPanel();
 
         // get colors from DB
         getGraphColorsFromDB();
@@ -401,8 +398,6 @@ public class MainPane implements
         // by default side panel should be off
         toggleSidePane(false);
 
-        setupStatusbar();
-
         // load database preset values
         loadDBPresets();
 
@@ -415,7 +410,6 @@ public class MainPane implements
         importDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
         quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
-
 
     private void setButtonFonts() {
     }
@@ -455,15 +449,6 @@ public class MainPane implements
         this.displayPane.getChildren().add(mainSplitPane);
     }
 
-    /**
-     * setup the status panel
-     */
-    private void setStatusPanel() {
-        statusBar.setAlignment(Pos.CENTER);
-        statusBar.setSpacing(5.0);
-        Insets insets1 = new Insets(3.0, 3.0, 3.0, 3.0);
-        statusBar.setPadding(insets1);
-    }
 
     private void getGraphColorsFromDB() {
         ColorPalette colorPalette = systemPreferencesService.getGraphColorsFromDB();
@@ -618,41 +603,6 @@ public class MainPane implements
         }
     }
 
-    private void setupStatusbar() {
-        Font labelFont = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
-        Font statusFont = Font.font("Verdana", FontWeight.LIGHT, FontPosture.REGULAR, 13);
-
-        this.statusBar.setPrefWidth(Universe.boxWidth + 20);
-        this.statusBar.setAlignment(Pos.BASELINE_LEFT);
-
-        GridPane gridPane = new GridPane();
-        Label databaseCommentLabel = new Label("Plot Status: ");
-        databaseCommentLabel.setFont(labelFont);
-        databaseCommentLabel.setTextFill(Color.BLACK);
-        gridPane.add(databaseCommentLabel, 0, 0);
-
-        databaseStatus = new Label("Waiting for a dataset to be selected");
-        databaseStatus.setFont(statusFont);
-        databaseStatus.setTextFill(Color.BLUE);
-        databaseStatus.setMinWidth(500);
-        gridPane.add(databaseStatus, 1, 0);
-
-        // put a unique divider
-        gridPane.add(new Label("\u25AE\u25C4\u25BA\u25AE"), 2, 0);
-
-        Label routingStatusLabel = new Label(" Routing State: ");
-        routingStatusLabel.setFont(labelFont);
-        routingStatusLabel.setTextFill(Color.BLACK);
-        gridPane.add(routingStatusLabel, 3, 0);
-
-        routingStatus = new Label("Inactive");
-        routingStatus.setFont(statusFont);
-        routingStatus.setTextFill(Color.SEAGREEN);
-        gridPane.add(routingStatus, 4, 0);
-
-        this.statusBar.getChildren().add(gridPane);
-
-    }
 
     private void loadDBPresets() {
 
@@ -700,10 +650,16 @@ public class MainPane implements
     ////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
+
     public void setStage(@NotNull Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
         this.stage = stage;
         this.sceneWidth = sceneWidth;
         this.sceneHeight = sceneHeight;
+
+        stage.setOnCloseRequest(event -> {
+            System.out.println(">>>>>>>Close request detected <<<<<<<<<<<");
+            // You can add any cleanup code here
+        });
 
         interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
 
@@ -832,7 +788,12 @@ public class MainPane implements
 
         this.menuBar.setPrefWidth(width);
         this.toolBar.setPrefWidth(width);
-        this.statusBar.setPrefWidth(width);
+
+        if (statusBarController != null && statusBarController.getStatusBar() != null) {
+            statusBarController.getStatusBar().setPrefWidth(width);
+        } else {
+            log.warn("StatusBar or its controller is null during resize operation");
+        }
 
         this.settingsPane.setPrefHeight(height - 112);
         this.settingsPane.setPrefWidth(260);
@@ -896,7 +857,6 @@ public class MainPane implements
 
     //////////////////////////  DATABASE STUFF  /////////
 
-
     private void getTripsPrefsFromDB() {
         TripsPrefs tripsPrefs = systemPreferencesService.getTripsPrefs();
         tripsContext.setTripsPrefs(tripsPrefs);
@@ -920,7 +880,6 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
         tripsContext.getCurrentPlot().setCivilizationDisplayPreferences(civilizationDisplayPreferences);
     }
-
 
     public void getGraphEnablesFromDB() {
         GraphEnablesPersist graphEnablesPersist = systemPreferencesService.getGraphEnablesFromDB();
@@ -950,7 +909,6 @@ public class MainPane implements
         tripsContext.getCurrentPlot().setStarDisplayPreferences(starDisplayPreferences);
     }
 
-
     private void loadDatasets(@NotNull SearchContext searchContext) {
         // load viable datasets into search context
         List<DataSetDescriptor> dataSets = loadDataSetView();
@@ -958,7 +916,6 @@ public class MainPane implements
             searchContext.addDataSets(dataSets);
         }
     }
-
 
     private @NotNull List<DataSetDescriptor> loadDataSetView() {
 
@@ -1471,13 +1428,7 @@ public class MainPane implements
 
     @Override
     public void routingStatus(boolean statusFlag) {
-        if (statusFlag) {
-            routingStatus.setTextFill(Color.RED);
-            routingStatus.setText("Active");
-        } else {
-            routingStatus.setTextFill(Color.SEAGREEN);
-            routingStatus.setText("Inactive");
-        }
+        statusBarController.routingStatus(statusFlag);
     }
 
     @Override
@@ -2303,10 +2254,6 @@ public class MainPane implements
         clearInterstellar();
     }
 
-    public void updateStatus(String message) {
-        databaseStatus.setText(message);
-    }
-
     public void displayStellarProperties(@Nullable StarObject starObject) {
         if (starObject != null) {
             toggleSidePane(true);
@@ -2366,6 +2313,10 @@ public class MainPane implements
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());
             }
         });
+    }
+
+    public void updateStatus(String newStatus) {
+        statusBarController.setStatus(newStatus);
     }
 
 }

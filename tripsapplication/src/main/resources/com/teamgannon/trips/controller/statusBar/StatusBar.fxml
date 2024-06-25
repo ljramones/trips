@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<HBox fx:id="statusBar"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.teamgannon.trips.controller.statusbar.StatusBarController"
+      alignment="BASELINE_LEFT"
+      spacing="5">
+    <padding>
+        <Insets top="3" right="3" bottom="3" left="3"/>
+    </padding>
+    <GridPane>
+        <Label fx:id="databaseCommentLabel" text="Plot Status: " GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana Bold" size="13"/>
+            </font>
+        </Label>
+        <Label fx:id="databaseStatus" text="Waiting for a dataset to be selected" GridPane.columnIndex="1" GridPane.rowIndex="0" minWidth="500">
+            <font>
+                <Font name="Verdana" size="13"/>
+            </font>
+        </Label>
+        <Label text="⥮◄►⥮" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+        <Label fx:id="routingStatusLabel" text=" Routing State: " GridPane.columnIndex="3" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana Bold" size="13"/>
+            </font>
+        </Label>
+        <Label fx:id="routingStatus" text="Inactive" GridPane.columnIndex="4" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana" size="13"/>
+            </font>
+        </Label>
+    </GridPane>
+</HBox>

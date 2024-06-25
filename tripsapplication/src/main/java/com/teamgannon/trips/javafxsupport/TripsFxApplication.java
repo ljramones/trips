@@ -36,6 +36,12 @@ public class TripsFxApplication extends Application {
 
     @Override
     public void start(@NotNull Stage primaryStage) throws Exception {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            System.err.println("Uncaught exception:");
+            throwable.printStackTrace();
+        });
+
+
         context.publishEvent(new StageReadyEvent(primaryStage));
         primaryStage.setOnCloseRequest(TripsFxApplication::exitApplication);
     }
