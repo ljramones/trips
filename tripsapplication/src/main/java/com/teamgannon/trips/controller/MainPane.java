@@ -404,12 +404,10 @@ public class MainPane implements
 
     /////////////////////////////  CREATE ASSETS  ////////////////////////////
 
-
     private void getGraphColorsFromDB() {
         ColorPalette colorPalette = systemPreferencesService.getGraphColorsFromDB();
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
-
 
     private void setDefaultSizesForUI() {
         this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
@@ -527,35 +525,6 @@ public class MainPane implements
         splitPaneDividerPosition.addListener(sliderControlManager.getSliderChangeListener());
     }
 
-
-    /**
-     * sets up list view for stellar objects
-     */
-    private void setupStellarObjectListView() {
-
-        ScrollPane scrollPane = new ScrollPane();
-
-        objectViewPane.setListeners(this, this);
-
-        scrollPane.setContent(objectViewPane);
-
-        // setup model to display in case we turn on
-        objectsViewPane.setContent(scrollPane);
-    }
-
-    private void setupDataSetView() {
-
-        SearchContext searchContext = tripsContext.getSearchContext();
-        datasetsPane.setContent(dataSetsListView);
-
-        dataSetsListView.setPrefHeight(10);
-        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
-        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
-
-        loadDatasets(searchContext);
-        log.info("Application up and running");
-    }
-
     public void toggleSidePane(boolean sidePanelOn) {
         if (sidePanelOn) {
             mainSplitPane.setDividerPositions(SCREEN_PROPORTION);
@@ -563,85 +532,6 @@ public class MainPane implements
         } else {
             mainSplitPane.setDividerPositions(1.0);
             interstellarSpacePane.shiftDisplayLeft(false);
-        }
-    }
-
-    private void loadDBPresets() {
-
-        // get graph enables from DB
-        getGraphEnablesFromDB();
-
-        // get Star definitions from DB
-        getStarDefinitionsFromDB();
-
-        // get civilizations/polities
-        getCivilizationsFromDB();
-
-        // get trips preferences
-        getTripsPrefsFromDB();
-
-        // get transit prefs
-        getTransitPrefs();
-    }
-
-    private void showBeginningAlert() {
-        if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
-            FirstStartDialog firstStartDialog = new FirstStartDialog();
-            firstStartDialog.showAndWait();
-        }
-
-        TripsPrefs tripsPrefs = tripsContext.getTripsPrefs();
-        if (!tripsPrefs.isShowWelcomeDataReq()) {
-            EachTimeStartDialog eachTimeStartDialog = new EachTimeStartDialog();
-            Optional<Boolean> optStart = eachTimeStartDialog.showAndWait();
-            if (optStart.isPresent()) {
-                boolean onStart = optStart.get();
-                if (onStart) {
-                    log.info("selected is true");
-                    tripsPrefs.setShowWelcomeDataReq(true);
-                    systemPreferencesService.saveTripsPrefs(tripsPrefs);
-                } else {
-                    log.info("selected is false");
-                }
-            }
-        }
-    }
-
-
-    private void createAWTTray() {
-        TrayIcon trayIcon;
-        if (SystemTray.isSupported()) {
-            try {
-                // get the SystemTray instance
-                SystemTray tray = SystemTray.getSystemTray();
-                // load an image
-                File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
-                java.awt.Image image = Toolkit.getDefaultToolkit().getImage(imageFileIcon.getAbsolutePath());
-                // create an action listener to listen for default action executed on the tray icon
-                ActionListener listener = e -> log.info("action performed");
-                // create a popup menu
-                PopupMenu popup = new PopupMenu();
-                // create menu item for the default action
-                java.awt.MenuItem defaultItem = new java.awt.MenuItem("Menu example");
-                defaultItem.addActionListener(listener);
-                popup.add(defaultItem);
-                /// ... add other items
-                // construct a TrayIcon
-                trayIcon = new TrayIcon(image, "Tray Demo", popup);
-                // set the TrayIcon properties
-                trayIcon.addActionListener(listener);
-
-                // add the tray image
-                tray.add(trayIcon);
-            } catch (Exception e) {
-                log.error("failed to add tray icon:" + e.getMessage());
-            }
-            // ...
-        } else {
-            // disable tray option in your application or
-            // perform other actions
-            log.error("TrayIcon not supported");
-
         }
     }
 
@@ -724,6 +614,116 @@ public class MainPane implements
             }
         }
     }
+
+    /**
+     * sets up list view for stellar objects
+     */
+    private void setupStellarObjectListView() {
+
+        ScrollPane scrollPane = new ScrollPane();
+
+        objectViewPane.setListeners(this, this);
+
+        scrollPane.setContent(objectViewPane);
+
+        // setup model to display in case we turn on
+        objectsViewPane.setContent(scrollPane);
+    }
+
+    private void setupDataSetView() {
+
+        SearchContext searchContext = tripsContext.getSearchContext();
+        datasetsPane.setContent(dataSetsListView);
+
+        dataSetsListView.setPrefHeight(10);
+        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
+        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
+
+        loadDatasets(searchContext);
+        log.info("Application up and running");
+    }
+
+
+    private void loadDBPresets() {
+
+        // get graph enables from DB
+        getGraphEnablesFromDB();
+
+        // get Star definitions from DB
+        getStarDefinitionsFromDB();
+
+        // get civilizations/polities
+        getCivilizationsFromDB();
+
+        // get trips preferences
+        getTripsPrefsFromDB();
+
+        // get transit prefs
+        getTransitPrefs();
+    }
+
+    private void showBeginningAlert() {
+        if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
+            FirstStartDialog firstStartDialog = new FirstStartDialog();
+            firstStartDialog.showAndWait();
+        }
+
+        TripsPrefs tripsPrefs = tripsContext.getTripsPrefs();
+        if (!tripsPrefs.isShowWelcomeDataReq()) {
+            EachTimeStartDialog eachTimeStartDialog = new EachTimeStartDialog();
+            Optional<Boolean> optStart = eachTimeStartDialog.showAndWait();
+            if (optStart.isPresent()) {
+                boolean onStart = optStart.get();
+                if (onStart) {
+                    log.info("selected is true");
+                    tripsPrefs.setShowWelcomeDataReq(true);
+                    systemPreferencesService.saveTripsPrefs(tripsPrefs);
+                } else {
+                    log.info("selected is false");
+                }
+            }
+        }
+    }
+
+
+    private void createAWTTray() {
+        TrayIcon trayIcon;
+        if (SystemTray.isSupported()) {
+            try {
+                // get the SystemTray instance
+                SystemTray tray = SystemTray.getSystemTray();
+                // load an image
+                File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+                java.awt.Image image = Toolkit.getDefaultToolkit().getImage(imageFileIcon.getAbsolutePath());
+                // create an action listener to listen for default action executed on the tray icon
+                ActionListener listener = e -> log.info("action performed");
+                // create a popup menu
+                PopupMenu popup = new PopupMenu();
+                // create menu item for the default action
+                java.awt.MenuItem defaultItem = new java.awt.MenuItem("Menu example");
+                defaultItem.addActionListener(listener);
+                popup.add(defaultItem);
+                /// ... add other items
+                // construct a TrayIcon
+                trayIcon = new TrayIcon(image, "Tray Demo", popup);
+                // set the TrayIcon properties
+                trayIcon.addActionListener(listener);
+
+                // add the tray image
+                tray.add(trayIcon);
+            } catch (Exception e) {
+                log.error("failed to add tray icon:" + e.getMessage());
+            }
+            // ...
+        } else {
+            // disable tray option in your application or
+            // perform other actions
+            log.error("TrayIcon not supported");
+
+        }
+    }
+
+
 
 
     //////////////////////////  DATABASE STUFF  /////////
