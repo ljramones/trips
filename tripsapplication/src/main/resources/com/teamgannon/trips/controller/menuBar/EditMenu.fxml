@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Edit" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.EditMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#runQuery"
+              text="Select starPositionDescriptors to display from current dataset"/>
+    <SeparatorMenuItem/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findInView"
+              text="Choose a starPositionDescriptor by name from current selection"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findByCatalogId"
+              text="Choose a starPositionDescriptor by by catalog Id"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findByConstellation"
+              text="Retrieve all starPositionDescriptors by constellation"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findByCommonName"
+              text="Choose a starPositionDescriptor by by common name"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findInDataset"
+              text="Choose a starPositionDescriptor by name from entire dataset"/>
+    <SeparatorMenuItem/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findRelatedStars"
+              text="Get a list of all starPositionDescriptors related to a requested starPositionDescriptor from a specified distance in ly"/>
+    <SeparatorMenuItem/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#editStar"
+              text="Edit starPositionDescriptor data"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#showApplicationPreferences"
+              text="Preferences"/>
+
+</Menu>

@@ -1,12 +1,15 @@
 package com.teamgannon.trips.controller.statusbar;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.events.StatusUpdateEvent;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -56,4 +59,12 @@ public class StatusBarController {
             routingStatus.setText("Inactive");
         }
     }
+
+    @EventListener
+    public void onStatusUpdateEvent(StatusUpdateEvent event) {
+        Platform.runLater(() -> {
+            setStatus(event.getStatus());
+        });
+    }
+
 }

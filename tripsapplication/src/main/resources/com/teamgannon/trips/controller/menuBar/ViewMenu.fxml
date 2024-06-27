@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<Menu xmlns:fx="http://javafx.com/fxml/1"
+      text="View"
+      mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.ViewMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#plotStars"
+              text="Plot Stars"/>
+    <fx:include source="ToggleDisplayMenu.fxml"/>
+    <MenuItem fx:id="showRoutesMenuitem"
+              mnemonicParsing="false"
+              onAction="#showRoutes"
+              text="Show routes in side pane"/>
+    <SeparatorMenuItem/>
+    <MenuItem onAction="#onSnapShot"
+              text="Take Snapshot picture of plot"/>
+</Menu>

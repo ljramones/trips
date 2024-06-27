@@ -69,7 +69,7 @@ public class OshiMeasure {
         this.globalMemory = hal.getMemory();
 
         // print out the inventory of this machine
-        log.info(getComputerInventory());
+//        log.info(getComputerInventory());
 
     }
 

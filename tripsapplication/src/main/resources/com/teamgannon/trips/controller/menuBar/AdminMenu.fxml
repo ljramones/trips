@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Admin" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.AdminMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#findInSesame"
+              text="lookup a name in the Sesame Name Resolver"/>
+    <!--                <MenuItem mnemonicParsing="=false"-->
+    <!--                          onAction="#compareDB"-->
+    <!--                          text="Compare Databases"/>-->
+    <!--                <SeparatorMenuItem/>-->
+    <!--                <MenuItem mnemonicParsing="false"-->
+    <!--                          onAction="#Load10ParsecStars"-->
+    <!--                          text="Load 10 Parsec Stars"/>-->
+    <!--                <MenuItem mnemonicParsing="false"-->
+    <!--                          onAction="#loadExoPlanets"-->
+    <!--                          text="Load/Import Exoplanets .."/>-->
+
+</Menu>

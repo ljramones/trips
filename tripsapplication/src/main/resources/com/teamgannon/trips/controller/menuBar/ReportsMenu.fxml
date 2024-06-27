@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Reports" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.ReportsMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#distanceReport"
+              text="Distance .."/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#routeListReport"
+              text="Route List"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#starPropertyReport"
+              text="Star Property Report"/>
+</Menu>

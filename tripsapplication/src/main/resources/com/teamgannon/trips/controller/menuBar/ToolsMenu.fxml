@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Tools" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.ToolsMenuController">
+    <Menu mnemonicParsing="false"
+          text="Route">
+        <MenuItem mnemonicParsing="false"
+                  onAction="#routeFinderInView"
+                  text="Route finder using currently selected starPositionDescriptors"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#routeFinderDataset"
+                  text="Route finder using entire dataset"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#clickRoutes"
+                  text="Create route by clicking on starPositionDescriptors"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#editDeleteRoutes"
+                  text="Edit or delete Route information"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#clearRoutes"
+                  text="Delete all routes"/>
+    </Menu>
+    <Menu mnemonicParsing="false"
+          text="Links">
+        <MenuItem mnemonicParsing="false"
+                  onAction="#transitFinder"
+                  text="Find links between starPositionDescriptors by distance"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#clearTransits"
+                  text="Clear existing links"/>
+    </Menu>
+    <Menu mnemonicParsing="false"
+          text="Search for / Select starPositionDescriptors">
+        <MenuItem mnemonicParsing="false"
+                  onAction="#runQuery"
+                  text="Select starPositionDescriptors to display from current dataset"/>
+        <MenuItem mnemonicParsing="false"
+                  onAction="#advancedSearch"
+                  text="Select starPositionDescriptors using advanced search.."/>
+    </Menu>
+</Menu>

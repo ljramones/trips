@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Utilities" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.UtilitiesMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#findDistance"
+              text="Calculate Distance between planets .."/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findXYZ"
+              text="Calculate Equatorial Coordinates from RA and Declination .."/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#findGalacticCoords"
+              text="Calculate Galactic Coordinates from Equatorial .."/>
+</Menu>

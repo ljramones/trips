@@ -1,6 +1,5 @@
 package com.teamgannon.trips.controller;
 
-import com.dustinredmond.fxtrayicon.FXTrayIcon;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
@@ -8,15 +7,14 @@ import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
+import com.teamgannon.trips.controller.shared.SharedUIFunctions;
+import com.teamgannon.trips.controller.shared.SharedUIState;
 import com.teamgannon.trips.controller.statusbar.StatusBarController;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
-import com.teamgannon.trips.dialogs.db.CompareDBDialog;
-import com.teamgannon.trips.dialogs.db.DBComparison;
-import com.teamgannon.trips.dialogs.exoplanets.LoadExoPlanetsFileDialog;
 import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsDialog;
 import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsResults;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
@@ -57,9 +55,6 @@ import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
-import com.teamgannon.trips.scripting.ScriptDialog;
-import com.teamgannon.trips.scripting.engine.GroovyScriptingEngine;
-import com.teamgannon.trips.scripting.engine.PythonScriptEngine;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.*;
@@ -79,19 +74,20 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -100,8 +96,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kordamp.ikonli.javafx.FontIcon;
-import org.kordamp.ikonli.zondicons.Zondicons;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -132,13 +126,12 @@ public class MainPane implements
         DatabaseListener,
         DataSetChangeListener {
 
+    private final SharedUIState sharedUIState;
+
     @FXML
     private StatusBarController statusBarController;
 
-    @FXML
-    private HBox statusBar;
-
-    private final static double SCREEN_PROPORTION = 0.60;
+    public final static double SCREEN_PROPORTION = 0.60;
 
     public final static double SIDE_PANEL_SIZE = 350;
 
@@ -157,7 +150,6 @@ public class MainPane implements
      */
     private final DatabaseManagementService databaseManagementService;
 
-
     /**
      * star plotter component
      */
@@ -166,7 +158,6 @@ public class MainPane implements
     private final Localization localization;
     private final ApplicationEventPublisher eventPublisher;
     private final DataExportService dataExportService;
-
 
     /**
      * dataset lists
@@ -177,44 +168,17 @@ public class MainPane implements
     public Pane mainPanel;
     public MenuBar menuBar;
 
-    public CheckMenuItem toggleRouteLengthsMenuitem;
     public MenuItem showRoutesMenuitem;
     public MenuItem openDatasetMenuItem;
     public MenuItem saveMenuItem;
-    public MenuItem saveAsMenuItem;
-    public MenuItem exportDataSetMenuItem;
+
     public MenuItem importDataSetMenuItem;
     public MenuItem quitMenuItem;
     public Menu scriptingMenu;
 
-    public CheckMenuItem togglePolitiesMenuitem;
-    public CheckMenuItem toggleGridMenuitem;
-    public CheckMenuItem toggleLabelsMenuitem;
-    public CheckMenuItem toggleExtensionsMenuitem;
-    public CheckMenuItem toggleStarMenuitem;
-    public CheckMenuItem toggleScaleMenuitem;
-    public CheckMenuItem toggleSidePaneMenuitem;
-    public CheckMenuItem toggleToolBarMenuitem;
-    public CheckMenuItem toggleStatusBarMenuitem;
-    public CheckMenuItem toggleTransitsMenuitem;
-    public CheckMenuItem toggleTransitLengthsMenuitem;
-    public CheckMenuItem toggleRoutesMenuitem;
-    public ToolBar toolBar;
-    public ToggleButton togglePolityBtn;
-    public ToggleButton toggleStarBtn;
-    public ToggleButton toggleGridBtn;
-    public ToggleButton toggleLabelsBtn;
-    public ToggleButton toggleStemBtn;
-    public ToggleButton toggleScaleBtn;
-    public ToggleButton toggleRoutesBtn;
-    public ToggleButton toggleTransitsBtn;
-    public ToggleButton toggleSettings;
-    public ToggleButton toggleZoomInBtn;
-    public ToggleButton toggleZoomOutBtn;
 
     ////  local assets
     public SplitPane mainSplitPane;
-    public Button plotButton;
     public VBox displayPane;
     public Accordion propertiesAccordion;
     public TitledPane stellarObjectPane;
@@ -228,6 +192,7 @@ public class MainPane implements
     private TitledPane datasetsPane;
     private final RoutingPanel routingPanel;
     private TransitFilterPane transitFilterPane;
+    private final SharedUIFunctions sharedUIFunctions;
     private final StarPropertiesPane starPropertiesPane;
     private final ObjectViewPane objectViewPane;
     private VBox settingsPane;
@@ -238,7 +203,7 @@ public class MainPane implements
      */
     private QueryDialog queryDialog;
 
-    private Stage stage;
+    private Stage primaryStage;
     private final OshiMeasure oshiMeasure;
     private final StarMeasurementService starMeasurementService;
     private final LargeGraphSearchService largeGraphSearchService;
@@ -260,7 +225,6 @@ public class MainPane implements
      */
     private final SolarSystemSpacePane solarSystemSpacePane;
 
-    private final ExoPlanetService exoPlanetService;
     private final DatasetService datasetService;
     private final SystemPreferencesService systemPreferencesService;
     private final TransitService transitService;
@@ -273,27 +237,16 @@ public class MainPane implements
     private List<Route> routeList;
 
     // state settings for control positions
-    private boolean polities = true;
-    private boolean gridOn = true;
-    private boolean extensionsOn = true;
-    private boolean labelsOn = true;
-    private boolean starsOn = true;
-    private boolean scaleOn = true;
-    private boolean routesOn = true;
-    private boolean routesLengthsOn = true;
-    private boolean transitsOn = true;
-    private boolean transitsLengthsOn = true;
-    private boolean helpModeOn = true;
 
     /////// data objects ///////////
     private boolean sidePaneOn = false;
-    private boolean toolBarOn = true;
-    private boolean statusBarOn = true;
 
     private double originalHeight = Universe.boxHeight;
     private double originalWidth = Universe.boxWidth;
 
     private final HostServices hostServices;
+
+    private final SliderControlManager sliderControlManager;
 
     /**
      * constructor
@@ -308,7 +261,6 @@ public class MainPane implements
                     RouteFinderInView routeFinderInView,
                     TripsContext tripsContext,
                     ApplicationContext appContext,
-                    ExoPlanetService exoPlanetService,
                     DatabaseManagementService databaseManagementService,
                     DatasetService datasetService,
                     SystemPreferencesService systemPreferencesService,
@@ -324,8 +276,10 @@ public class MainPane implements
                     RoutingPanel routingPanel,
                     ObjectViewPane objectViewPane,
                     StatusBarController statusBarController,
-                    StarPropertiesPane starPropertiesPane
-    ) {
+                    SliderControlManager sliderControlManager,
+                    SharedUIFunctions sharedUIFunctions,
+                    StarPropertiesPane starPropertiesPane,
+                    SharedUIState sharedUIState) {
 
         hostServices = fxWeaver.getBean(HostServices.class);
         this.oshiMeasure = oshiMeasure;
@@ -334,7 +288,6 @@ public class MainPane implements
         this.routeFinderInView = routeFinderInView;
 
         this.tripsContext = tripsContext;
-        this.exoPlanetService = exoPlanetService;
         this.datasetService = datasetService;
         this.systemPreferencesService = systemPreferencesService;
         this.transitService = transitService;
@@ -353,11 +306,16 @@ public class MainPane implements
         this.routingPanel = routingPanel;
         this.objectViewPane = objectViewPane;
         this.statusBarController = statusBarController;
+        this.sliderControlManager = sliderControlManager;
+        this.sharedUIFunctions = sharedUIFunctions;
         this.starPropertiesPane = starPropertiesPane;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
+        this.sharedUIState = sharedUIState;
 
     }
+
+
 
     @FXML
     public void initialize() {
@@ -365,29 +323,13 @@ public class MainPane implements
 
         setMnemonics();
 
-        this.plotManager = new PlotManager(tripsContext,
-                starService,
-                eventPublisher);
-
+        this.plotManager = new PlotManager(tripsContext, starService, eventPublisher);
         plotManager.setDataSetChangeListener(this);
-
-        setButtons();
 
         setDefaultSizesForUI();
 
-        setButtonFonts();
-
         // get colors from DB
         getGraphColorsFromDB();
-
-        // left display
-        createLeftDisplay();
-
-        // right display
-        createRightDisplay();
-
-        // set the sliders
-        setSliderControl();
 
         // create the list of objects in view
         setupStellarObjectListView();
@@ -402,7 +344,56 @@ public class MainPane implements
         loadDBPresets();
 
         showBeginningAlert();
+    }
 
+
+    public void setStage(@NotNull Stage primaryStage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
+        this.primaryStage = primaryStage;
+        this.sceneWidth = sceneWidth;
+        this.sceneHeight = sceneHeight;
+
+        addResizeListeners();
+
+        primaryStage.setOnCloseRequest(event -> {
+            log.info("Close request detected");
+            // You can add any cleanup code here
+        });
+
+        interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
+
+        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> resizeTrips(primaryStage.getHeight(), primaryStage.getWidth());
+
+        primaryStage.widthProperty().addListener(stageSizeListener);
+        primaryStage.heightProperty().addListener(stageSizeListener);
+
+        queryDialog = new QueryDialog(searchContext, this, this);
+        queryDialog.initModality(Modality.NONE);
+
+        try {
+            File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+            FileInputStream fis = new FileInputStream(imageFileIcon);
+            Image applicationIcon = new Image(fis);
+            if (applicationIcon != null) {
+                primaryStage.getIcons().add(applicationIcon);
+            } else {
+                log.error("Application Icon was not found!");
+            }
+        } catch (Exception e) {
+            log.error("Caught exception: " + e.getMessage());
+        }
+
+        createAWTTray();
+    }
+
+    private void addResizeListeners() {
+        if (primaryStage != null) {
+            primaryStage.widthProperty().addListener((obs, oldVal, newVal) -> handleResize());
+            primaryStage.heightProperty().addListener((obs, oldVal, newVal) -> handleResize());
+        }
+    }
+
+    private void handleResize() {
+        sharedUIFunctions.updateSidePaneOnResize();
     }
 
     private void setMnemonics() {
@@ -411,43 +402,7 @@ public class MainPane implements
         quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
 
-    private void setButtonFonts() {
-    }
-
-
     /////////////////////////////  CREATE ASSETS  ////////////////////////////
-
-    private void setButtons() {
-
-        final Image toggleRoutesBtnGraphic = new Image("/images/buttons/tb_routes.gif");
-        final ImageView toggleRoutesBtnImage = new ImageView(toggleRoutesBtnGraphic);
-        toggleRoutesBtn.setGraphic(toggleRoutesBtnImage);
-
-        FontIcon fontIconZoomIn = new FontIcon(Zondicons.ZOOM_IN);
-        toggleZoomInBtn.setGraphic(fontIconZoomIn);
-
-        FontIcon fontIconZoomOut = new FontIcon(Zondicons.ZOOM_OUT);
-        toggleZoomOutBtn.setGraphic(fontIconZoomOut);
-
-        final Image toggleGridBtnGraphic = new Image("/images/buttons/tb_grid.gif");
-        final ImageView toggleGridBtnImage = new ImageView(toggleGridBtnGraphic);
-        toggleGridBtn.setGraphic(toggleGridBtnImage);
-
-        plotButton.setDisable(true);
-    }
-
-    private void setDefaultSizesForUI() {
-        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
-
-        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
-        this.toolBar.setPrefWidth(Universe.boxWidth + 20);
-
-        this.mainSplitPane = new SplitPane();
-        this.mainSplitPane.setDividerPositions(1.0);
-        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
-
-        this.displayPane.getChildren().add(mainSplitPane);
-    }
 
 
     private void getGraphColorsFromDB() {
@@ -455,11 +410,34 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
     }
 
-    /**
-     * create the left part of the display
-     */
-    private void createLeftDisplay() {
 
+    private void setDefaultSizesForUI() {
+        this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
+        this.menuBar.setPrefWidth(Universe.boxWidth + 20);
+
+        // Initialize the mainSplitPane
+        this.mainSplitPane = new SplitPane();
+        this.mainSplitPane.setDividerPositions(1.0);
+        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
+
+        // Create left and right panes
+        createLeftDisplay();
+        createRightDisplay();
+
+        // Add mainSplitPane to displayPane
+        this.displayPane.getChildren().add(mainSplitPane);
+
+        // Initialize the SliderControlManager
+        sliderControlManager.initialize(mainSplitPane);
+
+        // Set up the slider control
+        setSliderControl(sliderControlManager);
+
+        // Initialize SharedUIFunctions
+        sharedUIFunctions.initialize(plotManager, mainSplitPane, sliderControlManager);
+    }
+
+    private void createLeftDisplay() {
         leftBorderPane = new BorderPane();
         leftBorderPane.setMinWidth(0);
 
@@ -483,11 +461,7 @@ public class MainPane implements
         createGalacticSpace(tripsContext.getAppViewPreferences().getColorPallete());
     }
 
-    /**
-     * create the right portion of the display
-     */
     private void createRightDisplay() {
-
         rightBorderPane = new BorderPane();
         mainSplitPane.getItems().add(rightBorderPane);
 
@@ -548,21 +522,11 @@ public class MainPane implements
         propertiesAccordion.getPanes().add(routingPane);
     }
 
-    /**
-     * set the slider controls
-     */
-    private void setSliderControl() {
+    private void setSliderControl(SliderControlManager sliderControlManager) {
         DoubleProperty splitPaneDividerPosition = mainSplitPane.getDividers().get(0).positionProperty();
-        splitPaneDividerPosition.addListener((obs, oldPos, newPos) -> {
-                    // this listener is invoked each time the slider is changed
-                    // we look at our confiuration and see if its allowed and them change it if the
-                    // operation is not
-                    double pos = newPos.doubleValue();
-                    toggleSettings.setSelected(pos < 0.95);
-                    adjustSliderForSidePanel(pos);
-                }
-        );
+        splitPaneDividerPosition.addListener(sliderControlManager.getSliderChangeListener());
     }
+
 
     /**
      * sets up list view for stellar objects
@@ -577,7 +541,6 @@ public class MainPane implements
 
         // setup model to display in case we turn on
         objectsViewPane.setContent(scrollPane);
-
     }
 
     private void setupDataSetView() {
@@ -603,7 +566,6 @@ public class MainPane implements
         }
     }
 
-
     private void loadDBPresets() {
 
         // get graph enables from DB
@@ -621,7 +583,6 @@ public class MainPane implements
         // get transit prefs
         getTransitPrefs();
     }
-
 
     private void showBeginningAlert() {
         if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
@@ -646,53 +607,9 @@ public class MainPane implements
         }
     }
 
-    ////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////
-
-
-    public void setStage(@NotNull Stage stage, double sceneWidth, double sceneHeight, double controlPaneOffset) {
-        this.stage = stage;
-        this.sceneWidth = sceneWidth;
-        this.sceneHeight = sceneHeight;
-
-        stage.setOnCloseRequest(event -> {
-            System.out.println(">>>>>>>Close request detected <<<<<<<<<<<");
-            // You can add any cleanup code here
-        });
-
-        interstellarSpacePane.setControlPaneOffset(controlPaneOffset);
-
-        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> {
-            resizeTrips(stage.getHeight(), stage.getWidth());
-        };
-
-        stage.widthProperty().addListener(stageSizeListener);
-        stage.heightProperty().addListener(stageSizeListener);
-
-        queryDialog = new QueryDialog(searchContext, this, this);
-        queryDialog.initModality(Modality.NONE);
-
-        try {
-            File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
-            FileInputStream fis = new FileInputStream(imageFileIcon);
-            Image applicationIcon = new Image(fis);
-            if (applicationIcon != null) {
-                stage.getIcons().add(applicationIcon);
-            } else {
-                log.error("Application Icon was not found!");
-            }
-        } catch (Exception e) {
-            log.error("Caught exception:" + e.getMessage());
-        }
-
-        createAWTTray();
-
-        //createTrayIcon(stage);
-    }
 
     private void createAWTTray() {
-        TrayIcon trayIcon = null;
+        TrayIcon trayIcon;
         if (SystemTray.isSupported()) {
             try {
                 // get the SystemTray instance
@@ -700,7 +617,7 @@ public class MainPane implements
                 // load an image
                 File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
                 java.awt.Image image = Toolkit.getDefaultToolkit().getImage(imageFileIcon.getAbsolutePath());
-                // create a action listener to listen for default action executed on the tray icon
+                // create an action listener to listen for default action executed on the tray icon
                 ActionListener listener = e -> log.info("action performed");
                 // create a popup menu
                 PopupMenu popup = new PopupMenu();
@@ -728,47 +645,6 @@ public class MainPane implements
         }
     }
 
-    private void createTrayIcon(@NotNull Stage stage) {
-        if (FXTrayIcon.isSupported()) {
-            log.info("TrayIcon is supported");
-        } else {
-            log.error("TrayIcon is only partially supported on this platform");
-        }
-        // Pass in the app's main stage, and path to the icon image
-        FXTrayIcon trayIcon = new FXTrayIcon(stage, getIcon());
-        trayIcon.show();
-
-        // By default, the FXTrayIcon's tooltip will be the parent stage's title,
-        // that we used in the constructor
-        // This method can override this
-        trayIcon.setTrayIconTooltip("Terran Republic Interstellar Plotting System");
-
-        // We can now add JavaFX MenuItems to the menu
-        MenuItem menuItemTest = new MenuItem("Create some JavaFX component!");
-        menuItemTest.setOnAction(e ->
-                new Alert(Alert.AlertType.INFORMATION,
-                        "We just ran some JavaFX code from an AWT MenuItem!").showAndWait());
-        trayIcon.addMenuItem(menuItemTest);
-
-        // We can also nest menus, below is an Options menu with sub-items
-        Menu menuOptions = new Menu("Options");
-        MenuItem miOn = new MenuItem("On");
-        miOn.setOnAction(e -> System.out.println("Options -> On clicked"));
-        MenuItem miOff = new MenuItem("Off");
-        miOff.setOnAction(e -> System.out.println("Options -> Off clicked"));
-        menuOptions.getItems().addAll(miOn, miOff);
-        trayIcon.addMenuItem(menuOptions);
-    }
-
-    /**
-     * Test icon used for FXTrayIcon runnable tests
-     *
-     * @return URL to an example icon PNG
-     */
-    public URL getIcon() {
-        return getClass().getResource("images/tripsWin.ico");
-    }
-
     /**
      * resize trips
      *
@@ -785,9 +661,6 @@ public class MainPane implements
         log.trace("Height: " + height + " Width: " + width);
 
         interstellarSpacePane.resize(width, height);
-
-        this.menuBar.setPrefWidth(width);
-        this.toolBar.setPrefWidth(width);
 
         if (statusBarController != null && statusBarController.getStatusBar() != null) {
             statusBarController.getStatusBar().setPrefWidth(width);
@@ -821,9 +694,7 @@ public class MainPane implements
         originalHeight = height;
         originalWidth = width;
 
-        Platform.runLater(() -> {
-            interstellarSpacePane.updateLabels();
-        });
+        Platform.runLater(interstellarSpacePane::updateLabels);
 
     }
 
@@ -835,12 +706,12 @@ public class MainPane implements
      */
     private void adjustSliderForSidePanel(double spPosition) {
         if (!sidePaneOn) {
-            // this takes into consideration that the side-pane is closed and we
+            // this takes into consideration that the side-pane is closed, and we
             // ensure it stays that way
             mainSplitPane.setDividerPosition(0, 1);
         } else {
             if (spPosition > .95) {
-                // if the divider is all the way over then make sure it stays there
+                // if the divider is all the way over, then make sure it stays there
                 mainSplitPane.setDividerPosition(0, 1);
             } else {
                 double currentWidth = this.mainPanel.getWidth();
@@ -886,13 +757,6 @@ public class MainPane implements
         tripsContext.getAppViewPreferences().setGraphEnablesPersist(graphEnablesPersist);
 
         updateToggles(graphEnablesPersist);
-
-        polities = graphEnablesPersist.isDisplayPolities();
-        gridOn = graphEnablesPersist.isDisplayGrid();
-        extensionsOn = graphEnablesPersist.isDisplayStems();
-        labelsOn = graphEnablesPersist.isDisplayLabels();
-        scaleOn = graphEnablesPersist.isDisplayLegend();
-        routesOn = graphEnablesPersist.isDisplayRoutes();
 
         // set defaults
         interstellarSpacePane.setGraphPresets(graphEnablesPersist);
@@ -958,7 +822,7 @@ public class MainPane implements
     }
 
     /**
-     * create a interstellar space drawing area
+     * create an interstellar space drawing area
      *
      * @param colorPalette the colors to use in drawing
      */
@@ -976,7 +840,6 @@ public class MainPane implements
 
         // set the interstellar pane to be the drawing surface
         plotManager.setInterstellarPane(interstellarSpacePane);
-
     }
 
     /**
@@ -1000,19 +863,6 @@ public class MainPane implements
         }
     }
 
-
-    public void viewEditStarData(ActionEvent actionEvent) {
-        showTableData();
-    }
-
-    public void plotRoutes(ActionEvent actionEvent) {
-        interstellarSpacePane.plotRoutes(routeList);
-    }
-
-    public void clearStars(ActionEvent actionEvent) {
-        interstellarSpacePane.clearStars();
-    }
-
     public void clearRoutes(ActionEvent actionEvent) {
         interstellarSpacePane.clearRoutes();
         datasetService.clearRoutesFromCurrent(searchContext.getDataSetDescriptor());
@@ -1028,87 +878,6 @@ public class MainPane implements
         ApplicationPreferences applicationPreferences = tripsContext.getAppPreferences();
         ViewPreferencesDialog viewPreferencesDialog = new ViewPreferencesDialog(tripsContext, applicationPreferences, eventPublisher);
         viewPreferencesDialog.showAndWait();
-    }
-
-    public void togglePolities(ActionEvent actionEvent) {
-        if (this.starsOn) {
-            this.polities = !polities;
-            tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(polities);
-            interstellarSpacePane.togglePolities(polities);
-            togglePolitiesMenuitem.setSelected(polities);
-            togglePolityBtn.setSelected(polities);
-        }
-    }
-
-    public void toggleGrid(ActionEvent actionEvent) {
-        this.gridOn = !gridOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayGrid(gridOn);
-        interstellarSpacePane.toggleGrid(gridOn);
-        toggleGridMenuitem.setSelected(gridOn);
-        toggleGridBtn.setSelected(gridOn);
-
-        toggleScale(null);
-    }
-
-    public void toggleLabels(ActionEvent actionEvent) {
-        this.labelsOn = !labelsOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLabels(labelsOn);
-        interstellarSpacePane.toggleLabels(labelsOn);
-        toggleLabelsMenuitem.setSelected(labelsOn);
-        toggleLabelsBtn.setSelected(labelsOn);
-    }
-
-    public void toggleGridExtensions(ActionEvent actionEvent) {
-        this.extensionsOn = !extensionsOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayStems(extensionsOn);
-        interstellarSpacePane.toggleExtensions(extensionsOn);
-        toggleGridMenuitem.setSelected(extensionsOn);
-        toggleGridBtn.setSelected(extensionsOn);
-    }
-
-    public void toggleStars(ActionEvent actionEvent) {
-        if (starsOn) {
-            polities = false;
-            interstellarSpacePane.togglePolities(polities);
-        }
-        this.starsOn = !starsOn;
-        interstellarSpacePane.toggleStars(starsOn);
-        toggleStarMenuitem.setSelected(starsOn);
-        toggleStarBtn.setSelected(starsOn);
-    }
-
-    public void toggleScale(ActionEvent actionEvent) {
-        this.scaleOn = !scaleOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayLegend(scaleOn);
-        interstellarSpacePane.toggleScale(scaleOn);
-        toggleScaleMenuitem.setSelected(scaleOn);
-        toggleScaleBtn.setSelected(scaleOn);
-    }
-
-    public void toggleSidePane(ActionEvent actionEvent) {
-        sidePaneOn = !sidePaneOn;
-        toggleSidePane(sidePaneOn);
-        toggleGridBtn.setSelected(sidePaneOn);
-        toggleSidePaneMenuitem.setSelected(sidePaneOn);
-    }
-
-
-    public void toggleToolbar(ActionEvent actionEvent) {
-        toolBarOn = !toolBarOn;
-        toolBar.setVisible(!toolBar.isVisible());
-        toggleToolBarMenuitem.setSelected(toolBarOn);
-    }
-
-    public void toggleStatusBar(ActionEvent actionEvent) {
-        statusBarOn = !statusBarOn;
-        statusBar.setVisible(!statusBar.isVisible());
-        toggleStatusBarMenuitem.setSelected(statusBarOn);
-    }
-
-    public void toggleHelpMode(ActionEvent actionEvent) {
-        helpModeOn = !helpModeOn;
-        statusBar.setVisible(!statusBar.isVisible());
-//        toggleStatusBarMenuitem.setSelected(statusBarOn);
     }
 
     public void loadDataSetManager(ActionEvent actionEvent) {
@@ -1143,10 +912,6 @@ public class MainPane implements
     }
 
 
-    public void exportDatabase(ActionEvent actionEvent) {
-        dataExportService.exportDB();
-    }
-
     public void transitFinder(ActionEvent actionEvent) {
         FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog
                 = new FindTransitsBetweenStarsDialog(databaseManagementService,
@@ -1162,32 +927,10 @@ public class MainPane implements
         }
     }
 
-    public void toggleTransitAction(ActionEvent actionEvent) {
-        this.transitsOn = !transitsOn;
-        toggleTransit(transitsOn);
-    }
-
-    public void toggleTransitLengths(ActionEvent actionEvent) {
-        this.transitsLengthsOn = !transitsLengthsOn;
-        interstellarSpacePane.toggleTransitLengths(transitsLengthsOn);
-        if (transitsLengthsOn) {
-            this.transitsOn = true;
-            toggleTransit(true);
-        }
-    }
-
-    private void toggleTransit(boolean transitWish) {
-        toggleTransitsMenuitem.setSelected(transitWish);
-        toggleTransitsBtn.setSelected(transitWish);
-        interstellarSpacePane.toggleTransits(transitWish);
-    }
-
-
     public void clearTransits(ActionEvent actionEvent) {
         interstellarSpacePane.clearTransits();
-        toggleTransitsBtn.setSelected(false);
-        toggleTransitsMenuitem.setSelected(false);
-        toggleTransitLengthsMenuitem.setSelected(false);
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.TRANSITS, false));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.TRANSIT_LENGTHS, false));
         transitFilterPane.clear();
     }
 
@@ -1211,21 +954,6 @@ public class MainPane implements
 
     }
 
-    public void toggleRoutes(ActionEvent actionEvent) {
-        this.routesOn = !routesOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesOn);
-        interstellarSpacePane.toggleRoutes(routesOn);
-        toggleRoutesMenuitem.setSelected(routesOn);
-        toggleRoutesBtn.setSelected(routesOn);
-    }
-
-    public void toggleRouteLengths(ActionEvent actionEvent) {
-        this.routesLengthsOn = !routesLengthsOn;
-        tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayRoutes(routesLengthsOn);
-        interstellarSpacePane.toggleRouteLengths(routesLengthsOn);
-        toggleRouteLengthsMenuitem.setSelected(routesLengthsOn);
-    }
-
     public void findInView(ActionEvent actionEvent) {
         List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
         FindStarInViewDialog findStarInViewDialog = new FindStarInViewDialog(starsInView);
@@ -1236,10 +964,10 @@ public class MainPane implements
             int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
 
             //Values from stage
-            int width = (int) stage.getWidth();
-            int height = (int) stage.getHeight();
-            int stageMaxX = (int) stage.getX();
-            int stageMaxY = (int) stage.getY();
+            int width = (int) primaryStage.getWidth();
+            int height = (int) primaryStage.getHeight();
+            int stageMaxX = (int) primaryStage.getX();
+            int stageMaxY = (int) primaryStage.getY();
 
             //Maximal values your stage
             int paneMaxX = screenMaxX - width;
@@ -1247,7 +975,7 @@ public class MainPane implements
 
             //Check if the position of your stage is not out of screen
             if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
-                // Set stage where ever you want
+                // Set the stage where ever you want
                 // future
             }
         });
@@ -1279,10 +1007,10 @@ public class MainPane implements
                 int screenMaxY = (int) Screen.getPrimary().getVisualBounds().getMaxY();
 
                 //Values from stage
-                int width = (int) stage.getWidth();
-                int height = (int) stage.getHeight();
-                int stageMaxX = (int) stage.getX();
-                int stageMaxY = (int) stage.getY();
+                int width = (int) primaryStage.getWidth();
+                int height = (int) primaryStage.getHeight();
+                int stageMaxX = (int) primaryStage.getX();
+                int stageMaxY = (int) primaryStage.getY();
 
                 //Maximal values your stage
                 int paneMaxX = screenMaxX - width;
@@ -1290,7 +1018,7 @@ public class MainPane implements
 
                 //Check if the position of your stage is not out of screen
                 if (stageMaxX > paneMaxX || stageMaxY > paneMaxY) {
-                    // Set stage where ever you want
+                    // Set the stage where ever you want
                     // future
                 }
             });
@@ -1327,44 +1055,6 @@ public class MainPane implements
         showWarningMessage("Check for Update", "Not currently supported");
     }
 
-    /**
-     * zoom in on the plot by a standard incidence amount
-     *
-     * @param actionEvent the specific action event
-     */
-    public void zoomIn(ActionEvent actionEvent) {
-        if (tripsContext.isShowWarningOnZoom()) {
-            ShowZoomWarning showZoomWarning = new ShowZoomWarning();
-            Optional<Boolean> optionalBoolean = showZoomWarning.showAndWait();
-            if (optionalBoolean.isPresent()) {
-                Boolean dontShowAgain = optionalBoolean.get();
-                if (dontShowAgain) {
-                    tripsContext.setShowWarningOnZoom(false);
-                }
-            }
-        }
-        interstellarSpacePane.zoomIn();
-    }
-
-    /**
-     * zoom out on the plot by a standard amount
-     *
-     * @param actionEvent the specific action event
-     */
-    public void zoomOut(ActionEvent actionEvent) {
-        if (tripsContext.isShowWarningOnZoom()) {
-            ShowZoomWarning showZoomWarning = new ShowZoomWarning();
-            Optional<Boolean> optionalBoolean = showZoomWarning.showAndWait();
-            if (optionalBoolean.isPresent()) {
-                Boolean dontShowAgain = optionalBoolean.get();
-                if (dontShowAgain) {
-                    tripsContext.setShowWarningOnZoom(false);
-                }
-            }
-        }
-        interstellarSpacePane.zoomOut();
-    }
-
     public void runAnimation(ActionEvent actionEvent) {
         interstellarSpacePane.toggleAnimation();
     }
@@ -1374,7 +1064,7 @@ public class MainPane implements
         if (btnType.isPresent()) {
             if (btnType.get().equals(ButtonType.OK)) {
                 interstellarSpacePane.simulateStars(40);
-                updateStatus("simulating 40 stars");
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "simulating 40 stars"));
             }
         }
     }
@@ -1507,7 +1197,7 @@ public class MainPane implements
                     if (showTable) {
                         showList(starObjects);
                     }
-                    updateStatus("Dataset loaded is: " + descriptor.getDataSetName());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset loaded is: " + descriptor.getDataSetName()));
 
                 } else {
                     showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
@@ -1564,7 +1254,7 @@ public class MainPane implements
             if (showTable) {
                 showList(starObjects);
             }
-            updateStatus("Dataset loaded is: " + searchQuery.getDataSetContext().getDescriptor().getDataSetName());
+            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset loaded is: " + searchQuery.getDataSetContext().getDescriptor().getDataSetName()));
 
             // highlight the data set used
 //            setContextDataSet(searchQuery.getDataSetContext().getDescriptor());
@@ -1600,7 +1290,7 @@ public class MainPane implements
 
         // update the query dialog
         queryDialog.updateDataContext(dataSetDescriptor);
-        updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " loaded");
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " loaded"));
     }
 
     @Override
@@ -1619,7 +1309,7 @@ public class MainPane implements
 
             // redisplay the datasets
             addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
-            updateStatus("Dataset: " + dataSetDescriptor.getDataSetName() + " removed");
+            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " removed"));
         }
     }
 
@@ -1639,9 +1329,7 @@ public class MainPane implements
             queryDialog.setDataSetContext(descriptor);
         }
 
-        plotButton.setDisable(false);
-
-        updateStatus("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ");
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, ("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ")));
     }
 
 
@@ -1660,50 +1348,14 @@ public class MainPane implements
      * @param graphEnablesPersist the graph
      */
     private void updateToggles(@NotNull GraphEnablesPersist graphEnablesPersist) {
-        if (graphEnablesPersist.isDisplayGrid()) {
-            interstellarSpacePane.toggleGrid(graphEnablesPersist.isDisplayGrid());
-            toggleGridBtn.setSelected(graphEnablesPersist.isDisplayGrid());
-            toggleGridMenuitem.setSelected(graphEnablesPersist.isDisplayGrid());
-        }
-
-        if (graphEnablesPersist.isDisplayPolities()) {
-            interstellarSpacePane.togglePolities(graphEnablesPersist.isDisplayPolities());
-            togglePolityBtn.setSelected(graphEnablesPersist.isDisplayPolities());
-            togglePolitiesMenuitem.setSelected(graphEnablesPersist.isDisplayPolities());
-        }
-
-        if (graphEnablesPersist.isDisplayLabels()) {
-            interstellarSpacePane.toggleLabels(graphEnablesPersist.isDisplayLabels());
-            toggleLabelsBtn.setSelected(graphEnablesPersist.isDisplayLabels());
-            toggleLabelsMenuitem.setSelected(graphEnablesPersist.isDisplayLabels());
-        }
-
-        if (graphEnablesPersist.isDisplayStems()) {
-            interstellarSpacePane.toggleExtensions(graphEnablesPersist.isDisplayStems());
-            toggleStemBtn.setSelected(graphEnablesPersist.isDisplayStems());
-            toggleExtensionsMenuitem.setSelected(graphEnablesPersist.isDisplayStems());
-        }
-
-        if (graphEnablesPersist.isDisplayLegend()) {
-            interstellarSpacePane.toggleScale(graphEnablesPersist.isDisplayLegend());
-            toggleScaleBtn.setSelected(graphEnablesPersist.isDisplayLegend());
-            toggleScaleMenuitem.setSelected(graphEnablesPersist.isDisplayLegend());
-        }
-
-        if (graphEnablesPersist.isDisplayRoutes()) {
-            interstellarSpacePane.toggleRoutes(graphEnablesPersist.isDisplayRoutes());
-            toggleRoutesBtn.setSelected(graphEnablesPersist.isDisplayRoutes());
-            toggleRoutesMenuitem.setSelected(graphEnablesPersist.isDisplayRoutes());
-        }
-
-        toggleToolBarMenuitem.setSelected(toolBarOn);
-        toggleStatusBarMenuitem.setSelected(statusBarOn);
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.GRID, graphEnablesPersist.isDisplayGrid()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.POLITIES, graphEnablesPersist.isDisplayPolities()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.EXTENSIONS, graphEnablesPersist.isDisplayStems()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.SCALE, graphEnablesPersist.isDisplayLegend()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.ROUTES, graphEnablesPersist.isDisplayRoutes()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.TOOLBAR, graphEnablesPersist.isDisplayRoutes()));
+        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.STATUS_BAR, graphEnablesPersist.isDisplayRoutes()));
     }
-
-    ///////////////////////
-
-    /////////////////////  DISPLAY DATA   ///////////////////////////
-
 
     /**
      * show the data in a spreadsheet
@@ -1743,7 +1395,7 @@ public class MainPane implements
                 List<StarObject> starObjects = getAstrographicObjectsOnQuery();
                 if (!starObjects.isEmpty()) {
                     new DataSetTable(databaseManagementService, starService, starObjects);
-                    updateStatus("Dataset table loaded is: " + dataSetDescriptor.getDataSetName());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset table loaded is: " + dataSetDescriptor.getDataSetName()));
                 } else {
                     showErrorAlert("Show Data Table", "No data to show");
                 }
@@ -1816,11 +1468,6 @@ public class MainPane implements
         }
     }
 
-
-    public void copyDatabase(ActionEvent actionEvent) {
-        showInfoMessage("Copy Database", "not ready yet, coming soon");
-    }
-
     public void advancedSearch(ActionEvent actionEvent) {
         if (tripsContext.getSearchContext().getDatasetMap().isEmpty()) {
             log.error("There are no datasets in this database to search on");
@@ -1871,26 +1518,18 @@ public class MainPane implements
                 new FileChooser.ExtensionFilter("PNG files (*.png)", "*.png");
         saveFileChooser.getExtensionFilters().add(extFilter);
         saveFileChooser.setInitialDirectory(new File("."));
-        File file = saveFileChooser.showSaveDialog(stage);
+        File file = saveFileChooser.showSaveDialog(primaryStage);
         if (file != null) {
             try {
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
             } catch (IOException e) {
-                log.error("unable to save the snapshot file:" + e.getMessage());
+                log.error("unable to save the snapshot file:{}", e.getMessage());
             }
         }
     }
 
     public void saveDataset(ActionEvent actionEvent) {
         log.info("Save requested");
-    }
-
-    public void saveAsDataset(ActionEvent actionEvent) {
-        showWarningMessage("Save As", "This function is not yet implemented");
-    }
-
-    public void exportDataset(ActionEvent actionEvent) {
-        showWarningMessage("Export dataset", "This function is not yet implemented");
     }
 
     public void editStar(ActionEvent actionEvent) {
@@ -1919,9 +1558,8 @@ public class MainPane implements
         }
     }
 
-
     public void showRoutes(ActionEvent actionEvent) {
-        toggleSidePane(null);
+        toggleSidePane(true);
         propertiesAccordion.setExpandedPane(routingPane);
     }
 
@@ -1961,7 +1599,7 @@ public class MainPane implements
         String physicalInventory = oshiMeasure.getComputerInventory();
         InventoryReport inventoryReport = new InventoryReport(physicalInventory);
         ReportManager reportManager = new ReportManager();
-        reportManager.generateComputerInventoryReport(stage, inventoryReport);
+        reportManager.generateComputerInventoryReport(primaryStage, inventoryReport);
     }
 
     /**
@@ -2034,27 +1672,6 @@ public class MainPane implements
         }
     }
 
-    public void loadExoPlanets(ActionEvent actionEvent) {
-        log.info("Load ExoPlanets");
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select a File containing the known exoplanets");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Data Files", "*.csv"));
-
-        File selectedFile = fileChooser.showOpenDialog(stage);
-        if (selectedFile != null) {
-            List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
-            if (!dataSetDescriptorList.isEmpty()) {
-                List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-                LoadExoPlanetsFileDialog dialog = new LoadExoPlanetsFileDialog(selectedFile, exoPlanetService, databaseManagementService, starService, datasetService);
-                dialog.showAndWait();
-            } else {
-                showErrorAlert("Load ExoPlanets File", "There are no datasets in this database!");
-            }
-        }
-
-    }
-
     public void findDistance(ActionEvent actionEvent) {
         List<String> datasetNames = searchContext.getDataSetNames();
         if (datasetNames.isEmpty()) {
@@ -2075,42 +1692,9 @@ public class MainPane implements
         dialog.showAndWait();
     }
 
-    public void scriptEditing(ActionEvent actionEvent) {
-        GroovyScriptingEngine groovyScriptEngine = (GroovyScriptingEngine) appContext.getBean("groovyScriptEngine");
-        PythonScriptEngine pythonScriptEngine = (PythonScriptEngine) appContext.getBean("pythonScriptEngine");
-        ScriptDialog dialog = new ScriptDialog(eventPublisher, groovyScriptEngine, pythonScriptEngine,
-                scriptingMenu, tripsContext, localization, databaseManagementService);
-        dialog.showAndWait();
-    }
-
-
-    public void showGalacticNeighorhood(ActionEvent actionEvent) {
-        galacticSpacePlane.toFront();
-    }
-
-    public void showInterstellarSpace(ActionEvent actionEvent) {
-        interstellarSpacePane.toFront();
-    }
-
     public void findInSesame(ActionEvent actionEvent) {
         SesameNameResolverDialog dialog = new SesameNameResolverDialog();
         Optional<List<String>> resultOpt = dialog.showAndWait();
-    }
-
-    public void compareDB(ActionEvent actionEvent) {
-
-        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
-        if (!dataSetDescriptorList.isEmpty()) {
-            List<String> dataSetNames = dataSetDescriptorList.stream().map(DataSetDescriptor::getDataSetName).toList();
-            CompareDBDialog dialog = new CompareDBDialog(databaseManagementService, starService, dataSetNames);
-            Optional<DBComparison> dbComparisonOptional = dialog.showAndWait();
-            if (dbComparisonOptional.isPresent()) {
-                DBComparison dbComparison = dbComparisonOptional.get();
-            }
-        } else {
-            showErrorAlert("Compare Datasets", "There are no datasets in this database!");
-        }
-
     }
 
     /**
@@ -2146,7 +1730,7 @@ public class MainPane implements
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Save Generated Distances of Related Stars to File");
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
-                File selectedFile = fileChooser.showSaveDialog(stage);
+                File selectedFile = fileChooser.showSaveDialog(primaryStage);
 
                 if (selectedFile != null) {
                     try (FileWriter writer = new FileWriter(selectedFile)) {
@@ -2203,7 +1787,7 @@ public class MainPane implements
         fileChooser.setTitle("Select a File containing the 10 parsec stars volume of space");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Data Files", "*.dat"));
 
-        File selectedFile = fileChooser.showOpenDialog(stage);
+        File selectedFile = fileChooser.showOpenDialog(primaryStage);
 
         if (selectedFile != null) {
             List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
@@ -2257,10 +1841,9 @@ public class MainPane implements
     public void displayStellarProperties(@Nullable StarObject starObject) {
         if (starObject != null) {
             toggleSidePane(true);
-//            starPropertiesPane.setStar(starObject);
             propertiesAccordion.setExpandedPane(stellarObjectPane);
             if (!sidePaneOn) {
-                toggleSidePane(null);
+                toggleSidePane(true);
             }
         }
     }
@@ -2274,15 +1857,7 @@ public class MainPane implements
         Platform.runLater(() -> {
             StarDisplayRecord starDescriptor = event.getStarDisplayRecord();
             ReportManager reportManager = new ReportManager();
-            reportManager.generateDistanceReport(stage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
-        });
-    }
-
-
-    @EventListener
-    public void onStatusUpdateEvent(StatusUpdateEvent event) {
-        Platform.runLater(() -> {
-            updateStatus(event.getStatus());
+            reportManager.generateDistanceReport(primaryStage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
         });
     }
 
@@ -2301,22 +1876,18 @@ public class MainPane implements
                 case INTERSTELLAR -> {
                     log.info("Showing interstellar Space");
                     interstellarSpacePane.toFront();
-                    updateStatus("Selected Interstellar space");
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
                 }
                 case SOLARSYSTEM -> {
                     log.info("Showing a solar system");
                     solarSystemSpacePane.reset();
                     solarSystemSpacePane.setSystemToDisplay(event.getStarDisplayRecord());
                     solarSystemSpacePane.toFront();
-                    updateStatus("Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
                 }
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());
             }
         });
-    }
-
-    public void updateStatus(String newStatus) {
-        statusBarController.setStatus(newStatus);
     }
 
 }

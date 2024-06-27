@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Help" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.HelpMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#aboutTrips"
+              text="About TRIPS"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#howToSupport"
+              text="How to get support"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#checkUpdate"
+              text="Check for update"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#getInventory"
+              text="Get Computer Description"/>
+</Menu>

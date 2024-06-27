@@ -37,21 +37,21 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
 
     @Override
     public void onApplicationEvent(@NotNull StageReadyEvent event) {
-        Stage stage = event.getStage();
+        Stage primaryStage = event.getStage();
         Parent root = fxWeaver.loadView(MainPane.class);
 
         Scene scene = new Scene(root, Universe.boxWidth, Universe.boxHeight + CONTROL_PANE_SIZE);
-        stage.setScene(scene);
-        mainPane.setStage(stage, Universe.boxWidth, Universe.boxHeight, CONTROL_PANE_SIZE);
-        stage.initStyle(StageStyle.DECORATED);
-        stage.setResizable(true);
-        stage.setTitle(title);
+        primaryStage.setScene(scene);
+        mainPane.setStage(primaryStage, Universe.boxWidth, Universe.boxHeight, CONTROL_PANE_SIZE);
+        primaryStage.initStyle(StageStyle.DECORATED);
+        primaryStage.setResizable(true);
+        primaryStage.setTitle(title);
 
         // load application icon
         final Image appIcon = new Image("/images/tripsMac.ico");
-        stage.getIcons().add(appIcon);
+        primaryStage.getIcons().add(appIcon);
 
-        stage.show();
+        primaryStage.show();
     }
 
 }

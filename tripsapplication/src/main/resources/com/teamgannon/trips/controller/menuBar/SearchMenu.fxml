@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="Search" mnemonicParsing="false"
+      fx:controller="com.teamgannon.trips.controller.menubar.SearchMenuController">
+    <MenuItem mnemonicParsing="false"
+              onAction="#FindCatalogId"
+              text="Find a star by catalog id"/>
+</Menu>
