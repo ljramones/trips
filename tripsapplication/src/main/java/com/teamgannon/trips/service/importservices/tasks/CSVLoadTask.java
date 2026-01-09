@@ -72,6 +72,7 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
                 processResult.setSuccess(false);
             }
         } catch (Exception e) {
+            log.error("Failed to load dataset {}", dataset.getName(), e);
             processResult.setSuccess(false);
             processResult.setMessage("Failed to load the dataset, see log ");
         }

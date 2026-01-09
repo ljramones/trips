@@ -57,6 +57,7 @@ public class ChvLoadTask extends Task<FileProcessResult> implements ProgressUpda
             processResult.setDataSetDescriptor(dataSetDescriptor);
             updateProgress(dataSetDescriptor.getNumberStars(), dataSetDescriptor.getNumberStars());
         } catch (Exception e) {
+            log.error("Failed to load dataset {}", dataset.getName(), e);
             processResult.setSuccess(false);
             processResult.setMessage("Unable to load this dataset into the system ");
         }

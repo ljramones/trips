@@ -30,6 +30,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
+    private Button cancelLoad;
 
 
     public CHVDataImportService(ApplicationEventPublisher eventPublisher,
@@ -52,6 +53,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
+        this.cancelLoad = cancelLoad;
 
         progressText.textProperty().bind(this.messageProperty());
         loadProgressBar.progressProperty().bind(this.progressProperty());
@@ -64,10 +66,20 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected void succeeded() {
         log.info("dataset loaded");
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, String.format("new Dataset loaded -> %s", dataset.getName())));
+        String datasetName = dataset != null ? dataset.getName() : "unknown dataset";
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, String.format("new Dataset loaded -> %s", datasetName)));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
+        if (fileProcessResult == null) {
+            log.error("fileProcessResult is null after successful import.");
+            if (importTaskComplete != null) {
+                importTaskComplete.complete(false, dataset, null, "dataset load failed: no result returned");
+            }
+            return;
+        }
+        if (importTaskComplete != null) {
+            importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
+        }
         eventPublisher.publishEvent(new AddDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
         // set context to newly loaded dataset
         eventPublisher.publishEvent(new SetContextDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
@@ -76,25 +88,39 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
 
     @Override
     protected void failed() {
-        log.error("dataset load failed due to: " + getException().getMessage());
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load failed due to: " + getException().getMessage()));
+        Throwable exception = getException();
+        log.error("dataset load failed", exception);
+        String message = exception != null ? exception.getMessage() : "unknown error";
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load failed due to: " + message));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + getException().getMessage());
+        if (importTaskComplete != null) {
+            importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load failed due to: " + message);
+        }
     }
 
     @Override
     protected void cancelled() {
         log.warn("dataset load cancelled");
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset laod was cancelled for " + dataset.getName()));
+        String datasetName = dataset != null ? dataset.getName() : "unknown dataset";
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset load was cancelled for " + datasetName));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
-        importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
+        if (importTaskComplete != null) {
+            importTaskComplete.complete(false, dataset, fileProcessResult, "dataset load cancelled");
+        }
     }
 
     private void unsetProgressControls() {
-        progressText.textProperty().unbind();
-        loadProgressBar.progressProperty().unbind();
+        if (progressText != null) {
+            progressText.textProperty().unbind();
+        }
+        if (loadProgressBar != null) {
+            loadProgressBar.progressProperty().unbind();
+        }
+        if (cancelLoad != null) {
+            cancelLoad.disableProperty().unbind();
+        }
     }
 
     @Override
