@@ -231,7 +231,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
     private void onChanged(ListChangeListener.@NotNull Change<? extends DataSetDescriptor> change) {
         ObservableList<DataSetDescriptor> selectedItems = (ObservableList<DataSetDescriptor>) change.getList();
-        if (selectedItems.size() != 0) {
+        if (!selectedItems.isEmpty()) {
             selectedDataset = selectedItems.get(0);
             deleteButton.setDisable(false);
             exportButton.setDisable(false);

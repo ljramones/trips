@@ -3,32 +3,31 @@ package com.teamgannon.trips.controller;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
+import com.teamgannon.trips.controller.splitpane.SplitPaneView;
+import com.teamgannon.trips.controller.splitpane.RightPanelCoordinator;
+import com.teamgannon.trips.controller.splitpane.SearchContextCoordinator;
 import com.teamgannon.trips.controller.statusbar.StatusBarController;
-import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
+import com.teamgannon.trips.controller.splitpane.RightPanelController;
+import com.teamgannon.trips.controller.splitpane.LeftDisplayController;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.panes.GalacticSpacePlane;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
 import com.teamgannon.trips.javafxsupport.BackgroundTaskRunner;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.listener.*;
-import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
-import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
@@ -36,21 +35,19 @@ import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.tableviews.DataSetTable;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -70,12 +67,14 @@ public class MainSplitPaneManager {
     private final ApplicationEventPublisher eventPublisher;
     private final StatusBarController statusBarController;
     private final TripsContext tripsContext;
-    private final SearchContext searchContext;
     private PlotManager plotManager;
     private final SharedUIState sharedUIState;
     private final DataExportService dataExportService;
     private final Localization localization;
     private final DatasetService datasetService;
+    private final RightPanelCoordinator rightPanelCoordinator;
+    private final SearchContextCoordinator searchContextCoordinator;
+    private final FxWeaver fxWeaver;
 
 
     private final StarPropertiesPane starPropertiesPane;
@@ -98,7 +97,6 @@ public class MainSplitPaneManager {
     /**
      * list of routes
      */
-    private List<Route> routeList;
 
     @Getter
     private SplitPane mainSplitPane;
@@ -113,30 +111,18 @@ public class MainSplitPaneManager {
 
     private final DatabaseManagementService databaseManagementService;
     /**
-     * galactic space
-     */
-    private final GalacticSpacePlane galacticSpacePlane;
-
-    /**
      * interstellar space
      */
     private final InterstellarSpacePane interstellarSpacePane;
     private final StarService starService;
+    private SplitPaneView splitPaneView;
+    private RightPanelController rightPanelController;
+    private LeftDisplayController leftDisplayController;
 
     /**
      * the query dialog
      */
     private QueryDialog queryDialog;
-
-    /**
-     * dataset lists
-     */
-    private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
-
-    /**
-     * solar system panes for showing the details of various solar systems
-     */
-    private final SolarSystemSpacePane solarSystemSpacePane;
 
     private SliderControlManager sliderControlManager;
 
@@ -152,15 +138,15 @@ public class MainSplitPaneManager {
                                 ObjectViewPane objectViewPane,
                                 DatabaseManagementService databaseManagementService,
                                 DatasetService datasetService,
-                                GalacticSpacePlane galacticSpacePlane,
-                                SolarSystemSpacePane solarSystemSpacePane,
                                 InterstellarSpacePane interstellarSpacePane,
-                                StarService starService) {
+                                StarService starService,
+                                FxWeaver fxWeaver,
+                                RightPanelCoordinator rightPanelCoordinator,
+                                SearchContextCoordinator searchContextCoordinator) {
         this.sharedUIFunctions = sharedUIFunctions;
         this.eventPublisher = eventPublisher;
         this.statusBarController = statusBarController;
         this.tripsContext = tripsContext;
-        this.searchContext = tripsContext.getSearchContext();
         this.sharedUIState = sharedUIState;
         this.starPropertiesPane = starPropertiesPane;
         this.routingPanel = routingPanel;
@@ -168,10 +154,11 @@ public class MainSplitPaneManager {
         this.objectViewPane = objectViewPane;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
-        this.galacticSpacePlane = galacticSpacePlane;
-        this.solarSystemSpacePane = solarSystemSpacePane;
+        this.rightPanelCoordinator = rightPanelCoordinator;
+        this.searchContextCoordinator = searchContextCoordinator;
         this.interstellarSpacePane = interstellarSpacePane;
         this.starService = starService;
+        this.fxWeaver = fxWeaver;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
 
@@ -181,20 +168,25 @@ public class MainSplitPaneManager {
         this.sliderControlManager = sliderControlManager;
         this.plotManager = plotManager;
 
-        this.mainSplitPane = new SplitPane();
+        fxWeaver.loadView(com.teamgannon.trips.controller.splitpane.SplitPaneController.class);
+        this.splitPaneView = fxWeaver.getBean(com.teamgannon.trips.controller.splitpane.SplitPaneController.class);
+        this.rightPanelController = splitPaneView.getRightPanel();
+        this.leftDisplayController = splitPaneView.getLeftDisplay();
+        this.mainSplitPane = splitPaneView.getMainSplitPane();
+        this.leftBorderPane = splitPaneView.getLeftBorderPane();
+        this.leftDisplayPane = splitPaneView.getLeftDisplayPane();
+        this.rightBorderPane = splitPaneView.getRightBorderPane();
+        this.settingsPane = splitPaneView.getSettingsPane();
+        this.propertiesAccordion = splitPaneView.getPropertiesAccordion();
+
         this.mainSplitPane.setDividerPositions(1.0);
         this.mainSplitPane.setPrefWidth(Universe.boxWidth);
 
 
         // Create left and right panes
-        createLeftDisplay();
+        leftDisplayController.build(plotManager);
         createRightDisplay();
-
-        // create a data set pane for the database files present
-        setupDataSetView();
-
-        // create the list of objects in view
-        setupStellarObjectListView();
+        rightPanelCoordinator.initialize();
 
         // Initialize the SliderControlManager
         sliderControlManager.initialize(mainSplitPane);
@@ -206,88 +198,13 @@ public class MainSplitPaneManager {
         sharedUIFunctions.initialize(plotManager, mainSplitPane, sliderControlManager);
     }
 
-    private void createLeftDisplay() {
-        leftBorderPane = new BorderPane();
-        leftBorderPane.setMinWidth(0);
-
-        leftBorderPane.setPrefWidth(Universe.boxWidth * 0.6);
-
-        mainSplitPane.getItems().add(leftBorderPane);
-
-        leftDisplayPane = new StackPane();
-        leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
-        leftDisplayPane.setPrefWidth(Universe.boxWidth);
-
-        leftBorderPane.setLeft(leftDisplayPane);
-
-        // create the solar system
-        createSolarSystemSpace();
-
-        // create the interstellar space
-        createInterstellarSpace(tripsContext.getAppViewPreferences().getColorPallete());
-
-        // create galactic space
-        createGalacticSpace(tripsContext.getAppViewPreferences().getColorPallete());
-    }
-
     private void createRightDisplay() {
-        rightBorderPane = new BorderPane();
-        mainSplitPane.getItems().add(rightBorderPane);
-
-        rightBorderPane.setMinWidth(0);
-        settingsPane = new VBox();
-        settingsPane.setPrefHeight(588.0);
-        settingsPane.setPrefWidth(SIDE_PANEL_SIZE);
-
-        rightBorderPane.setRight(settingsPane);
-
-        propertiesAccordion = new Accordion();
-        settingsPane.getChildren().add(propertiesAccordion);
-
-        // datasets pane
-        datasetsPane = new TitledPane();
-        datasetsPane.setText("DataSets Available");
-        datasetsPane.setMinWidth(SIDE_PANEL_SIZE);
-        datasetsPane.setMinHeight(200);
-        datasetsPane.setMaxHeight(500);
-        propertiesAccordion.getPanes().add(datasetsPane);
-
-        // objects in pane
-        objectsViewPane = new TitledPane();
-        objectsViewPane.setText("Objects in View");
-        objectsViewPane.setMinWidth(SIDE_PANEL_SIZE);
-        objectsViewPane.setMinHeight(200);
-        objectsViewPane.setMaxHeight(460);
-        propertiesAccordion.getPanes().add(objectsViewPane);
-
-        // stellar pane
-        stellarObjectPane = new TitledPane();
-        stellarObjectPane.setText("Stellar Object Properties");
-        stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
-        stellarObjectPane.setPrefHeight(500);
-        stellarObjectPane.setMaxHeight(520);
-        ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
-        stellarObjectPane.setContent(scrollPane);
-        propertiesAccordion.getPanes().add(stellarObjectPane);
-
-        transitPane = new TitledPane();
-        transitPane.setText("Link Control");
-        transitPane.setPrefWidth(SIDE_PANEL_SIZE);
-        transitPane.setPrefHeight(500);
-        transitPane.setMaxHeight(520);
-        transitFilterPane = new TransitFilterPane();
-        ScrollPane scrollPane2 = new ScrollPane(transitFilterPane);
-        transitPane.setContent(scrollPane2);
-        propertiesAccordion.getPanes().add(transitPane);
-
-        // routing pane
-        routingPane = new TitledPane();
-        routingPane.setText("Star Routing");
-        routingPane.setMinWidth(SIDE_PANEL_SIZE);
-        routingPane.setMinHeight(400);
-        routingPane.setMaxHeight(400);
-        routingPane.setContent(routingPanel);
-        propertiesAccordion.getPanes().add(routingPane);
+        datasetsPane = rightPanelController.getDatasetsPane();
+        objectsViewPane = rightPanelController.getObjectsViewPane();
+        stellarObjectPane = rightPanelController.getStellarObjectPane();
+        transitPane = rightPanelController.getTransitPane();
+        routingPane = rightPanelController.getRoutingPane();
+        transitFilterPane = rightPanelController.getTransitFilterPane();
     }
 
     private void setSliderControl(SliderControlManager sliderControlManager) {
@@ -311,96 +228,8 @@ public class MainSplitPaneManager {
     }
 
     /**
-     * create the galactic plane
-     *
-     * @param colorPalette the Galactic Space plane
-     */
-    private void createGalacticSpace(ColorPalette colorPalette) {
-        leftDisplayPane.getChildren().add(galacticSpacePlane);
-        // force it back
-        galacticSpacePlane.toBack();
-    }
-
-    /**
-     * create an interstellar space drawing area
-     *
-     * @param colorPalette the colors to use in drawing
-     */
-    private void createInterstellarSpace(ColorPalette colorPalette) {
-
-        leftDisplayPane.getChildren().add(interstellarSpacePane);
-
-        // put the interstellar space on top and the solar system to the back
-        interstellarSpacePane.toFront();
-
-        // set the interstellar pane to be the drawing surface
-        plotManager.setInterstellarPane(interstellarSpacePane);
-    }
-
-
-    /**
-     * create the solar space drawing area
-     */
-    private void createSolarSystemSpace() {
-        leftDisplayPane.getChildren().add(solarSystemSpacePane);
-        solarSystemSpacePane.toBack();
-    }
-
-    /**
      * sets up list view for stellar objects
      */
-    private void setupStellarObjectListView() {
-
-        ScrollPane scrollPane = new ScrollPane();
-
-        scrollPane.setContent(objectViewPane);
-
-        // setup model to display in case we turn on
-        objectsViewPane.setContent(scrollPane);
-    }
-
-    private void setupDataSetView() {
-
-        SearchContext searchContext = tripsContext.getSearchContext();
-        datasetsPane.setContent(dataSetsListView);
-
-        dataSetsListView.setPrefHeight(10);
-        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(eventPublisher));
-        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
-
-        loadDatasets(searchContext);
-        log.info("Application up and running");
-    }
-
-    private void loadDatasets(@NotNull SearchContext searchContext) {
-        // load viable datasets into search context
-        List<DataSetDescriptor> dataSets = loadDataSetView();
-        if (!dataSets.isEmpty()) {
-            searchContext.addDataSets(dataSets);
-        }
-    }
-
-    private @NotNull List<DataSetDescriptor> loadDataSetView() {
-
-        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
-
-        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
-            if (descriptor.getRoutesStr() != null) {
-                routeList = descriptor.getRoutes();
-                log.info("routes");
-            }
-        }
-
-        addDataSetToList(dataSetDescriptorList, true);
-        log.info("loaded DBs");
-        return dataSetDescriptorList;
-    }
-
-    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, @Nullable DataSetDescriptor oldValue, @Nullable DataSetDescriptor newValue) {
-        String oldText = oldValue == null ? "null" : oldValue.toString();
-        String newText = newValue == null ? "null" : newValue.toString();
-    }
-
 
     public void showList(@NotNull List<StarObject> starObjects) {
         if (!starObjects.isEmpty()) {
@@ -408,14 +237,6 @@ public class MainSplitPaneManager {
         } else {
             showErrorAlert("Display Data table", "no data to show");
         }
-    }
-
-    public void addDataSetToList(@NotNull List<DataSetDescriptor> list, boolean clear) {
-        if (clear) {
-            dataSetsListView.getItems().clear();
-        }
-        list.forEach(descriptor -> dataSetsListView.getItems().add(descriptor));
-        log.debug("update complete");
     }
 
     /**
@@ -483,7 +304,7 @@ public class MainSplitPaneManager {
     /////////////////////////
 
     public List<StarObject> getAstrographicObjectsOnQuery() {
-        return starService.getAstrographicObjectsOnQuery(searchContext);
+        return searchContextCoordinator.getAstrographicObjectsOnQuery();
     }
 
     public void updateStar(StarObject starObject) {
@@ -510,8 +331,8 @@ public class MainSplitPaneManager {
     public void onRecenterStarEvent(RecenterStarEvent event) {
         StarDisplayRecord starId = event.getStarDisplayRecord();
         log.info("recenter plot at {}", starId);
-        AstroSearchQuery query = searchContext.getAstroSearchQuery();
-        query.setCenterRanging(starId, query.getUpperDistanceLimit());
+        AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
+        searchContextCoordinator.recenter(starId, query.getUpperDistanceLimit());
         log.info("New Center Range: {}", query.getCenterRangingCube());
         FxThread.runOnFxThread(() -> showNewStellarData(query, true, false));
     }
@@ -535,7 +356,8 @@ public class MainSplitPaneManager {
     }
 
     public void doExport(AstroSearchQuery newQuery) {
-        ExportQueryDialog exportQueryDialog = new ExportQueryDialog(searchContext, databaseManagementService,
+        ExportQueryDialog exportQueryDialog = new ExportQueryDialog(searchContextCoordinator.getSearchContext(),
+                databaseManagementService,
                 dataExportService, localization, eventPublisher);
         exportQueryDialog.showAndWait();
 
@@ -551,7 +373,7 @@ public class MainSplitPaneManager {
     public void showNewStellarData(@NotNull AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
 
         log.info(searchQuery.toString());
-        searchContext.setAstroSearchQuery(searchQuery);
+        searchContextCoordinator.setAstroSearchQuery(searchQuery);
 
         DataSetDescriptor descriptor = searchQuery.getDataSetContext().getDescriptor();
         if (descriptor != null) {
@@ -679,12 +501,12 @@ public class MainSplitPaneManager {
                 "trips-update-route",
                 () -> {
                     RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    String datasetName = searchContext.getDataSetDescriptor().getDataSetName();
+                    String datasetName = searchContextCoordinator.getCurrentDataSetName();
                     return datasetService.updateRoute(datasetName, routeDescriptor);
                 },
                 descriptor -> FxThread.runOnFxThread(() -> {
                     log.info("update route");
-                    searchContext.getAstroSearchQuery().setDescriptor(descriptor);
+                    searchContextCoordinator.setDescriptor(descriptor);
                     routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
                     interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route updated."));
@@ -715,13 +537,13 @@ public class MainSplitPaneManager {
                 "trips-delete-route",
                 () -> {
                     RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    DataSetDescriptor descriptor = searchContext.getDataSetDescriptor();
+                    DataSetDescriptor descriptor = searchContextCoordinator.getCurrentDescriptor();
                     return datasetService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
                 },
                 descriptor -> FxThread.runOnFxThread(() -> {
                     log.info("delete route");
                     RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    searchContext.getAstroSearchQuery().setDescriptor(descriptor);
+                    searchContextCoordinator.setDescriptor(descriptor);
                     // clear the route from the plot
                     tripsContext.getCurrentPlot().removeRoute(routeDescriptor);
                     routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
@@ -745,12 +567,9 @@ public class MainSplitPaneManager {
     public void onAddDataSetEvent(AddDataSetEvent event) {
         DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
 
-        // add dataset to trips context
-        tripsContext.addDataSet(dataSetDescriptor);
-
         FxThread.runOnFxThread(() -> {
             // add to side-panel
-            addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+            rightPanelCoordinator.handleDataSetAdded(dataSetDescriptor);
 
             // update the query dialog
             if (queryDialog != null) {
@@ -775,7 +594,7 @@ public class MainSplitPaneManager {
                 BackgroundTaskRunner.TaskHandle taskHandle = BackgroundTaskRunner.runCancelable(
                         "trips-remove-dataset",
                         () -> {
-                            tripsContext.removeDataSet(dataSetDescriptor);
+                            rightPanelCoordinator.removeDataSetFromContext(dataSetDescriptor);
                             return null;
                         },
                         result -> FxThread.runOnFxThread(() -> {
@@ -785,7 +604,7 @@ public class MainSplitPaneManager {
                             }
 
                             // redisplay the datasets
-                            addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
+                            rightPanelCoordinator.refreshDataSets();
                             eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " removed"));
                         }),
                         exception -> FxThread.runOnFxThread(() -> {
@@ -829,7 +648,7 @@ public class MainSplitPaneManager {
             tripsContext.setDataSetContext(new DataSetContext(descriptor));
 
             // update the side panel
-            dataSetsListView.getSelectionModel().select(descriptor);
+            rightPanelController.selectDataSet(descriptor);
 
             if (queryDialog != null) {
                 queryDialog.setDataSetContext(descriptor);
@@ -868,14 +687,12 @@ public class MainSplitPaneManager {
             switch (event.getContextSelectionType()) {
                 case INTERSTELLAR -> {
                     log.info("Showing interstellar Space");
-                    interstellarSpacePane.toFront();
+                    leftDisplayController.showInterstellar();
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
                 }
                 case SOLARSYSTEM -> {
                     log.info("Showing a solar system");
-                    solarSystemSpacePane.reset();
-                    solarSystemSpacePane.setSystemToDisplay(event.getStarDisplayRecord());
-                    solarSystemSpacePane.toFront();
+                    leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
                 }
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());

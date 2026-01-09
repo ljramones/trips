@@ -322,7 +322,8 @@ public class MainPane  {
 
         primaryStage.setOnCloseRequest(event -> {
             log.info("Close request detected");
-            // You can add any cleanup code here
+            event.consume();
+            initiateShutdown(0);
         });
 
         interstellarSpacePane.setControlPaneOffset(controlPaneOffset);

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * The search query
@@ -21,9 +20,6 @@ import java.util.UUID;
 @Slf4j
 @Data
 public class AstroSearchQuery {
-
-    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AstroSearchQuery.class);
 
     /**
      * this is used for context since multiple datasets can be used

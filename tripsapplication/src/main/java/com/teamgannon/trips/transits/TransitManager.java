@@ -6,6 +6,7 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.scene.Group;
 import javafx.scene.SubScene;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
@@ -54,6 +55,13 @@ public class TransitManager {
     private boolean transitsOn;
 
     private boolean transitsLengthsOn = true;
+    /**
+     * -- SETTER --
+     *  used to add an offset for the screen
+     *
+     * @param controlPaneOffset the offset from the top to properly display this
+     */
+    @Setter
     private double controlPaneOffset;
 
 
@@ -152,15 +160,6 @@ public class TransitManager {
         labelDisplayGroup.getChildren().remove(visibilityGroup.getLabelGroup());
 
         visibilityGroup.clear();
-    }
-
-    /**
-     * used to add an offset for the screen
-     *
-     * @param controlPaneOffset the offset from the top to properly display this
-     */
-    public void setControlPaneOffset(double controlPaneOffset) {
-        this.controlPaneOffset = controlPaneOffset;
     }
 
     /**

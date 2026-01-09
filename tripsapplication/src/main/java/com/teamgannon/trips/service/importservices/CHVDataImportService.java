@@ -8,7 +8,6 @@ import com.teamgannon.trips.events.DataSetLoadEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.service.BulkLoadService;
-import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ChvLoadTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -18,7 +17,6 @@ import javafx.scene.control.ProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
 
 import static javafx.concurrent.Worker.State.RUNNING;
 

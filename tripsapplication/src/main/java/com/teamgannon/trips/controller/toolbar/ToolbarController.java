@@ -3,13 +3,13 @@ package com.teamgannon.trips.controller.toolbar;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
+import com.teamgannon.trips.events.RemoveDataSetEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
@@ -177,6 +177,11 @@ public class ToolbarController {
     @EventListener
     public void onSetContextDataSetEvent(SetContextDataSetEvent event) {
         FxThread.runOnFxThread(() -> plotButton.setDisable(event.getDescriptor() == null));
+    }
+
+    @EventListener
+    public void onRemoveDataSetEvent(RemoveDataSetEvent event) {
+        FxThread.runOnFxThread(() -> plotButton.setDisable(true));
     }
 
 

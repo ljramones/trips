@@ -64,9 +64,6 @@ public class StarObject implements Serializable {
     @Serial
     private static final long serialVersionUID = -751366073413071183L;
 
-    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StarObject.class);
-
     /**
      * match the pattern * nnn Con
      * nnn for 3 digits

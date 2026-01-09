@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -19,8 +20,11 @@ public class TripsFxApplication extends Application {
 
     private ConfigurableApplicationContext context;
 
-    private static void exitApplication(WindowEvent event) {
+    private void exitApplication(WindowEvent event) {
+        event.consume();
+        int exitCode = SpringApplication.exit(context);
         Platform.exit();
+        System.exit(exitCode);
     }
 
     @Override
@@ -42,7 +46,7 @@ public class TripsFxApplication extends Application {
 
 
         context.publishEvent(new StageReadyEvent(primaryStage));
-        primaryStage.setOnCloseRequest(TripsFxApplication::exitApplication);
+        primaryStage.setOnCloseRequest(this::exitApplication);
     }
 
     @Override
