@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,54 +21,58 @@ import java.util.List;
 @Slf4j
 public class TechSelectionPanel extends BasePane {
 
-    private final CheckBox yesTech = new CheckBox("Yes?");
-    private final CheckBox tech1 = new CheckBox("1");
-    private final CheckBox tech2 = new CheckBox("2");
-    private final CheckBox tech3 = new CheckBox("3");
-    private final CheckBox tech4 = new CheckBox("4");
-    private final CheckBox tech5 = new CheckBox("5");
-    private final CheckBox tech6 = new CheckBox("6");
-    private final CheckBox tech7 = new CheckBox("7");
-    private final CheckBox tech8 = new CheckBox("8");
-    private final CheckBox tech9 = new CheckBox("9");
-    private final CheckBox techA = new CheckBox("A");
-    private final CheckBox techB = new CheckBox("B");
-    private final CheckBox techC = new CheckBox("C");
-    private final CheckBox techD = new CheckBox("D");
-    private final CheckBox techE = new CheckBox("E");
+    @FXML
+    private Label techLabel;
+    @FXML
+    private CheckBox yesTech;
+    @FXML
+    private CheckBox tech1;
+    @FXML
+    private CheckBox tech2;
+    @FXML
+    private CheckBox tech3;
+    @FXML
+    private CheckBox tech4;
+    @FXML
+    private CheckBox tech5;
+    @FXML
+    private CheckBox tech6;
+    @FXML
+    private CheckBox tech7;
+    @FXML
+    private CheckBox tech8;
+    @FXML
+    private CheckBox tech9;
+    @FXML
+    private CheckBox techA;
+    @FXML
+    private CheckBox techB;
+    @FXML
+    private CheckBox techC;
+    @FXML
+    private CheckBox techD;
+    @FXML
+    private CheckBox techE;
 
     public TechSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("TechSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load TechSelectionPanel.fxml", ex);
+        }
 
-        Label techLabel = createLabel("Tech");
+    }
 
-        planGrid.add(techLabel, 0, 0);
-
-        planGrid.add(yesTech, 1, 0);
-
-        planGrid.add(tech1, 2, 0);
-        planGrid.add(tech2, 3, 0);
-        planGrid.add(tech3, 4, 0);
-        planGrid.add(tech4, 5, 0);
-        planGrid.add(tech5, 6, 0);
-        planGrid.add(tech6, 7, 0);
-        planGrid.add(tech7, 8, 0);
-
-        planGrid.add(tech8, 2, 1);
-        planGrid.add(tech9, 3, 1);
-        planGrid.add(techA, 4, 1);
-        planGrid.add(techB, 5, 1);
-        planGrid.add(techC, 6, 1);
-        planGrid.add(techD, 7, 1);
-        planGrid.add(techE, 8, 1);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(techLabel);
         yesTech.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
-
     }
 
 

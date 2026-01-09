@@ -3,11 +3,14 @@ package com.teamgannon.trips.search.components;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,49 +22,63 @@ import java.util.List;
 @Slf4j
 public class PolitySelectionPanel extends BasePane {
 
-    private final CheckBox yesPolity = new CheckBox("Yes?");
+    @FXML
+    private Label polityLabel;
+    @FXML
+    private CheckBox yesPolity;
 
-    private final CheckBox polity1 = new CheckBox(CivilizationDisplayPreferences.TERRAN);
-    private final CheckBox polity2 = new CheckBox(CivilizationDisplayPreferences.DORNANI);
-    private final CheckBox polity3 = new CheckBox(CivilizationDisplayPreferences.KTOR);
-    private final CheckBox polity4 = new CheckBox(CivilizationDisplayPreferences.ARAKUR);
-    private final CheckBox polity5 = new CheckBox(CivilizationDisplayPreferences.HKHRKH);
-    private final CheckBox polity6 = new CheckBox(CivilizationDisplayPreferences.SLAASRIITHI);
-    private final CheckBox polity7 = new CheckBox(CivilizationDisplayPreferences.OTHER1);
-    private final CheckBox polity8 = new CheckBox(CivilizationDisplayPreferences.OTHER2);
-    private final CheckBox polity9 = new CheckBox(CivilizationDisplayPreferences.OTHER3);
-    private final CheckBox polity10 = new CheckBox(CivilizationDisplayPreferences.OTHER4);
-    private final CheckBox polity11 = new CheckBox(CivilizationDisplayPreferences.NONE);
+    @FXML
+    private CheckBox polity1;
+    @FXML
+    private CheckBox polity2;
+    @FXML
+    private CheckBox polity3;
+    @FXML
+    private CheckBox polity4;
+    @FXML
+    private CheckBox polity5;
+    @FXML
+    private CheckBox polity6;
+    @FXML
+    private CheckBox polity7;
+    @FXML
+    private CheckBox polity8;
+    @FXML
+    private CheckBox polity9;
+    @FXML
+    private CheckBox polity10;
+    @FXML
+    private CheckBox polity11;
 
     public PolitySelectionPanel() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("PolitySelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load PolitySelectionPanel.fxml", ex);
+        }
+    }
+
+    @FXML
+    private void initialize() {
+        applyLabelStyle(polityLabel);
+        polity1.setText(CivilizationDisplayPreferences.TERRAN);
+        polity2.setText(CivilizationDisplayPreferences.DORNANI);
+        polity3.setText(CivilizationDisplayPreferences.KTOR);
+        polity4.setText(CivilizationDisplayPreferences.ARAKUR);
+        polity5.setText(CivilizationDisplayPreferences.HKHRKH);
+        polity6.setText(CivilizationDisplayPreferences.SLAASRIITHI);
+        polity7.setText(CivilizationDisplayPreferences.OTHER1);
+        polity8.setText(CivilizationDisplayPreferences.OTHER2);
+        polity9.setText(CivilizationDisplayPreferences.OTHER3);
+        polity10.setText(CivilizationDisplayPreferences.OTHER4);
+        polity11.setText(CivilizationDisplayPreferences.NONE);
 
         yesPolity.setSelected(false);
-
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
-
-        Label polityLabel = createLabel("Polity");
-
-        planGrid.add(polityLabel, 0, 0);
-        planGrid.add(yesPolity, 1, 0);
-
-        planGrid.add(polity1, 2, 0);
-        planGrid.add(polity2, 2, 1);
-        planGrid.add(polity3, 2, 2);
-        planGrid.add(polity4, 2, 3);
-
-        planGrid.add(polity5, 3, 0);
-        planGrid.add(polity6, 3, 1);
-        planGrid.add(polity7, 3, 2);
-        planGrid.add(polity8, 3, 3);
-
-        planGrid.add(polity9, 4, 0);
-        planGrid.add(polity10, 4, 1);
-        planGrid.add(polity11, 4, 2);
-
         enable(false);
         clearSelected();
-
         initEventHandler();
     }
 

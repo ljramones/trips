@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,47 +21,51 @@ import java.util.List;
 @Slf4j
 public class PopulationSelectionPanel extends BasePane {
 
-    private final CheckBox yesNoPop = new CheckBox("Yes?");
-    private final CheckBox pop0 = new CheckBox("1s");
-    private final CheckBox pop1 = new CheckBox("10s");
-    private final CheckBox pop2 = new CheckBox("100s");
-    private final CheckBox pop3 = new CheckBox("1000s");
-    private final CheckBox pop4 = new CheckBox("10\u2074");
-    private final CheckBox pop5 = new CheckBox("10\u2075");
-    private final CheckBox pop6 = new CheckBox("10\u2076");
-    private final CheckBox pop7 = new CheckBox("10\u2077");
-    private final CheckBox pop8 = new CheckBox("10\u2078");
-    private final CheckBox pop9 = new CheckBox("10\u2079");
+    @FXML
+    private Label populationLabel;
+    @FXML
+    private CheckBox yesNoPop;
+    @FXML
+    private CheckBox pop0;
+    @FXML
+    private CheckBox pop1;
+    @FXML
+    private CheckBox pop2;
+    @FXML
+    private CheckBox pop3;
+    @FXML
+    private CheckBox pop4;
+    @FXML
+    private CheckBox pop5;
+    @FXML
+    private CheckBox pop6;
+    @FXML
+    private CheckBox pop7;
+    @FXML
+    private CheckBox pop8;
+    @FXML
+    private CheckBox pop9;
 
 
     public PopulationSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("PopulationSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load PopulationSelectionPanel.fxml", ex);
+        }
 
-        Label populationLabel = createLabel("Population (magnitude) ");
+    }
 
-        planGrid.add(populationLabel, 0, 0);
-
-        planGrid.add(yesNoPop, 1, 0);
-
-        planGrid.add(pop0, 2, 0);
-        planGrid.add(pop1, 3, 0);
-        planGrid.add(pop2, 4, 0);
-        planGrid.add(pop3, 5, 0);
-        planGrid.add(pop4, 6, 0);
-
-        planGrid.add(pop5, 2, 1);
-        planGrid.add(pop6, 3, 1);
-        planGrid.add(pop7, 4, 1);
-        planGrid.add(pop8, 5, 1);
-        planGrid.add(pop9, 6, 1);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(populationLabel);
         yesNoPop.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
-
     }
 
     public boolean isSelected() {

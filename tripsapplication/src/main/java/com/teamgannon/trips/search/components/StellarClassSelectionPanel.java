@@ -2,6 +2,8 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -10,6 +12,7 @@ import javafx.scene.text.FontPosture;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,83 +28,65 @@ public class StellarClassSelectionPanel extends BasePane {
 
     private final Font secondaryFont = Font.font("Arial", MEDIUM, FontPosture.ITALIC, 13);
 
-    private final CheckBox yesClassStar = new CheckBox("Yes?");
-
-    private final CheckBox commonStars = new CheckBox("Common Stars?");
-
-    private final CheckBox oClassStar = new CheckBox("O");
-    private final CheckBox bClassStar = new CheckBox("B");
-    private final CheckBox aClassStar = new CheckBox("A");
-    private final CheckBox fClassStar = new CheckBox("F");
-    private final CheckBox gClassStar = new CheckBox("G");
-    private final CheckBox kClassStar = new CheckBox("K");
-    private final CheckBox mClassStar = new CheckBox("M");
-
-    private final CheckBox otherStars = new CheckBox("Other Stars?");
-
-    private final CheckBox wClassStar = new CheckBox("W");
-    private final CheckBox lClassStar = new CheckBox("L");
-    private final CheckBox tClassStar = new CheckBox("T");
-    private final CheckBox yClassStar = new CheckBox("Y");
-    private final CheckBox cClassStar = new CheckBox("C");
-    private final CheckBox sClassStar = new CheckBox("S");
-
-    private GridPane commonStarsPane = new GridPane();
-    private GridPane otherStarsPane = new GridPane();
+    @FXML
+    private Label stellarClassLabel;
+    @FXML
+    private CheckBox yesClassStar;
+    @FXML
+    private CheckBox commonStars;
+    @FXML
+    private CheckBox oClassStar;
+    @FXML
+    private CheckBox bClassStar;
+    @FXML
+    private CheckBox aClassStar;
+    @FXML
+    private CheckBox fClassStar;
+    @FXML
+    private CheckBox gClassStar;
+    @FXML
+    private CheckBox kClassStar;
+    @FXML
+    private CheckBox mClassStar;
+    @FXML
+    private CheckBox otherStars;
+    @FXML
+    private CheckBox wClassStar;
+    @FXML
+    private CheckBox lClassStar;
+    @FXML
+    private CheckBox tClassStar;
+    @FXML
+    private CheckBox yClassStar;
+    @FXML
+    private CheckBox cClassStar;
+    @FXML
+    private CheckBox sClassStar;
+    @FXML
+    private GridPane commonStarsPane;
+    @FXML
+    private GridPane otherStarsPane;
 
     public StellarClassSelectionPanel() {
-
-        yesClassStar.setSelected(false);
-
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
-        Label stellarClassLabel = createLabel("Stellar Class");
-        planGrid.add(stellarClassLabel, 0, 0);
-        planGrid.add(yesClassStar, 1, 0);
-
-        planGrid.add(commonStarsPane, 1, 1);
-        planGrid.add(otherStarsPane, 1, 2);
-
-        commonStarsPane.setHgap(10);
-        commonStarsPane.setVgap(10);
-        commonStars.setFont(secondaryFont);
-
-        otherStarsPane.setHgap(10);
-        otherStarsPane.setVgap(10);
-        otherStars.setFont(secondaryFont);
-
-        commonStarsPane.add(commonStars, 0, 0);
-        commonStarsPane.add(oClassStar, 1, 0);
-        commonStarsPane.add(bClassStar, 2, 0);
-        commonStarsPane.add(aClassStar, 3, 0);
-        commonStarsPane.add(fClassStar, 4, 0);
-
-        commonStarsPane.add(gClassStar, 1, 1);
-        commonStarsPane.add(kClassStar, 2, 1);
-        commonStarsPane.add(mClassStar, 3, 1);
-
-        //
-
-        otherStarsPane.add(otherStars, 0, 0);
-        otherStarsPane.add(wClassStar, 1, 0);
-        otherStarsPane.add(lClassStar, 2, 0);
-        otherStarsPane.add(tClassStar, 3, 0);
-
-        otherStarsPane.add(yClassStar, 1, 1);
-        otherStarsPane.add(cClassStar, 2, 1);
-        otherStarsPane.add(sClassStar, 3, 1);
-
-        //////////////////////////////////
-
-
-        enable(false);
-        clearSelected();
-
-        initEventHandler();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("StellarClassSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load StellarClassSelectionPanel.fxml", ex);
+        }
     }
 
-    public @NotNull GridPane getPane() {
-        return planGrid;
+    @FXML
+    private void initialize() {
+        applyLabelStyle(stellarClassLabel);
+        commonStars.setFont(secondaryFont);
+        otherStars.setFont(secondaryFont);
+        yesClassStar.setSelected(false);
+        enable(false);
+        clearSelected();
+        initEventHandler();
     }
 
     public @NotNull List<String> getSelection() {

@@ -27,25 +27,22 @@ public class SearchService {
     }
 
     @NotNull List<StarObject> findAllStarsFromSol(double distance) {
-        List<StarObject> starObjects = new ArrayList<>();
-
-
-        return starObjects;
+        AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
+        astroSearchQuery.setUpperDistanceLimit(distance);
+        astroSearchQuery.setDescriptor(tripsContext.getSearchContext().getDataSetDescriptor());
+        return repository.findBySearchQuery(astroSearchQuery);
     }
 
 
     @NotNull List<StarObject> findAllStarsFromXYZ(double distance) {
-        List<StarObject> starObjects = new ArrayList<>();
-
-
-        return starObjects;
+        AstroSearchQuery astroSearchQuery = new AstroSearchQuery();
+        astroSearchQuery.setUpperDistanceLimit(distance);
+        astroSearchQuery.setDescriptor(tripsContext.getSearchContext().getDataSetDescriptor());
+        return repository.findBySearchQuery(astroSearchQuery);
     }
 
     @NotNull List<StarObject> FindStarsFromQuery(AstroSearchQuery astroSearchQuery) {
-        List<StarObject> starObjects = new ArrayList<>();
-
-
-        return starObjects;
+        return repository.findBySearchQuery(astroSearchQuery);
     }
 
 

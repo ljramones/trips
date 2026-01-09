@@ -1,6 +1,8 @@
 package com.teamgannon.trips.search.components;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -8,25 +10,47 @@ import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.RangeSlider;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 /**
  * Created by larrymitchell on 2017-06-25.
  */
 @Slf4j
 public class DistanceSelectionPanel extends BasePane {
 
-    private final @NotNull RangeSlider d2EarthSlider;
-    TextField lowRangeTextField = new TextField();
-    TextField highRangeTextField = new TextField();
+    @FXML
+    private Label distanceToEarthLabel;
+    @FXML
+    private RangeSlider d2EarthSlider;
+    @FXML
+    private TextField lowRangeTextField;
+    @FXML
+    private TextField highRangeTextField;
+
     private DistanceRange distanceRange = DistanceRange.builder().lowValue(0).highValue(20).min(0).max(20).build();
+    private final double searchDistance;
 
 
     public DistanceSelectionPanel(double searchDistance, @NotNull DistanceRange distanceRange) {
 
+        this.searchDistance = searchDistance;
         this.distanceRange = distanceRange;
-        Label distanceToEarthLabel = createLabel("Radius from Center\n   (in ly)");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("DistanceSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load DistanceSelectionPanel.fxml", ex);
+        }
+    }
 
-
-        d2EarthSlider = new RangeSlider(distanceRange.getMin(), distanceRange.getMax(), distanceRange.getLowValue(), distanceRange.getHighValue());
+    @FXML
+    private void initialize() {
+        applyLabelStyle(distanceToEarthLabel);
+        d2EarthSlider.setMin(distanceRange.getMin());
+        d2EarthSlider.setMax(distanceRange.getMax());
+        d2EarthSlider.setLowValue(distanceRange.getLowValue());
+        d2EarthSlider.setHighValue(distanceRange.getHighValue());
         d2EarthSlider.setPrefWidth(400);
         d2EarthSlider.setPrefHeight(25);
         d2EarthSlider.setHighValue(searchDistance);
@@ -55,7 +79,7 @@ public class DistanceSelectionPanel extends BasePane {
         lowRangeTextField.setText(String.format("%.2f", distanceRange.getLowValue()));
         lowRangeTextField.setPrefWidth(60);
         lowRangeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.matches("^([0-9]{1,2}\\.?[0-9]{0,2})$")) {
+            if (newValue.matches("^([0-9]{1,3}\\.?[0-9]{0,2})$")) {
                 try {
                     double lowValue = Double.parseDouble(newValue);
                     d2EarthSlider.setLowValue(lowValue);
@@ -78,13 +102,7 @@ public class DistanceSelectionPanel extends BasePane {
                 }
             }
         });
-
-        planGrid.add(distanceToEarthLabel, 0, 0);
-        planGrid.add(lowRangeTextField, 1, 0);
-        planGrid.add(d2EarthSlider, 2, 0);
-        planGrid.add(highRangeTextField, 3, 0);
     }
-
 
     public void setRange(@NotNull DistanceRange distanceRange) {
         this.distanceRange = distanceRange;

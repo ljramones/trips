@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,31 +21,38 @@ import java.util.List;
 @Slf4j
 public class PortSelectionPanel extends BasePane {
 
-    private final CheckBox yesNoPort = new CheckBox("Yes?");
-    private final CheckBox aPort = new CheckBox("A");
-    private final CheckBox bPort = new CheckBox("B");
-    private final CheckBox cPort = new CheckBox("C");
-    private final CheckBox dPort = new CheckBox("D");
-    private final CheckBox ePort = new CheckBox("E");
+    @FXML
+    private Label portLabel;
+    @FXML
+    private CheckBox yesNoPort;
+    @FXML
+    private CheckBox aPort;
+    @FXML
+    private CheckBox bPort;
+    @FXML
+    private CheckBox cPort;
+    @FXML
+    private CheckBox dPort;
+    @FXML
+    private CheckBox ePort;
 
     public PortSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("PortSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load PortSelectionPanel.fxml", ex);
+        }
+    }
 
-        Label portLabel = createLabel("Port Present");
-
-        planGrid.add(portLabel, 0, 0);
-        planGrid.add(yesNoPort, 1, 0);
-        planGrid.add(aPort, 2, 0);
-        planGrid.add(bPort, 3, 0);
-        planGrid.add(cPort, 4, 0);
-        planGrid.add(dPort, 5, 0);
-        planGrid.add(ePort, 6, 0);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(portLabel);
         yesNoPort.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
     }
 

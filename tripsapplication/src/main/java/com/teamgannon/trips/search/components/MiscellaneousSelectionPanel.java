@@ -1,7 +1,11 @@
 package com.teamgannon.trips.search.components;
 
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+
+import java.io.IOException;
 
 /**
  * Miscellaneous selection panel
@@ -10,23 +14,30 @@ import javafx.scene.control.Label;
  */
 public class MiscellaneousSelectionPanel extends BasePane {
 
-    private final CheckBox anomalyPresent = new CheckBox("Present?");
-    private final CheckBox otherPresent = new CheckBox("present?");
+    @FXML
+    private Label otherLabel;
+    @FXML
+    private Label anomalyLabel;
+    @FXML
+    private CheckBox anomalyPresent;
+    @FXML
+    private CheckBox otherPresent;
 
     public MiscellaneousSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("MiscellaneousSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load MiscellaneousSelectionPanel.fxml", ex);
+        }
+    }
 
-        Label otherLabel = createLabel("Other");
-
-        planGrid.add(otherLabel, 0, 0);
-        planGrid.add(otherPresent, 1, 0);
-
-        Label anomalyLabel = createLabel("Anomaly");
-
-        planGrid.add(anomalyLabel, 0, 1);
-        planGrid.add(anomalyPresent, 1, 1);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(otherLabel);
+        applyLabelStyle(anomalyLabel);
     }
 
     public boolean isAnomalyPresent() {

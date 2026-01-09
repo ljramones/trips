@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,48 +21,50 @@ import java.util.List;
 @Slf4j
 public class ProductsSelectionPanel extends BasePane {
 
-    private final CheckBox yesNoProducts = new CheckBox("Yes?");
-    private final CheckBox agriProd = new CheckBox("Agricultural");
-    private final CheckBox indusProd = new CheckBox("Industry");
-    private final CheckBox svcsProd = new CheckBox("Services");
-    private final CheckBox rawMatProd = new CheckBox("Raw Materials");
-    private final CheckBox bioProd = new CheckBox("Bio");
-    private final CheckBox fossilFuelProd = new CheckBox("Fossil Fuel");
-    private final CheckBox finishGoodsProd = new CheckBox("Finished Goods");
-    private final CheckBox hiTechProd = new CheckBox("Hi Tech");
-    private final CheckBox uniqProd = new CheckBox("Unique");
-    private final CheckBox enerProd = new CheckBox("Energy (Nuke, AM or Fuel Cells \nat high export levels");
+    @FXML
+    private Label productsLabel;
+    @FXML
+    private CheckBox yesNoProducts;
+    @FXML
+    private CheckBox agriProd;
+    @FXML
+    private CheckBox indusProd;
+    @FXML
+    private CheckBox svcsProd;
+    @FXML
+    private CheckBox rawMatProd;
+    @FXML
+    private CheckBox bioProd;
+    @FXML
+    private CheckBox fossilFuelProd;
+    @FXML
+    private CheckBox finishGoodsProd;
+    @FXML
+    private CheckBox hiTechProd;
+    @FXML
+    private CheckBox uniqProd;
+    @FXML
+    private CheckBox enerProd;
 
     public ProductsSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("ProductsSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load ProductsSelectionPanel.fxml", ex);
+        }
 
-        Label productsLabel = createLabel("Products");
+    }
 
-        planGrid.add(productsLabel, 0, 0);
-        planGrid.add(yesNoProducts, 1, 0);
-
-        planGrid.add(agriProd, 2, 0);
-        planGrid.add(indusProd, 3, 0);
-        planGrid.add(svcsProd, 4, 0);
-
-        planGrid.add(bioProd, 2, 1);
-        planGrid.add(fossilFuelProd, 3, 1);
-        planGrid.add(finishGoodsProd, 4, 1);
-
-
-        planGrid.add(hiTechProd, 2, 2);
-        planGrid.add(uniqProd, 3, 2);
-        planGrid.add(rawMatProd, 4, 2);
-
-        planGrid.add(enerProd, 2, 3, 3, 1);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(productsLabel);
         yesNoProducts.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
-
     }
 
     public boolean isSelected() {

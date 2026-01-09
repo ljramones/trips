@@ -129,7 +129,7 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         if (!stellarSet.isEmpty()) {
             List<String> spectralClasses = stellarSet.stream().map(StellarType::getValue).collect(Collectors.toList());
             Expression<String> exp = root.get("orthoSpectralClass");
-            Expression<String> subString = cb.substring(exp, 0, 1);
+            Expression<String> subString = cb.substring(exp, 1, 1);
             Predicate predicate = subString.in(spectralClasses);
             predicates.add(predicate);
         }
@@ -159,8 +159,10 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         // setup a predicate based on military space types
         Set<String> politySet = astroSearchQuery.getPolities();
         if (!politySet.isEmpty()) {
-            boolean noneSelected = politySet.contains("None");
-            List<String> polityList = politySet.stream().filter(polity -> !polity.equals("none")).collect(Collectors.toList());
+            boolean noneSelected = politySet.stream().anyMatch(polity -> polity.equalsIgnoreCase("none"));
+            List<String> polityList = politySet.stream()
+                    .filter(polity -> !polity.equalsIgnoreCase("none"))
+                    .collect(Collectors.toList());
             if (noneSelected) {
                 log.info("None selected");
                 polityList.add("NA");

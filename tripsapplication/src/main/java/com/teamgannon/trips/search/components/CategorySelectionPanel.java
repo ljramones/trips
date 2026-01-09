@@ -1,7 +1,11 @@
 package com.teamgannon.trips.search.components;
 
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+
+import java.io.IOException;
 
 /**
  * Selection of
@@ -10,21 +14,29 @@ import javafx.scene.control.Label;
  */
 public class CategorySelectionPanel extends BasePane {
 
-    private final CheckBox realStars = new CheckBox("Real");
-    private final CheckBox fictionalStars = new CheckBox("Fictional");
+    @FXML
+    private Label categoryLabel;
+    @FXML
+    private CheckBox realStars;
+    @FXML
+    private CheckBox fictionalStars;
 
     public CategorySelectionPanel() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("CategorySelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load CategorySelectionPanel.fxml", ex);
+        }
+    }
+
+    @FXML
+    private void initialize() {
+        applyLabelStyle(categoryLabel);
         realStars.setSelected(true);
         fictionalStars.setSelected(false);
-
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
-
-        Label categoryLabel = createLabel("Category");
-
-        planGrid.add(categoryLabel, 0, 0);
-        planGrid.add(realStars, 1, 0);
-        planGrid.add(fictionalStars, 2, 0);
     }
 
     public boolean isRealStars() {

@@ -240,16 +240,24 @@ DataSetDescriptor implements Serializable {
         if (astrographicDataList == null) {
             return new HashSet<>();
         }
+        if (astrographicDataList.isBlank()) {
+            return new HashSet<>();
+        }
         // separate and convert to a list
         List<String> stringList = Arrays.asList(astrographicDataList.split("\\s*,\\s*"));
 
         // convert to an array list of UUIDs
-        return stringList.stream().map(UUID::fromString).collect(Collectors.toSet());
+        return stringList.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(UUID::fromString)
+                .collect(Collectors.toSet());
     }
 
     public void setAstrographicDataList(@org.jetbrains.annotations.NotNull Set<UUID> uuidList) {
         numberStars = (long) uuidList.size();
-        astrographicDataList = uuidList.stream().map(uuid -> uuid.toString() + ",").collect(Collectors.joining());
+        astrographicDataList = uuidList.stream()
+                .map(UUID::toString)
+                .collect(Collectors.joining(","));
     }
 
     public @org.jetbrains.annotations.NotNull String getCreationDate() {

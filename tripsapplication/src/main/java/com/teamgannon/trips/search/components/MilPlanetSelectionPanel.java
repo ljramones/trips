@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,33 +21,40 @@ import java.util.List;
 @Slf4j
 public class MilPlanetSelectionPanel extends BasePane {
 
-    private final CheckBox yesNoMilPlan = new CheckBox("Yes?");
-    private final CheckBox aMilPlan = new CheckBox("A");
-    private final CheckBox bMilPlan = new CheckBox("B");
-    private final CheckBox cMilPlan = new CheckBox("C");
-    private final CheckBox dMilPlan = new CheckBox("D");
-    private final CheckBox eMilPlan = new CheckBox("E");
+    @FXML
+    private Label militaryPlanetsideLabel;
+    @FXML
+    private CheckBox yesNoMilPlan;
+    @FXML
+    private CheckBox aMilPlan;
+    @FXML
+    private CheckBox bMilPlan;
+    @FXML
+    private CheckBox cMilPlan;
+    @FXML
+    private CheckBox dMilPlan;
+    @FXML
+    private CheckBox eMilPlan;
 
     public MilPlanetSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("MilPlanetSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load MilPlanetSelectionPanel.fxml", ex);
+        }
 
-        Label militaryPlanetsideLabel = createLabel("Military Planetside");
+    }
 
-        planGrid.add(militaryPlanetsideLabel, 0, 0);
-        planGrid.add(yesNoMilPlan, 1, 0);
-        planGrid.add(aMilPlan, 2, 0);
-        planGrid.add(bMilPlan, 3, 0);
-        planGrid.add(cMilPlan, 4, 0);
-        planGrid.add(dMilPlan, 5, 0);
-        planGrid.add(eMilPlan, 6, 0);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(militaryPlanetsideLabel);
         yesNoMilPlan.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
-
     }
 
     public boolean isSelected() {

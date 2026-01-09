@@ -2,10 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,32 +22,37 @@ import java.util.List;
 public class FuelSelectionPanel extends BasePane {
 
 
-    private final CheckBox yesNoFuel = new CheckBox("Yes?");
-    private final CheckBox h2Fuel = new CheckBox("H2");
-    private final CheckBox antiFuel = new CheckBox("Antimatter");
-    private final CheckBox gasGiantFuel = new CheckBox("Gas Giant");
-    private final CheckBox waterFuel = new CheckBox("Water World");
-
-    private final String enableStyle;
+    @FXML
+    private Label fuelLabel;
+    @FXML
+    private CheckBox yesNoFuel;
+    @FXML
+    private CheckBox h2Fuel;
+    @FXML
+    private CheckBox antiFuel;
+    @FXML
+    private CheckBox gasGiantFuel;
+    @FXML
+    private CheckBox waterFuel;
 
 
     public FuelSelectionPanel() {
-        planGrid.setHgap(10); //horizontal gap in pixels
-        planGrid.setVgap(10); //vertical gap in pixels
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("FuelSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load FuelSelectionPanel.fxml", ex);
+        }
+    }
 
-        enableStyle = h2Fuel.getStyle();
-
-        planGrid.add(createLabel("Fuel"), 0, 0);
-        planGrid.add(yesNoFuel, 1, 0);
-        planGrid.add(h2Fuel, 2, 0);
-        planGrid.add(antiFuel, 3, 0);
-        planGrid.add(gasGiantFuel, 4, 0);
-        planGrid.add(waterFuel, 5, 0);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(fuelLabel);
         yesNoFuel.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
     }
 

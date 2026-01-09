@@ -96,8 +96,13 @@ public class DataSetTable {
         // the actual ui component to hold these entries
         dialog = new Dialog<>();
 
-        dataSetName = starObjects.get(0).getDataSetName();
-        totalPages = (int) ceil(starObjects.size() / (float) PAGE_SIZE);  // bump to next integer
+        if (starObjects.isEmpty()) {
+            dataSetName = "Unknown";
+            totalPages = 1;
+        } else {
+            dataSetName = starObjects.get(0).getDataSetName();
+            totalPages = (int) ceil(starObjects.size() / (float) PAGE_SIZE);  // bump to next integer
+        }
 
         setTitle();
 
@@ -624,7 +629,7 @@ public class DataSetTable {
         if (sortOrder.equals(SortType.ASCENDING)) {
             starObjects.sort(Comparator.comparing(StarObject::getDisplayName));
         } else {
-            starObjects.sort(Comparator.comparing(StarObject::getDistance).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getDisplayName).reversed());
         }
     }
 
@@ -669,7 +674,7 @@ public class DataSetTable {
         if (sortOrder.equals(SortType.ASCENDING)) {
             starObjects.sort(Comparator.comparing(StarObject::getRadius));
         } else {
-            starObjects.sort(Comparator.comparing(StarObject::getSpectralClass).reversed());
+            starObjects.sort(Comparator.comparing(StarObject::getRadius).reversed());
         }
     }
 

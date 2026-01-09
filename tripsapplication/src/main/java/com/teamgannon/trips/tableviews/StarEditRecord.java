@@ -4,7 +4,6 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
 
 @Data
 public class StarEditRecord {

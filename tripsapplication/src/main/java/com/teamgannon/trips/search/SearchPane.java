@@ -4,21 +4,21 @@ import com.teamgannon.trips.events.ExportQueryEvent;
 import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.components.*;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class SearchPane extends Pane {
+public class SearchPane extends VBox {
 
     private final SearchContext searchContext;
     private final ApplicationEventPublisher eventPublisher;
@@ -37,6 +37,36 @@ public class SearchPane extends Pane {
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
     private DataSetPanel dataSetChoicePanel;
 
+    @FXML
+    private GridPane queryBox;
+    @FXML
+    private Pane datasetBox;
+    @FXML
+    private Pane distanceBox;
+    @FXML
+    private Pane stellarClassBox;
+    @FXML
+    private Pane categoryBox;
+    @FXML
+    private Pane fuelBox;
+    @FXML
+    private Pane worldBox;
+    @FXML
+    private Pane portBox;
+    @FXML
+    private Pane populationBox;
+    @FXML
+    private Pane polityBox;
+    @FXML
+    private Pane techBox;
+    @FXML
+    private Pane productsBox;
+    @FXML
+    private Pane milSpaceBox;
+    @FXML
+    private Pane milPlanetBox;
+    @FXML
+    private Pane miscBox;
 
     /**
      * constructor
@@ -64,40 +94,35 @@ public class SearchPane extends Pane {
         }
 
         d2EarthSlider = new DistanceSelectionPanel(searchContext.getAstroSearchQuery().getUpperDistanceLimit(), distanceRange);
-
-        this.getChildren().add(createContent());
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("SearchPane.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to load SearchPane.fxml", ex);
+        }
     }
 
-    private @NotNull Node createContent() {
-
-        VBox vBox = new VBox();
-        vBox.setSpacing(10);
-
-        GridPane queryBox = new GridPane();
-        queryBox.setPadding(new Insets(10, 10, 10, 10));
-        queryBox.setVgap(5);
-        queryBox.setHgap(5);
-
+    @FXML
+    private void initialize() {
         dataSetChoicePanel = new DataSetPanel(searchContext, eventPublisher);
-        queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
-        queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
-        queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);
-        queryBox.add(categorySelectionPanel.getPane(), 0, 4);
-        queryBox.add(fuelSelectionPanel.getPane(), 0, 5);
-        queryBox.add(worldSelectionPanel.getPane(), 0, 6);
-        queryBox.add(portSelectionPanel.getPane(), 0, 7);
-        queryBox.add(populationSelectionPanel.getPane(), 0, 8);
-        queryBox.add(politySelectionPanel.getPane(), 0, 9);
+        datasetBox.getChildren().add(dataSetChoicePanel.getPane());
+        distanceBox.getChildren().add(d2EarthSlider.getPane());
 
-        queryBox.add(techSelectionPanel.getPane(), 1, 3);
-        queryBox.add(productsSelectionPanel.getPane(), 1, 4);
-        queryBox.add(milSpaceSelectionPanel.getPane(), 1, 5);
-        queryBox.add(milPlanetSelectionPanel.getPane(), 1, 6);
-        queryBox.add(miscellaneousSelectionPanel.getPane(), 1, 7);
+        stellarClassBox.getChildren().add(stellarClassSelectionPanel.getPane());
+        categoryBox.getChildren().add(categorySelectionPanel.getPane());
+        fuelBox.getChildren().add(fuelSelectionPanel.getPane());
+        worldBox.getChildren().add(worldSelectionPanel.getPane());
+        portBox.getChildren().add(portSelectionPanel.getPane());
+        populationBox.getChildren().add(populationSelectionPanel.getPane());
+        polityBox.getChildren().add(politySelectionPanel.getPane());
 
-        vBox.getChildren().add(queryBox);
-
-        return vBox;
+        techBox.getChildren().add(techSelectionPanel.getPane());
+        productsBox.getChildren().add(productsSelectionPanel.getPane());
+        milSpaceBox.getChildren().add(milSpaceSelectionPanel.getPane());
+        milPlanetBox.getChildren().add(milPlanetSelectionPanel.getPane());
+        miscBox.getChildren().add(miscellaneousSelectionPanel.getPane());
     }
 
     public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
@@ -165,7 +190,6 @@ public class SearchPane extends Pane {
         getStellarTypes(astroSearchQuery);
         getPortTypes(astroSearchQuery);
         getTechTypes(astroSearchQuery);
-        getStellarTypes(astroSearchQuery);
         getFuelTypes(astroSearchQuery);
         getPopulationTypes(astroSearchQuery);
         getWorldSearch(astroSearchQuery);
@@ -189,7 +213,7 @@ public class SearchPane extends Pane {
     private void getPortTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearPortTypes();
         if (portSelectionPanel.isSelected()) {
-            astroSearchQuery.setPortSearch(false);
+            astroSearchQuery.setPortSearch(true);
             astroSearchQuery.addPorts(portSelectionPanel.getSelections());
         } else {
             astroSearchQuery.setPortSearch(false);
@@ -249,6 +273,7 @@ public class SearchPane extends Pane {
     private void getTechTypes(@NotNull AstroSearchQuery astroSearchQuery) {
         astroSearchQuery.clearTechTypes();
         if (techSelectionPanel.isSelected()) {
+            astroSearchQuery.setTechSearch(true);
             astroSearchQuery.addTechs(techSelectionPanel.getSelections());
         } else {
             astroSearchQuery.setTechSearch(false);

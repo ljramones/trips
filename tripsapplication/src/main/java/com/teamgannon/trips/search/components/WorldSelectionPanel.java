@@ -2,11 +2,14 @@ package com.teamgannon.trips.search.components;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,30 +22,37 @@ import java.util.List;
 public class WorldSelectionPanel extends BasePane {
 
 
-    private final CheckBox yesNoWorld = new CheckBox("Yes?");
-    private final CheckBox greenWorld = new CheckBox("Green");
-    private final CheckBox greyWorld = new CheckBox("Grey");
-    private final CheckBox brownWorld = new CheckBox("Brown");
+    @FXML
+    private Label worldLabel;
+    @FXML
+    private CheckBox yesNoWorld;
+    @FXML
+    private CheckBox greenWorld;
+    @FXML
+    private CheckBox greyWorld;
+    @FXML
+    private CheckBox brownWorld;
 
 
     public WorldSelectionPanel() {
-        planGrid.setHgap(10);
-        planGrid.setVgap(10);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("WorldSelectionPanel.fxml"));
+        loader.setRoot(this);
+        loader.setController(this);
+        try {
+            loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load WorldSelectionPanel.fxml", ex);
+        }
 
-        Label worldLabel = createLabel("World Present");
+    }
 
-        planGrid.add(worldLabel, 0, 0);
-        planGrid.add(yesNoWorld, 1, 0);
-        planGrid.add(greenWorld, 2, 0);
-        planGrid.add(greyWorld, 3, 0);
-        planGrid.add(brownWorld, 4, 0);
-
+    @FXML
+    private void initialize() {
+        applyLabelStyle(worldLabel);
         yesNoWorld.setSelected(false);
         enable(false);
         clearSelected();
-
         initEventHandler();
-
     }
 
     public boolean isSelected() {
