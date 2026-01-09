@@ -4,19 +4,22 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.utility.SesameResolver;
 import javafx.event.ActionEvent;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogEvent;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -28,86 +31,158 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private final @NotNull StarObject record;
 
     // Overview Info
-    private final Label recordIdLabel = new Label();
-    private final Label dataSetLabel = new Label();
+    @FXML
+    private Label recordIdLabel;
+    @FXML
+    private Label dataSetLabel;
 
-    private final TextField starNameTextField = new TextField();
-    private final TextField commonNameTextField = new TextField();
-    private final TextField constellationNameTextField = new TextField();
-    private final TextField spectralClassTextField = new TextField();
-    private final TextField distanceNameTextField = new TextField();
-    private final TextField metallicityTextfield = new TextField();
-    private final TextField ageTextfield = new TextField();
-    private final TextField xTextField = new TextField();
-    private final TextField yTextField = new TextField();
-    private final TextField zTextField = new TextField();
-    private final TextArea notesArea = new TextArea();
+    @FXML
+    private TextField starNameTextField;
+    @FXML
+    private TextField commonNameTextField;
+    @FXML
+    private TextField constellationNameTextField;
+    @FXML
+    private TextField spectralClassTextField;
+    @FXML
+    private TextField distanceNameTextField;
+    @FXML
+    private TextField metallicityTextfield;
+    @FXML
+    private TextField ageTextfield;
+    @FXML
+    private TextField xTextField;
+    @FXML
+    private TextField yTextField;
+    @FXML
+    private TextField zTextField;
+    @FXML
+    private TextArea notesArea;
 
     ////////// Other Info
 
-    private final TextField simbadIdTextField = new TextField();
-    private final TextField galacticCoorLatTextField = new TextField();
-    private final TextField galacticCoorLongTextField = new TextField();
-    private final TextField radiusTextField = new TextField();
-    private final TextField tempTextField = new TextField();
-    private final TextField raLabel = new TextField();
-    private final TextField decLabel = new TextField();
-    private final TextField pmraLabel = new TextField();
-    private final TextField pmdecLabel = new TextField();
-    private final TextField parallaxLabel = new TextField();
-    private final TextField radialVelocityLabel = new TextField();
-    private final TextField bprpLabel = new TextField();
-    private final TextField bpgLabel = new TextField();
-    private final TextField grpLabel = new TextField();
+    @FXML
+    private TextField simbadIdTextField;
+    @FXML
+    private TextField galacticCoorLatTextField;
+    @FXML
+    private TextField galacticCoorLongTextField;
+    @FXML
+    private TextField radiusTextField;
+    @FXML
+    private TextField tempTextField;
+    @FXML
+    private TextField raLabel;
+    @FXML
+    private TextField decLabel;
+    @FXML
+    private TextField pmraLabel;
+    @FXML
+    private TextField pmdecLabel;
+    @FXML
+    private TextField parallaxLabel;
+    @FXML
+    private TextField radialVelocityLabel;
+    @FXML
+    private TextField bprpLabel;
+    @FXML
+    private TextField bpgLabel;
+    @FXML
+    private TextField grpLabel;
 
-    private final TextField maguTextField = new TextField();
-    private final TextField magbTextField = new TextField();
-    private final TextField magvTextField = new TextField();
-    private final TextField magrTextField = new TextField();
-    private final TextField magiTextField = new TextField();
+    @FXML
+    private TextField maguTextField;
+    @FXML
+    private TextField magbTextField;
+    @FXML
+    private TextField magvTextField;
+    @FXML
+    private TextField magrTextField;
+    @FXML
+    private TextField magiTextField;
 
-    private final TextField gaiaIdTextField = new TextField();
+    @FXML
+    private TextField gaiaIdTextField;
 
-    private final TextArea aliasTextArea = new TextArea();
+    @FXML
+    private TextArea aliasTextArea;
 
     ///////// fictional Info
-    private final TextField polityTextField = new TextField();
-    private final TextField worldTypeTextField = new TextField();
-    private final TextField fuelTypeTextField = new TextField();
-    private final TextField techTypeTextField = new TextField();
-    private final TextField portTypeTextField = new TextField();
-    private final TextField popTypeTextField = new TextField();
-    private final TextField prodField = new TextField();
-    private final TextField milspaceTextField = new TextField();
-    private final TextField milplanTextField = new TextField();
+    @FXML
+    private TextField polityTextField;
+    @FXML
+    private TextField worldTypeTextField;
+    @FXML
+    private TextField fuelTypeTextField;
+    @FXML
+    private TextField techTypeTextField;
+    @FXML
+    private TextField portTypeTextField;
+    @FXML
+    private TextField popTypeTextField;
+    @FXML
+    private TextField prodField;
+    @FXML
+    private TextField milspaceTextField;
+    @FXML
+    private TextField milplanTextField;
 
-    private final CheckBox anomalyCheckbox = new CheckBox();
-    private final CheckBox otherCheckbox = new CheckBox();
+    @FXML
+    private CheckBox anomalyCheckbox;
+    @FXML
+    private CheckBox otherCheckbox;
 
     //////////////// User Specific
-    private final TextField misc1TextField = new TextField();
-    private final TextField misc2TextField = new TextField();
-    private final TextField misc3TextField = new TextField();
-    private final TextField misc4TextField = new TextField();
-    private final TextField misc5TextField = new TextField();
+    @FXML
+    private TextField misc1TextField;
+    @FXML
+    private TextField misc2TextField;
+    @FXML
+    private TextField misc3TextField;
+    @FXML
+    private TextField misc4TextField;
+    @FXML
+    private TextField misc5TextField;
 
-    private final TextField miscNum1TextField = new TextField();
-    private final TextField miscNum2TextField = new TextField();
-    private final TextField miscNum3TextField = new TextField();
-    private final TextField miscNum4TextField = new TextField();
-    private final TextField miscNum5TextField = new TextField();
+    @FXML
+    private TextField miscNum1TextField;
+    @FXML
+    private TextField miscNum2TextField;
+    @FXML
+    private TextField miscNum3TextField;
+    @FXML
+    private TextField miscNum4TextField;
+    @FXML
+    private TextField miscNum5TextField;
 
-    private final ComboBox<String> politiesComboBox = new ComboBox<>();
-    private final ComboBox<String> worldComboBox = new ComboBox<>();
-    private final ComboBox<String> fuelComboBox = new ComboBox<>();
-    private final ComboBox<String> techComboBox = new ComboBox<>();
-    private final ComboBox<String> portComboBox = new ComboBox<>();
-    private final ComboBox<String> populationComboBox = new ComboBox<>();
-    private final ComboBox<String> productComboBox = new ComboBox<>();
-    private final ComboBox<String> milSpaceComboBox = new ComboBox<>();
-    private final ComboBox<String> milPlanComboBox = new ComboBox<>();
+    @FXML
+    private ComboBox<String> politiesComboBox;
+    @FXML
+    private ComboBox<String> worldComboBox;
+    @FXML
+    private ComboBox<String> fuelComboBox;
+    @FXML
+    private ComboBox<String> techComboBox;
+    @FXML
+    private ComboBox<String> portComboBox;
+    @FXML
+    private ComboBox<String> populationComboBox;
+    @FXML
+    private ComboBox<String> productComboBox;
+    @FXML
+    private ComboBox<String> milSpaceComboBox;
+    @FXML
+    private ComboBox<String> milPlanComboBox;
 
-    private final CheckBox forceLabel = new CheckBox("Force Label to be seen");
+    @FXML
+    private CheckBox forceLabel;
+
+    @FXML
+    private Button updateAliasBtn;
+    @FXML
+    private Button resetBtn;
+    @FXML
+    private Button addBtn;
 
 
     ////////////////
@@ -115,99 +190,51 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     public StarEditDialog(@NotNull StarObject record) {
         this.record = record;
 
-        // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
-
-        VBox vBox = new VBox();
-
-        TabPane tabPane = new TabPane();
-
-        Tab overviewTab = new Tab("Overview");
-        overviewTab.setContent(createOverviewTab());
-        tabPane.getTabs().add(overviewTab);
-
-        Tab fictionalTab = new Tab("Fictional Info");
-        fictionalTab.setContent(createFictionalTab());
-        tabPane.getTabs().add(fictionalTab);
-
-        Tab secondaryTab = new Tab("Other Info");
-        secondaryTab.setContent(createSecondaryTab());
-        tabPane.getTabs().add(secondaryTab);
-
-        Tab userTab = new Tab("User Special Info");
-        userTab.setContent(createUserTab());
-        tabPane.getTabs().add(userTab);
-
-        vBox.getChildren().add(tabPane);
-
-        // setup button boxes
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER);
-
-        Button resetBtn = new Button("Cancel");
-        resetBtn.setOnAction(this::cancelClicked);
-        hBox.getChildren().add(resetBtn);
-
-        Button addBtn = new Button("Update");
-        addBtn.setOnAction(this::changeClicked);
-        hBox.getChildren().add(addBtn);
-
-        vBox.getChildren().add(hBox);
-
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("StarEditDialog.fxml"));
+        loader.setController(this);
+        Parent content;
+        try {
+            content = loader.load();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load StarEditDialog.fxml", ex);
+        }
+        getDialogPane().setContent(content);
+        getDialogPane().getButtonTypes().clear();
         this.setTitle("Change attributes for " + record.getDisplayName());
-        this.getDialogPane().setContent(vBox);
+        setOnCloseRequest(this::close);
     }
 
-    private void close(WindowEvent windowEvent) {
+    @FXML
+    private void initialize() {
+        initializeOverviewTab();
+        initializeFictionalTab();
+        initializeSecondaryTab();
+        initializeUserTab();
+        updateAliasBtn.setOnAction(this::updateAliasList);
+        resetBtn.setOnAction(this::cancelClicked);
+        addBtn.setOnAction(this::changeClicked);
+        anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
+        otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
+        forceLabel.setSelected(record.isForceLabelToBeShown());
+    }
+
+    private void close(DialogEvent event) {
         StarEditStatus editStatus = new StarEditStatus();
         editStatus.setChanged(false);
         setResult(editStatus);
     }
 
-    private @NotNull Pane createOverviewTab() {
-
-        // setup grid structure
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        gridPane.add(new Label("Record id"), 0, 1);
+    private void initializeOverviewTab() {
         recordIdLabel.setText(record.getId().toString());
-        gridPane.add(recordIdLabel, 1, 1);
-
-        Label datasetLabel = new Label("Data set name");
-        datasetLabel.setMinWidth(80);
-        gridPane.add(datasetLabel, 0, 2);
         dataSetLabel.setText(record.getDataSetName());
-        gridPane.add(dataSetLabel, 1, 2);
 
-        //////////////////
-
-        // star name
-        gridPane.add(new Label("Star name"), 0, 3);
         starNameTextField.setText(record.getDisplayName());
-        gridPane.add(starNameTextField, 1, 3);
-
-        // common name
-        gridPane.add(new Label("Common name"), 0, 4);
         commonNameTextField.setText(record.getCommonName());
-        gridPane.add(commonNameTextField, 1, 4);
-
-        // constellation name
-        gridPane.add(new Label("Constellation name"), 0, 5);
         constellationNameTextField.setText(record.getConstellationName());
-        gridPane.add(constellationNameTextField, 1, 5);
 
-        // spectral class
-        gridPane.add(new Label("Spectral class"), 0, 6);
         spectralClassTextField.setText(record.getSpectralClass());
         spectralClassTextField.setPromptText(" the spectral class as in O, A, etc.");
-        gridPane.add(spectralClassTextField, 1, 6);
 
-        // distance
-        gridPane.add(new Label("Distance"), 0, 7);
         distanceNameTextField.setText(Double.toString(record.getDistance()));
         distanceNameTextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
@@ -215,10 +242,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         distanceNameTextField.setPromptText("the distance from Sol in ly, press enter");
-        gridPane.add(distanceNameTextField, 1, 7);
 
-        // metallicity
-        gridPane.add(new Label("Metallicity"), 0, 8);
         metallicityTextfield.setText(Double.toString(record.getMetallicity()));
         metallicityTextfield.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
@@ -226,23 +250,15 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         metallicityTextfield.setPromptText("the metallicity, press enter");
-        gridPane.add(metallicityTextfield, 1, 8);
 
-        // age
-        gridPane.add(new Label("Age"), 0, 9);
-        ageTextfield.setText(Double.toString(record.getDistance()));
+        ageTextfield.setText(Double.toString(record.getAge()));
         ageTextfield.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkAge();
             }
         });
         ageTextfield.setPromptText("the age, press enter");
-        gridPane.add(ageTextfield, 1, 9);
 
-        // coordinates
-        gridPane.add(new Label("Coordinates"), 0, 10);
-        GridPane coordGrid = new GridPane();
-        gridPane.add(coordGrid, 1, 10);
         xTextField.setText(Double.toString(record.getX()));
         xTextField.setPromptText("X coordinate, press enter");
         xTextField.setOnKeyPressed(ke -> {
@@ -250,7 +266,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkX();
             }
         });
-        coordGrid.add(xTextField, 0, 1);
         yTextField.setText(Double.toString(record.getY()));
         yTextField.setPromptText("Y coordinate, press enter");
         yTextField.setOnKeyPressed(ke -> {
@@ -258,7 +273,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkY();
             }
         });
-        coordGrid.add(yTextField, 1, 1);
         zTextField.setText(Double.toString(record.getZ()));
         zTextField.setPromptText("Z coordinate, press enter");
         zTextField.setOnKeyPressed(ke -> {
@@ -266,94 +280,43 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkZ();
             }
         });
-        coordGrid.add(zTextField, 2, 1);
 
-        // notes
-        gridPane.add(new Label("Notes"), 0, 11);
         notesArea.setText(record.getNotes());
         notesArea.setPromptText("Enter a description or general notes on this star");
-        gridPane.add(notesArea, 1, 11, 1, 3);
-
-        return gridPane;
     }
 
-    private @NotNull Pane createFictionalTab() {
-
+    private void initializeFictionalTab() {
         fillCombos();
 
-        // setup grid structure
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        // polity
-        gridPane.add(new Label("Polity"), 0, 1);
         polityTextField.setText(record.getPolity());
-        gridPane.add(polityTextField, 1, 1);
-        gridPane.add(politiesComboBox, 2, 1);
 
-        // world type
-        gridPane.add(new Label("World Type"), 0, 2);
         worldTypeTextField.setText(record.getWorldType());
-        gridPane.add(worldTypeTextField, 1, 2);
-        gridPane.add(worldComboBox, 2, 2);
 
-        // fuel type
-        gridPane.add(new Label("Fuel Type"), 0, 3);
         fuelTypeTextField.setText(record.getFuelType());
-        gridPane.add(fuelTypeTextField, 1, 3);
-        gridPane.add(fuelComboBox, 2, 3);
 
-        // tech type
-        gridPane.add(new Label("Tech Type"), 0, 4);
         techTypeTextField.setText(record.getTechType());
-        gridPane.add(techTypeTextField, 1, 4);
-        gridPane.add(techComboBox, 2, 4);
 
-        // port type
-        gridPane.add(new Label("Port Type"), 0, 5);
         portTypeTextField.setText(record.getPortType());
-        gridPane.add(portTypeTextField, 1, 5);
-        gridPane.add(portComboBox, 2, 5);
 
-        // population
-        gridPane.add(new Label("Population Type"), 0, 6);
         popTypeTextField.setText(record.getPopulationType());
-        gridPane.add(popTypeTextField, 1, 6);
-        gridPane.add(populationComboBox, 2, 6);
 
-        // product type
-        gridPane.add(new Label("Product Type"), 0, 7);
         prodField.setText(record.getProductType());
-        gridPane.add(prodField, 1, 7);
-        gridPane.add(productComboBox, 2, 7);
 
-        // milspace type
-        gridPane.add(new Label("Milspace Type"), 0, 8);
         milspaceTextField.setText(record.getMilSpaceType());
-        gridPane.add(milspaceTextField, 1, 8);
-        gridPane.add(milSpaceComboBox, 2, 8);
 
-        // milplan type
-        gridPane.add(new Label("Milplan Type"), 0, 9);
         milplanTextField.setText(record.getMilPlanType());
-        gridPane.add(milplanTextField, 1, 9);
-        gridPane.add(milPlanComboBox, 2, 9);
-
-        // anomaly
-        gridPane.add(new Label("Anomaly"), 0, 10);
         anomalyCheckbox.setSelected(record.isAnomaly());
-        anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
-        gridPane.add(anomalyCheckbox, 1, 10);
-
-        // other
-        gridPane.add(new Label("Other"), 0, 11);
         otherCheckbox.setSelected(record.isOther());
-        otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
-        gridPane.add(otherCheckbox, 1, 11);
 
-        return gridPane;
+        selectCombo(politiesComboBox, record.getPolity());
+        selectCombo(worldComboBox, record.getWorldType());
+        selectCombo(fuelComboBox, record.getFuelType());
+        selectCombo(techComboBox, record.getTechType());
+        selectCombo(portComboBox, record.getPortType());
+        selectCombo(populationComboBox, record.getPopulationType());
+        selectCombo(productComboBox, record.getProductType());
+        selectCombo(milSpaceComboBox, record.getMilSpaceType());
+        selectCombo(milPlanComboBox, record.getMilPlanType());
     }
 
     private void fillCombos() {
@@ -415,34 +378,19 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         productComboBox.getSelectionModel().select("NA");
     }
 
-    private @NotNull Pane createSecondaryTab() {
+    private void selectCombo(ComboBox<String> comboBox, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        if (comboBox.getItems().contains(value)) {
+            comboBox.getSelectionModel().select(value);
+        }
+    }
 
-        // setup grid structure
-        GridPane mGridPane = new GridPane();
-        mGridPane.setPadding(new Insets(10, 10, 10, 10));
-        mGridPane.setVgap(5);
-        mGridPane.setHgap(5);
-
-        GridPane leftGrid = new GridPane();
-        leftGrid.setPadding(new Insets(10, 10, 10, 10));
-        leftGrid.setVgap(5);
-        leftGrid.setHgap(5);
-        mGridPane.add(leftGrid, 0, 1);
-
-        GridPane rightGrid = new GridPane();
-        rightGrid.setPadding(new Insets(10, 10, 10, 10));
-        rightGrid.setVgap(5);
-        rightGrid.setHgap(5);
-        mGridPane.add(rightGrid, 1, 1);
-
-        // simbad id
-        leftGrid.add(new Label("Simbad Id"), 0, 2);
+    private void initializeSecondaryTab() {
         simbadIdTextField.setText(record.getSimbadId());
         simbadIdTextField.setPromptText("the Simbad Id");
-        leftGrid.add(simbadIdTextField, 1, 2);
 
-        // galactic lat
-        leftGrid.add(new Label("Galactic Lat"), 0, 3);
         galacticCoorLatTextField.setText(Double.toString(record.getGalacticLat()));
         galacticCoorLatTextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
@@ -450,10 +398,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         galacticCoorLatTextField.setPromptText("the galactic latitude");
-        leftGrid.add(galacticCoorLatTextField, 1, 3);
 
-        // galactic long
-        leftGrid.add(new Label("Galactic Long"), 0, 4);
         galacticCoorLongTextField.setText(Double.toString(record.getGalacticLong()));
         galacticCoorLongTextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
@@ -461,10 +406,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         galacticCoorLongTextField.setPromptText("the galactic longitude");
-        leftGrid.add(galacticCoorLongTextField, 1, 4);
 
-        // radius
-        leftGrid.add(new Label("Radius"), 0, 5);
         radiusTextField.setText(Double.toString(record.getRadius()));
         radiusTextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
@@ -472,10 +414,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         radiusTextField.setPromptText("the radius in Sol units");
-        leftGrid.add(radiusTextField, 1, 5);
 
-        // temperature
-        leftGrid.add(new Label("Temperature"), 0, 6);
         tempTextField.setText(Double.toString(record.getTemperature()));
         tempTextField.setPromptText("temperature, press enter");
         tempTextField.setOnKeyPressed(ke -> {
@@ -484,12 +423,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         tempTextField.setPromptText("the surface temperature of the star");
-        leftGrid.add(tempTextField, 1, 6);
 
-
-        // items for right grid
         // RA
-        leftGrid.add(new Label("ra"), 0, 7);
         raLabel.setText(Double.toString(record.getRa()));
         raLabel.setPromptText("right ascension, press enter");
         raLabel.setOnKeyPressed(ke -> {
@@ -497,10 +432,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkRa();
             }
         });
-        leftGrid.add(raLabel, 1, 7);
 
-        // declination
-        leftGrid.add(new Label("Declination"), 0, 8);
         decLabel.setText(Double.toString(record.getDeclination()));
         decLabel.setPromptText("declination, press enter");
         decLabel.setOnKeyPressed(ke -> {
@@ -508,10 +440,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkDeclination();
             }
         });
-        leftGrid.add(decLabel, 1, 8);
 
-        // PMRA
-        leftGrid.add(new Label("Pmra"), 0, 9);
         pmraLabel.setText(Double.toString(record.getPmra()));
         pmraLabel.setPromptText("PMRA, press enter");
         pmraLabel.setOnKeyPressed(ke -> {
@@ -519,10 +448,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkPmra();
             }
         });
-        leftGrid.add(pmraLabel, 1, 9);
 
-        // PMDEC
-        leftGrid.add(new Label("pmdec"), 0, 10);
         pmdecLabel.setText(Double.toString(record.getPmdec()));
         pmdecLabel.setPromptText("PMDEC, press enter");
         pmdecLabel.setOnKeyPressed(ke -> {
@@ -530,10 +456,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkPmdec();
             }
         });
-        leftGrid.add(pmdecLabel, 1, 10);
 
-        // parallax
-        leftGrid.add(new Label("Parallax"), 0, 11);
         parallaxLabel.setText(Double.toString(record.getParallax()));
         parallaxLabel.setPromptText("parallax, press enter");
         parallaxLabel.setOnKeyPressed(ke -> {
@@ -541,10 +464,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkParallax();
             }
         });
-        leftGrid.add(parallaxLabel, 1, 11);
 
-        // radial velocity
-        leftGrid.add(new Label("Radial velocity"), 0, 12);
         radialVelocityLabel.setText(Double.toString(record.getRadialVelocity()));
         radialVelocityLabel.setPromptText("radial velocity, press enter");
         radialVelocityLabel.setOnKeyPressed(ke -> {
@@ -552,16 +472,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkRadialVel();
             }
         });
-        leftGrid.add(radialVelocityLabel, 1, 12);
 
-        Button updateAliasBtn = new Button("Update Alias List");
-        updateAliasBtn.setOnAction(this::updateAliasList);
-        leftGrid.add(updateAliasBtn, 0, 13, 2, 1);
-
-        ////////////////
-
-        // bprp
-        rightGrid.add(new Label("bprp"), 0, 1);
         bprpLabel.setText(Double.toString(record.getBprp()));
         bprpLabel.setPromptText("bprp, press enter");
         bprpLabel.setOnKeyPressed(ke -> {
@@ -569,10 +480,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkBprp();
             }
         });
-        rightGrid.add(bprpLabel, 1, 1);
 
-        // brp
-        rightGrid.add(new Label("bpg"), 0, 2);
         bpgLabel.setText(Double.toString(record.getBpg()));
         bpgLabel.setPromptText("bpg, press enter");
         bpgLabel.setOnKeyPressed(ke -> {
@@ -580,10 +488,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkBpg();
             }
         });
-        rightGrid.add(bpgLabel, 1, 2);
 
-        // grp
-        rightGrid.add(new Label("grp"), 0, 3);
         grpLabel.setText(Double.toString(record.getGrp()));
         grpLabel.setPromptText("grp, press enter");
         grpLabel.setOnKeyPressed(ke -> {
@@ -591,10 +496,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkGrp();
             }
         });
-        rightGrid.add(grpLabel, 1, 3);
 
-        // magu
-        rightGrid.add(new Label("magu"), 0, 4);
         maguTextField.setText(Double.toString(record.getMagu()));
         maguTextField.setPromptText("magu, press enter");
         maguTextField.setOnKeyPressed(ke -> {
@@ -602,10 +504,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkMagu();
             }
         });
-        rightGrid.add(maguTextField, 1, 4);
 
-        // magb
-        rightGrid.add(new Label("magb"), 0, 5);
         magbTextField.setText(Double.toString(record.getMagb()));
         magbTextField.setPromptText("magb, press enter");
         magbTextField.setOnKeyPressed(ke -> {
@@ -613,10 +512,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkMagb();
             }
         });
-        rightGrid.add(magbTextField, 1, 5);
 
-        // magv
-        rightGrid.add(new Label("magv"), 0, 6);
         magvTextField.setText(Double.toString(record.getMagv()));
         magvTextField.setPromptText("magv, press enter");
         magvTextField.setOnKeyPressed(ke -> {
@@ -624,10 +520,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkMagv();
             }
         });
-        rightGrid.add(magvTextField, 1, 6);
 
-        // magr
-        rightGrid.add(new Label("magr"), 0, 7);
         magrTextField.setText(Double.toString(record.getMagr()));
         magrTextField.setPromptText("magr, press enter");
         magrTextField.setOnKeyPressed(ke -> {
@@ -635,10 +528,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkMagr();
             }
         });
-        rightGrid.add(magrTextField, 1, 7);
 
-        // magi
-        rightGrid.add(new Label("magi"), 0, 8);
         magiTextField.setText(Double.toString(record.getMagi()));
         magiTextField.setPromptText("magi, press enter");
         magiTextField.setOnKeyPressed(ke -> {
@@ -646,21 +536,12 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 checkMagi();
             }
         });
-        rightGrid.add(magiTextField, 1, 8);
 
-        rightGrid.add(new Label("GAIA Id"), 0, 9);
         gaiaIdTextField.setText(record.getGaiaDR2CatId());
-        rightGrid.add(gaiaIdTextField, 1, 9);
 
-        // the alias list for the star
-        rightGrid.add(new Label("Alias list"), 0, 10);
-        rightGrid.add(aliasTextArea, 1, 10);
         if (!record.getAliasList().isEmpty()) {
             aliasTextArea.setText(String.join(", ", record.getAliasList()));
         }
-
-
-        return mGridPane;
     }
 
     private void updateAliasList(ActionEvent actionEvent) {
@@ -734,93 +615,51 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
     }
 
-    private @NotNull Pane createUserTab() {
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-
-        GridPane innerGridPane1 = new GridPane();
-        innerGridPane1.setPadding(new Insets(10, 10, 10, 10));
-        innerGridPane1.setVgap(5);
-        innerGridPane1.setHgap(5);
-        gridPane.add(innerGridPane1, 0, 1);
-
-        innerGridPane1.add(new Label("misc1"), 0, 1);
+    private void initializeUserTab() {
         misc1TextField.setText(record.getMiscText1());
-        innerGridPane1.add(misc1TextField, 1, 1);
 
-        innerGridPane1.add(new Label("misc2"), 0, 2);
         misc2TextField.setText(record.getMiscText2());
-        innerGridPane1.add(misc2TextField, 1, 2);
 
-        innerGridPane1.add(new Label("misc3"), 0, 3);
         misc3TextField.setText(record.getMiscText3());
-        innerGridPane1.add(misc3TextField, 1, 3);
 
-        innerGridPane1.add(new Label("misc4"), 0, 4);
         misc4TextField.setText(record.getMiscText4());
-        innerGridPane1.add(misc4TextField, 1, 4);
 
-        innerGridPane1.add(new Label("misc5"), 0, 5);
         misc5TextField.setText(record.getMiscText5());
-        innerGridPane1.add(misc5TextField, 1, 5);
 
-        forceLabel.setSelected(record.isForceLabelToBeShown());
-        innerGridPane1.add(forceLabel, 0, 6, 2, 1);
-
-        GridPane innerGridPane2 = new GridPane();
-        innerGridPane2.setPadding(new Insets(10, 10, 10, 10));
-        innerGridPane2.setVgap(5);
-        innerGridPane2.setHgap(5);
-        gridPane.add(innerGridPane2, 1, 1);
-
-        innerGridPane2.add(new Label("miscNum1"), 0, 1);
-        miscNum1TextField.setText(Double.toString(record.getMiscNum2()));
+        miscNum1TextField.setText(Double.toString(record.getMiscNum1()));
         miscNum1TextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkMiscNum1();
             }
         });
-        innerGridPane2.add(miscNum1TextField, 1, 1);
 
-        innerGridPane2.add(new Label("miscNum2"), 0, 2);
         miscNum2TextField.setText(Double.toString(record.getMiscNum2()));
         miscNum2TextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkMiscNum2();
             }
         });
-        innerGridPane2.add(miscNum2TextField, 1, 2);
 
-        innerGridPane2.add(new Label("miscNum3"), 0, 3);
         miscNum3TextField.setText(Double.toString(record.getMiscNum3()));
         miscNum3TextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkMiscNum3();
             }
         });
-        innerGridPane2.add(miscNum3TextField, 1, 3);
 
-        innerGridPane2.add(new Label("miscNum4"), 0, 4);
         miscNum4TextField.setText(Double.toString(record.getMiscNum4()));
         miscNum4TextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkMiscNum4();
             }
         });
-        innerGridPane2.add(miscNum4TextField, 1, 4);
 
-        innerGridPane2.add(new Label("miscNum5"), 0, 5);
         miscNum5TextField.setText(Double.toString(record.getMiscNum5()));
         miscNum5TextField.setOnKeyPressed(ke -> {
             if (ke.getCode().equals(KeyCode.ENTER)) {
                 checkMiscNum5();
             }
         });
-        innerGridPane2.add(miscNum5TextField, 1, 5);
-
-        return gridPane;
     }
 
     private void checkPolity() {
@@ -856,13 +695,13 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     }
 
     private void checkMilPlan() {
-        record.setMilPlanType(milspaceTextField.getText());
+        record.setMilPlanType(milplanTextField.getText());
     }
 
     private void checkAge() {
         try {
             double age = Double.parseDouble(ageTextfield.getText());
-            record.setMetallicity(age);
+            record.setAge(age);
         } catch (NumberFormatException nfe) {
             showErrorAlert("Edit Star Record", ageTextfield.getText() + " is an invalid floating point number");
         }
@@ -898,7 +737,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private void checkMiscNum3() {
         try {
             double miscNum3 = Double.parseDouble(miscNum3TextField.getText());
-            record.setMiscNum4(miscNum3);
+            record.setMiscNum3(miscNum3);
         } catch (NumberFormatException nfe) {
             showErrorAlert("Edit Star Record", miscNum3TextField.getText() + " is an invalid floating point number");
         }
@@ -1061,6 +900,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private void getData() {
 
         record.setDisplayName(starNameTextField.getText());
+        record.setConstellationName(constellationNameTextField.getText());
         record.setSpectralClass(spectralClassTextField.getText());
         record.setNotes(notesArea.getText());
 
@@ -1090,7 +930,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         record.setPopulationType(popTypeTextField.getText());
         record.setProductType(prodField.getText());
         record.setMilSpaceType(milspaceTextField.getText());
-        record.setMilPlanType(milspaceTextField.getText());
+        record.setMilPlanType(milplanTextField.getText());
 
         double ra = Double.parseDouble(raLabel.getText());
         record.setRa(ra);

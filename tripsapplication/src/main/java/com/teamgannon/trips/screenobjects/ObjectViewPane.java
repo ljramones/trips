@@ -10,7 +10,8 @@ import com.teamgannon.trips.service.StarService;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -20,7 +21,7 @@ import java.util.Comparator;
 
 @Slf4j
 @Component
-public class ObjectViewPane extends Pane {
+public class ObjectViewPane extends VBox {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
     private final ApplicationEventPublisher eventPublisher;
@@ -30,9 +31,11 @@ public class ObjectViewPane extends Pane {
         this.eventPublisher = eventPublisher;
         this.starService = starService;
 
-        stellarObjectsListView.setPrefHeight(600);
+        setPrefWidth(MainPane.SIDE_PANEL_SIZE);
+        setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
-        stellarObjectsListView.setMaxHeight(800);
+        stellarObjectsListView.setMaxWidth(Double.MAX_VALUE);
+        VBox.setVgrow(stellarObjectsListView, Priority.ALWAYS);
 
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
@@ -47,7 +50,7 @@ public class ObjectViewPane extends Pane {
         });
         stellarObjectsListView.setPlaceholder(new Label("No stars in view"));
 
-        this.getChildren().add(stellarObjectsListView);
+        getChildren().add(stellarObjectsListView);
     }
 
     public void clear() {

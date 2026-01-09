@@ -93,6 +93,9 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
             tooltip.setText("tooltip here");
             setTooltip(tooltip);
             setContextMenu(contextMenu);
+        } else {
+            setTooltip(null);
+            setContextMenu(null);
         }
 
         this.setText(entry);

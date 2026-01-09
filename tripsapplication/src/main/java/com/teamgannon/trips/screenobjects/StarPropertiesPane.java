@@ -223,7 +223,7 @@ public class StarPropertiesPane extends VBox {
         bpgLabel.setText(formatDouble(record.getBpg()));
         grpLabel.setText(formatDouble(record.getGrp()));
 
-        simbadButton.setDisable(simbadId.isEmpty());
+        simbadButton.setDisable(simbadId.isEmpty() || emptyDisplay().equals(simbadId));
     }
 
     /**
