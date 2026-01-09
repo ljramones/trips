@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.model;
 
 import com.teamgannon.trips.dataset.enums.GridLines;
+import com.teamgannon.trips.utility.ColorDefaults;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class RouteDefinition {
     /**
      * Hexadecimal Color value of route lines
      */
-    private double @NotNull [] routeColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] routeColor = ColorDefaults.defaultColorArray();
     /**
      * Style of Route lines
      */

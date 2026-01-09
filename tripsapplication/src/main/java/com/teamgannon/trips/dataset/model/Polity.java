@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dataset.model;
 
+import com.teamgannon.trips.utility.ColorDefaults;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public class Polity {
     /**
      * the polity color
      */
-    private double @NotNull [] polityColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] polityColor = ColorDefaults.defaultColorArray();
     /**
      * font to use for polity
      */

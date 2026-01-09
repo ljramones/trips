@@ -58,8 +58,14 @@ public class AstrographicObjectFactory {
 
         starObject.setRadius(chViewRecord.getRadius());
 
-        starObject.setSpectralClass(chViewRecord.getSpectra());
-        starObject.setOrthoSpectralClass(chViewRecord.getSpectra().substring(0, 1));
+        String spectra = chViewRecord.getSpectra();
+        if (spectra == null || spectra.isEmpty()) {
+            starObject.setSpectralClass("X");
+            starObject.setOrthoSpectralClass("X");
+        } else {
+            starObject.setSpectralClass(spectra);
+            starObject.setOrthoSpectralClass(spectra.substring(0, 1));
+        }
 
         switch (chViewRecord.getGroupNumber()) {
             case 1 -> starObject.setPolity(CivilizationDisplayPreferences.ARAKUR);

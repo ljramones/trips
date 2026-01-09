@@ -82,7 +82,7 @@ public class DataSetDescriptorFactory {
                 starObject.fromChvRecord(dataset, chViewRecord);
                 astrographicObjectMap.put(starObject.getId(), starObject);
             } catch (Exception e) {
-                log.error("failed to translate to star object: {}", chViewRecordMap.get(recordId));
+                log.error("failed to translate to star object: {}", chViewRecordMap.get(recordId), e);
             }
         }
 
@@ -96,13 +96,13 @@ public class DataSetDescriptorFactory {
 
         // set the records for this
         dataSetDescriptor.setNumberStars((long) astrographicObjectMap.keySet().size());
+        dataSetDescriptor.setDistanceRange(maxDistance);
         String message = String.format("Loaded %d stars within %.1f into dataset \"%s\"",
                 dataSetDescriptor.getNumberStars(),
                 dataSetDescriptor.getDistanceRange(),
                 dataSetDescriptor.getDataSetName()
         );
         log.info(message);
-        dataSetDescriptor.setDistanceRange(maxDistance);
 
         // save the data set which is cross-referenced to the star records
         dataSetDescriptorRepository.save(dataSetDescriptor);

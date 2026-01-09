@@ -71,6 +71,9 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
             tooltip.setText(descriptor.getToolTipText());
             setTooltip(tooltip);
             setContextMenu(contextMenu);
+        } else {
+            setTooltip(null);
+            setContextMenu(null);
         }
 
         this.setText(name);

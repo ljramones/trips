@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dataset.model;
 
 import com.teamgannon.trips.dataset.enums.GridLines;
+import com.teamgannon.trips.utility.ColorDefaults;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class Link {
     /**
      * Hexadecimal Color value of link lines
      */
-    private double @NotNull [] linkColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] linkColor = ColorDefaults.defaultColorArray();
     /**
      * Font to display this link ID in
      */

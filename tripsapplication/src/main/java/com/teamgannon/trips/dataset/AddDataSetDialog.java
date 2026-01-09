@@ -183,6 +183,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         } else {
             if (checkFileDNExists(dataSet.getFileSelected())) {
                 showErrorAlert("Add Dataset", "file selected does not exist!");
+                return;
             }
         }
 
@@ -200,6 +201,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         if (!fileName.isEmpty()) {
             if (checkFileDNExists(fileName)) {
                 showErrorAlert("Add Dataset", "This file does not exist!");
+                return;
             }
         } else {
             // show file selection dialog
@@ -279,6 +281,13 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         dataSet.setFileSelected(fileSelected.getText());
         dataSet.setNotes(notes.getText());
         dataSet.setAuthor(dataSetAuthor.getText());
+        String selectedFormat = dataSetType.getValue();
+        if (selectedFormat != null) {
+            DataFormatEnum formatEnum = DataFormatEnum.fromString(selectedFormat);
+            if (formatEnum != null) {
+                dataSet.setDataType(dataFileFormats.get(formatEnum));
+            }
+        }
     }
 
     private boolean checkFileDNExists(@NotNull String filePath) {

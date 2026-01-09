@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import com.teamgannon.trips.dataset.enums.GridShape;
 import com.teamgannon.trips.routing.model.RouteDefinition;
+import com.teamgannon.trips.utility.ColorDefaults;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +76,12 @@ public class Theme {
     /**
      * Color of background
      */
-    private double @NotNull [] backColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] backColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of text
      */
-    private double @NotNull [] textColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] textColor = ColorDefaults.defaultColorArray();
 
     /**
      * StarName font
@@ -145,12 +146,12 @@ public class Theme {
     /**
      * Hexadecimal Color value of grid lines
      */
-    private double @NotNull [] gridLineColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] gridLineColor = ColorDefaults.defaultColorArray();
 
     /**
      * Hexadecimal Color value of stem lines
      */
-    private double @NotNull [] stemColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] stemColor = ColorDefaults.defaultColorArray();
 
     /**
      * Display star outlines or not
@@ -160,42 +161,42 @@ public class Theme {
     /**
      * Color of spectral type O stars
      */
-    private double @NotNull [] oColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] oColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type B stars
      */
-    private double @NotNull [] bColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] bColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type A stars
      */
-    private double @NotNull [] aColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] aColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type F stars
      */
-    private double @NotNull [] fColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] fColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type G stars
      */
-    private double @NotNull [] gColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] gColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type K stars
      */
-    private double @NotNull [] kColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] kColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type M stars
      */
-    private double @NotNull [] mColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] mColor = ColorDefaults.defaultColorArray();
 
     /**
      * Color of spectral type X stars
      */
-    private double @NotNull [] xColor = new double[]{0xAA, 0xBB, 0xCC};
+    private double @NotNull [] xColor = ColorDefaults.defaultColorArray();
 
     /**
      * Radius of spectral class O stars in pixels
@@ -302,8 +303,6 @@ public class Theme {
     }
 
 }
-
-
 
 
 
