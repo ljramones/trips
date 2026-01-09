@@ -37,6 +37,9 @@ DataSetDescriptor implements Serializable {
 
     private static final long serialVersionUID = 1132779255908975239L;
 
+    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DataSetDescriptor.class);
+
     /**
      * used for JSON serialization
      */
@@ -313,6 +316,47 @@ DataSetDescriptor implements Serializable {
             log.error("couldn't serialize this {} because of {}:", transitDefinitions, e.getMessage());
             transitPreferencesStr = "";
         }
+    }
+
+    // Manual setters (Lombok @Setter should generate these but adding explicitly)
+    public void setDataSetName(String dataSetName) {
+        this.dataSetName = dataSetName;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public void setFileCreator(String fileCreator) {
+        this.fileCreator = fileCreator;
+    }
+
+    public void setFileOriginalDate(long fileOriginalDate) {
+        this.fileOriginalDate = fileOriginalDate;
+    }
+
+    public void setFileNotes(String fileNotes) {
+        this.fileNotes = fileNotes;
+    }
+
+    public void setDatasetType(String datasetType) {
+        this.datasetType = datasetType;
+    }
+
+    public void setNumberStars(Long numberStars) {
+        this.numberStars = numberStars;
+    }
+
+    public void setDistanceRange(double distanceRange) {
+        this.distanceRange = distanceRange;
+    }
+
+    public void setNumberRoutes(Integer numberRoutes) {
+        this.numberRoutes = numberRoutes;
+    }
+
+    public void setThemeStr(String themeStr) {
+        this.themeStr = themeStr;
     }
 
     @Override

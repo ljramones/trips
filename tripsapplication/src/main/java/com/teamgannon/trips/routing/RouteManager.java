@@ -16,12 +16,13 @@
 package com.teamgannon.trips.routing;
 
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.events.NewRouteEvent;
+import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteSegment;
@@ -32,6 +33,7 @@ import javafx.scene.Group;
 import javafx.scene.SubScene;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -52,9 +54,9 @@ public class RouteManager {
     private final TripsContext tripsContext;
 
     /**
-     * a listener for handling route update events
+     * event publisher for route events
      */
-    private RouteUpdaterListener routeUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * utility class for creating manual routes
@@ -84,8 +86,9 @@ public class RouteManager {
     /**
      * the constructor
      */
-    public RouteManager(TripsContext tripsContext) {
+    public RouteManager(TripsContext tripsContext, ApplicationEventPublisher eventPublisher) {
         this.tripsContext = tripsContext;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -98,16 +101,11 @@ public class RouteManager {
         routeGraphicsUtil = new RouteGraphicsUtil(routeDisplay);
         routeBuilderUtils = new RouteBuilderUtils(tripsContext, routeDisplay, routeGraphicsUtil);
 
-        currentManualRoute = new CurrentManualRoute(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils);
+        currentManualRoute = new CurrentManualRoute(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils, eventPublisher);
         partialRouteUtils = new PartialRouteUtils(tripsContext, routeDisplay, routeGraphicsUtil, routeBuilderUtils);
 
         world.getChildren().add(routeDisplay.getRoutesGroup());
         sceneRoot.getChildren().add(routeDisplay.getLabelDisplayGroup());
-    }
-
-    public void setListeners(RouteUpdaterListener routeUpdaterListener) {
-        this.routeUpdaterListener = routeUpdaterListener;
-        this.currentManualRoute.setRouteUpdaterListener(routeUpdaterListener);
     }
 
     /////////////// general
@@ -195,8 +193,7 @@ public class RouteManager {
     public void setManualRoutingActive(boolean state) {
         routeDisplay.setManualRoutingActive(state);
         if (!state) {
-//            resetRoute();
-            routeUpdaterListener.routingStatus(state);
+            eventPublisher.publishEvent(new RoutingStatusEvent(this, state));
         }
     }
 
@@ -254,7 +251,7 @@ public class RouteManager {
             Route route = routeDescriptor.toRoute();
             plotRoute(route);
             // update route and save
-            routeUpdaterListener.newRoute(currentDataSet, routeDescriptor);
+            eventPublisher.publishEvent(new NewRouteEvent(this, currentDataSet, routeDescriptor));
         }
         //  routeDisplay
         routeDisplay.updateLabels();

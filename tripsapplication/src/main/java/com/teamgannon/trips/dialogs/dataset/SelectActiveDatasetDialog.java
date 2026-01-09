@@ -2,18 +2,13 @@ package com.teamgannon.trips.dialogs.dataset;
 
 
 import com.teamgannon.trips.config.application.model.DataSetContext;
+import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -24,7 +19,7 @@ import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -33,18 +28,18 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
 
-    private final StellarDataUpdaterListener stellarDataUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
     private final DataSetContext dataSetContext;
     private final ListView<DataSetDescriptor> descriptorListView = new ListView<>();
     private final DatabaseManagementService databaseManagementService;
     private final DatasetService datasetService;
 
-    public SelectActiveDatasetDialog(StellarDataUpdaterListener stellarDataUpdaterListener,
+    public SelectActiveDatasetDialog(ApplicationEventPublisher eventPublisher,
                                      DataSetContext dataSetContext,
                                      DatabaseManagementService databaseManagementService,
                                      DatasetService datasetService) {
 
-        this.stellarDataUpdaterListener = stellarDataUpdaterListener;
+        this.eventPublisher = eventPublisher;
         this.dataSetContext = dataSetContext;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
@@ -106,7 +101,7 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
             DataSetDescriptor selected = descriptorListView.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 log.info("selected dataset: {}", selected.getDataSetName());
-                stellarDataUpdaterListener.showNewStellarData(selected, true, false);
+                eventPublisher.publishEvent(new ShowStellarDataEvent(this, selected, true, false));
                 setResult(true);
             }
         });

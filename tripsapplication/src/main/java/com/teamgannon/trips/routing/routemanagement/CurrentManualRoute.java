@@ -2,10 +2,11 @@ package com.teamgannon.trips.routing.routemanagement;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.events.NewRouteEvent;
+import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -14,6 +15,7 @@ import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +56,7 @@ public class CurrentManualRoute {
     private RouteDisplay routeDisplay;
     private RouteGraphicsUtil routeGraphicsUtil;
     private RouteBuilderUtils routeBuilderUtils;
-    private RouteUpdaterListener routeUpdaterListener;
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor
@@ -62,15 +64,19 @@ public class CurrentManualRoute {
      * @param tripsContext      the trips context
      * @param routeDisplay      the route display
      * @param routeGraphicsUtil the drawing facility for routing
+     * @param routeBuilderUtils the route builder utilities
+     * @param eventPublisher    the event publisher for route events
      */
     public CurrentManualRoute(TripsContext tripsContext,
                               RouteDisplay routeDisplay,
                               RouteGraphicsUtil routeGraphicsUtil,
-                              RouteBuilderUtils routeBuilderUtils) {
+                              RouteBuilderUtils routeBuilderUtils,
+                              ApplicationEventPublisher eventPublisher) {
         this.tripsContext = tripsContext;
         this.routeDisplay = routeDisplay;
         this.routeGraphicsUtil = routeGraphicsUtil;
         this.routeBuilderUtils = routeBuilderUtils;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -115,7 +121,7 @@ public class CurrentManualRoute {
             /// add to route lookup
             routeDisplay.addRouteToDisplay(getCurrentRoute(), getCurrentRouteDisplay());
             routeDisplay.toggleRouteVisibility(true);
-            routeUpdaterListener.routingStatus(true);
+            eventPublisher.publishEvent(new RoutingStatusEvent(this, true));
         }
     }
 
@@ -165,7 +171,7 @@ public class CurrentManualRoute {
                 // no more elements
                 clear();
                 log.info("Removed all segments");
-                routeUpdaterListener.routingStatus(false);
+                eventPublisher.publishEvent(new RoutingStatusEvent(this, false));
             }
             // remove last line segment
             removeRouteSegment(lineSegment);
@@ -188,7 +194,7 @@ public class CurrentManualRoute {
             createRouteSegment(endingStar);
             routeDisplay.setManualRoutingActive(false);
             routeDisplay.updateLabels();
-            routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
+            eventPublisher.publishEvent(new NewRouteEvent(this, getCurrentRoute().getDescriptor(), getCurrentRoute()));
         } else {
             showErrorAlert("Routing", "start a route first");
         }
@@ -199,7 +205,7 @@ public class CurrentManualRoute {
         if (routeDisplay.isManualRoutingActive()) {
             log.info("manual route is active, so turn it off");
             routeDisplay.setManualRoutingActive(false);
-            routeUpdaterListener.newRoute(getCurrentRoute().getDescriptor(), getCurrentRoute());
+            eventPublisher.publishEvent(new NewRouteEvent(this, getCurrentRoute().getDescriptor(), getCurrentRoute()));
             routeDisplay.updateLabels();
         } else {
             log.info("Manual routing is not active");

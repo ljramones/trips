@@ -17,9 +17,6 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
-import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.RedrawListener;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
@@ -80,12 +77,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private final @NotNull TripsContext tripsContext;
 
     /**
-     * used to signal an update to the parent list view
-     */
-    private DatabaseListener databaseListener;
-    private RedrawListener redrawListener;
-
-    /**
      * the grid plot manager
      */
     private GridPlotManager gridPlotManager;
@@ -135,8 +126,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private double controlPaneOffset;
 
     private double deltaX;
-
-    private RouteUpdaterListener routeUpdaterListener;
 
 
     /**
@@ -203,22 +192,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         log.info("startup complete");
 
     }
-
-    public void setlisteners(RouteUpdaterListener routeUpdaterListener,
-                             DatabaseListener databaseListener,
-                             RedrawListener redrawListener) {
-        this.routeUpdaterListener = routeUpdaterListener;
-        this.databaseListener = databaseListener;
-        this.redrawListener = redrawListener;
-
-        starPlotManager.setListeners(
-                redrawListener,
-                databaseListener);
-
-        routeManager.setListeners(routeUpdaterListener);
-        transitManager.setListeners(routeUpdaterListener);
-    }
-
 
     public void setRotationAngles(double xAngle, double yAngle, double zAngle) {
         rotateX.setAngle(xAngle);

@@ -178,4 +178,45 @@ public class ChViewRecord implements Serializable {
                 + ordinates[1];
     }
 
+    // Manual getters (Lombok @Data should generate these but adding explicitly)
+    public String getStarName() {
+        return starName;
+    }
+
+    public String getConstellation() {
+        return constellation;
+    }
+
+    public double getCollapsedMass() {
+        return collapsedMass;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public double[] getOrdinates() {
+        return ordinates;
+    }
+
+    public String getDistanceToEarth() {
+        return distanceToEarth;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
+    public String getOrthoSpectra() {
+        return orthoSpectra;
+    }
+
+    public String getSpectra() {
+        return spectra;
+    }
+
+    public int getGroupNumber() {
+        return groupNumber;
+    }
+
 }

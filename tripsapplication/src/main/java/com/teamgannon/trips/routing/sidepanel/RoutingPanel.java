@@ -1,13 +1,10 @@
 package com.teamgannon.trips.routing.sidepanel;
 
 import com.teamgannon.trips.controller.MainPane;
-import com.teamgannon.trips.events.ClearDataEvent;
-import com.teamgannon.trips.events.RoutingPanelUpdateEvent;
-import com.teamgannon.trips.events.StatusUpdateEvent;
+import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteChange;
@@ -25,7 +22,6 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,13 +47,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     private final TableView<RouteTree> routingTableView = new TableView<>();
 
     /**
-     * route update listener - used to handle route events
-     */
-    @Setter
-    private RouteUpdaterListener routeUpdaterListener;
-
-    /**
-     * status update listener - used to handle status events
+     * event publisher for route events
      */
     private final ApplicationEventPublisher eventPublisher;
 
@@ -110,7 +100,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                 if (routeChangeOptional.isPresent()) {
                     RouteChange routeChange = routeChangeOptional.get();
                     if (routeChange.isChanged()) {
-                        routeUpdaterListener.updateRoute(RouteTree.toRouteDescriptor(routeTree));
+                        eventPublisher.publishEvent(new UpdateRouteEvent(this, RouteTree.toRouteDescriptor(routeTree)));
                         eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was edited"));
                     }
                 }
@@ -131,7 +121,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                 if (buttonTypeOptional.isPresent()) {
                     ButtonType buttonType = buttonTypeOptional.get();
                     if (buttonType.equals(ButtonType.OK)) {
-                        routeUpdaterListener.deleteRoute(RouteTree.toRouteDescriptor(routeTree));
+                        eventPublisher.publishEvent(new DeleteRouteEvent(this, RouteTree.toRouteDescriptor(routeTree)));
                         eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was deleted"));
                     }
                 }
@@ -197,7 +187,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
                     }
                 }
                 if (routeTree != null) {
-                    routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
+                    eventPublisher.publishEvent(new DisplayRouteEvent(this, RouteTree.toRouteDescriptor(routeTree), isSelected));
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " is " + (isSelected ? "shown" : "not shown")));
                 }
             });
@@ -208,7 +198,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             log.info("edit commit checkbox");
             RouteTree routeTree = event.getRowValue();
             RouteDescriptor routeDescriptor = RouteDescriptor.toRouteDescriptor(routeTree);
-            routeUpdaterListener.displayRoute(routeDescriptor, routeTree.isChecked());
+            eventPublisher.publishEvent(new DisplayRouteEvent(this, routeDescriptor, routeTree.isChecked()));
             eventPublisher.publishEvent(new StatusUpdateEvent(this, routeTree.getRouteName() + " was edited"));
         });
         return tableColumn;
@@ -261,7 +251,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     public void triggerColorChange(Object object, Color color) {
         RouteTree routeTree = (RouteTree) object;
         routeTree.setRouteColor(color);
-        routeUpdaterListener.updateRoute(RouteTree.toRouteDescriptor(routeTree));
+        eventPublisher.publishEvent(new UpdateRouteEvent(this, RouteTree.toRouteDescriptor(routeTree)));
         log.info(routeTree.getRoute());
     }
 
@@ -274,7 +264,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             routeTree = null;
         }
         if (routeTree != null) {
-            routeUpdaterListener.displayRoute(RouteTree.toRouteDescriptor(routeTree), isSelected);
+            eventPublisher.publishEvent(new DisplayRouteEvent(this, RouteTree.toRouteDescriptor(routeTree), isSelected));
         }
     }
 

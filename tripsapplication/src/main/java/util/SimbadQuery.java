@@ -11,10 +11,12 @@ public class SimbadQuery {
         }
         String identifier = args[0];
 
-        String url = "http://simbad.u-strasbg.fr/simbad/sim-script";
+        String url = "https://simbad.u-strasbg.fr/simbad/sim-script";
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
         con.setRequestMethod("POST");
+        con.setConnectTimeout(10_000);
+        con.setReadTimeout(30_000);
 
         // Specify the votable command to get an XML response
         String script = "votable {"
@@ -33,7 +35,11 @@ public class SimbadQuery {
         System.out.println("\nSending 'POST' request to URL : " + url);
         System.out.println("Response Code : " + responseCode);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        InputStream responseStream = responseCode >= 400 ? con.getErrorStream() : con.getInputStream();
+        if (responseStream == null) {
+            throw new IOException("No response stream for HTTP " + responseCode);
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(responseStream));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
@@ -48,7 +54,6 @@ public class SimbadQuery {
         System.out.println("complete\n\n");
     }
 }
-
 
 
 

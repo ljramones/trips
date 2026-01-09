@@ -6,8 +6,7 @@ import com.teamgannon.trips.events.DisplayStarEvent;
 import com.teamgannon.trips.events.UpdateSidePanelListEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.RedrawListener;
+import com.teamgannon.trips.service.StarService;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -25,33 +24,24 @@ public class ObjectViewPane extends Pane {
 
     private final ListView<StarDisplayRecord> stellarObjectsListView = new ListView<>();
     private final ApplicationEventPublisher eventPublisher;
-    private DatabaseListener databaseListener;
-    private RedrawListener redrawListener;
+    private final StarService starService;
 
-    public ObjectViewPane(ApplicationEventPublisher eventPublisher) {
+    public ObjectViewPane(ApplicationEventPublisher eventPublisher, StarService starService) {
         this.eventPublisher = eventPublisher;
+        this.starService = starService;
 
         stellarObjectsListView.setPrefHeight(600);
         stellarObjectsListView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
         stellarObjectsListView.setMaxHeight(800);
 
-    }
-
-    public void setListeners(DatabaseListener databaseListener,
-                             RedrawListener redrawListener) {
-
-        this.databaseListener = databaseListener;
-        this.redrawListener = redrawListener;
-
         stellarObjectsListView.setCellFactory(
                 new StarDisplayRecordCellFactory(
-                        databaseListener,
-                        redrawListener,
+                        starService,
                         eventPublisher));
 
         stellarObjectsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                StarObject starObject = databaseListener.getStar(newValue.getRecordId());
+                StarObject starObject = starService.getStar(newValue.getRecordId());
                 eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
             }
         });

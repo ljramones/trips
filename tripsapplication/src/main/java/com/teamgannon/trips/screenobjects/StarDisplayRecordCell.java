@@ -2,10 +2,10 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.events.DistanceReportEvent;
 import com.teamgannon.trips.events.HighlightStarEvent;
+import com.teamgannon.trips.events.RecenterStarEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.RedrawListener;
+import com.teamgannon.trips.service.StarService;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
@@ -24,19 +24,16 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
     private final Tooltip tooltip = new Tooltip();
 
 
-    private final DatabaseListener databaseListener;
-    private final RedrawListener redrawListener;
+    private final StarService starService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor for this cell
      */
-    public StarDisplayRecordCell(DatabaseListener databaseListener,
-                                 RedrawListener redrawListener,
+    public StarDisplayRecordCell(StarService starService,
                                  ApplicationEventPublisher eventPublisher) {
 
-        this.databaseListener = databaseListener;
-        this.redrawListener = redrawListener;
+        this.starService = starService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -49,7 +46,7 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem recenterMenuItem = new MenuItem("Center on this star");
         recenterMenuItem.setOnAction((event) -> {
             log.info("recenter on {}", starDisplayRecord.getStarName());
-            redrawListener.recenter(starDisplayRecord);
+            eventPublisher.publishEvent(new RecenterStarEvent(this, starDisplayRecord));
         });
 
         MenuItem highlightMenuItem = new MenuItem("Highlight this star");
@@ -62,14 +59,14 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         MenuItem editMenuItem = new MenuItem("Edit this star");
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
-            StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+            StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
             StarEditDialog starEditDialog = new StarEditDialog(starObject);
             Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
             if (optionalStarDisplayRecord.isPresent()) {
                 StarEditStatus status = optionalStarDisplayRecord.get();
                 if (status.isChanged()) {
                     StarObject record = status.getRecord();
-                    databaseListener.updateStar(record);
+                    starService.updateStar(record);
                     log.info("Changed value: {}", record);
                 } else {
                     log.error("no return");

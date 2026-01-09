@@ -3,6 +3,7 @@ package com.teamgannon.trips.controller.menubar;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
 import com.teamgannon.trips.events.UIStateChangeEvent;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckMenuItem;
@@ -108,20 +109,22 @@ public class ToggleDisplayMenuController {
 
     @EventListener
     public void handleUIStateChangeEvent(UIStateChangeEvent event) {
-        switch (event.getElement()) {
-            case GRID -> toggleGridMenuitem.setSelected(toggleGridMenuitem.isSelected());
-            case LABELS -> toggleLabelsMenuitem.setSelected(toggleLabelsMenuitem.isSelected());
-            case POLITIES -> togglePolitiesMenuitem.setSelected(togglePolitiesMenuitem.isSelected());
-            case STARS -> toggleStarMenuitem.setSelected(toggleStarMenuitem.isSelected());
-            case ROUTES -> toggleRouteLengthsMenuitem.setSelected(toggleRouteLengthsMenuitem.isSelected());
-            case TRANSITS -> toggleTransitLengthsMenuitem.setSelected(toggleTransitLengthsMenuitem.isSelected());
-            case TRANSIT_LENGTHS -> toggleTransitLengthsMenuitem.setSelected(toggleTransitLengthsMenuitem.isSelected());
-            case ROUTE_LENGTHS -> toggleRouteLengthsMenuitem.setSelected(toggleRouteLengthsMenuitem.isSelected());
-            case SIDE_PANE -> toggleSidePaneMenuitem.setSelected(toggleSidePaneMenuitem.isSelected());
-            case TOOLBAR -> toggleToolBarMenuitem.setSelected(toggleToolBarMenuitem.isSelected());
-            case STATUS_BAR -> toggleStatusBarMenuitem.setSelected(toggleStatusBarMenuitem.isSelected());
-            case SCALE -> toggleScaleMenuitem.setSelected(toggleScaleMenuitem.isSelected());
-            case EXTENSIONS -> toggleExtensionsMenuitem.setSelected(toggleExtensionsMenuitem.isSelected());
-        }
+        FxThread.runOnFxThread(() -> {
+            switch (event.getElement()) {
+                case GRID -> toggleGridMenuitem.setSelected(event.isState());
+                case LABELS -> toggleLabelsMenuitem.setSelected(event.isState());
+                case POLITIES -> togglePolitiesMenuitem.setSelected(event.isState());
+                case STARS -> toggleStarMenuitem.setSelected(event.isState());
+                case ROUTES -> toggleRouteLengthsMenuitem.setSelected(event.isState());
+                case TRANSITS -> toggleTransitLengthsMenuitem.setSelected(event.isState());
+                case TRANSIT_LENGTHS -> toggleTransitLengthsMenuitem.setSelected(event.isState());
+                case ROUTE_LENGTHS -> toggleRouteLengthsMenuitem.setSelected(event.isState());
+                case SIDE_PANE -> toggleSidePaneMenuitem.setSelected(event.isState());
+                case TOOLBAR -> toggleToolBarMenuitem.setSelected(event.isState());
+                case STATUS_BAR -> toggleStatusBarMenuitem.setSelected(event.isState());
+                case SCALE -> toggleScaleMenuitem.setSelected(event.isState());
+                case EXTENSIONS -> toggleExtensionsMenuitem.setSelected(event.isState());
+            }
+        });
     }
 }

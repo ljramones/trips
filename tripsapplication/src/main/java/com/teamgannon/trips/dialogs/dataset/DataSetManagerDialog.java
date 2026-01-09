@@ -2,9 +2,13 @@ package com.teamgannon.trips.dialogs.dataset;
 
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dataset.AddDataSetDialog;
-import com.teamgannon.trips.dialogs.dataset.model.*;
+import com.teamgannon.trips.dialogs.dataset.model.Dataset;
+import com.teamgannon.trips.dialogs.dataset.model.ExportOptions;
+import com.teamgannon.trips.dialogs.dataset.model.ExportTaskComplete;
+import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
+import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
+import com.teamgannon.trips.events.RemoveDataSetEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DataImportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -38,12 +42,10 @@ import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
-public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskComplete, ExportTaskComplete, LoadUpdateListener {
+public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskComplete, ExportTaskComplete {
 
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
-
-    private final DataSetChangeListener dataSetChangeListener;
 
     private final HBox importLoadingPanel = new HBox();
     private final ProgressBar importProgressBar = new ProgressBar();
@@ -75,15 +77,13 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
     private @Nullable DataSetDescriptor selectedDataset;
 
-    public DataSetManagerDialog(DataSetChangeListener dataSetChangeListener,
-                                DatabaseManagementService databaseManagementService,
+    public DataSetManagerDialog(DatabaseManagementService databaseManagementService,
                                 DatasetService datasetService,
                                 ApplicationEventPublisher eventPublisher,
                                 DataImportService dataImportService,
                                 Localization localization,
                                 DataExportService dataExportService) {
 
-        this.dataSetChangeListener = dataSetChangeListener;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
         this.dataImportService = dataImportService;
@@ -253,7 +253,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
     private void delete(ActionEvent actionEvent) {
         if (selectedDataset != null) {
-            this.dataSetChangeListener.removeDataSet(selectedDataset);
+            eventPublisher.publishEvent(new RemoveDataSetEvent(this, selectedDataset));
         } else {
             showErrorAlert("Delete Dataset", "You need to select a dataset first");
         }
@@ -320,12 +320,10 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
 
             ImportResult success = dataImportService.processFile(
                     dataset,
-                    dataSetChangeListener,
                     this,
                     importProgressText,
                     importProgressBar,
-                    cancelImport,
-                    this);
+                    cancelImport);
 
             if (!success.isSuccess()) {
                 showErrorAlert("add Dataset", success.getMessage());
@@ -363,10 +361,6 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
     private void cancelTaskExport(ActionEvent actionEvent) {
         log.info("Export was cancelled");
         dataExportService.cancelCurrent();
-    }
-
-    @Override
-    public void update(DataSetDescriptor descriptor) {
     }
 
     @Override

@@ -3,8 +3,6 @@ package com.teamgannon.trips.service.export;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -25,11 +23,9 @@ public class ExportExportService extends Service<FileProcessResult> {
     private final DatabaseManagementService databaseManagementService;
 
     private Dataset dataset;
-    private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
-    private LoadUpdateListener loadUpdateListener;
 
     public ExportExportService(DatabaseManagementService databaseManagementService) {
         this.databaseManagementService = databaseManagementService;
@@ -37,17 +33,14 @@ public class ExportExportService extends Service<FileProcessResult> {
 
     public boolean processDataSet(Dataset dataset,
                                   ApplicationEventPublisher eventPublisher,
-                                  DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
-                                  @NotNull Button cancelLoad, LoadUpdateListener loadUpdateListener) {
+                                  @NotNull Button cancelLoad) {
         this.dataset = dataset;
-        this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
-        this.loadUpdateListener = loadUpdateListener;
 
         progressText.textProperty().bind(this.messageProperty());
         loadProgressBar.progressProperty().bind(this.progressProperty());

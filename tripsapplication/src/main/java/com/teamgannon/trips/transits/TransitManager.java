@@ -3,12 +3,12 @@ package com.teamgannon.trips.transits;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.scene.Group;
 import javafx.scene.SubScene;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -41,9 +41,9 @@ public class TransitManager {
     private SubScene subScene;
 
     /**
-     * the listener to create routes on demand
+     * event publisher for route events
      */
-    private RouteUpdaterListener routeUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
     private final TripsContext tripsContext;
     private final StarMeasurementService starMeasurementService;
     private InterstellarSpacePane interstellarSpacePane;
@@ -63,11 +63,13 @@ public class TransitManager {
      * constructor
      */
     public TransitManager(TripsContext tripsContext,
-                          StarMeasurementService starMeasurementService) {
+                          StarMeasurementService starMeasurementService,
+                          ApplicationEventPublisher eventPublisher) {
 
         // our graphics world
         this.tripsContext = tripsContext;
         this.starMeasurementService = starMeasurementService;
+        this.eventPublisher = eventPublisher;
     }
 
     public void setGraphics(Group sceneRoot,
@@ -81,10 +83,6 @@ public class TransitManager {
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
-    }
-
-    public void setListeners(RouteUpdaterListener routeUpdaterListener) {
-        this.routeUpdaterListener = routeUpdaterListener;
     }
 
 
@@ -108,7 +106,7 @@ public class TransitManager {
                 // create a transit visibilty group
                 TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(
                         subScene, interstellarSpacePane, starMeasurementService,
-                        controlPaneOffset, transitRangeDef, routeUpdaterListener, tripsContext);
+                        controlPaneOffset, transitRangeDef, eventPublisher, tripsContext);
 
                 // plot the visibility group
                 visibilityGroup.plotTransit(transitRangeDef, starsInView);

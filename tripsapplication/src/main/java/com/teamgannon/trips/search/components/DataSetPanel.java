@@ -1,8 +1,8 @@
 package com.teamgannon.trips.search.components;
 
 import com.teamgannon.trips.dialogs.dataset.DataSetDescribeDialog;
+import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.search.SearchContext;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 
@@ -22,21 +23,22 @@ public class DataSetPanel extends BasePane {
 
     private final ChoiceBox<String> datasetChoiceBox = new ChoiceBox<>();
     private final Map<String, DataSetDescriptor> datasets;
-    private final DataSetChangeListener dataSetChangeListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final @NotNull SearchContext searchContext;
 
     /**
      * constructor
      *
-     * @param searchContext the search context
+     * @param searchContext  the search context
+     * @param eventPublisher the event publisher
      */
     public DataSetPanel(@NotNull SearchContext searchContext,
-                        DataSetChangeListener dataSetChangeListener) {
+                        ApplicationEventPublisher eventPublisher) {
 
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
-        this.dataSetChangeListener = dataSetChangeListener;
+        this.eventPublisher = eventPublisher;
 
         for (DataSetDescriptor dataset : datasets.values()) {
             datasetChoiceBox.getItems().add(dataset.getDataSetName());
@@ -67,7 +69,7 @@ public class DataSetPanel extends BasePane {
 
     private void setNewDataSet(String newValue) {
         DataSetDescriptor descriptor = datasets.get(newValue);
-        dataSetChangeListener.setContextDataSet(descriptor);
+        eventPublisher.publishEvent(new SetContextDataSetEvent(this, descriptor));
     }
 
     private void describeButtonClicked(ActionEvent actionEvent) {

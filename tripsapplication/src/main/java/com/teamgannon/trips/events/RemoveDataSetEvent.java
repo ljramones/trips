@@ -6,10 +6,10 @@ import org.springframework.context.ApplicationEvent;
 
 @Getter
 public class RemoveDataSetEvent extends ApplicationEvent {
-    private final DataSetDescriptor descriptor;
+    private final DataSetDescriptor dataSetDescriptor;
 
-    public RemoveDataSetEvent(Object source, DataSetDescriptor descriptor) {
+    public RemoveDataSetEvent(Object source, DataSetDescriptor dataSetDescriptor) {
         super(source);
-        this.descriptor = descriptor;
+        this.dataSetDescriptor = dataSetDescriptor;
     }
 }

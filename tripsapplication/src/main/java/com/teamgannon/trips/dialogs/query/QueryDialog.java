@@ -1,8 +1,6 @@
 package com.teamgannon.trips.dialogs.query;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
@@ -18,6 +16,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -35,19 +34,17 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
     /**
      * constructor
      *
-     * @param searchContext the search context
-     * @param updater       the data updater
+     * @param searchContext  the search context
+     * @param eventPublisher the event publisher
      */
     public QueryDialog(@NotNull SearchContext searchContext,
-                       StellarDataUpdaterListener updater,
-                       DataSetChangeListener dataSetChangeListener) {
+                       ApplicationEventPublisher eventPublisher) {
 
         this.setTitle("Select stars from dataset");
 
         searchPane = new SearchPane(
                 searchContext,
-                dataSetChangeListener,
-                updater);
+                eventPublisher);
 
         VBox vBox = new VBox();
         HBox hBox = new HBox();

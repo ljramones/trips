@@ -25,6 +25,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -90,6 +91,7 @@ public class StarService {
         } else {
             starObjects = starObjectRepository.findBySearchQuery(searchQuery);
         }
+        checkInterrupted();
         log.info("New DB Query returns {} stars", starObjects.size());
         starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
@@ -115,6 +117,7 @@ public class StarService {
         } else {
             starObjects = starObjectRepository.findBySearchQuery(searchQuery);
         }
+        checkInterrupted();
         log.info("New DB Query returns {} stars", starObjects.size());
         starDistances = filterByDistanceIncludeDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
@@ -144,6 +147,7 @@ public class StarService {
             double distanceFromCenterStar) {
         List<StarObject> filterList = new ArrayList<>();
         starObjects.forEach(object -> {
+            checkInterrupted();
             try {
                 double[] starPosition = new double[3];
                 starPosition[0] = object.getX();
@@ -166,6 +170,7 @@ public class StarService {
             double distanceFromCenterStar) {
         List<StarDistances> filterList = new ArrayList<>();
         starObjects.forEach(object -> {
+            checkInterrupted();
             try {
                 double[] starPosition = new double[3];
                 starPosition[0] = object.getX();
@@ -181,6 +186,12 @@ public class StarService {
             }
         });
         return filterList;
+    }
+
+    private void checkInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Task cancelled.");
+        }
     }
 
 

@@ -23,6 +23,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Scope;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,11 @@ import org.springframework.data.domain.Pageable;
 @Slf4j
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)
+@EnableAsync
 public class TripsSpringBootApplication implements CommandLineRunner {
+
+    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TripsSpringBootApplication.class);
 
     /**
      * storage of astrographic objects in DB

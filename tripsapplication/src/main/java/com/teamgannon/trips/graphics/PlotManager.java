@@ -7,6 +7,7 @@ import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.events.GraphEnablesPersistEvent;
 import com.teamgannon.trips.events.RoutingPanelUpdateEvent;
+import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -15,7 +16,6 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.StarService;
@@ -49,8 +49,6 @@ public class PlotManager {
 
     private final AstrographicTransformer astrographicTransformer;
     private final StarService starService;
-    @Setter
-    private DataSetChangeListener dataSetChangeListener;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -118,7 +116,7 @@ public class PlotManager {
                 eventPublisher.publishEvent(new RoutingPanelUpdateEvent(this, dataSetDescriptor, getRouteVisibility()));
 
                 plotStars(dataSetDescriptor, searchContext.getAstroSearchQuery());
-                dataSetChangeListener.setContextDataSet(dataSetDescriptor);
+                eventPublisher.publishEvent(new SetContextDataSetEvent(this, dataSetDescriptor));
             }
         }
     }

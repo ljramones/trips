@@ -3,9 +3,10 @@ package com.teamgannon.trips.service.importservices;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
+import com.teamgannon.trips.events.AddDataSetEvent;
+import com.teamgannon.trips.events.DataSetLoadEvent;
+import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.service.BulkLoadService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.importservices.tasks.ChvLoadTask;
@@ -28,11 +29,9 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     private final ApplicationEventPublisher eventPublisher;
     private final BulkLoadService bulkLoadService;
     private Dataset dataset;
-    private DataSetChangeListener dataSetChangeListener;
     private ImportTaskComplete importTaskComplete;
     private Label progressText;
     private ProgressBar loadProgressBar;
-    private LoadUpdateListener loadUpdateListener;
 
 
     public CHVDataImportService(ApplicationEventPublisher eventPublisher,
@@ -47,18 +46,14 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     }
 
     public boolean processDataSet(Dataset dataset,
-                                  DataSetChangeListener dataSetChangeListener,
                                   ImportTaskComplete importTaskComplete,
                                   @NotNull Label progressText,
                                   @NotNull ProgressBar loadProgressBar,
-                                  @NotNull Button cancelLoad,
-                                  LoadUpdateListener loadUpdateListener) {
+                                  @NotNull Button cancelLoad) {
         this.dataset = dataset;
-        this.dataSetChangeListener = dataSetChangeListener;
         this.importTaskComplete = importTaskComplete;
         this.progressText = progressText;
         this.loadProgressBar = loadProgressBar;
-        this.loadUpdateListener = loadUpdateListener;
 
         progressText.textProperty().bind(this.messageProperty());
         loadProgressBar.progressProperty().bind(this.progressProperty());
@@ -75,10 +70,10 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         importTaskComplete.complete(true, dataset, fileProcessResult, "loaded");
-        dataSetChangeListener.addDataSet(fileProcessResult.getDataSetDescriptor());
+        eventPublisher.publishEvent(new AddDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
         // set context to newly loaded dataset
-        dataSetChangeListener.setContextDataSet(fileProcessResult.getDataSetDescriptor());
-        loadUpdateListener.update(fileProcessResult.getDataSetDescriptor());
+        eventPublisher.publishEvent(new SetContextDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
+        eventPublisher.publishEvent(new DataSetLoadEvent(this, fileProcessResult.getDataSetDescriptor()));
     }
 
     @Override

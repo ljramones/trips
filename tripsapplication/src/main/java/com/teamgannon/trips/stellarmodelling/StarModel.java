@@ -135,6 +135,14 @@ public class StarModel {
         return new SimStar(this.mass, this.luminosity, this.radius, this.temperature, absoluteMagnitude);
     }
 
+    // Manual getters for fields accessed by StarObject (Lombok @Data should generate these but adding explicitly)
+    public StellarType getStellarClass() {
+        return stellarClass;
+    }
+
+    public String getLuminosityClass() {
+        return luminosityClass;
+    }
 
     public static void main(String[] args) {
         //G8IV

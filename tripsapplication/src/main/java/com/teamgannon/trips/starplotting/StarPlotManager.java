@@ -17,9 +17,8 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.listener.DatabaseListener;
-import com.teamgannon.trips.listener.RedrawListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
@@ -109,14 +108,9 @@ public class StarPlotManager {
     private SubScene subScene;
 
     /**
-     * the redraw listener
-     */
-    private RedrawListener redrawListener;
-
-    /**
      * to make database changes
      */
-    private DatabaseListener databaseListener;
+    private final StarService starService;
 
     /**
      * the report generator
@@ -227,12 +221,14 @@ public class StarPlotManager {
     public StarPlotManager(TripsContext tripsContext,
                            RouteManager routeManager,
                            StarMeasurementService starMeasurementService,
+                           StarService starService,
                            ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.routeManager = routeManager;
         this.starMeasurementService = starMeasurementService;
+        this.starService = starService;
         this.eventPublisher = eventPublisher;
 
         // special graphical objects in MeshView format
@@ -253,12 +249,6 @@ public class StarPlotManager {
         world.getChildren().add(extensionsGroup);
 
         world.getChildren().add(politiesDisplayGroup);
-    }
-
-    public void setListeners(RedrawListener redrawListener,
-                             DatabaseListener databaseListener) {
-        this.redrawListener = redrawListener;
-        this.databaseListener = databaseListener;
     }
 
     @TrackExecutionTime
@@ -949,7 +939,7 @@ public class StarPlotManager {
         menuItem.setOnAction(event -> {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
             if (starDescriptor != null) {
-                redrawListener.recenter(starDescriptor);
+                eventPublisher.publishEvent(new RecenterStarEvent(this, starDescriptor));
             } else {
                 showErrorAlert("Recenter on star", "The star you selected was bull!");
             }
@@ -998,7 +988,7 @@ public class StarPlotManager {
      */
     private void removeNode(@NotNull StarDisplayRecord starDisplayRecord) {
         log.info("Removing object for:" + starDisplayRecord.getStarName());
-        databaseListener.removeStar(starDisplayRecord.getRecordId());
+        starService.removeStar(starDisplayRecord.getRecordId());
     }
 
 
@@ -1031,7 +1021,7 @@ public class StarPlotManager {
      * @param starDisplayRecord the properties to edit
      */
     private @Nullable StarDisplayRecord editProperties(@NotNull StarDisplayRecord starDisplayRecord) {
-        StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+        StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
         StarEditDialog starEditDialog = new StarEditDialog(starObject);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
         if (optionalStarDisplayRecord.isPresent()) {
@@ -1042,7 +1032,7 @@ public class StarPlotManager {
                 if (record1 != null) {
                     record1.setCoordinates(starDisplayRecord.getCoordinates());
                     log.info("Changed value: {}", record);
-                    databaseListener.updateStar(record);
+                    starService.updateStar(record);
                 } else {
                     log.error("Conversion of {} to star display record, returned a null-->bug!!", record);
                 }
@@ -1065,7 +1055,7 @@ public class StarPlotManager {
         MenuItem propertiesMenuItem = new MenuItem("Properties");
         propertiesMenuItem.setOnAction(event -> {
             StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            StarObject starObject = databaseListener.getStar(starDisplayRecord.getRecordId());
+            StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
             displayProperties(starObject);
         });
         return propertiesMenuItem;
@@ -1390,7 +1380,7 @@ public class StarPlotManager {
                 String notes = notesOptional.get();
                 if (!notes.isEmpty()) {
                     // save notes in star
-                    databaseListener.updateNotesForStar(starDescriptor.getRecordId(), notes);
+                    starService.updateNotesOnStar(starDescriptor.getRecordId(), notes);
                     // update the star notes on screen
                     starDescriptor.setNotes(notes);
                     star.setUserData(starDescriptor);
@@ -1486,7 +1476,7 @@ public class StarPlotManager {
 
 
     private void generateSolarSystem(StarDisplayRecord starDescriptor) {
-        StarObject starObject = databaseListener.getStar(starDescriptor.getRecordId());
+        StarObject starObject = starService.getStar(starDescriptor.getRecordId());
         SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
         Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
         if (solarSystemGenOptional.isPresent()) {

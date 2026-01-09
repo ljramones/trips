@@ -3,7 +3,9 @@ package com.teamgannon.trips.controller.toolbar;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
+import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -147,28 +149,34 @@ public class ToolbarController {
 
     @EventListener
     public void handleUIStateChangeEvent(UIStateChangeEvent event) {
-        switch (event.getElement()) {
-            case GRID -> toggleGridBtn.setSelected(event.isState());
-            case LABELS -> toggleLabelsBtn.setSelected(event.isState());
-            case POLITIES -> togglePolityBtn.setSelected(event.isState());
-            case STARS -> toggleStarBtn.setSelected(event.isState());
-            case ROUTES -> toggleRoutesBtn.setSelected(event.isState());
-            case TRANSITS -> toggleTransitsBtn.setSelected(event.isState());
-            case TRANSIT_LENGTHS -> {
+        FxThread.runOnFxThread(() -> {
+            switch (event.getElement()) {
+                case GRID -> toggleGridBtn.setSelected(event.isState());
+                case LABELS -> toggleLabelsBtn.setSelected(event.isState());
+                case POLITIES -> togglePolityBtn.setSelected(event.isState());
+                case STARS -> toggleStarBtn.setSelected(event.isState());
+                case ROUTES -> toggleRoutesBtn.setSelected(event.isState());
+                case TRANSITS -> toggleTransitsBtn.setSelected(event.isState());
+                case TRANSIT_LENGTHS -> {
+                }
+                case ROUTE_LENGTHS -> {
+                }
+                case SIDE_PANE -> {
+                }
+                case TOOLBAR -> {
+                }
+                case STATUS_BAR -> {
+                }
+                case SCALE -> toggleScaleBtn.setSelected(event.isState());
+                case EXTENSIONS -> toggleStemBtn.setSelected(event.isState());
+                default -> log.error("Unexpected value: {}", event.getElement());
             }
-            case ROUTE_LENGTHS -> {
-            }
-            case SIDE_PANE -> {
-            }
-            case TOOLBAR -> {
-            }
-            case STATUS_BAR -> {
-            }
-            case SCALE -> toggleScaleBtn.setSelected(event.isState());
-            case EXTENSIONS -> toggleStemBtn.setSelected(event.isState());
-            default -> log.error("Unexpected value: {}", event.getElement());
-        }
+        });
+    }
 
+    @EventListener
+    public void onSetContextDataSetEvent(SetContextDataSetEvent event) {
+        FxThread.runOnFxThread(() -> plotButton.setDisable(event.getDescriptor() == null));
     }
 
 

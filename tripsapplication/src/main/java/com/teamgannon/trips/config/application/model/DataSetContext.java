@@ -24,4 +24,9 @@ public class DataSetContext {
         validDescriptor = true;
     }
 
+    // Manual setter (Lombok @Data should generate this but adding explicitly)
+    public void setValidDescriptor(boolean validDescriptor) {
+        this.validDescriptor = validDescriptor;
+    }
+
 }

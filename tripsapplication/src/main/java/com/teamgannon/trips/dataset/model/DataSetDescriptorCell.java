@@ -1,14 +1,15 @@
 package com.teamgannon.trips.dataset.model;
 
+import com.teamgannon.trips.events.RemoveDataSetEvent;
+import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Slf4j
 public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
@@ -17,19 +18,15 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
     // for the Tooltip for each cell
     final Tooltip tooltip = new Tooltip();
 
-    private final DataSetChangeListener dataSetChangeListener;
-
-    private final StellarDataUpdaterListener updater;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * the constructor
      *
-     * @param dataSetChangeListener      the listener for datasets
-     * @param stellarDataUpdaterListener the stellar listener
+     * @param eventPublisher the event publisher
      */
-    public DataSetDescriptorCell(DataSetChangeListener dataSetChangeListener, StellarDataUpdaterListener stellarDataUpdaterListener) {
-        this.dataSetChangeListener = dataSetChangeListener;
-        this.updater = stellarDataUpdaterListener;
+    public DataSetDescriptorCell(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -42,25 +39,25 @@ public class DataSetDescriptorCell extends ListCell<DataSetDescriptor> {
         MenuItem plotMenuItem = new MenuItem("Plot Star");
         plotMenuItem.setOnAction((event) -> {
             log.info("plot stars!");
-            updater.showNewStellarData(descriptor, true, false);
+            eventPublisher.publishEvent(new ShowStellarDataEvent(this, descriptor, true, false));
         });
 
         MenuItem displayMenuItem = new MenuItem("Display Data");
         displayMenuItem.setOnAction((event) -> {
             log.info("display star data!");
-            updater.showNewStellarData(descriptor, false, true);
+            eventPublisher.publishEvent(new ShowStellarDataEvent(this, descriptor, false, true));
         });
 
         MenuItem displayPlotMenuItem = new MenuItem("Plot and display data");
         displayPlotMenuItem.setOnAction((event) -> {
             log.info("plot and display star data!");
-            updater.showNewStellarData(descriptor, true, true);
+            eventPublisher.publishEvent(new ShowStellarDataEvent(this, descriptor, true, true));
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction((event) -> {
             log.info("delete star data!");
-            dataSetChangeListener.removeDataSet(descriptor);
+            eventPublisher.publishEvent(new RemoveDataSetEvent(this, descriptor));
         });
 
         contextMenu.getItems().addAll(plotMenuItem, displayMenuItem, displayPlotMenuItem, deleteMenuItem);

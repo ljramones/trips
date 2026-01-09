@@ -64,6 +64,9 @@ public class StarObject implements Serializable {
     @Serial
     private static final long serialVersionUID = -751366073413071183L;
 
+    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StarObject.class);
+
     /**
      * match the pattern * nnn Con
      * nnn for 3 digits
@@ -950,6 +953,79 @@ public class StarObject implements Serializable {
         sparseStarRecord.setStarName(this.getDisplayName());
         sparseStarRecord.setActualCoordinates(new double[]{x, y, z});
         return sparseStarRecord;
+    }
+
+    // Manual getters/setters (Lombok @Getter/@Setter should generate these but adding explicitly)
+    public void setPolity(String polity) {
+        this.polity = polity;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public void setRadius(double radius) {
+        this.radius = radius;
+    }
+
+    public void setSpectralClass(String spectralClass) {
+        this.spectralClass = spectralClass;
+    }
+
+    public void setOrthoSpectralClass(String orthoSpectralClass) {
+        this.orthoSpectralClass = orthoSpectralClass;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setDataSetName(String dataSetName) {
+        this.dataSetName = dataSetName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public void setZ(double z) {
+        this.z = z;
+    }
+
+    public void setForceLabelToBeShown(boolean forceLabelToBeShown) {
+        this.forceLabelToBeShown = forceLabelToBeShown;
+    }
+
+    public String getOrthoSpectralClass() {
+        return orthoSpectralClass;
+    }
+
+    public double getMass() {
+        return mass;
+    }
+
+    public String getConstellationName() {
+        return constellationName;
     }
 
     @Override

@@ -31,4 +31,9 @@ public class Dataset {
      */
     private String author;
 
+    // Manual getter (Lombok @Data should generate this but adding explicitly)
+    public String getName() {
+        return name;
+    }
+
 }

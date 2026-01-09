@@ -21,7 +21,6 @@ public class TripsFxApplication extends Application {
 
     private static void exitApplication(WindowEvent event) {
         Platform.exit();
-        System.exit(0);
     }
 
     @Override

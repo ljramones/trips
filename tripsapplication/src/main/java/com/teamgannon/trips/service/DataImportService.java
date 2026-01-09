@@ -2,8 +2,6 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
-import com.teamgannon.trips.dialogs.dataset.model.LoadUpdateListener;
-import com.teamgannon.trips.listener.DataSetChangeListener;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.service.importservices.CHVDataImportService;
 import com.teamgannon.trips.service.importservices.CSVDataImportService;
@@ -49,12 +47,10 @@ public class DataImportService {
 
     @TrackExecutionTime
     public ImportResult processFile(@NotNull Dataset dataset,
-                                    DataSetChangeListener dataSetChangeListener,
                                     ImportTaskComplete importTaskComplete,
                                     @NotNull Label progressText,
                                     @NotNull ProgressBar importProgressBar,
-                                    @NotNull Button cancelLoad,
-                                    LoadUpdateListener loadUpdateListener) {
+                                    @NotNull Button cancelLoad) {
 
         if (currentlyRunning.get()) {
             if (runningImportService != null) {
@@ -81,12 +77,10 @@ public class DataImportService {
                 runningImportService = chvDataImportService;
                 boolean queued = chvDataImportService.processDataSet(
                         dataset,
-                        dataSetChangeListener,
                         importTaskComplete,
                         progressText,
                         importProgressBar,
-                        cancelLoad,
-                        loadUpdateListener);
+                        cancelLoad);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);
@@ -103,8 +97,8 @@ public class DataImportService {
                 currentlyRunning.set(true);
                 runningImportService = csvDataImportService;
                 boolean queued = csvDataImportService.processDataSet(
-                        dataset, dataSetChangeListener,
-                        importTaskComplete, progressText, importProgressBar, cancelLoad, loadUpdateListener);
+                        dataset,
+                        importTaskComplete, progressText, importProgressBar, cancelLoad);
                 if (!queued) {
                     log.error("failed to start import process");
                     currentlyRunning.set(false);

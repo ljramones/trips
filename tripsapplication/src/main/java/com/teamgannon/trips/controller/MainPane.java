@@ -5,14 +5,11 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
 import com.teamgannon.trips.controller.statusbar.StatusBarController;
-import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.dialogs.AboutDialog;
-import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.dataset.DataSetManagerDialog;
 import com.teamgannon.trips.dialogs.dataset.SelectActiveDatasetDialog;
 import com.teamgannon.trips.dialogs.gaiadata.Load10ParsecStarsDialog;
@@ -32,11 +29,9 @@ import com.teamgannon.trips.dialogs.utility.FindDistanceDialog;
 import com.teamgannon.trips.dialogs.utility.RADecToXYZDialog;
 import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.PlotManager;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.panes.GalacticSpacePlane;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.graphics.panes.SolarSystemSpacePane;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.measure.OshiMeasure;
@@ -48,46 +43,46 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.automation.RouteFinderDataset;
 import com.teamgannon.trips.routing.automation.RouteFinderInView;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
-import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
-import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.*;
-import com.teamgannon.trips.service.exoplanet.ExoPlanetService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
-import com.teamgannon.trips.tableviews.DataSetTable;
 import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import javafx.application.HostServices;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -103,28 +98,26 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.Toolkit;
+import java.awt.TrayIcon;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.*;
 
 @Slf4j
 @Component
-public class MainPane implements
-        StellarDataUpdaterListener,
-        RouteUpdaterListener,
-        RedrawListener,
-        DatabaseListener,
-        DataSetChangeListener {
+public class MainPane  {
 
     private final SharedUIState sharedUIState;
 
@@ -155,14 +148,14 @@ public class MainPane implements
      */
     private PlotManager plotManager;
 
+    /**
+     * the main 3D interstellar space visualization pane
+     */
+    private final InterstellarSpacePane interstellarSpacePane;
+
     private final Localization localization;
     private final ApplicationEventPublisher eventPublisher;
     private final DataExportService dataExportService;
-
-    /**
-     * dataset lists
-     */
-    private final ListView<DataSetDescriptor> dataSetsListView = new ListView<>();
 
     ////// injected properties
     public Pane mainPanel;
@@ -178,25 +171,21 @@ public class MainPane implements
 
 
     ////  local assets
-    public SplitPane mainSplitPane;
-    public VBox displayPane;
-    public Accordion propertiesAccordion;
-    public TitledPane stellarObjectPane;
-    public BorderPane leftBorderPane;
-    public BorderPane rightBorderPane;
-    public TitledPane objectsViewPane;
-    public TitledPane transitPane;
-    public TitledPane routingPane;
+    public StackPane displayPane;
+    private final BooleanProperty busy = new SimpleBooleanProperty(false);
+    private final StringProperty busyMessage = new SimpleStringProperty("");
+    private final BooleanProperty cancelAvailable = new SimpleBooleanProperty(false);
+    private final ObservableList<String> busyDetails = FXCollections.observableArrayList();
+    private final Map<String, Runnable> cancelActions = new LinkedHashMap<>();
+    private int busyCount = 0;
+    private StackPane busyOverlay;
+    private Label busyLabel;
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
-    private TitledPane datasetsPane;
     private final RoutingPanel routingPanel;
-    private TransitFilterPane transitFilterPane;
     private final SharedUIFunctions sharedUIFunctions;
     private final StarPropertiesPane starPropertiesPane;
     private final ObjectViewPane objectViewPane;
-    private VBox settingsPane;
-    private StackPane leftDisplayPane;
 
     /**
      * the query dialog
@@ -210,20 +199,7 @@ public class MainPane implements
     private final RouteFinderInView routeFinderInView;
     private final TripsContext tripsContext;
 
-    /**
-     * galactic space
-     */
-    private final GalacticSpacePlane galacticSpacePlane;
 
-    /**
-     * interstellar space
-     */
-    private final InterstellarSpacePane interstellarSpacePane;
-
-    /**
-     * solar system panes for showing the details of various solar systems
-     */
-    private final SolarSystemSpacePane solarSystemSpacePane;
 
     private final DatasetService datasetService;
     private final SystemPreferencesService systemPreferencesService;
@@ -231,10 +207,6 @@ public class MainPane implements
     private final StarService starService;
     private final BulkLoadService bulkLoadService;
     private final DataImportService dataImportService;
-    /**
-     * list of routes
-     */
-    private List<Route> routeList;
 
     // state settings for control positions
 
@@ -247,6 +219,8 @@ public class MainPane implements
     private final HostServices hostServices;
 
     private final SliderControlManager sliderControlManager;
+
+    private final MainSplitPaneManager mainSplitPaneManager;
 
     /**
      * constructor
@@ -268,9 +242,6 @@ public class MainPane implements
                     StarService starService,
                     BulkLoadService bulkLoadService,
                     DataImportService dataImportService,
-                    GalacticSpacePlane galacticSpacePlane,
-                    InterstellarSpacePane interstellarSpacePane,
-                    SolarSystemSpacePane solarSystemSpacePane,
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
                     RoutingPanel routingPanel,
@@ -279,7 +250,9 @@ public class MainPane implements
                     SliderControlManager sliderControlManager,
                     SharedUIFunctions sharedUIFunctions,
                     StarPropertiesPane starPropertiesPane,
-                    SharedUIState sharedUIState) {
+                    SharedUIState sharedUIState,
+                    InterstellarSpacePane interstellarSpacePane,
+                    MainSplitPaneManager mainSplitPaneManager) {
 
         hostServices = fxWeaver.getBean(HostServices.class);
         this.oshiMeasure = oshiMeasure;
@@ -294,13 +267,11 @@ public class MainPane implements
         this.starService = starService;
         this.bulkLoadService = bulkLoadService;
         this.dataImportService = dataImportService;
-        this.galacticSpacePlane = galacticSpacePlane;
-        this.interstellarSpacePane = interstellarSpacePane;
+
         this.searchContext = tripsContext.getSearchContext();
         this.appContext = appContext;
 
         this.databaseManagementService = databaseManagementService;
-        this.solarSystemSpacePane = solarSystemSpacePane;
         this.localization = localization;
         this.eventPublisher = eventPublisher;
         this.routingPanel = routingPanel;
@@ -309,10 +280,11 @@ public class MainPane implements
         this.sliderControlManager = sliderControlManager;
         this.sharedUIFunctions = sharedUIFunctions;
         this.starPropertiesPane = starPropertiesPane;
+        this.interstellarSpacePane = interstellarSpacePane;
+        this.mainSplitPaneManager = mainSplitPaneManager;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
         this.sharedUIState = sharedUIState;
-
     }
 
 
@@ -324,18 +296,12 @@ public class MainPane implements
         setMnemonics();
 
         this.plotManager = new PlotManager(tripsContext, starService, eventPublisher);
-        plotManager.setDataSetChangeListener(this);
+        this.plotManager.setInterstellarPane(interstellarSpacePane);
 
         setDefaultSizesForUI();
 
         // get colors from DB
         getGraphColorsFromDB();
-
-        // create the list of objects in view
-        setupStellarObjectListView();
-
-        // create a data set pane for the database files present
-        setupDataSetView();
 
         // by default side panel should be off
         toggleSidePane(false);
@@ -366,7 +332,7 @@ public class MainPane implements
         primaryStage.widthProperty().addListener(stageSizeListener);
         primaryStage.heightProperty().addListener(stageSizeListener);
 
-        queryDialog = new QueryDialog(searchContext, this, this);
+        queryDialog = new QueryDialog(searchContext, eventPublisher);
         queryDialog.initModality(Modality.NONE);
 
         try {
@@ -413,126 +379,60 @@ public class MainPane implements
         this.mainPanel.setPrefWidth(Universe.boxWidth + 20);
         this.menuBar.setPrefWidth(Universe.boxWidth + 20);
 
-        // Initialize the mainSplitPane
-        this.mainSplitPane = new SplitPane();
-        this.mainSplitPane.setDividerPositions(1.0);
-        this.mainSplitPane.setPrefWidth(Universe.boxWidth);
-
-        // Create left and right panes
-        createLeftDisplay();
-        createRightDisplay();
+        // Initialize the split pane via MainSplitPaneManager
+        mainSplitPaneManager.initialize(sliderControlManager, plotManager);
 
         // Add mainSplitPane to displayPane
-        this.displayPane.getChildren().add(mainSplitPane);
-
-        // Initialize the SliderControlManager
-        sliderControlManager.initialize(mainSplitPane);
-
-        // Set up the slider control
-        setSliderControl(sliderControlManager);
-
-        // Initialize SharedUIFunctions
-        sharedUIFunctions.initialize(plotManager, mainSplitPane, sliderControlManager);
+        this.displayPane.getChildren().add(mainSplitPaneManager.getMainSplitPane());
+        setupBusyOverlay();
     }
 
-    private void createLeftDisplay() {
-        leftBorderPane = new BorderPane();
-        leftBorderPane.setMinWidth(0);
+    private void setupBusyOverlay() {
+        ProgressIndicator indicator = new ProgressIndicator();
+        indicator.setMaxSize(80, 80);
 
-        this.leftBorderPane.setPrefWidth(Universe.boxWidth * 0.6);
+        busyLabel = new Label();
+        busyLabel.textProperty().bind(busyMessage);
+        busyLabel.setTextFill(Color.WHITE);
 
-        mainSplitPane.getItems().add(leftBorderPane);
+        ListView<String> detailsList = new ListView<>(busyDetails);
+        detailsList.setMaxHeight(120);
+        detailsList.setFocusTraversable(false);
 
-        leftDisplayPane = new StackPane();
-        this.leftDisplayPane.setMinWidth(Universe.boxWidth + 100);
-        this.leftDisplayPane.setPrefWidth(Universe.boxWidth);
+        TitledPane detailsPane = new TitledPane("Details", detailsList);
+        detailsPane.setExpanded(false);
+        detailsPane.setMaxWidth(360);
 
-        leftBorderPane.setLeft(leftDisplayPane);
+        Button cancelButton = new Button("Cancel");
+        cancelButton.visibleProperty().bind(cancelAvailable);
+        cancelButton.managedProperty().bind(cancelAvailable);
+        cancelButton.setOnAction(event -> cancelBusyTasks());
 
-        // create the solar system
-        createSolarSystemSpace();
+        VBox content = new VBox(10, indicator, busyLabel, detailsPane, cancelButton);
+        content.setAlignment(Pos.CENTER);
+        content.setMaxWidth(400);
 
-        // create the interstellar space
-        createInterstellarSpace(tripsContext.getAppViewPreferences().getColorPallete());
+        busyOverlay = new StackPane(content);
+        busyOverlay.setStyle("-fx-background-color: rgba(0,0,0,0.35);");
+        busyOverlay.setPickOnBounds(true);
+        busyOverlay.visibleProperty().bind(busy);
+        busyOverlay.managedProperty().bind(busy);
 
-        // create galactic space
-        createGalacticSpace(tripsContext.getAppViewPreferences().getColorPallete());
+        displayPane.getChildren().add(busyOverlay);
     }
 
-    private void createRightDisplay() {
-        rightBorderPane = new BorderPane();
-        mainSplitPane.getItems().add(rightBorderPane);
-
-        rightBorderPane.setMinWidth(0);
-        settingsPane = new VBox();
-        settingsPane.setPrefHeight(588.0);
-        settingsPane.setPrefWidth(SIDE_PANEL_SIZE);
-
-        rightBorderPane.setRight(settingsPane);
-
-        propertiesAccordion = new Accordion();
-        settingsPane.getChildren().add(propertiesAccordion);
-
-        // datasets pane
-        datasetsPane = new TitledPane();
-        datasetsPane.setText("DataSets Available");
-        datasetsPane.setMinWidth(SIDE_PANEL_SIZE);
-        datasetsPane.setMinHeight(200);
-        datasetsPane.setMaxHeight(500);
-        propertiesAccordion.getPanes().add(datasetsPane);
-
-        // objects in pane
-        objectsViewPane = new TitledPane();
-        objectsViewPane.setText("Objects in View");
-        objectsViewPane.setMinWidth(SIDE_PANEL_SIZE);
-        objectsViewPane.setMinHeight(200);
-        objectsViewPane.setMaxHeight(460);
-        propertiesAccordion.getPanes().add(objectsViewPane);
-
-        // stellar pane
-        stellarObjectPane = new TitledPane();
-        stellarObjectPane.setText("Stellar Object Properties");
-        stellarObjectPane.setPrefWidth(SIDE_PANEL_SIZE);
-        stellarObjectPane.setPrefHeight(500);
-        stellarObjectPane.setMaxHeight(520);
-        ScrollPane scrollPane = new ScrollPane(starPropertiesPane);
-        stellarObjectPane.setContent(scrollPane);
-        propertiesAccordion.getPanes().add(stellarObjectPane);
-
-        transitPane = new TitledPane();
-        transitPane.setText("Link Control");
-        transitPane.setPrefWidth(SIDE_PANEL_SIZE);
-        transitPane.setPrefHeight(500);
-        transitPane.setMaxHeight(520);
-        transitFilterPane = new TransitFilterPane();
-        ScrollPane scrollPane2 = new ScrollPane(transitFilterPane);
-        transitPane.setContent(scrollPane2);
-        propertiesAccordion.getPanes().add(transitPane);
-
-        // routing pane
-        routingPane = new TitledPane();
-        routingPane.setText("Star Routing");
-        routingPane.setMinWidth(SIDE_PANEL_SIZE);
-        routingPane.setMinHeight(400);
-        routingPane.setMaxHeight(400);
-        routingPanel.setRouteUpdaterListener(this);
-        routingPane.setContent(routingPanel);
-        propertiesAccordion.getPanes().add(routingPane);
-    }
-
-    private void setSliderControl(SliderControlManager sliderControlManager) {
-        DoubleProperty splitPaneDividerPosition = mainSplitPane.getDividers().get(0).positionProperty();
-        splitPaneDividerPosition.addListener(sliderControlManager.getSliderChangeListener());
+    private void cancelBusyTasks() {
+        if (cancelActions.isEmpty()) {
+            return;
+        }
+        busyMessage.set("Cancelling...");
+        for (Runnable cancelAction : new ArrayList<>(cancelActions.values())) {
+            cancelAction.run();
+        }
     }
 
     public void toggleSidePane(boolean sidePanelOn) {
-        if (sidePanelOn) {
-            mainSplitPane.setDividerPositions(SCREEN_PROPORTION);
-            interstellarSpacePane.shiftDisplayLeft(true);
-        } else {
-            mainSplitPane.setDividerPositions(1.0);
-            interstellarSpacePane.shiftDisplayLeft(false);
-        }
+        mainSplitPaneManager.toggleSidePane(sidePanelOn);
     }
 
     /**
@@ -558,14 +458,18 @@ public class MainPane implements
             log.warn("StatusBar or its controller is null during resize operation");
         }
 
-        this.settingsPane.setPrefHeight(height - 112);
-        this.settingsPane.setPrefWidth(260);
+        SplitPane mainSplitPane = mainSplitPaneManager.getMainSplitPane();
+        VBox settingsPane = mainSplitPaneManager.getSettingsPane();
+        StackPane leftDisplayPane = mainSplitPaneManager.getLeftDisplayPane();
 
-        this.leftDisplayPane.setPrefWidth(width);
-        this.leftDisplayPane.setPrefHeight(height);
+        settingsPane.setPrefHeight(height - 112);
+        settingsPane.setPrefWidth(260);
 
-        this.mainSplitPane.setPrefWidth(width);
-        this.mainSplitPane.setPrefHeight(height - 112);
+        leftDisplayPane.setPrefWidth(width);
+        leftDisplayPane.setPrefHeight(height);
+
+        mainSplitPane.setPrefWidth(width);
+        mainSplitPane.setPrefHeight(height - 112);
         // control split-pane divider so it doesn't lag while resizing
         double spPosition = mainSplitPane.getDividers().get(0).getPosition();
 
@@ -595,6 +499,7 @@ public class MainPane implements
      * @param spPosition the current divider position
      */
     private void adjustSliderForSidePanel(double spPosition) {
+        SplitPane mainSplitPane = mainSplitPaneManager.getMainSplitPane();
         if (!sidePaneOn) {
             // this takes into consideration that the side-pane is closed, and we
             // ensure it stays that way
@@ -606,7 +511,6 @@ public class MainPane implements
             } else {
                 double currentWidth = this.mainPanel.getWidth();
                 double exposedSettingsWidth = (1 - spPosition) * currentWidth;
-//                log.info("currentWidth={}, exposedSetting={}", currentWidth, exposedSettingsWidth);
                 if (exposedSettingsWidth > SIDE_PANEL_SIZE || exposedSettingsWidth < SIDE_PANEL_SIZE) {
                     double adjustedWidthRatio = SIDE_PANEL_SIZE / currentWidth;
                     mainSplitPane.setDividerPosition(0, 1 - adjustedWidthRatio);
@@ -614,35 +518,6 @@ public class MainPane implements
             }
         }
     }
-
-    /**
-     * sets up list view for stellar objects
-     */
-    private void setupStellarObjectListView() {
-
-        ScrollPane scrollPane = new ScrollPane();
-
-        objectViewPane.setListeners(this, this);
-
-        scrollPane.setContent(objectViewPane);
-
-        // setup model to display in case we turn on
-        objectsViewPane.setContent(scrollPane);
-    }
-
-    private void setupDataSetView() {
-
-        SearchContext searchContext = tripsContext.getSearchContext();
-        datasetsPane.setContent(dataSetsListView);
-
-        dataSetsListView.setPrefHeight(10);
-        dataSetsListView.setCellFactory(new DataSetDescriptorCellFactory(this, this));
-        dataSetsListView.getSelectionModel().selectedItemProperty().addListener(this::datasetDescriptorChanged);
-
-        loadDatasets(searchContext);
-        log.info("Application up and running");
-    }
-
 
     private void loadDBPresets() {
 
@@ -735,7 +610,7 @@ public class MainPane implements
         if (datasetName != null) {
             if (!datasetName.isEmpty()) {
                 DataSetDescriptor descriptor = datasetService.getDatasetFromName(tripsPrefs.getDatasetName());
-                this.setContextDataSet(descriptor);
+                eventPublisher.publishEvent(new SetContextDataSetEvent(this, descriptor));
                 plotStars(null);
             }
         }
@@ -773,84 +648,6 @@ public class MainPane implements
         tripsContext.getCurrentPlot().setStarDisplayPreferences(starDisplayPreferences);
     }
 
-    private void loadDatasets(@NotNull SearchContext searchContext) {
-        // load viable datasets into search context
-        List<DataSetDescriptor> dataSets = loadDataSetView();
-        if (!dataSets.isEmpty()) {
-            searchContext.addDataSets(dataSets);
-        }
-    }
-
-    private @NotNull List<DataSetDescriptor> loadDataSetView() {
-
-        List<DataSetDescriptor> dataSetDescriptorList = datasetService.getDataSets();
-
-        for (DataSetDescriptor descriptor : dataSetDescriptorList) {
-            if (descriptor.getRoutesStr() != null) {
-                routeList = descriptor.getRoutes();
-                log.info("routes");
-            }
-        }
-
-        addDataSetToList(dataSetDescriptorList, true);
-        log.info("loaded DBs");
-        return dataSetDescriptorList;
-    }
-
-    public void addDataSetToList(@NotNull List<DataSetDescriptor> list, boolean clear) {
-        if (clear) {
-            dataSetsListView.getItems().clear();
-        }
-        list.forEach(descriptor -> dataSetsListView.getItems().add(descriptor));
-        log.debug("update complete");
-    }
-
-    public void datasetDescriptorChanged(ObservableValue<? extends DataSetDescriptor> ov, @Nullable DataSetDescriptor oldValue, @Nullable DataSetDescriptor newValue) {
-        String oldText = oldValue == null ? "null" : oldValue.toString();
-        String newText = newValue == null ? "null" : newValue.toString();
-    }
-
-    /**
-     * create the galactic plane
-     *
-     * @param colorPalette the Galactic Space plane
-     */
-    private void createGalacticSpace(ColorPalette colorPalette) {
-        leftDisplayPane.getChildren().add(galacticSpacePlane);
-        // force it back
-        galacticSpacePlane.toBack();
-    }
-
-    /**
-     * create an interstellar space drawing area
-     *
-     * @param colorPalette the colors to use in drawing
-     */
-    private void createInterstellarSpace(ColorPalette colorPalette) {
-
-        interstellarSpacePane.setlisteners(
-                this,
-                this,
-                this);
-
-        leftDisplayPane.getChildren().add(interstellarSpacePane);
-
-        // put the interstellar space on top and the solar system to the back
-        interstellarSpacePane.toFront();
-
-        // set the interstellar pane to be the drawing surface
-        plotManager.setInterstellarPane(interstellarSpacePane);
-    }
-
-    /**
-     * create the solar space drawing area
-     */
-    private void createSolarSystemSpace() {
-        leftDisplayPane.getChildren().add(solarSystemSpacePane);
-        solarSystemSpacePane.toBack();
-    }
-
-
     /////////////////////////////  UI triggers  /////////////////////
 
 
@@ -883,7 +680,6 @@ public class MainPane implements
     public void loadDataSetManager(ActionEvent actionEvent) {
 
         DataSetManagerDialog dialog = new DataSetManagerDialog(
-                this,
                 databaseManagementService,
                 datasetService,
                 eventPublisher,
@@ -899,7 +695,7 @@ public class MainPane implements
     public void selectActiveDataset(ActionEvent actionEvent) {
         if (tripsContext.getDataSetContext().getDescriptor() != null) {
             SelectActiveDatasetDialog dialog = new SelectActiveDatasetDialog(
-                    this,
+                    eventPublisher,
                     tripsContext.getDataSetContext(),
                     databaseManagementService,
                     datasetService);
@@ -922,7 +718,7 @@ public class MainPane implements
             TransitDefinitions transitDefinitions = optionalTransitDefinitions.get();
             if (transitDefinitions.isSelected()) {
                 interstellarSpacePane.findTransits(transitDefinitions);
-                transitFilterPane.setFilter(transitDefinitions, interstellarSpacePane.getTransitManager());
+                mainSplitPaneManager.getTransitFilterPane().setFilter(transitDefinitions, interstellarSpacePane.getTransitManager());
             }
         }
     }
@@ -931,7 +727,7 @@ public class MainPane implements
         interstellarSpacePane.clearTransits();
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.TRANSITS, false));
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.TRANSIT_LENGTHS, false));
-        transitFilterPane.clear();
+        mainSplitPaneManager.getTransitFilterPane().clear();
     }
 
     public void routeFinderInView(ActionEvent actionEvent) {
@@ -1073,269 +869,12 @@ public class MainPane implements
     /////////////////////////////  LISTENERS  ///////////////////////////////
 
 
-    @Override
-    public List<StarObject> getAstrographicObjectsOnQuery() {
-        return starService.getAstrographicObjectsOnQuery(searchContext);
-    }
-
-    @Override
-    public void updateStar(@NotNull StarObject starObject) {
-        starService.updateStar(starObject);
-    }
-
-    @Override
-    public void updateNotesForStar(@NotNull String recordId, String notes) {
-        starService.updateNotesOnStar(recordId, notes);
-    }
-
-    @Override
-    public StarObject getStar(@NotNull String starId) {
-        return starService.getStar(starId);
-    }
-
-    @Override
-    public void removeStar(@NotNull StarObject starObject) {
-        starService.removeStar(starObject);
-    }
-
-    @Override
-    public void removeStar(@NotNull String recordId) {
-        starService.removeStar(recordId);
-    }
 
     public void clearList() {
         eventPublisher.publishEvent(new ClearListEvent(this));
     }
 
-    @Override
-    public void recenter(@NotNull StarDisplayRecord starId) {
-        log.info("recenter plot at {}", starId);
-        AstroSearchQuery query = searchContext.getAstroSearchQuery();
-        query.setCenterRanging(starId, query.getUpperDistanceLimit());
-        log.info("New Center Range: {}", query.getCenterRangingCube());
-        showNewStellarData(query, true, false);
-    }
 
-    @Override
-    public void routingStatus(boolean statusFlag) {
-        statusBarController.routingStatus(statusFlag);
-    }
-
-    @Override
-    public void newRoute(@NotNull DataSetDescriptor dataSetDescriptor, @NotNull RouteDescriptor routeDescriptor) {
-        log.info("new route");
-        datasetService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
-        routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
-        routingStatus(false);
-    }
-
-    @Override
-    public void updateRoute(RouteDescriptor routeDescriptor) {
-        log.info("update route");
-        String datasetName = searchContext.getDataSetDescriptor().getDataSetName();
-        DataSetDescriptor descriptor = datasetService.updateRoute(datasetName, routeDescriptor);
-        searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-        interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
-    }
-
-    @Override
-    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
-        interstellarSpacePane.displayRoute(routeDescriptor, state);
-    }
-
-    @Override
-    public void deleteRoute(RouteDescriptor routeDescriptor) {
-        log.info("delete route");
-        DataSetDescriptor descriptor = searchContext.getDataSetDescriptor();
-        descriptor = datasetService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
-        searchContext.getAstroSearchQuery().setDescriptor(descriptor);
-        // clear the route from the plot
-        tripsContext.getCurrentPlot().removeRoute(routeDescriptor);
-        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-        interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
-    }
-
-    /**
-     * redisplay data based on the selected filter criteria
-     *
-     * @param searchQuery the search query to use
-     * @param showPlot    show a graphical plot
-     * @param showTable   show a table
-     */
-    @Override
-    public void showNewStellarData(@NotNull AstroSearchQuery searchQuery, boolean showPlot, boolean showTable) {
-
-        log.info(searchQuery.toString());
-        searchContext.setAstroSearchQuery(searchQuery);
-
-        DataSetDescriptor descriptor = searchQuery.getDataSetContext().getDescriptor();
-        if (descriptor != null) {
-            setContextDataSet(descriptor);
-
-            if (showPlot || showTable) {
-                // get the distance range
-                double displayRadius = searchQuery.getUpperDistanceLimit();
-
-                // do a search and cause the plot to show it
-                List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-
-                if (!starObjects.isEmpty()) {
-                    if (showPlot) {
-                        plotManager.drawAstrographicData(descriptor,
-                                starObjects,
-                                displayRadius,
-                                searchQuery.getCenterCoordinates(),
-                                tripsContext.getAppViewPreferences().getColorPallete(),
-                                tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                                tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                        );
-
-                        //
-                        routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-                    }
-                    if (showTable) {
-                        showList(starObjects);
-                    }
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset loaded is: " + descriptor.getDataSetName()));
-
-                } else {
-                    showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
-                }
-            }
-        } else {
-            showErrorAlert("Show query data", "Data descriptor is null which shouldn't happen.\nPlease select a dataset.");
-        }
-    }
-
-    /**
-     * show the data
-     *
-     * @param dataSetDescriptor the dataset descriptor
-     * @param showPlot          show the graphical plot
-     * @param showTable         show the table
-     */
-    @Override
-    public void showNewStellarData(@NotNull DataSetDescriptor dataSetDescriptor, boolean showPlot, boolean showTable) {
-        log.info("showing new stellar data: {}, showPlot: {}, showTable: {}", dataSetDescriptor.getDataSetName(), showPlot, showTable);
-        setContextDataSet(dataSetDescriptor);
-        showNewStellarData(showPlot, showTable);
-    }
-
-    /**
-     * display plot or data based on default query
-     *
-     * @param showPlot  show the graphical plot
-     * @param showTable show the table
-     */
-    @Override
-    public void showNewStellarData(boolean showPlot, boolean showTable) {
-        AstroSearchQuery searchQuery = tripsContext.getSearchContext().getAstroSearchQuery();
-
-        // do a search and cause the plot to show it
-        List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-
-        if (!starObjects.isEmpty()) {
-            // get the distance range
-            double displayRadius = searchQuery.getUpperDistanceLimit();
-
-            if (showPlot) {
-                plotManager.drawAstrographicData(searchQuery.getDataSetContext().getDescriptor(),
-                        starObjects,
-                        displayRadius,
-                        searchQuery.getCenterCoordinates(),
-                        tripsContext.getAppViewPreferences().getColorPallete(),
-                        tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
-                        tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
-                );
-                DataSetDescriptor descriptor = searchQuery.getDataSetContext().getDescriptor();
-                routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-            }
-            if (showTable) {
-                showList(starObjects);
-            }
-            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset loaded is: " + searchQuery.getDataSetContext().getDescriptor().getDataSetName()));
-
-            // highlight the data set used
-//            setContextDataSet(searchQuery.getDataSetContext().getDescriptor());
-
-        } else {
-            showErrorAlert("Astrographic data view error", "No Astrographic data was loaded ");
-        }
-    }
-
-    @Override
-    public void doExport(AstroSearchQuery newQuery) {
-        ExportQueryDialog exportQueryDialog = new ExportQueryDialog(searchContext, databaseManagementService,
-                dataExportService, localization, eventPublisher);
-        exportQueryDialog.showAndWait();
-    }
-
-    private void showList(@NotNull List<StarObject> starObjects) {
-        if (!starObjects.isEmpty()) {
-            new DataSetTable(databaseManagementService, starService, starObjects);
-        } else {
-            showErrorAlert("Display Data table", "no data to show");
-        }
-    }
-
-    @Override
-    public void addDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
-
-        // add dataset to trips context
-        tripsContext.addDataSet(dataSetDescriptor);
-
-        // add to side-panel
-        addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
-
-        // update the query dialog
-        queryDialog.updateDataContext(dataSetDescriptor);
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " loaded"));
-    }
-
-    @Override
-    public void removeDataSet(@NotNull DataSetDescriptor dataSetDescriptor) {
-        Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                "Remove",
-                "Are you sure you want to remove: " + dataSetDescriptor.getDataSetName());
-
-        if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
-
-            // remove from database
-            tripsContext.removeDataSet(dataSetDescriptor);
-
-            // update the query dialong
-            queryDialog.removeDataset(dataSetDescriptor);
-
-            // redisplay the datasets
-            addDataSetToList(new ArrayList<>(searchContext.getDatasetMap().values()), true);
-            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " removed"));
-        }
-    }
-
-    @Override
-    public void setContextDataSet(@NotNull DataSetDescriptor descriptor) {
-
-        // clear all the current data
-        clearAll();
-
-        // update the trips context and write through to the database
-        tripsContext.setDataSetContext(new DataSetContext(descriptor));
-
-        // update the side panel
-        dataSetsListView.getSelectionModel().select(descriptor);
-
-        if (queryDialog != null) {
-            queryDialog.setDataSetContext(descriptor);
-        }
-
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, ("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ")));
-    }
-
-
-    private void clearInterstellar() {
-        interstellarSpacePane.clearAll();
-    }
 
     @EventListener
     public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
@@ -1357,65 +896,6 @@ public class MainPane implements
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.STATUS_BAR, graphEnablesPersist.isDisplayRoutes()));
     }
 
-    /**
-     * show the data in a spreadsheet
-     */
-    private void showTableData() {
-
-        if (tripsContext.getDataSetContext().isValidDescriptor()) {
-            List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-            if (!starObjects.isEmpty()) {
-                new DataSetTable(databaseManagementService, starService, starObjects);
-            } else {
-                showErrorAlert("Show Data Table", "no data found");
-            }
-        } else {
-            List<DataSetDescriptor> datasets = datasetService.getDataSets();
-            if (datasets.isEmpty()) {
-                showErrorAlert("Plot Stars", "No datasets loaded, please load one");
-                return;
-            }
-
-            List<String> dialogData = datasets.stream().map(DataSetDescriptor::getDataSetName).collect(Collectors.toList());
-
-            ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogData.get(0), dialogData);
-            dialog.setTitle("Choose data set to display");
-            dialog.setHeaderText("Select your choice - (Default display is 20 light years from Earth, use Show Stars filter to change)");
-
-            Optional<String> result = dialog.showAndWait();
-
-            if (result.isPresent()) {
-                String selected = result.get();
-
-                DataSetDescriptor dataSetDescriptor = findFromDataSet(selected, datasets);
-                if (dataSetDescriptor == null) {
-                    log.error("Dataset Descriptor is null. How the hell did this happen");
-                    return;
-                }
-                List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-                if (!starObjects.isEmpty()) {
-                    new DataSetTable(databaseManagementService, starService, starObjects);
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset table loaded is: " + dataSetDescriptor.getDataSetName()));
-                } else {
-                    showErrorAlert("Show Data Table", "No data to show");
-                }
-
-                // set current context
-                setContextDataSet(dataSetDescriptor);
-            }
-        }
-    }
-
-    /**
-     * find the data selected
-     *
-     * @param selected the selected data
-     * @param datasets the datasets
-     * @return the descriptor wanted
-     */
-    private DataSetDescriptor findFromDataSet(String selected, @NotNull List<DataSetDescriptor> datasets) {
-        return datasets.stream().filter(dataSetDescriptor -> dataSetDescriptor.getDataSetName().equals(selected)).findFirst().orElse(null);
-    }
 
     /////////////////////////  Shutdown   /////////////////////////
 
@@ -1441,9 +921,10 @@ public class MainPane implements
             queryDialog.close();
         }
         // close the spring context which invokes all the bean destroy methods
-        SpringApplication.exit(appContext, () -> returnCode);
+        int exitCode = SpringApplication.exit(appContext, () -> returnCode);
         // now exit the application
-        System.exit(returnCode);
+        Platform.exit();
+        System.exit(exitCode);
     }
 
     public void findInDataset(ActionEvent actionEvent) {
@@ -1480,7 +961,7 @@ public class MainPane implements
                 if (!advResultsSet.isDismissed()) {
                     if (advResultsSet.isResultsFound()) {
                         if (advResultsSet.isViewStars()) {
-                            showList(advResultsSet.getStarsFound());
+                            mainSplitPaneManager.showList(advResultsSet.getStarsFound());
                         }
                         if (advResultsSet.isPlotStars()) {
                             // get the distance range - in this case, pick a default @todo check this
@@ -1560,7 +1041,7 @@ public class MainPane implements
 
     public void showRoutes(ActionEvent actionEvent) {
         toggleSidePane(true);
-        propertiesAccordion.setExpandedPane(routingPane);
+        mainSplitPaneManager.getPropertiesAccordion().setExpandedPane(mainSplitPaneManager.getRoutingPane());
     }
 
     public void editDeleteRoutes(ActionEvent actionEvent) {
@@ -1832,25 +1313,17 @@ public class MainPane implements
 
     ////////////////////////////////////////////////////
 
-    public void clearAll() {
-        clearData();
-        clearList();
-        clearInterstellar();
-    }
 
     public void displayStellarProperties(@Nullable StarObject starObject) {
         if (starObject != null) {
             toggleSidePane(true);
-            propertiesAccordion.setExpandedPane(stellarObjectPane);
+            mainSplitPaneManager.getPropertiesAccordion().setExpandedPane(mainSplitPaneManager.getStellarObjectPane());
             if (!sidePaneOn) {
                 toggleSidePane(true);
             }
         }
     }
 
-    public void clearData() {
-        eventPublisher.publishEvent(new ClearDataEvent(this));
-    }
 
     @EventListener
     public void onDistanceReportEvent(DistanceReportEvent event) {
@@ -1870,22 +1343,36 @@ public class MainPane implements
     }
 
     @EventListener
-    public void onContextSelectorEvent(ContextSelectorEvent event) {
-        Platform.runLater(() -> {
-            switch (event.getContextSelectionType()) {
-                case INTERSTELLAR -> {
-                    log.info("Showing interstellar Space");
-                    interstellarSpacePane.toFront();
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
+    public void onBusyStateEvent(BusyStateEvent event) {
+        FxThread.runOnFxThread(() -> {
+            if (event.isBusy()) {
+                busyCount++;
+                if (event.getTaskId() != null && event.getCancelAction() != null) {
+                    cancelActions.put(event.getTaskId(), event.getCancelAction());
                 }
-                case SOLARSYSTEM -> {
-                    log.info("Showing a solar system");
-                    solarSystemSpacePane.reset();
-                    solarSystemSpacePane.setSystemToDisplay(event.getStarDisplayRecord());
-                    solarSystemSpacePane.toFront();
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
+                if (event.getMessage() != null) {
+                    busyMessage.set(event.getMessage());
                 }
-                default -> log.error("Unexpected value: {}", event.getContextSelectionType());
+            } else {
+                if (event.getTaskId() != null) {
+                    cancelActions.remove(event.getTaskId());
+                }
+                busyCount = Math.max(0, busyCount - 1);
+                if (busyCount == 0) {
+                    busyMessage.set("");
+                }
+            }
+            cancelAvailable.set(!cancelActions.isEmpty());
+            busy.set(busyCount > 0);
+        });
+    }
+
+    @EventListener
+    public void onStatusUpdateEvent(StatusUpdateEvent event) {
+        FxThread.runOnFxThread(() -> {
+            busyDetails.add(0, event.getStatus());
+            while (busyDetails.size() > 6) {
+                busyDetails.remove(busyDetails.size() - 1);
             }
         });
     }

@@ -1,12 +1,11 @@
 package com.teamgannon.trips.solarsysmodelling.accrete;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ResourceUtils;
-
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -68,13 +67,12 @@ class Utils {
     }
 
     public static BufferedReader loadFile(String fileName) {
-        try {
-            File file = ResourceUtils.getFile("classpath:" + fileName);
-            return new BufferedReader(new FileReader(file));
-        } catch (IOException e) {
-            e.printStackTrace();
+        InputStream inputStream = Utils.class.getClassLoader().getResourceAsStream(fileName);
+        if (inputStream == null) {
+            log.error("Resource not found on classpath: {}", fileName);
+            return null;
         }
-        return null;
+        return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
     }
 
     private static List<SimStar> loadStarType(String filename) {

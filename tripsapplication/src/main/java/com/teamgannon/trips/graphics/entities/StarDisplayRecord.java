@@ -278,4 +278,73 @@ public class StarDisplayRecord {
         }
     }
 
+    // Manual getters/setters (Lombok @Data should generate these but adding explicitly)
+    public double[] getActualCoordinates() {
+        return actualCoordinates;
+    }
+
+    public String getStarName() {
+        return starName;
+    }
+
+    public String getRecordId() {
+        return recordId;
+    }
+
+    public void setId(String id) {
+        this.recordId = id;
+    }
+
+    public String getDataSetName() {
+        return dataSetName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.starName = displayName;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setSpectralClass(String spectralClass) {
+        this.spectralClass = spectralClass;
+    }
+
+    public String getPolity() {
+        return polity;
+    }
+
+    public void setPolity(String polity) {
+        this.polity = polity;
+    }
+
+    public boolean isLabelForced() {
+        return labelForced;
+    }
+
+    public void setForceLabelToBeShown(boolean forceLabelToBeShown) {
+        this.labelForced = forceLabelToBeShown;
+    }
+
+    public void setDataSetName(String dataSetName) {
+        this.dataSetName = dataSetName;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public String getSpectralClass() {
+        return spectralClass;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
 }

@@ -4,13 +4,15 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.dialogs.routing.RouteDialog;
 import com.teamgannon.trips.dialogs.routing.RouteSelector;
+import com.teamgannon.trips.events.NewRouteEvent;
+import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.RouteUpdaterListener;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
+import org.springframework.context.ApplicationEventPublisher;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -129,7 +131,7 @@ public class TransitRouteVisibilityGroup {
      */
     private final List<TransitRoute> currentRouteList = new ArrayList<>();
 
-    private final RouteUpdaterListener routeUpdaterListener;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * current dataset
@@ -151,7 +153,7 @@ public class TransitRouteVisibilityGroup {
                                        StarMeasurementService starMeasurementService,
                                        double controlPaneOffset,
                                        TransitRangeDef transitRangeDef,
-                                       RouteUpdaterListener routeUpdaterListener,
+                                       ApplicationEventPublisher eventPublisher,
                                        TripsContext tripsContext
     ) {
         this.subScene = subScene;
@@ -159,7 +161,7 @@ public class TransitRouteVisibilityGroup {
         this.starMeasurementService = starMeasurementService;
         this.controlPaneOffset = controlPaneOffset;
         this.transitRangeDef = transitRangeDef;
-        this.routeUpdaterListener = routeUpdaterListener;
+        this.eventPublisher = eventPublisher;
         this.tripsContext = tripsContext;
         visible = false;
         labelsVisible = false;
@@ -431,11 +433,11 @@ public class TransitRouteVisibilityGroup {
                 if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
                     currentRouteList.clear();
                     createRoute(transitSegment);
-                    routeUpdaterListener.routingStatus(true);
+                    eventPublisher.publishEvent(new RoutingStatusEvent(this, true));
                 }
             } else {
                 createRoute(transitSegment);
-                routeUpdaterListener.routingStatus(true);
+                eventPublisher.publishEvent(new RoutingStatusEvent(this, true));
             }
         });
         return menuItem;
@@ -495,7 +497,7 @@ public class TransitRouteVisibilityGroup {
             routeDescriptor.getRouteCoordinates().add(transitRoute.getTargetEndpoint());
             routeDescriptor.getRouteList().add(transitRoute.getTarget().getRecordId());
         }
-        routeUpdaterListener.newRoute(dataSetDescriptor, routeDescriptor);
+        eventPublisher.publishEvent(new NewRouteEvent(this, dataSetDescriptor, routeDescriptor));
     }
 
     /////////////////////////////////////////

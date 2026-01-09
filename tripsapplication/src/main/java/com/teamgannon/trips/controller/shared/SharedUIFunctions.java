@@ -10,6 +10,7 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.Priority;
@@ -62,9 +63,25 @@ public class SharedUIFunctions {
             log.info("SplitPane width changed from " + oldVal + " to " + newVal);
         });
 
-        VBox parent = (VBox) mainSplitPane.getParent();
-        VBox.setVgrow(mainSplitPane, Priority.ALWAYS);
-        parent.setFillWidth(true);
+        setSplitPaneParentLayout(mainSplitPane);
+    }
+
+    private void setSplitPaneParentLayout(SplitPane splitPane) {
+        Parent currentParent = splitPane.getParent();
+        if (currentParent instanceof VBox) {
+            VBox parentBox = (VBox) currentParent;
+            VBox.setVgrow(splitPane, Priority.ALWAYS);
+            parentBox.setFillWidth(true);
+            return;
+        }
+
+        splitPane.parentProperty().addListener((obs, oldParent, newParent) -> {
+            if (newParent instanceof VBox) {
+                VBox parentBox = (VBox) newParent;
+                VBox.setVgrow(splitPane, Priority.ALWAYS);
+                parentBox.setFillWidth(true);
+            }
+        });
     }
 
     public void plotStars() {

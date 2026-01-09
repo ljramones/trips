@@ -15,6 +15,7 @@ import org.springframework.aop.framework.AopContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.UUID;
@@ -194,25 +195,28 @@ public class SystemPreferencesService {
     }
 
     @EventListener
+    @Async("taskExecutor")
     public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
         ((SystemPreferencesService) AopContext.currentProxy()).updateColors(event.getColorPalette());
     }
 
     @EventListener
+    @Async("taskExecutor")
     public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
         ((SystemPreferencesService) AopContext.currentProxy()).updateGraphEnables(event.getGraphEnablesPersist());
     }
 
     @EventListener
+    @Async("taskExecutor")
     public void onStarDisplayPreferencesChangeEvent(StarDisplayPreferencesChangeEvent event) {
         ((SystemPreferencesService) AopContext.currentProxy()).updateStarPreferences(event.getStarDisplayPreferences());
     }
 
     @EventListener
+    @Async("taskExecutor")
     public void onCivilizationDisplayPreferencesChangeEvent(CivilizationDisplayPreferencesChangeEvent event) {
         CivilizationDisplayPreferences preferences = event.getCivilizationDisplayPreferences();
         log.info("Handling CivilizationDisplayPreferencesChangeEvent for ID: {}", preferences.getId());
         ((SystemPreferencesService) AopContext.currentProxy()).updateCivilizationDisplayPreferences(preferences);
     }
 }
-

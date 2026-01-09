@@ -1,8 +1,8 @@
 package com.teamgannon.trips.search;
 
+import com.teamgannon.trips.events.ExportQueryEvent;
+import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.listener.DataSetChangeListener;
-import com.teamgannon.trips.listener.StellarDataUpdaterListener;
 import com.teamgannon.trips.search.components.*;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -20,8 +21,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class SearchPane extends Pane {
 
     private final SearchContext searchContext;
-    private final DataSetChangeListener dataSetChangeListener;
-    private final StellarDataUpdaterListener updater;
+    private final ApplicationEventPublisher eventPublisher;
     private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
@@ -41,15 +41,13 @@ public class SearchPane extends Pane {
     /**
      * constructor
      *
-     * @param searchContext the search context
-     * @param updater       the data updater
+     * @param searchContext  the search context
+     * @param eventPublisher the event publisher
      */
     public SearchPane(@NotNull SearchContext searchContext,
-                      DataSetChangeListener dataSetChangeListener,
-                      StellarDataUpdaterListener updater) {
+                      ApplicationEventPublisher eventPublisher) {
         this.searchContext = searchContext;
-        this.dataSetChangeListener = dataSetChangeListener;
-        this.updater = updater;
+        this.eventPublisher = eventPublisher;
 
         DistanceRange distanceRange = DistanceRange
                 .builder()
@@ -80,7 +78,7 @@ public class SearchPane extends Pane {
         queryBox.setVgap(5);
         queryBox.setHgap(5);
 
-        dataSetChoicePanel = new DataSetPanel(searchContext, dataSetChangeListener);
+        dataSetChoicePanel = new DataSetPanel(searchContext, eventPublisher);
         queryBox.add(dataSetChoicePanel.getPane(), 0, 1, 2, 1);
         queryBox.add(d2EarthSlider.getPane(), 0, 2, 2, 1);
         queryBox.add(stellarClassSelectionPanel.getPane(), 0, 3);
@@ -130,12 +128,12 @@ public class SearchPane extends Pane {
 
             // process file location for export if selected
             if (doExport) {
-                updater.doExport(newQuery);
+                eventPublisher.publishEvent(new ExportQueryEvent(this, newQuery));
             }
 
             if (newQuery.getDataSetContext().getDescriptor() != null) {
                 // update main screen
-                updater.showNewStellarData(newQuery, showPlot, showTable);
+                eventPublisher.publishEvent(new ShowStellarDataEvent(this, newQuery, showPlot, showTable));
             } else {
                 showErrorAlert("Query Dialog", "You must specify a dataset!");
             }
