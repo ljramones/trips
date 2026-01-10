@@ -591,7 +591,7 @@
                         <version>1.6.0</version>
                         <configuration>
                             <name>${jpackage.name}</name>
-                            <appVersion>1.0.0</appVersion>
+                            <appVersion>${project.version}</appVersion>
                             <vendor>Charles Gannon</vendor>
                             <type>${jpackage.type}</type>
                             <mainClass>com.teamgannon.trips.TripsSpringBootApplication</mainClass>

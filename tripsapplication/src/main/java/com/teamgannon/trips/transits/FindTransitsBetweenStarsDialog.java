@@ -1,7 +1,7 @@
 package com.teamgannon.trips.transits;
 
-import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,7 +16,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,8 +31,6 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
 
     private final Map<UUID, TransitRangeDefinition> bandMap = new HashMap<>();
 
-    private final DatabaseManagementService databaseManagementService;
-
     private final DatasetService datasetService;
     private final TransitDefinitions transitDefinitions;
 
@@ -41,14 +38,9 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
 
     private int currentRow = 0;
 
-    private final Stage stage;
-
-
-    public FindTransitsBetweenStarsDialog(DatabaseManagementService databaseManagementService,
-                                          DatasetService datasetService,
+    public FindTransitsBetweenStarsDialog(DatasetService datasetService,
                                           TransitDefinitions transitDefinitions) {
 
-        this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
         this.transitDefinitions = transitDefinitions;
         transitDefinitions.getTransitRangeDefs().sort(Comparator.comparing(TransitRangeDef::getBandName));
@@ -92,9 +84,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
 
         this.getDialogPane().setContent(vBox);
 
-        // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void addRow(ActionEvent actionEvent) {
@@ -105,7 +95,7 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
             def.setEnabled(false);
             def.setBandColor(Color.WHEAT);
             addBand(gridPane, currentRow++, def);
-            stage.sizeToScene();
+            sizeDialogToScene();
         } else {
             showErrorAlert("Add Transit Definition", "Max of 20 bands");
         }
@@ -182,16 +172,22 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
         TransitDefinitions transitDefinitions = new TransitDefinitions();
         transitDefinitions.setSelected(false);
         setResult(transitDefinitions);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         TransitDefinitions transitDefinitions = new TransitDefinitions();
         transitDefinitions.setSelected(false);
         setResult(transitDefinitions);
+        close();
     }
 
     private void goToStarClicked(ActionEvent actionEvent) {
         List<TransitRangeDef> transitRangeDefs = getValues();
+        if (transitRangeDefs == null) {
+            showErrorAlert("Add Transit Definitions", "Transit definition is invalid");
+            return;
+        }
         transitDefinitions.setTransitRangeDefs(transitRangeDefs);
         transitDefinitions.setSelected(true);
         datasetService.setTransitPreferences(transitDefinitions);
@@ -210,6 +206,13 @@ public class FindTransitsBetweenStarsDialog extends Dialog<TransitDefinitions> {
             log.error("transit definition is invalid:" + e.getMessage());
             return null;
         }
+    }
+
+    private void sizeDialogToScene() {
+        if (getDialogPane().getScene() == null) {
+            return;
+        }
+        getDialogPane().getScene().getWindow().sizeToScene();
     }
 
     private void validateTransitRefs(List<TransitRangeDef> transitRangeDefs) {

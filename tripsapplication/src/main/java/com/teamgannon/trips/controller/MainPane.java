@@ -710,8 +710,7 @@ public class MainPane  {
 
     public void transitFinder(ActionEvent actionEvent) {
         FindTransitsBetweenStarsDialog findTransitsBetweenStarsDialog
-                = new FindTransitsBetweenStarsDialog(databaseManagementService,
-                datasetService,
+                = new FindTransitsBetweenStarsDialog(datasetService,
                 tripsContext.getDataSetDescriptor().getTransitDefinitions());
         Optional<TransitDefinitions> optionalTransitDefinitions = findTransitsBetweenStarsDialog.showAndWait();
         if (optionalTransitDefinitions.isPresent()) {
