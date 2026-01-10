@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.teamgannon.trips.workbench.DataWorkbenchController">
+    <top>
+        <HBox spacing="10.0" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="8.0" right="12.0" bottom="8.0" left="12.0"/>
+            </padding>
+            <Label text="Data Workbench"/>
+        </HBox>
+    </top>
+    <center>
+        <TabPane fx:id="workbenchTabs" tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <Tab text="Connect">
+                    <VBox spacing="10.0" alignment="TOP_LEFT">
+                        <padding>
+                            <Insets top="12.0" right="12.0" bottom="12.0" left="12.0"/>
+                        </padding>
+                        <Label text="Connect to a source repository (Gaia, SIMBAD, VizieR, local files)."/>
+                        <HBox spacing="8.0">
+                            <Button onAction="#onAddSource" text="Add Source..."/>
+                            <Button onAction="#onRemoveSource" text="Remove"/>
+                            <Button onAction="#onDownloadSource" text="Download"/>
+                            <Separator orientation="VERTICAL"/>
+                            <Button onAction="#onRefreshSources" text="Refresh"/>
+                        </HBox>
+                        <HBox spacing="8.0" alignment="CENTER_LEFT">
+                            <Label text="Cache directory:"/>
+                            <TextField fx:id="cacheDirField" prefWidth="420.0"/>
+                            <Button onAction="#onChooseCacheDir" text="Choose"/>
+                            <CheckBox fx:id="cacheDefaultCheckbox" text="Use for downloads"/>
+                        </HBox>
+                        <ListView fx:id="sourceListView" prefHeight="220.0"/>
+                        <Label fx:id="sourceStatusLabel" text="No sources configured."/>
+                    </VBox>
+                </Tab>
+                <Tab text="Map">
+                    <VBox spacing="10.0" alignment="TOP_LEFT">
+                        <padding>
+                            <Insets top="12.0" right="12.0" bottom="12.0" left="12.0"/>
+                        </padding>
+                        <Label text="Map fields from the source data to TRIPS CSV columns."/>
+                        <HBox spacing="12.0">
+                            <VBox spacing="6.0">
+                                <Label text="Source Fields"/>
+                                <ListView fx:id="sourceFieldsListView" prefWidth="260.0" prefHeight="240.0"/>
+                                <Button onAction="#onLoadSourceFields" text="Load Source Fields"/>
+                            </VBox>
+                            <VBox spacing="6.0">
+                                <Label text="Target Fields (TRIPS CSV)"/>
+                                <ListView fx:id="targetFieldsListView" prefWidth="260.0" prefHeight="240.0"/>
+                            </VBox>
+                            <VBox spacing="8.0" alignment="CENTER">
+                                <Button onAction="#onAddMapping" text="Add Mapping →"/>
+                                <Button onAction="#onRemoveMapping" text="Remove Mapping"/>
+                                <Button onAction="#onAutoMap" text="Auto Map"/>
+                            </VBox>
+                            <VBox spacing="6.0">
+                                <Label text="Mappings"/>
+                                <TableView fx:id="mappingTable" prefWidth="460.0" prefHeight="240.0"/>
+                                <HBox spacing="8.0">
+                                    <Button onAction="#onSaveMapping" text="Save Mapping"/>
+                                    <Button onAction="#onLoadMapping" text="Load Mapping"/>
+                                </HBox>
+                            </VBox>
+                        </HBox>
+                        <Label fx:id="mappingStatusLabel" text="No mapping loaded."/>
+                    </VBox>
+                </Tab>
+                <Tab text="Preview">
+                    <BorderPane>
+                        <top>
+                            <HBox spacing="8.0" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                <padding>
+                                    <Insets top="8.0" right="12.0" bottom="8.0" left="12.0"/>
+                                </padding>
+                                <Button onAction="#onLoadPreview" text="Load Preview"/>
+                            </HBox>
+                        </top>
+                        <center>
+                            <VBox spacing="8.0">
+                                <TableView fx:id="previewTable"/>
+                                <Pagination fx:id="previewPagination"/>
+                            </VBox>
+                        </center>
+                        <bottom>
+                            <TextArea fx:id="validationLog" prefRowCount="6"
+                                      promptText="Validation results will appear here..."/>
+                        </bottom>
+                    </BorderPane>
+                </Tab>
+                <Tab text="Export">
+                    <VBox spacing="10.0" alignment="TOP_LEFT">
+                        <padding>
+                            <Insets top="12.0" right="12.0" bottom="12.0" left="12.0"/>
+                        </padding>
+                        <Label text="Export to TRIPS-compatible CSV."/>
+                        <HBox spacing="8.0">
+                            <Button onAction="#onValidate" text="Validate"/>
+                            <Button onAction="#onValidateFullFile" text="Validate Full File"/>
+                            <Button onAction="#onExportCsv" text="Export CSV"/>
+                        </HBox>
+                        <Label fx:id="exportStatusLabel" text="No export run yet."/>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

@@ -112,4 +112,12 @@
             <Tooltip text="zoom out"/>
         </tooltip>
     </ToggleButton>
+    <Separator/>
+    <Button mnemonicParsing="false"
+            onAction="#openWorkbench"
+            text="Workbench">
+        <tooltip>
+            <Tooltip text="Open Data Workbench"/>
+        </tooltip>
+    </Button>
 </ToolBar>

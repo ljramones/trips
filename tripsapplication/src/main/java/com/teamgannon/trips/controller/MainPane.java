@@ -69,6 +69,8 @@ import javafx.geometry.Pos;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
@@ -215,6 +217,8 @@ public class MainPane  {
 
     private final HostServices hostServices;
 
+    private final FxWeaver fxWeaver;
+
     private final SliderControlManager sliderControlManager;
 
     private final MainSplitPaneManager mainSplitPaneManager;
@@ -252,6 +256,7 @@ public class MainPane  {
                     MainSplitPaneManager mainSplitPaneManager) {
 
         hostServices = fxWeaver.getBean(HostServices.class);
+        this.fxWeaver = fxWeaver;
         this.oshiMeasure = oshiMeasure;
         this.starMeasurementService = starMeasurementService;
         this.largeGraphSearchService = largeGraphSearchService;
@@ -347,6 +352,23 @@ public class MainPane  {
         }
 
         createAWTTray();
+    }
+
+    public void openDataWorkbench(ActionEvent actionEvent) {
+        Parent root = fxWeaver.loadView(com.teamgannon.trips.workbench.DataWorkbenchController.class);
+        Stage stage = new Stage();
+        stage.setTitle("TRIPS Data Workbench");
+        stage.initModality(Modality.NONE);
+        if (primaryStage != null) {
+            stage.initOwner(primaryStage);
+        }
+        stage.setScene(new Scene(root, 900, 650));
+        stage.show();
+    }
+
+    @EventListener
+    public void onOpenWorkbenchEvent(com.teamgannon.trips.events.OpenWorkbenchEvent event) {
+        openDataWorkbench(null);
     }
 
     private void addResizeListeners() {

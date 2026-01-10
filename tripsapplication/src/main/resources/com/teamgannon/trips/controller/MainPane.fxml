@@ -119,6 +119,10 @@
                               onAction="#advancedSearch"
                               text="Select starPositionDescriptors using advanced search.."/>
                 </Menu>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false"
+                          onAction="#openDataWorkbench"
+                          text="Data Workbench..."/>
             </Menu>
             <Menu mnemonicParsing="false"
                   text="Reports">

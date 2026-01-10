@@ -3,6 +3,7 @@ package com.teamgannon.trips.controller.toolbar;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
+import com.teamgannon.trips.events.OpenWorkbenchEvent;
 import com.teamgannon.trips.events.RemoveDataSetEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
@@ -17,6 +18,7 @@ import javafx.scene.image.ImageView;
 import lombok.extern.slf4j.Slf4j;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.zondicons.Zondicons;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +28,7 @@ public class ToolbarController {
 
     private final SharedUIState sharedUIState;
     private final SharedUIFunctions sharedUIFunctions;
+    private final ApplicationEventPublisher eventPublisher;
 
     @FXML
     public ToolBar toolBar;
@@ -55,9 +58,12 @@ public class ToolbarController {
     private ToggleButton toggleZoomOutBtn;
 
 
-    public ToolbarController(SharedUIState sharedUIState, SharedUIFunctions sharedUIFunctions) {
+    public ToolbarController(SharedUIState sharedUIState,
+                             SharedUIFunctions sharedUIFunctions,
+                             ApplicationEventPublisher eventPublisher) {
         this.sharedUIState = sharedUIState;
         this.sharedUIFunctions = sharedUIFunctions;
+        this.eventPublisher = eventPublisher;
     }
 
     @FXML
@@ -145,6 +151,11 @@ public class ToolbarController {
     @FXML
     public void toggleSidePane(ActionEvent actionEvent) {
         sharedUIFunctions.toggleSidePane();
+    }
+
+    @FXML
+    public void openWorkbench(ActionEvent actionEvent) {
+        eventPublisher.publishEvent(new OpenWorkbenchEvent(this));
     }
 
     @EventListener
