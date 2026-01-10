@@ -6,6 +6,7 @@ import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -14,7 +15,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import lombok.extern.slf4j.Slf4j;
@@ -56,8 +56,7 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
         updateTable();
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void updateTable() {

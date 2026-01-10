@@ -11,6 +11,7 @@ import java.util.ListIterator;
 
 import static java.lang.Math.*;
 
+
 @Slf4j
 @Data
 public class StarSystem {

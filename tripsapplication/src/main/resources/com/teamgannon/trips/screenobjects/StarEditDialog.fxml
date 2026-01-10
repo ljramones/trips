@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" spacing="10">
+    <children>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <Tab text="Overview">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140" prefWidth="160" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <Label text="Record id" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <Label fx:id="recordIdLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                <Label text="Data set name" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label fx:id="dataSetLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                <Label text="Star name" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <TextField fx:id="starNameTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                <Label text="Common name" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <TextField fx:id="commonNameTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                <Label text="Constellation name" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <TextField fx:id="constellationNameTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                <Label text="Spectral class" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <TextField fx:id="spectralClassTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                <Label text="Distance" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <TextField fx:id="distanceNameTextField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                <Label text="Metallicity" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                <TextField fx:id="metallicityTextfield" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+
+                                <Label text="Age" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                <TextField fx:id="ageTextfield" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+
+                                <Label text="Coordinates" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="1" GridPane.rowIndex="10">
+                                    <children>
+                                        <TextField fx:id="xTextField" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="yTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <TextField fx:id="zTextField" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                                    </children>
+                                </GridPane>
+
+                                <Label text="Notes" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                <TextArea fx:id="notesArea" GridPane.columnIndex="1" GridPane.rowIndex="11" GridPane.rowSpan="3" />
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Fictional Info">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140" prefWidth="160" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                                <ColumnConstraints minWidth="120" prefWidth="140" />
+                            </columnConstraints>
+                            <children>
+                                <Label text="Polity" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <TextField fx:id="polityTextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                <ComboBox fx:id="politiesComboBox" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                                <Label text="World Type" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <TextField fx:id="worldTypeTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                <ComboBox fx:id="worldComboBox" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+
+                                <Label text="Fuel Type" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <TextField fx:id="fuelTypeTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                <ComboBox fx:id="fuelComboBox" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+
+                                <Label text="Tech Type" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <TextField fx:id="techTypeTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                <ComboBox fx:id="techComboBox" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+
+                                <Label text="Port Type" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <TextField fx:id="portTypeTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                <ComboBox fx:id="portComboBox" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+
+                                <Label text="Population Type" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <TextField fx:id="popTypeTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                <ComboBox fx:id="populationComboBox" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+
+                                <Label text="Product Type" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <TextField fx:id="prodField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                <ComboBox fx:id="productComboBox" GridPane.columnIndex="2" GridPane.rowIndex="7" />
+
+                                <Label text="Milspace Type" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                <TextField fx:id="milspaceTextField" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                                <ComboBox fx:id="milSpaceComboBox" GridPane.columnIndex="2" GridPane.rowIndex="8" />
+
+                                <Label text="Milplan Type" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                <TextField fx:id="milplanTextField" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                                <ComboBox fx:id="milPlanComboBox" GridPane.columnIndex="2" GridPane.rowIndex="9" />
+
+                                <Label text="Anomaly" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <CheckBox fx:id="anomalyCheckbox" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+
+                                <Label text="Other" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                <CheckBox fx:id="otherCheckbox" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Other Info">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="120" prefWidth="140" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="Simbad Id" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="simbadIdTextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                        <Label text="Galactic Lat" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="galacticCoorLatTextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                        <Label text="Galactic Long" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                        <TextField fx:id="galacticCoorLongTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                        <Label text="Radius" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                        <TextField fx:id="radiusTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                        <Label text="Temperature" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                        <TextField fx:id="tempTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                        <Label text="ra" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                        <TextField fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                        <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                        <TextField fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+
+                                        <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                        <TextField fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+
+                                        <Label text="pmdec" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                        <TextField fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+
+                                        <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                        <TextField fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+
+                                        <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="12" />
+                                        <TextField fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+
+                                        <Button fx:id="updateAliasBtn" text="Update Alias List" GridPane.columnIndex="0" GridPane.rowIndex="13" GridPane.columnSpan="2" />
+                                    </children>
+                                </GridPane>
+
+                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="120" prefWidth="140" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="bprp" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="bprpLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                        <Label text="bpg" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="bpgLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                        <Label text="grp" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="grpLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                        <Label text="magu" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                        <TextField fx:id="maguTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                        <Label text="magb" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                        <TextField fx:id="magbTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                        <Label text="magv" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                        <TextField fx:id="magvTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                        <Label text="magr" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                        <TextField fx:id="magrTextField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                        <Label text="magi" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                        <TextField fx:id="magiTextField" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+
+                                        <Label text="GAIA Id" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                        <TextField fx:id="gaiaIdTextField" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+
+                                        <Label text="Alias list" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                        <TextArea fx:id="aliasTextArea" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="User Special Info">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="120" prefWidth="140" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="misc1" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="misc1TextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                        <Label text="misc2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="misc2TextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                        <Label text="misc3" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="misc3TextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                        <Label text="misc4" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                        <TextField fx:id="misc4TextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                        <Label text="misc5" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                        <TextField fx:id="misc5TextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                        <CheckBox fx:id="forceLabel" text="Force Label to be seen" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="2" />
+                                    </children>
+                                </GridPane>
+
+                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="120" prefWidth="140" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="miscNum1" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="miscNum1TextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                        <Label text="miscNum2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="miscNum2TextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                        <Label text="miscNum3" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="miscNum3TextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                        <Label text="miscNum4" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                        <TextField fx:id="miscNum4TextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                        <Label text="miscNum5" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                        <TextField fx:id="miscNum5TextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+        <HBox alignment="CENTER" spacing="10">
+            <children>
+                <Button fx:id="resetBtn" text="Cancel" />
+                <Button fx:id="addBtn" text="Update" />
+            </children>
+        </HBox>
+    </children>
+</VBox>

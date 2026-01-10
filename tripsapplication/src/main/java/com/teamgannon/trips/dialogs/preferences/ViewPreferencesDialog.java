@@ -3,12 +3,12 @@ package com.teamgannon.trips.dialogs.preferences;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ApplicationPreferences;
 import com.teamgannon.trips.support.AlertFactory;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void close(WindowEvent windowEvent) {

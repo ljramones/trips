@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.search.SearchPane;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -12,7 +13,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,6 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         hBox.setMinWidth(800);
         explanationLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 10));
 
-        vBox.getChildren().add(explanationLabel);
         vBox.getChildren().add(new Separator());
         vBox.getChildren().add(searchPane);
         vBox.setAlignment(Pos.CENTER);
@@ -91,8 +90,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage1 = (Stage) this.getDialogPane().getScene().getWindow();
-        stage1.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void close(ActionEvent actionEvent) {
@@ -127,8 +125,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
                     "Must select at least one target for data, plot, table, or export");
             return;
         }
-        setResult(new AstroSearchQuery());
-        AstroSearchQuery newQuery = searchPane.runQuery(showPlot, showTable, doExport);
+        setResult(searchPane.runQuery(showPlot, showTable, doExport));
     }
 
 }

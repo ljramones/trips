@@ -8,13 +8,17 @@ import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.service.export.model.DataSetDescriptorDTO;
 import com.teamgannon.trips.transits.TransitDefinitions;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -32,13 +36,10 @@ import java.util.stream.Collectors;
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class
-DataSetDescriptor implements Serializable {
+public class DataSetDescriptor implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1132779255908975239L;
-
-    // Manual log field (Lombok @Slf4j should generate this but adding explicitly)
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DataSetDescriptor.class);
 
     /**
      * used for JSON serialization

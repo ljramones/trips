@@ -1,6 +1,5 @@
 package com.teamgannon.trips.routing.model;
 
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.routing.tree.treemodel.RouteTree;
 import lombok.Builder;
 import lombok.Data;

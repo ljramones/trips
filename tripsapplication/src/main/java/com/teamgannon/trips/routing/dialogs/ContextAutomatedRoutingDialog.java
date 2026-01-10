@@ -4,7 +4,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.routing.*;
+import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.automation.RouteBuilderHelper;
 import com.teamgannon.trips.routing.automation.RouteGraph;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
@@ -31,7 +31,7 @@ import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Component;
+
 
 import java.util.*;
 

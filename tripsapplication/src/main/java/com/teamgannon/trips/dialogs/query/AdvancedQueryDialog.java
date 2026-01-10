@@ -1,10 +1,10 @@
 package com.teamgannon.trips.dialogs.query;
 
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,13 +15,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.util.validation.Validation;
 import net.sf.jsqlparser.util.validation.ValidationError;
 import net.sf.jsqlparser.util.validation.feature.DatabaseType;
-import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -123,16 +121,16 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         vBox.getChildren().add(queryErrors);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     public void updateDatasetDescriptors() {
+        datasetChoices.getItems().clear();
         datasetChoices.getItems().addAll(tripsContext.getSearchContext().getDatasetMap().keySet());
-        if (tripsContext.getDataSetDescriptor()!=null) {
+        if (tripsContext.getDataSetDescriptor() != null) {
             datasetChoices.getSelectionModel().select(tripsContext.getDataSetDescriptor().getDataSetName());
         } else {
-            datasetChoices.getSelectionModel().select(0);
+            datasetChoices.getSelectionModel().selectFirst();
         }
     }
 
@@ -155,7 +153,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         String queryWherePart = wherePart.getText();
 
         String datasetName = datasetChoices.getValue();
-        if (!datasetName.isEmpty()) {
+        if (datasetName != null && !datasetName.isEmpty()) {
             String queryPrefix = "SELECT * FROM STAR_OBJ WHERE ";
             String datasetQuery = "DATA_SET_NAME='" + datasetName + "' ";
             String queryToRun = queryPrefix + datasetQuery;

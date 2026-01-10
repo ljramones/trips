@@ -22,7 +22,6 @@ import com.teamgannon.trips.service.StarService;
 import javafx.geometry.Point3D;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="techLabel" text="Tech" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="yesTech" text="Yes?" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <CheckBox fx:id="tech1" text="1" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech2" text="2" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech3" text="3" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech4" text="4" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech5" text="5" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech6" text="6" GridPane.columnIndex="7" GridPane.rowIndex="0" />
+        <CheckBox fx:id="tech7" text="7" GridPane.columnIndex="8" GridPane.rowIndex="0" />
+
+        <CheckBox fx:id="tech8" text="8" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+        <CheckBox fx:id="tech9" text="9" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+        <CheckBox fx:id="techA" text="A" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+        <CheckBox fx:id="techB" text="B" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+        <CheckBox fx:id="techC" text="C" GridPane.columnIndex="6" GridPane.rowIndex="1" />
+        <CheckBox fx:id="techD" text="D" GridPane.columnIndex="7" GridPane.rowIndex="1" />
+        <CheckBox fx:id="techE" text="E" GridPane.columnIndex="8" GridPane.rowIndex="1" />
+    </children>
+</fx:root>

@@ -109,9 +109,8 @@ public final class DataBinary2Reader implements SavotDataReader {
      * @param stream	The {@link SavotStream} which contains data to read.
      * @param fields	List of fields metadata (one per cell).
      * 
-     * @throws IOException	If an error occurs while building the input stream.
-     * 
-     * @see #DataBinaryReader(SavotStream, FieldSet, boolean, String)
+     * @throws IOException    If an error occurs while building the input stream.
+     *
      */
     public DataBinary2Reader(final SavotStream stream,  final FieldSet fields) throws IOException {
         this(stream, fields, false, null);
@@ -127,8 +126,7 @@ public final class DataBinary2Reader implements SavotDataReader {
      * @param ignoreExpiryDate	<i>true</i> to ignore the "expires" attribute, <i>false</i> otherwise.
      * 
      * @throws IOException		If an error occurs while building the input stream.
-     * 
-     * @see #DataBinaryReader(SavotStream, FieldSet, boolean, String)
+     *
      */
     public DataBinary2Reader(final SavotStream stream,  final FieldSet fields, final boolean ignoreExpiryDate) throws IOException {
         this(stream, fields, ignoreExpiryDate, null);
@@ -144,7 +142,6 @@ public final class DataBinary2Reader implements SavotDataReader {
      * 
      * @throws IOException		If an error occurs while building the input stream.
      * 
-     * @see #DataBinaryReader(FieldSet)
      * @see #getData(SavotStream, boolean, String)
      */
     public DataBinary2Reader(final SavotStream stream,  final FieldSet fields, final boolean ignoreExpiryDate, final String parentDirectory) throws IOException {
@@ -161,7 +158,6 @@ public final class DataBinary2Reader implements SavotDataReader {
      * 
      * @throws IOException	If an error occurs while building the input stream.
      * 
-     * @see #DataBinaryReader(FieldSet)
      * @see #getDecodedStream(InputStream, String)
      */
     public DataBinary2Reader(final InputStream encodedData, final String encoding,  final FieldSet fields) throws IOException {
@@ -176,8 +172,7 @@ public final class DataBinary2Reader implements SavotDataReader {
      * @param fields		List of fields metadata (one per cell).
      * 
      * @throws BinaryInterpreterException	If it is impossible to build a field decoder.
-     * 
-     * @see #DataBinaryReader(FieldSet)
+     *
      */
     public DataBinary2Reader(final InputStream decodedData,  final FieldSet fields) throws BinaryInterpreterException {
         this(fields);
@@ -354,7 +349,6 @@ public final class DataBinary2Reader implements SavotDataReader {
      * 
      * @throws IOException		If there is an error while building the input stream.
      * 
-     * @see Base64InputStream2
      * @see GZIPInputStream
      */
     private InputStream getDecodedStream(final InputStream encodedStream, final String encoding) throws IOException {

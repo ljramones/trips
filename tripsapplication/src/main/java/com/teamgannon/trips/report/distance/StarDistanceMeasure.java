@@ -4,7 +4,6 @@ package com.teamgannon.trips.report.distance;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.UUID;
 
 @Data
 @Builder

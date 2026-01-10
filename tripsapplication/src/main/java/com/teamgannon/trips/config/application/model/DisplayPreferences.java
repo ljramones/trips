@@ -1,8 +1,8 @@
 package com.teamgannon.trips.config.application.model;
 
+import com.teamgannon.trips.planetarymodelling.planetgen.math.Color;
 import lombok.Data;
 
-import java.awt.*;
 import java.io.Serial;
 import java.io.Serializable;
 

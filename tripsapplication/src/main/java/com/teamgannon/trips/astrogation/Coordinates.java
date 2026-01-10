@@ -2,11 +2,6 @@ package com.teamgannon.trips.astrogation;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.hipparchus.geometry.euclidean.threed.Vector3D;
-import org.orekit.frames.Frame;
-import org.orekit.frames.FramesFactory;
-import org.orekit.time.AbsoluteDate;
-import org.orekit.utils.TimeStampedPVCoordinates;
 
 @Slf4j
 public class Coordinates {

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root type="VBox" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <Tab text="Overview">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140" prefWidth="160" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <Button fx:id="editButton" text="Edit Star" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+
+                                <Label text="Star name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <Label fx:id="starNameLabel1" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                <Label text="Common name" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label fx:id="commonNameLabel1" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                <Label text="Constellation" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <Label fx:id="constellationNameLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                <Label text="Spectral class" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <Label fx:id="spectralClassLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                <Label text="Distance" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <Label fx:id="distanceNameLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                <Label text="Metallicity" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <Label fx:id="metallicityLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                <Label text="Age" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <Label fx:id="ageLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                <Label text="Notes" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <TextArea fx:id="notesArea" editable="false" prefRowCount="6" GridPane.columnIndex="1" GridPane.rowIndex="10" GridPane.rowSpan="10" />
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Fictional Info">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140" prefWidth="160" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <Label text="Star name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <Label fx:id="starNameLabel2" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                <Label text="Common name" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label fx:id="commonNameLabel2" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                <Label text="Polity" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <Label fx:id="polityLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                                <Label text="World type" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <Label fx:id="worldTypeLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                <Label text="Fuel type" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <Label fx:id="fuelTypeLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                <Label text="Tech type" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <Label fx:id="techTypeLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                <Label text="Port type" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <Label fx:id="portTypeLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                <Label text="Population type" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                <Label fx:id="popTypeLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+
+                                <Label text="Product type" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                <Label fx:id="prodField" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+
+                                <Label text="Milspace type" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <Label fx:id="milspaceLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+
+                                <Label text="Milplan type" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                <Label fx:id="milplanLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+
+                                <Label text="Anomaly" GridPane.columnIndex="0" GridPane.rowIndex="12" />
+                                <CheckBox fx:id="anomalyCheckbox" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+
+                                <Label text="Other" GridPane.columnIndex="0" GridPane.rowIndex="13" />
+                                <CheckBox fx:id="otherCheckbox" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Other Info">
+                    <content>
+                        <GridPane hgap="5" vgap="5">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140" prefWidth="160" />
+                                <ColumnConstraints hgrow="ALWAYS" />
+                            </columnConstraints>
+                            <children>
+                                <Label text="Star name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <Label fx:id="starNameLabel3" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                <Label text="Common name" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label fx:id="commonNameLabel3" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                <Label text="Simbad Id" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <HBox GridPane.columnIndex="1" GridPane.rowIndex="3" spacing="10">
+                                    <children>
+                                        <Label fx:id="simbadIdLabel" />
+                                        <Button fx:id="simbadButton" text="More&#10;Info" />
+                                    </children>
+                                </HBox>
+
+                                <Label text="Galactic coordinates" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <Label fx:id="galacticCoordinatesLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+                                <Label text="Radius" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <Label fx:id="radiusLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                <Label text="Ra" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <Label fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                                <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <Label fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+
+                                <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                <Label fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+
+                                <Label text="Pmdec" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                <Label fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+
+                                <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <Label fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+
+                                <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                <Label fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+
+                                <Label text="Temperature" GridPane.columnIndex="0" GridPane.rowIndex="12" />
+                                <Label fx:id="tempLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+
+                                <Label text="Magu" GridPane.columnIndex="0" GridPane.rowIndex="13" />
+                                <Label fx:id="maguLabel" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+
+                                <Label text="Magb" GridPane.columnIndex="0" GridPane.rowIndex="14" />
+                                <Label fx:id="magbLabel" GridPane.columnIndex="1" GridPane.rowIndex="14" />
+
+                                <Label text="Magv" GridPane.columnIndex="0" GridPane.rowIndex="15" />
+                                <Label fx:id="magvLabel" GridPane.columnIndex="1" GridPane.rowIndex="15" />
+
+                                <Label text="Magr" GridPane.columnIndex="0" GridPane.rowIndex="16" />
+                                <Label fx:id="magrLabel" GridPane.columnIndex="1" GridPane.rowIndex="16" />
+
+                                <Label text="Magi" GridPane.columnIndex="0" GridPane.rowIndex="17" />
+                                <Label fx:id="magiLabel" GridPane.columnIndex="1" GridPane.rowIndex="17" />
+
+                                <Label text="Bprp" GridPane.columnIndex="0" GridPane.rowIndex="18" />
+                                <Label fx:id="bprpLabel" GridPane.columnIndex="1" GridPane.rowIndex="18" />
+
+                                <Label text="Bpg" GridPane.columnIndex="0" GridPane.rowIndex="19" />
+                                <Label fx:id="bpgLabel" GridPane.columnIndex="1" GridPane.rowIndex="19" />
+
+                                <Label text="Grp" GridPane.columnIndex="0" GridPane.rowIndex="20" />
+                                <Label fx:id="grpLabel" GridPane.columnIndex="1" GridPane.rowIndex="20" />
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </children>
+</fx:root>

@@ -1,6 +1,5 @@
 package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
 import lombok.Builder;
 import lombok.Data;

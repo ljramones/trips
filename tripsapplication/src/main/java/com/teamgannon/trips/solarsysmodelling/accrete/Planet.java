@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import static java.lang.Math.*;
 
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Planet extends SystemObject implements Comparable<Planet> {

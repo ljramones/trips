@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="stellarClassLabel" text="Stellar Class" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="yesClassStar" text="Yes?" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <GridPane fx:id="commonStarsPane" hgap="10" vgap="10" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <children>
+                <CheckBox fx:id="commonStars" text="Common Stars?" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <CheckBox fx:id="oClassStar" text="O" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                <CheckBox fx:id="bClassStar" text="B" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                <CheckBox fx:id="aClassStar" text="A" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                <CheckBox fx:id="fClassStar" text="F" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+
+                <CheckBox fx:id="gClassStar" text="G" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <CheckBox fx:id="kClassStar" text="K" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                <CheckBox fx:id="mClassStar" text="M" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            </children>
+        </GridPane>
+
+        <GridPane fx:id="otherStarsPane" hgap="10" vgap="10" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <children>
+                <CheckBox fx:id="otherStars" text="Other Stars?" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <CheckBox fx:id="wClassStar" text="W" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                <CheckBox fx:id="lClassStar" text="L" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                <CheckBox fx:id="tClassStar" text="T" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+
+                <CheckBox fx:id="yClassStar" text="Y" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <CheckBox fx:id="cClassStar" text="C" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                <CheckBox fx:id="sClassStar" text="S" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            </children>
+        </GridPane>
+    </children>
+</fx:root>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:id="rightBorderPane"
+            fx:controller="com.teamgannon.trips.controller.splitpane.RightPanelController">
+    <right>
+        <VBox fx:id="settingsPane">
+            <Accordion fx:id="propertiesAccordion">
+                <panes>
+                    <TitledPane fx:id="datasetsPane" text="DataSets Available" />
+                    <TitledPane fx:id="objectsViewPane" text="Objects in View" />
+                    <TitledPane fx:id="stellarObjectPane" text="Stellar Object Properties">
+                        <content>
+                            <ScrollPane fx:id="stellarObjectScrollPane" />
+                        </content>
+                    </TitledPane>
+                    <TitledPane fx:id="transitPane" text="Link Control">
+                        <content>
+                            <ScrollPane fx:id="transitScrollPane" />
+                        </content>
+                    </TitledPane>
+                    <TitledPane fx:id="routingPane" text="Star Routing" />
+                </panes>
+            </Accordion>
+        </VBox>
+    </right>
+</BorderPane>

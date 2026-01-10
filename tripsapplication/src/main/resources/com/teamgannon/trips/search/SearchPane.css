@@ -1,0 +1,12 @@
+.search-pane {
+    -fx-spacing: 10;
+}
+
+.search-grid {
+    -fx-hgap: 8;
+    -fx-vgap: 6;
+}
+
+.search-cell {
+    -fx-padding: 2 4 2 4;
+}

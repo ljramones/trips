@@ -1,11 +1,8 @@
 package com.teamgannon.trips.file.csvin.model;
 
-import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.stellarmodelling.StarColor;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StellarFactory;
-import javafx.scene.paint.Color;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

@@ -1,6 +1,7 @@
 package com.teamgannon.trips.planetarymodelling.planetgen.awt;
 
-import java.awt.*;
+
+import com.teamgannon.trips.planetarymodelling.planetgen.math.Color;
 
 public class ColorUtil {
 

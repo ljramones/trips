@@ -1,6 +1,5 @@
 package com.teamgannon.trips.report.route;
 
-import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.model.Route;

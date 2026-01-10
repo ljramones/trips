@@ -3,7 +3,6 @@ package com.teamgannon.trips.solarsystem.sol;
 import com.opencsv.bean.CsvBindByPosition;
 import lombok.Data;
 
-import java.util.Date;
 
 @Data
 public class SolSolarSystemCometModel {

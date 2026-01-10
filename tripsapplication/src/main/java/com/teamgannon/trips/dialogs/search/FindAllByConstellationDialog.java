@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.search.model.ConstellationSelected;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -14,7 +15,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class FindAllByConstellationDialog extends Dialog<ConstellationSelected> {
@@ -62,8 +62,7 @@ public class FindAllByConstellationDialog extends Dialog<ConstellationSelected> 
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
 
     }
 

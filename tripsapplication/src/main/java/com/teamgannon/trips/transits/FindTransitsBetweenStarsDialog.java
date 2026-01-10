@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
+
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;

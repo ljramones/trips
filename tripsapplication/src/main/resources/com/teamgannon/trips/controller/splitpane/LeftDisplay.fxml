@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:id="leftBorderPane"
+            fx:controller="com.teamgannon.trips.controller.splitpane.LeftDisplayController">
+    <left>
+        <StackPane fx:id="leftDisplayPane"/>
+    </left>
+</BorderPane>

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.dialogs.sesame;
 
+import com.teamgannon.trips.utility.DialogUtils;
 import generated.Resolver;
 import generated.Sesame;
 import generated.Target;
@@ -10,7 +11,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -96,8 +95,7 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility
-        Stage stage1 = (Stage) this.getDialogPane().getScene().getWindow();
-        stage1.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void close(WindowEvent windowEvent) {

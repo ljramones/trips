@@ -2,12 +2,12 @@ package com.teamgannon.trips.astrogation.referenceframes;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.orekit.frames.*;
+import org.orekit.frames.Frame;
+import org.orekit.frames.FramesFactory;
+import org.orekit.frames.Transform;
 import org.orekit.time.AbsoluteDate;
-import org.orekit.utils.IERSConventions;
 import org.orekit.utils.TimeStampedPVCoordinates;
 
-import org.orekit.frames.*;
 
 
 @Slf4j

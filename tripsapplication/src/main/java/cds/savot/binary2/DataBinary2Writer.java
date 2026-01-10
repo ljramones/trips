@@ -13,32 +13,35 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * <p>Lets write binary data (that is to say: a votable.resource.table.data.binary node).</p>
- * 
+ *
  * <p>NOTE:
- * 	Accepted encoding algorithms are: <code>base64</code>, <code>gzip</code> or <code>dynamic</code>.
- * 	"dynamic" encoding is accepted but no particular encoding will be applied while writing data. They will be written just in binary.
+ * Accepted encoding algorithms are: <code>base64</code>, <code>gzip</code> or <code>dynamic</code>.
+ * "dynamic" encoding is accepted but no particular encoding will be applied while writing data. They will be written just in binary.
  * </p>
- * 
+ *
  * @author Gregory Mantelet
  * @since 09/2011
  */
 public final class DataBinary2Writer implements SavotDataWriter {
 
-    /** Stream in which binary data will be written encoded. */
+    /**
+     * Stream in which binary data will be written encoded.
+     */
     private OutputStream output;
-    /** List of encoders: one per available cell. */
+    /**
+     * List of encoders: one per available cell.
+     */
     private BinaryFieldInterpreter<?>[] encoders;
 
     /* CONSTRUCTORS */
+
     /**
      * Builds a DataBinaryWriter with no encoding.
-     * 
-     * @param rawStream		Simple output stream.
-     * @param fields		List of fields metadata (one per cell).
-     * @throws cds.savot.cds.savot.model.interpreter.BinaryInterpreterException
-     * @throws IOException	If an error occurs while building the output stream.
-     * 
-     * @see #DataBinaryWriter(OutputStream, FieldSet, String)
+     *
+     * @param rawStream Simple output stream.
+     * @param fields    List of fields metadata (one per cell).
+     * @throws IOException If an error occurs while building the output stream.
+     *
      */
     public DataBinary2Writer(final OutputStream rawStream, final FieldSet fields) throws BinaryInterpreterException, IOException {
         this(rawStream, fields, null);
@@ -46,13 +49,11 @@ public final class DataBinary2Writer implements SavotDataWriter {
 
     /**
      * Builds a DataBinaryWriter with a particular encoding (base64 or gzip).
-     * 
-     * @param rawStream		Simple output stream.
-     * @param fields		List of fields metadata (one per cell).
-     * @param encoding		Name of an encoding algorithm (base64, gzip or <code>null</code>).
-     * 
-     * @throws IOException	If an error occurs while building the output stream.
-     * 
+     *
+     * @param rawStream Simple output stream.
+     * @param fields    List of fields metadata (one per cell).
+     * @param encoding  Name of an encoding algorithm (base64, gzip or <code>null</code>).
+     * @throws IOException If an error occurs while building the output stream.
      * @see #getEncodedStream(OutputStream, String)
      * @see BinaryFieldInterpreter#createInterpreter(SavotField)
      */
@@ -72,19 +73,16 @@ public final class DataBinary2Writer implements SavotDataWriter {
     }
 
     /* STREAM BUILDING METHOD */
+
     /**
      * <p>Gets a stream which encodes data into the given output stream.</p>
-     * 
+     *
      * <p>NOTE: Accepted encoding algorithms are: <code>base64</code> or <code>gzip</code>.</p>
-     * 
-     * @param rawStream			Simple output stream.
-     * @param encoding			Name of the encoding algorithm (<code>base64</code> or <code>gzip</code>).
-     * 
-     * @return					An output stream which encodes data read into the given output stream.
-     * 
-     * @throws IOException		If there is an error while building the output stream.
-     * @throws cds.savot.cds.savot.model.interpreter.BinaryInterpreterException
-     * @see Base64OutputStream2
+     *
+     * @param rawStream Simple output stream.
+     * @param encoding  Name of the encoding algorithm (<code>base64</code> or <code>gzip</code>).
+     * @throws IOException If there is an error while building the output stream.
+     * @return                    An output stream which encodes data read into the given output stream.
      * @see GZIPOutputStream
      */
     OutputStream getEncodedStream(final OutputStream rawStream, final String encoding) throws IOException, BinaryInterpreterException {
@@ -104,7 +102,6 @@ public final class DataBinary2Writer implements SavotDataWriter {
     /**
      * @param row SavotTR
      * @throws IOException
-     * @throws cds.savot.cds.savot.model.interpreter.BinaryInterpreterException
      */
     @Override
     public void writeTR(final SavotTR row) throws IOException, BinaryInterpreterException {
@@ -123,7 +120,6 @@ public final class DataBinary2Writer implements SavotDataWriter {
     /**
      * @param rows TRSet
      * @throws IOException
-     * @throws cds.savot.cds.savot.model.interpreter.BinaryInterpreterException
      */
     @Override
     public void writeTRSet(final TRSet rows) throws IOException, BinaryInterpreterException {

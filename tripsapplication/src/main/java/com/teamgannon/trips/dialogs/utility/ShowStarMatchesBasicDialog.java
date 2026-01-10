@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.utility;
 import com.teamgannon.trips.dataset.enums.SortParameterEnum;
 import com.teamgannon.trips.dialogs.utility.model.StarSelectionObject;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -12,7 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +76,7 @@ public class ShowStarMatchesBasicDialog extends Dialog<StarSelectionObject> {
         loadData();
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
 
     }
 

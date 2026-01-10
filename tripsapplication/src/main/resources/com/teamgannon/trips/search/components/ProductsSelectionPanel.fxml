@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="productsLabel" text="Products" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="yesNoProducts" text="Yes?" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <CheckBox fx:id="agriProd" text="Agricultural" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <CheckBox fx:id="indusProd" text="Industry" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+        <CheckBox fx:id="svcsProd" text="Services" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+
+        <CheckBox fx:id="bioProd" text="Bio" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+        <CheckBox fx:id="fossilFuelProd" text="Fossil Fuel" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+        <CheckBox fx:id="finishGoodsProd" text="Finished Goods" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+
+        <CheckBox fx:id="hiTechProd" text="Hi Tech" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+        <CheckBox fx:id="uniqProd" text="Unique" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+        <CheckBox fx:id="rawMatProd" text="Raw Materials" GridPane.columnIndex="4" GridPane.rowIndex="2" />
+
+        <CheckBox fx:id="enerProd" text="Energy (Nuke, AM or Fuel Cells&#10;at high export levels" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.columnSpan="3" />
+    </children>
+</fx:root>

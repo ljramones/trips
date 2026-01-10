@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="categoryLabel" text="Category" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="realStars" text="Real" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <CheckBox fx:id="fictionalStars" text="Fictional" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+    </children>
+</fx:root>

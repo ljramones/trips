@@ -889,7 +889,7 @@ public class Color {
     private final double b;
     private final double a;
 
-    private Color(double r, double g, double b, double a) {
+    public Color(double r, double g, double b, double a) {
         this.r = r;
         this.g = g;
         this.b = b;

@@ -1,6 +1,5 @@
 package com.teamgannon.trips.transits;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

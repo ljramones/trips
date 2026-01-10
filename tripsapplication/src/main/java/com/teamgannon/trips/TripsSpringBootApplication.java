@@ -3,7 +3,6 @@ package com.teamgannon.trips;
 import com.teamgannon.trips.javafxsupport.TripsFxApplication;
 import com.teamgannon.trips.javafxsupport.TripsPreloader;
 
-import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import javafx.application.Application;
 import javafx.scene.Node;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

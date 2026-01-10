@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import static com.teamgannon.trips.propulsion.Constants.*;
 import static java.lang.Math.*;
 
+
 @Component
 public class ChemicalPropulsion {
 

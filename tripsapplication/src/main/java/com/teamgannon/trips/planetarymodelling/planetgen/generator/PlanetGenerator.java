@@ -10,6 +10,7 @@ import com.teamgannon.trips.planetarymodelling.planetgen.planet.LayerType;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.Planet;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.PlanetData;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.*;
+import com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.CraterLayer.CraterFunction;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.CraterLayer.CraterPartFunction;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.CraterLayer.DensityFunction;
 import com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.PlantLayer.PlantData;
@@ -24,7 +25,6 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import static com.teamgannon.trips.planetarymodelling.planetgen.math.Color.rgb;
-import static com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.CraterLayer.*;
 
 
 public class PlanetGenerator {
@@ -34,9 +34,9 @@ public class PlanetGenerator {
 
     public static final int KM = 1000;
 
-    private static CraterCalculator createCraterCalculator(double baseHeight, int grid, long seed, DensityFunction densityFunction, Crater crater) {
+    private static CraterLayer.CraterCalculator createCraterCalculator(double baseHeight, int grid, long seed, DensityFunction densityFunction, CraterLayer.Crater crater) {
         double heightFactor = (grid + Math.log(grid)) / 2;
-        return new CraterCalculator(baseHeight / heightFactor, grid, seed, densityFunction, crater);
+        return new CraterLayer.CraterCalculator(baseHeight / heightFactor, grid, seed, densityFunction, crater);
     }
 
     private static CraterPartFunction craterPart(double minDist, double maxDist, Function<Double, Double> func) {
@@ -113,7 +113,7 @@ public class PlanetGenerator {
                 0.0,
                 1.0);
 
-        Crater simpleRoundCrater = new Crater(
+        CraterLayer.Crater simpleRoundCrater = new CraterLayer.Crater(
                 "Simple Round Crater",
                 new CraterFunction(
                         craterPart(0.0, 0.7, d -> (d * d) * 4 - 3),
@@ -133,7 +133,7 @@ public class PlanetGenerator {
                 0.5,
                 1.0);
 
-        Crater simpleFlatCrater = new Crater(
+        CraterLayer.Crater simpleFlatCrater = new CraterLayer.Crater(
                 "Simple Flat Crater",
                 new CraterFunction(
                         craterPart(0.0, 0.6, d -> -2.2),
@@ -152,7 +152,7 @@ public class PlanetGenerator {
                 0.5,
                 1.0);
 
-        Crater complexFlatCrater = new Crater(
+        CraterLayer.Crater complexFlatCrater = new CraterLayer.Crater(
                 "Complex Flat Crater",
                 new CraterFunction(
                         craterPart(0.0, 0.1, d -> -0.2),
@@ -172,7 +172,7 @@ public class PlanetGenerator {
                 0.5,
                 1.0);
 
-        Crater complexStepsCrater = new Crater(
+        CraterLayer.Crater complexStepsCrater = new CraterLayer.Crater(
                 "Complex Steps Crater",
                 new CraterFunction(
                         craterPart(0.00, 0.10, d -> -0.3),
@@ -196,7 +196,7 @@ public class PlanetGenerator {
                 0.6,
                 1.0);
 
-        Crater complexRingsBasin = new Crater(
+        CraterLayer.Crater complexRingsBasin = new CraterLayer.Crater(
                 "Complex Rings Basin",
                 new CraterFunction(
                         craterPart(0.00, 0.30, d -> -0.2),
@@ -225,7 +225,7 @@ public class PlanetGenerator {
                 0.6,
                 1.0);
 
-        Crater domeVolcano = new Crater(
+        CraterLayer.Crater domeVolcano = new CraterLayer.Crater(
                 "Dome Volcano",
                 new CraterFunction(
                         craterPart(0.0, 0.2, d -> 1.0),
@@ -244,7 +244,7 @@ public class PlanetGenerator {
                 0.0,
                 0.0);
 
-        Crater stratoVolcano = new Crater(
+        CraterLayer.Crater stratoVolcano = new CraterLayer.Crater(
                 "Strato Volcano",
                 new CraterFunction(
                         craterPart(0.00, 0.02, d -> d * d * 0.1 + 3.9),
@@ -264,7 +264,7 @@ public class PlanetGenerator {
                 0.0,
                 0.0);
 
-        Crater shieldVolcano = new Crater(
+        CraterLayer.Crater shieldVolcano = new CraterLayer.Crater(
                 "Shield Volcano",
                 new CraterFunction(
                         craterPart(0.00, 0.02, d -> d * d * 0.1 + 1.9),

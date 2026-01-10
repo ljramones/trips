@@ -1,7 +1,6 @@
 package com.teamgannon.trips.dialogs.dataset.model;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.service.export.ExportResult;
 import com.teamgannon.trips.service.export.ExportResults;
 
 public interface ExportTaskComplete {

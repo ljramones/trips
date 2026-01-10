@@ -1,5 +1,6 @@
 package com.teamgannon.trips.solarsysmodelling.accrete;
 
+
 import static java.lang.Math.*;
 
 public abstract class SystemObject {

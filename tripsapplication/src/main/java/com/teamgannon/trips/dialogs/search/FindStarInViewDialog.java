@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.FindResults;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -10,7 +11,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.textfield.TextFields;
@@ -43,8 +43,7 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
     public FindStarInViewDialog(@NotNull List<StarDisplayRecord> starsInView) {
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
 
         this.setTitle("Find a star in current view");
         this.setHeight(1000);

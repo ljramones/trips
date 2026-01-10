@@ -2,6 +2,7 @@ package com.teamgannon.trips.dialogs.utility;
 
 import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.dialogs.utility.model.RADecXYZObject;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,7 +16,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -38,8 +38,7 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
     public RADecToXYZDialog() {
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
 
         this.setTitle("Calculate the Coordinates from RA, Declination, Distance");
         this.setHeight(600);

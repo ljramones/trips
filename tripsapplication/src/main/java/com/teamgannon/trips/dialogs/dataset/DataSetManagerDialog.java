@@ -16,6 +16,7 @@ import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.export.ExportResult;
 import com.teamgannon.trips.service.export.ExportResults;
 import com.teamgannon.trips.service.importservices.ImportResult;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -28,7 +29,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -108,8 +108,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         createExportProgress(vBox);
 
         // set the dialog as a utility
-        Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     private void createImportProgress(@NotNull VBox vBox) {
@@ -235,6 +234,10 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
             selectedDataset = selectedItems.get(0);
             deleteButton.setDisable(false);
             exportButton.setDisable(false);
+        } else {
+            selectedDataset = null;
+            deleteButton.setDisable(true);
+            exportButton.setDisable(true);
         }
     }
 

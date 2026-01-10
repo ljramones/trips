@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.SplitPane?>
+
+<SplitPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="mainSplitPane"
+           fx:controller="com.teamgannon.trips.controller.splitpane.SplitPaneController">
+    <items>
+        <fx:include source="LeftDisplay.fxml" fx:id="leftDisplay"/>
+        <fx:include source="RightPanel.fxml" fx:id="rightPanel"/>
+    </items>
+</SplitPane>

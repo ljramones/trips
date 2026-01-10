@@ -1,5 +1,6 @@
 package com.teamgannon.trips.solarsysmodelling.utils;
 
+
 import static java.lang.Math.*;
 
 public class OrbitalDynamicsCircularUtils implements OrbitalDynamics {

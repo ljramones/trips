@@ -33,7 +33,6 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.*;
-import com.teamgannon.trips.listener.*;
 import com.teamgannon.trips.measure.OshiMeasure;
 import com.teamgannon.trips.report.ReportManager;
 import com.teamgannon.trips.report.distance.DistanceReportSelection;
@@ -70,9 +69,6 @@ import javafx.geometry.Pos;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
@@ -114,6 +110,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.*;
+
 
 @Slf4j
 @Component

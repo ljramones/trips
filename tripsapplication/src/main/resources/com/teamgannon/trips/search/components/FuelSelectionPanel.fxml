@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="fuelLabel" text="Fuel" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="yesNoFuel" text="Yes?" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <CheckBox fx:id="h2Fuel" text="H2" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <CheckBox fx:id="antiFuel" text="Antimatter" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+        <CheckBox fx:id="gasGiantFuel" text="Gas Giant" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+        <CheckBox fx:id="waterFuel" text="Water World" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+    </children>
+</fx:root>

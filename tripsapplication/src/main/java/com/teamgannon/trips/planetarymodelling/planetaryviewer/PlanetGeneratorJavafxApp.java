@@ -56,8 +56,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.CraterLayer.*;
-import static com.teamgannon.trips.planetarymodelling.planetgen.planet.layer.PlantLayer.*;
 
 public class PlanetGeneratorJavafxApp extends Application {
 
@@ -109,8 +107,8 @@ public class PlanetGeneratorJavafxApp extends Application {
 	private final DoubleProperty baseTemperatureProperty = new SimpleDoubleProperty();
 	private final DoubleProperty seasonalBaseTemperatureVariationProperty = new SimpleDoubleProperty();
 	private final DoubleProperty dailyBaseTemperatureVariationProperty = new SimpleDoubleProperty();
-	private final ListProperty<PlantData> plantsProperty = new SimpleListProperty<>();
-	private final ListProperty<Crater> cratersProperty = new SimpleListProperty<>();
+	private final ListProperty<PlantLayer.PlantData> plantsProperty = new SimpleListProperty<>();
+	private final ListProperty<CraterLayer.Crater> cratersProperty = new SimpleListProperty<>();
 	private final DoubleProperty seasonTemperatureInfluenceToAverageProperty = new SimpleDoubleProperty();
 	private final DoubleProperty dailyTemperatureInfluenceToAverageProperty = new SimpleDoubleProperty();
 	private final DoubleProperty dailyTemperatureOceanDelayProperty = new SimpleDoubleProperty();
@@ -371,13 +369,13 @@ public class PlanetGeneratorJavafxApp extends Application {
 	private Node createPlantInfoView() {
         BorderPane borderPane = new BorderPane();
 
-        ListView<PlantData> plantsListView = new ListView<PlantData>();
+        ListView<PlantLayer.PlantData> plantsListView = new ListView<PlantLayer.PlantData>();
         borderPane.setLeft(plantsListView);
 		plantsListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         plantsListView.itemsProperty().bind(plantsProperty);
-        plantsProperty.addListener(new ListChangeListener<PlantData>() {
+        plantsProperty.addListener(new ListChangeListener<PlantLayer.PlantData>() {
 			@Override
-			public void onChanged(Change<? extends PlantData> c) {
+			public void onChanged(Change<? extends PlantLayer.PlantData> c) {
 				plantsListView.getSelectionModel().selectFirst();
 			}
 		});
@@ -418,7 +416,7 @@ public class PlanetGeneratorJavafxApp extends Application {
         plantCanvas.widthProperty().bind(canvasBox.widthProperty());
 
         plantsListView.getSelectionModel().selectedItemProperty().addListener((observable, oldPlantData, newPlantData) -> {
-				ObservableList<PlantData> selectedItems = plantsListView.getSelectionModel().getSelectedItems();
+				ObservableList<PlantLayer.PlantData> selectedItems = plantsListView.getSelectionModel().getSelectedItems();
                 drawPlantGrowth(plantCanvas, selectedItems);
 
                 if (newPlantData != null) {
@@ -441,12 +439,12 @@ public class PlanetGeneratorJavafxApp extends Application {
 		HBox hBox = new HBox();
 		scrollPane.setContent(hBox);
 
-		ListView<Crater> cratersListView = new ListView<Crater>();
+		ListView<CraterLayer.Crater> cratersListView = new ListView<CraterLayer.Crater>();
         hBox.getChildren().add(cratersListView);
         cratersListView.itemsProperty().bind(cratersProperty);
-        cratersProperty.addListener(new ListChangeListener<Crater>() {
+        cratersProperty.addListener(new ListChangeListener<CraterLayer.Crater>() {
 			@Override
-			public void onChanged(Change<? extends Crater> c) {
+			public void onChanged(Change<? extends CraterLayer.Crater> c) {
 				cratersListView.getSelectionModel().selectFirst();
 			}
 		});
@@ -484,7 +482,7 @@ public class PlanetGeneratorJavafxApp extends Application {
     			radialNoiseData.add(new Data<>(x, newCrater.radialNoiseFunction.calculate(x)));
     		}
 
-    		BasicCraterCalculator craterCalculator = new BasicCraterCalculator(newCrater); 
+    		CraterLayer.BasicCraterCalculator craterCalculator = new CraterLayer.BasicCraterCalculator(newCrater);
     		PlanetGenerationContext context = new PlanetGenerationContext();
     		context.accuracy = 0.00001;
     		ColorScale colorScale = ColorScale.divergingScale(minHeight, 0, maxHeight);
@@ -507,13 +505,13 @@ public class PlanetGeneratorJavafxApp extends Application {
 		return scrollPane;
 	}
 
-	private void drawPlantGrowth(Canvas canvas, ObservableList<PlantData> plantDatas) {
+	private void drawPlantGrowth(Canvas canvas, ObservableList<PlantLayer.PlantData> plantDatas) {
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 
 		for (int y = 0; y < canvas.getHeight(); y++) {
 			for (int x = 0; x < canvas.getWidth(); x++) {
 				Color color = Color.BEIGE;
-				for (PlantData plantData : plantDatas) {
+				for (PlantLayer.PlantData plantData : plantDatas) {
 					double temperature = y / canvas.getHeight() * 50.0 + 260.0;
 					double precipitation = x / canvas.getWidth() * 2.0;
 					double plant = plantData.plantGrowth(temperature, precipitation);
@@ -691,7 +689,7 @@ public class PlanetGeneratorJavafxApp extends Application {
 		drawHeightMap(zoomHeightMapCanvas, longitudeRadians - zoomLongitudeSize, longitudeRadians + zoomLongitudeSize, latitudeRadians);
 		
 		if (planetPoint.plants != null) {
-			for (Tuple2<PlantData, Double> plant : planetPoint.plants) {
+			for (Tuple2<PlantLayer.PlantData, Double> plant : planetPoint.plants) {
 				Rectangle plantGrowthBar = mapPlantDataToRectangle.get(plant.getValue1().name);
 				if (plantGrowthBar == null) {
 					plantGrowthBar = new Rectangle(10, 10, ColorUtil.toJavafxColor(plant.getValue1().color));

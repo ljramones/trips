@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+
+<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml/1" hgap="10" vgap="10">
+    <children>
+        <Label fx:id="militaryPlanetsideLabel" text="Military Planetside" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <CheckBox fx:id="yesNoMilPlan" text="Yes?" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <CheckBox fx:id="aMilPlan" text="A" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <CheckBox fx:id="bMilPlan" text="B" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+        <CheckBox fx:id="cMilPlan" text="C" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+        <CheckBox fx:id="dMilPlan" text="D" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+        <CheckBox fx:id="eMilPlan" text="E" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+    </children>
+</fx:root>

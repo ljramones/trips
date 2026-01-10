@@ -1,7 +1,6 @@
 package com.teamgannon.trips.constellation;
 
 import com.opencsv.bean.CsvBindByPosition;
-import lombok.Builder;
 import lombok.Data;
 
 @Data
