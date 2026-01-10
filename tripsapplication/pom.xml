@@ -125,6 +125,7 @@
 
         <jpackage.type>APP_IMAGE</jpackage.type>
         <jpackage.name>TRIPS</jpackage.name>
+        <jpackage.appVersion>${project.version}</jpackage.appVersion>
     </properties>
 
     <dependencyManagement>
@@ -591,7 +592,7 @@
                         <version>1.6.0</version>
                         <configuration>
                             <name>${jpackage.name}</name>
-                            <appVersion>${project.version}</appVersion>
+                            <appVersion>${jpackage.appVersion}</appVersion>
                             <vendor>Charles Gannon</vendor>
                             <type>${jpackage.type}</type>
                             <mainClass>com.teamgannon.trips.TripsSpringBootApplication</mainClass>
