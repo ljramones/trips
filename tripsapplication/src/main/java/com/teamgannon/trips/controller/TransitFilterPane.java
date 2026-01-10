@@ -3,31 +3,42 @@ package com.teamgannon.trips.controller;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
 import com.teamgannon.trips.transits.TransitRangeDef;
-import javafx.geometry.Insets;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
 
 @Slf4j
-public class TransitFilterPane extends Pane {
+public class TransitFilterPane extends VBox {
 
     private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 10);
 
     private TransitManager transitManager;
 
-    public TransitFilterPane() {
+    @FXML
+    private GridPane gridPane;
 
+    public TransitFilterPane() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("TransitFilterPane.fxml"));
+        loader.setController(this);
+        loader.setRoot(this);
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load TransitFilterPane.fxml", e);
+        }
     }
 
     /**
@@ -38,23 +49,14 @@ public class TransitFilterPane extends Pane {
      */
     public void setFilter(TransitDefinitions transitDefinitions, TransitManager transitManager) {
         this.transitManager = transitManager;
-
-        VBox vBox = new VBox();
-        this.getChildren().add(vBox);
-
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
-        vBox.getChildren().add(gridPane);
+        gridPane.getChildren().clear();
 
         Label datasetLabel = new Label("Dataset");
         datasetLabel.setFont(font);
         int currentRow = 0;
         gridPane.add(datasetLabel, 0, currentRow);
         gridPane.add(new Label(transitDefinitions.getDataSetName()), 1, currentRow++);
-        createHeaders(gridPane);
-        currentRow++;
+        createHeaders(gridPane, currentRow++);
         List<TransitRangeDef> transitRangeDefList = transitDefinitions.getTransitRangeDefs();
         transitRangeDefList.sort(Comparator.comparing(TransitRangeDef::getBandName));
         for (TransitRangeDef transitRangeDef : transitRangeDefList) {
@@ -64,29 +66,29 @@ public class TransitFilterPane extends Pane {
         }
     }
 
-    private void createHeaders(GridPane gridPane) {
+    private void createHeaders(GridPane gridPane, int row) {
         // show headers for this set of tables
         Label enabledLabel = new Label("Show?");
         enabledLabel.setFont(font);
-        gridPane.add(enabledLabel, 0, 1);
+        gridPane.add(enabledLabel, 0, row);
         Label showLengthsLabel = new Label("Show?");
         showLengthsLabel.setFont(font);
-        gridPane.add(showLengthsLabel, 1, 1);
+        gridPane.add(showLengthsLabel, 1, row);
         Label bandNameLabel = new Label("Band\nName");
         bandNameLabel.setFont(font);
-        gridPane.add(bandNameLabel, 2, 1);
+        gridPane.add(bandNameLabel, 2, row);
         Label lowerRangeLabel = new Label("Lower\nRange");
         lowerRangeLabel.setFont(font);
-        gridPane.add(lowerRangeLabel, 3, 1);
+        gridPane.add(lowerRangeLabel, 3, row);
         Label upperRangeLabel = new Label("Upper\nRange");
         upperRangeLabel.setFont(font);
-        gridPane.add(upperRangeLabel, 4, 1);
+        gridPane.add(upperRangeLabel, 4, row);
         Label lineWidthLabel = new Label("Line\nWidth");
         lineWidthLabel.setFont(font);
-        gridPane.add(lineWidthLabel, 5, 1);
+        gridPane.add(lineWidthLabel, 5, row);
         Label colorLabel = new Label("Color");
         colorLabel.setFont(font);
-        gridPane.add(colorLabel, 6, 1);
+        gridPane.add(colorLabel, 6, row);
     }
 
     private void addTransitRef(GridPane gridPane, TransitRangeDef transitRangeDef, int row) {
@@ -95,14 +97,18 @@ public class TransitFilterPane extends Pane {
         CheckBox showTransit = new CheckBox();
         showTransit.setSelected(transitRangeDef.isEnabled());
         showTransit.setOnAction(e -> {
-            transitManager.showTransit(transitRangeDef.getBandId(), showTransit.isSelected());
+            if (transitManager != null) {
+                transitManager.showTransit(transitRangeDef.getBandId(), showTransit.isSelected());
+            }
         });
         gridPane.add(showTransit, 0, row);
 
         CheckBox showLabels = new CheckBox();
         showLabels.setSelected(true);
         showLabels.setOnAction(e -> {
-            transitManager.showLabels(transitRangeDef.getBandId(), showLabels.isSelected());
+            if (transitManager != null) {
+                transitManager.showLabels(transitRangeDef.getBandId(), showLabels.isSelected());
+            }
         });
         gridPane.add(showLabels, 1, row);
 
@@ -132,6 +138,6 @@ public class TransitFilterPane extends Pane {
     }
 
     public void clear() {
-         this.getChildren().clear();
+        gridPane.getChildren().clear();
     }
 }
