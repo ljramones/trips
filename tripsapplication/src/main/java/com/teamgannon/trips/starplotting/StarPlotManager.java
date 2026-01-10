@@ -295,7 +295,7 @@ public class StarPlotManager {
 
         // load 5 pt star star
         Group fivePtStar = meshViewShapeFactory.star5pt();
-        if (fourPtStar != null) {
+        if (fivePtStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
                     .builder()
                     .name(FIVE_PT_STAR)
@@ -626,6 +626,7 @@ public class StarPlotManager {
 
                 // attach a context menu
                 setContextMenu(record, polityObject);
+                setContextMenu(record, starShape);
 
                 // set this polity object to the polities display
                 politiesDisplayGroup.getChildren().add(polityObject);
@@ -651,19 +652,19 @@ public class StarPlotManager {
         Color polityColor = polityPreferences.getColorForPolity(polity);
         switch (polity) {
             case CivilizationDisplayPreferences.TERRAN, CivilizationDisplayPreferences.SLAASRIITHI -> {
-                meshObjectDefinition = createDornaniPolity();
+                meshObjectDefinition = createTerranPolity();
             }
             case CivilizationDisplayPreferences.DORNANI, CivilizationDisplayPreferences.OTHER1 -> {
                 meshObjectDefinition = createDornaniPolity();
             }
             case CivilizationDisplayPreferences.KTOR, CivilizationDisplayPreferences.OTHER3 -> {
-                meshObjectDefinition = createDornaniPolity();
+                meshObjectDefinition = createKtorPolity();
             }
             case CivilizationDisplayPreferences.ARAKUR, CivilizationDisplayPreferences.OTHER2 -> {
-                meshObjectDefinition = createDornaniPolity();
+                meshObjectDefinition = createAratKurPolity();
             }
             case CivilizationDisplayPreferences.HKHRKH, CivilizationDisplayPreferences.OTHER4 -> {
-                meshObjectDefinition = createDornaniPolity();
+                meshObjectDefinition = createHkhRkhPolity();
             }
             default -> {
                 log.error("unknown polity");
@@ -690,6 +691,10 @@ public class StarPlotManager {
 
     private Node createCentralStar() {
         MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
+        if (meshObjectDefinition == null || meshObjectDefinition.getObject() == null) {
+            log.error("central star mesh object missing");
+            return new Sphere(1);
+        }
         Node centralStar = meshObjectDefinition.getObject();
         centralStar.setScaleX(meshObjectDefinition.getXScale());
         centralStar.setScaleY(meshObjectDefinition.getYScale());
@@ -789,8 +794,10 @@ public class StarPlotManager {
             if (selectionModel.containsKey(star)) {
                 // remove star and selection rectangle
                 StarSelectionModel starSelectionModel = selectionModel.get(star);
-                Group group = (Group) star;
-                group.getChildren().remove(starSelectionModel.getSelectionRectangle());
+                Node selectionRectangle = starSelectionModel.getSelectionRectangle();
+                if (selectionRectangle != null && selectionRectangle.getParent() instanceof Group group) {
+                    group.getChildren().remove(selectionRectangle);
+                }
 
                 // remove the selection model
                 selectionModel.remove(star);
@@ -1160,6 +1167,10 @@ public class StarPlotManager {
      * @param numberStars number of stars
      */
     public void generateRandomStars(int numberStars) {
+        if (colorPalette == null) {
+            log.warn("color palette not initialized; cannot generate random stars");
+            return;
+        }
         for (int i = 0; i < numberStars; i++) {
             double radius = random.nextDouble() * RADIUS_MAX;
             Color color = randomColor();
@@ -1176,13 +1187,17 @@ public class StarPlotManager {
     }
 
     private @NotNull Color randomColor() {
-        int r = random.nextInt(255);
-        int g = random.nextInt(255);
-        int b = random.nextInt(255);
+        int r = random.nextInt(256);
+        int g = random.nextInt(256);
+        int b = random.nextInt(256);
         return Color.rgb(r, g, b);
     }
 
     private void createSphereAndLabel(double radius, double x, double y, double z, Color color, Font font, String labelText) {
+        if (colorPalette == null) {
+            log.warn("color palette not initialized; cannot create labeled sphere");
+            return;
+        }
         Sphere sphere = new Sphere(radius);
         sphere.setTranslateX(x);
         sphere.setTranslateY(y);
@@ -1216,7 +1231,7 @@ public class StarPlotManager {
         Point3D point3DFrom = new Point3D(x, y, z);
         Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), 0);
         double lineWidth = 0.3;
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor, colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
