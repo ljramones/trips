@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -13,7 +14,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +32,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private final TextField dataSetAuthor = new TextField();
 
     private final TextArea notes = new TextArea();
-
-    private final Stage stage;
 
     private final TextField fileSelected = new TextField();
     private final Dataset dataSet = new Dataset();
@@ -120,9 +118,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         cancelDataSetButton.setOnAction(this::close);
         hBox5.getChildren().add(cancelDataSetButton);
 
-        // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
+        DialogUtils.bindCloseHandler(this, this::close);
     }
 
     /**
@@ -132,6 +128,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
      */
     private void close(ActionEvent actionEvent) {
         setResult(new Dataset());
+        close();
     }
 
     /**
@@ -141,6 +138,7 @@ public class AddDataSetDialog extends Dialog<Dataset> {
      */
     private void close(WindowEvent we) {
         setResult(new Dataset());
+        close();
     }
 
     private void addChoices() {
@@ -231,10 +229,16 @@ public class AddDataSetDialog extends Dialog<Dataset> {
                 showErrorAlert("Add Dataset ", "files folder did not exist, but attempt to create directories failed");
             }
         }
-        fileChooser.setInitialDirectory(filesFolder);
+        if (filesFolder.exists()) {
+            fileChooser.setInitialDirectory(filesFolder);
+        } else {
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.home", ".")));
+        }
         FileChooser.ExtensionFilter filter = selectExtensionFilter(dataFileFormat.getDataFormatEnum());
         fileChooser.getExtensionFilters().add(filter);
-        File file = fileChooser.showOpenDialog(stage);
+        File file = fileChooser.showOpenDialog(getDialogPane().getScene() != null
+                ? getDialogPane().getScene().getWindow()
+                : null);
         if (file != null) {
             fileSelected.setText(file.getAbsolutePath());
             dataSet.setDataType(dataFileFormat);

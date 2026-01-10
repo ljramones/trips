@@ -135,6 +135,7 @@ public class RouteDialog extends Dialog<RouteSelector> {
 
     private void close(WindowEvent windowEvent) {
         setResult(RouteSelector.builder().selected(false).build());
+        close();
     }
 
     private void okAction(ActionEvent actionEvent) {

@@ -109,10 +109,12 @@ public class CompareDBDialog extends Dialog<DBComparison> {
 
     private void close(WindowEvent windowEvent) {
         setResult(dbComparison);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(dbComparison);
+        close();
     }
 
     private void findDiffsClicked(ActionEvent actionEvent) {

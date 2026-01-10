@@ -142,6 +142,7 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
     private void close(WindowEvent windowEvent) {
         AdvResultsSet advResultsSet = AdvResultsSet.builder().dismissed(true).build();
         setResult(advResultsSet);
+        close();
     }
 
     private void cancelReq(ActionEvent actionEvent) {

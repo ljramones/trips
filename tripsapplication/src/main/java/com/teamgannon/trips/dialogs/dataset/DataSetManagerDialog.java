@@ -147,6 +147,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
      */
     private void close(WindowEvent we) {
         setResult(1);
+        close();
     }
 
 
@@ -157,6 +158,7 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
      */
     private void close(ActionEvent actionEvent) {
         setResult(1);
+        close();
     }
 
 

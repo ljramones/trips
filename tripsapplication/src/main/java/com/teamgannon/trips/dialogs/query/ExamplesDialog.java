@@ -44,10 +44,12 @@ public class ExamplesDialog extends Dialog<Boolean> {
 
     private void close(ActionEvent actionEvent) {
         setResult(true);
+        close();
     }
 
     private void close(WindowEvent windowEvent) {
         setResult(true);
+        close();
     }
 
 }

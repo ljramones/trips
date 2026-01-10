@@ -99,10 +99,12 @@ public class ExportDialog extends Dialog<ExportOptions> {
 
     private void close(WindowEvent windowEvent) {
         setResult(ExportOptions.builder().doExport(false).build());
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(ExportOptions.builder().doExport(false).build());
+        close();
     }
 
     private void exportClicked(ActionEvent actionEvent) {

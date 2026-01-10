@@ -186,10 +186,12 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
 
     private void close(WindowEvent windowEvent) {
         setResult(distanceCalculationObject);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(distanceCalculationObject);
+        close();
     }
 
     private void accept(ActionEvent actionEvent) {

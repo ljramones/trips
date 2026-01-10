@@ -69,11 +69,13 @@ public class FindAllByConstellationDialog extends Dialog<ConstellationSelected> 
     private void close(WindowEvent windowEvent) {
         ConstellationSelected selected = ConstellationSelected.builder().selected(false).build();
         setResult(selected);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         ConstellationSelected selected = ConstellationSelected.builder().selected(false).build();
         setResult(selected);
+        close();
     }
 
     private void searchConstellationClicked(ActionEvent actionEvent) {

@@ -477,6 +477,7 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
 
     private void close(WindowEvent windowEvent) {
         setResult(false);
+        close();
     }
 
 

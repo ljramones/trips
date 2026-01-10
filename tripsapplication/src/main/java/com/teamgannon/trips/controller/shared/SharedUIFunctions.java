@@ -56,11 +56,11 @@ public class SharedUIFunctions {
         SplitPane.setResizableWithParent(mainSplitPane.getItems().get(1), false);
 
         mainSplitPane.getDividers().get(0).positionProperty().addListener((obs, oldVal, newVal) -> {
-            log.info("Divider position changed from " + oldVal + " to " + newVal);
+            log.trace("Divider position changed from " + oldVal + " to " + newVal);
         });
 
         mainSplitPane.widthProperty().addListener((obs, oldVal, newVal) -> {
-            log.info("SplitPane width changed from " + oldVal + " to " + newVal);
+            log.trace("SplitPane width changed from " + oldVal + " to " + newVal);
         });
 
         setSplitPaneParentLayout(mainSplitPane);

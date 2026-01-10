@@ -245,6 +245,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
 
     private void close(ActionEvent actionEvent) {
         this.setResult(false);
+        close();
     }
 
     private void nextPlanetClicked(ActionEvent actionEvent) {
@@ -315,6 +316,7 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
 
     private void close(WindowEvent windowEvent) {
         this.setResult(false);
+        close();
     }
 
 

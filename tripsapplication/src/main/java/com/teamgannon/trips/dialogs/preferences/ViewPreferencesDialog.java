@@ -54,6 +54,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
     private void close(WindowEvent windowEvent) {
         setResult(new ApplicationPreferences());
+        close();
     }
 
     private void createTabPanes(@NotNull VBox vBox) {
@@ -140,6 +141,7 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
 
     private void close(ActionEvent actionEvent) {
         setResult(new ApplicationPreferences());
+        close();
     }
 
 }

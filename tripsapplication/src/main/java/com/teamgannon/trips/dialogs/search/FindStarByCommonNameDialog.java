@@ -69,11 +69,13 @@ public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
     private void close(WindowEvent windowEvent) {
         StarSearchResults findResults = StarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         StarSearchResults findResults = StarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
+        close();
     }
 
     private void searchStarClicked(ActionEvent actionEvent) {

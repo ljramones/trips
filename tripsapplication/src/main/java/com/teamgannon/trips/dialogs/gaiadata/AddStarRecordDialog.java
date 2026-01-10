@@ -307,6 +307,7 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
 
     private void close(WindowEvent windowEvent) {
         setResult(false);
+        close();
     }
 
 

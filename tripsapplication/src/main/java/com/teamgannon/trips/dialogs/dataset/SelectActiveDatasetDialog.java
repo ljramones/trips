@@ -130,5 +130,6 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
     private void close(WindowEvent we) {
         setResult(true);
+        close();
     }
 }

@@ -210,10 +210,12 @@ public class ShowStarMatchesBasicDialog extends Dialog<StarSelectionObject> {
 
     private void close(WindowEvent windowEvent) {
         setResult(starSelectionObject);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(starSelectionObject);
+        close();
     }
 
     ///////////////////  Sorting operators   ///////////////

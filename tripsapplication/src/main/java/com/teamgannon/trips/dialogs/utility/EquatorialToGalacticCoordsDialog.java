@@ -183,6 +183,7 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
 
     private void close(WindowEvent windowEvent) {
         setResult(true);
+        close();
     }
 
 }

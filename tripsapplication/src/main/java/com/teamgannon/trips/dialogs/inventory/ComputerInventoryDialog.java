@@ -57,6 +57,7 @@ public class ComputerInventoryDialog extends Dialog<InventoryReport> {
     private void close(WindowEvent windowEvent) {
         inventory.setSave(false);
         setResult(inventory);
+        close();
     }
 
     private void cancel(ActionEvent actionEvent) {

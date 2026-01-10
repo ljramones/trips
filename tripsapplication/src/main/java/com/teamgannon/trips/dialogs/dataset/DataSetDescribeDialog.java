@@ -72,6 +72,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
      */
     private void close(ActionEvent actionEvent) {
         setResult(descriptor);
+        close();
     }
 
     /**
@@ -81,6 +82,7 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
      */
     private void close(WindowEvent we) {
         setResult(descriptor);
+        close();
     }
 
     protected @NotNull Label createLabel(String textName, boolean boldFlag) {

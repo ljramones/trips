@@ -78,6 +78,7 @@ public class AboutDialog extends Dialog<String> {
 
     private void close(WindowEvent windowEvent) {
         setResult("  ");
+        close();
     }
 
     private void cancel(ActionEvent actionEvent) {

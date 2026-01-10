@@ -130,6 +130,7 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
                 .calculated(false)
                 .build();
         setResult(raDecXYZObject);
+        close();
     }
 
     private void close(WindowEvent windowEvent) {
@@ -138,6 +139,7 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
                 .calculated(false)
                 .build();
         setResult(raDecXYZObject);
+        close();
     }
 
 }

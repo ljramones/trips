@@ -95,6 +95,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     private void close(ActionEvent actionEvent) {
         setResult(new AstroSearchQuery());
+        close();
     }
 
 
@@ -113,6 +114,7 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
     private void close(WindowEvent we) {
         setResult(new AstroSearchQuery());
+        close();
     }
 
     private void runQueryClicked(ActionEvent actionEvent) {

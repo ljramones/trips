@@ -504,6 +504,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
                 .starsLoaded(false)
                 .build();
         setResult(findResults);
+        close();
     }
 
     private void close(WindowEvent windowEvent) {
@@ -511,5 +512,6 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
                 .starsLoaded(false)
                 .build();
         setResult(findResults);
+        close();
     }
 }

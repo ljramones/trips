@@ -98,11 +98,13 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
     private void close(WindowEvent windowEvent) {
         FindResults findResults = FindResults.builder().selected(false).build();
         setResult(findResults);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         FindResults findResults = FindResults.builder().selected(false).build();
         setResult(findResults);
+        close();
     }
 
     private void goToStarClicked(ActionEvent actionEvent) {

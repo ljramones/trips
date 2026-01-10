@@ -95,6 +95,7 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
     private void close(WindowEvent windowEvent) {
         MultipleStarSearchResults findResults = MultipleStarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
+        close();
     }
 
     private void searchStarClicked(ActionEvent actionEvent) {
@@ -144,5 +145,6 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
     private void close(ActionEvent actionEvent) {
         MultipleStarSearchResults findResults = MultipleStarSearchResults.builder().starsFound(false).build();
         setResult(findResults);
+        close();
     }
 }

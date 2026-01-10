@@ -170,10 +170,12 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
 
     private void close(WindowEvent windowEvent) {
         setResult(false);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(false);
+        close();
     }
 
     private void exportClicked(ActionEvent actionEvent) {

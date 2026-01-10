@@ -100,10 +100,12 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
 
     private void close(WindowEvent windowEvent) {
         setResult(aliasList);
+        close();
     }
 
     private void close(ActionEvent actionEvent) {
         setResult(aliasList);
+        close();
     }
 
     private void runQueryClicked(ActionEvent actionEvent) {

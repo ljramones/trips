@@ -101,6 +101,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
     private void close(WindowEvent windowEvent) {
         SingleStarSelection singleStarSelection = new SingleStarSelection(false, null);
         setResult(singleStarSelection);
+        close();
     }
 
     private void setupTable() {
@@ -247,6 +248,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
     private void close(ActionEvent actionEvent) {
         SingleStarSelection singleStarSelection = new SingleStarSelection(false, null);
         setResult(singleStarSelection);
+        close();
     }
 
     /**
