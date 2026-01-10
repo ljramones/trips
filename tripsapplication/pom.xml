@@ -122,6 +122,9 @@
         <xlsx-streamer.version>2.2.0</xlsx-streamer.version>
 
         <jsqlparser.version>4.5</jsqlparser.version>
+
+        <jpackage.type>APP_IMAGE</jpackage.type>
+        <jpackage.name>TRIPS</jpackage.name>
     </properties>
 
     <dependencyManagement>
@@ -550,5 +553,68 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>jpackage</id>
+            <build>
+                <plugins>
+                    <!-- Copy the jar to a staging directory for jpackage -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-jar-for-jpackage</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/jpackage-input</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>${project.build.finalName}.jar</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <name>${jpackage.name}</name>
+                            <appVersion>1.0.0</appVersion>
+                            <vendor>Charles Gannon</vendor>
+                            <type>${jpackage.type}</type>
+                            <mainClass>com.teamgannon.trips.TripsSpringBootApplication</mainClass>
+                            <mainJar>${project.build.finalName}.jar</mainJar>
+                            <input>${project.build.directory}/jpackage-input</input>
+                            <destination>${project.build.directory}/jpackage</destination>
+                            <javaOptions>
+                                <javaOption>-Dfile.encoding=UTF-8</javaOption>
+                            </javaOptions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-app-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jpackage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
