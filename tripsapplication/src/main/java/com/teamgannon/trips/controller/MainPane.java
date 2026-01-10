@@ -430,7 +430,10 @@ public class MainPane  {
     }
 
     public void toggleSidePane(boolean sidePanelOn) {
+        this.sidePaneOn = sidePanelOn;
+        sharedUIState.setSidePaneOn(sidePanelOn);
         mainSplitPaneManager.toggleSidePane(sidePanelOn);
+        sharedUIFunctions.applySidePaneState(sidePanelOn);
     }
 
     /**
@@ -1144,7 +1147,9 @@ public class MainPane  {
         if (optional.isPresent()) {
             ConstellationSelected selected = optional.get();
             if (selected.isSelected()) {
-                List<StarObject> starObjectList = starService.findStarsByConstellation(selected.getConstellation());
+                List<StarObject> starObjectList = starService.findStarsByConstellation(
+                        tripsContext.getDataSetDescriptor().getDataSetName(),
+                        selected.getConstellation());
                 ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjectList);
                 showStarMatchesDialog.showAndWait();
             }

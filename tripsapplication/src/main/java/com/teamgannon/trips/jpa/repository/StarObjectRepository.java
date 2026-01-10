@@ -158,9 +158,15 @@ public interface StarObjectRepository
 
     List<StarObject> findByCatalogIdListContainsIgnoreCase(String catalogId);
 
+    List<StarObject> findByCatalogIdListContainsIgnoreCaseAndDataSetName(String catalogId, String dataSetName);
+
     List<StarObject> findByCommonNameContainsIgnoreCase(String commonName);
 
+    List<StarObject> findByCommonNameContainsIgnoreCaseAndDataSetName(String commonName, String dataSetName);
+
     List<StarObject> findByConstellationName(String constellationName);
+
+    List<StarObject> findByConstellationNameAndDataSetName(String constellationName, String dataSetName);
 
    StarObject findByBayerCatIdAndDataSetName(String bayerId, String dataSetName);
 

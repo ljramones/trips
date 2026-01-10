@@ -219,12 +219,12 @@ public class StarService {
     @Transactional(readOnly = true)
     public Map<String, SparseStarRecord> getFromDatasetWithinRanges(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         final Map<String, SparseStarRecord> starRecordHashMap = new HashMap<>();
-        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance);
-
-        starObjectStream.forEach(starObject -> {
-            SparseStarRecord sparseStarRecord = starObject.toSparseStarRecord();
-            starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
-        });
+        try (Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance)) {
+            starObjectStream.forEach(starObject -> {
+                SparseStarRecord sparseStarRecord = starObject.toSparseStarRecord();
+                starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
+            });
+        }
 
         return starRecordHashMap;
     }
@@ -404,7 +404,7 @@ public class StarService {
     }
 
     public List<StarObject> findStarsWithCatalogId(String datasetName, String catalogId) {
-        return starObjectRepository.findByCatalogIdListContainsIgnoreCase(catalogId);
+        return starObjectRepository.findByCatalogIdListContainsIgnoreCaseAndDataSetName(catalogId, datasetName);
     }
 
     public StarObject findStarWithBayerId(String datasetName, String bayerId) {
@@ -459,7 +459,7 @@ public class StarService {
      * @return the stars that match
      */
     public List<StarObject> findStarsByCommonName(String datasetName, String commonName) {
-        return starObjectRepository.findByCommonNameContainsIgnoreCase(commonName);
+        return starObjectRepository.findByCommonNameContainsIgnoreCaseAndDataSetName(commonName, datasetName);
     }
 
     /**
@@ -468,8 +468,8 @@ public class StarService {
      * @param constellation the constellation
      * @return the list of stars
      */
-    public List<StarObject> findStarsByConstellation(String constellation) {
-        return starObjectRepository.findByConstellationName(constellation);
+    public List<StarObject> findStarsByConstellation(String datasetName, String constellation) {
+        return starObjectRepository.findByConstellationNameAndDataSetName(constellation, datasetName);
     }
 
     /**
@@ -510,14 +510,14 @@ public class StarService {
     @Transactional
     public List<DBReference> compareStars(String sourceSelection, String targetSelection) {
         List<DBReference> starsNotFound;
-        Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection);
-
-        starsNotFound = starObjectStream.filter(starObject ->
-                        !starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, starObject.getDisplayName()).isEmpty())
-                .map(
-                        starObject ->
-                                DBReference.builder().id(starObject.getId()).displayName(starObject.getDisplayName()).build())
-                .collect(Collectors.toList());
+        try (Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection)) {
+            starsNotFound = starObjectStream.filter(starObject ->
+                            starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, starObject.getDisplayName()).isEmpty())
+                    .map(
+                            starObject ->
+                                    DBReference.builder().id(starObject.getId()).displayName(starObject.getDisplayName()).build())
+                    .collect(Collectors.toList());
+        }
 
         return starsNotFound;
     }
