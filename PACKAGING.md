@@ -15,6 +15,14 @@ Building
 
 **Run all commands from the repository root directory.**
 
+Convenience scripts:
+- macOS DMG: `./bin/build-macos-dmg.sh`
+- macOS App: `./bin/build-macos-app.sh`
+- Windows EXE: `bin\\build-windows-exe.cmd`
+- Windows MSI: `bin\\build-windows-msi.cmd`
+
+Scripts are OS-specific and should be run on their target platform.
+
 Build an app image (default type):
 
 ```bash
