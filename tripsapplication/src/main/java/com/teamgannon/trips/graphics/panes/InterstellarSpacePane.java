@@ -24,6 +24,7 @@ import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
 import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.scene.Group;
@@ -90,9 +91,8 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     @Getter
     private final @NotNull StarPlotManager starPlotManager;
     @NotNull
-    Group root = new Group();
-    @NotNull
     PerspectiveCamera camera = new PerspectiveCamera(true);
+    private final double baseCameraTranslateX;
 
     // mouse positions
     private double mousePosX, mousePosY = 0;
@@ -126,6 +126,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private double controlPaneOffset;
 
     private double deltaX;
+    private final PauseTransition labelUpdatePause = new PauseTransition(Duration.millis(75));
 
 
     /**
@@ -158,6 +159,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         subScene.setFill(Color.BLACK);
 
         setInitialView();
+        baseCameraTranslateX = camera.getTranslateX();
 
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
@@ -168,8 +170,12 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
         subScene.widthProperty().bind(this.widthProperty());
         subScene.heightProperty().bind(this.heightProperty());
-
-        root.getChildren().add(this);
+        widthProperty().addListener((obs, oldValue, newValue) -> scheduleLabelUpdate());
+        heightProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue.doubleValue() > 0) {
+                scheduleLabelUpdate();
+            }
+        });
 
         // event setup
         handleUserEvents();
@@ -376,30 +382,28 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     public void shiftDisplayLeft(boolean shift) {
-        double xPos = camera.getTranslateX();
-        log.info("x position={}", xPos);
-
         if (shift) {
             double width = getWidth();
-            double halfNormal = width / 2.0;
-            double displayWidth = getWidth() - MainPane.SIDE_PANEL_SIZE;
-            double halfDisplay = displayWidth / 2.0;
-            deltaX = abs(halfDisplay - halfNormal);
+            if (width <= 0) {
+                width = subScene.getWidth();
+            }
+            if (width <= 0) {
+                Platform.runLater(() -> shiftDisplayLeft(true));
+                return;
+            }
+            deltaX = MainPane.SIDE_PANEL_SIZE / 2.0;
 
-            log.info("normal={}, withSide={}", halfNormal, halfDisplay);
             log.info("shift display left by {}", deltaX);
-            camera.setTranslateX(deltaX);
+            camera.setTranslateX(baseCameraTranslateX + deltaX);
         } else {
             if (!sidePanelShiftKludgeFirstTime) {
                 log.info("shift display right!!");
-                camera.setTranslateX(-deltaX / 6);
+                camera.setTranslateX(baseCameraTranslateX);
             } else {
                 sidePanelShiftKludgeFirstTime = false;
             }
         }
         updateLabels();
-        xPos = camera.getTranslateX();
-        log.info("x position={}", xPos);
     }
 
     /**
@@ -535,7 +539,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         rotate.setToAngle(0);
         rotate.setInterpolator(Interpolator.LINEAR);
         rotate.setCycleCount(RotateTransition.INDEFINITE);
-        updateLabels();
         return rotate;
     }
 
@@ -553,6 +556,11 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     private void run() {
         updateLabels();
+    }
+
+    private void scheduleLabelUpdate() {
+        labelUpdatePause.setOnFinished(event -> updateLabels());
+        labelUpdatePause.playFromStart();
     }
 
     ///////////////////////// event manager

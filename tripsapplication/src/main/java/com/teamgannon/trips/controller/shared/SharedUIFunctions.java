@@ -187,6 +187,7 @@ public class SharedUIFunctions {
             sliderControlManager.removeSliderChangeListener();
             mainSplitPane.setDividerPosition(0, newPosition);
             updatePaneWidths(sidePanelOn, newPosition);
+            interstellarSpacePane.shiftDisplayLeft(sidePanelOn);
             sliderControlManager.addSliderChangeListener();
 
             PauseTransition pause = new PauseTransition(Duration.millis(100));

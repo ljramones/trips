@@ -432,7 +432,6 @@ public class MainPane  {
     public void toggleSidePane(boolean sidePanelOn) {
         this.sidePaneOn = sidePanelOn;
         sharedUIState.setSidePaneOn(sidePanelOn);
-        mainSplitPaneManager.toggleSidePane(sidePanelOn);
         sharedUIFunctions.applySidePaneState(sidePanelOn);
     }
 
