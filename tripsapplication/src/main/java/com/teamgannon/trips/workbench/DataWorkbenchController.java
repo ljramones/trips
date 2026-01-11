@@ -177,12 +177,14 @@ public class DataWorkbenchController {
     private int previewTotalRows = 0;
     private final int previewPageSize = 100;
     private static final String GAIA_TAP_BASE_URL = "https://gea.esac.esa.int/tap-server/tap";
+    private static final String SIMBAD_TAP_BASE_URL = "https://simbad.cds.unistra.fr/simbad/sim-tap";
     private static final long GAIA_TAP_MAX_WAIT_MS = 20 * 60 * 1000;
     private static final long GAIA_TAP_MAX_DELAY_MS = 60 * 1000;
     private static final long GAIA_TAP_INITIAL_DELAY_MS = 1000;
     private volatile boolean tapCancelRequested = false;
     private volatile String tapJobUrl;
     private volatile long tapStartMillis = 0L;
+    private volatile String tapLabel = "TAP";
 
     public DataWorkbenchController(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -340,7 +342,10 @@ public class DataWorkbenchController {
                 WorkbenchSourceType.GAIA_TAP.getLabel(),
                 "Gaia TAP (TOP 200)",
                 "Gaia TAP (TOP 1000)",
-                "Gaia TAP (TOP 5000)"
+                "Gaia TAP (TOP 5000)",
+                WorkbenchSourceType.SIMBAD_TAP.getLabel(),
+                "SIMBAD TAP (TOP 200)",
+                "SIMBAD TAP (TOP 1000)"
         );
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
         dialog.setTitle("Add Source");
@@ -363,6 +368,14 @@ public class DataWorkbenchController {
             addGaiaTapSource(defaultGaiaQuery(5000), "Gaia_DR3_TOP_5000.csv");
             return;
         }
+        if ("SIMBAD TAP (TOP 200)".equals(selection)) {
+            addSimbadTapSource(defaultSimbadQuery(200), "SIMBAD_TOP_200.csv");
+            return;
+        }
+        if ("SIMBAD TAP (TOP 1000)".equals(selection)) {
+            addSimbadTapSource(defaultSimbadQuery(1000), "SIMBAD_TOP_1000.csv");
+            return;
+        }
         WorkbenchSourceType type = WorkbenchSourceType.fromLabel(selection);
         if (type == WorkbenchSourceType.LOCAL_CSV) {
             addLocalCsvSource();
@@ -370,6 +383,8 @@ public class DataWorkbenchController {
             addUrlCsvSource();
         } else if (type == WorkbenchSourceType.GAIA_TAP) {
             addGaiaTapSource();
+        } else if (type == WorkbenchSourceType.SIMBAD_TAP) {
+            addSimbadTapSource();
         }
     }
 
@@ -419,8 +434,11 @@ public class DataWorkbenchController {
         } else if (selected.getType() == WorkbenchSourceType.GAIA_TAP) {
             updateStatus("Submitting Gaia TAP job...");
             downloadGaiaTapToFile(selected.getLocation(), file.toPath(), null);
+        } else if (selected.getType() == WorkbenchSourceType.SIMBAD_TAP) {
+            updateStatus("Submitting SIMBAD TAP job...");
+            downloadSimbadTapToFile(selected.getLocation(), file.toPath(), null);
         } else {
-            showError("Download", "Only URL or Gaia TAP sources can be downloaded.");
+            showError("Download", "Only URL or TAP sources can be downloaded.");
         }
     }
 
@@ -429,10 +447,10 @@ public class DataWorkbenchController {
         tapCancelRequested = true;
         String jobUrl = tapJobUrl;
         if (jobUrl == null || jobUrl.isBlank()) {
-            updateStatus("No Gaia TAP job to cancel.");
+            updateStatus("No TAP job to cancel.");
             return;
         }
-        updateStatus("Cancelling Gaia TAP job...");
+        updateStatus("Cancelling TAP job...");
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -446,8 +464,8 @@ public class DataWorkbenchController {
                 return null;
             }
         };
-        task.setOnSucceeded(event -> updateStatus("Gaia TAP job cancelled."));
-        task.setOnFailed(event -> showError("Cancel Gaia TAP", String.valueOf(task.getException().getMessage())));
+        task.setOnSucceeded(event -> updateStatus("TAP job cancelled."));
+        task.setOnFailed(event -> showError("Cancel TAP", String.valueOf(task.getException().getMessage())));
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
@@ -576,7 +594,18 @@ public class DataWorkbenchController {
             mappedTargets.add(mapping.getTargetField());
             gaiaAdded++;
         }
-        mappingStatusLabel.setText("Mappings: " + mappings.size() + " (auto-added " + (added + gaiaAdded) + ")");
+        List<MappingRow> simbadMappings = defaultSimbadMappings();
+        int simbadAdded = 0;
+        for (MappingRow mapping : simbadMappings) {
+            if (mappedTargets.contains(mapping.getTargetField())) {
+                continue;
+            }
+            mappings.add(mapping);
+            mappedTargets.add(mapping.getTargetField());
+            simbadAdded++;
+        }
+        mappingStatusLabel.setText("Mappings: " + mappings.size()
+                + " (auto-added " + (added + gaiaAdded + simbadAdded) + ")");
         saveLastMapping();
     }
 
@@ -701,6 +730,54 @@ public class DataWorkbenchController {
         sourceStatusLabel.setText("Added source: " + source.getName());
     }
 
+    private void addSimbadTapSource() {
+        Dialog<GaiaQuerySpec> dialog = new Dialog<>();
+        dialog.setTitle("Add SIMBAD TAP Source");
+        dialog.setHeaderText("Define a SIMBAD TAP query");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        TextField nameField = new TextField("SIMBAD query");
+        TextArea queryArea = new TextArea(defaultSimbadQuery(1000));
+        queryArea.setPrefColumnCount(60);
+        queryArea.setPrefRowCount(8);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(8);
+        gridPane.setVgap(8);
+        gridPane.add(new Label("Name"), 0, 0);
+        gridPane.add(nameField, 1, 0);
+        gridPane.add(new Label("ADQL"), 0, 1);
+        gridPane.add(queryArea, 1, 1);
+
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                return new GaiaQuerySpec(nameField.getText().trim(), queryArea.getText().trim());
+            }
+            return null;
+        });
+
+        Optional<GaiaQuerySpec> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+        GaiaQuerySpec spec = result.get();
+        if (spec.adql.isEmpty()) {
+            showError("Add SIMBAD TAP Source", "ADQL query cannot be empty.");
+            return;
+        }
+        String name = spec.name.isEmpty() ? "SIMBAD query" : spec.name;
+        WorkbenchSource source = WorkbenchSource.simbadTap(name, spec.adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
+    private void addSimbadTapSource(String adql, String fileName) {
+        WorkbenchSource source = WorkbenchSource.simbadTap(fileName, adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
     private void downloadToFile(String url, Path outputPath) {
         downloadToFile(url, outputPath, null);
     }
@@ -736,6 +813,7 @@ public class DataWorkbenchController {
             @Override
             protected Void call() throws Exception {
                 tapCancelRequested = false;
+                tapLabel = "Gaia TAP";
                 HttpClient client = HttpClient.newHttpClient();
                 String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
                         + URLEncoder.encode(adql, StandardCharsets.UTF_8);
@@ -788,6 +866,64 @@ public class DataWorkbenchController {
         thread.start();
     }
 
+    private void downloadSimbadTapToFile(String adql, Path outputPath, Runnable onSuccess) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                tapCancelRequested = false;
+                tapLabel = "SIMBAD TAP";
+                HttpClient client = HttpClient.newHttpClient();
+                String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
+                        + URLEncoder.encode(adql, StandardCharsets.UTF_8);
+                HttpRequest request = HttpRequest.newBuilder(URI.create(SIMBAD_TAP_BASE_URL + "/async"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+                HttpResponse<Void> submitResponse = client.send(request, HttpResponse.BodyHandlers.discarding());
+                log.info("SIMBAD TAP submit status: {}", submitResponse.statusCode());
+                Optional<String> locationHeader = submitResponse.headers().firstValue("location");
+                if (locationHeader.isEmpty()) {
+                    throw new IOException("SIMBAD TAP submission failed. HTTP " + submitResponse.statusCode());
+                }
+                String jobUrl = locationHeader.get();
+                log.info("SIMBAD TAP job URL: {}", jobUrl);
+                tapJobUrl = jobUrl;
+                tapStartMillis = System.currentTimeMillis();
+                updateStatus("SIMBAD TAP job submitted.");
+                startTapJobIfPending(client, jobUrl);
+                waitForTapCompletion(client, jobUrl);
+                updateStatus("SIMBAD TAP completed. Downloading results...");
+                log.info("SIMBAD TAP downloading results to {}", outputPath);
+                HttpRequest resultRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/results/result"))
+                        .GET()
+                        .build();
+                HttpResponse<Path> resultResponse = client.send(resultRequest, HttpResponse.BodyHandlers.ofFile(outputPath));
+                log.info("SIMBAD TAP result status: {}", resultResponse.statusCode());
+                if (resultResponse.statusCode() < 200 || resultResponse.statusCode() >= 300) {
+                    throw new IOException("SIMBAD TAP download failed. HTTP " + resultResponse.statusCode());
+                }
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            updateStatus("Downloaded: " + outputPath.getFileName());
+            addLocalSourceIfMissing(outputPath);
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+        });
+        task.setOnFailed(event -> {
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+            showError("SIMBAD TAP failed", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     private void waitForTapCompletion(HttpClient client, String jobUrl) throws IOException, InterruptedException {
         long delayMs = GAIA_TAP_INITIAL_DELAY_MS;
         long maxDelayMs = GAIA_TAP_MAX_DELAY_MS;
@@ -795,20 +931,21 @@ public class DataWorkbenchController {
         long waitedMs = 0;
         while (waitedMs < maxWaitMs) {
             if (tapCancelRequested) {
-                throw new IOException("Gaia TAP job cancelled.");
+                throw new IOException("TAP job cancelled.");
             }
             HttpRequest phaseRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
                     .GET()
                     .build();
             HttpResponse<String> phaseResponse = client.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
             String phase = phaseResponse.body().trim();
-            log.info("Gaia TAP phase status: {} body: {}", phaseResponse.statusCode(), phase);
-            updateStatus("Gaia TAP phase: " + phase + " (" + formatElapsed(tapStartMillis) + ")");
+            log.info("TAP phase status: {} body: {}", phaseResponse.statusCode(), phase);
+            updateStatus(tapLabel + " phase: " + phase + " (" + formatElapsed(tapStartMillis) + ")");
             if ("COMPLETED".equalsIgnoreCase(phase)) {
                 return;
             }
             if ("ERROR".equalsIgnoreCase(phase) || "ABORTED".equalsIgnoreCase(phase)) {
-                throw new IOException("Gaia TAP job " + phase);
+                logTapError(client, jobUrl);
+                throw new IOException("TAP job " + phase);
             }
             Thread.sleep(delayMs);
             waitedMs += delayMs;
@@ -832,6 +969,30 @@ public class DataWorkbenchController {
                 .POST(HttpRequest.BodyPublishers.ofString("PHASE=RUN"))
                 .build();
         client.send(runRequest, HttpResponse.BodyHandlers.discarding());
+    }
+
+    private void logTapError(HttpClient client, String jobUrl) {
+        try {
+            HttpRequest errorRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/error"))
+                    .GET()
+                    .build();
+            HttpResponse<String> errorResponse = client.send(errorRequest, HttpResponse.BodyHandlers.ofString());
+            if (errorResponse.statusCode() == 303) {
+                Optional<String> location = errorResponse.headers().firstValue("location");
+                if (location.isPresent()) {
+                    HttpRequest redirectRequest = HttpRequest.newBuilder(URI.create(location.get()))
+                            .GET()
+                            .build();
+                    HttpResponse<String> redirectResponse = client.send(redirectRequest, HttpResponse.BodyHandlers.ofString());
+                    log.info("TAP error redirect status: {} body: {}", redirectResponse.statusCode(), redirectResponse.body());
+                    return;
+                }
+            }
+            log.info("TAP error status: {} body: {}", errorResponse.statusCode(), errorResponse.body());
+        } catch (IOException | InterruptedException e) {
+            log.warn("Failed to read TAP error response: {}", e.getMessage());
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void appendValidationMessage(String message) {
@@ -1322,6 +1483,19 @@ public class DataWorkbenchController {
             downloadGaiaTapToFile(source.getLocation(), outputPath, () -> onReady.accept(outputPath));
             return;
         }
+        if (source.getType() == WorkbenchSourceType.SIMBAD_TAP) {
+            ensureCacheDir();
+            String fileName = ensureCsvFileName(source.getName());
+            Path outputPath = cacheDir.resolve(fileName);
+            if (Files.exists(outputPath)) {
+                addLocalSourceIfMissing(outputPath);
+                onReady.accept(outputPath);
+                return;
+            }
+            updateStatus("Downloading " + source.getName() + "...");
+            downloadSimbadTapToFile(source.getLocation(), outputPath, () -> onReady.accept(outputPath));
+            return;
+        }
         ensureCacheDir();
         Path outputPath = cacheDir.resolve(ensureCsvFileName(source.getName()));
         if (Files.exists(outputPath)) {
@@ -1397,6 +1571,40 @@ public class DataWorkbenchController {
                 """.formatted(limit);
     }
 
+    private String defaultSimbadQuery(int limit) {
+        return """
+                SELECT TOP %d
+                  b.main_id,
+                  b.ra,
+                  b.dec,
+                  b.pmra,
+                  b.pmdec,
+                  b.plx_value,
+                  b.rvz_radvel,
+                  b.sp_type,
+                  b.otype,
+                  MIN(i.id) AS alt_id
+                FROM basic b
+                LEFT OUTER JOIN ident i ON i.oidref = b.oid
+                WHERE b.ra IS NOT NULL
+                  AND b.dec IS NOT NULL
+                  AND b.plx_value IS NOT NULL
+                  AND b.pmra IS NOT NULL
+                  AND b.pmdec IS NOT NULL
+                  AND b.sp_type IS NOT NULL
+                GROUP BY
+                  b.main_id,
+                  b.ra,
+                  b.dec,
+                  b.pmra,
+                  b.pmdec,
+                  b.plx_value,
+                  b.rvz_radvel,
+                  b.sp_type,
+                  b.otype
+                """.formatted(limit);
+    }
+
     private List<MappingRow> defaultGaiaMappings() {
         Map<String, String> sourceByNormalized = new HashMap<>();
         for (String field : sourceFields) {
@@ -1413,6 +1621,23 @@ public class DataWorkbenchController {
         addMappingIfPresent(rows, sourceByNormalized, "phot_bp_mean_mag", "magb");
         addMappingIfPresent(rows, sourceByNormalized, "phot_rp_mean_mag", "magr");
         addMappingIfPresent(rows, sourceByNormalized, "bp_rp", "bprp");
+        return rows;
+    }
+
+    private List<MappingRow> defaultSimbadMappings() {
+        Map<String, String> sourceByNormalized = new HashMap<>();
+        for (String field : sourceFields) {
+            sourceByNormalized.put(normalizeFieldName(field), field);
+        }
+        List<MappingRow> rows = new ArrayList<>();
+        addMappingIfPresent(rows, sourceByNormalized, "main_id", "displayName");
+        addMappingIfPresent(rows, sourceByNormalized, "alt_id", "catalogIdList");
+        addMappingIfPresent(rows, sourceByNormalized, "ra", "ra");
+        addMappingIfPresent(rows, sourceByNormalized, "dec", "declination");
+        addMappingIfPresent(rows, sourceByNormalized, "pmra", "pmra");
+        addMappingIfPresent(rows, sourceByNormalized, "pmdec", "pmdec");
+        addMappingIfPresent(rows, sourceByNormalized, "rvz_radvel", "radialVelocity");
+        addMappingIfPresent(rows, sourceByNormalized, "sp_type", "spectralClass");
         return rows;
     }
 
