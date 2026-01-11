@@ -18,10 +18,14 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Dialog;
+import javafx.application.Platform;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import com.teamgannon.trips.events.StatusUpdateEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +34,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -48,6 +53,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class DataWorkbenchController {
 
     private static final List<String> CSV_HEADER_COLUMNS = Arrays.asList(
@@ -170,6 +176,13 @@ public class DataWorkbenchController {
     private Map<String, String> previewTargetToSource = new HashMap<>();
     private int previewTotalRows = 0;
     private final int previewPageSize = 100;
+    private static final String GAIA_TAP_BASE_URL = "https://gea.esac.esa.int/tap-server/tap";
+    private static final long GAIA_TAP_MAX_WAIT_MS = 20 * 60 * 1000;
+    private static final long GAIA_TAP_MAX_DELAY_MS = 60 * 1000;
+    private static final long GAIA_TAP_INITIAL_DELAY_MS = 1000;
+    private volatile boolean tapCancelRequested = false;
+    private volatile String tapJobUrl;
+    private volatile long tapStartMillis = 0L;
 
     public DataWorkbenchController(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -177,6 +190,8 @@ public class DataWorkbenchController {
 
     @FXML
     public void initialize() {
+        log.info("Data Workbench: initialize");
+        updateStatus("Data Workbench ready");
         if (sourceListView != null) {
             sourceListView.setItems(sources);
             sourceListView.setCellFactory(listView -> new ListCell<>() {
@@ -318,9 +333,14 @@ public class DataWorkbenchController {
 
     @FXML
     private void onAddSource() {
+        log.info("Data Workbench: add source clicked");
         List<String> choices = List.of(
                 WorkbenchSourceType.LOCAL_CSV.getLabel(),
-                WorkbenchSourceType.URL_CSV.getLabel()
+                WorkbenchSourceType.URL_CSV.getLabel(),
+                WorkbenchSourceType.GAIA_TAP.getLabel(),
+                "Gaia TAP (TOP 200)",
+                "Gaia TAP (TOP 1000)",
+                "Gaia TAP (TOP 5000)"
         );
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
         dialog.setTitle("Add Source");
@@ -330,11 +350,26 @@ public class DataWorkbenchController {
         if (result.isEmpty()) {
             return;
         }
-        WorkbenchSourceType type = WorkbenchSourceType.fromLabel(result.get());
+        String selection = result.get();
+        if ("Gaia TAP (TOP 200)".equals(selection)) {
+            addGaiaTapSource(defaultGaiaQuery(200), "Gaia_DR3_TOP_200.csv");
+            return;
+        }
+        if ("Gaia TAP (TOP 1000)".equals(selection)) {
+            addGaiaTapSource(defaultGaiaQuery(1000), "Gaia_DR3_TOP_1000.csv");
+            return;
+        }
+        if ("Gaia TAP (TOP 5000)".equals(selection)) {
+            addGaiaTapSource(defaultGaiaQuery(5000), "Gaia_DR3_TOP_5000.csv");
+            return;
+        }
+        WorkbenchSourceType type = WorkbenchSourceType.fromLabel(selection);
         if (type == WorkbenchSourceType.LOCAL_CSV) {
             addLocalCsvSource();
         } else if (type == WorkbenchSourceType.URL_CSV) {
             addUrlCsvSource();
+        } else if (type == WorkbenchSourceType.GAIA_TAP) {
+            addGaiaTapSource();
         }
     }
 
@@ -354,23 +389,22 @@ public class DataWorkbenchController {
 
     @FXML
     private void onDownloadSource() {
+        log.info("Data Workbench: download clicked");
+        updateStatus("Download clicked.");
         WorkbenchSource selected = sourceListView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showError("Download", "Select a source to download.");
-            return;
-        }
-        if (selected.getType() != WorkbenchSourceType.URL_CSV) {
-            showError("Download", "Only URL sources can be downloaded.");
             return;
         }
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save downloaded CSV");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
         applyInitialDirectory(fileChooser);
-        fileChooser.setInitialFileName(selected.getName());
+        String fileName = ensureCsvFileName(selected.getName());
+        fileChooser.setInitialFileName(fileName);
         File file;
         if (cacheDefaultCheckbox != null && cacheDefaultCheckbox.isSelected() && cacheDir != null) {
-            file = cacheDir.resolve(selected.getName()).toFile();
+            file = cacheDir.resolve(fileName).toFile();
         } else {
             file = fileChooser.showSaveDialog(workbenchTabs.getScene() != null
                     ? workbenchTabs.getScene().getWindow()
@@ -379,7 +413,44 @@ public class DataWorkbenchController {
         if (file == null) {
             return;
         }
-        downloadToFile(selected.getLocation(), file.toPath());
+        if (selected.getType() == WorkbenchSourceType.URL_CSV) {
+            updateStatus("Downloading " + selected.getName() + "...");
+            downloadToFile(selected.getLocation(), file.toPath());
+        } else if (selected.getType() == WorkbenchSourceType.GAIA_TAP) {
+            updateStatus("Submitting Gaia TAP job...");
+            downloadGaiaTapToFile(selected.getLocation(), file.toPath(), null);
+        } else {
+            showError("Download", "Only URL or Gaia TAP sources can be downloaded.");
+        }
+    }
+
+    @FXML
+    private void onCancelTap() {
+        tapCancelRequested = true;
+        String jobUrl = tapJobUrl;
+        if (jobUrl == null || jobUrl.isBlank()) {
+            updateStatus("No Gaia TAP job to cancel.");
+            return;
+        }
+        updateStatus("Cancelling Gaia TAP job...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                HttpClient client = HttpClient.newHttpClient();
+                String body = "PHASE=ABORT";
+                HttpRequest request = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+                client.send(request, HttpResponse.BodyHandlers.discarding());
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> updateStatus("Gaia TAP job cancelled."));
+        task.setOnFailed(event -> showError("Cancel Gaia TAP", String.valueOf(task.getException().getMessage())));
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @FXML
@@ -495,7 +566,17 @@ public class DataWorkbenchController {
                 added++;
             }
         }
-        mappingStatusLabel.setText("Mappings: " + mappings.size() + " (auto-added " + added + ")");
+        List<MappingRow> gaiaMappings = defaultGaiaMappings();
+        int gaiaAdded = 0;
+        for (MappingRow mapping : gaiaMappings) {
+            if (mappedTargets.contains(mapping.getTargetField())) {
+                continue;
+            }
+            mappings.add(mapping);
+            mappedTargets.add(mapping.getTargetField());
+            gaiaAdded++;
+        }
+        mappingStatusLabel.setText("Mappings: " + mappings.size() + " (auto-added " + (added + gaiaAdded) + ")");
         saveLastMapping();
     }
 
@@ -572,6 +653,54 @@ public class DataWorkbenchController {
         sourceStatusLabel.setText("Added source: " + source.getName());
     }
 
+    private void addGaiaTapSource() {
+        Dialog<GaiaQuerySpec> dialog = new Dialog<>();
+        dialog.setTitle("Add Gaia TAP Source");
+        dialog.setHeaderText("Define a Gaia TAP query");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        TextField nameField = new TextField("Gaia DR3 query");
+        TextArea queryArea = new TextArea(defaultGaiaQuery(2000));
+        queryArea.setPrefColumnCount(60);
+        queryArea.setPrefRowCount(8);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(8);
+        gridPane.setVgap(8);
+        gridPane.add(new Label("Name"), 0, 0);
+        gridPane.add(nameField, 1, 0);
+        gridPane.add(new Label("ADQL"), 0, 1);
+        gridPane.add(queryArea, 1, 1);
+
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                return new GaiaQuerySpec(nameField.getText().trim(), queryArea.getText().trim());
+            }
+            return null;
+        });
+
+        Optional<GaiaQuerySpec> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+        GaiaQuerySpec spec = result.get();
+        if (spec.adql.isEmpty()) {
+            showError("Add Gaia TAP Source", "ADQL query cannot be empty.");
+            return;
+        }
+        String name = spec.name.isEmpty() ? "Gaia DR3 query" : spec.name;
+        WorkbenchSource source = WorkbenchSource.gaiaTap(name, spec.adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
+    private void addGaiaTapSource(String adql, String fileName) {
+        WorkbenchSource source = WorkbenchSource.gaiaTap(fileName, adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
     private void downloadToFile(String url, Path outputPath) {
         downloadToFile(url, outputPath, null);
     }
@@ -600,6 +729,109 @@ public class DataWorkbenchController {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void downloadGaiaTapToFile(String adql, Path outputPath, Runnable onSuccess) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                tapCancelRequested = false;
+                HttpClient client = HttpClient.newHttpClient();
+                String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
+                        + URLEncoder.encode(adql, StandardCharsets.UTF_8);
+                HttpRequest request = HttpRequest.newBuilder(URI.create(GAIA_TAP_BASE_URL + "/async"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+                HttpResponse<Void> submitResponse = client.send(request, HttpResponse.BodyHandlers.discarding());
+                log.info("Gaia TAP submit status: {}", submitResponse.statusCode());
+                Optional<String> locationHeader = submitResponse.headers().firstValue("location");
+                if (locationHeader.isEmpty()) {
+                    throw new IOException("Gaia TAP submission failed. HTTP " + submitResponse.statusCode());
+                }
+                String jobUrl = locationHeader.get();
+                log.info("Gaia TAP job URL: {}", jobUrl);
+                tapJobUrl = jobUrl;
+                tapStartMillis = System.currentTimeMillis();
+                updateStatus("Gaia TAP job submitted.");
+                startTapJobIfPending(client, jobUrl);
+                waitForTapCompletion(client, jobUrl);
+                updateStatus("Gaia TAP completed. Downloading results...");
+                log.info("Gaia TAP downloading results to {}", outputPath);
+                HttpRequest resultRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/results/result"))
+                        .GET()
+                        .build();
+                HttpResponse<Path> resultResponse = client.send(resultRequest, HttpResponse.BodyHandlers.ofFile(outputPath));
+                log.info("Gaia TAP result status: {}", resultResponse.statusCode());
+                if (resultResponse.statusCode() < 200 || resultResponse.statusCode() >= 300) {
+                    throw new IOException("Gaia TAP download failed. HTTP " + resultResponse.statusCode());
+                }
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            updateStatus("Downloaded: " + outputPath.getFileName());
+            addLocalSourceIfMissing(outputPath);
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+        });
+        task.setOnFailed(event -> {
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+            showError("Gaia TAP failed", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void waitForTapCompletion(HttpClient client, String jobUrl) throws IOException, InterruptedException {
+        long delayMs = GAIA_TAP_INITIAL_DELAY_MS;
+        long maxDelayMs = GAIA_TAP_MAX_DELAY_MS;
+        long maxWaitMs = GAIA_TAP_MAX_WAIT_MS;
+        long waitedMs = 0;
+        while (waitedMs < maxWaitMs) {
+            if (tapCancelRequested) {
+                throw new IOException("Gaia TAP job cancelled.");
+            }
+            HttpRequest phaseRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
+                    .GET()
+                    .build();
+            HttpResponse<String> phaseResponse = client.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
+            String phase = phaseResponse.body().trim();
+            log.info("Gaia TAP phase status: {} body: {}", phaseResponse.statusCode(), phase);
+            updateStatus("Gaia TAP phase: " + phase + " (" + formatElapsed(tapStartMillis) + ")");
+            if ("COMPLETED".equalsIgnoreCase(phase)) {
+                return;
+            }
+            if ("ERROR".equalsIgnoreCase(phase) || "ABORTED".equalsIgnoreCase(phase)) {
+                throw new IOException("Gaia TAP job " + phase);
+            }
+            Thread.sleep(delayMs);
+            waitedMs += delayMs;
+            delayMs = Math.min(delayMs * 2, maxDelayMs);
+        }
+        throw new IOException("Gaia TAP job timed out.");
+    }
+
+    private void startTapJobIfPending(HttpClient client, String jobUrl) throws IOException, InterruptedException {
+        HttpRequest phaseRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
+                .GET()
+                .build();
+        HttpResponse<String> phaseResponse = client.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
+        String phase = phaseResponse.body().trim();
+        if (!"PENDING".equalsIgnoreCase(phase)) {
+            return;
+        }
+        log.info("Gaia TAP phase is PENDING, sending PHASE=RUN");
+        HttpRequest runRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString("PHASE=RUN"))
+                .build();
+        client.send(runRequest, HttpResponse.BodyHandlers.discarding());
     }
 
     private void appendValidationMessage(String message) {
@@ -636,8 +868,18 @@ public class DataWorkbenchController {
     }
 
     private void updateStatus(String message) {
-        if (exportStatusLabel != null) {
-            exportStatusLabel.setText(message);
+        Runnable updateUi = () -> {
+            if (exportStatusLabel != null) {
+                exportStatusLabel.setText(message);
+            }
+            if (sourceStatusLabel != null) {
+                sourceStatusLabel.setText(message);
+            }
+        };
+        if (Platform.isFxApplicationThread()) {
+            updateUi.run();
+        } else {
+            Platform.runLater(updateUi);
         }
         if (eventPublisher != null) {
             eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
@@ -1067,8 +1309,21 @@ public class DataWorkbenchController {
             onReady.accept(Path.of(source.getLocation()));
             return;
         }
+        if (source.getType() == WorkbenchSourceType.GAIA_TAP) {
+            ensureCacheDir();
+            String fileName = ensureCsvFileName(source.getName());
+            Path outputPath = cacheDir.resolve(fileName);
+            if (Files.exists(outputPath)) {
+                addLocalSourceIfMissing(outputPath);
+                onReady.accept(outputPath);
+                return;
+            }
+            updateStatus("Downloading " + source.getName() + "...");
+            downloadGaiaTapToFile(source.getLocation(), outputPath, () -> onReady.accept(outputPath));
+            return;
+        }
         ensureCacheDir();
-        Path outputPath = cacheDir.resolve(source.getName());
+        Path outputPath = cacheDir.resolve(ensureCsvFileName(source.getName()));
         if (Files.exists(outputPath)) {
             addLocalSourceIfMissing(outputPath);
             onReady.accept(outputPath);
@@ -1097,5 +1352,87 @@ public class DataWorkbenchController {
             return "";
         }
         return value.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
+    private String formatElapsed(long startMillis) {
+        if (startMillis <= 0L) {
+            return "0s";
+        }
+        long elapsedSeconds = Math.max(0L, (System.currentTimeMillis() - startMillis) / 1000L);
+        long minutes = elapsedSeconds / 60;
+        long seconds = elapsedSeconds % 60;
+        if (minutes > 0) {
+            return minutes + "m " + seconds + "s";
+        }
+        return seconds + "s";
+    }
+
+    private String ensureCsvFileName(String name) {
+        String safeName = name == null || name.isBlank() ? "gaia-query.csv" : name.trim();
+        safeName = safeName.replaceAll("[\\\\/]+", "_");
+        safeName = safeName.replaceAll("\\s+", "_");
+        if (!safeName.toLowerCase().endsWith(".csv")) {
+            safeName = safeName + ".csv";
+        }
+        return safeName;
+    }
+
+    private String defaultGaiaQuery(int limit) {
+        return """
+                SELECT TOP %d
+                  source_id,
+                  ra,
+                  dec,
+                  parallax,
+                  pmra,
+                  pmdec,
+                  radial_velocity,
+                  phot_g_mean_mag,
+                  phot_bp_mean_mag,
+                  phot_rp_mean_mag,
+                  bp_rp
+                FROM gaiadr3.gaia_source
+                WHERE parallax > 33.3
+                  AND phot_g_mean_mag < 15
+                """.formatted(limit);
+    }
+
+    private List<MappingRow> defaultGaiaMappings() {
+        Map<String, String> sourceByNormalized = new HashMap<>();
+        for (String field : sourceFields) {
+            sourceByNormalized.put(normalizeFieldName(field), field);
+        }
+        List<MappingRow> rows = new ArrayList<>();
+        addMappingIfPresent(rows, sourceByNormalized, "source_id", "catalogIdList");
+        addMappingIfPresent(rows, sourceByNormalized, "ra", "ra");
+        addMappingIfPresent(rows, sourceByNormalized, "dec", "declination");
+        addMappingIfPresent(rows, sourceByNormalized, "pmra", "pmra");
+        addMappingIfPresent(rows, sourceByNormalized, "pmdec", "pmdec");
+        addMappingIfPresent(rows, sourceByNormalized, "radial_velocity", "radialVelocity");
+        addMappingIfPresent(rows, sourceByNormalized, "phot_g_mean_mag", "magr");
+        addMappingIfPresent(rows, sourceByNormalized, "phot_bp_mean_mag", "magb");
+        addMappingIfPresent(rows, sourceByNormalized, "phot_rp_mean_mag", "magr");
+        addMappingIfPresent(rows, sourceByNormalized, "bp_rp", "bprp");
+        return rows;
+    }
+
+    private void addMappingIfPresent(List<MappingRow> rows,
+                                     Map<String, String> sourceByNormalized,
+                                     String sourceField,
+                                     String targetField) {
+        String source = sourceByNormalized.get(normalizeFieldName(sourceField));
+        if (source != null) {
+            rows.add(new MappingRow(source, targetField));
+        }
+    }
+
+    private static class GaiaQuerySpec {
+        private final String name;
+        private final String adql;
+
+        private GaiaQuerySpec(String name, String adql) {
+            this.name = name;
+            this.adql = adql;
+        }
     }
 }

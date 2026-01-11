@@ -25,6 +25,10 @@ public class WorkbenchSource {
         return new WorkbenchSource(WorkbenchSourceType.URL_CSV, name, url);
     }
 
+    public static WorkbenchSource gaiaTap(String name, String adql) {
+        return new WorkbenchSource(WorkbenchSourceType.GAIA_TAP, name, adql);
+    }
+
     public WorkbenchSourceType getType() {
         return type;
     }

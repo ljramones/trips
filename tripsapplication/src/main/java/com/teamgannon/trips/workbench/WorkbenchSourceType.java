@@ -2,7 +2,8 @@ package com.teamgannon.trips.workbench;
 
 public enum WorkbenchSourceType {
     LOCAL_CSV("Local CSV"),
-    URL_CSV("CSV URL");
+    URL_CSV("CSV URL"),
+    GAIA_TAP("Gaia TAP");
 
     private final String label;
 

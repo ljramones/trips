@@ -39,6 +39,7 @@
                             <Button onAction="#onAddSource" text="Add Source..."/>
                             <Button onAction="#onRemoveSource" text="Remove"/>
                             <Button onAction="#onDownloadSource" text="Download"/>
+                            <Button onAction="#onCancelTap" text="Cancel Gaia"/>
                             <Separator orientation="VERTICAL"/>
                             <Button onAction="#onRefreshSources" text="Refresh"/>
                         </HBox>

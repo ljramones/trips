@@ -12,6 +12,8 @@ The Data Workbench helps you bring external star datasets into TRIPS by mapping 
 1. Click "Add Source..." and choose:
    - Local CSV: pick a file from disk.
    - URL CSV: paste a URL to a CSV file.
+   - Gaia TAP: enter an ADQL query to fetch Gaia data.
+   - Gaia TAP presets: quick TOP 200/1000/5000 queries.
 2. Optional: set the cache directory and enable "Use for downloads".
 3. The source appears in the list.
 
@@ -19,6 +21,7 @@ The Data Workbench helps you bring external star datasets into TRIPS by mapping 
 1. Select a source, then click "Load Source Fields".
 2. Select a source field and a target field, then click "Add Mapping ->".
 3. Use "Auto Map" to match common field names automatically.
+   - Gaia sources also use a built-in mapping template (e.g., `ra`, `dec`, `pmra`, `pmdec`, `bp_rp`).
 4. Save/Load mapping as needed.
    - The last mapping is cached in `~/trips-workbench-cache/last-mapping.map.csv`.
 
@@ -42,6 +45,7 @@ If no source or mapping is selected, Export creates a template CSV with the TRIP
 
 ## Notes
 - URL sources are downloaded to the cache before preview/validate/export.
+- Gaia TAP queries use async jobs with exponential backoff. Large results can take several minutes.
 - The Workbench emits status updates to the main TRIPS status bar.
 
 ## Troubleshooting
