@@ -178,6 +178,7 @@ public class DataWorkbenchController {
     private final int previewPageSize = 100;
     private static final String GAIA_TAP_BASE_URL = "https://gea.esac.esa.int/tap-server/tap";
     private static final String SIMBAD_TAP_BASE_URL = "https://simbad.cds.unistra.fr/simbad/sim-tap";
+    private static final String VIZIER_TAP_BASE_URL = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap";
     private static final long GAIA_TAP_MAX_WAIT_MS = 20 * 60 * 1000;
     private static final long GAIA_TAP_MAX_DELAY_MS = 60 * 1000;
     private static final long GAIA_TAP_INITIAL_DELAY_MS = 1000;
@@ -345,7 +346,10 @@ public class DataWorkbenchController {
                 "Gaia TAP (TOP 5000)",
                 WorkbenchSourceType.SIMBAD_TAP.getLabel(),
                 "SIMBAD TAP (TOP 200)",
-                "SIMBAD TAP (TOP 1000)"
+                "SIMBAD TAP (TOP 1000)",
+                WorkbenchSourceType.VIZIER_TAP.getLabel(),
+                "VizieR TAP (Hipparcos)",
+                "VizieR TAP (Tycho-2)"
         );
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
         dialog.setTitle("Add Source");
@@ -376,6 +380,14 @@ public class DataWorkbenchController {
             addSimbadTapSource(defaultSimbadQuery(1000), "SIMBAD_TOP_1000.csv");
             return;
         }
+        if ("VizieR TAP (Hipparcos)".equals(selection)) {
+            addVizierTapSource(defaultVizierHipparcosQuery(1000), "VIZIER_HIP2_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (Tycho-2)".equals(selection)) {
+            addVizierTapSource(defaultVizierTycho2Query(1000), "VIZIER_TYC2_TOP_1000.csv");
+            return;
+        }
         WorkbenchSourceType type = WorkbenchSourceType.fromLabel(selection);
         if (type == WorkbenchSourceType.LOCAL_CSV) {
             addLocalCsvSource();
@@ -385,6 +397,8 @@ public class DataWorkbenchController {
             addGaiaTapSource();
         } else if (type == WorkbenchSourceType.SIMBAD_TAP) {
             addSimbadTapSource();
+        } else if (type == WorkbenchSourceType.VIZIER_TAP) {
+            addVizierTapSource();
         }
     }
 
@@ -437,6 +451,9 @@ public class DataWorkbenchController {
         } else if (selected.getType() == WorkbenchSourceType.SIMBAD_TAP) {
             updateStatus("Submitting SIMBAD TAP job...");
             downloadSimbadTapToFile(selected.getLocation(), file.toPath(), null);
+        } else if (selected.getType() == WorkbenchSourceType.VIZIER_TAP) {
+            updateStatus("Submitting VizieR TAP job...");
+            downloadVizierTapToFile(selected.getLocation(), file.toPath(), null);
         } else {
             showError("Download", "Only URL or TAP sources can be downloaded.");
         }
@@ -604,8 +621,18 @@ public class DataWorkbenchController {
             mappedTargets.add(mapping.getTargetField());
             simbadAdded++;
         }
+        List<MappingRow> vizierMappings = defaultVizierMappings();
+        int vizierAdded = 0;
+        for (MappingRow mapping : vizierMappings) {
+            if (mappedTargets.contains(mapping.getTargetField())) {
+                continue;
+            }
+            mappings.add(mapping);
+            mappedTargets.add(mapping.getTargetField());
+            vizierAdded++;
+        }
         mappingStatusLabel.setText("Mappings: " + mappings.size()
-                + " (auto-added " + (added + gaiaAdded + simbadAdded) + ")");
+                + " (auto-added " + (added + gaiaAdded + simbadAdded + vizierAdded) + ")");
         saveLastMapping();
     }
 
@@ -778,6 +805,54 @@ public class DataWorkbenchController {
         sourceStatusLabel.setText("Added source: " + source.getName());
     }
 
+    private void addVizierTapSource() {
+        Dialog<GaiaQuerySpec> dialog = new Dialog<>();
+        dialog.setTitle("Add VizieR TAP Source");
+        dialog.setHeaderText("Define a VizieR TAP query");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        TextField nameField = new TextField("VizieR query");
+        TextArea queryArea = new TextArea(defaultVizierHipparcosQuery(1000));
+        queryArea.setPrefColumnCount(60);
+        queryArea.setPrefRowCount(8);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(8);
+        gridPane.setVgap(8);
+        gridPane.add(new Label("Name"), 0, 0);
+        gridPane.add(nameField, 1, 0);
+        gridPane.add(new Label("ADQL"), 0, 1);
+        gridPane.add(queryArea, 1, 1);
+
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                return new GaiaQuerySpec(nameField.getText().trim(), queryArea.getText().trim());
+            }
+            return null;
+        });
+
+        Optional<GaiaQuerySpec> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+        GaiaQuerySpec spec = result.get();
+        if (spec.adql.isEmpty()) {
+            showError("Add VizieR TAP Source", "ADQL query cannot be empty.");
+            return;
+        }
+        String name = spec.name.isEmpty() ? "VizieR query" : spec.name;
+        WorkbenchSource source = WorkbenchSource.vizierTap(name, spec.adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
+    private void addVizierTapSource(String adql, String fileName) {
+        WorkbenchSource source = WorkbenchSource.vizierTap(fileName, adql);
+        sources.add(source);
+        sourceStatusLabel.setText("Added source: " + source.getName());
+    }
+
     private void downloadToFile(String url, Path outputPath) {
         downloadToFile(url, outputPath, null);
     }
@@ -918,6 +993,64 @@ public class DataWorkbenchController {
             tapJobUrl = null;
             tapStartMillis = 0L;
             showError("SIMBAD TAP failed", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void downloadVizierTapToFile(String adql, Path outputPath, Runnable onSuccess) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                tapCancelRequested = false;
+                tapLabel = "VizieR TAP";
+                HttpClient client = HttpClient.newHttpClient();
+                String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
+                        + URLEncoder.encode(adql, StandardCharsets.UTF_8);
+                HttpRequest request = HttpRequest.newBuilder(URI.create(VIZIER_TAP_BASE_URL + "/async"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+                HttpResponse<Void> submitResponse = client.send(request, HttpResponse.BodyHandlers.discarding());
+                log.info("VizieR TAP submit status: {}", submitResponse.statusCode());
+                Optional<String> locationHeader = submitResponse.headers().firstValue("location");
+                if (locationHeader.isEmpty()) {
+                    throw new IOException("VizieR TAP submission failed. HTTP " + submitResponse.statusCode());
+                }
+                String jobUrl = locationHeader.get();
+                log.info("VizieR TAP job URL: {}", jobUrl);
+                tapJobUrl = jobUrl;
+                tapStartMillis = System.currentTimeMillis();
+                updateStatus("VizieR TAP job submitted.");
+                startTapJobIfPending(client, jobUrl);
+                waitForTapCompletion(client, jobUrl);
+                updateStatus("VizieR TAP completed. Downloading results...");
+                log.info("VizieR TAP downloading results to {}", outputPath);
+                HttpRequest resultRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/results/result"))
+                        .GET()
+                        .build();
+                HttpResponse<Path> resultResponse = client.send(resultRequest, HttpResponse.BodyHandlers.ofFile(outputPath));
+                log.info("VizieR TAP result status: {}", resultResponse.statusCode());
+                if (resultResponse.statusCode() < 200 || resultResponse.statusCode() >= 300) {
+                    throw new IOException("VizieR TAP download failed. HTTP " + resultResponse.statusCode());
+                }
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            updateStatus("Downloaded: " + outputPath.getFileName());
+            addLocalSourceIfMissing(outputPath);
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+        });
+        task.setOnFailed(event -> {
+            tapJobUrl = null;
+            tapStartMillis = 0L;
+            showError("VizieR TAP failed", String.valueOf(task.getException().getMessage()));
         });
         Thread thread = new Thread(task);
         thread.setDaemon(true);
@@ -1496,6 +1629,19 @@ public class DataWorkbenchController {
             downloadSimbadTapToFile(source.getLocation(), outputPath, () -> onReady.accept(outputPath));
             return;
         }
+        if (source.getType() == WorkbenchSourceType.VIZIER_TAP) {
+            ensureCacheDir();
+            String fileName = ensureCsvFileName(source.getName());
+            Path outputPath = cacheDir.resolve(fileName);
+            if (Files.exists(outputPath)) {
+                addLocalSourceIfMissing(outputPath);
+                onReady.accept(outputPath);
+                return;
+            }
+            updateStatus("Downloading " + source.getName() + "...");
+            downloadVizierTapToFile(source.getLocation(), outputPath, () -> onReady.accept(outputPath));
+            return;
+        }
         ensureCacheDir();
         Path outputPath = cacheDir.resolve(ensureCsvFileName(source.getName()));
         if (Files.exists(outputPath)) {
@@ -1605,6 +1751,20 @@ public class DataWorkbenchController {
                 """.formatted(limit);
     }
 
+    private String defaultVizierHipparcosQuery(int limit) {
+        return """
+                SELECT TOP %d *
+                FROM "I/311/hip2"
+                """.formatted(limit);
+    }
+
+    private String defaultVizierTycho2Query(int limit) {
+        return """
+                SELECT TOP %d *
+                FROM "I/259/tyc2"
+                """.formatted(limit);
+    }
+
     private List<MappingRow> defaultGaiaMappings() {
         Map<String, String> sourceByNormalized = new HashMap<>();
         for (String field : sourceFields) {
@@ -1638,6 +1798,27 @@ public class DataWorkbenchController {
         addMappingIfPresent(rows, sourceByNormalized, "pmdec", "pmdec");
         addMappingIfPresent(rows, sourceByNormalized, "rvz_radvel", "radialVelocity");
         addMappingIfPresent(rows, sourceByNormalized, "sp_type", "spectralClass");
+        return rows;
+    }
+
+    private List<MappingRow> defaultVizierMappings() {
+        Map<String, String> sourceByNormalized = new HashMap<>();
+        for (String field : sourceFields) {
+            sourceByNormalized.put(normalizeFieldName(field), field);
+        }
+        List<MappingRow> rows = new ArrayList<>();
+        addMappingIfPresent(rows, sourceByNormalized, "raicrs", "ra");
+        addMappingIfPresent(rows, sourceByNormalized, "deicrs", "declination");
+        addMappingIfPresent(rows, sourceByNormalized, "ramdeg", "ra");
+        addMappingIfPresent(rows, sourceByNormalized, "demdeg", "declination");
+        addMappingIfPresent(rows, sourceByNormalized, "pmra", "pmra");
+        addMappingIfPresent(rows, sourceByNormalized, "pmde", "pmdec");
+        addMappingIfPresent(rows, sourceByNormalized, "plx", "distance");
+        addMappingIfPresent(rows, sourceByNormalized, "vmag", "magv");
+        addMappingIfPresent(rows, sourceByNormalized, "vtmag", "magv");
+        addMappingIfPresent(rows, sourceByNormalized, "btmag", "magb");
+        addMappingIfPresent(rows, sourceByNormalized, "hip", "catalogIdList");
+        addMappingIfPresent(rows, sourceByNormalized, "tyc", "catalogIdList");
         return rows;
     }
 

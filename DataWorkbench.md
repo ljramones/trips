@@ -16,6 +16,8 @@ The Data Workbench helps you bring external star datasets into TRIPS by mapping 
     - Gaia TAP presets: quick TOP 200/1000/5000 queries.
     - SIMBAD TAP: enter an ADQL query to fetch SIMBAD data.
     - SIMBAD TAP presets: quick TOP 200/1000 queries filtered to non-null parallax, proper motion, and spectral type.
+    - VizieR TAP: enter an ADQL query to fetch VizieR catalog data.
+    - VizieR TAP presets: Hipparcos (HIP2) and Tycho-2 starters (use `SELECT *`).
 2. Optional: set the cache directory and enable "Use for downloads".
 3. The source appears in the list.
 
@@ -25,6 +27,7 @@ The Data Workbench helps you bring external star datasets into TRIPS by mapping 
 3. Use "Auto Map" to match common field names automatically.
     - Gaia sources also use a built-in mapping template (e.g., `ra`, `dec`, `pmra`, `pmdec`, `bp_rp`).
     - SIMBAD sources map common fields like `main_id`, `sp_type`, and `rvz_radvel`.
+    - VizieR presets map common Hipparcos/Tycho fields when those columns exist; some manual mapping may be needed.
 4. Save/Load mapping as needed.
    - The last mapping is cached in `~/trips-workbench-cache/last-mapping.map.csv`.
 

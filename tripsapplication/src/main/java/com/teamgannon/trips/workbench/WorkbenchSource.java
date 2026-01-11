@@ -33,6 +33,10 @@ public class WorkbenchSource {
         return new WorkbenchSource(WorkbenchSourceType.SIMBAD_TAP, name, adql);
     }
 
+    public static WorkbenchSource vizierTap(String name, String adql) {
+        return new WorkbenchSource(WorkbenchSourceType.VIZIER_TAP, name, adql);
+    }
+
     public WorkbenchSourceType getType() {
         return type;
     }
