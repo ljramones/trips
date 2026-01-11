@@ -349,7 +349,9 @@ public class DataWorkbenchController {
                 "SIMBAD TAP (TOP 1000)",
                 WorkbenchSourceType.VIZIER_TAP.getLabel(),
                 "VizieR TAP (Hipparcos)",
-                "VizieR TAP (Tycho-2)"
+                "VizieR TAP (Tycho-2)",
+                "VizieR TAP (RAVE DR5)",
+                "VizieR TAP (LAMOST DR5)"
         );
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
         dialog.setTitle("Add Source");
@@ -386,6 +388,14 @@ public class DataWorkbenchController {
         }
         if ("VizieR TAP (Tycho-2)".equals(selection)) {
             addVizierTapSource(defaultVizierTycho2Query(1000), "VIZIER_TYC2_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (RAVE DR5)".equals(selection)) {
+            addVizierTapSource(defaultVizierRaveQuery(1000), "VIZIER_RAVE_DR5_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (LAMOST DR5)".equals(selection)) {
+            addVizierTapSource(defaultVizierLamostQuery(1000), "VIZIER_LAMOST_DR5_TOP_1000.csv");
             return;
         }
         WorkbenchSourceType type = WorkbenchSourceType.fromLabel(selection);
@@ -1762,6 +1772,20 @@ public class DataWorkbenchController {
         return """
                 SELECT TOP %d *
                 FROM "I/259/tyc2"
+                """.formatted(limit);
+    }
+
+    private String defaultVizierRaveQuery(int limit) {
+        return """
+                SELECT TOP %d *
+                FROM "III/279/rave_dr5"
+                """.formatted(limit);
+    }
+
+    private String defaultVizierLamostQuery(int limit) {
+        return """
+                SELECT TOP %d *
+                FROM "V/164/dr5"
                 """.formatted(limit);
     }
 
