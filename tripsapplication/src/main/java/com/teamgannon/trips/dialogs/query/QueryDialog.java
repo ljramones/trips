@@ -108,6 +108,10 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
         searchPane.updateDataContext(dataSetDescriptor);
     }
 
+    public void refreshDataSets() {
+        searchPane.refreshDataSets();
+    }
+
     public void removeDataset(DataSetDescriptor dataSetDescriptor) {
         searchPane.removeDataset(dataSetDescriptor);
     }

@@ -25,6 +25,11 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import com.teamgannon.trips.events.StatusUpdateEvent;
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.service.StarService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -41,6 +46,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -50,6 +57,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -112,8 +121,17 @@ public class DataWorkbenchController {
             "miscNum3",
             "miscNum4",
             "miscNum5",
-            "numExoplanets"
+            "numExoplanets",
+            "absmag",
+            "Gaia DR3",
+            "x",
+            "y",
+            "z"
     );
+
+    private static final String HYG_SOURCE_NAME = "HYG-MERGED-2m";
+    private static final DateTimeFormatter HYG_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("ddMMyyyyHHmmss");
+    private static final Pattern DIGIT_PATTERN = Pattern.compile("(\\d+)");
 
     private static final List<String> REQUIRED_FIELDS = List.of(
             "displayName",
@@ -163,7 +181,15 @@ public class DataWorkbenchController {
     @FXML
     private CheckBox cacheDefaultCheckbox;
 
+    @FXML
+    private TextField liveTapBatchField;
+
+    @FXML
+    private TextField liveTapBackoffField;
+
     private final ApplicationEventPublisher eventPublisher;
+    private final StarService starService;
+    private final DatasetService datasetService;
 
     private final ObservableList<WorkbenchSource> sources = FXCollections.observableArrayList();
     private final ObservableList<String> sourceFields = FXCollections.observableArrayList();
@@ -187,14 +213,24 @@ public class DataWorkbenchController {
     private volatile long tapStartMillis = 0L;
     private volatile String tapLabel = "TAP";
 
-    public DataWorkbenchController(ApplicationEventPublisher eventPublisher) {
+    public DataWorkbenchController(ApplicationEventPublisher eventPublisher,
+                                   StarService starService,
+                                   DatasetService datasetService) {
         this.eventPublisher = eventPublisher;
+        this.starService = starService;
+        this.datasetService = datasetService;
     }
 
     @FXML
     public void initialize() {
         log.info("Data Workbench: initialize");
         updateStatus("Data Workbench ready");
+        if (liveTapBatchField != null) {
+            liveTapBatchField.setText("50");
+        }
+        if (liveTapBackoffField != null) {
+            liveTapBackoffField.setText("1000");
+        }
         if (sourceListView != null) {
             sourceListView.setItems(sources);
             sourceListView.setCellFactory(listView -> new ListCell<>() {
@@ -351,7 +387,11 @@ public class DataWorkbenchController {
                 "VizieR TAP (Hipparcos)",
                 "VizieR TAP (Tycho-2)",
                 "VizieR TAP (RAVE DR5)",
-                "VizieR TAP (LAMOST DR5)"
+                "VizieR TAP (LAMOST DR5)",
+                "VizieR TAP (Gaia RUWE subset)",
+                "VizieR TAP (Gliese/CNS)",
+                "VizieR TAP (RECONS)",
+                "VizieR TAP (Lookup tables)"
         );
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
         dialog.setTitle("Add Source");
@@ -396,6 +436,22 @@ public class DataWorkbenchController {
         }
         if ("VizieR TAP (LAMOST DR5)".equals(selection)) {
             addVizierTapSource(defaultVizierLamostQuery(1000), "VIZIER_LAMOST_DR5_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (Gaia RUWE subset)".equals(selection)) {
+            addVizierPresetWithPrompt("Gaia RUWE subset", "VIZIER_GAIA_RUWE_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (Gliese/CNS)".equals(selection)) {
+            addVizierPresetWithPrompt("Gliese/CNS", "VIZIER_GLIESE_CNS_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (RECONS)".equals(selection)) {
+            addVizierTapSource(defaultVizierReconsQuery(1000), "VIZIER_RECONS_TOP_1000.csv");
+            return;
+        }
+        if ("VizieR TAP (Lookup tables)".equals(selection)) {
+            addVizierTableLookupSource();
             return;
         }
         WorkbenchSourceType type = WorkbenchSourceType.fromLabel(selection);
@@ -467,6 +523,175 @@ public class DataWorkbenchController {
         } else {
             showError("Download", "Only URL or TAP sources can be downloaded.");
         }
+    }
+
+    @FXML
+    private void onConvertHygCsv() {
+        log.info("Data Workbench: convert HYG CSV clicked");
+        FileChooser inputChooser = new FileChooser();
+        inputChooser.setTitle("Select HYG CSV File");
+        inputChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(inputChooser);
+        File inputFile = inputChooser.showOpenDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+        if (inputFile == null) {
+            return;
+        }
+
+        String datasetName = buildHygDatasetName();
+        FileChooser outputChooser = new FileChooser();
+        outputChooser.setTitle("Save TRIPS CSV");
+        outputChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(outputChooser);
+        outputChooser.setInitialFileName(datasetName + ".csv");
+        File outputFile = outputChooser.showSaveDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+        if (outputFile == null) {
+            return;
+        }
+
+        updateStatus("Converting HYG TSV to TRIPS CSV...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                convertHygCsvToTripsCsv(inputFile.toPath(), outputFile.toPath(), datasetName,
+                        count -> updateStatus("HYG converter: " + count + " rows processed"));
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            updateStatus("Converted: " + outputFile.getName());
+            addLocalSourceIfMissing(outputFile.toPath());
+        });
+        task.setOnFailed(event -> showError("HYG Converter", String.valueOf(task.getException().getMessage())));
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onEnrichDistances() {
+        FileChooser baseChooser = new FileChooser();
+        baseChooser.setTitle("Select TRIPS CSV to enrich");
+        baseChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(baseChooser);
+        File baseFile = baseChooser.showOpenDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+        if (baseFile == null) {
+            return;
+        }
+
+        FileChooser gaiaChooser = new FileChooser();
+        gaiaChooser.setTitle("Select Gaia DR3 CSV (optional)");
+        gaiaChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(gaiaChooser);
+        File gaiaFile = gaiaChooser.showOpenDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+
+        FileChooser hipChooser = new FileChooser();
+        hipChooser.setTitle("Select Hipparcos CSV (optional)");
+        hipChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(hipChooser);
+        File hipFile = hipChooser.showOpenDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+
+        if (gaiaFile == null && hipFile == null) {
+            showError("Enrich Distances", "Select at least a Gaia or Hipparcos CSV file.");
+            return;
+        }
+
+        FileChooser outputChooser = new FileChooser();
+        outputChooser.setTitle("Save enriched TRIPS CSV");
+        outputChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+        applyInitialDirectory(outputChooser);
+        outputChooser.setInitialFileName(baseFile.getName().replace(".csv", "") + "-enriched.csv");
+        File outputFile = outputChooser.showSaveDialog(workbenchTabs.getScene() != null
+                ? workbenchTabs.getScene().getWindow()
+                : null);
+        if (outputFile == null) {
+            return;
+        }
+
+        updateStatus("Enriching distances...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                enrichDistances(baseFile.toPath(),
+                        gaiaFile != null ? gaiaFile.toPath() : null,
+                        hipFile != null ? hipFile.toPath() : null,
+                        outputFile.toPath(),
+                        count -> updateStatus("Enriching: " + count + " rows processed"));
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            updateStatus("Enriched CSV saved: " + outputFile.getName());
+            addLocalSourceIfMissing(outputFile.toPath());
+        });
+        task.setOnFailed(event -> showError("Enrich Distances", String.valueOf(task.getException().getMessage())));
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onEnrichMissingDistancesLive() {
+        int batchSize = 50;
+        int backoffMs = 1000;
+        if (liveTapBatchField != null && !liveTapBatchField.getText().isBlank()) {
+            Integer parsed = parseIntStrict(liveTapBatchField.getText(), "Live TAP batch size");
+            if (parsed == null || parsed <= 0) {
+                showError("Enrich Distances", "Live TAP batch size must be a positive integer.");
+                return;
+            }
+            batchSize = parsed;
+        }
+        if (liveTapBackoffField != null && !liveTapBackoffField.getText().isBlank()) {
+            Integer parsed = parseIntStrict(liveTapBackoffField.getText(), "Live TAP backoff");
+            if (parsed == null || parsed < 0) {
+                showError("Enrich Distances", "Live TAP backoff must be 0 or greater.");
+                return;
+            }
+            backoffMs = parsed;
+        }
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Enrich Distances", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Enrich Missing Distances");
+        dialog.setHeaderText("Select dataset to enrich");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        int finalBatchSize = batchSize;
+        int finalBackoffMs = backoffMs;
+        updateStatus("Enriching missing distances (live TAP)...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                enrichMissingDistancesLive(dataSetName, finalBatchSize, finalBackoffMs);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> updateStatus("Live TAP enrichment complete."));
+        task.setOnFailed(event -> showError("Enrich Distances", String.valueOf(task.getException().getMessage())));
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @FXML
@@ -863,6 +1088,421 @@ public class DataWorkbenchController {
         sourceStatusLabel.setText("Added source: " + source.getName());
     }
 
+    private void addVizierTableLookupSource() {
+        TextInputDialog dialog = new TextInputDialog("lamost");
+        dialog.setTitle("VizieR Table Lookup");
+        dialog.setHeaderText("Search TAP_SCHEMA.tables for a catalog");
+        dialog.setContentText("Keyword:");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+        String keyword = result.get().trim();
+        if (keyword.isEmpty()) {
+            showError("VizieR Table Lookup", "Keyword cannot be empty.");
+            return;
+        }
+        String adql = vizierTableLookupQuery(keyword, 200);
+        String fileName = "VIZIER_TABLES_" + keyword.replaceAll("\\s+", "_") + ".csv";
+        addVizierTapSource(adql, fileName);
+    }
+
+    private void addVizierPresetWithPrompt(String label, String fileName) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("VizieR Catalog");
+        dialog.setHeaderText("Enter the VizieR table ID for " + label);
+        dialog.setContentText("Table ID (example: V/164/dr5):");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+        String tableId = sanitizeVizierTableId(result.get());
+        if (tableId.isEmpty()) {
+            showError("VizieR Catalog", "Table ID cannot be empty.");
+            return;
+        }
+        String adql = "SELECT TOP 1000 * FROM \"" + tableId + "\"";
+        addVizierTapSource(adql, fileName);
+    }
+
+    private String buildHygDatasetName() {
+        return "HYG-MERGED-2M-TRIPS-" + LocalDateTime.now().format(HYG_TIMESTAMP_FORMAT);
+    }
+
+    private void convertHygCsvToTripsCsv(Path inputPath,
+                                         Path outputPath,
+                                         String datasetName,
+                                         Consumer<Long> progressConsumer) throws IOException {
+        try (BufferedReader reader = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8);
+             BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
+
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                throw new IOException("Input file is empty.");
+            }
+            boolean tabDelimited = isTabDelimited(headerLine);
+            String[] headers = splitHygLine(headerLine, tabDelimited);
+            Map<String, Integer> headerIndex = new HashMap<>();
+            for (int i = 0; i < headers.length; i++) {
+                headerIndex.put(unquote(headers[i]).trim(), i);
+            }
+
+            Map<String, Integer> csvIndex = buildCsvIndex();
+            writer.write(String.join(",", CSV_HEADER_COLUMNS));
+            writer.newLine();
+
+            long count = 0;
+            writeSolRow(writer, csvIndex, datasetName);
+            count++;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] values = splitHygLine(line, tabDelimited);
+
+                String hygId = getTsvField(headerIndex, values, "id");
+                String tyc = getTsvField(headerIndex, values, "tyc");
+                String gaia = getTsvField(headerIndex, values, "gaia");
+                String hip = getTsvField(headerIndex, values, "hip");
+                String hd = getTsvField(headerIndex, values, "hd");
+                String hr = getTsvField(headerIndex, values, "hr");
+                String gl = getTsvField(headerIndex, values, "gl");
+                String bayer = getTsvField(headerIndex, values, "bayer");
+                String flam = getTsvField(headerIndex, values, "flam");
+                String con = getTsvField(headerIndex, values, "con");
+                String proper = getTsvField(headerIndex, values, "proper");
+
+                String ra = getTsvField(headerIndex, values, "ra");
+                String dec = getTsvField(headerIndex, values, "dec");
+                String dist = getTsvField(headerIndex, values, "dist");
+                String x0 = getTsvField(headerIndex, values, "x0");
+                String y0 = getTsvField(headerIndex, values, "y0");
+                String z0 = getTsvField(headerIndex, values, "z0");
+                String pmRa = getTsvField(headerIndex, values, "pm_ra");
+                String pmDec = getTsvField(headerIndex, values, "pm_dec");
+                String rv = getTsvField(headerIndex, values, "rv");
+                String spect = getTsvField(headerIndex, values, "spect");
+                String colorIndex = getTsvField(headerIndex, values, "ci");
+                String mag = getTsvField(headerIndex, values, "mag");
+                String absMag = getTsvField(headerIndex, values, "absmag");
+                String vx = getTsvField(headerIndex, values, "vx");
+                String vy = getTsvField(headerIndex, values, "vy");
+                String vz = getTsvField(headerIndex, values, "vz");
+                String resolvedDistance = resolveDistance(dist, x0, y0, z0);
+                Coordinates hygCoordinates = resolveCoordinates(x0, y0, z0, ra, dec, resolvedDistance);
+
+                String displayName = chooseDisplayName(proper, bayer, flam, con, gl, hd, hip, hr, tyc, gaia, hygId);
+                if (isSolRow(displayName, proper)) {
+                    continue;
+                }
+                String catalogIdList = buildHygCatalogIdList(hygId, tyc, gaia, hip, hd, hr, gl);
+
+                String[] row = new String[CSV_HEADER_COLUMNS.size()];
+                Arrays.fill(row, "");
+                setCsvValue(row, csvIndex, "dataSetName", datasetName);
+                setCsvValue(row, csvIndex, "displayName", displayName);
+                setCsvValue(row, csvIndex, "commonName", proper);
+                setCsvValue(row, csvIndex, "Epoch", "J2000");
+                setCsvValue(row, csvIndex, "constellationName", con);
+                setCsvValue(row, csvIndex, "source", HYG_SOURCE_NAME);
+                setCsvValue(row, csvIndex, "catalogIdList", catalogIdList);
+                setCsvValue(row, csvIndex, "Gaia DR3", gaia);
+                setCsvValue(row, csvIndex, "ra", ra);
+                setCsvValue(row, csvIndex, "declination", dec);
+                setCsvValue(row, csvIndex, "x", hygCoordinates.x);
+                setCsvValue(row, csvIndex, "y", hygCoordinates.y);
+                setCsvValue(row, csvIndex, "z", hygCoordinates.z);
+                setCsvValue(row, csvIndex, "pmra", pmRa);
+                setCsvValue(row, csvIndex, "pmdec", pmDec);
+                setCsvValue(row, csvIndex, "distance", resolvedDistance);
+                setCsvValue(row, csvIndex, "radialVelocity", rv);
+                setCsvValue(row, csvIndex, "spectralClass", spect);
+                setCsvValue(row, csvIndex, "bprp", colorIndex);
+                setCsvValue(row, csvIndex, "magv", mag);
+                setCsvValue(row, csvIndex, "absmag", absMag);
+                setCsvValue(row, csvIndex, "miscText2", "vx");
+                setCsvValue(row, csvIndex, "miscText3", "vy");
+                setCsvValue(row, csvIndex, "miscText4", "vz");
+                setCsvValue(row, csvIndex, "miscNum1", vx);
+                setCsvValue(row, csvIndex, "miscNum2", vy);
+                setCsvValue(row, csvIndex, "miscNum3", vz);
+                setCsvValue(row, csvIndex, "realStar", "true");
+                setCsvValue(row, csvIndex, "other", "false");
+                setCsvValue(row, csvIndex, "anomaly", "false");
+                setCsvValue(row, csvIndex, "polity", "NA");
+                setCsvValue(row, csvIndex, "worldType", "NA");
+                setCsvValue(row, csvIndex, "fuelType", "NA");
+                setCsvValue(row, csvIndex, "portType", "NA");
+                setCsvValue(row, csvIndex, "populationType", "NA");
+                setCsvValue(row, csvIndex, "techType", "NA");
+                setCsvValue(row, csvIndex, "productType", "NA");
+                setCsvValue(row, csvIndex, "milSpaceType", "NA");
+                setCsvValue(row, csvIndex, "milPlanType", "NA");
+
+                List<String> rowValues = new ArrayList<>(row.length);
+                for (String value : row) {
+                    rowValues.add(escapeCsv(value));
+                }
+                writer.write(String.join(",", rowValues));
+                writer.newLine();
+
+                count++;
+                if (count % 50000 == 0) {
+                    if (progressConsumer != null) {
+                        progressConsumer.accept(count);
+                    }
+                    log.info("HYG converter: {} rows written", count);
+                }
+            }
+
+            log.info("HYG converter complete. rows={}", count);
+            if (progressConsumer != null) {
+                progressConsumer.accept(count);
+            }
+        }
+    }
+
+    private Map<String, Integer> buildCsvIndex() {
+        Map<String, Integer> index = new HashMap<>();
+        for (int i = 0; i < CSV_HEADER_COLUMNS.size(); i++) {
+            index.put(CSV_HEADER_COLUMNS.get(i), i);
+        }
+        return index;
+    }
+
+    private void setCsvValue(String[] row, Map<String, Integer> index, String column, String value) {
+        Integer idx = index.get(column);
+        if (idx != null) {
+            row[idx] = value == null ? "" : value;
+        }
+    }
+
+    private boolean isTabDelimited(String headerLine) {
+        return headerLine.contains("\t") && !headerLine.contains(",");
+    }
+
+    private String[] splitHygLine(String line, boolean tabDelimited) {
+        if (tabDelimited) {
+            return line.split("\t", -1);
+        }
+        return splitCsvLine(line);
+    }
+
+    private String resolveDistance(String dist, String x0, String y0, String z0) {
+        String normalized = dist == null ? "" : dist.trim();
+        if (!normalized.isEmpty()) {
+            double value = parseDoubleSafe(normalized);
+            if (value > 0) {
+                return normalized;
+            }
+        }
+        double x = parseDoubleSafe(x0);
+        double y = parseDoubleSafe(y0);
+        double z = parseDoubleSafe(z0);
+        double computed = Math.sqrt((x * x) + (y * y) + (z * z));
+        if (computed > 0) {
+            return Double.toString(computed);
+        }
+        return "0.0";
+    }
+
+    private double parseDoubleSafe(String value) {
+        if (value == null) {
+            return 0.0;
+        }
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(normalized);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private Coordinates resolveCoordinates(String x0, String y0, String z0,
+                                           String ra, String dec, String dist) {
+        double x = parseDoubleSafe(x0);
+        double y = parseDoubleSafe(y0);
+        double z = parseDoubleSafe(z0);
+        if (x != 0.0 || y != 0.0 || z != 0.0) {
+            return Coordinates.from(x, y, z);
+        }
+        double distance = parseDoubleSafe(dist);
+        if (distance <= 0.0) {
+            return Coordinates.from(0.0, 0.0, 0.0);
+        }
+        double raDeg = parseDoubleSafe(ra);
+        double decDeg = parseDoubleSafe(dec);
+        double raRad = Math.toRadians(raDeg);
+        double decRad = Math.toRadians(decDeg);
+        double cosDec = Math.cos(decRad);
+        double calcX = distance * cosDec * Math.cos(raRad);
+        double calcY = distance * cosDec * Math.sin(raRad);
+        double calcZ = distance * Math.sin(decRad);
+        return Coordinates.from(calcX, calcY, calcZ);
+    }
+
+    private static class Coordinates {
+        private final String x;
+        private final String y;
+        private final String z;
+
+        private Coordinates(String x, String y, String z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        private static Coordinates from(double x, double y, double z) {
+            return new Coordinates(Double.toString(x), Double.toString(y), Double.toString(z));
+        }
+    }
+
+    private void writeSolRow(BufferedWriter writer,
+                             Map<String, Integer> csvIndex,
+                             String datasetName) throws IOException {
+        String[] row = new String[CSV_HEADER_COLUMNS.size()];
+        Arrays.fill(row, "");
+        setCsvValue(row, csvIndex, "dataSetName", datasetName);
+        setCsvValue(row, csvIndex, "displayName", "Sol");
+        setCsvValue(row, csvIndex, "commonName", "Sol");
+        setCsvValue(row, csvIndex, "Epoch", "J2000");
+        setCsvValue(row, csvIndex, "mass", "1.99E+30");
+        setCsvValue(row, csvIndex, "notes", "none");
+        setCsvValue(row, csvIndex, "source", HYG_SOURCE_NAME);
+        setCsvValue(row, csvIndex, "catalogIdList", "HYG 0");
+        setCsvValue(row, csvIndex, "radius", "695700.0");
+        setCsvValue(row, csvIndex, "ra", "0.0");
+        setCsvValue(row, csvIndex, "declination", "0.0");
+        setCsvValue(row, csvIndex, "distance", "0.0");
+        setCsvValue(row, csvIndex, "spectralClass", "G2V");
+        setCsvValue(row, csvIndex, "temperature", "5772.0");
+        setCsvValue(row, csvIndex, "realStar", "true");
+        setCsvValue(row, csvIndex, "other", "false");
+        setCsvValue(row, csvIndex, "anomaly", "false");
+        setCsvValue(row, csvIndex, "polity", "NA");
+        setCsvValue(row, csvIndex, "worldType", "NA");
+        setCsvValue(row, csvIndex, "fuelType", "NA");
+        setCsvValue(row, csvIndex, "portType", "NA");
+        setCsvValue(row, csvIndex, "populationType", "NA");
+        setCsvValue(row, csvIndex, "techType", "NA");
+        setCsvValue(row, csvIndex, "productType", "NA");
+        setCsvValue(row, csvIndex, "milSpaceType", "NA");
+        setCsvValue(row, csvIndex, "milPlanType", "NA");
+
+        List<String> rowValues = new ArrayList<>(row.length);
+        for (String value : row) {
+            rowValues.add(escapeCsv(value));
+        }
+        writer.write(String.join(",", rowValues));
+        writer.newLine();
+    }
+
+    private boolean isSolRow(String displayName, String proper) {
+        if (displayName != null && displayName.trim().equalsIgnoreCase("Sol")) {
+            return true;
+        }
+        return proper != null && proper.trim().equalsIgnoreCase("Sol");
+    }
+
+    private String getTsvField(Map<String, Integer> index, String[] values, String name) {
+        Integer pos = index.get(name);
+        if (pos == null || pos < 0 || pos >= values.length) {
+            return "";
+        }
+        return unquote(values[pos]).trim();
+    }
+
+    private String[] splitCsvLine(String line) {
+        if (line == null) {
+            return new String[0];
+        }
+        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    }
+
+    private String chooseDisplayName(String proper,
+                                     String bayer,
+                                     String flam,
+                                     String con,
+                                     String gl,
+                                     String hd,
+                                     String hip,
+                                     String hr,
+                                     String tyc,
+                                     String gaia,
+                                     String hygId) {
+        return firstNonEmpty(
+                proper,
+                formatWithConstellation(bayer, con),
+                formatWithConstellation(flam, con),
+                formatCatalogId("GJ", gl),
+                formatCatalogId("HD", hd),
+                formatCatalogId("HIP", hip),
+                formatCatalogId("HR", hr),
+                formatCatalogId("TYC", tyc),
+                formatCatalogId("Gaia", gaia),
+                formatCatalogId("HYG", hygId)
+        );
+    }
+
+    private String formatWithConstellation(String value, String con) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        if (con == null || con.isBlank()) {
+            return value.trim();
+        }
+        return value.trim() + " " + con.trim();
+    }
+
+    private String formatCatalogId(String prefix, String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return prefix + " " + value.trim();
+    }
+
+    private String firstNonEmpty(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return "";
+    }
+
+    private String buildHygCatalogIdList(String hygId,
+                                         String tyc,
+                                         String gaia,
+                                         String hip,
+                                         String hd,
+                                         String hr,
+                                         String gl) {
+        List<String> entries = new ArrayList<>();
+        if (hygId != null && !hygId.isBlank()) {
+            entries.add("HYG " + hygId.trim());
+        }
+        if (tyc != null && !tyc.isBlank()) {
+            entries.add("TYC " + tyc.trim());
+        }
+        if (gaia != null && !gaia.isBlank()) {
+            entries.add("Gaia DR3 " + gaia.trim());
+        }
+        if (hip != null && !hip.isBlank()) {
+            entries.add("HIP " + hip.trim());
+        }
+        if (hd != null && !hd.isBlank()) {
+            entries.add("HD " + hd.trim());
+        }
+        if (hr != null && !hr.isBlank()) {
+            entries.add("HR " + hr.trim());
+        }
+        if (gl != null && !gl.isBlank()) {
+            entries.add("GJ " + gl.trim());
+        }
+        return String.join("|", entries);
+    }
+
     private void downloadToFile(String url, Path outputPath) {
         downloadToFile(url, outputPath, null);
     }
@@ -1015,6 +1655,7 @@ public class DataWorkbenchController {
             protected Void call() throws Exception {
                 tapCancelRequested = false;
                 tapLabel = "VizieR TAP";
+                log.info("VizieR TAP ADQL: {}", adql);
                 HttpClient client = HttpClient.newHttpClient();
                 String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
                         + URLEncoder.encode(adql, StandardCharsets.UTF_8);
@@ -1204,6 +1845,632 @@ public class DataWorkbenchController {
         }
     }
 
+    private void enrichDistances(Path baseCsv,
+                                 Path gaiaCsv,
+                                 Path hipCsv,
+                                 Path outputCsv,
+                                 Consumer<Long> progressConsumer) throws IOException {
+        Map<String, Double> gaiaParallax = gaiaCsv != null
+                ? loadParallaxMap(gaiaCsv, List.of("source_id", "gaia_source_id", "gaia_dr3", "gaia"), List.of("parallax"))
+                : Map.of();
+        Map<String, Double> hipParallax = hipCsv != null
+                ? loadParallaxMap(hipCsv, List.of("HIP", "hip", "hip_id"), List.of("Plx", "parallax", "plx"))
+                : Map.of();
+
+        try (BufferedReader reader = Files.newBufferedReader(baseCsv, StandardCharsets.UTF_8);
+             BufferedWriter writer = Files.newBufferedWriter(outputCsv, StandardCharsets.UTF_8)) {
+            String header = reader.readLine();
+            if (header == null) {
+                throw new IOException("Base CSV is empty.");
+            }
+            String[] headerFields = splitCsvLine(header);
+            Map<String, Integer> headerIndex = buildHeaderIndex(header);
+            writer.write(String.join(",", headerFields));
+            writer.newLine();
+
+            long count = 0;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] values = splitCsvLine(line);
+                values = linePad(values, headerFields.length);
+
+                int distanceIdx = headerIndex.getOrDefault("distance", -1);
+                int raIdx = headerIndex.getOrDefault("ra", -1);
+                int decIdx = headerIndex.getOrDefault("declination", -1);
+                int xIdx = headerIndex.getOrDefault("x", -1);
+                int yIdx = headerIndex.getOrDefault("y", -1);
+                int zIdx = headerIndex.getOrDefault("z", -1);
+                int sourceIdx = headerIndex.getOrDefault("source", -1);
+                int notesIdx = headerIndex.getOrDefault("notes", -1);
+                int catalogIdx = headerIndex.getOrDefault("catalogIdList", -1);
+                int gaiaIdx = headerIndex.getOrDefault("Gaia DR3", -1);
+
+                double distance = distanceIdx >= 0 ? parseDoubleSafe(values[distanceIdx]) : 0.0;
+                double x = xIdx >= 0 ? parseDoubleSafe(values[xIdx]) : 0.0;
+                double y = yIdx >= 0 ? parseDoubleSafe(values[yIdx]) : 0.0;
+                double z = zIdx >= 0 ? parseDoubleSafe(values[zIdx]) : 0.0;
+
+                if (distance <= 0.0 && (x == 0.0 && y == 0.0 && z == 0.0)) {
+                    String gaiaId = gaiaIdx >= 0 ? extractNumericId(values[gaiaIdx]) : "";
+                    String hipId = catalogIdx >= 0 ? extractHipId(values[catalogIdx]) : "";
+                    Double parallax = null;
+                    String sourceTag = null;
+                    String notesTag = null;
+                    if (!gaiaId.isEmpty()) {
+                        parallax = gaiaParallax.get(gaiaId);
+                        if (parallax != null && parallax > 0) {
+                            sourceTag = "Gaia DR3 parallax";
+                            notesTag = "distance from Gaia DR3 parallax";
+                        }
+                    }
+                    if ((parallax == null || parallax <= 0) && !hipId.isEmpty()) {
+                        parallax = hipParallax.get(hipId);
+                        if (parallax != null && parallax > 0) {
+                            sourceTag = "HIP parallax";
+                            notesTag = "distance from HIP parallax";
+                        }
+                    }
+                    if (parallax != null && parallax > 0 && distanceIdx >= 0 && raIdx >= 0 && decIdx >= 0) {
+                        distance = calculateDistanceFromParallax(parallax);
+                        values[distanceIdx] = Double.toString(distance);
+                        double raDeg = parseDoubleSafe(values[raIdx]);
+                        double decDeg = parseDoubleSafe(values[decIdx]);
+                        double[] coords = calculateCoordinatesFromRaDec(raDeg, decDeg, distance);
+                        if (xIdx >= 0) {
+                            values[xIdx] = Double.toString(coords[0]);
+                        }
+                        if (yIdx >= 0) {
+                            values[yIdx] = Double.toString(coords[1]);
+                        }
+                        if (zIdx >= 0) {
+                            values[zIdx] = Double.toString(coords[2]);
+                        }
+                        if (sourceIdx >= 0 && sourceTag != null) {
+                            values[sourceIdx] = appendToken(values[sourceIdx], sourceTag, "|");
+                        }
+                        if (notesIdx >= 0 && notesTag != null) {
+                            values[notesIdx] = appendToken(values[notesIdx], notesTag, "; ");
+                        }
+                    }
+                }
+
+                List<String> rowValues = new ArrayList<>(values.length);
+                for (String value : values) {
+                    rowValues.add(escapeCsv(value));
+                }
+                writer.write(String.join(",", rowValues));
+                writer.newLine();
+                count++;
+                if (count % 50000 == 0 && progressConsumer != null) {
+                    progressConsumer.accept(count);
+                }
+            }
+        }
+    }
+
+    private void enrichMissingDistancesLive(String dataSetName, int batchSize, long delayMs)
+            throws IOException, InterruptedException {
+        int pageSize = Math.max(batchSize * 4, 200);
+        int pageIndex = 0;
+        long updated = 0;
+        while (true) {
+            Page<StarObject> page = starService.findMissingDistanceWithIds(dataSetName, PageRequest.of(pageIndex, pageSize));
+            if (!page.hasContent()) {
+                break;
+            }
+            List<StarObject> candidates = page.getContent();
+            List<StarObject> updatedStars = new ArrayList<>();
+            Set<String> updatedIds = new HashSet<>();
+            int pageNumber = pageIndex + 1;
+            updateStatus("Live TAP enrichment: page " + pageNumber + ", candidates " + candidates.size());
+
+            Map<String, List<StarObject>> gaiaMap = new HashMap<>();
+            Map<String, List<StarObject>> hipMap = new HashMap<>();
+            Map<String, List<StarObject>> simbadMap = new HashMap<>();
+            for (StarObject star : candidates) {
+                if (star.getDistance() > 0) {
+                    continue;
+                }
+                String gaiaId = extractNumericId(star.getGaiaDR3CatId());
+                if (!gaiaId.isEmpty()) {
+                    gaiaMap.computeIfAbsent(gaiaId, key -> new ArrayList<>()).add(star);
+                    continue;
+                }
+                String hipId = star.getHipCatId();
+                if (hipId == null || hipId.isBlank()) {
+                    hipId = extractHipId(star.getRawCatalogIdList());
+                }
+                hipId = extractNumericId(hipId);
+                if (!hipId.isEmpty()) {
+                    hipMap.computeIfAbsent(hipId, key -> new ArrayList<>()).add(star);
+                }
+            }
+
+            List<String> gaiaIds = new ArrayList<>(gaiaMap.keySet());
+            List<String> hipIds = new ArrayList<>(hipMap.keySet());
+            int gaiaBatches = (gaiaIds.size() + batchSize - 1) / batchSize;
+            int hipBatches = (hipIds.size() + batchSize - 1) / batchSize;
+
+            for (int i = 0; i < gaiaIds.size(); i += batchSize) {
+                int batchNumber = (i / batchSize) + 1;
+                List<String> batch = gaiaIds.subList(i, Math.min(i + batchSize, gaiaIds.size()));
+                updateStatus("Live TAP: Gaia batch " + batchNumber + "/" + gaiaBatches + " (ids " + batch.size() + ")");
+                Map<String, Double> parallaxById = fetchGaiaParallax(batch);
+                int updatedBefore = updatedStars.size();
+                for (Map.Entry<String, Double> entry : parallaxById.entrySet()) {
+                    List<StarObject> stars = gaiaMap.get(entry.getKey());
+                    if (stars != null) {
+                        for (StarObject star : stars) {
+                            if (applyParallaxEnrichment(star, entry.getValue(), "Gaia DR3 parallax",
+                                    "distance from Gaia DR3 parallax") && updatedIds.add(star.getId())) {
+                                updatedStars.add(star);
+                            }
+                        }
+                    }
+                }
+                int updatedInBatch = updatedStars.size() - updatedBefore;
+                log.info("Gaia TAP batch {}/{}: ids={}, matches={}, updated={}",
+                        batchNumber, gaiaBatches, batch.size(), parallaxById.size(), updatedInBatch);
+                if (delayMs > 0) {
+                    Thread.sleep(delayMs);
+                }
+            }
+
+            for (int i = 0; i < hipIds.size(); i += batchSize) {
+                int batchNumber = (i / batchSize) + 1;
+                List<String> batch = hipIds.subList(i, Math.min(i + batchSize, hipIds.size()));
+                updateStatus("Live TAP: HIP batch " + batchNumber + "/" + hipBatches + " (ids " + batch.size() + ")");
+                Map<String, Double> parallaxById = fetchHipParallax(batch);
+                int updatedBefore = updatedStars.size();
+                for (Map.Entry<String, Double> entry : parallaxById.entrySet()) {
+                    List<StarObject> stars = hipMap.get(entry.getKey());
+                    if (stars != null) {
+                        for (StarObject star : stars) {
+                            if (applyParallaxEnrichment(star, entry.getValue(), "HIP parallax",
+                                    "distance from HIP parallax") && updatedIds.add(star.getId())) {
+                                updatedStars.add(star);
+                            }
+                        }
+                    }
+                }
+                int updatedInBatch = updatedStars.size() - updatedBefore;
+                log.info("HIP TAP batch {}/{}: ids={}, matches={}, updated={}",
+                        batchNumber, hipBatches, batch.size(), parallaxById.size(), updatedInBatch);
+                if (delayMs > 0) {
+                    Thread.sleep(delayMs);
+                }
+            }
+
+            for (StarObject star : candidates) {
+                if (star.getDistance() > 0 || updatedIds.contains(star.getId())) {
+                    continue;
+                }
+                String name = getPreferredSimbadName(star);
+                if (!name.isEmpty()) {
+                    String key = normalizeSimbadKey(name);
+                    simbadMap.computeIfAbsent(key, value -> new ArrayList<>()).add(star);
+                }
+            }
+
+            List<String> simbadNames = new ArrayList<>(simbadMap.keySet());
+            int simbadBatches = (simbadNames.size() + batchSize - 1) / batchSize;
+            if (!simbadNames.isEmpty()) {
+                updateStatus("Live TAP: SIMBAD batches " + simbadBatches + " (names " + simbadNames.size() + ")");
+            }
+            for (int i = 0; i < simbadNames.size(); i += batchSize) {
+                int batchNumber = (i / batchSize) + 1;
+                List<String> batch = simbadNames.subList(i, Math.min(i + batchSize, simbadNames.size()));
+                updateStatus("Live TAP: SIMBAD batch " + batchNumber + "/" + simbadBatches + " (names " + batch.size() + ")");
+                log.info("SIMBAD TAP batch {}/{} name sample: {}",
+                        batchNumber, simbadBatches, batch.subList(0, Math.min(10, batch.size())));
+                Map<String, Double> parallaxByName = fetchSimbadParallax(batch);
+                int updatedBefore = updatedStars.size();
+                int positiveParallax = 0;
+                List<String> parallaxSamples = new ArrayList<>();
+                for (Map.Entry<String, Double> entry : parallaxByName.entrySet()) {
+                    Double parallax = entry.getValue();
+                    if (parallax != null && parallax > 0) {
+                        positiveParallax++;
+                        if (parallaxSamples.size() < 5) {
+                            parallaxSamples.add(entry.getKey() + "=" + parallax);
+                        }
+                    }
+                    List<StarObject> stars = simbadMap.get(normalizeSimbadKey(entry.getKey()));
+                    if (stars != null) {
+                        for (StarObject star : stars) {
+                            if (applyParallaxEnrichment(star, parallax, "SIMBAD parallax",
+                                    "distance from SIMBAD parallax") && updatedIds.add(star.getId())) {
+                                updatedStars.add(star);
+                            }
+                        }
+                    }
+                }
+                int updatedInBatch = updatedStars.size() - updatedBefore;
+                log.info("SIMBAD TAP batch {}/{}: names={}, matches={}, updated={}",
+                        batchNumber, simbadBatches, batch.size(), parallaxByName.size(), updatedInBatch);
+                log.info("SIMBAD TAP batch {}/{}: positive parallaxes={}, samples={}",
+                        batchNumber, simbadBatches, positiveParallax, parallaxSamples);
+                if (delayMs > 0) {
+                    Thread.sleep(delayMs);
+                }
+            }
+
+            if (!updatedStars.isEmpty()) {
+                starService.updateStars(updatedStars);
+                updated += updatedStars.size();
+                updateStatus("Live TAP enrichment: updated " + updated + " stars");
+                log.info("Live TAP enrichment: page {} saved {}, total updated {}",
+                        pageNumber, updatedStars.size(), updated);
+            }
+            pageIndex++;
+            if (!page.hasNext()) {
+                break;
+            }
+        }
+    }
+
+    private Map<String, Double> fetchGaiaParallax(List<String> gaiaIds) throws IOException, InterruptedException {
+        if (gaiaIds.isEmpty()) {
+            return Map.of();
+        }
+        String idList = String.join(",", gaiaIds);
+        String adql = "SELECT source_id, parallax FROM gaiadr3.gaia_source WHERE source_id IN (" + idList + ")";
+        String csv = submitTapSyncCsv(GAIA_TAP_BASE_URL, adql, "Gaia TAP");
+        return parseParallaxCsv(csv, "source_id", "parallax");
+    }
+
+    private Map<String, Double> fetchHipParallax(List<String> hipIds) throws IOException, InterruptedException {
+        if (hipIds.isEmpty()) {
+            return Map.of();
+        }
+        String idList = String.join(",", hipIds);
+        String adql = "SELECT HIP, Plx FROM \"I/239/hip_main\" WHERE HIP IN (" + idList + ")";
+        String csv = submitTapSyncCsv(VIZIER_TAP_BASE_URL, adql, "VizieR TAP");
+        return parseParallaxCsv(csv, "HIP", "Plx");
+    }
+
+    private Map<String, Double> fetchSimbadParallax(List<String> simbadNames) throws IOException, InterruptedException {
+        if (simbadNames.isEmpty()) {
+            return Map.of();
+        }
+        String idList = simbadNames.stream()
+                .map(this::escapeAdqlString)
+                .map(name -> "'" + name + "'")
+                .collect(Collectors.joining(","));
+        String adql = "SELECT i.id AS id, b.plx_value "
+                + "FROM ident i JOIN basic b ON i.oidref = b.oid "
+                + "WHERE i.id IN (" + idList + ")";
+        String csv = submitTapSyncCsv(SIMBAD_TAP_BASE_URL, adql, "SIMBAD TAP");
+        logSimbadCsvSample(csv);
+        return parseParallaxCsvRawId(csv, "id", "plx_value");
+    }
+
+    private void logSimbadCsvSample(String csv) {
+        if (csv == null || csv.isBlank()) {
+            log.info("SIMBAD TAP CSV sample: <empty>");
+            return;
+        }
+        String[] lines = csv.split("\\r?\\n");
+        if (lines.length > 0) {
+            log.info("SIMBAD TAP CSV header: {}", lines[0]);
+        }
+        int printed = 0;
+        List<String> sample = new ArrayList<>();
+        for (int i = 1; i < lines.length && printed < 5; i++) {
+            String line = lines[i].trim();
+            if (!line.isEmpty()) {
+                sample.add(line);
+                printed++;
+            }
+        }
+        log.info("SIMBAD TAP CSV sample rows: {}", sample);
+    }
+
+    private String submitTapSyncCsv(String baseUrl, String adql, String label) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY="
+                + URLEncoder.encode(adql, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/sync"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        log.info("{} sync status: {}", label, response.statusCode());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            String bodyPreview = response.body();
+            if (bodyPreview != null && bodyPreview.length() > 400) {
+                bodyPreview = bodyPreview.substring(0, 400) + "...";
+            }
+            log.error("{} sync error body: {}", label, bodyPreview);
+            throw new IOException(label + " sync failed. HTTP " + response.statusCode());
+        }
+        return response.body();
+    }
+
+    private Map<String, Double> parseParallaxCsv(String csv, String idHeader, String parallaxHeader) {
+        Map<String, Double> map = new HashMap<>();
+        if (csv == null || csv.isBlank()) {
+            return map;
+        }
+        String[] lines = csv.split("\\r?\\n");
+        if (lines.length == 0) {
+            return map;
+        }
+        String[] header = splitCsvLine(lines[0]);
+        Map<String, Integer> headerIndex = new HashMap<>();
+        for (int i = 0; i < header.length; i++) {
+            headerIndex.put(header[i].trim(), i);
+        }
+        int idIdx = findHeaderIndex(headerIndex, List.of(idHeader));
+        int parallaxIdx = findHeaderIndex(headerIndex, List.of(parallaxHeader));
+        if (idIdx < 0 || parallaxIdx < 0) {
+            return map;
+        }
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) {
+                continue;
+            }
+            String[] values = splitCsvLine(line);
+            if (idIdx >= values.length || parallaxIdx >= values.length) {
+                continue;
+            }
+            String id = extractNumericId(values[idIdx]);
+            double parallax = parseDoubleSafe(values[parallaxIdx]);
+            if (!id.isEmpty() && parallax > 0) {
+                map.putIfAbsent(id, parallax);
+            }
+        }
+        return map;
+    }
+
+    private Map<String, Double> parseParallaxCsvRawId(String csv, String idHeader, String parallaxHeader) {
+        Map<String, Double> map = new HashMap<>();
+        if (csv == null || csv.isBlank()) {
+            return map;
+        }
+        String[] lines = csv.split("\\r?\\n");
+        if (lines.length == 0) {
+            return map;
+        }
+        String[] header = splitCsvLine(lines[0]);
+        Map<String, Integer> headerIndex = new HashMap<>();
+        for (int i = 0; i < header.length; i++) {
+            headerIndex.put(unquote(header[i]).trim(), i);
+        }
+        int idIdx = findHeaderIndex(headerIndex, List.of(idHeader));
+        int parallaxIdx = findHeaderIndex(headerIndex, List.of(parallaxHeader));
+        if (idIdx < 0 || parallaxIdx < 0) {
+            return map;
+        }
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) {
+                continue;
+            }
+            String[] values = splitCsvLine(line);
+            if (idIdx >= values.length || parallaxIdx >= values.length) {
+                continue;
+            }
+            String id = normalizeSimbadKey(values[idIdx]);
+            double parallax = parseDoubleSafe(values[parallaxIdx]);
+            if (!id.isEmpty() && parallax > 0) {
+                map.putIfAbsent(id, parallax);
+            }
+        }
+        return map;
+    }
+
+    private boolean applyParallaxEnrichment(StarObject star,
+                                            double parallaxMas,
+                                            String sourceToken,
+                                            String notesToken) {
+        if (parallaxMas <= 0 || star.getDistance() > 0) {
+            return false;
+        }
+        double distance = calculateDistanceFromParallax(parallaxMas);
+        if (distance <= 0) {
+            return false;
+        }
+        star.setParallax(parallaxMas);
+        star.setDistance(distance);
+        double[] coords = calculateCoordinatesFromRaDec(star.getRa(), star.getDeclination(), distance);
+        star.setX(coords[0]);
+        star.setY(coords[1]);
+        star.setZ(coords[2]);
+        star.setSource(appendToken(star.getSource(), sourceToken, "|"));
+        star.setNotes(appendToken(star.getNotes(), notesToken, "; "));
+        return true;
+    }
+
+    private String getPreferredSimbadName(StarObject star) {
+        String name = star.getCommonName();
+        if (name == null || name.isBlank() || "NA".equalsIgnoreCase(name.trim()) || isNumericToken(name)) {
+            name = star.getDisplayName();
+        }
+        if (name == null || name.isBlank() || isNumericToken(name)) {
+            String catalogId = extractSimbadCatalogId(star.getRawCatalogIdList());
+            if (catalogId != null && !catalogId.isBlank()) {
+                name = catalogId;
+            }
+        }
+        if (name == null) {
+            return "";
+        }
+        return name.trim();
+    }
+
+    private boolean isNumericToken(String value) {
+        if (value == null) {
+            return false;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < trimmed.length(); i++) {
+            if (!Character.isDigit(trimmed.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String extractSimbadCatalogId(String catalogIdList) {
+        if (catalogIdList == null || catalogIdList.isBlank()) {
+            return "";
+        }
+        String[] tokens = catalogIdList.split("\\|");
+        for (String token : tokens) {
+            String trimmed = token.trim();
+            if (trimmed.startsWith("TYC ")) {
+                return trimmed;
+            }
+        }
+        for (String token : tokens) {
+            String trimmed = token.trim();
+            if (trimmed.startsWith("HD ") || trimmed.startsWith("HIP ") || trimmed.startsWith("HR ")
+                    || trimmed.startsWith("BD ") || trimmed.startsWith("GJ ") || trimmed.startsWith("GL ")
+                    || trimmed.startsWith("LHS ") || trimmed.startsWith("2MASS ")) {
+                return trimmed;
+            }
+        }
+        return "";
+    }
+
+    private String normalizeSimbadKey(String value) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = unquote(value).trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        return trimmed.replaceAll("\\s+", " ");
+    }
+
+    private String escapeAdqlString(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("'", "''");
+    }
+
+    private Map<String, Double> loadParallaxMap(Path csvPath,
+                                                List<String> idHeaders,
+                                                List<String> parallaxHeaders) throws IOException {
+        Map<String, Double> map = new HashMap<>();
+        try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8)) {
+            String header = reader.readLine();
+            if (header == null) {
+                return map;
+            }
+            String[] headerFields = splitCsvLine(header);
+            Map<String, Integer> headerIndex = new HashMap<>();
+            for (int i = 0; i < headerFields.length; i++) {
+                headerIndex.put(headerFields[i].trim(), i);
+            }
+            int idIdx = findHeaderIndex(headerIndex, idHeaders);
+            int parallaxIdx = findHeaderIndex(headerIndex, parallaxHeaders);
+            if (idIdx < 0 || parallaxIdx < 0) {
+                return map;
+            }
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] values = splitCsvLine(line);
+                if (idIdx >= values.length || parallaxIdx >= values.length) {
+                    continue;
+                }
+                String id = extractNumericId(values[idIdx]);
+                if (id.isEmpty()) {
+                    continue;
+                }
+                double parallax = parseDoubleSafe(values[parallaxIdx]);
+                if (parallax > 0) {
+                    map.putIfAbsent(id, parallax);
+                }
+            }
+        }
+        return map;
+    }
+
+    private int findHeaderIndex(Map<String, Integer> headerIndex, List<String> candidates) {
+        for (String candidate : candidates) {
+            for (Map.Entry<String, Integer> entry : headerIndex.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(candidate)) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return -1;
+    }
+
+    private String extractNumericId(String value) {
+        if (value == null) {
+            return "";
+        }
+        Matcher matcher = DIGIT_PATTERN.matcher(value);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
+    private String extractHipId(String catalogIdList) {
+        if (catalogIdList == null) {
+            return "";
+        }
+        String[] tokens = catalogIdList.split("\\|");
+        for (String token : tokens) {
+            String trimmed = token.trim();
+            if (trimmed.toUpperCase().startsWith("HIP")) {
+                return extractNumericId(trimmed);
+            }
+        }
+        return "";
+    }
+
+    private double calculateDistanceFromParallax(double parallaxMas) {
+        if (parallaxMas <= 0) {
+            return 0.0;
+        }
+        double distanceParsecs = 1000.0 / parallaxMas;
+        return distanceParsecs * 3.26156;
+    }
+
+    private double[] calculateCoordinatesFromRaDec(double raDeg, double decDeg, double distance) {
+        double raRad = Math.toRadians(raDeg);
+        double decRad = Math.toRadians(decDeg);
+        double cosDec = Math.cos(decRad);
+        double x = distance * cosDec * Math.cos(raRad);
+        double y = distance * cosDec * Math.sin(raRad);
+        double z = distance * Math.sin(decRad);
+        return new double[]{x, y, z};
+    }
+
+    private String appendToken(String current, String token, String separator) {
+        String base = current == null ? "" : current.trim();
+        if (base.isEmpty()) {
+            return token;
+        }
+        if (base.contains(token)) {
+            return base;
+        }
+        return base + separator + token;
+    }
+
+    private Integer parseIntStrict(String value, String label) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            showError("Enrich Distances", label + " must be a valid integer.");
+            return null;
+        }
+    }
+
     private void loadPreviewFromPath(Path path) {
         previewSourcePath = path;
         try (BufferedReader reader = Files.newBufferedReader(previewSourcePath, StandardCharsets.UTF_8)) {
@@ -1357,10 +2624,6 @@ public class DataWorkbenchController {
         appendValidationMessage("Validation summary written: " + logPath.getFileName());
     }
 
-    private String[] splitCsvLine(String line) {
-        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-    }
-
     private String unquote(String value) {
         String trimmed = value.trim();
         if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() >= 2) {
@@ -1380,6 +2643,13 @@ public class DataWorkbenchController {
             return "\"" + escaped + "\"";
         }
         return trimmed;
+    }
+
+    private String[] linePad(String[] values, int length) {
+        if (values.length >= length) {
+            return values;
+        }
+        return Arrays.copyOf(values, length);
     }
 
     private List<String> validateRow(Map<String, String> row, int rowIndex) {
@@ -1789,6 +3059,33 @@ public class DataWorkbenchController {
                 """.formatted(limit);
     }
 
+    private String defaultVizierReconsQuery(int limit) {
+        return """
+                SELECT TOP %d *
+                FROM "J/AJ/160/215/table2"
+                """.formatted(limit);
+    }
+
+    private String vizierTableLookupQuery(String keyword, int limit) {
+        String escaped = keyword.replace("'", "''");
+        return """
+                SELECT TOP %d
+                  table_name,
+                  description
+                FROM TAP_SCHEMA.tables
+                WHERE ivo_nocasematch(table_name, '%%%s%%') = 1
+                   OR ivo_nocasematch(description, '%%%s%%') = 1
+                """.formatted(limit, escaped, escaped);
+    }
+
+    private String sanitizeVizierTableId(String input) {
+        String trimmed = input.trim();
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() > 1) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1);
+        }
+        return trimmed.trim();
+    }
+
     private List<MappingRow> defaultGaiaMappings() {
         Map<String, String> sourceByNormalized = new HashMap<>();
         for (String field : sourceFields) {
@@ -1796,6 +3093,7 @@ public class DataWorkbenchController {
         }
         List<MappingRow> rows = new ArrayList<>();
         addMappingIfPresent(rows, sourceByNormalized, "source_id", "catalogIdList");
+        addMappingIfPresent(rows, sourceByNormalized, "source_id", "Gaia DR3");
         addMappingIfPresent(rows, sourceByNormalized, "ra", "ra");
         addMappingIfPresent(rows, sourceByNormalized, "dec", "declination");
         addMappingIfPresent(rows, sourceByNormalized, "pmra", "pmra");

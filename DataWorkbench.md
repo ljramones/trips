@@ -18,6 +18,9 @@ The Data Workbench helps you bring external star datasets into TRIPS by mapping 
     - SIMBAD TAP presets: quick TOP 200/1000 queries filtered to non-null parallax, proper motion, and spectral type.
     - VizieR TAP: enter an ADQL query to fetch VizieR catalog data.
     - VizieR TAP presets: Hipparcos (HIP2), Tycho-2, RAVE DR5, and LAMOST DR5 starters (use `SELECT *`).
+    - VizieR TAP presets for Gaia RUWE subsets, Gliese/CNS, and RECONS prompt for a table ID.
+    - VizieR TAP (Lookup tables): search `TAP_SCHEMA.tables` and download a catalog list CSV.
+    - Convert HYG CSV: converts a HYG-style CSV file into the TRIPS CSV format.
 2. Optional: set the cache directory and enable "Use for downloads".
 3. The source appears in the list.
 
@@ -52,6 +55,7 @@ If no source or mapping is selected, Export creates a template CSV with the TRIP
 ## Notes
 - URL sources are downloaded to the cache before preview/validate/export.
 - Gaia TAP queries use async jobs with exponential backoff. Large results can take several minutes.
+- The TRIPS CSV header includes `absmag` and a `Gaia DR3` column at the end of the file.
 - The Workbench emits status updates to the main TRIPS status bar.
 
 ## Troubleshooting

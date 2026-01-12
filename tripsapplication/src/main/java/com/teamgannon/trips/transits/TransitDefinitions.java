@@ -22,4 +22,8 @@ public class TransitDefinitions {
      */
     private List<TransitRangeDef> transitRangeDefs = new ArrayList<>();
 
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
 }

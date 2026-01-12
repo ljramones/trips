@@ -72,6 +72,10 @@ public class TripsContext {
     }
 
     public void setDataSetContext(DataSetContext dataSetContext) {
+        if (dataSetContext == null || dataSetContext.getDescriptor() == null) {
+            log.warn("setDataSetContext called with null dataset descriptor.");
+            return;
+        }
         getSearchContext().setCurrentDataSet(dataSetContext.getDescriptor().getDataSetName());
         searchContext.getAstroSearchQuery().setDataSetContext(dataSetContext);
         systemPreferencesService.updateDataSet(dataSetContext.getDescriptor());

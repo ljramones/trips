@@ -515,8 +515,14 @@ public class StarPlotManager {
                           StarDisplayPreferences starDisplayPreferences,
                           CivilizationDisplayPreferences politiesPreferences) {
 
+        boolean isCenter = record.isCenter()
+                && centerStar != null
+                && !centerStar.isBlank()
+                && centerStar.equalsIgnoreCase(record.getStarName());
+
         Node starNode = createStar(
                 record,
+                isCenter,
                 colorPalette,
                 starDisplayPreferences,
                 politiesPreferences,
@@ -543,6 +549,7 @@ public class StarPlotManager {
      * @return the star to plot
      */
     private @NotNull Node createStar(@NotNull StarDisplayRecord record,
+                                     boolean isCenter,
                                      @NotNull ColorPalette colorPalette,
                                      StarDisplayPreferences starDisplayPreferences,
                                      CivilizationDisplayPreferences politiesPreferences,
@@ -552,7 +559,7 @@ public class StarPlotManager {
         Node star = drawStellarObject(
                 record,
                 colorPalette,
-                record.isCenter(),
+                isCenter,
                 labelsOn,
                 politiesOn,
                 starDisplayPreferences,

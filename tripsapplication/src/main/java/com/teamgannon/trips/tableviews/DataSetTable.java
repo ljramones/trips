@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,10 @@ import org.apache.commons.collections4.MapUtils;
 import org.jetbrains.annotations.NotNull;
 
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -134,6 +139,10 @@ public class DataSetTable {
         addButton.setText("Add Entry");
         addButton.setOnAction(event -> addNewDataEntry());
 
+        Button exportButton = new Button();
+        exportButton.setText("Export Page CSV");
+        exportButton.setOnAction(event -> exportCurrentPageCsv());
+
         Button cancelButton = new Button();
         cancelButton.setText("Cancel");
         cancelButton.setOnAction(event -> window.hide());
@@ -146,6 +155,8 @@ public class DataSetTable {
                 lastButton,
                 new Separator(),
                 addButton,
+                new Separator(),
+                exportButton,
                 new Separator(),
                 cancelButton);
 
@@ -433,6 +444,79 @@ public class DataSetTable {
      */
     private void resetList() {
         starObjects = new ArrayList<>(astrographicObjectMap.values());
+    }
+
+    private void exportCurrentPageCsv() {
+        if (tableView.getItems().isEmpty()) {
+            showErrorAlert("Export CSV", "No rows on this page to export.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Page to CSV");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setInitialFileName(dataSetName + "-page-" + pageNumber + ".csv");
+
+        File file = fileChooser.showSaveDialog(window);
+        if (file == null) {
+            return;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(String.join(",",
+                    "Display Name",
+                    "Distance (LY)",
+                    "Spectra",
+                    "Radius",
+                    "RA",
+                    "Declination",
+                    "Parallax",
+                    "X",
+                    "Y",
+                    "Z",
+                    "Real",
+                    "Comment"));
+            writer.newLine();
+
+            for (StarEditRecord record : tableView.getItems()) {
+                writer.write(String.join(",",
+                        csvCell(record.getDisplayName()),
+                        csvCell(record.getDistanceToEarth()),
+                        csvCell(record.getSpectra()),
+                        csvCell(record.getRadius()),
+                        csvCell(record.getRa()),
+                        csvCell(record.getDeclination()),
+                        csvCell(record.getParallax()),
+                        csvCell(record.getXCoord()),
+                        csvCell(record.getYCoord()),
+                        csvCell(record.getZCoord()),
+                        csvCell(record.isReal()),
+                        csvCell(record.getComment())));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            log.error("Failed to export CSV: {}", e.getMessage());
+            showErrorAlert("Export CSV", "Failed to export CSV: " + e.getMessage());
+        }
+    }
+
+    private String csvCell(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        if (escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n")) {
+            return "\"" + escaped + "\"";
+        }
+        return escaped;
+    }
+
+    private String csvCell(Double value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private String csvCell(Boolean value) {
+        return value == null ? "" : value.toString();
     }
 
 

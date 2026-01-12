@@ -190,6 +190,12 @@ public interface StarObjectRepository
 
     StarObject findByGaiaEDR3CatIdAndDataSetName(String gaiaEdr3Id, String dataSetName);
 
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 "
+            + "AND ((s.gaiaDR3CatId is not null and s.gaiaDR3CatId <> '') "
+            + "OR (s.hipCatId is not null and s.hipCatId <> '') "
+            + "OR (s.catalogIdList is not null and s.catalogIdList <> ''))")
+    Page<StarObject> findMissingDistanceWithIds(@Param("dataSetName") String dataSetName, Pageable pageable);
+
 
 
 }

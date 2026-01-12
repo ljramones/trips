@@ -64,14 +64,7 @@ public class DataSetPanel extends BasePane {
         applyLabelStyle(rowLabel);
         spaceSeparator.setMinSize(50, 1);
 
-        for (DataSetDescriptor dataset : datasets.values()) {
-            datasetChoiceBox.getItems().add(dataset.getDataSetName());
-        }
-
-        if (searchContext.getDataSetContext().isValidDescriptor()) {
-            datasetChoiceBox.setValue(searchContext.getDataSetDescriptor().getDataSetName());
-            searchContext.getAstroSearchQuery().setDescriptor(searchContext.getDataSetDescriptor());
-        }
+        refreshDatasetChoices();
         datasetChoiceBox.getSelectionModel()
                 .selectedItemProperty()
                 .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> setNewDataSet(newValue));
@@ -115,6 +108,19 @@ public class DataSetPanel extends BasePane {
     public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         datasets.put(dataSetDescriptor.getDataSetName(), dataSetDescriptor);
         datasetChoiceBox.getItems().add(dataSetDescriptor.getDataSetName());
+    }
+
+    public void refreshDatasetChoices() {
+        datasetChoiceBox.getItems().clear();
+        for (DataSetDescriptor dataset : datasets.values()) {
+            datasetChoiceBox.getItems().add(dataset.getDataSetName());
+        }
+        if (searchContext.getDataSetContext().isValidDescriptor()) {
+            datasetChoiceBox.setValue(searchContext.getDataSetDescriptor().getDataSetName());
+            searchContext.getAstroSearchQuery().setDescriptor(searchContext.getDataSetDescriptor());
+        } else if (!datasetChoiceBox.getItems().isEmpty()) {
+            datasetChoiceBox.getSelectionModel().selectFirst();
+        }
     }
 
     public void removeDataset(DataSetDescriptor dataSetDescriptor) {

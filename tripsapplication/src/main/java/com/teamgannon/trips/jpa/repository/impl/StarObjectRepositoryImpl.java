@@ -126,6 +126,12 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         predicates.add(cb.lessThanOrEqualTo(root.get("distance"), astroSearchQuery.getUpperDistanceLimit()));
 
         predicates.add(cb.greaterThanOrEqualTo(root.get("distance"), astroSearchQuery.getLowerDistanceLimit()));
+        if (astroSearchQuery.getUpperDistanceLimit() > 0) {
+            Predicate nonZeroDistance = cb.greaterThan(root.get("distance"), 0.0);
+            Predicate solByDisplayName = cb.equal(root.get("displayName"), "Sol");
+            Predicate solByCommonName = cb.equal(root.get("commonName"), "Sol");
+            predicates.add(cb.or(nonZeroDistance, solByDisplayName, solByCommonName));
+        }
 
         // make a stellar spectral class query
         Set<StellarType> stellarSet = astroSearchQuery.getStellarTypes();

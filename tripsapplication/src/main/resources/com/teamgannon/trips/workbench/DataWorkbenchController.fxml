@@ -39,9 +39,18 @@
                             <Button onAction="#onAddSource" text="Add Source..."/>
                             <Button onAction="#onRemoveSource" text="Remove"/>
                             <Button onAction="#onDownloadSource" text="Download"/>
+                            <Button onAction="#onConvertHygCsv" text="Convert HYG CSV..."/>
+                            <Button onAction="#onEnrichDistances" text="Enrich Distances (Gaia/HIP)..."/>
+                            <Button onAction="#onEnrichMissingDistancesLive" text="Enrich Missing Distances (Live TAP)..."/>
                             <Button onAction="#onCancelTap" text="Cancel Gaia"/>
                             <Separator orientation="VERTICAL"/>
                             <Button onAction="#onRefreshSources" text="Refresh"/>
+                        </HBox>
+                        <HBox spacing="8.0" alignment="CENTER_LEFT">
+                            <Label text="Live TAP batch size:"/>
+                            <TextField fx:id="liveTapBatchField" prefWidth="80.0"/>
+                            <Label text="Backoff (ms):"/>
+                            <TextField fx:id="liveTapBackoffField" prefWidth="100.0"/>
                         </HBox>
                         <HBox spacing="8.0" alignment="CENTER_LEFT">
                             <Label text="Cache directory:"/>

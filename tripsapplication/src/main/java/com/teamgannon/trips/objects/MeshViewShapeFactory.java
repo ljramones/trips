@@ -3,12 +3,11 @@ package com.teamgannon.trips.objects;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.shape.MeshView;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 
-@Slf4j
 public class MeshViewShapeFactory {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MeshViewShapeFactory.class);
 
     public Group starCentral() {
         try {

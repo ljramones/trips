@@ -391,6 +391,17 @@ public class MainSplitPaneManager {
                         this::getAstrographicObjectsOnQuery,
                         starObjects -> FxThread.runOnFxThread(() -> {
                     if (!starObjects.isEmpty()) {
+                        int sampleSize = Math.min(50, starObjects.size());
+                        for (int i = 0; i < sampleSize; i++) {
+                            StarObject starObject = starObjects.get(i);
+                            log.info("SearchPane sample {}: name={}, distance={}, x={}, y={}, z={}",
+                                    i + 1,
+                                    starObject.getDisplayName(),
+                                    starObject.getDistance(),
+                                    starObject.getX(),
+                                    starObject.getY(),
+                                    starObject.getZ());
+                        }
                         if (showPlot) {
                             plotManager.drawAstrographicData(descriptor,
                                     starObjects,
@@ -638,6 +649,10 @@ public class MainSplitPaneManager {
     @EventListener
     public void onSetContextDataSetEvent(SetContextDataSetEvent event) {
         DataSetDescriptor descriptor = event.getDescriptor();
+        if (descriptor == null) {
+            log.warn("SetContextDataSetEvent received with null descriptor.");
+            return;
+        }
 
         FxThread.runOnFxThread(() -> {
             // clear all the current data

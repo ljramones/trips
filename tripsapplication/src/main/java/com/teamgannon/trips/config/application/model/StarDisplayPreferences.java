@@ -90,6 +90,16 @@ public class StarDisplayPreferences implements Serializable {
                 StellarType.Q,
                 Color.MEDIUMVIOLETRED,
                 1f));
+        starMap.put(StellarType.P, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.P,
+                Color.LIGHTGRAY,
+                1f));
+        starMap.put(StellarType.S, StarDescriptionPreference.createStarDescription(
+                UUID.randomUUID().toString(),
+                StellarType.S,
+                Color.LIGHTGRAY,
+                1f));
     }
 
     public void reset() {
@@ -140,6 +150,18 @@ public class StarDisplayPreferences implements Serializable {
         StarDescriptionPreference qStar = starMap.get(StellarType.Q);
         qStar.setColor(Color.MEDIUMVIOLETRED);
         qStar.setSize(1f);
+
+        StarDescriptionPreference pStar = starMap.get(StellarType.P);
+        if (pStar != null) {
+            pStar.setColor(Color.LIGHTGRAY);
+            pStar.setSize(1f);
+        }
+
+        StarDescriptionPreference sStar = starMap.get(StellarType.S);
+        if (sStar != null) {
+            sStar.setColor(Color.LIGHTGRAY);
+            sStar.setSize(1f);
+        }
     }
 
     /**

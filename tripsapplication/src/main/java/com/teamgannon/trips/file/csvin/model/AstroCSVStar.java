@@ -51,8 +51,12 @@ public class AstroCSVStar {
     private double declination;
     private double pmdec;
 
+    private double parallax;
 
     private double distance;
+    private double x;
+    private double y;
+    private double z;
     private double radialVelocity;
     private String spectralClass;
 
@@ -71,6 +75,7 @@ public class AstroCSVStar {
     private double magv;
     private double magr;
     private double magi;
+    private String absoluteMagnitude;
 
     private String other;
     private String anomaly;
@@ -202,15 +207,37 @@ public class AstroCSVStar {
             astro.setCatalogIdList(catalogIdList);
 
             astro.setSimbadId(simbadId.trim());
+            astro.setGaiaDR2CatId(gaiaDR2CatId == null ? "" : gaiaDR2CatId.trim());
+            astro.setGaiaDR3CatId(gaiaDR3CatId == null ? "" : gaiaDR3CatId.trim());
+            astro.setGaiaEDR3CatId(gaiaEDR3CatId == null ? "" : gaiaEDR3CatId.trim());
             astro.setRadius(parseDouble(radius.trim()));
             astro.setRa(ra);
             astro.setDeclination(declination);
             astro.setPmra(pmra);
             astro.setPmdec(pmdec);
             astro.setDistance(distance);
+            astro.setParallax(parallax);
+            if (astro.getDistance() <= 0 && parallax > 0) {
+                astro.setDistance(calculateDistanceFromParallax(parallax));
+            }
+            if (hasCoordinates()) {
+                astro.setX(x);
+                astro.setY(y);
+                astro.setZ(z);
+                if (astro.getDistance() <= 0) {
+                    astro.setDistance(calculateDistanceFromCoords(x, y, z));
+                }
+            } else {
+                setCoordinatesFromRaDec(astro, ra, declination, distance);
+            }
             astro.setRadialVelocity(radialVelocity);
-            astro.setSpectralClass(spectralClass.trim());
-            astro.setOrthoSpectralClass(getOrthoSpectralClass(spectralClass.trim().substring(0,1)));
+            String spectralValue = spectralClass == null ? "" : spectralClass.trim();
+            astro.setSpectralClass(spectralValue);
+            if (!spectralValue.isEmpty()) {
+                astro.setOrthoSpectralClass(getOrthoSpectralClass(spectralValue.substring(0, 1)));
+            } else {
+                astro.setOrthoSpectralClass("M");
+            }
 
             astro.setTemperature(parseDouble(temperature.trim()));
             astro.setRealStar(Boolean.parseBoolean(realStar.trim()));
@@ -226,6 +253,11 @@ public class AstroCSVStar {
             astro.setMagv(magv);
             astro.setMagr(magr);
             astro.setMagi(magi);
+            if (absoluteMagnitude != null) {
+                astro.setAbsoluteMagnitude(absoluteMagnitude.trim());
+            } else {
+                astro.setAbsoluteMagnitude("");
+            }
 
             astro.setOther(Boolean.parseBoolean(other.trim()));
             astro.setAnomaly(Boolean.parseBoolean(anomaly.trim()));
@@ -309,6 +341,37 @@ public class AstroCSVStar {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    private boolean hasCoordinates() {
+        return x != 0.0 || y != 0.0 || z != 0.0;
+    }
+
+    private void setCoordinatesFromRaDec(StarObject astro, double raDeg, double decDeg, double distance) {
+        if (distance <= 0) {
+            return;
+        }
+        double raRad = Math.toRadians(raDeg);
+        double decRad = Math.toRadians(decDeg);
+        double cosDec = Math.cos(decRad);
+        double x = distance * cosDec * Math.cos(raRad);
+        double y = distance * cosDec * Math.sin(raRad);
+        double z = distance * Math.sin(decRad);
+        astro.setX(x);
+        astro.setY(y);
+        astro.setZ(z);
+    }
+
+    private double calculateDistanceFromCoords(double x, double y, double z) {
+        return Math.sqrt((x * x) + (y * y) + (z * z));
+    }
+
+    private double calculateDistanceFromParallax(double parallaxMas) {
+        if (parallaxMas <= 0) {
+            return 0.0;
+        }
+        double distanceParsecs = 1000.0 / parallaxMas;
+        return distanceParsecs * 3.26156;
     }
 
 }

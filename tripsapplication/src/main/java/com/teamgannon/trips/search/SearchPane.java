@@ -130,6 +130,14 @@ public class SearchPane extends VBox {
         d2EarthSlider.setDataSetDescriptor(descriptor);
     }
 
+    public void refreshDataSets() {
+        dataSetChoicePanel.refreshDatasetChoices();
+        DataSetDescriptor descriptor = dataSetChoicePanel.getSelected();
+        if (descriptor != null) {
+            d2EarthSlider.setDataSetDescriptor(descriptor);
+        }
+    }
+
 
     public void updateDataContext(@NotNull DataSetDescriptor dataSetDescriptor) {
         dataSetChoicePanel.updateDataContext(dataSetDescriptor);

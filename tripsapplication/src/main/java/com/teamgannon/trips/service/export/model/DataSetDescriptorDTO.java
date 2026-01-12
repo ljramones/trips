@@ -114,4 +114,16 @@ public class DataSetDescriptorDTO {
         return descriptor;
     }
 
+    public void setRoutesStr(String routesStr) {
+        this.routesStr = routesStr;
+    }
+
+    public void setCustomDataDefsStr(String customDataDefsStr) {
+        this.customDataDefsStr = customDataDefsStr;
+    }
+
+    public void setCustomDataValuesStr(String customDataValuesStr) {
+        this.customDataValuesStr = customDataValuesStr;
+    }
+
 }

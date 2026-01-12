@@ -36,6 +36,7 @@ public class StarService {
     private EntityManager entityManager;
 
     private static final int MAX_REQUEST_SIZE = 9999;
+    private static final int MAX_PLOT_STARS = 2000;
 
     private final StarObjectRepository starObjectRepository;
 
@@ -58,10 +59,18 @@ public class StarService {
     public List<StarObject> runNativeQuery(String queryToRun) {
         Query query = entityManager.createNativeQuery(queryToRun, StarObject.class);
         List<StarObject> starObjects = query.getResultList();
-        for (StarObject starObject : starObjects) {
-            log.info(starObject.toString());
+        int sampleSize = Math.min(50, starObjects.size());
+        for (int i = 0; i < sampleSize; i++) {
+            StarObject starObject = starObjects.get(i);
+            log.info("Advanced query sample {}: name={}, distance={}, x={}, y={}, z={}",
+                    i + 1,
+                    starObject.getDisplayName(),
+                    starObject.getDistance(),
+                    starObject.getX(),
+                    starObject.getY(),
+                    starObject.getZ());
         }
-        log.info("number of elements=" + starObjects.size());
+        log.info("number of elements={}", starObjects.size());
         return starObjects;
     }
 
@@ -94,6 +103,7 @@ public class StarService {
         checkInterrupted();
         log.info("New DB Query returns {} stars", starObjects.size());
         starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        starObjects = limitStarObjectsByDistance(starObjects, searchQuery.getCenterCoordinates());
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
         return starObjects;
     }
@@ -120,6 +130,7 @@ public class StarService {
         checkInterrupted();
         log.info("New DB Query returns {} stars", starObjects.size());
         starDistances = filterByDistanceIncludeDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
+        starDistances = limitStarDistances(starDistances);
         log.info("Filtered by distance Query returns {} stars", starObjects.size());
         return starDistances;
     }
@@ -149,10 +160,7 @@ public class StarService {
         starObjects.forEach(object -> {
             checkInterrupted();
             try {
-                double[] starPosition = new double[3];
-                starPosition[0] = object.getX();
-                starPosition[1] = object.getY();
-                starPosition[2] = object.getZ();
+                double[] starPosition = object.getCoordinates();
                 if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
                     filterList.add(object);
                 }
@@ -172,10 +180,7 @@ public class StarService {
         starObjects.forEach(object -> {
             checkInterrupted();
             try {
-                double[] starPosition = new double[3];
-                starPosition[0] = object.getX();
-                starPosition[1] = object.getY();
-                starPosition[2] = object.getZ();
+                double[] starPosition = object.getCoordinates();
                 double distance = StarMath.getDistance(centerCoordinates, starPosition);
                 if (!(distance >= distanceFromCenterStar)) {
                     StarDistances starDistance = new StarDistances(object, distance);
@@ -192,6 +197,38 @@ public class StarService {
         if (Thread.currentThread().isInterrupted()) {
             throw new CancellationException("Task cancelled.");
         }
+    }
+
+    private @NotNull List<StarObject> limitStarObjectsByDistance(@NotNull List<StarObject> starObjects,
+                                                                 double[] centerCoordinates) {
+        if (starObjects.size() <= MAX_PLOT_STARS) {
+            return starObjects;
+        }
+        List<StarDistances> distances = new ArrayList<>(starObjects.size());
+        for (StarObject object : starObjects) {
+            double[] starPosition = new double[]{object.getX(), object.getY(), object.getZ()};
+            distances.add(new StarDistances(object, StarMath.getDistance(centerCoordinates, starPosition)));
+        }
+        distances.sort(Comparator.comparingDouble(StarDistances::getDistance));
+        List<StarObject> limited = new ArrayList<>(MAX_PLOT_STARS);
+        for (int i = 0; i < MAX_PLOT_STARS; i++) {
+            limited.add(distances.get(i).getStarObject());
+        }
+        log.warn("Plot limit reached: trimmed {} stars down to {}", starObjects.size(), MAX_PLOT_STARS);
+        return limited;
+    }
+
+    private @NotNull List<StarDistances> limitStarDistances(@NotNull List<StarDistances> starDistances) {
+        if (starDistances.size() <= MAX_PLOT_STARS) {
+            return starDistances;
+        }
+        starDistances.sort(Comparator.comparingDouble(StarDistances::getDistance));
+        List<StarDistances> limited = new ArrayList<>(MAX_PLOT_STARS);
+        for (int i = 0; i < MAX_PLOT_STARS; i++) {
+            limited.add(starDistances.get(i));
+        }
+        log.warn("Plot limit reached: trimmed {} stars down to {}", starDistances.size(), MAX_PLOT_STARS);
+        return limited;
     }
 
 
@@ -366,6 +403,17 @@ public class StarService {
     @Transactional
     public void starBulkSave(@NotNull Set<StarObject> starSet) {
         starObjectRepository.saveAll(starSet);
+    }
+
+    @TrackExecutionTime
+    @Transactional
+    public void updateStars(@NotNull List<StarObject> starObjects) {
+        starObjectRepository.saveAll(starObjects);
+    }
+
+    @TrackExecutionTime
+    public Page<StarObject> findMissingDistanceWithIds(@NotNull String dataSetName, @NotNull Pageable pageable) {
+        return starObjectRepository.findMissingDistanceWithIds(dataSetName, pageable);
     }
 
     /**

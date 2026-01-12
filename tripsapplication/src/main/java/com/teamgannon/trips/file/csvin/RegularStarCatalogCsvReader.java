@@ -133,26 +133,23 @@ public class RegularStarCatalogCsvReader {
             loadStats.incLoopCounter();
             AstroCSVStar star = parseAstroCSVStar(loadStats.getDataSet(), lineRead);
             try {
-
-                // keep track for the max distance
-                double distance = star.getDistance();
-                if (distance > loadStats.getMaxDistance()) {
-                    loadStats.setMaxDistance(distance);
-                }
-            } catch (NumberFormatException nfe) {
-                log.error("Error getting distance for {})", star.getDisplayName());
-            }
-            try {
                 StarObject starObject = star.toStarObject();
                 if (starObject != null) {
                     starObject.setDataSetName(loadStats.getDataSet().getName());
 
-                    // calculate the equatorial XYZ coordinates and replace the read in values from the star data in file
-                    double[] coordinates = calculateEquatorialCoordinates(starObject.getRa(), starObject.getDeclination(), starObject.getDistance());
-                    // replace the star values
-                    starObject.setX(coordinates[0]);
-                    starObject.setY(coordinates[1]);
-                    starObject.setZ(coordinates[2]);
+                    if (starObject.getX() == 0.0 && starObject.getY() == 0.0 && starObject.getZ() == 0.0) {
+                        // calculate the equatorial XYZ coordinates and replace the read in values from the star data in file
+                        double[] coordinates = calculateEquatorialCoordinates(starObject.getRa(), starObject.getDeclination(), starObject.getDistance());
+                        // replace the star values
+                        starObject.setX(coordinates[0]);
+                        starObject.setY(coordinates[1]);
+                        starObject.setZ(coordinates[2]);
+                    }
+                    if (loadStats.getTotalCount() < 5) {
+                        log.info("CSV import sample: name={}, ra={}, dec={}, dist={}, x={}, y={}, z={}",
+                                starObject.getDisplayName(), starObject.getRa(), starObject.getDeclination(),
+                                starObject.getDistance(), starObject.getX(), starObject.getY(), starObject.getZ());
+                    }
 
                     double[] galacticCoordinates = equatorialToGalactic(starObject.getRa(), starObject.getDeclination());
                     starObject.setGalacticLong(galacticCoordinates[0]);
@@ -160,6 +157,11 @@ public class RegularStarCatalogCsvReader {
 
                     astroCSVStarSet.add(starObject);
                     loadStats.getCsvFile().incAccepts();
+
+                    double distance = starObject.getDistance();
+                    if (distance > loadStats.getMaxDistance()) {
+                        loadStats.setMaxDistance(distance);
+                    }
 
                     log.debug("setting catalog ids for star {}", starObject.getDisplayName());
                     // pull catalog ids
@@ -179,6 +181,14 @@ public class RegularStarCatalogCsvReader {
     }
 
     private AstroCSVStar parseAstroCSVStar(@NotNull Dataset dataset, String[] lineRead) {
+        boolean hasAbsMag = lineRead.length >= 58;
+        String absMagValue = hasAbsMag ? testForNull(lineRead, 56, "") : "";
+        String gaiaDr3Value = hasAbsMag ? testForNull(lineRead, 57, "") : testForNull(lineRead, 56, "");
+        String xValue = lineRead.length >= 61 ? testForNull(lineRead, 58, "") : "";
+        String yValue = lineRead.length >= 61 ? testForNull(lineRead, 59, "") : "";
+        String zValue = lineRead.length >= 61 ? testForNull(lineRead, 60, "") : "";
+        String parallaxValue = lineRead.length >= 62 ? testForNull(lineRead, 61, "0") : "0";
+
         return AstroCSVStar
                 .builder()
                 // skip id lineRead[0]
@@ -200,6 +210,7 @@ public class RegularStarCatalogCsvReader {
                 .declination(parseDouble(testForNull(lineRead, 15, "0")))
                 .pmra(parseDouble(testForNull(lineRead, 16, "0")))
                 .pmdec(parseDouble(testForNull(lineRead, 17, "0")))
+                .parallax(parseDouble(parallaxValue))
                 .distance(parseDouble(testForNull(lineRead, 18, "0")))
                 .radialVelocity(parseDouble(testForNull(lineRead, 19, "")))
                 .spectralClass(testForNull(lineRead, 20, ""))
@@ -214,6 +225,7 @@ public class RegularStarCatalogCsvReader {
                 .magv(parseDouble(testForNull(lineRead, 29, "0")))
                 .magr(parseDouble(testForNull(lineRead, 30, "0")))
                 .magi(parseDouble(testForNull(lineRead, 31, "0")))
+                .absoluteMagnitude(absMagValue)
                 .other(testForNull(lineRead, 32, "false"))
                 .anomaly(testForNull(lineRead, 33, "false"))
                 .polity(testForNull(lineRead, 34, "NA"))
@@ -238,6 +250,10 @@ public class RegularStarCatalogCsvReader {
                 .miscNum4(parseDouble(testForNull(lineRead, 53, "0")))
                 .miscNum5(parseDouble(testForNull(lineRead, 54, "0")))
                 .numExoplanets(parseInt(testForNull(lineRead, 55, "0")))
+                .gaiaDR3CatId(gaiaDr3Value)
+                .x(parseDouble(xValue))
+                .y(parseDouble(yValue))
+                .z(parseDouble(zValue))
                 .build();
     }
 

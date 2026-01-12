@@ -171,7 +171,7 @@ public class StarObject implements Serializable {
      * validated by the BayerChecker based on greek letter for first part
      * and genitive form of the constellation for the second part
      * <p>
-     * this is dervied form catalog ids or directly, not read in
+     * this is derived from catalog ids or directly, not read in
      */
     private String bayerCatId = "";
 
@@ -260,6 +260,7 @@ public class StarObject implements Serializable {
      * <p>
      * this is calculated directly from RA, dec and distance
      */
+    @Column(name = "x")
     private double x = 0.0;
 
     /**
@@ -268,6 +269,7 @@ public class StarObject implements Serializable {
      * <p>
      * this is calculated directly from RA, dec and distance
      */
+    @Column(name = "y")
     private double y = 0.0;
 
     /**
@@ -275,6 +277,7 @@ public class StarObject implements Serializable {
      * <p>
      * this is calculated directly from RA, dec and distance
      */
+    @Column(name = "z")
     private double z = 0.0;
 
     /**
@@ -675,13 +678,42 @@ public class StarObject implements Serializable {
         this.catalogIdList = catalogIdList;
     }
 
-    public double[] getCoordinates() {
-        double[] coordinates = new double[3];
-        coordinates[0] = x;
-        coordinates[1] = y;
-        coordinates[2] = z;
+    @PrePersist
+    @PreUpdate
+    private void ensureCoordinates() {
+        if (x == 0.0 && y == 0.0 && z == 0.0 && distance > 0) {
+            double[] computed = com.teamgannon.trips.astrogation.Coordinates
+                    .calculateEquatorialCoordinates(ra, declination, distance);
+            x = computed[0];
+            y = computed[1];
+            z = computed[2];
+        }
+    }
 
-        return coordinates;
+    public double getX() {
+        getCoordinates();
+        return x;
+    }
+
+    public double getY() {
+        getCoordinates();
+        return y;
+    }
+
+    public double getZ() {
+        getCoordinates();
+        return z;
+    }
+
+    public double[] getCoordinates() {
+        if (x == 0.0 && y == 0.0 && z == 0.0 && distance > 0) {
+            double[] computed = com.teamgannon.trips.astrogation.Coordinates
+                    .calculateEquatorialCoordinates(ra, declination, distance);
+            x = computed[0];
+            y = computed[1];
+            z = computed[2];
+        }
+        return new double[]{x, y, z};
     }
 
     public void setCoordinates(double[] coordinates) {
@@ -948,7 +980,7 @@ public class StarObject implements Serializable {
         SparseStarRecord sparseStarRecord = new SparseStarRecord();
         sparseStarRecord.setRecordId(this.id);
         sparseStarRecord.setStarName(this.getDisplayName());
-        sparseStarRecord.setActualCoordinates(new double[]{x, y, z});
+        sparseStarRecord.setActualCoordinates(getCoordinates());
         return sparseStarRecord;
     }
 

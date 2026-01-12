@@ -817,6 +817,7 @@ public class MainPane  {
             log.error("There aren't any datasets so don't show");
             showErrorAlert("Search Query", "There aren't any datasets to search on.\nPlease import one first");
         } else {
+            queryDialog.refreshDataSets();
             queryDialog.setOnShown(event -> {
 
                 //Values from screen
@@ -1042,7 +1043,22 @@ public class MainPane  {
             FindResults findResults = optional.get();
             if (findResults.isSelected()) {
                 StarDisplayRecord record = findResults.getRecord();
+                if (record == null) {
+                    log.warn("Edit star requested but no record was selected.");
+                    showErrorAlert("Edit Star", "No star was selected to edit.");
+                    return;
+                }
+                if (record.getRecordId() == null || record.getRecordId().isEmpty()) {
+                    log.warn("Edit star requested but recordId was empty for {}", record.getStarName());
+                    showErrorAlert("Edit Star", "Selected star has no record id.");
+                    return;
+                }
                 StarObject starObject = starService.getStar(record.getRecordId());
+                if (starObject == null) {
+                    log.warn("Edit star requested but star record {} was not found.", record.getRecordId());
+                    showErrorAlert("Edit Star", "Selected star could not be loaded.");
+                    return;
+                }
                 StarEditDialog starEditDialog = new StarEditDialog(starObject);
 
                 Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
