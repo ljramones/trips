@@ -196,6 +196,9 @@ public interface StarObjectRepository
             + "OR (s.catalogIdList is not null and s.catalogIdList <> ''))")
     Page<StarObject> findMissingDistanceWithIds(@Param("dataSetName") String dataSetName, Pageable pageable);
 
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0")
+    long countMissingDistance(@Param("dataSetName") String dataSetName);
+
 
 
 }

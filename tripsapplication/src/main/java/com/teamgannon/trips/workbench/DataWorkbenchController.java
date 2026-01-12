@@ -1953,6 +1953,7 @@ public class DataWorkbenchController {
         int pageSize = Math.max(batchSize * 4, 200);
         int pageIndex = 0;
         long updated = 0;
+        long processed = 0;
         while (true) {
             Page<StarObject> page = starService.findMissingDistanceWithIds(dataSetName, PageRequest.of(pageIndex, pageSize));
             if (!page.hasContent()) {
@@ -2101,6 +2102,14 @@ public class DataWorkbenchController {
                 updateStatus("Live TAP enrichment: updated " + updated + " stars");
                 log.info("Live TAP enrichment: page {} saved {}, total updated {}",
                         pageNumber, updatedStars.size(), updated);
+            }
+            processed += candidates.size();
+            if (processed % 1000 == 0 || updatedStars.size() > 0) {
+                long remaining = starService.countMissingDistance(dataSetName);
+                log.info("Live TAP enrichment: processed {}, remaining missing distance {}",
+                        processed, remaining);
+                updateStatus("Live TAP enrichment: updated " + updated
+                        + " stars, remaining missing distance " + remaining);
             }
             pageIndex++;
             if (!page.hasNext()) {

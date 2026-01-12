@@ -416,6 +416,11 @@ public class StarService {
         return starObjectRepository.findMissingDistanceWithIds(dataSetName, pageable);
     }
 
+    @TrackExecutionTime
+    public long countMissingDistance(@NotNull String dataSetName) {
+        return starObjectRepository.countMissingDistance(dataSetName);
+    }
+
     /**
      * find a set of stars that match our search term
      *
