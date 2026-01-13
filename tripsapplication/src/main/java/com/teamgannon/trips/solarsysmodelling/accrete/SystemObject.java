@@ -74,6 +74,27 @@ public abstract class SystemObject {
     protected double eccentricity;
     protected double inclination;
 
+    /**
+     * @return the semi-major axis in AU
+     */
+    public double getSma() {
+        return sma;
+    }
+
+    /**
+     * @return the orbital eccentricity
+     */
+    public double getEccentricity() {
+        return eccentricity;
+    }
+
+    /**
+     * @return the orbital inclination in degrees
+     */
+    public double getInclination() {
+        return inclination;
+    }
+
     public static double massInKg(double mass) {
         return mass * SUN_MASS;
     }

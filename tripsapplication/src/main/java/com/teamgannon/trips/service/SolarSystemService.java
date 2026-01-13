@@ -9,6 +9,7 @@ import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
 import com.teamgannon.trips.solarsysmodelling.habitable.HabitableZoneCalculator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service for managing solar systems and their contents.
@@ -535,6 +537,174 @@ public class SolarSystemService {
 
         solarSystem.setHasHabitableZonePlanets(hasHZPlanets);
         solarSystemRepository.save(solarSystem);
+    }
+
+    // ==================== Generated Planet Persistence ====================
+
+    /**
+     * Save generated planets from ACCRETE simulation to the database.
+     * Creates or updates the SolarSystem entity and converts all ACCRETE Planet
+     * objects to ExoPlanet JPA entities.
+     *
+     * @param sourceStar the star for which planets were generated
+     * @param planets    the list of generated ACCRETE Planet objects
+     * @return the number of planets saved
+     */
+    @Transactional
+    public int saveGeneratedPlanets(StarObject sourceStar, List<Planet> planets) {
+        if (sourceStar == null || planets == null || planets.isEmpty()) {
+            log.warn("Cannot save generated planets: source star or planets list is null/empty");
+            return 0;
+        }
+
+        // Find or create the solar system for this star
+        SolarSystem solarSystem = findOrCreateSolarSystem(sourceStar);
+
+        // Delete any existing generated planets for this system
+        // (in case user regenerates for the same star)
+        List<ExoPlanet> existingPlanets = exoPlanetRepository.findBySolarSystemId(solarSystem.getId());
+        for (ExoPlanet existing : existingPlanets) {
+            // Only delete planets that were generated (detected as "Simulated")
+            if ("Simulated".equals(existing.getDetectionType())) {
+                exoPlanetRepository.delete(existing);
+            }
+        }
+
+        // Convert and save each generated planet
+        int savedCount = 0;
+        int planetIndex = 1;
+        for (Planet planet : planets) {
+            ExoPlanet exoPlanet = convertAccretePlanetToExoPlanet(
+                    planet,
+                    sourceStar,
+                    solarSystem.getId(),
+                    planetIndex++
+            );
+            exoPlanetRepository.save(exoPlanet);
+            savedCount++;
+
+            log.debug("Saved generated planet: {} (SMA={} AU, Mass={} Earth masses)",
+                    exoPlanet.getName(),
+                    exoPlanet.getSemiMajorAxis(),
+                    exoPlanet.getMass());
+        }
+
+        // Update solar system planet count and habitable zone status
+        solarSystem.setPlanetCount((int) exoPlanetRepository.countBySolarSystemId(solarSystem.getId()));
+        updateHabitableZonePlanetStatus(solarSystem);
+        solarSystemRepository.save(solarSystem);
+
+        log.info("Saved {} generated planets for star '{}' (system ID: {})",
+                savedCount, sourceStar.getDisplayName(), solarSystem.getId());
+
+        return savedCount;
+    }
+
+    /**
+     * Convert an ACCRETE Planet object to an ExoPlanet JPA entity.
+     *
+     * @param planet        the ACCRETE planet
+     * @param hostStar      the host star
+     * @param solarSystemId the solar system ID
+     * @param planetIndex   the planet index (for naming)
+     * @return the ExoPlanet entity
+     */
+    private ExoPlanet convertAccretePlanetToExoPlanet(Planet planet,
+                                                      StarObject hostStar,
+                                                      String solarSystemId,
+                                                      int planetIndex) {
+        ExoPlanet exoPlanet = new ExoPlanet();
+        exoPlanet.setId(UUID.randomUUID().toString());
+
+        // Generate planet name using standard convention (star name + letter)
+        String planetLetter = getPlanetLetter(planetIndex);
+        String starName = hostStar.getDisplayName();
+        exoPlanet.setName(starName + " " + planetLetter);
+
+        // Link to solar system and host star
+        exoPlanet.setSolarSystemId(solarSystemId);
+        exoPlanet.setHostStarId(hostStar.getId());
+        exoPlanet.setStarName(starName);
+
+        // Mark as simulated
+        exoPlanet.setPlanetStatus("Simulated");
+        exoPlanet.setDetectionType("Simulated");
+
+        // Orbital parameters (SMA is already in AU)
+        exoPlanet.setSemiMajorAxis(planet.getSma());
+        exoPlanet.setEccentricity(planet.getEccentricity());
+
+        // Orbital period: convert from seconds to days
+        double orbitalPeriodDays = planet.getOrbitalPeriod() / (24.0 * 3600.0);
+        exoPlanet.setOrbitalPeriod(orbitalPeriodDays);
+
+        // Mass: convert from solar masses to Earth masses
+        double massEarth = planet.massInEarthMasses();
+        exoPlanet.setMass(massEarth);
+
+        // Radius: convert from km to Earth radii
+        // Earth radius is about 6371 km
+        double radiusEarth = planet.getRadius() / 6371.0;
+        exoPlanet.setRadius(radiusEarth);
+
+        // Temperature (surface temperature in Kelvin)
+        if (planet.getSurfaceTemperature() > 0 && planet.getSurfaceTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setTempCalculated(planet.getSurfaceTemperature());
+        } else if (planet.getEstimatedTemperature() > 0) {
+            exoPlanet.setTempCalculated(planet.getEstimatedTemperature());
+        }
+
+        // Surface gravity (log g)
+        if (planet.getSurfaceGravity() > 0 && planet.getSurfaceGravity() < Double.MAX_VALUE) {
+            // Convert Earth gravities to log g (log10 of cm/s^2)
+            // Earth surface gravity is 980.665 cm/s^2 = log g of ~2.99
+            double surfaceGravityCmS2 = planet.getSurfaceGravity() * 980.665;
+            exoPlanet.setLogG(Math.log10(surfaceGravityCmS2));
+        }
+
+        // Inclination: use axial tilt as a proxy (actual orbital inclination not tracked in ACCRETE)
+        if (planet.getAxialTilt() > 0) {
+            exoPlanet.setInclination(planet.getAxialTilt());
+        }
+
+        // Copy star properties
+        exoPlanet.setRa(hostStar.getRa());
+        exoPlanet.setDec(hostStar.getDeclination());
+        exoPlanet.setStarDistance(hostStar.getDistance());
+        exoPlanet.setStarSpType(hostStar.getSpectralClass());
+
+        // Copy star mass and radius (already doubles)
+        double starMass = hostStar.getMass();
+        if (starMass > 0) {
+            exoPlanet.setStarMass(starMass);
+        }
+
+        double starRadius = hostStar.getRadius();
+        if (starRadius > 0) {
+            exoPlanet.setStarRadius(starRadius);
+        }
+
+        return exoPlanet;
+    }
+
+    /**
+     * Get the planet letter designation (b, c, d, ..., z, aa, ab, ...).
+     * Uses lowercase letters starting from 'b' (as is convention for exoplanets,
+     * where 'a' is reserved for the star).
+     *
+     * @param planetIndex the 1-based planet index
+     * @return the letter designation
+     */
+    private String getPlanetLetter(int planetIndex) {
+        if (planetIndex <= 25) {
+            // b through z (index 1 = 'b', index 25 = 'z')
+            return String.valueOf((char) ('a' + planetIndex));
+        } else {
+            // For more than 25 planets, use aa, ab, ac, etc.
+            int first = (planetIndex - 26) / 26;
+            int second = (planetIndex - 26) % 26;
+            return String.valueOf((char) ('a' + first)) + (char) ('a' + second);
+        }
     }
 
 }

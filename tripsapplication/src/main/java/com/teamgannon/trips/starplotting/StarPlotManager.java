@@ -18,6 +18,7 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.measure.TrackExecutionTime;
+import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
@@ -31,6 +32,7 @@ import com.teamgannon.trips.solarsystem.PlanetDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
+import com.teamgannon.trips.solarsystem.SolarSystemSaveResult;
 import javafx.animation.RotateTransition;
 import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
@@ -112,6 +114,11 @@ public class StarPlotManager {
      * to make database changes
      */
     private final StarService starService;
+
+    /**
+     * to manage solar systems and planet persistence
+     */
+    private final SolarSystemService solarSystemService;
 
     /**
      * the report generator
@@ -223,6 +230,7 @@ public class StarPlotManager {
                            RouteManager routeManager,
                            StarMeasurementService starMeasurementService,
                            StarService starService,
+                           SolarSystemService solarSystemService,
                            ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
@@ -230,6 +238,7 @@ public class StarPlotManager {
         this.routeManager = routeManager;
         this.starMeasurementService = starMeasurementService;
         this.starService = starService;
+        this.solarSystemService = solarSystemService;
         this.eventPublisher = eventPublisher;
 
         // special graphical objects in MeshView format
@@ -1508,8 +1517,30 @@ public class StarPlotManager {
             report.generateReport();
 
             PlanetDialog planetDialog = new PlanetDialog(report);
-            planetDialog.showAndWait();
+            Optional<SolarSystemSaveResult> resultOptional = planetDialog.showAndWait();
 
+            // Handle save request
+            if (resultOptional.isPresent()) {
+                SolarSystemSaveResult saveResult = resultOptional.get();
+                if (saveResult.isSaveRequested()) {
+                    int savedCount = solarSystemService.saveGeneratedPlanets(
+                            saveResult.getSourceStar(),
+                            saveResult.getPlanets()
+                    );
+                    log.info("Saved {} generated planets to database for star '{}'",
+                            savedCount, starObject.getDisplayName());
+
+                    // Show confirmation to user
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Solar System Saved");
+                    alert.setHeaderText("Generated planets saved successfully");
+                    alert.setContentText(String.format(
+                            "Saved %d planets for %s.\n\n" +
+                            "You can now use 'Enter System' to view the generated solar system.",
+                            savedCount, starObject.getDisplayName()));
+                    alert.showAndWait();
+                }
+            }
         }
     }
 

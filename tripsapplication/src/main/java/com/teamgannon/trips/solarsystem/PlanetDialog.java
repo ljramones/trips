@@ -25,7 +25,7 @@ import java.util.Optional;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 @Slf4j
-public class PlanetDialog extends Dialog<Boolean> {
+public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
 
     private final StarSystem starSystem;
     private final SolarSystemReport solarSystemReport;
@@ -36,9 +36,10 @@ public class PlanetDialog extends Dialog<Boolean> {
 
         this.setTitle("Details of Planetary System " + starSystem.getStarObject().getDisplayName());
         this.setWidth(300);
-        this.setHeight(400);
+        this.setHeight(450);
 
         VBox vBox = new VBox();
+        vBox.setSpacing(10);
         this.getDialogPane().setContent(vBox);
 
         TabPane planetaryTabPane = createPlanetaryTabPane(starSystem.getPlanets());
@@ -54,11 +55,11 @@ public class PlanetDialog extends Dialog<Boolean> {
     }
 
     private void close(WindowEvent windowEvent) {
-        setResult(false);
+        setResult(SolarSystemSaveResult.dismissed());
     }
 
     private void close(ActionEvent actionEvent) {
-        setResult(false);
+        setResult(SolarSystemSaveResult.dismissed());
     }
 
     private HBox createButtonBox() {
@@ -67,16 +68,29 @@ public class PlanetDialog extends Dialog<Boolean> {
         HBox.setMargin(hBox, new Insets(0, 0, 0, 50));
         hBox.setSpacing(10);
 
+        Button saveButton = new Button("Save to Database");
+        saveButton.setOnAction(this::saveToDatabase);
+        saveButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        hBox.getChildren().add(saveButton);
+
         Button reportButton = new Button("Report");
         reportButton.setOnAction(this::showReport);
         hBox.getChildren().add(reportButton);
-
 
         Button cancelButton = new Button("Dismiss");
         cancelButton.setOnAction(this::close);
         hBox.getChildren().add(cancelButton);
 
         return hBox;
+    }
+
+    private void saveToDatabase(ActionEvent actionEvent) {
+        log.info("User requested to save generated solar system to database");
+        SolarSystemSaveResult result = SolarSystemSaveResult.saveRequest(
+                starSystem,
+                solarSystemReport.getSourceStar()
+        );
+        setResult(result);
     }
 
     private void showReport(ActionEvent actionEvent) {
