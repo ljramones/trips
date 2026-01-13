@@ -602,6 +602,8 @@ public class SolarSystemService {
 
     /**
      * Convert an ACCRETE Planet object to an ExoPlanet JPA entity.
+     * Populates all available fields including extended properties for climate,
+     * atmosphere, and habitability.
      *
      * @param planet        the ACCRETE planet
      * @param hostStar      the host star
@@ -630,50 +632,127 @@ public class SolarSystemService {
         exoPlanet.setPlanetStatus("Simulated");
         exoPlanet.setDetectionType("Simulated");
 
-        // Orbital parameters (SMA is already in AU)
+        // --- Basic Orbital Parameters ---
         exoPlanet.setSemiMajorAxis(planet.getSma());
         exoPlanet.setEccentricity(planet.getEccentricity());
+        exoPlanet.setInclination(planet.getInclination());
+        // Note: ACCRETE doesn't generate omega or longitude of ascending node,
+        // so these remain null/default for simulated planets
 
         // Orbital period: convert from seconds to days
         double orbitalPeriodDays = planet.getOrbitalPeriod() / (24.0 * 3600.0);
         exoPlanet.setOrbitalPeriod(orbitalPeriodDays);
 
+        // --- Basic Physical Properties ---
         // Mass: convert from solar masses to Earth masses
-        double massEarth = planet.massInEarthMasses();
-        exoPlanet.setMass(massEarth);
+        exoPlanet.setMass(planet.massInEarthMasses());
 
-        // Radius: convert from km to Earth radii
-        // Earth radius is about 6371 km
-        double radiusEarth = planet.getRadius() / 6371.0;
-        exoPlanet.setRadius(radiusEarth);
+        // Radius: convert from km to Earth radii (Earth radius ~6371 km)
+        exoPlanet.setRadius(planet.getRadius() / 6371.0);
 
-        // Temperature (surface temperature in Kelvin)
+        // --- Planet Type and Classification ---
+        exoPlanet.setPlanetType(planet.planetType());
+        exoPlanet.setOrbitalZone(planet.getOrbitalZone());
+
+        // --- Habitability Flags ---
+        exoPlanet.setHabitable(planet.isHabitable());
+        exoPlanet.setEarthlike(planet.isEarthlike());
+        exoPlanet.setGasGiant(planet.isGasGiant());
+        exoPlanet.setHabitableJovian(planet.isHabitableJovian());
+        exoPlanet.setHabitableMoon(planet.isHabitableMoon());
+        exoPlanet.setGreenhouseEffect(planet.isGreenhouseEffect());
+        exoPlanet.setTidallyLocked(planet.isResonantPeriod());
+
+        // --- Extended Physical Properties ---
+        exoPlanet.setDensity(planet.getDensity());
+        exoPlanet.setCoreRadius(planet.getCoreRadius());
+        exoPlanet.setAxialTilt(planet.getAxialTilt());
+
+        // Day length: convert from seconds to hours
+        if (planet.getDayLength() > 0 && planet.getDayLength() < Double.MAX_VALUE) {
+            exoPlanet.setDayLength(planet.getDayLength() / 3600.0);
+        }
+
+        // Surface gravity (in Earth gravities)
+        if (planet.getSurfaceGravity() > 0 && planet.getSurfaceGravity() < Double.MAX_VALUE) {
+            exoPlanet.setSurfaceGravity(planet.getSurfaceGravity());
+            // Also set log g for catalog compatibility
+            double surfaceGravityCmS2 = planet.getSurfaceGravity() * 980.665;
+            exoPlanet.setLogG(Math.log10(surfaceGravityCmS2));
+        }
+
+        exoPlanet.setSurfaceAcceleration(planet.getSurfaceAcceleration());
+        exoPlanet.setEscapeVelocity(planet.getEscapeVelocity());
+
+        // --- Climate Properties ---
+        exoPlanet.setHydrosphere(planet.getHydrosphere());
+        exoPlanet.setCloudCover(planet.getCloudCover());
+        exoPlanet.setIceCover(planet.getIceCover());
+        exoPlanet.setAlbedo(planet.getAlbedo());
+
+        if (planet.getSurfacePressure() > 0 && planet.getSurfacePressure() < Double.MAX_VALUE) {
+            exoPlanet.setSurfacePressure(planet.getSurfacePressure());
+        }
+
+        if (planet.getVolatileGasInventory() > 0 && planet.getVolatileGasInventory() < Double.MAX_VALUE) {
+            exoPlanet.setVolatileGasInventory(planet.getVolatileGasInventory());
+        }
+
+        // --- Temperature Properties ---
         if (planet.getSurfaceTemperature() > 0 && planet.getSurfaceTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setSurfaceTemperature(planet.getSurfaceTemperature());
             exoPlanet.setTempCalculated(planet.getSurfaceTemperature());
         } else if (planet.getEstimatedTemperature() > 0) {
             exoPlanet.setTempCalculated(planet.getEstimatedTemperature());
         }
 
-        // Surface gravity (log g)
-        if (planet.getSurfaceGravity() > 0 && planet.getSurfaceGravity() < Double.MAX_VALUE) {
-            // Convert Earth gravities to log g (log10 of cm/s^2)
-            // Earth surface gravity is 980.665 cm/s^2 = log g of ~2.99
-            double surfaceGravityCmS2 = planet.getSurfaceGravity() * 980.665;
-            exoPlanet.setLogG(Math.log10(surfaceGravityCmS2));
+        if (planet.getHighTemperature() > 0 && planet.getHighTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setHighTemperature(planet.getHighTemperature());
+        }
+        if (planet.getLowTemperature() > 0 && planet.getLowTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setLowTemperature(planet.getLowTemperature());
+        }
+        if (planet.getMaxTemperature() > 0 && planet.getMaxTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setMaxTemperature(planet.getMaxTemperature());
+        }
+        if (planet.getMinTemperature() > 0 && planet.getMinTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setMinTemperature(planet.getMinTemperature());
+        }
+        if (planet.getBoilingPoint() > 0 && planet.getBoilingPoint() < Double.MAX_VALUE) {
+            exoPlanet.setBoilingPoint(planet.getBoilingPoint());
+        }
+        if (planet.getExosphericTemperature() > 0 && planet.getExosphericTemperature() < Double.MAX_VALUE) {
+            exoPlanet.setExosphericTemperature(planet.getExosphericTemperature());
+        }
+        exoPlanet.setGreenhouseRise(planet.getGreenhouseRise());
+
+        // --- Atmospheric Properties ---
+        if (planet.getMinimumMolecularWeight() > 0 && planet.getMinimumMolecularWeight() < Double.MAX_VALUE) {
+            exoPlanet.setMinimumMolecularWeight(planet.getMinimumMolecularWeight());
         }
 
-        // Inclination: use axial tilt as a proxy (actual orbital inclination not tracked in ACCRETE)
-        if (planet.getAxialTilt() > 0) {
-            exoPlanet.setInclination(planet.getAxialTilt());
+        exoPlanet.setAtmosphereType(planet.atmosphereType());
+
+        // Convert atmosphere composition to string format
+        if (planet.getAtmosphere() != null && !planet.getAtmosphere().isEmpty()) {
+            StringBuilder atmoComp = new StringBuilder();
+            for (var chem : planet.getAtmosphere()) {
+                if (atmoComp.length() > 0) {
+                    atmoComp.append(";");
+                }
+                atmoComp.append(chem.getChem().getSymbol())
+                        .append(":")
+                        .append(String.format("%.2f", chem.getSurfacePressure()));
+            }
+            exoPlanet.setAtmosphereComposition(atmoComp.toString());
         }
 
-        // Copy star properties
+        // --- Host Star Properties ---
         exoPlanet.setRa(hostStar.getRa());
         exoPlanet.setDec(hostStar.getDeclination());
         exoPlanet.setStarDistance(hostStar.getDistance());
         exoPlanet.setStarSpType(hostStar.getSpectralClass());
 
-        // Copy star mass and radius (already doubles)
         double starMass = hostStar.getMass();
         if (starMass > 0) {
             exoPlanet.setStarMass(starMass);

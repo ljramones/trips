@@ -169,6 +169,13 @@ public class ExoPlanet {
     private Double omega;
 
     /**
+     * Longitude of the ascending node in degrees.
+     * Part of the Keplerian orbital elements for fully specifying an orbit in 3D.
+     */
+    @Column(nullable = true)
+    private Double longitudeOfAscendingNode;
+
+    /**
      * * - `tperi`, `tconj`, `tzero_tr`, `tzero_tr_sec` and their errors: Various time-related parameters, often related to transit or radial velocity measurements.
      */
     @Column(nullable = true)
@@ -381,5 +388,257 @@ public class ExoPlanet {
      * * - `star_alternate_names`: Other names for the star.
      */
     private String starAlternateNames;
+
+    // ==================== Extended Planet Properties (ACCRETE/Sci-Fi) ====================
+
+    // --- Planet Type and Classification ---
+
+    /**
+     * Planet type classification (e.g., Terrestrial, Venusian, Martian, Water, Ice, Gas Giant, etc.)
+     * Matches PlanetTypeEnum values from ACCRETE simulation.
+     */
+    private String planetType;
+
+    /**
+     * Orbital zone (1=inner, 2=middle, 3=outer) based on star luminosity
+     */
+    @Column(nullable = true)
+    private Integer orbitalZone;
+
+    // --- Habitability Flags ---
+
+    /**
+     * Whether the planet has a breathable atmosphere and suitable conditions
+     */
+    private Boolean habitable;
+
+    /**
+     * Whether the planet is Earth-like (habitable with Earth-similar conditions)
+     */
+    private Boolean earthlike;
+
+    /**
+     * Whether this is a gas giant
+     */
+    private Boolean gasGiant;
+
+    /**
+     * Whether this is a habitable Jovian (gas giant with potentially habitable moons)
+     */
+    private Boolean habitableJovian;
+
+    /**
+     * Whether this planet has a habitable moon
+     */
+    private Boolean habitableMoon;
+
+    /**
+     * Whether this planet has a runaway greenhouse effect
+     */
+    private Boolean greenhouseEffect;
+
+    /**
+     * Whether this planet is tidally locked or in resonant rotation
+     */
+    private Boolean tidallyLocked;
+
+    // --- Physical Properties ---
+
+    /**
+     * Planet density in g/cc
+     */
+    @Column(nullable = true)
+    private Double density;
+
+    /**
+     * Core radius in km (for differentiated planets)
+     */
+    @Column(nullable = true)
+    private Double coreRadius;
+
+    /**
+     * Axial tilt in degrees
+     */
+    @Column(nullable = true)
+    private Double axialTilt;
+
+    /**
+     * Day length (rotation period) in hours
+     */
+    @Column(nullable = true)
+    private Double dayLength;
+
+    /**
+     * Surface gravity in Earth gravities (g)
+     */
+    @Column(nullable = true)
+    private Double surfaceGravity;
+
+    /**
+     * Surface acceleration in m/s^2
+     */
+    @Column(nullable = true)
+    private Double surfaceAcceleration;
+
+    /**
+     * Escape velocity in m/s
+     */
+    @Column(nullable = true)
+    private Double escapeVelocity;
+
+    // --- Climate Properties ---
+
+    /**
+     * Fraction of surface covered by water (0.0 to 1.0)
+     */
+    @Column(nullable = true)
+    private Double hydrosphere;
+
+    /**
+     * Fraction of atmosphere covered by clouds (0.0 to 1.0)
+     */
+    @Column(nullable = true)
+    private Double cloudCover;
+
+    /**
+     * Fraction of surface covered by ice (0.0 to 1.0)
+     */
+    @Column(nullable = true)
+    private Double iceCover;
+
+    /**
+     * Planetary albedo (reflectivity, 0.0 to 1.0)
+     */
+    @Column(nullable = true)
+    private Double albedo;
+
+    /**
+     * Surface pressure in millibars
+     */
+    @Column(nullable = true)
+    private Double surfacePressure;
+
+    /**
+     * Volatile gas inventory (unitless measure of atmospheric gases)
+     */
+    @Column(nullable = true)
+    private Double volatileGasInventory;
+
+    // --- Temperature Properties ---
+
+    /**
+     * Surface temperature in Kelvin
+     */
+    @Column(nullable = true)
+    private Double surfaceTemperature;
+
+    /**
+     * Daytime high temperature in Kelvin
+     */
+    @Column(nullable = true)
+    private Double highTemperature;
+
+    /**
+     * Nighttime low temperature in Kelvin
+     */
+    @Column(nullable = true)
+    private Double lowTemperature;
+
+    /**
+     * Maximum temperature (summer day) in Kelvin
+     */
+    @Column(nullable = true)
+    private Double maxTemperature;
+
+    /**
+     * Minimum temperature (winter night) in Kelvin
+     */
+    @Column(nullable = true)
+    private Double minTemperature;
+
+    /**
+     * Boiling point of water at surface pressure in Kelvin
+     */
+    @Column(nullable = true)
+    private Double boilingPoint;
+
+    /**
+     * Exospheric temperature in Kelvin
+     */
+    @Column(nullable = true)
+    private Double exosphericTemperature;
+
+    /**
+     * Temperature rise due to greenhouse effect in Kelvin
+     */
+    @Column(nullable = true)
+    private Double greenhouseRise;
+
+    // --- Atmospheric Properties ---
+
+    /**
+     * Minimum molecular weight retained by the atmosphere
+     */
+    @Column(nullable = true)
+    private Double minimumMolecularWeight;
+
+    /**
+     * Atmosphere type (Breathable, Unbreathable, Poisonous, None)
+     */
+    private String atmosphereType;
+
+    /**
+     * Detailed atmospheric composition as JSON or semicolon-separated list
+     * Format: "N2:780;O2:210;Ar:9;CO2:0.4" (symbol:partial_pressure_mb)
+     */
+    @Column(length = 2000)
+    private String atmosphereComposition;
+
+    // --- Science Fiction Properties ---
+
+    /**
+     * Population of the planet (for colonized worlds)
+     */
+    @Column(nullable = true)
+    private Long population;
+
+    /**
+     * Technology level (1-10 scale for sci-fi settings)
+     */
+    @Column(nullable = true)
+    private Integer techLevel;
+
+    /**
+     * Whether this planet has been colonized
+     */
+    private Boolean colonized;
+
+    /**
+     * Year of colonization (for sci-fi settings)
+     */
+    @Column(nullable = true)
+    private Integer colonizationYear;
+
+    /**
+     * Polity or faction controlling this planet
+     */
+    private String polity;
+
+    /**
+     * Strategic importance rating (1-10)
+     */
+    @Column(nullable = true)
+    private Integer strategicImportance;
+
+    /**
+     * Primary economic activity or resource
+     */
+    private String primaryResource;
+
+    /**
+     * General notes about the planet
+     */
+    @Column(length = 4000)
+    private String notes;
 
 }
