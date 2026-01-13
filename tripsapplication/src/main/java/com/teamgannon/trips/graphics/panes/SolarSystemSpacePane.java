@@ -20,6 +20,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Background;
@@ -370,6 +371,42 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                     updateLabels();
                 }
         );
+
+        // Right-click on empty space shows "Add Planet" menu
+        subScene.setOnMouseClicked((MouseEvent me) -> {
+            if (me.getButton() == MouseButton.SECONDARY && !me.isConsumed()) {
+                // Only show if we have a current system loaded
+                if (currentSystem != null && currentSystem.getStarDisplayRecord() != null) {
+                    showEmptySpaceContextMenu(me.getScreenX(), me.getScreenY());
+                }
+            }
+        });
+    }
+
+    /**
+     * Show context menu when right-clicking on empty space
+     */
+    private void showEmptySpaceContextMenu(double screenX, double screenY) {
+        ContextMenu menu = contextMenuFactory.createEmptySpaceContextMenu(
+                currentSystem,
+                this::handleAddPlanet
+        );
+        menu.show(this, screenX, screenY);
+    }
+
+    /**
+     * Handle adding a new planet to the system
+     */
+    private void handleAddPlanet(ExoPlanet newPlanet) {
+        if (newPlanet == null) return;
+
+        log.info("Adding new planet: {}", newPlanet.getName());
+
+        // Save to database
+        solarSystemService.addExoPlanet(newPlanet);
+
+        // Refresh the visualization
+        refreshCurrentSystem();
     }
 
     /**

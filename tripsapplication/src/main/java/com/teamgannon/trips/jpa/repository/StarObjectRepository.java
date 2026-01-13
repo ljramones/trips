@@ -215,4 +215,31 @@ public interface StarObjectRepository
      */
     long countBySolarSystemId(String solarSystemId);
 
+    /**
+     * Find a star by its display name (case insensitive)
+     *
+     * @param displayName the star's display name
+     * @return the star, or null if not found
+     */
+    StarObject findFirstByDisplayNameIgnoreCase(String displayName);
+
+    /**
+     * Find all stars that have exoplanets linked via solarSystemId.
+     * Uses a subquery to find star IDs that appear as hostStarId in exoplanets.
+     *
+     * @return list of stars with planets
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.id IN (SELECT DISTINCT e.hostStarId FROM EXOPLANET e WHERE e.hostStarId IS NOT NULL AND (e.isMoon IS NULL OR e.isMoon = false))")
+    List<StarObject> findStarsWithPlanets();
+
+    /**
+     * Find stars near a given RA/Dec coordinate (within 0.01 degrees)
+     *
+     * @param ra the right ascension
+     * @param dec the declination
+     * @return list of stars near the coordinates
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.ra BETWEEN :ra - 0.01 AND :ra + 0.01 AND s.declination BETWEEN :dec - 0.01 AND :dec + 0.01")
+    List<StarObject> findByRaAndDecNear(@Param("ra") Double ra, @Param("dec") Double dec);
+
 }

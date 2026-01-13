@@ -4,6 +4,7 @@ import com.teamgannon.trips.algorithms.StarMath;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.dialogs.db.DBReference;
 import com.teamgannon.trips.dialogs.search.model.StarDistances;
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.DataSetDescriptorRepository;
@@ -375,6 +376,36 @@ public class StarService {
     public StarObject getStar(@NotNull String recordId) {
         Optional<StarObject> objectOptional = starObjectRepository.findById(recordId);
         return objectOptional.orElse(null);
+    }
+
+    /**
+     * Get a StarDisplayRecord for a star by its ID.
+     *
+     * @param recordId the star's record ID
+     * @return the StarDisplayRecord, or null if not found
+     */
+    @TrackExecutionTime
+    public StarDisplayRecord getStarDisplayRecord(@NotNull String recordId) {
+        StarObject starObject = getStar(recordId);
+        if (starObject == null) {
+            return null;
+        }
+        return StarDisplayRecord.fromStarObject(starObject);
+    }
+
+    /**
+     * Get a StarDisplayRecord for a star by its display name.
+     *
+     * @param starName the star's display name
+     * @return the StarDisplayRecord, or null if not found
+     */
+    @TrackExecutionTime
+    public StarDisplayRecord getStarDisplayRecordByName(@NotNull String starName) {
+        StarObject starObject = starObjectRepository.findFirstByDisplayNameIgnoreCase(starName);
+        if (starObject == null) {
+            return null;
+        }
+        return StarDisplayRecord.fromStarObject(starObject);
     }
 
     @TrackExecutionTime

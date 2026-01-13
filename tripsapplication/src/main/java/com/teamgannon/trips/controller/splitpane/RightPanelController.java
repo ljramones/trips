@@ -7,6 +7,7 @@ import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
+import com.teamgannon.trips.screenobjects.PlanetarySystemsPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.service.DatasetService;
 import javafx.scene.control.Accordion;
@@ -44,6 +45,9 @@ public class RightPanelController {
     private TitledPane objectsViewPane;
     @Getter
     @FXML
+    private TitledPane planetarySystemsPane;
+    @Getter
+    @FXML
     private TitledPane stellarObjectPane;
     @Getter
     @FXML
@@ -64,13 +68,17 @@ public class RightPanelController {
     private final RoutingPanel routingPanel;
     @Getter
     private final ObjectViewPane objectViewPane;
+    @Getter
+    private final PlanetarySystemsPane planetarySystemsPaneContent;
 
     public RightPanelController(StarPropertiesPane starPropertiesPane,
                                 RoutingPanel routingPanel,
-                                ObjectViewPane objectViewPane) {
+                                ObjectViewPane objectViewPane,
+                                PlanetarySystemsPane planetarySystemsPaneContent) {
         this.starPropertiesPane = starPropertiesPane;
         this.routingPanel = routingPanel;
         this.objectViewPane = objectViewPane;
+        this.planetarySystemsPaneContent = planetarySystemsPaneContent;
     }
 
     @FXML
@@ -86,6 +94,13 @@ public class RightPanelController {
         objectsViewPane.setMinWidth(MainPane.SIDE_PANEL_SIZE);
         objectsViewPane.setMinHeight(200);
         objectsViewPane.setMaxHeight(460);
+
+        planetarySystemsPane.setMinWidth(MainPane.SIDE_PANEL_SIZE);
+        planetarySystemsPane.setMinHeight(150);
+        planetarySystemsPane.setMaxHeight(400);
+        ScrollPane planetaryScrollPane = new ScrollPane();
+        planetaryScrollPane.setContent(planetarySystemsPaneContent);
+        planetarySystemsPane.setContent(planetaryScrollPane);
 
         stellarObjectPane.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
         stellarObjectPane.setPrefHeight(500);
@@ -149,6 +164,13 @@ public class RightPanelController {
 
     public void selectDataSet(DataSetDescriptor descriptor) {
         dataSetsListView.getSelectionModel().select(descriptor);
+    }
+
+    /**
+     * Refresh the planetary systems list.
+     */
+    public void refreshPlanetarySystems() {
+        planetarySystemsPaneContent.refresh();
     }
 
 }

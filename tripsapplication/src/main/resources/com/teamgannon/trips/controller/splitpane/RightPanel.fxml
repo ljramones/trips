@@ -15,6 +15,7 @@
                 <panes>
                     <TitledPane fx:id="datasetsPane" text="DataSets Available" />
                     <TitledPane fx:id="objectsViewPane" text="Objects in View" />
+                    <TitledPane fx:id="planetarySystemsPane" text="Planetary Systems" />
                     <TitledPane fx:id="stellarObjectPane" text="Stellar Object Properties">
                         <content>
                             <ScrollPane fx:id="stellarObjectScrollPane" />

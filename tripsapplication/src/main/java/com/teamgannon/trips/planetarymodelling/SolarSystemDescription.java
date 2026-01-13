@@ -71,4 +71,21 @@ public class SolarSystemDescription {
         return 1 + companionStars.size();
     }
 
+    /**
+     * Convenience method to get the solar system ID
+     */
+    public String getSolarSystemId() {
+        return solarSystem != null ? solarSystem.getId() : null;
+    }
+
+    /**
+     * Convenience method to set the solar system ID by creating a minimal SolarSystem if needed
+     */
+    public void setSolarSystemId(String solarSystemId) {
+        if (solarSystem == null) {
+            solarSystem = new SolarSystem();
+        }
+        solarSystem.setId(solarSystemId);
+    }
+
 }

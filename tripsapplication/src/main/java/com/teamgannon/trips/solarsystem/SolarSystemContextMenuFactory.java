@@ -1,10 +1,12 @@
 package com.teamgannon.trips.solarsystem;
 
+import com.teamgannon.trips.dialogs.solarsystem.AddPlanetDialog;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetPropertiesDialog;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -70,6 +73,19 @@ public class SolarSystemContextMenuFactory {
         });
         editOrbitItem.setDisable(exoPlanet == null);
         menu.getItems().add(editOrbitItem);
+
+        menu.getItems().add(new SeparatorMenuItem());
+
+        // Add Moon (only for planets, not moons)
+        MenuItem addMoonItem = new MenuItem("Add Moon...");
+        addMoonItem.setOnAction(e -> {
+            if (exoPlanet != null) {
+                showAddMoonDialog(exoPlanet, siblingPlanets, onEditComplete);
+            }
+        });
+        // Disable if this is already a moon or if no exoPlanet
+        addMoonItem.setDisable(exoPlanet == null || Boolean.TRUE.equals(exoPlanet.getIsMoon()));
+        menu.getItems().add(addMoonItem);
 
         menu.getItems().add(new SeparatorMenuItem());
 
@@ -226,5 +242,77 @@ public class SolarSystemContextMenuFactory {
             log.info("User confirmed deletion of planet: {}", planet.getName());
             onDeletePlanet.accept(planet);
         }
+    }
+
+    /**
+     * Create a context menu for empty space in the solar system view.
+     *
+     * @param currentSystem the current solar system
+     * @param onAddPlanet   callback when a new planet is added
+     * @return the context menu
+     */
+    public ContextMenu createEmptySpaceContextMenu(
+            SolarSystemDescription currentSystem,
+            Consumer<ExoPlanet> onAddPlanet) {
+
+        ContextMenu menu = new ContextMenu();
+
+        String systemName = currentSystem.getStarDisplayRecord() != null
+                ? currentSystem.getStarDisplayRecord().getStarName()
+                : "System";
+
+        // Title
+        MenuItem titleItem = new MenuItem(systemName);
+        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size: 14; -fx-font-weight: bold;");
+        titleItem.setDisable(true);
+        menu.getItems().add(titleItem);
+        menu.getItems().add(new SeparatorMenuItem());
+
+        // Add Planet
+        MenuItem addPlanetItem = new MenuItem("Add Planet...");
+        addPlanetItem.setOnAction(e -> showAddPlanetDialog(currentSystem, onAddPlanet));
+        menu.getItems().add(addPlanetItem);
+
+        return menu;
+    }
+
+    /**
+     * Show dialog to add a new planet to the system.
+     */
+    private void showAddPlanetDialog(SolarSystemDescription currentSystem, Consumer<ExoPlanet> onAddPlanet) {
+        AddPlanetDialog dialog = new AddPlanetDialog(currentSystem, false, null);
+        Optional<ExoPlanet> result = dialog.showAndWait();
+
+        result.ifPresent(newPlanet -> {
+            log.info("User created new planet: {}", newPlanet.getName());
+            if (onAddPlanet != null) {
+                onAddPlanet.accept(newPlanet);
+            }
+        });
+    }
+
+    /**
+     * Show dialog to add a moon to a planet.
+     */
+    private void showAddMoonDialog(ExoPlanet parentPlanet,
+                                    List<PlanetDescription> siblingPlanets,
+                                    Consumer<PlanetEditResult> onEditComplete) {
+        // Create a minimal system description for the dialog
+        SolarSystemDescription tempDesc = new SolarSystemDescription();
+        tempDesc.setSolarSystemId(parentPlanet.getSolarSystemId());
+        tempDesc.setPlanetDescriptionList(siblingPlanets);
+
+        AddPlanetDialog dialog = new AddPlanetDialog(tempDesc, true, parentPlanet);
+        Optional<ExoPlanet> result = dialog.showAndWait();
+
+        result.ifPresent(newMoon -> {
+            log.info("User created new moon: {} for planet {}", newMoon.getName(), parentPlanet.getName());
+            // Signal that we need to refresh by creating a dummy edit result
+            if (onEditComplete != null) {
+                // Create a result that signals orbital change to trigger refresh
+                PlanetEditResult editResult = PlanetEditResult.changed(parentPlanet, true);
+                onEditComplete.accept(editResult);
+            }
+        });
     }
 }

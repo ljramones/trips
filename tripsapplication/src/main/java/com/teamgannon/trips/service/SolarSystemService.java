@@ -526,6 +526,46 @@ public class SolarSystemService {
     }
 
     /**
+     * Add a new ExoPlanet (or moon) to the database.
+     *
+     * @param planet the planet to add
+     * @return the saved planet
+     */
+    @Transactional
+    public ExoPlanet addExoPlanet(ExoPlanet planet) {
+        if (planet == null) {
+            log.warn("Cannot add null planet");
+            return null;
+        }
+
+        // Ensure ID is set
+        if (planet.getId() == null || planet.getId().isBlank()) {
+            planet.setId(UUID.randomUUID().toString());
+        }
+
+        ExoPlanet saved = exoPlanetRepository.save(planet);
+        log.info("Added new {}: {} (id={}, SMA={} AU)",
+                Boolean.TRUE.equals(planet.getIsMoon()) ? "moon" : "planet",
+                saved.getName(),
+                saved.getId(),
+                saved.getSemiMajorAxis());
+
+        // Update solar system planet count
+        String solarSystemId = planet.getSolarSystemId();
+        if (solarSystemId != null) {
+            solarSystemRepository.findById(solarSystemId).ifPresent(ss -> {
+                // Count only planets, not moons
+                long planetCount = exoPlanetRepository.findPlanetsBySolarSystemId(solarSystemId).size();
+                ss.setPlanetCount((int) planetCount);
+                updateHabitableZonePlanetStatus(ss);
+                solarSystemRepository.save(ss);
+            });
+        }
+
+        return saved;
+    }
+
+    /**
      * Update the hasHabitableZonePlanets flag for a solar system
      */
     private void updateHabitableZonePlanetStatus(SolarSystem solarSystem) {

@@ -91,4 +91,38 @@ public interface ExoPlanetRepository extends PagingAndSortingRepository<ExoPlane
      */
     void deleteBySolarSystemIdAndPlanetStatus(String solarSystemId, String planetStatus);
 
+    /**
+     * Find all distinct host star IDs that have planets
+     *
+     * @return list of distinct host star IDs
+     */
+    @Query("SELECT DISTINCT e.hostStarId FROM EXOPLANET e WHERE e.hostStarId IS NOT NULL AND (e.isMoon IS NULL OR e.isMoon = false)")
+    List<String> findDistinctHostStarIds();
+
+    /**
+     * Find all distinct star names that have planets
+     *
+     * @return list of distinct star names
+     */
+    @Query("SELECT DISTINCT e.starName FROM EXOPLANET e WHERE e.starName IS NOT NULL AND (e.isMoon IS NULL OR e.isMoon = false)")
+    List<String> findDistinctStarNames();
+
+    /**
+     * Count planets (not moons) for a specific host star
+     *
+     * @param hostStarId the host star ID
+     * @return count of planets
+     */
+    @Query("SELECT COUNT(e) FROM EXOPLANET e WHERE e.hostStarId = :hostStarId AND (e.isMoon IS NULL OR e.isMoon = false)")
+    long countPlanetsByHostStarId(@Param("hostStarId") String hostStarId);
+
+    /**
+     * Count planets (not moons) for a specific star name
+     *
+     * @param starName the star name
+     * @return count of planets
+     */
+    @Query("SELECT COUNT(e) FROM EXOPLANET e WHERE e.starName = :starName AND (e.isMoon IS NULL OR e.isMoon = false)")
+    long countPlanetsByStarName(@Param("starName") String starName);
+
 }

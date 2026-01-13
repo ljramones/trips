@@ -32,12 +32,14 @@ public class RightPanelCoordinator {
         dataSetPanelCoordinator.loadDataSets();
         rightPanelController.setupDataSetView(datasetService, eventPublisher, searchContextCoordinator);
         rightPanelController.setupObjectViewPane();
+        rightPanelController.refreshPlanetarySystems();
         log.info("Right panel initialized");
     }
 
     public void refreshDataSets() {
         dataSetPanelCoordinator.refreshDataSets();
         rightPanelController.refreshDataSets(datasetService);
+        rightPanelController.refreshPlanetarySystems();
     }
 
     public void addDataSetToContext(DataSetDescriptor descriptor) {
