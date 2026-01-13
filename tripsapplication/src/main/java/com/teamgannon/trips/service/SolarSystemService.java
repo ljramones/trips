@@ -570,15 +570,19 @@ public class SolarSystemService {
             }
         }
 
-        // Convert and save each generated planet
+        // Convert and save each generated planet and its moons
         int savedCount = 0;
+        int moonCount = 0;
         int planetIndex = 1;
         for (Planet planet : planets) {
+            // Save the planet
             ExoPlanet exoPlanet = convertAccretePlanetToExoPlanet(
                     planet,
                     sourceStar,
                     solarSystem.getId(),
-                    planetIndex++
+                    planetIndex++,
+                    null,  // no parent planet (this is a planet, not a moon)
+                    false  // not a moon
             );
             exoPlanetRepository.save(exoPlanet);
             savedCount++;
@@ -587,17 +591,54 @@ public class SolarSystemService {
                     exoPlanet.getName(),
                     exoPlanet.getSemiMajorAxis(),
                     exoPlanet.getMass());
+
+            // Save moons for this planet
+            List<Planet> moons = planet.getMoons();
+            if (moons != null && !moons.isEmpty()) {
+                int moonIndex = 1;
+                for (Planet moon : moons) {
+                    ExoPlanet exoMoon = convertAccretePlanetToExoPlanet(
+                            moon,
+                            sourceStar,
+                            solarSystem.getId(),
+                            moonIndex++,
+                            exoPlanet.getId(),  // parent planet ID
+                            true  // is a moon
+                    );
+                    // Override the name for moons (e.g., "Proxima Centauri b I" for first moon of planet b)
+                    exoMoon.setName(exoPlanet.getName() + " " + toRomanNumeral(moonIndex - 1));
+                    exoPlanetRepository.save(exoMoon);
+                    moonCount++;
+
+                    log.debug("Saved generated moon: {} (parent: {}, SMA={} AU)",
+                            exoMoon.getName(),
+                            exoPlanet.getName(),
+                            exoMoon.getSemiMajorAxis());
+                }
+            }
         }
 
-        // Update solar system planet count and habitable zone status
-        solarSystem.setPlanetCount((int) exoPlanetRepository.countBySolarSystemId(solarSystem.getId()));
+        // Update solar system planet count (excluding moons) and habitable zone status
+        solarSystem.setPlanetCount(savedCount);
         updateHabitableZonePlanetStatus(solarSystem);
         solarSystemRepository.save(solarSystem);
 
-        log.info("Saved {} generated planets for star '{}' (system ID: {})",
-                savedCount, sourceStar.getDisplayName(), solarSystem.getId());
+        log.info("Saved {} generated planets and {} moons for star '{}' (system ID: {})",
+                savedCount, moonCount, sourceStar.getDisplayName(), solarSystem.getId());
 
-        return savedCount;
+        return savedCount + moonCount;
+    }
+
+    /**
+     * Convert an integer to Roman numerals for moon naming.
+     */
+    private String toRomanNumeral(int number) {
+        if (number <= 0 || number > 20) {
+            return String.valueOf(number);
+        }
+        String[] romanNumerals = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+                "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"};
+        return romanNumerals[number - 1];
     }
 
     /**
@@ -605,21 +646,26 @@ public class SolarSystemService {
      * Populates all available fields including extended properties for climate,
      * atmosphere, and habitability.
      *
-     * @param planet        the ACCRETE planet
-     * @param hostStar      the host star
-     * @param solarSystemId the solar system ID
-     * @param planetIndex   the planet index (for naming)
+     * @param planet         the ACCRETE planet or moon
+     * @param hostStar       the host star
+     * @param solarSystemId  the solar system ID
+     * @param index          the planet/moon index (for naming)
+     * @param parentPlanetId the parent planet ID (null for planets, set for moons)
+     * @param isMoon         whether this is a moon
      * @return the ExoPlanet entity
      */
     private ExoPlanet convertAccretePlanetToExoPlanet(Planet planet,
                                                       StarObject hostStar,
                                                       String solarSystemId,
-                                                      int planetIndex) {
+                                                      int index,
+                                                      String parentPlanetId,
+                                                      boolean isMoon) {
         ExoPlanet exoPlanet = new ExoPlanet();
         exoPlanet.setId(UUID.randomUUID().toString());
 
         // Generate planet name using standard convention (star name + letter)
-        String planetLetter = getPlanetLetter(planetIndex);
+        // For moons, the name will be overridden by the caller
+        String planetLetter = getPlanetLetter(index);
         String starName = hostStar.getDisplayName();
         exoPlanet.setName(starName + " " + planetLetter);
 
@@ -627,6 +673,10 @@ public class SolarSystemService {
         exoPlanet.setSolarSystemId(solarSystemId);
         exoPlanet.setHostStarId(hostStar.getId());
         exoPlanet.setStarName(starName);
+
+        // Set moon-specific fields
+        exoPlanet.setParentPlanetId(parentPlanetId);
+        exoPlanet.setIsMoon(isMoon);
 
         // Mark as simulated
         exoPlanet.setPlanetStatus("Simulated");

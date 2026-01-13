@@ -51,7 +51,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField planetTypeField;
     private TextField orbitalZoneField;
 
-    // Habitability checkboxes
+    // Classification checkboxes
+    private CheckBox isMoonCheck;
     private CheckBox habitableCheck;
     private CheckBox earthlikeCheck;
     private CheckBox gasGiantCheck;
@@ -229,28 +230,31 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         GridPane grid = createGridPane();
         grid.setHgap(20);
 
+        isMoonCheck = new CheckBox("Is Moon");
+        grid.add(isMoonCheck, 0, 0);
+
         habitableCheck = new CheckBox("Habitable");
-        grid.add(habitableCheck, 0, 0);
+        grid.add(habitableCheck, 1, 0);
 
         earthlikeCheck = new CheckBox("Earthlike");
-        grid.add(earthlikeCheck, 1, 0);
+        grid.add(earthlikeCheck, 2, 0);
 
         gasGiantCheck = new CheckBox("Gas Giant");
-        grid.add(gasGiantCheck, 2, 0);
+        grid.add(gasGiantCheck, 3, 0);
 
         habitableJovianCheck = new CheckBox("Habitable Jovian");
-        grid.add(habitableJovianCheck, 3, 0);
+        grid.add(habitableJovianCheck, 0, 1);
 
         habitableMoonCheck = new CheckBox("Habitable Moon");
-        grid.add(habitableMoonCheck, 0, 1);
+        grid.add(habitableMoonCheck, 1, 1);
 
         greenhouseCheck = new CheckBox("Greenhouse Effect");
-        grid.add(greenhouseCheck, 1, 1);
+        grid.add(greenhouseCheck, 2, 1);
 
         tidallyLockedCheck = new CheckBox("Tidally Locked");
-        grid.add(tidallyLockedCheck, 2, 1);
+        grid.add(tidallyLockedCheck, 3, 1);
 
-        TitledPane pane = new TitledPane("Habitability Flags", grid);
+        TitledPane pane = new TitledPane("Classification Flags", grid);
         pane.setCollapsible(false);
         return pane;
     }
@@ -566,7 +570,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planetTypeField.setText(safeString(planet.getPlanetType()));
         orbitalZoneField.setText(planet.getOrbitalZone() != null ? planet.getOrbitalZone().toString() : "");
 
-        // Habitability flags
+        // Classification flags
+        isMoonCheck.setSelected(Boolean.TRUE.equals(planet.getIsMoon()));
         habitableCheck.setSelected(Boolean.TRUE.equals(planet.getHabitable()));
         earthlikeCheck.setSelected(Boolean.TRUE.equals(planet.getEarthlike()));
         gasGiantCheck.setSelected(Boolean.TRUE.equals(planet.getGasGiant()));
@@ -698,7 +703,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planet.setPlanetType(planetTypeField.getText().trim());
         planet.setOrbitalZone(parseInteger(orbitalZoneField.getText()));
 
-        // Habitability flags
+        // Classification flags
+        planet.setIsMoon(isMoonCheck.isSelected());
         planet.setHabitable(habitableCheck.isSelected());
         planet.setEarthlike(earthlikeCheck.isSelected());
         planet.setGasGiant(gasGiantCheck.isSelected());

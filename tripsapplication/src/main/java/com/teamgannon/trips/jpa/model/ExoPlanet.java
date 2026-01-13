@@ -72,7 +72,9 @@ import javax.persistence.Table;
         @Index(columnList = "starName ASC"),
         @Index(columnList = "solarSystemId"),
         @Index(columnList = "hostStarId"),
-        @Index(columnList = "planetStatus")
+        @Index(columnList = "parentPlanetId"),
+        @Index(columnList = "planetStatus"),
+        @Index(columnList = "isMoon")
 })
 public class ExoPlanet {
 
@@ -96,6 +98,17 @@ public class ExoPlanet {
      * For circumbinary planets, this would be the primary star.
      */
     private String hostStarId;
+
+    /**
+     * Foreign key reference to the parent planet if this is a moon.
+     * Null for planets, set for moons.
+     */
+    private String parentPlanetId;
+
+    /**
+     * Whether this object is a moon (orbits a planet) rather than a planet (orbits a star).
+     */
+    private Boolean isMoon;
 
     /**
      * * - `planet_status`: Current status of the planet (e.g., confirmed, candidate).

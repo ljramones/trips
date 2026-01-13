@@ -50,4 +50,45 @@ public interface ExoPlanetRepository extends PagingAndSortingRepository<ExoPlane
      */
     long countByHostStarId(String hostStarId);
 
+    /**
+     * Find all moons orbiting a specific planet
+     *
+     * @param parentPlanetId the parent planet's ID
+     * @return list of moons
+     */
+    List<ExoPlanet> findByParentPlanetId(String parentPlanetId);
+
+    /**
+     * Count moons orbiting a specific planet
+     *
+     * @param parentPlanetId the parent planet's ID
+     * @return count of moons
+     */
+    long countByParentPlanetId(String parentPlanetId);
+
+    /**
+     * Find only planets (not moons) in a solar system
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of planets (excluding moons)
+     */
+    List<ExoPlanet> findBySolarSystemIdAndIsMoonFalse(String solarSystemId);
+
+    /**
+     * Find only planets (not moons) in a solar system, including those with null isMoon
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of planets
+     */
+    @Query("SELECT e FROM EXOPLANET e WHERE e.solarSystemId = :solarSystemId AND (e.isMoon IS NULL OR e.isMoon = false)")
+    List<ExoPlanet> findPlanetsBySolarSystemId(@Param("solarSystemId") String solarSystemId);
+
+    /**
+     * Delete all exoplanets (and moons) for a solar system with a specific status
+     *
+     * @param solarSystemId the solar system ID
+     * @param planetStatus the status (e.g., "Simulated")
+     */
+    void deleteBySolarSystemIdAndPlanetStatus(String solarSystemId, String planetStatus);
+
 }
