@@ -702,11 +702,13 @@ public class MainSplitPaneManager {
                 case INTERSTELLAR -> {
                     log.info("Showing interstellar Space");
                     leftDisplayController.showInterstellar();
+                    rightPanelCoordinator.switchToInterstellar();  // Switch side pane
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
                 }
                 case SOLARSYSTEM -> {
                     log.info("Showing a solar system");
                     leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
+                    rightPanelCoordinator.switchToSolarSystem(event.getStarDisplayRecord());  // Switch side pane
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
                 }
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());

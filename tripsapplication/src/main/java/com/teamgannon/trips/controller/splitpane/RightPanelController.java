@@ -5,29 +5,37 @@ import javafx.fxml.FXML;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.PlanetarySystemsPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
+import com.teamgannon.trips.screenobjects.solarsystem.SolarSystemSidePane;
 import com.teamgannon.trips.service.DatasetService;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 public class RightPanelController {
 
     @Getter
     @FXML
     private BorderPane rightBorderPane;
+
+    // Stack pane for contextual side pane switching
+    private StackPane contextStackPane;
 
     @Getter
     @FXML
@@ -70,15 +78,19 @@ public class RightPanelController {
     private final ObjectViewPane objectViewPane;
     @Getter
     private final PlanetarySystemsPane planetarySystemsPaneContent;
+    @Getter
+    private final SolarSystemSidePane solarSystemSidePane;
 
     public RightPanelController(StarPropertiesPane starPropertiesPane,
                                 RoutingPanel routingPanel,
                                 ObjectViewPane objectViewPane,
-                                PlanetarySystemsPane planetarySystemsPaneContent) {
+                                PlanetarySystemsPane planetarySystemsPaneContent,
+                                SolarSystemSidePane solarSystemSidePane) {
         this.starPropertiesPane = starPropertiesPane;
         this.routingPanel = routingPanel;
         this.objectViewPane = objectViewPane;
         this.planetarySystemsPaneContent = planetarySystemsPaneContent;
+        this.solarSystemSidePane = solarSystemSidePane;
     }
 
     @FXML
@@ -96,9 +108,11 @@ public class RightPanelController {
         objectsViewPane.setMaxHeight(460);
 
         planetarySystemsPane.setMinWidth(MainPane.SIDE_PANEL_SIZE);
-        planetarySystemsPane.setMinHeight(150);
-        planetarySystemsPane.setMaxHeight(400);
+        planetarySystemsPane.setMinHeight(200);
+        planetarySystemsPane.setPrefHeight(300);
+        planetarySystemsPane.setMaxHeight(500);
         ScrollPane planetaryScrollPane = new ScrollPane();
+        planetaryScrollPane.setFitToWidth(true);
         planetaryScrollPane.setContent(planetarySystemsPaneContent);
         planetarySystemsPane.setContent(planetaryScrollPane);
 
@@ -117,6 +131,79 @@ public class RightPanelController {
         routingPane.setMinHeight(400);
         routingPane.setMaxHeight(400);
         routingPane.setContent(routingPanel);
+
+        // Create context stack pane to enable switching between interstellar and solar system side panes
+        setupContextStackPane();
+    }
+
+    /**
+     * Set up the stack pane for contextual side pane switching.
+     * Wraps both the interstellar accordion and solar system side pane.
+     * Only ONE pane is visible at a time - they do NOT share content.
+     */
+    private void setupContextStackPane() {
+        // Create the stack pane
+        contextStackPane = new StackPane();
+
+        // Remove accordion from settings pane and add to stack
+        settingsPane.getChildren().remove(propertiesAccordion);
+
+        // Add both panes to the stack
+        contextStackPane.getChildren().addAll(
+                propertiesAccordion,      // Interstellar side pane
+                solarSystemSidePane       // Solar system side pane
+        );
+
+        // Add stack pane to settings pane
+        settingsPane.getChildren().add(0, contextStackPane);
+
+        // IMPORTANT: Hide solar system pane completely at startup
+        // Only interstellar pane should be visible initially
+        solarSystemSidePane.setVisible(false);
+        solarSystemSidePane.setManaged(false);
+
+        propertiesAccordion.setVisible(true);
+        propertiesAccordion.setManaged(true);
+        propertiesAccordion.toFront();
+
+        log.info("Context stack pane initialized - interstellar side pane visible, solar system side pane hidden");
+    }
+
+    /**
+     * Switch to the interstellar side pane (default view).
+     */
+    public void showInterstellarSidePane() {
+        // Hide solar system pane completely
+        solarSystemSidePane.setVisible(false);
+        solarSystemSidePane.setManaged(false);
+        solarSystemSidePane.clear();
+
+        // Show interstellar pane
+        propertiesAccordion.setVisible(true);
+        propertiesAccordion.setManaged(true);
+        propertiesAccordion.toFront();
+
+        log.info("Switched to interstellar side pane");
+    }
+
+    /**
+     * Switch to the solar system side pane.
+     */
+    public void showSolarSystemSidePane(SolarSystemDescription system) {
+        // Hide interstellar pane completely
+        propertiesAccordion.setVisible(false);
+        propertiesAccordion.setManaged(false);
+
+        // Show solar system pane
+        solarSystemSidePane.setSystem(system);
+        solarSystemSidePane.setVisible(true);
+        solarSystemSidePane.setManaged(true);
+        solarSystemSidePane.toFront();
+
+        log.info("Switched to solar system side pane for: {}",
+                system != null && system.getStarDisplayRecord() != null
+                        ? system.getStarDisplayRecord().getStarName()
+                        : "null");
     }
 
     public void setupObjectViewPane() {

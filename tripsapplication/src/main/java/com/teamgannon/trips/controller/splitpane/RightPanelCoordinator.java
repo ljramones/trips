@@ -1,7 +1,10 @@
 package com.teamgannon.trips.controller.splitpane;
 
+import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatasetService;
+import com.teamgannon.trips.service.SolarSystemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -13,17 +16,20 @@ public class RightPanelCoordinator {
     private final RightPanelController rightPanelController;
     private final DataSetPanelCoordinator dataSetPanelCoordinator;
     private final DatasetService datasetService;
+    private final SolarSystemService solarSystemService;
     private final ApplicationEventPublisher eventPublisher;
     private final SearchContextCoordinator searchContextCoordinator;
 
     public RightPanelCoordinator(RightPanelController rightPanelController,
                                  DataSetPanelCoordinator dataSetPanelCoordinator,
                                  DatasetService datasetService,
+                                 SolarSystemService solarSystemService,
                                  ApplicationEventPublisher eventPublisher,
                                  SearchContextCoordinator searchContextCoordinator) {
         this.rightPanelController = rightPanelController;
         this.dataSetPanelCoordinator = dataSetPanelCoordinator;
         this.datasetService = datasetService;
+        this.solarSystemService = solarSystemService;
         this.eventPublisher = eventPublisher;
         this.searchContextCoordinator = searchContextCoordinator;
     }
@@ -58,5 +64,32 @@ public class RightPanelCoordinator {
     public void handleDataSetRemoved(DataSetDescriptor descriptor) {
         dataSetPanelCoordinator.removeDataSet(descriptor);
         refreshDataSets();
+    }
+
+    /**
+     * Switch to the interstellar side pane (default view).
+     */
+    public void switchToInterstellar() {
+        rightPanelController.showInterstellarSidePane();
+        log.info("Switched side pane to interstellar view");
+    }
+
+    /**
+     * Switch to the solar system side pane.
+     *
+     * @param star the star to display solar system for
+     */
+    public void switchToSolarSystem(StarDisplayRecord star) {
+        if (star == null) {
+            log.warn("Cannot switch to solar system view: star is null");
+            return;
+        }
+
+        // Get the solar system description
+        SolarSystemDescription system = solarSystemService.getSolarSystem(star);
+
+        // Update the side pane
+        rightPanelController.showSolarSystemSidePane(system);
+        log.info("Switched side pane to solar system view for: {}", star.getStarName());
     }
 }
