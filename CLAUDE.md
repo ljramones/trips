@@ -127,7 +127,7 @@ TripsSpringBootApplication (main)
 
 2. **Service Layer** (`@Service`): Business logic
    - `StarService`: Star queries and filtering
-   - `SolarSystemService`: Solar system data retrieval and creation
+   - `SolarSystemService`: Solar system data retrieval, creation, and exoplanet CRUD operations
    - `DatabaseManagementService`: Database lifecycle
    - `DataExportService/DataImportService`: Data interchange
    - `LargeGraphSearchService`: Asynchronous graph algorithms
@@ -308,6 +308,7 @@ Located in `solarsystem/rendering/` package:
    - Queries database for existing `SolarSystem` entity or creates one from star data
    - Converts `ExoPlanet` entities to `PlanetDescription` for rendering
    - Calculates habitable zone from stellar luminosity via `HabitableZoneCalculator`
+   - ExoPlanet CRUD: `findExoPlanetByName()`, `updateExoPlanet()`, `deleteExoPlanet()`
 
 2. **ScaleManager** (`solarsystem/rendering/ScaleManager.java`):
    - Converts between AU (Astronomical Units) and screen coordinates
@@ -366,6 +367,65 @@ SolarSystemRenderer.render(SolarSystemDescription)
         ▼
 Group added to SolarSystemSpacePane.systemEntityGroup
 ```
+
+### Multi-Planet System Visualization
+
+For systems with many planets at varying distances (like HD 219134 with 7 planets):
+
+**Auto Log Scale**: When orbit ratio (max/min) exceeds 20x, renderer auto-enables logarithmic scaling to spread out tightly-packed inner planets.
+
+**Smart Angular Distribution**: Planets are sorted by semi-major axis, and planets with orbits within 15% of each other are placed 180° apart to prevent visual overlap.
+
+```java
+// In SolarSystemRenderer.calculatePlanetAngles()
+if (prevSma > 0 && Math.abs(currSma - prevSma) / prevSma < 0.15) {
+    baseAngle = angles[i - 1] + 180;  // Opposite side of orbit
+}
+```
+
+### Solar System Context Menus
+
+Right-click interaction is supported on all solar system elements:
+
+**Package**: `solarsystem/` contains the context menu infrastructure:
+- `SolarSystemContextMenuHandler` - Callback interface for context menu events
+- `SolarSystemContextMenuFactory` - Creates context menus for planets, stars, orbits
+
+**Planet Context Menu** (right-click planet sphere or orbit):
+- Properties... → Opens `PlanetPropertiesDialog` for viewing/editing
+- Edit Orbit... → Same dialog focused on orbital parameters
+- Delete Planet... → With confirmation dialog
+
+**Star Context Menu** (right-click central star):
+- Star Properties... → Shows star information
+- Return to Interstellar View → Fires `ContextSelectorEvent`
+
+**Property Editing Workflow**:
+```
+User right-clicks planet → onPlanetContextMenu()
+        │
+        ▼
+SolarSystemContextMenuFactory.createPlanetContextMenu()
+        │
+        ▼
+User selects "Properties..."
+        │
+        ▼
+PlanetPropertiesDialog.showAndWait()
+        │
+        ├─> Cancel: No changes
+        └─> OK: PlanetEditResult returned
+                │
+                ├─> solarSystemService.updateExoPlanet() → Persist
+                └─> if orbitalChanged: refreshCurrentSystem() → Redraw
+```
+
+**Key Files**:
+- `dialogs/solarsystem/PlanetPropertiesDialog.java` - Edit dialog with orbit validation
+- `dialogs/solarsystem/PlanetEditResult.java` - Result object with change flags
+- `SolarSystemSpacePane.java` - Implements `SolarSystemContextMenuHandler`
+
+**Orbit Overlap Validation**: When editing semi-major axis, the dialog warns if the new orbit overlaps with sibling planets (within 5% tolerance).
 
 ### Future: Orbital Animation with Orekit
 
@@ -481,6 +541,40 @@ The workbench (`workbench/` package) provides data preparation capabilities sepa
    - TAP (Table Access Protocol) client for astronomical databases
    - Downloads data from VizieR RAVE/LAMOST catalogs
    - Uses `WorkbenchTapDefaults` for standard query configurations
+
+### Exoplanet Import Tab
+
+The "Exoplanets" tab in the Data Workbench imports exoplanet.eu catalog data and matches planets to existing stars.
+
+**Key Components**:
+- `WorkbenchExoplanetImportService` (`workbench/service/`) - Core import logic
+- `ExoplanetCsvSchema` (`workbench/model/`) - Column indices for exoplanet.eu CSV format
+- `ExoplanetPreviewRow`, `ExoplanetMatchRow` - Display models for TableViews
+
+**Import Workflow**:
+```
+1. Load CSV → parseCsvFile() → List<ExoplanetCsvRow>
+        │
+        ▼
+2. Match to Stars → matchExoplanetsToStars() → ExoplanetMatchResult
+   (3-tier algorithm: exact name → fuzzy name → RA/Dec proximity)
+        │
+        ▼
+3. Import Selected → importMatchedExoplanets() → ExoplanetImportResult
+   (Creates ExoPlanet entities linked to SolarSystem/StarObject)
+```
+
+**Star Matching Algorithm** (in `WorkbenchExoplanetImportService`):
+1. **Exact match**: Compare `starName` with `displayName` or `commonName` (case-insensitive)
+2. **Fuzzy match**: Normalize names, strip suffixes like " A", " B"
+3. **RA/Dec proximity**: Within 0.01 degrees of star coordinates
+
+**UI Elements** (in `DataWorkbenchController.fxml`):
+- Load CSV button → File chooser for exoplanet.eu catalog
+- Match to Stars button → Runs matching algorithm in background
+- Import Selected button → Imports matched exoplanets to database
+- Preview table → Shows loaded exoplanets (name, star, semi-major axis, mass)
+- Match table → Shows matching results with confidence levels
 
 ### Workbench vs Main App
 
