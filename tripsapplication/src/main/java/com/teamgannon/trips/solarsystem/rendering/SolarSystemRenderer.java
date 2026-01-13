@@ -53,6 +53,11 @@ public class SolarSystemRenderer {
     private static final Color COLD_PLANET_COLOR = Color.rgb(150, 200, 255);
     private static final Color GAS_GIANT_COLOR = Color.rgb(230, 180, 120);
 
+    /**
+     * Moon color - silver/gray to distinguish from planets
+     */
+    private static final Color MOON_COLOR = Color.rgb(192, 192, 200);
+
     @Getter
     private final ScaleManager scaleManager;
 
@@ -609,6 +614,11 @@ public class SolarSystemRenderer {
     }
 
     private Color getPlanetColor(PlanetDescription planet) {
+        // Use distinct color for moons
+        if (planet.isMoon()) {
+            return MOON_COLOR;
+        }
+
         // Color based on equilibrium temperature if available
         double temp = planet.getEquilibriumTemperature();
         if (temp > 0) {

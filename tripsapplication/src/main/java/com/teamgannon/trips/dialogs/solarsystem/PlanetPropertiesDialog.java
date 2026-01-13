@@ -48,6 +48,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField statusField;
     private TextField discoveredField;
     private TextField starNameField;
+    private TextField parentPlanetField;
     private TextField planetTypeField;
     private TextField orbitalZoneField;
 
@@ -112,9 +113,13 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     // Validation label
     private Label validationLabel;
 
-    public PlanetPropertiesDialog(@NotNull ExoPlanet planet, List<PlanetDescription> siblingPlanets) {
+    // Parent planet name for moons (passed in, since we need to look it up externally)
+    private final String parentPlanetName;
+
+    public PlanetPropertiesDialog(@NotNull ExoPlanet planet, List<PlanetDescription> siblingPlanets, String parentPlanetName) {
         this.planet = planet;
         this.siblingPlanets = siblingPlanets;
+        this.parentPlanetName = parentPlanetName;
 
         // Store original orbital values for change detection
         this.origSemiMajorAxis = planet.getSemiMajorAxis();
@@ -167,8 +172,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         mainBox.getChildren().add(createButtonBar());
 
         this.getDialogPane().setContent(mainBox);
-        this.getDialogPane().setPrefWidth(550);
-        this.getDialogPane().setPrefHeight(500);
+        this.getDialogPane().setPrefWidth(580);
+        this.getDialogPane().setPrefHeight(620);
 
         DialogUtils.bindCloseHandler(this, this::handleClose);
 
@@ -220,6 +225,12 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         starNameField.setEditable(false);
         starNameField.setStyle("-fx-background-color: #e8e8e8;");
         grid.add(starNameField, 1, 3);
+
+        grid.add(createBoldLabel("Parent Planet:"), 2, 3);
+        parentPlanetField = createTextField(150);
+        parentPlanetField.setEditable(false);
+        parentPlanetField.setStyle("-fx-background-color: #e8e8e8;");
+        grid.add(parentPlanetField, 3, 3);
 
         TitledPane pane = new TitledPane("Identity", grid);
         pane.setCollapsible(false);
@@ -567,6 +578,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         statusField.setText(safeString(planet.getPlanetStatus()));
         discoveredField.setText(planet.getDiscovered() != null ? planet.getDiscovered().toString() : "");
         starNameField.setText(safeString(planet.getStarName()));
+        parentPlanetField.setText(safeString(parentPlanetName));
         planetTypeField.setText(safeString(planet.getPlanetType()));
         orbitalZoneField.setText(planet.getOrbitalZone() != null ? planet.getOrbitalZone().toString() : "");
 

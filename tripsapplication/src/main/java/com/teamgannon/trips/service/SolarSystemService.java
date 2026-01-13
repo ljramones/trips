@@ -246,6 +246,10 @@ public class SolarSystemService {
             desc.setSurfaceGravity(exoPlanet.getLogG());
         }
 
+        // Moon properties
+        desc.setMoon(Boolean.TRUE.equals(exoPlanet.getIsMoon()));
+        desc.setParentPlanetId(exoPlanet.getParentPlanetId());
+
         return desc;
     }
 

@@ -144,7 +144,13 @@ public class SolarSystemContextMenuFactory {
             List<PlanetDescription> siblingPlanets,
             Consumer<PlanetEditResult> onEditComplete) {
 
-        PlanetPropertiesDialog dialog = new PlanetPropertiesDialog(exoPlanet, siblingPlanets);
+        // Look up parent planet name if this is a moon
+        String parentPlanetName = null;
+        if (Boolean.TRUE.equals(exoPlanet.getIsMoon()) && exoPlanet.getParentPlanetId() != null) {
+            parentPlanetName = findParentPlanetName(exoPlanet.getParentPlanetId(), siblingPlanets);
+        }
+
+        PlanetPropertiesDialog dialog = new PlanetPropertiesDialog(exoPlanet, siblingPlanets, parentPlanetName);
         Optional<PlanetEditResult> result = dialog.showAndWait();
 
         result.ifPresent(editResult -> {
@@ -152,6 +158,21 @@ public class SolarSystemContextMenuFactory {
                 onEditComplete.accept(editResult);
             }
         });
+    }
+
+    /**
+     * Find the parent planet name from the siblings list by ID.
+     */
+    private String findParentPlanetName(String parentPlanetId, List<PlanetDescription> siblings) {
+        if (parentPlanetId == null || siblings == null) {
+            return null;
+        }
+        for (PlanetDescription sibling : siblings) {
+            if (parentPlanetId.equals(sibling.getId())) {
+                return sibling.getName();
+            }
+        }
+        return null;
     }
 
     private void showReadOnlyPlanetInfo(PlanetDescription planet) {

@@ -57,4 +57,14 @@ public class PlanetDescription {
      */
     private double surfaceGravity;
 
+    /**
+     * Whether this is a moon (orbits a planet rather than a star)
+     */
+    private boolean isMoon;
+
+    /**
+     * If this is a moon, the ID of the parent planet
+     */
+    private String parentPlanetId;
+
 }
