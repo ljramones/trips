@@ -53,7 +53,8 @@ import java.util.regex.Pattern;
         @Index(columnList = "csiCatId ASC"),
         @Index(columnList = "bayerCatId ASC"),
         @Index(columnList = "flamsteedCatId ASC"),
-        @Index(columnList = "exoplanets")
+        @Index(columnList = "exoplanets"),
+        @Index(columnList = "solarSystemId")
 })
 public class StarObject implements Serializable {
 
@@ -105,6 +106,13 @@ public class StarObject implements Serializable {
      * name of the system
      */
     private String systemName = "";
+
+    /**
+     * Foreign key reference to the SolarSystem entity this star belongs to.
+     * Null if the star has not been associated with a detailed solar system model.
+     * For binary/trinary systems, multiple StarObjects will share the same solarSystemId.
+     */
+    private String solarSystemId;
 
     /**
      * the epoch of the star normally J2000

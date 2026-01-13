@@ -127,13 +127,16 @@ TripsSpringBootApplication (main)
 
 2. **Service Layer** (`@Service`): Business logic
    - `StarService`: Star queries and filtering
+   - `SolarSystemService`: Solar system data retrieval and creation
    - `DatabaseManagementService`: Database lifecycle
    - `DataExportService/DataImportService`: Data interchange
    - `LargeGraphSearchService`: Asynchronous graph algorithms
 
 3. **Repository Layer** (`@Repository`): JPA repositories
-   - `StarObjectRepository`: Star data persistence
+   - `StarObjectRepository`: Star data persistence, includes `findBySolarSystemId()`
    - `DataSetDescriptorRepository`: Dataset metadata
+   - `SolarSystemRepository`: Solar system aggregate queries
+   - `ExoPlanetRepository`: Exoplanet data, includes `findBySolarSystemId()`, `findByHostStarId()`
    - Custom queries using Spring Data JPA and Criteria API
 
 4. **Manager Components** (`@Component`): Complex subsystem orchestration
@@ -225,6 +228,32 @@ Multiple datasets can exist; one is "active" at a time via `DataSetContext`.
 - **Axes**: Right-handed 3D coordinate system
 - **Transformations**: Support for galactic and equatorial coordinate systems via `AstrographicTransformer`
 
+### Solar System Entity
+
+Located in `jpa/model/SolarSystem.java`, this is the aggregate root for solar system data:
+- **Identity**: UUID-based primary key, system name
+- **Star Relationships**: primaryStarId links to main star, supports multi-star systems (starCount)
+- **Planet Data**: planetCount, hasHabitableZonePlanets flag
+- **Habitable Zone**: habitableZoneInnerAU, habitableZoneOuterAU (calculated from stellar luminosity)
+- **Sci-Fi Fields**: polity, colonized flag, population, techLevel (for world-building)
+- **Custom Fields**: customData1-10 for extensibility
+
+Entity Relationships:
+```
+SolarSystem (1) ──────> (1) StarObject (primary star via primaryStarId)
+SolarSystem (1) <────── (N) StarObject (companion stars via solarSystemId FK)
+SolarSystem (1) <────── (N) ExoPlanet (via solarSystemId FK)
+StarObject  (1) <────── (N) ExoPlanet (via hostStarId FK, for multi-star systems)
+```
+
+### ExoPlanet Entity
+
+Located in `jpa/model/ExoPlanet.java`:
+- **Orbital Parameters**: semiMajorAxis, eccentricity, inclination, argumentOfPeriapsis, longitudeOfAscendingNode
+- **Physical Properties**: radius, mass, equilibriumTemperature
+- **Relationships**: solarSystemId (FK to SolarSystem), hostStarId (FK to StarObject for binary systems)
+- **Status**: planetStatus field for confirmed vs candidate planets
+
 ## 3D Visualization System
 
 ### InterstellarSpacePane
@@ -259,6 +288,92 @@ Custom 3D shapes defined in `/resources/objects/`:
 - Star shapes (4-point, 5-point, moravian stars)
 - Geometric shapes (tetrahedron, cube, octahedron, dodecahedron, icosahedron)
 - Created via `CustomObjectFactory` and `StellarEntityFactory`
+
+## Solar System Visualization
+
+### SolarSystemSpacePane
+
+Located in `graphics/panes/SolarSystemSpacePane.java`, displays individual solar systems:
+- Extends JavaFX `Pane` with `SubScene` and `PerspectiveCamera`
+- Activated via "Jump Into..." context menu on a selected star
+- Delegates rendering to `SolarSystemRenderer`
+- Uses `ContextSelectorEvent` to switch between interstellar and solar system views
+
+### Solar System Rendering Pipeline
+
+Located in `solarsystem/rendering/` package:
+
+1. **SolarSystemService** (`service/SolarSystemService.java`):
+   - Entry point: `getSolarSystem(StarDisplayRecord)`
+   - Queries database for existing `SolarSystem` entity or creates one from star data
+   - Converts `ExoPlanet` entities to `PlanetDescription` for rendering
+   - Calculates habitable zone from stellar luminosity via `HabitableZoneCalculator`
+
+2. **ScaleManager** (`solarsystem/rendering/ScaleManager.java`):
+   - Converts between AU (Astronomical Units) and screen coordinates
+   - Supports linear and logarithmic scale modes
+   - Calculates relative planet/star display sizes with visual compression
+   - Manages zoom levels and scale grid values
+   ```java
+   // Linear: direct scaling
+   public double auToScreen(double au) {
+       return au * baseScale * zoomLevel;
+   }
+   // Log scale for very large systems
+   return Math.log10(1 + au * 10) * baseScale * zoomLevel * 30;
+   ```
+
+3. **OrbitVisualizer** (`solarsystem/rendering/OrbitVisualizer.java`):
+   - Creates 3D orbital ellipses from Keplerian elements
+   - Parameters: semi-major axis, eccentricity, inclination, longitude of ascending node, argument of periapsis
+   - Renders orbits as connected cylinder tube segments
+   - Applies proper 3D rotations: R_z(Ω) * R_x(i) * R_z(ω)
+   - `calculateOrbitalPosition()` returns {x,y,z} at any true anomaly
+
+4. **SolarSystemRenderer** (`solarsystem/rendering/SolarSystemRenderer.java`):
+   - Main orchestrator creating all 3D visual elements
+   - Renders: central star, companion stars, orbital ellipses, planet spheres, habitable zone ring, scale grid
+   - Planet colors based on equilibrium temperature (hot=red, temperate=green, cold=blue)
+   - Star colors based on spectral class (O-M classification)
+   - Stores `planetNodes` map for future animation support
+
+### Rendering Workflow
+
+```
+User clicks "Jump Into..." on star
+        │
+        ▼
+SolarSystemSpacePane.setSystemToDisplay(StarDisplayRecord)
+        │
+        ▼
+SolarSystemService.getSolarSystem(starRecord)
+  ├─> Query SolarSystemRepository for existing system
+  ├─> If not found, create from star + query ExoPlanetRepository
+  └─> Return SolarSystemDescription with planets, habitable zone
+        │
+        ▼
+SolarSystemRenderer.render(SolarSystemDescription)
+  ├─> ScaleManager calculates screen coordinates
+  ├─> Render scale grid circles
+  ├─> Render habitable zone as translucent ring
+  ├─> Render central star sphere
+  ├─> For each companion star: render sphere at offset
+  └─> For each planet:
+        ├─> OrbitVisualizer.createOrbitPath() → ellipse
+        ├─> OrbitVisualizer.calculateOrbitalPosition() → position
+        └─> Create planet sphere with tooltip
+        │
+        ▼
+Group added to SolarSystemSpacePane.systemEntityGroup
+```
+
+### Future: Orbital Animation with Orekit
+
+The project includes **Orekit 11.1.2** for orbital mechanics:
+- `DynamicsCalculator` class exists for Keplerian propagation
+- `planetNodes` map in `SolarSystemRenderer` stores references for position updates
+- Animation would update planet positions based on propagated true anomaly over time
+- Not yet implemented (static rendering only)
 
 ## Routing and Graph Algorithms
 
@@ -333,6 +448,48 @@ Datasets can define custom columns beyond standard star properties:
 - Defined in `DataSetDescriptor.customDataDefinitions`
 - Stored in `StarObject.customData1` through `customData10` fields
 - UI automatically adapts to show custom columns
+
+## Data Workbench
+
+The workbench (`workbench/` package) provides data preparation capabilities separate from the main visualization app.
+
+### Purpose
+
+- Import and transform large star catalogs (e.g., 2.5M star HYG database from astronexus.com)
+- Enrich data from external astronomical services (GAIA, SIMBAD, VizieR)
+- Clean and prepare data before loading into the main application
+
+### Key Components
+
+1. **DataWorkbenchController** (`workbench/DataWorkbenchController.java`):
+   - Main UI controller for workbench operations
+   - Manages source selection and data transformation
+
+2. **WorkbenchSourceActions** (`workbench/WorkbenchSourceActions.java`):
+   - Handles loading data from various sources
+   - Supports CSV files with flexible schema mapping
+
+3. **WorkbenchCsvService** (`workbench/service/WorkbenchCsvService.java`):
+   - Parses CSV files using `WorkbenchCsvSchema` for column mapping
+   - Handles various catalog formats (HYG, Gaia, custom)
+
+4. **WorkbenchEnrichmentService** (`workbench/service/WorkbenchEnrichmentService.java`):
+   - Finds stars with missing distance values
+   - Queries GAIA, VizieR, and SIMBAD to fill in distance data
+
+5. **WorkbenchTapService** (`workbench/service/WorkbenchTapService.java`):
+   - TAP (Table Access Protocol) client for astronomical databases
+   - Downloads data from VizieR RAVE/LAMOST catalogs
+   - Uses `WorkbenchTapDefaults` for standard query configurations
+
+### Workbench vs Main App
+
+| Feature | Workbench | Main App |
+|---------|-----------|----------|
+| Purpose | Data preparation | Visualization |
+| Data size | Millions of stars | Filtered subset |
+| Filtering | ~100 parameters | Query-based |
+| Output | Cleaned CSV/database | 3D star chart |
 
 ## FXML and UI Structure
 
@@ -526,12 +683,13 @@ Always verify coordinate system when working with star positions:
 ## Technology Stack
 
 - **Language**: Java 17
-- **UI Framework**: JavaFX 17
+- **UI Framework**: JavaFX 21.0.5
 - **Backend**: Spring Boot 2.7.4
 - **Database**: H2 (embedded, file-based)
 - **ORM**: Spring Data JPA with Hibernate
 - **Dependency Injection**: Spring Framework + FxWeaver
 - **Graph Algorithms**: JGraphT 1.5.1
+- **Orbital Mechanics**: Orekit 11.1.2 (Keplerian propagation, orbital calculations)
 - **Build Tool**: Maven
 - **Code Generation**: Lombok
 - **3D Graphics**: JavaFX 3D

@@ -1,0 +1,202 @@
+package com.teamgannon.trips.solarsystem.rendering;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Manages coordinate scaling for solar system visualization.
+ * Converts between astronomical units (AU) and screen coordinates.
+ */
+@Slf4j
+@Getter
+@Setter
+public class ScaleManager {
+
+    /**
+     * Astronomical unit in meters
+     */
+    public static final double AU_IN_METERS = 149_597_870_700.0;
+
+    /**
+     * Screen units per AU at zoom level 1.0
+     */
+    private double baseScale = 50.0;
+
+    /**
+     * Current zoom level (1.0 = default)
+     */
+    private double zoomLevel = 1.0;
+
+    /**
+     * Minimum zoom level
+     */
+    private double minZoom = 0.1;
+
+    /**
+     * Maximum zoom level
+     */
+    private double maxZoom = 100.0;
+
+    /**
+     * Whether to use logarithmic scaling for distances
+     */
+    private boolean useLogScale = false;
+
+    /**
+     * Maximum orbital distance in AU (used for scaling)
+     */
+    private double maxOrbitalDistanceAU = 30.0;
+
+    /**
+     * Minimum planet display radius in screen units
+     */
+    private double minPlanetRadius = 2.0;
+
+    /**
+     * Maximum planet display radius in screen units
+     */
+    private double maxPlanetRadius = 10.0;
+
+    /**
+     * Star display radius in screen units
+     */
+    private double starRadius = 20.0;
+
+    public ScaleManager() {
+    }
+
+    public ScaleManager(double maxOrbitalDistanceAU) {
+        this.maxOrbitalDistanceAU = maxOrbitalDistanceAU;
+        // Adjust base scale so the max orbit fits reasonably on screen
+        // Aim for max orbit to be about 400 screen units from center
+        if (maxOrbitalDistanceAU > 0) {
+            this.baseScale = 400.0 / maxOrbitalDistanceAU;
+        }
+    }
+
+    /**
+     * Convert AU to screen coordinates
+     *
+     * @param au distance in astronomical units
+     * @return distance in screen units
+     */
+    public double auToScreen(double au) {
+        if (useLogScale && au > 0) {
+            // Log scale: compress large distances
+            // Use log10(1 + au) to handle au < 1 nicely
+            return Math.log10(1 + au * 10) * baseScale * zoomLevel * 30;
+        }
+        return au * baseScale * zoomLevel;
+    }
+
+    /**
+     * Convert screen coordinates to AU
+     *
+     * @param screen distance in screen units
+     * @return distance in astronomical units
+     */
+    public double screenToAu(double screen) {
+        if (useLogScale) {
+            // Inverse of log scale
+            double logValue = screen / (baseScale * zoomLevel * 30);
+            return (Math.pow(10, logValue) - 1) / 10;
+        }
+        return screen / (baseScale * zoomLevel);
+    }
+
+    /**
+     * Convert AU to meters (for Orekit)
+     *
+     * @param au distance in astronomical units
+     * @return distance in meters
+     */
+    public static double auToMeters(double au) {
+        return au * AU_IN_METERS;
+    }
+
+    /**
+     * Convert meters to AU
+     *
+     * @param meters distance in meters
+     * @return distance in astronomical units
+     */
+    public static double metersToAu(double meters) {
+        return meters / AU_IN_METERS;
+    }
+
+    /**
+     * Calculate planet display radius based on actual radius.
+     * Scales planet sizes relative to each other while keeping them visible.
+     *
+     * @param planetRadiusEarthRadii planet radius in Earth radii
+     * @param maxRadiusInSystem      largest planet radius in the system (Earth radii)
+     * @return display radius in screen units
+     */
+    public double calculatePlanetDisplayRadius(double planetRadiusEarthRadii, double maxRadiusInSystem) {
+        if (maxRadiusInSystem <= 0 || planetRadiusEarthRadii <= 0) {
+            return minPlanetRadius;
+        }
+
+        // Normalize to 0-1 range, then scale to min-max display range
+        double normalized = planetRadiusEarthRadii / maxRadiusInSystem;
+
+        // Use square root to compress the range (Jupiter won't be 11x Earth visually)
+        double compressed = Math.sqrt(normalized);
+
+        return minPlanetRadius + compressed * (maxPlanetRadius - minPlanetRadius);
+    }
+
+    /**
+     * Calculate star display radius based on stellar radius.
+     *
+     * @param stellarRadiusSolarRadii star radius in solar radii
+     * @return display radius in screen units
+     */
+    public double calculateStarDisplayRadius(double stellarRadiusSolarRadii) {
+        if (stellarRadiusSolarRadii <= 0) {
+            return starRadius;
+        }
+        // Compress using log scale for giant stars
+        if (stellarRadiusSolarRadii > 2) {
+            return starRadius + Math.log10(stellarRadiusSolarRadii) * 10;
+        }
+        return starRadius * stellarRadiusSolarRadii;
+    }
+
+    /**
+     * Zoom in by a factor
+     *
+     * @param factor zoom factor (> 1 zooms in, < 1 zooms out)
+     */
+    public void zoom(double factor) {
+        zoomLevel = Math.max(minZoom, Math.min(maxZoom, zoomLevel * factor));
+    }
+
+    /**
+     * Reset zoom to default
+     */
+    public void resetZoom() {
+        zoomLevel = 1.0;
+    }
+
+    /**
+     * Get AU values for scale grid circles
+     *
+     * @return array of AU values for drawing reference circles
+     */
+    public double[] getScaleGridAuValues() {
+        if (maxOrbitalDistanceAU <= 1) {
+            return new double[]{0.1, 0.2, 0.5, 1.0};
+        } else if (maxOrbitalDistanceAU <= 5) {
+            return new double[]{0.5, 1.0, 2.0, 3.0, 5.0};
+        } else if (maxOrbitalDistanceAU <= 10) {
+            return new double[]{1.0, 2.0, 5.0, 10.0};
+        } else if (maxOrbitalDistanceAU <= 50) {
+            return new double[]{1.0, 5.0, 10.0, 20.0, 30.0, 50.0};
+        } else {
+            return new double[]{1.0, 10.0, 30.0, 50.0, 100.0};
+        }
+    }
+
+}

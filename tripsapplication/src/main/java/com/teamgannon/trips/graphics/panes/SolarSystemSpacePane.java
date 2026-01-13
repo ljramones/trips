@@ -2,16 +2,22 @@ package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.ScreenSize;
 import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SolarSystemService;
+import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
+import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
+import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import javafx.animation.RotateTransition;
 import javafx.scene.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.input.MouseEvent;
@@ -29,6 +35,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -38,7 +45,7 @@ import java.util.HashMap;
  */
 @Slf4j
 @Component
-public class SolarSystemSpacePane extends Pane {
+public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenuHandler {
 
     /**
      * rotation angle controls
@@ -50,6 +57,7 @@ public class SolarSystemSpacePane extends Pane {
     private final TripsContext tripsContext;
     private final ApplicationEventPublisher eventPublisher;
     private final SolarSystemService solarSystemService;
+    private final SolarSystemContextMenuFactory contextMenuFactory;
     private final DatabaseManagementService databaseManagementService;
 
     // mouse positions
@@ -96,6 +104,16 @@ public class SolarSystemSpacePane extends Pane {
     private final boolean animationPlay = false;
 
     /**
+     * The renderer that creates all 3D visualization elements
+     */
+    private final SolarSystemRenderer solarSystemRenderer;
+
+    /**
+     * The current solar system description being displayed
+     */
+    private SolarSystemDescription currentSystem;
+
+    /**
      * constructor
      *
      * @param tripsContext              the trips context
@@ -104,15 +122,26 @@ public class SolarSystemSpacePane extends Pane {
     public SolarSystemSpacePane(TripsContext tripsContext,
                                 ApplicationEventPublisher eventPublisher,
                                 DatabaseManagementService databaseManagementService,
-                                SolarSystemService solarSystemService) {
+                                SolarSystemService solarSystemService,
+                                SolarSystemContextMenuFactory contextMenuFactory) {
 
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
         this.solarSystemService = solarSystemService;
+        this.contextMenuFactory = contextMenuFactory;
         ScreenSize screenSize = tripsContext.getScreenSize();
         this.databaseManagementService = databaseManagementService;
 
         this.depth = screenSize.getDepth();
+
+        // Initialize the solar system renderer
+        this.solarSystemRenderer = new SolarSystemRenderer();
+
+        // Set up context menu handler
+        this.solarSystemRenderer.setContextMenuHandler(this);
+
+        // Add the system entity group to world (will hold rendered solar system)
+        world.getChildren().add(systemEntityGroup);
 
         // attach our custom rotation transforms so we can update the labels dynamically
         world.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -165,35 +194,72 @@ public class SolarSystemSpacePane extends Pane {
 
 
     /**
-     * used to draw the target System
+     * Render the solar system using the SolarSystemRenderer
+     *
+     * @param solarSystemDescription the system to render
      */
     private void render(SolarSystemDescription solarSystemDescription) {
-        // figure out size of solar system to get scaling factors
+        // Store current system for reference
+        this.currentSystem = solarSystemDescription;
 
-        // plot central star
+        // Clear previous rendering
+        systemEntityGroup.getChildren().clear();
 
-        // iterate through all the planets
+        if (solarSystemDescription == null) {
+            log.warn("Cannot render null solar system");
+            return;
+        }
 
-        // iterate through all the other objects
+        // Use the renderer to create all 3D elements
+        Group renderedSystem = solarSystemRenderer.render(solarSystemDescription);
 
-        log.info("system rendered");
+        // Add the rendered system to our entity group
+        systemEntityGroup.getChildren().add(renderedSystem);
+
+        // Log summary
+        int planetCount = solarSystemDescription.getPlanetDescriptionList().size();
+        String systemName = solarSystemDescription.getStarDisplayRecord() != null
+                ? solarSystemDescription.getStarDisplayRecord().getStarName()
+                : "Unknown";
+        log.info("Rendered solar system '{}' with {} planets, HZ: {}-{} AU",
+                systemName,
+                planetCount,
+                solarSystemDescription.getHabitableZoneInnerAU(),
+                solarSystemDescription.getHabitableZoneOuterAU());
     }
 
-    private Node createStar(StarDisplayRecord starDisplayRecord) {
-        return null;
+    /**
+     * Get the current solar system description
+     *
+     * @return the current system being displayed
+     */
+    public SolarSystemDescription getCurrentSystem() {
+        return currentSystem;
     }
 
-    private Node createPlanet(PlanetDescription planetDescription) {
-        return null;
+    /**
+     * Get the renderer for external access (e.g., for animation)
+     *
+     * @return the solar system renderer
+     */
+    public SolarSystemRenderer getRenderer() {
+        return solarSystemRenderer;
     }
 
 
     /**
-     * reset the system
+     * Reset the system view
      */
     public void reset() {
-        // clear group to redraw
+        // Clear the UI legend
         starNameGroup.getChildren().clear();
+
+        // Clear the 3D rendered elements
+        systemEntityGroup.getChildren().clear();
+        solarSystemRenderer.clear();
+
+        // Clear current system reference
+        currentSystem = null;
     }
 
     // ---------------------- helpers -------------------------- //
@@ -315,6 +381,103 @@ public class SolarSystemSpacePane extends Pane {
         double z = camera.getTranslateZ();
         double newZ = z - zoomAmt;
         camera.setTranslateZ(newZ);
+    }
+
+    // ==================== Context Menu Handler Implementation ====================
+
+    @Override
+    public void onPlanetContextMenu(Node source, PlanetDescription planet, double screenX, double screenY) {
+        log.info("Planet context menu requested for: {}", planet.getName());
+
+        // Find the ExoPlanet entity from the database
+        ExoPlanet exoPlanet = solarSystemService.findExoPlanetByName(planet.getName());
+
+        // Get sibling planets for orbit validation
+        List<PlanetDescription> siblings = currentSystem != null
+                ? currentSystem.getPlanetDescriptionList()
+                : List.of();
+
+        // Create and show context menu
+        ContextMenu menu = contextMenuFactory.createPlanetContextMenu(
+                planet,
+                exoPlanet,
+                siblings,
+                this::handlePlanetEdit,
+                this::handlePlanetDelete
+        );
+
+        menu.show(source, screenX, screenY);
+    }
+
+    @Override
+    public void onStarContextMenu(Node source, StarDisplayRecord star, double screenX, double screenY) {
+        log.info("Star context menu requested for: {}", star.getStarName());
+
+        // Create and show context menu
+        ContextMenu menu = contextMenuFactory.createStarContextMenu(
+                star,
+                this::jumpBackToInterstellarSpace
+        );
+
+        menu.show(source, screenX, screenY);
+    }
+
+    @Override
+    public void onOrbitContextMenu(Node source, PlanetDescription planet, double screenX, double screenY) {
+        log.info("Orbit context menu requested for planet: {}", planet.getName());
+
+        // Delegate to planet context menu
+        onPlanetContextMenu(source, planet, screenX, screenY);
+    }
+
+    /**
+     * Handle planet edit result from properties dialog.
+     */
+    private void handlePlanetEdit(PlanetEditResult result) {
+        if (!result.isChanged()) {
+            return;
+        }
+
+        log.info("Planet edited: {}, orbital changed: {}", result.getPlanet().getName(), result.isOrbitalChanged());
+
+        // Persist changes to database
+        solarSystemService.updateExoPlanet(result.getPlanet());
+
+        // If orbital properties changed, refresh the visualization
+        if (result.isOrbitalChanged() && currentSystem != null) {
+            refreshCurrentSystem();
+        }
+    }
+
+    /**
+     * Handle planet deletion.
+     */
+    private void handlePlanetDelete(ExoPlanet planet) {
+        log.info("Deleting planet: {}", planet.getName());
+
+        // Delete from database
+        solarSystemService.deleteExoPlanet(planet.getId());
+
+        // Refresh the visualization
+        if (currentSystem != null) {
+            refreshCurrentSystem();
+        }
+    }
+
+    /**
+     * Refresh the current solar system display after edits.
+     */
+    private void refreshCurrentSystem() {
+        if (currentSystem == null || currentSystem.getStarDisplayRecord() == null) {
+            return;
+        }
+
+        // Re-fetch the solar system data and re-render
+        StarDisplayRecord star = currentSystem.getStarDisplayRecord();
+        SolarSystemDescription refreshedSystem = solarSystemService.getSolarSystem(star);
+        render(refreshedSystem);
+
+        log.info("Refreshed solar system display after edit");
     }
 
 }

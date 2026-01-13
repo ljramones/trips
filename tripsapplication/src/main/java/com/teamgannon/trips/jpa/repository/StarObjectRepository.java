@@ -199,6 +199,20 @@ public interface StarObjectRepository
     @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0")
     long countMissingDistance(@Param("dataSetName") String dataSetName);
 
+    /**
+     * Find all stars that belong to a specific solar system
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of stars in the system
+     */
+    List<StarObject> findBySolarSystemId(String solarSystemId);
 
+    /**
+     * Count stars in a solar system
+     *
+     * @param solarSystemId the solar system ID
+     * @return count of stars
+     */
+    long countBySolarSystemId(String solarSystemId);
 
 }

@@ -10,6 +10,8 @@ import org.hibernate.annotations.DynamicUpdate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 /**
  * Yes, this appears to be a header or schema for a dataset related to exoplanets. The fields describe various properties and characteristics of exoplanets and their host stars.
@@ -65,6 +67,13 @@ import javax.persistence.Id;
 @ToString
 @DynamicUpdate
 @Entity(name = "EXOPLANET")
+@Table(indexes = {
+        @Index(columnList = "name ASC"),
+        @Index(columnList = "starName ASC"),
+        @Index(columnList = "solarSystemId"),
+        @Index(columnList = "hostStarId"),
+        @Index(columnList = "planetStatus")
+})
 public class ExoPlanet {
 
     @Id
@@ -74,6 +83,19 @@ public class ExoPlanet {
      * name`: Name of the exoplanet.
      */
     private String name;
+
+    /**
+     * Foreign key reference to the SolarSystem entity this planet belongs to.
+     * Links the planet to its parent stellar system.
+     */
+    private String solarSystemId;
+
+    /**
+     * Foreign key reference to the specific StarObject this planet orbits.
+     * In multi-star systems, this identifies which star the planet orbits.
+     * For circumbinary planets, this would be the primary star.
+     */
+    private String hostStarId;
 
     /**
      * * - `planet_status`: Current status of the planet (e.g., confirmed, candidate).

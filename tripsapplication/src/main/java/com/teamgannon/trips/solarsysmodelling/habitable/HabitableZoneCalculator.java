@@ -13,6 +13,26 @@ public class HabitableZoneCalculator {
 
     private final HabitableZoneFluxes fluxes = new HabitableZoneFluxes();
 
+    /**
+     * Calculate habitable zone boundaries for a star based on luminosity.
+     * Uses simplified formula: inner edge ~ 0.95 * sqrt(L), outer edge ~ 1.67 * sqrt(L)
+     * where L is luminosity in solar units.
+     *
+     * @param luminosity stellar luminosity in solar luminosities
+     * @return array of [innerAU, outerAU]
+     */
+    public static double[] calculate(double luminosity) {
+        if (luminosity <= 0) {
+            // Default to Sun-like values
+            return new double[]{0.95, 1.67};
+        }
+        double sqrtL = Math.sqrt(luminosity);
+        // Conservative habitable zone estimates
+        double innerAU = 0.95 * sqrtL;  // Recent Venus limit
+        double outerAU = 1.67 * sqrtL;  // Early Mars limit
+        return new double[]{innerAU, outerAU};
+    }
+
     public static void main(String[] args) {
         HabitableZoneCalculator hz = new HabitableZoneCalculator();
         HabitableZoneFluxes habitableZoneFluxes = hz.findStellarFluxes(5780.0);

@@ -12,6 +12,9 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Pagination?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -130,6 +133,79 @@
                         </HBox>
                         <Label fx:id="exportStatusLabel" text="No export run yet."/>
                     </VBox>
+                </Tab>
+                <Tab text="Exoplanets">
+                    <BorderPane>
+                        <top>
+                            <VBox spacing="8.0">
+                                <padding>
+                                    <Insets top="8.0" right="12.0" bottom="8.0" left="12.0"/>
+                                </padding>
+                                <Label text="Import exoplanets from exoplanet.eu catalog and match to existing stars in your dataset."/>
+                                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                    <Button onAction="#onLoadExoplanetCsv" text="Load CSV..."/>
+                                    <Button onAction="#onMatchExoplanets" text="Match to Stars"/>
+                                    <Button onAction="#onImportExoplanets" text="Import Selected"/>
+                                    <Button onAction="#onClearExoplanetData" text="Clear"/>
+                                    <Separator orientation="VERTICAL"/>
+                                    <CheckBox fx:id="skipDuplicatesCheckbox" text="Skip duplicates" selected="true"/>
+                                </HBox>
+                                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                    <Label text="Loaded:"/>
+                                    <Label fx:id="exoplanetFileStatusLabel" text="No file loaded"/>
+                                    <Separator orientation="VERTICAL"/>
+                                    <Label fx:id="exoplanetMatchStatsLabel" text=""/>
+                                </HBox>
+                            </VBox>
+                        </top>
+                        <center>
+                            <SplitPane orientation="VERTICAL" dividerPositions="0.5">
+                                <VBox spacing="4.0">
+                                    <padding>
+                                        <Insets top="4.0" right="12.0" bottom="4.0" left="12.0"/>
+                                    </padding>
+                                    <Label text="Loaded Exoplanets" style="-fx-font-weight: bold;"/>
+                                    <TableView fx:id="exoplanetPreviewTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="exoNameCol" text="Planet Name" prefWidth="140"/>
+                                            <TableColumn fx:id="exoStarNameCol" text="Star Name" prefWidth="120"/>
+                                            <TableColumn fx:id="exoSmaCol" text="Semi-Major Axis" prefWidth="110"/>
+                                            <TableColumn fx:id="exoMassCol" text="Mass" prefWidth="80"/>
+                                            <TableColumn fx:id="exoRadiusCol" text="Radius" prefWidth="80"/>
+                                            <TableColumn fx:id="exoPeriodCol" text="Period" prefWidth="90"/>
+                                            <TableColumn fx:id="exoStatusCol" text="Status" prefWidth="80"/>
+                                        </columns>
+                                    </TableView>
+                                </VBox>
+                                <VBox spacing="4.0">
+                                    <padding>
+                                        <Insets top="4.0" right="12.0" bottom="4.0" left="12.0"/>
+                                    </padding>
+                                    <Label text="Star Matching Results" style="-fx-font-weight: bold;"/>
+                                    <TableView fx:id="exoplanetMatchTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="matchSelectCol" text="" prefWidth="30"/>
+                                            <TableColumn fx:id="matchExoNameCol" text="Exoplanet" prefWidth="140"/>
+                                            <TableColumn fx:id="matchCsvStarCol" text="CSV Star Name" prefWidth="120"/>
+                                            <TableColumn fx:id="matchMatchedStarCol" text="Matched Star" prefWidth="140"/>
+                                            <TableColumn fx:id="matchTypeCol" text="Match Type" prefWidth="100"/>
+                                            <TableColumn fx:id="matchConfidenceCol" text="Confidence" prefWidth="80"/>
+                                        </columns>
+                                    </TableView>
+                                </VBox>
+                            </SplitPane>
+                        </center>
+                        <bottom>
+                            <VBox spacing="4.0">
+                                <padding>
+                                    <Insets top="8.0" right="12.0" bottom="8.0" left="12.0"/>
+                                </padding>
+                                <ProgressBar fx:id="exoplanetProgressBar" prefWidth="700.0" visible="false"/>
+                                <TextArea fx:id="exoplanetLogArea" prefRowCount="4" editable="false"
+                                          promptText="Import log will appear here..."/>
+                            </VBox>
+                        </bottom>
+                    </BorderPane>
                 </Tab>
             </tabs>
         </TabPane>

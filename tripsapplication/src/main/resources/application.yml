@@ -13,7 +13,7 @@ spring:
       connectionTimeout: 20000
       maximumPoolSize: 5
       poolName: HikariPoolTrips
-    url: jdbc:h2:file:./data/tripsdb
+    url: jdbc:h2:file:./data/tripsdb;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
     driverClassName: org.h2.Driver
     username: sa
     password:

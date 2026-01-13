@@ -186,6 +186,71 @@ public class StarDisplayRecord {
         return record;
     }
 
+    /**
+     * Create a StarDisplayRecord from a StarObject using default display settings.
+     * Useful when preferences are not available (e.g., for companion stars in solar system view).
+     *
+     * @param starObject the star object to convert
+     * @return a new StarDisplayRecord with basic properties set
+     */
+    public static @NotNull StarDisplayRecord fromStarObject(@NotNull StarObject starObject) {
+        StarDisplayRecord record = new StarDisplayRecord();
+
+        record.setRecordId(starObject.getId());
+        record.setStarName(starObject.getDisplayName());
+        record.setDataSetName(starObject.getDataSetName());
+        record.setDistance(starObject.getDistance());
+        record.setSpectralClass(starObject.getSpectralClass());
+        record.setMass(starObject.getMass());
+        record.setLuminosity(parseDoubleSafe(starObject.getLuminosity()));
+        record.setTemperature(starObject.getTemperature());
+        record.setNotes(starObject.getNotes());
+        record.setPolity(starObject.getPolity());
+
+        double[] coords = starObject.getCoordinates();
+        record.setActualCoordinates(coords);
+
+        // Set default color based on spectral class
+        record.setStarColor(getDefaultColorForSpectralClass(starObject.getOrthoSpectralClass()));
+        record.setRadius(5.0); // Default radius for display
+
+        return record;
+    }
+
+    private static double parseDoubleSafe(String value) {
+        if (value == null || value.isBlank()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Get a default color for a spectral class
+     */
+    private static Color getDefaultColorForSpectralClass(String spectralClass) {
+        if (spectralClass == null || spectralClass.isEmpty()) {
+            return Color.WHITE;
+        }
+        char type = spectralClass.charAt(0);
+        return switch (type) {
+            case 'O' -> Color.rgb(155, 176, 255);  // Blue
+            case 'B' -> Color.rgb(170, 191, 255);  // Blue-white
+            case 'A' -> Color.rgb(202, 215, 255);  // White
+            case 'F' -> Color.rgb(248, 247, 255);  // Yellow-white
+            case 'G' -> Color.rgb(255, 244, 234);  // Yellow
+            case 'K' -> Color.rgb(255, 210, 161);  // Orange
+            case 'M' -> Color.rgb(255, 204, 111);  // Red-orange
+            case 'L' -> Color.rgb(255, 150, 100);  // Dark red
+            case 'T' -> Color.rgb(200, 100, 100);  // Brown
+            case 'Y' -> Color.rgb(150, 80, 80);    // Dark brown
+            default -> Color.WHITE;
+        };
+    }
+
     public void init() {
         dataSetName = " ";
         starName = " ";
