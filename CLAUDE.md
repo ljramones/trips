@@ -282,6 +282,96 @@ The main 3D visualization component:
 - **Labels**: Displayed for important/close stars based on display score
 - **Selection**: Click to select, shows properties in side panel
 
+### Billboard Labels Pattern (2D Labels on 3D Objects)
+
+TRIPS uses a pattern to display labels that always face the camera (billboard-style) without complex 3D math. The technique exploits JavaFX's scene graph separation:
+
+**Architecture:**
+```
+sceneRoot (2D)
+├── subScene (3D viewport)
+│   └── world (3D group - rotates with camera)
+│       └── 3D objects (spheres, meshes, etc.)
+└── labelDisplayGroup (2D group - stays fixed)
+    └── Label nodes (always flat to screen)
+```
+
+**Key Components:**
+1. **3D objects** live in `world` group (part of `SubScene`)
+2. **2D labels** live in `labelDisplayGroup` (sibling of `SubScene`, added to `sceneRoot`)
+3. **`shapeToLabel` Map** tracks which Label belongs to which 3D Node
+4. **`updateLabels()` method** repositions labels when view rotates/zooms
+
+**CRITICAL: Two-Step Coordinate Transformation**
+
+A naive implementation using only `localToScene()` will cause labels to drift erratically during rotation. The correct approach requires a **two-step transformation**:
+
+```java
+public void updateLabels() {
+    for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+        Node node3D = entry.getKey();
+        Label label2D = entry.getValue();
+
+        // Step 1: Project 3D node position to scene coordinates
+        Point3D sceneCoords = node3D.localToScene(Point3D.ZERO, true);
+
+        // Step 2: Convert scene coordinates to labelDisplayGroup's local coordinates
+        Point2D localPoint = labelDisplayGroup.sceneToLocal(sceneCoords.getX(), sceneCoords.getY());
+
+        // Apply position via Translate transform
+        label2D.getTransforms().setAll(new Translate(localPoint.getX(), localPoint.getY()));
+    }
+}
+```
+
+**Why Two Steps Are Required:**
+- `localToScene(Point3D.ZERO, true)` gives coordinates in the **Scene's** coordinate space
+- But the `labelDisplayGroup` may have its own transforms or coordinate offsets
+- `sceneToLocal()` converts from Scene space to the label group's local space
+- Without this second step, labels will drift as the 3D world rotates because the coordinate spaces don't align
+
+**Additional Robustness (Lessons Learned):**
+
+The `SolarSystemSpacePane.updateLabels()` implementation includes these defensive measures:
+
+1. **NaN checks** - `localToScene()` can return NaN for nodes with invalid positions:
+   ```java
+   if (Double.isNaN(node.getTranslateX())) {
+       label.setVisible(false);
+       continue;
+   }
+   if (Double.isNaN(sceneCoords.getX()) || Double.isNaN(sceneCoords.getY())) {
+       label.setVisible(false);
+       continue;
+   }
+   ```
+
+2. **Visibility clipping** - Hide labels that move outside the viewport:
+   ```java
+   if (x < 20 || x > (subScene.getWidth() - 20)) {
+       label.setVisible(false);
+       continue;
+   }
+   ```
+
+3. **Boundary clamping** - Prevent labels from going partially off-screen:
+   ```java
+   if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+       x = subScene.getWidth() - (label.getWidth() + 5);
+   }
+   ```
+
+**Implementations:**
+- `StarPlotManager.updateLabels()` - interstellar view star labels
+- `SolarSystemSpacePane.updateLabels()` - solar system planet/star labels (reference implementation with full robustness)
+
+**When to Call `updateLabels()`:**
+- After mouse drag (rotation)
+- After scroll (zoom)
+- After initial render
+
+This pattern can be extended for any screen-aligned overlay: distance indicators, selection highlights, measurement tools, etc.
+
 ### 3D Objects and Meshes
 
 Custom 3D shapes defined in `/resources/objects/`:

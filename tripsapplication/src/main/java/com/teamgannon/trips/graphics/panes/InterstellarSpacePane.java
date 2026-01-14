@@ -80,16 +80,20 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     /**
      * the grid plot manager
      */
-    private GridPlotManager gridPlotManager;
+    private final GridPlotManager gridPlotManager;
+
     @Getter
-    private RouteManager routeManager;
+    private final RouteManager routeManager;
 
     private final ApplicationEventPublisher eventPublisher;
+
     /////////////////
     @Getter
     private final @NotNull TransitManager transitManager;
+
     @Getter
     private final @NotNull StarPlotManager starPlotManager;
+
     @NotNull
     PerspectiveCamera camera = new PerspectiveCamera(true);
     private final double baseCameraTranslateX;
@@ -180,7 +184,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         // event setup
         handleUserEvents();
 
-        // setup star plot manager
+        // set up star plot manager
         starPlotManager.setGraphics(sceneRoot, world, subScene);
 
         // setup route manager
@@ -189,7 +193,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         // setup grid manager
         gridPlotManager.setGraphics(sceneRoot, world, subScene);
 
-        // setup transsit manager
+        // setup transit manager
         this.transitManager.setGraphics(sceneRoot, world, subScene, this);
 
         // create a rotation animation
@@ -566,7 +570,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     ///////////////////////// event manager
 
     /**
-     * handle the user events events
+     * handle the user events
      */
     private void handleUserEvents() {
 

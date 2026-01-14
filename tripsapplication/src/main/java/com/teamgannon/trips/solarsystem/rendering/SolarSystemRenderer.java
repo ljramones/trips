@@ -7,6 +7,7 @@ import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -14,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
+import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import lombok.Getter;
 import lombok.Setter;
@@ -107,6 +109,12 @@ public class SolarSystemRenderer {
     private final Map<String, Group> orbitGroups;
 
     /**
+     * Map of 3D nodes to their 2D labels (for billboard-style label updates)
+     */
+    @Getter
+    private final Map<Node, Label> shapeToLabel;
+
+    /**
      * Handler for context menu events (optional)
      */
     @Getter
@@ -118,6 +126,16 @@ public class SolarSystemRenderer {
      */
     private StarDisplayRecord currentStar;
 
+    /**
+     * Label font for planet/star names
+     */
+    private Font labelFont = Font.font("Verdana", 12);
+
+    /**
+     * Label color for planet/star names
+     */
+    private Color labelColor = Color.WHEAT;
+
     public SolarSystemRenderer() {
         this.scaleManager = new ScaleManager();
         this.orbitVisualizer = new OrbitVisualizer(scaleManager);
@@ -128,8 +146,45 @@ public class SolarSystemRenderer {
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
+        this.shapeToLabel = new HashMap<>();
 
         systemGroup.getChildren().addAll(orbitsGroup, planetsGroup, labelsGroup);
+    }
+
+    /**
+     * Set label appearance
+     *
+     * @param font  the font for labels
+     * @param color the color for labels
+     */
+    public void setLabelStyle(Font font, Color color) {
+        this.labelFont = font;
+        this.labelColor = color;
+    }
+
+    /**
+     * Create a label for a named object.
+     * The label is NOT added to any group here - it should be added to a 2D overlay by the caller.
+     *
+     * @param name the name to display
+     * @return the created label
+     */
+    public Label createLabel(String name) {
+        Label label = new Label(name);
+        label.setFont(labelFont);
+        label.setTextFill(labelColor);
+        return label;
+    }
+
+    /**
+     * Register a 3D node with its corresponding 2D label.
+     * This allows the pane to update label positions when the view rotates.
+     *
+     * @param node  the 3D node (sphere, etc.)
+     * @param label the 2D label
+     */
+    public void registerLabel(Node node, Label label) {
+        shapeToLabel.put(node, label);
     }
 
     /**
@@ -216,6 +271,7 @@ public class SolarSystemRenderer {
         planetNodes.clear();
         planetDescriptions.clear();
         orbitGroups.clear();
+        shapeToLabel.clear();
         currentStar = null;
     }
 

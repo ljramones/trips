@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.jpa.model.StarObject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,14 +37,11 @@ public class AstrographicTransformer {
     /**
      * the scaling parameters
      */
+    @Getter
     private ScalingParameters scalingParameters;
 
     public AstrographicTransformer(double scaleIncrement) {
         this.scaleIncrement = scaleIncrement;
-    }
-
-    public ScalingParameters getScalingParameters() {
-        return scalingParameters;
     }
 
     /**

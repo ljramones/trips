@@ -21,6 +21,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
+import javafx.geometry.Point3D;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -31,6 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Translate;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -75,9 +80,19 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private final Group starNameGroup = new Group();
 
     /**
+     * 2D label display group - added to sceneRoot for flat labels that face the camera
+     */
+    private final Group labelDisplayGroup = new Group();
+
+    /**
      * contains all the entities in the solar system
      */
     private final Group systemEntityGroup = new Group();
+
+    /**
+     * Whether labels are currently visible
+     */
+    private boolean labelsOn = true;
 
     /**
      * the subscene which is used for a glass pane flat screen
@@ -158,6 +173,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         sceneRoot.getChildren().add(starNameGroup);
 
+        // Add label display group to sceneRoot (2D overlay) - labels stay flat to camera
+        sceneRoot.getChildren().add(labelDisplayGroup);
+
         this.setBackground(Background.EMPTY);
         this.getChildren().add(sceneRoot);
         this.setPickOnBounds(false);
@@ -171,10 +189,86 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     }
 
     /**
-     * call to update the labels
+     * Update label positions to follow their associated 3D nodes.
+     * Labels stay flat (billboard-style) because they're in a 2D overlay group.
+     *
+     * This follows the same pattern as StarPlotManager.updateLabels() -
+     * using getBoundsInParent() to calculate offset and Translate transforms.
      */
     public void updateLabels() {
+        if (!labelsOn) {
+            return;
+        }
 
+        Map<Node, Label> shapeToLabel = solarSystemRenderer.getShapeToLabel();
+        if (shapeToLabel.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
+
+            // Skip nodes with invalid coordinates
+            if (Double.isNaN(node.getTranslateX())) {
+                label.setVisible(false);
+                continue;
+            }
+
+            // Get 3D node's position in root Scene coordinates
+            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+
+            // Skip if localToScene returned NaN
+            if (Double.isNaN(coordinates.getX()) || Double.isNaN(coordinates.getY())) {
+                label.setVisible(false);
+                continue;
+            }
+
+            Point2D localPoint = labelDisplayGroup.sceneToLocal(coordinates.getX(), coordinates.getY());
+            double x = localPoint.getX();
+            double y = localPoint.getY();
+
+            // Clipping Logic - keep labels within the visible overlay
+            if (x < 20 || x > (subScene.getWidth() - 20)) {
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+            if (y < 20 || y > (subScene.getHeight() - 20)) {
+                label.setVisible(false);
+                continue;
+            } else {
+                label.setVisible(true);
+            }
+
+            // Boundary checks
+            if (x < 0) {
+                x = 0;
+            }
+            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + 5);
+            }
+            if (y < 0) {
+                y = 0;
+            }
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + 5);
+            }
+
+            // Use Translate transform - same as StarPlotManager
+            label.getTransforms().setAll(new Translate(x, y));
+        }
+    }
+
+    /**
+     * Toggle label visibility
+     *
+     * @param labelsOn true to show labels
+     */
+    public void toggleLabels(boolean labelsOn) {
+        this.labelsOn = labelsOn;
+        labelDisplayGroup.setVisible(labelsOn);
     }
 
 
@@ -206,6 +300,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Clear previous rendering
         systemEntityGroup.getChildren().clear();
+        labelDisplayGroup.getChildren().clear();
 
         if (solarSystemDescription == null) {
             log.warn("Cannot render null solar system");
@@ -218,6 +313,12 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         // Add the rendered system to our entity group
         systemEntityGroup.getChildren().add(renderedSystem);
 
+        // Create labels for all rendered objects and add to 2D overlay
+        createLabelsForRenderedObjects(solarSystemDescription);
+
+        // Initial label positioning
+        updateLabels();
+
         // Log summary
         int planetCount = solarSystemDescription.getPlanetDescriptionList().size();
         String systemName = solarSystemDescription.getStarDisplayRecord() != null
@@ -228,6 +329,45 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 planetCount,
                 solarSystemDescription.getHabitableZoneInnerAU(),
                 solarSystemDescription.getHabitableZoneOuterAU());
+    }
+
+    /**
+     * Create 2D labels for all rendered 3D objects (planets and stars).
+     * Labels are added to the 2D labelDisplayGroup and registered with the renderer.
+     *
+     * @param solarSystemDescription the system being rendered
+     */
+    private void createLabelsForRenderedObjects(SolarSystemDescription solarSystemDescription) {
+        Map<String, javafx.scene.shape.Sphere> planetNodes = solarSystemRenderer.getPlanetNodes();
+
+        // Create labels for planets
+        for (Map.Entry<String, javafx.scene.shape.Sphere> entry : planetNodes.entrySet()) {
+            String planetName = entry.getKey();
+            javafx.scene.shape.Sphere planetSphere = entry.getValue();
+
+            Label label = solarSystemRenderer.createLabel(planetName);
+            label.setLabelFor(planetSphere);
+            labelDisplayGroup.getChildren().add(label);
+            solarSystemRenderer.registerLabel(planetSphere, label);
+        }
+
+        // Create label for the central star
+        if (solarSystemDescription.getStarDisplayRecord() != null) {
+            String starName = solarSystemDescription.getStarDisplayRecord().getStarName();
+            // Find the star sphere in the planets group (it's rendered there)
+            Group planetsGroup = solarSystemRenderer.getPlanetsGroup();
+            for (Node node : planetsGroup.getChildren()) {
+                if (node.getUserData() instanceof StarDisplayRecord star) {
+                    Label label = solarSystemRenderer.createLabel(star.getStarName());
+                    label.setLabelFor(node);
+                    labelDisplayGroup.getChildren().add(label);
+                    solarSystemRenderer.registerLabel(node, label);
+                    break; // Only label the primary star for now
+                }
+            }
+        }
+
+        log.debug("Created {} labels for solar system objects", solarSystemRenderer.getShapeToLabel().size());
     }
 
     /**
@@ -255,6 +395,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     public void reset() {
         // Clear the UI legend
         starNameGroup.getChildren().clear();
+
+        // Clear the 2D labels
+        labelDisplayGroup.getChildren().clear();
 
         // Clear the 3D rendered elements
         systemEntityGroup.getChildren().clear();
