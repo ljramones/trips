@@ -1,0 +1,44 @@
+# Java
+*.class
+target/
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Logs
+logs/*.log
+logs/*.gz
+
+# Database
+data/*.db
+data/*.trace.db
+
+# Backup
+backup/
+
+# Personal tokens
+ptoken
+
+# Large data files
+files/*.csv
+files/hyg_db/
+*.csv
+*.big
+
+30ly.trips.csv.zip
