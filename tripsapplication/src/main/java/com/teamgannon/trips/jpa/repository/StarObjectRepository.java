@@ -156,6 +156,30 @@ public interface StarObjectRepository
             double zl
     );
 
+    /**
+     * Stream stars within a 3D coordinate bounding box for a specific dataset.
+     * Used by NightSkyService for efficient star queries on large datasets.
+     *
+     * @param datasetName the dataset name
+     * @param minX minimum X coordinate (light years)
+     * @param maxX maximum X coordinate (light years)
+     * @param minY minimum Y coordinate (light years)
+     * @param maxY maximum Y coordinate (light years)
+     * @param minZ minimum Z coordinate (light years)
+     * @param maxZ maximum Z coordinate (light years)
+     * @return stream of matching stars
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :datasetName " +
+           "AND s.x >= :minX AND s.x <= :maxX " +
+           "AND s.y >= :minY AND s.y <= :maxY " +
+           "AND s.z >= :minZ AND s.z <= :maxZ")
+    @Transactional(readOnly = true)
+    Stream<StarObject> streamByDataSetNameAndCoordinateRange(
+            @Param("datasetName") String datasetName,
+            @Param("minX") double minX, @Param("maxX") double maxX,
+            @Param("minY") double minY, @Param("maxY") double maxY,
+            @Param("minZ") double minZ, @Param("maxZ") double maxZ);
+
     List<StarObject> findByCatalogIdListContainsIgnoreCase(String catalogId);
 
     List<StarObject> findByCatalogIdListContainsIgnoreCaseAndDataSetName(String catalogId, String dataSetName);

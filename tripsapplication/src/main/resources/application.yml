@@ -40,5 +40,10 @@ app:
   programdata: files/programdata/
   scriptDirectory: files/scriptfiles/
 
+# Orekit orbital mechanics library configuration
+orekit:
+  data:
+    path: ${user.home}/orekit-data
+
 
 

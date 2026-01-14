@@ -44,6 +44,28 @@ public class SolarSystemContextMenuFactory {
             Consumer<PlanetEditResult> onEditComplete,
             Consumer<ExoPlanet> onDeletePlanet) {
 
+        return createPlanetContextMenu(planet, exoPlanet, siblingPlanets, onEditComplete, onDeletePlanet, null);
+    }
+
+    /**
+     * Create a context menu for a planet sphere with land on planet option.
+     *
+     * @param planet           the planet description
+     * @param exoPlanet        the ExoPlanet entity for editing
+     * @param siblingPlanets   other planets in the system (for orbit validation)
+     * @param onEditComplete   callback when editing is complete
+     * @param onDeletePlanet   callback when planet should be deleted
+     * @param onLandOnPlanet   callback when user wants to land on planet (view sky from surface)
+     * @return the context menu
+     */
+    public ContextMenu createPlanetContextMenu(
+            PlanetDescription planet,
+            ExoPlanet exoPlanet,
+            List<PlanetDescription> siblingPlanets,
+            Consumer<PlanetEditResult> onEditComplete,
+            Consumer<ExoPlanet> onDeletePlanet,
+            Consumer<ExoPlanet> onLandOnPlanet) {
+
         ContextMenu menu = new ContextMenu();
 
         // Title item (disabled, just for display)
@@ -51,6 +73,19 @@ public class SolarSystemContextMenuFactory {
         titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size: 14; -fx-font-weight: bold;");
         titleItem.setDisable(true);
         menu.getItems().add(titleItem);
+        menu.getItems().add(new SeparatorMenuItem());
+
+        // Land on Planet (view sky from surface) - first for prominence
+        MenuItem landOnPlanetItem = new MenuItem("Land on Planet");
+        landOnPlanetItem.setOnAction(e -> {
+            if (exoPlanet != null && onLandOnPlanet != null) {
+                log.info("User selected 'Land on Planet' for: {}", exoPlanet.getName());
+                onLandOnPlanet.accept(exoPlanet);
+            }
+        });
+        landOnPlanetItem.setDisable(exoPlanet == null || onLandOnPlanet == null);
+        menu.getItems().add(landOnPlanetItem);
+
         menu.getItems().add(new SeparatorMenuItem());
 
         // Properties menu item

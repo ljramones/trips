@@ -418,21 +418,21 @@ public class SolarSystemRenderer {
             double angle1 = 2 * Math.PI * i / segments;
             double angle2 = 2 * Math.PI * (i + 1) / segments;
 
-            // Inner edge
+            // Inner edge in XZ plane (Y is up)
             double x1Inner = innerRadius * Math.cos(angle1);
-            double y1Inner = innerRadius * Math.sin(angle1);
+            double z1Inner = innerRadius * Math.sin(angle1);
             double x2Inner = innerRadius * Math.cos(angle2);
-            double y2Inner = innerRadius * Math.sin(angle2);
+            double z2Inner = innerRadius * Math.sin(angle2);
 
-            // Outer edge
+            // Outer edge in XZ plane
             double x1Outer = outerRadius * Math.cos(angle1);
-            double y1Outer = outerRadius * Math.sin(angle1);
+            double z1Outer = outerRadius * Math.sin(angle1);
             double x2Outer = outerRadius * Math.cos(angle2);
-            double y2Outer = outerRadius * Math.sin(angle2);
+            double z2Outer = outerRadius * Math.sin(angle2);
 
             // Create thin cylinders for inner and outer edges
-            Cylinder innerSeg = createRingSegment(x1Inner, y1Inner, x2Inner, y2Inner, 0.3, hzMaterial);
-            Cylinder outerSeg = createRingSegment(x1Outer, y1Outer, x2Outer, y2Outer, 0.3, hzMaterial);
+            Cylinder innerSeg = createRingSegmentXZ(x1Inner, z1Inner, x2Inner, z2Inner, 0.3, hzMaterial);
+            Cylinder outerSeg = createRingSegmentXZ(x1Outer, z1Outer, x2Outer, z2Outer, 0.3, hzMaterial);
 
             hzGroup.getChildren().addAll(innerSeg, outerSeg);
         }
@@ -441,11 +441,11 @@ public class SolarSystemRenderer {
         for (int i = 0; i < 12; i++) {
             double angle = 2 * Math.PI * i / 12;
             double xInner = innerRadius * Math.cos(angle);
-            double yInner = innerRadius * Math.sin(angle);
+            double zInner = innerRadius * Math.sin(angle);
             double xOuter = outerRadius * Math.cos(angle);
-            double yOuter = outerRadius * Math.sin(angle);
+            double zOuter = outerRadius * Math.sin(angle);
 
-            Cylinder radial = createRingSegment(xInner, yInner, xOuter, yOuter, 0.2, hzMaterial);
+            Cylinder radial = createRingSegmentXZ(xInner, zInner, xOuter, zOuter, 0.2, hzMaterial);
             hzGroup.getChildren().add(radial);
         }
 
@@ -470,7 +470,7 @@ public class SolarSystemRenderer {
     }
 
     /**
-     * Create a circle in the XY plane
+     * Create a circle in the XZ plane (Y is up)
      */
     private Group createCircle(double radius, PhongMaterial material) {
         Group circleGroup = new Group();
@@ -481,11 +481,11 @@ public class SolarSystemRenderer {
             double angle2 = 2 * Math.PI * (i + 1) / segments;
 
             double x1 = radius * Math.cos(angle1);
-            double y1 = radius * Math.sin(angle1);
+            double z1 = radius * Math.sin(angle1);
             double x2 = radius * Math.cos(angle2);
-            double y2 = radius * Math.sin(angle2);
+            double z2 = radius * Math.sin(angle2);
 
-            Cylinder segment = createRingSegment(x1, y1, x2, y2, 0.2, material);
+            Cylinder segment = createRingSegmentXZ(x1, z1, x2, z2, 0.2, material);
             circleGroup.getChildren().add(segment);
         }
 
@@ -493,31 +493,32 @@ public class SolarSystemRenderer {
     }
 
     /**
-     * Create a cylinder segment between two points in the XY plane
+     * Create a cylinder segment between two points in the XZ plane (Y is up)
      */
-    private Cylinder createRingSegment(double x1, double y1, double x2, double y2,
-                                        double radius, PhongMaterial material) {
+    private Cylinder createRingSegmentXZ(double x1, double z1, double x2, double z2,
+                                          double radius, PhongMaterial material) {
         double midX = (x1 + x2) / 2;
-        double midY = (y1 + y2) / 2;
+        double midZ = (z1 + z2) / 2;
 
         double dx = x2 - x1;
-        double dy = y2 - y1;
-        double length = Math.sqrt(dx * dx + dy * dy);
+        double dz = z2 - z1;
+        double length = Math.sqrt(dx * dx + dz * dz);
 
         Cylinder cylinder = new Cylinder(radius, length);
         cylinder.setMaterial(material);
 
         cylinder.setTranslateX(midX);
-        cylinder.setTranslateY(midY);
-        cylinder.setTranslateZ(0);
+        cylinder.setTranslateY(0);  // In XZ plane
+        cylinder.setTranslateZ(midZ);
 
-        // Rotate to align with segment direction (default cylinder is along Y)
-        double angle = Math.toDegrees(Math.atan2(dx, dy));
-        cylinder.setRotationAxis(new Point3D(0, 0, 1));
-        cylinder.setRotate(-angle);
+        // Rotate to align with segment direction in XZ plane
+        // Default cylinder is along Y axis, we need to lay it flat and rotate
+        double angle = Math.toDegrees(Math.atan2(dx, dz));
 
-        // Lay flat in XY plane
+        // First lay the cylinder flat (rotate 90° around X to put it in XZ plane)
         cylinder.getTransforms().add(new Rotate(90, Rotate.X_AXIS));
+        // Then rotate around Y to align with the segment direction
+        cylinder.getTransforms().add(new Rotate(-angle, Rotate.Y_AXIS));
 
         return cylinder;
     }

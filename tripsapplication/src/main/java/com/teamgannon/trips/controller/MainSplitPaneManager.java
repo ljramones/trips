@@ -15,6 +15,7 @@ import com.teamgannon.trips.controller.splitpane.LeftDisplayController;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.events.*;
+import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -710,6 +711,13 @@ public class MainSplitPaneManager {
                     leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
                     rightPanelCoordinator.switchToSolarSystem(event.getStarDisplayRecord());  // Switch side pane
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
+                }
+                case PLANETARY -> {
+                    log.info("Showing planetary surface view");
+                    leftDisplayController.showPlanetary(event.getPlanetaryContext());
+                    rightPanelCoordinator.switchToPlanetary(event.getPlanetaryContext());  // Switch side pane
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                            "Viewing sky from " + event.getPlanetaryContext().getPlanetName()));
                 }
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());
             }

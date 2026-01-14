@@ -1105,7 +1105,7 @@ public class StarPlotManager {
                 this,
                 ContextSelectionType.SOLARSYSTEM,
                 starDisplayRecord,
-                null));
+                (java.util.Map<String, String>) null));
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {

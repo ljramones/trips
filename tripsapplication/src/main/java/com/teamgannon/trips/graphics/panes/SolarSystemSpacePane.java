@@ -7,6 +7,7 @@ import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
+import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -434,16 +435,49 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 ? currentSystem.getPlanetDescriptionList()
                 : List.of();
 
-        // Create and show context menu
+        // Create and show context menu with land on planet option
         ContextMenu menu = contextMenuFactory.createPlanetContextMenu(
                 planet,
                 exoPlanet,
                 siblings,
                 this::handlePlanetEdit,
-                this::handlePlanetDelete
+                this::handlePlanetDelete,
+                this::handleLandOnPlanet
         );
 
         menu.show(source, screenX, screenY);
+    }
+
+    /**
+     * Handle "Land on Planet" - switch to planetary view showing sky from planet's surface.
+     */
+    private void handleLandOnPlanet(ExoPlanet planet) {
+        if (planet == null || currentSystem == null) {
+            log.warn("Cannot land on planet: planet or system is null");
+            return;
+        }
+
+        log.info("Landing on planet: {}", planet.getName());
+
+        // Build the planetary context
+        PlanetaryContext context = PlanetaryContext.builder()
+                .planet(planet)
+                .system(currentSystem)
+                .hostStar(currentSystem.getStarDisplayRecord())
+                .localTime(12.0)  // Default to noon
+                .viewingAzimuth(0.0)  // Looking north
+                .viewingAltitude(45.0)  // Looking up at 45 degrees
+                .magnitudeLimit(6.0)  // Default naked-eye limit
+                .fieldOfView(90.0)
+                .showAtmosphereEffects(true)
+                .build();
+
+        // Publish event to switch to planetary view
+        eventPublisher.publishEvent(new ContextSelectorEvent(
+                this,
+                ContextSelectionType.PLANETARY,
+                currentSystem.getStarDisplayRecord(),
+                context));
     }
 
     @Override

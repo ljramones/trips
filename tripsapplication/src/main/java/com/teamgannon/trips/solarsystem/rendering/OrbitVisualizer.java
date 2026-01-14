@@ -73,10 +73,11 @@ public class OrbitVisualizer {
         for (int i = 0; i <= ORBIT_SEGMENTS; i++) {
             double angle = 2 * Math.PI * i / ORBIT_SEGMENTS;
 
-            // Parametric ellipse (in orbital plane, centered at ellipse center)
+            // Parametric ellipse in the XZ plane (Y is up, XZ is the orbital plane)
+            // This gives a proper top-down view of the solar system
             double x = a * Math.cos(angle);
-            double y = b * Math.sin(angle);
-            double z = 0;
+            double y = 0;  // Orbital plane is XZ, Y is perpendicular (up)
+            double z = b * Math.sin(angle);
 
             // Shift so the focus (star) is at origin
             x -= focusOffset;
@@ -102,14 +103,14 @@ public class OrbitVisualizer {
             orbitGroup.getChildren().add(segment);
         }
 
-        // Apply orbital rotations in correct order:
-        // 1. Argument of periapsis (ω) - rotation around Z in orbital plane
-        // 2. Inclination (i) - tilt the orbital plane
-        // 3. Longitude of ascending node (Ω) - rotation around Z in reference plane
+        // Apply orbital rotations in correct order for XZ orbital plane:
+        // 1. Argument of periapsis (ω) - rotation around Y axis (perpendicular to XZ plane)
+        // 2. Inclination (i) - tilt the orbital plane around X axis
+        // 3. Longitude of ascending node (Ω) - rotation around Y axis in reference plane
 
-        Rotate rotateArgPeri = new Rotate(argumentOfPeriapsisDeg, Rotate.Z_AXIS);
+        Rotate rotateArgPeri = new Rotate(argumentOfPeriapsisDeg, Rotate.Y_AXIS);
         Rotate rotateInclination = new Rotate(inclinationDeg, Rotate.X_AXIS);
-        Rotate rotateLAN = new Rotate(longitudeOfAscendingNodeDeg, Rotate.Z_AXIS);
+        Rotate rotateLAN = new Rotate(longitudeOfAscendingNodeDeg, Rotate.Y_AXIS);
 
         orbitGroup.getTransforms().addAll(rotateLAN, rotateInclination, rotateArgPeri);
 
@@ -156,12 +157,13 @@ public class OrbitVisualizer {
         double r = semiMajorAxisAU * (1 - eccentricity * eccentricity)
                 / (1 + eccentricity * Math.cos(trueAnomalyRad));
 
-        // Position in orbital plane (perifocal coordinates)
+        // Position in orbital plane (XZ plane, with Y as "up")
+        // x and z are in the orbital plane, y is perpendicular
         double xOrbital = r * Math.cos(trueAnomalyRad);
-        double yOrbital = r * Math.sin(trueAnomalyRad);
+        double zOrbital = r * Math.sin(trueAnomalyRad);
 
         // Transform to 3D space using rotation matrices
-        // Combined rotation: R_z(Ω) * R_x(i) * R_z(ω)
+        // For XZ orbital plane: R_y(Ω) * R_x(i) * R_y(ω)
 
         double cosLAN = Math.cos(lanRad);
         double sinLAN = Math.sin(lanRad);
@@ -170,20 +172,20 @@ public class OrbitVisualizer {
         double cosArg = Math.cos(argPeriRad);
         double sinArg = Math.sin(argPeriRad);
 
-        // Apply argument of periapsis rotation (in orbital plane)
-        double x1 = xOrbital * cosArg - yOrbital * sinArg;
-        double y1 = xOrbital * sinArg + yOrbital * cosArg;
-        double z1 = 0;
+        // Apply argument of periapsis rotation (around Y axis in orbital plane)
+        double x1 = xOrbital * cosArg + zOrbital * sinArg;
+        double y1 = 0;
+        double z1 = -xOrbital * sinArg + zOrbital * cosArg;
 
-        // Apply inclination rotation (tilt orbital plane)
+        // Apply inclination rotation (tilt orbital plane around X axis)
         double x2 = x1;
         double y2 = y1 * cosInc - z1 * sinInc;
         double z2 = y1 * sinInc + z1 * cosInc;
 
-        // Apply longitude of ascending node rotation
-        double x3 = x2 * cosLAN - y2 * sinLAN;
-        double y3 = x2 * sinLAN + y2 * cosLAN;
-        double z3 = z2;
+        // Apply longitude of ascending node rotation (around Y axis)
+        double x3 = x2 * cosLAN + z2 * sinLAN;
+        double y3 = y2;
+        double z3 = -x2 * sinLAN + z2 * cosLAN;
 
         // Convert to screen coordinates
         return new double[]{

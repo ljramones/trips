@@ -2,6 +2,7 @@ package com.teamgannon.trips.controller.splitpane;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.SolarSystemService;
@@ -91,5 +92,21 @@ public class RightPanelCoordinator {
         // Update the side pane
         rightPanelController.showSolarSystemSidePane(system);
         log.info("Switched side pane to solar system view for: {}", star.getStarName());
+    }
+
+    /**
+     * Switch to the planetary side pane.
+     *
+     * @param context the planetary viewing context
+     */
+    public void switchToPlanetary(PlanetaryContext context) {
+        if (context == null) {
+            log.warn("Cannot switch to planetary view: context is null");
+            return;
+        }
+
+        // Update the side pane
+        rightPanelController.showPlanetarySidePane(context);
+        log.info("Switched side pane to planetary view for: {}", context.getPlanetName());
     }
 }
