@@ -92,14 +92,13 @@ public class LeftDisplayController {
     public void showPlanetary(PlanetaryContext context) {
         planetarySpacePane.reset();
 
-        // Get nearby stars from interstellar pane for sky rendering
-        if (interstellarSpacePane != null) {
-            planetarySpacePane.setNearbyStars(interstellarSpacePane.getCurrentStarsInView());
-        }
-
         planetarySpacePane.setContext(context);
         planetarySpacePane.toFront();
 
         log.info("Switched to planetary view for: {}", context.getPlanetName());
+    }
+
+    public PlanetarySpacePane getPlanetarySpacePane() {
+        return planetarySpacePane;
     }
 }

@@ -47,14 +47,14 @@ public class PlanetaryContext {
      * 0 = horizon, 90 = zenith, -90 = nadir
      */
     @Builder.Default
-    private double viewingAltitude = 45.0;
+    private double viewingAltitude = 65.0;
 
     /**
      * Local time of day in hours (0-24).
      * Affects host star position in sky.
      */
     @Builder.Default
-    private double localTime = 12.0;
+    private double localTime = 22.0;
 
     /**
      * Magnitude limit for star visibility.
@@ -74,6 +74,30 @@ public class PlanetaryContext {
      */
     @Builder.Default
     private boolean showAtmosphereEffects = true;
+
+    /**
+     * Whether the host star should be rendered in the sky.
+     */
+    @Builder.Default
+    private boolean showHostStar = true;
+
+    /**
+     * Whether the horizon ring should be rendered.
+     */
+    @Builder.Default
+    private boolean showHorizon = true;
+
+    /**
+     * Whether the host star is above the horizon.
+     */
+    @Builder.Default
+    private boolean daylight = false;
+
+    /**
+     * Host star altitude in degrees (computed from nightsky math).
+     */
+    @Builder.Default
+    private double hostStarAltitudeDeg = Double.NaN;
 
     /**
      * Get the planet name for display purposes.

@@ -5,9 +5,13 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModel;
+import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModelBuilder;
+import com.teamgannon.trips.solarsystem.nightsky.VisibleStarResult;
 import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,6 +30,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,6 +54,7 @@ public class PlanetarySpacePane extends Pane {
 
     private final TripsContext tripsContext;
     private final ApplicationEventPublisher eventPublisher;
+    private final StarObjectRepository starObjectRepository;
 
     // Mouse position tracking
     private double mousePosX, mousePosY = 0;
@@ -89,14 +95,19 @@ public class PlanetarySpacePane extends Pane {
      * List of nearby stars for rendering
      */
     private List<StarDisplayRecord> nearbyStars = new ArrayList<>();
+    private List<PlanetarySkyRenderer.BrightStarEntry> computedBrightestStars = new ArrayList<>();
+    private int visibleStarCount = 0;
+    private final PlanetarySkyModelBuilder skyModelBuilder = new PlanetarySkyModelBuilder();
 
     /**
      * Constructor
      */
     public PlanetarySpacePane(TripsContext tripsContext,
-                              ApplicationEventPublisher eventPublisher) {
+                              ApplicationEventPublisher eventPublisher,
+                              StarObjectRepository starObjectRepository) {
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
+        this.starObjectRepository = starObjectRepository;
 
         ScreenSize screenSize = tripsContext.getScreenSize();
 
@@ -147,8 +158,10 @@ public class PlanetarySpacePane extends Pane {
         // Create the title legend
         createLegend(context);
 
+        setViewingDirection(context.getViewingAzimuth(), context.getViewingAltitude());
+
         // Render the sky dome
-        renderSky();
+        recomputeSky();
     }
 
     /**
@@ -178,6 +191,52 @@ public class PlanetarySpacePane extends Pane {
         log.info("Rendered planetary sky from {}", currentContext.getPlanetName());
     }
 
+    public void recomputeSky() {
+        if (currentContext == null) {
+            return;
+        }
+        List<StarObject> allStars = new ArrayList<>();
+        for (StarObject star : starObjectRepository.findAll()) {
+            allStars.add(star);
+        }
+
+        PlanetarySkyModel model = skyModelBuilder.build(currentContext, allStars);
+        nearbyStars = toStarDisplayRecords(model.getVisibleStars());
+        computedBrightestStars = toBrightestEntries(model.getTopBrightest());
+        visibleStarCount = model.getVisibleCount();
+        boolean isDay = model.getHostStarAltitudeDeg() > 0.0;
+        subScene.setFill(isDay ? Color.web("#6FA9E6") : Color.BLACK);
+        currentContext.setShowHostStar(isDay);
+        currentContext.setShowHorizon(!isDay);
+        currentContext.setDaylight(isDay);
+        currentContext.setHostStarAltitudeDeg(model.getHostStarAltitudeDeg());
+        renderSky();
+    }
+
+    public void updateLocalTime(double time) {
+        if (currentContext == null) {
+            return;
+        }
+        currentContext.setLocalTime(time);
+        recomputeSky();
+    }
+
+    public void updateMagnitudeLimit(double magnitudeLimit) {
+        if (currentContext == null) {
+            return;
+        }
+        currentContext.setMagnitudeLimit(magnitudeLimit);
+        recomputeSky();
+    }
+
+    public void updateAtmosphere(boolean enabled) {
+        if (currentContext == null) {
+            return;
+        }
+        currentContext.setShowAtmosphereEffects(enabled);
+        renderSky();
+    }
+
     /**
      * Reset the view.
      */
@@ -192,19 +251,21 @@ public class PlanetarySpacePane extends Pane {
         rotateX.setAngle(0);
         rotateY.setAngle(0);
         rotateZ.setAngle(0);
-        camera.setTranslateZ(-500);
+        camera.setNearClip(5.0);
+        camera.setTranslateZ(-900);
+        rotateX.setAngle(-25);
     }
 
     /**
      * Set initial camera view.
      */
     private void setInitialView() {
-        camera.setNearClip(0.1);
+        camera.setNearClip(5.0);
         camera.setFarClip(10000.0);
-        camera.setTranslateZ(-500);
+        camera.setTranslateZ(-900);
 
-        // Start looking slightly up (30 degrees above horizon)
-        rotateX.setAngle(-30);
+        // Start looking slightly up (25 degrees above horizon)
+        rotateX.setAngle(-25);
     }
 
     /**
@@ -347,6 +408,75 @@ public class PlanetarySpacePane extends Pane {
      * Get the brightest stars from the current render.
      */
     public List<PlanetarySkyRenderer.BrightStarEntry> getBrightestStars() {
-        return skyRenderer.getBrightestStars();
+        return new ArrayList<>(computedBrightestStars);
+    }
+
+    public int getVisibleStarCount() {
+        return visibleStarCount;
+    }
+
+    private List<StarDisplayRecord> toStarDisplayRecords(List<VisibleStarResult> results) {
+        List<StarDisplayRecord> records = new ArrayList<>();
+        for (VisibleStarResult result : results) {
+            StarObject star = result.getStar();
+            if (star == null) {
+                continue;
+            }
+            StarDisplayRecord record = new StarDisplayRecord();
+            record.setRecordId(star.getId());
+            record.setStarName(resolveName(star));
+            record.setMagnitude(result.getMagnitude());
+            record.setDistance(star.getDistance());
+            record.setSpectralClass(star.getSpectralClass());
+            record.setX(star.getX());
+            record.setY(star.getY());
+            record.setZ(star.getZ());
+            records.add(record);
+        }
+        return records;
+    }
+
+    private List<PlanetarySkyRenderer.BrightStarEntry> toBrightestEntries(List<VisibleStarResult> results) {
+        List<PlanetarySkyRenderer.BrightStarEntry> entries = new ArrayList<>();
+        for (VisibleStarResult result : results) {
+            StarObject star = result.getStar();
+            if (star == null) {
+                continue;
+            }
+            StarDisplayRecord record = new StarDisplayRecord();
+            record.setRecordId(star.getId());
+            record.setStarName(resolveName(star));
+            record.setMagnitude(result.getMagnitude());
+            record.setDistance(star.getDistance());
+            record.setSpectralClass(star.getSpectralClass());
+            record.setX(star.getX());
+            record.setY(star.getY());
+            record.setZ(star.getZ());
+            entries.add(new PlanetarySkyRenderer.BrightStarEntry(
+                    record.getStarName(),
+                    result.getDistanceLy(),
+                    result.getMagnitude(),
+                    result.getAzimuthDeg(),
+                    result.getAltitudeDeg(),
+                    record
+            ));
+        }
+        return entries;
+    }
+
+    private String resolveName(StarObject star) {
+        if (star.getCommonName() != null && !star.getCommonName().trim().isEmpty()) {
+            return star.getCommonName().trim();
+        }
+        if (star.getDisplayName() != null && !star.getDisplayName().trim().isEmpty()) {
+            return star.getDisplayName().trim();
+        }
+        if (star.getSystemName() != null && !star.getSystemName().trim().isEmpty()) {
+            return star.getSystemName().trim();
+        }
+        if (star.getId() != null && !star.getId().trim().isEmpty()) {
+            return star.getId().trim();
+        }
+        return "Unknown";
     }
 }

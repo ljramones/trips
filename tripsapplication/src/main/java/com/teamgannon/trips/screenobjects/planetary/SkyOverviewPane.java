@@ -66,6 +66,13 @@ public class SkyOverviewPane extends VBox {
      * Set the planetary context and brightest stars list.
      */
     public void setContext(PlanetaryContext context, List<PlanetarySkyRenderer.BrightStarEntry> brightestStars) {
+        int starCount = brightestStars != null ? brightestStars.size() : 0;
+        setContext(context, brightestStars, starCount);
+    }
+
+    public void setContext(PlanetaryContext context,
+                           List<PlanetarySkyRenderer.BrightStarEntry> brightestStars,
+                           int visibleStarCount) {
         if (context == null) {
             clear();
             return;
@@ -75,13 +82,16 @@ public class SkyOverviewPane extends VBox {
         magnitudeLimitLabel.setText(String.format("%.1f", context.getMagnitudeLimit()));
 
         // Visible stars count
-        int starCount = brightestStars != null ? brightestStars.size() : 0;
-        visibleStarsLabel.setText(String.valueOf(starCount));
+        visibleStarsLabel.setText(String.valueOf(Math.max(visibleStarCount, 0)));
 
-        // Host star position (based on local time)
-        double localTime = context.getLocalTime();
-        String sunPosition = getSunPosition(localTime);
-        hostStarPositionLabel.setText(sunPosition);
+        // Host star position (computed)
+        String dayNight = context.isDaylight() ? "Day" : "Night";
+        double altitude = context.getHostStarAltitudeDeg();
+        if (Double.isNaN(altitude)) {
+            hostStarPositionLabel.setText(dayNight);
+        } else {
+            hostStarPositionLabel.setText(String.format("%s (alt %.1f deg)", dayNight, altitude));
+        }
 
         // Brightest star
         if (brightestStars != null && !brightestStars.isEmpty()) {
@@ -95,7 +105,7 @@ public class SkyOverviewPane extends VBox {
         // Sibling planets (TODO: implement)
         siblingPlanetsLabel.setText("0");
 
-        log.debug("Updated sky overview: {} visible stars", starCount);
+        log.debug("Updated sky overview: {} visible stars", visibleStarCount);
     }
 
     /**
@@ -109,18 +119,5 @@ public class SkyOverviewPane extends VBox {
         siblingPlanetsLabel.setText("-");
     }
 
-    /**
-     * Get sun position description based on local time.
-     */
-    private String getSunPosition(double localTime) {
-        if (localTime < 6 || localTime >= 18) {
-            return "Below horizon";
-        } else if (localTime < 9) {
-            return "Low (East)";
-        } else if (localTime < 15) {
-            return "High (overhead)";
-        } else {
-            return "Low (West)";
-        }
-    }
+    // Host star position is computed via nightsky math in PlanetarySkyModelBuilder.
 }

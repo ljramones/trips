@@ -23,7 +23,9 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.javafxsupport.BackgroundTaskRunner;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
@@ -115,6 +117,7 @@ public class MainSplitPaneManager {
      */
     private final InterstellarSpacePane interstellarSpacePane;
     private final StarService starService;
+    private final ExoPlanetRepository exoPlanetRepository;
     private SplitPaneView splitPaneView;
     private RightPanelController rightPanelController;
     private LeftDisplayController leftDisplayController;
@@ -140,6 +143,7 @@ public class MainSplitPaneManager {
                                 DatasetService datasetService,
                                 InterstellarSpacePane interstellarSpacePane,
                                 StarService starService,
+                                ExoPlanetRepository exoPlanetRepository,
                                 FxWeaver fxWeaver,
                                 RightPanelCoordinator rightPanelCoordinator,
                                 SearchContextCoordinator searchContextCoordinator) {
@@ -158,6 +162,7 @@ public class MainSplitPaneManager {
         this.searchContextCoordinator = searchContextCoordinator;
         this.interstellarSpacePane = interstellarSpacePane;
         this.starService = starService;
+        this.exoPlanetRepository = exoPlanetRepository;
         this.fxWeaver = fxWeaver;
 
         this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
@@ -742,14 +747,85 @@ public class MainSplitPaneManager {
                 }
                 case PLANETARY -> {
                     log.info("Showing planetary surface view");
-                    leftDisplayController.showPlanetary(event.getPlanetaryContext());
-                    rightPanelCoordinator.switchToPlanetary(event.getPlanetaryContext());  // Switch side pane
+                    PlanetaryContext context = event.getPlanetaryContext();
+                    if (context == null) {
+                        StarDisplayRecord star = event.getStarDisplayRecord();
+                        ExoPlanet planet = findDefaultPlanet(star);
+                        if (planet == null) {
+                            log.warn("No planets available for {}", star != null ? star.getStarName() : "unknown star");
+                            eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                                    "No planets available for planetary view"));
+                            return;
+                        }
+                        context = PlanetaryContext.builder()
+                                .hostStar(star)
+                                .planet(planet)
+                                .localTime(22.0)
+                                .build();
+                    }
+
+                    // Snapshot for lambdas (context is reassigned above, so it's not effectively final)
+                    final PlanetaryContext finalContext = context;
+
+                    leftDisplayController.showPlanetary(finalContext);
+                    rightPanelCoordinator.switchToPlanetary(finalContext);  // Switch side pane
+                    rightPanelCoordinator.updatePlanetaryBrightestStars(
+                            leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                            leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+
+                    var viewControlPane = rightPanelCoordinator.getPlanetaryViewControlPane();
+                    if (viewControlPane != null) {
+                        viewControlPane.setOnTimeChanged(time -> {
+                            leftDisplayController.getPlanetarySpacePane().updateLocalTime(time);
+                            rightPanelCoordinator.updatePlanetaryBrightestStars(
+                                    leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                                    leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+                        });
+
+                        viewControlPane.setOnMagnitudeChanged(mag -> {
+                            leftDisplayController.getPlanetarySpacePane().updateMagnitudeLimit(mag);
+                            rightPanelCoordinator.updatePlanetaryBrightestStars(
+                                    leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                                    leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+                        });
+
+                        viewControlPane.setOnAtmosphereChanged(enabled ->
+                                leftDisplayController.getPlanetarySpacePane().updateAtmosphere(enabled));
+
+                        viewControlPane.setOnDirectionChanged(direction ->
+                                leftDisplayController.getPlanetarySpacePane().setViewingDirection(
+                                        com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),
+                                        finalContext.getViewingAltitude()));
+                    }
+
                     eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                            "Viewing sky from " + event.getPlanetaryContext().getPlanetName()));
+                            "Viewing sky from " + finalContext.getPlanetName()));
                 }
+
                 default -> log.error("Unexpected value: {}", event.getContextSelectionType());
             }
         });
+    }
+
+    private ExoPlanet findDefaultPlanet(StarDisplayRecord star) {
+        if (star == null) {
+            return null;
+        }
+        String recordId = star.getRecordId();
+        if (recordId != null && !recordId.isBlank()) {
+            List<ExoPlanet> planets = exoPlanetRepository.findByHostStarId(recordId);
+            if (planets != null && !planets.isEmpty()) {
+                return planets.get(0);
+            }
+        }
+        String starName = star.getStarName();
+        if (starName != null && !starName.isBlank()) {
+            List<ExoPlanet> planets = exoPlanetRepository.findByStarName(starName);
+            if (planets != null && !planets.isEmpty()) {
+                return planets.get(0);
+            }
+        }
+        return null;
     }
 
 

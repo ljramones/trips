@@ -126,7 +126,12 @@ public class PlanetarySidePane extends VBox {
      * Update the brightest stars list.
      */
     public void updateBrightestStars(List<PlanetarySkyRenderer.BrightStarEntry> stars) {
-        skyOverviewPane.setContext(currentContext, stars);
+        int visibleCount = stars != null ? stars.size() : 0;
+        updateBrightestStars(stars, visibleCount);
+    }
+
+    public void updateBrightestStars(List<PlanetarySkyRenderer.BrightStarEntry> stars, int visibleStarCount) {
+        skyOverviewPane.setContext(currentContext, stars, visibleStarCount);
         brightestStarsPane.setStars(stars);
     }
 

@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 public class RightPanelCoordinator {
@@ -108,5 +110,18 @@ public class RightPanelCoordinator {
         // Update the side pane
         rightPanelController.showPlanetarySidePane(context);
         log.info("Switched side pane to planetary view for: {}", context.getPlanetName());
+    }
+
+    public void updatePlanetaryBrightestStars(List<com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer.BrightStarEntry> stars) {
+        rightPanelController.updatePlanetaryBrightestStars(stars);
+    }
+
+    public void updatePlanetaryBrightestStars(List<com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer.BrightStarEntry> stars,
+                                              int visibleStarCount) {
+        rightPanelController.updatePlanetaryBrightestStars(stars, visibleStarCount);
+    }
+
+    public com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane getPlanetaryViewControlPane() {
+        return rightPanelController.getPlanetarySidePane().getViewControlPane();
     }
 }

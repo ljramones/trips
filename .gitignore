@@ -42,3 +42,4 @@ files/hyg_db/
 *.big
 
 30ly.trips.csv.zip
+/tripsapplication/logs/terranrepublicviewer.log

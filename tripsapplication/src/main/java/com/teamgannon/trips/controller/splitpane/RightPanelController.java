@@ -6,6 +6,7 @@ import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.planetary.PlanetaryContext;
+import com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
@@ -247,6 +248,19 @@ public class RightPanelController {
 
         log.info("Switched to planetary side pane for: {}",
                 context != null ? context.getPlanetName() : "null");
+    }
+
+    public PlanetarySidePane getPlanetarySidePane() {
+        return planetarySidePane;
+    }
+
+    public void updatePlanetaryBrightestStars(List<PlanetarySkyRenderer.BrightStarEntry> stars) {
+        planetarySidePane.updateBrightestStars(stars);
+    }
+
+    public void updatePlanetaryBrightestStars(List<PlanetarySkyRenderer.BrightStarEntry> stars,
+                                              int visibleStarCount) {
+        planetarySidePane.updateBrightestStars(stars, visibleStarCount);
     }
 
     public void setupObjectViewPane() {

@@ -42,14 +42,14 @@ public class PlanetaryViewControlPane extends VBox {
 
         // Time of day slider
         grid.add(new Label("Time of Day:"), 0, row);
-        timeOfDaySlider = new Slider(0, 24, 12);
+        timeOfDaySlider = new Slider(0, 24, 22);
         timeOfDaySlider.setShowTickLabels(true);
         timeOfDaySlider.setShowTickMarks(true);
         timeOfDaySlider.setMajorTickUnit(6);
         timeOfDaySlider.setMinorTickCount(2);
         timeOfDaySlider.setBlockIncrement(1);
         grid.add(timeOfDaySlider, 1, row);
-        timeOfDayLabel = new Label("12:00");
+        timeOfDayLabel = new Label("22:00");
         grid.add(timeOfDayLabel, 2, row++);
 
         timeOfDaySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -125,7 +125,11 @@ public class PlanetaryViewControlPane extends VBox {
             return;
         }
 
-        timeOfDaySlider.setValue(context.getLocalTime());
+        double localTime = context.getLocalTime();
+        if (localTime == 0.0) {
+            localTime = 22.0;
+        }
+        timeOfDaySlider.setValue(localTime);
         magnitudeLimitSlider.setValue(context.getMagnitudeLimit());
         atmosphereCheckbox.setSelected(context.isShowAtmosphereEffects());
 
@@ -139,7 +143,7 @@ public class PlanetaryViewControlPane extends VBox {
      * Reset controls to default values.
      */
     public void reset() {
-        timeOfDaySlider.setValue(12);
+        timeOfDaySlider.setValue(22);
         viewDirectionCombo.setValue("North");
         magnitudeLimitSlider.setValue(6);
         atmosphereCheckbox.setSelected(true);
@@ -225,6 +229,6 @@ public class PlanetaryViewControlPane extends VBox {
         if ("Zenith".equals(direction)) {
             return 90;  // Straight up
         }
-        return 45;  // Default altitude
+        return 65;  // Default altitude
     }
 }

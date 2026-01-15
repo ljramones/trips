@@ -84,6 +84,18 @@ public final class NightSkyQuery3D {
         if (magv != 0.0 && !Double.isNaN(magv)) {
             return magv;
         }
+        double grp = star.getGrp();
+        if (grp != 0.0 && !Double.isNaN(grp)) {
+            return grp;
+        }
+        double bpg = star.getBpg();
+        if (bpg != 0.0 && !Double.isNaN(bpg)) {
+            return bpg;
+        }
+        double bprp = star.getBprp();
+        if (bprp != 0.0 && !Double.isNaN(bprp)) {
+            return bprp;
+        }
         String apparent = star.getApparentMagnitude();
         if (apparent != null && !apparent.trim().isEmpty()) {
             try {
@@ -91,6 +103,6 @@ public final class NightSkyQuery3D {
             } catch (NumberFormatException ignored) {
             }
         }
-        return Double.POSITIVE_INFINITY;
+        return 10.0;
     }
 }

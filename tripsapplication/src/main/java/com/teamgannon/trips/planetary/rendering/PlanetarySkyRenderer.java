@@ -82,7 +82,9 @@ public class PlanetarySkyRenderer {
         }
 
         // Render the horizon circle
-        renderHorizon();
+        if (context.isShowHorizon()) {
+            renderHorizon();
+        }
 
         // Render the host star as the "sun"
         renderHostStar(context, planetPos);
@@ -165,7 +167,7 @@ public class PlanetarySkyRenderer {
      */
     private void renderHostStar(PlanetaryContext context, double[] planetPos) {
         StarDisplayRecord hostStar = context.getHostStar();
-        if (hostStar == null) return;
+        if (hostStar == null || !context.isShowHostStar()) return;
 
         // Calculate direction from planet to host star
         double[] starPos = {hostStar.getX(), hostStar.getY(), hostStar.getZ()};
