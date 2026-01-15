@@ -3,6 +3,8 @@ package com.teamgannon.trips.solarsystem.rendering;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
+import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProviders;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -16,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
@@ -74,6 +77,7 @@ public class SolarSystemRenderer {
 
     @Getter
     private final OrbitVisualizer orbitVisualizer;
+    private final OrbitSamplingProvider orbitSamplingProvider;
 
     /**
      * Group containing all rendered elements
@@ -200,7 +204,8 @@ public class SolarSystemRenderer {
 
     public SolarSystemRenderer() {
         this.scaleManager = new ScaleManager();
-        this.orbitVisualizer = new OrbitVisualizer(scaleManager);
+        this.orbitSamplingProvider = OrbitSamplingProviders.defaultKepler();
+        this.orbitVisualizer = new OrbitVisualizer(scaleManager, orbitSamplingProvider);
         this.systemGroup = new Group();
         this.scaleGridGroup = new Group();
         this.habitableZoneGroup = new Group();
@@ -554,7 +559,7 @@ public class SolarSystemRenderer {
         orbitsGroup.getChildren().add(orbitPath);
         registerOrbitSegments(orbitPath);
         registerSelectableNode(orbitPath);
-        double[] position = orbitVisualizer.calculateOrbitalPosition(
+        double[] positionAu = orbitSamplingProvider.calculatePositionAu(
                 semiMajorAxis,
                 eccentricity,
                 inclination,
@@ -562,6 +567,7 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 trueAnomaly
         );
+        double[] position = scaleManager.auVectorToScreen(positionAu[0], positionAu[1], positionAu[2]);
 
         // Create planet sphere
         double planetRadius = scaleManager.calculatePlanetDisplayRadius(
@@ -728,6 +734,12 @@ public class SolarSystemRenderer {
     private void applySelectedOrbitStyle(Group orbit) {
         restoreOrbitStyle(orbit);
         orbit.setOpacity(1.0);
+        OrbitMeshSelection meshSelection = getOrbitMeshSelection(orbit);
+        if (meshSelection != null) {
+            meshSelection.highlightMesh().setVisible(true);
+            brightenOrbitMaterial(meshSelection.baseMesh());
+            return;
+        }
         for (Node child : orbit.getChildren()) {
             double[] baseScale = orbitSegmentScales.get(child);
             if (baseScale != null) {
@@ -742,6 +754,12 @@ public class SolarSystemRenderer {
     private void restoreOrbitStyle(Group orbit) {
         restoreBaseStyle(orbit);
         orbit.setOpacity(ORBIT_DEEMPHASIZED_OPACITY);
+        OrbitMeshSelection meshSelection = getOrbitMeshSelection(orbit);
+        if (meshSelection != null) {
+            meshSelection.highlightMesh().setVisible(false);
+            restoreOrbitMaterial(meshSelection.baseMesh());
+            return;
+        }
         for (Node child : orbit.getChildren()) {
             double[] baseScale = orbitSegmentScales.get(child);
             if (baseScale != null) {
@@ -788,6 +806,18 @@ public class SolarSystemRenderer {
                 }
             }
         }
+    }
+
+    private OrbitMeshSelection getOrbitMeshSelection(Group orbit) {
+        Object baseNode = orbit.getProperties().get(OrbitVisualizer.ORBIT_BASE_MESH_KEY);
+        Object highlightNode = orbit.getProperties().get(OrbitVisualizer.ORBIT_HIGHLIGHT_MESH_KEY);
+        if (baseNode instanceof MeshView baseMesh && highlightNode instanceof MeshView highlightMesh) {
+            return new OrbitMeshSelection(baseMesh, highlightMesh);
+        }
+        return null;
+    }
+
+    private record OrbitMeshSelection(MeshView baseMesh, MeshView highlightMesh) {
     }
 
     private void brightenOrbitMaterial(Node node) {
@@ -929,7 +959,7 @@ public class SolarSystemRenderer {
         double ascendingTrueAnomaly = -argPeriapsis;
         double descendingTrueAnomaly = 180 - argPeriapsis;
 
-        double[] ascPos = orbitVisualizer.calculateOrbitalPosition(
+        double[] ascPosAu = orbitSamplingProvider.calculatePositionAu(
                 semiMajorAxis,
                 eccentricity,
                 inclination,
@@ -937,7 +967,7 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 ascendingTrueAnomaly
         );
-        double[] descPos = orbitVisualizer.calculateOrbitalPosition(
+        double[] descPosAu = orbitSamplingProvider.calculatePositionAu(
                 semiMajorAxis,
                 eccentricity,
                 inclination,
@@ -945,6 +975,8 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 descendingTrueAnomaly
         );
+        double[] ascPos = scaleManager.auVectorToScreen(ascPosAu[0], ascPosAu[1], ascPosAu[2]);
+        double[] descPos = scaleManager.auVectorToScreen(descPosAu[0], descPosAu[1], descPosAu[2]);
 
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(orbitColor.brighter());
@@ -1008,7 +1040,7 @@ public class SolarSystemRenderer {
         double longAscNode = planet.getLongitudeOfAscendingNode();
 
         // Periapsis at true anomaly = 0, Apoapsis at true anomaly = 180
-        double[] periPos = orbitVisualizer.calculateOrbitalPosition(
+        double[] periPosAu = orbitSamplingProvider.calculatePositionAu(
                 semiMajorAxis,
                 eccentricity,
                 inclination,
@@ -1016,7 +1048,7 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 0.0  // Periapsis
         );
-        double[] apoPos = orbitVisualizer.calculateOrbitalPosition(
+        double[] apoPosAu = orbitSamplingProvider.calculatePositionAu(
                 semiMajorAxis,
                 eccentricity,
                 inclination,
@@ -1024,6 +1056,8 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 180.0  // Apoapsis
         );
+        double[] periPos = scaleManager.auVectorToScreen(periPosAu[0], periPosAu[1], periPosAu[2]);
+        double[] apoPos = scaleManager.auVectorToScreen(apoPosAu[0], apoPosAu[1], apoPosAu[2]);
 
         // Use distinct colors: warm for periapsis (close/hot), cool for apoapsis (far/cold)
         PhongMaterial periMaterial = new PhongMaterial();

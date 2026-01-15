@@ -96,6 +96,24 @@ public class ScaleManager {
     }
 
     /**
+     * Convert an AU vector to screen coordinates.
+     *
+     * @param xAu x in AU
+     * @param yAu y in AU
+     * @param zAu z in AU
+     * @return screen-space vector {x, y, z}
+     */
+    public double[] auVectorToScreen(double xAu, double yAu, double zAu) {
+        double r = Math.sqrt(xAu * xAu + yAu * yAu + zAu * zAu);
+        if (r == 0) {
+            return new double[]{0, 0, 0};
+        }
+        double scaledR = auToScreen(r);
+        double factor = scaledR / r;
+        return new double[]{xAu * factor, yAu * factor, zAu * factor};
+    }
+
+    /**
      * Convert screen coordinates to AU
      *
      * @param screen distance in screen units
