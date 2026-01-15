@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects.solarsystem;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.SolarSystemCameraEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
 import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import javafx.geometry.Insets;
@@ -48,6 +49,11 @@ public class SimulationControlPane extends VBox {
     private final CheckBox showGridCheckbox = new CheckBox("Show Scale Grid");
     @Getter
     private final CheckBox showRelativeSizesCheckbox = new CheckBox("True Relative Planet Sizes");
+
+    private final Button topDownPresetButton = new Button("Top");
+    private final Button edgeOnPresetButton = new Button("Edge");
+    private final Button obliquePresetButton = new Button("45\u00B0");
+    private final Button focusPresetButton = new Button("Focus");
 
     private boolean isPlaying = false;
 
@@ -166,7 +172,9 @@ public class SimulationControlPane extends VBox {
         );
 
         VBox section = new VBox(8);
-        section.getChildren().addAll(header, checkboxes);
+        HBox presetRow = new HBox(6, topDownPresetButton, edgeOnPresetButton, obliquePresetButton, focusPresetButton);
+        presetRow.setPadding(new Insets(4, 0, 0, 0));
+        section.getChildren().addAll(header, checkboxes, new Separator(), presetRow);
         return section;
     }
 
@@ -248,6 +256,15 @@ public class SimulationControlPane extends VBox {
             eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
                     this, SolarSystemDisplayToggleEvent.ToggleType.RELATIVE_PLANET_SIZES, enabled));
         });
+
+        topDownPresetButton.setOnAction(e -> eventPublisher.publishEvent(
+                new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.TOP_DOWN)));
+        edgeOnPresetButton.setOnAction(e -> eventPublisher.publishEvent(
+                new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.EDGE_ON)));
+        obliquePresetButton.setOnAction(e -> eventPublisher.publishEvent(
+                new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.OBLIQUE)));
+        focusPresetButton.setOnAction(e -> eventPublisher.publishEvent(
+                new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.FOCUS_SELECTED)));
     }
 
     /**

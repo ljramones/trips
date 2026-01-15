@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
+import com.teamgannon.trips.events.SolarSystemCameraEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
 import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -65,6 +66,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
+    private final Translate worldTranslate = new Translate(0, 0, 0);
     private final TripsContext tripsContext;
     private final ApplicationEventPublisher eventPublisher;
     private final SolarSystemService solarSystemService;
@@ -131,11 +133,13 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      * The renderer that creates all 3D visualization elements
      */
     private final SolarSystemRenderer solarSystemRenderer;
+    private final SolarSystemCameraController cameraController;
 
     /**
      * The current solar system description being displayed
      */
     private SolarSystemDescription currentSystem;
+    private Node selectedNode;
     private final Map<Node, Point2D> lastLabelPositions = new HashMap<>();
 
     /**
@@ -161,6 +165,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Initialize the solar system renderer
         this.solarSystemRenderer = new SolarSystemRenderer();
+        this.cameraController = new SolarSystemCameraController(camera, rotateX, rotateY, rotateZ, worldTranslate, this::updateLabels);
 
         // Set up context menu handler
         this.solarSystemRenderer.setContextMenuHandler(this);
@@ -169,7 +174,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         world.getChildren().add(systemEntityGroup);
 
         // attach our custom rotation transforms so we can update the labels dynamically
-        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
+        world.getTransforms().addAll(worldTranslate, rotateX, rotateY, rotateZ);
 
         subScene = new SubScene(world, screenSize.getSceneWidth(), screenSize.getSceneHeight(), true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
@@ -779,20 +784,34 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     @Override
     public void onPlanetSelected(Node source, PlanetDescription planet) {
+        selectedNode = source;
         solarSystemRenderer.selectPlanet(planet);
         updateLabels();
     }
 
     @Override
     public void onStarSelected(Node source, StarDisplayRecord star) {
+        selectedNode = source;
         solarSystemRenderer.selectStar(star);
         updateLabels();
     }
 
     @Override
     public void onOrbitSelected(Node source, PlanetDescription planet) {
+        Node planetNode = solarSystemRenderer.getPlanetNodes().get(planet.getName());
+        selectedNode = planetNode != null ? planetNode : source;
         solarSystemRenderer.selectPlanet(planet);
         updateLabels();
+    }
+
+    @EventListener
+    public void onSolarSystemCameraEvent(SolarSystemCameraEvent event) {
+        switch (event.getAction()) {
+            case TOP_DOWN -> cameraController.animatePreset(90, 0, 0);
+            case EDGE_ON -> cameraController.animatePreset(0, 90, 0);
+            case OBLIQUE -> cameraController.animatePreset(35, 45, 0);
+            case FOCUS_SELECTED -> cameraController.focusOn(selectedNode, world);
+        }
     }
 
     /**
