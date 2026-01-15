@@ -14,13 +14,15 @@ public class SolarSystemScaleEvent extends ApplicationEvent {
         ZOOM_LEVEL
     }
 
+    public enum ScaleMode {
+        AUTO,
+        LINEAR,
+        LOGARITHMIC
+    }
+
     private final ScaleChangeType changeType;
 
-    /**
-     * For SCALE_MODE: true = logarithmic, false = linear
-     * For ZOOM_LEVEL: not used (see zoomLevel field)
-     */
-    private final boolean logarithmic;
+    private final ScaleMode scaleMode;
 
     /**
      * The zoom level (1.0 = default, >1 = zoomed in, <1 = zoomed out)
@@ -30,10 +32,10 @@ public class SolarSystemScaleEvent extends ApplicationEvent {
     /**
      * Constructor for scale mode change.
      */
-    public SolarSystemScaleEvent(Object source, boolean logarithmic) {
+    public SolarSystemScaleEvent(Object source, ScaleMode scaleMode) {
         super(source);
         this.changeType = ScaleChangeType.SCALE_MODE;
-        this.logarithmic = logarithmic;
+        this.scaleMode = scaleMode;
         this.zoomLevel = 1.0;
     }
 
@@ -43,7 +45,7 @@ public class SolarSystemScaleEvent extends ApplicationEvent {
     public SolarSystemScaleEvent(Object source, double zoomLevel) {
         super(source);
         this.changeType = ScaleChangeType.ZOOM_LEVEL;
-        this.logarithmic = false;
+        this.scaleMode = ScaleMode.AUTO;
         this.zoomLevel = zoomLevel;
     }
 }

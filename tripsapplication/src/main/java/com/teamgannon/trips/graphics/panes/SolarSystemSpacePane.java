@@ -376,7 +376,12 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         log.info("Solar system scale event: {} ", event.getChangeType());
         switch (event.getChangeType()) {
             case SCALE_MODE -> {
-                solarSystemRenderer.setUseLogScale(event.isLogarithmic());
+                SolarSystemRenderer.ScaleMode mode = switch (event.getScaleMode()) {
+                    case LINEAR -> SolarSystemRenderer.ScaleMode.LINEAR;
+                    case LOGARITHMIC -> SolarSystemRenderer.ScaleMode.LOGARITHMIC;
+                    case AUTO -> SolarSystemRenderer.ScaleMode.AUTO;
+                };
+                solarSystemRenderer.setScaleMode(mode);
                 // Re-render the current system with new scale
                 if (currentSystem != null) {
                     refreshCurrentSystem();

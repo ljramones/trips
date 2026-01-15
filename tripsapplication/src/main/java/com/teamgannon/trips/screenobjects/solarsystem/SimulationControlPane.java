@@ -120,8 +120,8 @@ public class SimulationControlPane extends VBox {
 
         // Scale mode
         Label modeLabel = new Label("Scale Mode:");
-        scaleModeCombo.getItems().addAll("Linear", "Logarithmic");
-        scaleModeCombo.setValue("Linear");
+        scaleModeCombo.getItems().addAll("Auto", "Linear", "Logarithmic");
+        scaleModeCombo.setValue("Auto");
         scaleModeCombo.setTooltip(new Tooltip("Logarithmic scale shows distant planets more clearly"));
 
         HBox modeBox = new HBox(10);
@@ -204,9 +204,13 @@ public class SimulationControlPane extends VBox {
         // Scale mode
         scaleModeCombo.setOnAction(e -> {
             String mode = scaleModeCombo.getValue();
-            boolean isLogarithmic = "Logarithmic".equals(mode);
-            log.info("Scale mode changed to: {} (logarithmic={})", mode, isLogarithmic);
-            eventPublisher.publishEvent(new SolarSystemScaleEvent(this, isLogarithmic));
+            SolarSystemScaleEvent.ScaleMode scaleMode = switch (mode) {
+                case "Logarithmic" -> SolarSystemScaleEvent.ScaleMode.LOGARITHMIC;
+                case "Linear" -> SolarSystemScaleEvent.ScaleMode.LINEAR;
+                default -> SolarSystemScaleEvent.ScaleMode.AUTO;
+            };
+            log.info("Scale mode changed to: {}", scaleMode);
+            eventPublisher.publishEvent(new SolarSystemScaleEvent(this, scaleMode));
         });
 
         // Display toggles
@@ -254,7 +258,7 @@ public class SimulationControlPane extends VBox {
         playPauseButton.setText("\u25B6");
         timeScaleSlider.setValue(1.0);
         zoomSlider.setValue(1.0);
-        scaleModeCombo.setValue("Linear");
+        scaleModeCombo.setValue("Auto");
         showOrbitsCheckbox.setSelected(true);
         showLabelsCheckbox.setSelected(true);
         showHabitableZoneCheckbox.setSelected(true);

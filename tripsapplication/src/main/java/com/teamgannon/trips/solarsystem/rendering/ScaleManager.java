@@ -149,7 +149,9 @@ public class ScaleManager {
         if (useRelativeScale) {
             // True relative sizing - linear scaling preserving actual ratios
             // Jupiter really is ~11x Earth's radius, so show that difference
-            return minPlanetRadius + normalized * (maxPlanetRadius - minPlanetRadius) * 2.5;
+            // But cap at 40% of star size so planets don't look as big as stars
+            double maxAllowed = starRadius * 0.4;
+            return minPlanetRadius + normalized * (maxAllowed - minPlanetRadius);
         }
 
         // Clamped mode (default) - use square root to compress the range

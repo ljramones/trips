@@ -168,6 +168,13 @@ public class SolarSystemRenderer {
     private boolean showOrbits = true;
     private boolean showHabitableZone = true;
     private boolean showScaleGrid = true;
+    private ScaleMode scaleMode = ScaleMode.AUTO;
+
+    public enum ScaleMode {
+        AUTO,
+        LINEAR,
+        LOGARITHMIC
+    }
 
     /**
      * Handler for context menu events (optional)
@@ -323,8 +330,8 @@ public class SolarSystemRenderer {
         scaleGridGroup.setVisible(show);
     }
 
-    public void setUseLogScale(boolean useLogScale) {
-        scaleManager.setUseLogScale(useLogScale);
+    public void setScaleMode(ScaleMode scaleMode) {
+        this.scaleMode = scaleMode == null ? ScaleMode.AUTO : scaleMode;
     }
 
     public void setZoomLevel(double zoomLevel) {
@@ -356,21 +363,23 @@ public class SolarSystemRenderer {
 
         // Auto-enable log scale if orbit ratio is large (helps spread out tightly-packed inner planets)
         boolean useLogScale = false;
-        if (minOrbitAU > 0 && maxOrbitAU / minOrbitAU > 20) {
+        if (scaleMode == ScaleMode.AUTO) {
+            if (minOrbitAU > 0 && maxOrbitAU / minOrbitAU > 20) {
+                useLogScale = true;
+                log.info("Auto-enabled log scale: orbit ratio = {}", maxOrbitAU / minOrbitAU);
+            }
+        } else if (scaleMode == ScaleMode.LOGARITHMIC) {
             useLogScale = true;
-            scaleManager.setUseLogScale(true);
-            log.info("Auto-enabled log scale: orbit ratio = {}", maxOrbitAU / minOrbitAU);
-        } else {
-            scaleManager.setUseLogScale(false);
         }
+        scaleManager.setUseLogScale(useLogScale);
 
         // Recalculate base scale for the system
         if (maxOrbitAU > 0) {
             scaleManager.setBaseScale(350.0 / maxOrbitAU);
         }
 
-        log.info("Rendering solar system with max orbit {} AU, min orbit {} AU, scale factor {}, logScale={}",
-                maxOrbitAU, minOrbitAU, scaleManager.getBaseScale(), useLogScale);
+        log.info("Rendering solar system with max orbit {} AU, min orbit {} AU, scale factor {}, logScale={}, mode={}",
+                maxOrbitAU, minOrbitAU, scaleManager.getBaseScale(), useLogScale, scaleMode);
 
         // Render scale grid first (behind everything)
         renderScaleGrid();
