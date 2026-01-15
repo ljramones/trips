@@ -3,6 +3,8 @@ package com.teamgannon.trips.solarsystem.nightsky;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
+import java.time.Instant;
+
 /**
  * Right-handed inertial frame: +X, +Y (up), +Z.
  * Planet equator starts in the XZ plane before applying obliquity.
@@ -66,5 +68,31 @@ public final class NightSkyMath {
     public static double azimuthDeg(Vector3D horizonCoords) {
         double az = Math.toDegrees(Math.atan2(horizonCoords.getX(), horizonCoords.getY()));
         return az < 0 ? az + 360.0 : az;
+    }
+
+    public static AltAz equatorialToAltAz(EquatorialCoordinates eq, ObserverLocation obs, Instant t) {
+        double jd = AstroTime.julianDate(t);
+        double lst = AstroTime.lstRadians(jd, obs.getLongitudeDeg());
+        double ra = eq.getRaRadians();
+        double dec = eq.getDecRadians();
+        double lat = Math.toRadians(obs.getLatitudeDeg());
+
+        double hourAngle = AstroTime.normalizeRadians(lst - ra);
+
+        double sinDec = Math.sin(dec);
+        double cosDec = Math.cos(dec);
+        double sinLat = Math.sin(lat);
+        double cosLat = Math.cos(lat);
+        double sinH = Math.sin(hourAngle);
+        double cosH = Math.cos(hourAngle);
+
+        double east = cosDec * sinH;
+        double north = sinDec * cosLat - cosDec * cosH * sinLat;
+        double up = sinDec * sinLat + cosDec * cosH * cosLat;
+
+        Vector3D horizon = new Vector3D(east, north, up);
+        double alt = altitudeDeg(horizon);
+        double az = azimuthDeg(horizon);
+        return new AltAz(alt, az);
     }
 }
