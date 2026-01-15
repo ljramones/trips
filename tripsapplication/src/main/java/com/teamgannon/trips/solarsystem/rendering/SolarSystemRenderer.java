@@ -9,11 +9,13 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.Glow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
@@ -59,6 +61,12 @@ public class SolarSystemRenderer {
      * Moon color - silver/gray to distinguish from planets
      */
     private static final Color MOON_COLOR = Color.rgb(192, 192, 200);
+
+    private static final double DEEMPHASIZED_OPACITY = 0.6;
+    private static final double ORBIT_DEEMPHASIZED_OPACITY = 1.0;
+    private static final double LABEL_DEEMPHASIZED_OPACITY = 0.7;
+    private static final double PLANET_SELECTED_SCALE = 1.25;
+    private static final double STAR_SELECTED_SCALE = 1.15;
 
     @Getter
     private final ScaleManager scaleManager;
@@ -114,6 +122,15 @@ public class SolarSystemRenderer {
     @Getter
     private final Map<Node, Label> shapeToLabel;
 
+    private final Map<Node, Double> baseScales;
+    private final Map<Node, Double> baseOpacities;
+    private final Map<String, Node> starNodes;
+    private final Map<Node, double[]> orbitSegmentScales;
+    private final Map<PhongMaterial, Color[]> orbitSegmentMaterials;
+    private final Glow selectedBodyGlow = new Glow(0.6);
+    private Node selectedBody;
+    private Group selectedOrbit;
+
     /**
      * Handler for context menu events (optional)
      */
@@ -147,6 +164,11 @@ public class SolarSystemRenderer {
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
         this.shapeToLabel = new HashMap<>();
+        this.baseScales = new HashMap<>();
+        this.baseOpacities = new HashMap<>();
+        this.starNodes = new HashMap<>();
+        this.orbitSegmentScales = new HashMap<>();
+        this.orbitSegmentMaterials = new HashMap<>();
 
         systemGroup.getChildren().addAll(orbitsGroup, planetsGroup, labelsGroup);
     }
@@ -185,6 +207,29 @@ public class SolarSystemRenderer {
      */
     public void registerLabel(Node node, Label label) {
         shapeToLabel.put(node, label);
+    }
+
+    public void selectPlanet(PlanetDescription planet) {
+        if (planet == null) {
+            clearSelection();
+            return;
+        }
+        Node planetNode = planetNodes.get(planet.getName());
+        Group orbitGroup = orbitGroups.get(planet.getName());
+        applySelection(planetNode, orbitGroup);
+    }
+
+    public void selectStar(StarDisplayRecord star) {
+        if (star == null) {
+            clearSelection();
+            return;
+        }
+        Node starNode = starNodes.get(star.getStarName());
+        applySelection(starNode, null);
+    }
+
+    public void clearSelection() {
+        applySelection(null, null);
     }
 
     /**
@@ -272,6 +317,13 @@ public class SolarSystemRenderer {
         planetDescriptions.clear();
         orbitGroups.clear();
         shapeToLabel.clear();
+        baseScales.clear();
+        baseOpacities.clear();
+        starNodes.clear();
+        orbitSegmentScales.clear();
+        orbitSegmentMaterials.clear();
+        selectedBody = null;
+        selectedOrbit = null;
         currentStar = null;
     }
 
@@ -326,12 +378,19 @@ public class SolarSystemRenderer {
 
         // Add context menu handler
         starSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
+                contextMenuHandler.onStarSelected(starSphere, star);
+                e.consume();
+                return;
+            }
             if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
                 contextMenuHandler.onStarContextMenu(starSphere, star, e.getScreenX(), e.getScreenY());
                 e.consume();
             }
         });
 
+        registerSelectableNode(starSphere);
+        starNodes.put(star.getStarName(), starSphere);
         planetsGroup.getChildren().add(starSphere);
     }
 
@@ -372,6 +431,8 @@ public class SolarSystemRenderer {
         addOrbitContextMenuHandler(orbitPath, planet);
 
         orbitsGroup.getChildren().add(orbitPath);
+        registerOrbitSegments(orbitPath);
+        registerSelectableNode(orbitPath);
         double[] position = orbitVisualizer.calculateOrbitalPosition(
                 semiMajorAxis,
                 eccentricity,
@@ -410,12 +471,18 @@ public class SolarSystemRenderer {
 
         // Add context menu handler to planet sphere
         planetSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
+                contextMenuHandler.onPlanetSelected(planetSphere, planet);
+                e.consume();
+                return;
+            }
             if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
                 contextMenuHandler.onPlanetContextMenu(planetSphere, planet, e.getScreenX(), e.getScreenY());
                 e.consume();
             }
         });
 
+        registerSelectableNode(planetSphere);
         planetsGroup.getChildren().add(planetSphere);
 
         // Store references for animation
@@ -429,6 +496,11 @@ public class SolarSystemRenderer {
     private void addOrbitContextMenuHandler(Group orbitGroup, PlanetDescription planet) {
         // Add handler to the group itself
         orbitGroup.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
+                contextMenuHandler.onOrbitSelected(orbitGroup, planet);
+                e.consume();
+                return;
+            }
             if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
                 contextMenuHandler.onOrbitContextMenu(orbitGroup, planet, e.getScreenX(), e.getScreenY());
                 e.consume();
@@ -439,12 +511,189 @@ public class SolarSystemRenderer {
         for (Node child : orbitGroup.getChildren()) {
             child.setUserData(planet);
             child.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+                if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
+                    contextMenuHandler.onOrbitSelected(child, planet);
+                    e.consume();
+                    return;
+                }
                 if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
                     contextMenuHandler.onOrbitContextMenu(child, planet, e.getScreenX(), e.getScreenY());
                     e.consume();
                 }
             });
         }
+    }
+
+    private void registerSelectableNode(Node node) {
+        if (node == null) {
+            return;
+        }
+        baseScales.put(node, node.getScaleX());
+        baseOpacities.put(node, node.getOpacity());
+    }
+
+    private void applySelection(Node selectedBody, Group selectedOrbit) {
+        this.selectedBody = selectedBody;
+        this.selectedOrbit = selectedOrbit;
+        boolean hasSelection = selectedBody != null || selectedOrbit != null;
+
+        for (Map.Entry<String, Sphere> entry : planetNodes.entrySet()) {
+            Node planet = entry.getValue();
+            if (planet == null) {
+                continue;
+            }
+            if (planet == selectedBody) {
+                applySelectedBodyStyle(planet, PLANET_SELECTED_SCALE);
+            } else if (hasSelection) {
+                applyDeemphasizedStyle(planet, DEEMPHASIZED_OPACITY);
+            } else {
+                restoreBaseStyle(planet);
+            }
+        }
+
+        for (Map.Entry<String, Node> entry : starNodes.entrySet()) {
+            Node star = entry.getValue();
+            if (star == null) {
+                continue;
+            }
+            if (star == selectedBody) {
+                applySelectedBodyStyle(star, STAR_SELECTED_SCALE);
+            } else if (hasSelection) {
+                applyDeemphasizedStyle(star, 0.6);
+            } else {
+                restoreBaseStyle(star);
+            }
+        }
+
+        for (Map.Entry<String, Group> entry : orbitGroups.entrySet()) {
+            Group orbit = entry.getValue();
+            if (orbit == null) {
+                continue;
+            }
+            if (orbit == selectedOrbit) {
+                applySelectedOrbitStyle(orbit);
+            } else {
+                restoreOrbitStyle(orbit);
+            }
+        }
+
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Label label = entry.getValue();
+            if (label == null) {
+                continue;
+            }
+            if (!hasSelection) {
+                label.setOpacity(1.0);
+            } else if (entry.getKey() == selectedBody) {
+                label.setOpacity(1.0);
+            } else {
+                label.setOpacity(LABEL_DEEMPHASIZED_OPACITY);
+            }
+        }
+    }
+
+    private void applySelectedBodyStyle(Node node, double scaleMultiplier) {
+        restoreBaseScale(node);
+        node.setScaleX(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
+        node.setScaleY(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
+        node.setScaleZ(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
+        node.setOpacity(1.0);
+        node.setEffect(selectedBodyGlow);
+    }
+
+    private void applySelectedOrbitStyle(Group orbit) {
+        restoreOrbitStyle(orbit);
+        orbit.setOpacity(1.0);
+        for (Node child : orbit.getChildren()) {
+            double[] baseScale = orbitSegmentScales.get(child);
+            if (baseScale != null) {
+                child.setScaleX(baseScale[0] * 1.6);
+                child.setScaleY(baseScale[1]);
+                child.setScaleZ(baseScale[2] * 1.6);
+            }
+            brightenOrbitMaterial(child);
+        }
+    }
+
+    private void restoreOrbitStyle(Group orbit) {
+        restoreBaseStyle(orbit);
+        orbit.setOpacity(ORBIT_DEEMPHASIZED_OPACITY);
+        for (Node child : orbit.getChildren()) {
+            double[] baseScale = orbitSegmentScales.get(child);
+            if (baseScale != null) {
+                child.setScaleX(baseScale[0]);
+                child.setScaleY(baseScale[1]);
+                child.setScaleZ(baseScale[2]);
+            }
+            restoreOrbitMaterial(child);
+        }
+    }
+
+    private void applyDeemphasizedStyle(Node node, double opacity) {
+        restoreBaseScale(node);
+        node.setOpacity(opacity);
+        node.setEffect(null);
+    }
+
+    private void restoreBaseStyle(Node node) {
+        restoreBaseScale(node);
+        node.setOpacity(baseOpacities.getOrDefault(node, 1.0));
+        node.setEffect(null);
+    }
+
+    private void restoreBaseScale(Node node) {
+        double baseScale = baseScales.getOrDefault(node, 1.0);
+        node.setScaleX(baseScale);
+        node.setScaleY(baseScale);
+        node.setScaleZ(baseScale);
+    }
+
+    private void registerOrbitSegments(Group orbitGroup) {
+        for (Node child : orbitGroup.getChildren()) {
+            orbitSegmentScales.putIfAbsent(child, new double[]{
+                    child.getScaleX(),
+                    child.getScaleY(),
+                    child.getScaleZ()
+            });
+            if (child instanceof Shape3D shape) {
+                if (shape.getMaterial() instanceof PhongMaterial material) {
+                    orbitSegmentMaterials.putIfAbsent(material, new Color[]{
+                            material.getDiffuseColor(),
+                            material.getSpecularColor()
+                    });
+                }
+            }
+        }
+    }
+
+    private void brightenOrbitMaterial(Node node) {
+        if (!(node instanceof Shape3D shape)) {
+            return;
+        }
+        if (!(shape.getMaterial() instanceof PhongMaterial material)) {
+            return;
+        }
+        Color[] baseColors = orbitSegmentMaterials.get(material);
+        if (baseColors == null) {
+            return;
+        }
+        material.setDiffuseColor(baseColors[0].brighter().brighter());
+        material.setSpecularColor(baseColors[1].brighter());
+    }
+
+    private void restoreOrbitMaterial(Node node) {
+        if (!(node instanceof Shape3D shape)) {
+            return;
+        }
+        if (!(shape.getMaterial() instanceof PhongMaterial material)) {
+            return;
+        }
+        Color[] baseColors = orbitSegmentMaterials.get(material);
+        if (baseColors == null) {
+            return;
+        }
+        material.setDiffuseColor(baseColors[0]);
+        material.setSpecularColor(baseColors[1]);
     }
 
     /**

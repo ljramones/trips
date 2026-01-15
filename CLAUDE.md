@@ -825,6 +825,34 @@ Ensure Lombok is configured in your IDE.
 
 ## Common Pitfalls
 
+### JavaFX Transform Order
+
+**CRITICAL**: JavaFX applies transforms in **first-to-last** order in the list. This is counterintuitive if you're thinking in matrix notation.
+
+```java
+// To achieve R_C(R_B(R_A(P))) - i.e., apply A first, then B, then C:
+node.getTransforms().addAll(rotateA, rotateB, rotateC);  // CORRECT
+
+// NOT this (which gives R_A(R_B(R_C(P)))):
+node.getTransforms().addAll(rotateC, rotateB, rotateA);  // WRONG
+```
+
+**Real Example - Orbital Rotations:**
+
+In `OrbitVisualizer`, to transform orbital coordinates using Keplerian elements:
+1. First rotate by argument of periapsis (ω)
+2. Then by inclination (i)
+3. Then by longitude of ascending node (Ω)
+
+The transforms must be added as:
+```java
+orbitGroup.getTransforms().addAll(rotateArgPeri, rotateInclination, rotateLAN);
+```
+
+If you reverse this order, orbits will not align with planet positions calculated mathematically using the same rotation sequence.
+
+**Lesson Learned**: When you have code that calculates positions mathematically (applying rotations in sequence) AND code that uses JavaFX transforms on the same geometry, the transform list order must match the mathematical application order.
+
 ### JavaFX Thread Safety
 
 All UI updates must occur on JavaFX Application Thread:

@@ -55,12 +55,11 @@ public class OrbitVisualizer {
         // Calculate semi-minor axis: b = a * sqrt(1 - e²)
         double semiMinorAxisAU = semiMajorAxisAU * Math.sqrt(1 - eccentricity * eccentricity);
 
-        // Convert to screen units
-        double a = scaleManager.auToScreen(semiMajorAxisAU);
-        double b = scaleManager.auToScreen(semiMinorAxisAU);
+        double a = semiMajorAxisAU;
+        double b = semiMinorAxisAU;
 
         // Calculate focus offset (center of ellipse is offset from focus where star is)
-        double focusOffset = scaleManager.auToScreen(semiMajorAxisAU * eccentricity);
+        double focusOffset = semiMajorAxisAU * eccentricity;
 
         // Create the ellipse as a series of connected cylinders (tube segments)
         PhongMaterial material = new PhongMaterial();
@@ -82,7 +81,7 @@ public class OrbitVisualizer {
             // Shift so the focus (star) is at origin
             x -= focusOffset;
 
-            double[] point = new double[]{x, y, z};
+            double[] point = toScreen(x, y, z);
 
             if (i == 0) {
                 firstPoint = point;
@@ -103,16 +102,18 @@ public class OrbitVisualizer {
             orbitGroup.getChildren().add(segment);
         }
 
-        // Apply orbital rotations in correct order for XZ orbital plane:
+        // Apply orbital rotations to match calculateOrbitalPosition():
+        // JavaFX applies transforms first-to-last, so order must be:
         // 1. Argument of periapsis (ω) - rotation around Y axis (perpendicular to XZ plane)
         // 2. Inclination (i) - tilt the orbital plane around X axis
         // 3. Longitude of ascending node (Ω) - rotation around Y axis in reference plane
+        // This gives R_LAN(R_inc(R_argPeri(P))) matching the position calculation.
 
         Rotate rotateArgPeri = new Rotate(argumentOfPeriapsisDeg, Rotate.Y_AXIS);
         Rotate rotateInclination = new Rotate(inclinationDeg, Rotate.X_AXIS);
         Rotate rotateLAN = new Rotate(longitudeOfAscendingNodeDeg, Rotate.Y_AXIS);
 
-        orbitGroup.getTransforms().addAll(rotateLAN, rotateInclination, rotateArgPeri);
+        orbitGroup.getTransforms().addAll(rotateArgPeri, rotateInclination, rotateLAN);
 
         return orbitGroup;
     }
@@ -187,12 +188,17 @@ public class OrbitVisualizer {
         double y3 = y2;
         double z3 = -x2 * sinLAN + z2 * cosLAN;
 
-        // Convert to screen coordinates
-        return new double[]{
-                scaleManager.auToScreen(x3),
-                scaleManager.auToScreen(y3),
-                scaleManager.auToScreen(z3)
-        };
+        return toScreen(x3, y3, z3);
+    }
+
+    private double[] toScreen(double xAu, double yAu, double zAu) {
+        double r = Math.sqrt(xAu * xAu + yAu * yAu + zAu * zAu);
+        if (r == 0) {
+            return new double[]{0, 0, 0};
+        }
+        double scaledR = scaleManager.auToScreen(r);
+        double factor = scaledR / r;
+        return new double[]{xAu * factor, yAu * factor, zAu * factor};
     }
 
     /**

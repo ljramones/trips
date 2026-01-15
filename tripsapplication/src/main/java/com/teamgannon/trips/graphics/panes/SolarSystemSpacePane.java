@@ -175,6 +175,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Add label display group to sceneRoot (2D overlay) - labels stay flat to camera
         sceneRoot.getChildren().add(labelDisplayGroup);
+        labelDisplayGroup.setMouseTransparent(true);
 
         this.setBackground(Background.EMPTY);
         this.getChildren().add(sceneRoot);
@@ -317,6 +318,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         createLabelsForRenderedObjects(solarSystemDescription);
 
         // Initial label positioning
+        solarSystemRenderer.clearSelection();
         updateLabels();
 
         // Log summary
@@ -518,6 +520,10 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Right-click on empty space shows "Add Planet" menu
         subScene.setOnMouseClicked((MouseEvent me) -> {
+            if (me.getButton() == MouseButton.PRIMARY && !me.isConsumed()) {
+                solarSystemRenderer.clearSelection();
+                updateLabels();
+            }
             if (me.getButton() == MouseButton.SECONDARY && !me.isConsumed()) {
                 // Only show if we have a current system loaded
                 if (currentSystem != null && currentSystem.getStarDisplayRecord() != null) {
@@ -642,6 +648,24 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Delegate to planet context menu
         onPlanetContextMenu(source, planet, screenX, screenY);
+    }
+
+    @Override
+    public void onPlanetSelected(Node source, PlanetDescription planet) {
+        solarSystemRenderer.selectPlanet(planet);
+        updateLabels();
+    }
+
+    @Override
+    public void onStarSelected(Node source, StarDisplayRecord star) {
+        solarSystemRenderer.selectStar(star);
+        updateLabels();
+    }
+
+    @Override
+    public void onOrbitSelected(Node source, PlanetDescription planet) {
+        solarSystemRenderer.selectPlanet(planet);
+        updateLabels();
     }
 
     /**

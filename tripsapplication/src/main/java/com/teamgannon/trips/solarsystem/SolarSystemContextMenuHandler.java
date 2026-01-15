@@ -38,4 +38,34 @@ public interface SolarSystemContextMenuHandler {
      * @param screenY screen Y coordinate for menu placement
      */
     void onOrbitContextMenu(Node source, PlanetDescription planet, double screenX, double screenY);
+
+    /**
+     * Called when user left-clicks a planet sphere to select it.
+     *
+     * @param source the 3D node that was clicked
+     * @param planet the planet description
+     */
+    default void onPlanetSelected(Node source, PlanetDescription planet) {
+        // no-op by default
+    }
+
+    /**
+     * Called when user left-clicks the central star to select it.
+     *
+     * @param source the 3D node that was clicked
+     * @param star   the star display record
+     */
+    default void onStarSelected(Node source, StarDisplayRecord star) {
+        // no-op by default
+    }
+
+    /**
+     * Called when user left-clicks an orbit path to select it.
+     *
+     * @param source the 3D node that was clicked
+     * @param planet the planet whose orbit was clicked
+     */
+    default void onOrbitSelected(Node source, PlanetDescription planet) {
+        // no-op by default
+    }
 }
