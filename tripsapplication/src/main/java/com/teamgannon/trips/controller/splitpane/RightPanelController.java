@@ -9,7 +9,7 @@ import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
-import com.teamgannon.trips.screenobjects.PlanetarySystemsPane;
+import com.teamgannon.trips.screenobjects.planetary.PlanetarySystemsPane;
 import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.screenobjects.planetary.PlanetarySidePane;
 import com.teamgannon.trips.screenobjects.solarsystem.SolarSystemSidePane;

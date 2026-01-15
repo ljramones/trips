@@ -1,4 +1,4 @@
-package com.teamgannon.trips.screenobjects;
+package com.teamgannon.trips.screenobjects.planetary;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.screenobjects;
+package com.teamgannon.trips.screenobjects.planetary;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import lombok.Data;

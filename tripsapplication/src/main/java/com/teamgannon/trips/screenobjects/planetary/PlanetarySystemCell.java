@@ -1,4 +1,4 @@
-package com.teamgannon.trips.screenobjects;
+package com.teamgannon.trips.screenobjects.planetary;
 
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
@@ -62,7 +62,17 @@ public class PlanetarySystemCell extends ListCell<PlanetarySystemRecord> {
                         new HashMap<>()
                 ));
             });
-            contextMenu.getItems().add(enterSystemItem);
+            MenuItem viewNightSkyItem = new MenuItem("View Night Sky");
+            viewNightSkyItem.setOnAction(event -> {
+                log.info("Viewing night sky for: {}", record.getStarName());
+                eventPublisher.publishEvent(new ContextSelectorEvent(
+                        this,
+                        ContextSelectionType.PLANETARY,
+                        record.getStarDisplayRecord(),
+                        new HashMap<>()
+                ));
+            });
+            contextMenu.getItems().addAll(enterSystemItem, viewNightSkyItem);
 
             setContextMenu(contextMenu);
         } else {
