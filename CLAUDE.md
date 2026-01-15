@@ -853,6 +853,47 @@ If you reverse this order, orbits will not align with planet positions calculate
 
 **Lesson Learned**: When you have code that calculates positions mathematically (applying rotations in sequence) AND code that uses JavaFX transforms on the same geometry, the transform list order must match the mathematical application order.
 
+### Non-Linear Scaling Must Be Radial, Not Per-Axis
+
+**CRITICAL**: When using logarithmic or other non-linear scaling for 3D coordinates, you must scale the **radial distance**, not each axis independently.
+
+**The Problem:**
+```java
+// WRONG - scales each axis independently, distorts shapes
+double screenX = scaleManager.auToScreen(x);
+double screenY = scaleManager.auToScreen(y);
+double screenZ = scaleManager.auToScreen(z);
+```
+
+When `auToScreen()` uses logarithmic scaling, this distorts the geometry. A circle becomes squashed, ellipses become misshapen, and calculated positions don't match rendered paths.
+
+**The Solution - Radial Scaling:**
+```java
+// CORRECT - scale radial distance, preserve direction
+private double[] toScreen(double xAu, double yAu, double zAu) {
+    double r = Math.sqrt(xAu * xAu + yAu * yAu + zAu * zAu);
+    if (r == 0) {
+        return new double[]{0, 0, 0};
+    }
+    double scaledR = scaleManager.auToScreen(r);
+    double factor = scaledR / r;
+    return new double[]{xAu * factor, yAu * factor, zAu * factor};
+}
+```
+
+This approach:
+1. Calculates the radial distance from origin
+2. Scales only the radial distance (applying log scale to magnitude)
+3. Applies the **same scale factor** to all coordinates
+
+The direction vector is preserved; only the magnitude changes. This maintains the shape of orbits and ensures calculated positions match rendered geometry.
+
+**Where This Applies:**
+- `OrbitVisualizer.toScreen()` - used by both `createOrbitPath()` and `calculateOrbitalPosition()`
+- Any 3D visualization using non-linear distance compression
+
+**Lesson Learned**: When orbit paths didn't align with planet positions, the root cause was per-axis scaling distorting the orbit ellipse differently than the position calculation. Using a shared `toScreen()` method with radial scaling fixed both issues at once.
+
 ### JavaFX Thread Safety
 
 All UI updates must occur on JavaFX Application Thread:
