@@ -188,6 +188,8 @@ public class MainSplitPaneManager {
         createRightDisplay();
         rightPanelCoordinator.initialize();
 
+        connectSolarSystemReferenceControls();
+
         // Initialize the SliderControlManager
         sliderControlManager.initialize(mainSplitPane);
 
@@ -196,6 +198,32 @@ public class MainSplitPaneManager {
 
         // Initialize SharedUIFunctions
         sharedUIFunctions.initialize(plotManager, mainSplitPane, sliderControlManager);
+    }
+
+    private void connectSolarSystemReferenceControls() {
+        if (rightPanelController == null || leftDisplayController == null) {
+            return;
+        }
+        var solarSystemSidePane = rightPanelController.getSolarSystemSidePane();
+        if (solarSystemSidePane == null) {
+            return;
+        }
+        var referencePane = solarSystemSidePane.getReferenceCueControlPane();
+        if (referencePane == null) {
+            return;
+        }
+        var solarSystemSpacePane = leftDisplayController.getSolarSystemSpacePane();
+        if (solarSystemSpacePane == null) {
+            return;
+        }
+
+        referencePane.getShowEclipticPlaneCheckbox().selectedProperty().addListener((obs, oldVal, newVal) -> {
+            solarSystemSpacePane.toggleEclipticPlane(Boolean.TRUE.equals(newVal));
+        });
+
+        referencePane.getShowOrbitNodesCheckbox().selectedProperty().addListener((obs, oldVal, newVal) -> {
+            solarSystemSpacePane.toggleOrbitNodes(Boolean.TRUE.equals(newVal));
+        });
     }
 
     private void createRightDisplay() {

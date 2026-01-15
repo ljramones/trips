@@ -12,11 +12,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * Main container for the solar system side pane content.
- * Contains an accordion with 4 titled panes:
+ * Contains an accordion with 5 titled panes:
  * 1. System Overview - star info, habitable zone, counts
  * 2. Planet List - list of planets with context menu
  * 3. Selected Object Properties - details of selected planet/star
- * 4. Simulation Controls - animation and display settings
+ * 4. Reference Cues - ecliptic plane/grid and orbit node markers
+ * 5. Simulation Controls - animation and display settings
  */
 @Slf4j
 @Component
@@ -29,12 +30,18 @@ public class SolarSystemSidePane extends VBox {
     private final SystemOverviewPane systemOverviewPane;
     private final SolarSystemPlanetListPane planetListPane;
     private final SolarSystemObjectPropertiesPane objectPropertiesPane;
+    private final ReferenceCueControlPane referenceCueControlPane;
     private final SimulationControlPane simulationControlPane;
+
+    public ReferenceCueControlPane getReferenceCueControlPane() {
+        return referenceCueControlPane;
+    }
 
     // TitledPanes
     private final TitledPane overviewTitledPane;
     private final TitledPane planetListTitledPane;
     private final TitledPane propertiesTitledPane;
+    private final TitledPane referenceTitledPane;
     private final TitledPane simulationTitledPane;
 
     private SolarSystemDescription currentSystem;
@@ -42,10 +49,12 @@ public class SolarSystemSidePane extends VBox {
     public SolarSystemSidePane(SystemOverviewPane systemOverviewPane,
                                 SolarSystemPlanetListPane planetListPane,
                                 SolarSystemObjectPropertiesPane objectPropertiesPane,
+                                ReferenceCueControlPane referenceCueControlPane,
                                 SimulationControlPane simulationControlPane) {
         this.systemOverviewPane = systemOverviewPane;
         this.planetListPane = planetListPane;
         this.objectPropertiesPane = objectPropertiesPane;
+        this.referenceCueControlPane = referenceCueControlPane;
         this.simulationControlPane = simulationControlPane;
 
         // Match the interstellar side pane width exactly
@@ -72,6 +81,10 @@ public class SolarSystemSidePane extends VBox {
         propertiesTitledPane.setMinHeight(200);
         propertiesTitledPane.setMaxHeight(500);
 
+        referenceTitledPane = new TitledPane("Reference Cues", wrapInScrollPane(referenceCueControlPane));
+        referenceTitledPane.setMinHeight(140);
+        referenceTitledPane.setMaxHeight(260);
+
         simulationTitledPane = new TitledPane("Display & Controls", wrapInScrollPane(simulationControlPane));
         simulationTitledPane.setMinHeight(150);
         simulationTitledPane.setMaxHeight(400);
@@ -81,6 +94,7 @@ public class SolarSystemSidePane extends VBox {
                 overviewTitledPane,
                 planetListTitledPane,
                 propertiesTitledPane,
+                referenceTitledPane,
                 simulationTitledPane
         );
 
@@ -89,7 +103,7 @@ public class SolarSystemSidePane extends VBox {
 
         getChildren().add(solarSystemAccordion);
 
-        log.info("SolarSystemSidePane initialized with 4 titled panes");
+        log.info("SolarSystemSidePane initialized with 5 titled panes");
     }
 
     private ScrollPane wrapInScrollPane(VBox content) {
@@ -109,6 +123,7 @@ public class SolarSystemSidePane extends VBox {
         systemOverviewPane.setSystem(system);
         planetListPane.setSystem(system);
         objectPropertiesPane.clear();
+        referenceCueControlPane.reset();
         simulationControlPane.reset();
 
         // Expand overview pane when system changes
@@ -128,6 +143,7 @@ public class SolarSystemSidePane extends VBox {
         systemOverviewPane.clear();
         planetListPane.clear();
         objectPropertiesPane.clear();
+        referenceCueControlPane.reset();
         simulationControlPane.reset();
     }
 

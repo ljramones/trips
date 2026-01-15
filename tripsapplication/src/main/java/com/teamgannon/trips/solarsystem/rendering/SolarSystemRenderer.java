@@ -87,6 +87,18 @@ public class SolarSystemRenderer {
     private final Group orbitsGroup;
 
     /**
+     * Group for ecliptic reference plane/grid
+     */
+    @Getter
+    private final Group eclipticPlaneGroup;
+
+    /**
+     * Group for orbit node markers (ascending/descending)
+     */
+    @Getter
+    private final Group orbitNodeGroup;
+
+    /**
      * Group for planet spheres (updated during animation)
      */
     @Getter
@@ -115,6 +127,7 @@ public class SolarSystemRenderer {
      */
     @Getter
     private final Map<String, Group> orbitGroups;
+    private final Map<String, Color> orbitColors;
 
     /**
      * Map of 3D nodes to their 2D labels (for billboard-style label updates)
@@ -130,6 +143,8 @@ public class SolarSystemRenderer {
     private final Glow selectedBodyGlow = new Glow(0.6);
     private Node selectedBody;
     private Group selectedOrbit;
+    private boolean showEclipticPlane = false;
+    private boolean showOrbitNodes = false;
 
     /**
      * Handler for context menu events (optional)
@@ -160,9 +175,12 @@ public class SolarSystemRenderer {
         this.orbitsGroup = new Group();
         this.planetsGroup = new Group();
         this.labelsGroup = new Group();
+        this.eclipticPlaneGroup = new Group();
+        this.orbitNodeGroup = new Group();
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
+        this.orbitColors = new HashMap<>();
         this.shapeToLabel = new HashMap<>();
         this.baseScales = new HashMap<>();
         this.baseOpacities = new HashMap<>();
@@ -170,7 +188,7 @@ public class SolarSystemRenderer {
         this.orbitSegmentScales = new HashMap<>();
         this.orbitSegmentMaterials = new HashMap<>();
 
-        systemGroup.getChildren().addAll(orbitsGroup, planetsGroup, labelsGroup);
+        systemGroup.getChildren().addAll(eclipticPlaneGroup, orbitsGroup, orbitNodeGroup, planetsGroup, labelsGroup);
     }
 
     /**
@@ -232,6 +250,26 @@ public class SolarSystemRenderer {
         applySelection(null, null);
     }
 
+    public void setShowEclipticPlane(boolean show) {
+        this.showEclipticPlane = show;
+        if (show) {
+            renderEclipticReference();
+        } else {
+            eclipticPlaneGroup.getChildren().clear();
+            eclipticPlaneGroup.setVisible(false);
+        }
+    }
+
+    public void setShowOrbitNodes(boolean show) {
+        this.showOrbitNodes = show;
+        if (show) {
+            rebuildOrbitNodeMarkers();
+        } else {
+            orbitNodeGroup.getChildren().clear();
+            orbitNodeGroup.setVisible(false);
+        }
+    }
+
     /**
      * Render a complete solar system
      *
@@ -272,6 +310,8 @@ public class SolarSystemRenderer {
         // Render scale grid first (behind everything)
         renderScaleGrid();
 
+        renderEclipticReference();
+
         // Render habitable zone
         renderHabitableZone(description.getHabitableZoneInnerAU(),
                 description.getHabitableZoneOuterAU());
@@ -310,12 +350,15 @@ public class SolarSystemRenderer {
      * Clear all rendered elements
      */
     public void clear() {
+        eclipticPlaneGroup.getChildren().clear();
         orbitsGroup.getChildren().clear();
+        orbitNodeGroup.getChildren().clear();
         planetsGroup.getChildren().clear();
         labelsGroup.getChildren().clear();
         planetNodes.clear();
         planetDescriptions.clear();
         orbitGroups.clear();
+        orbitColors.clear();
         shapeToLabel.clear();
         baseScales.clear();
         baseOpacities.clear();
@@ -426,6 +469,7 @@ public class SolarSystemRenderer {
         // Store planet reference in orbit for context menu
         orbitPath.setUserData(planet);
         orbitGroups.put(planet.getName(), orbitPath);
+        orbitColors.put(planet.getName(), orbitColor);
 
         // Add context menu handler to orbit
         addOrbitContextMenuHandler(orbitPath, planet);
@@ -488,6 +532,8 @@ public class SolarSystemRenderer {
         // Store references for animation
         planetNodes.put(planet.getName(), planetSphere);
         planetDescriptions.put(planet.getName(), planet);
+
+        renderOrbitNodeMarkers(planet, orbitColor);
     }
 
     /**
@@ -757,6 +803,105 @@ public class SolarSystemRenderer {
         orbitsGroup.getChildren().add(hzGroup);
 
         log.info("Rendered habitable zone: {} - {} AU", innerAU, outerAU);
+    }
+
+    private void renderEclipticReference() {
+        eclipticPlaneGroup.getChildren().clear();
+        if (!showEclipticPlane) {
+            return;
+        }
+
+        PhongMaterial gridMaterial = new PhongMaterial();
+        gridMaterial.setDiffuseColor(Color.rgb(60, 60, 60, 0.25));
+        gridMaterial.setSpecularColor(Color.rgb(80, 80, 80, 0.2));
+
+        double[] gridValues = scaleManager.getScaleGridAuValues();
+        for (double au : gridValues) {
+            Group circle = createCircle(scaleManager.auToScreen(au), gridMaterial);
+            eclipticPlaneGroup.getChildren().add(circle);
+        }
+
+        double maxRadius = scaleManager.auToScreen(scaleManager.getMaxOrbitalDistanceAU());
+        double gridStep = maxRadius / 6;
+        int steps = 12;
+        for (int i = -steps; i <= steps; i++) {
+            double offset = i * gridStep;
+            Cylinder lineX = createRingSegmentXZ(-maxRadius, offset, maxRadius, offset, 0.15, gridMaterial);
+            Cylinder lineZ = createRingSegmentXZ(offset, -maxRadius, offset, maxRadius, 0.15, gridMaterial);
+            eclipticPlaneGroup.getChildren().addAll(lineX, lineZ);
+        }
+
+        eclipticPlaneGroup.setVisible(showEclipticPlane);
+    }
+
+    private void renderOrbitNodeMarkers(PlanetDescription planet, Color orbitColor) {
+        if (!showOrbitNodes) {
+            return;
+        }
+        double semiMajorAxis = planet.getSemiMajorAxis();
+        if (semiMajorAxis <= 0) {
+            return;
+        }
+
+        double eccentricity = Math.max(0, Math.min(0.99, planet.getEccentricity()));
+        double inclination = planet.getInclination();
+        double argPeriapsis = planet.getArgumentOfPeriapsis();
+        double longAscNode = planet.getLongitudeOfAscendingNode();
+
+        double ascendingTrueAnomaly = -argPeriapsis;
+        double descendingTrueAnomaly = 180 - argPeriapsis;
+
+        double[] ascPos = orbitVisualizer.calculateOrbitalPosition(
+                semiMajorAxis,
+                eccentricity,
+                inclination,
+                longAscNode,
+                argPeriapsis,
+                ascendingTrueAnomaly
+        );
+        double[] descPos = orbitVisualizer.calculateOrbitalPosition(
+                semiMajorAxis,
+                eccentricity,
+                inclination,
+                longAscNode,
+                argPeriapsis,
+                descendingTrueAnomaly
+        );
+
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(orbitColor.brighter());
+        material.setSpecularColor(orbitColor.brighter());
+
+        Sphere ascending = new Sphere(1.4);
+        ascending.setMaterial(material);
+        ascending.setTranslateX(ascPos[0]);
+        ascending.setTranslateY(ascPos[1]);
+        ascending.setTranslateZ(ascPos[2]);
+
+        Sphere descending = new Sphere(1.2);
+        descending.setMaterial(material);
+        descending.setTranslateX(descPos[0]);
+        descending.setTranslateY(descPos[1]);
+        descending.setTranslateZ(descPos[2]);
+
+        orbitNodeGroup.getChildren().addAll(ascending, descending);
+        orbitNodeGroup.setVisible(showOrbitNodes);
+    }
+
+    private void rebuildOrbitNodeMarkers() {
+        orbitNodeGroup.getChildren().clear();
+        if (!showOrbitNodes) {
+            return;
+        }
+        for (Map.Entry<String, PlanetDescription> entry : planetDescriptions.entrySet()) {
+            String planetName = entry.getKey();
+            PlanetDescription planet = entry.getValue();
+            if (planet == null) {
+                continue;
+            }
+            Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
+            renderOrbitNodeMarkers(planet, orbitColor);
+        }
     }
 
     /**
