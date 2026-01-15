@@ -14,6 +14,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
@@ -99,6 +100,24 @@ public class SolarSystemRenderer {
     private final Group orbitNodeGroup;
 
     /**
+     * Group for apside markers (periapsis/apoapsis)
+     */
+    @Getter
+    private final Group apsidesGroup;
+
+    /**
+     * Group for habitable zone ring
+     */
+    @Getter
+    private final Group habitableZoneGroup;
+
+    /**
+     * Group for scale grid circles
+     */
+    @Getter
+    private final Group scaleGridGroup;
+
+    /**
      * Group for planet spheres (updated during animation)
      */
     @Getter
@@ -145,6 +164,10 @@ public class SolarSystemRenderer {
     private Group selectedOrbit;
     private boolean showEclipticPlane = false;
     private boolean showOrbitNodes = false;
+    private boolean showApsides = false;
+    private boolean showOrbits = true;
+    private boolean showHabitableZone = true;
+    private boolean showScaleGrid = true;
 
     /**
      * Handler for context menu events (optional)
@@ -172,11 +195,14 @@ public class SolarSystemRenderer {
         this.scaleManager = new ScaleManager();
         this.orbitVisualizer = new OrbitVisualizer(scaleManager);
         this.systemGroup = new Group();
+        this.scaleGridGroup = new Group();
+        this.habitableZoneGroup = new Group();
         this.orbitsGroup = new Group();
         this.planetsGroup = new Group();
         this.labelsGroup = new Group();
         this.eclipticPlaneGroup = new Group();
         this.orbitNodeGroup = new Group();
+        this.apsidesGroup = new Group();
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
@@ -188,7 +214,9 @@ public class SolarSystemRenderer {
         this.orbitSegmentScales = new HashMap<>();
         this.orbitSegmentMaterials = new HashMap<>();
 
-        systemGroup.getChildren().addAll(eclipticPlaneGroup, orbitsGroup, orbitNodeGroup, planetsGroup, labelsGroup);
+        // Order: scale grid (back), habitable zone, ecliptic, orbits, orbit nodes, apsides, planets, labels (front)
+        systemGroup.getChildren().addAll(scaleGridGroup, habitableZoneGroup, eclipticPlaneGroup,
+                orbitsGroup, orbitNodeGroup, apsidesGroup, planetsGroup, labelsGroup);
     }
 
     /**
@@ -268,6 +296,43 @@ public class SolarSystemRenderer {
             orbitNodeGroup.getChildren().clear();
             orbitNodeGroup.setVisible(false);
         }
+    }
+
+    public void setShowApsides(boolean show) {
+        this.showApsides = show;
+        if (show) {
+            rebuildApsideMarkers();
+        } else {
+            apsidesGroup.getChildren().clear();
+            apsidesGroup.setVisible(false);
+        }
+    }
+
+    public void setShowOrbits(boolean show) {
+        this.showOrbits = show;
+        orbitsGroup.setVisible(show);
+    }
+
+    public void setShowHabitableZone(boolean show) {
+        this.showHabitableZone = show;
+        habitableZoneGroup.setVisible(show);
+    }
+
+    public void setShowScaleGrid(boolean show) {
+        this.showScaleGrid = show;
+        scaleGridGroup.setVisible(show);
+    }
+
+    public void setUseLogScale(boolean useLogScale) {
+        scaleManager.setUseLogScale(useLogScale);
+    }
+
+    public void setZoomLevel(double zoomLevel) {
+        scaleManager.setZoomLevel(zoomLevel);
+    }
+
+    public void setUseRelativePlanetSizes(boolean useRelative) {
+        scaleManager.setUseRelativeScale(useRelative);
     }
 
     /**
@@ -350,9 +415,12 @@ public class SolarSystemRenderer {
      * Clear all rendered elements
      */
     public void clear() {
+        scaleGridGroup.getChildren().clear();
+        habitableZoneGroup.getChildren().clear();
         eclipticPlaneGroup.getChildren().clear();
         orbitsGroup.getChildren().clear();
         orbitNodeGroup.getChildren().clear();
+        apsidesGroup.getChildren().clear();
         planetsGroup.getChildren().clear();
         labelsGroup.getChildren().clear();
         planetNodes.clear();
@@ -534,6 +602,7 @@ public class SolarSystemRenderer {
         planetDescriptions.put(planet.getName(), planet);
 
         renderOrbitNodeMarkers(planet, orbitColor);
+        renderApsideMarkers(planet, orbitColor);
     }
 
     /**
@@ -800,7 +869,7 @@ public class SolarSystemRenderer {
             hzGroup.getChildren().add(radial);
         }
 
-        orbitsGroup.getChildren().add(hzGroup);
+        habitableZoneGroup.getChildren().add(hzGroup);
 
         log.info("Rendered habitable zone: {} - {} AU", innerAU, outerAU);
     }
@@ -905,6 +974,101 @@ public class SolarSystemRenderer {
     }
 
     /**
+     * Render periapsis and apoapsis markers for a planet's orbit.
+     * Periapsis (closest to star) is at true anomaly = 0°
+     * Apoapsis (farthest from star) is at true anomaly = 180°
+     */
+    private void renderApsideMarkers(PlanetDescription planet, Color orbitColor) {
+        if (!showApsides) {
+            return;
+        }
+        double semiMajorAxis = planet.getSemiMajorAxis();
+        if (semiMajorAxis <= 0) {
+            return;
+        }
+
+        double eccentricity = Math.max(0, Math.min(0.99, planet.getEccentricity()));
+
+        // Skip nearly circular orbits where apsides are meaningless
+        if (eccentricity < 0.01) {
+            return;
+        }
+
+        double inclination = planet.getInclination();
+        double argPeriapsis = planet.getArgumentOfPeriapsis();
+        double longAscNode = planet.getLongitudeOfAscendingNode();
+
+        // Periapsis at true anomaly = 0, Apoapsis at true anomaly = 180
+        double[] periPos = orbitVisualizer.calculateOrbitalPosition(
+                semiMajorAxis,
+                eccentricity,
+                inclination,
+                longAscNode,
+                argPeriapsis,
+                0.0  // Periapsis
+        );
+        double[] apoPos = orbitVisualizer.calculateOrbitalPosition(
+                semiMajorAxis,
+                eccentricity,
+                inclination,
+                longAscNode,
+                argPeriapsis,
+                180.0  // Apoapsis
+        );
+
+        // Use distinct colors: warm for periapsis (close/hot), cool for apoapsis (far/cold)
+        PhongMaterial periMaterial = new PhongMaterial();
+        periMaterial.setDiffuseColor(Color.ORANGERED);
+        periMaterial.setSpecularColor(Color.ORANGE);
+
+        PhongMaterial apoMaterial = new PhongMaterial();
+        apoMaterial.setDiffuseColor(Color.CORNFLOWERBLUE);
+        apoMaterial.setSpecularColor(Color.LIGHTBLUE);
+
+        // Use boxes instead of spheres to distinguish from orbit node markers
+        // Size scales with orbit distance for visibility
+        double markerSize = Math.max(4.0, Math.min(8.0, semiMajorAxis * 2));
+
+        Box periMarker = new Box(markerSize, markerSize, markerSize);
+        periMarker.setMaterial(periMaterial);
+        periMarker.setTranslateX(periPos[0]);
+        periMarker.setTranslateY(periPos[1]);
+        periMarker.setTranslateZ(periPos[2]);
+        // Rotate 45 degrees to look like a diamond
+        periMarker.setRotate(45);
+
+        Box apoMarker = new Box(markerSize, markerSize, markerSize);
+        apoMarker.setMaterial(apoMaterial);
+        apoMarker.setTranslateX(apoPos[0]);
+        apoMarker.setTranslateY(apoPos[1]);
+        apoMarker.setTranslateZ(apoPos[2]);
+        apoMarker.setRotate(45);
+
+        log.debug("Created apside markers for {} at peri=({},{},{}) apo=({},{},{}) size={}",
+                planet.getName(), periPos[0], periPos[1], periPos[2],
+                apoPos[0], apoPos[1], apoPos[2], markerSize);
+
+        apsidesGroup.getChildren().addAll(periMarker, apoMarker);
+        apsidesGroup.setVisible(showApsides);
+    }
+
+    private void rebuildApsideMarkers() {
+        apsidesGroup.getChildren().clear();
+        if (!showApsides) {
+            return;
+        }
+        for (Map.Entry<String, PlanetDescription> entry : planetDescriptions.entrySet()) {
+            String planetName = entry.getKey();
+            PlanetDescription planet = entry.getValue();
+            if (planet == null) {
+                continue;
+            }
+            Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
+            renderApsideMarkers(planet, orbitColor);
+        }
+    }
+
+    /**
      * Render scale grid circles at standard AU intervals
      */
     private void renderScaleGrid() {
@@ -915,7 +1079,7 @@ public class SolarSystemRenderer {
 
         for (double au : gridValues) {
             Group circle = createCircle(scaleManager.auToScreen(au), gridMaterial);
-            orbitsGroup.getChildren().add(circle);
+            scaleGridGroup.getChildren().add(circle);
         }
     }
 

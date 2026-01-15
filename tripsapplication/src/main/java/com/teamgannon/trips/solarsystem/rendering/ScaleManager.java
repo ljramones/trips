@@ -44,6 +44,11 @@ public class ScaleManager {
     private boolean useLogScale = false;
 
     /**
+     * Whether to use true relative planet sizes (vs clamped for visibility)
+     */
+    private boolean useRelativeScale = false;
+
+    /**
      * Maximum orbital distance in AU (used for scaling)
      */
     private double maxOrbitalDistanceAU = 30.0;
@@ -138,10 +143,17 @@ public class ScaleManager {
             return minPlanetRadius;
         }
 
-        // Normalize to 0-1 range, then scale to min-max display range
+        // Normalize to 0-1 range
         double normalized = planetRadiusEarthRadii / maxRadiusInSystem;
 
-        // Use square root to compress the range (Jupiter won't be 11x Earth visually)
+        if (useRelativeScale) {
+            // True relative sizing - linear scaling preserving actual ratios
+            // Jupiter really is ~11x Earth's radius, so show that difference
+            return minPlanetRadius + normalized * (maxPlanetRadius - minPlanetRadius) * 2.5;
+        }
+
+        // Clamped mode (default) - use square root to compress the range
+        // Jupiter won't be 11x Earth visually, making small planets more visible
         double compressed = Math.sqrt(normalized);
 
         return minPlanetRadius + compressed * (maxPlanetRadius - minPlanetRadius);

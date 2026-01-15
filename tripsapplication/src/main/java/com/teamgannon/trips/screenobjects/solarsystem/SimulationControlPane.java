@@ -1,6 +1,8 @@
 package com.teamgannon.trips.screenobjects.solarsystem;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
+import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -44,6 +46,8 @@ public class SimulationControlPane extends VBox {
     private final CheckBox showHabitableZoneCheckbox = new CheckBox("Show Habitable Zone");
     @Getter
     private final CheckBox showGridCheckbox = new CheckBox("Show Scale Grid");
+    @Getter
+    private final CheckBox showRelativeSizesCheckbox = new CheckBox("True Relative Planet Sizes");
 
     private boolean isPlaying = false;
 
@@ -149,6 +153,7 @@ public class SimulationControlPane extends VBox {
         showLabelsCheckbox.setSelected(true);
         showHabitableZoneCheckbox.setSelected(true);
         showGridCheckbox.setSelected(true);
+        showRelativeSizesCheckbox.setSelected(false);  // Default to clamped sizes
 
         VBox checkboxes = new VBox(5);
         checkboxes.setPadding(new Insets(0, 0, 0, 10));
@@ -156,7 +161,8 @@ public class SimulationControlPane extends VBox {
                 showOrbitsCheckbox,
                 showLabelsCheckbox,
                 showHabitableZoneCheckbox,
-                showGridCheckbox
+                showGridCheckbox,
+                showRelativeSizesCheckbox
         );
 
         VBox section = new VBox(8);
@@ -170,7 +176,7 @@ public class SimulationControlPane extends VBox {
             isPlaying = !isPlaying;
             playPauseButton.setText(isPlaying ? "\u23F8" : "\u25B6");  // Pause or Play symbol
             log.info("Animation {}", isPlaying ? "started" : "paused");
-            // TODO: Publish animation event
+            // Animation not yet implemented
         });
 
         // Reset button
@@ -178,49 +184,65 @@ public class SimulationControlPane extends VBox {
             isPlaying = false;
             playPauseButton.setText("\u25B6");
             log.info("Animation reset");
-            // TODO: Publish reset event
+            // Animation not yet implemented
         });
 
         // Time scale slider
         timeScaleSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             timeScaleLabel.setText(String.format("%.1fx", newVal.doubleValue()));
             log.debug("Time scale changed to: {}", newVal);
-            // TODO: Publish time scale change event
+            // Animation not yet implemented
         });
 
         // Zoom slider
         zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             zoomLabel.setText(String.format("%.1fx", newVal.doubleValue()));
-            log.debug("Zoom changed to: {}", newVal);
-            // TODO: Publish zoom change event
+            log.info("Zoom changed to: {}", newVal);
+            eventPublisher.publishEvent(new SolarSystemScaleEvent(this, newVal.doubleValue()));
         });
 
         // Scale mode
         scaleModeCombo.setOnAction(e -> {
             String mode = scaleModeCombo.getValue();
-            log.info("Scale mode changed to: {}", mode);
-            // TODO: Publish scale mode change event
+            boolean isLogarithmic = "Logarithmic".equals(mode);
+            log.info("Scale mode changed to: {} (logarithmic={})", mode, isLogarithmic);
+            eventPublisher.publishEvent(new SolarSystemScaleEvent(this, isLogarithmic));
         });
 
         // Display toggles
         showOrbitsCheckbox.setOnAction(e -> {
-            log.info("Show orbits: {}", showOrbitsCheckbox.isSelected());
-            // TODO: Publish display settings event
+            boolean enabled = showOrbitsCheckbox.isSelected();
+            log.info("Show orbits: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.ORBITS, enabled));
         });
 
         showLabelsCheckbox.setOnAction(e -> {
-            log.info("Show labels: {}", showLabelsCheckbox.isSelected());
-            // TODO: Publish display settings event
+            boolean enabled = showLabelsCheckbox.isSelected();
+            log.info("Show labels: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.LABELS, enabled));
         });
 
         showHabitableZoneCheckbox.setOnAction(e -> {
-            log.info("Show habitable zone: {}", showHabitableZoneCheckbox.isSelected());
-            // TODO: Publish display settings event
+            boolean enabled = showHabitableZoneCheckbox.isSelected();
+            log.info("Show habitable zone: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.HABITABLE_ZONE, enabled));
         });
 
         showGridCheckbox.setOnAction(e -> {
-            log.info("Show grid: {}", showGridCheckbox.isSelected());
-            // TODO: Publish display settings event
+            boolean enabled = showGridCheckbox.isSelected();
+            log.info("Show grid: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.SCALE_GRID, enabled));
+        });
+
+        showRelativeSizesCheckbox.setOnAction(e -> {
+            boolean enabled = showRelativeSizesCheckbox.isSelected();
+            log.info("Show relative planet sizes: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.RELATIVE_PLANET_SIZES, enabled));
         });
     }
 
@@ -237,6 +259,7 @@ public class SimulationControlPane extends VBox {
         showLabelsCheckbox.setSelected(true);
         showHabitableZoneCheckbox.setSelected(true);
         showGridCheckbox.setSelected(true);
+        showRelativeSizesCheckbox.setSelected(false);
     }
 
     /**

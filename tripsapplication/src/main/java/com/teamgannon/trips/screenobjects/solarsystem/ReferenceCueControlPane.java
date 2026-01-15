@@ -23,7 +23,9 @@ public class ReferenceCueControlPane extends VBox {
     @Getter
     private final CheckBox showEclipticPlaneCheckbox = new CheckBox("Show Ecliptic Plane/Grid");
     @Getter
-    private final CheckBox showOrbitNodesCheckbox = new CheckBox("Show Orbit Nodes");
+    private final CheckBox showOrbitNodesCheckbox = new CheckBox("Show Orbit Nodes (Asc/Desc)");
+    @Getter
+    private final CheckBox showApsidesCheckbox = new CheckBox("Show Apsides (Peri/Apo)");
 
     public ReferenceCueControlPane(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -37,8 +39,9 @@ public class ReferenceCueControlPane extends VBox {
 
         showEclipticPlaneCheckbox.setSelected(false);
         showOrbitNodesCheckbox.setSelected(false);
+        showApsidesCheckbox.setSelected(false);
 
-        getChildren().addAll(header, showEclipticPlaneCheckbox, showOrbitNodesCheckbox);
+        getChildren().addAll(header, showEclipticPlaneCheckbox, showOrbitNodesCheckbox, showApsidesCheckbox);
 
         setupListeners();
     }
@@ -57,10 +60,18 @@ public class ReferenceCueControlPane extends VBox {
             eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
                     this, SolarSystemDisplayToggleEvent.ToggleType.ORBIT_NODES, enabled));
         });
+
+        showApsidesCheckbox.setOnAction(e -> {
+            boolean enabled = showApsidesCheckbox.isSelected();
+            log.info("Show apsides: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.APSIDES, enabled));
+        });
     }
 
     public void reset() {
         showEclipticPlaneCheckbox.setSelected(false);
         showOrbitNodesCheckbox.setSelected(false);
+        showApsidesCheckbox.setSelected(false);
     }
 }

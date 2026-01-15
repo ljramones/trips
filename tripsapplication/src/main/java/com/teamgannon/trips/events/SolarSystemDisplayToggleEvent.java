@@ -11,7 +11,13 @@ public class SolarSystemDisplayToggleEvent extends ApplicationEvent {
 
     public enum ToggleType {
         ECLIPTIC_PLANE,
-        ORBIT_NODES
+        ORBIT_NODES,
+        APSIDES,
+        ORBITS,
+        LABELS,
+        HABITABLE_ZONE,
+        SCALE_GRID,
+        RELATIVE_PLANET_SIZES
     }
 
     private final ToggleType toggleType;

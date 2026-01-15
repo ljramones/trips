@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
+import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetary.PlanetaryContext;
@@ -331,12 +332,63 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         solarSystemRenderer.setShowOrbitNodes(enabled);
     }
 
+    public void toggleApsides(boolean enabled) {
+        solarSystemRenderer.setShowApsides(enabled);
+    }
+
+    public void toggleOrbits(boolean enabled) {
+        solarSystemRenderer.setShowOrbits(enabled);
+    }
+
+    public void toggleHabitableZone(boolean enabled) {
+        solarSystemRenderer.setShowHabitableZone(enabled);
+    }
+
+    public void toggleScaleGrid(boolean enabled) {
+        solarSystemRenderer.setShowScaleGrid(enabled);
+    }
+
+    public void toggleRelativePlanetSizes(boolean enabled) {
+        solarSystemRenderer.setUseRelativePlanetSizes(enabled);
+        // Re-render to apply new planet sizing
+        if (currentSystem != null) {
+            refreshCurrentSystem();
+        }
+    }
+
     @EventListener
     public void onSolarSystemDisplayToggleEvent(SolarSystemDisplayToggleEvent event) {
         log.info("Solar system display toggle: {} -> {}", event.getToggleType(), event.isEnabled());
         switch (event.getToggleType()) {
             case ECLIPTIC_PLANE -> toggleEclipticPlane(event.isEnabled());
             case ORBIT_NODES -> toggleOrbitNodes(event.isEnabled());
+            case APSIDES -> toggleApsides(event.isEnabled());
+            case ORBITS -> toggleOrbits(event.isEnabled());
+            case LABELS -> toggleLabels(event.isEnabled());
+            case HABITABLE_ZONE -> toggleHabitableZone(event.isEnabled());
+            case SCALE_GRID -> toggleScaleGrid(event.isEnabled());
+            case RELATIVE_PLANET_SIZES -> toggleRelativePlanetSizes(event.isEnabled());
+        }
+    }
+
+    @EventListener
+    public void onSolarSystemScaleEvent(SolarSystemScaleEvent event) {
+        log.info("Solar system scale event: {} ", event.getChangeType());
+        switch (event.getChangeType()) {
+            case SCALE_MODE -> {
+                solarSystemRenderer.setUseLogScale(event.isLogarithmic());
+                // Re-render the current system with new scale
+                if (currentSystem != null) {
+                    refreshCurrentSystem();
+                }
+            }
+            case ZOOM_LEVEL -> {
+                solarSystemRenderer.setZoomLevel(event.getZoomLevel());
+                // Re-render the current system with new zoom
+                if (currentSystem != null) {
+                    refreshCurrentSystem();
+                }
+            }
         }
     }
 
