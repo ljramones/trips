@@ -261,6 +261,7 @@ public class PlanetarySpacePane extends Pane {
 
     /**
      * Reset the view.
+     * Camera must be INSIDE the sky dome (radius=500) for CullFace.FRONT to work.
      */
     public void reset() {
         log.info(">>> reset CALLED - rotateX BEFORE: {}", rotateX.getAngle());
@@ -273,20 +274,21 @@ public class PlanetarySpacePane extends Pane {
         // Reset camera position but NOT rotateX/Y - those are set by setContext
         rotateZ.setAngle(0);
         camera.setNearClip(5.0);
-        camera.setTranslateY(-200);  // Keep the Y offset for horizon placement
-        camera.setTranslateZ(-800);
+        camera.setTranslateY(-150);  // Vertical offset to push horizon down
+        camera.setTranslateZ(-300);  // Inside the 500-radius dome
         log.info("    reset done - rotateX AFTER: {}", rotateX.getAngle());
     }
 
     /**
      * Set initial camera view.
+     * Camera must be INSIDE the sky dome (radius=500) for CullFace.FRONT to work.
      */
     private void setInitialView() {
         log.info(">>> setInitialView CALLED - rotateX BEFORE: {}", rotateX.getAngle());
         camera.setNearClip(5.0);
         camera.setFarClip(10000.0);
-        camera.setTranslateZ(-800);  // Distance from sky dome
-        camera.setTranslateY(-200);  // Offset camera upward to push horizon down (~70% of viewport)
+        camera.setTranslateZ(-300);  // Inside the 500-radius dome (was -800)
+        camera.setTranslateY(-150);  // Vertical offset to push horizon down
 
         // NOTE: Do NOT set rotateX here - let setContext/setViewingDirection control it
         log.info("    setInitialView done - rotateX AFTER: {}", rotateX.getAngle());
@@ -402,8 +404,8 @@ public class PlanetarySpacePane extends Pane {
             double modifierFactor = 0.1;
 
             if (me.isPrimaryButtonDown()) {
-                // Rotate view
-                rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
+                // Rotate view - negate X delta to match negated azimuth
+                rotateY.setAngle(((rotateY.getAngle() - mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
                 rotateX.setAngle(Math.max(-90, Math.min(90,
                         rotateX.getAngle() + mouseDeltaY * modifierFactor * modifier * 2.0)));
                 redrawOrientationGrid();
@@ -413,12 +415,13 @@ public class PlanetarySpacePane extends Pane {
 
     /**
      * Zoom the view.
+     * Camera must stay INSIDE the sky dome (radius=500) for CullFace.FRONT to work.
      */
     private void zoomView(double zoomAmt) {
         double z = camera.getTranslateZ();
         double newZ = z - zoomAmt;
-        // Clamp zoom
-        newZ = Math.max(-1000, Math.min(-100, newZ));
+        // Clamp zoom to keep camera inside the 500-radius dome
+        newZ = Math.max(-450, Math.min(-50, newZ));
         camera.setTranslateZ(newZ);
     }
 
@@ -432,7 +435,7 @@ public class PlanetarySpacePane extends Pane {
         log.info("    rotateX BEFORE: {}", rotateX.getAngle());
         log.info("    rotateY BEFORE: {}", rotateY.getAngle());
 
-        rotateY.setAngle(azimuth);
+        rotateY.setAngle(-azimuth);  // NEGATED - rotating world vs rotating camera
         rotateX.setAngle(altitude);  // Positive: Y is negated in sky coords, so rotation flips
 
         log.info("    rotateX AFTER: {}", rotateX.getAngle());

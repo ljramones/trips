@@ -8,6 +8,7 @@ import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
@@ -107,6 +108,14 @@ public class PlanetarySkyRenderer {
         log.info("Rendered sky dome from {} with {} visible stars",
                 context.getPlanetName(), brightestStars.size());
 
+        // DEBUG: Add visible test sphere at origin
+        Sphere testSphere = new Sphere(50);
+        testSphere.setCullFace(CullFace.NONE);
+        PhongMaterial testMat = new PhongMaterial(Color.MAGENTA);
+        testSphere.setMaterial(testMat);
+        starsGroup.getChildren().add(testSphere);
+        log.info("DEBUG: Added test sphere, starsGroup has {} children", starsGroup.getChildren().size());
+
         return skyGroup;
     }
 
@@ -184,6 +193,7 @@ public class PlanetarySkyRenderer {
     private void renderGroundMask() {
         double radius = SKY_DOME_RADIUS * 1.1;
         Cylinder ground = new Cylinder(radius, 2.0);
+        ground.setCullFace(CullFace.NONE);  // Render inside-facing surfaces
         ground.setTranslateY(-1.0);
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.rgb(6, 8, 12, 0.9));
@@ -217,6 +227,7 @@ public class PlanetarySkyRenderer {
 
         // Create sun sphere (large and bright)
         Sphere sun = new Sphere(20);
+        sun.setCullFace(CullFace.NONE);  // Render inside-facing surfaces (viewed from inside dome)
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.YELLOW);
         material.setSpecularColor(Color.WHITE);
@@ -233,6 +244,8 @@ public class PlanetarySkyRenderer {
      * Render stars visible from the planet's surface.
      */
     private void renderStars(PlanetaryContext context, List<StarDisplayRecord> allStars, double[] planetPos) {
+        log.info("DEBUG renderStars called with {} stars, magnitudeLimit={}",
+                allStars != null ? allStars.size() : 0, magnitudeLimit);
         if (allStars == null || allStars.isEmpty()) return;
 
         brightestStars.clear();
@@ -278,6 +291,7 @@ public class PlanetarySkyRenderer {
             double size = magnitudeToSize(adjustedMag);
             if (adjustedMag <= 1.0) {
                 Sphere halo = new Sphere(size * 2.6);
+                halo.setCullFace(CullFace.NONE);  // Render inside-facing surfaces
                 PhongMaterial haloMaterial = new PhongMaterial();
                 haloMaterial.setDiffuseColor(Color.rgb(255, 255, 255, 0.25));
                 halo.setMaterial(haloMaterial);
@@ -289,6 +303,7 @@ public class PlanetarySkyRenderer {
             }
 
             Sphere starSphere = new Sphere(size);
+            starSphere.setCullFace(CullFace.NONE);  // Render inside-facing surfaces
 
             PhongMaterial material = new PhongMaterial();
             Color starColor = getStarColor(star.getSpectralClass());
@@ -300,6 +315,7 @@ public class PlanetarySkyRenderer {
             starSphere.setTranslateY(skyPos[1]);
             starSphere.setTranslateZ(skyPos[2]);
 
+            log.info("Adding star {} at ({}, {}, {}) size={}", star.getStarName(), skyPos[0], skyPos[1], skyPos[2], size);
             starsGroup.getChildren().add(starSphere);
 
             // Track brightest stars
