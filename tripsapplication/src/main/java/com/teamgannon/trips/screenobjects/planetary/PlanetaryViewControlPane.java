@@ -2,7 +2,9 @@ package com.teamgannon.trips.screenobjects.planetary;
 
 import com.teamgannon.trips.planetary.PlanetaryContext;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +26,22 @@ public class PlanetaryViewControlPane extends VBox {
     private final Slider magnitudeLimitSlider;
     private final Label magnitudeLimitLabel;
     private final CheckBox atmosphereCheckbox;
+    private final CheckBox orientationGridCheckbox;
 
     private Consumer<Double> onTimeChanged;
     private Consumer<String> onDirectionChanged;
     private Consumer<Double> onMagnitudeChanged;
     private Consumer<Boolean> onAtmosphereChanged;
+    private Consumer<Boolean> onOrientationGridChanged;
+    private Consumer<Preset> onPresetSelected;
+
+    public enum Preset {
+        ZENITH,
+        HIGH_SKY,
+        HORIZON,
+        NADIR,
+        FOCUS_BRIGHTEST
+    }
 
     public PlanetaryViewControlPane() {
         setPadding(new Insets(10));
@@ -75,6 +88,24 @@ public class PlanetaryViewControlPane extends VBox {
             }
         });
 
+        // Camera presets
+        grid.add(new Label("Presets:"), 0, row);
+        FlowPane presetRow = new FlowPane(6, 6);
+        presetRow.setAlignment(Pos.CENTER_LEFT);
+        presetRow.prefWrapLengthProperty().bind(widthProperty().subtract(40));
+        Button zenithButton = presetButton("Zenith", "Look straight up");
+        Button highSkyButton = presetButton("High", "Upper sky view");
+        Button horizonButton = presetButton("Horizon", "Horizon view");
+        Button nadirButton = presetButton("Nadir", "Look straight down");
+        Button focusButton = presetButton("Focus*", "Center on brightest visible star");
+        zenithButton.setOnAction(e -> firePreset(Preset.ZENITH));
+        highSkyButton.setOnAction(e -> firePreset(Preset.HIGH_SKY));
+        horizonButton.setOnAction(e -> firePreset(Preset.HORIZON));
+        nadirButton.setOnAction(e -> firePreset(Preset.NADIR));
+        focusButton.setOnAction(e -> firePreset(Preset.FOCUS_BRIGHTEST));
+        presetRow.getChildren().addAll(zenithButton, highSkyButton, horizonButton, nadirButton, focusButton);
+        grid.add(presetRow, 1, row++, 2, 1);
+
         // Magnitude limit slider
         grid.add(new Label("Magnitude Limit:"), 0, row);
         magnitudeLimitSlider = new Slider(1, 10, 6);
@@ -105,6 +136,17 @@ public class PlanetaryViewControlPane extends VBox {
             }
         });
 
+        // Orientation grid checkbox
+        orientationGridCheckbox = new CheckBox("Show Orientation Grid");
+        orientationGridCheckbox.setSelected(false);
+        grid.add(orientationGridCheckbox, 0, row++, 3, 1);
+
+        orientationGridCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (onOrientationGridChanged != null) {
+                onOrientationGridChanged.accept(newVal);
+            }
+        });
+
         // Separator
         grid.add(new Separator(), 0, row++, 3, 1);
 
@@ -132,6 +174,7 @@ public class PlanetaryViewControlPane extends VBox {
         timeOfDaySlider.setValue(localTime);
         magnitudeLimitSlider.setValue(context.getMagnitudeLimit());
         atmosphereCheckbox.setSelected(context.isShowAtmosphereEffects());
+        orientationGridCheckbox.setSelected(context.isShowOrientationGrid());
 
         // Set viewing direction based on azimuth
         double azimuth = context.getViewingAzimuth();
@@ -147,6 +190,7 @@ public class PlanetaryViewControlPane extends VBox {
         viewDirectionCombo.setValue("North");
         magnitudeLimitSlider.setValue(6);
         atmosphereCheckbox.setSelected(true);
+        orientationGridCheckbox.setSelected(false);
     }
 
     /**
@@ -194,6 +238,29 @@ public class PlanetaryViewControlPane extends VBox {
 
     public void setOnAtmosphereChanged(Consumer<Boolean> callback) {
         this.onAtmosphereChanged = callback;
+    }
+
+    public void setOnOrientationGridChanged(Consumer<Boolean> callback) {
+        this.onOrientationGridChanged = callback;
+    }
+
+    public void setOnPresetSelected(Consumer<Preset> callback) {
+        this.onPresetSelected = callback;
+    }
+
+    private void firePreset(Preset preset) {
+        if (onPresetSelected != null) {
+            onPresetSelected.accept(preset);
+        }
+    }
+
+    private Button presetButton(String text, String tooltip) {
+        Button button = new Button(text);
+        button.setTooltip(new Tooltip(tooltip));
+        button.setMinWidth(72);
+        button.setPrefWidth(72);
+        button.setFocusTraversable(false);
+        return button;
     }
 
     /**

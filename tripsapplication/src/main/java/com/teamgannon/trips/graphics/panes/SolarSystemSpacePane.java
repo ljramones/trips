@@ -745,9 +745,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 .planet(planet)
                 .system(currentSystem)
                 .hostStar(currentSystem.getStarDisplayRecord())
-                .localTime(12.0)  // Default to noon
+                .localTime(22.0)  // Default to night
                 .viewingAzimuth(0.0)  // Looking north
-                .viewingAltitude(45.0)  // Looking up at 45 degrees
+                .viewingAltitude(15.0)  // Slight look-up, camera Y offset handles horizon placement
                 .magnitudeLimit(6.0)  // Default naked-eye limit
                 .fieldOfView(90.0)
                 .showAtmosphereEffects(true)

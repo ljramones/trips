@@ -792,10 +792,46 @@ public class MainSplitPaneManager {
                         viewControlPane.setOnAtmosphereChanged(enabled ->
                                 leftDisplayController.getPlanetarySpacePane().updateAtmosphere(enabled));
 
+                        viewControlPane.setOnOrientationGridChanged(enabled ->
+                                leftDisplayController.getPlanetarySpacePane().updateOrientationGrid(enabled));
+
                         viewControlPane.setOnDirectionChanged(direction ->
                                 leftDisplayController.getPlanetarySpacePane().setViewingDirection(
                                         com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),
                                         finalContext.getViewingAltitude()));
+
+                        viewControlPane.setOnPresetSelected(preset -> {
+                            var spacePane = leftDisplayController.getPlanetarySpacePane();
+                            double azimuth = finalContext.getViewingAzimuth();
+                            double altitude = finalContext.getViewingAltitude();
+                            switch (preset) {
+                                case ZENITH -> {
+                                    altitude = 90.0;
+                                }
+                                case HIGH_SKY -> {
+                                    azimuth = 0.0;
+                                    altitude = 65.0;
+                                }
+                                case HORIZON -> {
+                                    azimuth = 0.0;
+                                    altitude = 15.0;  // Slight look-up, combined with camera Y offset
+                                }
+                                case NADIR -> {
+                                    altitude = -90.0;
+                                }
+                                case FOCUS_BRIGHTEST -> {
+                                    var brightest = spacePane.getBrightestStars();
+                                    if (brightest != null && !brightest.isEmpty()) {
+                                        var target = brightest.get(0);
+                                        azimuth = target.getAzimuth();
+                                        altitude = target.getAltitude();
+                                    }
+                                }
+                            }
+                            finalContext.setViewingAzimuth(azimuth);
+                            finalContext.setViewingAltitude(altitude);
+                            spacePane.setViewingDirection(azimuth, altitude);
+                        });
                     }
 
                     eventPublisher.publishEvent(new StatusUpdateEvent(this,

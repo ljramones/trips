@@ -12,7 +12,11 @@ import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModel;
 import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModelBuilder;
 import com.teamgannon.trips.solarsystem.nightsky.VisibleStarResult;
+import javafx.geometry.Point2D;
+import javafx.geometry.Point3D;
 import javafx.scene.*;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -68,6 +72,7 @@ public class PlanetarySpacePane extends Pane {
     private final Group root = new Group();
     private final Group labelGroup = new Group();
     private final Group skyGroup = new Group();
+    private final Canvas orientationCanvas = new Canvas();
 
     /**
      * SubScene for 3D rendering
@@ -128,6 +133,11 @@ public class PlanetarySpacePane extends Pane {
 
         subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
+        orientationCanvas.setMouseTransparent(true);
+        orientationCanvas.setVisible(false);
+        orientationCanvas.widthProperty().bind(subScene.widthProperty());
+        orientationCanvas.heightProperty().bind(subScene.heightProperty());
+        sceneRoot.getChildren().add(orientationCanvas);
         sceneRoot.getChildren().add(labelGroup);
 
         this.setBackground(Background.EMPTY);
@@ -136,6 +146,8 @@ public class PlanetarySpacePane extends Pane {
 
         subScene.widthProperty().bind(this.widthProperty());
         subScene.heightProperty().bind(this.heightProperty());
+        subScene.widthProperty().addListener((obs, oldVal, newVal) -> redrawOrientationGrid());
+        subScene.heightProperty().addListener((obs, oldVal, newVal) -> redrawOrientationGrid());
 
         root.getChildren().add(this);
 
@@ -211,6 +223,7 @@ public class PlanetarySpacePane extends Pane {
         currentContext.setDaylight(isDay);
         currentContext.setHostStarAltitudeDeg(model.getHostStarAltitudeDeg());
         renderSky();
+        redrawOrientationGrid();
     }
 
     public void updateLocalTime(double time) {
@@ -237,35 +250,46 @@ public class PlanetarySpacePane extends Pane {
         renderSky();
     }
 
+    public void updateOrientationGrid(boolean enabled) {
+        if (currentContext == null) {
+            return;
+        }
+        currentContext.setShowOrientationGrid(enabled);
+        skyRenderer.setOrientationGridVisible(enabled);
+        redrawOrientationGrid();
+    }
+
     /**
      * Reset the view.
      */
     public void reset() {
+        log.info(">>> reset CALLED - rotateX BEFORE: {}", rotateX.getAngle());
         labelGroup.getChildren().clear();
         skyGroup.getChildren().clear();
         skyRenderer.clear();
         currentContext = null;
         nearbyStars.clear();
 
-        // Reset camera position
-        rotateX.setAngle(0);
-        rotateY.setAngle(0);
+        // Reset camera position but NOT rotateX/Y - those are set by setContext
         rotateZ.setAngle(0);
         camera.setNearClip(5.0);
-        camera.setTranslateZ(-900);
-        rotateX.setAngle(-25);
+        camera.setTranslateY(-200);  // Keep the Y offset for horizon placement
+        camera.setTranslateZ(-800);
+        log.info("    reset done - rotateX AFTER: {}", rotateX.getAngle());
     }
 
     /**
      * Set initial camera view.
      */
     private void setInitialView() {
+        log.info(">>> setInitialView CALLED - rotateX BEFORE: {}", rotateX.getAngle());
         camera.setNearClip(5.0);
         camera.setFarClip(10000.0);
-        camera.setTranslateZ(-900);
+        camera.setTranslateZ(-800);  // Distance from sky dome
+        camera.setTranslateY(-200);  // Offset camera upward to push horizon down (~70% of viewport)
 
-        // Start looking slightly up (25 degrees above horizon)
-        rotateX.setAngle(-25);
+        // NOTE: Do NOT set rotateX here - let setContext/setViewingDirection control it
+        log.info("    setInitialView done - rotateX AFTER: {}", rotateX.getAngle());
     }
 
     /**
@@ -354,6 +378,7 @@ public class PlanetarySpacePane extends Pane {
         subScene.setOnScroll((ScrollEvent event) -> {
             double deltaY = event.getDeltaY();
             zoomView(deltaY * 2);
+            redrawOrientationGrid();
         });
 
         // Mouse press
@@ -380,7 +405,8 @@ public class PlanetarySpacePane extends Pane {
                 // Rotate view
                 rotateY.setAngle(((rotateY.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
                 rotateX.setAngle(Math.max(-90, Math.min(90,
-                        rotateX.getAngle() - mouseDeltaY * modifierFactor * modifier * 2.0)));
+                        rotateX.getAngle() + mouseDeltaY * modifierFactor * modifier * 2.0)));
+                redrawOrientationGrid();
             }
         });
     }
@@ -398,10 +424,22 @@ public class PlanetarySpacePane extends Pane {
 
     /**
      * Update viewing direction.
+     * rotateX controls pitch: positive = look up, negative = look down
+     * rotateY controls azimuth: 0=North, 90=East, etc.
      */
     public void setViewingDirection(double azimuth, double altitude) {
+        log.info(">>> setViewingDirection CALLED: azimuth={}, altitude={}", azimuth, altitude);
+        log.info("    rotateX BEFORE: {}", rotateX.getAngle());
+        log.info("    rotateY BEFORE: {}", rotateY.getAngle());
+
         rotateY.setAngle(azimuth);
-        rotateX.setAngle(-altitude);  // Negative because looking up is positive altitude
+        rotateX.setAngle(altitude);  // Positive: Y is negated in sky coords, so rotation flips
+
+        log.info("    rotateX AFTER: {}", rotateX.getAngle());
+        log.info("    rotateY AFTER: {}", rotateY.getAngle());
+        log.info("    world.getTransforms() contains rotateX: {}", world.getTransforms().contains(rotateX));
+
+        redrawOrientationGrid();
     }
 
     /**
@@ -478,5 +516,189 @@ public class PlanetarySpacePane extends Pane {
             return star.getId().trim();
         }
         return "Unknown";
+    }
+
+    private void redrawOrientationGrid() {
+        GraphicsContext gc = orientationCanvas.getGraphicsContext2D();
+        double width = orientationCanvas.getWidth();
+        double height = orientationCanvas.getHeight();
+        gc.clearRect(0, 0, width, height);
+
+        boolean showGrid = currentContext != null && currentContext.isShowOrientationGrid();
+        orientationCanvas.setVisible(showGrid);
+        if (!showGrid || width <= 0 || height <= 0) {
+            return;
+        }
+
+        // Styling per spec: subtle violet-blue grid
+        Color horizonColor = Color.rgb(140, 130, 255, 0.30);   // Brighter for horizon
+        Color altitudeColor = Color.rgb(130, 120, 255, 0.20);  // Subtle for altitude rings
+        Color spokeColor = Color.rgb(130, 120, 255, 0.18);     // Very subtle for spokes
+        Color labelColor = Color.rgb(170, 160, 255, 0.65);     // More visible for labels
+
+        double radius = skyRenderer.getSkyDomeRadius() * 0.995;
+
+        // Draw altitude rings: horizon (0°), 30°, 60°
+        gc.setLineWidth(2.0);  // Thicker horizon line
+        drawAltitudeRing(gc, radius, 0, horizonColor);
+
+        gc.setLineWidth(1.0);  // Standard width for other rings
+        drawAltitudeRing(gc, radius, 30, altitudeColor);
+        drawAltitudeRing(gc, radius, 60, altitudeColor);
+
+        // Draw cardinal direction spokes (N, E, S, W)
+        gc.setLineWidth(1.0);
+        for (int az = 0; az < 360; az += 90) {
+            drawAzimuthSpoke(gc, radius, az, 0, 80, spokeColor);
+        }
+
+        // Draw cardinal labels at the horizon
+        gc.setFill(labelColor);
+        gc.setFont(Font.font("Verdana", 14));
+        drawCardinalLabel(gc, radius, 0, "N");
+        drawCardinalLabel(gc, radius, 90, "E");
+        drawCardinalLabel(gc, radius, 180, "S");
+        drawCardinalLabel(gc, radius, 270, "W");
+
+        // Draw altitude labels along the North spoke
+        gc.setFont(Font.font("Verdana", 10));
+        Color altLabelColor = Color.rgb(150, 140, 255, 0.50);
+        gc.setFill(altLabelColor);
+        drawAltitudeLabel(gc, radius, 0, 30, "30°");
+        drawAltitudeLabel(gc, radius, 0, 60, "60°");
+    }
+
+    private void drawAltitudeLabel(GraphicsContext gc, double radius, double azimuthDeg,
+                                   double altitudeDeg, String label) {
+        Point2D point = projectToOverlay(radius, azimuthDeg, altitudeDeg);
+        if (point == null) {
+            return;
+        }
+        // Offset slightly to the right of the spoke
+        gc.fillText(label, point.getX() + 8, point.getY() + 4);
+    }
+
+    private void drawAltitudeRing(GraphicsContext gc, double radius, double altitudeDeg, Color color) {
+        gc.setStroke(color);
+        double step = 3.0;  // Smaller step for smoother curves
+        Point2D prev = null;
+        boolean wasGap = true;  // Track if previous point was null (gap in ring)
+
+        for (double az = 0; az <= 360.0 + step; az += step) {
+            double azNorm = az % 360.0;
+            Point2D next = projectToOverlay(radius, azNorm, altitudeDeg);
+
+            if (prev != null && next != null) {
+                // Check for wraparound artifacts (large jumps across screen)
+                double dx = next.getX() - prev.getX();
+                double dy = next.getY() - prev.getY();
+                double dist = Math.sqrt(dx * dx + dy * dy);
+
+                // Skip if segment jumps across more than 1/4 of screen (behind camera wrap)
+                double maxDist = Math.max(orientationCanvas.getWidth(), orientationCanvas.getHeight()) * 0.4;
+                if (dist < maxDist) {
+                    gc.strokeLine(prev.getX(), prev.getY(), next.getX(), next.getY());
+                }
+            }
+
+            wasGap = (next == null);
+            prev = next;
+        }
+    }
+
+    private void drawAzimuthSpoke(GraphicsContext gc, double radius, double azimuthDeg,
+                                  double altStart, double altEnd, Color color) {
+        gc.setStroke(color);
+        double step = 3.0;  // Smaller step for smoother lines
+        Point2D prev = null;
+
+        for (double alt = Math.max(0, altStart); alt <= altEnd; alt += step) {
+            Point2D next = projectToOverlay(radius, azimuthDeg, alt);
+
+            if (prev != null && next != null) {
+                // Check for large jumps (shouldn't happen for spokes, but defensive)
+                double dx = next.getX() - prev.getX();
+                double dy = next.getY() - prev.getY();
+                double dist = Math.sqrt(dx * dx + dy * dy);
+
+                double maxDist = Math.max(orientationCanvas.getWidth(), orientationCanvas.getHeight()) * 0.3;
+                if (dist < maxDist) {
+                    gc.strokeLine(prev.getX(), prev.getY(), next.getX(), next.getY());
+                }
+            }
+
+            prev = next;
+        }
+    }
+
+    private void drawCardinalLabel(GraphicsContext gc, double radius, double azimuthDeg, String label) {
+        // Project the label position at horizon (alt=0) plus a small offset above
+        Point2D horizonPoint = projectToOverlay(radius, azimuthDeg, 0);
+        Point2D abovePoint = projectToOverlay(radius, azimuthDeg, 5);
+
+        if (horizonPoint == null) {
+            return;
+        }
+
+        // Position label slightly above the horizon point
+        double x = horizonPoint.getX();
+        double y = horizonPoint.getY();
+
+        // If we have a point above horizon, use it to offset in the right direction
+        if (abovePoint != null) {
+            double dx = abovePoint.getX() - horizonPoint.getX();
+            double dy = abovePoint.getY() - horizonPoint.getY();
+            double len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 1) {
+                // Offset 15 pixels in the "up" direction relative to view
+                x += (dx / len) * 15;
+                y += (dy / len) * 15;
+            }
+        } else {
+            // Fallback: offset upward in screen coords
+            y -= 15;
+        }
+
+        // Center the label horizontally on the computed position
+        double labelWidth = gc.getFont().getSize() * label.length() * 0.6;
+        gc.fillText(label, x - labelWidth / 2, y + 5);
+    }
+
+    private Point2D projectToOverlay(double radius, double azimuthDeg, double altitudeDeg) {
+        if (altitudeDeg < 0) {
+            return null;  // Below horizon - don't draw
+        }
+
+        // Get 3D position in world coordinates (same coordinate system as stars)
+        double[] pos = skyRenderer.toSkyPoint(radius, azimuthDeg, altitudeDeg);
+        Point3D worldPoint = new Point3D(pos[0], pos[1], pos[2]);
+
+        // Project to scene coordinates (localToScene with rootScene=true does perspective projection)
+        Point3D scenePoint = world.localToScene(worldPoint, true);
+
+        // Check for invalid projection
+        if (Double.isNaN(scenePoint.getX()) || Double.isNaN(scenePoint.getY())) {
+            return null;
+        }
+
+        // Convert scene coordinates to canvas local coordinates
+        Point2D canvasPoint = orientationCanvas.sceneToLocal(scenePoint.getX(), scenePoint.getY());
+        if (canvasPoint == null) {
+            return null;
+        }
+
+        // Get canvas dimensions
+        double width = orientationCanvas.getWidth();
+        double height = orientationCanvas.getHeight();
+
+        double x = canvasPoint.getX();
+        double y = canvasPoint.getY();
+
+        // Check if point is within visible bounds (with margin for labels)
+        if (x < -50 || x > width + 50 || y < -50 || y > height + 50) {
+            return null;
+        }
+
+        return new Point2D(x, y);
     }
 }

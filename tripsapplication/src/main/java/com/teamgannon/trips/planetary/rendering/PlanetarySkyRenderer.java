@@ -43,6 +43,8 @@ public class PlanetarySkyRenderer {
      * Output groups
      */
     private final Group skyGroup = new Group();
+    private final Group groundGroup = new Group();
+    private final Group gridGroup = new Group();
     private final Group starsGroup = new Group();
     private final Group hostStarGroup = new Group();
     private final Group horizonGroup = new Group();
@@ -54,7 +56,7 @@ public class PlanetarySkyRenderer {
     private final List<BrightStarEntry> brightestStars = new ArrayList<>();
 
     public PlanetarySkyRenderer() {
-        skyGroup.getChildren().addAll(horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
+        skyGroup.getChildren().addAll(groundGroup, gridGroup, horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
     }
 
     /**
@@ -73,6 +75,7 @@ public class PlanetarySkyRenderer {
         }
 
         this.magnitudeLimit = context.getMagnitudeLimit();
+        gridGroup.setVisible(context.isShowOrientationGrid());
 
         // Get planet's absolute position in light years
         double[] planetPos = context.getPlanetPositionLy();
@@ -81,9 +84,15 @@ public class PlanetarySkyRenderer {
             context.setPlanetPositionLy(planetPos);
         }
 
-        // Render the horizon circle
+        // Render ground mask to hide stars below horizon (but NOT the 3D horizon ring -
+        // that's now rendered as a 2D overlay in PlanetarySpacePane to avoid z-fighting)
         if (context.isShowHorizon()) {
-            renderHorizon();
+            renderGroundMask();
+            // renderHorizon() disabled - horizon line now drawn as 2D overlay
+        }
+
+        if (context.isShowOrientationGrid()) {
+            renderOrientationGrid();
         }
 
         // Render the host star as the "sun"
@@ -142,7 +151,7 @@ public class PlanetarySkyRenderer {
         double radius = SKY_DOME_RADIUS;
 
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.DARKGRAY.deriveColor(0, 1, 1, 0.5));
+        material.setDiffuseColor(Color.DARKGRAY.deriveColor(0, 1, 1, 0.25));
 
         for (int i = 0; i < segments; i++) {
             double angle1 = 2 * Math.PI * i / segments;
@@ -160,6 +169,27 @@ public class PlanetarySkyRenderer {
                     0.5, material);
             horizonGroup.getChildren().add(segment);
         }
+    }
+
+    /**
+     * Render altitude rings and azimuth spokes for orientation.
+     */
+    private void renderOrientationGrid() {
+        // Orientation grid now rendered as a 2D overlay in PlanetarySpacePane.
+    }
+
+    /**
+     * Render a dark ground mask below the horizon.
+     */
+    private void renderGroundMask() {
+        double radius = SKY_DOME_RADIUS * 1.1;
+        Cylinder ground = new Cylinder(radius, 2.0);
+        ground.setTranslateY(-1.0);
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(Color.rgb(6, 8, 12, 0.9));
+        material.setSpecularColor(Color.rgb(0, 0, 0));
+        ground.setMaterial(material);
+        groundGroup.getChildren().add(ground);
     }
 
     /**
@@ -246,6 +276,18 @@ public class PlanetarySkyRenderer {
 
             // Create star sphere (size based on magnitude)
             double size = magnitudeToSize(adjustedMag);
+            if (adjustedMag <= 1.0) {
+                Sphere halo = new Sphere(size * 2.6);
+                PhongMaterial haloMaterial = new PhongMaterial();
+                haloMaterial.setDiffuseColor(Color.rgb(255, 255, 255, 0.25));
+                halo.setMaterial(haloMaterial);
+                halo.setOpacity(0.35);
+                halo.setTranslateX(skyPos[0]);
+                halo.setTranslateY(skyPos[1]);
+                halo.setTranslateZ(skyPos[2]);
+                starsGroup.getChildren().add(halo);
+            }
+
             Sphere starSphere = new Sphere(size);
 
             PhongMaterial material = new PhongMaterial();
@@ -326,6 +368,8 @@ public class PlanetarySkyRenderer {
 
     /**
      * Convert spherical coordinates (radius, azimuth, altitude) to Cartesian (x, y, z).
+     * Note: Y is negated so that positive altitude appears "up" on screen
+     * (JavaFX 3D with our camera setup has Y increasing downward visually).
      */
     private double[] sphericalToCartesian(double radius, double azimuthDeg, double altitudeDeg) {
         double azimuthRad = Math.toRadians(azimuthDeg);
@@ -333,20 +377,27 @@ public class PlanetarySkyRenderer {
 
         double cosAlt = Math.cos(altitudeRad);
         double x = radius * cosAlt * Math.sin(azimuthRad);
-        double y = radius * Math.sin(altitudeRad);
+        double y = -radius * Math.sin(altitudeRad);  // Negated for screen Y convention
         double z = radius * cosAlt * Math.cos(azimuthRad);
 
         return new double[]{x, y, z};
+    }
+
+    public double[] toSkyPoint(double radius, double azimuthDeg, double altitudeDeg) {
+        return sphericalToCartesian(radius, azimuthDeg, altitudeDeg);
+    }
+
+    public double getSkyDomeRadius() {
+        return SKY_DOME_RADIUS;
     }
 
     /**
      * Convert magnitude to display size.
      */
     private double magnitudeToSize(double magnitude) {
-        // Brighter (lower magnitude) = larger
-        // Magnitude -1 -> size 5, magnitude 6 -> size 0.5
-        double size = 5.0 - (magnitude + 1) * 0.6;
-        return Math.max(0.5, Math.min(5.0, size));
+        // Brighter (lower magnitude) = slightly larger, keep most stars tiny.
+        double size = 1.6 - (magnitude + 1) * 0.18;
+        return Math.max(0.4, Math.min(1.8, size));
     }
 
     /**
@@ -416,6 +467,8 @@ public class PlanetarySkyRenderer {
      * Clear all rendered elements.
      */
     public void clear() {
+        groundGroup.getChildren().clear();
+        gridGroup.getChildren().clear();
         starsGroup.getChildren().clear();
         hostStarGroup.getChildren().clear();
         horizonGroup.getChildren().clear();
@@ -435,6 +488,10 @@ public class PlanetarySkyRenderer {
      */
     public void setMagnitudeLimit(double limit) {
         this.magnitudeLimit = limit;
+    }
+
+    public void setOrientationGridVisible(boolean visible) {
+        gridGroup.setVisible(visible);
     }
 
     /**

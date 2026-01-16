@@ -47,7 +47,7 @@ public class PlanetaryContext {
      * 0 = horizon, 90 = zenith, -90 = nadir
      */
     @Builder.Default
-    private double viewingAltitude = 65.0;
+    private double viewingAltitude = 15.0;  // Slight look-up, camera Y offset handles horizon placement
 
     /**
      * Local time of day in hours (0-24).
@@ -98,6 +98,12 @@ public class PlanetaryContext {
      */
     @Builder.Default
     private double hostStarAltitudeDeg = Double.NaN;
+
+    /**
+     * Whether to show orientation grid overlays.
+     */
+    @Builder.Default
+    private boolean showOrientationGrid = true;
 
     /**
      * Get the planet name for display purposes.
