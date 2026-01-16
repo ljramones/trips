@@ -37,6 +37,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
     private double minTemperature = 0.0;
     private double boilingPoint = 0.0;
     private double greenhouseRise = 0.0;
+    /**
+     * The albedo/cloud cooling effect (always <= 0).
+     * When surface temp < equilibrium temp, this captures the cooling.
+     */
+    private double albedoCooling = 0.0;
     private double minimumMolecularWeight = 0.0;
     private double hydrosphere = 0.0;
     private double cloudCover = 0.0;
@@ -52,6 +57,16 @@ public class Planet extends SystemObject implements Comparable<Planet> {
     private boolean habitable = false;
     private boolean earthlike = false;
     private boolean habitableMoon = false;
+
+    /**
+     * Whether the planet is within the optimal (conservative) habitable zone.
+     */
+    private boolean inOptimalHZ = false;
+
+    /**
+     * Whether the planet is within the maximum (optimistic) habitable zone.
+     */
+    private boolean inMaxHZ = false;
 
     private PlanetTypeEnum type;
     private SimStar primary;
@@ -210,11 +225,18 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             this.hydrosphere = 1.0;
             this.cloudCover = 1.0;
             this.iceCover = 0.0;
+            // Calculate surface gravity at 1-bar level (cloud-top) - DO NOT override with MAX_VALUE
             this.surfaceGravity = gravity();
             this.minimumMolecularWeight = minimumMolecularWeight();
-            this.surfaceGravity = Double.MAX_VALUE;
+            // NOTE: Removed erroneous "this.surfaceGravity = Double.MAX_VALUE" that was overwriting the calculation
             this.estimatedTemperature = estimatedTemperature();
             this.estimatedTerrestrialTemperature = estimatedTerrestrialTemperature();
+
+            // Cap core radius for gas giants - core should be at most 20% of total radius
+            double maxCoreRadius = this.radius * 0.20;
+            if (this.coreRadius > maxCoreRadius) {
+                this.coreRadius = maxCoreRadius;
+            }
 
             if (this.estimatedTerrestrialTemperature >= FREEZING_POINT_OF_WATER
                     && this.estimatedTerrestrialTemperature <= EARTH_AVERAGE_KELVIN + 10.0
@@ -320,32 +342,88 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             return; // no need to continue
         }
 
+        // Check if planet is within the habitable zone using Kopparapu boundaries
+        this.inOptimalHZ = this.primary.isInOptimalHZ(this.sma);
+        this.inMaxHZ = this.primary.isInMaxHZ(this.sma);
+
         // check for those golden planets
         if (breathableAtmosphere() == AtmosphereTypeEnum.BREATHABLE) {
             if (!(this.resonantPeriod
                     || secondsToHoursRounded(this.dayLength) == secondsToHoursRounded(this.orbitalPeriod))) {
                 // TODO: Investigate habitable tidally locked planets.
-                this.habitable = true;
+                // Planet must also be in the habitable zone (at least the optimistic zone)
+                if (this.inMaxHZ) {
+                    this.habitable = true;
 
-                double relTemp = this.surfaceTemperature - FREEZING_POINT_OF_WATER - EARTH_AVERAGE_CELSIUS;
-                double pressure = this.surfacePressure / EARTH_SURF_PRES_IN_MILLIBARS;
+                    double relTemp = this.surfaceTemperature - FREEZING_POINT_OF_WATER - EARTH_AVERAGE_CELSIUS;
+                    double pressure = this.surfacePressure / EARTH_SURF_PRES_IN_MILLIBARS;
 
-                if (this.surfaceGravity >= 0.8
-                        && this.surfaceGravity <= 1.2
-                        && relTemp >= -2.0
-                        && relTemp <= 3.0
-                        && this.iceCover <= 0.1
-                        && pressure >= 0.5
-                        && pressure <= 2.0
-                        && this.cloudCover >= 0.4
-                        && this.cloudCover <= 0.8
-                        && this.hydrosphere >= 0.5
-                        && this.hydrosphere <= 0.8
-                        && this.type != PlanetTypeEnum.tWater) {
-                    this.earthlike = true;
+                    // Earthlike requires being in the optimal (conservative) HZ
+                    if (this.inOptimalHZ
+                            && this.surfaceGravity >= 0.8
+                            && this.surfaceGravity <= 1.2
+                            && relTemp >= -2.0
+                            && relTemp <= 3.0
+                            && this.iceCover <= 0.1
+                            && pressure >= 0.5
+                            && pressure <= 2.0
+                            && this.cloudCover >= 0.4
+                            && this.cloudCover <= 0.8
+                            && this.hydrosphere >= 0.5
+                            && this.hydrosphere <= 0.8
+                            && this.type != PlanetTypeEnum.tWater) {
+                        this.earthlike = true;
+                    }
                 }
             }
         }
+
+        // Run physics validation checks
+        validatePhysics();
+    }
+
+    /**
+     * Validates physics consistency and corrects any anomalies.
+     * Called at the end of finalize() to ensure all values are self-consistent.
+     */
+    private void validatePhysics() {
+        // Validation 1: Density must be consistent with mass and radius
+        // density = mass / volume = mass / (4/3 * π * r³)
+        if (this.radius > 0 && this.mass > 0) {
+            double calculatedDensity = volumeDensity();
+            // If empirical density differs significantly from calculated, use calculated
+            if (abs(calculatedDensity - this.density) / this.density > 0.10) {
+                // Significant discrepancy - use the physically derived value
+                this.density = calculatedDensity;
+                // Recalculate gravity to be consistent
+                this.surfaceAcceleration = gravitationalAcceleration();
+                this.surfaceGravity = gravity();
+            }
+        }
+
+        // Validation 2: Escape velocity should match v_esc = sqrt(2 * g * r)
+        if (this.radius > 0 && this.surfaceGravity > 0 && this.surfaceGravity < Double.MAX_VALUE) {
+            double expectedVesc = sqrt(2.0 * this.surfaceAcceleration * radiusInMeters());
+            double actualVesc = this.escapeVelocity;
+
+            // If discrepancy > 5%, recalculate using sqrt(2gr) method
+            if (actualVesc > 0 && abs(expectedVesc - actualVesc) / actualVesc > 0.05) {
+                // Use the more reliable formula
+                this.escapeVelocity = expectedVesc;
+            }
+        }
+
+        // Validation 3: Core radius must be <= 30% of total radius for all planets
+        // (More strictly, <= 20% for gas giants, but we already cap that above)
+        if (this.coreRadius > this.radius * 0.30 && !this.gasGiant) {
+            this.coreRadius = this.radius * 0.25;
+        }
+
+        // Validation 4: Surface gravity must be calculable (no MAX_VALUE except where truly infinite)
+        // Already fixed by removing the MAX_VALUE override for gas giants
+
+        // Validation 5: Greenhouse rise should be >= 0 (negative values go to albedoCooling)
+        // Already handled in iterateSurfaceTemperature()
     }
 
     public void calculateGases() {
@@ -425,8 +503,42 @@ public class Planet extends SystemObject implements Comparable<Planet> {
         return this.radius * 1000.0;
     }
 
+    /**
+     * @return The ratio of this planet's radius to Earth's radius (R/R_Earth)
+     */
     public double ratioRadiusToEarth() {
-        return EARTH_RADIUS / radiusInMeters();
+        return radiusInMeters() / EARTH_RADIUS;
+    }
+
+    // ==================== Habitable Zone Getters ====================
+
+    /**
+     * @return true if the planet is within the optimal (conservative) habitable zone
+     */
+    public boolean isInOptimalHZ() {
+        return inOptimalHZ;
+    }
+
+    /**
+     * @return true if the planet is within the maximum (optimistic) habitable zone
+     */
+    public boolean isInMaxHZ() {
+        return inMaxHZ;
+    }
+
+    /**
+     * Get a descriptive string for the planet's habitable zone status.
+     *
+     * @return "Optimal HZ", "Extended HZ", or "Outside HZ"
+     */
+    public String getHabitableZoneStatus() {
+        if (inOptimalHZ) {
+            return "Optimal HZ";
+        } else if (inMaxHZ) {
+            return "Extended HZ";
+        } else {
+            return "Outside HZ";
+        }
     }
 
     public int numberOfMoons() {
@@ -582,7 +694,8 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             stopped = true;
             dayInSeconds = Double.MAX_VALUE;
         } else {
-            dayInSeconds = 2.0 * PI * angularVelocity;
+            // Period T = 2π/ω (not 2π*ω)
+            dayInSeconds = 2.0 * PI / angularVelocity;
         }
 
         // tidal or resonant locking?
@@ -811,10 +924,20 @@ public class Planet extends SystemObject implements Comparable<Planet> {
      * it's too hot, the water will never condense out of the atmosphere, rain down and form an
      * ocean. The albedo used here was chosen so that the boundary is about the same as the old
      * method Neither zone, nor r_greenhouse are used in this version - JLB
+     * <p>
+     * NOTE: Greenhouse effect requires an atmosphere. A planet with no surface pressure
+     * cannot have a greenhouse effect since there are no gases to trap heat.
      *
      * @return Whether a greenhouse effect exists
      */
     boolean greenhouse() {
+        // Greenhouse effect requires significant atmosphere to trap heat
+        // Check volatile inventory as proxy for potential atmosphere
+        double velocityRatio = this.escapeVelocity / this.rmsVelocity;
+        if (velocityRatio < GAS_RETENTION_THRESHOLD) {
+            // Planet cannot retain significant atmosphere
+            return false;
+        }
         return effectiveTemperature(GREENHOUSE_TRIGGER_ALBEDO) > FREEZING_POINT_OF_WATER;
     }
 
@@ -1047,8 +1170,18 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             }
         }
 
+        // For frozen worlds: liquid water becomes ice, but total water inventory remains
+        // Don't zero hydrosphere if there's significant ice - the water is just frozen
         if (this.surfaceTemperature < FREEZING_POINT_OF_WATER - 3.0) {
-            this.hydrosphere = 0.0;
+            // If ice cover is significant, keep a minimum hydrosphere to represent total water
+            // (liquid hydrosphere is 0, but total water inventory = ice cover)
+            if (this.iceCover > 0.05) {
+                // Set hydrosphere to a small value representing frozen water inventory
+                // This ensures ice/hydrosphere relationship remains consistent
+                this.hydrosphere = this.iceCover * 0.67;  // Ice is 1.5x hydrosphere max, so hydrosphere = ice/1.5
+            } else {
+                this.hydrosphere = 0.0;
+            }
         }
 
         this.albedo = planetAlbedo();
@@ -1091,7 +1224,40 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             }
         }
 
-        this.greenhouseRise = this.surfaceTemperature - initialTemperature;
+        // Calculate net radiative adjustment
+        double netAdjustment = this.surfaceTemperature - initialTemperature;
+
+        // Separate into greenhouse warming (positive) and albedo/cloud cooling (negative)
+        if (netAdjustment >= 0) {
+            this.greenhouseRise = netAdjustment;
+            this.albedoCooling = 0.0;
+        } else {
+            // Negative adjustment means albedo/cloud cooling dominates
+            this.greenhouseRise = 0.0;
+            this.albedoCooling = netAdjustment;  // Will be negative
+        }
+    }
+
+    /**
+     * @return The net radiative adjustment (greenhouse rise - albedo cooling).
+     *         Positive = warming, negative = cooling.
+     */
+    public double getNetRadiativeAdjustment() {
+        return greenhouseRise + albedoCooling;
+    }
+
+    /**
+     * @return true if the planet has net radiative cooling (albedo/clouds > greenhouse)
+     */
+    public boolean hasNetCooling() {
+        return albedoCooling < 0;
+    }
+
+    /**
+     * @return The albedo/cloud cooling effect in Kelvin (always <= 0)
+     */
+    public double getAlbedoCooling() {
+        return albedoCooling;
     }
 
     /**
@@ -1283,7 +1449,10 @@ public class Planet extends SystemObject implements Comparable<Planet> {
                     .append(String.format("%1$,.4f", apoapsis()))
                     .append(" AU, periapsis: ")
                     .append(String.format("%1$,.2f", periapsis()))
-                    .append(" AU");
+                    .append(" AU")
+                    .append(" [")
+                    .append(getHabitableZoneStatus())
+                    .append("]");
         }
         // TODO: Fix the following values for moons so that they correctly use their moon SMA and eccentricity
         retval.append(cr)

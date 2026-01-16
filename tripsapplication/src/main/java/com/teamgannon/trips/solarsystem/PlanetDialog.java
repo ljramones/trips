@@ -1,15 +1,20 @@
 package com.teamgannon.trips.solarsystem;
 
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
+import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -35,19 +40,33 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
         this.starSystem = solarSystemReport.getStarSystem();
 
         this.setTitle("Details of Planetary System " + starSystem.getStarObject().getDisplayName());
-        this.setWidth(300);
-        this.setHeight(450);
+        this.setResizable(true);
 
         VBox vBox = new VBox();
         vBox.setSpacing(10);
+        vBox.setPadding(new Insets(10));
         this.getDialogPane().setContent(vBox);
+        this.getDialogPane().setPrefWidth(550);
+        this.getDialogPane().setPrefHeight(550);
 
+        // Add star info header with HZ boundaries
+        GridPane starInfoPane = createStarInfoHeader(starSystem.getCentralBody());
+        vBox.getChildren().add(starInfoPane);
+
+        // Create tabbed pane with planet tabs
         TabPane planetaryTabPane = createPlanetaryTabPane(starSystem.getPlanets());
-        vBox.getChildren().add(planetaryTabPane);
+
+        // Wrap in ScrollPane for systems with many planets
+        ScrollPane scrollPane = new ScrollPane(planetaryTabPane);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        vBox.getChildren().add(scrollPane);
 
         HBox buttonBox = createButtonBox();
         vBox.getChildren().add(buttonBox);
-
 
         // set the dialog as a utility
         Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
@@ -65,12 +84,12 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
     private HBox createButtonBox() {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
-        HBox.setMargin(hBox, new Insets(0, 0, 0, 50));
-        hBox.setSpacing(10);
+        hBox.setPadding(new Insets(10, 0, 5, 0));
+        hBox.setSpacing(15);
 
         Button saveButton = new Button("Save to Database");
         saveButton.setOnAction(this::saveToDatabase);
-        saveButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        saveButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         hBox.getChildren().add(saveButton);
 
         Button reportButton = new Button("Report");
@@ -82,6 +101,38 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
         hBox.getChildren().add(cancelButton);
 
         return hBox;
+    }
+
+    private GridPane createStarInfoHeader(SimStar star) {
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(15);
+        gridPane.setVgap(5);
+        gridPane.setPadding(new Insets(8, 12, 8, 12));
+        gridPane.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #cccccc; -fx-border-radius: 5;");
+
+        // Star type and properties
+        Label starTypeLabel = new Label("Star: " + star.toString().split(" HZ:")[0]);
+        starTypeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        gridPane.add(starTypeLabel, 0, 0, 3, 1);
+
+        // Habitable Zone boundaries with clarification
+        Label hzHeaderLabel = new Label("Habitable Zone (liquid water possible):");
+        hzHeaderLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #666666; -fx-font-size: 10px;");
+        gridPane.add(hzHeaderLabel, 0, 1, 3, 1);
+
+        gridPane.add(new Label("Conservative:"), 0, 2);
+        Label optimalHZLabel = new Label(String.format("%.2f - %.2f AU",
+                star.getHzInnerOptimal(), star.getHzOuterOptimal()));
+        optimalHZLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;");
+        gridPane.add(optimalHZLabel, 1, 2);
+
+        gridPane.add(new Label("Optimistic:"), 0, 3);
+        Label maxHZLabel = new Label(String.format("%.2f - %.2f AU",
+                star.getHzInnerMax(), star.getHzOuterMax()));
+        maxHZLabel.setStyle("-fx-text-fill: #66BB6A;");
+        gridPane.add(maxHZLabel, 1, 3);
+
+        return gridPane;
     }
 
     private void saveToDatabase(ActionEvent actionEvent) {
