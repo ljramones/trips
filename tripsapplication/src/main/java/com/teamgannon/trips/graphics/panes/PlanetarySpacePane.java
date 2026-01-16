@@ -6,12 +6,12 @@ import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.nightsky.bridge.PlanetarySkyBridgeService;
 import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
-import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModel;
-import com.teamgannon.trips.solarsystem.nightsky.PlanetarySkyModelBuilder;
-import com.teamgannon.trips.solarsystem.nightsky.VisibleStarResult;
+import com.teamgannon.trips.nightsky.model.PlanetarySkyModel;
+import com.teamgannon.trips.nightsky.model.VisibleStarResult;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
@@ -59,6 +59,8 @@ public class PlanetarySpacePane extends Pane {
     private final TripsContext tripsContext;
     private final ApplicationEventPublisher eventPublisher;
     private final StarObjectRepository starObjectRepository;
+    private final PlanetarySkyBridgeService skyBridgeService;
+
 
     // Mouse position tracking
     private double mousePosX, mousePosY = 0;
@@ -102,17 +104,18 @@ public class PlanetarySpacePane extends Pane {
     private List<StarDisplayRecord> nearbyStars = new ArrayList<>();
     private List<PlanetarySkyRenderer.BrightStarEntry> computedBrightestStars = new ArrayList<>();
     private int visibleStarCount = 0;
-    private final PlanetarySkyModelBuilder skyModelBuilder = new PlanetarySkyModelBuilder();
 
     /**
      * Constructor
      */
     public PlanetarySpacePane(TripsContext tripsContext,
                               ApplicationEventPublisher eventPublisher,
-                              StarObjectRepository starObjectRepository) {
+                              StarObjectRepository starObjectRepository,
+                              PlanetarySkyBridgeService skyBridgeService) {
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
         this.starObjectRepository = starObjectRepository;
+        this.skyBridgeService = skyBridgeService;
 
         ScreenSize screenSize = tripsContext.getScreenSize();
 
@@ -207,12 +210,15 @@ public class PlanetarySpacePane extends Pane {
         if (currentContext == null) {
             return;
         }
-        List<StarObject> allStars = new ArrayList<>();
-        for (StarObject star : starObjectRepository.findAll()) {
-            allStars.add(star);
-        }
 
-        PlanetarySkyModel model = skyModelBuilder.build(currentContext, allStars);
+        // Use the efficient top-level services with caching and spatial queries
+        String datasetName = (tripsContext.getDataSetContext() != null
+                && tripsContext.getDataSetContext().getDescriptor() != null)
+                ? tripsContext.getDataSetContext().getDescriptor().getDataSetName()
+                : null;
+        PlanetarySkyModel model = skyBridgeService.computeSky(currentContext, datasetName);
+        log.debug("Sky computed using PlanetarySkyBridgeService");
+
         nearbyStars = toStarDisplayRecords(model.getVisibleStars());
         computedBrightestStars = toBrightestEntries(model.getTopBrightest());
         visibleStarCount = model.getVisibleCount();

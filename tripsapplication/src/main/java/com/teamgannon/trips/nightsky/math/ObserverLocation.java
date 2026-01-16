@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.math;
 
 /**
  * Immutable observer location on a spherical planet.

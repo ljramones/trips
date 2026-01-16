@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.math;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;

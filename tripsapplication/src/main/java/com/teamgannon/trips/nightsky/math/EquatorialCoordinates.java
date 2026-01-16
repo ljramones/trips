@@ -1,5 +1,8 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.math;
 
+/**
+ * Equatorial coordinates (right ascension and declination).
+ */
 public final class EquatorialCoordinates {
 
     private final double raHours;

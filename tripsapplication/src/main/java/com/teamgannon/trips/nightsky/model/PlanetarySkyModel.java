@@ -1,7 +1,10 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.model;
 
 import java.util.List;
 
+/**
+ * Model representing visible stars in a planetary night sky.
+ */
 public final class PlanetarySkyModel {
 
     private final List<VisibleStarResult> visibleStars;

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.bridge;
 
 import com.teamgannon.trips.jpa.model.StarObject;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -62,4 +62,3 @@ public final class NightSkyFrameBridge {
         return observerPositionLyFromAu(systemStar, new Vector3D(xAu, yAu, zAu));
     }
 }
-

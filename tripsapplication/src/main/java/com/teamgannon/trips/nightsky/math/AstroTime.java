@@ -1,7 +1,10 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.math;
 
 import java.time.Instant;
 
+/**
+ * Utility class for astronomical time calculations.
+ */
 public final class AstroTime {
 
     private static final double JD_UNIX_EPOCH = 2440587.5;

@@ -1,19 +1,16 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.math;
 
-public final class AltAzResult {
+/**
+ * Altitude-azimuth coordinates representing a position in the sky.
+ */
+public final class AltAz {
 
-    private final StarCatalogEntry star;
     private final double altitudeDeg;
     private final double azimuthDeg;
 
-    public AltAzResult(StarCatalogEntry star, double altitudeDeg, double azimuthDeg) {
-        this.star = star;
+    public AltAz(double altitudeDeg, double azimuthDeg) {
         this.altitudeDeg = altitudeDeg;
         this.azimuthDeg = azimuthDeg;
-    }
-
-    public StarCatalogEntry getStar() {
-        return star;
     }
 
     public double getAltitudeDeg() {

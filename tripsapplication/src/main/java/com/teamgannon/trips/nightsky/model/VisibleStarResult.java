@@ -1,7 +1,10 @@
-package com.teamgannon.trips.solarsystem.nightsky;
+package com.teamgannon.trips.nightsky.model;
 
 import com.teamgannon.trips.jpa.model.StarObject;
 
+/**
+ * Result of a star visibility calculation, containing position in horizon coordinates.
+ */
 public final class VisibleStarResult {
 
     private final StarObject star;
