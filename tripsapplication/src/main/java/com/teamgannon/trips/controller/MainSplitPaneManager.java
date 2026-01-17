@@ -795,6 +795,13 @@ public class MainSplitPaneManager {
                         viewControlPane.setOnOrientationGridChanged(enabled ->
                                 leftDisplayController.getPlanetarySpacePane().updateOrientationGrid(enabled));
 
+                        viewControlPane.setOnShowLabelsChanged(enabled ->
+                                leftDisplayController.getPlanetarySpacePane().setStarLabelsOn(enabled));
+
+                        viewControlPane.setOnLabelMagnitudeChanged(mag -> {
+                            leftDisplayController.getPlanetarySpacePane().updateLabelMagnitudeLimit(mag);
+                        });
+
                         viewControlPane.setOnDirectionChanged(direction ->
                                 leftDisplayController.getPlanetarySpacePane().setViewingDirection(
                                         com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),

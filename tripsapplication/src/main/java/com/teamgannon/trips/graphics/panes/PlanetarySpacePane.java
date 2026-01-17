@@ -207,6 +207,10 @@ public class PlanetarySpacePane extends Pane {
         // Clear previous rendering
         skyGroup.getChildren().clear();
 
+        // Clear old labels - new ones will be created by the renderer
+        starLabelGroup.getChildren().clear();
+        lastLabelPositions.clear();
+
         if (currentContext == null) {
             return;
         }
@@ -276,6 +280,12 @@ public class PlanetarySpacePane extends Pane {
         currentContext.setShowOrientationGrid(enabled);
         skyRenderer.setOrientationGridVisible(enabled);
         redrawOrientationGrid();
+    }
+
+    public void updateLabelMagnitudeLimit(double limit) {
+        skyRenderer.setLabelMagnitudeLimit(limit);
+        // Re-render to apply the new limit
+        recomputeSky();
     }
 
     /**

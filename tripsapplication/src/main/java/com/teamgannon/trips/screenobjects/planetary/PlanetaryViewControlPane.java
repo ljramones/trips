@@ -27,12 +27,17 @@ public class PlanetaryViewControlPane extends VBox {
     private final Label magnitudeLimitLabel;
     private final CheckBox atmosphereCheckbox;
     private final CheckBox orientationGridCheckbox;
+    private final CheckBox showLabelsCheckbox;
+    private final Slider labelMagnitudeSlider;
+    private final Label labelMagnitudeLabel;
 
     private Consumer<Double> onTimeChanged;
     private Consumer<String> onDirectionChanged;
     private Consumer<Double> onMagnitudeChanged;
     private Consumer<Boolean> onAtmosphereChanged;
     private Consumer<Boolean> onOrientationGridChanged;
+    private Consumer<Boolean> onShowLabelsChanged;
+    private Consumer<Double> onLabelMagnitudeChanged;
     private Consumer<Preset> onPresetSelected;
 
     public enum Preset {
@@ -147,6 +152,39 @@ public class PlanetaryViewControlPane extends VBox {
             }
         });
 
+        // Star labels checkbox
+        showLabelsCheckbox = new CheckBox("Show Star Labels");
+        showLabelsCheckbox.setSelected(true);
+        grid.add(showLabelsCheckbox, 0, row++, 3, 1);
+
+        // Label magnitude limit slider (create before adding checkbox listener)
+        grid.add(new Label("Label Mag Limit:"), 0, row);
+        labelMagnitudeSlider = new Slider(0, 6, 3);
+        labelMagnitudeSlider.setShowTickLabels(true);
+        labelMagnitudeSlider.setShowTickMarks(true);
+        labelMagnitudeSlider.setMajorTickUnit(1);
+        labelMagnitudeSlider.setBlockIncrement(0.5);
+        labelMagnitudeSlider.setSnapToTicks(false);
+        grid.add(labelMagnitudeSlider, 1, row);
+        labelMagnitudeLabel = new Label("3.0");
+        grid.add(labelMagnitudeLabel, 2, row++);
+
+        labelMagnitudeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            double mag = newVal.doubleValue();
+            labelMagnitudeLabel.setText(String.format("%.1f", mag));
+            if (onLabelMagnitudeChanged != null) {
+                onLabelMagnitudeChanged.accept(mag);
+            }
+        });
+
+        // Now add the checkbox listener (after slider is initialized)
+        showLabelsCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            labelMagnitudeSlider.setDisable(!newVal);
+            if (onShowLabelsChanged != null) {
+                onShowLabelsChanged.accept(newVal);
+            }
+        });
+
         // Separator
         grid.add(new Separator(), 0, row++, 3, 1);
 
@@ -191,6 +229,9 @@ public class PlanetaryViewControlPane extends VBox {
         magnitudeLimitSlider.setValue(6);
         atmosphereCheckbox.setSelected(true);
         orientationGridCheckbox.setSelected(false);
+        showLabelsCheckbox.setSelected(true);
+        labelMagnitudeSlider.setValue(3);
+        labelMagnitudeSlider.setDisable(false);
     }
 
     /**
@@ -222,6 +263,20 @@ public class PlanetaryViewControlPane extends VBox {
     }
 
     /**
+     * Check if star labels are enabled.
+     */
+    public boolean isShowLabelsEnabled() {
+        return showLabelsCheckbox.isSelected();
+    }
+
+    /**
+     * Get the current label magnitude limit.
+     */
+    public double getLabelMagnitudeLimit() {
+        return labelMagnitudeSlider.getValue();
+    }
+
+    /**
      * Set callbacks for control changes.
      */
     public void setOnTimeChanged(Consumer<Double> callback) {
@@ -242,6 +297,14 @@ public class PlanetaryViewControlPane extends VBox {
 
     public void setOnOrientationGridChanged(Consumer<Boolean> callback) {
         this.onOrientationGridChanged = callback;
+    }
+
+    public void setOnShowLabelsChanged(Consumer<Boolean> callback) {
+        this.onShowLabelsChanged = callback;
+    }
+
+    public void setOnLabelMagnitudeChanged(Consumer<Double> callback) {
+        this.onLabelMagnitudeChanged = callback;
     }
 
     public void setOnPresetSelected(Consumer<Preset> callback) {

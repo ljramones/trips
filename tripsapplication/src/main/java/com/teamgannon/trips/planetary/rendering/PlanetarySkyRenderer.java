@@ -45,6 +45,11 @@ public class PlanetarySkyRenderer {
     private double magnitudeLimit = 6.0;
 
     /**
+     * Maximum magnitude for star labels (stars brighter than this get labels)
+     */
+    private double labelMagnitudeLimit = 3.0;
+
+    /**
      * Output groups
      */
     private final Group skyGroup = new Group();
@@ -327,8 +332,8 @@ public class PlanetarySkyRenderer {
             log.info("Adding star {} at ({}, {}, {}) size={}", star.getStarName(), skyPos[0], skyPos[1], skyPos[2], size);
             starsGroup.getChildren().add(starSphere);
 
-            // Create label for bright stars (mag <= 3.0)
-            if (adjustedMag <= 3.0 && star.getStarName() != null && !star.getStarName().isEmpty()) {
+            // Create label for bright stars (mag <= labelMagnitudeLimit)
+            if (adjustedMag <= labelMagnitudeLimit && star.getStarName() != null && !star.getStarName().isEmpty()) {
                 Label label = createStarLabel(star.getStarName(), adjustedMag);
                 shapeToLabel.put(starSphere, label);
             }
@@ -548,6 +553,21 @@ public class PlanetarySkyRenderer {
      */
     public void setMagnitudeLimit(double limit) {
         this.magnitudeLimit = limit;
+    }
+
+    /**
+     * Set the magnitude limit for star labels.
+     * Stars brighter than this limit will have labels.
+     */
+    public void setLabelMagnitudeLimit(double limit) {
+        this.labelMagnitudeLimit = limit;
+    }
+
+    /**
+     * Get the current label magnitude limit.
+     */
+    public double getLabelMagnitudeLimit() {
+        return labelMagnitudeLimit;
     }
 
     public void setOrientationGridVisible(boolean visible) {
