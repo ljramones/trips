@@ -1,0 +1,272 @@
+package com.teamgannon.trips.planetarymodelling.procedural;
+
+import com.teamgannon.trips.planetarymodelling.procedural.ClimateCalculator.ClimateZone;
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.data.Offset.offset;
+
+class ClimateCalculatorTest {
+
+    private List<Polygon> polygons;
+    private ClimateCalculator calculator;
+
+    @BeforeEach
+    void setUp() {
+        var config = PlanetConfig.builder()
+            .seed(12345L)
+            .size(PlanetConfig.Size.DUEL)
+            .build();
+        var mesh = new IcosahedralMesh(config);
+        polygons = mesh.generate();
+        calculator = new ClimateCalculator(polygons);
+    }
+
+    @Test
+    @DisplayName("calculate() returns array matching polygon count")
+    void calculateReturnsCorrectSize() {
+        ClimateZone[] zones = calculator.calculate();
+
+        assertThat(zones).hasSize(polygons.size());
+    }
+
+    @Test
+    @DisplayName("All zones are assigned (no nulls)")
+    void allZonesAssigned() {
+        ClimateZone[] zones = calculator.calculate();
+
+        for (ClimateZone zone : zones) {
+            assertThat(zone).isNotNull();
+        }
+    }
+
+    @Test
+    @DisplayName("Only valid climate zones")
+    void validClimateZones() {
+        ClimateZone[] zones = calculator.calculate();
+
+        for (ClimateZone zone : zones) {
+            assertThat(zone).isIn(
+                ClimateZone.TROPICAL,
+                ClimateZone.TEMPERATE,
+                ClimateZone.POLAR
+            );
+        }
+    }
+
+    @Test
+    @DisplayName("All three climate zones present on standard-sized planet")
+    void allZonesPresent() {
+        ClimateZone[] zones = calculator.calculate();
+
+        boolean hasTropical = false;
+        boolean hasTemperate = false;
+        boolean hasPolar = false;
+
+        for (ClimateZone zone : zones) {
+            if (zone == ClimateZone.TROPICAL) hasTropical = true;
+            if (zone == ClimateZone.TEMPERATE) hasTemperate = true;
+            if (zone == ClimateZone.POLAR) hasPolar = true;
+        }
+
+        assertThat(hasTropical).as("Should have tropical zones").isTrue();
+        assertThat(hasTemperate).as("Should have temperate zones").isTrue();
+        assertThat(hasPolar).as("Should have polar zones").isTrue();
+    }
+
+    @Test
+    @DisplayName("Equatorial polygons are tropical")
+    void equatorialIsTropical() {
+        ClimateZone[] zones = calculator.calculate();
+
+        for (int i = 0; i < polygons.size(); i++) {
+            double latitude = Math.abs(ClimateCalculator.getLatitudeDegrees(polygons.get(i)));
+
+            if (latitude < 25) { // Well within tropical zone
+                assertThat(zones[i])
+                    .as("Polygon at latitude %.1f should be tropical", latitude)
+                    .isEqualTo(ClimateZone.TROPICAL);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Polar polygons are polar")
+    void polarIsPolar() {
+        ClimateZone[] zones = calculator.calculate();
+
+        for (int i = 0; i < polygons.size(); i++) {
+            double latitude = Math.abs(ClimateCalculator.getLatitudeDegrees(polygons.get(i)));
+
+            if (latitude > 65) { // Well within polar zone
+                assertThat(zones[i])
+                    .as("Polygon at latitude %.1f should be polar", latitude)
+                    .isEqualTo(ClimateZone.POLAR);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Mid-latitude polygons are temperate")
+    void midLatitudeIsTemperate() {
+        ClimateZone[] zones = calculator.calculate();
+
+        for (int i = 0; i < polygons.size(); i++) {
+            double latitude = Math.abs(ClimateCalculator.getLatitudeDegrees(polygons.get(i)));
+
+            if (latitude > 35 && latitude < 55) { // Well within temperate zone
+                assertThat(zones[i])
+                    .as("Polygon at latitude %.1f should be temperate", latitude)
+                    .isEqualTo(ClimateZone.TEMPERATE);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("getLatitudeDegrees returns value in valid range")
+    void latitudeInValidRange() {
+        for (Polygon p : polygons) {
+            double latitude = ClimateCalculator.getLatitudeDegrees(p);
+            assertThat(latitude)
+                .as("Latitude should be between -90 and 90")
+                .isBetween(-90.0, 90.0);
+        }
+    }
+
+    @Test
+    @DisplayName("getLatitudeDegrees is positive for northern hemisphere")
+    void northernHemispherePositive() {
+        // Create a polygon with center in northern hemisphere (positive Y)
+        Vector3D northCenter = new Vector3D(0, 0.5, 0.5).normalize();
+        Polygon northPoly = new Polygon(northCenter, List.of(
+            new Vector3D(0.1, 0.5, 0.5).normalize(),
+            new Vector3D(-0.1, 0.5, 0.5).normalize(),
+            new Vector3D(0, 0.6, 0.4).normalize()
+        ));
+
+        double latitude = ClimateCalculator.getLatitudeDegrees(northPoly);
+        assertThat(latitude)
+            .as("Northern hemisphere should have positive latitude")
+            .isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("getLatitudeDegrees is negative for southern hemisphere")
+    void southernHemisphereNegative() {
+        // Create a polygon with center in southern hemisphere (negative Y)
+        Vector3D southCenter = new Vector3D(0, -0.5, 0.5).normalize();
+        Polygon southPoly = new Polygon(southCenter, List.of(
+            new Vector3D(0.1, -0.5, 0.5).normalize(),
+            new Vector3D(-0.1, -0.5, 0.5).normalize(),
+            new Vector3D(0, -0.6, 0.4).normalize()
+        ));
+
+        double latitude = ClimateCalculator.getLatitudeDegrees(southPoly);
+        assertThat(latitude)
+            .as("Southern hemisphere should have negative latitude")
+            .isLessThan(0);
+    }
+
+    @Test
+    @DisplayName("Tropical boundary is at 30 degrees")
+    void tropicalBoundary() {
+        // Polygon just inside tropical zone
+        Vector3D center25 = new Vector3D(
+            Math.cos(Math.toRadians(25)),
+            Math.sin(Math.toRadians(25)),
+            0
+        ).normalize();
+        Polygon tropical = new Polygon(center25, createDummyVertices(center25));
+
+        // Polygon just outside tropical zone
+        Vector3D center35 = new Vector3D(
+            Math.cos(Math.toRadians(35)),
+            Math.sin(Math.toRadians(35)),
+            0
+        ).normalize();
+        Polygon temperate = new Polygon(center35, createDummyVertices(center35));
+
+        ClimateCalculator calc = new ClimateCalculator(List.of(tropical, temperate));
+        ClimateZone[] zones = calc.calculate();
+
+        assertThat(zones[0]).isEqualTo(ClimateZone.TROPICAL);
+        assertThat(zones[1]).isEqualTo(ClimateZone.TEMPERATE);
+    }
+
+    @Test
+    @DisplayName("Temperate boundary is at 60 degrees")
+    void temperateBoundary() {
+        // Polygon just inside temperate zone
+        Vector3D center55 = new Vector3D(
+            Math.cos(Math.toRadians(55)),
+            Math.sin(Math.toRadians(55)),
+            0
+        ).normalize();
+        Polygon temperate = new Polygon(center55, createDummyVertices(center55));
+
+        // Polygon just outside temperate zone
+        Vector3D center65 = new Vector3D(
+            Math.cos(Math.toRadians(65)),
+            Math.sin(Math.toRadians(65)),
+            0
+        ).normalize();
+        Polygon polar = new Polygon(center65, createDummyVertices(center65));
+
+        ClimateCalculator calc = new ClimateCalculator(List.of(temperate, polar));
+        ClimateZone[] zones = calc.calculate();
+
+        assertThat(zones[0]).isEqualTo(ClimateZone.TEMPERATE);
+        assertThat(zones[1]).isEqualTo(ClimateZone.POLAR);
+    }
+
+    @Test
+    @DisplayName("Climate distribution is symmetric between hemispheres")
+    void symmetricDistribution() {
+        ClimateZone[] zones = calculator.calculate();
+
+        int northTropical = 0, southTropical = 0;
+        int northTemperate = 0, southTemperate = 0;
+        int northPolar = 0, southPolar = 0;
+
+        for (int i = 0; i < polygons.size(); i++) {
+            double lat = ClimateCalculator.getLatitudeDegrees(polygons.get(i));
+            ClimateZone zone = zones[i];
+
+            if (lat >= 0) {
+                if (zone == ClimateZone.TROPICAL) northTropical++;
+                else if (zone == ClimateZone.TEMPERATE) northTemperate++;
+                else northPolar++;
+            } else {
+                if (zone == ClimateZone.TROPICAL) southTropical++;
+                else if (zone == ClimateZone.TEMPERATE) southTemperate++;
+                else southPolar++;
+            }
+        }
+
+        // Allow 20% variance for asymmetry due to discrete polygons
+        assertThat(northTropical).isCloseTo(southTropical, offset((int)(northTropical * 0.3 + 5)));
+        assertThat(northTemperate).isCloseTo(southTemperate, offset((int)(northTemperate * 0.3 + 5)));
+        assertThat(northPolar).isCloseTo(southPolar, offset((int)(northPolar * 0.3 + 5)));
+    }
+
+    private List<Vector3D> createDummyVertices(Vector3D center) {
+        // Create simple triangle vertices around center
+        Vector3D perp1 = center.crossProduct(Vector3D.PLUS_K);
+        if (perp1.getNorm() < 0.01) {
+            perp1 = center.crossProduct(Vector3D.PLUS_I);
+        }
+        perp1 = perp1.normalize().scalarMultiply(0.1);
+        Vector3D perp2 = center.crossProduct(perp1).normalize().scalarMultiply(0.1);
+
+        return List.of(
+            center.add(perp1).normalize(),
+            center.add(perp2).normalize(),
+            center.subtract(perp1).normalize()
+        );
+    }
+}

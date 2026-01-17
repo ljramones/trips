@@ -126,6 +126,15 @@ public class SimStar extends SystemObject {
     }
 
     /**
+     * Get the age of the star in years.
+     *
+     * @return the stellar age in years
+     */
+    public double getAge() {
+        return this.age;
+    }
+
+    /**
      * set the mass of the sim star
      *
      * @param mass the relative mass to the sun

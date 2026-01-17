@@ -43,3 +43,5 @@ files/hyg_db/
 
 30ly.trips.csv.zip
 /tripsapplication/logs/terranrepublicviewer.log
+/tripsapplication/data/tripsdb.mv.db
+/tripsapplication/logs/terranrepublicviewer.log.2026-01-15.0.log.gz

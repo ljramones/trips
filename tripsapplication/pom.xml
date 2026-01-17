@@ -104,6 +104,9 @@
         <commons.math.version>3.6.1</commons.math.version>
         <commons-codec.version>20041127.091804</commons-codec.version>
 
+        <hipparchus.version>3.0</hipparchus.version>
+        <jzy3d.version>2.2.1</jzy3d.version>
+
         <orekit.version>11.1.2</orekit.version>
 
         <metrics.version>4.2.10</metrics.version>
@@ -164,6 +167,13 @@
 
     </dependencyManagement>
 
+    <repositories>
+        <repository>
+            <id>jzy3d-releases</id>
+            <url>https://maven.jzy3d.org/releases/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
 
         <!-- JPA support -->
@@ -185,6 +195,20 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-oxm</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hipparchus</groupId>
+            <artifactId>hipparchus-geometry</artifactId>
+            <version>${hipparchus.version}</version>
+        </dependency>
+
+        <!-- Jzy3d for 3D rendering (optional, use PlanetRenderer) -->
+        <dependency>
+            <groupId>org.jzy3d</groupId>
+            <artifactId>jzy3d-native-jogl-swing</artifactId>
+            <version>${jzy3d.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- H2 database support -->
@@ -383,6 +407,13 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-base</artifactId>
             <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Java FX support third party -->
