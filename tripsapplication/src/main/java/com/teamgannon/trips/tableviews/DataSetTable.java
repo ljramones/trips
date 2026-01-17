@@ -54,6 +54,8 @@ public class DataSetTable {
     private final TableColumn<StarEditRecord, Double> distanceToEarthCol = new TableColumn<>("Distance to Earth (LY)");
     private final TableColumn<StarEditRecord, String> spectraCol = new TableColumn<>("Spectra");
     private final TableColumn<StarEditRecord, Double> radiusCol = new TableColumn<>("Radius");
+    private final TableColumn<StarEditRecord, Double> massCol = new TableColumn<>("Mass (M☉)");
+    private final TableColumn<StarEditRecord, String> luminosityCol = new TableColumn<>("Luminosity");
     private final TableColumn<StarEditRecord, Double> raCol = new TableColumn<>("RA");
     private final TableColumn<StarEditRecord, Double> decCol = new TableColumn<>("Declination");
     private final TableColumn<StarEditRecord, Double> paraCol = new TableColumn<>("Parallax");
@@ -263,6 +265,12 @@ public class DataSetTable {
         radiusCol.setCellValueFactory(new PropertyValueFactory<>("radius"));
         radiusCol.sortTypeProperty().addListener(this::radiusSortOrderChange);
 
+        massCol.setMinWidth(80);
+        massCol.setCellValueFactory(new PropertyValueFactory<>("mass"));
+
+        luminosityCol.setMinWidth(80);
+        luminosityCol.setCellValueFactory(new PropertyValueFactory<>("luminosity"));
+
         raCol.setMinWidth(50);
         raCol.setCellValueFactory(new PropertyValueFactory<>("ra"));
         raCol.sortTypeProperty().addListener(this::raSortOrderChange);
@@ -298,7 +306,7 @@ public class DataSetTable {
         // add the columns
         tableView.getColumns()
                 .addAll(displayNameCol, distanceToEarthCol, spectraCol,
-                        radiusCol, raCol, decCol, paraCol,
+                        radiusCol, massCol, luminosityCol, raCol, decCol, paraCol,
                         xCoordCol, yCoordCol, zCoordCol,
                         realCol, commentCol
                 );

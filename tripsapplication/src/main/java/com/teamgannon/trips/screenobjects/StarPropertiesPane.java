@@ -87,6 +87,10 @@ public class StarPropertiesPane extends VBox {
     @FXML
     private Label radiusLabel;
     @FXML
+    private Label massLabel;
+    @FXML
+    private Label luminosityLabel;
+    @FXML
     private Label raLabel;
     @FXML
     private Label decLabel;
@@ -205,6 +209,8 @@ public class StarPropertiesPane extends VBox {
         simbadIdLabel.setText(simbadId);
         galacticCoordinatesLabel.setText(formatDouble(record.getGalacticLat()) + ", " + formatDouble(record.getGalacticLong()));
         radiusLabel.setText(formatDouble(record.getRadius()));
+        massLabel.setText(formatDouble(record.getMass()));
+        luminosityLabel.setText(safeDisplay(record.getLuminosity()));
         raLabel.setText(formatDouble(record.getRa()));
         decLabel.setText(formatDouble(record.getDeclination()));
         pmraLabel.setText(formatDouble(record.getPmra()));
@@ -262,6 +268,8 @@ public class StarPropertiesPane extends VBox {
         simbadIdLabel.setText(emptyDisplay());
         galacticCoordinatesLabel.setText(emptyDisplay());
         radiusLabel.setText(emptyDisplay());
+        massLabel.setText(emptyDisplay());
+        luminosityLabel.setText(emptyDisplay());
         raLabel.setText(emptyDisplay());
         decLabel.setText(emptyDisplay());
         pmraLabel.setText(emptyDisplay());

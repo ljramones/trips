@@ -70,6 +70,10 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     @FXML
     private TextField radiusTextField;
     @FXML
+    private TextField massTextField;
+    @FXML
+    private TextField luminosityTextField;
+    @FXML
     private TextField tempTextField;
     @FXML
     private TextField raLabel;
@@ -414,6 +418,22 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
         });
         radiusTextField.setPromptText("the radius in Sol units");
+
+        massTextField.setText(Double.toString(record.getMass()));
+        massTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkMass();
+            }
+        });
+        massTextField.setPromptText("the mass in Sol units");
+
+        luminosityTextField.setText(record.getLuminosity() != null ? record.getLuminosity() : "");
+        luminosityTextField.setOnKeyPressed(ke -> {
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                checkLuminosity();
+            }
+        });
+        luminosityTextField.setPromptText("luminosity value or class (e.g., 1.0 or V)");
 
         tempTextField.setText(Double.toString(record.getTemperature()));
         tempTextField.setPromptText("temperature, press enter");
@@ -852,6 +872,20 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
     }
 
+    private void checkMass() {
+        try {
+            double mass = Double.parseDouble(massTextField.getText());
+            record.setMass(mass);
+        } catch (NumberFormatException nfe) {
+            showErrorAlert("Edit Star Record", massTextField.getText() + " is an invalid floating point number");
+        }
+    }
+
+    private void checkLuminosity() {
+        // Luminosity can be a numeric value (e.g., "1.0") or luminosity class (e.g., "V")
+        record.setLuminosity(luminosityTextField.getText());
+    }
+
     private void checkDistance() {
         try {
             double distance = Double.parseDouble(distanceNameTextField.getText());
@@ -906,6 +940,11 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
 
         double radius = Double.parseDouble(radiusTextField.getText());
         record.setRadius(radius);
+
+        double mass = Double.parseDouble(massTextField.getText());
+        record.setMass(mass);
+
+        record.setLuminosity(luminosityTextField.getText());
 
         double distance = Double.parseDouble(distanceNameTextField.getText());
         record.setDistance(distance);

@@ -58,6 +58,24 @@ public class SimStar extends SystemObject {
     protected double E = 0.0;
 
     public SimStar(double stellarMass, double stellarLuminosity, double stellarRadius, double temp, double mag) {
+        // Validate critical stellar parameters to prevent division by zero and invalid calculations
+        if (stellarMass <= 0) {
+            throw new IllegalArgumentException(
+                "Invalid stellar mass: " + stellarMass + " (must be positive)");
+        }
+        if (stellarLuminosity <= 0) {
+            throw new IllegalArgumentException(
+                "Invalid stellar luminosity: " + stellarLuminosity + " (must be positive)");
+        }
+        if (stellarRadius <= 0) {
+            throw new IllegalArgumentException(
+                "Invalid stellar radius: " + stellarRadius + " (must be positive)");
+        }
+        if (temp <= 0) {
+            throw new IllegalArgumentException(
+                "Invalid stellar temperature: " + temp + " (must be positive)");
+        }
+
         this.mass = stellarMass;
         this.luminosity = stellarLuminosity;
         this.radius = stellarRadius;
@@ -137,36 +155,48 @@ public class SimStar extends SystemObject {
     /**
      * set the mass of the sim star
      *
-     * @param mass the relative mass to the sun
+     * @param mass the relative mass to the sun (must be positive)
      */
     public void setMass(double mass) {
+        if (mass <= 0) {
+            throw new IllegalArgumentException("Stellar mass must be positive: " + mass);
+        }
         this.mass = mass;
     }
 
     /**
      * set the radius of the star
      *
-     * @param radius the relative radius to the sun
+     * @param radius the relative radius to the sun (must be positive)
      */
     public void setRadius(double radius) {
+        if (radius <= 0) {
+            throw new IllegalArgumentException("Stellar radius must be positive: " + radius);
+        }
         this.radius = radius;
     }
 
     /**
      * set the luminosity
      *
-     * @param luminosity the relative luminosity to the sun
+     * @param luminosity the relative luminosity to the sun (must be positive)
      */
     public void setLuminosity(double luminosity) {
+        if (luminosity <= 0) {
+            throw new IllegalArgumentException("Stellar luminosity must be positive: " + luminosity);
+        }
         this.luminosity = luminosity;
     }
 
     /**
      * set the temperature
      *
-     * @param temperature the relative temperature to the sun
+     * @param temperature the temperature in Kelvin (must be positive)
      */
     public void setTemperature(double temperature) {
+        if (temperature <= 0) {
+            throw new IllegalArgumentException("Stellar temperature must be positive: " + temperature);
+        }
         this.temperature = temperature;
     }
 

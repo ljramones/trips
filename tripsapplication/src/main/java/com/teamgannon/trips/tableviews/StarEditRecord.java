@@ -18,6 +18,10 @@ public class StarEditRecord {
 
     private Double radius;
 
+    private Double mass;
+
+    private String luminosity;
+
     private Double ra;
     private Double declination;
     private Double parallax;
@@ -44,6 +48,8 @@ public class StarEditRecord {
         record.setDistanceToEarth(starObject.getDistance());
         record.setSpectra(starObject.getSpectralClass());
         record.setRadius(starObject.getRadius());
+        record.setMass(starObject.getMass());
+        record.setLuminosity(starObject.getLuminosity());
         record.setRa(starObject.getRa());
         record.setDeclination(starObject.getDeclination());
         record.setParallax(starObject.getParallax());

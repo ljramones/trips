@@ -137,53 +137,59 @@
                                 <Label text="Galactic coordinates" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                                 <Label fx:id="galacticCoordinatesLabel" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 
-                                <Label text="Radius" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <Label text="Radius (R☉)" GridPane.columnIndex="0" GridPane.rowIndex="5" />
                                 <Label fx:id="radiusLabel" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
-                                <Label text="Ra" GridPane.columnIndex="0" GridPane.rowIndex="6" />
-                                <Label fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                <Label text="Mass (M☉)" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <Label fx:id="massLabel" GridPane.columnIndex="1" GridPane.rowIndex="6" />
 
-                                <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="7" />
-                                <Label fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                <Label text="Luminosity (L☉)" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                <Label fx:id="luminosityLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 
-                                <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="8" />
-                                <Label fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                                <Label text="Ra" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                <Label fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
 
-                                <Label text="Pmdec" GridPane.columnIndex="0" GridPane.rowIndex="9" />
-                                <Label fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                                <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                <Label fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
 
-                                <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="10" />
-                                <Label fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+                                <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                <Label fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
 
-                                <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="11" />
-                                <Label fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                                <Label text="Pmdec" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                <Label fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
 
-                                <Label text="Temperature" GridPane.columnIndex="0" GridPane.rowIndex="12" />
-                                <Label fx:id="tempLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+                                <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="12" />
+                                <Label fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
 
-                                <Label text="Magu" GridPane.columnIndex="0" GridPane.rowIndex="13" />
-                                <Label fx:id="maguLabel" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+                                <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="13" />
+                                <Label fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="13" />
 
-                                <Label text="Magb" GridPane.columnIndex="0" GridPane.rowIndex="14" />
-                                <Label fx:id="magbLabel" GridPane.columnIndex="1" GridPane.rowIndex="14" />
+                                <Label text="Temperature (K)" GridPane.columnIndex="0" GridPane.rowIndex="14" />
+                                <Label fx:id="tempLabel" GridPane.columnIndex="1" GridPane.rowIndex="14" />
 
-                                <Label text="Magv" GridPane.columnIndex="0" GridPane.rowIndex="15" />
-                                <Label fx:id="magvLabel" GridPane.columnIndex="1" GridPane.rowIndex="15" />
+                                <Label text="Magu" GridPane.columnIndex="0" GridPane.rowIndex="15" />
+                                <Label fx:id="maguLabel" GridPane.columnIndex="1" GridPane.rowIndex="15" />
 
-                                <Label text="Magr" GridPane.columnIndex="0" GridPane.rowIndex="16" />
-                                <Label fx:id="magrLabel" GridPane.columnIndex="1" GridPane.rowIndex="16" />
+                                <Label text="Magb" GridPane.columnIndex="0" GridPane.rowIndex="16" />
+                                <Label fx:id="magbLabel" GridPane.columnIndex="1" GridPane.rowIndex="16" />
 
-                                <Label text="Magi" GridPane.columnIndex="0" GridPane.rowIndex="17" />
-                                <Label fx:id="magiLabel" GridPane.columnIndex="1" GridPane.rowIndex="17" />
+                                <Label text="Magv" GridPane.columnIndex="0" GridPane.rowIndex="17" />
+                                <Label fx:id="magvLabel" GridPane.columnIndex="1" GridPane.rowIndex="17" />
 
-                                <Label text="Bprp" GridPane.columnIndex="0" GridPane.rowIndex="18" />
-                                <Label fx:id="bprpLabel" GridPane.columnIndex="1" GridPane.rowIndex="18" />
+                                <Label text="Magr" GridPane.columnIndex="0" GridPane.rowIndex="18" />
+                                <Label fx:id="magrLabel" GridPane.columnIndex="1" GridPane.rowIndex="18" />
 
-                                <Label text="Bpg" GridPane.columnIndex="0" GridPane.rowIndex="19" />
-                                <Label fx:id="bpgLabel" GridPane.columnIndex="1" GridPane.rowIndex="19" />
+                                <Label text="Magi" GridPane.columnIndex="0" GridPane.rowIndex="19" />
+                                <Label fx:id="magiLabel" GridPane.columnIndex="1" GridPane.rowIndex="19" />
 
-                                <Label text="Grp" GridPane.columnIndex="0" GridPane.rowIndex="20" />
-                                <Label fx:id="grpLabel" GridPane.columnIndex="1" GridPane.rowIndex="20" />
+                                <Label text="Bprp" GridPane.columnIndex="0" GridPane.rowIndex="20" />
+                                <Label fx:id="bprpLabel" GridPane.columnIndex="1" GridPane.rowIndex="20" />
+
+                                <Label text="Bpg" GridPane.columnIndex="0" GridPane.rowIndex="21" />
+                                <Label fx:id="bpgLabel" GridPane.columnIndex="1" GridPane.rowIndex="21" />
+
+                                <Label text="Grp" GridPane.columnIndex="0" GridPane.rowIndex="22" />
+                                <Label fx:id="grpLabel" GridPane.columnIndex="1" GridPane.rowIndex="22" />
                             </children>
                         </GridPane>
                     </content>

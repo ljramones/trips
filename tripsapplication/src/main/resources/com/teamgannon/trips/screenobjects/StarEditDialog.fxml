@@ -154,31 +154,37 @@
                                         <Label text="Galactic Long" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                                         <TextField fx:id="galacticCoorLongTextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 
-                                        <Label text="Radius" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                        <Label text="Radius (R☉)" GridPane.columnIndex="0" GridPane.rowIndex="5" />
                                         <TextField fx:id="radiusTextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
-                                        <Label text="Temperature" GridPane.columnIndex="0" GridPane.rowIndex="6" />
-                                        <TextField fx:id="tempTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                        <Label text="Mass (M☉)" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                        <TextField fx:id="massTextField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
 
-                                        <Label text="ra" GridPane.columnIndex="0" GridPane.rowIndex="7" />
-                                        <TextField fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                        <Label text="Luminosity (L☉)" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                        <TextField fx:id="luminosityTextField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 
-                                        <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="8" />
-                                        <TextField fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                                        <Label text="Temperature (K)" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                                        <TextField fx:id="tempTextField" GridPane.columnIndex="1" GridPane.rowIndex="8" />
 
-                                        <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="9" />
-                                        <TextField fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                                        <Label text="ra" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                                        <TextField fx:id="raLabel" GridPane.columnIndex="1" GridPane.rowIndex="9" />
 
-                                        <Label text="pmdec" GridPane.columnIndex="0" GridPane.rowIndex="10" />
-                                        <TextField fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
+                                        <Label text="Declination" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                                        <TextField fx:id="decLabel" GridPane.columnIndex="1" GridPane.rowIndex="10" />
 
-                                        <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="11" />
-                                        <TextField fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
+                                        <Label text="Pmra" GridPane.columnIndex="0" GridPane.rowIndex="11" />
+                                        <TextField fx:id="pmraLabel" GridPane.columnIndex="1" GridPane.rowIndex="11" />
 
-                                        <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="12" />
-                                        <TextField fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
+                                        <Label text="pmdec" GridPane.columnIndex="0" GridPane.rowIndex="12" />
+                                        <TextField fx:id="pmdecLabel" GridPane.columnIndex="1" GridPane.rowIndex="12" />
 
-                                        <Button fx:id="updateAliasBtn" text="Update Alias List" GridPane.columnIndex="0" GridPane.rowIndex="13" GridPane.columnSpan="2" />
+                                        <Label text="Parallax" GridPane.columnIndex="0" GridPane.rowIndex="13" />
+                                        <TextField fx:id="parallaxLabel" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+
+                                        <Label text="Radial velocity" GridPane.columnIndex="0" GridPane.rowIndex="14" />
+                                        <TextField fx:id="radialVelocityLabel" GridPane.columnIndex="1" GridPane.rowIndex="14" />
+
+                                        <Button fx:id="updateAliasBtn" text="Update Alias List" GridPane.columnIndex="0" GridPane.rowIndex="15" GridPane.columnSpan="2" />
                                     </children>
                                 </GridPane>
 
