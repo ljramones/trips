@@ -1509,6 +1509,31 @@ public class StarPlotManager {
 
     private void generateSolarSystem(StarDisplayRecord starDescriptor) {
         StarObject starObject = starService.getStar(starDescriptor.getRecordId());
+
+        // Check for invalid stellar parameters and warn the user
+        String parameterIssues = validateStellarParameters(starObject);
+        if (parameterIssues != null) {
+            Alert warningAlert = new Alert(Alert.AlertType.WARNING);
+            warningAlert.setTitle("Missing Stellar Parameters");
+            warningAlert.setHeaderText("Some stellar parameters are missing or invalid");
+            warningAlert.setContentText(
+                    parameterIssues +
+                    "\n\nThe generator will use Sun-like default values for missing parameters. " +
+                    "This may produce unrealistic results.\n\n" +
+                    "Do you want to proceed anyway?"
+            );
+            warningAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+
+            Optional<ButtonType> warningResult = warningAlert.showAndWait();
+            if (warningResult.isEmpty() || warningResult.get() == ButtonType.NO) {
+                log.info("User cancelled solar system generation due to missing stellar parameters for '{}'",
+                        starObject.getDisplayName());
+                return;
+            }
+            log.warn("User proceeding with solar system generation despite missing parameters for '{}': {}",
+                    starObject.getDisplayName(), parameterIssues.replace("\n", "; "));
+        }
+
         SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
         Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
         if (solarSystemGenOptional.isPresent()) {
@@ -1542,6 +1567,54 @@ public class StarPlotManager {
                 }
             }
         }
+    }
+
+    /**
+     * Validates stellar parameters required for solar system generation.
+     *
+     * @param starObject the star to validate
+     * @return null if all parameters are valid, otherwise a string describing the issues
+     */
+    private String validateStellarParameters(StarObject starObject) {
+        StringBuilder issues = new StringBuilder();
+
+        if (starObject.getMass() <= 0) {
+            issues.append("• Mass is missing or zero\n");
+        }
+
+        if (starObject.getRadius() <= 0) {
+            issues.append("• Radius is missing or zero\n");
+        }
+
+        if (starObject.getTemperature() <= 0) {
+            issues.append("• Temperature is missing or zero\n");
+        }
+
+        // Luminosity is a String - check if it's empty or not a valid positive number
+        String luminosity = starObject.getLuminosity();
+        if (luminosity == null || luminosity.trim().isEmpty()) {
+            issues.append("• Luminosity is missing\n");
+        } else {
+            try {
+                double lumValue = Double.parseDouble(luminosity.trim());
+                if (lumValue <= 0) {
+                    issues.append("• Luminosity value is zero or negative\n");
+                }
+            } catch (NumberFormatException e) {
+                // Luminosity might be a class like "V" or "IV" - that's acceptable
+                // Only flag it if it's neither a valid number nor a known luminosity class
+                String trimmed = luminosity.trim().toUpperCase();
+                if (!trimmed.matches("^(I{1,3}|IV|V|VI|VII|0|Ia|Ib|II|III)?[ab]?$")) {
+                    // Not a standard luminosity class, might be invalid
+                    // But we'll be lenient here - only flag completely empty strings
+                }
+            }
+        }
+
+        if (issues.length() > 0) {
+            return "The following stellar parameters are missing or invalid:\n\n" + issues;
+        }
+        return null;
     }
 
 
