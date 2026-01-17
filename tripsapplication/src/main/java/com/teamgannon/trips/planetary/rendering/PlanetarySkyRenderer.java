@@ -6,6 +6,8 @@ import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
@@ -16,7 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Renders the sky dome with repositioned stars as seen from a planet's surface.
@@ -55,6 +59,11 @@ public class PlanetarySkyRenderer {
      * List of brightest stars from current view (for side pane display)
      */
     private final List<BrightStarEntry> brightestStars = new ArrayList<>();
+
+    /**
+     * Map from 3D star node to its 2D label (for billboard-style labels)
+     */
+    private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     public PlanetarySkyRenderer() {
         skyGroup.getChildren().addAll(groundGroup, gridGroup, horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
@@ -318,6 +327,12 @@ public class PlanetarySkyRenderer {
             log.info("Adding star {} at ({}, {}, {}) size={}", star.getStarName(), skyPos[0], skyPos[1], skyPos[2], size);
             starsGroup.getChildren().add(starSphere);
 
+            // Create label for bright stars (mag <= 3.0)
+            if (adjustedMag <= 3.0 && star.getStarName() != null && !star.getStarName().isEmpty()) {
+                Label label = createStarLabel(star.getStarName(), adjustedMag);
+                shapeToLabel.put(starSphere, label);
+            }
+
             // Track brightest stars
             brightestStars.add(new BrightStarEntry(
                     star.getStarName(),
@@ -490,6 +505,35 @@ public class PlanetarySkyRenderer {
         horizonGroup.getChildren().clear();
         siblingPlanetsGroup.getChildren().clear();
         brightestStars.clear();
+        shapeToLabel.clear();
+    }
+
+    /**
+     * Get the map of 3D star nodes to their 2D labels.
+     * Used by PlanetarySpacePane for billboard-style label positioning.
+     */
+    public Map<Node, Label> getShapeToLabel() {
+        return shapeToLabel;
+    }
+
+    /**
+     * Create a styled label for a star.
+     */
+    private Label createStarLabel(String name, double magnitude) {
+        Label label = new Label(name);
+        label.setTextFill(Color.WHITE);
+        label.setVisible(true);
+
+        // Style based on magnitude - brighter stars get larger, bolder labels
+        if (magnitude <= 0.0) {
+            label.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        } else if (magnitude <= 1.5) {
+            label.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+        } else {
+            label.setStyle("-fx-font-size: 9px;");
+        }
+
+        return label;
     }
 
     /**
