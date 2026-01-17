@@ -301,36 +301,12 @@ public class PlanetarySkyRenderer {
             // Position on sky dome
             double[] skyPos = sphericalToCartesian(SKY_DOME_RADIUS, azimuth, altitude);
 
-            // Create star sphere (size based on magnitude)
-            double size = magnitudeToSize(adjustedMag);
-            if (adjustedMag <= 1.0) {
-                Sphere halo = new Sphere(size * 2.6);
-                halo.setCullFace(CullFace.NONE);  // Render inside-facing surfaces
-                PhongMaterial haloMaterial = new PhongMaterial();
-                haloMaterial.setDiffuseColor(Color.rgb(255, 255, 255, 0.25));
-                halo.setMaterial(haloMaterial);
-                halo.setOpacity(0.35);
-                halo.setTranslateX(skyPos[0]);
-                halo.setTranslateY(skyPos[1]);
-                halo.setTranslateZ(skyPos[2]);
-                starsGroup.getChildren().add(halo);
-            }
-
-            Sphere starSphere = new Sphere(size);
-            starSphere.setCullFace(CullFace.NONE);  // Render inside-facing surfaces
-
-            PhongMaterial material = new PhongMaterial();
+            // Create star visual with magnitude-based rendering
             Color starColor = getStarColor(star.getSpectralClass());
-            material.setDiffuseColor(starColor);
-            material.setSpecularColor(starColor.brighter());
-            starSphere.setMaterial(material);
+            StarVisualResult starVisual = createStarVisual(adjustedMag, starColor, skyPos);
 
-            starSphere.setTranslateX(skyPos[0]);
-            starSphere.setTranslateY(skyPos[1]);
-            starSphere.setTranslateZ(skyPos[2]);
-
-            log.info("Adding star {} at ({}, {}, {}) size={}", star.getStarName(), skyPos[0], skyPos[1], skyPos[2], size);
-            starsGroup.getChildren().add(starSphere);
+            starsGroup.getChildren().add(starVisual.group());
+            Sphere starSphere = starVisual.coreSphere();
 
             // Create label for bright stars (mag <= labelMagnitudeLimit)
             if (adjustedMag <= labelMagnitudeLimit && star.getStarName() != null && !star.getStarName().isEmpty()) {
@@ -425,15 +401,6 @@ public class PlanetarySkyRenderer {
 
     public double getSkyDomeRadius() {
         return SKY_DOME_RADIUS;
-    }
-
-    /**
-     * Convert magnitude to display size.
-     */
-    private double magnitudeToSize(double magnitude) {
-        // Brighter (lower magnitude) = slightly larger, keep most stars tiny.
-        double size = 1.6 - (magnitude + 1) * 0.18;
-        return Math.max(0.4, Math.min(1.8, size));
     }
 
     /**
@@ -572,6 +539,111 @@ public class PlanetarySkyRenderer {
 
     public void setOrientationGridVisible(boolean visible) {
         gridGroup.setVisible(visible);
+    }
+
+    /**
+     * Result of creating a star visual - contains the group and core sphere reference.
+     */
+    private record StarVisualResult(Group group, Sphere coreSphere) {}
+
+    /**
+     * Create a magnitude-based star visual with tiered halos.
+     * Brighter stars get larger cores and multiple glow halos.
+     *
+     * Magnitude tiers:
+     *   mag ≤ -1.0: Exceptional (e.g., Sirius) - triple halo, large core
+     *   mag ≤  0.5: Very bright - double halo
+     *   mag ≤  1.5: Bright - single halo
+     *   mag ≤  3.0: Visible - no halo, medium core
+     *   mag >  3.0: Dim - small core only
+     */
+    private StarVisualResult createStarVisual(double magnitude, Color starColor, double[] position) {
+        Group starGroup = new Group();
+        double x = position[0];
+        double y = position[1];
+        double z = position[2];
+
+        // Calculate core size based on magnitude (brighter = larger)
+        double coreSize = calculateCoreSize(magnitude);
+
+        // Create the core sphere
+        Sphere core = new Sphere(coreSize);
+        core.setCullFace(CullFace.NONE);
+        PhongMaterial coreMaterial = new PhongMaterial();
+        coreMaterial.setDiffuseColor(starColor);
+        coreMaterial.setSpecularColor(Color.WHITE);
+        core.setMaterial(coreMaterial);
+        core.setTranslateX(x);
+        core.setTranslateY(y);
+        core.setTranslateZ(z);
+
+        // Add halos based on magnitude tier
+        if (magnitude <= -1.0) {
+            // Exceptional brightness (Sirius-class): triple halo
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 6.0, starColor, 0.08));
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 4.0, starColor, 0.15));
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 2.5, starColor, 0.25));
+        } else if (magnitude <= 0.5) {
+            // Very bright: double halo
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 4.0, starColor, 0.12));
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 2.2, starColor, 0.22));
+        } else if (magnitude <= 1.5) {
+            // Bright: single halo
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 2.5, starColor, 0.18));
+        } else if (magnitude <= 2.5) {
+            // Moderately bright: subtle halo
+            starGroup.getChildren().add(createHalo(x, y, z, coreSize * 1.8, starColor, 0.12));
+        }
+        // mag > 2.5: no halo, just the core
+
+        starGroup.getChildren().add(core);
+
+        return new StarVisualResult(starGroup, core);
+    }
+
+    /**
+     * Create a glow halo sphere.
+     */
+    private Sphere createHalo(double x, double y, double z, double radius, Color tintColor, double opacity) {
+        Sphere halo = new Sphere(radius);
+        halo.setCullFace(CullFace.NONE);
+
+        // Blend the star color with white for the halo (tinted glow)
+        Color haloColor = tintColor.interpolate(Color.WHITE, 0.6);
+        // Apply opacity to the color
+        Color finalColor = Color.color(
+                haloColor.getRed(),
+                haloColor.getGreen(),
+                haloColor.getBlue(),
+                opacity
+        );
+
+        PhongMaterial haloMaterial = new PhongMaterial();
+        haloMaterial.setDiffuseColor(finalColor);
+        halo.setMaterial(haloMaterial);
+
+        halo.setTranslateX(x);
+        halo.setTranslateY(y);
+        halo.setTranslateZ(z);
+
+        return halo;
+    }
+
+    /**
+     * Calculate core sphere size based on magnitude.
+     * Uses a logarithmic scale for better visual distinction.
+     */
+    private double calculateCoreSize(double magnitude) {
+        // Base size for mag 6 stars
+        double baseSize = 0.5;
+
+        // Each magnitude step is ~2.512x brightness difference
+        // We use a gentler scaling for visual appeal
+        double brightnessScale = Math.pow(2.0, (6.0 - magnitude) / 2.5);
+
+        // Clamp the size to reasonable bounds
+        double size = baseSize * Math.sqrt(brightnessScale);
+        return Math.max(0.4, Math.min(3.5, size));
     }
 
     /**
