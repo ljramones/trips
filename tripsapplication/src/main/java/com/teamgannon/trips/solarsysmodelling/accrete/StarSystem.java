@@ -87,6 +87,10 @@ public class StarSystem {
         this.extraVerbose = extraVerbose;
 
         centralBody = starObject.toSimStar();
+
+        // Validate stellar parameters - fail fast with clear error message
+        validateAndFixStarParams(starObject.getDisplayName());
+
         centralBody.setAge();
 
         // run solar system dust aggregation
@@ -94,6 +98,46 @@ public class StarSystem {
         checkPlanets();
         migratePlanets();
         setEnvironments();
+    }
+
+    /**
+     * Validates stellar parameters and applies fallback defaults if invalid.
+     * This prevents division by zero and NaN propagation in system generation.
+     *
+     * @param starName the star name for logging/error messages
+     */
+    private void validateAndFixStarParams(String starName) {
+        boolean invalid = false;
+        StringBuilder issues = new StringBuilder();
+
+        // Access protected fields directly (same package)
+        if (centralBody.mass <= 0) {
+            centralBody.mass = 1.0;  // Sun-like fallback
+            issues.append("Mass was ≤0 → set to 1.0 M☉; ");
+            invalid = true;
+        }
+        if (centralBody.luminosity <= 0) {
+            centralBody.luminosity = 1.0;  // Sun-like fallback
+            issues.append("Luminosity was ≤0 → set to 1.0 L☉; ");
+            invalid = true;
+        }
+        if (centralBody.temperature <= 0) {
+            centralBody.temperature = 5772;  // Sun's effective temperature
+            issues.append("Temperature was ≤0 → set to 5772 K; ");
+            invalid = true;
+        }
+        if (centralBody.radius <= 0) {
+            centralBody.radius = 1.0;  // Sun-like fallback
+            issues.append("Radius was ≤0 → set to 1.0 R☉; ");
+            invalid = true;
+        }
+
+        if (invalid) {
+            log.warn("Fixed invalid stellar parameters for '{}': {} " +
+                     "Please update the star record with correct values.", starName, issues);
+            // Recalculate derived values after fixing
+            centralBody.recalc();
+        }
     }
 
     ////////////////  APIs  //////////////////////////////////////////

@@ -4,6 +4,7 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.utility.SesameResolver;
 import javafx.event.ActionEvent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -1058,6 +1059,14 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private void changeClicked(ActionEvent actionEvent) {
         try {
             getData();
+
+            // Validate critical stellar parameters for solar system generation
+            String validationWarning = validateStellarParameters();
+            if (validationWarning != null) {
+                // Show warning but allow save - user may want to fix later
+                showWarningAlert("Incomplete Stellar Data", validationWarning);
+            }
+
             StarEditStatus starEditStatus = new StarEditStatus();
             starEditStatus.setRecord(record);
             starEditStatus.setChanged(true);
@@ -1065,6 +1074,54 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         } catch (Exception e) {
             showErrorAlert("enter star data", "invalid floating point number entered");
         }
+    }
+
+    /**
+     * Validates that critical stellar parameters are present for solar system generation.
+     * Returns a warning message if any are missing/zero, or null if all are valid.
+     */
+    private String validateStellarParameters() {
+        StringBuilder issues = new StringBuilder();
+
+        if (record.getMass() <= 0) {
+            issues.append("• Mass is missing or zero\n");
+        }
+        if (record.getRadius() <= 0) {
+            issues.append("• Radius is missing or zero\n");
+        }
+        if (record.getTemperature() <= 0) {
+            issues.append("• Temperature is missing or zero\n");
+        }
+
+        // Check luminosity - it's a String that should parse to a positive number
+        String lumStr = record.getLuminosity();
+        if (lumStr == null || lumStr.isBlank()) {
+            issues.append("• Luminosity is missing\n");
+        } else {
+            try {
+                double lum = Double.parseDouble(lumStr.trim());
+                if (lum <= 0) {
+                    issues.append("• Luminosity is zero or negative\n");
+                }
+            } catch (NumberFormatException e) {
+                // It might be a luminosity class (e.g., "V") which is fine
+            }
+        }
+
+        if (issues.length() > 0) {
+            return "The following stellar parameters are missing or invalid:\n\n" +
+                   issues +
+                   "\nSolar system generation may use default values (Sun-like) for missing data.";
+        }
+        return null;
+    }
+
+    private void showWarningAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void cancelClicked(ActionEvent actionEvent) {
