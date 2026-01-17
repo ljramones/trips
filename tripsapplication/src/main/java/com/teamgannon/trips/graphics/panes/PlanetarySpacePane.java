@@ -289,6 +289,13 @@ public class PlanetarySpacePane extends Pane {
     }
 
     /**
+     * Set callback for when a star is clicked.
+     */
+    public void setOnStarClicked(java.util.function.Consumer<PlanetarySkyRenderer.BrightStarEntry> callback) {
+        skyRenderer.setOnStarClicked(callback);
+    }
+
+    /**
      * Reset the view.
      * Camera must be INSIDE the sky dome (radius=500) for CullFace.FRONT to work.
      */

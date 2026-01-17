@@ -70,6 +70,16 @@ public class PlanetarySkyRenderer {
      */
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    /**
+     * Map from 3D star node to its star data (for click-to-identify)
+     */
+    private final Map<Node, BrightStarEntry> shapeToStarData = new HashMap<>();
+
+    /**
+     * Callback for when a star is clicked
+     */
+    private java.util.function.Consumer<BrightStarEntry> onStarClicked;
+
     public PlanetarySkyRenderer() {
         skyGroup.getChildren().addAll(groundGroup, gridGroup, horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
     }
@@ -307,6 +317,29 @@ public class PlanetarySkyRenderer {
 
             starsGroup.getChildren().add(starVisual.group());
             Sphere starSphere = starVisual.coreSphere();
+            Group starGroup = starVisual.group();
+
+            // Create star entry for tracking and click identification
+            BrightStarEntry starEntry = new BrightStarEntry(
+                    star.getStarName(),
+                    distFromPlanet,
+                    adjustedMag,
+                    azimuth,
+                    altitude,
+                    star
+            );
+
+            // Map the star group and core sphere to the star data for click-to-identify
+            shapeToStarData.put(starGroup, starEntry);
+            shapeToStarData.put(starSphere, starEntry);
+
+            // Add click handler to the star group
+            starGroup.setOnMouseClicked(event -> {
+                if (onStarClicked != null) {
+                    onStarClicked.accept(starEntry);
+                }
+                event.consume();
+            });
 
             // Create label for bright stars (mag <= labelMagnitudeLimit)
             if (adjustedMag <= labelMagnitudeLimit && star.getStarName() != null && !star.getStarName().isEmpty()) {
@@ -314,15 +347,8 @@ public class PlanetarySkyRenderer {
                 shapeToLabel.put(starSphere, label);
             }
 
-            // Track brightest stars
-            brightestStars.add(new BrightStarEntry(
-                    star.getStarName(),
-                    distFromPlanet,
-                    adjustedMag,
-                    azimuth,
-                    altitude,
-                    star
-            ));
+            // Track brightest stars (for side pane list)
+            brightestStars.add(starEntry);
         }
 
         // Sort by magnitude (brightest first) and keep top 20
@@ -478,6 +504,7 @@ public class PlanetarySkyRenderer {
         siblingPlanetsGroup.getChildren().clear();
         brightestStars.clear();
         shapeToLabel.clear();
+        shapeToStarData.clear();
     }
 
     /**
@@ -486,6 +513,13 @@ public class PlanetarySkyRenderer {
      */
     public Map<Node, Label> getShapeToLabel() {
         return shapeToLabel;
+    }
+
+    /**
+     * Set callback for when a star is clicked.
+     */
+    public void setOnStarClicked(java.util.function.Consumer<BrightStarEntry> callback) {
+        this.onStarClicked = callback;
     }
 
     /**

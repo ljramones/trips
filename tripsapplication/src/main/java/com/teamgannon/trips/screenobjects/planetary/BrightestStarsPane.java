@@ -25,12 +25,31 @@ public class BrightestStarsPane extends VBox {
     private final ListView<PlanetarySkyRenderer.BrightStarEntry> starListView;
     private final ObservableList<PlanetarySkyRenderer.BrightStarEntry> starList;
     private final Label headerLabel;
+    private final VBox selectedStarBox;
+    private final Label selectedStarLabel;
+    private final Label selectedStarDetails;
 
     private Consumer<PlanetarySkyRenderer.BrightStarEntry> onStarSelected;
 
     public BrightestStarsPane() {
         setPadding(new Insets(10));
         setSpacing(5);
+
+        // Selected star section (shown when a star is clicked in the sky)
+        selectedStarBox = new VBox(3);
+        selectedStarBox.setPadding(new Insets(5, 8, 8, 8));
+        selectedStarBox.setStyle("-fx-background-color: #2a4d6e; -fx-background-radius: 4;");
+        selectedStarBox.setVisible(false);
+        selectedStarBox.setManaged(false);
+
+        Label selectedHeader = new Label("Selected Star");
+        selectedHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #aaccff;");
+        selectedStarLabel = new Label();
+        selectedStarLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: white;");
+        selectedStarDetails = new Label();
+        selectedStarDetails.setStyle("-fx-font-size: 11px; -fx-text-fill: #cccccc;");
+        selectedStarDetails.setWrapText(true);
+        selectedStarBox.getChildren().addAll(selectedHeader, selectedStarLabel, selectedStarDetails);
 
         headerLabel = new Label("Top 20 Brightest Stars");
         headerLabel.setStyle("-fx-font-weight: bold;");
@@ -66,7 +85,63 @@ public class BrightestStarsPane extends VBox {
             }
         });
 
-        getChildren().addAll(headerLabel, starListView);
+        getChildren().addAll(selectedStarBox, headerLabel, starListView);
+    }
+
+    /**
+     * Display a star that was clicked in the sky.
+     * Shows detailed info in the selected star box.
+     */
+    public void showSelectedStar(PlanetarySkyRenderer.BrightStarEntry star) {
+        if (star == null) {
+            selectedStarBox.setVisible(false);
+            selectedStarBox.setManaged(false);
+            return;
+        }
+
+        selectedStarLabel.setText(star.getName());
+
+        String compassDir = getCompassDirection(star.getAzimuth());
+        String details = String.format(
+                "Magnitude: %.2f\n" +
+                "Distance: %.2f ly\n" +
+                "Position: %s, %.1f° altitude\n" +
+                "Azimuth: %.1f°",
+                star.getApparentMagnitude(),
+                star.getDistanceFromPlanet(),
+                compassDir,
+                star.getAltitude(),
+                star.getAzimuth()
+        );
+
+        // Add spectral class if available
+        if (star.getStarRecord() != null && star.getStarRecord().getSpectralClass() != null) {
+            details += "\nSpectral: " + star.getStarRecord().getSpectralClass();
+        }
+
+        selectedStarDetails.setText(details);
+        selectedStarBox.setVisible(true);
+        selectedStarBox.setManaged(true);
+
+        // Also try to select it in the list if it's there
+        for (int i = 0; i < starList.size(); i++) {
+            if (starList.get(i).getName().equals(star.getName())) {
+                starListView.getSelectionModel().select(i);
+                starListView.scrollTo(i);
+                break;
+            }
+        }
+
+        log.info("Selected star: {}", star.getName());
+    }
+
+    /**
+     * Clear the selected star display.
+     */
+    public void clearSelectedStar() {
+        selectedStarBox.setVisible(false);
+        selectedStarBox.setManaged(false);
+        starListView.getSelectionModel().clearSelection();
     }
 
     /**
@@ -88,6 +163,7 @@ public class BrightestStarsPane extends VBox {
     public void clear() {
         starList.clear();
         headerLabel.setText("Top 20 Brightest Stars");
+        clearSelectedStar();
     }
 
     /**

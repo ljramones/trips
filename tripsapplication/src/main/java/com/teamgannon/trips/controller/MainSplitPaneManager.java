@@ -802,6 +802,12 @@ public class MainSplitPaneManager {
                             leftDisplayController.getPlanetarySpacePane().updateLabelMagnitudeLimit(mag);
                         });
 
+                        // Wire star click-to-identify
+                        leftDisplayController.getPlanetarySpacePane().setOnStarClicked(star -> {
+                            rightPanelCoordinator.getPlanetarySidePane().getBrightestStarsPane().showSelectedStar(star);
+                            rightPanelCoordinator.getPlanetarySidePane().expandStarsList();
+                        });
+
                         viewControlPane.setOnDirectionChanged(direction ->
                                 leftDisplayController.getPlanetarySpacePane().setViewingDirection(
                                         com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),

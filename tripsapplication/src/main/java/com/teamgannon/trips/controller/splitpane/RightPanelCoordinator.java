@@ -124,4 +124,11 @@ public class RightPanelCoordinator {
     public com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane getPlanetaryViewControlPane() {
         return rightPanelController.getPlanetarySidePane().getViewControlPane();
     }
+
+    /**
+     * Get the planetary side pane for direct access to its components.
+     */
+    public com.teamgannon.trips.screenobjects.planetary.PlanetarySidePane getPlanetarySidePane() {
+        return rightPanelController.getPlanetarySidePane();
+    }
 }
