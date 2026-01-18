@@ -17,7 +17,11 @@ public record PlanetConfig(
     double heightScaleMultiplier, // multiplier for mountain/rift heights (default 1.0)
     double riftDepthMultiplier,   // multiplier for divergent boundary depths
     double hotspotProbability,    // 0.0-1.0, chance of volcanic hotspots
-    boolean enableActiveTectonics // whether full plate tectonics is active (vs stagnant lid)
+    boolean enableActiveTectonics, // whether full plate tectonics is active (vs stagnant lid)
+    // Erosion parameters
+    int erosionIterations,        // 0-10, number of sediment flow iterations (default 5)
+    double rainfallScale,         // 0.0-2.0, multiplier for rainfall amounts (default 1.0)
+    boolean enableRivers          // whether to carve river valleys (default true)
 ) {
 
     /** Size presets matching original GDScript */
@@ -77,6 +81,10 @@ public record PlanetConfig(
         private double riftDepthMultiplier = 1.0;
         private double hotspotProbability = 0.12;
         private boolean enableActiveTectonics = true;
+        // Erosion defaults
+        private int erosionIterations = 5;
+        private double rainfallScale = 1.0;
+        private boolean enableRivers = true;
 
         public Builder seed(long seed) { this.seed = seed; return this; }
         public Builder size(Size size) { this.size = size; return this; }
@@ -109,6 +117,21 @@ public record PlanetConfig(
             return this;
         }
 
+        public Builder erosionIterations(int iterations) {
+            this.erosionIterations = Math.max(0, Math.min(10, iterations));
+            return this;
+        }
+
+        public Builder rainfallScale(double scale) {
+            this.rainfallScale = Math.max(0.0, Math.min(2.0, scale));
+            return this;
+        }
+
+        public Builder enableRivers(boolean enabled) {
+            this.enableRivers = enabled;
+            return this;
+        }
+
         public Builder fromAccreteRadius(double radiusKm) {
             this.radius = radiusKm;
             if (radiusKm < 3000) this.size = Size.SMALL;
@@ -122,7 +145,8 @@ public record PlanetConfig(
             return new PlanetConfig(
                 seed, size.n, size.polyCount, plateCount, radius, waterFraction,
                 oceanicPlateRatio, heightScaleMultiplier, riftDepthMultiplier,
-                hotspotProbability, enableActiveTectonics
+                hotspotProbability, enableActiveTectonics,
+                erosionIterations, rainfallScale, enableRivers
             );
         }
     }
@@ -142,7 +166,10 @@ public record PlanetConfig(
             .heightScaleMultiplier(heightScaleMultiplier)
             .riftDepthMultiplier(riftDepthMultiplier)
             .hotspotProbability(hotspotProbability)
-            .enableActiveTectonics(enableActiveTectonics);
+            .enableActiveTectonics(enableActiveTectonics)
+            .erosionIterations(erosionIterations)
+            .rainfallScale(rainfallScale)
+            .enableRivers(enableRivers);
     }
 
     /**

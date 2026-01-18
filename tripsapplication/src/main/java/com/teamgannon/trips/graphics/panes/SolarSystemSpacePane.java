@@ -3,6 +3,7 @@ package com.teamgannon.trips.graphics.panes;
 import com.teamgannon.trips.config.application.ScreenSize;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
+import com.teamgannon.trips.dialogs.solarsystem.ProceduralPlanetViewerDialog;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.events.SolarSystemCameraEvent;
@@ -13,6 +14,8 @@ import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
@@ -715,14 +718,15 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 ? currentSystem.getPlanetDescriptionList()
                 : List.of();
 
-        // Create and show context menu with land on planet option
+        // Create and show context menu with all options including terrain viewing
         ContextMenu menu = contextMenuFactory.createPlanetContextMenu(
                 planet,
                 exoPlanet,
                 siblings,
                 this::handlePlanetEdit,
                 this::handlePlanetDelete,
-                this::handleLandOnPlanet
+                this::handleLandOnPlanet,
+                this::handleViewTerrain
         );
 
         menu.show(source, screenX, screenY);
@@ -758,6 +762,145 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 ContextSelectionType.PLANETARY,
                 currentSystem.getStarDisplayRecord(),
                 context));
+    }
+
+    /**
+     * Handle "View Terrain" - generate and display procedural terrain for the planet.
+     */
+    private void handleViewTerrain(ExoPlanet exoPlanet) {
+        if (exoPlanet == null) {
+            log.warn("Cannot view terrain: planet is null");
+            return;
+        }
+
+        // Don't allow terrain viewing for gas giants
+        if (Boolean.TRUE.equals(exoPlanet.getGasGiant())) {
+            log.info("Cannot view terrain for gas giant: {}", exoPlanet.getName());
+            return;
+        }
+
+        log.info("Generating procedural terrain for: {}", exoPlanet.getName());
+
+        try {
+            // Generate deterministic seed from planet ID
+            long seed = exoPlanet.getId() != null ? exoPlanet.getId().hashCode() : System.nanoTime();
+
+            // Create PlanetConfig directly from ExoPlanet properties
+            PlanetConfig config = createPlanetConfigFromExoPlanet(exoPlanet, seed);
+
+            // Generate procedural terrain
+            PlanetGenerator.GeneratedPlanet generated = PlanetGenerator.generate(config);
+
+            log.info("Generated terrain with {} polygons, {} rivers",
+                generated.polygons().size(),
+                generated.rivers() != null ? generated.rivers().size() : 0);
+
+            // Show the terrain viewer dialog
+            ProceduralPlanetViewerDialog dialog = new ProceduralPlanetViewerDialog(
+                exoPlanet.getName(), generated);
+            dialog.showAndWait();
+
+        } catch (Exception e) {
+            log.error("Failed to generate terrain for planet: {}", exoPlanet.getName(), e);
+        }
+    }
+
+    /**
+     * Create a PlanetConfig directly from ExoPlanet properties.
+     * Derives tectonic parameters from physical properties without requiring Accrete Planet.
+     */
+    private PlanetConfig createPlanetConfigFromExoPlanet(ExoPlanet exo, long seed) {
+        // Earth radius in km
+        final double EARTH_RADIUS_KM = 6371.0;
+
+        // Get radius in km (ExoPlanet stores in Earth radii)
+        double radiusKm = (exo.getRadius() != null && exo.getRadius() > 0)
+            ? exo.getRadius() * EARTH_RADIUS_KM
+            : EARTH_RADIUS_KM;
+
+        // Get water fraction (ExoPlanet stores as fraction 0-1)
+        double waterFraction = (exo.getHydrosphere() != null)
+            ? exo.getHydrosphere()
+            : 0.66;  // Earth-like default
+
+        // Derive tectonic parameters from physical properties
+        double mass = (exo.getMass() != null && exo.getMass() > 0) ? exo.getMass() : 1.0;
+        double gravity = (exo.getSurfaceGravity() != null && exo.getSurfaceGravity() > 0)
+            ? exo.getSurfaceGravity() : 1.0;
+
+        // Plate count: more massive planets have more internal heat → more plates
+        int plateCount;
+        if (mass < 0.3) {
+            plateCount = 5;
+        } else if (mass < 0.7) {
+            plateCount = 8;
+        } else if (mass < 1.5) {
+            plateCount = 12;  // Earth-like
+        } else if (mass < 3.0) {
+            plateCount = 16;  // Super-Earths
+        } else {
+            plateCount = 10;  // Very massive may transition to stagnant lid
+        }
+
+        // Oceanic ratio: more water → more oceanic crust
+        double oceanicRatio = 0.5 + (waterFraction * 0.35);
+        oceanicRatio = Math.min(0.85, Math.max(0.3, oceanicRatio));
+
+        // Mountain height: inversely proportional to gravity
+        double heightMultiplier = 1.0 / Math.sqrt(gravity);
+        heightMultiplier = Math.min(2.0, Math.max(0.5, heightMultiplier));
+        if (waterFraction > 0.5) {
+            heightMultiplier *= 0.9;  // Erosion reduces peaks
+        }
+
+        // Rift depth multiplier
+        double riftMultiplier = 1.0 / Math.sqrt(gravity);
+        if (waterFraction > 0.3) {
+            riftMultiplier *= 1.0 + (waterFraction * 0.3);
+        }
+        riftMultiplier = Math.min(2.0, Math.max(0.5, riftMultiplier));
+
+        // Hotspot probability: assume moderate age (4-5 Gyr)
+        double hotspotProb = 0.12;
+        if (mass > 1.5) {
+            hotspotProb *= 1.3;
+        } else if (mass < 0.5) {
+            hotspotProb *= 0.6;
+        }
+        hotspotProb = Math.min(0.4, Math.max(0.02, hotspotProb));
+
+        // Active tectonics check
+        boolean activeTectonics = mass >= 0.2 && waterFraction >= 0.05;
+
+        // Surface temperature check (K)
+        Double surfTemp = exo.getSurfaceTemperature();
+        if (surfTemp == null) {
+            surfTemp = exo.getTempCalculated();
+        }
+        if (surfTemp != null) {
+            if (surfTemp > 700 && waterFraction < 0.01) {
+                activeTectonics = false;  // Venus-like
+            }
+            if (surfTemp < 150) {
+                activeTectonics = false;  // Frozen
+            }
+        }
+
+        PlanetConfig.Builder builder = PlanetConfig.builder()
+            .seed(seed)
+            .fromAccreteRadius(radiusKm)
+            .waterFraction(waterFraction)
+            .plateCount(plateCount)
+            .oceanicPlateRatio(oceanicRatio)
+            .heightScaleMultiplier(heightMultiplier)
+            .riftDepthMultiplier(riftMultiplier)
+            .hotspotProbability(hotspotProb)
+            .enableActiveTectonics(activeTectonics);
+
+        log.debug("Created PlanetConfig for {}: radius={} km, water={}, plates={}, active={}",
+            exo.getName(), radiusKm, waterFraction, plateCount, activeTectonics);
+
+        return builder.build();
     }
 
     @Override

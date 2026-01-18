@@ -1,6 +1,7 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
+import org.jzy3d.plot3d.primitives.Composite;
 import org.jzy3d.plot3d.primitives.Shape;
 
 import java.util.List;
@@ -26,7 +27,8 @@ public class PlanetGenerator {
         int[] heights,
         ClimateCalculator.ClimateZone[] climates,
         PlateAssigner.PlateAssignment plateAssignment,
-        BoundaryDetector.BoundaryAnalysis boundaryAnalysis
+        BoundaryDetector.BoundaryAnalysis boundaryAnalysis,
+        ErosionCalculator.ErosionResult erosionResult
     ) {
         public Shape createShape() {
             return new PlanetRenderer(polygons, heights, config.radius() / 6371.0).createShape();
@@ -38,6 +40,133 @@ public class PlanetGenerator {
 
         public Shape createWireframe() {
             return new PlanetRenderer(polygons, heights).createWireframeShape();
+        }
+
+        /**
+         * Returns the river paths from erosion calculation.
+         * Each river is a list of polygon indices from source to mouth.
+         */
+        public List<List<Integer>> rivers() {
+            return erosionResult != null ? erosionResult.rivers() : List.of();
+        }
+
+        /**
+         * Returns the rainfall distribution from erosion calculation.
+         * Values indicate relative precipitation amounts per polygon.
+         */
+        public double[] rainfall() {
+            return erosionResult != null ? erosionResult.rainfall() : new double[0];
+        }
+
+        /**
+         * Returns the high-precision heights from erosion calculation.
+         * These provide finer gradations than integer heights for smooth rendering.
+         */
+        public double[] preciseHeights() {
+            return erosionResult != null ? erosionResult.preciseHeights() : new double[0];
+        }
+
+        /**
+         * Returns array indicating which rivers end frozen (in polar zones).
+         * True = frozen terminus, False = flows into ocean.
+         */
+        public boolean[] frozenRiverTerminus() {
+            return erosionResult != null ? erosionResult.frozenRiverTerminus() : null;
+        }
+
+        /**
+         * Checks if a specific river ends frozen.
+         */
+        public boolean isRiverFrozen(int riverIndex) {
+            return erosionResult != null && erosionResult.isRiverFrozen(riverIndex);
+        }
+
+        /**
+         * Creates a shape using smooth color gradients based on precise heights.
+         * Provides more natural-looking terrain than integer-stepped colors.
+         */
+        public Shape createSmoothShape() {
+            return new PlanetRenderer(polygons, heights, preciseHeights(), config.radius() / 6371.0)
+                .createSmoothShape();
+        }
+
+        /**
+         * Creates a smooth shape at specified scale.
+         */
+        public Shape createSmoothShape(double scale) {
+            return new PlanetRenderer(polygons, heights, preciseHeights(), scale)
+                .createSmoothShape();
+        }
+
+        /**
+         * Creates a composite shape with planet surface and rivers.
+         * Rivers are rendered as blue line strips from mountain sources to ocean mouths.
+         * Frozen rivers (ending in polar zones) are rendered with ice-blue gradient.
+         */
+        public Composite createShapeWithRivers() {
+            return new PlanetRenderer(polygons, heights, config.radius() / 6371.0)
+                .createShapeWithRivers(rivers(), frozenRiverTerminus());
+        }
+
+        /**
+         * Creates a composite shape with planet surface and rivers at specified scale.
+         */
+        public Composite createShapeWithRivers(double scale) {
+            return new PlanetRenderer(polygons, heights, scale)
+                .createShapeWithRivers(rivers(), frozenRiverTerminus());
+        }
+
+        /**
+         * Creates a shape containing only the rivers (without planet surface).
+         * Useful for layering rivers over existing planet renders.
+         * Includes frozen river visualization.
+         */
+        public Composite createRiversOnly() {
+            return new PlanetRenderer(polygons, heights, config.radius() / 6371.0)
+                .createRiverShape(rivers(), frozenRiverTerminus());
+        }
+
+        /**
+         * Creates a shape containing only the rivers at specified scale.
+         */
+        public Composite createRiversOnly(double scale) {
+            return new PlanetRenderer(polygons, heights, scale)
+                .createRiverShape(rivers(), frozenRiverTerminus());
+        }
+
+        /**
+         * Creates a rainfall heat-map visualization.
+         * Colors range from brown (dry) through yellow/green to blue (wet).
+         * Useful for debugging erosion and understanding climate patterns.
+         */
+        public Shape createRainfallHeatMap() {
+            return new PlanetRenderer(polygons, heights, config.radius() / 6371.0)
+                .createRainfallHeatMap(rainfall());
+        }
+
+        /**
+         * Creates a rainfall heat-map at specified scale.
+         */
+        public Shape createRainfallHeatMap(double scale) {
+            return new PlanetRenderer(polygons, heights, scale)
+                .createRainfallHeatMap(rainfall());
+        }
+
+        /**
+         * Creates a blended terrain/rainfall visualization.
+         * @param blendFactor 0.0 = terrain only, 1.0 = rainfall only, 0.5 = equal blend
+         */
+        public Shape createTerrainWithRainfallOverlay(double blendFactor) {
+            return new PlanetRenderer(polygons, heights, config.radius() / 6371.0)
+                .createTerrainWithRainfallOverlay(rainfall(), blendFactor);
+        }
+
+        /**
+         * Creates a blended terrain/rainfall visualization at specified scale.
+         */
+        public Shape createTerrainWithRainfallOverlay(double scale, double blendFactor) {
+            return new PlanetRenderer(polygons, heights, scale)
+                .createTerrainWithRainfallOverlay(rainfall(), blendFactor);
         }
     }
 
@@ -60,7 +189,16 @@ public class PlanetGenerator {
         ClimateCalculator climateCalc = new ClimateCalculator(polygons);
         ClimateCalculator.ClimateZone[] climates = climateCalc.calculate();
 
-        return new GeneratedPlanet(config, polygons, heights, climates, plateAssignment, boundaryAnalysis);
+        // Apply erosion pass (runs after climate since rainfall depends on climate zones)
+        // Pass plate data for divergent boundary moisture boost
+        ErosionCalculator.ErosionResult erosionResult = ErosionCalculator.calculate(
+            heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+
+        // Use eroded heights for final output
+        int[] finalHeights = erosionResult.erodedHeights();
+
+        return new GeneratedPlanet(config, polygons, finalHeights, climates,
+            plateAssignment, boundaryAnalysis, erosionResult);
     }
 
     public static GeneratedPlanet generate(PlanetConfig config) {

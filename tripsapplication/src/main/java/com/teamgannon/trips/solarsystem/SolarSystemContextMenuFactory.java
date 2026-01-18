@@ -66,6 +66,31 @@ public class SolarSystemContextMenuFactory {
             Consumer<ExoPlanet> onDeletePlanet,
             Consumer<ExoPlanet> onLandOnPlanet) {
 
+        return createPlanetContextMenu(planet, exoPlanet, siblingPlanets, onEditComplete,
+                onDeletePlanet, onLandOnPlanet, null);
+    }
+
+    /**
+     * Create a context menu for a planet sphere with all options including terrain viewing.
+     *
+     * @param planet           the planet description
+     * @param exoPlanet        the ExoPlanet entity for editing
+     * @param siblingPlanets   other planets in the system (for orbit validation)
+     * @param onEditComplete   callback when editing is complete
+     * @param onDeletePlanet   callback when planet should be deleted
+     * @param onLandOnPlanet   callback when user wants to land on planet (view sky from surface)
+     * @param onViewTerrain    callback when user wants to view procedural terrain
+     * @return the context menu
+     */
+    public ContextMenu createPlanetContextMenu(
+            PlanetDescription planet,
+            ExoPlanet exoPlanet,
+            List<PlanetDescription> siblingPlanets,
+            Consumer<PlanetEditResult> onEditComplete,
+            Consumer<ExoPlanet> onDeletePlanet,
+            Consumer<ExoPlanet> onLandOnPlanet,
+            Consumer<ExoPlanet> onViewTerrain) {
+
         ContextMenu menu = new ContextMenu();
 
         // Title item (disabled, just for display)
@@ -85,6 +110,22 @@ public class SolarSystemContextMenuFactory {
         });
         landOnPlanetItem.setDisable(exoPlanet == null || onLandOnPlanet == null);
         menu.getItems().add(landOnPlanetItem);
+
+        // View Terrain (procedural 3D terrain viewer)
+        MenuItem viewTerrainItem = new MenuItem("View Terrain...");
+        viewTerrainItem.setOnAction(e -> {
+            if (exoPlanet != null && onViewTerrain != null) {
+                log.info("User selected 'View Terrain' for: {}", exoPlanet.getName());
+                onViewTerrain.accept(exoPlanet);
+            }
+        });
+        // Disable for gas giants (no solid surface) or if no callback provided
+        boolean isGasGiant = exoPlanet != null && Boolean.TRUE.equals(exoPlanet.getGasGiant());
+        viewTerrainItem.setDisable(exoPlanet == null || onViewTerrain == null || isGasGiant);
+        if (isGasGiant) {
+            viewTerrainItem.setText("View Terrain... (no solid surface)");
+        }
+        menu.getItems().add(viewTerrainItem);
 
         menu.getItems().add(new SeparatorMenuItem());
 
