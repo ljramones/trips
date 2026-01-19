@@ -25,7 +25,12 @@ solarsysmodelling/
 │   ├── HabitableZone.java            # HZ inner/outer radius container
 │   └── HabitableZoneTypesEnum.java   # OPTIMAL vs MAX zone types
 └── utils/
-    └── (reserved for future utilities)
+    ├── OrbitalDynamics.java              # Interface with gravitational constants
+    ├── OrbitalTypeEnum.java              # Orbit classification (Circular, Elliptical, etc.)
+    ├── OrbitalDynamicsUtils.java         # General orbital mechanics calculations
+    ├── OrbitalDynamicsCircularUtils.java # Circular orbit specialization (e=0)
+    ├── OrbitalDynamicsParabolicUtils.java# Parabolic trajectory calculations (e=1)
+    └── OrbitalDynamicsHyperbolicUtils.java# Hyperbolic orbit calculations (e>1)
 ```
 
 ## Overview
@@ -38,6 +43,110 @@ The ACCRETE algorithm simulates planetary formation through the following phases
 4. **Validation** - Handle failed planetesimals and escaped moons
 5. **Migration** - (Placeholder for planetary migration)
 6. **Environment** - Calculate atmospheres, temperatures, habitability
+
+## TRIPS Extensions to Classic Accrete
+
+TRIPS extends the original ACCRETE implementation with additional physics,
+habitability models, and data consistency checks:
+
+- **Kopparapu Habitable Zones**: Uses `HabitableZoneCalculator` in `SimStar`
+  to compute OPTIMAL/MAX HZ boundaries, and sets `inOptimalHZ`/`inMaxHZ` flags.
+- **HZ-Centered Ecosphere Radius**: `radiusEcosphere` is derived from the
+  midpoint of the OPTIMAL zone when available (fallback to √L).
+- **Expanded Planet Types**: `PlanetTypeEnum` and `AtmosphereTypeEnum` provide
+  richer classifications (breathability, greenhouse, tidal lock, etc.).
+- **Physics Validation**: `Planet.validatePhysics()` reconciles density,
+  escape velocity, and core-radius caps to keep values self-consistent.
+- **Temperature Model Guards**: explicit `albedoCooling` and greenhouse rise
+  are tracked separately to prevent sign errors in temperature calculations.
+- **Habitable/earthlike flags**: computed from environmental results and HZ status.
+- **Orbital Dynamics Framework**: New `utils/` package with comprehensive orbital mechanics calculations.
+- **Stellar Parameter Validation**: `StarSystem` validates and fixes invalid stellar parameters.
+- **Procedural Planet Integration**: Bridge to `PlanetGenerator` for terrain generation from Accrete data.
+
+## Orbital Dynamics Framework
+
+The `utils/` package provides a comprehensive orbital mechanics library for calculating orbital parameters, velocities, and anomalies.
+
+### OrbitalDynamics Interface
+
+Defines fundamental constants:
+
+```java
+public interface OrbitalDynamics {
+    double G = 6.674e-11;      // Gravitational constant (N·m²/kg²)
+    double AU = 1.4960E11;      // Astronomical unit (meters)
+    double secsInYear = 3.558E7; // Seconds in one year
+}
+```
+
+### OrbitalTypeEnum
+
+Classifies orbits by eccentricity:
+
+| Type | Eccentricity | Shape |
+|------|--------------|-------|
+| `Circular` | e = 0 | Circle |
+| `Elliptical` | 0 < e < 1 | Ellipse |
+| `Parabolic` | e = 1 | Parabola (escape trajectory) |
+| `Hyperbolic` | e > 1 | Hyperbola (flyby trajectory) |
+
+### OrbitalDynamicsUtils
+
+General orbital mechanics calculations:
+
+```java
+// Escape velocity: v_esc = √(2GM/r)
+double escapeVelocity(double mass, double radius);
+
+// First cosmic velocity (orbital velocity): v = √(GM/r)
+double firstCosmicVelocity(double mass, double radius);
+
+// Orbital period for two-body system: P = 2π√(a³/G(m₁+m₂))
+double orbitalPeriod(double mass1, double mass2, double semiMajorAxis);
+
+// Eccentricity from semi-axes: e = √(1 - b²/a²)
+double eccentricity(double semiMajorAxis, double semiMinorAxis);
+
+// Periapsis distance: q = a(1-e)
+double periapsisDistance(double semiMajorAxis, double eccentricity);
+
+// Semi-latus rectum: p = a(1-e²)
+double semiLatusRectum(double semiMajorAxis, double eccentricity);
+
+// Distance from central body at angle θ: r = p/(1 + e·cos(θ))
+double distanceFromCentralBody(double semiLatusRectum, double eccentricity, double angle);
+
+// Velocity at angle θ
+double velocity(double mass, double semiMajorAxis, double eccentricity, double angle);
+
+// Periapsis velocity: vq = √((k/a)(1+e)/(1-e))
+double periapsisVelocity(double mass, double semiMajorAxis, double eccentricity);
+
+// Eccentric anomaly: cos(E) = (e + cos(θ))/(1 + e·cos(θ))
+double eccentricAnomaly(double angle, double eccentricity);
+
+// Mean anomaly: M = E - e·sin(E)
+double meanAnomaly(double angle, double eccentricity);
+
+// Classify orbit type by eccentricity
+OrbitalTypeEnum whatTypeOfOrbit(double eccentricity);
+```
+
+### Specialized Orbit Calculators
+
+**OrbitalDynamicsCircularUtils** - For circular orbits (e=0):
+- Periapsis/semi-latus rectum both equal semi-major axis
+- Constant orbital velocity
+- Simplified calculations
+
+**OrbitalDynamicsParabolicUtils** - For parabolic trajectories (e=1):
+- Escape trajectory calculations
+- Zero total orbital energy
+
+**OrbitalDynamicsHyperbolicUtils** - For hyperbolic orbits (e>1):
+- Flyby trajectory calculations
+- Positive total orbital energy
 
 ## Entry Point
 
@@ -56,6 +165,7 @@ The constructor executes the full pipeline:
 ```java
 public StarSystem(StarObject starObject, boolean doMoons, boolean verbose, boolean extraVerbose) {
     centralBody = starObject.toSimStar();
+    validateAndFixStarParams(starObject.getDisplayName());  // NEW: Parameter validation
     centralBody.setAge();
 
     distributePlanetaryMasses();  // Phase 1-3: Accretion & coalescence
@@ -64,6 +174,54 @@ public StarSystem(StarObject starObject, boolean doMoons, boolean verbose, boole
     setEnvironments();            // Phase 6: Finalize planets
 }
 ```
+
+### Stellar Parameter Validation
+
+`validateAndFixStarParams()` ensures the central star has valid properties for simulation:
+
+```java
+private void validateAndFixStarParams(String starName) {
+    boolean needsRecalc = false;
+
+    if (centralBody.mass <= 0) {
+        log.warn("Star {} has invalid mass {}, defaulting to 1.0 solar", starName, centralBody.mass);
+        centralBody.mass = 1.0;
+        needsRecalc = true;
+    }
+
+    if (centralBody.luminosity <= 0) {
+        log.warn("Star {} has invalid luminosity {}, defaulting to 1.0 solar", starName, centralBody.luminosity);
+        centralBody.luminosity = 1.0;
+        needsRecalc = true;
+    }
+
+    if (centralBody.temperature <= 0) {
+        log.warn("Star {} has invalid temperature {}, defaulting to 5772 K", starName, centralBody.temperature);
+        centralBody.temperature = 5772;
+        needsRecalc = true;
+    }
+
+    if (centralBody.radius <= 0) {
+        log.warn("Star {} has invalid radius {}, defaulting to 1.0 solar", starName, centralBody.radius);
+        centralBody.radius = 1.0;
+        needsRecalc = true;
+    }
+
+    if (needsRecalc) {
+        centralBody.recalc();  // Recalculate dependent properties (HZ, ecosphere, etc.)
+    }
+}
+```
+
+**Default Values:**
+| Parameter | Invalid If | Default Value |
+|-----------|-----------|---------------|
+| Mass | ≤ 0 | 1.0 M☉ |
+| Luminosity | ≤ 0 | 1.0 L☉ |
+| Temperature | ≤ 0 | 5772 K |
+| Radius | ≤ 0 | 1.0 R☉ |
+
+This prevents simulation crashes when database stars have missing or zero values.
 
 ## Phase 1: Disk Initialization
 
@@ -497,6 +655,56 @@ if (breathableAtmosphere() == BREATHABLE) {
 }
 ```
 
+### Planet Habitable Zone Fields
+
+Each planet tracks its habitable zone status:
+
+```java
+private boolean inOptimalHZ = false;  // Conservative HZ (Runaway GH to Max GH)
+private boolean inMaxHZ = false;       // Optimistic HZ (Recent Venus to Early Mars)
+```
+
+**Accessor Methods:**
+
+```java
+// Check if planet is in optimal (conservative) habitable zone
+boolean isInOptimalHZ();
+
+// Check if planet is in maximum (optimistic) habitable zone
+boolean isInMaxHZ();
+
+// Get descriptive status string
+String getHabitableZoneStatus();
+// Returns: "Optimal HZ", "Extended HZ", or "Outside HZ"
+```
+
+### Radiative Physics Tracking
+
+Separates greenhouse warming from albedo cooling:
+
+```java
+private double greenhouseRise = 0.0;   // Always >= 0 (warming)
+private double albedoCooling = 0.0;    // Always <= 0 (cooling)
+```
+
+**Accessor Methods:**
+
+```java
+// Net temperature adjustment (greenhouse + albedo)
+double getNetRadiativeAdjustment();  // Returns greenhouseRise + albedoCooling
+
+// Check if planet has net cooling effect
+boolean hasNetCooling();  // Returns albedoCooling < 0
+
+// Get the cooling component
+double getAlbedoCooling();  // Returns value <= 0
+```
+
+**Why Separate Tracking:**
+- Prevents sign errors in temperature calculations
+- Allows UI to show greenhouse effect vs albedo cooling independently
+- Maintains physical consistency (greenhouse can't be negative)
+
 ## Physics Validation
 
 ### validatePhysics()
@@ -547,6 +755,62 @@ private void validatePhysics() {
 ## Habitable Zone Calculations
 
 The `habitable` package implements the Kopparapu et al. (2013/2014) model.
+
+### SimStar Habitable Zone Integration
+
+`SimStar` now has four HZ boundary fields (set by `calculateHabitableZones()`):
+
+```java
+protected double hzInnerMax = 0.0;      // Recent Venus boundary (optimistic inner)
+protected double hzOuterMax = 0.0;      // Early Mars boundary (optimistic outer)
+protected double hzInnerOptimal = 0.0;  // Runaway Greenhouse boundary (conservative inner)
+protected double hzOuterOptimal = 0.0;  // Max Greenhouse boundary (conservative outer)
+```
+
+**Accessor Methods:**
+
+```java
+// Get HZ boundaries in AU
+double getHzInnerMax();     // Recent Venus
+double getHzOuterMax();     // Early Mars
+double getHzInnerOptimal(); // Runaway Greenhouse
+double getHzOuterOptimal(); // Max Greenhouse
+
+// Check if orbital distance is in HZ
+boolean isInOptimalHZ(double semiMajorAxis);  // Conservative zone
+boolean isInMaxHZ(double semiMajorAxis);       // Optimistic zone
+```
+
+**Integration in `recalc()`:**
+
+```java
+public void recalc() {
+    // ... stellar property calculations ...
+    calculateHabitableZones();  // Sets all four HZ boundaries
+}
+
+private void calculateHabitableZones() {
+    HabitableZoneCalculator calculator = new HabitableZoneCalculator();
+    Map<HabitableZoneTypesEnum, HabitableZone> zones =
+        calculator.getHabitableZones(temperature, luminosity);
+
+    HabitableZone optimal = zones.get(HabitableZoneTypesEnum.OPTIMAL);
+    HabitableZone max = zones.get(HabitableZoneTypesEnum.MAX);
+
+    hzInnerOptimal = optimal.getInnerRadius();
+    hzOuterOptimal = optimal.getOuterRadius();
+    hzInnerMax = max.getInnerRadius();
+    hzOuterMax = max.getOuterRadius();
+
+    // Backward compatibility: set ecosphere to center of optimal HZ
+    radiusEcosphere = (hzInnerOptimal + hzOuterOptimal) / 2.0;
+}
+```
+
+`SimStar.calculateHabitableZones()` uses this calculator to set:
+- `hzInnerMax`/`hzOuterMax` (optimistic HZ)
+- `hzInnerOptimal`/`hzOuterOptimal` (conservative HZ)
+- `radiusEcosphere` as the midpoint of the optimal HZ when available
 
 ### HabitableZoneFluxes
 
@@ -738,6 +1002,107 @@ for (Planet p : system.getPlanets()) {
 }
 ```
 
+## Accrete-to-Procedural Integration
+
+The Accrete simulation output can be used to generate detailed 3D terrain via the
+`procedural` package. This creates a bridge from physical simulation to visual rendering.
+
+### Direct Generation
+
+```java
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
+
+// Generate procedural terrain directly from Accrete planet
+Planet accretePlanet = system.getPlanets().get(0);
+long seed = accretePlanet.hashCode();  // Or use orbital hash for reproducibility
+
+PlanetGenerator.GeneratedPlanet terrain =
+    PlanetGenerator.generateFromAccrete(accretePlanet, seed);
+
+// Render the terrain
+Shape planetShape = terrain.createShape();
+```
+
+### TectonicBias Translation
+
+`TectonicBias` translates Accrete physical parameters to procedural config:
+
+| Accrete Parameter | Procedural Effect |
+|-------------------|-------------------|
+| `planet.getRadius()` | Mesh resolution (larger = more polygons) |
+| `planet.getHydrosphere()` | Water fraction (sea level) |
+| `planet.getMass()` | Plate count (more mass = more plates) |
+| `planet.getSurfaceGravity()` | Height scale (higher gravity = flatter terrain) |
+| `planet.getDayLength()` | Climate model (slow rotation = tidally locked) |
+| `planet.isGasGiant()` | Minimal terrain (no solid surface) |
+
+```java
+// Manual config with TectonicBias
+TectonicBias bias = TectonicBias.fromAccretePlanet(accretePlanet);
+
+PlanetConfig config = PlanetConfig.builder()
+    .seed(seed)
+    .fromAccreteRadius(accretePlanet.getRadius())
+    .waterFraction(accretePlanet.getHydrosphere() / 100.0)
+    .build();
+
+PlanetConfig biasedConfig = bias.applyTo(config, seed);
+PlanetGenerator.GeneratedPlanet terrain = PlanetGenerator.generate(biasedConfig);
+```
+
+### Parameter Mapping Details
+
+**Plate Count from Mass:**
+```java
+if (mass < 0.3) plateCount = 5;       // Small rocky body
+else if (mass < 0.7) plateCount = 8;  // Mars-like
+else if (mass < 1.5) plateCount = 12; // Earth-like
+else if (mass < 3.0) plateCount = 16; // Super-Earth
+else plateCount = 10;                  // Large planet (convection limited)
+```
+
+**Height Scale from Gravity:**
+```java
+heightMultiplier = 1.0 / surfaceGravity;  // High gravity = lower mountains
+```
+
+**Gas Giant Handling:**
+```java
+if (isGasGiant) {
+    enableActiveTectonics = false;
+    plateCount = 1;
+    heightScaleMultiplier = 0.2;  // Minimal terrain
+}
+```
+
+### Persistence with ExoPlanet
+
+For database storage, use `ProceduralPlanetPersistenceHelper`:
+
+```java
+import com.teamgannon.trips.planetarymodelling.procedural.ProceduralPlanetPersistenceHelper;
+
+// Store procedural config in ExoPlanet entity
+ProceduralPlanetPersistenceHelper.populateProceduralMetadata(
+    exoPlanet,      // Target entity
+    config,         // PlanetConfig used
+    seed,           // Generation seed
+    terrain,        // GeneratedPlanet result
+    "accrete"       // Source label
+);
+
+// Later, restore config from stored data
+PlanetConfig restored = ProceduralPlanetPersistenceHelper.buildConfigFromSnapshots(exoPlanet);
+PlanetGenerator.GeneratedPlanet regenerated = PlanetGenerator.generate(restored);
+```
+
+**Stored Fields in ExoPlanet:**
+- `proceduralSeed` - Generation seed
+- `proceduralGeneratorVersion` - Version for migration
+- `proceduralAccreteSnapshot` - JSON of physical parameters
+- `proceduralOverrides` - JSON of config overrides
+- `proceduralPreview` - PNG preview image (256×256)
+
 ## References
 
 1. Dole, S. H. (1969). "Computer Simulation of the Formation of Planetary Systems". *Icarus*, 13(3), 494-508.
@@ -750,6 +1115,42 @@ for (Planet p : system.getPlanets()) {
 8. Fogg, M. J. (1985). "Extra-solar Planetary Systems: A Microcomputer Simulation". *JBIS*, 38, 501-514.
 
 ## Changelog
+
+### Version 2.1 (January 2026)
+
+**New: Orbital Dynamics Framework** (`utils/` package):
+- `OrbitalDynamics` interface with gravitational constants
+- `OrbitalTypeEnum` for orbit classification (Circular, Elliptical, Parabolic, Hyperbolic)
+- `OrbitalDynamicsUtils` - General orbital mechanics (escape velocity, orbital period, eccentricity, anomalies)
+- `OrbitalDynamicsCircularUtils` - Specialized circular orbit calculations
+- `OrbitalDynamicsParabolicUtils` - Escape trajectory calculations
+- `OrbitalDynamicsHyperbolicUtils` - Flyby trajectory calculations
+
+**Enhanced SimStar Habitable Zone Integration**:
+- Added four HZ boundary fields: `hzInnerMax`, `hzOuterMax`, `hzInnerOptimal`, `hzOuterOptimal`
+- New `calculateHabitableZones()` method using Kopparapu model
+- HZ checking methods: `isInOptimalHZ()`, `isInMaxHZ()`
+- Updated `toString()` to include HZ information
+
+**Enhanced Planet Habitable Zone Tracking**:
+- Added `inOptimalHZ` and `inMaxHZ` boolean fields
+- New accessor methods: `isInOptimalHZ()`, `isInMaxHZ()`, `getHabitableZoneStatus()`
+- Radiative physics separation: `greenhouseRise` vs `albedoCooling`
+- New methods: `getNetRadiativeAdjustment()`, `hasNetCooling()`, `getAlbedoCooling()`
+
+**StarSystem Parameter Validation**:
+- Added `validateAndFixStarParams()` method
+- Validates mass, luminosity, temperature, radius
+- Applies sensible defaults for invalid values
+- Logs warnings for corrected parameters
+
+**Accrete-to-Procedural Integration**:
+- `PlanetGenerator.generateFromAccrete()` for direct terrain generation
+- `TectonicBias.fromAccretePlanet()` translates physical parameters
+- `ProceduralPlanetPersistenceHelper` for storing/restoring configs
+- Parameter mapping: mass→plates, gravity→height, hydrosphere→water
+
+---
 
 ### Version 2.0 (2026)
 

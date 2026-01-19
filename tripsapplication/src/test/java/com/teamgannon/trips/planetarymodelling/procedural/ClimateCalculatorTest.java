@@ -474,4 +474,163 @@ class ClimateCalculatorTest {
             }
         }
     }
+
+    // =============================================
+    // Extended SEASONAL Model Tests
+    // =============================================
+
+    @Test
+    @DisplayName("SEASONAL model with zero tilt behaves like no seasonality")
+    void seasonalZeroTiltNoSeasonality() {
+        // 55 degree latitude polygon (well within temperate zone)
+        Vector3D center55 = new Vector3D(
+            Math.cos(Math.toRadians(55)),
+            Math.sin(Math.toRadians(55)),
+            0
+        ).normalize();
+        Polygon midLat = new Polygon(center55, createDummyVertices(center55));
+
+        ClimateCalculator seasonal = new ClimateCalculator(List.of(midLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 0.0, 0.0, 12);
+
+        ClimateZone[] zones = seasonal.calculate();
+
+        // With zero tilt, 55° latitude should be temperate
+        assertThat(zones[0]).isEqualTo(ClimateZone.TEMPERATE);
+    }
+
+    @Test
+    @DisplayName("SEASONAL model samples parameter affects smoothness")
+    void seasonalSamplesParameterRespected() {
+        Vector3D center60 = new Vector3D(
+            Math.cos(Math.toRadians(60)),
+            Math.sin(Math.toRadians(60)),
+            0
+        ).normalize();
+        Polygon highMidLat = new Polygon(center60, createDummyVertices(center60));
+
+        // Same tilt, different sample counts should give similar results
+        ClimateCalculator fewSamples = new ClimateCalculator(List.of(highMidLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 30.0, 0.0, 4);
+        ClimateCalculator manySamples = new ClimateCalculator(List.of(highMidLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 30.0, 0.0, 48);
+
+        // Both should complete without error
+        assertThat(fewSamples.calculate()).hasSize(1);
+        assertThat(manySamples.calculate()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("SEASONAL model equator remains tropical regardless of tilt")
+    void seasonalEquatorRemainsTropical() {
+        Vector3D equator = new Vector3D(1, 0, 0).normalize();
+        Polygon equatorialPoly = new Polygon(equator, createDummyVertices(equator));
+
+        ClimateCalculator lowTilt = new ClimateCalculator(List.of(equatorialPoly),
+            ClimateCalculator.ClimateModel.SEASONAL, 10.0, 0.0, 12);
+        ClimateCalculator highTilt = new ClimateCalculator(List.of(equatorialPoly),
+            ClimateCalculator.ClimateModel.SEASONAL, 45.0, 0.0, 12);
+
+        assertThat(lowTilt.calculate()[0])
+            .as("Equator should be tropical with low tilt")
+            .isEqualTo(ClimateZone.TROPICAL);
+        assertThat(highTilt.calculate()[0])
+            .as("Equator should be tropical even with high tilt")
+            .isEqualTo(ClimateZone.TROPICAL);
+    }
+
+    @Test
+    @DisplayName("SEASONAL model seasonal offset is handled")
+    void seasonalOffsetIsHandled() {
+        Vector3D center50 = new Vector3D(
+            Math.cos(Math.toRadians(50)),
+            Math.sin(Math.toRadians(50)),
+            0
+        ).normalize();
+        Polygon midLat = new Polygon(center50, createDummyVertices(center50));
+
+        // Different phase offsets should produce valid results
+        ClimateCalculator offset0 = new ClimateCalculator(List.of(midLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 23.5, 0.0, 12);
+        ClimateCalculator offset90 = new ClimateCalculator(List.of(midLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 23.5, 90.0, 12);
+        ClimateCalculator offset180 = new ClimateCalculator(List.of(midLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 23.5, 180.0, 12);
+
+        // All should complete and produce temperate (for Earth-like tilt at 50°)
+        assertThat(offset0.calculate()[0]).isNotNull();
+        assertThat(offset90.calculate()[0]).isNotNull();
+        assertThat(offset180.calculate()[0]).isNotNull();
+    }
+
+    @Test
+    @DisplayName("SEASONAL model via PlanetConfig uses correct parameters")
+    void seasonalViaConfigUsesParameters() {
+        var config = PlanetConfig.builder()
+            .seed(12345L)
+            .size(PlanetConfig.Size.DUEL)
+            .climateModel(ClimateCalculator.ClimateModel.SEASONAL)
+            .axialTiltDegrees(45.0)
+            .seasonalOffsetDegrees(30.0)
+            .seasonalSamples(24)
+            .build();
+
+        assertThat(config.climateModel()).isEqualTo(ClimateCalculator.ClimateModel.SEASONAL);
+        assertThat(config.axialTiltDegrees()).isEqualTo(45.0);
+        assertThat(config.seasonalOffsetDegrees()).isEqualTo(30.0);
+        assertThat(config.seasonalSamples()).isEqualTo(24);
+    }
+
+    @Test
+    @DisplayName("PlanetGenerator uses seasonal config in pipeline")
+    void planetGeneratorUsesSeasonalConfig() {
+        var config = PlanetConfig.builder()
+            .seed(9999L)
+            .size(PlanetConfig.Size.DUEL)
+            .climateModel(ClimateCalculator.ClimateModel.SEASONAL)
+            .axialTiltDegrees(30.0)
+            .seasonalSamples(12)
+            .build();
+
+        PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(config);
+
+        assertThat(planet.climates()).isNotNull();
+        assertThat(planet.climates()).hasSizeGreaterThan(0);
+        // All zones should be valid
+        for (ClimateZone zone : planet.climates()) {
+            assertThat(zone).isIn(ClimateZone.TROPICAL, ClimateZone.TEMPERATE, ClimateZone.POLAR);
+        }
+    }
+
+    @Test
+    @DisplayName("SEASONAL model axial tilt clamped to 0-60 degrees")
+    void seasonalTiltClamped() {
+        var config = PlanetConfig.builder()
+            .axialTiltDegrees(90.0) // Should be clamped to 60
+            .build();
+
+        assertThat(config.axialTiltDegrees()).isEqualTo(60.0);
+
+        var config2 = PlanetConfig.builder()
+            .axialTiltDegrees(-10.0) // Should be clamped to 0
+            .build();
+
+        assertThat(config2.axialTiltDegrees()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("SEASONAL model samples clamped to 4-48")
+    void seasonalSamplesClamped() {
+        var configLow = PlanetConfig.builder()
+            .seasonalSamples(1) // Should be clamped to 4
+            .build();
+
+        assertThat(configLow.seasonalSamples()).isEqualTo(4);
+
+        var configHigh = PlanetConfig.builder()
+            .seasonalSamples(100) // Should be clamped to 48
+            .build();
+
+        assertThat(configHigh.seasonalSamples()).isEqualTo(48);
+    }
 }

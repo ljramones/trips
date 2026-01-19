@@ -672,6 +672,127 @@ class ErosionCalculatorTest {
     }
 
     // ===========================================
+    // Extended Lake and Flow Accumulation Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Lake mask array has correct size")
+    void lakeMaskCorrectSize() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        if (result.lakeMask() != null) {
+            assertThat(result.lakeMask())
+                .as("Lake mask should match polygon count")
+                .hasSize(polygons.size());
+        }
+    }
+
+    @Test
+    @DisplayName("Flow accumulation array has correct size")
+    void flowAccumulationCorrectSize() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        if (result.flowAccumulation() != null) {
+            assertThat(result.flowAccumulation())
+                .as("Flow accumulation should match polygon count")
+                .hasSize(polygons.size());
+        }
+    }
+
+    @Test
+    @DisplayName("Flow accumulation values are non-negative")
+    void flowAccumulationNonNegative() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        if (result.flowAccumulation() != null) {
+            for (int i = 0; i < result.flowAccumulation().length; i++) {
+                assertThat(result.flowAccumulation()[i])
+                    .as("Flow accumulation at %d should be non-negative", i)
+                    .isGreaterThanOrEqualTo(0.0);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Lakes are not created in ocean polygons")
+    void lakesNotInOcean() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        if (result.lakeMask() != null) {
+            for (int i = 0; i < result.lakeMask().length; i++) {
+                if (result.lakeMask()[i]) {
+                    // Lake polygon should have non-negative height (not ocean)
+                    assertThat(result.erodedHeights()[i])
+                        .as("Lake polygon %d should not be in deep ocean", i)
+                        .isGreaterThanOrEqualTo(ElevationCalculator.OCEAN);
+                }
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("GeneratedPlanet exposes flow accumulation")
+    void generatedPlanetExposesFlowAccumulation() {
+        PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(config);
+
+        double[] flow = planet.flowAccumulation();
+        assertThat(flow).isNotNull();
+        if (flow.length > 0) {
+            assertThat(flow).hasSize(planet.polygons().size());
+        }
+    }
+
+    @Test
+    @DisplayName("GeneratedPlanet exposes lake mask")
+    void generatedPlanetExposesLakeMask() {
+        PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(config);
+
+        boolean[] lakes = planet.lakeMask();
+        // Lake mask may be null if no lakes formed
+        if (lakes != null) {
+            assertThat(lakes).hasSize(planet.polygons().size());
+        }
+    }
+
+    @Test
+    @DisplayName("High elevation polygons have low flow accumulation")
+    void highElevationLowFlow() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        if (result.flowAccumulation() == null) return;
+
+        // Find average flow for high vs low elevation
+        double highElevSum = 0, highCount = 0;
+        double lowElevSum = 0, lowCount = 0;
+
+        for (int i = 0; i < result.erodedHeights().length; i++) {
+            if (result.erodedHeights()[i] >= ElevationCalculator.MOUNTAINS) {
+                highElevSum += result.flowAccumulation()[i];
+                highCount++;
+            } else if (result.erodedHeights()[i] == ElevationCalculator.PLAINS ||
+                       result.erodedHeights()[i] == ElevationCalculator.LOWLAND) {
+                lowElevSum += result.flowAccumulation()[i];
+                lowCount++;
+            }
+        }
+
+        if (highCount > 0 && lowCount > 0) {
+            double avgHigh = highElevSum / highCount;
+            double avgLow = lowElevSum / lowCount;
+
+            // Low elevations should have more accumulated flow (water flows downhill)
+            assertThat(avgLow)
+                .as("Low elevation areas should have higher average flow accumulation")
+                .isGreaterThanOrEqualTo(avgHigh);
+        }
+    }
+
+    // ===========================================
     // Full Pipeline Integration Test
     // ===========================================
 

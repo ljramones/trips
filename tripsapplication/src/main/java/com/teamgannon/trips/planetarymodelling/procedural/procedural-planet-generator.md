@@ -95,6 +95,7 @@ PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(biasedConfig);
 | `JavaFxPlanetMeshConverter` | Converts mesh to JavaFX TriangleMesh |
 | `PlanetRenderer` | Jzy3d renderer (optional) |
 | `TectonicService` | Spring-compatible service with caching (in `service/` subpackage) |
+| `ProceduralPlanetPersistenceHelper` | Stores/restores procedural planet data in ExoPlanet entities |
 
 ## Size Presets
 
@@ -214,6 +215,40 @@ Sub-seeds derived for each generation phase:
 - Phase 5: Elevation calculation
 - Phase 6: Climate calculation
 - Phase 7: Erosion calculation
+
+## Persistence Layer
+
+Store and restore procedural planet configurations using `ProceduralPlanetPersistenceHelper`:
+
+```java
+// After generating a planet, store metadata in ExoPlanet entity
+ProceduralPlanetPersistenceHelper.populateProceduralMetadata(
+    exoPlanet,           // Target entity
+    config,              // PlanetConfig used
+    seed,                // Generation seed
+    planet,              // GeneratedPlanet result
+    "manual"             // Source label (e.g., "accrete", "manual", "imported")
+);
+// Saves: seed, generator version, Accrete snapshot, config overrides, preview PNG
+
+// Later, rebuild the config from stored data
+PlanetConfig restored = ProceduralPlanetPersistenceHelper.buildConfigFromSnapshots(exoPlanet);
+PlanetGenerator.GeneratedPlanet regenerated = PlanetGenerator.generate(restored);
+// Result matches original planet (reproducible from stored snapshots)
+
+// Or build config from ExoPlanet physical properties only
+PlanetConfig fromPhysicals = ProceduralPlanetPersistenceHelper.buildConfigFromExoPlanet(
+    exoPlanet, seed);
+```
+
+**Stored Data:**
+- `proceduralSeed` - Generation seed for reproducibility
+- `proceduralGeneratorVersion` - Version string for migration compatibility
+- `proceduralAccreteSnapshot` - JSON snapshot of physical parameters (mass, radius, gravity, etc.)
+- `proceduralOverrides` - JSON snapshot of PlanetConfig overrides
+- `proceduralGeneratedAt` - ISO timestamp of generation
+- `proceduralPreview` - PNG byte array (256x256 preview image)
+- `proceduralSource` - Label indicating generation source
 
 ## Service Layer
 
@@ -656,6 +691,7 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | `GenerationProgressListener` | Progress callbacks for UI integration |
 | `TectonicBias` | Accrete physical parameter translation |
 | `JavaFxPlanetMeshConverter` | JavaFX TriangleMesh conversion |
+| `ProceduralPlanetPersistenceHelper` | Store/restore procedural config in ExoPlanet entities |
 | Sub-seed derivation | `config.subSeed(phase)` for reproducibility |
 | `fromAccreteRadius()` | Auto-select mesh resolution from Accrete data |
 | Multiple climate models | HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED, SEASONAL |
@@ -914,13 +950,14 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | PlateAssigner | ~130 | Low | ✅ Good | — |
 | BoundaryDetector | ~255 | Medium | ✅ Good | Documented |
 | ElevationCalculator | ~640 | Medium | ✅ Good | Refactored |
-| ClimateCalculator | ~220 | Medium | ✅ Good | 6 climate models |
-| ErosionCalculator | ~750 | Medium | ✅ Good | Rain shadow + mass conservation |
+| ClimateCalculator | ~280 | Medium | ✅ Good | 6 climate models (incl. SEASONAL) |
+| ErosionCalculator | ~1050 | Medium | ✅ Good | Rain shadow + flow routing + lake fill |
 | GenerationProgressListener | ~145 | Low | ✅ Good | Progress callbacks |
 | TectonicBias | ~150 | Low | ✅ Good | Accrete parameter translation |
 | PlanetRenderer | ~440 | Low | ✅ Good | — |
 | JavaFxPlanetMeshConverter | ~1200 | Medium | ✅ Good | Consolidated |
-| PlanetConfig | ~450 | Low | ✅ Good | Climate model + erosion config |
+| ProceduralPlanetPersistenceHelper | ~530 | Low | ✅ Good | Store/restore config |
+| PlanetConfig | ~520 | Low | ✅ Good | Climate model + erosion config |
 | ProceduralPlanetViewerDialog* | ~950 | Medium | ✅ Good | Side panel, interactive regeneration |
 
 *Located in `dialogs/solarsystem/` package
