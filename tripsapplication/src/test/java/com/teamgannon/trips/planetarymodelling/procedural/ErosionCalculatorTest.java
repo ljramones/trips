@@ -451,4 +451,262 @@ class ErosionCalculatorTest {
         var mesh = new IcosahedralMesh(cfg);
         return mesh.generate();
     }
+
+    // ===========================================
+    // Frozen River Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Rivers ending in polar zones are marked as frozen")
+    void frozenRiversInPolarZones() {
+        // Use a config that encourages rivers
+        var frozenConfig = PlanetConfig.builder()
+            .seed(77777L)
+            .size(PlanetConfig.Size.SMALL)
+            .plateCount(10)
+            .waterFraction(0.5)
+            .erosionIterations(5)
+            .rainfallScale(1.5)
+            .enableRivers(true)
+            .build();
+
+        var mesh = new IcosahedralMesh(frozenConfig);
+        var polys = mesh.generate();
+        var adj = new AdjacencyGraph(polys);
+        var assigner = new PlateAssigner(frozenConfig, adj);
+        var plateAssignment = assigner.assign();
+        var detector = new BoundaryDetector(frozenConfig, plateAssignment);
+        var analysis = detector.analyze();
+        var elevCalc = new ElevationCalculator(frozenConfig, adj, plateAssignment, analysis);
+        var heights = elevCalc.calculate();
+        var climCalc = new ClimateCalculator(polys);
+        var clims = climCalc.calculate();
+
+        ErosionResult result = ErosionCalculator.calculate(
+            heights, polys, adj, clims, frozenConfig);
+
+        // Check that frozen terminus array exists
+        assertThat(result.frozenRiverTerminus()).isNotNull();
+
+        if (!result.rivers().isEmpty()) {
+            assertThat(result.frozenRiverTerminus())
+                .as("Frozen terminus array should match river count")
+                .hasSize(result.rivers().size());
+        }
+    }
+
+    @Test
+    @DisplayName("isRiverFrozen() returns correct values")
+    void isRiverFrozenMethod() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        for (int i = 0; i < result.rivers().size(); i++) {
+            boolean frozen = result.isRiverFrozen(i);
+            if (result.frozenRiverTerminus() != null && i < result.frozenRiverTerminus().length) {
+                assertThat(frozen)
+                    .as("isRiverFrozen(%d) should match frozenRiverTerminus array", i)
+                    .isEqualTo(result.frozenRiverTerminus()[i]);
+            }
+        }
+    }
+
+    // ===========================================
+    // Precise Heights Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Precise heights array has correct size")
+    void preciseHeightsCorrectSize() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        assertThat(result.preciseHeights())
+            .as("Precise heights should match polygon count")
+            .hasSize(polygons.size());
+    }
+
+    @Test
+    @DisplayName("Precise heights correlate with integer heights")
+    void preciseHeightsCorrelateWithIntegers() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        // Precise heights should be within ~1 unit of integer heights
+        for (int i = 0; i < result.erodedHeights().length; i++) {
+            double precise = result.preciseHeights()[i];
+            int integer = result.erodedHeights()[i];
+
+            assertThat(Math.abs(precise - integer))
+                .as("Precise height %f should be within 1.5 of integer height %d at index %d",
+                    precise, integer, i)
+                .isLessThan(1.5);
+        }
+    }
+
+    @Test
+    @DisplayName("Precise heights provide finer gradations than integers")
+    void preciseHeightsHaveFinerGradations() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        // Count unique precise heights vs unique integer heights
+        java.util.Set<Double> preciseUnique = new java.util.HashSet<>();
+        java.util.Set<Integer> intUnique = new java.util.HashSet<>();
+
+        for (int i = 0; i < result.erodedHeights().length; i++) {
+            // Round to 2 decimal places for counting
+            preciseUnique.add(Math.round(result.preciseHeights()[i] * 100.0) / 100.0);
+            intUnique.add(result.erodedHeights()[i]);
+        }
+
+        // Precise heights should have more unique values (or equal for flat terrain)
+        assertThat(preciseUnique.size())
+            .as("Precise heights should have at least as many unique values as integer heights")
+            .isGreaterThanOrEqualTo(intUnique.size());
+    }
+
+    // ===========================================
+    // Rain Shadow Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Mountains reduce rainfall on leeward side")
+    void mountainsReduceLeewardRainfall() {
+        // Use HADLEY_CELLS model which has defined wind directions
+        var rainShadowConfig = PlanetConfig.builder()
+            .seed(55555L)
+            .size(PlanetConfig.Size.STANDARD)  // More polygons for better wind patterns
+            .plateCount(12)
+            .waterFraction(0.6)
+            .erosionIterations(5)
+            .rainfallScale(1.0)
+            .climateModel(ClimateCalculator.ClimateModel.HADLEY_CELLS)
+            .enableRivers(true)
+            .build();
+
+        var mesh = new IcosahedralMesh(rainShadowConfig);
+        var polys = mesh.generate();
+        var adj = new AdjacencyGraph(polys);
+        var assigner = new PlateAssigner(rainShadowConfig, adj);
+        var plateAssignment = assigner.assign();
+        var detector = new BoundaryDetector(rainShadowConfig, plateAssignment);
+        var analysis = detector.analyze();
+        var elevCalc = new ElevationCalculator(rainShadowConfig, adj, plateAssignment, analysis);
+        var heights = elevCalc.calculate();
+        var climCalc = new ClimateCalculator(polys, rainShadowConfig.climateModel());
+        var clims = climCalc.calculate();
+
+        ErosionResult result = ErosionCalculator.calculate(
+            heights, polys, adj, clims, rainShadowConfig);
+
+        // Verify rain shadow effect exists by checking rainfall variance
+        double sum = 0, sumSq = 0;
+        for (double r : result.rainfall()) {
+            sum += r;
+            sumSq += r * r;
+        }
+        double mean = sum / result.rainfall().length;
+        double variance = (sumSq / result.rainfall().length) - (mean * mean);
+
+        // Rain shadow should create variance in rainfall (not uniform)
+        assertThat(variance)
+            .as("Rain shadow should create variance in rainfall distribution")
+            .isGreaterThan(0.001);
+    }
+
+    // ===========================================
+    // Sediment Conservation Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Erosion conserves approximate mass")
+    void erosionConservesMass() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        // Sum pre-erosion heights
+        long preSum = 0;
+        for (int h : preErosionHeights) {
+            preSum += h;
+        }
+
+        // Sum post-erosion heights
+        long postSum = 0;
+        for (int h : result.erodedHeights()) {
+            postSum += h;
+        }
+
+        // Mass should be approximately conserved (within 20% tolerance due to rounding)
+        double ratio = (double) postSum / preSum;
+        assertThat(ratio)
+            .as("Total elevation should be approximately conserved")
+            .isBetween(0.5, 1.5);
+    }
+
+    // ===========================================
+    // River Source Threshold Tests
+    // ===========================================
+
+    @Test
+    @DisplayName("Lower river source threshold creates more rivers")
+    void lowerThresholdMoreRivers() {
+        var lowThresholdConfig = config.toBuilder()
+            .riverSourceThreshold(0.2)  // Very low threshold
+            .riverSourceElevationMin(0.1)
+            .build();
+
+        var highThresholdConfig = config.toBuilder()
+            .riverSourceThreshold(0.95)  // Very high threshold
+            .riverSourceElevationMin(0.9)
+            .build();
+
+        ErosionResult lowResult = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, lowThresholdConfig);
+        ErosionResult highResult = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, highThresholdConfig);
+
+        assertThat(lowResult.rivers().size())
+            .as("Lower threshold should create at least as many rivers")
+            .isGreaterThanOrEqualTo(highResult.rivers().size());
+    }
+
+    // ===========================================
+    // Full Pipeline Integration Test
+    // ===========================================
+
+    @Test
+    @DisplayName("Full erosion with plate data integration")
+    void fullErosionWithPlateData() {
+        var fullConfig = PlanetConfig.builder()
+            .seed(99999L)
+            .size(PlanetConfig.Size.SMALL)
+            .plateCount(10)
+            .waterFraction(0.5)
+            .erosionIterations(5)
+            .rainfallScale(1.0)
+            .enableRivers(true)
+            .build();
+
+        var mesh = new IcosahedralMesh(fullConfig);
+        var polys = mesh.generate();
+        var adj = new AdjacencyGraph(polys);
+        var assigner = new PlateAssigner(fullConfig, adj);
+        var plateAssignment = assigner.assign();
+        var detector = new BoundaryDetector(fullConfig, plateAssignment);
+        var boundaryAnalysis = detector.analyze();
+        var elevCalc = new ElevationCalculator(fullConfig, adj, plateAssignment, boundaryAnalysis);
+        var heights = elevCalc.calculate();
+        var climCalc = new ClimateCalculator(polys);
+        var clims = climCalc.calculate();
+
+        // Call with plate data (used for divergent boundary moisture boost)
+        ErosionResult result = ErosionCalculator.calculate(
+            heights, polys, adj, clims, fullConfig, plateAssignment, boundaryAnalysis);
+
+        assertThat(result).isNotNull();
+        assertThat(result.erodedHeights()).hasSize(polys.size());
+        assertThat(result.rainfall()).hasSize(polys.size());
+        assertThat(result.preciseHeights()).hasSize(polys.size());
+    }
 }

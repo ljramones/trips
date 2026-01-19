@@ -16,6 +16,7 @@ import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
+import com.teamgannon.trips.planetarymodelling.procedural.ProceduralPlanetPersistenceHelper;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
@@ -786,7 +787,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             long seed = exoPlanet.getId() != null ? exoPlanet.getId().hashCode() : System.nanoTime();
 
             // Create PlanetConfig directly from ExoPlanet properties
-            PlanetConfig config = createPlanetConfigFromExoPlanet(exoPlanet, seed);
+            PlanetConfig config = ProceduralPlanetPersistenceHelper.buildConfigFromExoPlanet(exoPlanet, seed);
 
             // Generate procedural terrain
             PlanetGenerator.GeneratedPlanet generated = PlanetGenerator.generate(config);
@@ -795,9 +796,19 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 generated.polygons().size(),
                 generated.rivers() != null ? generated.rivers().size() : 0);
 
+            ProceduralPlanetPersistenceHelper.populateProceduralMetadata(
+                exoPlanet, config, seed, generated, "ACCRETE");
+            solarSystemService.updateExoPlanet(exoPlanet);
+
             // Show the terrain viewer dialog
             ProceduralPlanetViewerDialog dialog = new ProceduralPlanetViewerDialog(
-                exoPlanet.getName(), generated);
+                exoPlanet.getName(),
+                generated,
+                (planet, planetConfig) -> {
+                    ProceduralPlanetPersistenceHelper.populateProceduralMetadata(
+                        exoPlanet, planetConfig, planetConfig.seed(), planet, "USER_OVERRIDES");
+                    solarSystemService.updateExoPlanet(exoPlanet);
+                });
             dialog.showAndWait();
 
         } catch (Exception e) {
@@ -805,103 +816,6 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         }
     }
 
-    /**
-     * Create a PlanetConfig directly from ExoPlanet properties.
-     * Derives tectonic parameters from physical properties without requiring Accrete Planet.
-     */
-    private PlanetConfig createPlanetConfigFromExoPlanet(ExoPlanet exo, long seed) {
-        // Earth radius in km
-        final double EARTH_RADIUS_KM = 6371.0;
-
-        // Get radius in km (ExoPlanet stores in Earth radii)
-        double radiusKm = (exo.getRadius() != null && exo.getRadius() > 0)
-            ? exo.getRadius() * EARTH_RADIUS_KM
-            : EARTH_RADIUS_KM;
-
-        // Get water fraction (ExoPlanet stores as fraction 0-1)
-        double waterFraction = (exo.getHydrosphere() != null)
-            ? exo.getHydrosphere()
-            : 0.66;  // Earth-like default
-
-        // Derive tectonic parameters from physical properties
-        double mass = (exo.getMass() != null && exo.getMass() > 0) ? exo.getMass() : 1.0;
-        double gravity = (exo.getSurfaceGravity() != null && exo.getSurfaceGravity() > 0)
-            ? exo.getSurfaceGravity() : 1.0;
-
-        // Plate count: more massive planets have more internal heat → more plates
-        int plateCount;
-        if (mass < 0.3) {
-            plateCount = 5;
-        } else if (mass < 0.7) {
-            plateCount = 8;
-        } else if (mass < 1.5) {
-            plateCount = 12;  // Earth-like
-        } else if (mass < 3.0) {
-            plateCount = 16;  // Super-Earths
-        } else {
-            plateCount = 10;  // Very massive may transition to stagnant lid
-        }
-
-        // Oceanic ratio: more water → more oceanic crust
-        double oceanicRatio = 0.5 + (waterFraction * 0.35);
-        oceanicRatio = Math.min(0.85, Math.max(0.3, oceanicRatio));
-
-        // Mountain height: inversely proportional to gravity
-        double heightMultiplier = 1.0 / Math.sqrt(gravity);
-        heightMultiplier = Math.min(2.0, Math.max(0.5, heightMultiplier));
-        if (waterFraction > 0.5) {
-            heightMultiplier *= 0.9;  // Erosion reduces peaks
-        }
-
-        // Rift depth multiplier
-        double riftMultiplier = 1.0 / Math.sqrt(gravity);
-        if (waterFraction > 0.3) {
-            riftMultiplier *= 1.0 + (waterFraction * 0.3);
-        }
-        riftMultiplier = Math.min(2.0, Math.max(0.5, riftMultiplier));
-
-        // Hotspot probability: assume moderate age (4-5 Gyr)
-        double hotspotProb = 0.12;
-        if (mass > 1.5) {
-            hotspotProb *= 1.3;
-        } else if (mass < 0.5) {
-            hotspotProb *= 0.6;
-        }
-        hotspotProb = Math.min(0.4, Math.max(0.02, hotspotProb));
-
-        // Active tectonics check
-        boolean activeTectonics = mass >= 0.2 && waterFraction >= 0.05;
-
-        // Surface temperature check (K)
-        Double surfTemp = exo.getSurfaceTemperature();
-        if (surfTemp == null) {
-            surfTemp = exo.getTempCalculated();
-        }
-        if (surfTemp != null) {
-            if (surfTemp > 700 && waterFraction < 0.01) {
-                activeTectonics = false;  // Venus-like
-            }
-            if (surfTemp < 150) {
-                activeTectonics = false;  // Frozen
-            }
-        }
-
-        PlanetConfig.Builder builder = PlanetConfig.builder()
-            .seed(seed)
-            .fromAccreteRadius(radiusKm)
-            .waterFraction(waterFraction)
-            .plateCount(plateCount)
-            .oceanicPlateRatio(oceanicRatio)
-            .heightScaleMultiplier(heightMultiplier)
-            .riftDepthMultiplier(riftMultiplier)
-            .hotspotProbability(hotspotProb)
-            .enableActiveTectonics(activeTectonics);
-
-        log.debug("Created PlanetConfig for {}: radius={} km, water={}, plates={}, active={}",
-            exo.getName(), radiusKm, waterFraction, plateCount, activeTectonics);
-
-        return builder.build();
-    }
 
     @Override
     public void onStarContextMenu(Node source, StarDisplayRecord star, double screenX, double screenY) {

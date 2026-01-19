@@ -9,6 +9,9 @@ import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
+import com.teamgannon.trips.planetarymodelling.procedural.ProceduralPlanetPersistenceHelper;
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
 import com.teamgannon.trips.solarsysmodelling.habitable.HabitableZoneCalculator;
 import lombok.extern.slf4j.Slf4j;
@@ -488,6 +491,34 @@ public class SolarSystemService {
         }
 
         return saved;
+    }
+
+    /**
+     * Regenerate procedural terrain using stored snapshot/overrides and persist a new preview.
+     *
+     * @param exoPlanet the planet to regenerate
+     * @return Generated planet or null if regeneration fails
+     */
+    @Transactional
+    public PlanetGenerator.GeneratedPlanet regenerateProceduralPlanet(ExoPlanet exoPlanet) {
+        if (exoPlanet == null) {
+            log.warn("Cannot regenerate procedural planet for null ExoPlanet");
+            return null;
+        }
+
+        PlanetConfig config = ProceduralPlanetPersistenceHelper.buildConfigFromSnapshots(exoPlanet);
+        if (config == null) {
+            log.warn("Could not build procedural config for {}", exoPlanet.getName());
+            return null;
+        }
+
+        PlanetGenerator.GeneratedPlanet generated = PlanetGenerator.generate(config);
+
+        ProceduralPlanetPersistenceHelper.populateProceduralMetadata(
+            exoPlanet, config, config.seed(), generated, "REGENERATED");
+        updateExoPlanet(exoPlanet);
+
+        return generated;
     }
 
     /**

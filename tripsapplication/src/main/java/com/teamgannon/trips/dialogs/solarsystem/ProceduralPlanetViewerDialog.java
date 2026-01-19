@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 /**
  * Dialog for viewing and interactively generating procedural planet terrain.
@@ -62,6 +63,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private final PerspectiveCamera camera;
     private final Group world;
     private final Group planetGroup;
+    private final BiConsumer<GeneratedPlanet, PlanetConfig> onRegenerated;
 
     // Rotation transforms
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
@@ -160,8 +162,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param planet     The generated planet data
      */
     public ProceduralPlanetViewerDialog(String planetName, GeneratedPlanet planet) {
+        this(planetName, planet, null);
+    }
+
+    /**
+     * Create a new procedural planet viewer dialog with a regeneration callback.
+     *
+     * @param planetName   The name of the planet being viewed
+     * @param planet       The generated planet data
+     * @param onRegenerated Callback invoked after regeneration completes
+     */
+    public ProceduralPlanetViewerDialog(String planetName, GeneratedPlanet planet,
+            BiConsumer<GeneratedPlanet, PlanetConfig> onRegenerated) {
         this.planetName = planetName;
         this.generatedPlanet = planet;
+        this.onRegenerated = onRegenerated;
         updatePlanetData(planet);
 
         // Initialize generation parameters from current planet config
@@ -868,6 +883,14 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
                 // Update checkbox states based on new data
                 updateControlStates();
+
+                if (onRegenerated != null) {
+                    try {
+                        onRegenerated.accept(newPlanet, newPlanet.config());
+                    } catch (Exception ex) {
+                        log.warn("Failed to persist regenerated planet metadata", ex);
+                    }
+                }
 
                 // Hide progress UI
                 regenerateButton.setDisable(false);

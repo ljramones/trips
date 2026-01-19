@@ -11,6 +11,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 
 /**
@@ -653,5 +654,46 @@ public class ExoPlanet {
      */
     @Column(length = 4000)
     private String notes;
+
+    // ==================== Procedural Generation Metadata ====================
+
+    /**
+     * Seed used for procedural planet generation.
+     */
+    @Column(nullable = true)
+    private Long proceduralSeed;
+
+    /**
+     * Version identifier for the procedural generator/bias logic.
+     */
+    private String proceduralGeneratorVersion;
+
+    /**
+     * Origin of the procedural config (ACCRETE, USER_OVERRIDES, MANUAL).
+     */
+    private String proceduralSource;
+
+    /**
+     * JSON snapshot of Accrete-derived inputs used for generation.
+     */
+    @Lob
+    private String proceduralAccreteSnapshot;
+
+    /**
+     * JSON of non-default procedural config overrides.
+     */
+    @Lob
+    private String proceduralOverrides;
+
+    /**
+     * Timestamp of the last procedural generation (ISO-8601 string).
+     */
+    private String proceduralGeneratedAt;
+
+    /**
+     * Cached preview image (PNG or JPEG) for the generated planet.
+     */
+    @Lob
+    private byte[] proceduralPreview;
 
 }

@@ -782,7 +782,33 @@ Ported from GDScript (Godot 3.x) to Java 17.
 #### 6. Expand Test Coverage (Completed)
 **Directory:** `src/test/java/.../procedural/`
 
+**Test Files:**
+- `TectonicBiasTest.java` (22 tests) - NEW
+- `ErosionCalculatorTest.java` (25 tests) - Extended
+- `AccreteBridgeIntegrationTest.java`
+- `EdgeCaseTest.java`
+- `ConfigInteractionTest.java`
+- `ValidationTest.java`
+- `ProgressListenerTest.java`
+
 **Added Tests:**
+- **TectonicBias tests (NEW):**
+  - Factory presets (`earthLike()`, `marsLike()`, `venusLike()`)
+  - `fromAccretePlanet()` for various planet types (Earth-like, gas giant, Super-Earth, ocean world)
+  - Gravity effects on mountain height multiplier
+  - `applyTo()` config modification
+  - Stagnant lid vs active tectonics detection
+  - Edge cases (zero gravity, extreme mass/hydrosphere)
+
+- **Erosion tests (Extended):**
+  - Frozen rivers in polar zones
+  - `isRiverFrozen()` method validation
+  - Precise heights correlation with integer heights
+  - Rain shadow effect variance
+  - Sediment mass conservation
+  - River source threshold effects
+  - Full pipeline integration with plate data
+
 - **Integration tests for Accrete bridge:**
   - `PlanetGenerator.generateFromAccrete()` with various planet types
   - `PlanetGenerator.createBiasedConfig()` validation
