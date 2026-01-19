@@ -11,9 +11,24 @@ import java.util.List;
  */
 public class IcosahedralMesh {
 
+    /**
+     * Epsilon tolerance for floating-point vertex comparisons.
+     * Set to 1e-10 which is much smaller than the vertex spacing on even
+     * the finest mesh (n=32 has ~10242 polygons, vertex spacing ~0.01).
+     */
+    private static final double EPSILON = 1e-10;
+
     private final int n;
     private final Vector3D[] icoVertices;
     private List<Polygon> polygons;
+
+    /**
+     * Compares two Vector3D points for equality within epsilon tolerance.
+     * Direct .equals() on floating-point vectors can fail due to rounding errors.
+     */
+    private static boolean vectorsEqual(Vector3D v1, Vector3D v2) {
+        return v1.distance(v2) < EPSILON;
+    }
 
     public IcosahedralMesh(PlanetConfig config) {
         this.n = config.n();
@@ -279,19 +294,20 @@ public class IcosahedralMesh {
         List<Polygon> hexes = new ArrayList<>();
         int lastIdx = face1.size() - 1;
 
-        if (face1.get(lastIdx).equals(face2.get(lastIdx))) {
+        // Use epsilon-tolerant comparison for floating-point vertices
+        if (vectorsEqual(face1.get(lastIdx), face2.get(lastIdx))) {
             for (int y = 1; y < n; y++) {
                 hexes.add(hexOnLineTips(y, face1, face2));
             }
-        } else if (face1.get(0).equals(face2.get(n))) {
+        } else if (vectorsEqual(face1.get(0), face2.get(n))) {
             for (int x = 1; x < n; x++) {
                 hexes.add(hexOnLineBottoms(x, face1, face2));
             }
-        } else if (face1.get(0).equals(face2.get(lastIdx))) {
+        } else if (vectorsEqual(face1.get(0), face2.get(lastIdx))) {
             for (int y = 1; y < n; y++) {
                 hexes.add(hexOnLineSidesClockwise(y, face1, face2));
             }
-        } else if (face1.get(lastIdx).equals(face2.get(n))) {
+        } else if (vectorsEqual(face1.get(lastIdx), face2.get(n))) {
             for (int y = 1; y < n; y++) {
                 hexes.add(hexOnLineSidesAnticlockwise(y, face1, face2));
             }

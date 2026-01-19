@@ -157,10 +157,16 @@ public class BoundaryDetector {
                 if (plateTypes[adjPlate] == PlateType.OCEANIC) {
                     boundaries.put(pair, BoundaryType.TRANSFORM);
                 } else {
+                    // Limit divergent oceanic-continental boundaries to 2.
+                    // Earth has ~2-3 major spreading centers (Atlantic, East Pacific, Indian).
+                    // More would fragment continents unrealistically.
                     if (numDivergentOcean < 2) {
                         boundaries.put(pair, BoundaryType.DIVERGENT);
                         numDivergentOcean++;
                         markOppositePlates(i, adjPlate, BoundaryType.DIVERGENT);
+                    // Limit subduction zones to 3.
+                    // Earth has ~3-4 major subduction zones (Pacific Ring of Fire segments).
+                    // This creates concentrated mountain building without overdoing it.
                     } else if (numSubductionOcean < 3) {
                         boundaries.put(pair, BoundaryType.CONVERGENT);
                         numSubductionOcean++;

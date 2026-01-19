@@ -25,6 +25,14 @@ public record PlanetConfig(
     double rainfallScale,         // 0.0-2.0, multiplier for rainfall amounts (default 1.0)
     boolean enableRivers,         // whether to carve river valleys (default true)
 
+    // Erosion thresholds (configurable for different planet types)
+    double rainfallThreshold,     // 0.0-1.0, min rainfall for erosion (default 0.3 = semi-arid)
+    double riverSourceThreshold,  // 0.0-1.0, min rainfall for river sources (default 0.7 = humid)
+    double riverSourceElevationMin, // 0.0-1.0, min elevation for river sources (default 0.5 = hills+)
+    double erosionCap,            // max erosion per iteration (default 0.3 height units)
+    double depositionFactor,      // fraction of eroded sediment deposited (default 0.5 = 50%)
+    double riverCarveDepth,       // max river valley depth at source (default 0.3 height units)
+
     // Terrain distribution parameters
     double maxMountainPercentage,
     double mountainReductionChance,
@@ -37,8 +45,140 @@ public record PlanetConfig(
 
     // Plate assigner parameters
     List<Double> distortionProgressThresholds,
-    List<Double> distortionValues
+    List<Double> distortionValues,
+
+    // Boundary effect parameters - controls terrain generation at plate boundaries
+    // These define how much area is affected (percent), height change (delta), and irregularity (distortion)
+    // for each type of plate interaction. See ElevationCalculator for usage.
+    BoundaryEffectConfig boundaryEffects
 ) {
+
+    /**
+     * Configuration for terrain effects at plate boundaries.
+     * Each boundary type (convergent, divergent, transform) produces different terrain
+     * based on the plate types involved (oceanic vs continental).
+     *
+     * <p>Parameter meanings:
+     * <ul>
+     *   <li>percent: Fraction of plate area affected (0.0-1.0)</li>
+     *   <li>delta: Height change direction (+1 = uplift, -1 = subsidence)</li>
+     *   <li>distortion: Irregularity of affected area (0.0-1.0, higher = more irregular)</li>
+     * </ul>
+     *
+     * <p>Physical basis:
+     * <ul>
+     *   <li>Convergent oceanic-oceanic: Island arcs form as one plate subducts</li>
+     *   <li>Convergent oceanic-continental: Mountains form inland, trench at coast</li>
+     *   <li>Convergent continental-continental: High mountain ranges (Himalayas)</li>
+     *   <li>Divergent continental: Rift valleys (East African Rift)</li>
+     *   <li>Transform: Minor uplift/depression along fault line</li>
+     * </ul>
+     */
+    public record BoundaryEffectConfig(
+        // Convergent boundary effects
+        EffectParams convergentOceanicOceanic,      // Island arc formation
+        EffectParams convergentOceanicContinental,  // Subduction with coastal mountains
+        EffectParams convergentContinentalOceanic,  // Reverse subduction
+        EffectParams convergentContinentalContinental, // Collision mountains
+
+        // Divergent boundary effects
+        EffectParams divergentOceanicContinental,   // Passive margin
+        EffectParams divergentContinentalOceanic,   // Rift initiation
+        EffectParams divergentContinentalContinental, // Continental rift valley
+
+        // Transform boundary effects
+        EffectParams transformOceanicContinental,   // Coastal fault uplift
+        EffectParams transformContinentalOceanic,   // Coastal fault depression
+        EffectParams transformContinentalContinental, // Strike-slip basin
+
+        // Probability for random variations
+        double continentalCollisionExtraChance      // Chance of extra uplift at cont-cont collision
+    ) {
+        /**
+         * Parameters for a single boundary effect application.
+         * Multiple effects can be applied for the same boundary type (layered terrain).
+         */
+        public record EffectParams(
+            double[] percents,      // Area percentages for each layer
+            int[] deltas,           // Height change for each layer (+1/-1)
+            double[] distortions    // Irregularity for each layer
+        ) {
+            public int layerCount() {
+                return percents.length;
+            }
+        }
+
+        /**
+         * Creates default boundary effect configuration matching original algorithm.
+         * These values were empirically tuned for realistic terrain generation.
+         */
+        public static BoundaryEffectConfig defaults() {
+            return new BoundaryEffectConfig(
+                // Convergent oceanic-oceanic: Small island arc (15% area, low distortion)
+                new EffectParams(
+                    new double[]{0.15},
+                    new int[]{1},
+                    new double[]{0.10}
+                ),
+                // Convergent oceanic-continental: Coastal mountains + foothills + trench
+                new EffectParams(
+                    new double[]{0.35, 0.15, 0.10},
+                    new int[]{1, 1, 1},
+                    new double[]{0.40, 0.25, 0.25}
+                ),
+                // Convergent continental-oceanic: Mountains + coastal hills
+                new EffectParams(
+                    new double[]{0.25, 0.15},
+                    new int[]{1, 1},
+                    new double[]{0.35, 0.10}
+                ),
+                // Convergent continental-continental: Major mountain range
+                new EffectParams(
+                    new double[]{0.25, 0.10},
+                    new int[]{1, 1},
+                    new double[]{0.35, 0.10}
+                ),
+                // Divergent oceanic-continental: Passive margin uplift
+                new EffectParams(
+                    new double[]{0.15},
+                    new int[]{1},
+                    new double[]{0.10}
+                ),
+                // Divergent continental-oceanic: Rift initiation
+                new EffectParams(
+                    new double[]{0.35, 0.25},
+                    new int[]{-1, -1},
+                    new double[]{0.35, 0.10}
+                ),
+                // Divergent continental-continental: Full rift valley (East Africa style)
+                new EffectParams(
+                    new double[]{0.60, 0.45, 0.35, 0.25, 0.15},
+                    new int[]{-1, -1, -1, -1, -1},
+                    new double[]{0.55, 0.40, 0.20, 0.10, 0.10}
+                ),
+                // Transform oceanic-continental: Coastal fault uplift
+                new EffectParams(
+                    new double[]{0.35, 0.25},
+                    new int[]{1, 1},
+                    new double[]{0.40, 0.25}
+                ),
+                // Transform continental-oceanic: Coastal fault depression
+                new EffectParams(
+                    new double[]{0.35},
+                    new int[]{-1},
+                    new double[]{0.25}
+                ),
+                // Transform continental-continental: Minor pull-apart basin (rare)
+                new EffectParams(
+                    new double[]{0.20, 0.15},
+                    new int[]{-1, -1},
+                    new double[]{0.25, 0.15}
+                ),
+                // 50% chance of extra uplift at continental collision
+                0.50
+            );
+        }
+    }
 
     /** Size presets matching original GDScript */
     public enum Size {
@@ -89,18 +229,35 @@ public record PlanetConfig(
     public static class Builder {
         private long seed = System.nanoTime();
         private Size size = Size.STANDARD;
+        // Default 14 plates matches Earth's major plate count (7 major + 7 minor).
         private int plateCount = 14;
+        // Default Earth radius in km.
         private double radius = 6371.0;
+        // Default 66% water matches Earth's ocean coverage.
         private double waterFraction = 0.66;
+        // 65% oceanic plates: Earth's oceanic crust is ~60-70% of surface by area.
+        // Higher values create more ocean-dominated worlds (waterworlds).
+        // Lower values create more continental land mass.
         private double oceanicPlateRatio = 0.65;
+        // Height/depth multiplier for terrain extremes (1.0 = Earth-like).
         private double heightScaleMultiplier = 1.0;
         private double riftDepthMultiplier = 1.0;
+        // 12% hotspot probability per plate: Earth has ~40-50 active hotspots
+        // across 15 plates, roughly 3 per plate, but not all plates have one.
+        // 12% gives ~1-2 hotspots per planet, creating volcanic island chains.
         private double hotspotProbability = 0.12;
         private boolean enableActiveTectonics = true;
         // Erosion defaults
         private int erosionIterations = 5;
         private double rainfallScale = 1.0;
         private boolean enableRivers = true;
+        // Erosion threshold defaults (Earth-like values)
+        private double rainfallThreshold = 0.3;       // Semi-arid minimum
+        private double riverSourceThreshold = 0.7;    // Humid conditions for rivers
+        private double riverSourceElevationMin = 0.5; // Hills or higher
+        private double erosionCap = 0.3;              // Max erosion per pass
+        private double depositionFactor = 0.5;        // 50% sediment deposited
+        private double riverCarveDepth = 0.3;         // Max valley depth at source
         // Terrain distribution defaults
         private double maxMountainPercentage = 0.05;
         private double mountainReductionChance = 0.65;
@@ -113,6 +270,8 @@ public record PlanetConfig(
         // Plate assigner defaults
         private List<Double> distortionProgressThresholds = List.of(0.25, 0.50, 1.00);
         private List<Double> distortionValues = List.of(0.1, 0.2, 0.7);
+        // Boundary effect defaults
+        private BoundaryEffectConfig boundaryEffects = BoundaryEffectConfig.defaults();
 
 
         public Builder seed(long seed) { this.seed = seed; return this; }
@@ -161,6 +320,36 @@ public record PlanetConfig(
             return this;
         }
 
+        public Builder rainfallThreshold(double threshold) {
+            this.rainfallThreshold = Math.max(0.0, Math.min(1.0, threshold));
+            return this;
+        }
+
+        public Builder riverSourceThreshold(double threshold) {
+            this.riverSourceThreshold = Math.max(0.0, Math.min(1.0, threshold));
+            return this;
+        }
+
+        public Builder riverSourceElevationMin(double min) {
+            this.riverSourceElevationMin = Math.max(0.0, Math.min(1.0, min));
+            return this;
+        }
+
+        public Builder erosionCap(double cap) {
+            this.erosionCap = Math.max(0.0, Math.min(1.0, cap));
+            return this;
+        }
+
+        public Builder depositionFactor(double factor) {
+            this.depositionFactor = Math.max(0.0, Math.min(1.0, factor));
+            return this;
+        }
+
+        public Builder riverCarveDepth(double depth) {
+            this.riverCarveDepth = Math.max(0.0, Math.min(1.0, depth));
+            return this;
+        }
+
         public Builder fromAccreteRadius(double radiusKm) {
             this.radius = radiusKm;
             if (radiusKm < 3000) this.size = Size.SMALL;
@@ -180,6 +369,7 @@ public record PlanetConfig(
         public Builder lowlandIncreaseChance(double val) { this.lowlandIncreaseChance = val; return this; }
         public Builder distortionProgressThresholds(List<Double> thresholds) { this.distortionProgressThresholds = thresholds; return this; }
         public Builder distortionValues(List<Double> values) { this.distortionValues = values; return this; }
+        public Builder boundaryEffects(BoundaryEffectConfig effects) { this.boundaryEffects = effects; return this; }
 
 
         public PlanetConfig build() {
@@ -191,10 +381,13 @@ public record PlanetConfig(
                 oceanicPlateRatio, heightScaleMultiplier, riftDepthMultiplier,
                 hotspotProbability, enableActiveTectonics,
                 erosionIterations, rainfallScale, enableRivers,
+                rainfallThreshold, riverSourceThreshold, riverSourceElevationMin,
+                erosionCap, depositionFactor, riverCarveDepth,
                 maxMountainPercentage, mountainReductionChance, minFarmablePercentage,
                 farmableCreationChance, maxHillPercentage, hillReductionChance,
                 maxLowlandPercentage, lowlandIncreaseChance,
-                distortionProgressThresholds, distortionValues
+                distortionProgressThresholds, distortionValues,
+                boundaryEffects
             );
         }
     }
@@ -218,6 +411,12 @@ public record PlanetConfig(
             .erosionIterations(erosionIterations)
             .rainfallScale(rainfallScale)
             .enableRivers(enableRivers)
+            .rainfallThreshold(rainfallThreshold)
+            .riverSourceThreshold(riverSourceThreshold)
+            .riverSourceElevationMin(riverSourceElevationMin)
+            .erosionCap(erosionCap)
+            .depositionFactor(depositionFactor)
+            .riverCarveDepth(riverCarveDepth)
             .maxMountainPercentage(maxMountainPercentage)
             .mountainReductionChance(mountainReductionChance)
             .minFarmablePercentage(minFarmablePercentage)
@@ -227,7 +426,8 @@ public record PlanetConfig(
             .maxLowlandPercentage(maxLowlandPercentage)
             .lowlandIncreaseChance(lowlandIncreaseChance)
             .distortionProgressThresholds(distortionProgressThresholds)
-            .distortionValues(distortionValues);
+            .distortionValues(distortionValues)
+            .boundaryEffects(boundaryEffects);
     }
 
     /**

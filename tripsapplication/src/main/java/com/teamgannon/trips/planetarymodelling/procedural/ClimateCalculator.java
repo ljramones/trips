@@ -14,6 +14,12 @@ public class ClimateCalculator {
     private static final double TROPICAL_LIMIT = Math.toRadians(30);
     private static final double TEMPERATE_LIMIT = Math.toRadians(60);
 
+    /**
+     * Epsilon for floating-point comparisons. Used to safely check for
+     * zero-length vectors without exact equality on doubles.
+     */
+    private static final double EPSILON = 1e-10;
+
     private final List<Polygon> polygons;
 
     public ClimateCalculator(List<Polygon> polygons) {
@@ -44,7 +50,8 @@ public class ClimateCalculator {
 
     private static double getLatitudeRadians(Vector3D center) {
         double norm = center.getNorm();
-        if (norm == 0.0) {
+        // Use epsilon comparison for floating-point zero check
+        if (norm < EPSILON) {
             return 0.0;
         }
         double clamped = Math.max(-1.0, Math.min(1.0, center.getY() / norm));

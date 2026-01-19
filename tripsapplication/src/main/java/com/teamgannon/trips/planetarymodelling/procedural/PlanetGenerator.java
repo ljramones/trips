@@ -13,7 +13,16 @@ public class PlanetGenerator {
 
     private final PlanetConfig config;
 
+    /**
+     * Creates a new PlanetGenerator with the given configuration.
+     *
+     * @param config The planet configuration (must not be null)
+     * @throws IllegalArgumentException if config is null
+     */
     public PlanetGenerator(PlanetConfig config) {
+        if (config == null) {
+            throw new IllegalArgumentException("PlanetConfig cannot be null");
+        }
         this.config = config;
     }
 
@@ -202,7 +211,17 @@ public class PlanetGenerator {
             plateAssignment, boundaryAnalysis, erosionResult, adjacency);
     }
 
+    /**
+     * Generates a procedural planet with the given configuration.
+     *
+     * @param config The planet configuration (must not be null)
+     * @return Generated planet with terrain data
+     * @throws IllegalArgumentException if config is null
+     */
     public static GeneratedPlanet generate(PlanetConfig config) {
+        if (config == null) {
+            throw new IllegalArgumentException("PlanetConfig cannot be null");
+        }
         return new PlanetGenerator(config).generate();
     }
 
@@ -215,17 +234,23 @@ public class PlanetGenerator {
      * This is the primary integration point between Accrete simulation and
      * procedural terrain generation.
      *
-     * @param accretePlanet The planet from Accrete simulation
+     * @param accretePlanet The planet from Accrete simulation (must not be null, must have positive radius)
      * @param seed          Seed for procedural generation (use planet's orbital hash or similar)
      * @return PlanetConfig with physically-derived tectonic parameters
+     * @throws IllegalArgumentException if accretePlanet is null or has invalid properties
      */
     public static PlanetConfig createBiasedConfig(Planet accretePlanet, long seed) {
+        validateAccretePlanet(accretePlanet);
+
         TectonicBias bias = TectonicBias.fromAccretePlanet(accretePlanet);
+
+        // Clamp hydrosphere to valid range [0, 100]
+        double hydrosphere = Math.max(0.0, Math.min(100.0, accretePlanet.getHydrosphere()));
 
         PlanetConfig base = PlanetConfig.builder()
             .seed(seed)
             .fromAccreteRadius(accretePlanet.getRadius())
-            .waterFraction(accretePlanet.getHydrosphere() / 100.0)
+            .waterFraction(hydrosphere / 100.0)
             .build();
 
         return bias.applyTo(base, seed);
@@ -235,12 +260,34 @@ public class PlanetGenerator {
      * Generates a procedural planet directly from an Accrete planet.
      * Combines createBiasedConfig and generate into a single call.
      *
-     * @param accretePlanet The planet from Accrete simulation
+     * @param accretePlanet The planet from Accrete simulation (must not be null)
      * @param seed          Seed for procedural generation
      * @return Generated planet with terrain based on physical parameters
+     * @throws IllegalArgumentException if accretePlanet is null or invalid
      */
     public static GeneratedPlanet generateFromAccrete(Planet accretePlanet, long seed) {
+        validateAccretePlanet(accretePlanet);
         PlanetConfig config = createBiasedConfig(accretePlanet, seed);
         return generate(config);
+    }
+
+    /**
+     * Validates an Accrete planet has the required properties for terrain generation.
+     *
+     * @param planet The planet to validate
+     * @throws IllegalArgumentException if the planet is null or has invalid properties
+     */
+    private static void validateAccretePlanet(Planet planet) {
+        if (planet == null) {
+            throw new IllegalArgumentException("Accrete planet cannot be null");
+        }
+        if (planet.getRadius() <= 0) {
+            throw new IllegalArgumentException(
+                "Planet radius must be positive, got: " + planet.getRadius() + " km");
+        }
+        if (planet.isGasGiant()) {
+            // Gas giants have no solid surface, but we still allow generation
+            // (returns minimal terrain for visualization purposes)
+        }
     }
 }

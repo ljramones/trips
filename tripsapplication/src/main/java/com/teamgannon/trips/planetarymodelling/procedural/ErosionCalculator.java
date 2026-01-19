@@ -14,13 +14,24 @@ import java.util.stream.IntStream;
  */
 public class ErosionCalculator {
 
-    // Default constants
-    private static final double RAINFALL_THRESHOLD = 0.3;
-    private static final double RIVER_SOURCE_THRESHOLD = 0.7;
-    private static final double RIVER_SOURCE_ELEVATION_MIN = 0.5;
+    // ==================== Physical Constants ====================
+    // Default values are now in PlanetConfig. These are kept as fallbacks
+    // and for documentation purposes.
 
-    // Threshold for parallel processing (polygons)
+    /**
+     * Polygon count threshold for parallel processing.
+     * Below this, single-threaded is faster due to thread overhead.
+     * 5000 polygons ≈ Size.LARGE, where parallelism benefits appear.
+     */
     private static final int PARALLEL_THRESHOLD = 5000;
+
+    // Instance-level thresholds from config (with Earth-like defaults)
+    private final double rainfallThreshold;       // Min rainfall for erosion (default 0.3)
+    private final double riverSourceThreshold;    // Min rainfall for river sources (default 0.7)
+    private final double riverSourceElevationMin; // Min elevation for river sources (default 0.5)
+    private final double erosionCap;              // Max erosion per iteration (default 0.3)
+    private final double depositionFactor;        // Fraction deposited (default 0.5)
+    private final double riverCarveDepth;         // Max river carve depth (default 0.3)
 
     // Instance fields
     private final List<Polygon> polygons;
@@ -82,6 +93,14 @@ public class ErosionCalculator {
         this.rivers = new ArrayList<>();
         this.plateAssignment = plateAssignment;
         this.boundaryAnalysis = boundaryAnalysis;
+
+        // Initialize erosion thresholds from config
+        this.rainfallThreshold = config.rainfallThreshold();
+        this.riverSourceThreshold = config.riverSourceThreshold();
+        this.riverSourceElevationMin = config.riverSourceElevationMin();
+        this.erosionCap = config.erosionCap();
+        this.depositionFactor = config.depositionFactor();
+        this.riverCarveDepth = config.riverCarveDepth();
 
         // Convert int heights to double for finer erosion calculations
         this.workingHeights = new double[heights.length];
@@ -284,7 +303,7 @@ public class ErosionCalculator {
 
             for (int i : order) {
                 // Only erode polygons with significant rainfall
-                if (rainfall[i] < RAINFALL_THRESHOLD) continue;
+                if (rainfall[i] < rainfallThreshold) continue;
 
                 // Find lowest neighbor
                 int lowestNeighbor = findLowestNeighbor(i);
@@ -294,14 +313,20 @@ public class ErosionCalculator {
                 double slope = workingHeights[i] - workingHeights[lowestNeighbor];
                 if (slope <= 0) continue;
 
-                // Calculate erosion amount based on slope and rainfall
-                double erosionAmount = Math.min(0.3, slope * 0.2 * rainfall[i]);
+                // Calculate erosion amount based on slope and rainfall.
+                // Cap at 0.3 height units per iteration to prevent over-erosion
+                // that would create unrealistic canyons in a single pass.
+                // The 0.2 slope factor means gentle slopes erode less.
+                double erosionAmount = Math.min(erosionCap, slope * 0.2 * rainfall[i]);
 
                 // Erode source polygon
                 workingHeights[i] -= erosionAmount;
 
-                // Deposit some sediment at destination (not all - some is carried away)
-                workingHeights[lowestNeighbor] += erosionAmount * 0.5;
+                // Deposit 50% of eroded sediment at destination.
+                // The remaining 50% is assumed carried away by water flow to
+                // the ocean or deposited further downstream. This prevents
+                // over-accumulation while still building alluvial features.
+                workingHeights[lowestNeighbor] += erosionAmount * depositionFactor;
             }
         }
 
@@ -343,13 +368,17 @@ public class ErosionCalculator {
                     && workingHeights[terminus] > 0;  // Land, not ocean
                 frozenTerminus.add(isFrozen);
 
-                // Carve the river valley (less carving for frozen rivers)
-                double carveMultiplier = isFrozen ? 0.5 : 1.0;  // Frozen rivers erode less
+                // Carve the river valley. Frozen rivers (polar termini) erode
+                // at half rate since ice flows slower than liquid water.
+                double carveMultiplier = isFrozen ? 0.5 : 1.0;
                 for (int i = 0; i < path.size(); i++) {
                     int polyIdx = path.get(i);
-                    // Deeper carving near source, shallower near mouth
+                    // Deeper carving near source (steeper V-valley), shallower
+                    // near mouth (wide floodplain). Factor ranges 1.0→0.0.
                     double carveFactor = 1.0 - (double) i / path.size();
-                    workingHeights[polyIdx] -= 0.3 * carveFactor * carveMultiplier;
+                    // Maximum carve depth is 0.3 height units at source.
+                    // This creates visible valleys without over-carving the terrain.
+                    workingHeights[polyIdx] -= riverCarveDepth * carveFactor * carveMultiplier;
                 }
 
                 // Create delta at river mouth (sediment deposit) - only for flowing rivers
@@ -424,8 +453,8 @@ public class ErosionCalculator {
      */
     private boolean isRiverSource(int i) {
         // Source needs high rainfall and elevated terrain
-        if (rainfall[i] <= RIVER_SOURCE_THRESHOLD ||
-            workingHeights[i] <= RIVER_SOURCE_ELEVATION_MIN) {
+        if (rainfall[i] <= riverSourceThreshold ||
+            workingHeights[i] <= riverSourceElevationMin) {
             return false;
         }
 

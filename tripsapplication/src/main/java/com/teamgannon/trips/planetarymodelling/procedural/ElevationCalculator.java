@@ -73,6 +73,11 @@ public class ElevationCalculator {
             }
         }
 
+        // Mountain range length scales with mesh resolution.
+        // Smaller meshes (n<21) use shorter ranges (5 polygons) to avoid
+        // ranges spanning too much of the planet. Larger meshes (n≥21)
+        // use longer ranges (7 polygons) for proportional detail.
+        // Values derived from visual testing at each mesh resolution.
         int mountainLength = (config.n() < 21) ? 5 : 7;
         for (int p = 0; p < plateCount; p++) {
             if (types[p] == PlateType.CONTINENTAL && random.nextDouble() > 0.25) {
@@ -83,6 +88,10 @@ public class ElevationCalculator {
         adjustWaterLevel();
         adjustTerrainDistribution();
 
+        // Generate island chain in largest oceanic plate (hotspot volcanism like Hawaii).
+        // Chain length scales with mesh resolution: shorter chains (3) on small meshes
+        // to avoid dominating the ocean, longer chains (7) on large meshes.
+        // Values tuned to produce visually realistic archipelagos at each scale.
         int largestOceanic = findLargestOceanicPlate(types, sizeOrder);
         if (largestOceanic >= 0) {
             int islandLength = (config.n() < 21) ? 3 : 7;
@@ -95,67 +104,166 @@ public class ElevationCalculator {
         return heights;
     }
 
+    /**
+     * Applies terrain effects at the boundary between two plates.
+     * Dispatches to specialized methods based on boundary type and plate types.
+     *
+     * @param plate1   First plate index
+     * @param plate2   Second plate index
+     * @param type1    Type of first plate (OCEANIC or CONTINENTAL)
+     * @param type2    Type of second plate
+     * @param boundary Type of boundary interaction
+     * @param plates   List of polygon indices for each plate
+     */
     private void applyBoundaryEffect(int plate1, int plate2,
             PlateType type1, PlateType type2, BoundaryType boundary,
             List<List<Integer>> plates) {
 
+        switch (boundary) {
+            case CONVERGENT -> applyConvergentBoundary(plate1, plate2, type1, type2, plates);
+            case DIVERGENT -> applyDivergentBoundary(plate1, plate2, type1, type2, plates);
+            case TRANSFORM -> applyTransformBoundary(plate1, plate2, type1, type2, plates);
+            case INACTIVE -> {
+                // Inactive/dead zone: no significant plate interaction.
+                // Typical of stagnant-lid worlds (Venus, Mars).
+            }
+        }
+    }
+
+    /**
+     * Applies terrain effects for convergent (colliding) plate boundaries.
+     *
+     * <p>Physical basis:
+     * <ul>
+     *   <li>Oceanic-Oceanic: One plate subducts, creating island arcs (Japan, Philippines)</li>
+     *   <li>Oceanic-Continental: Oceanic plate subducts, creating coastal mountains (Andes)</li>
+     *   <li>Continental-Continental: Neither subducts, creating high mountains (Himalayas)</li>
+     * </ul>
+     */
+    private void applyConvergentBoundary(int plate1, int plate2,
+            PlateType type1, PlateType type2, List<List<Integer>> plates) {
+
         boolean oceanic1 = (type1 == PlateType.OCEANIC);
         boolean oceanic2 = (type2 == PlateType.OCEANIC);
+        double heightMult = config.heightScaleMultiplier();
+        var effects = config.boundaryEffects();
 
-        // Get multipliers from config for physically-derived terrain scaling
+        if (oceanic1 && oceanic2) {
+            // Island arc formation: small uplift where one plate subducts
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.convergentOceanicOceanic(), heightMult);
+        } else if (oceanic1 && !oceanic2) {
+            // Subduction with coastal mountains on continental side
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.convergentOceanicContinental(), heightMult);
+        } else if (!oceanic1 && oceanic2) {
+            // Reverse subduction - continental overrides oceanic
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.convergentContinentalOceanic(), heightMult);
+        } else {
+            // Continental collision - major mountain building
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.convergentContinentalContinental(), heightMult);
+            // Random chance of extra uplift (double collision effect)
+            if (random.nextDouble() < effects.continentalCollisionExtraChance()) {
+                var extraEffect = effects.convergentContinentalContinental();
+                if (extraEffect.layerCount() > 1) {
+                    applyMassScaled(plates.get(plate1), plate1, plate2,
+                        extraEffect.percents()[1], extraEffect.deltas()[1],
+                        extraEffect.distortions()[1], heightMult);
+                }
+            }
+        }
+    }
+
+    /**
+     * Applies terrain effects for divergent (spreading) plate boundaries.
+     *
+     * <p>Physical basis:
+     * <ul>
+     *   <li>Oceanic-Continental: Passive margin with mild uplift</li>
+     *   <li>Continental-Oceanic: Rift initiation, early spreading</li>
+     *   <li>Continental-Continental: Rift valley formation (East African Rift)</li>
+     * </ul>
+     */
+    private void applyDivergentBoundary(int plate1, int plate2,
+            PlateType type1, PlateType type2, List<List<Integer>> plates) {
+
+        boolean oceanic1 = (type1 == PlateType.OCEANIC);
+        boolean oceanic2 = (type2 == PlateType.OCEANIC);
         double heightMult = config.heightScaleMultiplier();
         double riftMult = config.riftDepthMultiplier();
+        var effects = config.boundaryEffects();
 
-        switch (boundary) {
-            case CONVERGENT -> {
-                if (oceanic1 && oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, 1, 0.10, heightMult);
-                } else if (oceanic1 && !oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.35, 1, 0.40, heightMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, 1, 0.25, heightMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.10, 1, 0.25, heightMult);
-                } else if (!oceanic1 && oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.25, 1, 0.35, heightMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, 1, 0.10, heightMult);
-                } else {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.25, 1, 0.35, heightMult);
-                    if (random.nextDouble() < 0.50) {
-                        applyMassScaled(plates.get(plate1), plate1, plate2, 0.10, 1, 0.10, heightMult);
-                    }
-                }
+        if (oceanic1 && !oceanic2) {
+            // Passive margin uplift
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.divergentOceanicContinental(), heightMult);
+        } else if (!oceanic1 && oceanic2) {
+            // Rift initiation - uses rift depth multiplier
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.divergentContinentalOceanic(), riftMult);
+        } else if (!oceanic1 && !oceanic2) {
+            // Continental rift valley - deep and wide
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.divergentContinentalContinental(), riftMult);
+        }
+        // Oceanic-Oceanic divergent: mid-ocean ridge, no significant surface effect
+    }
+
+    /**
+     * Applies terrain effects for transform (sliding) plate boundaries.
+     *
+     * <p>Physical basis:
+     * <ul>
+     *   <li>Transform faults create minor uplift or depression</li>
+     *   <li>Continental-Continental: Rarely creates pull-apart basins</li>
+     *   <li>Less dramatic than convergent/divergent boundaries</li>
+     * </ul>
+     */
+    private void applyTransformBoundary(int plate1, int plate2,
+            PlateType type1, PlateType type2, List<List<Integer>> plates) {
+
+        boolean oceanic1 = (type1 == PlateType.OCEANIC);
+        boolean oceanic2 = (type2 == PlateType.OCEANIC);
+        double heightMult = config.heightScaleMultiplier();
+        double riftMult = config.riftDepthMultiplier();
+        var effects = config.boundaryEffects();
+
+        if (oceanic1 && !oceanic2) {
+            // Coastal fault uplift
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.transformOceanicContinental(), heightMult);
+        } else if (!oceanic1 && oceanic2) {
+            // Coastal fault depression
+            applyEffectLayers(plates.get(plate1), plate1, plate2,
+                effects.transformContinentalOceanic(), riftMult);
+        } else if (!oceanic1 && !oceanic2) {
+            // Pull-apart basin - only 25% of the time
+            if (random.nextDouble() > 0.75) {
+                applyEffectLayers(plates.get(plate1), plate1, plate2,
+                    effects.transformContinentalContinental(), riftMult);
             }
-            case DIVERGENT -> {
-                if (oceanic1 && !oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, 1, 0.10, heightMult);
-                } else if (!oceanic1 && oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.35, -1, 0.35, riftMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.25, -1, 0.10, riftMult);
-                } else if (!oceanic1 && !oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.60, -1, 0.55, riftMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.45, -1, 0.40, riftMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.35, -1, 0.20, riftMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.25, -1, 0.10, riftMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, -1, 0.10, riftMult);
-                }
-            }
-            case TRANSFORM -> {
-                if (oceanic1 && !oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.35, 1, 0.40, heightMult);
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.25, 1, 0.25, heightMult);
-                } else if (!oceanic1 && oceanic2) {
-                    applyMassScaled(plates.get(plate1), plate1, plate2, 0.35, -1, 0.25, riftMult);
-                } else if (!oceanic1 && !oceanic2) {
-                    if (random.nextDouble() > 0.75) {
-                        applyMassScaled(plates.get(plate1), plate1, plate2, 0.20, -1, 0.25, riftMult);
-                        applyMassScaled(plates.get(plate1), plate1, plate2, 0.15, -1, 0.15, riftMult);
-                    }
-                }
-            }
-            case INACTIVE -> {
-                // Inactive/dead zone: no significant plate interaction
-                // Minimal terrain effect - just slight smoothing at boundary
-                // This is typical of stagnant-lid worlds (Venus, Mars)
-            }
+        }
+        // Oceanic-Oceanic transform: fracture zone, no significant surface effect
+    }
+
+    /**
+     * Applies multiple terrain effect layers from configuration.
+     *
+     * @param platePolys Polygon indices for the source plate
+     * @param plate1Idx  First plate index
+     * @param plate2Idx  Second plate index
+     * @param params     Effect parameters (percents, deltas, distortions)
+     * @param multiplier Height scale multiplier
+     */
+    private void applyEffectLayers(List<Integer> platePolys, int plate1Idx, int plate2Idx,
+            PlanetConfig.BoundaryEffectConfig.EffectParams params, double multiplier) {
+
+        for (int i = 0; i < params.layerCount(); i++) {
+            applyMassScaled(platePolys, plate1Idx, plate2Idx,
+                params.percents()[i], params.deltas()[i],
+                params.distortions()[i], multiplier);
         }
     }
 
