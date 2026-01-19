@@ -1103,6 +1103,232 @@ PlanetGenerator.GeneratedPlanet regenerated = PlanetGenerator.generate(restored)
 - `proceduralOverrides` - JSON of config overrides
 - `proceduralPreview` - PNG preview image (256×256)
 
+## Orbital Animation System
+
+The `solarsystem/animation` package provides real-time orbital animation for the solar system visualization, with physically accurate Keplerian motion.
+
+### Package Structure
+
+```
+solarsystem/
+├── animation/
+│   ├── AnimationTimeModel.java        # Simulation time tracking with speed control
+│   └── OrbitalAnimationController.java # Animation loop and position updates
+├── orbits/
+│   ├── OrbitSamplingProvider.java     # Interface for orbit calculations
+│   ├── KeplerOrbitSamplingProvider.java # Keplerian position calculations
+│   └── OrbitSamplingProviders.java    # Factory for orbit providers
+└── rendering/
+    └── SolarSystemRenderer.java       # 3D rendering (includes updatePlanetPositions)
+```
+
+### Architecture
+
+The animation system uses a decoupled event-driven architecture:
+
+```
+SimulationControlPane (UI)
+        │
+        │ publishes SolarSystemAnimationEvent
+        ▼
+SolarSystemSpacePane (@EventListener)
+        │
+        │ controls
+        ▼
+OrbitalAnimationController
+        │
+        ├── AnimationTimeModel (time tracking)
+        ├── KeplerOrbitSamplingProvider (position math)
+        └── SolarSystemRenderer.updatePlanetPositions()
+```
+
+### AnimationTimeModel
+
+Tracks simulation time with configurable speed multiplier:
+
+```java
+public class AnimationTimeModel {
+    private Instant epoch;           // Simulation start (default: J2000)
+    private Instant simulationTime;  // Current simulation time
+    private double speedMultiplier;  // 1.0 = real-time, 86400 = 1 day/sec
+
+    // Called each frame by AnimationTimer
+    public void update(long nowNanos) {
+        long deltaNanos = nowNanos - lastUpdateNanos;
+        double deltaSeconds = deltaNanos / 1_000_000_000.0;
+        double simDeltaSeconds = deltaSeconds * speedMultiplier;
+        simulationTime = simulationTime.plusMillis((long)(simDeltaSeconds * 1000));
+    }
+
+    // Elapsed time since epoch in days (for orbital calculations)
+    public double getElapsedDays() {
+        return (simulationTime.toEpochMilli() - epoch.toEpochMilli()) / (1000.0 * 60 * 60 * 24);
+    }
+}
+```
+
+### OrbitalAnimationController
+
+Manages the JavaFX `AnimationTimer` and coordinates position updates:
+
+```java
+public class OrbitalAnimationController {
+    private final AnimationTimer timer;
+    private final AnimationTimeModel timeModel;
+    private final OrbitSamplingProvider orbitSampler;
+
+    private void updateFrame(long nowNanos) {
+        timeModel.update(nowNanos);
+        double elapsedDays = timeModel.getElapsedDays();
+
+        Map<String, double[]> newPositions = new HashMap<>();
+        for (PlanetDescription planet : planets) {
+            double trueAnomaly = calculateTrueAnomaly(planet, elapsedDays);
+            double[] posAu = orbitSampler.calculatePositionAu(
+                planet.getSemiMajorAxis(),
+                planet.getEccentricity(),
+                planet.getInclination(),
+                planet.getLongitudeOfAscendingNode(),
+                planet.getArgumentOfPeriapsis(),
+                trueAnomaly
+            );
+            newPositions.put(planet.getName(), posAu);
+        }
+
+        renderer.updatePlanetPositions(newPositions);
+        onUpdate.run();  // Updates labels
+    }
+}
+```
+
+### Kepler's Equation Solver
+
+The animation calculates true anomaly from elapsed time using Newton-Raphson iteration:
+
+```java
+private double calculateTrueAnomaly(PlanetDescription planet, double elapsedDays) {
+    double period = planet.getOrbitalPeriod(); // days
+    if (period <= 0) {
+        // Kepler's 3rd law fallback: P² = a³ (solar mass, years/AU)
+        period = Math.pow(planet.getSemiMajorAxis(), 1.5) * 365.25;
+    }
+
+    // Mean anomaly: M = n × t (degrees)
+    double meanMotion = 360.0 / period;
+    double meanAnomaly = (meanMotion * elapsedDays) % 360.0;
+
+    // Solve Kepler's equation: M = E - e×sin(E)
+    double E = Math.toRadians(meanAnomaly);
+    for (int i = 0; i < 10; i++) {
+        double deltaE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+        E -= deltaE;
+        if (Math.abs(deltaE) < 1e-10) break;
+    }
+
+    // Eccentric anomaly to true anomaly
+    double trueAnomaly = Math.atan2(
+        Math.sqrt(1 - e*e) * Math.sin(E),
+        Math.cos(E) - e
+    );
+    return Math.toDegrees(trueAnomaly);
+}
+```
+
+### Event-Driven Control
+
+Animation is controlled via Spring events from `SimulationControlPane`:
+
+```java
+// SimulationControlPane publishes events
+playPauseButton.setOnAction(e -> {
+    eventPublisher.publishEvent(new SolarSystemAnimationEvent(
+        this, SolarSystemAnimationEvent.AnimationAction.TOGGLE_PLAY_PAUSE));
+});
+
+// SolarSystemSpacePane listens for events
+@EventListener
+public void onSolarSystemAnimationEvent(SolarSystemAnimationEvent event) {
+    switch (event.getAction()) {
+        case PLAY -> animationController.play();
+        case PAUSE -> animationController.pause();
+        case TOGGLE_PLAY_PAUSE -> animationController.togglePlayPause();
+        case RESET -> animationController.stop();
+        case SET_SPEED -> animationController.setSpeed(event.getSpeedMultiplier());
+    }
+}
+```
+
+### SolarSystemAnimationEvent
+
+Event class for animation control:
+
+```java
+public class SolarSystemAnimationEvent extends ApplicationEvent {
+    public enum AnimationAction {
+        PLAY, PAUSE, TOGGLE_PLAY_PAUSE, RESET, SET_SPEED
+    }
+
+    private final AnimationAction action;
+    private final double speedMultiplier;  // For SET_SPEED action
+}
+```
+
+### Speed Multipliers
+
+| UI Label | Speed Multiplier | Effect |
+|----------|------------------|--------|
+| 0.1x | 8,640 | ~2.4 hours/sec |
+| 1.0x | 86,400 | 1 day/sec |
+| 10.0x | 864,000 | 10 days/sec |
+
+At 1 day/sec, Earth would complete one orbit in ~6 minutes of wall-clock time.
+
+### Integration with Renderer
+
+The renderer's `updatePlanetPositions()` method applies new positions:
+
+```java
+public void updatePlanetPositions(Map<String, double[]> positionsAu) {
+    for (Map.Entry<String, double[]> entry : positionsAu.entrySet()) {
+        Sphere sphere = planetNodes.get(entry.getKey());
+        if (sphere != null) {
+            double[] screen = scaleManager.auVectorToScreen(
+                posAu[0], posAu[1], posAu[2]);
+            sphere.setTranslateX(screen[0]);
+            sphere.setTranslateY(screen[1]);
+            sphere.setTranslateZ(screen[2]);
+        }
+    }
+}
+```
+
+### Lifecycle Management
+
+Animation is initialized when entering a solar system and cleaned up when leaving:
+
+```java
+// In SolarSystemSpacePane
+private void initializeAnimation(SolarSystemDescription system) {
+    animationController = new OrbitalAnimationController(renderer, this::updateLabels);
+    animationController.setPlanets(system.getPlanetDescriptionList());
+}
+
+private void cleanupAnimation() {
+    if (animationController != null) {
+        animationController.dispose();
+        animationController = null;
+    }
+}
+```
+
+### Future Enhancements
+
+- **Orekit Integration**: Replace simple Kepler solver with Orekit propagators for perturbations
+- **Moon Animation**: Animate moons orbiting their parent planets
+- **Orbital Trails**: Show fading paths behind moving planets
+- **Time Scrubber**: Slider to jump to specific dates
+- **Camera Follow**: Track a specific planet during animation
+
 ## References
 
 1. Dole, S. H. (1969). "Computer Simulation of the Formation of Planetary Systems". *Icarus*, 13(3), 494-508.
@@ -1115,6 +1341,25 @@ PlanetGenerator.GeneratedPlanet regenerated = PlanetGenerator.generate(restored)
 8. Fogg, M. J. (1985). "Extra-solar Planetary Systems: A Microcomputer Simulation". *JBIS*, 38, 501-514.
 
 ## Changelog
+
+### Version 2.2 (January 2026)
+
+**New: Real-Time Orbital Animation** (`solarsystem/animation/` package):
+- `AnimationTimeModel` - Simulation time tracking with configurable speed multiplier
+- `OrbitalAnimationController` - JavaFX AnimationTimer-based animation loop
+- Kepler's equation solver using Newton-Raphson iteration for true anomaly
+- Event-driven control via `SolarSystemAnimationEvent`
+- Integration with `SimulationControlPane` play/pause/reset/speed controls
+- Automatic cleanup when leaving solar system view
+
+**Animation Features**:
+- Speed range: 0.1x to 10x (8,640 to 864,000 seconds per wall-clock second)
+- Default speed: 1 day per second (Earth orbit in ~6 minutes)
+- Physically accurate Keplerian orbital motion
+- Labels track planet positions during animation
+- Support for eccentric orbits with proper anomaly calculations
+
+---
 
 ### Version 2.1 (January 2026)
 
