@@ -255,7 +255,9 @@ public class PlanetGenerator {
             // Phase 6: Climate calculation
             listener.onPhaseStarted(GenerationProgressListener.Phase.CLIMATE_CALCULATION,
                 "Assigning climate zones using " + config.climateModel() + " model");
-            ClimateCalculator climateCalc = new ClimateCalculator(polygons, config.climateModel());
+            ClimateCalculator climateCalc = new ClimateCalculator(
+                polygons, config.climateModel(),
+                config.axialTiltDegrees(), config.seasonalOffsetDegrees(), config.seasonalSamples());
             ClimateCalculator.ClimateZone[] climates = climateCalc.calculate();
             listener.onProgressUpdate(GenerationProgressListener.Phase.CLIMATE_CALCULATION, 1.0);
             listener.onPhaseCompleted(GenerationProgressListener.Phase.CLIMATE_CALCULATION);

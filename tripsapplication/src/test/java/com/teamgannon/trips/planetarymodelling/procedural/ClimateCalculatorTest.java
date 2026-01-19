@@ -414,6 +414,29 @@ class ClimateCalculatorTest {
     }
 
     @Test
+    @DisplayName("Seasonal tilt shifts high-latitude climate zones")
+    void seasonalTiltShiftsBelts() {
+        Vector3D center80 = new Vector3D(
+            Math.cos(Math.toRadians(80)),
+            Math.sin(Math.toRadians(80)),
+            0
+        ).normalize();
+        Polygon highLat = new Polygon(center80, createDummyVertices(center80));
+
+        ClimateCalculator noTilt = new ClimateCalculator(List.of(highLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 0.0, 0.0, 24);
+        ClimateCalculator highTilt = new ClimateCalculator(List.of(highLat),
+            ClimateCalculator.ClimateModel.SEASONAL, 60.0, 0.0, 24);
+
+        assertThat(noTilt.calculate()[0])
+            .as("High latitude should be polar without tilt")
+            .isEqualTo(ClimateZone.POLAR);
+        assertThat(highTilt.calculate()[0])
+            .as("High tilt should warm high latitudes into temperate range")
+            .isEqualTo(ClimateZone.TEMPERATE);
+    }
+
+    @Test
     @DisplayName("Climate model can be specified in PlanetConfig")
     void climateModelInConfig() {
         var config = PlanetConfig.builder()

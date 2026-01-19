@@ -66,6 +66,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     // Rotation transforms
     private final Rotate rotateX = new Rotate(25, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(25, Rotate.Y_AXIS);
+    private final Rotate axialTiltRotate = new Rotate(0, Rotate.X_AXIS);
+    private final Rotate spinRotate = new Rotate(0, Rotate.Y_AXIS);
 
     // Mouse drag state
     private double mouseX, mouseY;
@@ -83,6 +85,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private boolean autoRotate = false;
     private boolean showLakes = true;
     private boolean useFlowAccumulationRivers = true;
+    private boolean showPoleMarker = true;
 
     // Animation
     private Timeline rotationAnimation;
@@ -109,6 +112,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private boolean currentUseContinuousHeights;
     private double currentReliefMin;
     private double currentReliefMax;
+    private double currentAxialTilt;
+    private double currentSeasonalOffset;
     private PlanetConfig.Size currentSize;
     private ClimateCalculator.ClimateModel currentClimateModel;
 
@@ -125,6 +130,10 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private CheckBox continuousHeightsCheckBox;
     private Spinner<Double> reliefMinSpinner;
     private Spinner<Double> reliefMaxSpinner;
+    private Slider axialTiltSlider;
+    private Label axialTiltLabel;
+    private Slider seasonalOffsetSlider;
+    private Label seasonalOffsetLabel;
     private ComboBox<PlanetConfig.Size> sizeCombo;
     private ComboBox<ClimateCalculator.ClimateModel> climateCombo;
     private Button regenerateButton;
@@ -140,6 +149,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private CheckBox smoothCheckBox;
     private CheckBox plateBoundariesCheckBox;
     private CheckBox climateZonesCheckBox;
+    private CheckBox poleMarkerCheckBox;
+
+    private Group poleMarkerGroup;
 
     /**
      * Create a new procedural planet viewer dialog.
@@ -163,6 +175,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         this.currentUseContinuousHeights = config != null && config.useContinuousHeights();
         this.currentReliefMin = config != null ? config.continuousReliefMin() : -4.0;
         this.currentReliefMax = config != null ? config.continuousReliefMax() : 4.0;
+        this.currentAxialTilt = config != null ? config.axialTiltDegrees() : 23.5;
+        this.currentSeasonalOffset = config != null ? config.seasonalOffsetDegrees() : 0.0;
         this.currentSize = config != null ? deriveSizeFromN(config.n()) : PlanetConfig.Size.STANDARD;
         this.currentClimateModel = config != null ? config.climateModel() : ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
 
@@ -172,6 +186,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Create 3D scene
         world = new Group();
         planetGroup = new Group();
+        planetGroup.getTransforms().addAll(axialTiltRotate, spinRotate);
         world.getChildren().add(planetGroup);
 
         // Apply rotation transforms to world
@@ -194,6 +209,11 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Render the planet mesh
         renderPlanet();
 
+        // Apply axial tilt and pole markers
+        updateAxialTilt();
+        createPoleMarker();
+
+        // Add pole marker
         // Add atmosphere glow
         createAtmosphere();
 
@@ -396,6 +416,39 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
         heightBox.getChildren().addAll(heightHeader, heightSlider);
 
+        // Axial tilt
+        VBox tiltBox = new VBox(2);
+        HBox tiltHeader = new HBox(5);
+        tiltHeader.setAlignment(Pos.CENTER_LEFT);
+        axialTiltLabel = new Label(String.format("Axial Tilt: %.1f°", currentAxialTilt));
+        axialTiltLabel.setStyle(LABEL_STYLE);
+        tiltHeader.getChildren().add(axialTiltLabel);
+        axialTiltSlider = new Slider(0, 60, currentAxialTilt);
+        axialTiltSlider.setShowTickMarks(true);
+        axialTiltSlider.setMajorTickUnit(10);
+        axialTiltSlider.valueProperty().addListener((obs, old, val) -> {
+            currentAxialTilt = val.doubleValue();
+            axialTiltLabel.setText(String.format("Axial Tilt: %.1f°", currentAxialTilt));
+            updateAxialTilt();
+        });
+        tiltBox.getChildren().addAll(tiltHeader, axialTiltSlider);
+
+        // Seasonal offset
+        VBox seasonBox = new VBox(2);
+        HBox seasonHeader = new HBox(5);
+        seasonHeader.setAlignment(Pos.CENTER_LEFT);
+        seasonalOffsetLabel = new Label(String.format("Season Offset: %.0f°", currentSeasonalOffset));
+        seasonalOffsetLabel.setStyle(LABEL_STYLE);
+        seasonHeader.getChildren().add(seasonalOffsetLabel);
+        seasonalOffsetSlider = new Slider(0, 360, currentSeasonalOffset);
+        seasonalOffsetSlider.setShowTickMarks(true);
+        seasonalOffsetSlider.setMajorTickUnit(90);
+        seasonalOffsetSlider.valueProperty().addListener((obs, old, val) -> {
+            currentSeasonalOffset = val.doubleValue();
+            seasonalOffsetLabel.setText(String.format("Season Offset: %.0f°", currentSeasonalOffset));
+        });
+        seasonBox.getChildren().addAll(seasonHeader, seasonalOffsetSlider);
+
         // Continuous heights
         VBox continuousBox = new VBox(4);
         continuousHeightsCheckBox = new CheckBox("Continuous Heights");
@@ -463,6 +516,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             erosionRow,
             riverBox,
             heightBox,
+            tiltBox,
+            seasonBox,
             continuousBox,
             climateRow,
             regenerateButton,
@@ -582,6 +637,19 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             renderPlanet();
         });
 
+        // Pole marker checkbox
+        poleMarkerCheckBox = new CheckBox("Pole Marker");
+        poleMarkerCheckBox.setStyle(LABEL_STYLE);
+        poleMarkerCheckBox.setSelected(showPoleMarker);
+        poleMarkerCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showPoleMarker = newVal;
+            if (showPoleMarker) {
+                createPoleMarker();
+            } else if (poleMarkerGroup != null) {
+                poleMarkerGroup.setVisible(false);
+            }
+        });
+
         // Atmosphere checkbox
         CheckBox atmosphereCheckBox = new CheckBox("Atmosphere");
         atmosphereCheckBox.setStyle(LABEL_STYLE);
@@ -593,7 +661,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         content.getChildren().addAll(
             riversCheckBox, lakesCheckBox, flowRiversCheckBox,
-            plateBoundariesCheckBox, climateZonesCheckBox, atmosphereCheckBox);
+            plateBoundariesCheckBox, climateZonesCheckBox, poleMarkerCheckBox, atmosphereCheckBox);
 
         TitledPane pane = new TitledPane("Overlays", content);
         pane.setExpanded(true);
@@ -717,6 +785,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         currentUseContinuousHeights = continuousHeightsCheckBox.isSelected();
         currentReliefMin = reliefMinSpinner.getValue();
         currentReliefMax = reliefMaxSpinner.getValue();
+        currentAxialTilt = axialTiltSlider.getValue();
+        currentSeasonalOffset = seasonalOffsetSlider.getValue();
         currentSize = sizeCombo.getValue();
         currentClimateModel = climateCombo.getValue();
 
@@ -742,6 +812,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             .continuousReliefMin(currentReliefMin)
             .continuousReliefMax(currentReliefMax)
             .climateModel(currentClimateModel)
+            .axialTiltDegrees(currentAxialTilt)
+            .seasonalOffsetDegrees(currentSeasonalOffset)
             .build();
 
         // Create progress listener
@@ -786,6 +858,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                 updatePlanetData(newPlanet);
 
                 // Re-render
+                updateAxialTilt();
+                createPoleMarker();
                 createAtmosphere();
                 renderPlanet();
 
@@ -939,6 +1013,32 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         }
     }
 
+    private void updateAxialTilt() {
+        axialTiltRotate.setAngle(currentAxialTilt);
+    }
+
+    private void createPoleMarker() {
+        if (poleMarkerGroup != null) {
+            planetGroup.getChildren().remove(poleMarkerGroup);
+        }
+
+        poleMarkerGroup = new Group();
+        double markerRadius = 0.02;
+        double markerDistance = PLANET_SCALE * 1.05;
+
+        Sphere north = new Sphere(markerRadius);
+        north.setMaterial(new PhongMaterial(Color.rgb(255, 80, 80)));
+        north.setTranslateY(markerDistance);
+
+        Sphere south = new Sphere(markerRadius);
+        south.setMaterial(new PhongMaterial(Color.rgb(80, 80, 255)));
+        south.setTranslateY(-markerDistance);
+
+        poleMarkerGroup.getChildren().addAll(north, south);
+        poleMarkerGroup.setVisible(showPoleMarker);
+        planetGroup.getChildren().add(poleMarkerGroup);
+    }
+
     /**
      * Render the planet terrain mesh.
      */
@@ -1036,6 +1136,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         if (showClimateZones) {
             addClimateZones();
         }
+
+        // Ensure pole markers are restored after clearing the planet group.
+        createPoleMarker();
     }
 
     /**
@@ -1366,7 +1469,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         rotationAnimation = new Timeline(
             new KeyFrame(Duration.millis(30), event -> {
                 if (autoRotate) {
-                    rotateY.setAngle(rotateY.getAngle() + 0.3);
+                    spinRotate.setAngle(spinRotate.getAngle() + 0.3);
                 }
             })
         );

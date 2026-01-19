@@ -36,7 +36,9 @@ public class ClimateCalculator {
         /** Hot tropical world: extended tropical zone (0-45°), small polar caps */
         TROPICAL_WORLD,
         /** Tidally locked: fixed day/night sides based on assumed subsolar point */
-        TIDALLY_LOCKED
+        TIDALLY_LOCKED,
+        /** Seasonal insolation with axial tilt and averaged sunlight */
+        SEASONAL
     }
 
     // Standard latitude limits (radians)
@@ -65,20 +67,34 @@ public class ClimateCalculator {
 
     private final List<Polygon> polygons;
     private final ClimateModel model;
+    private final double axialTiltRadians;
+    private final double seasonalOffsetRadians;
+    private final int seasonalSamples;
 
     /**
      * Create calculator with default SIMPLE_LATITUDE model.
      */
     public ClimateCalculator(List<Polygon> polygons) {
-        this(polygons, ClimateModel.SIMPLE_LATITUDE);
+        this(polygons, ClimateModel.SIMPLE_LATITUDE, 0.0, 0.0, 12);
     }
 
     /**
      * Create calculator with specified climate model.
      */
     public ClimateCalculator(List<Polygon> polygons, ClimateModel model) {
+        this(polygons, model, 0.0, 0.0, 12);
+    }
+
+    /**
+     * Create calculator with specified climate model and seasonal parameters.
+     */
+    public ClimateCalculator(List<Polygon> polygons, ClimateModel model,
+            double axialTiltDegrees, double seasonalOffsetDegrees, int seasonalSamples) {
         this.polygons = polygons;
         this.model = model != null ? model : ClimateModel.SIMPLE_LATITUDE;
+        this.axialTiltRadians = Math.toRadians(axialTiltDegrees);
+        this.seasonalOffsetRadians = Math.toRadians(seasonalOffsetDegrees);
+        this.seasonalSamples = Math.max(4, Math.min(48, seasonalSamples));
     }
 
     /**
@@ -105,6 +121,7 @@ public class ClimateCalculator {
             case ICE_WORLD -> calculateIceWorld(center);
             case TROPICAL_WORLD -> calculateTropicalWorld(center);
             case TIDALLY_LOCKED -> calculateTidallyLocked(center);
+            case SEASONAL -> calculateSeasonalInsolation(center);
         };
     }
 
@@ -217,6 +234,36 @@ public class ClimateCalculator {
             // Night side - polar (frozen)
             return ClimateZone.POLAR;
         }
+    }
+
+    /**
+     * Seasonal insolation model with axial tilt.
+     * Uses average insolation over the year to assign climate zones.
+     */
+    private ClimateZone calculateSeasonalInsolation(Vector3D center) {
+        double latitude = getLatitudeRadians(center);
+        double avgInsolation = averageInsolation(latitude);
+
+        if (avgInsolation >= 0.65) {
+            return ClimateZone.TROPICAL;
+        } else if (avgInsolation >= 0.3) {
+            return ClimateZone.TEMPERATE;
+        } else {
+            return ClimateZone.POLAR;
+        }
+    }
+
+    private double averageInsolation(double latitude) {
+        double sum = 0.0;
+        double step = (2.0 * Math.PI) / seasonalSamples;
+        for (int i = 0; i < seasonalSamples; i++) {
+            double phase = seasonalOffsetRadians + i * step;
+            double subsolarLat = axialTiltRadians * Math.sin(phase);
+            double cosZenith = Math.sin(latitude) * Math.sin(subsolarLat)
+                + Math.cos(latitude) * Math.cos(subsolarLat);
+            sum += Math.max(0.0, cosZenith);
+        }
+        return sum / seasonalSamples;
     }
 
     public static double getLatitudeDegrees(Polygon polygon) {

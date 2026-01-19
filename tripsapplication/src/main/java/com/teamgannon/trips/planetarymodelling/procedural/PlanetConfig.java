@@ -58,7 +58,10 @@ public record PlanetConfig(
     BoundaryEffectConfig boundaryEffects,
 
     // Climate model selection for atmospheric/temperature simulation
-    ClimateCalculator.ClimateModel climateModel
+    ClimateCalculator.ClimateModel climateModel,
+    double axialTiltDegrees,       // axial tilt in degrees (0-60, default 23.5)
+    double seasonalOffsetDegrees,  // seasonal phase offset in degrees (0-360)
+    int seasonalSamples            // number of samples for insolation averaging
 ) {
 
     /**
@@ -286,6 +289,9 @@ public record PlanetConfig(
         private BoundaryEffectConfig boundaryEffects = BoundaryEffectConfig.defaults();
         // Climate model defaults to simple latitude-based zones (Earth-like)
         private ClimateCalculator.ClimateModel climateModel = ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
+        private double axialTiltDegrees = 23.5;
+        private double seasonalOffsetDegrees = 0.0;
+        private int seasonalSamples = 12;
 
 
         public Builder seed(long seed) { this.seed = seed; return this; }
@@ -409,6 +415,20 @@ public record PlanetConfig(
             return this;
         }
 
+        public Builder axialTiltDegrees(double tilt) {
+            this.axialTiltDegrees = Math.max(0.0, Math.min(60.0, tilt));
+            return this;
+        }
+
+        public Builder seasonalOffsetDegrees(double offset) {
+            this.seasonalOffsetDegrees = offset;
+            return this;
+        }
+
+        public Builder seasonalSamples(int samples) {
+            this.seasonalSamples = Math.max(4, Math.min(48, samples));
+            return this;
+        }
 
         public PlanetConfig build() {
             if (distortionProgressThresholds.size() != distortionValues.size()) {
@@ -428,7 +448,8 @@ public record PlanetConfig(
                 farmableCreationChance, maxHillPercentage, hillReductionChance,
                 maxLowlandPercentage, lowlandIncreaseChance,
                 distortionProgressThresholds, distortionValues,
-                boundaryEffects, climateModel
+                boundaryEffects, climateModel,
+                axialTiltDegrees, seasonalOffsetDegrees, seasonalSamples
             );
         }
     }
@@ -472,7 +493,10 @@ public record PlanetConfig(
             .distortionProgressThresholds(distortionProgressThresholds)
             .distortionValues(distortionValues)
             .boundaryEffects(boundaryEffects)
-            .climateModel(climateModel);
+            .climateModel(climateModel)
+            .axialTiltDegrees(axialTiltDegrees)
+            .seasonalOffsetDegrees(seasonalOffsetDegrees)
+            .seasonalSamples(seasonalSamples);
     }
 
     /**

@@ -397,6 +397,10 @@ public class ErosionCalculator {
      */
     private double calculateRainfallForPolygon(int i, Random rng, double rainfallScale,
             double stagnantLidFactor, double rainShadowFactor) {
+        Vector3D center = polygons.get(i).center();
+        double lat = Math.toDegrees(Math.asin(center.normalize().getY()));
+        Vector3D windDir = getPrevailingWindDirection(lat, center);
+
         // Base rain from climate zone
         double baseRain = switch (climates[i]) {
             case TROPICAL -> 1.0 + rng.nextDouble() * 0.5;   // 1.0-1.5
@@ -415,9 +419,49 @@ public class ErosionCalculator {
             divergentBoost = 1.3;  // 30% boost near divergent boundaries
         }
 
+        double oceanBoost = calculateOceanMoistureBoost(i, windDir);
+
         // Apply rain shadow effect (can significantly reduce rainfall on leeward slopes)
         return baseRain * Math.max(0.1, elevationFactor) * rainfallScale
-            * stagnantLidFactor * divergentBoost * rainShadowFactor;
+            * stagnantLidFactor * divergentBoost * oceanBoost * rainShadowFactor;
+    }
+
+    private double calculateOceanMoistureBoost(int startIdx, Vector3D windDir) {
+        int current = startIdx;
+        Set<Integer> visited = new HashSet<>();
+        int maxSteps = 4;
+
+        for (int step = 0; step < maxSteps && current >= 0; step++) {
+            visited.add(current);
+
+            int bestNeighbor = -1;
+            double bestAlignment = -1;
+
+            for (int neighbor : adjacency.neighborsOnly(current)) {
+                if (visited.contains(neighbor)) continue;
+
+                Vector3D neighborDir = polygons.get(neighbor).center()
+                    .subtract(polygons.get(current).center()).normalize();
+                double alignment = -neighborDir.dotProduct(windDir);
+                if (alignment > bestAlignment) {
+                    bestAlignment = alignment;
+                    bestNeighbor = neighbor;
+                }
+            }
+
+            if (bestNeighbor < 0 || bestAlignment < 0.3) {
+                break;
+            }
+
+            if (workingHeights[bestNeighbor] < 0) {
+                double distanceFactor = 1.0 - (double) step / maxSteps;
+                return 1.0 + 0.2 * distanceFactor;
+            }
+
+            current = bestNeighbor;
+        }
+
+        return 1.0;
     }
 
     /**
