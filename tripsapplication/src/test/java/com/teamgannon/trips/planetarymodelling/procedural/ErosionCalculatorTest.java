@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -349,6 +350,74 @@ class ErosionCalculatorTest {
                 assertThat(adjacency.areNeighbors(current, next))
                     .as("River segment from %d to %d should be neighbors", current, next)
                     .isTrue();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Basins create lakes after filling")
+    void basinsCreateLakes() {
+        var basinConfig = PlanetConfig.builder()
+            .seed(123L)
+            .size(PlanetConfig.Size.DUEL)
+            .build();
+
+        var mesh = new IcosahedralMesh(basinConfig);
+        var polys = mesh.generate();
+        var adj = new AdjacencyGraph(polys);
+        var climCalc = new ClimateCalculator(polys);
+        var clims = climCalc.calculate();
+
+        int[] heights = new int[polys.size()];
+        Arrays.fill(heights, ElevationCalculator.HILLS);
+
+        int sink = 0;
+        heights[sink] = ElevationCalculator.PLAINS;
+        for (int neighbor : adj.neighborsOnly(sink)) {
+            heights[neighbor] = ElevationCalculator.HIGH_MOUNTAINS;
+        }
+
+        ErosionResult result = ErosionCalculator.calculate(
+            heights, polys, adj, clims, basinConfig);
+
+        assertThat(result.lakeMask())
+            .as("Lake mask should be present")
+            .isNotNull();
+
+        boolean hasLake = false;
+        for (boolean isLake : result.lakeMask()) {
+            if (isLake) {
+                hasLake = true;
+                break;
+            }
+        }
+
+        assertThat(hasLake)
+            .as("At least one lake polygon should be created")
+            .isTrue();
+    }
+
+    @Test
+    @DisplayName("Flow accumulation increases downstream along rivers")
+    void flowAccumulationIncreasesDownstream() {
+        ErosionResult result = ErosionCalculator.calculate(
+            preErosionHeights, polygons, adjacency, climates, config);
+
+        double[] accumulation = result.flowAccumulation();
+        if (accumulation == null || accumulation.length == 0) {
+            return;
+        }
+
+        for (List<Integer> river : result.rivers()) {
+            if (river.size() < 2) continue;
+
+            for (int i = 0; i < river.size() - 1; i++) {
+                int current = river.get(i);
+                int next = river.get(i + 1);
+
+                assertThat(accumulation[next])
+                    .as("Flow should not decrease downstream at step %d", i)
+                    .isGreaterThanOrEqualTo(accumulation[current] - 1e-6);
             }
         }
     }

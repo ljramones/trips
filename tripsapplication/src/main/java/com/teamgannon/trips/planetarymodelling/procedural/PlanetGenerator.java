@@ -83,6 +83,20 @@ public class PlanetGenerator {
         }
 
         /**
+         * Returns flow accumulation values used for river sizing.
+         */
+        public double[] flowAccumulation() {
+            return erosionResult != null ? erosionResult.flowAccumulation() : new double[0];
+        }
+
+        /**
+         * Returns mask of polygons that are part of filled lake basins.
+         */
+        public boolean[] lakeMask() {
+            return erosionResult != null ? erosionResult.lakeMask() : null;
+        }
+
+        /**
          * Returns the high-precision heights from erosion calculation.
          * These provide finer gradations than integer heights for smooth rendering.
          */

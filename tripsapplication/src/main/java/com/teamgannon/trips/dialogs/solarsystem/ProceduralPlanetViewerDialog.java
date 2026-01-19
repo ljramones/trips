@@ -4,6 +4,7 @@ import com.teamgannon.trips.planetarymodelling.procedural.AdjacencyGraph;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector.BoundaryType;
 import com.teamgannon.trips.planetarymodelling.procedural.ClimateCalculator;
+import com.teamgannon.trips.planetarymodelling.procedural.ElevationCalculator;
 import com.teamgannon.trips.planetarymodelling.procedural.GenerationProgressListener;
 import com.teamgannon.trips.planetarymodelling.procedural.JavaFxPlanetMeshConverter;
 import com.teamgannon.trips.planetarymodelling.procedural.PlateAssigner;
@@ -80,6 +81,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private boolean showPlateBoundaries = false;
     private boolean showClimateZones = false;
     private boolean autoRotate = false;
+    private boolean showLakes = true;
+    private boolean useFlowAccumulationRivers = true;
 
     // Animation
     private Timeline rotationAnimation;
@@ -131,6 +134,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private Label infoRiversLabel;
     private Label infoPlatesLabel;
     private CheckBox riversCheckBox;
+    private CheckBox lakesCheckBox;
+    private CheckBox flowRiversCheckBox;
     private CheckBox rainfallCheckBox;
     private CheckBox smoothCheckBox;
     private CheckBox plateBoundariesCheckBox;
@@ -533,6 +538,28 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             renderPlanet();
         });
 
+        // Lakes checkbox
+        boolean hasLakes = hasLakes();
+        lakesCheckBox = new CheckBox("Lakes");
+        lakesCheckBox.setStyle(LABEL_STYLE);
+        lakesCheckBox.setSelected(showLakes);
+        lakesCheckBox.setDisable(!hasLakes);
+        lakesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showLakes = newVal;
+            renderPlanet();
+        });
+
+        // Flow-scaled rivers checkbox
+        boolean hasFlow = hasFlowAccumulation();
+        flowRiversCheckBox = new CheckBox("Flow-Scaled Rivers");
+        flowRiversCheckBox.setStyle(LABEL_STYLE);
+        flowRiversCheckBox.setSelected(useFlowAccumulationRivers);
+        flowRiversCheckBox.setDisable(!hasFlow);
+        flowRiversCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            useFlowAccumulationRivers = newVal;
+            renderPlanet();
+        });
+
         // Plate boundaries checkbox
         boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
         plateBoundariesCheckBox = new CheckBox("Plate Boundaries");
@@ -564,7 +591,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             updateAtmosphere();
         });
 
-        content.getChildren().addAll(riversCheckBox, plateBoundariesCheckBox, climateZonesCheckBox, atmosphereCheckBox);
+        content.getChildren().addAll(
+            riversCheckBox, lakesCheckBox, flowRiversCheckBox,
+            plateBoundariesCheckBox, climateZonesCheckBox, atmosphereCheckBox);
 
         TitledPane pane = new TitledPane("Overlays", content);
         pane.setExpanded(true);
@@ -807,6 +836,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         riversCheckBox.setText("Rivers (" + riverCount + ")");
         riversCheckBox.setDisable(riverCount == 0);
 
+        lakesCheckBox.setDisable(!hasLakes());
+        flowRiversCheckBox.setDisable(!hasFlowAccumulation());
+
         boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
         plateBoundariesCheckBox.setDisable(!hasPlateData);
 
@@ -815,6 +847,24 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
         smoothCheckBox.setDisable(!hasPreciseHeights);
+    }
+
+    private boolean hasLakes() {
+        boolean[] lakeMask = generatedPlanet.lakeMask();
+        if (lakeMask == null) {
+            return false;
+        }
+        for (boolean isLake : lakeMask) {
+            if (isLake) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasFlowAccumulation() {
+        double[] accumulation = generatedPlanet.flowAccumulation();
+        return accumulation != null && accumulation.length > 0;
     }
 
     /**
@@ -897,10 +947,30 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         List<Polygon> polygons = generatedPlanet.polygons();
         int[] heights = generatedPlanet.heights();
+        boolean[] lakeMask = generatedPlanet.lakeMask();
+        int[] renderHeights = heights;
+        double[] renderPreciseHeights = preciseHeights;
+
+        if (showLakes && lakeMask != null && lakeMask.length == heights.length) {
+            renderHeights = heights.clone();
+            for (int i = 0; i < lakeMask.length; i++) {
+                if (lakeMask[i]) {
+                    renderHeights[i] = ElevationCalculator.COASTAL;
+                }
+            }
+            if (preciseHeights != null && preciseHeights.length == heights.length) {
+                renderPreciseHeights = preciseHeights.clone();
+                for (int i = 0; i < lakeMask.length; i++) {
+                    if (lakeMask[i]) {
+                        renderPreciseHeights[i] = ElevationCalculator.COASTAL;
+                    }
+                }
+            }
+        }
 
         if (showRainfallHeatmap && rainfall != null && rainfall.length > 0) {
             Map<Integer, TriangleMesh> meshByRainfall = JavaFxPlanetMeshConverter.convertByRainfall(
-                polygons, heights, rainfall, PLANET_SCALE);
+                polygons, renderHeights, rainfall, PLANET_SCALE);
 
             for (Map.Entry<Integer, TriangleMesh> entry : meshByRainfall.entrySet()) {
                 int bucket = entry.getKey();
@@ -917,8 +987,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         } else if (useColorByHeight) {
             Map<Integer, TriangleMesh> meshByHeight = adjacency != null
                 ? JavaFxPlanetMeshConverter.convertByHeightWithAveraging(
-                    polygons, heights, adjacency, PLANET_SCALE, preciseHeights)
-                : JavaFxPlanetMeshConverter.convertByHeight(polygons, heights, PLANET_SCALE);
+                    polygons, renderHeights, adjacency, PLANET_SCALE, renderPreciseHeights)
+                : JavaFxPlanetMeshConverter.convertByHeight(polygons, renderHeights, PLANET_SCALE);
 
             for (Map.Entry<Integer, TriangleMesh> entry : meshByHeight.entrySet()) {
                 int height = entry.getKey();
@@ -937,11 +1007,11 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             PhongMaterial material;
 
             if (useSmoothTerrain && preciseHeights != null && preciseHeights.length > 0) {
-                mesh = JavaFxPlanetMeshConverter.convertSmooth(polygons, preciseHeights, PLANET_SCALE);
-                material = JavaFxPlanetMeshConverter.createSmoothTerrainMaterial(polygons, preciseHeights);
+                mesh = JavaFxPlanetMeshConverter.convertSmooth(polygons, renderPreciseHeights, PLANET_SCALE);
+                material = JavaFxPlanetMeshConverter.createSmoothTerrainMaterial(polygons, renderPreciseHeights);
             } else {
-                mesh = JavaFxPlanetMeshConverter.convert(polygons, heights, PLANET_SCALE);
-                material = JavaFxPlanetMeshConverter.createTerrainMaterial(polygons, heights);
+                mesh = JavaFxPlanetMeshConverter.convert(polygons, renderHeights, PLANET_SCALE);
+                material = JavaFxPlanetMeshConverter.createTerrainMaterial(polygons, renderHeights);
             }
 
             MeshView meshView = new MeshView(mesh);
@@ -976,6 +1046,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         List<Polygon> polygons = generatedPlanet.polygons();
         boolean[] frozenTerminus = generatedPlanet.frozenRiverTerminus();
         int[] heights = generatedPlanet.heights();
+        double[] flowAccumulation = useFlowAccumulationRivers ? generatedPlanet.flowAccumulation() : null;
 
         for (int riverIdx = 0; riverIdx < rivers.size(); riverIdx++) {
             List<Integer> river = rivers.get(riverIdx);
@@ -983,8 +1054,11 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
             boolean isFrozen = frozenTerminus != null && riverIdx < frozenTerminus.length && frozenTerminus[riverIdx];
 
-            double[] cumulativeFlow = calculateCumulativeFlow(river);
-            double maxFlow = cumulativeFlow[cumulativeFlow.length - 1];
+            double[] flowValues = calculateFlowValues(river, flowAccumulation);
+            double maxFlow = 0.0;
+            for (double flowValue : flowValues) {
+                if (flowValue > maxFlow) maxFlow = flowValue;
+            }
             if (maxFlow <= 0) maxFlow = 1.0;
 
             for (int i = 0; i < river.size() - 1; i++) {
@@ -996,7 +1070,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                     continue;
                 }
 
-                double flowRatio = cumulativeFlow[i + 1] / maxFlow;
+                double flowRatio = flowValues[i + 1] / maxFlow;
 
                 int height1 = heights[polyIdx1];
                 int height2 = heights[polyIdx2];
@@ -1015,11 +1089,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         }
     }
 
-    private double[] calculateCumulativeFlow(List<Integer> river) {
+    private double[] calculateFlowValues(List<Integer> river, double[] flowAccumulation) {
         double[] flow = new double[river.size()];
+
+        if (flowAccumulation != null && flowAccumulation.length > 0) {
+            for (int i = 0; i < river.size(); i++) {
+                int polyIdx = river.get(i);
+                flow[i] = polyIdx >= 0 && polyIdx < flowAccumulation.length
+                    ? flowAccumulation[polyIdx]
+                    : 0.0;
+            }
+            return flow;
+        }
+
         double cumulative = 0.0;
         double baseFlowPerSegment = 0.5;
-
         for (int i = 0; i < river.size(); i++) {
             int polyIdx = river.get(i);
             double contribution = baseFlowPerSegment;

@@ -44,6 +44,9 @@ public class ErosionCalculator {
 
     private double[] rainfall;
     private double[] workingHeights;
+    private double[] flowAccumulation;
+    private int[] flowTo;
+    private boolean[] lakeMask;
     private List<List<Integer>> rivers;
     private List<Boolean> frozenTerminus;  // Track if each river ends frozen
     private boolean[] nearDivergentBoundary;  // Cache for boundary proximity
@@ -56,7 +59,9 @@ public class ErosionCalculator {
         double[] preciseHeights,       // High-precision heights for smooth rendering
         List<List<Integer>> rivers,    // River paths (polygon index sequences)
         double[] rainfall,             // Rainfall distribution (for visualization)
-        boolean[] frozenRiverTerminus  // True if river ends frozen (polar) vs flowing (ocean)
+        boolean[] frozenRiverTerminus, // True if river ends frozen (polar) vs flowing (ocean)
+        double[] flowAccumulation,     // Upstream flow accumulation per polygon
+        boolean[] lakeMask             // True if polygon is part of a lake basin
     ) {
         /**
          * Returns true if precise heights are available for smooth rendering.
@@ -178,6 +183,11 @@ public class ErosionCalculator {
         // Phase 2: Apply sediment flow erosion (cellular automata)
         applySedimentFlow();
 
+        // Phase 2b: Build flow routing and fill lakes
+        buildFlowRouting();
+        fillLakes();
+        buildFlowRouting();
+
         // Phase 3: Carve river valleys (if enabled)
         if (config.enableRivers()) {
             carveRivers();
@@ -212,7 +222,8 @@ public class ErosionCalculator {
             }
         }
 
-        return new ErosionResult(finalHeights, preciseHeights, rivers, rainfall, frozenArray);
+        return new ErosionResult(finalHeights, preciseHeights, rivers, rainfall, frozenArray,
+            flowAccumulation, lakeMask);
     }
 
     /**
@@ -644,7 +655,7 @@ public class ErosionCalculator {
                 break;  // River freezes at polar terminus
             }
 
-            int next = findLowestNeighbor(current);
+            int next = (flowTo != null) ? flowTo[current] : findLowestNeighbor(current);
             if (next < 0 || workingHeights[next] >= workingHeights[current]) {
                 break;  // Dead end or uphill
             }
@@ -706,6 +717,96 @@ public class ErosionCalculator {
         }
 
         return true;
+    }
+
+    private void buildFlowRouting() {
+        int size = polygons.size();
+        flowTo = new int[size];
+        flowAccumulation = new double[size];
+        Arrays.fill(flowTo, -1);
+
+        for (int i = 0; i < size; i++) {
+            int lowest = findLowestNeighbor(i);
+            if (lowest >= 0 && workingHeights[lowest] < workingHeights[i]) {
+                flowTo[i] = lowest;
+            }
+        }
+
+        Integer[] order = getSortedByHeightDescending();
+        for (int idx : order) {
+            double localFlow = rainfall[idx] > 0 ? rainfall[idx] : 0.0;
+            flowAccumulation[idx] += localFlow;
+            int downstream = flowTo[idx];
+            if (downstream >= 0) {
+                flowAccumulation[downstream] += flowAccumulation[idx];
+            }
+        }
+    }
+
+    private void fillLakes() {
+        int size = polygons.size();
+        lakeMask = new boolean[size];
+        int[] sinkFor = new int[size];
+        Arrays.fill(sinkFor, -1);
+
+        for (int i = 0; i < size; i++) {
+            sinkFor[i] = resolveSink(i, sinkFor);
+        }
+
+        Map<Integer, List<Integer>> basins = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            int sink = sinkFor[i];
+            if (sink >= 0 && workingHeights[sink] > 0) {
+                basins.computeIfAbsent(sink, k -> new ArrayList<>()).add(i);
+            }
+        }
+
+        for (List<Integer> basin : basins.values()) {
+            double spillElevation = Double.MAX_VALUE;
+            int spillNeighbor = -1;
+            boolean[] basinMask = new boolean[size];
+            for (int polyIdx : basin) {
+                basinMask[polyIdx] = true;
+            }
+
+            for (int polyIdx : basin) {
+                for (int neighbor : adjacency.neighborsOnly(polyIdx)) {
+                    if (!basinMask[neighbor]) {
+                        double neighborHeight = workingHeights[neighbor];
+                        if (neighborHeight < spillElevation) {
+                            spillElevation = neighborHeight;
+                            spillNeighbor = neighbor;
+                        }
+                    }
+                }
+            }
+
+            if (spillNeighbor < 0 || spillElevation == Double.MAX_VALUE) {
+                continue;
+            }
+
+            double lakeLevel = spillElevation + 1e-3;
+            for (int polyIdx : basin) {
+                if (workingHeights[polyIdx] < lakeLevel) {
+                    workingHeights[polyIdx] = lakeLevel;
+                    lakeMask[polyIdx] = true;
+                }
+            }
+        }
+    }
+
+    private int resolveSink(int idx, int[] sinkFor) {
+        if (sinkFor[idx] != -1) {
+            return sinkFor[idx];
+        }
+        int downstream = flowTo != null ? flowTo[idx] : findLowestNeighbor(idx);
+        if (downstream < 0 || workingHeights[downstream] >= workingHeights[idx]) {
+            sinkFor[idx] = idx;
+            return idx;
+        }
+        int sink = resolveSink(downstream, sinkFor);
+        sinkFor[idx] = sink;
+        return sink;
     }
 
     /**
