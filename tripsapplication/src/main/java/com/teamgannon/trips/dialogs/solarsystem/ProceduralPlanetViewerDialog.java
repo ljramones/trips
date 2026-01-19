@@ -3,19 +3,21 @@ package com.teamgannon.trips.dialogs.solarsystem;
 import com.teamgannon.trips.planetarymodelling.procedural.AdjacencyGraph;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector.BoundaryType;
+import com.teamgannon.trips.planetarymodelling.procedural.ClimateCalculator;
+import com.teamgannon.trips.planetarymodelling.procedural.GenerationProgressListener;
 import com.teamgannon.trips.planetarymodelling.procedural.JavaFxPlanetMeshConverter;
 import com.teamgannon.trips.planetarymodelling.procedural.PlateAssigner;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
+import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator.GeneratedPlanet;
 import com.teamgannon.trips.planetarymodelling.procedural.Polygon;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.*;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.PhongMaterial;
@@ -25,7 +27,6 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -38,19 +39,21 @@ import lombok.extern.slf4j.Slf4j;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Dialog for viewing procedurally generated planet terrain.
- * Displays the icosahedral mesh terrain in a 3D viewer with rotation and zoom controls.
+ * Dialog for viewing and interactively generating procedural planet terrain.
+ * Features a 3D viewer with a side panel for generation parameters and visualization controls.
  */
 @Slf4j
 public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
-    private static final double SCENE_WIDTH = 700;
-    private static final double SCENE_HEIGHT = 550;
+    private static final double SCENE_WIDTH = 550;
+    private static final double SCENE_HEIGHT = 380;
+    private static final double SIDE_PANEL_WIDTH = 240;
     private static final double PLANET_SCALE = 1.0;
     private static final double INITIAL_CAMERA_DISTANCE = -4.0;
 
@@ -81,21 +84,51 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     // Animation
     private Timeline rotationAnimation;
 
-    // Legend
-    private VBox legendPanel;
-    private boolean showLegend = false;
-
     // Atmosphere visualization
     private Sphere atmosphereSphere;
 
-    // Generated planet data
-    private final GeneratedPlanet generatedPlanet;
+    // Generated planet data (mutable - changes on regeneration)
+    private GeneratedPlanet generatedPlanet;
     private final String planetName;
-    private final double[] rainfall;
-    private final double[] preciseHeights;
-    private final AdjacencyGraph adjacency;
-    private final PlateAssigner.PlateAssignment plateAssignment;
-    private final BoundaryDetector.BoundaryAnalysis boundaryAnalysis;
+    private double[] rainfall;
+    private double[] preciseHeights;
+    private AdjacencyGraph adjacency;
+    private PlateAssigner.PlateAssignment plateAssignment;
+    private BoundaryDetector.BoundaryAnalysis boundaryAnalysis;
+
+    // Generation parameters (editable)
+    private long currentSeed;
+    private int currentPlateCount;
+    private double currentWaterFraction;
+    private int currentErosionIterations;
+    private double currentRiverThreshold;
+    private double currentHeightScale;
+    private PlanetConfig.Size currentSize;
+    private ClimateCalculator.ClimateModel currentClimateModel;
+
+    // UI controls that need updating after regeneration
+    private TextField seedField;
+    private Spinner<Integer> plateSpinner;
+    private Slider waterSlider;
+    private Label waterLabel;
+    private Spinner<Integer> erosionSpinner;
+    private Slider riverSlider;
+    private Label riverLabel;
+    private Slider heightSlider;
+    private Label heightLabel;
+    private ComboBox<PlanetConfig.Size> sizeCombo;
+    private ComboBox<ClimateCalculator.ClimateModel> climateCombo;
+    private Button regenerateButton;
+    private ProgressBar progressBar;
+    private Label progressLabel;
+    private Label infoPolygonsLabel;
+    private Label infoRiversLabel;
+    private Label infoPlatesLabel;
+    private CheckBox riversCheckBox;
+    private CheckBox rainfallCheckBox;
+    private CheckBox smoothCheckBox;
+    private CheckBox plateBoundariesCheckBox;
+    private CheckBox climateZonesCheckBox;
 
     /**
      * Create a new procedural planet viewer dialog.
@@ -106,14 +139,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     public ProceduralPlanetViewerDialog(String planetName, GeneratedPlanet planet) {
         this.planetName = planetName;
         this.generatedPlanet = planet;
-        this.rainfall = planet.rainfall();
-        this.preciseHeights = planet.preciseHeights();
-        this.adjacency = planet.adjacency();
-        this.plateAssignment = planet.plateAssignment();
-        this.boundaryAnalysis = planet.boundaryAnalysis();
+        updatePlanetData(planet);
+
+        // Initialize generation parameters from current planet config
+        PlanetConfig config = planet.config();
+        this.currentSeed = config != null ? config.seed() : System.nanoTime();
+        this.currentPlateCount = config != null ? config.plateCount() : 12;
+        this.currentWaterFraction = config != null ? config.waterFraction() : 0.66;
+        this.currentErosionIterations = config != null ? config.erosionIterations() : 5;
+        this.currentRiverThreshold = config != null ? config.riverSourceThreshold() : 0.7;
+        this.currentHeightScale = config != null ? config.heightScaleMultiplier() : 1.0;
+        this.currentSize = config != null ? deriveSizeFromN(config.n()) : PlanetConfig.Size.STANDARD;
+        this.currentClimateModel = config != null ? config.climateModel() : ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
 
         setTitle("Terrain: " + planetName);
-        setResizable(true);
+        setResizable(false);  // Fixed size dialog
 
         // Create 3D scene
         world = new Group();
@@ -146,28 +186,32 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Set up mouse interaction
         setupMouseHandlers();
 
-        // Create the legend panel (initially hidden)
-        legendPanel = createLegend();
-        legendPanel.setVisible(showLegend);
-
-        // Wrap SubScene and legend in StackPane for overlay
+        // Wrap SubScene in a simple container with fixed size
         StackPane viewPane = new StackPane();
-        viewPane.getChildren().addAll(subScene, legendPanel);
-        StackPane.setAlignment(legendPanel, Pos.TOP_RIGHT);
-        StackPane.setMargin(legendPanel, new Insets(10));
+        viewPane.getChildren().add(subScene);
+        viewPane.setMinSize(SCENE_WIDTH, SCENE_HEIGHT);
+        viewPane.setMaxSize(SCENE_WIDTH, SCENE_HEIGHT);
+        viewPane.setPrefSize(SCENE_WIDTH, SCENE_HEIGHT);
 
-        // Create dialog content
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(10));
-        content.getChildren().addAll(viewPane, createControlBar());
-        VBox.setVgrow(viewPane, Priority.ALWAYS);
+        // Create side panel
+        VBox sidePanel = createSidePanel();
+        sidePanel.setMinWidth(SIDE_PANEL_WIDTH);
+        sidePanel.setPrefWidth(SIDE_PANEL_WIDTH);
 
-        getDialogPane().setContent(content);
+        // Main layout: 3D view on left, side panel on right
+        HBox mainLayout = new HBox(10);
+        mainLayout.setPadding(new Insets(10));
+        mainLayout.getChildren().addAll(viewPane, sidePanel);
+
+        getDialogPane().setContent(mainLayout);
         getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
-        // Set minimum size
-        getDialogPane().setMinWidth(750);
-        getDialogPane().setMinHeight(650);
+        // Set dialog size - use preferred size to prevent it from expanding to fill screen
+        double dialogWidth = SCENE_WIDTH + SIDE_PANEL_WIDTH + 60;
+        double dialogHeight = SCENE_HEIGHT + 80;
+        getDialogPane().setPrefWidth(dialogWidth);
+        getDialogPane().setPrefHeight(dialogHeight);
+        getDialogPane().setMaxHeight(dialogHeight + 50);  // Allow slight expansion but not full screen
 
         // Stop animation when dialog closes
         setOnCloseRequest(event -> stopAnimation());
@@ -177,6 +221,554 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         log.info("Created procedural planet viewer for: {}", planetName);
+    }
+
+    /**
+     * Update local references when planet data changes.
+     */
+    private void updatePlanetData(GeneratedPlanet planet) {
+        this.generatedPlanet = planet;
+        this.rainfall = planet.rainfall();
+        this.preciseHeights = planet.preciseHeights();
+        this.adjacency = planet.adjacency();
+        this.plateAssignment = planet.plateAssignment();
+        this.boundaryAnalysis = planet.boundaryAnalysis();
+    }
+
+    /**
+     * Create the side panel with all control sections.
+     */
+    private VBox createSidePanel() {
+        VBox sidePanel = new VBox(10);
+        sidePanel.setPadding(new Insets(5));
+
+        // Use a ScrollPane in case content is too tall
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(5));
+
+        content.getChildren().addAll(
+            createGenerationSection(),
+            new Separator(),
+            createViewSection(),
+            new Separator(),
+            createOverlaysSection(),
+            new Separator(),
+            createRenderSection(),
+            new Separator(),
+            createInfoSection(),
+            new Separator(),
+            createLegendSection()
+        );
+
+        scrollPane.setContent(content);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        sidePanel.getChildren().add(scrollPane);
+
+        return sidePanel;
+    }
+
+    // Standard style for labels in side panel
+    private static final String LABEL_STYLE = "-fx-text-fill: #333333; -fx-font-size: 11;";
+    private static final String SMALL_LABEL_STYLE = "-fx-text-fill: #333333; -fx-font-size: 10;";
+    private static final String INFO_LABEL_STYLE = "-fx-text-fill: #555555; -fx-font-size: 10;";
+
+    /**
+     * Create the GENERATION section with parameter controls.
+     */
+    private TitledPane createGenerationSection() {
+        VBox content = new VBox(8);
+        content.setPadding(new Insets(5));
+
+        // Seed
+        HBox seedRow = new HBox(5);
+        seedRow.setAlignment(Pos.CENTER_LEFT);
+        Label seedLabel = new Label("Seed:");
+        seedLabel.setStyle(LABEL_STYLE);
+        seedField = new TextField(String.valueOf(currentSeed));
+        seedField.setPrefWidth(100);
+        seedField.setStyle("-fx-font-size: 10;");
+        Button randomizeButton = new Button("🎲");
+        randomizeButton.setTooltip(new Tooltip("Generate random seed"));
+        randomizeButton.setOnAction(e -> {
+            currentSeed = new Random().nextLong();
+            seedField.setText(String.valueOf(currentSeed));
+        });
+        seedRow.getChildren().addAll(seedLabel, seedField, randomizeButton);
+
+        // Size
+        HBox sizeRow = new HBox(5);
+        sizeRow.setAlignment(Pos.CENTER_LEFT);
+        Label sizeLabel = new Label("Size:");
+        sizeLabel.setStyle(LABEL_STYLE);
+        sizeCombo = new ComboBox<>();
+        sizeCombo.getItems().addAll(PlanetConfig.Size.values());
+        sizeCombo.setValue(currentSize);
+        sizeCombo.setPrefWidth(120);
+        sizeCombo.setStyle("-fx-font-size: 10;");
+        sizeRow.getChildren().addAll(sizeLabel, sizeCombo);
+
+        // Plate count
+        HBox plateRow = new HBox(5);
+        plateRow.setAlignment(Pos.CENTER_LEFT);
+        Label platesLabel = new Label("Plates:");
+        platesLabel.setStyle(LABEL_STYLE);
+        plateSpinner = new Spinner<>(7, 21, currentPlateCount);
+        plateSpinner.setPrefWidth(70);
+        plateSpinner.setEditable(true);
+        plateSpinner.setStyle("-fx-font-size: 10;");
+        plateRow.getChildren().addAll(platesLabel, plateSpinner);
+
+        // Water fraction
+        VBox waterBox = new VBox(2);
+        HBox waterHeader = new HBox(5);
+        waterHeader.setAlignment(Pos.CENTER_LEFT);
+        waterLabel = new Label(String.format("Water: %.0f%%", currentWaterFraction * 100));
+        waterLabel.setStyle(LABEL_STYLE);
+        waterHeader.getChildren().add(waterLabel);
+        waterSlider = new Slider(0, 1, currentWaterFraction);
+        waterSlider.setShowTickMarks(true);
+        waterSlider.setMajorTickUnit(0.25);
+        waterSlider.valueProperty().addListener((obs, old, val) -> {
+            currentWaterFraction = val.doubleValue();
+            waterLabel.setText(String.format("Water: %.0f%%", currentWaterFraction * 100));
+        });
+        waterBox.getChildren().addAll(waterHeader, waterSlider);
+
+        // Erosion iterations
+        HBox erosionRow = new HBox(5);
+        erosionRow.setAlignment(Pos.CENTER_LEFT);
+        Label erosionLabel = new Label("Erosion:");
+        erosionLabel.setStyle(LABEL_STYLE);
+        erosionSpinner = new Spinner<>(0, 10, currentErosionIterations);
+        erosionSpinner.setPrefWidth(70);
+        erosionSpinner.setEditable(true);
+        erosionSpinner.setStyle("-fx-font-size: 10;");
+        erosionRow.getChildren().addAll(erosionLabel, erosionSpinner);
+
+        // River threshold
+        VBox riverBox = new VBox(2);
+        HBox riverHeader = new HBox(5);
+        riverHeader.setAlignment(Pos.CENTER_LEFT);
+        riverLabel = new Label(String.format("River Thresh: %.2f", currentRiverThreshold));
+        riverLabel.setStyle(LABEL_STYLE);
+        riverHeader.getChildren().add(riverLabel);
+        riverSlider = new Slider(0.1, 1.0, currentRiverThreshold);
+        riverSlider.setShowTickMarks(true);
+        riverSlider.setMajorTickUnit(0.2);
+        riverSlider.valueProperty().addListener((obs, old, val) -> {
+            currentRiverThreshold = val.doubleValue();
+            riverLabel.setText(String.format("River Thresh: %.2f", currentRiverThreshold));
+        });
+        riverBox.getChildren().addAll(riverHeader, riverSlider);
+
+        // Height scale
+        VBox heightBox = new VBox(2);
+        HBox heightHeader = new HBox(5);
+        heightHeader.setAlignment(Pos.CENTER_LEFT);
+        heightLabel = new Label(String.format("Height Scale: %.1f", currentHeightScale));
+        heightLabel.setStyle(LABEL_STYLE);
+        heightHeader.getChildren().add(heightLabel);
+        heightSlider = new Slider(0.5, 3.0, currentHeightScale);
+        heightSlider.setShowTickMarks(true);
+        heightSlider.setMajorTickUnit(0.5);
+        heightSlider.valueProperty().addListener((obs, old, val) -> {
+            currentHeightScale = val.doubleValue();
+            heightLabel.setText(String.format("Height Scale: %.1f", currentHeightScale));
+        });
+        heightBox.getChildren().addAll(heightHeader, heightSlider);
+
+        // Climate model
+        HBox climateRow = new HBox(5);
+        climateRow.setAlignment(Pos.CENTER_LEFT);
+        Label climateLabel = new Label("Climate:");
+        climateLabel.setStyle(LABEL_STYLE);
+        climateCombo = new ComboBox<>();
+        climateCombo.getItems().addAll(ClimateCalculator.ClimateModel.values());
+        climateCombo.setValue(currentClimateModel);
+        climateCombo.setPrefWidth(120);
+        climateCombo.setStyle("-fx-font-size: 10;");
+        climateRow.getChildren().addAll(climateLabel, climateCombo);
+
+        // Regenerate button
+        regenerateButton = new Button("Regenerate");
+        regenerateButton.setMaxWidth(Double.MAX_VALUE);
+        regenerateButton.setStyle("-fx-font-weight: bold;");
+        regenerateButton.setOnAction(e -> regeneratePlanet());
+
+        // Progress bar (initially hidden)
+        progressBar = new ProgressBar(0);
+        progressBar.setMaxWidth(Double.MAX_VALUE);
+        progressBar.setVisible(false);
+        progressBar.setManaged(false);
+
+        progressLabel = new Label("");
+        progressLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #666666;");
+        progressLabel.setVisible(false);
+        progressLabel.setManaged(false);
+
+        content.getChildren().addAll(
+            seedRow,
+            sizeRow,
+            plateRow,
+            waterBox,
+            erosionRow,
+            riverBox,
+            heightBox,
+            climateRow,
+            regenerateButton,
+            progressBar,
+            progressLabel
+        );
+
+        TitledPane pane = new TitledPane("Generation", content);
+        pane.setExpanded(true);
+        pane.setCollapsible(true);
+        return pane;
+    }
+
+    /**
+     * Create the VIEW section with zoom and rotation controls.
+     */
+    private TitledPane createViewSection() {
+        VBox content = new VBox(8);
+        content.setPadding(new Insets(5));
+
+        // Zoom slider
+        VBox zoomBox = new VBox(2);
+        Label zoomLabel = new Label("Zoom:");
+        zoomLabel.setStyle(LABEL_STYLE);
+        Slider zoomSlider = new Slider(-8, -1.5, INITIAL_CAMERA_DISTANCE);
+        zoomSlider.setShowTickMarks(true);
+        zoomSlider.setMajorTickUnit(2);
+        zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            camera.setTranslateZ(newVal.doubleValue());
+        });
+        zoomBox.getChildren().addAll(zoomLabel, zoomSlider);
+
+        // Auto-rotate checkbox
+        CheckBox autoRotateCheckBox = new CheckBox("Auto-spin");
+        autoRotateCheckBox.setStyle(LABEL_STYLE);
+        autoRotateCheckBox.setSelected(autoRotate);
+        autoRotateCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            setAutoRotate(newVal);
+        });
+
+        // Reset view button
+        Button resetButton = new Button("Reset View");
+        resetButton.setMaxWidth(Double.MAX_VALUE);
+        resetButton.setOnAction(e -> {
+            resetView();
+            autoRotateCheckBox.setSelected(false);
+            setAutoRotate(false);
+        });
+
+        content.getChildren().addAll(zoomBox, autoRotateCheckBox, resetButton);
+
+        TitledPane pane = new TitledPane("View", content);
+        pane.setExpanded(true);
+        pane.setCollapsible(true);
+        return pane;
+    }
+
+    /**
+     * Create the OVERLAYS section with toggle options.
+     */
+    private TitledPane createOverlaysSection() {
+        VBox content = new VBox(5);
+        content.setPadding(new Insets(5));
+
+        // Rivers checkbox
+        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        riversCheckBox = new CheckBox("Rivers (" + riverCount + ")");
+        riversCheckBox.setStyle(LABEL_STYLE);
+        riversCheckBox.setSelected(showRivers);
+        riversCheckBox.setDisable(riverCount == 0);
+        riversCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showRivers = newVal;
+            renderPlanet();
+        });
+
+        // Plate boundaries checkbox
+        boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
+        plateBoundariesCheckBox = new CheckBox("Plate Boundaries");
+        plateBoundariesCheckBox.setStyle(LABEL_STYLE);
+        plateBoundariesCheckBox.setSelected(showPlateBoundaries);
+        plateBoundariesCheckBox.setDisable(!hasPlateData);
+        plateBoundariesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showPlateBoundaries = newVal;
+            renderPlanet();
+        });
+
+        // Climate zones checkbox
+        boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
+        climateZonesCheckBox = new CheckBox("Climate Zones");
+        climateZonesCheckBox.setStyle(LABEL_STYLE);
+        climateZonesCheckBox.setSelected(showClimateZones);
+        climateZonesCheckBox.setDisable(!hasClimateData);
+        climateZonesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showClimateZones = newVal;
+            renderPlanet();
+        });
+
+        // Atmosphere checkbox
+        CheckBox atmosphereCheckBox = new CheckBox("Atmosphere");
+        atmosphereCheckBox.setStyle(LABEL_STYLE);
+        atmosphereCheckBox.setSelected(showAtmosphere);
+        atmosphereCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showAtmosphere = newVal;
+            updateAtmosphere();
+        });
+
+        content.getChildren().addAll(riversCheckBox, plateBoundariesCheckBox, climateZonesCheckBox, atmosphereCheckBox);
+
+        TitledPane pane = new TitledPane("Overlays", content);
+        pane.setExpanded(true);
+        pane.setCollapsible(true);
+        return pane;
+    }
+
+    /**
+     * Create the RENDER section with display mode options.
+     */
+    private TitledPane createRenderSection() {
+        VBox content = new VBox(5);
+        content.setPadding(new Insets(5));
+
+        // Render mode radio buttons
+        ToggleGroup renderGroup = new ToggleGroup();
+
+        RadioButton terrainRadio = new RadioButton("Terrain Colors");
+        terrainRadio.setStyle(LABEL_STYLE);
+        terrainRadio.setToggleGroup(renderGroup);
+        terrainRadio.setSelected(useColorByHeight);
+
+        boolean hasRainfall = rainfall != null && rainfall.length > 0;
+        RadioButton rainfallRadio = new RadioButton("Rainfall Heatmap");
+        rainfallRadio.setStyle(LABEL_STYLE);
+        rainfallRadio.setToggleGroup(renderGroup);
+        rainfallRadio.setSelected(showRainfallHeatmap);
+        rainfallRadio.setDisable(!hasRainfall);
+
+        renderGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == terrainRadio) {
+                useColorByHeight = true;
+                showRainfallHeatmap = false;
+            } else if (newVal == rainfallRadio) {
+                useColorByHeight = false;
+                showRainfallHeatmap = true;
+            }
+            renderPlanet();
+        });
+
+        // Smooth terrain checkbox
+        boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
+        smoothCheckBox = new CheckBox("Smooth Terrain");
+        smoothCheckBox.setStyle(LABEL_STYLE);
+        smoothCheckBox.setSelected(useSmoothTerrain);
+        smoothCheckBox.setDisable(!hasPreciseHeights);
+        smoothCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            useSmoothTerrain = newVal;
+            renderPlanet();
+        });
+
+        // Wireframe checkbox
+        CheckBox wireframeCheckBox = new CheckBox("Wireframe");
+        wireframeCheckBox.setStyle(LABEL_STYLE);
+        wireframeCheckBox.setSelected(showWireframe);
+        wireframeCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            showWireframe = newVal;
+            renderPlanet();
+        });
+
+        content.getChildren().addAll(terrainRadio, rainfallRadio, new Separator(), smoothCheckBox, wireframeCheckBox);
+
+        TitledPane pane = new TitledPane("Render", content);
+        pane.setExpanded(true);
+        pane.setCollapsible(true);
+        return pane;
+    }
+
+    /**
+     * Create the INFO section with stats and export options.
+     */
+    private TitledPane createInfoSection() {
+        VBox content = new VBox(5);
+        content.setPadding(new Insets(5));
+
+        // Stats
+        int polyCount = generatedPlanet.polygons().size();
+        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        int plateCount = plateAssignment != null ? plateAssignment.plates().size() : 0;
+
+        infoPolygonsLabel = new Label("Polygons: " + polyCount);
+        infoPolygonsLabel.setStyle(INFO_LABEL_STYLE);
+
+        infoRiversLabel = new Label("Rivers: " + riverCount);
+        infoRiversLabel.setStyle(INFO_LABEL_STYLE);
+
+        infoPlatesLabel = new Label("Plates: " + plateCount);
+        infoPlatesLabel.setStyle(INFO_LABEL_STYLE);
+
+        // Save screenshot button
+        Button saveButton = new Button("Save Screenshot");
+        saveButton.setMaxWidth(Double.MAX_VALUE);
+        saveButton.setOnAction(e -> saveScreenshot());
+
+        content.getChildren().addAll(infoPolygonsLabel, infoRiversLabel, infoPlatesLabel,
+            new Separator(), saveButton);
+
+        TitledPane pane = new TitledPane("Info", content);
+        pane.setExpanded(true);
+        pane.setCollapsible(true);
+        return pane;
+    }
+
+    /**
+     * Regenerate the planet with current parameter values.
+     */
+    private void regeneratePlanet() {
+        // Read current values from UI
+        try {
+            currentSeed = Long.parseLong(seedField.getText().trim());
+        } catch (NumberFormatException e) {
+            currentSeed = System.nanoTime();
+            seedField.setText(String.valueOf(currentSeed));
+        }
+
+        currentPlateCount = plateSpinner.getValue();
+        currentWaterFraction = waterSlider.getValue();
+        currentErosionIterations = erosionSpinner.getValue();
+        currentRiverThreshold = riverSlider.getValue();
+        currentHeightScale = heightSlider.getValue();
+        currentSize = sizeCombo.getValue();
+        currentClimateModel = climateCombo.getValue();
+
+        // Show progress UI
+        regenerateButton.setDisable(true);
+        progressBar.setProgress(0);
+        progressBar.setVisible(true);
+        progressBar.setManaged(true);
+        progressLabel.setText("Starting...");
+        progressLabel.setVisible(true);
+        progressLabel.setManaged(true);
+
+        // Build config
+        PlanetConfig config = PlanetConfig.builder()
+            .seed(currentSeed)
+            .size(currentSize)
+            .plateCount(currentPlateCount)
+            .waterFraction(currentWaterFraction)
+            .erosionIterations(currentErosionIterations)
+            .riverSourceThreshold(currentRiverThreshold)
+            .heightScaleMultiplier(currentHeightScale)
+            .climateModel(currentClimateModel)
+            .build();
+
+        // Create progress listener
+        GenerationProgressListener listener = new GenerationProgressListener() {
+            @Override
+            public void onPhaseStarted(GenerationProgressListener.Phase phase, String description) {
+                Platform.runLater(() -> progressLabel.setText(description));
+            }
+
+            @Override
+            public void onProgressUpdate(GenerationProgressListener.Phase phase, double progress) {
+                double overall = GenerationProgressListener.calculateOverallProgress(phase, progress);
+                Platform.runLater(() -> progressBar.setProgress(overall));
+            }
+
+            @Override
+            public void onPhaseCompleted(GenerationProgressListener.Phase phase) {
+                // Nothing special needed
+            }
+
+            @Override
+            public void onGenerationCompleted() {
+                Platform.runLater(() -> {
+                    progressLabel.setText("Complete!");
+                    progressBar.setProgress(1.0);
+                });
+            }
+
+            @Override
+            public void onGenerationError(GenerationProgressListener.Phase phase, Exception error) {
+                Platform.runLater(() -> {
+                    progressLabel.setText("Error: " + error.getMessage());
+                    log.error("Generation error in phase {}: {}", phase, error.getMessage());
+                });
+            }
+        };
+
+        // Run generation in background thread
+        CompletableFuture.supplyAsync(() -> PlanetGenerator.generate(config, listener))
+            .thenAccept(newPlanet -> Platform.runLater(() -> {
+                // Update planet data
+                updatePlanetData(newPlanet);
+
+                // Re-render
+                createAtmosphere();
+                renderPlanet();
+
+                // Update info labels
+                updateInfoLabels();
+
+                // Update checkbox states based on new data
+                updateControlStates();
+
+                // Hide progress UI
+                regenerateButton.setDisable(false);
+                progressBar.setVisible(false);
+                progressBar.setManaged(false);
+                progressLabel.setVisible(false);
+                progressLabel.setManaged(false);
+
+                log.info("Regenerated planet with seed={}, size={}, plates={}, water={:.0f}%",
+                    currentSeed, currentSize, currentPlateCount, currentWaterFraction * 100);
+            }))
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    progressLabel.setText("Error: " + ex.getMessage());
+                    regenerateButton.setDisable(false);
+                    log.error("Failed to regenerate planet", ex);
+                });
+                return null;
+            });
+    }
+
+    /**
+     * Update info labels after regeneration.
+     */
+    private void updateInfoLabels() {
+        int polyCount = generatedPlanet.polygons().size();
+        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        int plateCount = plateAssignment != null ? plateAssignment.plates().size() : 0;
+
+        infoPolygonsLabel.setText("Polygons: " + polyCount);
+        infoRiversLabel.setText("Rivers: " + riverCount);
+        infoPlatesLabel.setText("Plates: " + plateCount);
+    }
+
+    /**
+     * Update control states based on new planet data availability.
+     */
+    private void updateControlStates() {
+        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        riversCheckBox.setText("Rivers (" + riverCount + ")");
+        riversCheckBox.setDisable(riverCount == 0);
+
+        boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
+        plateBoundariesCheckBox.setDisable(!hasPlateData);
+
+        boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
+        climateZonesCheckBox.setDisable(!hasClimateData);
+
+        boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
+        smoothCheckBox.setDisable(!hasPreciseHeights);
     }
 
     /**
@@ -204,7 +796,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
     /**
      * Create an atmosphere glow effect around the planet.
-     * Uses a semi-transparent blue sphere slightly larger than the planet.
      */
     private void createAtmosphere() {
         // Remove existing atmosphere if any
@@ -220,39 +811,27 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         double atmosphereRadius = PLANET_SCALE * 1.05;
         atmosphereSphere = new Sphere(atmosphereRadius);
 
-        // Create semi-transparent blue atmosphere material
-        PhongMaterial atmosphereMaterial = new PhongMaterial();
-
         // Atmosphere color varies based on planet water content
-        // More water = bluer atmosphere (Earth-like)
-        // Less water = thinner/lighter atmosphere
         double waterFraction = generatedPlanet.config() != null
             ? generatedPlanet.config().waterFraction()
             : 0.66;
 
-        // Color ranges from pale white (dry) to blue (wet)
         Color atmosphereColor;
         if (waterFraction > 0.5) {
-            // Water world - deeper blue atmosphere
             atmosphereColor = Color.rgb(100, 150, 255, 0.12);
         } else if (waterFraction > 0.2) {
-            // Moderate water - lighter blue
             atmosphereColor = Color.rgb(135, 180, 255, 0.08);
         } else {
-            // Dry world - thin, pale atmosphere
             atmosphereColor = Color.rgb(180, 200, 230, 0.05);
         }
 
+        PhongMaterial atmosphereMaterial = new PhongMaterial();
         atmosphereMaterial.setDiffuseColor(atmosphereColor);
         atmosphereMaterial.setSpecularColor(Color.TRANSPARENT);
         atmosphereSphere.setMaterial(atmosphereMaterial);
-
-        // Render both sides for atmosphere glow effect
         atmosphereSphere.setCullFace(CullFace.NONE);
 
         world.getChildren().add(atmosphereSphere);
-        log.debug("Created atmosphere with radius {} and water fraction {}",
-            atmosphereRadius, waterFraction);
     }
 
     /**
@@ -266,7 +845,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
     /**
      * Render the planet terrain mesh.
-     * Supports multiple visualization modes: height-colored, rainfall heatmap, smooth terrain.
      */
     private void renderPlanet() {
         planetGroup.getChildren().clear();
@@ -275,7 +853,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         int[] heights = generatedPlanet.heights();
 
         if (showRainfallHeatmap && rainfall != null && rainfall.length > 0) {
-            // Render with rainfall heatmap coloring
             Map<Integer, TriangleMesh> meshByRainfall = JavaFxPlanetMeshConverter.convertByRainfall(
                 polygons, heights, rainfall, PLANET_SCALE);
 
@@ -290,12 +867,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
                 planetGroup.getChildren().add(meshView);
             }
-            log.debug("Rendered planet with rainfall heatmap: {} polygons, {} rainfall buckets",
-                polygons.size(), meshByRainfall.size());
 
         } else if (useColorByHeight) {
-            // Render with separate meshes per height level, using neighbor-averaged vertices
-            // Pass preciseHeights for finer averaging when available
             Map<Integer, TriangleMesh> meshByHeight = adjacency != null
                 ? JavaFxPlanetMeshConverter.convertByHeightWithAveraging(
                     polygons, heights, adjacency, PLANET_SCALE, preciseHeights)
@@ -312,11 +885,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
                 planetGroup.getChildren().add(meshView);
             }
-            log.debug("Rendered planet with {} polygons, {} height-grouped meshes",
-                polygons.size(), meshByHeight.size());
 
         } else {
-            // Single mesh with averaged color or smooth terrain
             TriangleMesh mesh;
             PhongMaterial material;
 
@@ -334,8 +904,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             meshView.setDrawMode(showWireframe ? DrawMode.LINE : DrawMode.FILL);
 
             planetGroup.getChildren().add(meshView);
-            log.debug("Rendered planet with {} polygons, single mesh",
-                polygons.size());
         }
 
         // Add rivers if enabled
@@ -356,9 +924,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
     /**
      * Add river visualization as gradient-colored lines.
-     * Rivers transition from thin/light at source to thick/dark at mouth.
-     * Width is based on cumulative flow (sum of rainfall from upstream polygons).
-     * Frozen rivers (ending in polar zones) use ice-blue coloring.
      */
     private void addRivers() {
         List<List<Integer>> rivers = generatedPlanet.rivers();
@@ -372,12 +937,10 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
             boolean isFrozen = frozenTerminus != null && riverIdx < frozenTerminus.length && frozenTerminus[riverIdx];
 
-            // Calculate cumulative flow along river based on rainfall
             double[] cumulativeFlow = calculateCumulativeFlow(river);
             double maxFlow = cumulativeFlow[cumulativeFlow.length - 1];
-            if (maxFlow <= 0) maxFlow = 1.0;  // Avoid division by zero
+            if (maxFlow <= 0) maxFlow = 1.0;
 
-            // Create river as a series of cylinders with flow-based width
             for (int i = 0; i < river.size() - 1; i++) {
                 int polyIdx1 = river.get(i);
                 int polyIdx2 = river.get(i + 1);
@@ -387,55 +950,36 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                     continue;
                 }
 
-                // Calculate normalized flow at this segment (0 to 1)
                 double flowRatio = cumulativeFlow[i + 1] / maxFlow;
 
-                // Get height displacement for river to follow terrain
                 int height1 = heights[polyIdx1];
                 int height2 = heights[polyIdx2];
                 double avgHeight = (height1 + height2) / 2.0;
-                double displacement = 1.0 + avgHeight * 0.025; // Slightly above terrain
+                double displacement = 1.0 + avgHeight * 0.025;
 
-                // Position river segment above the terrain
                 Point3D p1 = toPoint3D(polygons.get(polyIdx1).center().normalize()
                     .scalarMultiply(PLANET_SCALE * displacement * 1.003));
                 Point3D p2 = toPoint3D(polygons.get(polyIdx2).center().normalize()
                     .scalarMultiply(PLANET_SCALE * displacement * 1.003));
 
-                // Create flow-weighted river segment
                 javafx.scene.shape.Cylinder riverSegment = createFlowBasedRiverSegment(
                     p1, p2, flowRatio, isFrozen);
                 planetGroup.getChildren().add(riverSegment);
             }
         }
-
-        log.debug("Added {} rivers to planet visualization", rivers.size());
     }
 
-    /**
-     * Calculate cumulative flow along a river path.
-     * Flow accumulates based on rainfall at each polygon, simulating tributaries.
-     *
-     * @param river List of polygon indices from source to mouth
-     * @return Array of cumulative flow values (one per river segment endpoint)
-     */
     private double[] calculateCumulativeFlow(List<Integer> river) {
         double[] flow = new double[river.size()];
         double cumulative = 0.0;
-
-        // Base flow contribution per polygon
         double baseFlowPerSegment = 0.5;
 
         for (int i = 0; i < river.size(); i++) {
             int polyIdx = river.get(i);
-
-            // Add rainfall contribution if available
             double contribution = baseFlowPerSegment;
             if (rainfall != null && polyIdx >= 0 && polyIdx < rainfall.length) {
-                // More rainfall = more water entering the river
                 contribution += rainfall[polyIdx] * 0.5;
             }
-
             cumulative += contribution;
             flow[i] = cumulative;
         }
@@ -443,57 +987,40 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         return flow;
     }
 
-    /**
-     * Create a river segment with width based on cumulative flow.
-     *
-     * @param start     Start point
-     * @param end       End point
-     * @param flowRatio Normalized flow (0 = source, 1 = max flow at mouth)
-     * @param frozen    Whether this river ends frozen
-     * @return Cylinder representing the river segment
-     */
     private javafx.scene.shape.Cylinder createFlowBasedRiverSegment(
             Point3D start, Point3D end, double flowRatio, boolean frozen) {
 
         Point3D midpoint = start.midpoint(end);
         double length = start.distance(end);
 
-        // Flow-based width: use square root scaling for natural appearance
-        // Small streams: 0.002, Large rivers: 0.008
-        // Square root gives better visual distribution than linear
         double minRadius = 0.002;
         double maxRadius = 0.008;
         double radius = minRadius + Math.sqrt(flowRatio) * (maxRadius - minRadius);
 
         javafx.scene.shape.Cylinder cylinder = new javafx.scene.shape.Cylinder(radius, length);
 
-        // Color transitions along river (based on flow for color too)
         PhongMaterial material = new PhongMaterial();
         Color riverColor;
 
         if (frozen) {
-            // Frozen river: light cyan → white/ice as flow increases
-            Color sourceColor = Color.rgb(135, 206, 250);   // Light sky blue
-            Color terminusColor = Color.rgb(224, 255, 255); // Light cyan/ice
+            Color sourceColor = Color.rgb(135, 206, 250);
+            Color terminusColor = Color.rgb(224, 255, 255);
             riverColor = sourceColor.interpolate(terminusColor, flowRatio);
         } else {
-            // Normal river: light blue (stream) → dark blue (wide river)
-            Color sourceColor = Color.rgb(100, 180, 255);   // Light blue (mountain spring)
-            Color mouthColor = Color.rgb(0, 80, 160);       // Dark blue (wide river)
+            Color sourceColor = Color.rgb(100, 180, 255);
+            Color mouthColor = Color.rgb(0, 80, 160);
             riverColor = sourceColor.interpolate(mouthColor, flowRatio);
         }
 
         material.setDiffuseColor(riverColor);
         material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.5, 1));
-        material.setSpecularPower(25.0); // Shiny water effect
+        material.setSpecularPower(25.0);
         cylinder.setMaterial(material);
 
-        // Position at midpoint
         cylinder.setTranslateX(midpoint.getX());
         cylinder.setTranslateY(midpoint.getY());
         cylinder.setTranslateZ(midpoint.getZ());
 
-        // Rotate to align with the segment direction
         Point3D direction = end.subtract(start).normalize();
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D rotationAxis = yAxis.crossProduct(direction);
@@ -508,16 +1035,10 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Add plate boundary visualization as colored lines.
-     * Boundary types are color-coded:
-     * - CONVERGENT (subduction/collision): Red
-     * - DIVERGENT (spreading): Cyan/Green
-     * - TRANSFORM (lateral): Yellow/Orange
-     * - INACTIVE: Gray
+     * Add plate boundary visualization.
      */
     private void addPlateBoundaries() {
         if (plateAssignment == null || boundaryAnalysis == null || adjacency == null) {
-            log.warn("Cannot render plate boundaries: missing plate data");
             return;
         }
 
@@ -525,11 +1046,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         int[] plateIndex = plateAssignment.plateIndex();
         int[] heights = generatedPlanet.heights();
 
-        // Track which boundary edges we've already drawn to avoid duplicates
         java.util.Set<String> drawnEdges = new java.util.HashSet<>();
-        int boundaryCount = 0;
 
-        // Iterate through all polygons to find boundaries
         for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
             int plate1 = plateIndex[polyIdx];
             int[] neighbors = adjacency.neighborsOnly(polyIdx);
@@ -537,27 +1055,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             for (int neighborIdx : neighbors) {
                 int plate2 = plateIndex[neighborIdx];
 
-                // Skip if same plate (no boundary)
                 if (plate1 == plate2) continue;
 
-                // Create unique edge key to avoid drawing same edge twice
                 String edgeKey = Math.min(polyIdx, neighborIdx) + "-" + Math.max(polyIdx, neighborIdx);
                 if (drawnEdges.contains(edgeKey)) continue;
                 drawnEdges.add(edgeKey);
 
-                // Get boundary type between these plates
                 BoundaryDetector.PlatePair pair = new BoundaryDetector.PlatePair(plate1, plate2);
                 BoundaryType boundaryType = boundaryAnalysis.boundaries().get(pair);
                 if (boundaryType == null) {
                     boundaryType = BoundaryType.INACTIVE;
                 }
 
-                // Get positions for the boundary segment
                 Polygon poly1 = polygons.get(polyIdx);
                 Polygon poly2 = polygons.get(neighborIdx);
 
-                // Calculate boundary line position (midpoint between polygon centers)
-                // Offset slightly above terrain
                 double height1 = heights[polyIdx];
                 double height2 = heights[neighborIdx];
                 double avgHeight = (height1 + height2) / 2.0;
@@ -568,46 +1080,35 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                 Point3D p2 = toPoint3D(poly2.center().normalize()
                     .scalarMultiply(PLANET_SCALE * displacement * 1.004));
 
-                // Create boundary segment with appropriate color
                 javafx.scene.shape.Cylinder boundarySegment = createBoundarySegment(p1, p2, boundaryType);
                 planetGroup.getChildren().add(boundarySegment);
-                boundaryCount++;
             }
         }
-
-        log.debug("Added {} plate boundary segments", boundaryCount);
     }
 
-    /**
-     * Create a colored cylinder for a plate boundary segment.
-     */
     private javafx.scene.shape.Cylinder createBoundarySegment(Point3D start, Point3D end, BoundaryType type) {
         Point3D midpoint = start.midpoint(end);
         double length = start.distance(end);
 
-        // Boundary line width based on type
         double radius = (type == BoundaryType.CONVERGENT || type == BoundaryType.DIVERGENT) ? 0.004 : 0.003;
         javafx.scene.shape.Cylinder cylinder = new javafx.scene.shape.Cylinder(radius, length);
 
-        // Color based on boundary type
         PhongMaterial material = new PhongMaterial();
         Color boundaryColor = switch (type) {
-            case CONVERGENT -> Color.rgb(220, 60, 60);     // Red - subduction/collision
-            case DIVERGENT -> Color.rgb(60, 200, 180);     // Cyan - spreading ridges
-            case TRANSFORM -> Color.rgb(220, 180, 60);     // Yellow/Orange - strike-slip
-            case INACTIVE -> Color.rgb(120, 120, 120);     // Gray - inactive
+            case CONVERGENT -> Color.rgb(220, 60, 60);
+            case DIVERGENT -> Color.rgb(60, 200, 180);
+            case TRANSFORM -> Color.rgb(220, 180, 60);
+            case INACTIVE -> Color.rgb(120, 120, 120);
         };
 
         material.setDiffuseColor(boundaryColor);
         material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.3, 1));
         cylinder.setMaterial(material);
 
-        // Position at midpoint
         cylinder.setTranslateX(midpoint.getX());
         cylinder.setTranslateY(midpoint.getY());
         cylinder.setTranslateZ(midpoint.getZ());
 
-        // Rotate to align with segment direction
         Point3D direction = end.subtract(start).normalize();
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D rotationAxis = yAxis.crossProduct(direction);
@@ -622,44 +1123,25 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Add climate zone visualization as translucent colored bands.
-     * - Tropical (±30°): Red/Orange tint
-     * - Temperate (30°-60°): Green tint
-     * - Polar (60°-90°): Blue/White tint
+     * Add climate zone visualization.
      */
     private void addClimateZones() {
-        List<Polygon> polygons = generatedPlanet.polygons();
-        var climates = generatedPlanet.climates();
-
-        if (climates == null || climates.length == 0) {
-            log.warn("Cannot render climate zones: no climate data");
+        if (generatedPlanet.climates() == null || generatedPlanet.climates().length == 0) {
             return;
         }
 
-        // Create translucent spherical shells for each climate zone
-        // We'll create latitude rings to indicate zone boundaries
-
-        // Tropical zone boundary ring (±30°)
-        addLatitudeRing(30.0, Color.rgb(255, 200, 100, 0.4), "Tropical boundary");
-        addLatitudeRing(-30.0, Color.rgb(255, 200, 100, 0.4), "Tropical boundary");
-
-        // Temperate-Polar boundary ring (±60°)
-        addLatitudeRing(60.0, Color.rgb(100, 200, 255, 0.5), "Polar boundary");
-        addLatitudeRing(-60.0, Color.rgb(100, 200, 255, 0.5), "Polar boundary");
-
-        log.debug("Added climate zone boundaries");
+        addLatitudeRing(30.0, Color.rgb(255, 200, 100, 0.4));
+        addLatitudeRing(-30.0, Color.rgb(255, 200, 100, 0.4));
+        addLatitudeRing(60.0, Color.rgb(100, 200, 255, 0.5));
+        addLatitudeRing(-60.0, Color.rgb(100, 200, 255, 0.5));
     }
 
-    /**
-     * Add a latitude ring at the specified latitude.
-     */
-    private void addLatitudeRing(double latitudeDegrees, Color color, String description) {
+    private void addLatitudeRing(double latitudeDegrees, Color color) {
         double latRad = Math.toRadians(latitudeDegrees);
-        double ringRadius = PLANET_SCALE * Math.cos(latRad) * 1.008; // Slightly above surface
+        double ringRadius = PLANET_SCALE * Math.cos(latRad) * 1.008;
         double y = PLANET_SCALE * Math.sin(latRad) * 1.008;
 
-        // Create a torus-like ring using small spheres along the latitude
-        int segments = 72; // Number of points around the ring
+        int segments = 72;
         for (int i = 0; i < segments; i++) {
             double angle = 2.0 * Math.PI * i / segments;
             double x = ringRadius * Math.cos(angle);
@@ -681,178 +1163,31 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Create the control bar with options.
+     * Derive the Size enum value from the n subdivision level.
      */
-    private HBox createControlBar() {
-        HBox controlBar = new HBox(10);
-        controlBar.setPadding(new Insets(10, 0, 0, 0));
-
-        // Zoom slider
-        Label zoomLabel = new Label("Zoom:");
-        Slider zoomSlider = new Slider(-8, -1.5, INITIAL_CAMERA_DISTANCE);
-        zoomSlider.setPrefWidth(120);
-        zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            camera.setTranslateZ(newVal.doubleValue());
-        });
-
-        // Rivers checkbox
-        CheckBox riversCheckBox = new CheckBox("Rivers");
-        riversCheckBox.setSelected(showRivers);
-        riversCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showRivers = newVal;
-            renderPlanet();
-        });
-        // Disable rivers checkbox if no rivers exist
-        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
-        riversCheckBox.setDisable(riverCount == 0);
-
-        // Wireframe checkbox
-        CheckBox wireframeCheckBox = new CheckBox("Wireframe");
-        wireframeCheckBox.setSelected(showWireframe);
-        wireframeCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showWireframe = newVal;
-            renderPlanet();
-        });
-
-        // Color mode checkbox
-        CheckBox colorByHeightCheckBox = new CheckBox("Terrain");
-        colorByHeightCheckBox.setSelected(useColorByHeight);
-        colorByHeightCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            useColorByHeight = newVal;
-            if (newVal) {
-                showRainfallHeatmap = false;
+    private static PlanetConfig.Size deriveSizeFromN(int n) {
+        for (PlanetConfig.Size size : PlanetConfig.Size.values()) {
+            if (size.n == n) {
+                return size;
             }
-            renderPlanet();
-        });
-
-        // Rainfall heatmap checkbox
-        CheckBox rainfallCheckBox = new CheckBox("Rainfall");
-        rainfallCheckBox.setSelected(showRainfallHeatmap);
-        rainfallCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showRainfallHeatmap = newVal;
-            if (newVal) {
-                useColorByHeight = false;
-                colorByHeightCheckBox.setSelected(false);
-            }
-            renderPlanet();
-        });
-        // Disable if no rainfall data
-        boolean hasRainfall = rainfall != null && rainfall.length > 0;
-        rainfallCheckBox.setDisable(!hasRainfall);
-
-        // Smooth terrain checkbox
-        CheckBox smoothCheckBox = new CheckBox("Smooth");
-        smoothCheckBox.setSelected(useSmoothTerrain);
-        smoothCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            useSmoothTerrain = newVal;
-            renderPlanet();
-        });
-        // Disable if no precise heights
-        boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
-        smoothCheckBox.setDisable(!hasPreciseHeights);
-
-        // Atmosphere checkbox
-        CheckBox atmosphereCheckBox = new CheckBox("Atmo");
-        atmosphereCheckBox.setSelected(showAtmosphere);
-        atmosphereCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showAtmosphere = newVal;
-            updateAtmosphere();
-        });
-
-        // Plate boundaries checkbox
-        CheckBox plateBoundariesCheckBox = new CheckBox("Plates");
-        plateBoundariesCheckBox.setSelected(showPlateBoundaries);
-        plateBoundariesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showPlateBoundaries = newVal;
-            renderPlanet();
-        });
-        // Disable if no plate data
-        boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
-        plateBoundariesCheckBox.setDisable(!hasPlateData);
-
-        // Climate zones checkbox
-        CheckBox climateZonesCheckBox = new CheckBox("Climate");
-        climateZonesCheckBox.setSelected(showClimateZones);
-        climateZonesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showClimateZones = newVal;
-            renderPlanet();
-        });
-        // Disable if no climate data
-        boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
-        climateZonesCheckBox.setDisable(!hasClimateData);
-
-        // Auto-rotate checkbox
-        CheckBox autoRotateCheckBox = new CheckBox("Spin");
-        autoRotateCheckBox.setSelected(autoRotate);
-        autoRotateCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            setAutoRotate(newVal);
-        });
-
-        // Legend checkbox
-        CheckBox legendCheckBox = new CheckBox("Legend");
-        legendCheckBox.setSelected(showLegend);
-        legendCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showLegend = newVal;
-            if (legendPanel != null) {
-                legendPanel.setVisible(showLegend);
-            }
-        });
-
-        // Reset view button
-        Button resetButton = new Button("Reset");
-        resetButton.setOnAction(e -> {
-            resetView();
-            autoRotateCheckBox.setSelected(false);
-            setAutoRotate(false);
-        });
-
-        // Save screenshot button
-        Button saveButton = new Button("Save");
-        saveButton.setOnAction(e -> saveScreenshot());
-
-        // Info label with more details
-        String infoText = String.format("Poly: %d | Rivers: %d",
-            generatedPlanet.polygons().size(),
-            riverCount);
-        if (hasRainfall) {
-            // Calculate average rainfall for display
-            double avgRain = 0;
-            for (double r : rainfall) avgRain += r;
-            avgRain /= rainfall.length;
-            infoText += String.format(" | Avg Rain: %.1f", avgRain);
         }
-        Label infoLabel = new Label(infoText);
-        infoLabel.setStyle("-fx-text-fill: gray; -fx-font-size: 10;");
-
-        controlBar.getChildren().addAll(
-            zoomLabel, zoomSlider,
-            new Separator(),
-            riversCheckBox,
-            wireframeCheckBox,
-            atmosphereCheckBox,
-            plateBoundariesCheckBox,
-            climateZonesCheckBox,
-            new Separator(),
-            colorByHeightCheckBox,
-            rainfallCheckBox,
-            smoothCheckBox,
-            new Separator(),
-            autoRotateCheckBox,
-            legendCheckBox,
-            resetButton,
-            saveButton,
-            new Separator(),
-            infoLabel
-        );
-
-        return controlBar;
+        // If no exact match, find closest
+        PlanetConfig.Size closest = PlanetConfig.Size.STANDARD;
+        int minDiff = Integer.MAX_VALUE;
+        for (PlanetConfig.Size size : PlanetConfig.Size.values()) {
+            int diff = Math.abs(size.n - n);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = size;
+            }
+        }
+        return closest;
     }
 
     /**
      * Set up mouse handlers for rotation and zoom.
      */
     private void setupMouseHandlers() {
-        // Mouse press - record initial position
         subScene.setOnMousePressed(event -> {
             mouseX = event.getSceneX();
             mouseY = event.getSceneY();
@@ -860,7 +1195,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             mouseOldY = event.getSceneY();
         });
 
-        // Mouse drag - rotate the view
         subScene.setOnMouseDragged(event -> {
             mouseOldX = mouseX;
             mouseOldY = mouseY;
@@ -873,22 +1207,17 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             double modifier = 0.3;
 
             if (event.isPrimaryButtonDown()) {
-                // Rotate around Y axis (horizontal drag)
                 rotateY.setAngle(rotateY.getAngle() + deltaX * modifier);
-                // Rotate around X axis (vertical drag)
                 rotateX.setAngle(rotateX.getAngle() - deltaY * modifier);
 
-                // Clamp X rotation to prevent flipping
                 if (rotateX.getAngle() > 85) rotateX.setAngle(85);
                 if (rotateX.getAngle() < -85) rotateX.setAngle(-85);
             }
         });
 
-        // Mouse scroll - zoom
         subScene.setOnScroll(event -> {
             double deltaY = event.getDeltaY();
             double newZ = camera.getTranslateZ() + deltaY * 0.01;
-            // Clamp zoom
             newZ = Math.max(-8, Math.min(-1.5, newZ));
             camera.setTranslateZ(newZ);
         });
@@ -903,9 +1232,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         camera.setTranslateZ(INITIAL_CAMERA_DISTANCE);
     }
 
-    /**
-     * Initialize the auto-rotation animation.
-     */
     private void initializeAnimation() {
         rotationAnimation = new Timeline(
             new KeyFrame(Duration.millis(30), event -> {
@@ -917,9 +1243,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         rotationAnimation.setCycleCount(Animation.INDEFINITE);
     }
 
-    /**
-     * Toggle auto-rotation on/off.
-     */
     private void setAutoRotate(boolean enabled) {
         this.autoRotate = enabled;
         if (enabled) {
@@ -934,9 +1257,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         }
     }
 
-    /**
-     * Stop animation when dialog closes.
-     */
     private void stopAnimation() {
         if (rotationAnimation != null) {
             rotationAnimation.stop();
@@ -944,56 +1264,51 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Create a color legend panel showing height-to-color mapping.
-     * The legend displays terrain elevation colors from deep ocean to mountain peaks.
+     * Create the LEGEND section showing color mappings.
      */
-    private VBox createLegend() {
-        VBox legend = new VBox(3);
-        legend.setPadding(new Insets(8));
-        legend.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7); -fx-background-radius: 5;");
-        legend.setMaxWidth(100);
-        legend.setMaxHeight(200);
+    private TitledPane createLegendSection() {
+        VBox content = new VBox(3);
+        content.setPadding(new Insets(5));
 
-        Label title = new Label("Elevation");
-        title.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11;");
-        legend.getChildren().add(title);
+        // Elevation legend
+        Label elevTitle = new Label("Elevation");
+        elevTitle.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold; -fx-font-size: 10;");
+        content.getChildren().add(elevTitle);
 
-        // Height levels with their colors (from JavaFxPlanetMeshConverter color mapping)
-        // Heights range from -4 (deep ocean) to +4 (mountain peaks)
         String[][] legendItems = {
-            {"4", "Snow Peak", "#FFFFFF"},
-            {"3", "Mountain", "#8B7355"},
-            {"2", "Highland", "#9B8B5B"},
-            {"1", "Lowland", "#6B8E23"},
-            {"0", "Coast", "#90B060"},
-            {"-1", "Shallow", "#5090C0"},
-            {"-2", "Ocean", "#3070A0"},
-            {"-3", "Deep Sea", "#204080"},
-            {"-4", "Abyss", "#102050"}
+            {"Snow Peak", "#FFFFFF"},
+            {"Mountain", "#8B7355"},
+            {"Highland", "#9B8B5B"},
+            {"Lowland", "#6B8E23"},
+            {"Coast", "#90B060"},
+            {"Shallow", "#5090C0"},
+            {"Ocean", "#3070A0"},
+            {"Deep Sea", "#204080"},
+            {"Abyss", "#102050"}
         };
 
         for (String[] item : legendItems) {
             HBox row = new HBox(5);
             row.setAlignment(Pos.CENTER_LEFT);
 
-            Rectangle colorBox = new Rectangle(14, 12);
-            colorBox.setFill(Color.web(item[2]));
+            Rectangle colorBox = new Rectangle(14, 10);
+            colorBox.setFill(Color.web(item[1]));
             colorBox.setStroke(Color.gray(0.5));
             colorBox.setStrokeWidth(0.5);
 
-            Label label = new Label(item[1]);
-            label.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 9;");
+            Label label = new Label(item[0]);
+            label.setStyle("-fx-text-fill: #555555; -fx-font-size: 9;");
 
             row.getChildren().addAll(colorBox, label);
-            legend.getChildren().add(row);
+            content.getChildren().add(row);
         }
 
-        // Add plate boundary legend if plate data exists
+        // Plate boundary legend (if plate data exists)
         if (plateAssignment != null && boundaryAnalysis != null) {
-            legend.getChildren().add(new Separator());
+            content.getChildren().add(new Separator());
             Label plateTitle = new Label("Boundaries");
-            plateTitle.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11;");
-            legend.getChildren().add(plateTitle);
+            plateTitle.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold; -fx-font-size: 10;");
+            content.getChildren().add(plateTitle);
 
             String[][] plateItems = {
                 {"Convergent", "#DC3C3C"},
@@ -1010,21 +1325,23 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                 colorBox.setFill(Color.web(item[1]));
 
                 Label label = new Label(item[0]);
-                label.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 9;");
+                label.setStyle("-fx-text-fill: #555555; -fx-font-size: 9;");
 
                 row.getChildren().addAll(colorBox, label);
-                legend.getChildren().add(row);
+                content.getChildren().add(row);
             }
         }
 
-        return legend;
+        TitledPane pane = new TitledPane("Legend", content);
+        pane.setExpanded(false);  // Collapsed by default
+        pane.setCollapsible(true);
+        return pane;
     }
 
     /**
      * Save the current view as a PNG screenshot.
      */
     private void saveScreenshot() {
-        // Pause rotation during screenshot
         boolean wasRotating = autoRotate;
         if (wasRotating) {
             setAutoRotate(false);
@@ -1048,7 +1365,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             }
         }
 
-        // Resume rotation if it was active
         if (wasRotating) {
             setAutoRotate(true);
         }

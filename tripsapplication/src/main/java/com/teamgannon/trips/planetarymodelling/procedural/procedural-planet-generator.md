@@ -18,7 +18,7 @@ com.teamgannon.trips.planetarymodelling.procedural
 - **Terrain Generation**: Heights from -4 (deep ocean) to +4 (high mountains)
 - **Climate Zones**: Latitude-based tropical/temperate/polar classification
 - **Reproducible**: Seed-based generation for consistent results
-- **JavaFX Integration**: Native JavaFX 3D rendering via `PlanetMeshView`
+- **JavaFX Integration**: Native JavaFX 3D rendering via `JavaFxPlanetMeshConverter`
 
 ## Dependencies
 
@@ -36,6 +36,8 @@ JavaFX assumed provided by TRIPS parent pom.
 
 ```java
 import com.teamgannon.trips.planetarymodelling.procedural.*;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.TriangleMesh;
 
 // Generate planet
 PlanetConfig config = PlanetConfig.builder()
@@ -45,25 +47,30 @@ PlanetConfig config = PlanetConfig.builder()
     .waterFraction(0.66)
     .build();
 
-PlanetGenerator.Planet planet = PlanetGenerator.generate(config);
+PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(config);
 
 // Render in JavaFX
-PlanetMeshView meshView = new PlanetMeshView(planet);
+TriangleMesh mesh = JavaFxPlanetMeshConverter.convert(planet.polygons(), planet.heights(), 1.0);
+MeshView meshView = new MeshView(mesh);
 scene.getRoot().getChildren().add(meshView);
 ```
 
 ## Integration with Accrete
 
 ```java
-// From Accrete planetary data
-PlanetConfig config = PlanetConfig.builder()
-    .seed(accretePlanet.getSeed())
-    .fromAccreteRadius(accretePlanet.getRadiusKm())  // Auto-selects mesh resolution
-    .plateCount(calculatePlateCount(accretePlanet.getMassEarths()))
-    .waterFraction(accretePlanet.getHydrosphereFraction())
-    .build();
+// Direct generation from Accrete planet (recommended)
+PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generateFromAccrete(
+    accretePlanet, seed);
 
-PlanetGenerator.Planet planet = PlanetGenerator.generate(config);
+// Or manual config with TectonicBias
+TectonicBias bias = TectonicBias.fromAccretePlanet(accretePlanet);
+PlanetConfig config = PlanetConfig.builder()
+    .seed(seed)
+    .fromAccreteRadius(accretePlanet.getRadius())
+    .waterFraction(accretePlanet.getHydrosphere() / 100.0)
+    .build();
+PlanetConfig biasedConfig = bias.applyTo(config, seed);
+PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(biasedConfig);
 ```
 
 ## Classes
@@ -72,17 +79,20 @@ PlanetGenerator.Planet planet = PlanetGenerator.generate(config);
 |-------|---------|
 | `PlanetConfig` | Immutable configuration record with builder |
 | `PlanetGenerator` | Facade orchestrating the generation pipeline |
-| `PlanetGenerator.Planet` | Result record containing all generated data |
+| `PlanetGenerator.GeneratedPlanet` | Result record containing all generated data |
 | `Polygon` | Single hex/pentagon with center + vertices |
 | `IcosahedralMesh` | Goldberg polyhedron geometry generation |
 | `AdjacencyGraph` | Polygon neighbor relationships |
 | `PlateAssigner` | Tectonic plate flood-fill assignment |
 | `BoundaryDetector` | Plate types and boundary interactions |
 | `ElevationCalculator` | Terrain height from plate tectonics |
-| `ClimateCalculator` | Latitude-based climate zones |
-| `PlanetMeshView` | JavaFX 3D renderer (extends `Group`) |
+| `ClimateCalculator` | Latitude-based climate zones (5 models) |
+| `ErosionCalculator` | Erosion simulation, rivers, rainfall, sediment |
+| `GenerationProgressListener` | Progress callback interface for UI updates |
+| `TectonicBias` | Translates Accrete parameters to tectonic settings |
+| `JavaFxPlanetMeshConverter` | Converts mesh to JavaFX TriangleMesh |
 | `PlanetRenderer` | Jzy3d renderer (optional) |
-| `TectonicService` | Spring-compatible service with caching |
+| `TectonicService` | Spring-compatible service with caching (in `service/` subpackage) |
 
 ## Size Presets
 
@@ -121,7 +131,7 @@ PlanetGenerator.Planet planet = PlanetGenerator.generate(config);
 ## Accessing Generated Data
 
 ```java
-Planet planet = PlanetGenerator.generate(config);
+GeneratedPlanet planet = PlanetGenerator.generate(config);
 
 // Geometry
 List<Polygon> polygons = planet.polygons();
@@ -134,6 +144,9 @@ for (Polygon p : polygons) {
 // Terrain heights (-4 to +4)
 int[] heights = planet.heights();
 
+// High-precision heights (for smooth rendering)
+double[] preciseHeights = planet.preciseHeights();
+
 // Climate zones
 ClimateCalculator.ClimateZone[] climates = planet.climates();
 
@@ -145,6 +158,12 @@ List<List<Integer>> platePolygons = plates.plates();  // plate -> polygon list
 // Plate boundaries
 BoundaryDetector.BoundaryAnalysis boundaries = planet.boundaryAnalysis();
 BoundaryDetector.PlateType[] plateTypes = boundaries.plateTypes();  // OCEANIC or CONTINENTAL
+
+// Erosion data
+ErosionCalculator.ErosionResult erosion = planet.erosionResult();
+double[] rainfall = planet.rainfall();           // precipitation per polygon
+List<List<Integer>> rivers = planet.rivers();    // river paths as polygon index lists
+boolean[] frozen = planet.frozenRiverTerminus(); // which rivers end frozen
 ```
 
 ## Reproducibility
@@ -153,18 +172,23 @@ Same seed + config = identical planet:
 
 ```java
 var config = PlanetConfig.builder().seed(42L).build();
-Planet p1 = PlanetGenerator.generate(config);
-Planet p2 = PlanetGenerator.generate(config);
+GeneratedPlanet p1 = PlanetGenerator.generate(config);
+GeneratedPlanet p2 = PlanetGenerator.generate(config);
 // p1 and p2 are identical
 ```
 
 Sub-seeds derived for each generation phase:
-- Phase 1: Plate assignment
-- Phase 2: Elevation calculation
+- Phase 1: Mesh generation
+- Phase 2: Adjacency graph
+- Phase 3: Plate assignment
+- Phase 4: Boundary detection
+- Phase 5: Elevation calculation
+- Phase 6: Climate calculation
+- Phase 7: Erosion calculation
 
 ## Service Layer
 
-For Spring Boot integration:
+For Spring Boot integration (in `service/` subpackage):
 
 ```java
 @Service
@@ -173,31 +197,68 @@ public class MyTectonicService extends TectonicService {}
 // Usage
 @Autowired TectonicService tectonicService;
 
-Planet planet = tectonicService.generateFromAccrete(
+GeneratedPlanet planet = tectonicService.generateFromAccrete(
     seed, radiusKm, massEarths, waterFraction
 );
 
 // Caching built-in
-Planet cached = tectonicService.getCached(seed);
-tectonicService.evict(seed);
+GeneratedPlanet cached = tectonicService.getCached(planet.config());
+tectonicService.evict(planet.config());
 tectonicService.clearCache();
 ```
 
 ## JavaFX Rendering
 
 ```java
-// Full terrain view
-PlanetMeshView meshView = new PlanetMeshView(planet);
+// Convert to JavaFX mesh
+TriangleMesh mesh = JavaFxPlanetMeshConverter.convert(planet.polygons(), planet.heights(), 1.0);
+MeshView meshView = new MeshView(mesh);
 meshView.setScaleX(100);
 meshView.setScaleY(100);
 meshView.setScaleZ(100);
 
-// Wireframe for debugging
-Group wireframe = PlanetMeshView.createWireframe(planet.polygons(), 1.0);
+// Smooth rendering with precise heights
+TriangleMesh smoothMesh = JavaFxPlanetMeshConverter.convertSmooth(
+    planet.polygons(), planet.preciseHeights(), 1.0);
+MeshView smoothView = new MeshView(smoothMesh);
+
+// Wireframe for debugging (JavaFX)
+meshView.setDrawMode(javafx.scene.shape.DrawMode.LINE);
 
 // Add to SubScene with PerspectiveCamera
 SubScene subScene = new SubScene(meshView, 800, 600, true, SceneAntialiasing.BALANCED);
 subScene.setCamera(new PerspectiveCamera(true));
+
+// With progress listener for UI feedback
+GenerationProgressListener listener = new GenerationProgressListener() {
+    @Override
+    public void onPhaseStarted(Phase phase, String description) {
+        Platform.runLater(() -> statusLabel.setText(description));
+    }
+    @Override
+    public void onProgressUpdate(Phase phase, double progress) {
+        Platform.runLater(() -> progressBar.setProgress(
+            GenerationProgressListener.calculateOverallProgress(phase, progress)));
+    }
+    @Override
+    public void onPhaseCompleted(Phase phase) {}
+    @Override
+    public void onGenerationCompleted() {
+        Platform.runLater(() -> statusLabel.setText("Complete!"));
+    }
+};
+GeneratedPlanet planet = PlanetGenerator.generate(config, listener);
+```
+
+### Procedural Viewer Dialog
+
+For the in-app experience, use `ProceduralPlanetViewerDialog`, which provides
+interactive zoom/rotation and multiple visualization modes (terrain, rainfall,
+smooth terrain, rivers):
+
+```java
+ProceduralPlanetViewerDialog dialog = new ProceduralPlanetViewerDialog("My Planet", planet);
+dialog.showAndWait();
 ```
 
 ## Generation Pipeline
@@ -217,8 +278,259 @@ ElevationCalculator.calculate() → int[] heights
     ↓
 ClimateCalculator.calculate()   → ClimateZone[] climates
     ↓
-Planet (result record)
+ErosionCalculator.calculate()   → rivers, rainfall, eroded heights
+    ↓
+GeneratedPlanet (result record)
 ```
+
+---
+
+## Scientific & Geological Background
+
+This section documents the geophysical basis for the procedural terrain generation algorithms.
+
+### Tectonic Plate Theory
+
+The generator uses a simplified model of plate tectonics, the dominant theory explaining Earth's large-scale geological features.
+
+**Plate Count (7-21):**
+- Earth has 7 major plates and ~8 minor plates
+- Small planets/moons may have fewer plates or a "stagnant lid" (single plate)
+- Larger, hotter planets may have more vigorous convection and more plates
+- The generator's range of 7-21 plates reflects this variability
+
+**Oceanic vs Continental Crust:**
+- `oceanicPlateRatio` defaults to 0.65 (65% oceanic), matching Earth's ~60-70% oceanic coverage
+- Oceanic crust is denser (basalt, ~3.0 g/cm³) and thinner (5-10 km)
+- Continental crust is lighter (granite, ~2.7 g/cm³) and thicker (30-50 km)
+- This density difference drives subduction at convergent boundaries
+
+**Plate Assignment Algorithm:**
+- Uses flood-fill from random seed points (analogous to mantle plumes)
+- Each plate grows from its seed until meeting another plate
+- Produces irregular plate shapes similar to Earth's actual plates
+
+### Boundary Types & Terrain Effects
+
+The three fundamental boundary types create distinct geological features:
+
+#### Convergent Boundaries (Plates Colliding)
+
+**Oceanic-Oceanic Convergence:**
+- One plate subducts beneath the other
+- Creates deep ocean trenches (height: -4 to -3)
+- Volcanic island arcs form from melting subducted material
+- Real examples: Mariana Trench, Aleutian Islands
+
+**Oceanic-Continental Convergence:**
+- Oceanic plate always subducts (denser)
+- Creates coastal mountain ranges (height: +3 to +4)
+- Volcanic activity from subduction-zone melting
+- Real examples: Andes, Cascades
+
+**Continental-Continental Convergence:**
+- Neither plate subducts; instead, crust crumples and thickens
+- Creates the highest mountain ranges (height: +4)
+- No volcanic activity (no subduction)
+- Real examples: Himalayas, Alps
+
+#### Divergent Boundaries (Plates Spreading)
+
+**Oceanic Divergence:**
+- Mid-ocean ridges form as magma rises to fill the gap
+- Slight elevation increase along the ridge (height: -2 to -1)
+- Creates new oceanic crust continuously
+- Real examples: Mid-Atlantic Ridge, East Pacific Rise
+
+**Continental Divergence:**
+- Creates rift valleys with normal faulting (height: -1 to 0)
+- May eventually split a continent, forming a new ocean
+- Associated volcanism as mantle rises
+- Real examples: East African Rift, Rio Grande Rift
+
+#### Transform Boundaries (Plates Sliding)
+
+- Horizontal sliding motion, no significant elevation change
+- Creates fault zones with earthquake activity
+- May form pull-apart basins at restraining bends
+- Real examples: San Andreas Fault, Alpine Fault (NZ)
+
+### Elevation Physics
+
+**Base Height Calculation:**
+- Oceanic plates start at depth (height: -3)
+- Continental plates start elevated (height: 0)
+- Boundary effects modify these base elevations
+
+**Mountain Chain Generation:**
+- Length scales with plate size (larger plates = longer mountain chains)
+- `mountainLength = 0.12 × (platePolygons.size())` based on empirical analysis of Earth's ranges
+- Andes: ~7000 km along ~3,000,000 km² plate margin
+
+**Island Chain Generation:**
+- Forms at oceanic-oceanic subduction zones
+- `islandLength = 0.08 × (platePolygons.size())`
+- Islands are positive elevation anomalies in oceanic context
+
+**Hotspot Volcanism:**
+- `hotspotProbability = 0.12` produces ~1-2 hotspots per planet
+- Creates isolated volcanic islands mid-plate
+- Real examples: Hawaiian Islands, Yellowstone
+
+### Climate & Atmospheric Circulation
+
+The climate models simulate Earth's atmospheric circulation patterns:
+
+#### Hadley Cells Model
+
+Earth's atmosphere divides into three circulation cells per hemisphere:
+
+```
+            Polar Cell
+           (60°-90°)
+    ────────────────────── 60°N
+         Ferrel Cell
+          (30°-60°)
+    ────────────────────── 30°N
+         Hadley Cell
+          (0°-30°)
+    ══════════════════════ 0° (Equator / ITCZ)
+         Hadley Cell
+          (0°-30°)
+    ────────────────────── 30°S
+         Ferrel Cell
+          (30°-60°)
+    ────────────────────── 60°S
+           Polar Cell
+           (60°-90°)
+```
+
+**Climate Zone Effects:**
+- **ITCZ (0-10°)**: Rising warm air, high rainfall, tropical rainforests
+- **Subtropical highs (20-30°)**: Descending dry air, deserts (Sahara, Arabian)
+- **Temperate (30-60°)**: Prevailing westerlies, moderate rainfall
+- **Polar (60-90°)**: Cold, descending air, low precipitation
+
+#### Prevailing Wind Directions
+
+Wind direction is critical for the rain shadow effect:
+
+| Latitude Zone | Wind Direction | Name |
+|---------------|----------------|------|
+| 0° - 30° | From East | Trade Winds |
+| 30° - 60° | From West | Westerlies |
+| 60° - 90° | From East | Polar Easterlies |
+
+These patterns result from the Coriolis effect deflecting air moving away from equatorial high pressure.
+
+### Rain Shadow Effect
+
+The orographic effect creates rain shadows on the leeward side of mountains:
+
+```
+Prevailing Wind →
+                        ↗ Moist air rises
+                      /   ↓ Cooling & precipitation
+                    /     ▓▓▓ Mountain range
+                  /        \
+ Moist ocean air →          \ Dry air descends (rain shadow)
+                             \
+                              → Arid leeward region
+```
+
+**Implementation:**
+- `traceUpwindForMountains()` checks 5 polygons in the upwind direction
+- If mountains (height ≥ 2) are found, rainfall is reduced by up to 80%
+- Effect is proportional to mountain height and proximity
+
+**Real Examples:**
+- Atacama Desert (Chilean Andes)
+- Gobi Desert (Tibetan Plateau)
+- Death Valley (Sierra Nevada)
+
+### Erosion & Hydrology
+
+The erosion simulation models the water cycle's effect on terrain:
+
+#### Rainfall Distribution
+
+- Base rainfall proportional to climate zone (tropical > temperate > polar)
+- Modified by rain shadow effect (see above)
+- Modified by divergent ocean boundaries (+30% moisture from volcanic steam)
+- `rainfallThreshold = 0.3`: Minimum rainfall for significant erosion
+
+#### River Formation
+
+Rivers form through a priority-based downhill tracing algorithm:
+
+1. **Source Selection:**
+   - Requires rainfall ≥ `riverSourceThreshold` (0.7) and elevation ≥ `riverSourceElevationMin` (0.5)
+   - Prevents rivers from starting in dry or low areas
+
+2. **Flow Path:**
+   - Water flows to the lowest neighboring polygon
+   - Flow accumulates, increasing river width downstream
+   - Rivers terminate at ocean (height < 0) or lakes (no downhill path)
+
+3. **Frozen Rivers:**
+   - Rivers ending in polar zones are marked as frozen
+   - Rendered with ice-blue gradient instead of water-blue
+
+#### Sediment Transport
+
+The sediment model conserves mass during erosion:
+
+**Carrying Capacity:**
+```
+capacity = slope × rainfall × SEDIMENT_CAPACITY_FACTOR
+```
+- Steeper slopes and higher water flow can carry more sediment
+- When slope decreases, excess sediment is deposited
+
+**Erosion Process:**
+1. Calculate carrying capacity at each polygon
+2. Pick up sediment up to capacity limit (`erosionCap = 0.3`)
+3. Transport downstream, depositing when capacity decreases
+4. Final deposition at river mouths creates deltas/alluvial fans
+
+**Height Modification:**
+- Erosion lowers terrain by up to `erosionCap` (0.3)
+- Deposition raises terrain by `depositionFactor × sediment` (50%)
+- River channels carved by additional `riverCarveDepth` (0.3)
+
+### Integration with Accrete Physical Parameters
+
+When generating terrain from Accrete++ simulation data, physical parameters translate to geological activity:
+
+| Accrete Parameter | Geological Effect |
+|-------------------|-------------------|
+| **Surface Gravity** | Higher gravity = less dramatic mountains (compression) |
+| **Surface Temperature** | Affects erosion rates and climate model |
+| **Day Length** | Very slow rotation may produce "tidally locked" climate |
+| **Mass** | Larger planets have more convection → more plates |
+| **Hydrosphere %** | Directly sets `waterFraction` for sea level |
+| **Age** | Older planets may have less tectonic activity |
+
+**TectonicBias Calculation:**
+- `TectonicBias.fromAccretePlanet()` analyzes physical parameters
+- Adjusts plate count, activity level, and oceanic ratio
+- Hot young planets get more plates and volcanic activity
+- Cold old planets get fewer plates and gentler terrain
+
+### Scientific Limitations
+
+The generator simplifies complex geophysics for practical terrain generation:
+
+1. **Static Snapshot**: Plates don't move over time; terrain represents a single moment
+2. **No Mantle Dynamics**: Convection cells are implicit in plate assignment, not simulated
+3. **Simplified Subduction**: Oceanic-oceanic subduction is random (not density-based)
+4. **No Isostasy**: Crustal buoyancy equilibrium is not modeled
+5. **Instantaneous Erosion**: Millions of years of erosion simulated in single pass
+6. **No Glaciation**: Ice ages and glacial erosion not modeled separately
+
+Despite these simplifications, the generator produces visually convincing Earth-like terrain with recognizable geological features (mountain ranges, island arcs, rift valleys, etc.).
+
+---
 
 ## Origin
 
@@ -242,7 +554,7 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | [`MapTypes/continents.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/MapTypes/continents.gd) | `BoundaryDetector` | Plate types, boundary interactions |
 | [`MapTypes/continents.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/MapTypes/continents.gd) | `ElevationCalculator` | Height generation, mountains, islands |
 | [`Hydrosphere/hydrosphere.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/Hydrosphere/hydrosphere.gd) | `ClimateCalculator` | Latitude-based climate zones |
-| [`HelperFunctions/DrawFunctions/draw.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/HelperFunctions/DrawFunctions/draw.gd) | `PlanetMeshView` | Godot mesh → JavaFX TriangleMesh |
+| [`HelperFunctions/DrawFunctions/draw.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/HelperFunctions/DrawFunctions/draw.gd) | `JavaFxPlanetMeshConverter` | Godot mesh → JavaFX TriangleMesh |
 | [`HelperFunctions/helper_functions.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/HelperFunctions/helper_functions.gd) | (inlined) | Utility functions absorbed into classes |
 | [`test/test.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/test/test.gd) | `PlanetGenerator` | Entry point, orchestration |
 | [`Camera/CameraGimbal.gd`](../../../../../../../../../../procedural/4x_planet_generator_godot-main/Camera/CameraGimbal.gd) | — | Skipped (Godot-specific, TRIPS has own camera) |
@@ -257,9 +569,14 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | `TectonicService` | Spring-compatible service with caching |
 | `PlanetRenderer` | Jzy3d renderer (optional alternative) |
 | `Polygon` record | Type-safe polygon representation |
-| `PlanetGenerator.Planet` | Result record with all generated data |
+| `PlanetGenerator.GeneratedPlanet` | Result record with all generated data |
+| `ErosionCalculator` | Erosion, rivers, rainfall (not in original) |
+| `GenerationProgressListener` | Progress callbacks for UI integration |
+| `TectonicBias` | Accrete physical parameter translation |
+| `JavaFxPlanetMeshConverter` | JavaFX TriangleMesh conversion |
 | Sub-seed derivation | `config.subSeed(phase)` for reproducibility |
 | `fromAccreteRadius()` | Auto-select mesh resolution from Accrete data |
+| Multiple climate models | HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED |
 
 ## Key Adaptations
 
@@ -497,17 +814,21 @@ Ported from GDScript (Godot 3.x) to Java 17.
 
 | Component | Lines | Complexity | Status | Next Action |
 |-----------|-------|------------|--------|-------------|
-| PlanetGenerator | 293 | Low | ✅ Good | — |
-| IcosahedralMesh | 370 | Medium | ✅ Good | Fixed float comparison |
-| PlateAssigner | 129 | Low | ✅ Good | — |
-| BoundaryDetector | 255 | Medium | ✅ Good | Documented |
-| ElevationCalculator | 640 | Medium | ✅ Good | Refactored |
-| ClimateCalculator | 220 | Medium | ✅ Good | 5 climate models |
-| ErosionCalculator | 750 | Medium | ✅ Good | Rain shadow + mass conservation |
-| PlanetRenderer | 440 | Low | ✅ Good | — |
-| JavaFxPlanetMeshConverter | 1200 | Medium | ✅ Good | Consolidated |
-| PlanetConfig | 450 | Low | ✅ Good | Climate model + erosion config |
-| ProceduralPlanetViewerDialog | 950 | Medium | ✅ Good | Legend, screenshot, flow rivers |
+| PlanetGenerator | ~375 | Low | ✅ Good | — |
+| IcosahedralMesh | ~370 | Medium | ✅ Good | Fixed float comparison |
+| PlateAssigner | ~130 | Low | ✅ Good | — |
+| BoundaryDetector | ~255 | Medium | ✅ Good | Documented |
+| ElevationCalculator | ~640 | Medium | ✅ Good | Refactored |
+| ClimateCalculator | ~220 | Medium | ✅ Good | 5 climate models |
+| ErosionCalculator | ~750 | Medium | ✅ Good | Rain shadow + mass conservation |
+| GenerationProgressListener | ~145 | Low | ✅ Good | Progress callbacks |
+| TectonicBias | ~150 | Low | ✅ Good | Accrete parameter translation |
+| PlanetRenderer | ~440 | Low | ✅ Good | — |
+| JavaFxPlanetMeshConverter | ~1200 | Medium | ✅ Good | Consolidated |
+| PlanetConfig | ~450 | Low | ✅ Good | Climate model + erosion config |
+| ProceduralPlanetViewerDialog* | ~950 | Medium | ✅ Good | Side panel, interactive regeneration |
+
+*Located in `dialogs/solarsystem/` package
 
 ---
 
@@ -590,4 +911,3 @@ Ported from GDScript (Godot 3.x) to Java 17.
 - Center height now averaged from edge vertices (no more center bulge)
 - Equalized `HEIGHT_SCALE = EDGE_HEIGHT_SCALE = 0.02`
 - Relaxed `ElevationCalculatorTest` tolerances for stochastic generation
-
