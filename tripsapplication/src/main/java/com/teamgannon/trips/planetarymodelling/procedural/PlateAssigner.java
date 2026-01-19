@@ -116,9 +116,15 @@ public class PlateAssigner {
     }
 
     private double calculateDistortion(double progress) {
-        if (progress < 0.25) return 0.1;
-        if (progress < 0.50) return 0.2;
-        if (progress < 1.00) return 0.7;
-        return 1.0;
+        List<Double> thresholds = config.distortionProgressThresholds();
+        List<Double> values = config.distortionValues();
+
+        for (int i = 0; i < thresholds.size(); i++) {
+            if (progress < thresholds.get(i)) {
+                return values.get(i);
+            }
+        }
+        // If progress is 1.0 or greater, return the last value or a default
+        return values.get(values.size() - 1);
     }
 }

@@ -1,6 +1,7 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
+import java.util.List;
 
 /**
  * Immutable configuration for procedural planet generation.
@@ -18,10 +19,25 @@ public record PlanetConfig(
     double riftDepthMultiplier,   // multiplier for divergent boundary depths
     double hotspotProbability,    // 0.0-1.0, chance of volcanic hotspots
     boolean enableActiveTectonics, // whether full plate tectonics is active (vs stagnant lid)
+
     // Erosion parameters
     int erosionIterations,        // 0-10, number of sediment flow iterations (default 5)
     double rainfallScale,         // 0.0-2.0, multiplier for rainfall amounts (default 1.0)
-    boolean enableRivers          // whether to carve river valleys (default true)
+    boolean enableRivers,         // whether to carve river valleys (default true)
+
+    // Terrain distribution parameters
+    double maxMountainPercentage,
+    double mountainReductionChance,
+    double minFarmablePercentage,
+    double farmableCreationChance,
+    double maxHillPercentage,
+    double hillReductionChance,
+    double maxLowlandPercentage,
+    double lowlandIncreaseChance,
+
+    // Plate assigner parameters
+    List<Double> distortionProgressThresholds,
+    List<Double> distortionValues
 ) {
 
     /** Size presets matching original GDScript */
@@ -85,6 +101,19 @@ public record PlanetConfig(
         private int erosionIterations = 5;
         private double rainfallScale = 1.0;
         private boolean enableRivers = true;
+        // Terrain distribution defaults
+        private double maxMountainPercentage = 0.05;
+        private double mountainReductionChance = 0.65;
+        private double minFarmablePercentage = 0.15;
+        private double farmableCreationChance = 0.75;
+        private double maxHillPercentage = 0.14;
+        private double hillReductionChance = 0.35;
+        private double maxLowlandPercentage = 0.08;
+        private double lowlandIncreaseChance = 0.35;
+        // Plate assigner defaults
+        private List<Double> distortionProgressThresholds = List.of(0.25, 0.50, 1.00);
+        private List<Double> distortionValues = List.of(0.1, 0.2, 0.7);
+
 
         public Builder seed(long seed) { this.seed = seed; return this; }
         public Builder size(Size size) { this.size = size; return this; }
@@ -141,12 +170,31 @@ public record PlanetConfig(
             return this;
         }
 
+        public Builder maxMountainPercentage(double val) { this.maxMountainPercentage = val; return this; }
+        public Builder mountainReductionChance(double val) { this.mountainReductionChance = val; return this; }
+        public Builder minFarmablePercentage(double val) { this.minFarmablePercentage = val; return this; }
+        public Builder farmableCreationChance(double val) { this.farmableCreationChance = val; return this; }
+        public Builder maxHillPercentage(double val) { this.maxHillPercentage = val; return this; }
+        public Builder hillReductionChance(double val) { this.hillReductionChance = val; return this; }
+        public Builder maxLowlandPercentage(double val) { this.maxLowlandPercentage = val; return this; }
+        public Builder lowlandIncreaseChance(double val) { this.lowlandIncreaseChance = val; return this; }
+        public Builder distortionProgressThresholds(List<Double> thresholds) { this.distortionProgressThresholds = thresholds; return this; }
+        public Builder distortionValues(List<Double> values) { this.distortionValues = values; return this; }
+
+
         public PlanetConfig build() {
+            if (distortionProgressThresholds.size() != distortionValues.size()) {
+                throw new IllegalArgumentException("Distortion thresholds and values must have the same size.");
+            }
             return new PlanetConfig(
                 seed, size.n, size.polyCount, plateCount, radius, waterFraction,
                 oceanicPlateRatio, heightScaleMultiplier, riftDepthMultiplier,
                 hotspotProbability, enableActiveTectonics,
-                erosionIterations, rainfallScale, enableRivers
+                erosionIterations, rainfallScale, enableRivers,
+                maxMountainPercentage, mountainReductionChance, minFarmablePercentage,
+                farmableCreationChance, maxHillPercentage, hillReductionChance,
+                maxLowlandPercentage, lowlandIncreaseChance,
+                distortionProgressThresholds, distortionValues
             );
         }
     }
@@ -169,7 +217,17 @@ public record PlanetConfig(
             .enableActiveTectonics(enableActiveTectonics)
             .erosionIterations(erosionIterations)
             .rainfallScale(rainfallScale)
-            .enableRivers(enableRivers);
+            .enableRivers(enableRivers)
+            .maxMountainPercentage(maxMountainPercentage)
+            .mountainReductionChance(mountainReductionChance)
+            .minFarmablePercentage(minFarmablePercentage)
+            .farmableCreationChance(farmableCreationChance)
+            .maxHillPercentage(maxHillPercentage)
+            .hillReductionChance(hillReductionChance)
+            .maxLowlandPercentage(maxLowlandPercentage)
+            .lowlandIncreaseChance(lowlandIncreaseChance)
+            .distortionProgressThresholds(distortionProgressThresholds)
+            .distortionValues(distortionValues);
     }
 
     /**

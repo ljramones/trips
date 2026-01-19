@@ -272,3 +272,4 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | `randf()`, `randi_range()` | `Random` with seed |
 | Godot `ArrayMesh` | JavaFX `TriangleMesh` |
 | `.size` / `.adj` cache files | Generated on-the-fly |
+
