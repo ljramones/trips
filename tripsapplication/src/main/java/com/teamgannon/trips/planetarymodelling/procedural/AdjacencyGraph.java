@@ -13,8 +13,11 @@ import java.util.Map;
  */
 public class AdjacencyGraph {
 
-    private static final double NEIGHBOR_DISTANCE = 2.5;
-    private static final double NEIGHBOR_DISTANCE_SQ = NEIGHBOR_DISTANCE * NEIGHBOR_DISTANCE;
+    private static final double NEIGHBOR_DISTANCE_DEFAULT = 2.5;
+    private static final double NEIGHBOR_DISTANCE_SAFETY = 1.05;
+    private static final int MAX_NEIGHBOR_SAMPLES = 200;
+    private static final int MIN_NEIGHBOR_SAMPLES = 10;
+    private static final boolean DEBUG_LOGGING = false;
 
     private final List<int[]> adjacencies;
 
@@ -37,7 +40,9 @@ public class AdjacencyGraph {
         // 1. Initialize Spatial Grid
         // The cell size is chosen to be the neighbor search radius, ensuring any
         // potential neighbor must be in an adjacent grid cell.
-        double cellSize = NEIGHBOR_DISTANCE;
+        double neighborDistance = estimateNeighborDistance(polygons);
+        double neighborDistanceSq = neighborDistance * neighborDistance;
+        double cellSize = neighborDistance;
         Map<GridKey, List<Integer>> grid = new HashMap<>();
 
         // 2. Binning Pass: Place all polygon indices into the grid
@@ -81,7 +86,7 @@ public class AdjacencyGraph {
                             }
                             Vector3D otherCenter = polygons.get(j).center();
                             double distSq = Vector3D.distanceSq(center, otherCenter);
-                            if (distSq < NEIGHBOR_DISTANCE_SQ) {
+                            if (distSq < neighborDistanceSq) {
                                 neighbors.add(j);
                             }
                         }
@@ -114,5 +119,55 @@ public class AdjacencyGraph {
 
     public int size() {
         return adjacencies.size();
+    }
+
+    private static double estimateNeighborDistance(List<Polygon> polygons) {
+        int n = polygons.size();
+        if (n < 2) {
+            if (DEBUG_LOGGING) {
+                System.out.println("[AdjacencyGraph] Fallback neighbor distance (too few polygons).");
+            }
+            return NEIGHBOR_DISTANCE_DEFAULT;
+        }
+
+        int step = Math.max(1, n / MAX_NEIGHBOR_SAMPLES);
+        List<Double> nearestDistances = new ArrayList<>();
+
+        for (int i = 0; i < n; i += step) {
+            Vector3D center = polygons.get(i).center();
+            double minDistSq = Double.MAX_VALUE;
+
+            for (int j = 0; j < n; j++) {
+                if (i == j) continue;
+                double distSq = Vector3D.distanceSq(center, polygons.get(j).center());
+                if (distSq < minDistSq) {
+                    minDistSq = distSq;
+                }
+            }
+
+            if (minDistSq < Double.MAX_VALUE) {
+                nearestDistances.add(Math.sqrt(minDistSq));
+            }
+        }
+
+        if (nearestDistances.size() < MIN_NEIGHBOR_SAMPLES) {
+            if (DEBUG_LOGGING) {
+                System.out.println("[AdjacencyGraph] Fallback neighbor distance (insufficient samples).");
+            }
+            return NEIGHBOR_DISTANCE_DEFAULT;
+        }
+
+        nearestDistances.sort(Double::compareTo);
+        int index = (int) Math.floor(0.95 * (nearestDistances.size() - 1));
+        double percentile = nearestDistances.get(index);
+
+        if (percentile <= 0.0 || Double.isNaN(percentile) || Double.isInfinite(percentile)) {
+            if (DEBUG_LOGGING) {
+                System.out.println("[AdjacencyGraph] Fallback neighbor distance (invalid percentile).");
+            }
+            return NEIGHBOR_DISTANCE_DEFAULT;
+        }
+
+        return percentile * NEIGHBOR_DISTANCE_SAFETY;
     }
 }

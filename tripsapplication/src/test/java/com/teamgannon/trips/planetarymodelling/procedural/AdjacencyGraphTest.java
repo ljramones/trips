@@ -3,6 +3,8 @@ package com.teamgannon.trips.planetarymodelling.procedural;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.HashSet;
 import java.util.List;
@@ -157,6 +159,54 @@ class AdjacencyGraphTest {
                     .as("Polygon %d should not have duplicate neighbor %d", i, n)
                     .isTrue();
             }
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PlanetConfig.Size.class, names = { "TINY", "SMALL", "STANDARD" })
+    @DisplayName("Neighbor counts stay within expected bounds across sizes")
+    void neighborCountsAcrossSizes(PlanetConfig.Size size) {
+        var config = PlanetConfig.builder().size(size).build();
+        var mesh = new IcosahedralMesh(config);
+        var polys = mesh.generate();
+        var graph = new AdjacencyGraph(polys);
+
+        int totalNeighbors = 0;
+        int pentagonCount = 0;
+        int pentagonCorrect = 0;
+        int hexagonCount = 0;
+        int hexagonCorrect = 0;
+
+        for (int i = 0; i < polys.size(); i++) {
+            int neighbors = graph.neighborsOnly(i).length;
+            totalNeighbors += neighbors;
+            if (polys.get(i).isPentagon()) {
+                pentagonCount++;
+                if (neighbors == 5) pentagonCorrect++;
+            } else {
+                hexagonCount++;
+                if (neighbors == 6) hexagonCorrect++;
+            }
+        }
+
+        double avgNeighbors = (double) totalNeighbors / polys.size();
+
+        assertThat(avgNeighbors)
+            .as("Average neighbor count should be close to 6")
+            .isBetween(5.6, 6.1);
+
+        if (pentagonCount > 0) {
+            double pentagonAccuracy = (double) pentagonCorrect / pentagonCount;
+            assertThat(pentagonAccuracy)
+                .as("Pentagon neighbor count accuracy should be high")
+                .isGreaterThan(0.95);
+        }
+
+        if (hexagonCount > 0) {
+            double hexagonAccuracy = (double) hexagonCorrect / hexagonCount;
+            assertThat(hexagonAccuracy)
+                .as("Hexagon neighbor count accuracy should be high")
+                .isGreaterThan(0.95);
         }
     }
 }
