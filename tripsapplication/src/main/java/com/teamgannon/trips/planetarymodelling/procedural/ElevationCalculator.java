@@ -224,15 +224,19 @@ public class ElevationCalculator {
             double maxPercent, int baseHeightDelta, double distortion, double multiplier) {
         if (maxPercent <= 0) return;
 
-        // Scale the height delta by the multiplier
-        // For multiplier 1.0, effect is same as base
-        // For multiplier 1.5, 50% chance of additional +/-1 height
-        // For multiplier 2.0, guaranteed additional +/-1 height
-        int scaledDelta = baseHeightDelta;
-        double extraChance = multiplier - 1.0;
-        if (extraChance > 0 && random.nextDouble() < extraChance) {
-            scaledDelta += (baseHeightDelta > 0) ? 1 : -1;
+        // Scale the height delta by the multiplier.
+        // Values < 1.0 reduce the chance/magnitude of height changes.
+        double scaledMagnitude = Math.abs(baseHeightDelta) * multiplier;
+        int scaledWhole = (int) Math.floor(scaledMagnitude);
+        double scaledFraction = scaledMagnitude - scaledWhole;
+        int sign = baseHeightDelta >= 0 ? 1 : -1;
+
+        int scaledDelta = sign * scaledWhole;
+        if (scaledFraction > 0 && random.nextDouble() < scaledFraction) {
+            scaledDelta += sign;
         }
+
+        if (scaledDelta == 0) return;
 
         applyMass(plate1Polys, plate1Idx, plate2Idx, maxPercent, scaledDelta, distortion);
     }
@@ -430,7 +434,7 @@ public class ElevationCalculator {
     private void adjustWaterLevel() {
         int polyCount = heights.length;  // Use actual count, not config preset
         double targetWater = config.waterFraction();
-        int maxIterations = polyCount * 2;  // Safety limit
+        int maxIterations = polyCount * (targetWater <= 0.05 ? 5 : 2);  // Safety limit
 
         double seaPercent = percentBelow(LOWLAND);
 
@@ -439,8 +443,10 @@ public class ElevationCalculator {
         while (seaPercent > targetWater + 0.05 && iterations < maxIterations) {
             int modified = 0;
             for (int i = 0; i < polyCount; i++) {
-                if (heights[i] == COASTAL || heights[i] == SHALLOW_OCEAN) {
-                    if (random.nextDouble() < 0.35) {
+                if (heights[i] < LOWLAND) {
+                    double raiseChance = 0.15 + 0.05 * (heights[i] - DEEP_OCEAN);
+                    raiseChance = Math.min(0.35, Math.max(0.15, raiseChance));
+                    if (random.nextDouble() < raiseChance) {
                         heights[i]++;
                         modified++;
                         if (heights[i] >= LOWLAND) {

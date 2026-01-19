@@ -105,6 +105,28 @@ class ElevationCalculatorTest {
         assertThat(heights1).isNotEqualTo(heights2);
     }
 
+    @Test
+    @DisplayName("Lower height scale multiplier affects elevation output")
+    void lowerHeightScaleChangesTerrain() {
+        var baseConfig = PlanetConfig.builder()
+            .seed(777L)
+            .size(PlanetConfig.Size.SMALL)
+            .plateCount(10)
+            .heightScaleMultiplier(1.0)
+            .riftDepthMultiplier(1.0)
+            .build();
+        var flattenedConfig = baseConfig.toBuilder()
+            .heightScaleMultiplier(0.5)
+            .build();
+
+        int[] baseHeights = generateHeights(baseConfig);
+        int[] flattenedHeights = generateHeights(flattenedConfig);
+
+        assertThat(flattenedHeights)
+            .as("Lower height scale multiplier should change terrain output")
+            .isNotEqualTo(baseHeights);
+    }
+
     private int[] generateHeights(PlanetConfig cfg) {
         var mesh = new IcosahedralMesh(cfg);
         var polys = mesh.generate();
@@ -161,6 +183,31 @@ class ElevationCalculatorTest {
         assertThat(actualWater)
             .as("Water fraction should trend toward target %.2f (actual: %.2f)", targetWater, actualWater)
             .isBetween(0.3, 0.9);
+    }
+
+    @Test
+    @DisplayName("Very low water fraction substantially reduces ocean coverage")
+    void lowWaterFractionReducesOcean() {
+        var dryConfig = PlanetConfig.builder()
+            .seed(42L)
+            .size(PlanetConfig.Size.SMALL)
+            .plateCount(10)
+            .waterFraction(0.0)
+            .oceanicPlateRatio(0.0)
+            .build();
+
+        int[] heights = generateHeights(dryConfig);
+
+        int waterCount = 0;
+        for (int h : heights) {
+            if (h < ElevationCalculator.LOWLAND) waterCount++;
+        }
+
+        double actualWater = (double) waterCount / heights.length;
+
+        assertThat(actualWater)
+            .as("Water fraction should be low when target is near zero")
+            .isLessThan(0.2);
     }
 
     @Test

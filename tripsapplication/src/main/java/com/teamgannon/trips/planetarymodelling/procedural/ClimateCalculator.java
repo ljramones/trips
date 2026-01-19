@@ -24,9 +24,7 @@ public class ClimateCalculator {
         ClimateZone[] zones = new ClimateZone[polygons.size()];
 
         for (int i = 0; i < polygons.size(); i++) {
-            Vector3D center = polygons.get(i).center();
-            Vector3D equatorial = new Vector3D(center.getX(), 0, center.getZ());
-            double latitude = Vector3D.angle(center, equatorial);
+            double latitude = Math.abs(getLatitudeRadians(polygons.get(i).center()));
 
             if (latitude <= TROPICAL_LIMIT) {
                 zones[i] = ClimateZone.TROPICAL;
@@ -41,9 +39,15 @@ public class ClimateCalculator {
     }
 
     public static double getLatitudeDegrees(Polygon polygon) {
-        Vector3D center = polygon.center();
-        Vector3D equatorial = new Vector3D(center.getX(), 0, center.getZ());
-        double latitude = Vector3D.angle(center, equatorial);
-        return Math.toDegrees(latitude) * (center.getY() >= 0 ? 1 : -1);
+        return Math.toDegrees(getLatitudeRadians(polygon.center()));
+    }
+
+    private static double getLatitudeRadians(Vector3D center) {
+        double norm = center.getNorm();
+        if (norm == 0.0) {
+            return 0.0;
+        }
+        double clamped = Math.max(-1.0, Math.min(1.0, center.getY() / norm));
+        return Math.asin(clamped);
     }
 }

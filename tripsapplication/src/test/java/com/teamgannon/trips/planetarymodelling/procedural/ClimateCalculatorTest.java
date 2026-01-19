@@ -112,6 +112,21 @@ class ClimateCalculatorTest {
     }
 
     @Test
+    @DisplayName("Polar center is handled without error")
+    void polarCenterIsHandled() {
+        Vector3D northPole = new Vector3D(0, 1, 0);
+        Polygon polarPoly = new Polygon(northPole, createDummyVertices(northPole));
+
+        ClimateCalculator calc = new ClimateCalculator(List.of(polarPoly));
+        ClimateZone[] zones = calc.calculate();
+
+        assertThat(zones[0]).isEqualTo(ClimateZone.POLAR);
+        assertThat(ClimateCalculator.getLatitudeDegrees(polarPoly))
+            .as("Polar latitude should be near 90 degrees")
+            .isCloseTo(90.0, offset(0.1));
+    }
+
+    @Test
     @DisplayName("Mid-latitude polygons are temperate")
     void midLatitudeIsTemperate() {
         ClimateZone[] zones = calculator.calculate();

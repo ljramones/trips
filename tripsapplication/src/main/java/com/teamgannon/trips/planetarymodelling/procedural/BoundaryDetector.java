@@ -94,6 +94,10 @@ public class BoundaryDetector {
 
         // Use oceanicPlateRatio from config (default 0.5, range 0.0-1.0)
         double targetOceanicRatio = config.oceanicPlateRatio();
+        if (targetOceanicRatio <= 0.0) {
+            Arrays.fill(plateTypes, PlateType.CONTINENTAL);
+            return;
+        }
 
         int largestPlate = sizeOrder.get(0);
         plateTypes[largestPlate] = PlateType.OCEANIC;

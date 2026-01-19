@@ -28,7 +28,8 @@ public class PlanetGenerator {
         ClimateCalculator.ClimateZone[] climates,
         PlateAssigner.PlateAssignment plateAssignment,
         BoundaryDetector.BoundaryAnalysis boundaryAnalysis,
-        ErosionCalculator.ErosionResult erosionResult
+        ErosionCalculator.ErosionResult erosionResult,
+        AdjacencyGraph adjacency
     ) {
         public Shape createShape() {
             return new PlanetRenderer(polygons, heights, config.radius() / 6371.0).createShape();
@@ -198,7 +199,7 @@ public class PlanetGenerator {
         int[] finalHeights = erosionResult.erodedHeights();
 
         return new GeneratedPlanet(config, polygons, finalHeights, climates,
-            plateAssignment, boundaryAnalysis, erosionResult);
+            plateAssignment, boundaryAnalysis, erosionResult, adjacency);
     }
 
     public static GeneratedPlanet generate(PlanetConfig config) {

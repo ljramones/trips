@@ -6,6 +6,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.TriangleMesh;
+import javafx.scene.shape.VertexFormat;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.ArrayList;
@@ -17,11 +18,21 @@ import java.util.Map;
  * Converts procedural planet icosahedral mesh to JavaFX TriangleMesh.
  * Handles both pentagons (5 vertices) and hexagons (6 vertices) by
  * triangulating from center point using fan triangulation.
+ * <p>
+ * Supports multiple rendering modes:
+ * - Basic: Integer height displacement with faceted terrain
+ * - Smooth: Precise height displacement with interpolated colors
+ * - Per-height: Separate meshes per height level for distinct coloring
  */
 public class JavaFxPlanetMeshConverter {
 
-    // Height displacement scale factor (how much height affects radial distance)
+    // Height displacement scale factor (how much height affects radial distance).
+    // Tuned lower to avoid exaggerated mountain relief in JavaFX rendering.
     private static final double HEIGHT_SCALE = 0.02;
+
+    // Edge scale equals center scale for seamless polygon transitions.
+    private static final double EDGE_HEIGHT_SCALE = 0.02;
+
 
     // Height color mapping (same as PlanetRenderer)
     private static final Color[] HEIGHT_COLORS = {
@@ -39,6 +50,7 @@ public class JavaFxPlanetMeshConverter {
     /**
      * Convert procedural planet mesh to JavaFX TriangleMesh.
      * Uses fan triangulation from polygon center to edges.
+     * Edge vertices are displaced by height to create proper terrain relief.
      *
      * @param polygons The icosahedral mesh polygons
      * @param heights  Height values per polygon (for vertex displacement)
@@ -64,21 +76,23 @@ public class JavaFxPlanetMeshConverter {
             int height = heights[polyIdx];
 
             // Calculate radial displacement from height
-            double displacement = 1.0 + height * HEIGHT_SCALE;
+            // Center gets full displacement, edges get slightly less for beveled look
+            double centerDisplacement = 1.0 + height * HEIGHT_SCALE;
+            double edgeDisplacement = 1.0 + height * EDGE_HEIGHT_SCALE;
 
             // Add center point (displaced by height)
-            Vector3D center = poly.center().normalize().scalarMultiply(displacement * scale);
+            Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
             points.add((float) center.getX());
             points.add((float) center.getY());
             points.add((float) center.getZ());
             int centerIdx = vertexIndex++;
 
-            // Add edge vertices (at unit sphere distance, to create slight beveling effect)
+            // Add edge vertices (also displaced by height for terrain relief)
             List<Vector3D> vertices = poly.vertices();
             int[] edgeIndices = new int[vertices.size()];
 
             for (int i = 0; i < vertices.size(); i++) {
-                Vector3D v = vertices.get(i).normalize().scalarMultiply(scale);
+                Vector3D v = vertices.get(i).normalize().scalarMultiply(edgeDisplacement * scale);
                 points.add((float) v.getX());
                 points.add((float) v.getY());
                 points.add((float) v.getZ());
@@ -125,8 +139,301 @@ public class JavaFxPlanetMeshConverter {
     }
 
     /**
+     * Convert procedural planet mesh to JavaFX TriangleMesh with properly averaged heights.
+     * Builds a global vertex index and averages heights from ALL polygons sharing each vertex,
+     * eliminating gaps/overlaps at shared edges for smooth terrain transitions.
+     *
+     * @param polygons  The icosahedral mesh polygons
+     * @param heights   Height values per polygon
+     * @param adjacency The polygon adjacency graph (unused, kept for API compatibility)
+     * @param scale     Scale factor for rendering
+     * @return JavaFX TriangleMesh with smooth vertex displacement
+     */
+    public static TriangleMesh convertWithAveraging(
+            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency, double scale) {
+
+        // Build vertex indexing data
+        VertexData vertexData = buildVertexData(polygons);
+        double[] averagedHeights = computeAveragedHeights(vertexData, heights);
+
+        TriangleMesh mesh = new TriangleMesh();
+
+        List<Float> points = new ArrayList<>();
+        List<Integer> faces = new ArrayList<>();
+        List<Float> texCoords = new ArrayList<>();
+
+        texCoords.add(0.5f);
+        texCoords.add(0.5f);
+
+        int vertexIndex = 0;
+
+        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
+            Polygon poly = polygons.get(polyIdx);
+            int height = heights[polyIdx];
+
+            // Center uses polygon's own height
+            double centerDisplacement = 1.0 + height * HEIGHT_SCALE;
+
+            Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
+            points.add((float) center.getX());
+            points.add((float) center.getY());
+            points.add((float) center.getZ());
+            int centerIdx = vertexIndex++;
+
+            List<Vector3D> vertices = poly.vertices();
+            int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+            int[] edgeIndices = new int[vertices.size()];
+
+            for (int i = 0; i < vertices.size(); i++) {
+                Vector3D vertex = vertices.get(i);
+
+                // Use pre-computed averaged height for this vertex
+                int globalVertIdx = polyVertIndices[i];
+                double avgHeight = averagedHeights[globalVertIdx];
+
+                double edgeDisplacement = 1.0 + avgHeight * EDGE_HEIGHT_SCALE;
+                Vector3D v = vertex.normalize().scalarMultiply(edgeDisplacement * scale);
+
+                points.add((float) v.getX());
+                points.add((float) v.getY());
+                points.add((float) v.getZ());
+                edgeIndices[i] = vertexIndex++;
+            }
+
+            // Create fan triangles
+            for (int i = 0; i < vertices.size(); i++) {
+                int nextI = (i + 1) % vertices.size();
+                faces.add(centerIdx);
+                faces.add(0);
+                faces.add(edgeIndices[i]);
+                faces.add(0);
+                faces.add(edgeIndices[nextI]);
+                faces.add(0);
+            }
+        }
+
+        float[] pointsArray = toFloatArray(points);
+        int[] facesArray = toIntArray(faces);
+        float[] texCoordsArray = toFloatArray(texCoords);
+
+        mesh.getPoints().addAll(pointsArray);
+        mesh.getTexCoords().addAll(texCoordsArray);
+        mesh.getFaces().addAll(facesArray);
+
+        return mesh;
+    }
+
+    /**
+     * Build a global vertex list and vertex-to-polygon map.
+     * Uses a spatial hash grid for efficient vertex deduplication.
+     */
+    private static VertexData buildVertexData(List<Polygon> polygons) {
+        List<Vector3D> uniqueVertices = new ArrayList<>();
+        List<List<Integer>> vertexToPolygons = new ArrayList<>();
+        int[][] polygonVertexIndices = new int[polygons.size()][];
+
+        // Use a map with quantized position as key for O(1) lookup
+        // Key: quantized position string, Value: vertex index
+        Map<String, Integer> positionToIndex = new HashMap<>();
+
+        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
+            Polygon poly = polygons.get(polyIdx);
+            List<Vector3D> verts = poly.vertices();
+            polygonVertexIndices[polyIdx] = new int[verts.size()];
+
+            for (int i = 0; i < verts.size(); i++) {
+                Vector3D v = verts.get(i);
+                String key = quantizePosition(v);
+
+                Integer existingIdx = positionToIndex.get(key);
+                if (existingIdx != null) {
+                    // Found existing vertex at this grid cell
+                    polygonVertexIndices[polyIdx][i] = existingIdx;
+                    vertexToPolygons.get(existingIdx).add(polyIdx);
+                } else {
+                    // New unique vertex
+                    int newIdx = uniqueVertices.size();
+                    uniqueVertices.add(v);
+                    positionToIndex.put(key, newIdx);
+                    List<Integer> polyList = new ArrayList<>();
+                    polyList.add(polyIdx);
+                    vertexToPolygons.add(polyList);
+                    polygonVertexIndices[polyIdx][i] = newIdx;
+                }
+            }
+        }
+
+        // Debug: verify vertex sharing statistics
+        int totalShared = 0;
+        int maxShared = 0;
+        for (List<Integer> polys : vertexToPolygons) {
+            if (polys.size() > 1) totalShared++;
+            if (polys.size() > maxShared) maxShared = polys.size();
+        }
+        System.out.println("[VertexData] Polygons: " + polygons.size() +
+            ", Unique vertices: " + uniqueVertices.size() +
+            ", Shared vertices: " + totalShared +
+            ", Max polys/vertex: " + maxShared);
+
+        return new VertexData(uniqueVertices, polygonVertexIndices, vertexToPolygons);
+    }
+
+    /**
+     * Quantize vertex position to a grid cell key.
+     * Grid resolution chosen to be finer than polygon edge length but coarse enough
+     * to group vertices at the "same" position.
+     */
+    private static String quantizePosition(Vector3D v) {
+        // Quantize to 4 decimal places (0.0001 resolution)
+        // On unit sphere, this is ~0.01% of radius - much finer than polygon edges
+        int qx = (int) Math.round(v.getX() * 10000);
+        int qy = (int) Math.round(v.getY() * 10000);
+        int qz = (int) Math.round(v.getZ() * 10000);
+        return qx + "," + qy + "," + qz;
+    }
+
+    /**
+     * Compute averaged heights for all unique vertices.
+     */
+    private static double[] computeAveragedHeights(VertexData vertexData, int[] heights) {
+        double[] averaged = new double[vertexData.uniqueVertices.size()];
+
+        int smoothedCount = 0; // vertices where averaging changed the value
+
+        for (int vIdx = 0; vIdx < averaged.length; vIdx++) {
+            List<Integer> polys = vertexData.vertexToPolygons.get(vIdx);
+            double sum = 0;
+            int minH = Integer.MAX_VALUE;
+            int maxH = Integer.MIN_VALUE;
+            for (int polyIdx : polys) {
+                int h = heights[polyIdx];
+                sum += h;
+                if (h < minH) minH = h;
+                if (h > maxH) maxH = h;
+            }
+            averaged[vIdx] = sum / polys.size();
+
+            // Count vertices where averaging made a difference
+            if (polys.size() > 1 && maxH != minH) {
+                smoothedCount++;
+            }
+        }
+
+        System.out.println("[AveragedHeights] Total vertices: " + averaged.length +
+            ", Smoothed (different neighbors): " + smoothedCount);
+
+        return averaged;
+    }
+
+    /**
+     * Compute averaged heights for polygon centers based on their neighbors.
+     */
+    private static double[] computeAveragedCenterHeights(
+            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency) {
+
+        double[] averaged = new double[polygons.size()];
+
+        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
+            int[] neighbors = adjacency.neighbors(polyIdx); // includes self
+            double sum = 0;
+            for (int neighborIdx : neighbors) {
+                sum += heights[neighborIdx];
+            }
+            averaged[polyIdx] = sum / neighbors.length;
+        }
+
+        return averaged;
+    }
+
+    /**
+     * Compute averaged heights for edge vertices using precise (double) heights.
+     * This provides finer gradations than integer heights for smoother terrain.
+     */
+    private static double[] computeAveragedHeightsPrecise(VertexData vertexData, double[] preciseHeights) {
+        double[] averaged = new double[vertexData.uniqueVertices.size()];
+
+        int smoothedCount = 0;
+
+        for (int vIdx = 0; vIdx < averaged.length; vIdx++) {
+            List<Integer> polys = vertexData.vertexToPolygons.get(vIdx);
+            double sum = 0;
+            double minH = Double.MAX_VALUE;
+            double maxH = Double.MIN_VALUE;
+            for (int polyIdx : polys) {
+                double h = preciseHeights[polyIdx];
+                sum += h;
+                if (h < minH) minH = h;
+                if (h > maxH) maxH = h;
+            }
+            averaged[vIdx] = sum / polys.size();
+
+            // Count vertices where averaging made a difference (threshold: 0.1)
+            if (polys.size() > 1 && (maxH - minH) > 0.1) {
+                smoothedCount++;
+            }
+        }
+
+        System.out.println("[AveragedHeightsPrecise] Total vertices: " + averaged.length +
+            ", Smoothed (different neighbors): " + smoothedCount);
+
+        return averaged;
+    }
+
+    /**
+     * Compute averaged heights for polygon centers using precise (double) heights.
+     */
+    private static double[] computeAveragedCenterHeightsPrecise(
+            List<Polygon> polygons, double[] preciseHeights, AdjacencyGraph adjacency) {
+
+        double[] averaged = new double[polygons.size()];
+
+        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
+            int[] neighbors = adjacency.neighbors(polyIdx); // includes self
+            double sum = 0;
+            for (int neighborIdx : neighbors) {
+                sum += preciseHeights[neighborIdx];
+            }
+            averaged[polyIdx] = sum / neighbors.length;
+        }
+
+        return averaged;
+    }
+
+
+    /**
+     * Container for vertex indexing data.
+     */
+    private record VertexData(
+        List<Vector3D> uniqueVertices,
+        int[][] polygonVertexIndices,  // [polyIdx][localVertIdx] -> globalVertIdx
+        List<List<Integer>> vertexToPolygons  // globalVertIdx -> list of polyIdx
+    ) {}
+
+    /**
+     * Convert List<Float> to float[].
+     */
+    private static float[] toFloatArray(List<Float> list) {
+        float[] array = new float[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            array[i] = list.get(i);
+        }
+        return array;
+    }
+
+    /**
+     * Convert List<Integer> to int[].
+     */
+    private static int[] toIntArray(List<Integer> list) {
+        int[] array = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            array[i] = list.get(i);
+        }
+        return array;
+    }
+
+    /**
      * Convert procedural planet mesh to JavaFX TriangleMesh with smooth heights.
-     * Uses precise heights for smoother displacement.
+     * Uses precise heights for smoother displacement and finer terrain gradations.
      *
      * @param polygons       The icosahedral mesh polygons
      * @param preciseHeights Precise height values per polygon
@@ -151,9 +458,12 @@ public class JavaFxPlanetMeshConverter {
                 ? preciseHeights[polyIdx]
                 : 0.0;
 
-            double displacement = 1.0 + height * HEIGHT_SCALE;
+            // For smooth mode, center and edge use the same displacement
+            // to create more natural continuous terrain
+            double centerDisplacement = 1.0 + height * HEIGHT_SCALE;
+            double edgeDisplacement = 1.0 + height * EDGE_HEIGHT_SCALE;
 
-            Vector3D center = poly.center().normalize().scalarMultiply(displacement * scale);
+            Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
             points.add((float) center.getX());
             points.add((float) center.getY());
             points.add((float) center.getZ());
@@ -163,7 +473,7 @@ public class JavaFxPlanetMeshConverter {
             int[] edgeIndices = new int[vertices.size()];
 
             for (int i = 0; i < vertices.size(); i++) {
-                Vector3D v = vertices.get(i).normalize().scalarMultiply(scale);
+                Vector3D v = vertices.get(i).normalize().scalarMultiply(edgeDisplacement * scale);
                 points.add((float) v.getX());
                 points.add((float) v.getY());
                 points.add((float) v.getZ());
@@ -303,7 +613,8 @@ public class JavaFxPlanetMeshConverter {
 
     /**
      * Creates a per-polygon colored mesh using vertex colors.
-     * This is a more complex approach that creates separate meshes per color group.
+     * This approach creates separate meshes per height level for distinct coloring.
+     * Each height group gets proper terrain displacement.
      *
      * @param polygons The icosahedral mesh polygons
      * @param heights  Height values per polygon
@@ -333,12 +644,13 @@ public class JavaFxPlanetMeshConverter {
             mesh.getTexCoords().addAll(0.5f, 0.5f);
 
             int vertexIndex = 0;
-            double displacement = 1.0 + height * HEIGHT_SCALE;
+            double centerDisplacement = 1.0 + height * HEIGHT_SCALE;
+            double edgeDisplacement = 1.0 + height * EDGE_HEIGHT_SCALE;
 
             for (int polyIdx : polyIndices) {
                 Polygon poly = polygons.get(polyIdx);
 
-                Vector3D center = poly.center().normalize().scalarMultiply(displacement * scale);
+                Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
                 points.add((float) center.getX());
                 points.add((float) center.getY());
                 points.add((float) center.getZ());
@@ -348,7 +660,8 @@ public class JavaFxPlanetMeshConverter {
                 int[] edgeIndices = new int[vertices.size()];
 
                 for (int i = 0; i < vertices.size(); i++) {
-                    Vector3D v = vertices.get(i).normalize().scalarMultiply(scale);
+                    // Edge vertices also displaced for proper terrain relief
+                    Vector3D v = vertices.get(i).normalize().scalarMultiply(edgeDisplacement * scale);
                     points.add((float) v.getX());
                     points.add((float) v.getY());
                     points.add((float) v.getZ());
@@ -378,6 +691,161 @@ public class JavaFxPlanetMeshConverter {
 
             mesh.getPoints().addAll(pointsArray);
             mesh.getFaces().addAll(facesArray);
+
+            result.put(height, mesh);
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates per-height colored meshes with properly averaged vertex heights.
+     * Convenience method that delegates to full version without preciseHeights.
+     */
+    public static Map<Integer, TriangleMesh> convertByHeightWithAveraging(
+            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency, double scale) {
+        return convertByHeightWithAveraging(polygons, heights, adjacency, scale, null);
+    }
+
+    /**
+     * Creates per-height colored meshes with properly averaged vertex heights.
+     * Builds a global vertex index and averages heights from ALL polygons sharing each vertex,
+     * eliminating gaps at shared edges for smooth terrain transitions.
+     * Also averages center heights with neighbors for smoother overall terrain.
+     *
+     * @param polygons       The icosahedral mesh polygons
+     * @param heights        Integer height values per polygon (for color grouping)
+     * @param adjacency      The polygon adjacency graph (used for center averaging)
+     * @param scale          Scale factor for rendering
+     * @param preciseHeights Optional precise (double) heights for finer averaging (null to use int heights)
+     * @return Map of height value to TriangleMesh (for separate coloring)
+     */
+    public static Map<Integer, TriangleMesh> convertByHeightWithAveraging(
+            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency, double scale,
+            double[] preciseHeights) {
+
+        // Build vertex indexing data ONCE for all polygons
+        VertexData vertexData = buildVertexData(polygons);
+
+        // Use precise heights for averaging if available, otherwise fall back to int heights
+        double[] averagedEdgeHeights;
+        double[] averagedCenterHeights;
+
+        if (preciseHeights != null && preciseHeights.length == polygons.size()) {
+            // Use precise heights for smoother averaging
+            averagedEdgeHeights = computeAveragedHeightsPrecise(vertexData, preciseHeights);
+            averagedCenterHeights = adjacency != null
+                ? computeAveragedCenterHeightsPrecise(polygons, preciseHeights, adjacency)
+                : null;
+        } else {
+            // Fall back to integer heights
+            averagedEdgeHeights = computeAveragedHeights(vertexData, heights);
+            averagedCenterHeights = adjacency != null
+                ? computeAveragedCenterHeights(polygons, heights, adjacency)
+                : null;
+        }
+
+        Map<Integer, List<Integer>> heightToPolygons = new HashMap<>();
+
+        // Group polygons by height
+        for (int i = 0; i < polygons.size(); i++) {
+            int height = heights[i];
+            heightToPolygons.computeIfAbsent(height, k -> new ArrayList<>()).add(i);
+        }
+
+        Map<Integer, TriangleMesh> result = new HashMap<>();
+
+        // Create separate mesh for each height level
+        for (Map.Entry<Integer, List<Integer>> entry : heightToPolygons.entrySet()) {
+            int height = entry.getKey();
+            List<Integer> polyIndices = entry.getValue();
+
+            TriangleMesh mesh = new TriangleMesh();
+            // Enable smooth shading with per-vertex normals
+            mesh.setVertexFormat(VertexFormat.POINT_NORMAL_TEXCOORD);
+
+            List<Float> points = new ArrayList<>();
+            List<Float> normals = new ArrayList<>();
+            List<Integer> faces = new ArrayList<>();
+
+            mesh.getTexCoords().addAll(0.5f, 0.5f);
+
+            int vertexIndex = 0;
+
+            for (int polyIdx : polyIndices) {
+                Polygon poly = polygons.get(polyIdx);
+                List<Vector3D> vertices = poly.vertices();
+                int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+
+                // Center height: average from its own edge vertices for uniform displacement
+                // This eliminates center-puffing artifacts by matching center to edge heights
+                double centerSum = 0.0;
+                for (int local = 0; local < polyVertIndices.length; local++) {
+                    int globalV = polyVertIndices[local];
+                    centerSum += averagedEdgeHeights[globalV];
+                }
+                double centerHeight = centerSum / polyVertIndices.length;
+                double centerDisplacement = 1.0 + centerHeight * HEIGHT_SCALE;
+
+                Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
+                points.add((float) center.getX());
+                points.add((float) center.getY());
+                points.add((float) center.getZ());
+
+                // Normal = radial direction (normalized position) for smooth spherical shading
+                Vector3D centerNormal = center.normalize();
+                normals.add((float) centerNormal.getX());
+                normals.add((float) centerNormal.getY());
+                normals.add((float) centerNormal.getZ());
+
+                int centerIdx = vertexIndex++;
+
+                int[] edgeIndices = new int[vertices.size()];
+
+                for (int i = 0; i < vertices.size(); i++) {
+                    Vector3D vertex = vertices.get(i);
+
+                    // Use pre-computed averaged height for this vertex
+                    int globalVertIdx = polyVertIndices[i];
+                    double avgHeight = averagedEdgeHeights[globalVertIdx];
+
+                    double edgeDisplacement = 1.0 + avgHeight * EDGE_HEIGHT_SCALE;
+                    Vector3D v = vertex.normalize().scalarMultiply(edgeDisplacement * scale);
+
+                    points.add((float) v.getX());
+                    points.add((float) v.getY());
+                    points.add((float) v.getZ());
+
+                    // Radial normal for smooth shading
+                    Vector3D edgeNormal = v.normalize();
+                    normals.add((float) edgeNormal.getX());
+                    normals.add((float) edgeNormal.getY());
+                    normals.add((float) edgeNormal.getZ());
+
+                    edgeIndices[i] = vertexIndex++;
+                }
+
+                // Face format for POINT_NORMAL_TEXCOORD: p0, n0, t0, p1, n1, t1, p2, n2, t2
+                for (int i = 0; i < vertices.size(); i++) {
+                    int nextI = (i + 1) % vertices.size();
+                    // Vertex 0: center
+                    faces.add(centerIdx);        // point index
+                    faces.add(centerIdx);        // normal index (same as point for radial normals)
+                    faces.add(0);                // tex coord index
+                    // Vertex 1: edge[i]
+                    faces.add(edgeIndices[i]);
+                    faces.add(edgeIndices[i]);
+                    faces.add(0);
+                    // Vertex 2: edge[nextI]
+                    faces.add(edgeIndices[nextI]);
+                    faces.add(edgeIndices[nextI]);
+                    faces.add(0);
+                }
+            }
+
+            mesh.getPoints().addAll(toFloatArray(points));
+            mesh.getNormals().addAll(toFloatArray(normals));
+            mesh.getFaces().addAll(toIntArray(faces));
 
             result.put(height, mesh);
         }
@@ -446,5 +914,168 @@ public class JavaFxPlanetMeshConverter {
             sum += h;
         }
         return (int) (sum / heights.length);
+    }
+
+    // ==================== Rainfall Heatmap Support ====================
+
+    // Rainfall color gradient: brown (dry) → yellow → green → cyan → blue (wet)
+    private static final Color[] RAINFALL_COLORS = {
+        Color.rgb(139, 90, 43),   // Dry: brown/tan
+        Color.rgb(189, 183, 107), // Low: khaki
+        Color.rgb(154, 205, 50),  // Medium-low: yellow-green
+        Color.rgb(60, 179, 113),  // Medium: sea green
+        Color.rgb(32, 178, 170),  // Medium-high: light sea green
+        Color.rgb(0, 139, 139),   // High: dark cyan
+        Color.rgb(0, 100, 180),   // Very high: blue
+        Color.rgb(0, 0, 139)      // Extreme: dark blue
+    };
+
+    /**
+     * Creates a map of rainfall levels to TriangleMesh for heatmap visualization.
+     * Groups polygons by rainfall intensity and colors accordingly.
+     *
+     * @param polygons The icosahedral mesh polygons
+     * @param heights  Height values per polygon (for displacement)
+     * @param rainfall Rainfall values per polygon
+     * @param scale    Scale factor for rendering
+     * @return Map of rainfall bucket (0-7) to TriangleMesh
+     */
+    public static Map<Integer, TriangleMesh> convertByRainfall(
+            List<Polygon> polygons, int[] heights, double[] rainfall, double scale) {
+
+        if (rainfall == null || rainfall.length == 0) {
+            // No rainfall data, return empty map
+            return new HashMap<>();
+        }
+
+        // Find rainfall range for normalization
+        double minRain = Double.MAX_VALUE;
+        double maxRain = Double.MIN_VALUE;
+        for (double r : rainfall) {
+            if (r < minRain) minRain = r;
+            if (r > maxRain) maxRain = r;
+        }
+        double rainRange = maxRain - minRain;
+        if (rainRange < 0.001) rainRange = 1.0; // Avoid division by zero
+
+        // Group polygons by rainfall bucket (0-7)
+        Map<Integer, List<Integer>> bucketToPolygons = new HashMap<>();
+        for (int i = 0; i < polygons.size(); i++) {
+            double normalizedRain = (rainfall[i] - minRain) / rainRange;
+            int bucket = (int) Math.min(7, Math.floor(normalizedRain * 8));
+            bucketToPolygons.computeIfAbsent(bucket, k -> new ArrayList<>()).add(i);
+        }
+
+        Map<Integer, TriangleMesh> result = new HashMap<>();
+
+        // Create mesh for each rainfall bucket
+        for (Map.Entry<Integer, List<Integer>> entry : bucketToPolygons.entrySet()) {
+            int bucket = entry.getKey();
+            List<Integer> polyIndices = entry.getValue();
+
+            TriangleMesh mesh = new TriangleMesh();
+            List<Float> points = new ArrayList<>();
+            List<Integer> faces = new ArrayList<>();
+
+            mesh.getTexCoords().addAll(0.5f, 0.5f);
+
+            int vertexIndex = 0;
+
+            for (int polyIdx : polyIndices) {
+                Polygon poly = polygons.get(polyIdx);
+                int height = heights[polyIdx];
+
+                double centerDisplacement = 1.0 + height * HEIGHT_SCALE;
+                double edgeDisplacement = 1.0 + height * EDGE_HEIGHT_SCALE;
+
+                Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
+                points.add((float) center.getX());
+                points.add((float) center.getY());
+                points.add((float) center.getZ());
+                int centerIdx = vertexIndex++;
+
+                List<Vector3D> vertices = poly.vertices();
+                int[] edgeIndices = new int[vertices.size()];
+
+                for (int i = 0; i < vertices.size(); i++) {
+                    Vector3D v = vertices.get(i).normalize().scalarMultiply(edgeDisplacement * scale);
+                    points.add((float) v.getX());
+                    points.add((float) v.getY());
+                    points.add((float) v.getZ());
+                    edgeIndices[i] = vertexIndex++;
+                }
+
+                for (int i = 0; i < vertices.size(); i++) {
+                    int nextI = (i + 1) % vertices.size();
+                    faces.add(centerIdx);
+                    faces.add(0);
+                    faces.add(edgeIndices[i]);
+                    faces.add(0);
+                    faces.add(edgeIndices[nextI]);
+                    faces.add(0);
+                }
+            }
+
+            float[] pointsArray = new float[points.size()];
+            for (int i = 0; i < points.size(); i++) {
+                pointsArray[i] = points.get(i);
+            }
+
+            int[] facesArray = new int[faces.size()];
+            for (int i = 0; i < faces.size(); i++) {
+                facesArray[i] = faces.get(i);
+            }
+
+            mesh.getPoints().addAll(pointsArray);
+            mesh.getFaces().addAll(facesArray);
+
+            result.put(bucket, mesh);
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates a material for a rainfall bucket (heatmap coloring).
+     *
+     * @param bucket Rainfall bucket (0-7, 0=dry, 7=wet)
+     * @return PhongMaterial with appropriate rainfall color
+     */
+    public static PhongMaterial createMaterialForRainfall(int bucket) {
+        PhongMaterial material = new PhongMaterial();
+        int index = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, bucket));
+        material.setDiffuseColor(RAINFALL_COLORS[index]);
+        material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.15, 1));
+        material.setSpecularPower(8.0);
+        return material;
+    }
+
+    /**
+     * Returns the color for a rainfall bucket.
+     *
+     * @param bucket Rainfall bucket (0-7)
+     * @return JavaFX Color for the bucket
+     */
+    public static Color getColorForRainfall(int bucket) {
+        int index = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, bucket));
+        return RAINFALL_COLORS[index];
+    }
+
+    /**
+     * Interpolates a color for a normalized rainfall value.
+     *
+     * @param normalizedRainfall Rainfall value normalized to 0.0-1.0 range
+     * @return Interpolated color from the rainfall gradient
+     */
+    public static Color getColorForNormalizedRainfall(double normalizedRainfall) {
+        double scaled = normalizedRainfall * (RAINFALL_COLORS.length - 1);
+        int lowerIdx = (int) Math.floor(scaled);
+        int upperIdx = lowerIdx + 1;
+        double fraction = scaled - lowerIdx;
+
+        lowerIdx = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, lowerIdx));
+        upperIdx = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, upperIdx));
+
+        return RAINFALL_COLORS[lowerIdx].interpolate(RAINFALL_COLORS[upperIdx], fraction);
     }
 }
