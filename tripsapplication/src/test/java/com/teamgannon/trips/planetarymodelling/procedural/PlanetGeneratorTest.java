@@ -2,6 +2,7 @@ package com.teamgannon.trips.planetarymodelling.procedural;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig.Size;
@@ -9,8 +10,11 @@ import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator.Genera
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.data.Percentage.withPercentage;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 class PlanetGeneratorTest {
 
@@ -190,6 +194,23 @@ class PlanetGeneratorTest {
         assertThat(planet.heights()).hasSize(polyCount);
         assertThat(planet.climates()).hasSize(polyCount);
         assertThat(planet.plateAssignment().plates()).hasSize(14);
+    }
+
+    @Test
+    @Tag("slow")
+    @DisplayName("COLOSSAL size generation completes within a reasonable time")
+    void colossalGenerationPerformance() {
+        var config = PlanetConfig.builder()
+            .seed(42L)
+            .size(Size.COLOSSAL)
+            .plateCount(14)
+            .waterFraction(0.66)
+            .build();
+
+        assertTimeoutPreemptively(Duration.ofSeconds(20), () -> {
+            GeneratedPlanet planet = PlanetGenerator.generate(config);
+            assertThat(planet.polygons()).isNotEmpty();
+        });
     }
 
     // ==================== Edge Case Tests ====================

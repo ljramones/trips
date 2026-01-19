@@ -16,7 +16,9 @@ com.teamgannon.trips.planetarymodelling.procedural
 - **Tectonic Plate Simulation**: Flood-fill plate assignment with configurable plate count (7-21)
 - **Plate Boundary Interactions**: Convergent, divergent, and transform boundaries
 - **Terrain Generation**: Heights from -4 (deep ocean) to +4 (high mountains)
-- **Climate Zones**: Latitude-based tropical/temperate/polar classification
+- **Continuous Heights**: Optional continuous height field with relief normalization
+- **Hydrology**: Flow accumulation, river width scaling, and lake filling
+- **Climate Zones**: Multiple climate models including seasonal insolation with axial tilt
 - **Reproducible**: Seed-based generation for consistent results
 - **JavaFX Integration**: Native JavaFX 3D rendering via `JavaFxPlanetMeshConverter`
 
@@ -86,8 +88,8 @@ PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(biasedConfig);
 | `PlateAssigner` | Tectonic plate flood-fill assignment |
 | `BoundaryDetector` | Plate types and boundary interactions |
 | `ElevationCalculator` | Terrain height from plate tectonics |
-| `ClimateCalculator` | Latitude-based climate zones (5 models) |
-| `ErosionCalculator` | Erosion simulation, rivers, rainfall, sediment |
+| `ClimateCalculator` | Climate zones (6 models, incl. seasonal insolation) |
+| `ErosionCalculator` | Erosion simulation, rivers, rainfall, flow accumulation |
 | `GenerationProgressListener` | Progress callback interface for UI updates |
 | `TectonicBias` | Translates Accrete parameters to tectonic settings |
 | `JavaFxPlanetMeshConverter` | Converts mesh to JavaFX TriangleMesh |
@@ -120,13 +122,18 @@ PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(biasedConfig);
 | 3 | Mountains |
 | 4 | High mountains |
 
-## Climate Zones
+Continuous heights can be enabled with `useContinuousHeights` and normalized
+to a configurable relief range (`continuousReliefMin`, `continuousReliefMax`).
+
+## Climate Zones (Simple Latitude)
 
 | Zone | Latitude Range |
 |------|----------------|
 | TROPICAL | 0° - 30° |
 | TEMPERATE | 30° - 60° |
 | POLAR | 60° - 90° |
+
+Other climate models adjust or replace these latitude bands.
 
 ## Accessing Generated Data
 
@@ -143,6 +150,9 @@ for (Polygon p : polygons) {
 
 // Terrain heights (-4 to +4)
 int[] heights = planet.heights();
+
+// Pre-erosion baseline heights (before rainfall/river carving)
+double[] baseHeights = planet.baseHeights();
 
 // High-precision heights (for smooth rendering)
 double[] preciseHeights = planet.preciseHeights();
@@ -162,8 +172,27 @@ BoundaryDetector.PlateType[] plateTypes = boundaries.plateTypes();  // OCEANIC o
 // Erosion data
 ErosionCalculator.ErosionResult erosion = planet.erosionResult();
 double[] rainfall = planet.rainfall();           // precipitation per polygon
+double[] flow = planet.flowAccumulation();       // flow accumulation for rivers
+boolean[] lakes = planet.lakeMask();              // lake-filled basins
 List<List<Integer>> rivers = planet.rivers();    // river paths as polygon index lists
 boolean[] frozen = planet.frozenRiverTerminus(); // which rivers end frozen
+```
+
+## Configuration Examples
+
+```java
+PlanetConfig config = PlanetConfig.builder()
+    .seed(12345L)
+    .size(PlanetConfig.Size.STANDARD)
+    .plateCount(14)
+    .waterFraction(0.66)
+    .useContinuousHeights(true)
+    .continuousReliefMin(-3.0)
+    .continuousReliefMax(5.0)
+    .climateModel(ClimateCalculator.ClimateModel.SEASONAL)
+    .axialTiltDegrees(23.5)
+    .seasonalOffsetDegrees(0.0)
+    .build();
 ```
 
 ## Reproducibility
@@ -253,13 +282,41 @@ GeneratedPlanet planet = PlanetGenerator.generate(config, listener);
 ### Procedural Viewer Dialog
 
 For the in-app experience, use `ProceduralPlanetViewerDialog`, which provides
-interactive zoom/rotation and multiple visualization modes (terrain, rainfall,
-smooth terrain, rivers):
+interactive zoom/rotation, axial tilt + pole markers, and multiple visualization
+modes (terrain, rainfall, smooth terrain, rivers):
 
 ```java
 ProceduralPlanetViewerDialog dialog = new ProceduralPlanetViewerDialog("My Planet", planet);
 dialog.showAndWait();
 ```
+
+#### UI Controls (Current)
+
+**Generation**
+- Seed (manual + randomize), Size, Plates, Water %, Erosion iterations
+- River threshold, Height scale
+- Axial tilt (degrees), Seasonal offset (degrees)
+- Continuous heights toggle + Relief min/max
+- Climate model dropdown
+
+**View**
+- Zoom, Auto-spin, Reset view
+
+**Overlays**
+- Rivers, Lakes, Flow-scaled rivers
+- Plate boundaries, Climate zones
+- Pole marker, Atmosphere
+
+**Render**
+- Terrain colors vs Rainfall heatmap
+- Smooth terrain, Wireframe
+
+**Info**
+- Polygons/Rivers/Plates counts
+- Save Screenshot
+
+Axial tilt rotates the globe around the tilt axis; auto-spin uses that same axis,
+and pole markers show the current north/south poles.
 
 ## Generation Pipeline
 
@@ -274,11 +331,11 @@ PlateAssigner.assign()          → polygon-to-plate mapping
     ↓
 BoundaryDetector.analyze()      → plate types + boundary types
     ↓
-ElevationCalculator.calculate() → int[] heights
+ElevationCalculator.calculate() → int[] heights (+ continuous heights optional)
     ↓
 ClimateCalculator.calculate()   → ClimateZone[] climates
     ↓
-ErosionCalculator.calculate()   → rivers, rainfall, eroded heights
+ErosionCalculator.calculate()   → rivers, rainfall, flow, lake fill, eroded heights
     ↓
 GeneratedPlanet (result record)
 ```
@@ -457,6 +514,7 @@ The erosion simulation models the water cycle's effect on terrain:
 - Base rainfall proportional to climate zone (tropical > temperate > polar)
 - Modified by rain shadow effect (see above)
 - Modified by divergent ocean boundaries (+30% moisture from volcanic steam)
+- Upwind ocean proximity adds a moisture boost (simple fetch-based model)
 - `rainfallThreshold = 0.3`: Minimum rainfall for significant erosion
 
 #### River Formation
@@ -498,6 +556,28 @@ capacity = slope × rainfall × SEDIMENT_CAPACITY_FACTOR
 - Deposition raises terrain by `depositionFactor × sediment` (50%)
 - River channels carved by additional `riverCarveDepth` (0.3)
 
+#### Lake Filling and Basins
+
+Closed basins are detected and filled until a spill point exists:
+
+1. Identify sinks with no downhill neighbor
+2. Raise the local water surface until an outflow neighbor exists
+3. Mark polygons as lakes and re-trace rivers to the ocean
+
+This produces interior lakes and more realistic drainage networks.
+
+### Seasonal Insolation and Axial Tilt
+
+Seasonal climates are computed by averaging insolation over a year:
+
+```
+cos(zenith) = sin(lat) * sin(subsolarLat)
+           + cos(lat) * cos(subsolarLat)
+```
+
+Where `subsolarLat = axialTilt * sin(phase)`. Higher axial tilt expands
+temperate zones into high latitudes and reduces permanent polar caps.
+
 ### Integration with Accrete Physical Parameters
 
 When generating terrain from Accrete++ simulation data, physical parameters translate to geological activity:
@@ -527,6 +607,8 @@ The generator simplifies complex geophysics for practical terrain generation:
 4. **No Isostasy**: Crustal buoyancy equilibrium is not modeled
 5. **Instantaneous Erosion**: Millions of years of erosion simulated in single pass
 6. **No Glaciation**: Ice ages and glacial erosion not modeled separately
+7. **No Ocean Currents**: Ocean heat transport and currents are not modeled
+8. **Simplified Hydrology**: No groundwater, aquifers, or evapotranspiration
 
 Despite these simplifications, the generator produces visually convincing Earth-like terrain with recognizable geological features (mountain ranges, island arcs, rift valleys, etc.).
 
@@ -576,7 +658,7 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | `JavaFxPlanetMeshConverter` | JavaFX TriangleMesh conversion |
 | Sub-seed derivation | `config.subSeed(phase)` for reproducibility |
 | `fromAccreteRadius()` | Auto-select mesh resolution from Accrete data |
-| Multiple climate models | HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED |
+| Multiple climate models | HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED, SEASONAL |
 
 ## Key Adaptations
 
@@ -695,53 +777,40 @@ Ported from GDScript (Godot 3.x) to Java 17.
 
 ---
 
-### 🟡 MEDIUM PRIORITY (Remaining)
+### ✅ MEDIUM PRIORITY (Completed)
 
-#### 6. Expand Test Coverage (Estimated: 1-2 weeks)
+#### 6. Expand Test Coverage (Completed)
 **Directory:** `src/test/java/.../procedural/`
 
-**Missing Tests:**
-- [ ] **Integration tests for Accrete bridge:**
+**Added Tests:**
+- **Integration tests for Accrete bridge:**
   - `PlanetGenerator.generateFromAccrete()` with various planet types
   - `PlanetGenerator.createBiasedConfig()` validation
 
-- [ ] **Edge case tests:**
+- **Edge case tests:**
   - `waterFraction = 0.0` (desert world)
   - `waterFraction = 1.0` (ocean world)
-  - `plateCount = 1` (single-plate stagnant lid)
-  - `plateCount = 21` (maximum plates)
+  - `plateCount = 7` (minimum clamped) and `plateCount = 21` (maximum)
   - `Size.COLOSSAL` performance
 
-- [ ] **Configuration interaction tests:**
-  - `heightScaleMultiplier = 0.5` effect
+- **Configuration interaction tests:**
+  - `heightScaleMultiplier` effects
   - `erosionIterations = 0` (no erosion)
   - `rainfallScale = 2.0` (extreme rainfall)
   - `enableRivers = false`
 
 ---
 
-#### 7. Improve Error Handling (Estimated: 3-5 days)
-**Files:** Multiple
+#### 7. Improve Error Handling (Completed)
+**Files:** `PlanetGenerator.java`
 
-**Tasks:**
-- [ ] Add validation in `PlanetGenerator.generate()`:
-  ```java
-  if (config.plateCount() > config.polyCount() / 10) {
-      throw new IllegalArgumentException("Too many plates for mesh size");
-  }
-  ```
-- [ ] Validate intermediate results:
+**Implemented:**
+- Validation in `PlanetGenerator.generate()` for plate count vs mesh size
+- Intermediate result checks:
   - Plate assignment completeness
   - Height range validity
   - Climate zone coverage
-- [ ] Add generation progress callbacks:
-  ```java
-  interface GenerationProgressListener {
-      void onPhaseStarted(String phase);
-      void onPhaseCompleted(String phase, int polygonsProcessed);
-      void onError(String phase, Exception e);
-  }
-  ```
+- Progress callbacks already provided via `GenerationProgressListener` (phase start/update/completion + error)
 
 ---
 
@@ -819,7 +888,7 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | PlateAssigner | ~130 | Low | ✅ Good | — |
 | BoundaryDetector | ~255 | Medium | ✅ Good | Documented |
 | ElevationCalculator | ~640 | Medium | ✅ Good | Refactored |
-| ClimateCalculator | ~220 | Medium | ✅ Good | 5 climate models |
+| ClimateCalculator | ~220 | Medium | ✅ Good | 6 climate models |
 | ErosionCalculator | ~750 | Medium | ✅ Good | Rain shadow + mass conservation |
 | GenerationProgressListener | ~145 | Low | ✅ Good | Progress callbacks |
 | TectonicBias | ~150 | Low | ✅ Good | Accrete parameter translation |
@@ -855,10 +924,21 @@ Ported from GDScript (Godot 3.x) to Java 17.
 - Parallelized for large meshes
 
 #### Multiple Climate Models
-- Added `ClimateModel` enum: SIMPLE_LATITUDE, HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED
+- Added `ClimateModel` enum: SIMPLE_LATITUDE, HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED, SEASONAL
 - Tidally locked model uses star-facing direction instead of latitude
 - Ice world has 60%+ polar coverage
 - Tropical world extends tropical zone to 45° latitude
+- Seasonal model averages insolation with axial tilt
+
+#### Continuous Heights
+- Added optional continuous height field alongside the 9-band terrain
+- Normalized relief range with `continuousReliefMin`/`continuousReliefMax`
+- Smooth rendering uses continuous heights when enabled
+
+#### Hydrology Basins and Flow Accumulation
+- Flow accumulation computed by routing to lowest neighbor
+- Basin filling raises sinks until a spill point exists
+- Lakes are exposed as a mask and renderable overlay
 
 #### River Width Variation
 - Cumulative flow calculated from rainfall along river path
@@ -883,6 +963,8 @@ Ported from GDScript (Godot 3.x) to Java 17.
 - Plate boundary visualization (convergent=red, divergent=cyan, transform=yellow)
 - Climate zone latitude rings (±30°, ±60°)
 - Auto-rotate animation with "Spin" checkbox
+- Axial tilt slider and pole marker overlay
+- Flow-accumulation river sizing and lake visibility toggles
 
 ### High Priority Refactoring Completed
 

@@ -209,61 +209,73 @@ public class PlanetGenerator {
     }
 
     public GeneratedPlanet generate() {
+        GenerationProgressListener.Phase currentPhase = GenerationProgressListener.Phase.MESH_GENERATION;
         try {
+            validateConfigForGeneration(config);
+
             // Phase 1: Mesh generation
-            listener.onPhaseStarted(GenerationProgressListener.Phase.MESH_GENERATION,
+            currentPhase = GenerationProgressListener.Phase.MESH_GENERATION;
+            listener.onPhaseStarted(currentPhase,
                 "Creating icosahedral mesh with " + config.polyCount() + " polygons");
             IcosahedralMesh mesh = new IcosahedralMesh(config);
             List<Polygon> polygons = mesh.generate();
-            listener.onProgressUpdate(GenerationProgressListener.Phase.MESH_GENERATION, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.MESH_GENERATION);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 2: Adjacency graph
-            listener.onPhaseStarted(GenerationProgressListener.Phase.ADJACENCY_GRAPH,
+            currentPhase = GenerationProgressListener.Phase.ADJACENCY_GRAPH;
+            listener.onPhaseStarted(currentPhase,
                 "Building adjacency relationships");
             AdjacencyGraph adjacency = new AdjacencyGraph(polygons);
-            listener.onProgressUpdate(GenerationProgressListener.Phase.ADJACENCY_GRAPH, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.ADJACENCY_GRAPH);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 3: Plate assignment
-            listener.onPhaseStarted(GenerationProgressListener.Phase.PLATE_ASSIGNMENT,
+            currentPhase = GenerationProgressListener.Phase.PLATE_ASSIGNMENT;
+            listener.onPhaseStarted(currentPhase,
                 "Assigning " + config.plateCount() + " tectonic plates");
             PlateAssigner plateAssigner = new PlateAssigner(config, adjacency);
             PlateAssigner.PlateAssignment plateAssignment = plateAssigner.assign();
-            listener.onProgressUpdate(GenerationProgressListener.Phase.PLATE_ASSIGNMENT, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.PLATE_ASSIGNMENT);
+            validatePlateAssignment(polygons.size(), config.plateCount(), plateAssignment);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 4: Boundary detection
-            listener.onPhaseStarted(GenerationProgressListener.Phase.BOUNDARY_DETECTION,
+            currentPhase = GenerationProgressListener.Phase.BOUNDARY_DETECTION;
+            listener.onPhaseStarted(currentPhase,
                 "Detecting plate boundaries and interactions");
             BoundaryDetector boundaryDetector = new BoundaryDetector(config, plateAssignment);
             BoundaryDetector.BoundaryAnalysis boundaryAnalysis = boundaryDetector.analyze();
-            listener.onProgressUpdate(GenerationProgressListener.Phase.BOUNDARY_DETECTION, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.BOUNDARY_DETECTION);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 5: Elevation calculation
-            listener.onPhaseStarted(GenerationProgressListener.Phase.ELEVATION_CALCULATION,
+            currentPhase = GenerationProgressListener.Phase.ELEVATION_CALCULATION;
+            listener.onPhaseStarted(currentPhase,
                 "Calculating terrain elevations");
             ElevationCalculator elevationCalc = new ElevationCalculator(
                 config, adjacency, plateAssignment, boundaryAnalysis);
             ElevationCalculator.ElevationResult elevationResult = elevationCalc.calculateResult();
             int[] heights = elevationResult.heights();
             double[] baseHeights = elevationResult.continuousHeights();
-            listener.onProgressUpdate(GenerationProgressListener.Phase.ELEVATION_CALCULATION, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.ELEVATION_CALCULATION);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 6: Climate calculation
-            listener.onPhaseStarted(GenerationProgressListener.Phase.CLIMATE_CALCULATION,
+            currentPhase = GenerationProgressListener.Phase.CLIMATE_CALCULATION;
+            listener.onPhaseStarted(currentPhase,
                 "Assigning climate zones using " + config.climateModel() + " model");
             ClimateCalculator climateCalc = new ClimateCalculator(
                 polygons, config.climateModel(),
                 config.axialTiltDegrees(), config.seasonalOffsetDegrees(), config.seasonalSamples());
             ClimateCalculator.ClimateZone[] climates = climateCalc.calculate();
-            listener.onProgressUpdate(GenerationProgressListener.Phase.CLIMATE_CALCULATION, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.CLIMATE_CALCULATION);
+            validateClimates(polygons.size(), climates);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Phase 7: Erosion calculation
-            listener.onPhaseStarted(GenerationProgressListener.Phase.EROSION_CALCULATION,
+            currentPhase = GenerationProgressListener.Phase.EROSION_CALCULATION;
+            listener.onPhaseStarted(currentPhase,
                 "Simulating erosion with " + config.erosionIterations() + " iterations");
             // Apply erosion pass (runs after climate since rainfall depends on climate zones)
             // Pass plate data for divergent boundary moisture boost
@@ -272,11 +284,12 @@ public class PlanetGenerator {
                     baseHeights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis)
                 : ErosionCalculator.calculate(
                     heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
-            listener.onProgressUpdate(GenerationProgressListener.Phase.EROSION_CALCULATION, 1.0);
-            listener.onPhaseCompleted(GenerationProgressListener.Phase.EROSION_CALCULATION);
+            listener.onProgressUpdate(currentPhase, 1.0);
+            listener.onPhaseCompleted(currentPhase);
 
             // Use eroded heights for final output
             int[] finalHeights = erosionResult.erodedHeights();
+            validateHeights(finalHeights);
 
             GeneratedPlanet planet = new GeneratedPlanet(config, polygons, finalHeights, baseHeights, climates,
                 plateAssignment, boundaryAnalysis, erosionResult, adjacency);
@@ -285,8 +298,57 @@ public class PlanetGenerator {
             return planet;
 
         } catch (Exception e) {
-            listener.onGenerationError(GenerationProgressListener.Phase.MESH_GENERATION, e);
+            listener.onGenerationError(currentPhase, e);
             throw e;
+        }
+    }
+
+    private static void validateConfigForGeneration(PlanetConfig config) {
+        if (config.plateCount() > config.polyCount() / 10) {
+            throw new IllegalArgumentException(
+                "Too many plates for mesh size: " + config.plateCount()
+                    + " plates for " + config.polyCount() + " polygons");
+        }
+    }
+
+    private static void validatePlateAssignment(
+            int polygonCount, int plateCount, PlateAssigner.PlateAssignment assignment) {
+        int[] plateIndex = assignment.plateIndex();
+        if (plateIndex.length != polygonCount) {
+            throw new IllegalStateException(
+                "Plate assignment size mismatch: expected " + polygonCount
+                    + " got " + plateIndex.length);
+        }
+        for (int idx : plateIndex) {
+            if (idx < 0 || idx >= plateCount) {
+                throw new IllegalStateException("Invalid plate index: " + idx);
+            }
+        }
+        int total = assignment.plates().stream().mapToInt(List::size).sum();
+        if (total != polygonCount) {
+            throw new IllegalStateException(
+                "Plate assignment incomplete: " + total + " of " + polygonCount);
+        }
+    }
+
+    private static void validateHeights(int[] heights) {
+        for (int height : heights) {
+            if (height < -4 || height > 4) {
+                throw new IllegalStateException("Height out of range: " + height);
+            }
+        }
+    }
+
+    private static void validateClimates(int polygonCount, ClimateCalculator.ClimateZone[] climates) {
+        if (climates.length != polygonCount) {
+            throw new IllegalStateException(
+                "Climate array size mismatch: expected " + polygonCount
+                    + " got " + climates.length);
+        }
+        for (ClimateCalculator.ClimateZone zone : climates) {
+            if (zone == null) {
+                throw new IllegalStateException("Climate zone missing");
+            }
         }
     }
 
