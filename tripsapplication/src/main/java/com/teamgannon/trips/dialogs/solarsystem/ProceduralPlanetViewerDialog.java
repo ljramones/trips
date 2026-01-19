@@ -103,6 +103,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private int currentErosionIterations;
     private double currentRiverThreshold;
     private double currentHeightScale;
+    private boolean currentUseContinuousHeights;
+    private double currentReliefMin;
+    private double currentReliefMax;
     private PlanetConfig.Size currentSize;
     private ClimateCalculator.ClimateModel currentClimateModel;
 
@@ -116,6 +119,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private Label riverLabel;
     private Slider heightSlider;
     private Label heightLabel;
+    private CheckBox continuousHeightsCheckBox;
+    private Spinner<Double> reliefMinSpinner;
+    private Spinner<Double> reliefMaxSpinner;
     private ComboBox<PlanetConfig.Size> sizeCombo;
     private ComboBox<ClimateCalculator.ClimateModel> climateCombo;
     private Button regenerateButton;
@@ -149,6 +155,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         this.currentErosionIterations = config != null ? config.erosionIterations() : 5;
         this.currentRiverThreshold = config != null ? config.riverSourceThreshold() : 0.7;
         this.currentHeightScale = config != null ? config.heightScaleMultiplier() : 1.0;
+        this.currentUseContinuousHeights = config != null && config.useContinuousHeights();
+        this.currentReliefMin = config != null ? config.continuousReliefMin() : -4.0;
+        this.currentReliefMax = config != null ? config.continuousReliefMax() : 4.0;
         this.currentSize = config != null ? deriveSizeFromN(config.n()) : PlanetConfig.Size.STANDARD;
         this.currentClimateModel = config != null ? config.climateModel() : ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
 
@@ -382,6 +391,36 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
         heightBox.getChildren().addAll(heightHeader, heightSlider);
 
+        // Continuous heights
+        VBox continuousBox = new VBox(4);
+        continuousHeightsCheckBox = new CheckBox("Continuous Heights");
+        continuousHeightsCheckBox.setSelected(currentUseContinuousHeights);
+
+        HBox reliefRow = new HBox(5);
+        reliefRow.setAlignment(Pos.CENTER_LEFT);
+        Label reliefLabel = new Label("Relief:");
+        reliefLabel.setStyle(LABEL_STYLE);
+        reliefMinSpinner = new Spinner<>(
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(-6.0, 0.0, currentReliefMin, 0.1));
+        reliefMinSpinner.setPrefWidth(70);
+        reliefMinSpinner.setEditable(true);
+        reliefMinSpinner.setStyle("-fx-font-size: 10;");
+        reliefMaxSpinner = new Spinner<>(
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(0.0, 6.0, currentReliefMax, 0.1));
+        reliefMaxSpinner.setPrefWidth(70);
+        reliefMaxSpinner.setEditable(true);
+        reliefMaxSpinner.setStyle("-fx-font-size: 10;");
+        reliefRow.getChildren().addAll(reliefLabel, reliefMinSpinner, reliefMaxSpinner);
+
+        continuousHeightsCheckBox.selectedProperty().addListener((obs, old, val) -> {
+            reliefMinSpinner.setDisable(!val);
+            reliefMaxSpinner.setDisable(!val);
+        });
+        reliefMinSpinner.setDisable(!currentUseContinuousHeights);
+        reliefMaxSpinner.setDisable(!currentUseContinuousHeights);
+
+        continuousBox.getChildren().addAll(continuousHeightsCheckBox, reliefRow);
+
         // Climate model
         HBox climateRow = new HBox(5);
         climateRow.setAlignment(Pos.CENTER_LEFT);
@@ -419,6 +458,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             erosionRow,
             riverBox,
             heightBox,
+            continuousBox,
             climateRow,
             regenerateButton,
             progressBar,
@@ -645,6 +685,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         currentErosionIterations = erosionSpinner.getValue();
         currentRiverThreshold = riverSlider.getValue();
         currentHeightScale = heightSlider.getValue();
+        currentUseContinuousHeights = continuousHeightsCheckBox.isSelected();
+        currentReliefMin = reliefMinSpinner.getValue();
+        currentReliefMax = reliefMaxSpinner.getValue();
         currentSize = sizeCombo.getValue();
         currentClimateModel = climateCombo.getValue();
 
@@ -666,6 +709,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             .erosionIterations(currentErosionIterations)
             .riverSourceThreshold(currentRiverThreshold)
             .heightScaleMultiplier(currentHeightScale)
+            .useContinuousHeights(currentUseContinuousHeights)
+            .continuousReliefMin(currentReliefMin)
+            .continuousReliefMax(currentReliefMax)
             .climateModel(currentClimateModel)
             .build();
 

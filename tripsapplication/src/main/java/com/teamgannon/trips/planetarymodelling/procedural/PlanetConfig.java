@@ -25,6 +25,11 @@ public record PlanetConfig(
     double rainfallScale,         // 0.0-2.0, multiplier for rainfall amounts (default 1.0)
     boolean enableRivers,         // whether to carve river valleys (default true)
 
+    // Continuous height settings
+    boolean useContinuousHeights, // whether to use continuous heights through erosion
+    double continuousReliefMin,   // minimum continuous height (default -4.0)
+    double continuousReliefMax,   // maximum continuous height (default 4.0)
+
     // Erosion thresholds (configurable for different planet types)
     double rainfallThreshold,     // 0.0-1.0, min rainfall for erosion (default 0.3 = semi-arid)
     double riverSourceThreshold,  // 0.0-1.0, min rainfall for river sources (default 0.7 = humid)
@@ -254,6 +259,10 @@ public record PlanetConfig(
         private int erosionIterations = 5;
         private double rainfallScale = 1.0;
         private boolean enableRivers = true;
+        // Continuous height defaults
+        private boolean useContinuousHeights = false;
+        private double continuousReliefMin = -4.0;
+        private double continuousReliefMax = 4.0;
         // Erosion threshold defaults (Earth-like values)
         private double rainfallThreshold = 0.3;       // Semi-arid minimum
         private double riverSourceThreshold = 0.7;    // Humid conditions for rivers
@@ -325,6 +334,21 @@ public record PlanetConfig(
             return this;
         }
 
+        public Builder useContinuousHeights(boolean enabled) {
+            this.useContinuousHeights = enabled;
+            return this;
+        }
+
+        public Builder continuousReliefMin(double min) {
+            this.continuousReliefMin = min;
+            return this;
+        }
+
+        public Builder continuousReliefMax(double max) {
+            this.continuousReliefMax = max;
+            return this;
+        }
+
         public Builder rainfallThreshold(double threshold) {
             this.rainfallThreshold = Math.max(0.0, Math.min(1.0, threshold));
             return this;
@@ -390,11 +414,14 @@ public record PlanetConfig(
             if (distortionProgressThresholds.size() != distortionValues.size()) {
                 throw new IllegalArgumentException("Distortion thresholds and values must have the same size.");
             }
+            double minRelief = Math.min(continuousReliefMin, continuousReliefMax);
+            double maxRelief = Math.max(continuousReliefMin, continuousReliefMax);
             return new PlanetConfig(
                 seed, size.n, size.polyCount, plateCount, radius, waterFraction,
                 oceanicPlateRatio, heightScaleMultiplier, riftDepthMultiplier,
                 hotspotProbability, enableActiveTectonics,
                 erosionIterations, rainfallScale, enableRivers,
+                useContinuousHeights, minRelief, maxRelief,
                 rainfallThreshold, riverSourceThreshold, riverSourceElevationMin,
                 erosionCap, depositionFactor, riverCarveDepth,
                 maxMountainPercentage, mountainReductionChance, minFarmablePercentage,
@@ -425,6 +452,9 @@ public record PlanetConfig(
             .erosionIterations(erosionIterations)
             .rainfallScale(rainfallScale)
             .enableRivers(enableRivers)
+            .useContinuousHeights(useContinuousHeights)
+            .continuousReliefMin(continuousReliefMin)
+            .continuousReliefMax(continuousReliefMax)
             .rainfallThreshold(rainfallThreshold)
             .riverSourceThreshold(riverSourceThreshold)
             .riverSourceElevationMin(riverSourceElevationMin)

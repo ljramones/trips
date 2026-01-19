@@ -85,6 +85,17 @@ public class ErosionCalculator {
             PlanetConfig config,
             PlateAssigner.PlateAssignment plateAssignment,
             BoundaryDetector.BoundaryAnalysis boundaryAnalysis) {
+        this(convertToDouble(heights), polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+    }
+
+    private ErosionCalculator(
+            double[] heights,
+            List<Polygon> polygons,
+            AdjacencyGraph adjacency,
+            ClimateCalculator.ClimateZone[] climates,
+            PlanetConfig config,
+            PlateAssigner.PlateAssignment plateAssignment,
+            BoundaryDetector.BoundaryAnalysis boundaryAnalysis) {
         this.polygons = polygons;
         this.adjacency = adjacency;
         this.climates = climates;
@@ -102,11 +113,9 @@ public class ErosionCalculator {
         this.depositionFactor = config.depositionFactor();
         this.riverCarveDepth = config.riverCarveDepth();
 
-        // Convert int heights to double for finer erosion calculations
+        // Use continuous heights directly for erosion calculations
         this.workingHeights = new double[heights.length];
-        for (int i = 0; i < heights.length; i++) {
-            workingHeights[i] = heights[i];
-        }
+        System.arraycopy(heights, 0, workingHeights, 0, heights.length);
 
         // Pre-calculate divergent boundary proximity
         this.nearDivergentBoundary = calculateDivergentProximity();
@@ -123,6 +132,24 @@ public class ErosionCalculator {
             PlanetConfig config) {
         // Call overload with null plate data (backward compatible)
         return calculate(heights, polygons, adjacency, climates, config, null, null);
+    }
+
+    /**
+     * Main entry point for erosion calculation with continuous heights.
+     */
+    public static ErosionResult calculate(
+            double[] heights,
+            List<Polygon> polygons,
+            AdjacencyGraph adjacency,
+            ClimateCalculator.ClimateZone[] climates,
+            PlanetConfig config,
+            PlateAssigner.PlateAssignment plateAssignment,
+            BoundaryDetector.BoundaryAnalysis boundaryAnalysis) {
+
+        ErosionCalculator calculator = new ErosionCalculator(
+            heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+
+        return calculator.runErosion();
     }
 
     /**
@@ -158,6 +185,10 @@ public class ErosionCalculator {
 
         // Phase 4: Smooth coastlines
         smoothCoastlines();
+
+        if (config.useContinuousHeights()) {
+            normalizeWorkingHeights();
+        }
 
         // Create precise heights copy (clamped but not rounded)
         double[] preciseHeights = new double[workingHeights.length];
@@ -845,5 +876,33 @@ public class ErosionCalculator {
         double noise = v1 - Math.floor(v1);
 
         return noise;
+    }
+
+    private void normalizeWorkingHeights() {
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        for (double h : workingHeights) {
+            if (h < min) min = h;
+            if (h > max) max = h;
+        }
+
+        double targetMin = config.continuousReliefMin();
+        double targetMax = config.continuousReliefMax();
+        if (max <= min || targetMax <= targetMin) {
+            return;
+        }
+
+        double scale = (targetMax - targetMin) / (max - min);
+        for (int i = 0; i < workingHeights.length; i++) {
+            workingHeights[i] = (workingHeights[i] - min) * scale + targetMin;
+        }
+    }
+
+    private static double[] convertToDouble(int[] heights) {
+        double[] converted = new double[heights.length];
+        for (int i = 0; i < heights.length; i++) {
+            converted[i] = heights[i];
+        }
+        return converted;
     }
 }

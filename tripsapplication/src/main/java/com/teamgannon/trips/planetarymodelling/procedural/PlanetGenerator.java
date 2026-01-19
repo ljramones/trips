@@ -47,6 +47,7 @@ public class PlanetGenerator {
         PlanetConfig config,
         List<Polygon> polygons,
         int[] heights,
+        double[] baseHeights,
         ClimateCalculator.ClimateZone[] climates,
         PlateAssigner.PlateAssignment plateAssignment,
         BoundaryDetector.BoundaryAnalysis boundaryAnalysis,
@@ -231,7 +232,9 @@ public class PlanetGenerator {
                 "Calculating terrain elevations");
             ElevationCalculator elevationCalc = new ElevationCalculator(
                 config, adjacency, plateAssignment, boundaryAnalysis);
-            int[] heights = elevationCalc.calculate();
+            ElevationCalculator.ElevationResult elevationResult = elevationCalc.calculateResult();
+            int[] heights = elevationResult.heights();
+            double[] baseHeights = elevationResult.continuousHeights();
             listener.onProgressUpdate(GenerationProgressListener.Phase.ELEVATION_CALCULATION, 1.0);
             listener.onPhaseCompleted(GenerationProgressListener.Phase.ELEVATION_CALCULATION);
 
@@ -248,15 +251,18 @@ public class PlanetGenerator {
                 "Simulating erosion with " + config.erosionIterations() + " iterations");
             // Apply erosion pass (runs after climate since rainfall depends on climate zones)
             // Pass plate data for divergent boundary moisture boost
-            ErosionCalculator.ErosionResult erosionResult = ErosionCalculator.calculate(
-                heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+            ErosionCalculator.ErosionResult erosionResult = config.useContinuousHeights()
+                ? ErosionCalculator.calculate(
+                    baseHeights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis)
+                : ErosionCalculator.calculate(
+                    heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
             listener.onProgressUpdate(GenerationProgressListener.Phase.EROSION_CALCULATION, 1.0);
             listener.onPhaseCompleted(GenerationProgressListener.Phase.EROSION_CALCULATION);
 
             // Use eroded heights for final output
             int[] finalHeights = erosionResult.erodedHeights();
 
-            GeneratedPlanet planet = new GeneratedPlanet(config, polygons, finalHeights, climates,
+            GeneratedPlanet planet = new GeneratedPlanet(config, polygons, finalHeights, baseHeights, climates,
                 plateAssignment, boundaryAnalysis, erosionResult, adjacency);
 
             listener.onGenerationCompleted();

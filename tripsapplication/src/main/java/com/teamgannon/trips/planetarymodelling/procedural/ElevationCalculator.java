@@ -26,7 +26,10 @@ public class ElevationCalculator {
     private final BoundaryAnalysis boundaryAnalysis;
     private final Random random;
 
+    public record ElevationResult(int[] heights, double[] continuousHeights) {}
+
     private int[] heights;
+    private double[] continuousHeights;
     private int[] massMarker;
 
     public ElevationCalculator(
@@ -42,10 +45,15 @@ public class ElevationCalculator {
     }
 
     public int[] calculate() {
+        return calculateResult().heights();
+    }
+
+    public ElevationResult calculateResult() {
         int polyCount = adjacency.size(); // Use actual polygon count
         int plateCount = config.plateCount();
 
         heights = new int[polyCount];
+        continuousHeights = new double[polyCount];
         Arrays.fill(heights, UNASSIGNED);
         massMarker = new int[polyCount];
 
@@ -57,6 +65,7 @@ public class ElevationCalculator {
             int baseHeight = (types[p] == PlateType.OCEANIC) ? DEEP_OCEAN : PLAINS;
             for (int polyIdx : plates.get(p)) {
                 heights[polyIdx] = baseHeight;
+                continuousHeights[polyIdx] = baseHeight;
             }
         }
 
@@ -101,7 +110,7 @@ public class ElevationCalculator {
         // Generate volcanic hotspots based on probability from config
         generateHotspots(plates, types);
 
-        return heights;
+        return new ElevationResult(heights, continuousHeights);
     }
 
     /**
@@ -284,7 +293,7 @@ public class ElevationCalculator {
     }
 
     private void applyMass(List<Integer> plate1Polys, int plate1Idx, int plate2Idx,
-            double maxPercent, int heightDelta, double distortion) {
+            double maxPercent, int heightDelta, double distortion, double continuousDelta) {
         if (maxPercent <= 0) return;
 
         Arrays.fill(massMarker, -1);
@@ -319,6 +328,7 @@ public class ElevationCalculator {
             }
             int newHeight = heights[polyIdx] + heightDelta;
             heights[polyIdx] = Math.max(DEEP_OCEAN, Math.min(HIGH_MOUNTAINS, newHeight));
+            continuousHeights[polyIdx] = clampContinuous(continuousHeights[polyIdx] + continuousDelta);
         }
     }
 
@@ -344,9 +354,10 @@ public class ElevationCalculator {
             scaledDelta += sign;
         }
 
-        if (scaledDelta == 0) return;
+        double continuousDelta = baseHeightDelta * multiplier;
+        if (scaledDelta == 0 && continuousDelta == 0.0) return;
 
-        applyMass(plate1Polys, plate1Idx, plate2Idx, maxPercent, scaledDelta, distortion);
+        applyMass(plate1Polys, plate1Idx, plate2Idx, maxPercent, scaledDelta, distortion, continuousDelta);
     }
 
     private void generateMountainRange(int plateIdx, List<Integer> platePolys, int length) {
@@ -403,6 +414,7 @@ public class ElevationCalculator {
 
             for (int idx : range) {
                 heights[idx] = MOUNTAINS;
+                continuousHeights[idx] = MOUNTAINS;
             }
 
             break;
@@ -454,6 +466,7 @@ public class ElevationCalculator {
                 if (i < 2) heights[idx] = MOUNTAINS;
                 else if (i < 5) heights[idx] = HILLS;
                 else heights[idx] = PLAINS;
+                continuousHeights[idx] = heights[idx];
             }
 
             break;
@@ -529,11 +542,13 @@ public class ElevationCalculator {
                 // Oceanic hotspot: raise from deep ocean to create volcanic island
                 if (heights[polyIdx] <= OCEAN) {
                     heights[polyIdx] = random.nextDouble() < 0.3 ? MOUNTAINS : HILLS;
+                    continuousHeights[polyIdx] = heights[polyIdx];
                 }
             } else {
                 // Continental hotspot: create volcanic highlands
                 if (heights[polyIdx] < MOUNTAINS) {
                     heights[polyIdx] = random.nextDouble() < 0.4 ? HIGH_MOUNTAINS : MOUNTAINS;
+                    continuousHeights[polyIdx] = heights[polyIdx];
                 }
             }
         }
@@ -556,6 +571,7 @@ public class ElevationCalculator {
                     raiseChance = Math.min(0.35, Math.max(0.15, raiseChance));
                     if (random.nextDouble() < raiseChance) {
                         heights[i]++;
+                        continuousHeights[i] = clampContinuous(continuousHeights[i] + 1.0);
                         modified++;
                         if (heights[i] >= LOWLAND) {
                             seaPercent = percentBelow(LOWLAND);
@@ -577,6 +593,7 @@ public class ElevationCalculator {
                 if (heights[i] == LOWLAND) {
                     if (random.nextDouble() < 0.35) {
                         heights[i]--;
+                        continuousHeights[i] = clampContinuous(continuousHeights[i] - 1.0);
                         modified++;
                         seaPercent = percentBelow(LOWLAND);
                         if (seaPercent >= targetWater - 0.01) break;
@@ -600,6 +617,7 @@ public class ElevationCalculator {
             for (int i = 0; i < polyCount; i++) {
                 if (heights[i] > HILLS && random.nextDouble() < 0.65) {
                     heights[i]--;
+                    continuousHeights[i] = clampContinuous(continuousHeights[i] - 1.0);
                     modified++;
                     if (percentAbove(HILLS) < 0.05) break;
                 }
@@ -616,6 +634,7 @@ public class ElevationCalculator {
             for (int i = 0; i < polyCount; i++) {
                 if (heights[i] == HILLS && random.nextDouble() < 0.75) {
                     heights[i]--;
+                    continuousHeights[i] = clampContinuous(continuousHeights[i] - 1.0);
                     modified++;
                     farmable = percentEqual(PLAINS) + percentEqual(LOWLAND);
                     if (farmable >= 0.15) break;
@@ -632,6 +651,7 @@ public class ElevationCalculator {
             for (int i = 0; i < polyCount; i++) {
                 if (heights[i] == HILLS && random.nextDouble() < 0.35) {
                     heights[i]--;
+                    continuousHeights[i] = clampContinuous(continuousHeights[i] - 1.0);
                     modified++;
                     if (percentEqual(HILLS) <= 0.14) break;
                 }
@@ -647,6 +667,7 @@ public class ElevationCalculator {
             for (int i = 0; i < polyCount; i++) {
                 if (heights[i] == LOWLAND && random.nextDouble() < 0.35) {
                     heights[i]++;
+                    continuousHeights[i] = clampContinuous(continuousHeights[i] + 1.0);
                     modified++;
                     if (percentEqual(LOWLAND) <= 0.08) break;
                 }
@@ -680,4 +701,9 @@ public class ElevationCalculator {
         }
         return -1;
     }
+
+    private double clampContinuous(double value) {
+        return Math.max(DEEP_OCEAN, Math.min(HIGH_MOUNTAINS, value));
+    }
+
 }
