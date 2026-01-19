@@ -1,6 +1,7 @@
 package com.teamgannon.trips.screenobjects.solarsystem;
 
 import com.teamgannon.trips.controller.MainPane;
+import com.teamgannon.trips.events.SolarSystemAnimationEvent;
 import com.teamgannon.trips.events.SolarSystemCameraEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
 import com.teamgannon.trips.events.SolarSystemScaleEvent;
@@ -111,12 +112,8 @@ public class SimulationControlPane extends VBox {
         timeBox.setAlignment(Pos.CENTER_LEFT);
         timeBox.getChildren().addAll(timeLabel, timeScaleSlider, timeScaleLabel);
 
-        // Note about animation being a future feature
-        Label noteLabel = new Label("(Animation coming soon)");
-        noteLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #888888; -fx-font-size: 10px;");
-
         VBox section = new VBox(8);
-        section.getChildren().addAll(header, buttonBox, timeBox, noteLabel);
+        section.getChildren().addAll(header, buttonBox, timeBox);
         return section;
     }
 
@@ -184,7 +181,8 @@ public class SimulationControlPane extends VBox {
             isPlaying = !isPlaying;
             playPauseButton.setText(isPlaying ? "\u23F8" : "\u25B6");  // Pause or Play symbol
             log.info("Animation {}", isPlaying ? "started" : "paused");
-            // Animation not yet implemented
+            eventPublisher.publishEvent(new SolarSystemAnimationEvent(
+                    this, SolarSystemAnimationEvent.AnimationAction.TOGGLE_PLAY_PAUSE));
         });
 
         // Reset button
@@ -192,14 +190,21 @@ public class SimulationControlPane extends VBox {
             isPlaying = false;
             playPauseButton.setText("\u25B6");
             log.info("Animation reset");
-            // Animation not yet implemented
+            eventPublisher.publishEvent(new SolarSystemAnimationEvent(
+                    this, SolarSystemAnimationEvent.AnimationAction.RESET));
         });
 
-        // Time scale slider
+        // Time scale slider - convert 0.1-10 range to speed multiplier
+        // 1.0 on slider = 1 day/sec (86400x), scaled logarithmically
         timeScaleSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             timeScaleLabel.setText(String.format("%.1fx", newVal.doubleValue()));
-            log.debug("Time scale changed to: {}", newVal);
-            // Animation not yet implemented
+            // Convert slider value to speed multiplier:
+            // slider 0.1 -> 1 hour/sec (3600)
+            // slider 1.0 -> 1 day/sec (86400)
+            // slider 10.0 -> 1 year/sec (31536000)
+            double speedMultiplier = 86400.0 * newVal.doubleValue();
+            log.debug("Time scale changed to: {} (speed: {}x)", newVal, speedMultiplier);
+            eventPublisher.publishEvent(new SolarSystemAnimationEvent(this, speedMultiplier));
         });
 
         // Zoom slider

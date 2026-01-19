@@ -426,6 +426,40 @@ public class SolarSystemRenderer {
     }
 
     /**
+     * Update planet positions during animation.
+     * Receives positions in AU and updates the 3D sphere positions.
+     *
+     * @param positionsAu map of planet name to position in AU {x, y, z}
+     */
+    public void updatePlanetPositions(Map<String, double[]> positionsAu) {
+        int updated = 0;
+        int notFound = 0;
+        for (Map.Entry<String, double[]> entry : positionsAu.entrySet()) {
+            String planetName = entry.getKey();
+            double[] posAu = entry.getValue();
+
+            Sphere sphere = planetNodes.get(planetName);
+            if (sphere != null && posAu != null && posAu.length >= 3) {
+                double[] screen = scaleManager.auVectorToScreen(posAu[0], posAu[1], posAu[2]);
+                sphere.setTranslateX(screen[0]);
+                sphere.setTranslateY(screen[1]);
+                sphere.setTranslateZ(screen[2]);
+                updated++;
+            } else {
+                notFound++;
+                if (notFound == 1) {
+                    log.warn("Planet sphere not found: '{}', available keys: {}", planetName, planetNodes.keySet());
+                }
+            }
+        }
+        if (updateLogCount++ % 60 == 0 && updated > 0) {
+            log.trace("Updated {} planet positions", updated);
+        }
+    }
+
+    private int updateLogCount = 0;
+
+    /**
      * Clear all rendered elements
      */
     public void clear() {

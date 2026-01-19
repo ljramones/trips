@@ -6,6 +6,7 @@ import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.dialogs.solarsystem.ProceduralPlanetViewerDialog;
 import com.teamgannon.trips.events.ContextSelectionType;
 import com.teamgannon.trips.events.ContextSelectorEvent;
+import com.teamgannon.trips.events.SolarSystemAnimationEvent;
 import com.teamgannon.trips.events.SolarSystemCameraEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
 import com.teamgannon.trips.events.SolarSystemScaleEvent;
@@ -21,6 +22,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
+import com.teamgannon.trips.solarsystem.animation.OrbitalAnimationController;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import javafx.animation.RotateTransition;
 import javafx.scene.*;
@@ -144,6 +146,11 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private SolarSystemDescription currentSystem;
     private Node selectedNode;
     private final Map<Node, Point2D> lastLabelPositions = new HashMap<>();
+
+    /**
+     * Animation controller for orbital dynamics
+     */
+    private OrbitalAnimationController animationController;
 
     /**
      * constructor
@@ -405,6 +412,23 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         }
     }
 
+    @EventListener
+    public void onSolarSystemAnimationEvent(SolarSystemAnimationEvent event) {
+        if (animationController == null) {
+            log.warn("Animation event received but no animation controller available");
+            return;
+        }
+
+        log.info("Animation event: {}", event.getAction());
+        switch (event.getAction()) {
+            case PLAY -> animationController.play();
+            case PAUSE -> animationController.pause();
+            case TOGGLE_PLAY_PAUSE -> animationController.togglePlayPause();
+            case RESET -> animationController.stop();
+            case SET_SPEED -> animationController.setSpeed(event.getSpeedMultiplier());
+        }
+    }
+
 
     /**
      * set the system to show
@@ -431,6 +455,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private void render(SolarSystemDescription solarSystemDescription) {
         // Store current system for reference
         this.currentSystem = solarSystemDescription;
+
+        // Clean up previous animation if any
+        cleanupAnimation();
 
         // Clear previous rendering
         systemEntityGroup.getChildren().clear();
@@ -464,6 +491,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 planetCount,
                 solarSystemDescription.getHabitableZoneInnerAU(),
                 solarSystemDescription.getHabitableZoneOuterAU());
+
+        // Initialize orbital animation
+        initializeAnimation(solarSystemDescription);
     }
 
     /**
@@ -530,6 +560,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      * Reset the system view
      */
     public void reset() {
+        // Clean up animation
+        cleanupAnimation();
+
         // Clear the UI legend
         starNameGroup.getChildren().clear();
 
@@ -542,6 +575,42 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Clear current system reference
         currentSystem = null;
+    }
+
+    /**
+     * Initialize orbital animation for the rendered system.
+     *
+     * @param solarSystemDescription the solar system being displayed
+     */
+    private void initializeAnimation(SolarSystemDescription solarSystemDescription) {
+        if (solarSystemDescription == null || solarSystemDescription.getPlanetDescriptionList().isEmpty()) {
+            log.warn("No planets to animate - skipping animation setup");
+            return;
+        }
+
+        List<PlanetDescription> planets = solarSystemDescription.getPlanetDescriptionList();
+        log.info("Setting up animation for {} planets:", planets.size());
+        for (PlanetDescription p : planets) {
+            log.info("  - {} : sma={} AU, period={} days, ecc={}",
+                    p.getName(), p.getSemiMajorAxis(), p.getOrbitalPeriod(), p.getEccentricity());
+        }
+
+        // Create animation controller (controlled via SimulationControlPane events)
+        animationController = new OrbitalAnimationController(solarSystemRenderer, this::updateLabels);
+        animationController.setPlanets(planets);
+
+        log.info("Orbital animation initialized with {} planets, planetNodes keys: {}",
+                planets.size(), solarSystemRenderer.getPlanetNodes().keySet());
+    }
+
+    /**
+     * Clean up animation resources.
+     */
+    private void cleanupAnimation() {
+        if (animationController != null) {
+            animationController.dispose();
+            animationController = null;
+        }
     }
 
     // ---------------------- helpers -------------------------- //
@@ -593,12 +662,24 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      * jump back to the interstellar space
      */
     private void jumpBackToInterstellarSpace() {
+        // Clean up animation before leaving
+        cleanupAnimation();
+
         // there is no specific context at the moment.  We assume the same interstellar space we came form
         eventPublisher.publishEvent(new ContextSelectorEvent(
                 this,
                 ContextSelectionType.INTERSTELLAR,
                 null,
                 new HashMap<>()));
+    }
+
+    /**
+     * Get the animation controller for external control.
+     *
+     * @return the animation controller, or null if no system is loaded
+     */
+    public OrbitalAnimationController getAnimationController() {
+        return animationController;
     }
 
     /**
