@@ -186,8 +186,7 @@ public class ErosionCalculator {
 
     /**
      * Phase 1: Calculate rainfall distribution based on climate zones.
-     * Tropical zones get high rainfall, polar zones get low rainfall.
-     * High elevations have reduced rain (rain shadow effect).
+     * Includes rain shadow effect where mountains block prevailing winds.
      */
     private void calculateRainfall() {
         rainfall = new double[polygons.size()];
@@ -196,26 +195,166 @@ public class ErosionCalculator {
         // For stagnant-lid worlds (Venus/Mars-like), reduce rainfall significantly
         double stagnantLidFactor = config.enableActiveTectonics() ? 1.0 : 0.3;
 
+        // Pre-calculate rain shadow factors for all polygons
+        double[] rainShadowFactors = calculateRainShadowFactors();
+
         if (polygons.size() >= PARALLEL_THRESHOLD) {
             // Parallel processing for large meshes
             // Use seeded random per-polygon for reproducibility
             long baseSeed = config.subSeed(4);
             IntStream.range(0, polygons.size()).parallel().forEach(i -> {
                 Random localRandom = new Random(baseSeed + i);
-                rainfall[i] = calculateRainfallForPolygon(i, localRandom, rainfallScale, stagnantLidFactor);
+                rainfall[i] = calculateRainfallForPolygon(i, localRandom, rainfallScale,
+                    stagnantLidFactor, rainShadowFactors[i]);
             });
         } else {
             // Sequential processing for small meshes
             for (int i = 0; i < polygons.size(); i++) {
-                rainfall[i] = calculateRainfallForPolygon(i, random, rainfallScale, stagnantLidFactor);
+                rainfall[i] = calculateRainfallForPolygon(i, random, rainfallScale,
+                    stagnantLidFactor, rainShadowFactors[i]);
             }
         }
     }
 
     /**
+     * Calculate rain shadow factors for all polygons.
+     * Uses simplified global wind circulation:
+     * - Trade winds (0-30° lat): blow from east
+     * - Westerlies (30-60° lat): blow from west
+     * - Polar easterlies (60-90° lat): blow from east
+     *
+     * @return Array of factors (0.2 to 1.0) where lower = more shadow
+     */
+    private double[] calculateRainShadowFactors() {
+        double[] factors = new double[polygons.size()];
+
+        if (polygons.size() >= PARALLEL_THRESHOLD) {
+            // Parallel processing for large meshes
+            IntStream.range(0, polygons.size()).parallel().forEach(i -> {
+                factors[i] = calculateRainShadowForPolygon(i);
+            });
+        } else {
+            // Sequential processing for small meshes
+            for (int i = 0; i < polygons.size(); i++) {
+                factors[i] = calculateRainShadowForPolygon(i);
+            }
+        }
+
+        return factors;
+    }
+
+    /**
+     * Calculate rain shadow factor for a single polygon.
+     */
+    private double calculateRainShadowForPolygon(int i) {
+        Vector3D center = polygons.get(i).center();
+
+        // Calculate latitude (Y is up in our coordinate system)
+        double lat = Math.toDegrees(Math.asin(center.normalize().getY()));
+
+        // Determine prevailing wind direction based on latitude
+        Vector3D windDir = getPrevailingWindDirection(lat, center);
+
+        // Trace upwind looking for blocking terrain
+        double shadowAmount = traceUpwindForMountains(i, windDir);
+
+        // Convert shadow amount to factor (more shadow = less rain)
+        // shadowAmount of 0 = no shadow (factor 1.0)
+        // shadowAmount of 1 = full shadow (factor 0.2)
+        return Math.max(0.2, 1.0 - shadowAmount * 0.8);
+    }
+
+    /**
+     * Get prevailing wind direction based on latitude.
+     * Simplified global circulation model:
+     * - 0-30° latitude: Trade winds (easterly, from the east)
+     * - 30-60° latitude: Westerlies (from the west)
+     * - 60-90° latitude: Polar easterlies (from the east)
+     */
+    private Vector3D getPrevailingWindDirection(double latitude, Vector3D position) {
+        double absLat = Math.abs(latitude);
+
+        // Calculate local "east" direction (tangent to surface, perpendicular to radius)
+        Vector3D up = position.normalize();
+        Vector3D north = new Vector3D(0, 1, 0);
+        Vector3D east = north.crossProduct(up).normalize();
+
+        // If we're near poles, east direction becomes degenerate
+        if (east.getNorm() < 0.1) {
+            east = new Vector3D(1, 0, 0);
+        }
+
+        // Determine wind direction based on latitude zone
+        if (absLat < 30) {
+            // Trade winds: blow FROM the east (so wind direction vector points west)
+            return east.negate();
+        } else if (absLat < 60) {
+            // Westerlies: blow FROM the west (so wind direction vector points east)
+            return east;
+        } else {
+            // Polar easterlies: blow FROM the east
+            return east.negate();
+        }
+    }
+
+    /**
+     * Trace upwind from a polygon looking for blocking mountain terrain.
+     * Returns a shadow amount from 0 (no shadow) to 1 (full shadow).
+     */
+    private double traceUpwindForMountains(int startIdx, Vector3D windDir) {
+        double maxBlockingHeight = 0;
+        double startHeight = workingHeights[startIdx];
+
+        // Follow the wind direction through neighbor polygons (up to 5 steps)
+        int current = startIdx;
+        Set<Integer> visited = new HashSet<>();
+
+        for (int step = 0; step < 5 && current >= 0; step++) {
+            visited.add(current);
+
+            // Find neighbor most aligned with upwind direction
+            int bestNeighbor = -1;
+            double bestAlignment = -1;
+
+            for (int neighbor : adjacency.neighborsOnly(current)) {
+                if (visited.contains(neighbor)) continue;
+
+                Vector3D neighborDir = polygons.get(neighbor).center()
+                    .subtract(polygons.get(current).center()).normalize();
+
+                // Dot product gives alignment (-1 to 1)
+                // We want the neighbor that is most OPPOSITE to wind direction (upwind)
+                double alignment = -neighborDir.dotProduct(windDir);
+
+                if (alignment > bestAlignment) {
+                    bestAlignment = alignment;
+                    bestNeighbor = neighbor;
+                }
+            }
+
+            if (bestNeighbor < 0 || bestAlignment < 0.3) {
+                break;  // No good upwind neighbor found
+            }
+
+            // Check if this upwind polygon is elevated terrain
+            double neighborHeight = workingHeights[bestNeighbor];
+            if (neighborHeight > startHeight && neighborHeight > 0) {
+                // This is elevated land upwind - contributes to shadow
+                double blockingAmount = (neighborHeight - startHeight) / 4.0;  // Normalize by max height diff
+                maxBlockingHeight = Math.max(maxBlockingHeight, blockingAmount);
+            }
+
+            current = bestNeighbor;
+        }
+
+        return Math.min(1.0, maxBlockingHeight);
+    }
+
+    /**
      * Calculate rainfall for a single polygon.
      */
-    private double calculateRainfallForPolygon(int i, Random rng, double rainfallScale, double stagnantLidFactor) {
+    private double calculateRainfallForPolygon(int i, Random rng, double rainfallScale,
+            double stagnantLidFactor, double rainShadowFactor) {
         // Base rain from climate zone
         double baseRain = switch (climates[i]) {
             case TROPICAL -> 1.0 + rng.nextDouble() * 0.5;   // 1.0-1.5
@@ -223,10 +362,10 @@ public class ErosionCalculator {
             case POLAR -> 0.1 + rng.nextDouble() * 0.2;      // 0.1-0.3
         };
 
-        // Reduce rain at high elevations (rain shadow effect)
+        // Reduce rain at high elevations (orographic effect on peaks)
         // Normalize height to 0-1 range (heights range from -4 to 4)
         double normalizedHeight = (workingHeights[i] + 4.0) / 8.0;
-        double elevationFactor = 1.0 - (normalizedHeight * 0.5);  // 50% reduction at max height
+        double elevationFactor = 1.0 - (normalizedHeight * 0.3);  // 30% reduction at max height
 
         // Boost rainfall near divergent plate boundaries (upwelling moisture)
         double divergentBoost = 1.0;
@@ -234,7 +373,9 @@ public class ErosionCalculator {
             divergentBoost = 1.3;  // 30% boost near divergent boundaries
         }
 
-        return baseRain * Math.max(0.1, elevationFactor) * rainfallScale * stagnantLidFactor * divergentBoost;
+        // Apply rain shadow effect (can significantly reduce rainfall on leeward slopes)
+        return baseRain * Math.max(0.1, elevationFactor) * rainfallScale
+            * stagnantLidFactor * divergentBoost * rainShadowFactor;
     }
 
     /**
@@ -285,8 +426,14 @@ public class ErosionCalculator {
     }
 
     /**
-     * Phase 2: Sediment flow erosion using cellular automata.
+     * Phase 2: Sediment flow erosion using mass-conserving sediment transport.
      * Simulates water carrying sediment from high areas to low areas.
+     *
+     * Uses a carrying capacity model where:
+     * - Water can carry sediment proportional to slope and flow rate
+     * - Excess capacity erodes the terrain (picks up sediment)
+     * - Over-capacity deposits sediment (when slope decreases)
+     * - All sediment is eventually deposited (mass conservation)
      */
     private void applySedimentFlow() {
         int iterations = config.erosionIterations();
@@ -296,42 +443,98 @@ public class ErosionCalculator {
             iterations = Math.max(1, iterations / 2);
         }
 
-        int[] order = createShuffledOrder();
+        // Track sediment being carried at each polygon
+        double[] sediment = new double[polygons.size()];
 
         for (int iter = 0; iter < iterations; iter++) {
-            shuffleArray(order);
+            // Process polygons in height order (highest to lowest) for proper flow
+            Integer[] sortedByHeight = getSortedByHeightDescending();
 
-            for (int i : order) {
-                // Only erode polygons with significant rainfall
+            // Reset sediment for this iteration
+            Arrays.fill(sediment, 0.0);
+
+            for (int i : sortedByHeight) {
+                // Skip polygons with minimal rainfall
                 if (rainfall[i] < rainfallThreshold) continue;
 
-                // Find lowest neighbor
+                // Find lowest neighbor for flow direction
                 int lowestNeighbor = findLowestNeighbor(i);
                 if (lowestNeighbor < 0) continue;
 
-                // Only erode if there's a downhill slope
+                // Calculate slope to downstream neighbor
                 double slope = workingHeights[i] - workingHeights[lowestNeighbor];
                 if (slope <= 0) continue;
 
-                // Calculate erosion amount based on slope and rainfall.
-                // Cap at 0.3 height units per iteration to prevent over-erosion
-                // that would create unrealistic canyons in a single pass.
-                // The 0.2 slope factor means gentle slopes erode less.
-                double erosionAmount = Math.min(erosionCap, slope * 0.2 * rainfall[i]);
+                // Calculate water carrying capacity based on slope and rainfall
+                // Steeper slopes and more water = higher capacity
+                double carryingCapacity = Math.min(erosionCap, slope * 0.3 * rainfall[i]);
 
-                // Erode source polygon
-                workingHeights[i] -= erosionAmount;
+                // Current sediment load
+                double currentLoad = sediment[i];
 
-                // Deposit 50% of eroded sediment at destination.
-                // The remaining 50% is assumed carried away by water flow to
-                // the ocean or deposited further downstream. This prevents
-                // over-accumulation while still building alluvial features.
-                workingHeights[lowestNeighbor] += erosionAmount * depositionFactor;
+                if (currentLoad < carryingCapacity) {
+                    // Under capacity: erode terrain to pick up more sediment
+                    double erosionPotential = carryingCapacity - currentLoad;
+                    double erosionAmount = Math.min(erosionPotential, slope * 0.15);
+
+                    // Erode source polygon
+                    workingHeights[i] -= erosionAmount;
+                    currentLoad += erosionAmount;
+                }
+
+                // Calculate new carrying capacity at downstream location
+                int nextLowest = findLowestNeighbor(lowestNeighbor);
+                double downstreamSlope = 0;
+                if (nextLowest >= 0) {
+                    downstreamSlope = Math.max(0, workingHeights[lowestNeighbor] - workingHeights[nextLowest]);
+                }
+                double downstreamCapacity = Math.min(erosionCap, downstreamSlope * 0.3 * rainfall[lowestNeighbor]);
+
+                // If downstream capacity is lower, deposit excess sediment
+                if (currentLoad > downstreamCapacity) {
+                    double toDeposit = (currentLoad - downstreamCapacity) * depositionFactor;
+                    workingHeights[lowestNeighbor] += toDeposit;
+                    currentLoad -= toDeposit;
+                }
+
+                // Pass remaining sediment downstream
+                sediment[lowestNeighbor] += currentLoad;
+            }
+
+            // Deposit any remaining sediment at lowest points (ocean, basins)
+            for (int i = 0; i < polygons.size(); i++) {
+                if (sediment[i] > 0) {
+                    int lowest = findLowestNeighbor(i);
+                    if (lowest < 0 || workingHeights[lowest] >= workingHeights[i]) {
+                        // No lower neighbor - deposit all remaining sediment here
+                        workingHeights[i] += sediment[i];
+                    }
+                }
             }
         }
 
         // Apply smoothing pass to reduce sharp edges
         smoothHeights();
+    }
+
+    /**
+     * Get polygon indices sorted by height (descending - highest first).
+     * Used for processing erosion in proper flow order.
+     * Uses parallel sorting for large meshes.
+     */
+    private Integer[] getSortedByHeightDescending() {
+        Integer[] indices = new Integer[polygons.size()];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = i;
+        }
+
+        if (polygons.size() >= PARALLEL_THRESHOLD) {
+            // Use parallel sort for large meshes
+            Arrays.parallelSort(indices, (a, b) -> Double.compare(workingHeights[b], workingHeights[a]));
+        } else {
+            Arrays.sort(indices, (a, b) -> Double.compare(workingHeights[b], workingHeights[a]));
+        }
+        return indices;
     }
 
     /**

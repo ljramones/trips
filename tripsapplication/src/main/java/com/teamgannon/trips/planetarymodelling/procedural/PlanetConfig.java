@@ -50,7 +50,10 @@ public record PlanetConfig(
     // Boundary effect parameters - controls terrain generation at plate boundaries
     // These define how much area is affected (percent), height change (delta), and irregularity (distortion)
     // for each type of plate interaction. See ElevationCalculator for usage.
-    BoundaryEffectConfig boundaryEffects
+    BoundaryEffectConfig boundaryEffects,
+
+    // Climate model selection for atmospheric/temperature simulation
+    ClimateCalculator.ClimateModel climateModel
 ) {
 
     /**
@@ -272,6 +275,8 @@ public record PlanetConfig(
         private List<Double> distortionValues = List.of(0.1, 0.2, 0.7);
         // Boundary effect defaults
         private BoundaryEffectConfig boundaryEffects = BoundaryEffectConfig.defaults();
+        // Climate model defaults to simple latitude-based zones (Earth-like)
+        private ClimateCalculator.ClimateModel climateModel = ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
 
 
         public Builder seed(long seed) { this.seed = seed; return this; }
@@ -371,6 +376,15 @@ public record PlanetConfig(
         public Builder distortionValues(List<Double> values) { this.distortionValues = values; return this; }
         public Builder boundaryEffects(BoundaryEffectConfig effects) { this.boundaryEffects = effects; return this; }
 
+        /**
+         * Sets the climate model for atmospheric simulation.
+         * @param model Climate model to use (default: SIMPLE_LATITUDE)
+         */
+        public Builder climateModel(ClimateCalculator.ClimateModel model) {
+            this.climateModel = model != null ? model : ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
+            return this;
+        }
+
 
         public PlanetConfig build() {
             if (distortionProgressThresholds.size() != distortionValues.size()) {
@@ -387,7 +401,7 @@ public record PlanetConfig(
                 farmableCreationChance, maxHillPercentage, hillReductionChance,
                 maxLowlandPercentage, lowlandIncreaseChance,
                 distortionProgressThresholds, distortionValues,
-                boundaryEffects
+                boundaryEffects, climateModel
             );
         }
     }
@@ -427,7 +441,8 @@ public record PlanetConfig(
             .lowlandIncreaseChance(lowlandIncreaseChance)
             .distortionProgressThresholds(distortionProgressThresholds)
             .distortionValues(distortionValues)
-            .boundaryEffects(boundaryEffects);
+            .boundaryEffects(boundaryEffects)
+            .climateModel(climateModel);
     }
 
     /**

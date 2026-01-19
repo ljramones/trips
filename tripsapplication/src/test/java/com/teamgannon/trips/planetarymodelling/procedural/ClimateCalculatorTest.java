@@ -284,4 +284,171 @@ class ClimateCalculatorTest {
             center.subtract(perp1).normalize()
         );
     }
+
+    // =============================================
+    // Climate Model Tests
+    // =============================================
+
+    @Test
+    @DisplayName("ICE_WORLD model has no tropical zones")
+    void iceWorldNoTropical() {
+        ClimateCalculator iceCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.ICE_WORLD);
+        ClimateZone[] zones = iceCalc.calculate();
+
+        for (ClimateZone zone : zones) {
+            assertThat(zone)
+                .as("Ice world should have no tropical zones")
+                .isNotEqualTo(ClimateZone.TROPICAL);
+        }
+    }
+
+    @Test
+    @DisplayName("ICE_WORLD model has mostly polar zones")
+    void iceWorldMostlyPolar() {
+        ClimateCalculator iceCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.ICE_WORLD);
+        ClimateZone[] zones = iceCalc.calculate();
+
+        int polarCount = 0;
+        for (ClimateZone zone : zones) {
+            if (zone == ClimateZone.POLAR) polarCount++;
+        }
+
+        // Ice worlds should be at least 50% polar
+        assertThat((double) polarCount / zones.length)
+            .as("Ice world should be mostly polar")
+            .isGreaterThan(0.5);
+    }
+
+    @Test
+    @DisplayName("TROPICAL_WORLD model has extended tropical zones")
+    void tropicalWorldExtendedTropical() {
+        ClimateCalculator tropicalCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.TROPICAL_WORLD);
+        ClimateZone[] zones = tropicalCalc.calculate();
+
+        // Check polygon at 40 degrees (would be temperate in simple model)
+        Vector3D center40 = new Vector3D(
+            Math.cos(Math.toRadians(40)),
+            Math.sin(Math.toRadians(40)),
+            0
+        ).normalize();
+        Polygon poly40 = new Polygon(center40, createDummyVertices(center40));
+
+        ClimateCalculator calc = new ClimateCalculator(List.of(poly40),
+            ClimateCalculator.ClimateModel.TROPICAL_WORLD);
+        ClimateZone[] result = calc.calculate();
+
+        assertThat(result[0])
+            .as("40° latitude should be tropical in tropical world model")
+            .isEqualTo(ClimateZone.TROPICAL);
+    }
+
+    @Test
+    @DisplayName("TROPICAL_WORLD model has smaller polar caps")
+    void tropicalWorldSmallPolarCaps() {
+        ClimateCalculator tropicalCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.TROPICAL_WORLD);
+        ClimateCalculator simpleCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.SIMPLE_LATITUDE);
+
+        ClimateZone[] tropicalZones = tropicalCalc.calculate();
+        ClimateZone[] simpleZones = simpleCalc.calculate();
+
+        int tropicalPolar = 0, simplePolar = 0;
+        for (ClimateZone zone : tropicalZones) {
+            if (zone == ClimateZone.POLAR) tropicalPolar++;
+        }
+        for (ClimateZone zone : simpleZones) {
+            if (zone == ClimateZone.POLAR) simplePolar++;
+        }
+
+        assertThat(tropicalPolar)
+            .as("Tropical world should have fewer polar zones than simple latitude model")
+            .isLessThan(simplePolar);
+    }
+
+    @Test
+    @DisplayName("TIDALLY_LOCKED model zones based on longitude not latitude")
+    void tidallyLockedLongitudeBased() {
+        // Create polygons at same latitude but different longitudes
+        // Day side (positive X)
+        Vector3D dayCenter = new Vector3D(1, 0, 0);
+        Polygon dayPoly = new Polygon(dayCenter, createDummyVertices(dayCenter));
+
+        // Night side (negative X)
+        Vector3D nightCenter = new Vector3D(-1, 0, 0);
+        Polygon nightPoly = new Polygon(nightCenter, createDummyVertices(nightCenter));
+
+        ClimateCalculator tidalCalc = new ClimateCalculator(List.of(dayPoly, nightPoly),
+            ClimateCalculator.ClimateModel.TIDALLY_LOCKED);
+        ClimateZone[] zones = tidalCalc.calculate();
+
+        assertThat(zones[0])
+            .as("Day side should be tropical (hot)")
+            .isEqualTo(ClimateZone.TROPICAL);
+        assertThat(zones[1])
+            .as("Night side should be polar (frozen)")
+            .isEqualTo(ClimateZone.POLAR);
+    }
+
+    @Test
+    @DisplayName("HADLEY_CELLS model includes subtropical transition")
+    void hadleyCellsSubtropical() {
+        ClimateCalculator hadleyCalc = new ClimateCalculator(polygons,
+            ClimateCalculator.ClimateModel.HADLEY_CELLS);
+        ClimateZone[] zones = hadleyCalc.calculate();
+
+        // Should still have all three zone types
+        boolean hasTropical = false, hasTemperate = false, hasPolar = false;
+        for (ClimateZone zone : zones) {
+            if (zone == ClimateZone.TROPICAL) hasTropical = true;
+            if (zone == ClimateZone.TEMPERATE) hasTemperate = true;
+            if (zone == ClimateZone.POLAR) hasPolar = true;
+        }
+
+        assertThat(hasTropical).as("Hadley model should have tropical zones").isTrue();
+        assertThat(hasTemperate).as("Hadley model should have temperate zones").isTrue();
+        assertThat(hasPolar).as("Hadley model should have polar zones").isTrue();
+    }
+
+    @Test
+    @DisplayName("Climate model can be specified in PlanetConfig")
+    void climateModelInConfig() {
+        var config = PlanetConfig.builder()
+            .seed(12345L)
+            .size(PlanetConfig.Size.DUEL)
+            .climateModel(ClimateCalculator.ClimateModel.ICE_WORLD)
+            .build();
+
+        assertThat(config.climateModel())
+            .isEqualTo(ClimateCalculator.ClimateModel.ICE_WORLD);
+    }
+
+    @Test
+    @DisplayName("Default climate model is SIMPLE_LATITUDE")
+    void defaultClimateModel() {
+        var config = PlanetConfig.builder()
+            .seed(12345L)
+            .build();
+
+        assertThat(config.climateModel())
+            .isEqualTo(ClimateCalculator.ClimateModel.SIMPLE_LATITUDE);
+    }
+
+    @Test
+    @DisplayName("Null model defaults to SIMPLE_LATITUDE")
+    void nullModelDefault() {
+        ClimateCalculator calc = new ClimateCalculator(polygons, null);
+        ClimateZone[] zones = calc.calculate();
+
+        // Should behave like simple latitude model
+        for (int i = 0; i < polygons.size(); i++) {
+            double latitude = Math.abs(ClimateCalculator.getLatitudeDegrees(polygons.get(i)));
+            if (latitude < 25) {
+                assertThat(zones[i]).isEqualTo(ClimateZone.TROPICAL);
+            }
+        }
+    }
 }

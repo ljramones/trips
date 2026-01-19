@@ -12,6 +12,7 @@ import java.util.List;
 public class PlanetGenerator {
 
     private final PlanetConfig config;
+    private final GenerationProgressListener listener;
 
     /**
      * Creates a new PlanetGenerator with the given configuration.
@@ -20,10 +21,22 @@ public class PlanetGenerator {
      * @throws IllegalArgumentException if config is null
      */
     public PlanetGenerator(PlanetConfig config) {
+        this(config, GenerationProgressListener.NO_OP);
+    }
+
+    /**
+     * Creates a new PlanetGenerator with the given configuration and progress listener.
+     *
+     * @param config   The planet configuration (must not be null)
+     * @param listener Progress listener for tracking generation (null uses NO_OP)
+     * @throws IllegalArgumentException if config is null
+     */
+    public PlanetGenerator(PlanetConfig config, GenerationProgressListener listener) {
         if (config == null) {
             throw new IllegalArgumentException("PlanetConfig cannot be null");
         }
         this.config = config;
+        this.listener = listener != null ? listener : GenerationProgressListener.NO_OP;
     }
 
     /**
@@ -181,34 +194,78 @@ public class PlanetGenerator {
     }
 
     public GeneratedPlanet generate() {
-        IcosahedralMesh mesh = new IcosahedralMesh(config);
-        List<Polygon> polygons = mesh.generate();
+        try {
+            // Phase 1: Mesh generation
+            listener.onPhaseStarted(GenerationProgressListener.Phase.MESH_GENERATION,
+                "Creating icosahedral mesh with " + config.polyCount() + " polygons");
+            IcosahedralMesh mesh = new IcosahedralMesh(config);
+            List<Polygon> polygons = mesh.generate();
+            listener.onProgressUpdate(GenerationProgressListener.Phase.MESH_GENERATION, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.MESH_GENERATION);
 
-        AdjacencyGraph adjacency = new AdjacencyGraph(polygons);
+            // Phase 2: Adjacency graph
+            listener.onPhaseStarted(GenerationProgressListener.Phase.ADJACENCY_GRAPH,
+                "Building adjacency relationships");
+            AdjacencyGraph adjacency = new AdjacencyGraph(polygons);
+            listener.onProgressUpdate(GenerationProgressListener.Phase.ADJACENCY_GRAPH, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.ADJACENCY_GRAPH);
 
-        PlateAssigner plateAssigner = new PlateAssigner(config, adjacency);
-        PlateAssigner.PlateAssignment plateAssignment = plateAssigner.assign();
+            // Phase 3: Plate assignment
+            listener.onPhaseStarted(GenerationProgressListener.Phase.PLATE_ASSIGNMENT,
+                "Assigning " + config.plateCount() + " tectonic plates");
+            PlateAssigner plateAssigner = new PlateAssigner(config, adjacency);
+            PlateAssigner.PlateAssignment plateAssignment = plateAssigner.assign();
+            listener.onProgressUpdate(GenerationProgressListener.Phase.PLATE_ASSIGNMENT, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.PLATE_ASSIGNMENT);
 
-        BoundaryDetector boundaryDetector = new BoundaryDetector(config, plateAssignment);
-        BoundaryDetector.BoundaryAnalysis boundaryAnalysis = boundaryDetector.analyze();
+            // Phase 4: Boundary detection
+            listener.onPhaseStarted(GenerationProgressListener.Phase.BOUNDARY_DETECTION,
+                "Detecting plate boundaries and interactions");
+            BoundaryDetector boundaryDetector = new BoundaryDetector(config, plateAssignment);
+            BoundaryDetector.BoundaryAnalysis boundaryAnalysis = boundaryDetector.analyze();
+            listener.onProgressUpdate(GenerationProgressListener.Phase.BOUNDARY_DETECTION, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.BOUNDARY_DETECTION);
 
-        ElevationCalculator elevationCalc = new ElevationCalculator(
-            config, adjacency, plateAssignment, boundaryAnalysis);
-        int[] heights = elevationCalc.calculate();
+            // Phase 5: Elevation calculation
+            listener.onPhaseStarted(GenerationProgressListener.Phase.ELEVATION_CALCULATION,
+                "Calculating terrain elevations");
+            ElevationCalculator elevationCalc = new ElevationCalculator(
+                config, adjacency, plateAssignment, boundaryAnalysis);
+            int[] heights = elevationCalc.calculate();
+            listener.onProgressUpdate(GenerationProgressListener.Phase.ELEVATION_CALCULATION, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.ELEVATION_CALCULATION);
 
-        ClimateCalculator climateCalc = new ClimateCalculator(polygons);
-        ClimateCalculator.ClimateZone[] climates = climateCalc.calculate();
+            // Phase 6: Climate calculation
+            listener.onPhaseStarted(GenerationProgressListener.Phase.CLIMATE_CALCULATION,
+                "Assigning climate zones using " + config.climateModel() + " model");
+            ClimateCalculator climateCalc = new ClimateCalculator(polygons, config.climateModel());
+            ClimateCalculator.ClimateZone[] climates = climateCalc.calculate();
+            listener.onProgressUpdate(GenerationProgressListener.Phase.CLIMATE_CALCULATION, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.CLIMATE_CALCULATION);
 
-        // Apply erosion pass (runs after climate since rainfall depends on climate zones)
-        // Pass plate data for divergent boundary moisture boost
-        ErosionCalculator.ErosionResult erosionResult = ErosionCalculator.calculate(
-            heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+            // Phase 7: Erosion calculation
+            listener.onPhaseStarted(GenerationProgressListener.Phase.EROSION_CALCULATION,
+                "Simulating erosion with " + config.erosionIterations() + " iterations");
+            // Apply erosion pass (runs after climate since rainfall depends on climate zones)
+            // Pass plate data for divergent boundary moisture boost
+            ErosionCalculator.ErosionResult erosionResult = ErosionCalculator.calculate(
+                heights, polygons, adjacency, climates, config, plateAssignment, boundaryAnalysis);
+            listener.onProgressUpdate(GenerationProgressListener.Phase.EROSION_CALCULATION, 1.0);
+            listener.onPhaseCompleted(GenerationProgressListener.Phase.EROSION_CALCULATION);
 
-        // Use eroded heights for final output
-        int[] finalHeights = erosionResult.erodedHeights();
+            // Use eroded heights for final output
+            int[] finalHeights = erosionResult.erodedHeights();
 
-        return new GeneratedPlanet(config, polygons, finalHeights, climates,
-            plateAssignment, boundaryAnalysis, erosionResult, adjacency);
+            GeneratedPlanet planet = new GeneratedPlanet(config, polygons, finalHeights, climates,
+                plateAssignment, boundaryAnalysis, erosionResult, adjacency);
+
+            listener.onGenerationCompleted();
+            return planet;
+
+        } catch (Exception e) {
+            listener.onGenerationError(GenerationProgressListener.Phase.MESH_GENERATION, e);
+            throw e;
+        }
     }
 
     /**
@@ -225,8 +282,33 @@ public class PlanetGenerator {
         return new PlanetGenerator(config).generate();
     }
 
+    /**
+     * Generates a procedural planet with the given configuration and progress listener.
+     *
+     * @param config   The planet configuration (must not be null)
+     * @param listener Progress listener for tracking generation (null uses NO_OP)
+     * @return Generated planet with terrain data
+     * @throws IllegalArgumentException if config is null
+     */
+    public static GeneratedPlanet generate(PlanetConfig config, GenerationProgressListener listener) {
+        if (config == null) {
+            throw new IllegalArgumentException("PlanetConfig cannot be null");
+        }
+        return new PlanetGenerator(config, listener).generate();
+    }
+
     public static GeneratedPlanet generateDefault() {
         return generate(PlanetConfig.builder().build());
+    }
+
+    /**
+     * Generates a procedural planet with default configuration and progress listener.
+     *
+     * @param listener Progress listener for tracking generation (null uses NO_OP)
+     * @return Generated planet with terrain data
+     */
+    public static GeneratedPlanet generateDefault(GenerationProgressListener listener) {
+        return generate(PlanetConfig.builder().build(), listener);
     }
 
     /**
