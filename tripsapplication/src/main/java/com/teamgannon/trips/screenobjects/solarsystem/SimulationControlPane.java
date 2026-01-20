@@ -55,6 +55,7 @@ public class SimulationControlPane extends VBox {
     private final Button edgeOnPresetButton = new Button("Edge");
     private final Button obliquePresetButton = new Button("45\u00B0");
     private final Button focusPresetButton = new Button("Focus");
+    private final Button resetViewButton = new Button("Reset");
 
     private boolean isPlaying = false;
 
@@ -169,7 +170,7 @@ public class SimulationControlPane extends VBox {
         );
 
         VBox section = new VBox(8);
-        HBox presetRow = new HBox(6, topDownPresetButton, edgeOnPresetButton, obliquePresetButton, focusPresetButton);
+        HBox presetRow = new HBox(6, topDownPresetButton, edgeOnPresetButton, obliquePresetButton, focusPresetButton, resetViewButton);
         presetRow.setPadding(new Insets(4, 0, 0, 0));
         section.getChildren().addAll(header, checkboxes, new Separator(), presetRow);
         return section;
@@ -262,14 +263,26 @@ public class SimulationControlPane extends VBox {
                     this, SolarSystemDisplayToggleEvent.ToggleType.RELATIVE_PLANET_SIZES, enabled));
         });
 
+        // Camera preset buttons with tooltips
+        topDownPresetButton.setTooltip(new Tooltip("Top-down view (looking down at orbital plane)"));
         topDownPresetButton.setOnAction(e -> eventPublisher.publishEvent(
                 new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.TOP_DOWN)));
+
+        edgeOnPresetButton.setTooltip(new Tooltip("Edge-on view (looking along orbital plane)"));
         edgeOnPresetButton.setOnAction(e -> eventPublisher.publishEvent(
                 new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.EDGE_ON)));
+
+        obliquePresetButton.setTooltip(new Tooltip("Oblique 45° view"));
         obliquePresetButton.setOnAction(e -> eventPublisher.publishEvent(
                 new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.OBLIQUE)));
+
+        focusPresetButton.setTooltip(new Tooltip("Focus on selected planet"));
         focusPresetButton.setOnAction(e -> eventPublisher.publishEvent(
                 new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.FOCUS_SELECTED)));
+
+        resetViewButton.setTooltip(new Tooltip("Reset view to center (top-down, no pan)"));
+        resetViewButton.setOnAction(e -> eventPublisher.publishEvent(
+                new SolarSystemCameraEvent(this, SolarSystemCameraEvent.CameraAction.RESET_VIEW)));
     }
 
     /**

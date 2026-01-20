@@ -328,6 +328,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             label.getTransforms().setAll(new Translate(x, y));
             lastLabelPositions.put(node, new Point2D(x, y));
         }
+
+        // Update moon orbit visibility based on current zoom level
+        solarSystemRenderer.updateMoonOrbitVisibility(camera.getTranslateZ());
     }
 
     /**
@@ -771,7 +774,13 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                     double modifier = 1.0;
                     double modifierFactor = 0.1;
 
-                    if (me.isPrimaryButtonDown()) {
+                    // Middle mouse button OR Shift+Primary = Pan (translate)
+                    if (me.isMiddleButtonDown() || (me.isPrimaryButtonDown() && me.isShiftDown())) {
+                        // Pan the view - adjust world translate
+                        double panSpeed = 2.0;
+                        worldTranslate.setX(worldTranslate.getX() + mouseDeltaX * panSpeed);
+                        worldTranslate.setY(worldTranslate.getY() + mouseDeltaY * panSpeed);
+                    } else if (me.isPrimaryButtonDown()) {
                         if (me.isAltDown()) { //roll
                             rotateZ.setAngle(((rotateZ.getAngle() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180); // +
                         } else {
@@ -835,6 +844,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         double z = camera.getTranslateZ();
         double newZ = z - zoomAmt;
         camera.setTranslateZ(newZ);
+
+        // Update moon orbit visibility based on zoom level
+        solarSystemRenderer.updateMoonOrbitVisibility(newZ);
     }
 
     // ==================== Context Menu Handler Implementation ====================
@@ -999,6 +1011,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             case EDGE_ON -> cameraController.animatePreset(0, 90, 0);
             case OBLIQUE -> cameraController.animatePreset(35, 45, 0);
             case FOCUS_SELECTED -> cameraController.focusOn(selectedNode, world);
+            case RESET_VIEW -> cameraController.resetView();
         }
     }
 

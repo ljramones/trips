@@ -8,7 +8,8 @@ public class SolarSystemCameraEvent extends ApplicationEvent {
         TOP_DOWN,
         EDGE_ON,
         OBLIQUE,
-        FOCUS_SELECTED
+        FOCUS_SELECTED,
+        RESET_VIEW
     }
 
     private final CameraAction action;

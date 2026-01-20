@@ -19,6 +19,12 @@ import java.util.Map;
 @Slf4j
 public class OrbitalAnimationController {
 
+    /**
+     * Amplification factor for moon orbits to make them visible.
+     * Must match the value in SolarSystemRenderer.
+     */
+    private static final double MOON_ORBIT_AMPLIFICATION = 50.0;
+
     private final AnimationTimer timer;
     private final AnimationTimeModel timeModel;
     private final SolarSystemRenderer renderer;
@@ -127,8 +133,10 @@ public class OrbitalAnimationController {
             }
 
             double trueAnomaly = calculateTrueAnomaly(moon, elapsedDays);
+            // Use amplified SMA for moons so they appear on the visible orbit
+            double amplifiedSma = moon.getSemiMajorAxis() * MOON_ORBIT_AMPLIFICATION;
             double[] offset = orbitSampler.calculatePositionAu(
-                    moon.getSemiMajorAxis(),
+                    amplifiedSma,
                     moon.getEccentricity(),
                     moon.getInclination(),
                     moon.getLongitudeOfAscendingNode(),

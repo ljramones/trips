@@ -153,6 +153,18 @@ public class SolarSystemRenderer {
     private final Map<String, Color> orbitColors;
 
     /**
+     * Map of parent planet name to list of moon orbit Groups.
+     * Used for showing/hiding moon orbits based on zoom level.
+     */
+    private final Map<String, List<Group>> moonOrbitsByParent;
+
+    /**
+     * Amplification factor for moon orbits to make them visible.
+     * Moon orbits are typically tiny (0.001-0.01 AU) compared to planet orbits.
+     */
+    private static final double MOON_ORBIT_AMPLIFICATION = 50.0;
+
+    /**
      * Map of 3D nodes to their 2D labels (for billboard-style label updates)
      */
     @Getter
@@ -218,6 +230,7 @@ public class SolarSystemRenderer {
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
+        this.moonOrbitsByParent = new HashMap<>();
         this.orbitColors = new HashMap<>();
         this.shapeToLabel = new HashMap<>();
         this.baseScales = new HashMap<>();
@@ -505,6 +518,66 @@ public class SolarSystemRenderer {
     private int updateLogCount = 0;
 
     /**
+     * Update moon orbit visibility based on camera zoom level.
+     * Moon orbits become visible when zoomed in close enough.
+     *
+     * @param cameraZ the camera's Z position (negative = closer)
+     */
+    public void updateMoonOrbitVisibility(double cameraZ) {
+        // Show moon orbits when camera is closer than this threshold
+        // At -1600 (default), don't show. At -400 or closer, show.
+        double visibilityThreshold = -600.0;
+        boolean shouldShow = cameraZ > visibilityThreshold;
+
+        for (List<Group> moonOrbits : moonOrbitsByParent.values()) {
+            for (Group orbit : moonOrbits) {
+                orbit.setVisible(shouldShow && showOrbits);
+            }
+        }
+
+        if (shouldShow) {
+            log.debug("Moon orbits visible (camera Z: {})", cameraZ);
+        }
+    }
+
+    /**
+     * Show moon orbits for a specific parent planet.
+     *
+     * @param parentPlanetId the parent planet's ID
+     * @param visible        whether to show or hide
+     */
+    public void setMoonOrbitsVisible(String parentPlanetId, boolean visible) {
+        List<Group> moonOrbits = moonOrbitsByParent.get(parentPlanetId);
+        if (moonOrbits != null) {
+            for (Group orbit : moonOrbits) {
+                orbit.setVisible(visible && showOrbits);
+            }
+        }
+    }
+
+    /**
+     * Show all moon orbits.
+     */
+    public void showAllMoonOrbits() {
+        for (List<Group> moonOrbits : moonOrbitsByParent.values()) {
+            for (Group orbit : moonOrbits) {
+                orbit.setVisible(showOrbits);
+            }
+        }
+    }
+
+    /**
+     * Hide all moon orbits.
+     */
+    public void hideAllMoonOrbits() {
+        for (List<Group> moonOrbits : moonOrbitsByParent.values()) {
+            for (Group orbit : moonOrbits) {
+                orbit.setVisible(false);
+            }
+        }
+    }
+
+    /**
      * Clear all rendered elements
      */
     public void clear() {
@@ -520,6 +593,7 @@ public class SolarSystemRenderer {
         planetDescriptions.clear();
         orbitGroups.clear();
         orbitColors.clear();
+        moonOrbitsByParent.clear();
         shapeToLabel.clear();
         baseScales.clear();
         baseOpacities.clear();
@@ -618,9 +692,15 @@ public class SolarSystemRenderer {
         double argPeriapsis = planet.getArgumentOfPeriapsis();
         double longAscNode = planet.getLongitudeOfAscendingNode();
 
+        // For moons, amplify the orbit size so it's visible
+        double orbitSmaForRendering = semiMajorAxis;
+        if (planet.isMoon()) {
+            orbitSmaForRendering = semiMajorAxis * MOON_ORBIT_AMPLIFICATION;
+        }
+
         // Create orbit path
         Group orbitPath = orbitVisualizer.createOrbitPath(
-                semiMajorAxis,
+                orbitSmaForRendering,
                 eccentricity,
                 inclination,
                 longAscNode,
@@ -640,14 +720,26 @@ public class SolarSystemRenderer {
         orbitGroups.put(planet.getName(), orbitPath);
         orbitColors.put(planet.getName(), orbitColor);
 
+        // Track moon orbits by parent for dynamic visibility
+        if (planet.isMoon() && planet.getParentPlanetId() != null) {
+            moonOrbitsByParent
+                    .computeIfAbsent(planet.getParentPlanetId(), k -> new ArrayList<>())
+                    .add(orbitPath);
+            // Initially hide moon orbits - show when zoomed in
+            orbitPath.setVisible(false);
+        }
+
         // Add context menu handler to orbit
         addOrbitContextMenuHandler(orbitPath, planet);
 
         orbitsGroup.getChildren().add(orbitPath);
         registerOrbitSegments(orbitPath);
         registerSelectableNode(orbitPath);
+
+        // Calculate position - use amplified SMA for moons so they appear on their visible orbit
+        double positionSma = planet.isMoon() ? orbitSmaForRendering : semiMajorAxis;
         double[] positionAu = orbitSamplingProvider.calculatePositionAu(
-                semiMajorAxis,
+                positionSma,
                 eccentricity,
                 inclination,
                 longAscNode,

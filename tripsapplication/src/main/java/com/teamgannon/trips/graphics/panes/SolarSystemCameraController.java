@@ -46,6 +46,21 @@ public class SolarSystemCameraController {
                 camera.getTranslateZ(), 0, 0, 0));
     }
 
+    /**
+     * Reset view to default: top-down view, centered, default zoom
+     */
+    public void resetView() {
+        animateTo(new CameraPose(90, 0, 0, -1600, 0, 0, 0));
+    }
+
+    /**
+     * Reset pan only (keep current rotation and zoom)
+     */
+    public void resetPan() {
+        animateTo(new CameraPose(rotateX.getAngle(), rotateY.getAngle(), rotateZ.getAngle(),
+                camera.getTranslateZ(), 0, 0, 0));
+    }
+
     public void focusOn(Node target, Group world) {
         if (target == null || world == null) {
             return;
