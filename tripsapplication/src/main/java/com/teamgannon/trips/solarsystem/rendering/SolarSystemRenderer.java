@@ -361,7 +361,7 @@ public class SolarSystemRenderer {
             return systemGroup;
         }
 
-        // Determine scale based on outermost orbit
+        // Determine scale based on outermost primary planet orbit
         double maxOrbitAU = calculateMaxOrbitalDistance(description);
         double minOrbitAU = calculateMinOrbitalDistance(description);
         scaleManager.setMaxOrbitalDistanceAU(Math.max(maxOrbitAU, 1.0));
@@ -406,21 +406,66 @@ public class SolarSystemRenderer {
             renderStar(companion, false);
         }
 
-        // Render planets - sort by semi-major axis for better angular distribution
-        List<PlanetDescription> planets = new ArrayList<>(description.getPlanetDescriptionList());
-        planets.sort((a, b) -> Double.compare(a.getSemiMajorAxis(), b.getSemiMajorAxis()));
-        double maxPlanetRadius = findMaxPlanetRadius(planets);
+        // Render planets - sort primaries by semi-major axis for better angular distribution
+        List<PlanetDescription> allBodies = new ArrayList<>(description.getPlanetDescriptionList());
+        List<PlanetDescription> primaryPlanets = new ArrayList<>();
+        List<PlanetDescription> moons = new ArrayList<>();
+        Map<String, PlanetDescription> planetsById = new HashMap<>();
+        for (PlanetDescription planet : allBodies) {
+            if (planet == null) {
+                continue;
+            }
+            planetsById.put(planet.getId(), planet);
+            if (planet.isMoon()) {
+                moons.add(planet);
+            } else {
+                primaryPlanets.add(planet);
+            }
+        }
+        primaryPlanets.sort((a, b) -> Double.compare(a.getSemiMajorAxis(), b.getSemiMajorAxis()));
+        double maxPlanetRadius = findMaxPlanetRadius(primaryPlanets);
 
         // Calculate angular offsets - spread planets evenly, with extra offset for close orbits
-        double[] trueAnomalies = calculatePlanetAngles(planets);
+        double[] trueAnomalies = calculatePlanetAngles(primaryPlanets);
+        Map<String, double[]> primaryPositionsAu = new HashMap<>();
+        Map<String, Color> primaryOrbitColors = new HashMap<>();
 
-        for (int i = 0; i < planets.size(); i++) {
-            PlanetDescription planet = planets.get(i);
+        for (int i = 0; i < primaryPlanets.size(); i++) {
+            PlanetDescription planet = primaryPlanets.get(i);
             Color orbitColor = ORBIT_COLORS[i % ORBIT_COLORS.length];
-            renderPlanet(planet, orbitColor, maxPlanetRadius, trueAnomalies[i]);
+            primaryOrbitColors.put(planet.getId(), orbitColor);
+            double[] positionAu = orbitSamplingProvider.calculatePositionAu(
+                    planet.getSemiMajorAxis(),
+                    Math.max(0, Math.min(0.99, planet.getEccentricity())),
+                    planet.getInclination(),
+                    planet.getLongitudeOfAscendingNode(),
+                    planet.getArgumentOfPeriapsis(),
+                    trueAnomalies[i]
+            );
+            primaryPositionsAu.put(planet.getId(), positionAu);
+            renderPlanet(planet, orbitColor, maxPlanetRadius, trueAnomalies[i], null);
         }
 
-        log.info("Rendered {} planets", planets.size());
+        java.util.Random random = new java.util.Random(42);
+        for (PlanetDescription moon : moons) {
+            PlanetDescription parent = moon.getParentPlanetId() != null
+                    ? planetsById.get(moon.getParentPlanetId())
+                    : null;
+            if (parent == null) {
+                log.warn("Skipping moon {}: parent not found", moon.getName());
+                continue;
+            }
+            double[] parentPosAu = primaryPositionsAu.get(parent.getId());
+            if (parentPosAu == null) {
+                log.warn("Skipping moon {}: parent position not found", moon.getName());
+                continue;
+            }
+            Color orbitColor = primaryOrbitColors.getOrDefault(parent.getId(), ORBIT_COLORS[0]);
+            double trueAnomaly = random.nextDouble() * 360.0;
+            renderPlanet(moon, orbitColor, maxPlanetRadius, trueAnomaly, parentPosAu);
+        }
+
+        log.info("Rendered {} planets and {} moons", primaryPlanets.size(), moons.size());
 
         return systemGroup;
     }
@@ -559,7 +604,8 @@ public class SolarSystemRenderer {
     private void renderPlanet(PlanetDescription planet,
                                Color orbitColor,
                                double maxPlanetRadius,
-                               double trueAnomaly) {
+                               double trueAnomaly,
+                               double[] parentOffsetAu) {
 
         double semiMajorAxis = planet.getSemiMajorAxis();
         if (semiMajorAxis <= 0) {
@@ -581,6 +627,13 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 orbitColor
         );
+        if (parentOffsetAu != null) {
+            double[] offset = scaleManager.auVectorToScreen(
+                    parentOffsetAu[0], parentOffsetAu[1], parentOffsetAu[2]);
+            orbitPath.setTranslateX(offset[0]);
+            orbitPath.setTranslateY(offset[1]);
+            orbitPath.setTranslateZ(offset[2]);
+        }
 
         // Store planet reference in orbit for context menu
         orbitPath.setUserData(planet);
@@ -601,6 +654,11 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 trueAnomaly
         );
+        if (parentOffsetAu != null) {
+            positionAu[0] += parentOffsetAu[0];
+            positionAu[1] += parentOffsetAu[1];
+            positionAu[2] += parentOffsetAu[2];
+        }
         double[] position = scaleManager.auVectorToScreen(positionAu[0], positionAu[1], positionAu[2]);
 
         // Create planet sphere
@@ -650,8 +708,8 @@ public class SolarSystemRenderer {
         planetNodes.put(planet.getName(), planetSphere);
         planetDescriptions.put(planet.getName(), planet);
 
-        renderOrbitNodeMarkers(planet, orbitColor);
-        renderApsideMarkers(planet, orbitColor);
+        renderOrbitNodeMarkers(planet, orbitColor, parentOffsetAu);
+        renderApsideMarkers(planet, orbitColor, parentOffsetAu);
     }
 
     /**
@@ -976,7 +1034,7 @@ public class SolarSystemRenderer {
         eclipticPlaneGroup.setVisible(showEclipticPlane);
     }
 
-    private void renderOrbitNodeMarkers(PlanetDescription planet, Color orbitColor) {
+    private void renderOrbitNodeMarkers(PlanetDescription planet, Color orbitColor, double[] parentOffsetAu) {
         if (!showOrbitNodes) {
             return;
         }
@@ -1009,6 +1067,14 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 descendingTrueAnomaly
         );
+        if (parentOffsetAu != null) {
+            ascPosAu[0] += parentOffsetAu[0];
+            ascPosAu[1] += parentOffsetAu[1];
+            ascPosAu[2] += parentOffsetAu[2];
+            descPosAu[0] += parentOffsetAu[0];
+            descPosAu[1] += parentOffsetAu[1];
+            descPosAu[2] += parentOffsetAu[2];
+        }
         double[] ascPos = scaleManager.auVectorToScreen(ascPosAu[0], ascPosAu[1], ascPosAu[2]);
         double[] descPos = scaleManager.auVectorToScreen(descPosAu[0], descPosAu[1], descPosAu[2]);
 
@@ -1044,7 +1110,7 @@ public class SolarSystemRenderer {
                 continue;
             }
             Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
-            renderOrbitNodeMarkers(planet, orbitColor);
+            renderOrbitNodeMarkers(planet, orbitColor, null);
         }
     }
 
@@ -1053,7 +1119,7 @@ public class SolarSystemRenderer {
      * Periapsis (closest to star) is at true anomaly = 0°
      * Apoapsis (farthest from star) is at true anomaly = 180°
      */
-    private void renderApsideMarkers(PlanetDescription planet, Color orbitColor) {
+    private void renderApsideMarkers(PlanetDescription planet, Color orbitColor, double[] parentOffsetAu) {
         if (!showApsides) {
             return;
         }
@@ -1090,6 +1156,14 @@ public class SolarSystemRenderer {
                 argPeriapsis,
                 180.0  // Apoapsis
         );
+        if (parentOffsetAu != null) {
+            periPosAu[0] += parentOffsetAu[0];
+            periPosAu[1] += parentOffsetAu[1];
+            periPosAu[2] += parentOffsetAu[2];
+            apoPosAu[0] += parentOffsetAu[0];
+            apoPosAu[1] += parentOffsetAu[1];
+            apoPosAu[2] += parentOffsetAu[2];
+        }
         double[] periPos = scaleManager.auVectorToScreen(periPosAu[0], periPosAu[1], periPosAu[2]);
         double[] apoPos = scaleManager.auVectorToScreen(apoPosAu[0], apoPosAu[1], apoPosAu[2]);
 
@@ -1141,7 +1215,7 @@ public class SolarSystemRenderer {
                 continue;
             }
             Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
-            renderApsideMarkers(planet, orbitColor);
+            renderApsideMarkers(planet, orbitColor, null);
         }
     }
 
@@ -1219,6 +1293,9 @@ public class SolarSystemRenderer {
     private double calculateMaxOrbitalDistance(SolarSystemDescription description) {
         double max = 0;
         for (PlanetDescription planet : description.getPlanetDescriptionList()) {
+            if (planet.isMoon()) {
+                continue;
+            }
             if (planet.getSemiMajorAxis() > max) {
                 max = planet.getSemiMajorAxis();
             }
@@ -1233,6 +1310,9 @@ public class SolarSystemRenderer {
     private double calculateMinOrbitalDistance(SolarSystemDescription description) {
         double min = Double.MAX_VALUE;
         for (PlanetDescription planet : description.getPlanetDescriptionList()) {
+            if (planet.isMoon()) {
+                continue;
+            }
             double sma = planet.getSemiMajorAxis();
             if (sma > 0 && sma < min) {
                 min = sma;

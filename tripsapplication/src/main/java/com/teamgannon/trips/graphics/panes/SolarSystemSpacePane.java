@@ -40,6 +40,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.transform.Rotate;
@@ -505,15 +506,55 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private void createLabelsForRenderedObjects(SolarSystemDescription solarSystemDescription) {
         Map<String, javafx.scene.shape.Sphere> planetNodes = solarSystemRenderer.getPlanetNodes();
 
-        // Create labels for planets
-        for (Map.Entry<String, javafx.scene.shape.Sphere> entry : planetNodes.entrySet()) {
-            String planetName = entry.getKey();
-            javafx.scene.shape.Sphere planetSphere = entry.getValue();
+        Map<String, PlanetDescription> planetsById = new HashMap<>();
+        Map<String, Integer> moonCountsByParentId = new HashMap<>();
 
-            Label label = solarSystemRenderer.createLabel(planetName);
-            label.setLabelFor(planetSphere);
-            labelDisplayGroup.getChildren().add(label);
-            solarSystemRenderer.registerLabel(planetSphere, label);
+        if (solarSystemDescription != null && solarSystemDescription.getPlanetDescriptionList() != null) {
+            for (PlanetDescription planet : solarSystemDescription.getPlanetDescriptionList()) {
+                if (planet == null) {
+                    continue;
+                }
+                planetsById.put(planet.getId(), planet);
+                if (planet.isMoon() && planet.getParentPlanetId() != null) {
+                    moonCountsByParentId.merge(planet.getParentPlanetId(), 1, Integer::sum);
+                }
+            }
+        }
+
+        // Create labels for planets/moons (skip moon labels if too close to parent)
+        if (solarSystemDescription != null && solarSystemDescription.getPlanetDescriptionList() != null) {
+            for (PlanetDescription planet : solarSystemDescription.getPlanetDescriptionList()) {
+                if (planet == null) {
+                    continue;
+                }
+                javafx.scene.shape.Sphere planetSphere = planetNodes.get(planet.getName());
+                if (planetSphere == null) {
+                    continue;
+                }
+
+                if (planet.isMoon()) {
+                    PlanetDescription parent = planetsById.get(planet.getParentPlanetId());
+                    if (parent != null) {
+                        javafx.scene.shape.Sphere parentSphere = planetNodes.get(parent.getName());
+                        if (parentSphere != null && isMoonLabelTooClose(planetSphere, parentSphere)) {
+                            continue;
+                        }
+                    }
+                }
+
+                String labelText = planet.getName() != null ? planet.getName() : "Unknown";
+                if (!planet.isMoon()) {
+                    int moonCount = moonCountsByParentId.getOrDefault(planet.getId(), 0);
+                    if (moonCount > 0) {
+                        labelText = labelText + " (" + moonCount + ")";
+                    }
+                }
+
+                Label label = solarSystemRenderer.createLabel(labelText);
+                label.setLabelFor(planetSphere);
+                labelDisplayGroup.getChildren().add(label);
+                solarSystemRenderer.registerLabel(planetSphere, label);
+            }
         }
 
         // Create label for the central star
@@ -555,6 +596,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     private record LabelCandidate(Node node, Label label, Point3D scenePoint, double distanceToCamera) {
     }
+
+    private static final double MIN_MOON_LABEL_DISTANCE = 12.0;
 
     /**
      * Reset the system view
@@ -611,6 +654,14 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             animationController.dispose();
             animationController = null;
         }
+    }
+
+    private boolean isMoonLabelTooClose(Sphere moon, Sphere parent) {
+        double dx = moon.getTranslateX() - parent.getTranslateX();
+        double dy = moon.getTranslateY() - parent.getTranslateY();
+        double dz = moon.getTranslateZ() - parent.getTranslateZ();
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return distance < MIN_MOON_LABEL_DISTANCE;
     }
 
     // ---------------------- helpers -------------------------- //

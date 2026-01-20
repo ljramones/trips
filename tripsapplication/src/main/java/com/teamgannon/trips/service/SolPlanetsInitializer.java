@@ -60,7 +60,24 @@ public class SolPlanetsInitializer {
         }
 
         if (existingPlanets != null && !existingPlanets.isEmpty()) {
-            log.info("Sol already has {} planets initialized", existingPlanets.size());
+            boolean hasMoons = existingPlanets.stream()
+                .anyMatch(planet -> Boolean.TRUE.equals(planet.getIsMoon()));
+            if (hasMoons) {
+                log.info("Sol already has {} planets/moons initialized", existingPlanets.size());
+                return;
+            }
+
+            SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
+            java.util.Map<String, ExoPlanet> planetsByName = new java.util.HashMap<>();
+            for (ExoPlanet planet : existingPlanets) {
+                if (!Boolean.TRUE.equals(planet.getIsMoon())) {
+                    planetsByName.put(planet.getName(), planet);
+                }
+            }
+            if (!planetsByName.isEmpty()) {
+                createSolMoons(sol, solarSystem, planetsByName);
+                log.info("Sol planets existed but moons were missing; moons created");
+            }
             return;
         }
 
@@ -175,16 +192,20 @@ public class SolPlanetsInitializer {
                 {"Pluto", 0.013, 2376.0, 5906.4, 90560.0, 0.244, 17.2, -225.0, false, "Dwarf Planet"}
         };
 
+        java.util.Map<String, ExoPlanet> createdPlanets = new java.util.HashMap<>();
         for (Object[] data : planetData) {
-            createPlanet(sol, solarSystem, data);
+            ExoPlanet planet = createPlanet(sol, solarSystem, data);
+            createdPlanets.put(planet.getName(), planet);
         }
+
+        createSolMoons(sol, solarSystem, createdPlanets);
 
         // Update solar system planet count
         solarSystem.setPlanetCount(planetData.length);
         solarSystemRepository.save(solarSystem);
     }
 
-    private void createPlanet(StarObject sol, SolarSystem solarSystem, Object[] data) {
+    private ExoPlanet createPlanet(StarObject sol, SolarSystem solarSystem, Object[] data) {
         String name = (String) data[0];
         double massE24Kg = (Double) data[1];
         double diameterKm = (Double) data[2];
@@ -245,5 +266,90 @@ public class SolPlanetsInitializer {
 
         exoPlanetRepository.save(planet);
         log.info("Created planet: {} at {} AU", name, String.format("%.2f", semiMajorAxisAU));
+        return planet;
+    }
+
+    private void createSolMoons(StarObject sol,
+                                SolarSystem solarSystem,
+                                java.util.Map<String, ExoPlanet> planetsByName) {
+        Object[][] moonData = {
+                // Earth
+                {"Moon", "Earth", 0.073, 3474.8, 0.3844, 27.32, 0.055, 5.145},
+                // Mars
+                {"Phobos", "Mars", 0.0000000107, 22.4, 0.009376, 0.319, 0.015, 1.08},
+                {"Deimos", "Mars", 0.00000000148, 12.4, 0.023463, 1.263, 0.0002, 1.79},
+                // Jupiter (Galilean moons)
+                {"Io", "Jupiter", 0.0893, 3643.0, 0.4217, 1.769, 0.0041, 0.04},
+                {"Europa", "Jupiter", 0.0480, 3122.0, 0.6711, 3.551, 0.0094, 0.47},
+                {"Ganymede", "Jupiter", 0.1480, 5268.0, 1.0704, 7.155, 0.0013, 0.18},
+                {"Callisto", "Jupiter", 0.1080, 4821.0, 1.8827, 16.689, 0.0074, 0.28},
+                // Saturn
+                {"Titan", "Saturn", 0.1345, 5150.0, 1.2219, 15.945, 0.0288, 0.33},
+                {"Enceladus", "Saturn", 0.000108, 504.0, 0.2380, 1.370, 0.0047, 0.02},
+                // Uranus
+                {"Titania", "Uranus", 0.0035, 1578.0, 0.4359, 8.706, 0.0011, 0.08},
+                {"Oberon", "Uranus", 0.0030, 1523.0, 0.5835, 13.463, 0.0014, 0.07},
+                // Neptune
+                {"Triton", "Neptune", 0.0214, 2706.0, 0.3548, 5.877, 0.00002, 156.9},
+                // Pluto
+                {"Charon", "Pluto", 0.001586, 1212.0, 0.0196, 6.387, 0.0002, 0.0}
+        };
+
+        for (Object[] data : moonData) {
+            String moonName = (String) data[0];
+            String parentName = (String) data[1];
+            ExoPlanet parent = planetsByName.get(parentName);
+            if (parent == null) {
+                log.warn("Skipping moon {}: parent planet {} not found", moonName, parentName);
+                continue;
+            }
+            createMoon(sol, solarSystem, parent, data);
+        }
+    }
+
+    private void createMoon(StarObject sol,
+                            SolarSystem solarSystem,
+                            ExoPlanet parent,
+                            Object[] data) {
+        String name = (String) data[0];
+        double massE24Kg = (Double) data[2];
+        double diameterKm = (Double) data[3];
+        double distanceMillionKm = (Double) data[4];
+        double orbitalPeriodDays = (Double) data[5];
+        double eccentricity = (Double) data[6];
+        double inclination = (Double) data[7];
+
+        ExoPlanet moon = new ExoPlanet();
+        moon.setId(UUID.randomUUID().toString());
+        moon.setName(name);
+        moon.setStarName("Sol");
+        moon.setSolarSystemId(solarSystem.getId());
+        moon.setHostStarId(sol.getId());
+        moon.setParentPlanetId(parent.getId());
+        moon.setIsMoon(true);
+        moon.setPlanetStatus("Confirmed");
+
+        // Convert mass to Jupiter masses (Jupiter = 1898 × 10^24 kg)
+        double massJupiter = massE24Kg / 1898.0;
+        moon.setMass(massJupiter);
+
+        // Convert diameter to Jupiter radii (Jupiter diameter = 142984 km, radius = 71492 km)
+        double radiusKm = diameterKm / 2.0;
+        double radiusJupiter = radiusKm / 71492.0;
+        moon.setRadius(radiusJupiter);
+
+        // Moon semi-major axis is relative to the parent planet (store in AU)
+        double semiMajorAxisAU = distanceMillionKm / MILLION_KM_TO_AU;
+        moon.setSemiMajorAxis(semiMajorAxisAU);
+        moon.setOrbitalPeriod(orbitalPeriodDays);
+        moon.setEccentricity(eccentricity);
+        moon.setInclination(inclination);
+
+        moon.setPlanetType("Moon");
+        moon.setGasGiant(false);
+        moon.setDetectionType("Direct");
+
+        exoPlanetRepository.save(moon);
+        log.info("Created moon: {} for {}", name, parent.getName());
     }
 }

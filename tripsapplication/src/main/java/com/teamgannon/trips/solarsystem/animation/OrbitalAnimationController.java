@@ -79,7 +79,15 @@ public class OrbitalAnimationController {
 
         Map<String, double[]> newPositions = new HashMap<>();
 
+        Map<String, PlanetDescription> planetsById = new HashMap<>();
         for (PlanetDescription planet : planets) {
+            planetsById.put(planet.getId(), planet);
+        }
+
+        for (PlanetDescription planet : planets) {
+            if (planet.isMoon()) {
+                continue;
+            }
             double trueAnomaly = calculateTrueAnomaly(planet, elapsedDays);
 
             double[] posAu = orbitSampler.calculatePositionAu(
@@ -103,6 +111,36 @@ public class OrbitalAnimationController {
                         String.format("%.4f", posAu[1]),
                         String.format("%.4f", posAu[2]));
             }
+        }
+
+        for (PlanetDescription moon : planets) {
+            if (!moon.isMoon()) {
+                continue;
+            }
+            PlanetDescription parent = planetsById.get(moon.getParentPlanetId());
+            if (parent == null) {
+                continue;
+            }
+            double[] parentPos = newPositions.get(parent.getName());
+            if (parentPos == null) {
+                continue;
+            }
+
+            double trueAnomaly = calculateTrueAnomaly(moon, elapsedDays);
+            double[] offset = orbitSampler.calculatePositionAu(
+                    moon.getSemiMajorAxis(),
+                    moon.getEccentricity(),
+                    moon.getInclination(),
+                    moon.getLongitudeOfAscendingNode(),
+                    moon.getArgumentOfPeriapsis(),
+                    trueAnomaly
+            );
+
+            newPositions.put(moon.getName(), new double[] {
+                    parentPos[0] + offset[0],
+                    parentPos[1] + offset[1],
+                    parentPos[2] + offset[2]
+            });
         }
         frameCount++;
 

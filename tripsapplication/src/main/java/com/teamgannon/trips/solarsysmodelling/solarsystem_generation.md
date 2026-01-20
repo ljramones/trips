@@ -33,6 +33,15 @@ solarsysmodelling/
     └── OrbitalDynamicsHyperbolicUtils.java# Hyperbolic orbit calculations (e>1)
 ```
 
+Related packages used by the solar system view:
+
+```
+solarsystem/animation/          # Real-time orbit animation controller
+solarsystem/orbits/             # Orbit sampling providers (Kepler/Orekit seam)
+dynamics/                       # Orekit-based propagators and orbit descriptors
+nightsky/service/               # Orekit bootstrap + time conversions
+```
+
 ## Overview
 
 The ACCRETE algorithm simulates planetary formation through the following phases:
@@ -61,6 +70,7 @@ habitability models, and data consistency checks:
   are tracked separately to prevent sign errors in temperature calculations.
 - **Habitable/earthlike flags**: computed from environmental results and HZ status.
 - **Orbital Dynamics Framework**: New `utils/` package with comprehensive orbital mechanics calculations.
+- **Orekit Dynamics Integration**: Orekit time and propagator utilities are integrated in `dynamics/`.
 - **Stellar Parameter Validation**: `StarSystem` validates and fixes invalid stellar parameters.
 - **Procedural Planet Integration**: Bridge to `PlanetGenerator` for terrain generation from Accrete data.
 
@@ -1321,9 +1331,22 @@ private void cleanupAnimation() {
 }
 ```
 
+### Orekit Dynamics Integration
+
+Orekit is integrated for high-precision propagation and time handling, while
+the solar system view keeps a clean seam for swapping orbit samplers:
+
+- `dynamics/DynamicsCalculator` wraps Orekit `KeplerianPropagator` for orbit state updates.
+- `nightsky/service/OrekitBootstrapService` initializes Orekit data at startup.
+- `nightsky/service/TimeService` converts between Java time and Orekit `AbsoluteDate`.
+- `solarsystem/orbits/OrbitSamplingProvider` is the plug point; current default uses
+  `KeplerOrbitSamplingProvider`, and an Orekit-backed provider can be wired in without
+  touching renderers.
+
 ### Future Enhancements
 
-- **Orekit Integration**: Replace simple Kepler solver with Orekit propagators for perturbations
+- **Orekit Perturbations**: Add J2, third-body, and SRP perturbation models to the
+  Orekit propagator path.
 - **Moon Animation**: Animate moons orbiting their parent planets
 - **Orbital Trails**: Show fading paths behind moving planets
 - **Time Scrubber**: Slider to jump to specific dates
