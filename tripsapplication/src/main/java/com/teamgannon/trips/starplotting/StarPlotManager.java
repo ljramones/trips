@@ -98,9 +98,10 @@ public class StarPlotManager {
     private final Group stellarDisplayGroup = new Group();
 
     /**
-     * used to control label visibility
+     * Manages star labels (creation, positioning, visibility).
      */
-    private final Group labelDisplayGroup = new Group();
+    @Getter
+    private final StarLabelManager labelManager = new StarLabelManager();
 
     /**
      * to hold all the polities
@@ -150,17 +151,11 @@ public class StarPlotManager {
      * used to implement a selection model for selecting stars
      */
     private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
-    private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
     /**
      * source of reasonably random numbers
      */
     private final Random random = new Random();
-
-    /**
-     * label state
-     */
-    private boolean labelsOn = true;
 
     /**
      * toggle state of polities
@@ -255,7 +250,8 @@ public class StarPlotManager {
 
         world.getChildren().add(stellarDisplayGroup);
 
-        sceneRoot.getChildren().add(labelDisplayGroup);
+        // Initialize label manager with scene references
+        labelManager.initialize(sceneRoot, subScene);
 
         world.getChildren().add(extensionsGroup);
 
@@ -394,9 +390,8 @@ public class StarPlotManager {
 
         // remove stars
         stellarDisplayGroup.getChildren().clear();
-        labelDisplayGroup.getChildren().clear();
+        labelManager.clear();
         politiesDisplayGroup.getChildren().clear();
-        shapeToLabel.clear();
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
@@ -474,7 +469,7 @@ public class StarPlotManager {
 
     public void toggleStars(boolean starsOn) {
         stellarDisplayGroup.setVisible(starsOn);
-        labelDisplayGroup.setVisible(starsOn);
+        labelManager.setLabelsVisible(starsOn);
     }
 
     @TrackExecutionTime
@@ -500,11 +495,9 @@ public class StarPlotManager {
      * @param labelSetting true is labels should be on
      */
     public void toggleLabels(boolean labelSetting) {
-        this.labelsOn = labelSetting;
-
         // we can only do this if there are plot element on screen
         if (tripsContext.getCurrentPlot().isPlotActive()) {
-            labelDisplayGroup.setVisible(labelSetting);
+            labelManager.setLabelsVisible(labelSetting);
         }
     }
 
@@ -626,12 +619,11 @@ public class StarPlotManager {
         starShape.setTranslateY(point3D.getY());
         starShape.setTranslateZ(point3D.getZ());
 
+        // labelsOn is per-star setting from record.isDisplayLabel()
+        // labelManager handles global visibility toggle
         if (labelsOn) {
-            Label label = createLabel(record, colorPalette);
-            label.setLabelFor(starShape);
-            labelDisplayGroup.getChildren().add(label);
+            Label label = labelManager.addLabel(starShape, record, colorPalette);
             tripsContext.getCurrentPlot().mapLabelToStar(record.getRecordId(), label);
-            shapeToLabel.put(starShape, label);
         }
 
         if (politiesOn) {
@@ -774,13 +766,17 @@ public class StarPlotManager {
      * @param colorPalette the color palette to use
      * @return the created object
      */
+    /**
+     * Create a label for a star.
+     * Delegates to {@link StarLabelManager#createLabel}.
+     *
+     * @param record       the star record
+     * @param colorPalette the color palette
+     * @return the created label
+     */
     public @NotNull Label createLabel(@NotNull StarDisplayRecord record,
                                       @NotNull ColorPalette colorPalette) {
-        Label label = new Label(record.getStarName());
-        SerialFont serialFont = colorPalette.getLabelFont();
-        label.setFont(serialFont.toFont());
-        label.setTextFill(colorPalette.getLabelColor());
-        return label;
+        return labelManager.createLabel(record, colorPalette);
     }
 
     /**
@@ -1139,72 +1135,8 @@ public class StarPlotManager {
     }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
-        Bounds ofParent = interstellarSpacePane.getBoundsInParent();
-        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
-            Node node = entry.getKey();
-            Label label = entry.getValue();
-            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
-
-            // Clipping Logic
-            // if coordinates are outside of the scene it could
-            // stretch the screen so don't transform them
-            double xs = coordinates.getX();
-            double ys = coordinates.getY();
-
-            // configure visibility
-            if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
-                label.setVisible(false);
-                continue;
-            } else {
-                label.setVisible(true);
-            }
-            if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
-                label.setVisible(false);
-                continue;
-            } else {
-                label.setVisible(true);
-            }
-
-            ///////////////////
-
-            double x;
-            double y;
-
-            if (ofParent.getMinX() > 0) {
-                x = xs - ofParent.getMinX();
-            } else {
-                x = xs;
-            }
-            if (ofParent.getMinY() >= 0) {
-                y = ys - ofParent.getMinY() - controlPaneOffset;
-            } else {
-                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
-            }
-
-            // is it left of the view?
-            if (x < 0) {
-                x = 0;
-            }
-
-            // is it right of the view?
-            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + 5);
-            }
-
-            // is it above the view?
-            if (y < 0) {
-                y = 0;
-            }
-
-            // is it below the view
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + 5);
-            }
-
-            //update the local transform of the label.
-            label.getTransforms().setAll(new Translate(x, y));
-        }
-
+        labelManager.setControlPaneOffset(controlPaneOffset);
+        labelManager.updateLabels(interstellarSpacePane.getBoundsInParent());
     }
 
     /**
@@ -1231,7 +1163,7 @@ public class StarPlotManager {
             createExtension(x, y, z, Color.VIOLET);
         }
 
-        log.info("shapes:{}", shapeToLabel.size());
+        log.info("shapes:{}", labelManager.getLabelCount());
     }
 
     private @NotNull Color randomColor() {
@@ -1268,10 +1200,9 @@ public class StarPlotManager {
         sphere.setUserData(descriptor);
         Tooltip tooltip = new Tooltip(descriptor.toString());
         Tooltip.install(sphere, tooltip);
-        labelDisplayGroup.getChildren().add(label);
 
-        //Add to hashmap so updateLabels() can manage the label position
-        shapeToLabel.put(sphere, label);
+        // Register the label with the label manager
+        labelManager.registerLabel(sphere, label);
 
     }
 
