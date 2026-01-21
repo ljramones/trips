@@ -2,6 +2,7 @@ package com.teamgannon.trips.graphics;
 
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.starplotting.InterstellarScaleManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,13 @@ import java.util.List;
 
 
 /**
- * This class determines how to map the imported data into the drawable universe
+ * This class determines how to map the imported data into the drawable universe.
+ * <p>
+ * Coordinates the calculation of scaling parameters and transformation of
+ * light-year coordinates to screen coordinates.
+ * <p>
+ * Works with {@link InterstellarScaleManager} which provides the actual
+ * transformation methods and can be shared with other components.
  * <p>
  * Created by larrymitchell on 2017-02-15.
  */
@@ -35,31 +42,62 @@ public class AstrographicTransformer {
     private double[] centerCoordinates;
 
     /**
-     * the scaling parameters
+     * The scaling parameters (legacy, for backward compatibility)
      */
     @Getter
     private ScalingParameters scalingParameters;
 
+    /**
+     * The interstellar scale manager for coordinate transformations.
+     * This provides a cleaner API and can be shared with other components.
+     */
+    @Getter
+    private final InterstellarScaleManager scaleManager;
+
     public AstrographicTransformer(double scaleIncrement) {
         this.scaleIncrement = scaleIncrement;
+        this.scaleManager = new InterstellarScaleManager(scaleIncrement);
     }
 
     /**
-     * transform the original to the drawing area of the screen
+     * Create a transformer with an existing scale manager.
+     * Use this to share a scale manager across components.
      *
-     * @param ords the incoming to transform
-     * @return the transformed coordinates
+     * @param scaleIncrement grid spacing in light-years
+     * @param scaleManager   existing scale manager to use
+     */
+    public AstrographicTransformer(double scaleIncrement, InterstellarScaleManager scaleManager) {
+        this.scaleIncrement = scaleIncrement;
+        this.scaleManager = scaleManager != null ? scaleManager : new InterstellarScaleManager(scaleIncrement);
+    }
+
+    /**
+     * Transform light-year coordinates to screen coordinates.
+     * Uses the legacy transformation method for backward compatibility.
+     *
+     * @param ords the incoming coordinates in light-years [x, y, z]
+     * @return the transformed screen coordinates [x, y, z]
      */
     public double @NotNull [] transformOrds(double[] ords) {
         double[] transformOrds = new double[3];
 
-        // transform coordinates
+        // transform coordinates using legacy method
         transformOrds[0] = xTransform(ords[0]);
         transformOrds[1] = yTransform(ords[1]);
         transformOrds[2] = zTransform(ords[2]);
 
-        // transform but for now just past back the original
         return transformOrds;
+    }
+
+    /**
+     * Transform light-year coordinates to screen coordinates using the scale manager.
+     * Preferred method for new code - provides cleaner API and zoom support.
+     *
+     * @param lyCoords coordinates in light-years [x, y, z]
+     * @return screen coordinates [x, y, z]
+     */
+    public double[] transformOrdsViaScaleManager(double[] lyCoords) {
+        return scaleManager.lyToScreen(lyCoords);
     }
 
 
@@ -95,10 +133,12 @@ public class AstrographicTransformer {
     }
 
     /**
-     * find the min/max in all coordinates
+     * Find the min/max in all coordinates and calculate scaling parameters.
+     * Also configures the InterstellarScaleManager with the same values.
      *
      * @param starRecords       the star records to check
-     * @param centerCoordinates teh center coordinates
+     * @param centerCoordinates the center coordinates in light-years
+     * @return the scaling parameters (also available via getScaleManager())
      */
     public ScalingParameters findMinMaxValues(@NotNull List<StarObject> starRecords, double[] centerCoordinates) {
 
@@ -134,10 +174,9 @@ public class AstrographicTransformer {
             if (ords[2] < minZ) {
                 minZ = ords[2];
             }
-
-//            log.info("x={}, y={}, z={}, minY={}, maxY={}", ords[0], ords[1], ords[2], minY, maxY);
         }
 
+        // Update legacy ScalingParameters
         scalingParameters.setMinX(minX);
         scalingParameters.setMaxX(maxX);
         scalingParameters.setMinY(minY);
@@ -147,6 +186,12 @@ public class AstrographicTransformer {
 
         double scalingFactor = findScalingValues(scalingParameters);
         scalingParameters.setScalingFactor(scalingFactor);
+
+        // Also configure the InterstellarScaleManager with the same values
+        scaleManager.setCenterCoordinates(centerCoordinates[0], centerCoordinates[1], centerCoordinates[2]);
+        scaleManager.calculateScalingFromStars(starRecords, centerCoordinates);
+
+        log.debug("Configured scale manager: {}", scaleManager);
 
         return scalingParameters;
     }

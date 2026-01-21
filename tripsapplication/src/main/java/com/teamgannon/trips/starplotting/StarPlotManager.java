@@ -54,6 +54,7 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Modality;
 import javafx.util.Duration;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,16 +73,16 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 public class StarPlotManager {
 
     /**
-     * we do this to make the star size a constant size bigger x1.5
+     * Manages coordinate scaling between light-years and screen units.
+     * Provides star radius calculation, zoom support, and coordinate transformation.
      */
-    private final static double GRAPHICS_FUDGE_FACTOR = 1.5;
+    @Getter
+    private final InterstellarScaleManager scaleManager = new InterstellarScaleManager();
 
     /**
-     * put a limit on how big a radius should be
+     * Legacy constants for random star generation (test/debug only).
+     * Real star plotting uses coordinates from the database via scaleManager.
      */
-    private final static double RADIUS_MAX = 7;
-
-    ///////////////////
     private final static double X_MAX = 300;
     private final static double Y_MAX = 300;
     private final static double Z_MAX = 300;
@@ -613,7 +614,10 @@ public class StarPlotManager {
         if (isCenter) {
             starShape = createCentralStar();
         } else {
-            Sphere sphere = new Sphere(record.getRadius() * GRAPHICS_FUDGE_FACTOR);
+            // Use scale manager for star size calculation
+            // record.getRadius() is pre-configured from StarDisplayPreferences based on spectral class
+            double displayRadius = record.getRadius() * scaleManager.getStarSizeMultiplier();
+            Sphere sphere = new Sphere(displayRadius);
             sphere.setMaterial(material);
             starShape = sphere;
         }
@@ -1178,7 +1182,7 @@ public class StarPlotManager {
     }
 
     /**
-     * generate random stars
+     * generate random stars (for testing/debug purposes)
      *
      * @param numberStars number of stars
      */
@@ -1187,8 +1191,10 @@ public class StarPlotManager {
             log.warn("color palette not initialized; cannot generate random stars");
             return;
         }
+        // Max radius for random star generation (test purposes)
+        final double maxRandomRadius = 7.0;
         for (int i = 0; i < numberStars; i++) {
-            double radius = random.nextDouble() * RADIUS_MAX;
+            double radius = random.nextDouble() * maxRandomRadius;
             Color color = randomColor();
             double x = random.nextDouble() * X_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
             double y = random.nextDouble() * Y_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
