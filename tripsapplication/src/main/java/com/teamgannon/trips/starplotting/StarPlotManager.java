@@ -205,6 +205,13 @@ public class StarPlotManager {
     private final StarLabelManager labelManager = new StarLabelManager();
 
     /**
+     * Manages Level-of-Detail (LOD) for star rendering.
+     * Determines appropriate detail level based on distance, magnitude, and zoom.
+     */
+    @Getter
+    private final StarLODManager lodManager = new StarLODManager();
+
+    /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
@@ -497,6 +504,9 @@ public class StarPlotManager {
 
         // remove the extension points to the stars
         extensionsGroup.getChildren().clear();
+
+        // reset LOD statistics
+        lodManager.resetStatistics();
     }
 
     public void highlightStar(String starId) {
@@ -579,11 +589,21 @@ public class StarPlotManager {
         this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
         this.extensionsVisible = extensionsVisible;
 
+        // Configure LOD manager with center coordinates for distance calculations
+        double[] centerCoords = currentPlot.getCenterCoordinates();
+        if (centerCoords != null && centerCoords.length >= 3) {
+            lodManager.setCenterCoordinates(centerCoords[0], centerCoords[1], centerCoords[2]);
+        }
+        lodManager.resetStatistics();
+
         for (StarDisplayRecord starDisplayRecord : currentPlot.getStarDisplayRecordList()) {
             plotStar(starDisplayRecord, currentPlot.getCenterStar(),
                     currentPlot.getColorPalette(), currentPlot.getStarDisplayPreferences(),
                     currentPlot.getCivilizationDisplayPreferences());
         }
+
+        // Log LOD statistics for performance monitoring
+        lodManager.logStatistics();
     }
 
     public void clearPlot() {
@@ -711,9 +731,10 @@ public class StarPlotManager {
             // Use scale manager for star size calculation
             // record.getRadius() is pre-configured from StarDisplayPreferences based on spectral class
             double displayRadius = record.getRadius() * scaleManager.getStarSizeMultiplier();
-            Sphere sphere = new Sphere(displayRadius);
-            sphere.setMaterial(material);
-            starShape = sphere;
+
+            // Use LOD manager to determine detail level and create appropriate geometry
+            StarLODManager.LODLevel lodLevel = lodManager.determineLODLevel(record, false);
+            starShape = lodManager.createStarWithLOD(record, displayRadius, material, lodLevel);
         }
         Point3D point3D = record.getCoordinates();
         starShape.setTranslateX(point3D.getX());
@@ -1317,6 +1338,27 @@ public class StarPlotManager {
 
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;
+    }
+
+    /**
+     * Set the zoom level for both scale and LOD managers.
+     * Call this when zoom level changes to ensure LOD thresholds are adjusted.
+     *
+     * @param zoomLevel the new zoom level
+     */
+    public void setZoomLevel(double zoomLevel) {
+        scaleManager.setZoomLevel(zoomLevel);
+        lodManager.setZoomLevel(zoomLevel);
+    }
+
+    /**
+     * Enable or disable LOD system.
+     * When disabled, all stars use MEDIUM detail level.
+     *
+     * @param enabled true to enable LOD, false to disable
+     */
+    public void setLodEnabled(boolean enabled) {
+        lodManager.setLodEnabled(enabled);
     }
 
 
