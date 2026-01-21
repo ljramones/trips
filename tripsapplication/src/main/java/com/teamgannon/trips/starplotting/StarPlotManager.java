@@ -709,18 +709,44 @@ public class StarPlotManager {
         return polityObject;
     }
 
-    private Node createCentralStar() {
+    /**
+     * Create a fresh central star mesh for display.
+     * IMPORTANT: Each call creates a NEW instance because JavaFX Nodes can only
+     * be in one scene graph at a time. Reusing the same Node would cause it to
+     * be removed from its previous parent.
+     *
+     * @return a new central star Node
+     */
+    // Package-private for testing
+    Node createCentralStar() {
+        // Get the definition for scale/rotation settings
         MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
-        if (meshObjectDefinition == null || meshObjectDefinition.getObject() == null) {
-            log.error("central star mesh object missing");
-            return new Sphere(1);
+
+        // Create a FRESH mesh instance - don't reuse cached objects!
+        // JavaFX Nodes can only exist in one scene graph at a time.
+        Group centralStar = meshViewShapeFactory.starCentral();
+
+        if (centralStar == null) {
+            log.error("Failed to load central star mesh from factory");
+            return new Sphere(10); // Fallback
         }
-        Node centralStar = meshObjectDefinition.getObject();
-        centralStar.setScaleX(meshObjectDefinition.getXScale());
-        centralStar.setScaleY(meshObjectDefinition.getYScale());
-        centralStar.setScaleZ(meshObjectDefinition.getZScale());
-        centralStar.setRotationAxis(meshObjectDefinition.getAxis());
-        centralStar.setRotate(meshObjectDefinition.getRotateAngle());
+
+        // Apply scale and rotation from the definition
+        if (meshObjectDefinition != null) {
+            centralStar.setScaleX(meshObjectDefinition.getXScale());
+            centralStar.setScaleY(meshObjectDefinition.getYScale());
+            centralStar.setScaleZ(meshObjectDefinition.getZScale());
+            centralStar.setRotationAxis(meshObjectDefinition.getAxis());
+            centralStar.setRotate(meshObjectDefinition.getRotateAngle());
+        } else {
+            // Default settings if definition is missing
+            centralStar.setScaleX(30);
+            centralStar.setScaleY(30);
+            centralStar.setScaleZ(30);
+            centralStar.setRotationAxis(Rotate.X_AXIS);
+            centralStar.setRotate(90);
+        }
+
         return centralStar;
     }
 
@@ -1316,7 +1342,8 @@ public class StarPlotManager {
      * @param color the color to display it as (used to match the star)
      * @return the star to display
      */
-    private Node createHighlightStar(Color color) {
+    // Package-private for testing
+    Node createHighlightStar(Color color) {
         // load the moravian star
         // we have to do this each time because it has to unique
         Group highLightStar = meshViewShapeFactory.starMoravian();
