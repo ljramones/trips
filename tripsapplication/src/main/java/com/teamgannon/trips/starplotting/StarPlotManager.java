@@ -3,14 +3,8 @@ package com.teamgannon.trips.starplotting;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
-import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
-import com.teamgannon.trips.dialogs.routing.RouteDialog;
-import com.teamgannon.trips.dialogs.routing.RouteSelector;
 import com.teamgannon.trips.events.*;
-import com.teamgannon.trips.graphics.StarNotesDialog;
-import com.teamgannon.trips.graphics.entities.CustomObjectFactory;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StarSelectionModel;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -33,10 +27,7 @@ import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
 import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemReport;
 import com.teamgannon.trips.solarsystem.SolarSystemSaveResult;
-import javafx.animation.RotateTransition;
-import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -51,9 +42,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.stage.Modality;
-import javafx.util.Duration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -126,19 +115,6 @@ public class StarPlotManager {
      */
     private static final int HIGHLIGHT_BLINK_CYCLES = 100;
 
-    // =========================================================================
-    // UI Constants - Fonts and Styling
-    // =========================================================================
-
-    /**
-     * Font size for context menu titles.
-     */
-    private static final int MENU_TITLE_FONT_SIZE = 20;
-
-    /**
-     * Font size for context menu section headers.
-     */
-    private static final int MENU_HEADER_FONT_SIZE = 15;
 
     // =========================================================================
     // Random Generation Constants (Test/Debug Only)
@@ -211,6 +187,12 @@ public class StarPlotManager {
     private final PolityObjectFactory polityObjectFactory;
 
     /**
+     * Manages star animations (highlight blinking, rotation).
+     */
+    @Getter
+    private final StarAnimationManager animationManager = new StarAnimationManager();
+
+    /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
@@ -234,15 +216,6 @@ public class StarPlotManager {
      */
     private final ApplicationEventPublisher eventPublisher;
 
-    /**
-     * the scale transition
-     */
-    private ScaleTransition scaleTransition;
-
-    /**
-     * the transition state
-     */
-    private TransitionState transitionState;
 
     /**
      * the global context of TRIPS
@@ -283,7 +256,6 @@ public class StarPlotManager {
 
     private double controlPaneOffset;
 
-    private final RotateTransition centralRotator = new RotateTransition();
 
     /**
      * used as a control for highlighting stars
@@ -536,40 +508,15 @@ public class StarPlotManager {
     }
 
     private void blinkStar(Node starShape, int cycleCount) {
-        if (scaleTransition != null) {
-
-            log.info("stop old fade transition");
-            scaleTransition.stop();
-            if (transitionState != null) {
-                Node node = transitionState.getNode();
-                node.setScaleX(transitionState.getXScale());
-                node.setScaleY(transitionState.getYScale());
-                node.setScaleZ(transitionState.getZScale());
-            }
-        }
-        log.info("create new transition");
-
-        scaleTransition = new ScaleTransition(Duration.seconds(SCALE_TRANSITION_DURATION_SECONDS), starShape);
-        double xScale = starShape.getScaleX();
-        double yScale = starShape.getScaleY();
-        double zScale = starShape.getScaleZ();
-
-        scaleTransition.setFromX(xScale * ANIMATION_SCALE_MULTIPLIER);
-        scaleTransition.setFromY(yScale * ANIMATION_SCALE_MULTIPLIER);
-        scaleTransition.setFromZ(zScale * ANIMATION_SCALE_MULTIPLIER);
-        scaleTransition.setToX(xScale / ANIMATION_SCALE_MULTIPLIER);
-        scaleTransition.setToY(yScale / ANIMATION_SCALE_MULTIPLIER);
-        scaleTransition.setToZ(zScale / ANIMATION_SCALE_MULTIPLIER);
-
-        scaleTransition.setCycleCount(cycleCount);
-        scaleTransition.setAutoReverse(true);
-        scaleTransition.setOnFinished(e -> {
+        // Set up completion callback to remove highlight star when animation finishes
+        animationManager.setOnHighlightFinished(node -> {
             log.info("highlight star expiring and will be removed");
-            stellarDisplayGroup.getChildren().remove(starShape);
+            stellarDisplayGroup.getChildren().remove(node);
         });
-        scaleTransition.play();
-        transitionState = new TransitionState(starShape, xScale, yScale, zScale);
 
+        // Start the highlight animation
+        animationManager.startHighlightAnimation(starShape, cycleCount,
+                SCALE_TRANSITION_DURATION_SECONDS, ANIMATION_SCALE_MULTIPLIER);
     }
 
     public void toggleStars(boolean starsOn) {
@@ -936,77 +883,40 @@ public class StarPlotManager {
      * @return the menu
      */
     private @NotNull ContextMenu createPopup(String name, @NotNull Node star) {
-        final ContextMenu cm = new ContextMenu();
+        StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
 
-        MenuItem titleItem = new MenuItem(name);
-        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size:" + MENU_TITLE_FONT_SIZE + "; -fx-font-weight: bold");
-        titleItem.setDisable(true);
-        cm.getItems().add(titleItem);
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem highlightStarMenuItem = createHighlightStarMenuitem(star);
-        cm.getItems().add(highlightStarMenuItem);
-
-        MenuItem propertiesMenuItem = createShowPropertiesMenuItem(star);
-        cm.getItems().add(propertiesMenuItem);
-
-        MenuItem recenterMenuItem = createRecenterMenuitem(star);
-        cm.getItems().add(recenterMenuItem);
-
-        MenuItem editPropertiesMenuItem = createEditPropertiesMenuItem(star);
-        cm.getItems().add(editPropertiesMenuItem);
-
-        MenuItem removeMenuItem = createRemoveMenuItem(star);
-        cm.getItems().add(removeMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem routingHeader = new MenuItem("Routing");
-        routingHeader.setStyle("-fx-font-size:" + MENU_HEADER_FONT_SIZE + "; -fx-font-weight: bold");
-        routingHeader.setDisable(true);
-        cm.getItems().add(routingHeader);
-
-        MenuItem automatedRouteMenuItem = createAutomatedRoutingMenuItem(star);
-        cm.getItems().add(automatedRouteMenuItem);
-
-        MenuItem manualRouteMenuItem = createManualRoutingMenuItem(star);
-        cm.getItems().add(manualRouteMenuItem);
-
-        cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem distanceToMenuItem = distanceReportMenuItem(star);
-        cm.getItems().add(distanceToMenuItem);
-
-        cm.getItems().add((new SeparatorMenuItem()));
-
-        MenuItem jumpIntoSystem = createEnterSystemItem(star);
-        cm.getItems().add(jumpIntoSystem);
-
-        MenuItem generateSolarSystem = createGenerateSolarSystemItem(star);
-        cm.getItems().add(generateSolarSystem);
-
-        return cm;
+        return new StarContextMenuBuilder(star, record)
+                .withTitle(name)
+                .withHighlightAction(r ->
+                        eventPublisher.publishEvent(new HighlightStarEvent(this, r.getRecordId())))
+                .withPropertiesAction(r -> {
+                    StarObject starObject = starService.getStar(r.getRecordId());
+                    displayProperties(starObject);
+                })
+                .withRecenterAction(r -> {
+                    if (r != null) {
+                        eventPublisher.publishEvent(new RecenterStarEvent(this, r));
+                    } else {
+                        showErrorAlert("Recenter on star", "The star you selected was null!");
+                    }
+                })
+                .withEditAction(r -> {
+                    StarDisplayRecord editRecord = editProperties(r);
+                    if (editRecord != null) {
+                        star.setUserData(editRecord);
+                    }
+                })
+                .withDeleteAction(r -> removeNode(r))
+                .withRoutingHeader()
+                .withAutomatedRoutingAction(r -> generateAutomatedRoute(r))
+                .withManualRoutingAction(r -> generateManualRoute(r))
+                .withDistanceReportAction(r ->
+                        eventPublisher.publishEvent(new DistanceReportEvent(this, r)))
+                .withEnterSystemAction(r -> jumpToSystem(r))
+                .withGenerateSolarSystemAction(r -> generateSolarSystem(r))
+                .build();
     }
 
-    private MenuItem createManualRoutingMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Build route on screen by clicking stars");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            generateManualRoute(starDescriptor);
-
-        });
-        return menuItem;
-    }
-
-    private MenuItem createAutomatedRoutingMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Run route finder/generator");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            generateAutomatedRoute(starDescriptor);
-
-        });
-        return menuItem;
-    }
 
     private void generateAutomatedRoute(StarDisplayRecord starDescriptor) {
         log.info("generate automated route");
@@ -1040,70 +950,9 @@ public class StarPlotManager {
         return tripsContext.getDataSetDescriptor();
     }
 
-    private @NotNull MenuItem createHighlightStarMenuitem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Highlight star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            eventPublisher.publishEvent(new HighlightStarEvent(this, starDescriptor.getRecordId()));
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem distanceReportMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Generate distance report from this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            eventPublisher.publishEvent(new DistanceReportEvent(this, starDescriptor));
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem createRecenterMenuitem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Recenter on this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            if (starDescriptor != null) {
-                eventPublisher.publishEvent(new RecenterStarEvent(this, starDescriptor));
-            } else {
-                showErrorAlert("Recenter on star", "The star you selected was bull!");
-            }
-        });
-        return menuItem;
-    }
 
 
-    private @NotNull MenuItem finishRoutingMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Finish Route");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.finishRoute(starDescriptor);
-        });
-        return menuItem;
-    }
 
-    private @NotNull MenuItem resetRoutingMenuItem() {
-        MenuItem menuItem = new MenuItem("Route: Start over");
-        menuItem.setOnAction(this::resetRoute);
-        return menuItem;
-    }
-
-    private void resetRoute(ActionEvent event) {
-        routeManager.resetRoute();
-    }
-
-    /**
-     * create a menuitem to remove a targeted item
-     *
-     * @return the menuitem supporting this action
-     */
-    private @NotNull MenuItem createRemoveMenuItem(@NotNull Node star) {
-        MenuItem removeMenuItem = new MenuItem("Delete star");
-        removeMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            removeNode(starDescriptor);
-        });
-        return removeMenuItem;
-    }
 
     /**
      * remove a star node form the db
@@ -1116,25 +965,6 @@ public class StarPlotManager {
     }
 
 
-    /**
-     * crate a menuitem to edit a targeted item
-     *
-     * @return the menuitem supporting this action
-     */
-    private @NotNull MenuItem createEditPropertiesMenuItem(@NotNull Node star) {
-        MenuItem editPropertiesMenuItem = new MenuItem("Edit star");
-        editPropertiesMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            StarDisplayRecord editRecord = editProperties(starDisplayRecord);
-            if (editRecord != null) {
-                star.setUserData(editRecord);
-            } else {
-                log.error("Why is the edit record a null!!");
-            }
-
-        });
-        return editPropertiesMenuItem;
-    }
 
 
     ///////////////////////// Simulate  /////////
@@ -1170,20 +1000,6 @@ public class StarPlotManager {
         return starDisplayRecord;
     }
 
-    /**
-     * create a menuitem to show properties
-     *
-     * @return the menuitem supporting this action
-     */
-    private @NotNull MenuItem createShowPropertiesMenuItem(@NotNull Node star) {
-        MenuItem propertiesMenuItem = new MenuItem("Properties");
-        propertiesMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDisplayRecord = (StarDisplayRecord) star.getUserData();
-            StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
-            displayProperties(starObject);
-        });
-        return propertiesMenuItem;
-    }
 
     /**
      * display properties for this star
@@ -1352,103 +1168,8 @@ public class StarPlotManager {
 
     /////////////////////////////////////////////////////////////////////
 
-    private @NotNull MenuItem createRoutingMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Start Route");
-        menuItem.setOnAction(event -> {
-            boolean routingActive = routeManager.isManualRoutingActive();
-            if (routingActive) {
-                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                        "Restart Route?",
-                        "You have a route in progress, Ok will clear current?");
-
-                if ((buttonType.isEmpty()) || (buttonType.get() != ButtonType.OK)) {
-                    return;
-                }
-            }
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            RouteDialog dialog = new RouteDialog(starDescriptor);
-            Optional<RouteSelector> resultOptional = dialog.showAndWait();
-            if (resultOptional.isPresent()) {
-                RouteSelector routeSelector = resultOptional.get();
-                if (routeSelector.isSelected()) {
-                    RouteDescriptor routeDescriptor = routeSelector.getRouteDescriptor();
-                    routeManager.startRoute(
-                            tripsContext.getCurrentPlot().getDataSetDescriptor(),
-                            routeDescriptor, starDescriptor);
-                }
-            }
-        });
-        return menuItem;
-    }
-
-    private @NotNull MenuItem continueRoutingMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Continue Route");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            routeManager.continueRoute(starDescriptor);
-        });
-        return menuItem;
-    }
 
 
-    private MenuItem removeRouteMenuItem(Node star) {
-        MenuItem menuItem = new MenuItem("Remove last link from route");
-        menuItem.setOnAction(event -> {
-            routeManager.removeRoute();
-        });
-        return menuItem;
-    }
-
-
-    private MenuItem createGenerateSolarSystemItem(Node star) {
-        MenuItem menuItem = new MenuItem("Generate Simulated Solar System from this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            generateSolarSystem(starDescriptor);
-
-        });
-        return menuItem;
-    }
-
-
-    private @NotNull MenuItem createNotesMenuItem(@NotNull Node star) {
-        MenuItem menuItem = new MenuItem("Edit notes on this star");
-        menuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            StarNotesDialog notesDialog = new StarNotesDialog(starDescriptor.getNotes());
-            notesDialog.setTitle("Edit notes for " + starDescriptor.getStarName());
-            Optional<String> notesOptional = notesDialog.showAndWait();
-            if (notesOptional.isPresent()) {
-                String notes = notesOptional.get();
-                if (!notes.isEmpty()) {
-                    // save notes in star
-                    starService.updateNotesOnStar(starDescriptor.getRecordId(), notes);
-                    // update the star notes on screen
-                    starDescriptor.setNotes(notes);
-                    star.setUserData(starDescriptor);
-                }
-            }
-
-        });
-        return menuItem;
-    }
-
-
-
-    /**
-     * create an enter system object
-     *
-     * @param star the star selected
-     * @return the menuitem
-     */
-    private @NotNull MenuItem createEnterSystemItem(@NotNull Node star) {
-        MenuItem removeMenuItem = new MenuItem("Enter System");
-        removeMenuItem.setOnAction(event -> {
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) star.getUserData();
-            jumpToSystem(starDescriptor);
-        });
-        return removeMenuItem;
-    }
 
     public void clearRoutingFlag() {
         routeManager.setManualRoutingActive(false);
