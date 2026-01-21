@@ -119,6 +119,96 @@ public class OrbitVisualizer {
         return createOrbitPath(radiusAU, 0.0, inclinationDeg, 0.0, 0.0, orbitColor);
     }
 
+    /**
+     * Create a solid (non-dashed) orbit path. Used for moon orbits where dashing
+     * can look fragmented at small scales.
+     *
+     * @param semiMajorAxisAU              semi-major axis in AU
+     * @param eccentricity                 orbital eccentricity
+     * @param inclinationDeg               orbital inclination in degrees
+     * @param longitudeOfAscendingNodeDeg  longitude of ascending node in degrees
+     * @param argumentOfPeriapsisDeg       argument of periapsis in degrees
+     * @param orbitColor                   color for the orbit path
+     * @return Group containing the solid orbital path
+     */
+    public Group createSolidOrbitPath(double semiMajorAxisAU,
+                                       double eccentricity,
+                                       double inclinationDeg,
+                                       double longitudeOfAscendingNodeDeg,
+                                       double argumentOfPeriapsisDeg,
+                                       Color orbitColor) {
+
+        OrbitKey orbitKey = new OrbitKey(semiMajorAxisAU, eccentricity, inclinationDeg,
+                longitudeOfAscendingNodeDeg, argumentOfPeriapsisDeg);
+        int segments = selectSegmentCount(orbitKey);
+
+        // Build solid mesh (no dashing)
+        double[][] points = buildOrbitSamplePoints(semiMajorAxisAU, eccentricity, segments);
+        TriangleMesh baseMesh = buildSolidRibbonMesh(points, ORBIT_RIBBON_HALF_WIDTH * 0.7);
+        TriangleMesh highlightMesh = buildSolidRibbonMesh(points, ORBIT_RIBBON_HALF_WIDTH * 0.7 * ORBIT_HIGHLIGHT_SCALE);
+
+        PhongMaterial baseMaterial = createOrbitMaterial(orbitColor, false);
+        PhongMaterial highlightMaterial = createOrbitMaterial(orbitColor, true);
+
+        MeshView baseMeshView = createOrbitMeshView(baseMesh, baseMaterial);
+        MeshView highlightMeshView = createOrbitMeshView(highlightMesh, highlightMaterial);
+        highlightMeshView.setVisible(false);
+
+        Group orbitGroup = new Group(baseMeshView, highlightMeshView);
+        orbitGroup.getProperties().put(ORBIT_BASE_MESH_KEY, baseMeshView);
+        orbitGroup.getProperties().put(ORBIT_HIGHLIGHT_MESH_KEY, highlightMeshView);
+
+        orbitGroup.getTransforms().add(new Translate(0, ORBIT_PLANE_EPSILON, 0));
+
+        Rotate rotateArgPeri = new Rotate(argumentOfPeriapsisDeg, Rotate.Y_AXIS);
+        Rotate rotateInclination = new Rotate(inclinationDeg, Rotate.X_AXIS);
+        Rotate rotateLAN = new Rotate(longitudeOfAscendingNodeDeg, Rotate.Y_AXIS);
+
+        orbitGroup.getTransforms().addAll(rotateArgPeri, rotateInclination, rotateLAN);
+
+        return orbitGroup;
+    }
+
+    /**
+     * Build a solid (non-dashed) ribbon mesh for smooth orbit appearance.
+     */
+    private TriangleMesh buildSolidRibbonMesh(double[][] points, double halfWidth) {
+        List<Float> meshPoints = new ArrayList<>();
+        List<Integer> meshFaces = new ArrayList<>();
+        int segmentCount = points.length - 1;
+
+        for (int i = 0; i < segmentCount; i++) {
+            double[] p0 = points[i];
+            double[] p1 = points[i + 1];
+
+            double dx = p1[0] - p0[0];
+            double dy = p1[1] - p0[1];
+            double dz = p1[2] - p0[2];
+            double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (length < MIN_TANGENT_LENGTH) {
+                continue;
+            }
+
+            double sideX = dz / length;
+            double sideY = 0;
+            double sideZ = -dx / length;
+
+            int baseIndex = meshPoints.size() / 3;
+            addPoint(meshPoints, p0[0] + sideX * halfWidth, p0[1] + sideY * halfWidth, p0[2] + sideZ * halfWidth);
+            addPoint(meshPoints, p0[0] - sideX * halfWidth, p0[1] - sideY * halfWidth, p0[2] - sideZ * halfWidth);
+            addPoint(meshPoints, p1[0] + sideX * halfWidth, p1[1] + sideY * halfWidth, p1[2] + sideZ * halfWidth);
+            addPoint(meshPoints, p1[0] - sideX * halfWidth, p1[1] - sideY * halfWidth, p1[2] - sideZ * halfWidth);
+
+            addQuadFaces(meshFaces, baseIndex);
+        }
+
+        TriangleMesh mesh = new TriangleMesh();
+        mesh.getPoints().setAll(toFloatArray(meshPoints));
+        mesh.getTexCoords().addAll(0, 0);
+        mesh.getFaces().setAll(toIntArray(meshFaces));
+        return mesh;
+    }
+
     private int selectSegmentCount(OrbitKey key) {
         OrbitLodState state = lodStates.get(key);
         if (state == null) {

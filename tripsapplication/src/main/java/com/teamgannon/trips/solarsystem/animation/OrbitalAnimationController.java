@@ -23,7 +23,7 @@ public class OrbitalAnimationController {
      * Amplification factor for moon orbits to make them visible.
      * Must match the value in SolarSystemRenderer.
      */
-    private static final double MOON_ORBIT_AMPLIFICATION = 50.0;
+    private static final double MOON_ORBIT_AMPLIFICATION = 15.0;
 
     private final AnimationTimer timer;
     private final AnimationTimeModel timeModel;

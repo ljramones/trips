@@ -180,6 +180,43 @@ public class ScaleManager {
     }
 
     /**
+     * Calculate moon display radius based on parent planet's display size.
+     * Uses actual physical radius ratios to ensure accurate relative sizing.
+     *
+     * Real moon/planet ratios (by diameter):
+     * - Ganymede/Jupiter: 5268/142984 = 0.0368 (1/27)
+     * - Callisto/Jupiter: 4821/142984 = 0.0337 (1/30)
+     * - Io/Jupiter:       3643/142984 = 0.0255 (1/39)
+     * - Europa/Jupiter:   3122/142984 = 0.0218 (1/46)
+     *
+     * @param moonRadiusEarthRadii   moon's physical radius in Earth radii
+     * @param parentRadiusEarthRadii parent planet's physical radius in Earth radii
+     * @param parentDisplayRadius    parent planet's display radius in screen units
+     * @return display radius for the moon in screen units
+     */
+    public double calculateMoonDisplayRadius(double moonRadiusEarthRadii,
+                                              double parentRadiusEarthRadii,
+                                              double parentDisplayRadius) {
+        if (moonRadiusEarthRadii <= 0 || parentRadiusEarthRadii <= 0 || parentDisplayRadius <= 0) {
+            // Fallback: use a tiny fraction of parent size
+            return parentDisplayRadius > 0 ? parentDisplayRadius * 0.03 : 0.2;
+        }
+
+        // Calculate the actual physical ratio - this is the scientifically accurate ratio
+        double physicalRatio = moonRadiusEarthRadii / parentRadiusEarthRadii;
+
+        // Apply the same ratio to display size - moons will be tiny relative to parent
+        double moonDisplayRadius = parentDisplayRadius * physicalRatio;
+
+        // Very small minimum just to keep moons from becoming invisible dots
+        // At 0.15 screen units, moons will still render as visible pixels
+        // but won't be artificially inflated beyond their true relative size
+        double absoluteMinimum = 0.15;
+
+        return Math.max(absoluteMinimum, moonDisplayRadius);
+    }
+
+    /**
      * Calculate star display radius based on stellar radius.
      *
      * @param stellarRadiusSolarRadii star radius in solar radii

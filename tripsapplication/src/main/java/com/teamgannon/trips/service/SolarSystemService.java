@@ -614,6 +614,107 @@ public class SolarSystemService {
         solarSystemRepository.save(solarSystem);
     }
 
+    // ==================== Galilean Moon Helper ====================
+
+    /**
+     * Create the four Galilean moons of Jupiter if they don't exist.
+     * Uses accurate real-world data for orbital and physical parameters.
+     *
+     * @param jupiterPlanet the Jupiter ExoPlanet entity
+     * @return list of created moons (empty if they already exist)
+     */
+    @Transactional
+    public List<ExoPlanet> createGalileanMoonsIfMissing(ExoPlanet jupiterPlanet) {
+        if (jupiterPlanet == null) {
+            log.warn("Cannot create Galilean moons - Jupiter planet is null");
+            return List.of();
+        }
+
+        List<ExoPlanet> createdMoons = new ArrayList<>();
+        String jupiterId = jupiterPlanet.getId();
+        String solarSystemId = jupiterPlanet.getSolarSystemId();
+
+        // Check existing moons for this planet
+        List<ExoPlanet> existingMoons = exoPlanetRepository.findByParentPlanetId(jupiterId);
+        List<String> existingNames = existingMoons.stream()
+                .map(ExoPlanet::getName)
+                .map(String::toLowerCase)
+                .toList();
+
+        // Galilean moon data (all values in real units)
+        // Semi-major axes in AU (converted from km: divide by 149,597,870.7)
+        // Radii in Earth radii (Earth radius = 6371 km)
+        // Orbital periods in days
+        // Masses in Earth masses (Earth mass = 5.972e24 kg)
+        Object[][] moonData = {
+                // Name, SMA (AU), Radius (Earth radii), Mass (Earth masses), Orbital Period (days), Eccentricity
+                {"Io",       0.002819, 0.286, 0.015,  1.769, 0.0041},  // 421,700 km
+                {"Europa",   0.004485, 0.245, 0.008,  3.551, 0.0094},  // 670,900 km
+                {"Ganymede", 0.007155, 0.413, 0.025,  7.155, 0.0011},  // 1,070,400 km
+                {"Callisto", 0.012585, 0.378, 0.018, 16.689, 0.0074},  // 1,882,700 km
+        };
+
+        for (Object[] data : moonData) {
+            String name = (String) data[0];
+            if (existingNames.contains(name.toLowerCase())) {
+                log.debug("Moon {} already exists for Jupiter", name);
+                continue;
+            }
+
+            ExoPlanet moon = new ExoPlanet();
+            moon.setId(UUID.randomUUID().toString());
+            moon.setName(name);
+            moon.setSolarSystemId(solarSystemId);
+            moon.setHostStarId(jupiterPlanet.getHostStarId());
+            moon.setParentPlanetId(jupiterId);
+            moon.setIsMoon(true);
+
+            moon.setSemiMajorAxis((Double) data[1]);
+            moon.setRadius((Double) data[2]);
+            moon.setMass((Double) data[3]);
+            moon.setOrbitalPeriod((Double) data[4]);
+            moon.setEccentricity((Double) data[5]);
+
+            // Galilean moons have very low inclinations (nearly coplanar)
+            moon.setInclination(0.0);
+            moon.setOmega(0.0);  // Argument of periapsis
+
+            moon.setStarName(jupiterPlanet.getStarName());
+            moon.setPlanetStatus("Confirmed");
+            moon.setDetectionType("Known");
+
+            ExoPlanet saved = exoPlanetRepository.save(moon);
+            createdMoons.add(saved);
+            log.info("Created Galilean moon: {} (SMA={} AU, radius={} Earth radii)",
+                    name, moon.getSemiMajorAxis(), moon.getRadius());
+        }
+
+        if (!createdMoons.isEmpty()) {
+            log.info("Created {} Galilean moons for Jupiter", createdMoons.size());
+        }
+
+        return createdMoons;
+    }
+
+    /**
+     * Find a planet named "Jupiter" or similar in the given solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return the Jupiter planet, or null if not found
+     */
+    public ExoPlanet findJupiterInSystem(String solarSystemId) {
+        List<ExoPlanet> planets = exoPlanetRepository.findBySolarSystemId(solarSystemId);
+        for (ExoPlanet planet : planets) {
+            String name = planet.getName();
+            if (name != null && (name.toLowerCase().contains("jupiter") ||
+                    (name.toLowerCase().endsWith(" e") && planet.getMass() != null && planet.getMass() > 100))) {
+                // Either named Jupiter or is a gas giant (>100 Earth masses, often designated 'e')
+                return planet;
+            }
+        }
+        return null;
+    }
+
     // ==================== Generated Planet Persistence ====================
 
     /**
