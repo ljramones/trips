@@ -72,20 +72,121 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 @Component
 public class StarPlotManager {
 
+    // =========================================================================
+    // Display Constants - Star Appearance
+    // =========================================================================
+
+    /**
+     * Default scale factor for special star meshes (central star, 4pt, 5pt stars).
+     */
+    private static final double DEFAULT_STAR_MESH_SCALE = 30.0;
+
+    /**
+     * Scale factor for smaller mesh objects (pyramid, geometric shapes).
+     */
+    private static final double SMALL_MESH_SCALE = 10.0;
+
+    /**
+     * Scale factor for polity indicator objects.
+     */
+    private static final double POLITY_MESH_SCALE = 1.0;
+
+    /**
+     * Default rotation angle for star meshes (degrees).
+     */
+    private static final double DEFAULT_ROTATION_ANGLE = 90.0;
+
+    /**
+     * Inverted rotation angle for some mesh objects (degrees).
+     */
+    private static final double INVERTED_ROTATION_ANGLE = -90.0;
+
+    /**
+     * Fallback sphere radius when mesh loading fails.
+     */
+    private static final double FALLBACK_SPHERE_RADIUS = 10.0;
+
+    // =========================================================================
+    // Display Constants - Extensions and Lines
+    // =========================================================================
+
+    /**
+     * Width of extension lines from grid to stars.
+     */
+    private static final double EXTENSION_LINE_WIDTH = 0.3;
+
+    // =========================================================================
+    // Animation Constants
+    // =========================================================================
+
+    /**
+     * Duration of scale transition animation in seconds.
+     */
+    private static final double SCALE_TRANSITION_DURATION_SECONDS = 2.0;
+
+    /**
+     * Scale multiplier for animation start/end states.
+     */
+    private static final double ANIMATION_SCALE_MULTIPLIER = 2.0;
+
+    /**
+     * Number of blink cycles for star highlighting.
+     */
+    private static final int HIGHLIGHT_BLINK_CYCLES = 100;
+
+    // =========================================================================
+    // UI Constants - Fonts and Styling
+    // =========================================================================
+
+    /**
+     * Font size for context menu titles.
+     */
+    private static final int MENU_TITLE_FONT_SIZE = 20;
+
+    /**
+     * Font size for context menu section headers.
+     */
+    private static final int MENU_HEADER_FONT_SIZE = 15;
+
+    // =========================================================================
+    // Random Generation Constants (Test/Debug Only)
+    // =========================================================================
+
+    /**
+     * Maximum radius for randomly generated test stars.
+     */
+    private static final double MAX_RANDOM_STAR_RADIUS = 7.0;
+
+    /**
+     * Fraction of max range used for random star positions.
+     */
+    private static final double RANDOM_POSITION_FRACTION = 2.0 / 3.0;
+
+    /**
+     * Maximum X coordinate for random star generation.
+     */
+    private static final double X_MAX = 300.0;
+
+    /**
+     * Maximum Y coordinate for random star generation.
+     */
+    private static final double Y_MAX = 300.0;
+
+    /**
+     * Maximum Z coordinate for random star generation.
+     */
+    private static final double Z_MAX = 300.0;
+
+    // =========================================================================
+    // Instance Fields
+    // =========================================================================
+
     /**
      * Manages coordinate scaling between light-years and screen units.
      * Provides star radius calculation, zoom support, and coordinate transformation.
      */
     @Getter
     private final InterstellarScaleManager scaleManager = new InterstellarScaleManager();
-
-    /**
-     * Legacy constants for random star generation (test/debug only).
-     * Real star plotting uses coordinates from the database via scaleManager.
-     */
-    private final static double X_MAX = 300;
-    private final static double Y_MAX = 300;
-    private final static double Z_MAX = 300;
 
     /**
      * a graphics object group for extensions
@@ -269,18 +370,18 @@ public class StarPlotManager {
                     .name(CENTRAL_STAR)
                     .id(UUID.randomUUID())
                     .object(centralStar)
-                    .xScale(30)
-                    .yScale(30)
-                    .zScale(30)
+                    .xScale(DEFAULT_STAR_MESH_SCALE)
+                    .yScale(DEFAULT_STAR_MESH_SCALE)
+                    .zScale(DEFAULT_STAR_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
             specialObjects.put(CENTRAL_STAR, objectDefinition);
         } else {
             log.error("Unable to load the central star object");
         }
 
-        // load 4 pt star star
+        // load 4 pt star
         Node fourPtStar = meshViewShapeFactory.star4pt();
         if (fourPtStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
@@ -288,18 +389,18 @@ public class StarPlotManager {
                     .name(FOUR_PT_STAR)
                     .id(UUID.randomUUID())
                     .object(fourPtStar)
-                    .xScale(30)
-                    .yScale(30)
-                    .zScale(30)
+                    .xScale(DEFAULT_STAR_MESH_SCALE)
+                    .yScale(DEFAULT_STAR_MESH_SCALE)
+                    .zScale(DEFAULT_STAR_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
             specialObjects.put(FOUR_PT_STAR, objectDefinition);
         } else {
             log.error("Unable to load the 4 pt star object");
         }
 
-        // load 5 pt star star
+        // load 5 pt star
         Group fivePtStar = meshViewShapeFactory.star5pt();
         if (fivePtStar != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
@@ -307,18 +408,18 @@ public class StarPlotManager {
                     .name(FIVE_PT_STAR)
                     .id(UUID.randomUUID())
                     .object(fivePtStar)
-                    .xScale(30)
-                    .yScale(30)
-                    .zScale(30)
+                    .xScale(DEFAULT_STAR_MESH_SCALE)
+                    .yScale(DEFAULT_STAR_MESH_SCALE)
+                    .zScale(DEFAULT_STAR_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
             specialObjects.put(FIVE_PT_STAR, objectDefinition);
         } else {
             log.error("Unable to load the 5 pt star object");
         }
 
-        // load 5 pt star star
+        // load pyramid
         MeshView pyramid = meshViewShapeFactory.pyramid();
         if (pyramid != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
@@ -326,17 +427,18 @@ public class StarPlotManager {
                     .name(PYRAMID)
                     .id(UUID.randomUUID())
                     .object(pyramid)
-                    .xScale(10)
-                    .yScale(10)
-                    .zScale(10)
+                    .xScale(SMALL_MESH_SCALE)
+                    .yScale(SMALL_MESH_SCALE)
+                    .zScale(SMALL_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(-90)
+                    .rotateAngle(INVERTED_ROTATION_ANGLE)
                     .build();
             specialObjects.put(PYRAMID, objectDefinition);
         } else {
-            log.error("Unable to load the 5 pt star object");
+            log.error("Unable to load the pyramid object");
         }
 
+        // load geometric shape
         MeshView geometric0 = meshViewShapeFactory.geometric0();
         if (geometric0 != null) {
             MeshObjectDefinition objectDefinition = MeshObjectDefinition
@@ -344,11 +446,11 @@ public class StarPlotManager {
                     .name("geometric0")
                     .id(UUID.randomUUID())
                     .object(geometric0)
-                    .xScale(10)
-                    .yScale(10)
-                    .zScale(10)
+                    .xScale(SMALL_MESH_SCALE)
+                    .yScale(SMALL_MESH_SCALE)
+                    .zScale(SMALL_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(-90)
+                    .rotateAngle(INVERTED_ROTATION_ANGLE)
                     .build();
             specialObjects.put("geometric0", objectDefinition);
         } else {
@@ -421,9 +523,9 @@ public class StarPlotManager {
             highLightStar.setVisible(true);
             stellarDisplayGroup.getChildren().add(highLightStar);
 
-            // now blink for 100 cycles
+            // now blink for highlight cycles
             log.info("starting blink");
-            blinkStar(highLightStar, 100);
+            blinkStar(highLightStar, HIGHLIGHT_BLINK_CYCLES);
 
             log.info("mark point");
         }
@@ -443,18 +545,17 @@ public class StarPlotManager {
         }
         log.info("create new transition");
 
-        scaleTransition = new ScaleTransition(Duration.seconds(2), starShape);
+        scaleTransition = new ScaleTransition(Duration.seconds(SCALE_TRANSITION_DURATION_SECONDS), starShape);
         double xScale = starShape.getScaleX();
-
         double yScale = starShape.getScaleY();
         double zScale = starShape.getScaleZ();
 
-        scaleTransition.setFromX(xScale * 2);
-        scaleTransition.setFromY(yScale * 2);
-        scaleTransition.setFromZ(zScale * 2);
-        scaleTransition.setToX(xScale / 2);
-        scaleTransition.setToY(yScale / 2);
-        scaleTransition.setToZ(zScale / 2);
+        scaleTransition.setFromX(xScale * ANIMATION_SCALE_MULTIPLIER);
+        scaleTransition.setFromY(yScale * ANIMATION_SCALE_MULTIPLIER);
+        scaleTransition.setFromZ(zScale * ANIMATION_SCALE_MULTIPLIER);
+        scaleTransition.setToX(xScale / ANIMATION_SCALE_MULTIPLIER);
+        scaleTransition.setToY(yScale / ANIMATION_SCALE_MULTIPLIER);
+        scaleTransition.setToZ(zScale / ANIMATION_SCALE_MULTIPLIER);
 
         scaleTransition.setCycleCount(cycleCount);
         scaleTransition.setAutoReverse(true);
@@ -720,7 +821,7 @@ public class StarPlotManager {
 
         if (centralStar == null) {
             log.error("Failed to load central star mesh from factory");
-            return new Sphere(10); // Fallback
+            return new Sphere(FALLBACK_SPHERE_RADIUS);
         }
 
         // Apply scale and rotation from the definition
@@ -732,11 +833,11 @@ public class StarPlotManager {
             centralStar.setRotate(meshObjectDefinition.getRotateAngle());
         } else {
             // Default settings if definition is missing
-            centralStar.setScaleX(30);
-            centralStar.setScaleY(30);
-            centralStar.setScaleZ(30);
+            centralStar.setScaleX(DEFAULT_STAR_MESH_SCALE);
+            centralStar.setScaleY(DEFAULT_STAR_MESH_SCALE);
+            centralStar.setScaleZ(DEFAULT_STAR_MESH_SCALE);
             centralStar.setRotationAxis(Rotate.X_AXIS);
-            centralStar.setRotate(90);
+            centralStar.setRotate(DEFAULT_ROTATION_ANGLE);
         }
 
         return centralStar;
@@ -865,7 +966,7 @@ public class StarPlotManager {
         final ContextMenu cm = new ContextMenu();
 
         MenuItem titleItem = new MenuItem(name);
-        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size:20; -fx-font-weight: bold");
+        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size:" + MENU_TITLE_FONT_SIZE + "; -fx-font-weight: bold");
         titleItem.setDisable(true);
         cm.getItems().add(titleItem);
         cm.getItems().add(new SeparatorMenuItem());
@@ -888,7 +989,7 @@ public class StarPlotManager {
         cm.getItems().add(new SeparatorMenuItem());
 
         MenuItem routingHeader = new MenuItem("Routing");
-        routingHeader.setStyle(" -fx-font-size:15; -fx-font-weight: bold");
+        routingHeader.setStyle("-fx-font-size:" + MENU_HEADER_FONT_SIZE + "; -fx-font-weight: bold");
         routingHeader.setDisable(true);
         cm.getItems().add(routingHeader);
 
@@ -1149,14 +1250,12 @@ public class StarPlotManager {
             log.warn("color palette not initialized; cannot generate random stars");
             return;
         }
-        // Max radius for random star generation (test purposes)
-        final double maxRandomRadius = 7.0;
         for (int i = 0; i < numberStars; i++) {
-            double radius = random.nextDouble() * maxRandomRadius;
+            double radius = random.nextDouble() * MAX_RANDOM_STAR_RADIUS;
             Color color = randomColor();
-            double x = random.nextDouble() * X_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
-            double y = random.nextDouble() * Y_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
-            double z = random.nextDouble() * Z_MAX * 2 / 3 * (random.nextBoolean() ? 1 : -1);
+            double x = random.nextDouble() * X_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
+            double y = random.nextDouble() * Y_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
+            double z = random.nextDouble() * Z_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
 
             String labelText = "Star " + i;
             createSphereAndLabel(radius, x, y, z, color, colorPalette.getLabelFont().toFont(), labelText);
@@ -1209,8 +1308,7 @@ public class StarPlotManager {
     private void createExtension(double x, double y, double z, Color extensionColor) {
         Point3D point3DFrom = new Point3D(x, y, z);
         Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), 0);
-        double lineWidth = 0.3;
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, lineWidth, extensionColor, colorPalette.getLabelFont().toFont());
+        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, EXTENSION_LINE_WIDTH, extensionColor, colorPalette.getLabelFont().toFont());
         extensionsGroup.getChildren().add(lineSegment);
         // add the extensions group to the world model
         extensionsGroup.setVisible(true);
@@ -1234,11 +1332,11 @@ public class StarPlotManager {
                     .name(POLITY_TERRAN)
                     .id(UUID.randomUUID())
                     .object(polity1)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
+                    .xScale(POLITY_MESH_SCALE)
+                    .yScale(POLITY_MESH_SCALE)
+                    .zScale(POLITY_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
         } else {
             log.error("Unable to load the polity 1 object");
@@ -1255,11 +1353,11 @@ public class StarPlotManager {
                     .name(POLITY_DORNANI)
                     .id(UUID.randomUUID())
                     .object(polity2)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
+                    .xScale(POLITY_MESH_SCALE)
+                    .yScale(POLITY_MESH_SCALE)
+                    .zScale(POLITY_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
         } else {
             log.error("Unable to load the polity 2 object");
@@ -1291,11 +1389,11 @@ public class StarPlotManager {
             }
 
             // now scale it and set it to show properly
-            highLightStar.setScaleX(30);
-            highLightStar.setScaleY(30);
-            highLightStar.setScaleZ(30);
+            highLightStar.setScaleX(DEFAULT_STAR_MESH_SCALE);
+            highLightStar.setScaleY(DEFAULT_STAR_MESH_SCALE);
+            highLightStar.setScaleZ(DEFAULT_STAR_MESH_SCALE);
             highLightStar.setRotationAxis(Rotate.X_AXIS);
-            highLightStar.setRotate(90);
+            highLightStar.setRotate(DEFAULT_ROTATION_ANGLE);
             return highLightStar;
         } else {
             log.error("Unable to load the moravian star object");
@@ -1397,11 +1495,11 @@ public class StarPlotManager {
                     .name(POLITY_KTOR)
                     .id(UUID.randomUUID())
                     .object(polity3)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
+                    .xScale(POLITY_MESH_SCALE)
+                    .yScale(POLITY_MESH_SCALE)
+                    .zScale(POLITY_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
         } else {
             log.error("Unable to load the polity 3 object");
@@ -1410,7 +1508,7 @@ public class StarPlotManager {
     }
 
     private MeshObjectDefinition createAratKurPolity() {
-        // load icosahedron as polity 4
+        // load octahedron as polity 4
         MeshView polity4 = meshViewShapeFactory.octahedron();
         if (polity4 != null) {
             return MeshObjectDefinition
@@ -1418,11 +1516,11 @@ public class StarPlotManager {
                     .name(POLITY_ARAT_KUR)
                     .id(UUID.randomUUID())
                     .object(polity4)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
+                    .xScale(POLITY_MESH_SCALE)
+                    .yScale(POLITY_MESH_SCALE)
+                    .zScale(POLITY_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
         } else {
             log.error("Unable to load the polity 4 object");
@@ -1431,7 +1529,7 @@ public class StarPlotManager {
     }
 
     private MeshObjectDefinition createHkhRkhPolity() {
-        // load icosahedron as polity 5
+        // load dodecahedron as polity 5
         MeshView polity5 = meshViewShapeFactory.dodecahedron();
         if (polity5 != null) {
             return MeshObjectDefinition
@@ -1439,11 +1537,11 @@ public class StarPlotManager {
                     .name(POLITY_HKH_RKH)
                     .id(UUID.randomUUID())
                     .object(polity5)
-                    .xScale(1)
-                    .yScale(1)
-                    .zScale(1)
+                    .xScale(POLITY_MESH_SCALE)
+                    .yScale(POLITY_MESH_SCALE)
+                    .zScale(POLITY_MESH_SCALE)
                     .axis(Rotate.X_AXIS)
-                    .rotateAngle(90)
+                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
                     .build();
         } else {
             log.error("Unable to load the polity 5 object");
