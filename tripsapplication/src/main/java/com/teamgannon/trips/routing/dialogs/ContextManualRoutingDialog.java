@@ -5,6 +5,7 @@ import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import javafx.event.ActionEvent;
@@ -16,205 +17,196 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.textfield.TextFields;
 import org.jetbrains.annotations.NotNull;
-
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 
+/**
+ * Dialog for creating manual routes by selecting stars.
+ * <p>
+ * Supports two modes:
+ * <ul>
+ *   <li>Plotting context mode: Started from a selected star in the plot</li>
+ *   <li>Non-plotting context mode: User selects starting star from a list</li>
+ * </ul>
+ */
 @Slf4j
 public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
-    /**
-     * the route manager for handling all the routes
-     */
-    private final RouteManager routeManager;
+    // =========================================================================
+    // Dependencies
+    // =========================================================================
 
-    /**
-     * the current dataset
-     */
+    private final RouteManager routeManager;
     private final DataSetDescriptor currentDataSet;
 
-    /**
-     * a star display record
-     */
-    private StarDisplayRecord starDisplayRecord;
+    // =========================================================================
+    // UI Components
+    // =========================================================================
 
-    /**
-     * font for the UI
-     */
-    private final Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
-
-    /**
-     * the orute name
-     */
+    private final Font font = RoutingConstants.createDialogFont();
     private final TextField routeName = new TextField();
-
-    /**
-     * the line width
-     */
     private final TextField lineWidthTextField = new TextField();
-
-    /**
-     * the color picker
-     */
     private final ColorPicker colorPicker = new ColorPicker();
-
-    /**
-     * the notes area
-     */
     private final TextArea notes = new TextArea();
-
-    /**
-     * the current row for adding stars
-     */
-    private int rowToAdd = 1;
-
-    /**
-     * the anchor row where the selected stars are displayed
-     */
-    private final int anchorRow = 7;
-
-    /**
-     * the grid pane to add components
-     */
     private final GridPane grid = new GridPane();
-
-    /**
-     * the finish button
-     */
     private final Button finishBtn = new Button("Finish route");
-
-    /**
-     * whether we have started to create a route
-     */
-    private boolean startRouting = false;
-
-    /**
-     * the stage
-     */
+    private final Button startButton = new Button("Start route");
+    private final Button removeLastBtn = new Button("Remove last segment");
+    private final Button colorButton = new Button("Color");
+    private final Label startStarLabel = new Label();
+    private final Label routeStartCoordinates = new Label("0, 0, 0");
     private final Stage stage;
 
-    /**
-     * the list of stars
-     */
-    private final List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
-
-    /**
-     * the route set
-     */
-    private final Set<StarDisplayRecord> routeSet = new HashSet<>();
-
-    /**
-     * the route descriptor
-     */
-    private RouteDescriptor routeDescriptor;
-
-    /**
-     * true means this plot was part of an in plot context call
-     * false means it was called from outside of the plot
-     */
-    private final boolean plottingContextMode;
-
-    /**
-     * the origin display combo
-     */
+    /** ComboBox for star selection (only used in non-plotting context mode) */
     private ComboBox<String> originDisplayCmb;
 
-    /**
-     * our lookup
-     */
+    // =========================================================================
+    // State
+    // =========================================================================
+
+    /** The currently selected star for route origin */
+    private StarDisplayRecord starDisplayRecord;
+
+    /** The route descriptor being built */
+    private RouteDescriptor routeDescriptor;
+
+    /** True if this dialog was opened from a selected star in the plot */
+    private final boolean plottingContextMode;
+
+    /** Maps star names to their display records for lookup */
     private final Map<String, StarDisplayRecord> starLookup = new HashMap<>();
 
-    /**
-     * whether this is the first time or not
-     */
-    boolean firstTime = true;
+    /** Stars that have been added to the current route */
+    private final Set<StarDisplayRecord> routeSet = new HashSet<>();
+
+    /** Ordered list of stars in the route */
+    private final List<StarDisplayRecord> starDisplayRecordList = new ArrayList<>();
+
+    /** Whether route creation has started */
+    private boolean startRouting = false;
+
+    /** Whether this is the first star selection */
+    private boolean firstTime = true;
+
+    /** Current row for adding route segment labels */
+    private int rowToAdd = 1;
+
+    /** The anchor row where selected stars are displayed */
+    private static final int ANCHOR_ROW = 7;
+
+    // =========================================================================
+    // Constructors
+    // =========================================================================
 
     /**
-     * the start label
-     */
-    private final Label startStarLabel = new Label();
-
-    /**
-     * the start coordinates
-     */
-    private final Label routeStartCoordinates = new Label("0, 0, 0");
-
-    /**
-     * the start plotting button
-     */
-    private final Button startButton = new Button("Start route");
-
-    /**
-     * the remove last segment button
-     */
-    private final Button removeLastBtn = new Button("Remove last segment");
-
-    /**
-     * the color button
-     */
-    private final Button colorButton = new Button("Color");
-
-    /**
-     * the constructor
+     * Constructor for non-plotting context mode.
+     * User will select the starting star from a list.
      *
      * @param routeManager   the route manager
      * @param currentDataSet the current dataset
-     * @param starsInView    the list of stars in view
+     * @param starsInView    the list of stars available for selection
      */
     public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
                                       @NotNull DataSetDescriptor currentDataSet,
                                       @NotNull List<StarDisplayRecord> starsInView) {
-
         this.plottingContextMode = false;
-
         this.routeManager = routeManager;
         this.currentDataSet = currentDataSet;
 
         Set<String> searchValues = convertList(starsInView);
 
+        VBox vBox = initializeDialogPane();
+        setupCommonGridLayout();
+        setupStarSelectionComboBox(searchValues);
+        setupCoordinatesDisplay();
+        setupNotesAndStartSegment(null);
+        HBox buttonBox = createButtonBox();
+        vBox.getChildren().add(buttonBox);
+
+        stage = initializeStage();
+        clearRoute();
+    }
+
+    /**
+     * Constructor for plotting context mode.
+     * The starting star is already selected.
+     *
+     * @param routeManager      the route manager
+     * @param currentDataSet    the current dataset
+     * @param starDisplayRecord the pre-selected starting star
+     */
+    public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
+                                      @NotNull DataSetDescriptor currentDataSet,
+                                      @NotNull StarDisplayRecord starDisplayRecord) {
+        this.plottingContextMode = true;
+        this.routeManager = routeManager;
+        this.currentDataSet = currentDataSet;
+        this.starDisplayRecord = starDisplayRecord;
+
+        starDisplayRecordList.add(starDisplayRecord);
+
+        VBox vBox = initializeDialogPane();
+        setupCommonGridLayout();
+        setupFixedStarDisplay(starDisplayRecord);
+        setupCoordinatesDisplayForStar(starDisplayRecord);
+        setupNotesAndStartSegment(starDisplayRecord.getStarName());
+        HBox buttonBox = createButtonBox();
+        vBox.getChildren().add(buttonBox);
+
+        stage = initializeStage();
+    }
+
+    // =========================================================================
+    // Initialization Helpers
+    // =========================================================================
+
+    private VBox initializeDialogPane() {
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
         vBox.getChildren().add(grid);
-
         this.setTitle("Route Creation Dialog");
         this.setHeaderText("Create an initial Route");
+        return vBox;
+    }
 
+    private void setupCommonGridLayout() {
         grid.setPadding(new Insets(10, 10, 10, 10));
         grid.setVgap(5);
         grid.setHgap(5);
 
+        // Row 1: Route Name
         Label routeNameLabel = new Label("Route Name: ");
         routeNameLabel.setFont(font);
-
         grid.add(routeNameLabel, 1, 1);
         routeName.setText("Route A");
         grid.add(routeName, 2, 1);
 
+        // Row 2: Route Color
         Label routeColorLabel = new Label("Route Color: ");
         routeColorLabel.setFont(font);
-
         grid.add(routeColorLabel, 1, 2);
         colorPicker.setValue(Color.CYAN);
         colorButton.setOnAction(this::setColor);
         grid.add(colorButton, 2, 2);
 
+        // Row 3: Line Width
         Label routeLineWidthLabel = new Label("Route Line Width: ");
         routeLineWidthLabel.setFont(font);
-
         grid.add(routeLineWidthLabel, 1, 3);
-        lineWidthTextField.setText("0.5");
+        lineWidthTextField.setText(String.valueOf(RoutingConstants.DEFAULT_LINE_WIDTH));
         grid.add(lineWidthTextField, 2, 3);
+    }
 
+    private void setupStarSelectionComboBox(Set<String> searchValues) {
         Label routeStartLabel = new Label("Route Starts at: ");
         routeStartLabel.setFont(font);
 
@@ -227,22 +219,51 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
 
         grid.add(routeStartLabel, 1, 4);
         grid.add(originDisplayCmb, 2, 4);
+    }
 
+    private void setupFixedStarDisplay(StarDisplayRecord star) {
+        Label routeStartLabel = new Label("Route Starts at: ");
+        routeStartLabel.setFont(font);
+        Label routeStart = new Label(star.getStarName());
+        grid.add(routeStartLabel, 1, 4);
+        grid.add(routeStart, 2, 4);
+    }
+
+    private void setupCoordinatesDisplay() {
         Label routeStartCoordinatesLabel = new Label("Route Start Coords: ");
         routeStartCoordinatesLabel.setFont(font);
         grid.add(routeStartCoordinatesLabel, 1, 5);
         grid.add(routeStartCoordinates, 2, 5);
+    }
 
+    private void setupCoordinatesDisplayForStar(StarDisplayRecord star) {
+        Label routeStartCoordinatesLabel = new Label("Route Start Coords: ");
+        routeStartCoordinatesLabel.setFont(font);
+        Label coordsLabel = new Label(formatCoordinates(star.getX(), star.getY(), star.getZ()));
+        grid.add(routeStartCoordinatesLabel, 1, 5);
+        grid.add(coordsLabel, 2, 5);
+    }
+
+    private void setupNotesAndStartSegment(@Nullable String starName) {
+        // Row 6: Notes
         Label notesLabel = new Label("Notes: ");
         notesLabel.setFont(font);
         grid.add(notesLabel, 1, 6);
         grid.add(notes, 2, 6);
 
+        // Row 7: Start segment
         Label startSegmentLabel = new Label("Start:");
         startSegmentLabel.setFont(font);
         grid.add(startSegmentLabel, 1, 7);
-        grid.add(startStarLabel, 2, 7);
 
+        if (starName != null) {
+            grid.add(new Label(starName), 2, 7);
+        } else {
+            grid.add(startStarLabel, 2, 7);
+        }
+    }
+
+    private HBox createButtonBox() {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
 
@@ -261,27 +282,169 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         hBox.getChildren().add(removeLastBtn);
         removeLastBtn.setDisable(true);
 
-        Button addBtn = new Button("Close");
-        addBtn.setOnAction(this::closeClicked);
-        hBox.getChildren().add(addBtn);
-        vBox.getChildren().add(hBox);
+        Button closeBtn = new Button("Close");
+        closeBtn.setOnAction(this::closeClicked);
+        hBox.getChildren().add(closeBtn);
 
-        // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
-
-        clearRoute();
+        return hBox;
     }
 
-    private void createRoute() {
-
+    private Stage initializeStage() {
+        Stage stg = (Stage) this.getDialogPane().getScene().getWindow();
+        stg.setOnCloseRequest(this::close);
+        return stg;
     }
+
+    // =========================================================================
+    // Star Selection
+    // =========================================================================
+
+    private void selectStar(ActionEvent actionEvent) {
+        if (!firstTime) {
+            return;
+        }
+
+        String selectedStar = originDisplayCmb.getValue();
+        if (selectedStar == null || selectedStar.trim().isEmpty()) {
+            showWarningMessage("Star Selection", "Please select a star from the list.");
+            return;
+        }
+
+        StarDisplayRecord selectedRecord = starLookup.get(selectedStar);
+        if (selectedRecord == null) {
+            showWarningMessage("Star Selection",
+                    "Star '" + selectedStar + "' not found. Please select from the available stars.");
+            return;
+        }
+
+        starDisplayRecord = selectedRecord;
+        startStarLabel.setText(starDisplayRecord.getStarName());
+        routeStartCoordinates.setText(formatCoordinates(
+                starDisplayRecord.getX(),
+                starDisplayRecord.getY(),
+                starDisplayRecord.getZ()));
+
+        log.info("start star:{}", starDisplayRecord);
+        originDisplayCmb.setDisable(true);
+        firstTime = false;
+        removeLastBtn.setDisable(false);
+    }
+
+    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
+        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
+        return starLookup.keySet();
+    }
+
+    // =========================================================================
+    // Route Management
+    // =========================================================================
 
     /**
-     * set the color for the route
+     * Add a star to the current route.
      *
-     * @param actionEvent the event
+     * @param record the star to add
      */
+    public void addStar(StarDisplayRecord record) {
+        log.info("request to add star to manual plot:{}", record.getStarName());
+        if (!startRouting) {
+            showWarningMessage("Add Route", "Please press start to select parameters for route.");
+            return;
+        }
+
+        if (routeSet.contains(record)) {
+            showErrorAlert("Manual Route finding", "You already have this star in the route.");
+            return;
+        }
+
+        routeManager.continueRoute(record);
+        routeSet.add(record);
+        starDisplayRecordList.add(record);
+
+        Label segmentNameLabel = new Label("segment" + rowToAdd + ":");
+        segmentNameLabel.setFont(font);
+        grid.add(segmentNameLabel, 1, ANCHOR_ROW + rowToAdd);
+        grid.add(new Label(record.getStarName()), 2, ANCHOR_ROW + rowToAdd);
+        rowToAdd++;
+
+        stage.sizeToScene();
+        finishBtn.setDisable(false);
+        removeLastBtn.setDisable(false);
+    }
+
+    private void startRouteClicked(ActionEvent actionEvent) {
+        if (starDisplayRecord == null) {
+            showWarningMessage("Start Route", "Please select a starting star first.");
+            return;
+        }
+
+        double lineWidth = parseLineWidth();
+        routeDescriptor = RouteDescriptor.builder()
+                .name(routeName.getText())
+                .color(colorPicker.getValue())
+                .startStar(starDisplayRecord.getStarName())
+                .routeCoordinates(new ArrayList<>())
+                .lineWidth(lineWidth)
+                .visibility(RouteVisibility.FULL)
+                .routeNotes(notes.getText())
+                .routeList(new ArrayList<>())
+                .build();
+
+        routeSet.add(starDisplayRecord);
+        routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
+        startRouting = true;
+        startButton.setDisable(true);
+    }
+
+    private void finishRouteClicked(ActionEvent actionEvent) {
+        log.info("save route");
+        routeManager.finishRoute();
+        removeLastBtn.setDisable(true);
+        setResult(true);
+    }
+
+    private void resetRoute(ActionEvent actionEvent) {
+        if (!plottingContextMode) {
+            originDisplayCmb.setDisable(false);
+            originDisplayCmb.setValue("");
+            routeStartCoordinates.setText("0, 0, 0");
+            startButton.setDisable(false);
+        }
+        clearRoute();
+
+        // Remove added segment rows
+        for (int i = 1; i <= rowToAdd; i++) {
+            int rowNumber = ANCHOR_ROW + i;
+            grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == rowNumber);
+        }
+
+        stage.sizeToScene();
+        finishBtn.setDisable(true);
+        routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
+        removeLastBtn.setDisable(true);
+    }
+
+    private void removeRouteSegment(ActionEvent actionEvent) {
+        log.info("remove last star segment");
+        StarDisplayRecord lastStar = routeManager.removeLastSegment();
+        if (lastStar != null) {
+            boolean wasThere = routeSet.remove(lastStar);
+            log.info("removing {}, was there={}", lastStar.getStarName(), wasThere);
+        }
+        grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == (ANCHOR_ROW + rowToAdd - 1));
+        rowToAdd--;
+        stage.sizeToScene();
+    }
+
+    private void clearRoute() {
+        routeSet.clear();
+        routeManager.resetRoute();
+        removeLastBtn.setDisable(true);
+    }
+
+    // =========================================================================
+    // Dialog Actions
+    // =========================================================================
+
     private void setColor(ActionEvent actionEvent) {
         ColorChoiceDialog colorChoiceDialog = new ColorChoiceDialog();
         Optional<ColorChoice> colorChoiceOptional = colorChoiceDialog.showAndWait();
@@ -294,185 +457,12 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         }
     }
 
-
-    public ContextManualRoutingDialog(@NotNull RouteManager routeManager,
-                                      @NotNull DataSetDescriptor currentDataSet,
-                                      @NotNull StarDisplayRecord starDisplayRecord) {
-
-        this.plottingContextMode = true;
-
-        this.routeManager = routeManager;
-        this.currentDataSet = currentDataSet;
-
-        this.starDisplayRecord = starDisplayRecord;
-        starDisplayRecordList.add(starDisplayRecord);
-
-        VBox vBox = new VBox();
-        this.getDialogPane().setContent(vBox);
-        vBox.getChildren().add(grid);
-
-        this.setTitle("Route Creation Dialog");
-        this.setHeaderText("Create an initial Route");
-
-        String starName = starDisplayRecord.getStarName();
-        double x = starDisplayRecord.getX();
-        double y = starDisplayRecord.getY();
-        double z = starDisplayRecord.getZ();
-
-        grid.setPadding(new Insets(10, 10, 10, 10));
-        grid.setVgap(5);
-        grid.setHgap(5);
-
-        Label routeNameLabel = new Label("Route Name: ");
-        routeNameLabel.setFont(font);
-
-        grid.add(routeNameLabel, 1, 1);
-        routeName.setText("Route A");
-        grid.add(routeName, 2, 1);
-
-        Label routeColorLabel = new Label("Route Color: ");
-        routeColorLabel.setFont(font);
-
-        grid.add(routeColorLabel, 1, 2);
-        colorPicker.setValue(Color.CYAN);
-
-        colorButton.setOnAction(this::setColor);
-        grid.add(colorButton, 2, 2);
-
-        Label routeLineWidthLabel = new Label("Route Line Width: ");
-        routeLineWidthLabel.setFont(font);
-
-        grid.add(routeLineWidthLabel, 1, 3);
-        lineWidthTextField.setText("0.5");
-        grid.add(lineWidthTextField, 2, 3);
-
-        Label routeStartLabel = new Label("Route Starts at: ");
-        routeStartLabel.setFont(font);
-        Label routeStart = new Label(starName);
-        grid.add(routeStartLabel, 1, 4);
-        grid.add(routeStart, 2, 4);
-
-        Label routeStartCoordinatesLabel = new Label("Route Start Coords: ");
-        routeStartCoordinatesLabel.setFont(font);
-        Label routeStartCoordinates = new Label(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
-        grid.add(routeStartCoordinatesLabel, 1, 5);
-        grid.add(routeStartCoordinates, 2, 5);
-
-        Label notesLabel = new Label("Notes: ");
-        notesLabel.setFont(font);
-        grid.add(notesLabel, 1, 6);
-        grid.add(notes, 2, 6);
-
-        Label startSegmentLabel = new Label("Start:");
-        startSegmentLabel.setFont(font);
-        grid.add(startSegmentLabel, 1, 7);
-        grid.add(new Label(starDisplayRecord.getStarName()), 2, 7);
-
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER);
-
-        startButton.setOnAction(this::startRouteClicked);
-        hBox.getChildren().add(startButton);
-
-        Button resetBtn = new Button("Reset route");
-        resetBtn.setOnAction(this::resetRoute);
-        hBox.getChildren().add(resetBtn);
-
-        removeLastBtn.setOnAction(this::removeRouteSegment);
-        hBox.getChildren().add(removeLastBtn);
-        removeLastBtn.setDisable(true);
-
-        finishBtn.setDisable(true);
-        finishBtn.setOnAction(this::finishRouteClicked);
-        hBox.getChildren().add(finishBtn);
-
-        Button addBtn = new Button("Close");
-        addBtn.setOnAction(this::closeClicked);
-        hBox.getChildren().add(addBtn);
-        vBox.getChildren().add(hBox);
-
-        // set the dialog as a utility
-        stage = (Stage) this.getDialogPane().getScene().getWindow();
-        stage.setOnCloseRequest(this::close);
-
-//        clearRoute();
-    }
-
-
-    private void clearRoute() {
-        routeSet.clear();
-        routeManager.resetRoute();
-        removeLastBtn.setDisable(true);
-    }
-
-
-    private void resetRoute(ActionEvent actionEvent) {
-        if (!plottingContextMode) {
-            originDisplayCmb.setDisable(false);
-            originDisplayCmb.setValue("");
-            routeStartCoordinates.setText("0, 0, 0");
-            startButton.setDisable(false);
-        }
-        clearRoute();
-        for (int i = 1; i <= rowToAdd; i++) {
-            // removing rows
-            int rowNumber = anchorRow + i;
-            grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == rowNumber);
-        }
-        stage.sizeToScene();
-        finishBtn.setDisable(true);
-        routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
-        removeLastBtn.setDisable(true);
-    }
-
-
-    private void removeRouteSegment(ActionEvent actionEvent) {
-        log.info("remove last star segment");
-        StarDisplayRecord lastStar = routeManager.removeLastSegment();
-        boolean wasThere = routeSet.remove(lastStar);
-        log.info("removing {}, was there={}", lastStar.getStarName(), wasThere);
-        grid.getChildren().removeIf(node -> GridPane.getRowIndex(node) == (anchorRow + rowToAdd - 1));
-        rowToAdd--;
-        stage.sizeToScene();
-    }
-
-    private void selectStar(ActionEvent actionEvent) {
-        if (firstTime) {
-            String selectedStar = originDisplayCmb.getValue();
-            starDisplayRecord = starLookup.get(selectedStar);
-            startStarLabel.setText(starDisplayRecord.getStarName());
-
-            double x = starDisplayRecord.getX();
-            double y = starDisplayRecord.getY();
-            double z = starDisplayRecord.getZ();
-            routeStartCoordinates.setText(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
-
-            log.info("start star:{}", starDisplayRecord);
-            originDisplayCmb.setDisable(true);
-            firstTime = false;
-            removeLastBtn.setDisable(false);
-        }
-    }
-
-    private @NotNull Set<String> convertList(@NotNull List<StarDisplayRecord> starsInView) {
-        starsInView.forEach(record -> starLookup.put(record.getStarName(), record));
-        return starLookup.keySet();
-    }
-
-    private void finishRouteClicked(ActionEvent actionEvent) {
-        log.info("save route");
-        routeManager.finishRoute();
-        removeLastBtn.setDisable(true);
-        setResult(true);
-    }
-
     private void closeClicked(ActionEvent actionEvent) {
         if (routeManager.isManualRoutingActive()) {
             routeManager.setManualRoutingActive(false);
         }
         setResult(false);
     }
-
 
     private void close(WindowEvent windowEvent) {
         if (routeManager.isManualRoutingActive()) {
@@ -481,53 +471,21 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
         setResult(false);
     }
 
-    public void addStar(StarDisplayRecord record) {
-        log.info("request to add star to manual plot:{}", record.getStarName());
-        if (startRouting) {
-            if (routeSet.contains(record)) {
-                // can't use this route
-                showErrorAlert("Manual Route finding", "You already have this star in the route.");
-            } else {
-                routeManager.continueRoute(record);
-                routeSet.add(record);
-                starDisplayRecordList.add(record);
-                Label segmentNameLabel = new Label("segment" + rowToAdd + ":");
-                segmentNameLabel.setFont(font);
-                grid.add(segmentNameLabel, 1, anchorRow + rowToAdd);
-                grid.add(new Label(record.getStarName()), 2, anchorRow + rowToAdd);
-                rowToAdd++;
-                stage.sizeToScene();
-                finishBtn.setDisable(false);
-                removeLastBtn.setDisable(false);
-            }
-        } else {
-            showWarningMessage("Add Route", "Please press start to select parameters for route.");
-        }
+    // =========================================================================
+    // Utility Methods
+    // =========================================================================
+
+    private String formatCoordinates(double x, double y, double z) {
+        return String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z);
     }
 
-    private void startRouteClicked(ActionEvent actionEvent) {
-        double lineWidth = 0.5;
+    private double parseLineWidth() {
         try {
-            lineWidth = Double.parseDouble(lineWidthTextField.getText());
+            return Double.parseDouble(lineWidthTextField.getText());
         } catch (NumberFormatException nfe) {
-            log.error(
-                    "{} is not a valid double so defaulting to 0.5",
-                    lineWidthTextField.getText());
+            log.error("{} is not a valid double so defaulting to {}",
+                    lineWidthTextField.getText(), RoutingConstants.DEFAULT_LINE_WIDTH);
+            return RoutingConstants.DEFAULT_LINE_WIDTH;
         }
-        routeDescriptor = RouteDescriptor.builder()
-                .name(routeName.getText())
-                .color(colorPicker.getValue())
-                .startStar(starDisplayRecord.getStarName())
-                .routeCoordinates(new ArrayList<>())
-                .lineWidth(lineWidth)
-                .visibility(RouteVisibility.FULL)
-                .routeNotes(notes.getText())
-                .routeList(new ArrayList<>())
-                .build();
-        routeSet.add(starDisplayRecord);
-        routeManager.startRoute(currentDataSet, routeDescriptor, starDisplayRecord);
-        startRouting = true;
-        startButton.setDisable(true);
     }
-
 }

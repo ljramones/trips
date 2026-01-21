@@ -16,6 +16,7 @@ import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.routing.model.RoutingType;
@@ -253,6 +254,11 @@ public class StarPlotManager {
      */
     private final StarMeasurementService starMeasurementService;
 
+    /**
+     * service for finding routes between stars
+     */
+    private final RouteFindingService routeFindingService;
+
 
     private double controlPaneOffset;
 
@@ -295,6 +301,7 @@ public class StarPlotManager {
     public StarPlotManager(TripsContext tripsContext,
                            RouteManager routeManager,
                            StarMeasurementService starMeasurementService,
+                           RouteFindingService routeFindingService,
                            StarService starService,
                            SolarSystemService solarSystemService,
                            ApplicationEventPublisher eventPublisher) {
@@ -303,6 +310,7 @@ public class StarPlotManager {
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
         this.routeManager = routeManager;
         this.starMeasurementService = starMeasurementService;
+        this.routeFindingService = routeFindingService;
         this.starService = starService;
         this.solarSystemService = solarSystemService;
         this.eventPublisher = eventPublisher;
@@ -921,7 +929,7 @@ public class StarPlotManager {
     private void generateAutomatedRoute(StarDisplayRecord starDescriptor) {
         log.info("generate automated route");
         automatedRoutingDialog = new ContextAutomatedRoutingDialog(
-                this, routeManager, starMeasurementService,
+                this, routeManager, routeFindingService,
                 getCurrentDataSet(), starDescriptor, getCurrentStarsInView());
 
         automatedRoutingDialog.initModality(Modality.NONE);

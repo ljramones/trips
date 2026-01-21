@@ -48,10 +48,23 @@ public class RouteGraph {
         for (TransitRoute transitRoute : transitRoutes) {
             StarDisplayRecord source = transitRoute.getSource();
             StarDisplayRecord destination = transitRoute.getTarget();
+
+            // Skip self-loops
+            if (source.getStarName().equals(destination.getStarName())) {
+                log.debug("Skipping self-loop transit for star: {}", source.getStarName());
+                continue;
+            }
+
             routingGraph.addVertex(source.getStarName());
             routingGraph.addVertex(destination.getStarName());
             DefaultEdge e1 = routingGraph.addEdge(source.getStarName(), destination.getStarName());
-            routingGraph.setEdgeWeight(e1, transitRoute.getDistance());
+
+            // addEdge returns null if edge already exists (duplicate transit)
+            if (e1 != null) {
+                routingGraph.setEdgeWeight(e1, transitRoute.getDistance());
+            } else {
+                log.debug("Duplicate edge skipped: {} -> {}", source.getStarName(), destination.getStarName());
+            }
         }
 
         // setup a connectivity inspector

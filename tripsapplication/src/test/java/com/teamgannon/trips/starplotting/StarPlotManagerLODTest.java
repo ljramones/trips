@@ -8,6 +8,7 @@ import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
@@ -73,6 +74,7 @@ class StarPlotManagerLODTest {
         tripsContext = mock(TripsContext.class);
         routeManager = mock(RouteManager.class);
         starMeasurementService = mock(StarMeasurementService.class);
+        RouteFindingService routeFindingService = mock(RouteFindingService.class);
         starService = mock(StarService.class);
         solarSystemService = mock(SolarSystemService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
@@ -91,6 +93,7 @@ class StarPlotManagerLODTest {
                 tripsContext,
                 routeManager,
                 starMeasurementService,
+                routeFindingService,
                 starService,
                 solarSystemService,
                 eventPublisher

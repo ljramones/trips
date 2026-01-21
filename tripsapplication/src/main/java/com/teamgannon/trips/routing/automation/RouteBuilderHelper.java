@@ -55,15 +55,20 @@ public class RouteBuilderHelper {
         route.setLastStar(lastStar);
         route.setLineWidth(lineWidth);
 
-        Arrays.stream(starList).forEach(name -> {
-            route.getNameList().add(name.trim());
-            StarDisplayRecord starDisplayRecord = starDisplayRecordMap.get(name.trim());
-            route.getRouteList().add(starDisplayRecord.getRecordId());
-        });
+        // Track if any stars are missing for visibility determination
+        boolean hasMissingStar = false;
+        for (String name : starList) {
+            String trimmedName = name.trim();
+            route.getNameList().add(trimmedName);
+            StarDisplayRecord starDisplayRecord = starDisplayRecordMap.get(trimmedName);
+            if (starDisplayRecord != null) {
+                route.getRouteList().add(starDisplayRecord.getRecordId());
+            } else {
+                log.warn("Star '{}' not found in map, skipping route list entry", trimmedName);
+                hasMissingStar = true;
+            }
+        }
 
-
-        // default to Full visibility unless we discover that a star is missing
-        route.setVisibility(RouteVisibility.FULL);
 
         // set segments
         double totalLength = 0;
@@ -83,13 +88,15 @@ public class RouteBuilderHelper {
                     route.addLengthSegment(lengthValue);
                 }
                 route.addLineSegment(starDisplayRecord.getCoordinates());
-
             } else {
-                log.warn("Star: {} is missing on plot", star.trim());
-                route.setVisibility(RouteVisibility.PARTIAL);
+                log.warn("Star '{}' is missing on plot", star.trim());
+                hasMissingStar = true;
             }
         }
         route.setTotalLength(totalLength);
+
+        // Set visibility based on whether any stars were missing
+        route.setVisibility(hasMissingStar ? RouteVisibility.PARTIAL : RouteVisibility.FULL);
 
         // we assume that routes created usingthis method are at least partially visible
 

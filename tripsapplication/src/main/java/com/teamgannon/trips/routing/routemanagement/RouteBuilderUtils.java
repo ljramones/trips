@@ -9,6 +9,8 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,12 +95,15 @@ public class RouteBuilderUtils {
 
         int i = 0;
         Point3D previousPoint = new Point3D(0, 0, 0);
+        List<Double> lengthList = routeDescriptor.getLengthList();
+
         for (Point3D point3D : routeDescriptor.getRouteCoordinates()) {
             if (firstLink) {
                 previousPoint = point3D;
                 firstLink = false;
             } else {
-                double length = routeDescriptor.getLengthList().get(i++);
+                // Safely get length with bounds check
+                double length = (i < lengthList.size()) ? lengthList.get(i++) : 0.0;
                 Label lengthLabel = routeGraphicsUtil.createLabel(firstLink, length);
                 // create the line segment
                 Node lineSegment = routeGraphicsUtil.createLineSegment(previousPoint, point3D, routeDescriptor.getLineWidth(), routeDescriptor.getColor(), lengthLabel);

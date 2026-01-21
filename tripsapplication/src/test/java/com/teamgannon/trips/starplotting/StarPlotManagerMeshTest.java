@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.routing.RouteManager;
+import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
@@ -63,6 +64,7 @@ class StarPlotManagerMeshTest {
 
         RouteManager routeManager = mock(RouteManager.class);
         StarMeasurementService starMeasurementService = mock(StarMeasurementService.class);
+        RouteFindingService routeFindingService = mock(RouteFindingService.class);
         StarService starService = mock(StarService.class);
         SolarSystemService solarSystemService = mock(SolarSystemService.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
@@ -71,6 +73,7 @@ class StarPlotManagerMeshTest {
                 tripsContext,
                 routeManager,
                 starMeasurementService,
+                routeFindingService,
                 starService,
                 solarSystemService,
                 eventPublisher

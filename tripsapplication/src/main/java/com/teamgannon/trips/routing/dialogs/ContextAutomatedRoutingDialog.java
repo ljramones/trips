@@ -1,20 +1,17 @@
 package com.teamgannon.trips.routing.dialogs;
 
-import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.RouteManager;
-import com.teamgannon.trips.routing.automation.RouteBuilderHelper;
-import com.teamgannon.trips.routing.automation.RouteGraph;
+import com.teamgannon.trips.routing.RouteFindingService;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
-import com.teamgannon.trips.routing.model.PossibleRoutes;
+import com.teamgannon.trips.routing.dialogs.components.ExclusionCheckboxPanel;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
+import com.teamgannon.trips.routing.model.RouteFindingResult;
 import com.teamgannon.trips.routing.model.RoutingMetric;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
-import com.teamgannon.trips.transits.TransitRoute;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,8 +21,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -65,46 +60,21 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
     private final Stage stage;
 
-    // star types
-    private final CheckBox oCheckBox = new CheckBox("O");
-    private final CheckBox bCheckBox = new CheckBox("B");
-    private final CheckBox aCheckBox = new CheckBox("A");
-    private final CheckBox fCheckBox = new CheckBox("F");
-    private final CheckBox gCheckBox = new CheckBox("G");
-    private final CheckBox kCheckBox = new CheckBox("K");
-    private final CheckBox mCheckBox = new CheckBox("M");
-    private final CheckBox wCheckBox = new CheckBox("W");
-    private final CheckBox lCheckBox = new CheckBox("L");
-    private final CheckBox tCheckBox = new CheckBox("T");
-    private final CheckBox yCheckBox = new CheckBox("Y");
-    private final CheckBox cCheckBox = new CheckBox("C");
-    private final CheckBox sCheckBox = new CheckBox("S");
+    // Exclusion panels (replaces individual checkboxes)
+    private ExclusionCheckboxPanel spectralClassPanel;
+    private ExclusionCheckboxPanel polityPanel;
 
-    private final CheckBox terranCheckBox = new CheckBox("Terran");
-    private final CheckBox dornaniCheckBox = new CheckBox("Dornani");
-    private final CheckBox ktorCheckBox = new CheckBox("Ktor");
-    private final CheckBox aratKurCheckBox = new CheckBox("Arat kur");
-    private final CheckBox hkhRkhCheckBox = new CheckBox("Hkh'Rkh");
-    private final CheckBox slassrithiCheckBox = new CheckBox("Slaasriithi");
-    private final CheckBox other1CheckBox = new CheckBox("Other 1");
-    private final CheckBox other2CheckBox = new CheckBox("Other 2");
-    private final CheckBox other3CheckBox = new CheckBox("Other 3");
-    private final CheckBox other4CheckBox = new CheckBox("Other 4");
-
-
-    private static final int GRAPH_THRESHOLD = 1500;
-
-    Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+    private final Font font = RoutingConstants.createDialogFont();
 
     private final StarPlotManager plotManager;
     private final RouteManager routeManager;
-    private final StarMeasurementService starMeasurementService;
+    private final RouteFindingService routeFindingService;
     private final DataSetDescriptor currentDataSet;
     private final List<StarDisplayRecord> starsInView;
 
     public ContextAutomatedRoutingDialog(@NotNull StarPlotManager plotManager,
                                          @NotNull RouteManager routeManager,
-                                         StarMeasurementService starMeasurementService,
+                                         @NotNull RouteFindingService routeFindingService,
                                          @NotNull DataSetDescriptor currentDataSet,
                                          @NotNull StarDisplayRecord fromStarDisplayRecord,
                                          @NotNull List<StarDisplayRecord> starsInView) {
@@ -112,7 +82,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
         this.plotManager = plotManager;
         this.routeManager = routeManager;
-        this.starMeasurementService = starMeasurementService;
+        this.routeFindingService = routeFindingService;
         this.currentDataSet = currentDataSet;
         this.starsInView = starsInView;
 
@@ -197,145 +167,49 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 .numberPaths(Integer.parseInt(numPathsToFindTextField.getText()))
                 .build();
 
-        // get the route location parameters from the dialog
-        processRouteRequest(currentDataSet, stage, routeFindingOptions);
+        // Delegate to service
+        processRouteRequest(routeFindingOptions);
     }
 
 
-    private void processRouteRequest(DataSetDescriptor currentDataSet, Stage theStage, RouteFindingOptions routeFindingOptions) {
-
-        // if we actually selected the option to route then do it
-        if (routeFindingOptions.isSelected()) {
-            try {
-                log.info("find route between stars");
-
-                // setup our initials
-                String origin = routeFindingOptions.getOriginStarName();
-                String destination = routeFindingOptions.getDestinationStarName();
-
-                List<StarDisplayRecord> prunedStars = prune(starsInView, routeFindingOptions);
-
-                if (prunedStars.size() > GRAPH_THRESHOLD) {
-                    showErrorAlert("Route Finder", "There are too many stars to plan a route");
-                }
-
-                RouteBuilderHelper routeBuilderHelper = new RouteBuilderHelper(prunedStars);
-
-                // check if the start star is present
-                if (!routeBuilderHelper.has(origin)) {
-                    showErrorAlert("Route Finder", "The start star is not in route");
-                }
-
-                // check if the destination star is present
-                if (!routeBuilderHelper.has(destination)) {
-                    showErrorAlert("Route Finder", "The destination star is not in route");
-                }
-
-                // calculate the transits based on upper and lower bounds
-                DistanceRoutes distanceRoutes = DistanceRoutes
-                        .builder()
-                        .upperDistance(routeFindingOptions.getUpperBound())
-                        .lowerDistance((routeFindingOptions.getLowerBound()))
-                        .build();
-                List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(distanceRoutes, prunedStars);
-                log.info("transits calculated");
-
-                // create a graph based on the transits available
-                RouteGraph routeGraph = new RouteGraph();
-                routeGraph.calculateGraphForTransit(transitRoutes);
-
-                try {
-                    // check if the origin star and destination star are connected to each other
-                    if (routeGraph.isConnected(origin, destination)) {
-                        determineRoutesAndPlotOne(currentDataSet, theStage, routeFindingOptions, origin, destination, routeBuilderHelper, routeGraph);
-                    } else {
-                        log.error("Source and destination stars do not have a path");
-                        showErrorAlert("Route Finder from A to B",
-                                "Unable to find a route between source and destination based on supplied parameters.");
-                    }
-                } catch (Exception e) {
-                    showErrorAlert("Route Finder from A to B",
-                            "Unable to find a route between source and destination based on supplied parameters.");
-                }
-            } catch (Exception e) {
-                log.error("failed to find routes:", e);
-            }
+    private void processRouteRequest(RouteFindingOptions routeFindingOptions) {
+        if (!routeFindingOptions.isSelected()) {
+            return;
         }
+
+        // Delegate to service for route finding
+        RouteFindingResult result = routeFindingService.findRoutes(
+                routeFindingOptions, starsInView, currentDataSet);
+
+        if (!result.isSuccess()) {
+            showErrorAlert("Route Finder", result.getErrorMessage());
+            return;
+        }
+
+        if (!result.hasRoutes()) {
+            showErrorAlert("Route Finder", "No routes found with the given parameters.");
+            return;
+        }
+
+        // Display the found routes for user selection
+        displayFoundRoutes(result);
     }
 
+    private void displayFoundRoutes(@NotNull RouteFindingResult result) {
+        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(result.getRoutes());
+        Stage dialogStage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
+        dialogStage.setAlwaysOnTop(true);
+        dialogStage.toFront();
 
-    private void determineRoutesAndPlotOne(DataSetDescriptor currentDataSet, Stage theStage, RouteFindingOptions routeFindingOptions, String origin, String destination, RouteBuilderHelper routeBuilderHelper, RouteGraph routeGraph) {
-        log.info("Source and destination stars have a path");
-
-        // find the k shortest paths. We add one because the first is null
-        List<String> kShortestPaths = routeGraph.findKShortestPaths(
-                origin, destination, routeFindingOptions.getNumberPaths() + 1);
-//                        kShortestPaths.forEach(System.out::println);
-
-        PossibleRoutes possibleRoutes = new PossibleRoutes();
-        possibleRoutes.setDesiredPath(String.format("Route %s to %s", origin, destination));
-
-        List<RouteDescriptor> routeList = new ArrayList<>();
-        List<String> pathToPlot = new ArrayList<>(kShortestPaths);
-        int i = 1;
-        // for each of our paths create a route
-        for (String path : pathToPlot) {
-            if (path.contains("null")) {
-                // this is a dead path
-                continue;
-            }
-
-            Color color = routeFindingOptions.getColor();
-            if (i > 1) {
-                color = Color.color(Math.random(), Math.random(), Math.random());
-            }
-
-            RouteDescriptor route = routeBuilderHelper.buildPath(
-                    origin, destination, Integer.toString(i++),
-                    color, routeFindingOptions.getLineWidth(), path);
-
-            route.setDescriptor(currentDataSet);
-            routeList.add(route);
-
-            RoutingMetric routingMetric = RoutingMetric
-                    .builder()
-                    .totalLength(route.getTotalLength())
-                    .routeDescriptor(route)
-                    .path(path)
-                    .rank(i - 1)
-                    .numberOfSegments(route.getRouteCoordinates().size())
-                    .build();
-            possibleRoutes.getRoutes().add(routingMetric);
-        }
-
-        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
-        Stage stage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
-        stage.setAlwaysOnTop(true);
-        stage.toFront();
         Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
         if (optionalRoutingMetrics.isPresent()) {
             List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
-            if (selectedRoutingMetrics.size() > 0) {
-                log.info("plotting selected routes:{}", selectedRoutingMetrics);
-                // plot the routes found
+            if (!selectedRoutingMetrics.isEmpty()) {
+                log.info("Plotting {} selected routes", selectedRoutingMetrics.size());
                 plot(currentDataSet, selectedRoutingMetrics);
                 setResult(true);
             }
         }
-    }
-
-    private List<StarDisplayRecord> prune(List<StarDisplayRecord> starsInView, RouteFindingOptions routeFindingOptions) {
-        List<StarDisplayRecord> prunedStars = new ArrayList<>();
-        for (StarDisplayRecord starDisplayRecord : starsInView) {
-            if (routeFindingOptions.getStarExclusions().contains(starDisplayRecord.getSpectralClass().substring(0, 1))) {
-                continue;
-            }
-            if (routeFindingOptions.getPolityExclusions().contains(starDisplayRecord.getPolity())) {
-                continue;
-            }
-            prunedStars.add(starDisplayRecord);
-        }
-        return prunedStars;
     }
 
 
@@ -386,7 +260,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         upperBound.setFont(font);
         gridPane.add(upperBound, 0, 3);
         gridPane.add(upperLengthLengthTextField, 1, 3);
-        upperLengthLengthTextField.setText("8");
+        upperLengthLengthTextField.setText(String.valueOf(RoutingConstants.DEFAULT_UPPER_DISTANCE));
 
         Label lowerBound = new Label("lower limit for route length");
         lowerBound.setFont(font);
@@ -398,7 +272,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         lineWidth.setFont(font);
         gridPane.add(lineWidth, 0, 5);
         gridPane.add(lineWidthTextField, 1, 5);
-        lineWidthTextField.setText("0.5");
+        lineWidthTextField.setText(String.valueOf(RoutingConstants.DEFAULT_LINE_WIDTH));
 
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
@@ -412,7 +286,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         numberPaths.setFont(font);
         gridPane.add(numberPaths, 0, 7);
         gridPane.add(numPathsToFindTextField, 1, 7);
-        numPathsToFindTextField.setText("3");
+        numPathsToFindTextField.setText(String.valueOf(RoutingConstants.DEFAULT_NUMBER_PATHS));
 
     }
 
@@ -429,182 +303,23 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     }
 
     private void setupStarTab(Tab starTab) {
-        VBox vBox = new VBox();
-        starTab.setContent(vBox);
         starTab.setText("Star Exclusions");
-        Label titleLabel = new Label("Select stars to exclude in our route finding");
-        titleLabel.setFont(font);
-        vBox.getChildren().add(titleLabel);
-        vBox.getChildren().add(new Separator());
-
-        HBox hBox = new HBox();
-        vBox.getChildren().add(hBox);
-
-        VBox vBox1 = new VBox();
-        hBox.getChildren().add(vBox1);
-        oCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(oCheckBox);
-        bCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(bCheckBox);
-        aCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(aCheckBox);
-        fCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(fCheckBox);
-
-        VBox vBox2 = new VBox();
-        hBox.getChildren().add(vBox2);
-        gCheckBox.setMinWidth(100);
-        vBox2.getChildren().add(gCheckBox);
-        kCheckBox.setMinWidth(100);
-        vBox2.getChildren().add(kCheckBox);
-        mCheckBox.setMinWidth(100);
-        vBox2.getChildren().add(mCheckBox);
-        wCheckBox.setMinWidth(100);
-        vBox2.getChildren().add(wCheckBox);
-
-        VBox vBox3 = new VBox();
-        hBox.getChildren().add(vBox3);
-        lCheckBox.setMinWidth(100);
-        vBox3.getChildren().add(lCheckBox);
-        tCheckBox.setMinWidth(100);
-        vBox3.getChildren().add(tCheckBox);
-        yCheckBox.setMinWidth(100);
-        vBox3.getChildren().add(yCheckBox);
-        cCheckBox.setMinWidth(100);
-        vBox3.getChildren().add(cCheckBox);
-        sCheckBox.setMinWidth(100);
-        vBox3.getChildren().add(sCheckBox);
-
+        spectralClassPanel = ExclusionCheckboxPanel.createSpectralClassPanel();
+        starTab.setContent(spectralClassPanel);
     }
 
     private void setupPolityTab(Tab polityTab) {
-        VBox vBox = new VBox();
-        polityTab.setContent(vBox);
         polityTab.setText("Polity Exclusions");
-        Label titleLabel = new Label("Select polities to exclude in our route finding");
-        titleLabel.setFont(font);
-        vBox.getChildren().add(titleLabel);
-        vBox.getChildren().add(new Separator());
-
-        HBox hBox = new HBox();
-        vBox.getChildren().add(hBox);
-
-        VBox vBox1 = new VBox();
-        hBox.getChildren().add(vBox1);
-        terranCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(terranCheckBox);
-
-        dornaniCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(dornaniCheckBox);
-
-        ktorCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(ktorCheckBox);
-
-        aratKurCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(aratKurCheckBox);
-
-        hkhRkhCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(hkhRkhCheckBox);
-
-        slassrithiCheckBox.setMinWidth(100);
-        vBox1.getChildren().add(slassrithiCheckBox);
-
-        VBox vBox2 = new VBox();
-        hBox.getChildren().add(vBox2);
-
-        other1CheckBox.setMinWidth(100);
-        vBox2.getChildren().add(other1CheckBox);
-
-        other2CheckBox.setMinWidth(100);
-        vBox2.getChildren().add(other2CheckBox);
-
-        other3CheckBox.setMinWidth(100);
-        vBox2.getChildren().add(other3CheckBox);
-
-        other4CheckBox.setMinWidth(100);
-        vBox2.getChildren().add(other4CheckBox);
-
+        polityPanel = ExclusionCheckboxPanel.createPolityPanel();
+        polityTab.setContent(polityPanel);
     }
 
     private Set<String> getStarExclusions() {
-        Set<String> starExclusions = new HashSet<>();
-        if (oCheckBox.isSelected()) {
-            starExclusions.add("O");
-        }
-        if (bCheckBox.isSelected()) {
-            starExclusions.add("B");
-        }
-        if (aCheckBox.isSelected()) {
-            starExclusions.add("A");
-        }
-        if (fCheckBox.isSelected()) {
-            starExclusions.add("F");
-        }
-        if (gCheckBox.isSelected()) {
-            starExclusions.add("G");
-        }
-        if (kCheckBox.isSelected()) {
-            starExclusions.add("K");
-        }
-        if (mCheckBox.isSelected()) {
-            starExclusions.add("M");
-        }
-        if (wCheckBox.isSelected()) {
-            starExclusions.add("W");
-        }
-        if (lCheckBox.isSelected()) {
-            starExclusions.add("L");
-        }
-        if (tCheckBox.isSelected()) {
-            starExclusions.add("T");
-        }
-        if (yCheckBox.isSelected()) {
-            starExclusions.add("Y");
-        }
-        if (cCheckBox.isSelected()) {
-            starExclusions.add("C");
-        }
-        if (sCheckBox.isSelected()) {
-            starExclusions.add("S");
-        }
-
-        return starExclusions;
+        return spectralClassPanel.getSelectedExclusions();
     }
 
     private Set<String> getPolityExclusions() {
-        Set<String> exclusions = new HashSet<>();
-        if (terranCheckBox.isSelected()) {
-            exclusions.add("Terran");
-        }
-        if (dornaniCheckBox.isSelected()) {
-            exclusions.add("Dornani");
-        }
-        if (ktorCheckBox.isSelected()) {
-            exclusions.add("Ktor");
-        }
-        if (aratKurCheckBox.isSelected()) {
-            exclusions.add("Arat Kur");
-        }
-        if (hkhRkhCheckBox.isSelected()) {
-            exclusions.add("Hkh'rkh");
-        }
-        if (slassrithiCheckBox.isSelected()) {
-            exclusions.add("slassrithi");
-        }
-        if (other1CheckBox.isSelected()) {
-            exclusions.add("Other 1");
-        }
-        if (other2CheckBox.isSelected()) {
-            exclusions.add("Other 2");
-        }
-        if (other3CheckBox.isSelected()) {
-            exclusions.add("Other 3");
-        }
-        if (other4CheckBox.isSelected()) {
-            exclusions.add("Other4");
-        }
-
-        return exclusions;
+        return polityPanel.getSelectedExclusions();
     }
 
     private void close(WindowEvent windowEvent) {

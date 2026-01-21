@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.model;
 
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.routing.RoutingConstants;
 import javafx.scene.paint.Color;
 import lombok.Builder;
 import lombok.Data;
@@ -13,9 +14,11 @@ import java.util.Set;
 @Builder
 public class RouteFindingOptions {
 
-    private double upperBound;
+    @Builder.Default
+    private double upperBound = RoutingConstants.DEFAULT_UPPER_DISTANCE;
 
-    private double lowerBound;
+    @Builder.Default
+    private double lowerBound = RoutingConstants.DEFAULT_LOWER_DISTANCE;
 
     private StarObject originStar;
     private StarObject destinationStar;
@@ -25,13 +28,13 @@ public class RouteFindingOptions {
     private String destinationStarName;
 
     @Builder.Default
-    private double lineWidth = 0.5;
+    private double lineWidth = RoutingConstants.DEFAULT_LINE_WIDTH;
 
     @Builder.Default
     private @NotNull Color color = Color.WHITE;
 
     @Builder.Default
-    private int numberPaths = 3;
+    private int numberPaths = RoutingConstants.DEFAULT_NUMBER_PATHS;
 
     /**
      * the stars to exclude when finding routes
