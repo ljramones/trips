@@ -106,14 +106,6 @@ public class StarPlotManager {
      */
     private static final double FALLBACK_SPHERE_RADIUS = 10.0;
 
-    // =========================================================================
-    // Display Constants - Extensions and Lines
-    // =========================================================================
-
-    /**
-     * Width of extension lines from grid to stars.
-     */
-    private static final double EXTENSION_LINE_WIDTH = 0.3;
 
     // =========================================================================
     // Animation Constants
@@ -188,10 +180,6 @@ public class StarPlotManager {
     @Getter
     private final InterstellarScaleManager scaleManager = new InterstellarScaleManager();
 
-    /**
-     * a graphics object group for extensions
-     */
-    private final Group extensionsGroup = new Group();
 
     /**
      * the stellar group for display
@@ -210,6 +198,17 @@ public class StarPlotManager {
      */
     @Getter
     private final StarLODManager lodManager = new StarLODManager();
+
+    /**
+     * Manages extension lines from the grid to stars.
+     */
+    @Getter
+    private final StarExtensionManager extensionManager = new StarExtensionManager();
+
+    /**
+     * Factory for creating polity indicator objects.
+     */
+    private final PolityObjectFactory polityObjectFactory;
 
     /**
      * to hold all the polities
@@ -270,10 +269,6 @@ public class StarPlotManager {
      */
     private boolean politiesOn = true;
 
-    /**
-     * flag for the extensions from the plane to the star to show height above or below
-     */
-    private boolean extensionsVisible = true;
 
     /**
      * reference to the Route Manager
@@ -304,11 +299,6 @@ public class StarPlotManager {
     private final static String FOUR_PT_STAR = "4PtStar";
     private final static String FIVE_PT_STAR = "5PtStar";
     private final static String PYRAMID = "pyramid";
-    private final static String POLITY_TERRAN = "polity_1";
-    private final static String POLITY_DORNANI = "polity_2";
-    private final static String POLITY_KTOR = "polity_3";
-    private final static String POLITY_ARAT_KUR = "polity_4";
-    private final static String POLITY_HKH_RKH = "polity_5";
 
     /**
      * the special objects
@@ -345,6 +335,9 @@ public class StarPlotManager {
         this.solarSystemService = solarSystemService;
         this.eventPublisher = eventPublisher;
 
+        // Initialize polity object factory
+        this.polityObjectFactory = new PolityObjectFactory(meshViewShapeFactory);
+
         // special graphical objects in MeshView format
         loadSpecialObjects();
     }
@@ -361,7 +354,8 @@ public class StarPlotManager {
         // Initialize label manager with scene references
         labelManager.initialize(sceneRoot, subScene);
 
-        world.getChildren().add(extensionsGroup);
+        // Initialize extension manager
+        extensionManager.initialize(world);
 
         world.getChildren().add(politiesDisplayGroup);
     }
@@ -489,7 +483,7 @@ public class StarPlotManager {
      * @param extensionsOn the extensions flag
      */
     public void toggleExtensions(boolean extensionsOn) {
-        extensionsGroup.setVisible(extensionsOn);
+        extensionManager.toggleExtensions(extensionsOn);
     }
 
     /**
@@ -503,7 +497,7 @@ public class StarPlotManager {
         politiesDisplayGroup.getChildren().clear();
 
         // remove the extension points to the stars
-        extensionsGroup.getChildren().clear();
+        extensionManager.clear();
 
         // reset LOD statistics
         lodManager.resetStatistics();
@@ -587,14 +581,16 @@ public class StarPlotManager {
     public void drawStars(@NotNull CurrentPlot currentPlot, boolean extensionsVisible) {
         this.colorPalette = currentPlot.getColorPalette();
         this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
-        this.extensionsVisible = extensionsVisible;
 
         // Configure LOD manager with center coordinates for distance calculations
         double[] centerCoords = currentPlot.getCenterCoordinates();
         if (centerCoords != null && centerCoords.length >= 3) {
             lodManager.setCenterCoordinates(centerCoords[0], centerCoords[1], centerCoords[2]);
+            // Set reference Z for extension manager (grid plane level)
+            extensionManager.setReferenceZ(centerCoords[2]);
         }
         lodManager.resetStatistics();
+        extensionManager.setExtensionsVisible(extensionsVisible);
 
         for (StarDisplayRecord starDisplayRecord : currentPlot.getStarDisplayRecordList()) {
             plotStar(starDisplayRecord, currentPlot.getCenterStar(),
@@ -782,43 +778,9 @@ public class StarPlotManager {
 
 
     private MeshView getPolityObject(String polity, CivilizationDisplayPreferences polityPreferences) {
-        MeshObjectDefinition meshObjectDefinition = MeshObjectDefinition.builder().build();
-        Color polityColor = polityPreferences.getColorForPolity(polity);
-        switch (polity) {
-            case CivilizationDisplayPreferences.TERRAN, CivilizationDisplayPreferences.SLAASRIITHI -> {
-                meshObjectDefinition = createTerranPolity();
-            }
-            case CivilizationDisplayPreferences.DORNANI, CivilizationDisplayPreferences.OTHER1 -> {
-                meshObjectDefinition = createDornaniPolity();
-            }
-            case CivilizationDisplayPreferences.KTOR, CivilizationDisplayPreferences.OTHER3 -> {
-                meshObjectDefinition = createKtorPolity();
-            }
-            case CivilizationDisplayPreferences.ARAKUR, CivilizationDisplayPreferences.OTHER2 -> {
-                meshObjectDefinition = createAratKurPolity();
-            }
-            case CivilizationDisplayPreferences.HKHRKH, CivilizationDisplayPreferences.OTHER4 -> {
-                meshObjectDefinition = createHkhRkhPolity();
-            }
-            default -> {
-                log.error("unknown polity");
-            }
-        }
-        MeshView polityObject = (MeshView) meshObjectDefinition.getObject();
-        if (polityObject != null) {
-            // set color
-            PhongMaterial material = (PhongMaterial) polityObject.getMaterial();
-            material.setDiffuseColor(polityColor);
-            material.setSpecularColor(polityColor);
-
-            // set size and orient
-            polityObject.setScaleX(meshObjectDefinition.getXScale());
-            polityObject.setScaleY(meshObjectDefinition.getYScale());
-            polityObject.setScaleZ(meshObjectDefinition.getZScale());
-            polityObject.setRotationAxis(meshObjectDefinition.getAxis());
-            polityObject.setRotate(meshObjectDefinition.getRotateAngle());
-        } else {
-            log.error("polity object is null: {}", meshObjectDefinition);
+        MeshView polityObject = polityObjectFactory.createPolityObject(polity, polityPreferences);
+        if (polityObject == null) {
+            log.error("Failed to create polity object for: {}", polity);
         }
         return polityObject;
     }
@@ -907,17 +869,7 @@ public class StarPlotManager {
      * @param record the star
      */
     private void createExtension(@NotNull StarDisplayRecord record) {
-        double zZero = tripsContext.getCurrentPlot().getCenterCoordinates()[2];
-        Point3D point3DFrom = record.getCoordinates();
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), zZero);
-        double lineWidth = colorPalette.getStemLineWidth();
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo,
-                lineWidth, colorPalette.getExtensionColor(), colorPalette.getLabelFont().toFont());
-        extensionsGroup.getChildren().add(lineSegment);
-        // add the extensions group to the world model
-        if (extensionsVisible) {
-            extensionsGroup.setVisible(true);
-        }
+        extensionManager.createExtension(record, colorPalette);
     }
 
     /**
@@ -1327,12 +1279,7 @@ public class StarPlotManager {
     }
 
     private void createExtension(double x, double y, double z, Color extensionColor) {
-        Point3D point3DFrom = new Point3D(x, y, z);
-        Point3D point3DTo = new Point3D(point3DFrom.getX(), point3DFrom.getY(), 0);
-        Node lineSegment = CustomObjectFactory.createLineSegment(point3DFrom, point3DTo, EXTENSION_LINE_WIDTH, extensionColor, colorPalette.getLabelFont().toFont());
-        extensionsGroup.getChildren().add(lineSegment);
-        // add the extensions group to the world model
-        extensionsGroup.setVisible(true);
+        extensionManager.createExtension(x, y, z, extensionColor, colorPalette.getLabelFont().toFont());
     }
 
 
@@ -1365,47 +1312,6 @@ public class StarPlotManager {
     ///////////
 
 
-    private MeshObjectDefinition createTerranPolity() {
-        // load cube as Terran polity
-        MeshView polity1 = meshViewShapeFactory.cube();
-        if (polity1 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_TERRAN)
-                    .id(UUID.randomUUID())
-                    .object(polity1)
-                    .xScale(POLITY_MESH_SCALE)
-                    .yScale(POLITY_MESH_SCALE)
-                    .zScale(POLITY_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 1 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    public MeshObjectDefinition createDornaniPolity() {
-        // load tetrahedron as polity 2
-        MeshView polity2 = meshViewShapeFactory.tetrahedron();
-        if (polity2 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_DORNANI)
-                    .id(UUID.randomUUID())
-                    .object(polity2)
-                    .xScale(POLITY_MESH_SCALE)
-                    .yScale(POLITY_MESH_SCALE)
-                    .zScale(POLITY_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 2 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
 
     /**
      * create a highlight star
@@ -1528,68 +1434,6 @@ public class StarPlotManager {
     }
 
 
-    private MeshObjectDefinition createKtorPolity() {
-        // load icosahedron as polity 3
-        MeshView polity3 = meshViewShapeFactory.icosahedron();
-        if (polity3 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_KTOR)
-                    .id(UUID.randomUUID())
-                    .object(polity3)
-                    .xScale(POLITY_MESH_SCALE)
-                    .yScale(POLITY_MESH_SCALE)
-                    .zScale(POLITY_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 3 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    private MeshObjectDefinition createAratKurPolity() {
-        // load octahedron as polity 4
-        MeshView polity4 = meshViewShapeFactory.octahedron();
-        if (polity4 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_ARAT_KUR)
-                    .id(UUID.randomUUID())
-                    .object(polity4)
-                    .xScale(POLITY_MESH_SCALE)
-                    .yScale(POLITY_MESH_SCALE)
-                    .zScale(POLITY_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 4 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
-
-    private MeshObjectDefinition createHkhRkhPolity() {
-        // load dodecahedron as polity 5
-        MeshView polity5 = meshViewShapeFactory.dodecahedron();
-        if (polity5 != null) {
-            return MeshObjectDefinition
-                    .builder()
-                    .name(POLITY_HKH_RKH)
-                    .id(UUID.randomUUID())
-                    .object(polity5)
-                    .xScale(POLITY_MESH_SCALE)
-                    .yScale(POLITY_MESH_SCALE)
-                    .zScale(POLITY_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-        } else {
-            log.error("Unable to load the polity 5 object");
-            return MeshObjectDefinition.builder().build();
-        }
-    }
 
     /**
      * create an enter system object
