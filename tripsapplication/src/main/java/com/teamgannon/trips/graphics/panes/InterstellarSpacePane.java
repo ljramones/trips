@@ -266,7 +266,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
         routeManager.updateLabels();
 
-        transitManager.updateLabels(this);
+        transitManager.updateLabels();
     }
 
 

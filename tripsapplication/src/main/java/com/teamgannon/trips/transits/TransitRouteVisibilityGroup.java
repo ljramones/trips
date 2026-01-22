@@ -1,221 +1,119 @@
 package com.teamgannon.trips.transits;
 
-import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.SerialFont;
-import com.teamgannon.trips.dialogs.routing.RouteDialog;
-import com.teamgannon.trips.dialogs.routing.RouteSelector;
-import com.teamgannon.trips.events.NewRouteEvent;
-import com.teamgannon.trips.events.RoutingStatusEvent;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
-import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
-import javafx.scene.control.*;
-import org.springframework.context.ApplicationEventPublisher;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.SubScene;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-import java.util.*;
-
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-
+/**
+ * Manages the visualization of transit routes for a specific transit band.
+ * Handles 3D line rendering, labels, and user interaction via context menus.
+ */
 @Slf4j
-@Data
 public class TransitRouteVisibilityGroup {
 
-    /**
-     * TRIPS application context
-     */
-    private TripsContext tripsContext;
+    private final TransitGraphicsContext context;
+    private final TransitRangeDef transitRangeDef;
 
-    /**
-     * star measurement service
-     */
-    private final StarMeasurementService starMeasurementService;
+    @Getter
+    private final Group group;
 
-    /**
-     * reference to the interstellar pane
-     */
-    private InterstellarSpacePane interstellarSpacePane;
+    @Getter
+    private final Group labelGroup;
 
-    /**
-     * whether this is currently visible
-     * just a marker since it doesn't actually actual set the group visibility
-     */
-    private boolean visible;
+    @Getter
+    private final String groupName;
 
-    /**
-     * the labels can be visible or not if the transit group is visible
-     * but if the visible flag is set to false (no show) then this is also to be not shown
-     */
-    private boolean labelsVisible;
+    @Getter
+    private final UUID groupId;
 
-    /**
-     * the containing group for the thransit line segments contained here
-     */
-    private Group group;
-
-    /**
-     * the label group for any labels defined here
-     */
-    private Group labelGroup;
-
-    /**
-     * the name of the group
-     */
-    private String groupName;
-
-    /**
-     * used to act as an index
-     */
-    private UUID groupId;
-
-    /**
-     * lookup for transits
-     */
     private final Map<String, TransitRoute> transitRouteMap = new HashMap<>();
-
-    /**
-     * transit links
-     */
-    private List<TransitRoute> transitRouteList = new ArrayList<>();
-
-    /**
-     * used to map a given label to a point sphere
-     */
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
-    /**
-     * used to make label appear always flat to the glass pane
-     */
-    private SubScene subScene;
-
+    private static final double LABEL_PADDING = TransitConstants.LABEL_PADDING;
+    private static final double LABEL_EDGE_MARGIN = TransitConstants.LABEL_EDGE_MARGIN;
 
     /**
-     * the transit range ref used to describe any of this
-     */
-    private TransitRangeDef transitRangeDef;
-
-
-    /**
-     * the route descriptor
-     */
-    private @Nullable RouteDescriptor routeDescriptor;
-
-    /**
-     * used to track an active routing effort
-     */
-    private boolean routingActive = false;
-
-    /**
-     * used to track the current rout list
-     */
-    private final List<TransitRoute> currentRouteList = new ArrayList<>();
-
-    private final ApplicationEventPublisher eventPublisher;
-
-    /**
-     * current dataset
-     */
-    private DataSetDescriptor dataSetDescriptor;
-
-    private double controlPaneOffset;
-
-
-    //////////////////////
-
-    /**
-     * the constructor
+     * Create a new transit visibility group.
      *
-     * @param transitRangeDef the transit group definition
+     * @param context         shared graphics context and services
+     * @param transitRangeDef the transit band definition
      */
-    public TransitRouteVisibilityGroup(SubScene subScene,
-                                       InterstellarSpacePane interstellarSpacePane,
-                                       StarMeasurementService starMeasurementService,
-                                       double controlPaneOffset,
-                                       TransitRangeDef transitRangeDef,
-                                       ApplicationEventPublisher eventPublisher,
-                                       TripsContext tripsContext
-    ) {
-        this.subScene = subScene;
-        this.interstellarSpacePane = interstellarSpacePane;
-        this.starMeasurementService = starMeasurementService;
-        this.controlPaneOffset = controlPaneOffset;
+    public TransitRouteVisibilityGroup(TransitGraphicsContext context, TransitRangeDef transitRangeDef) {
+        this.context = context;
         this.transitRangeDef = transitRangeDef;
-        this.eventPublisher = eventPublisher;
-        this.tripsContext = tripsContext;
-        visible = false;
-        labelsVisible = false;
-        group = new Group();
-        labelGroup = new Group();
-        groupName = transitRangeDef.getBandName();
-        groupId = transitRangeDef.getBandId();
+
+        this.group = new Group();
+        this.labelGroup = new Group();
+        this.groupName = transitRangeDef.getBandName();
+        this.groupId = transitRangeDef.getBandId();
+
+        group.setVisible(false);
+        labelGroup.setVisible(false);
     }
 
+    /**
+     * Toggle visibility of transit lines and labels.
+     */
     public void toggleTransit(boolean show) {
         group.setVisible(show);
         labelGroup.setVisible(show);
-        visible = true;
     }
 
+    /**
+     * Toggle visibility of labels only (if transits are visible).
+     */
     public void toggleLabels(boolean show) {
-        if (visible) {
+        if (group.isVisible()) {
             labelGroup.setVisible(show);
         }
     }
 
+    /**
+     * Clear all transit visualizations.
+     */
     public void clear() {
         labelGroup.getChildren().clear();
         group.getChildren().clear();
         shapeToLabel.clear();
-        visible = false;
-    }
-
-
-    /////////////////////////////////////////
-
-    public void plotTransit(TransitRangeDef transitRangeDef, List<StarDisplayRecord> starsInView) {
-        List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(transitRangeDef, starsInView);
-        log.info("# of routes found is {}", transitRoutes.size());
-
-        MapUtils.populateMap(transitRouteMap,
-                transitRoutes,
-                TransitRoute::getName);
-
-        plotTransitRoutes(transitRoutes);
+        transitRouteMap.clear();
     }
 
     /**
-     * plot the transit routes
-     *
-     * @param transitRoutes the transit routes
+     * Plot transits for the given stars within the transit range.
      */
-    private void plotTransitRoutes(@NotNull List<TransitRoute> transitRoutes) {
-        visible = true;
-        labelsVisible = true;
+    public void plotTransit(TransitRangeDef transitRangeDef, List<StarDisplayRecord> starsInView) {
+        List<TransitRoute> transitRoutes = context.getDistanceCalculator()
+                .calculateDistances(transitRangeDef, starsInView);
+        log.debug("# of routes found is {}", transitRoutes.size());
 
+        MapUtils.populateMap(transitRouteMap, transitRoutes, TransitRoute::getName);
+        plotTransitRoutes(transitRoutes);
+    }
+
+    private void plotTransitRoutes(@NotNull List<TransitRoute> transitRoutes) {
         for (TransitRoute transitRoute : transitRoutes) {
-            log.info("transit: {}", transitRoute);
+            log.debug("transit: {}", transitRoute);
             Label lengthLabel = createLabel(transitRoute);
 
             Node transitSegment = createLineSegment(
@@ -225,39 +123,27 @@ public class TransitRouteVisibilityGroup {
                     transitRoute.getColor(),
                     lengthLabel);
             transitSegment.setUserData(transitRoute);
+
             Tooltip tooltip = new Tooltip(hoverText(transitRoute));
             Tooltip.install(transitSegment, tooltip);
+
             createContextMenu(transitSegment);
             group.getChildren().add(transitSegment);
         }
-        updateLabels(subScene, controlPaneOffset, interstellarSpacePane.getWidth(),
-                interstellarSpacePane.getHeight(), interstellarSpacePane.getBoundsInParent());
 
-        group.setVisible(visible);
-        labelGroup.setVisible(visible);
+        group.setVisible(true);
+        labelGroup.setVisible(true);
     }
-
 
     private @NotNull String hoverText(@NotNull TransitRoute transitRoute) {
         return "transit: "
                 + transitRoute.getSource().getStarName() + " <--> "
-                + transitRoute.getTarget().getStarName() + "is "
-                + String.format("%.2f", transitRoute.getDistance()) + " ";
+                + transitRoute.getTarget().getStarName() + " is "
+                + String.format("%.2f", transitRoute.getDistance()) + " ly";
     }
 
-
-    /**
-     * create a line segment
-     *
-     * @param origin      the start point
-     * @param target      the finish point
-     * @param lineWeight  the line width
-     * @param color       the line color
-     * @param lengthLabel the length label
-     * @return the 3-d line
-     */
-    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target, double lineWeight, Color color, @NotNull Label lengthLabel) {
-
+    private @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target,
+                                            double lineWeight, Color color, @NotNull Label lengthLabel) {
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
         double height = diff.magnitude();
@@ -269,102 +155,58 @@ public class TransitRouteVisibilityGroup {
         double angle = Math.acos(diff.normalize().dotProduct(yAxis));
         Rotate rotateAroundCenter = new Rotate(-Math.toDegrees(angle), axisOfRotation);
 
-        // create cylinder and color it with phong material
-        Cylinder line = StellarEntityFactory.createCylinder(lineWeight, color, height);
+        var line = StellarEntityFactory.createCylinder(lineWeight, color, height);
 
         Group lineGroup = new Group();
-
         line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
         lineGroup.getChildren().add(line);
 
-        if (labelsVisible) {
-            // attach label
-            Sphere pointSphere = createPointSphere(lengthLabel);
-            pointSphere.setTranslateX(mid.getX());
-            pointSphere.setTranslateY(mid.getY());
-            pointSphere.setTranslateZ(mid.getZ());
-            lengthLabel.setTextFill(color);
-            lineGroup.getChildren().add(pointSphere);
-            if (!shapeToLabel.containsValue(lengthLabel)) {
-                shapeToLabel.put(pointSphere, lengthLabel);
-                labelGroup.getChildren().add(lengthLabel);
-            } else {
-                log.warn("what is <{}> present twice", lengthLabel.getText());
-            }
+        // Always create label attachment point
+        Sphere pointSphere = createPointSphere(lengthLabel);
+        pointSphere.setTranslateX(mid.getX());
+        pointSphere.setTranslateY(mid.getY());
+        pointSphere.setTranslateZ(mid.getZ());
+        lengthLabel.setTextFill(color);
+        lineGroup.getChildren().add(pointSphere);
+
+        if (!shapeToLabel.containsValue(lengthLabel)) {
+            shapeToLabel.put(pointSphere, lengthLabel);
+            labelGroup.getChildren().add(lengthLabel);
+        } else {
+            log.warn("Label <{}> already present", lengthLabel.getText());
         }
 
         return lineGroup;
     }
 
-    /**
-     * create an attachment point for the label
-     *
-     * @param label the label to add
-     * @return the attachment point
-     */
     private @NotNull Sphere createPointSphere(@NotNull Label label) {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.WHEAT);
         material.setSpecularColor(Color.WHEAT);
-        Sphere sphere = new Sphere(1);
+        Sphere sphere = new Sphere(TransitConstants.LABEL_ANCHOR_SPHERE_RADIUS);
         sphere.setMaterial(material);
         label.setLabelFor(sphere);
-        labelGroup.getChildren().add(label);
-        shapeToLabel.put(sphere, label);
         return sphere;
     }
 
-    /**
-     * create a label
-     *
-     * @param transitRoute the transit route
-     * @return the label
-     */
     private @NotNull Label createLabel(@NotNull TransitRoute transitRoute) {
         Label label = new Label(String.format(" %.2f ", transitRoute.getDistance()));
-        SerialFont serialFont = tripsContext.getCurrentPlot().getColorPalette().getLabelFont();
+        SerialFont serialFont = context.getTripsContext().getCurrentPlot().getColorPalette().getLabelFont();
         label.setFont(serialFont.toFont());
         return label;
     }
 
-    ///////////////
-
-    /**
-     * create a popup context menu
-     *
-     * @param transitSegment the line segment to point and attach the menu to
-     */
     private void createContextMenu(@NotNull Node transitSegment) {
         TransitRoute route = (TransitRoute) transitSegment.getUserData();
         ContextMenu transitContextMenu = createPopup(hoverText(route), transitSegment);
 
         transitSegment.addEventHandler(
                 MouseEvent.MOUSE_CLICKED,
-                e -> transitClickEventHandler(transitSegment, transitContextMenu, e));
-
-        transitSegment.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            TransitRoute transitRoute = (TransitRoute) node.getUserData();
-            log.info("mouse click detected! " + transitRoute);
-        });
-
-    }
-
-
-    /**
-     * the event handler if you click the line sgement
-     *
-     * @param transitSegment     the line segment
-     * @param transitContextMenu the context menu
-     * @param e                  the mouse event
-     */
-    private void transitClickEventHandler(Node transitSegment, @NotNull ContextMenu transitContextMenu, @NotNull MouseEvent e) {
-        if (e.getButton() == MouseButton.PRIMARY) {
-            log.info("Primary button pressed");
-            transitContextMenu.show(transitSegment, e.getScreenX(), e.getScreenY());
-        } else {
-            log.info("not primary button pressed");
-        }
+                e -> {
+                    if (e.getButton() == MouseButton.PRIMARY) {
+                        transitContextMenu.show(transitSegment, e.getScreenX(), e.getScreenY());
+                    }
+                });
     }
 
     private @NotNull ContextMenu createPopup(String hoverText, @NotNull Node transitSegment) {
@@ -374,230 +216,113 @@ public class TransitRouteVisibilityGroup {
         titleItem.setDisable(true);
         cm.getItems().add(titleItem);
 
-        MenuItem createRouteMenuItem = createNewRoute(transitSegment);
-        cm.getItems().add(createRouteMenuItem);
-
-        MenuItem addRouteMenuItem = addToRoute(transitSegment);
-        cm.getItems().add(addRouteMenuItem);
-
-        MenuItem completeRouteMenuItem = completeTheRoute(transitSegment);
-        cm.getItems().add(completeRouteMenuItem);
-
+        cm.getItems().add(createNewRouteMenuItem(transitSegment));
+        cm.getItems().add(createAddToRouteMenuItem(transitSegment));
+        cm.getItems().add(createCompleteRouteMenuItem(transitSegment));
         cm.getItems().add(new SeparatorMenuItem());
-
-        MenuItem removeTransitMenuItem = removeTransit(transitSegment);
-        cm.getItems().add(removeTransitMenuItem);
+        cm.getItems().add(createRemoveTransitMenuItem(transitSegment));
 
         return cm;
     }
 
-    private @NotNull MenuItem removeTransit(@NotNull Node transitSegment) {
+    private @NotNull MenuItem createRemoveTransitMenuItem(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Remove");
         menuItem.setOnAction(event -> {
             TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
             group.getChildren().remove(transitSegment);
-            removeTransit(transitRoute);
-            log.info("remove");
+            transitRouteMap.remove(transitRoute.getName());
+            log.debug("Removed transit: {}", transitRoute.getName());
         });
         return menuItem;
     }
 
-    ///////////////////////  ROUTING  ////////////////////
-
-    /**
-     * remove a transit segment
-     *
-     * @param transitRoute the transit segment
-     */
-    private void removeTransit(@NotNull TransitRoute transitRoute) {
-        transitRouteMap.remove(transitRoute.getName());
-        transitRouteList = new ArrayList<>(transitRouteMap.values());
-        MapUtils.populateMap(transitRouteMap,
-                transitRouteList,
-                TransitRoute::getName);
-    }
-
-    /**
-     * create a menutitem for create new route
-     *
-     * @param transitSegment the line segment
-     * @return the menu item
-     */
-    private @NotNull MenuItem createNewRoute(@NotNull Node transitSegment) {
+    private @NotNull MenuItem createNewRouteMenuItem(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Create New Route");
         menuItem.setOnAction(event -> {
-            if (currentRouteList.size() > 0) {
-                Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                        "Restart Route?",
-                        "You have a route in progress, Ok will clear current?");
-
-                if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
-                    currentRouteList.clear();
-                    createRoute(transitSegment);
-                    eventPublisher.publishEvent(new RoutingStatusEvent(this, true));
-                }
-            } else {
-                createRoute(transitSegment);
-                eventPublisher.publishEvent(new RoutingStatusEvent(this, true));
-            }
+            TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
+            context.getRouteBuilderService().startNewRoute(transitRoute);
         });
         return menuItem;
     }
 
-
-    private void createRoute(@NotNull Node transitSegment) {
-        TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-        RouteDialog dialog = new RouteDialog(transitRoute.getSource());
-        Optional<RouteSelector> resultOptional = dialog.showAndWait();
-        if (resultOptional.isPresent()) {
-            RouteSelector routeSelector = resultOptional.get();
-            if (routeSelector.isSelected()) {
-                currentRouteList.clear();
-                routingActive = true;
-                routeDescriptor = routeSelector.getRouteDescriptor();
-                routeDescriptor.setStartStar(transitRoute.getSource().getStarName());
-                routeDescriptor.getRouteList().add(transitRoute.getSource().getRecordId());
-                currentRouteList.add(transitRoute);
-                log.info("new route");
-            }
-        }
-    }
-
-    private @NotNull MenuItem addToRoute(@NotNull Node transitSegment) {
+    private @NotNull MenuItem createAddToRouteMenuItem(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Add To Route");
         menuItem.setOnAction(event -> {
-            if (routingActive) {
-                TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-                currentRouteList.add(transitRoute);
-                log.info("add to route");
-            } else {
-                showErrorAlert("Link Routing", "start a route first");
-            }
+            TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
+            context.getRouteBuilderService().addToRoute(transitRoute);
         });
         return menuItem;
     }
 
-    private @NotNull MenuItem completeTheRoute(@NotNull Node transitSegment) {
+    private @NotNull MenuItem createCompleteRouteMenuItem(@NotNull Node transitSegment) {
         MenuItem menuItem = new MenuItem("Complete Route");
         menuItem.setOnAction(event -> {
-            if (routingActive) {
-                TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
-                currentRouteList.add(transitRoute);
-                constructRoute();
-                log.info("complete route");
-            } else {
-                showErrorAlert("Link Routing", "start a route first");
-            }
+            TransitRoute transitRoute = (TransitRoute) transitSegment.getUserData();
+            context.getRouteBuilderService().completeRoute(transitRoute);
         });
         return menuItem;
     }
 
-    private void constructRoute() {
-        log.info("validate the ");
-        for (TransitRoute transitRoute : currentRouteList) {
-            routeDescriptor.getRouteCoordinates().add(transitRoute.getTargetEndpoint());
-            routeDescriptor.getRouteList().add(transitRoute.getTarget().getRecordId());
-        }
-        eventPublisher.publishEvent(new NewRouteEvent(this, dataSetDescriptor, routeDescriptor));
-    }
-
-    /////////////////////////////////////////
-
     /**
-     * update the labels for this transit group
-     *
-     * @param subScene          the embedded subscene
-     * @param controlPaneOffset the control panel offset
-     * @param width             the width
-     * @param height            the height
-     * @param ofParent          the parent bounds
+     * Update label positions after view rotation/zoom.
+     * Uses two-step coordinate transformation for proper tracking.
      */
-    public void updateLabels(SubScene subScene, double controlPaneOffset, double width, double height, Bounds ofParent) {
-        if (visible) {
-            for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
-                Node node = entry.getKey();
-                Label label = entry.getValue();
-                Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+    public void updateLabels() {
+        if (!group.isVisible()) {
+            return;
+        }
 
-                // we need to check if the coordinates work within the displayable area
-                if (!clip(coordinates, width, height)) {
+        var subScene = context.getSubScene();
+        var pane = context.getInterstellarSpacePane();
+        double controlPaneOffset = context.getControlPaneOffset();
+        Bounds ofParent = pane.getBoundsInParent();
 
-                    //Clipping Logic
-                    //if coordinates are outside of the scene it could
-                    //stretch the screen so don't transform them
-                    double xs = coordinates.getX();
-                    double ys = coordinates.getY();
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
 
-                    // configure visibility
-                    if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
-                        label.setVisible(false);
-                        continue;
-                    } else {
-                        label.setVisible(true);
-                    }
-                    if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
-                        label.setVisible(false);
-                        continue;
-                    } else {
-                        label.setVisible(true);
-                    }
-
-                    ///////////////////
-
-                    double x;
-                    double y;
-
-                    if (ofParent.getMinX() > 0) {
-                        x = xs - ofParent.getMinX();
-                    } else {
-                        x = xs;
-                    }
-                    if (ofParent.getMinY() >= 0) {
-                        y = ys - ofParent.getMinY() - controlPaneOffset;
-                    } else {
-                        y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
-                    }
-
-                    // is it left of the view?
-                    if (x < 0) {
-                        x = 0;
-                    }
-
-                    // is it right of the view?
-                    if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                        x = subScene.getWidth() - (label.getWidth() + 5);
-                    }
-
-                    // is it above the view?
-                    if (y < 0) {
-                        y = 0;
-                    }
-
-                    // is it below the view
-                    if ((y + label.getHeight()) > subScene.getHeight()) {
-                        y = subScene.getHeight() - (label.getHeight() + 5);
-                    }
-
-                    //update the local transform of the label.
-                    label.getTransforms().setAll(new Translate(x, y));
-                } else {
-                    log.info("label:{} are {},{} is outside area", label, coordinates.getX(), coordinates.getY());
-                }
+            if (Double.isNaN(node.getTranslateX()) || Double.isNaN(node.getTranslateY()) || Double.isNaN(node.getTranslateZ())) {
+                label.setVisible(false);
+                continue;
             }
+
+            Point3D sceneCoords = node.localToScene(Point3D.ZERO, true);
+
+            if (Double.isNaN(sceneCoords.getX()) || Double.isNaN(sceneCoords.getY())) {
+                label.setVisible(false);
+                continue;
+            }
+
+            double xs = sceneCoords.getX();
+            double ys = sceneCoords.getY();
+
+            if (xs < (ofParent.getMinX() + LABEL_PADDING) || xs > (ofParent.getMaxX() - LABEL_PADDING)) {
+                label.setVisible(false);
+                continue;
+            }
+            if (ys < (controlPaneOffset + LABEL_PADDING) || ys > (ofParent.getMaxY() - LABEL_PADDING)) {
+                label.setVisible(false);
+                continue;
+            }
+
+            label.setVisible(true);
+
+            javafx.geometry.Point2D localPoint = labelGroup.sceneToLocal(xs, ys);
+            double x = localPoint.getX();
+            double y = localPoint.getY() - controlPaneOffset;
+
+            x = Math.max(0, x);
+            y = Math.max(0, y);
+
+            if ((x + label.getWidth() + LABEL_EDGE_MARGIN) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + LABEL_EDGE_MARGIN);
+            }
+
+            if ((y + label.getHeight()) > subScene.getHeight()) {
+                y = subScene.getHeight() - (label.getHeight() + LABEL_EDGE_MARGIN);
+            }
+
+            label.getTransforms().setAll(new Translate(x, y));
         }
     }
-
-    /**
-     * the clipping function
-     *
-     * @param coordinates the coordinates
-     * @param width       the screen width
-     * @param height      the sccreen height
-     * @return true is clip, false is keep
-     */
-    private boolean clip(Point3D coordinates, double width, double height) {
-//        return abs(coordinates.getX()) < width/2 && abs(coordinates.getY()) < height/2;
-        return false;
-    }
-
 }

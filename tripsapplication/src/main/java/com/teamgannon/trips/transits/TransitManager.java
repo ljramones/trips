@@ -3,13 +3,11 @@ package com.teamgannon.trips.transits;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.Group;
 import javafx.scene.SubScene;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -17,243 +15,189 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Manages transit visualization across all transit bands.
+ * Coordinates TransitRouteVisibilityGroup instances and their scene graph placement.
+ */
 @Slf4j
 @Component
 public class TransitManager {
 
-    /**
-     * the transit map which is associated with a specific id
-     */
     private final Map<UUID, TransitRouteVisibilityGroup> transitMap = new HashMap<>();
 
-    /**
-     * the graphical element controlling transits
-     */
     private Group transitGroup;
-
-    /**
-     * the label display
-     */
     private final Group labelDisplayGroup = new Group();
 
-    /**
-     * subscene used to display labels in a flat glass manner
-     */
-    private SubScene subScene;
-
-    /**
-     * event publisher for route events
-     */
-    private final ApplicationEventPublisher eventPublisher;
     private final TripsContext tripsContext;
-    private final StarMeasurementService starMeasurementService;
+    private final TransitCalculatorFactory calculatorFactory;
+    private final TransitRouteBuilderService routeBuilderService;
+
+    // Graphics state for building context
+    private SubScene subScene;
     private InterstellarSpacePane interstellarSpacePane;
-
-    /**
-     * whether the transits are visible or not
-     */
-    private boolean transitsOn;
-
-    private boolean transitsLengthsOn = true;
-    /**
-     * -- SETTER --
-     *  used to add an offset for the screen
-     *
-     * @param controlPaneOffset the offset from the top to properly display this
-     */
-    @Setter
     private double controlPaneOffset;
 
-
-    ////////////////
-
-    /**
-     * constructor
-     */
     public TransitManager(TripsContext tripsContext,
-                          StarMeasurementService starMeasurementService,
-                          ApplicationEventPublisher eventPublisher) {
-
-        // our graphics world
+                          TransitCalculatorFactory calculatorFactory,
+                          TransitRouteBuilderService routeBuilderService) {
         this.tripsContext = tripsContext;
-        this.starMeasurementService = starMeasurementService;
-        this.eventPublisher = eventPublisher;
+        this.calculatorFactory = calculatorFactory;
+        this.routeBuilderService = routeBuilderService;
     }
 
+    /**
+     * Initialize graphics references. Must be called before using transit features.
+     */
     public void setGraphics(Group sceneRoot,
                             Group world,
                             SubScene subScene,
                             InterstellarSpacePane interstellarSpacePane) {
-
         this.interstellarSpacePane = interstellarSpacePane;
-
         this.subScene = subScene;
         transitGroup = new Group();
         world.getChildren().add(transitGroup);
         sceneRoot.getChildren().add(labelDisplayGroup);
     }
 
+    /**
+     * Set the control pane offset for label positioning.
+     */
+    public void setControlPaneOffset(double controlPaneOffset) {
+        this.controlPaneOffset = controlPaneOffset;
+    }
 
     /**
-     * finds all the transits for stars in view
+     * Set the current dataset for route building.
+     */
+    public void setDataSetDescriptor(DataSetDescriptor descriptor) {
+        routeBuilderService.setDataSetDescriptor(descriptor);
+    }
+
+    /**
+     * Build the graphics context for creating visibility groups.
      *
-     * @param transitDefinitions the distance range selected
-     * @param starsInView        the stars in the current plot
+     * @param starCount the number of stars being processed (used to select optimal algorithm)
+     */
+    private TransitGraphicsContext buildContext(int starCount) {
+        ITransitDistanceCalculator calculator = calculatorFactory.getCalculator(starCount);
+        return TransitGraphicsContext.builder()
+                .subScene(subScene)
+                .interstellarSpacePane(interstellarSpacePane)
+                .controlPaneOffset(controlPaneOffset)
+                .distanceCalculator(calculator)
+                .routeBuilderService(routeBuilderService)
+                .tripsContext(tripsContext)
+                .build();
+    }
+
+    /**
+     * Find and display transits for stars in view.
+     * <p>
+     * Automatically selects the optimal algorithm based on star count:
+     * <ul>
+     *   <li>≤ 100 stars: O(n²) brute-force (lower overhead)</li>
+     *   <li>> 100 stars: O(n log n) KD-Tree with parallel queries</li>
+     * </ul>
      */
     public void findTransits(TransitDefinitions transitDefinitions, @NotNull List<StarDisplayRecord> starsInView) {
-        // clear existing
         clearTransits();
 
-        // set
-        transitsLengthsOn = true;
-        transitsOn = true;
+        log.debug("Finding transits for {} stars", starsInView.size());
+        TransitGraphicsContext context = buildContext(starsInView.size());
         List<TransitRangeDef> transitRangeDefList = transitDefinitions.getTransitRangeDefs();
 
         for (TransitRangeDef transitRangeDef : transitRangeDefList) {
             if (transitRangeDef.isEnabled()) {
-                // create a transit visibilty group
-                TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(
-                        subScene, interstellarSpacePane, starMeasurementService,
-                        controlPaneOffset, transitRangeDef, eventPublisher, tripsContext);
-
-                // plot the visibility group
+                TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(context, transitRangeDef);
                 visibilityGroup.plotTransit(transitRangeDef, starsInView);
-
-                // install it
                 installGroup(visibilityGroup);
             }
         }
-        updateLabels(interstellarSpacePane);
 
-        log.info("done transits");
+        updateLabels();
+        log.debug("Transits computed and displayed");
     }
 
-    /**
-     * install the visibility group
-     *
-     * @param visibilityGroup the visibility group
-     */
     private void installGroup(TransitRouteVisibilityGroup visibilityGroup) {
-
-        // map visibility group by id
         transitMap.put(visibilityGroup.getGroupId(), visibilityGroup);
-
-        // add this visibility group to the overall transit group
         transitGroup.getChildren().add(visibilityGroup.getGroup());
-
-        // add the internal label group to the larger group
         labelDisplayGroup.getChildren().add(visibilityGroup.getLabelGroup());
     }
 
-
-    /**
-     * uninstall the visibility group
-     *
-     * @param visibilityGroup the visibility group to uninstall
-     */
     private void uninstallGroup(TransitRouteVisibilityGroup visibilityGroup) {
-
-        // add this visibility group to the overall transit group
         transitGroup.getChildren().remove(visibilityGroup.getGroup());
-
-        // add the internal label group to the larger group
         labelDisplayGroup.getChildren().remove(visibilityGroup.getLabelGroup());
-
         visibilityGroup.clear();
     }
 
     /**
-     * show a specific transit
-     *
-     * @param bandId the transit id
-     * @param show   true is shwo, false is hide
+     * Show or hide a specific transit band.
      */
     public void showTransit(UUID bandId, boolean show) {
-        // transit
-        log.info("Link:{} is {}", bandId, show);
-        // pull the associated group
+        log.debug("Transit band {} visibility: {}", bandId, show);
         TransitRouteVisibilityGroup visibilityGroup = transitMap.get(bandId);
-        // set it visible or not based on the status
         if (visibilityGroup != null) {
             visibilityGroup.toggleTransit(show);
         }
     }
 
     /**
-     * show the labels
-     *
-     * @param bandId the group id
-     * @param show   true is to show labels
+     * Show or hide labels for a specific transit band.
      */
     public void showLabels(UUID bandId, boolean show) {
-        // transit
-        log.info("Link:{} is {}", bandId, show);
-        // pull the associated group
+        log.debug("Transit band {} labels: {}", bandId, show);
         TransitRouteVisibilityGroup visibilityGroup = transitMap.get(bandId);
-        // set it visible or not based on the status
         if (visibilityGroup != null) {
             visibilityGroup.toggleLabels(show);
         }
     }
 
     /**
-     * Is transit container group visible
-     *
-     * @return true is yes
+     * Check if transits are currently visible.
      */
     public boolean isVisible() {
-        return transitsOn;
+        return transitGroup != null && transitGroup.isVisible();
     }
-
-    public void setVisible(boolean transitsOn) {
-        this.transitsOn = transitsOn;
-        this.transitsLengthsOn = transitsOn;
-        transitGroup.setVisible(transitsOn);
-        labelDisplayGroup.setVisible(transitsLengthsOn);
-    }
-
 
     /**
-     * clears all transits
+     * Set visibility of all transits and labels.
+     */
+    public void setVisible(boolean visible) {
+        transitGroup.setVisible(visible);
+        labelDisplayGroup.setVisible(visible);
+    }
+
+    /**
+     * Clear all transits from the display.
      */
     public void clearTransits() {
         transitGroup.getChildren().clear();
-        for (TransitRouteVisibilityGroup transitGroup : transitMap.values()) {
-            if (transitGroup != null) {
-                uninstallGroup(transitGroup);
+        for (TransitRouteVisibilityGroup group : transitMap.values()) {
+            if (group != null) {
+                uninstallGroup(group);
             }
         }
         transitMap.clear();
-        transitsOn = false;
         labelDisplayGroup.getChildren().clear();
-        transitsLengthsOn = false;
     }
 
     /**
-     * toggle transit lengths
-     *
-     * @param transitsLengthsOn toggle the transit lengths
+     * Toggle visibility of all transit labels.
      */
-    public void toggleTransitLengths(boolean transitsLengthsOn) {
-        this.transitsLengthsOn = transitsLengthsOn;
-        log.info("transit labels visibility:{}", transitsLengthsOn);
-        labelDisplayGroup.setVisible(transitsLengthsOn);
+    public void toggleTransitLengths(boolean showLabels) {
+        log.debug("Transit labels visibility: {}", showLabels);
+        labelDisplayGroup.setVisible(showLabels);
         for (TransitRouteVisibilityGroup visibilityGroup : transitMap.values()) {
-            visibilityGroup.toggleLabels(transitsLengthsOn);
+            visibilityGroup.toggleLabels(showLabels);
         }
     }
 
     /**
-     * iterate over the labels to redisplay
-     *
-     * @param interstellarSpacePane the interstellar pane
+     * Update all label positions (call after rotation/zoom).
      */
-    public void updateLabels(InterstellarSpacePane interstellarSpacePane) {
+    public void updateLabels() {
         for (TransitRouteVisibilityGroup visibilityGroup : transitMap.values()) {
-            visibilityGroup.updateLabels(subScene, controlPaneOffset,
-                    interstellarSpacePane.getWidth(), interstellarSpacePane.getHeight(),
-                    interstellarSpacePane.getBoundsInParent());
+            visibilityGroup.updateLabels();
         }
     }
-
 }

@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.search.model.DistanceRoutes;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.measure.OshiMeasure;
 import com.teamgannon.trips.measure.TrackExecutionTime;
+import com.teamgannon.trips.transits.ITransitDistanceCalculator;
 import com.teamgannon.trips.transits.TransitRangeDef;
 import com.teamgannon.trips.transits.TransitRoute;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import java.util.*;
 
 @Slf4j
 @Component
-public class StarMeasurementService {
+public class StarMeasurementService implements ITransitDistanceCalculator {
 
     private final Set<String> lookupSourceTarget = new HashSet<>();
     private final OshiMeasure oshiMeasure;
@@ -93,6 +94,7 @@ public class StarMeasurementService {
         return allTransit;
     }
 
+    @Override
     @TrackExecutionTime
     public @NotNull List<TransitRoute> calculateDistances(@NotNull TransitRangeDef transitRangeDef, @NotNull List<StarDisplayRecord> starsInView) {
         lookupSourceTarget.clear();
