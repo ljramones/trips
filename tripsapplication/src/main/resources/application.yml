@@ -39,6 +39,11 @@ app:
   fileDirectory: files
   programdata: files/programdata/
   scriptDirectory: files/scriptfiles/
+  ui:
+    window:
+      width: 1080
+      height: 680
+      controlPaneHeight: 80
 
 # Orekit orbital mechanics library configuration
 orekit:

@@ -17,10 +17,13 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 public class TripsPreloader extends Preloader {
 
     private Stage preloaderStage;
-
 
     @Override
     public void start(@NotNull Stage primaryStage) throws Exception {
@@ -38,9 +41,11 @@ public class TripsPreloader extends Preloader {
 
         HBox hBox2 = new HBox();
         final ImageView selectedImage = new ImageView();
-        Image image1 = new Image("/images/CTR_emblem_metal.jpg");
-        selectedImage.setImage(image1);
-        hBox2.getChildren().add(selectedImage);
+        Image image1 = loadImageWithFallback("/images/CTR_emblem_metal.jpg");
+        if (image1 != null) {
+            selectedImage.setImage(image1);
+            hBox2.getChildren().add(selectedImage);
+        }
         loading.getChildren().addAll(hBox2);
 
         loading.setMaxWidth(Region.USE_PREF_SIZE);
@@ -58,7 +63,7 @@ public class TripsPreloader extends Preloader {
 
         HBox hBox5 = new HBox();
         hBox5.setAlignment(Pos.CENTER);
-        hBox5.getChildren().add(new Label("Version v0.7.2 - March 7, 2022"));
+        hBox5.getChildren().add(new Label("Version " + getVersionString()));
         loading.getChildren().add(hBox5);
 
         BorderPane root = new BorderPane(loading);
@@ -71,7 +76,44 @@ public class TripsPreloader extends Preloader {
     }
 
     /**
-     * catch and handle event
+     * Load version information from properties file.
+     * Falls back to "unknown" if properties file cannot be read.
+     */
+    private String getVersionString() {
+        Properties props = new Properties();
+        try (InputStream is = getClass().getResourceAsStream("/version.properties")) {
+            if (is != null) {
+                props.load(is);
+                String version = props.getProperty("app.version", "unknown");
+                String releaseDate = props.getProperty("app.releaseDate", "");
+                if (!releaseDate.isEmpty()) {
+                    return version + " - " + releaseDate;
+                }
+                return version;
+            }
+        } catch (IOException e) {
+            // Fall through to default
+        }
+        return "unknown";
+    }
+
+    /**
+     * Load image with fallback handling if resource is missing.
+     */
+    private Image loadImageWithFallback(String resourcePath) {
+        try {
+            InputStream is = getClass().getResourceAsStream(resourcePath);
+            if (is != null) {
+                return new Image(is);
+            }
+        } catch (Exception e) {
+            // Fall through to return null
+        }
+        return null;
+    }
+
+    /**
+     * Catch and handle state change notifications.
      *
      * @param stateChangeNotification the state notification
      */

@@ -568,17 +568,17 @@ public class MainPane  {
         }
 
         TripsPrefs tripsPrefs = tripsContext.getTripsPrefs();
-        if (!tripsPrefs.isShowWelcomeDataReq()) {
+        if (!tripsPrefs.isSkipStartupDialog()) {
             EachTimeStartDialog eachTimeStartDialog = new EachTimeStartDialog();
             Optional<Boolean> optStart = eachTimeStartDialog.showAndWait();
             if (optStart.isPresent()) {
-                boolean onStart = optStart.get();
-                if (onStart) {
-                    log.info("selected is true");
-                    tripsPrefs.setShowWelcomeDataReq(true);
+                boolean skipNextTime = optStart.get();
+                if (skipNextTime) {
+                    log.info("User selected to skip startup dialog in future");
+                    tripsPrefs.setSkipStartupDialog(true);
                     systemPreferencesService.saveTripsPrefs(tripsPrefs);
                 } else {
-                    log.info("selected is false");
+                    log.info("Startup dialog will continue to show");
                 }
             }
         }

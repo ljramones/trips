@@ -51,7 +51,7 @@ public class SystemPreferencesService {
         TripsPrefs tripsPrefs = tripsPrefsRepository.findById("main").orElseGet(() -> {
             TripsPrefs newPrefs = new TripsPrefs();
             newPrefs.setId("main");
-            newPrefs.setShowWelcomeDataReq(false);
+            newPrefs.setSkipStartupDialog(false);
             return newPrefs;
         });
         tripsPrefs.setDatasetName(descriptor.getDataSetName());
@@ -182,7 +182,7 @@ public class SystemPreferencesService {
         return tripsPrefsRepository.findById("main").orElseGet(() -> {
             TripsPrefs tripsPrefs = new TripsPrefs();
             tripsPrefs.setId("main");
-            tripsPrefs.setShowWelcomeDataReq(false);
+            tripsPrefs.setSkipStartupDialog(false);
             tripsPrefsRepository.save(tripsPrefs);
             return tripsPrefs;
         });
