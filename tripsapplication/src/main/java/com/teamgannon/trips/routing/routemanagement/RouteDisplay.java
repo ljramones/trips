@@ -4,99 +4,103 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
-import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.model.RouteSegment;
-import javafx.geometry.Bounds;
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
-import javafx.scene.transform.Translate;
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 
+/**
+ * Manages the display and state of routes in the 3D visualization.
+ * <p>
+ * This class coordinates route rendering, visibility toggling, and route segment tracking.
+ * Label management is delegated to {@link RouteLabelManager}.
+ * <p>
+ * <b>Responsibilities:</b>
+ * <ul>
+ *   <li>Route group management (adding, removing, toggling visibility)</li>
+ *   <li>Route segment deduplication tracking</li>
+ *   <li>Manual routing mode state</li>
+ *   <li>Coordination with label manager for route distance labels</li>
+ * </ul>
+ */
 @Slf4j
-@Data
 public class RouteDisplay {
 
     /**
-     * the subscene for managing the display plane
+     * The subscene for managing the display plane.
      */
     private final SubScene subScene;
 
     /**
-     * reference to the drawing screen
+     * Reference to the drawing screen.
      */
+    @Getter
     private InterstellarSpacePane interstellarSpacePane;
 
     /**
-     * a map between shapes and labels
+     * Manager for route distance labels.
      */
-    private final Map<Node, Label> shapeToLabel = new HashMap<>();
+    private final RouteLabelManager labelManager;
 
     /**
-     * the reverse map for above (label to shape)
-     */
-    private final Map<Label, Node> reverseLabelLookup = new HashMap<>();
-
-    /**
-     * the label group - used to manage all labels at once (turn on and off or delete)
-     */
-    private final Group labelDisplayGroup = new Group();
-
-    /**
-     * use this to map individual routes to their id
+     * Maps individual routes to their UUID.
      */
     private final Map<UUID, Group> routeLookup = new HashMap<>();
 
     /**
-     * the total set of all routes and is used to manage them as a group
+     * The group containing all routes (used for bulk visibility toggling).
      */
+    @Getter
     private final Group routesGroup = new Group();
 
     /**
-     * by default the labels are on
+     * Whether route labels are currently enabled.
      */
+    @Getter
     private boolean routeLabelsOn = true;
 
     /**
-     * reference to the current TRIPS context
+     * Reference to the current TRIPS context.
      */
     private final TripsContext tripsContext;
 
     /**
-     * to deal with the offset based on the control panel
-     */
-    private double controlPaneOffset = 0;
-
-    /**
-     * this marks whether we are in manual routing mode.
+     * Whether manual routing mode is active.
      */
     private boolean manualRoutingActive = false;
 
     /**
-     * a map of the route segments for separating the route segments
+     * Set of route segments for deduplication.
      */
-    private Set<RouteSegment> routeSegments = new HashSet<>();
+    private final Set<RouteSegment> routeSegments = new HashSet<>();
 
 
     /**
-     * constructor
+     * Creates a new RouteDisplay.
      *
-     * @param tripsContext the context
+     * @param tripsContext          the application context
+     * @param subScene              the 3D subscene
+     * @param interstellarSpacePane the interstellar space pane
      */
     public RouteDisplay(TripsContext tripsContext,
                         SubScene subScene,
                         InterstellarSpacePane interstellarSpacePane) {
-        log.info("\n\n\nInitializing the Route Display\n\n\n");
+        log.info("Initializing the Route Display");
         this.tripsContext = tripsContext;
         this.subScene = subScene;
         this.interstellarSpacePane = interstellarSpacePane;
+        this.labelManager = new RouteLabelManager(subScene, interstellarSpacePane::getBoundsInParent);
     }
+
+    // =========================================================================
+    // Manual Routing State
+    // =========================================================================
 
     public boolean isManualRoutingActive() {
         return manualRoutingActive;
@@ -106,48 +110,74 @@ public class RouteDisplay {
         manualRoutingActive = flag;
     }
 
+    // =========================================================================
+    // Color Palette
+    // =========================================================================
+
     public ColorPalette getColorPalette() {
         return tripsContext.getAppViewPreferences().getColorPalette();
     }
 
-
-    public void setControlPaneOffset(double controlPaneOffset) {
-        this.controlPaneOffset = controlPaneOffset;
-    }
+    // =========================================================================
+    // Control Pane Offset
+    // =========================================================================
 
     /**
-     * clear the routes
+     * Sets the vertical offset for the control pane.
+     *
+     * @param controlPaneOffset the offset in pixels
+     */
+    public void setControlPaneOffset(double controlPaneOffset) {
+        labelManager.setControlPaneOffset(controlPaneOffset);
+    }
+
+    // =========================================================================
+    // Clear / Reset
+    // =========================================================================
+
+    /**
+     * Clears all routes and labels.
      */
     public void clear() {
-        shapeToLabel.clear();
-        reverseLabelLookup.clear();
-        labelDisplayGroup.clipProperty();
+        labelManager.clear();
         routeLabelsOn = false;
         routeLookup.clear();
         routesGroup.getChildren().clear();
         routeSegments.clear();
     }
 
+    // =========================================================================
+    // Route Segment Tracking (Deduplication)
+    // =========================================================================
+
     /**
-     * check if a route segment is present
+     * Checks if a route segment is already tracked.
      *
-     * @param routeSegment the route segment
-     * @return true if there
+     * @param routeSegment the route segment to check
+     * @return true if the segment is already present
      */
     public boolean contains(RouteSegment routeSegment) {
         return routeSegments.contains(routeSegment);
     }
 
+    /**
+     * Adds a route segment to the tracking set.
+     *
+     * @param routeSegment the route segment to add
+     */
     public void addSegment(RouteSegment routeSegment) {
         routeSegments.add(routeSegment);
     }
 
+    // =========================================================================
+    // Route Visibility
+    // =========================================================================
 
     /**
-     * change the state of a displayed route
+     * Changes the display state of a specific route.
      *
-     * @param routeDescriptor the route
-     * @param state           the state
+     * @param routeDescriptor the route descriptor
+     * @param state           true to show, false to hide
      */
     public void changeDisplayStateOfRoute(RouteDescriptor routeDescriptor, boolean state) {
         log.info("Change state of route {} to {}", routeDescriptor.getName(), state);
@@ -155,180 +185,151 @@ public class RouteDisplay {
         if (route != null) {
             route.setVisible(state);
         } else {
-            log.error("requested route is null:{}", routeDescriptor);
+            log.error("Requested route is null: {}", routeDescriptor);
         }
     }
 
-    public void toggleRouteVisibility(boolean toggleState) {
-        routesGroup.setVisible(toggleState);
+    /**
+     * Toggles visibility of all routes (without affecting labels).
+     *
+     * @param visible true to show routes
+     */
+    public void toggleRouteVisibility(boolean visible) {
+        routesGroup.setVisible(visible);
     }
 
-    public void toggleRoutes(boolean routesFlag) {
-        routesGroup.setVisible(routesFlag);
-        labelDisplayGroup.setVisible(routesFlag);
+    /**
+     * Toggles visibility of both routes and labels.
+     *
+     * @param visible true to show routes and labels
+     */
+    public void toggleRoutes(boolean visible) {
+        routesGroup.setVisible(visible);
+        labelManager.setLabelsVisible(visible);
     }
 
-    public void toggleRouteLengths(boolean routesLengthsFlag) {
-        labelDisplayGroup.setVisible(routesLengthsFlag);
+    /**
+     * Toggles visibility of route length labels only.
+     *
+     * @param visible true to show labels
+     */
+    public void toggleRouteLengths(boolean visible) {
+        labelManager.setLabelsVisible(visible);
     }
 
-    public boolean isLabelPresent(Label lengthLabel) {
-        return shapeToLabel.containsValue(lengthLabel);
+    // =========================================================================
+    // Label Management (Delegated to RouteLabelManager)
+    // =========================================================================
+
+    /**
+     * Checks if a label is already registered.
+     *
+     * @param label the label to check
+     * @return true if present
+     */
+    public boolean isLabelPresent(Label label) {
+        return labelManager.containsLabel(label);
     }
 
+    /**
+     * Removes the label associated with a 3D object.
+     *
+     * @param object the anchor node
+     */
     public void removeObject(Node object) {
-        Label label = shapeToLabel.get(object);
-        if (label != null) {
-            reverseLabelLookup.remove(label);
-            labelDisplayGroup.getChildren().remove(label);
-            shapeToLabel.remove(object);
-        }
+        labelManager.removeLabelForNode(object);
     }
 
+    /**
+     * Links a 3D object to a label.
+     *
+     * @param object the anchor node
+     * @param label  the label
+     */
     public void linkObjectToLabel(Node object, Label label) {
-        labelDisplayGroup.getChildren().add(label);
-        shapeToLabel.put(object, label);
-        reverseLabelLookup.put(label, object);
+        labelManager.linkLabel(object, label);
     }
 
+    /**
+     * Removes a label.
+     *
+     * @param label the label to remove
+     */
     public void removeLabel(Label label) {
-        Node node = reverseLabelLookup.get(label);
-        shapeToLabel.remove(node);
-        reverseLabelLookup.remove(label);
-        labelDisplayGroup.getChildren().remove(label);
+        labelManager.removeLabel(label);
     }
 
-    ///////////////
+    /**
+     * Gets the label display group (for adding to scene root).
+     *
+     * @return the label display group
+     */
+    public Group getLabelDisplayGroup() {
+        return labelManager.getLabelDisplayGroup();
+    }
 
+    /**
+     * Updates all label positions after view rotation/zoom.
+     */
+    public void updateLabels() {
+        labelManager.updateLabels();
+    }
+
+    // =========================================================================
+    // Route Group Management
+    // =========================================================================
+
+    /**
+     * Gets a route group by its UUID.
+     *
+     * @param id the route UUID
+     * @return the route group, or null if not found
+     */
     public Group getRoute(UUID id) {
         return routeLookup.get(id);
     }
 
+    /**
+     * Removes a route from the lookup by ID.
+     *
+     * @param id the route UUID
+     */
     public void removeRouteId(UUID id) {
         routeLookup.remove(id);
     }
 
+    /**
+     * Adds a route to the display.
+     *
+     * @param routeDescriptor the route descriptor
+     * @param routeToAdd      the route group to add
+     */
     public void addRouteToDisplay(RouteDescriptor routeDescriptor, Group routeToAdd) {
-        log.info("\n\n\n\nAdd new route to display\n\n\n\n");
+        log.info("Add new route to display: {}", routeDescriptor.getName());
         if (routeDescriptor != null) {
             if (!routesGroup.getChildren().contains(routeToAdd)) {
                 routeLookup.put(routeDescriptor.getId(), routeToAdd);
                 routesGroup.getChildren().add(routeToAdd);
             } else {
-                log.error("Already contains route={}", routeDescriptor);
+                log.error("Already contains route: {}", routeDescriptor);
             }
         }
     }
 
+    /**
+     * Removes a route from the display.
+     *
+     * @param routeToRemove the route group to remove
+     */
     public void removeRouteFromDisplay(Group routeToRemove) {
         routesGroup.getChildren().remove(routeToRemove);
     }
 
+    // =========================================================================
+    // Lombok @Data replacement - explicit getters for SubScene
+    // =========================================================================
 
-    /////////////////////////////////////
-
-    /**
-     * Update all route labels to match current screen positions after view rotation/zoom.
-     * <p>
-     * This method implements the <b>billboard labels pattern</b> where 2D labels are
-     * positioned to track 3D anchor points while remaining flat on screen.
-     * <p>
-     * <b>Coordinate Transformation (Two-Step Process):</b>
-     * <ol>
-     *   <li><b>3D to Scene:</b> {@code node.localToScene(Point3D.ZERO, true)} transforms
-     *       the 3D anchor point to scene coordinates. The {@code true} parameter ensures
-     *       the entire transform chain is applied.</li>
-     *   <li><b>Scene to Local:</b> {@code labelDisplayGroup.sceneToLocal(x, y)} converts
-     *       scene coordinates to the label group's local coordinate space.</li>
-     * </ol>
-     * <p>
-     * <b>Why Two Steps Are Required:</b>
-     * Using only {@code localToScene()} would give coordinates in the Scene's space,
-     * but the labelDisplayGroup may have its own transforms. Without the second step,
-     * labels would drift as the 3D world rotates because coordinate spaces don't align.
-     * <p>
-     * <b>Visibility Logic:</b>
-     * <ul>
-     *   <li>Labels within {@link RoutingConstants#LABEL_CLIPPING_PADDING} of viewport edges are hidden</li>
-     *   <li>Labels are clamped to prevent going off-screen using {@link RoutingConstants#LABEL_EDGE_MARGIN}</li>
-     *   <li>The {@code controlPaneOffset} accounts for any control panes at the top of the view</li>
-     * </ul>
-     * <p>
-     * <b>When to Call:</b> After mouse drag (rotation), scroll (zoom), or initial render.
-     *
-     * @see RoutingConstants#LABEL_CLIPPING_PADDING
-     * @see RoutingConstants#LABEL_EDGE_MARGIN
-     */
-    public void updateLabels() {
-        final Bounds ofParent = interstellarSpacePane.getBoundsInParent();
-
-        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
-            Node node = entry.getKey();
-            Label label = entry.getValue();
-            Point3D coordinates = node.localToScene(Point3D.ZERO, true);
-
-            /*
-            Clipping Logic
-            if coordinates are outside of the scene it could
-            stretch the screen so don't transform them
-            */
-            double xs = coordinates.getX();
-            double ys = coordinates.getY();
-
-            // configure visibility - hide labels too close to viewport edges
-            double padding = RoutingConstants.LABEL_CLIPPING_PADDING;
-            if (xs < (ofParent.getMinX() + padding) || xs > (ofParent.getMaxX() - padding)) {
-                label.setVisible(false);
-                continue;
-            } else {
-                label.setVisible(true);
-            }
-            if (ys < (controlPaneOffset + padding) || (ys > ofParent.getMaxY() - padding)) {
-                label.setVisible(false);
-                continue;
-            } else {
-                label.setVisible(true);
-            }
-
-            double x;
-            double y;
-
-            if (ofParent.getMinX() > 0) {
-                x = xs - ofParent.getMinX();
-            } else {
-                x = xs;
-            }
-            if (ofParent.getMinY() >= 0) {
-                y = ys - ofParent.getMinY() - controlPaneOffset;
-            } else {
-                y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
-            }
-
-            // is it left of the view?
-            if (x < 0) {
-                x = 0;
-            }
-
-            // is it right of the view? Clamp to viewport with margin
-            double margin = RoutingConstants.LABEL_EDGE_MARGIN;
-            if ((x + label.getWidth() + margin) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + margin);
-            }
-
-            // is it above the view?
-            if (y < 0) {
-                y = 0;
-            }
-
-            // is it below the view? Clamp to viewport with margin
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + margin);
-            }
-
-            //update the local transform of the label.
-            label.getTransforms().setAll(new Translate(x, y));
-        }
-
+    public SubScene getSubScene() {
+        return subScene;
     }
-
 }
