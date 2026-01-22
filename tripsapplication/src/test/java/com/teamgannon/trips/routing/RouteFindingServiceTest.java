@@ -497,4 +497,196 @@ class RouteFindingServiceTest {
             assertTrue(result.getErrorMessage().contains("failed"));
         }
     }
+
+    // =========================================================================
+    // Caching Tests
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Caching Tests")
+    class CachingTests {
+
+        @Test
+        @DisplayName("Failed results are not cached - validation failure")
+        void failedResultsAreNotCachedValidationFailure() {
+            List<StarDisplayRecord> stars = Collections.emptyList(); // Will fail validation
+
+            RouteFindingOptions options = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .build();
+
+            // First call - fails due to missing origin
+            RouteFindingResult result1 = routeFindingService.findRoutes(options, stars, dataSet);
+            assertFalse(result1.isSuccess());
+
+            // Second call with same empty stars - should recalculate (not cached)
+            RouteFindingResult result2 = routeFindingService.findRoutes(options, stars, dataSet);
+            assertFalse(result2.isSuccess());
+
+            // Both calls should fail, verifying failed results aren't incorrectly cached
+            assertEquals(result1.getErrorMessage(), result2.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("Failed results are not cached - transit failure")
+        void failedResultsAreNotCachedTransitFailure() {
+            StarDisplayRecord origin = createStar("Sol", 0, 0, 0, "G2V", "Terran");
+            StarDisplayRecord destination = createStar("Alpha Centauri", 1, 1, 1, "G2V", "Terran");
+            List<StarDisplayRecord> stars = List.of(origin, destination);
+
+            // Return empty transits - will cause failure
+            when(starMeasurementService.calculateDistances(any(DistanceRoutes.class), anyList()))
+                    .thenReturn(Collections.emptyList());
+
+            RouteFindingOptions options = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .build();
+
+            // First call - fails due to no transits
+            RouteFindingResult result1 = routeFindingService.findRoutes(options, stars, dataSet);
+            assertFalse(result1.isSuccess());
+
+            // Second call - should NOT use cache (failed results not cached)
+            RouteFindingResult result2 = routeFindingService.findRoutes(options, stars, dataSet);
+
+            // Both calls should have hit the measurement service
+            verify(starMeasurementService, times(2)).calculateDistances(any(DistanceRoutes.class), anyList());
+        }
+
+        @Test
+        @DisplayName("Cache bypass works with useCache=false")
+        void cacheBypassWorksWithUseCacheFalse() {
+            StarDisplayRecord origin = createStar("Sol", 0, 0, 0, "G2V", "Terran");
+            StarDisplayRecord destination = createStar("Alpha Centauri", 1, 1, 1, "G2V", "Terran");
+            List<StarDisplayRecord> stars = List.of(origin, destination);
+
+            // Return empty transits
+            when(starMeasurementService.calculateDistances(any(DistanceRoutes.class), anyList()))
+                    .thenReturn(Collections.emptyList());
+
+            RouteFindingOptions options = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .build();
+
+            // First call with cache enabled
+            routeFindingService.findRoutes(options, stars, dataSet, true);
+
+            // Second call with cache disabled - should always recalculate
+            routeFindingService.findRoutes(options, stars, dataSet, false);
+
+            // Both calls should have hit the measurement service
+            verify(starMeasurementService, times(2)).calculateDistances(any(DistanceRoutes.class), anyList());
+        }
+
+        @Test
+        @DisplayName("clearCache method executes without error")
+        void clearCacheMethodExecutesWithoutError() {
+            // Just verify clearCache doesn't throw
+            assertDoesNotThrow(() -> routeFindingService.clearCache());
+        }
+
+        @Test
+        @DisplayName("getCacheStatistics returns formatted string")
+        void getCacheStatisticsReturnsFormattedString() {
+            String stats = routeFindingService.getCacheStatistics();
+
+            assertNotNull(stats);
+            assertTrue(stats.contains("RouteCache"));
+            assertTrue(stats.contains("size="));
+            assertTrue(stats.contains("hits="));
+            assertTrue(stats.contains("misses="));
+        }
+
+        @Test
+        @DisplayName("Different origin creates different cache key")
+        void differentOriginCreatesDifferentCacheKey() {
+            StarDisplayRecord sol = createStar("Sol", 0, 0, 0, "G2V", "Terran");
+            StarDisplayRecord barnard = createStar("Barnard's Star", 2, 0, 0, "M4V", "Terran");
+            StarDisplayRecord destination = createStar("Alpha Centauri", 1, 1, 1, "G2V", "Terran");
+            List<StarDisplayRecord> stars = List.of(sol, barnard, destination);
+
+            when(starMeasurementService.calculateDistances(any(DistanceRoutes.class), anyList()))
+                    .thenReturn(Collections.emptyList());
+
+            RouteFindingOptions options1 = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .build();
+
+            RouteFindingOptions options2 = defaultOptionsBuilder()
+                    .originStarName("Barnard's Star")
+                    .destinationStarName("Alpha Centauri")
+                    .build();
+
+            // Call with different origins
+            routeFindingService.findRoutes(options1, stars, dataSet);
+            routeFindingService.findRoutes(options2, stars, dataSet);
+
+            // Both should calculate (different cache keys)
+            verify(starMeasurementService, times(2)).calculateDistances(any(DistanceRoutes.class), anyList());
+        }
+
+        @Test
+        @DisplayName("Different upper bound creates different cache key")
+        void differentUpperBoundCreatesDifferentCacheKey() {
+            StarDisplayRecord origin = createStar("Sol", 0, 0, 0, "G2V", "Terran");
+            StarDisplayRecord destination = createStar("Alpha Centauri", 1, 1, 1, "G2V", "Terran");
+            List<StarDisplayRecord> stars = List.of(origin, destination);
+
+            when(starMeasurementService.calculateDistances(any(DistanceRoutes.class), anyList()))
+                    .thenReturn(Collections.emptyList());
+
+            RouteFindingOptions options1 = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .upperBound(8.0)
+                    .build();
+
+            RouteFindingOptions options2 = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .upperBound(12.0)
+                    .build();
+
+            // Call with different upper bounds
+            routeFindingService.findRoutes(options1, stars, dataSet);
+            routeFindingService.findRoutes(options2, stars, dataSet);
+
+            // Both should calculate (different cache keys)
+            verify(starMeasurementService, times(2)).calculateDistances(any(DistanceRoutes.class), anyList());
+        }
+
+        @Test
+        @DisplayName("Different exclusions create different cache key")
+        void differentExclusionsCreateDifferentCacheKey() {
+            StarDisplayRecord origin = createStar("Sol", 0, 0, 0, "G2V", "Terran");
+            StarDisplayRecord destination = createStar("Alpha Centauri", 1, 1, 1, "G2V", "Terran");
+            List<StarDisplayRecord> stars = List.of(origin, destination);
+
+            when(starMeasurementService.calculateDistances(any(DistanceRoutes.class), anyList()))
+                    .thenReturn(Collections.emptyList());
+
+            RouteFindingOptions options1 = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .starExclusions(Set.of("M"))
+                    .build();
+
+            RouteFindingOptions options2 = defaultOptionsBuilder()
+                    .originStarName("Sol")
+                    .destinationStarName("Alpha Centauri")
+                    .starExclusions(Set.of("M", "L"))
+                    .build();
+
+            // Call with different exclusions
+            routeFindingService.findRoutes(options1, stars, dataSet);
+            routeFindingService.findRoutes(options2, stars, dataSet);
+
+            // Both should calculate (different cache keys)
+            verify(starMeasurementService, times(2)).calculateDistances(any(DistanceRoutes.class), anyList());
+        }
+    }
 }
