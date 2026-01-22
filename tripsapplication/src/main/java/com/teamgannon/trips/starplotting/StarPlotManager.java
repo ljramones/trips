@@ -293,6 +293,28 @@ public class StarPlotManager {
 
     private ContextManualRoutingDialog manualRoutingDialog;
 
+    // =========================================================================
+    // Performance Optimization Caches
+    // =========================================================================
+
+    /**
+     * Cache of PhongMaterial objects by color.
+     * Avoids creating duplicate materials for stars of the same color.
+     * Cleared on each new plot.
+     */
+    private final Map<Color, PhongMaterial> materialCache = new HashMap<>();
+
+    /**
+     * Batch collection for star nodes to add to scene graph.
+     * Using addAll() is more efficient than individual add() calls.
+     */
+    private final List<Node> pendingStarNodes = new ArrayList<>();
+
+    /**
+     * Batch collection for polity nodes.
+     */
+    private final List<Node> pendingPolityNodes = new ArrayList<>();
+
     /**
      * constructor
      *
@@ -481,6 +503,27 @@ public class StarPlotManager {
 
         // reset LOD statistics
         lodManager.resetStatistics();
+
+        // clear performance caches
+        materialCache.clear();
+        pendingStarNodes.clear();
+        pendingPolityNodes.clear();
+    }
+
+    /**
+     * Gets or creates a cached PhongMaterial for the given color.
+     * Reusing materials reduces memory allocation and improves rendering performance.
+     *
+     * @param color the color for the material
+     * @return the cached or newly created material
+     */
+    private @NotNull PhongMaterial getCachedMaterial(@NotNull Color color) {
+        return materialCache.computeIfAbsent(color, c -> {
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(c);
+            material.setSpecularColor(c);
+            return material;
+        });
     }
 
     public void highlightStar(String starId) {
@@ -581,8 +624,33 @@ public class StarPlotManager {
                     currentPlot.getCivilizationDisplayPreferences());
         }
 
+        // Batch add all collected nodes to scene graph (more efficient than individual adds)
+        flushPendingNodes();
+
         // Log LOD statistics for performance monitoring
         lodManager.logStatistics();
+        log.debug("Material cache size: {} unique colors", materialCache.size());
+    }
+
+    /**
+     * Flushes all pending star and polity nodes to the scene graph in batch.
+     * <p>
+     * Using {@code addAll()} is more efficient than individual {@code add()} calls
+     * because it triggers only one scene graph restructure operation.
+     */
+    private void flushPendingNodes() {
+        if (!pendingStarNodes.isEmpty()) {
+            stellarDisplayGroup.getChildren().addAll(pendingStarNodes);
+            log.debug("Batch added {} star nodes to scene graph", pendingStarNodes.size());
+            pendingStarNodes.clear();
+        }
+
+        if (!pendingPolityNodes.isEmpty()) {
+            politiesDisplayGroup.getChildren().addAll(pendingPolityNodes);
+            politiesDisplayGroup.setVisible(true);  // Set once after all additions
+            log.debug("Batch added {} polity nodes to scene graph", pendingPolityNodes.size());
+            pendingPolityNodes.clear();
+        }
     }
 
     public void clearPlot() {
@@ -637,8 +705,8 @@ public class StarPlotManager {
 
         tripsContext.getCurrentPlot().addStar(record.getRecordId(), starNode);
 
-        // draw the star on the pane
-        stellarDisplayGroup.getChildren().add(starNode);
+        // collect for batch addition (more efficient than individual adds)
+        pendingStarNodes.add(starNode);
     }
 
     /**
@@ -700,9 +768,9 @@ public class StarPlotManager {
                                            StarDisplayPreferences starDisplayPreferences,
                                            @NotNull CivilizationDisplayPreferences polityPreferences) {
 
-        final PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(record.getStarColor());
-        material.setSpecularColor(record.getStarColor());
+        // Use cached material to avoid creating duplicate PhongMaterial objects
+        final PhongMaterial material = getCachedMaterial(record.getStarColor());
+
         Node starShape;
         if (isCenter) {
             starShape = createCentralStar();
@@ -737,24 +805,21 @@ public class StarPlotManager {
                 polityObject.setTranslateY(point3D.getY());
                 polityObject.setTranslateZ(point3D.getZ());
 
-                // attach a context menu
-                setContextMenu(record, polityObject);
-                setContextMenu(record, starShape);
+                // attach a context menu (lazy-loaded on right-click)
+                setLazyContextMenu(record, polityObject);
+                setLazyContextMenu(record, starShape);
 
-                // set this polity object to the polities display
-                politiesDisplayGroup.getChildren().add(polityObject);
-                politiesDisplayGroup.setVisible(true);
+                // collect for batch addition (more efficient than individual adds)
+                pendingPolityNodes.add(polityObject);
             } else {
-                // set context menu
-                setContextMenu(record, starShape);
+                // set context menu (lazy-loaded on right-click)
+                setLazyContextMenu(record, starShape);
                 log.debug("No polity to plot");
             }
-
-            // set polities to be visible
-            politiesDisplayGroup.setVisible(true);
+            // Note: setVisible(true) moved to flushPendingNodes() - called once after all stars
         } else {
-            // set context menu
-            setContextMenu(record, starShape);
+            // set context menu (lazy-loaded on right-click)
+            setLazyContextMenu(record, starShape);
         }
         return starShape;
     }
@@ -824,6 +889,90 @@ public class StarPlotManager {
             StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
             log.info("mouse click detected! " + starDescriptor);
         });
+    }
+
+    /**
+     * Sets up lazy-loaded context menu for a star node.
+     * <p>
+     * Unlike {@link #setContextMenu}, this method does NOT create the ContextMenu upfront.
+     * Instead, the menu is created on-demand when the user clicks the node.
+     * This significantly reduces memory usage and initialization time for large star plots.
+     *
+     * @param record the star record
+     * @param star   the star node
+     */
+    private void setLazyContextMenu(@NotNull StarDisplayRecord record, Node star) {
+        star.setUserData(record);
+
+        // Create context menu lazily on click
+        star.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            // Handle primary button (left-click)
+            if (e.getButton() == MouseButton.PRIMARY) {
+                log.info("Primary button pressed");
+                if (routeManager.isManualRoutingActive()) {
+                    log.info("Manual Routing is active");
+                    if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
+                        if (manualRoutingDialog != null) {
+                            manualRoutingDialog.addStar(record);
+                        }
+                    }
+                    if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
+                        if (automatedRoutingDialog != null) {
+                            automatedRoutingDialog.setToStar(record.getStarName());
+                        }
+                    }
+                } else {
+                    log.info("Manual routing is not active - showing context menu");
+                    ContextMenu starContextMenu = createLazyPopup(record, star);
+                    starContextMenu.show(star, e.getScreenX(), e.getScreenY());
+                }
+            }
+            // Handle middle button
+            else if (e.getButton() == MouseButton.MIDDLE) {
+                log.info("Middle button pressed");
+                ContextMenu starContextMenu = createLazyPopup(record, star);
+                starContextMenu.show(star, e.getScreenX(), e.getScreenY());
+            }
+            // Handle secondary button (right-click) for selection toggle
+            else if (e.getButton() == MouseButton.SECONDARY) {
+                log.info("Secondary button pressed");
+                if (selectionModel.containsKey(star)) {
+                    // remove star and selection rectangle
+                    StarSelectionModel starSelectionModel = selectionModel.get(star);
+                    Node selectionRectangle = starSelectionModel.getSelectionRectangle();
+                    if (selectionRectangle != null && selectionRectangle.getParent() instanceof Group group) {
+                        group.getChildren().remove(selectionRectangle);
+                    }
+                    selectionModel.remove(star);
+                } else {
+                    // add star selection
+                    StarSelectionModel starSelectionModel = new StarSelectionModel();
+                    starSelectionModel.setStarNode(star);
+                    selectionModel.put(star, starSelectionModel);
+                }
+            }
+        });
+
+        star.setOnMousePressed(event -> {
+            Node node = (Node) event.getSource();
+            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
+            log.debug("mouse click detected! " + starDescriptor);
+        });
+    }
+
+    /**
+     * Creates a context menu popup lazily for a star.
+     *
+     * @param record the star record
+     * @param star   the star node
+     * @return the created context menu
+     */
+    private @NotNull ContextMenu createLazyPopup(@NotNull StarDisplayRecord record, @NotNull Node star) {
+        String polity = record.getPolity();
+        if (polity.equals("NA")) {
+            polity = "Non-aligned";
+        }
+        return createPopup(record.getStarName() + " (" + polity + ")", star);
     }
 
     /**

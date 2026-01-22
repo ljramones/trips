@@ -231,7 +231,8 @@ public class PlotManager {
                     if (record != null) {
                         record.setCurrentLabelDisplayScore(displayRadius);
                         record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
-                        currentPlot.addRecord(record.copy());
+                        // Add record directly - no need to copy since it's created fresh each iteration
+                        currentPlot.addRecord(record);
                     } else {
                         log.error("astrographic object is bad: {}", starObject);
                     }
