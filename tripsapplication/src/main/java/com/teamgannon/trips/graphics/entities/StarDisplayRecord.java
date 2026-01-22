@@ -115,6 +115,18 @@ public class StarDisplayRecord {
     private Point3D coordinates;
 
     /**
+     * Cached distance from the current plot center (transient - computed during rendering).
+     * Used for LOD determination and distance-based sorting to avoid redundant calculations.
+     */
+    private transient double distanceFromPlotCenter = -1;
+
+    /**
+     * Cached LOD level (transient - computed during rendering).
+     * Set during pre-sort phase to avoid recalculating during star creation.
+     */
+    private transient int cachedLodLevel = -1;
+
+    /**
      * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
      * if we have to add custom fields in the custom object, but sometimes text notes make sense.
      */
@@ -259,6 +271,46 @@ public class StarDisplayRecord {
         distance = 0;
         spectralClass = "X";
         notes = " ";
+    }
+
+    /**
+     * Computes and caches the distance from the given plot center.
+     * This should be called once during the pre-sort phase to avoid
+     * redundant distance calculations during LOD determination.
+     * <p>
+     * Uses actualCoordinates (light-years) for consistency with the KD-tree
+     * spatial index, which also operates in actual coordinate space.
+     *
+     * @param centerX center X coordinate (in light-years)
+     * @param centerY center Y coordinate (in light-years)
+     * @param centerZ center Z coordinate (in light-years)
+     * @return the computed distance in light-years
+     */
+    public double computeAndCacheDistanceFromCenter(double centerX, double centerY, double centerZ) {
+        if (actualCoordinates != null && actualCoordinates.length >= 3) {
+            double dx = actualCoordinates[0] - centerX;
+            double dy = actualCoordinates[1] - centerY;
+            double dz = actualCoordinates[2] - centerZ;
+            distanceFromPlotCenter = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        } else {
+            distanceFromPlotCenter = Double.MAX_VALUE;
+        }
+        return distanceFromPlotCenter;
+    }
+
+    /**
+     * Returns true if distance from plot center has been pre-computed.
+     */
+    public boolean hasComputedDistance() {
+        return distanceFromPlotCenter >= 0;
+    }
+
+    /**
+     * Resets the cached distance (call when plot center changes).
+     */
+    public void resetCachedDistance() {
+        distanceFromPlotCenter = -1;
+        cachedLodLevel = -1;
     }
 
     public @NotNull StarDisplayRecord copy() {

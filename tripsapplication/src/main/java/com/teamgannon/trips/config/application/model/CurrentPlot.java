@@ -453,5 +453,74 @@ public class CurrentPlot {
                 starsForLabeling.size(), radius);
     }
 
+    // =========================================================================
+    // Distance-Sorted Access (for LOD optimization)
+    // =========================================================================
+
+    /**
+     * Returns stars sorted by distance from the plot center.
+     * <p>
+     * This method pre-computes and caches the distance for each star,
+     * enabling efficient LOD determination without redundant calculations.
+     * Stars closer to the center are returned first.
+     *
+     * @return list of stars sorted by distance from center (nearest first)
+     */
+    @TrackExecutionTime
+    public @NotNull List<StarDisplayRecord> getStarsSortedByDistance() {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            log.warn("Center coordinates not set, returning unsorted list");
+            return new ArrayList<>(starDisplayRecordList);
+        }
+
+        double cx = centerCoordinates[0];
+        double cy = centerCoordinates[1];
+        double cz = centerCoordinates[2];
+
+        // Pre-compute distances for all stars
+        for (StarDisplayRecord star : starDisplayRecordList) {
+            star.computeAndCacheDistanceFromCenter(cx, cy, cz);
+        }
+
+        // Sort by cached distance
+        List<StarDisplayRecord> sorted = new ArrayList<>(starDisplayRecordList);
+        sorted.sort(Comparator.comparingDouble(StarDisplayRecord::getDistanceFromPlotCenter));
+
+        log.debug("Sorted {} stars by distance from center", sorted.size());
+        return sorted;
+    }
+
+    /**
+     * Returns stars within radius, sorted by distance from center.
+     * <p>
+     * Combines spatial filtering with distance sorting for optimal LOD rendering.
+     *
+     * @param radius maximum distance from center
+     * @return filtered and sorted list of stars
+     */
+    @TrackExecutionTime
+    public @NotNull List<StarDisplayRecord> getStarsWithinRadiusSorted(double radius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            return getStarsSortedByDistance();
+        }
+
+        double cx = centerCoordinates[0];
+        double cy = centerCoordinates[1];
+        double cz = centerCoordinates[2];
+
+        // Use spatial index for efficient filtering, then sort
+        List<StarDisplayRecord> withinRadius = getStarsWithinRadius(radius);
+
+        // Pre-compute distances for filtered stars
+        for (StarDisplayRecord star : withinRadius) {
+            star.computeAndCacheDistanceFromCenter(cx, cy, cz);
+        }
+
+        // Sort by cached distance
+        withinRadius.sort(Comparator.comparingDouble(StarDisplayRecord::getDistanceFromPlotCenter));
+
+        return withinRadius;
+    }
+
 }
 

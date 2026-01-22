@@ -179,6 +179,10 @@ public class StarLODManager {
 
     /**
      * Determine the appropriate LOD level for a star.
+     * <p>
+     * Note: LOD uses screen coordinates because thresholds are calibrated for
+     * visual rendering. The cached distance in StarDisplayRecord is in light-years
+     * (for KD-tree consistency) and is NOT used here.
      *
      * @param record the star display record
      * @param isCenter whether this is the center star
@@ -194,7 +198,7 @@ public class StarLODManager {
             return LODLevel.HIGH;
         }
 
-        // Calculate distance from center
+        // Calculate distance in screen coordinates (LOD thresholds are screen-calibrated)
         Point3D coords = record.getCoordinates();
         double distance = calculateDistance(coords.getX(), coords.getY(), coords.getZ());
 

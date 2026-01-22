@@ -606,16 +606,17 @@ public class StarPlotManager {
         lodManager.resetStatistics();
         extensionManager.setExtensionsVisible(extensionsVisible);
 
-        // Get stars to render - use spatial filtering if maxDistance is specified
+        // Get stars to render - sorted by distance for optimal LOD processing
+        // Pre-sorting enables cached distance calculations in LOD determination
         List<StarDisplayRecord> starsToRender;
         if (maxDistance > 0 && centerCoords != null && centerCoords.length >= 3) {
-            // Use spatial index for efficient filtering
-            starsToRender = currentPlot.getStarsWithinRadius(maxDistance);
-            log.debug("Rendering {} stars within {} ly (of {} total)",
+            // Use spatial index for filtering, sorted by distance
+            starsToRender = currentPlot.getStarsWithinRadiusSorted(maxDistance);
+            log.debug("Rendering {} stars within {} ly (of {} total), sorted by distance",
                     starsToRender.size(), maxDistance, currentPlot.getStarDisplayRecordList().size());
         } else {
-            // Render all stars
-            starsToRender = currentPlot.getStarDisplayRecordList();
+            // Render all stars, sorted by distance for LOD optimization
+            starsToRender = currentPlot.getStarsSortedByDistance();
         }
 
         for (StarDisplayRecord starDisplayRecord : starsToRender) {
