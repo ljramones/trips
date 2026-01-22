@@ -25,28 +25,36 @@ Users can define **route parameters** including:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        RouteManager                              │
-│  (Spring @Component - orchestrates all route operations)        │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-           ┌───────────────────┼───────────────────┐
-           │                   │                   │
-           ▼                   ▼                   ▼
-┌──────────────────┐  ┌─────────────────┐  ┌─────────────────────┐
-│  RouteDisplay    │  │ CurrentManual   │  │ RouteFindingService │
-│  (3D rendering,  │  │ Route           │  │ (algorithm,         │
-│   label mgmt)    │  │ (real-time      │  │  JGraphT)           │
-│                  │  │  user drawing)  │  │                     │
-└──────────────────┘  └─────────────────┘  └─────────────────────┘
-         │                    │                      │
-         │                    │                      ▼
-         │                    │            ┌─────────────────────┐
-         │                    │            │     RouteGraph      │
-         │                    │            │  (JGraphT wrapper,  │
-         │                    │            │   Yen's K-shortest) │
-         │                    │            └─────────────────────┘
-         │                    │
-         └────────────┬───────┘
-                      ▼
+│  (Spring @Component - coordinates route visualization)          │
+└──────────────────────────────────┬──────────────────────────────┘
+                                   │
+           ┌───────────────────────┼───────────────────┐
+           │                       │                   │
+           ▼                       ▼                   ▼
+┌──────────────────┐      ┌─────────────────┐  ┌─────────────────────┐
+│  RoutePlotter    │      │ CurrentManual   │  │ RouteFindingService │
+│  (route plotting │      │ Route           │  │ (algorithm,         │
+│   and rendering) │      │ (real-time      │  │  JGraphT)           │
+│                  │      │  user drawing)  │  │                     │
+└────────┬─────────┘      └────────┬────────┘  └─────────────────────┘
+         │                         │                    │
+         │    ┌────────────────────┘                    ▼
+         │    │                                ┌─────────────────────┐
+         ▼    ▼                                │     RouteGraph      │
+┌──────────────────┐                           │  (JGraphT wrapper,  │
+│  RouteDisplay    │                           │   Yen's K-shortest) │
+│  (state, segment │                           └─────────────────────┘
+│   tracking)      │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│RouteLabelManager │
+│  (2D billboard   │
+│   label mgmt)    │
+└──────────────────┘
+         │
+         ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                       RouteDescriptor                            │
 │  (Data model - stars, segments, lengths, color, line width)     │
@@ -55,32 +63,33 @@ Users can define **route parameters** including:
 
 ## Key Components
 
-### Core Services
+### Core Coordination
 
 | Class | Purpose |
 |-------|---------|
-| `RouteManager` | Main entry point - coordinates all route visualization and operations |
-| `RouteFindingService` | Core algorithm using JGraphT for K-shortest paths |
-| `RouteDisplay` | 3D rendering of routes, label management, visibility control |
+| `RouteManager` | Spring @Component - main entry point, coordinates route visualization, delegates to specialized handlers |
+| `RoutePlotter` | Handles route plotting/rendering - converts route models to 3D graphics, manages segment deduplication |
 | `CurrentManualRoute` | Manages real-time manual route creation with undo support |
+
+### Route Display and Labels
+
+| Class | Purpose |
+|-------|---------|
+| `RouteDisplay` | Route state management - visibility toggling, segment tracking, route group management |
+| `RouteLabelManager` | Billboard label positioning - 2D labels tracking 3D anchor points with coordinate transformation |
+| `RouteGraphicsUtil` | Creates 3D line segments (cylinders) and distance labels |
+| `RouteBuilderUtils` | Creates complete route graphics, checks star visibility |
+| `PartialRouteUtils` | Handles visualization when some stars not visible in viewport |
 
 ### Route Finding
 
 | Class | Purpose |
 |-------|---------|
+| `RouteFindingService` | Core algorithm using JGraphT for K-shortest paths |
 | `RouteFinderInView` | Route finder for stars currently visible (fast) |
 | `RouteFinderDataset` | Route finder across entire dataset (async, for large datasets) |
 | `RouteGraph` | JGraphT wrapper for weighted graph and Yen's algorithm |
 | `RouteBuilderHelper` | Constructs RouteDescriptor from path results |
-
-### Utilities
-
-| Class | Purpose |
-|-------|---------|
-| `RouteBuilderUtils` | Creates route graphics, checks visibility |
-| `PartialRouteUtils` | Handles visualization when some stars not visible |
-| `RouteGraphicsUtil` | Creates 3D line segments and labels |
-| `RoutingConstants` | Centralized constants for the package |
 
 ### UI Components
 
@@ -101,16 +110,54 @@ Users can define **route parameters** including:
 | `RouteFindingOptions` | User-specified parameters for route search |
 | `RouteFindingResult` | Result object (success with routes or failure with message) |
 | `RoutingMetric` | Route evaluation data (rank, length, segments) |
-| `RouteSegment` | Single segment between two stars |
+| `RouteSegment` | Single segment between two stars (for deduplication) |
 | `PossibleRoutes` | Container for multiple route alternatives |
 
-### Interfaces
+### Interfaces and Enums
 
-| Interface | Purpose |
-|-----------|---------|
+| Interface/Enum | Purpose |
+|----------------|---------|
 | `RoutingCallback` | Callback for color change notifications |
 | `RouteVisibility` | Enum: FULL, PARTIAL |
 | `RoutingType` | Enum: AUTOMATIC, MANUAL, NONE |
+
+## Component Responsibilities
+
+### RouteManager (Coordinator)
+
+The central coordinator that:
+- Initializes visualization components (`setGraphics()`)
+- Manages routing mode state (manual routing active, routing type)
+- Delegates plotting to `RoutePlotter`
+- Exposes manual route operations via `CurrentManualRoute`
+- Controls route visibility and label updates
+
+### RoutePlotter
+
+Handles all route plotting operations:
+- `plotRoutes(List<Route>)` - plots multiple database routes
+- `plotRouteDescriptors(DataSetDescriptor, List<RoutingMetric>)` - plots automated route results
+- `plotRoute(Route)` - plots a single route (full or partial)
+- Manages segment deduplication to prevent visual overlap
+- Converts database `Route` models to graphical `RouteDescriptor`
+
+### RouteDisplay
+
+Manages route display state:
+- Route group management (add, remove, lookup by UUID)
+- Route segment tracking for deduplication
+- Visibility toggling (routes and labels)
+- Manual routing mode state
+- Delegates label operations to `RouteLabelManager`
+
+### RouteLabelManager
+
+Implements the billboard labels pattern:
+- Links 3D anchor nodes to 2D labels
+- Updates label positions after view changes
+- Handles coordinate transformation (3D → scene → local)
+- Clamps labels to viewport boundaries
+- Manages label visibility based on viewport clipping
 
 ## Usage Workflow
 
@@ -119,21 +166,21 @@ Users can define **route parameters** including:
 Users can find routes between stars currently visible in the viewport:
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│ Find Routes (In View)                                       │
-├────────────────────────────────────────────────────────────┤
-│ Origin Star:      [Sol              ▼]                     │
-│ Destination Star: [Alpha Centauri   ▼]                     │
-│                                                            │
-│ Upper Bound (ly): [8.0    ]  Lower Bound (ly): [3.0    ]  │
-│ Line Width:       [0.5    ]  Number of Paths:  [3      ]  │
-│ Route Color:      [■ Coral]                                │
-│                                                            │
-│ Exclude Spectral Classes:                                  │
-│ [ ] O  [ ] B  [ ] A  [✓] M  [✓] L  [✓] T  [✓] Y           │
-│                                                            │
-│              [Find Routes]  [Cancel]                       │
-└────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ Find Routes (In View)                                           │
+├────────────────────────────────────────────────────────────────┤
+│ Origin Star:      [Sol              ▼]                         │
+│ Destination Star: [Alpha Centauri   ▼]                         │
+│                                                                │
+│ Upper Bound (ly): [8.0    ]  Lower Bound (ly): [3.0    ]      │
+│ Line Width:       [0.5    ]  Number of Paths:  [3      ]      │
+│ Route Color:      [■ Coral]                                    │
+│                                                                │
+│ Exclude Spectral Classes:                                      │
+│ [ ] O  [ ] B  [ ] A  [✓] M  [✓] L  [✓] T  [✓] Y               │
+│                                                                │
+│              [Find Routes]  [Cancel]                           │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2. Route Finding Process
@@ -165,15 +212,15 @@ Stars in View → Prune by Exclusions → Calculate Transits
 After routes are found, users select which to display:
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│ Route Results                                               │
-├────────────────────────────────────────────────────────────┤
-│ [✓] Route 1: Sol → Barnard's → Alpha Centauri (7.2 ly)    │
-│ [ ] Route 2: Sol → Wolf 359 → Alpha Centauri (8.1 ly)     │
-│ [ ] Route 3: Sol → Luyten → Alpha Centauri (9.4 ly)       │
-│                                                            │
-│              [Plot Selected]  [Cancel]                     │
-└────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ Route Results                                                   │
+├────────────────────────────────────────────────────────────────┤
+│ [✓] Route 1: Sol → Barnard's → Alpha Centauri (7.2 ly)        │
+│ [ ] Route 2: Sol → Wolf 359 → Alpha Centauri (8.1 ly)         │
+│ [ ] Route 3: Sol → Luyten → Alpha Centauri (9.4 ly)           │
+│                                                                │
+│              [Plot Selected]  [Cancel]                         │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ### 4. Manual Route Creation
@@ -221,13 +268,28 @@ sceneRoot (2D)
     └── Distance labels (always flat to screen)
 ```
 
-**Two-Step Coordinate Transformation:**
+**Two-Step Coordinate Transformation (in RouteLabelManager.updateLabels()):**
 
 ```java
-// In RouteDisplay.updateLabels()
-Point3D sceneCoords = node.localToScene(Point3D.ZERO, true);  // 3D → Scene
-Point2D localPoint = labelDisplayGroup.sceneToLocal(xs, ys);   // Scene → Label group
-label.getTransforms().setAll(new Translate(x, y));
+// Step 1: Project 3D position to scene coordinates
+Point3D sceneCoords = anchorNode.localToScene(Point3D.ZERO, true);
+
+// Step 2: Check visibility within viewport
+if (!isWithinViewport(sceneX, sceneY, viewportBounds)) {
+    label.setVisible(false);
+    continue;
+}
+
+// Step 3: Convert scene coordinates to local viewport coordinates
+double localX = toLocalX(sceneX, viewportBounds);
+double localY = toLocalY(sceneY, viewportBounds);
+
+// Step 4: Clamp to prevent going off-screen
+double clampedX = clampX(localX, label.getWidth());
+double clampedY = clampY(localY, label.getHeight());
+
+// Step 5: Apply position
+label.getTransforms().setAll(new Translate(clampedX, clampedY));
 ```
 
 ## Algorithm Details
@@ -313,6 +375,12 @@ Key constants from `RoutingConstants`:
 | `DEFAULT_UPPER_DISTANCE` | 8.0 | Default max jump distance (ly) |
 | `LABEL_CLIPPING_PADDING` | 20.0 | Padding for label visibility |
 | `LABEL_EDGE_MARGIN` | 5.0 | Margin for label clamping |
+| `ROUTE_POINT_SPHERE_RADIUS` | 0.05 | Radius of label anchor spheres |
+| `LABEL_CORNER_RADIUS` | 3.0 | Corner radius for label backgrounds |
+| `DARK_BACKGROUND_THRESHOLD` | 380 | RGB sum threshold for contrast |
+| `RGB_MAX_VALUE` | 255 | Max RGB component value |
+| `FIRST_SEGMENT_PREFIX` | "=>" | Prefix for first segment labels |
+| `LABEL_SUFFIX` | "->" | Prefix for subsequent segment labels |
 
 ## Testing
 
@@ -322,6 +390,8 @@ Tests for the routing package should cover:
 - `RouteGraph` - graph construction, connectivity, path finding
 - `PartialRouteUtils` - edge cases for visibility extraction
 - `RouteGraphicsUtil` - coordinate transformations
+- `RouteLabelManager` - label positioning and clamping
+- `RoutePlotter` - route plotting and deduplication
 
 Run routing tests with:
 ```bash
@@ -334,6 +404,7 @@ Run routing tests with:
 2. **Many Routes**: Label updates occur on every viewport change
 3. **Complex Paths**: Yen's algorithm complexity increases with K
 4. **Partial Routes**: Recalculated on each view change
+5. **Segment Deduplication**: Uses HashSet for O(1) lookup
 
 ## Known Limitations
 
