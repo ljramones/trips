@@ -132,6 +132,21 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private double deltaX;
     private final PauseTransition labelUpdatePause = new PauseTransition(Duration.millis(75));
 
+    // =========================================================================
+    // Throttled Label Update Fields
+    // =========================================================================
+
+    /**
+     * Minimum interval between label updates during continuous interactions (ms).
+     * ~60fps = 16ms, but we use a slightly higher value for smoother performance.
+     */
+    private static final long LABEL_UPDATE_THROTTLE_MS = 16;
+
+    /**
+     * Timestamp of the last label update.
+     */
+    private long lastLabelUpdateTime = 0;
+
 
     /**
      * constructor for the Graphics Pane
@@ -267,6 +282,24 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         routeManager.updateLabels();
 
         transitManager.updateLabels();
+    }
+
+    /**
+     * Throttled version of updateLabels() for use during continuous interactions.
+     * <p>
+     * During mouse drag and scroll events, label updates can be called many times
+     * per second. This method limits updates to at most one per {@link #LABEL_UPDATE_THROTTLE_MS}
+     * milliseconds, reducing CPU usage while maintaining smooth visual feedback.
+     * <p>
+     * Use {@link #updateLabels()} directly when immediate feedback is required
+     * (e.g., after programmatic changes, toggling visibility).
+     */
+    private void throttledUpdateLabels() {
+        long now = System.currentTimeMillis();
+        if (now - lastLabelUpdateTime >= LABEL_UPDATE_THROTTLE_MS) {
+            lastLabelUpdateTime = now;
+            updateLabels();
+        }
     }
 
 
@@ -591,7 +624,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private void mouseScrollEventHandler(ScrollEvent event) {
         double deltaY = event.getDeltaY();
         zoomGraph(deltaY * 5);
-        updateLabels();
+        throttledUpdateLabels();
     }
 
     private void mousePressEventHandler(MouseEvent me) {
@@ -623,7 +656,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
                 rotateXY(direction, modifier, mouseDeltaX, mouseDeltaY);
             }
         }
-        updateLabels();
+        throttledUpdateLabels();
     }
 
     private void translateXY(double mousePosX, double mousePosY) {
