@@ -16,6 +16,7 @@ import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.StarService;
@@ -136,6 +137,7 @@ public class PlotManager {
      *
      * @param dataSetDescriptor the data descriptor
      */
+    @TrackExecutionTime
     public void plotStars(@NotNull DataSetDescriptor dataSetDescriptor, AstroSearchQuery astroSearchQuery) {
 
         // get the distance range
@@ -185,6 +187,7 @@ public class PlotManager {
      * @param centerCoordinates the center of the plot
      * @param colorPalette      the color palette to draw
      */
+    @TrackExecutionTime
     public void drawAstrographicData(@NotNull DataSetDescriptor dataSetDescriptor,
                                      @NotNull List<StarObject> starObjects,
                                      double displayRadius,
@@ -217,30 +220,25 @@ public class PlotManager {
         interstellarSpacePane.rebuildGrid(centerCoordinates, astrographicTransformer, currentPlot);
 
 
-        // plot all stars
-        for (StarObject starObject : starObjects) {
-            try {
-                // create a star record object
-                double[] ords = starObject.getCoordinates();
-                double[] correctedOrds = astrographicTransformer.transformOrds(ords);
+        // Pre-filter stars: validate and collect only drawable stars with valid data
+        // This moves exception handling outside the main rendering loop for better performance
+        List<StarObject> validStars = filterValidStars(starObjects);
+        int invalidCount = starObjects.size() - validStars.size();
+        if (invalidCount > 0) {
+            log.warn("Filtered out {} invalid/non-drawable stars", invalidCount);
+        }
 
-                // figure out what stars should be plotted in a sphere
-                if (drawable(starObject)) {
-                    starObject.calculateDisplayScore();
-                    StarDisplayRecord record = StarDisplayRecord.fromStarObject(starObject, starDisplayPreferences);
-                    if (record != null) {
-                        record.setCurrentLabelDisplayScore(displayRadius);
-                        record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
-                        // Add record directly - no need to copy since it's created fresh each iteration
-                        currentPlot.addRecord(record);
-                    } else {
-                        log.error("astrographic object is bad: {}", starObject);
-                    }
-                } else {
-                    log.warn("star record is not drawable:{}", starObject);
-                }
-            } catch (IllegalArgumentException iae) {
-                log.error("Star color is invalid:{}", starObject);
+        // Plot all valid stars (no try-catch needed - already validated)
+        for (StarObject starObject : validStars) {
+            double[] ords = starObject.getCoordinates();
+            double[] correctedOrds = astrographicTransformer.transformOrds(ords);
+
+            starObject.calculateDisplayScore();
+            StarDisplayRecord record = StarDisplayRecord.fromStarObject(starObject, starDisplayPreferences);
+            if (record != null) {
+                record.setCurrentLabelDisplayScore(displayRadius);
+                record.setCoordinates(new Point3D(correctedOrds[0], correctedOrds[1], correctedOrds[2]));
+                currentPlot.addRecord(record);
             }
         }
 
@@ -274,6 +272,48 @@ public class PlotManager {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Pre-filters stars to remove invalid or non-drawable entries.
+     * <p>
+     * This validation pass moves exception handling outside the main rendering loop,
+     * improving performance by avoiding try-catch overhead for each star.
+     *
+     * @param starObjects the list of stars to filter
+     * @return list of valid, drawable stars
+     */
+    @TrackExecutionTime
+    private @NotNull List<StarObject> filterValidStars(@NotNull List<StarObject> starObjects) {
+        List<StarObject> validStars = new ArrayList<>(starObjects.size());
+
+        for (StarObject star : starObjects) {
+            try {
+                // Check if drawable (within bounds)
+                if (!drawable(star)) {
+                    continue;
+                }
+
+                // Validate star has required data for display
+                if (star.getCoordinates() == null || star.getCoordinates().length < 3) {
+                    log.debug("Skipping star with invalid coordinates: {}", star.getDisplayName());
+                    continue;
+                }
+
+                // Validate spectral class can be parsed (color depends on this)
+                String spectralClass = star.getOrthoSpectralClass();
+                if (spectralClass == null || spectralClass.isEmpty()) {
+                    log.debug("Skipping star with missing spectral class: {}", star.getDisplayName());
+                    continue;
+                }
+
+                validStars.add(star);
+            } catch (Exception e) {
+                log.debug("Skipping invalid star {}: {}", star.getDisplayName(), e.getMessage());
+            }
+        }
+
+        return validStars;
+    }
 
     /**
      * check if the point is in the drawable area

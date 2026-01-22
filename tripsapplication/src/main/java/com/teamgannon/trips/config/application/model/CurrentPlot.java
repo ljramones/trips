@@ -5,6 +5,7 @@ import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.starplotting.VisualizationSpatialIndex;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -336,6 +337,7 @@ public class CurrentPlot {
      * Call this after bulk modifications to the star list.
      * The index is automatically rebuilt when accessed if dirty.
      */
+    @TrackExecutionTime
     public void rebuildSpatialIndex() {
         if (!starDisplayRecordList.isEmpty()) {
             log.debug("Building spatial index for {} stars", starDisplayRecordList.size());
@@ -416,6 +418,7 @@ public class CurrentPlot {
      * @param labelCount the maximum number of labels to display
      * @param radius     the search radius (use plot range or viewport distance)
      */
+    @TrackExecutionTime
     public void determineVisibleLabelsWithSpatialIndex(int labelCount, double radius) {
         if (centerCoordinates == null || centerCoordinates.length < 3) {
             // Fall back to non-spatial method
