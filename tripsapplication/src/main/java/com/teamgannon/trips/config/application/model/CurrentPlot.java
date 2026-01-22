@@ -5,11 +5,13 @@ import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.starplotting.VisualizationSpatialIndex;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -73,6 +75,17 @@ public class CurrentPlot {
      */
     private StarDisplayPreferences starDisplayPreferences;
 
+    /**
+     * Spatial index for efficient star queries (viewport culling, nearest neighbor, etc.).
+     * Built lazily when first needed after stars are added.
+     */
+    private transient VisualizationSpatialIndex spatialIndex;
+
+    /**
+     * Flag indicating the spatial index needs to be rebuilt.
+     */
+    private transient boolean spatialIndexDirty = true;
+
 
     /**
      * setup the mechanics of the plot
@@ -111,6 +124,9 @@ public class CurrentPlot {
         plotActive = false;
         centerCoordinates = new double[3];
         clearRoutes();
+        // Clear spatial index
+        spatialIndex = null;
+        spatialIndexDirty = true;
     }
 
     ////////////////  route management   //////////////////////
@@ -201,7 +217,8 @@ public class CurrentPlot {
             record.setCurrentLabelDisplayScore(1000);
         }
         starDisplayRecordList.add(record);
-        // put star display record into the label sort
+        // Mark spatial index as needing rebuild
+        spatialIndexDirty = true;
     }
 
     /**
@@ -285,4 +302,153 @@ public class CurrentPlot {
         }
     }
 
+    // =========================================================================
+    // Spatial Index Methods
+    // =========================================================================
+
+    /**
+     * Gets the spatial index, building it if necessary.
+     * <p>
+     * The spatial index enables efficient queries like:
+     * <ul>
+     *   <li>Find stars within a viewport distance</li>
+     *   <li>Find nearest stars to a point</li>
+     *   <li>Find top-scoring stars within a radius for label display</li>
+     * </ul>
+     *
+     * @return the spatial index, or null if no stars are loaded
+     */
+    public @Nullable VisualizationSpatialIndex getSpatialIndex() {
+        if (starDisplayRecordList.isEmpty()) {
+            return null;
+        }
+
+        if (spatialIndex == null || spatialIndexDirty) {
+            rebuildSpatialIndex();
+        }
+
+        return spatialIndex;
+    }
+
+    /**
+     * Rebuilds the spatial index from the current star list.
+     * <p>
+     * Call this after bulk modifications to the star list.
+     * The index is automatically rebuilt when accessed if dirty.
+     */
+    public void rebuildSpatialIndex() {
+        if (!starDisplayRecordList.isEmpty()) {
+            log.debug("Building spatial index for {} stars", starDisplayRecordList.size());
+            spatialIndex = new VisualizationSpatialIndex(starDisplayRecordList);
+            spatialIndexDirty = false;
+        } else {
+            spatialIndex = null;
+            spatialIndexDirty = false;
+        }
+    }
+
+    /**
+     * Marks the spatial index as needing rebuild.
+     * <p>
+     * Call this when stars are added or removed.
+     */
+    public void invalidateSpatialIndex() {
+        spatialIndexDirty = true;
+    }
+
+    /**
+     * Finds stars within the specified radius of the center coordinates.
+     * <p>
+     * Uses the spatial index for O(log n + k) performance if available,
+     * otherwise falls back to linear search.
+     *
+     * @param radius the search radius in light-years
+     * @return stars within the radius, or all stars if center not set
+     */
+    public @NotNull List<StarDisplayRecord> getStarsWithinRadius(double radius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            return new ArrayList<>(starDisplayRecordList);
+        }
+
+        VisualizationSpatialIndex index = getSpatialIndex();
+        if (index != null) {
+            return index.findStarsWithinRadius(
+                    centerCoordinates[0],
+                    centerCoordinates[1],
+                    centerCoordinates[2],
+                    radius);
+        }
+
+        return new ArrayList<>(starDisplayRecordList);
+    }
+
+    /**
+     * Finds stars within the specified distance range of the center.
+     *
+     * @param minRadius minimum distance (exclusive)
+     * @param maxRadius maximum distance (inclusive)
+     * @return stars within the distance range
+     */
+    public @NotNull List<StarDisplayRecord> getStarsInRange(double minRadius, double maxRadius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            return new ArrayList<>(starDisplayRecordList);
+        }
+
+        VisualizationSpatialIndex index = getSpatialIndex();
+        if (index != null) {
+            return index.findStarsInRange(
+                    centerCoordinates[0],
+                    centerCoordinates[1],
+                    centerCoordinates[2],
+                    minRadius,
+                    maxRadius);
+        }
+
+        return new ArrayList<>(starDisplayRecordList);
+    }
+
+    /**
+     * Determines which stars should display labels using spatial optimization.
+     * <p>
+     * This is more efficient than the full sort approach when dealing with
+     * a large number of stars and a small label count.
+     *
+     * @param labelCount the maximum number of labels to display
+     * @param radius     the search radius (use plot range or viewport distance)
+     */
+    public void determineVisibleLabelsWithSpatialIndex(int labelCount, double radius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            // Fall back to non-spatial method
+            determineVisibleLabels(labelCount);
+            return;
+        }
+
+        VisualizationSpatialIndex index = getSpatialIndex();
+        if (index == null) {
+            determineVisibleLabels(labelCount);
+            return;
+        }
+
+        // Reset all labels
+        for (StarDisplayRecord star : starDisplayRecordList) {
+            star.setDisplayLabel(false);
+        }
+
+        // Use spatial index to find stars that should have labels
+        List<StarDisplayRecord> starsForLabeling = index.findStarsForLabeling(
+                centerCoordinates[0],
+                centerCoordinates[1],
+                centerCoordinates[2],
+                radius,
+                labelCount);
+
+        for (StarDisplayRecord star : starsForLabeling) {
+            star.setDisplayLabel(true);
+        }
+
+        log.debug("Determined {} labels using spatial index (within {} ly radius)",
+                starsForLabeling.size(), radius);
+    }
+
 }
+

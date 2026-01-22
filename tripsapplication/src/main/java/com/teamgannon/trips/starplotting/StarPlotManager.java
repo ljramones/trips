@@ -534,6 +534,22 @@ public class StarPlotManager {
 
     @TrackExecutionTime
     public void drawStars(@NotNull CurrentPlot currentPlot, boolean extensionsVisible) {
+        drawStars(currentPlot, extensionsVisible, -1); // -1 means no distance filtering
+    }
+
+    /**
+     * Draw stars with optional viewport distance filtering.
+     * <p>
+     * When maxDistance > 0, only stars within that distance from the center
+     * are rendered. This uses the spatial index for O(log n + k) performance
+     * where k is the number of visible stars.
+     *
+     * @param currentPlot        the current plot configuration
+     * @param extensionsVisible  whether to show extension lines
+     * @param maxDistance        maximum distance from center to render (-1 for all stars)
+     */
+    @TrackExecutionTime
+    public void drawStars(@NotNull CurrentPlot currentPlot, boolean extensionsVisible, double maxDistance) {
         this.colorPalette = currentPlot.getColorPalette();
         this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
 
@@ -547,7 +563,19 @@ public class StarPlotManager {
         lodManager.resetStatistics();
         extensionManager.setExtensionsVisible(extensionsVisible);
 
-        for (StarDisplayRecord starDisplayRecord : currentPlot.getStarDisplayRecordList()) {
+        // Get stars to render - use spatial filtering if maxDistance is specified
+        List<StarDisplayRecord> starsToRender;
+        if (maxDistance > 0 && centerCoords != null && centerCoords.length >= 3) {
+            // Use spatial index for efficient filtering
+            starsToRender = currentPlot.getStarsWithinRadius(maxDistance);
+            log.debug("Rendering {} stars within {} ly (of {} total)",
+                    starsToRender.size(), maxDistance, currentPlot.getStarDisplayRecordList().size());
+        } else {
+            // Render all stars
+            starsToRender = currentPlot.getStarDisplayRecordList();
+        }
+
+        for (StarDisplayRecord starDisplayRecord : starsToRender) {
             plotStar(starDisplayRecord, currentPlot.getCenterStar(),
                     currentPlot.getColorPalette(), currentPlot.getStarDisplayPreferences(),
                     currentPlot.getCivilizationDisplayPreferences());

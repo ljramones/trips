@@ -243,7 +243,11 @@ public class PlotManager {
             }
         }
 
-        currentPlot.determineVisibleLabels(starDisplayPreferences.getNumberOfVisibleLabels());
+        // Use spatial index for efficient label selection when available
+        currentPlot.determineVisibleLabelsWithSpatialIndex(
+                starDisplayPreferences.getNumberOfVisibleLabels(),
+                displayRadius
+        );
 
         // with our data now plot in interstellar
         interstellarSpacePane.plotStars(currentPlot);
