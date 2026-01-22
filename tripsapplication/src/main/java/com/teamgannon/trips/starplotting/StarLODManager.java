@@ -165,12 +165,44 @@ public class StarLODManager {
     }
 
     /**
-     * Log current LOD statistics.
+     * Log current LOD statistics with triangle counts and efficiency metrics.
      */
     public void logStatistics() {
         int total = highDetailCount + mediumDetailCount + lowDetailCount + minimalDetailCount;
-        log.info("LOD Statistics: HIGH={}, MEDIUM={}, LOW={}, MINIMAL={}, TOTAL={}",
-                highDetailCount, mediumDetailCount, lowDetailCount, minimalDetailCount, total);
+        if (total == 0) {
+            log.info("LOD Statistics: No stars rendered");
+            return;
+        }
+
+        // Triangle counts per LOD level (triangles ≈ 2 * divisions²)
+        // HIGH uses default (64), MEDIUM=32, LOW=16, MINIMAL=8
+        long highTriangles = highDetailCount * 8192L;      // 2 * 64 * 64
+        long mediumTriangles = mediumDetailCount * 2048L;  // 2 * 32 * 32
+        long lowTriangles = lowDetailCount * 512L;         // 2 * 16 * 16
+        long minimalTriangles = minimalDetailCount * 128L; // 2 * 8 * 8
+        long actualTriangles = highTriangles + mediumTriangles + lowTriangles + minimalTriangles;
+        long maxTriangles = total * 8192L; // If all were HIGH
+
+        double efficiency = 100.0 * (1.0 - (double) actualTriangles / maxTriangles);
+
+        log.info("╔══════════════════════════════════════════════════════════════╗");
+        log.info("║                    LOD RENDERING STATISTICS                   ║");
+        log.info("╠══════════════════════════════════════════════════════════════╣");
+        log.info("║ Level    │ Count │ Percent │ Triangles                       ║");
+        log.info("║ HIGH     │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
+                highDetailCount, (highDetailCount * 100.0) / total, highTriangles);
+        log.info("║ MEDIUM   │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
+                mediumDetailCount, (mediumDetailCount * 100.0) / total, mediumTriangles);
+        log.info("║ LOW      │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
+                lowDetailCount, (lowDetailCount * 100.0) / total, lowTriangles);
+        log.info("║ MINIMAL  │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
+                minimalDetailCount, (minimalDetailCount * 100.0) / total, minimalTriangles);
+        log.info("╠══════════════════════════════════════════════════════════════╣");
+        log.info("║ TOTAL STARS: {:,}                                            ║", total);
+        log.info("║ ACTUAL TRIANGULAR TRIANGLES: {:,}                              ║", actualTriangles);
+        log.info("║ WITHOUT LOD WOULD BE: {:,}                                   ║", maxTriangles);
+        log.info("║ EFFICIENCY GAIN: {:.1f}% triangle reduction                   ║", efficiency);
+        log.info("╚══════════════════════════════════════════════════════════════╝");
     }
 
     // =========================================================================
