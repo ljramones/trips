@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.teamgannon.trips.routing.RoutingConstants.KDTREE_THRESHOLD;
+
 /**
  * Service for finding routes between stars.
  * <p>
@@ -130,18 +132,17 @@ public class RouteFindingService {
                         String.format("Destination star '%s' is not in the available stars (may have been excluded).", destination));
             }
 
-            // Calculate transits
-            List<TransitRoute> transitRoutes = calculateTransits(options, prunedStars);
-            log.info("Calculated {} transits", transitRoutes.size());
+            // Build route graph using appropriate algorithm
+            RouteGraph routeGraph = buildRouteGraph(prunedStars, options);
 
-            if (transitRoutes.isEmpty()) {
+            if (routeGraph.getRoutingGraph().edgeSet().isEmpty()) {
                 return RouteFindingResult.failure(
                         "No transits found with the given distance bounds. Try adjusting upper/lower bounds.");
             }
 
-            // Build route graph
-            RouteGraph routeGraph = new RouteGraph();
-            routeGraph.calculateGraphForTransit(transitRoutes);
+            log.info("Built graph with {} vertices and {} edges",
+                    routeGraph.getRoutingGraph().vertexSet().size(),
+                    routeGraph.getRoutingGraph().edgeSet().size());
 
             // Check connectivity
             if (!routeGraph.isConnected(origin, destination)) {
@@ -231,17 +232,51 @@ public class RouteFindingService {
     }
 
     /**
-     * Calculate transits between stars within the distance bounds.
+     * Build route graph using the appropriate algorithm based on dataset size.
+     * <p>
+     * For small datasets (≤ KDTREE_THRESHOLD), uses brute-force transit calculation
+     * which has lower overhead. For larger datasets, uses KD-Tree spatial indexing
+     * which provides O(n log n) complexity vs O(n²) brute-force.
+     *
+     * @param stars   the stars to include in the graph
+     * @param options the route finding options with distance bounds
+     * @return the constructed route graph
      */
-    private @NotNull List<TransitRoute> calculateTransits(@NotNull RouteFindingOptions options,
-                                                           @NotNull List<StarDisplayRecord> stars) {
+    private @NotNull RouteGraph buildRouteGraph(@NotNull List<StarDisplayRecord> stars,
+                                                 @NotNull RouteFindingOptions options) {
+        double lowerBound = options.getLowerBound();
+        double upperBound = options.getUpperBound();
+
+        if (stars.size() <= KDTREE_THRESHOLD) {
+            // Use brute-force for small datasets (lower overhead)
+            log.debug("Using brute-force graph building for {} stars", stars.size());
+            return buildRouteGraphBruteForce(stars, lowerBound, upperBound);
+        } else {
+            // Use KD-Tree for larger datasets (O(n log n) vs O(n²))
+            log.debug("Using KD-Tree graph building for {} stars", stars.size());
+            return RouteGraph.buildWithKDTree(stars, lowerBound, upperBound);
+        }
+    }
+
+    /**
+     * Build route graph using brute-force transit calculation.
+     * Optimal for small datasets (< 100 stars).
+     */
+    private @NotNull RouteGraph buildRouteGraphBruteForce(@NotNull List<StarDisplayRecord> stars,
+                                                           double lowerBound,
+                                                           double upperBound) {
         DistanceRoutes distanceRoutes = DistanceRoutes
                 .builder()
-                .upperDistance(options.getUpperBound())
-                .lowerDistance(options.getLowerBound())
+                .upperDistance(upperBound)
+                .lowerDistance(lowerBound)
                 .build();
 
-        return starMeasurementService.calculateDistances(distanceRoutes, stars);
+        List<TransitRoute> transitRoutes = starMeasurementService.calculateDistances(distanceRoutes, stars);
+        log.debug("Brute-force calculated {} transits", transitRoutes.size());
+
+        RouteGraph routeGraph = new RouteGraph();
+        routeGraph.calculateGraphForTransit(transitRoutes);
+        return routeGraph;
     }
 
     /**

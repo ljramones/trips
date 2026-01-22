@@ -8,8 +8,11 @@ import com.teamgannon.trips.routing.model.*;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.GraphRouteResult;
+import com.teamgannon.trips.transits.kdtree.KDTreeGraphBuilder;
 import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -31,16 +34,30 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
     private final List<SparseTransit> sparseTransitList = new ArrayList<>();
 
+    /**
+     * Whether to use KD-Tree based graph building (recommended for large datasets).
+     * KD-Tree provides O(n log n) complexity vs O(n²) brute-force.
+     */
+    private final boolean useKDTree;
+
     public LargeGraphSearchTask(DataSetDescriptor currentDataset,
                                 DatabaseManagementService databaseManagementService,
                                 StarService starService,
                                 RouteFindingOptions routeFindingOptions) {
+        this(currentDataset, databaseManagementService, starService, routeFindingOptions, true);
+    }
+
+    public LargeGraphSearchTask(DataSetDescriptor currentDataset,
+                                DatabaseManagementService databaseManagementService,
+                                StarService starService,
+                                RouteFindingOptions routeFindingOptions,
+                                boolean useKDTree) {
 
         this.currentDataset = currentDataset;
-
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
         this.routeFindingOptions = routeFindingOptions;
+        this.useKDTree = useKDTree;
 
         Map<String, Integer> collisionMap = new ConcurrentHashMap<>();
         collisionSet = ConcurrentHashMap.newKeySet(collisionMap.size());
@@ -79,19 +96,35 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
         // get a set of stars that match the range request
         Map<String, SparseStarRecord> sparseStarRecordList = getStarRecords(routeFindingOptions);
 
-        // figure out what the allowable transits are
+        // Build route graph using appropriate algorithm
+        RouteGraph routeGraph;
         long startTime = System.currentTimeMillis();
-        List<SparseTransit> transitRoutes = calculateTransits(lower, upper, new ArrayList<>(sparseStarRecordList.values()));
-        long endTime = System.currentTimeMillis();
-        log.info("Metrics: in long route search, transit calculation, time = {}", String.format("%,d", endTime - startTime));
-        updateTaskInfo(String.format("Number of transits found is %d", transitRoutes.size()));
-        log.info(String.format("Number of transits found is %d", transitRoutes.size()));
 
-        RouteGraph routeGraph = new RouteGraph();
-        startTime = System.currentTimeMillis();
-        boolean connected = routeGraph.calculateGraphForSparseTransits(transitRoutes);
-        endTime = System.currentTimeMillis();
-        log.info("Metrics: in long route search, graph connectivity, time = {}", String.format("%,d", endTime - startTime));
+        if (useKDTree) {
+            // Use KD-Tree for O(n log n) graph building
+            log.info("Using KD-Tree based graph building for {} stars", sparseStarRecordList.size());
+            updateTaskInfo("Building graph with KD-Tree spatial indexing...");
+            routeGraph = buildGraphWithKDTree(sparseStarRecordList, lower, upper);
+        } else {
+            // Use legacy brute-force O(n²) approach
+            log.info("Using brute-force graph building for {} stars", sparseStarRecordList.size());
+            updateTaskInfo("begin link calculation");
+            List<SparseTransit> transitRoutes = calculateTransits(lower, upper, new ArrayList<>(sparseStarRecordList.values()));
+            log.info("Number of transits found is {}", transitRoutes.size());
+            updateTaskInfo(String.format("Number of transits found is %d", transitRoutes.size()));
+
+            routeGraph = new RouteGraph();
+            routeGraph.calculateGraphForSparseTransits(transitRoutes);
+        }
+
+        long endTime = System.currentTimeMillis();
+        log.info("Metrics: in long route search, graph building, time = {} ms", String.format("%,d", endTime - startTime));
+        updateTaskInfo(String.format("Graph built with %d vertices and %d edges in %d ms",
+                routeGraph.getRoutingGraph().vertexSet().size(),
+                routeGraph.getRoutingGraph().edgeSet().size(),
+                endTime - startTime));
+
+        boolean connected = !routeGraph.getRoutingGraph().edgeSet().isEmpty();
 
         // so there is at least one path between the stars
         if (connected) {
@@ -133,6 +166,27 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
         }
 
         return graphRouteResult;
+    }
+
+    /**
+     * Build route graph using KD-Tree spatial indexing.
+     * <p>
+     * This provides O(n log n) complexity compared to O(n²) brute-force,
+     * significantly improving performance for large datasets.
+     *
+     * @param sparseStarRecordList the stars to include
+     * @param lower                minimum transit distance
+     * @param upper                maximum transit distance
+     * @return the constructed route graph
+     */
+    private RouteGraph buildGraphWithKDTree(Map<String, SparseStarRecord> sparseStarRecordList,
+                                             double lower, double upper) {
+        List<SparseStarRecord> stars = new ArrayList<>(sparseStarRecordList.values());
+
+        KDTreeGraphBuilder builder = new KDTreeGraphBuilder(true);
+        Graph<String, DefaultEdge> graph = builder.buildGraphFromSparse(stars, lower, upper);
+
+        return new RouteGraph(graph);
     }
 
     private Map<String, SparseStarRecord> getStarRecords(RouteFindingOptions routeFindingOptions) {

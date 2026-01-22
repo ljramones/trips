@@ -32,6 +32,13 @@ public final class RoutingConstants {
     public static final int GRAPH_THRESHOLD = 1500;
 
     /**
+     * Threshold for switching from brute-force to KD-Tree algorithm.
+     * Below this count, the O(n²) algorithm is faster due to lower overhead.
+     * Above this count, KD-Tree O(n log n) provides significant speedup.
+     */
+    public static final int KDTREE_THRESHOLD = 100;
+
+    /**
      * Default number of alternative paths to find using Yen's K-shortest path algorithm.
      */
     public static final int DEFAULT_NUMBER_PATHS = 3;

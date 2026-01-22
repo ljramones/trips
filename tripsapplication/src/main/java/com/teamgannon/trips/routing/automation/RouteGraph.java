@@ -4,6 +4,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.routing.model.SparseTransit;
 import com.teamgannon.trips.transits.TransitRoute;
+import com.teamgannon.trips.transits.kdtree.KDTreeGraphBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +39,71 @@ public class RouteGraph {
 
 
     /**
-     * the ctor
+     * Creates an empty RouteGraph.
      */
     public RouteGraph() {
         routingGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
     }
+
+    /**
+     * Creates a RouteGraph from a pre-built graph.
+     * <p>
+     * Use this constructor when the graph has been built externally,
+     * e.g., by {@link com.teamgannon.trips.transits.kdtree.KDTreeGraphBuilder}.
+     *
+     * @param preBuiltGraph the pre-built weighted graph
+     */
+    public RouteGraph(@NotNull Graph<String, DefaultEdge> preBuiltGraph) {
+        this.routingGraph = preBuiltGraph;
+        calculateGraphPaths();
+    }
+
+    // =========================================================================
+    // Static Factory Methods - KD-Tree Based Construction
+    // =========================================================================
+
+    /**
+     * Creates a RouteGraph using KD-Tree spatial indexing for efficient edge discovery.
+     * <p>
+     * This is O(n log n) compared to O(n²) brute-force transit calculation,
+     * providing significant speedup for large star datasets.
+     *
+     * @param stars      list of stars to include in the graph
+     * @param lowerBound minimum edge distance (exclusive)
+     * @param upperBound maximum edge distance (inclusive)
+     * @return a fully constructed RouteGraph ready for pathfinding
+     */
+    public static @NotNull RouteGraph buildWithKDTree(
+            @NotNull List<StarDisplayRecord> stars,
+            double lowerBound,
+            double upperBound) {
+
+        KDTreeGraphBuilder builder = new KDTreeGraphBuilder();
+        Graph<String, DefaultEdge> graph = builder.buildGraph(stars, lowerBound, upperBound);
+        return new RouteGraph(graph);
+    }
+
+    /**
+     * Creates a RouteGraph from SparseStarRecords using KD-Tree spatial indexing.
+     *
+     * @param stars      list of sparse star records
+     * @param lowerBound minimum edge distance (exclusive)
+     * @param upperBound maximum edge distance (inclusive)
+     * @return a fully constructed RouteGraph ready for pathfinding
+     */
+    public static @NotNull RouteGraph buildWithKDTreeFromSparse(
+            @NotNull List<SparseStarRecord> stars,
+            double lowerBound,
+            double upperBound) {
+
+        KDTreeGraphBuilder builder = new KDTreeGraphBuilder();
+        Graph<String, DefaultEdge> graph = builder.buildGraphFromSparse(stars, lowerBound, upperBound);
+        return new RouteGraph(graph);
+    }
+
+    // =========================================================================
+    // Instance Methods - Transit-Based Construction (Legacy)
+    // =========================================================================
 
     public void calculateGraphForTransit(List<TransitRoute> transitRoutes) {
         for (TransitRoute transitRoute : transitRoutes) {

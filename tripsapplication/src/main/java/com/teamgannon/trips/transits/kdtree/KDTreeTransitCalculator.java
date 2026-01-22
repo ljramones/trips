@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -124,7 +123,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
         KDTree3D<StarDisplayRecord> tree = buildTree(starsInView);
 
         // Find all pairs within max range, then filter by band
-        Set<String> seen = ConcurrentHashMap.newKeySet();
+        Set<String> seen = StarPairKey.createTrackingSet();
         List<TransitRoute> allRoutes = new ArrayList<>();
 
         for (StarDisplayRecord star : starsInView) {
@@ -135,8 +134,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
                 StarDisplayRecord target = neighbor.data();
                 if (star == target) continue;
 
-                String key = pairKey(star, target);
-                if (!seen.add(key)) continue;
+                if (!StarPairKey.addIfAbsent(seen, star.getStarName(), target.getStarName())) continue;
 
                 double distance = neighbor.distanceTo(coords);
 
@@ -170,7 +168,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
             @NotNull List<StarDisplayRecord> stars,
             @NotNull TransitRangeDef rangeDef) {
 
-        Set<String> seen = ConcurrentHashMap.newKeySet();
+        Set<String> seen = StarPairKey.createTrackingSet();
         List<TransitRoute> routes = new ArrayList<>();
         double upperRange = rangeDef.getUpperRange();
         double lowerRange = rangeDef.getLowerRange();
@@ -183,8 +181,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
                 StarDisplayRecord target = neighbor.data();
                 if (star == target) continue;
 
-                String key = pairKey(star, target);
-                if (!seen.add(key)) continue;
+                if (!StarPairKey.addIfAbsent(seen, star.getStarName(), target.getStarName())) continue;
 
                 double distance = neighbor.distanceTo(coords);
                 if (distance > lowerRange) {
@@ -201,7 +198,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
             @NotNull List<StarDisplayRecord> stars,
             @NotNull TransitRangeDef rangeDef) {
 
-        Set<String> seen = ConcurrentHashMap.newKeySet();
+        Set<String> seen = StarPairKey.createTrackingSet();
         double upperRange = rangeDef.getUpperRange();
         double lowerRange = rangeDef.getLowerRange();
 
@@ -212,7 +209,7 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
 
                     return neighbors.stream()
                             .filter(neighbor -> neighbor.data() != star)
-                            .filter(neighbor -> seen.add(pairKey(star, neighbor.data())))
+                            .filter(neighbor -> StarPairKey.addIfAbsent(seen, star.getStarName(), neighbor.data().getStarName()))
                             .map(neighbor -> {
                                 double distance = neighbor.distanceTo(coords);
                                 if (distance > lowerRange) {
@@ -223,17 +220,6 @@ public class KDTreeTransitCalculator implements ITransitDistanceCalculator {
                             .filter(route -> route != null);
                 })
                 .collect(Collectors.toList());
-    }
-
-    private @NotNull String pairKey(@NotNull StarDisplayRecord a, @NotNull StarDisplayRecord b) {
-        String nameA = a.getStarName();
-        String nameB = b.getStarName();
-        // Ensure consistent ordering
-        if (nameA.compareTo(nameB) < 0) {
-            return nameA + "|" + nameB;
-        } else {
-            return nameB + "|" + nameA;
-        }
     }
 
     private @NotNull TransitRoute createRoute(@NotNull StarDisplayRecord source,
