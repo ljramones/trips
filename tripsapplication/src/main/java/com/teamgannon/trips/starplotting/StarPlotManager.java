@@ -736,17 +736,38 @@ public class StarPlotManager {
                 starDisplayPreferences,
                 politiesPreferences);
 
-        String polity = record.getPolity();
-        if (polity.equals("NA")) {
-            polity = "Non-Aligned";
-        }
-        Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
-        Tooltip.install(star, tooltip);
+        // Install tooltip lazily on first hover to reduce memory usage
+        installLazyTooltip(star, record);
+
         eventPublisher.publishEvent(new UpdateSidePanelListEvent(this, record));
         star.setId("regularStar");
         star.setUserData(record);
 
         return star;
+    }
+
+    /**
+     * Installs a tooltip lazily - only created when user first hovers over the node.
+     * This reduces memory usage for large star plots where most tooltips are never seen.
+     *
+     * @param node   the node to attach the tooltip to
+     * @param record the star record for tooltip content
+     */
+    private void installLazyTooltip(@NotNull Node node, @NotNull StarDisplayRecord record) {
+        // Use a single-fire mouse enter handler to install tooltip on first hover
+        node.setOnMouseEntered(event -> {
+            // Check if tooltip already installed (prevents duplicate creation)
+            if (node.getProperties().get("tooltipInstalled") == null) {
+                String polity = record.getPolity();
+                if (polity.equals("NA")) {
+                    polity = "Non-Aligned";
+                }
+                Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
+                Tooltip.install(node, tooltip);
+                node.getProperties().put("tooltipInstalled", Boolean.TRUE);
+                log.trace("Installed tooltip for star: {}", record.getStarName());
+            }
+        });
     }
 
     /**
