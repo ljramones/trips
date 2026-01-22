@@ -68,6 +68,25 @@ public class RoutePlotter {
     @TrackExecutionTime
     public void plotRoutes(@NotNull List<Route> routeList) {
         routeList.forEach(this::plotRoute);
+
+        // Log spatial index statistics after bulk route plotting
+        if (!routeList.isEmpty()) {
+            logRouteSpatialIndexStatistics();
+        }
+    }
+
+    /**
+     * Logs route spatial index statistics for performance monitoring.
+     */
+    private void logRouteSpatialIndexStatistics() {
+        var currentPlot = tripsContext.getCurrentPlot();
+        if (currentPlot != null) {
+            var index = currentPlot.getRouteSpatialIndex();
+            if (index != null && !index.isEmpty()) {
+                log.info("Route spatial index built: {} routes, {} segments",
+                        index.getRouteCount(), index.getTotalSegments());
+            }
+        }
     }
 
     /**

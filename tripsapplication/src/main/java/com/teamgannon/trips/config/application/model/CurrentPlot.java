@@ -6,6 +6,8 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.measure.TrackExecutionTime;
+import com.teamgannon.trips.routing.routemanagement.IndexedRouteSegment;
+import com.teamgannon.trips.routing.routemanagement.RouteSegmentSpatialIndex;
 import com.teamgannon.trips.starplotting.VisualizationSpatialIndex;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -87,6 +89,17 @@ public class CurrentPlot {
      */
     private transient boolean spatialIndexDirty = true;
 
+    /**
+     * Spatial index for efficient route segment queries (viewport culling).
+     * Built lazily when first needed after routes are added.
+     */
+    private transient RouteSegmentSpatialIndex routeSpatialIndex;
+
+    /**
+     * Flag indicating the route spatial index needs to be rebuilt.
+     */
+    private transient boolean routeSpatialIndexDirty = true;
+
 
     /**
      * setup the mechanics of the plot
@@ -125,9 +138,11 @@ public class CurrentPlot {
         plotActive = false;
         centerCoordinates = new double[3];
         clearRoutes();
-        // Clear spatial index
+        // Clear spatial indices
         spatialIndex = null;
         spatialIndexDirty = true;
+        routeSpatialIndex = null;
+        routeSpatialIndexDirty = true;
     }
 
     ////////////////  route management   //////////////////////
@@ -141,6 +156,7 @@ public class CurrentPlot {
         log.info("\nAdd route with Id={}\n", routeDescriptor.getId());
         if (!routeMapping.containsKey(routeDescriptor.getId())) {
             routeMapping.put(routeDescriptor.getId(), routeDescriptor);
+            routeSpatialIndexDirty = true;
         }
     }
 
@@ -159,6 +175,7 @@ public class CurrentPlot {
     public void removeRoute(RouteDescriptor routeDescriptor) {
         log.info("\nRemoved route with Id={}\n", routeDescriptor.getId());
         routeMapping.remove(routeDescriptor.getId());
+        routeSpatialIndexDirty = true;
     }
 
     /**
@@ -185,6 +202,10 @@ public class CurrentPlot {
      */
     public void clearRoutes() {
         routeMapping.clear();
+        if (routeSpatialIndex != null) {
+            routeSpatialIndex.clear();
+        }
+        routeSpatialIndexDirty = true;
     }
 
     /**
@@ -522,5 +543,130 @@ public class CurrentPlot {
         return withinRadius;
     }
 
+    // =========================================================================
+    // Route Spatial Index Methods
+    // =========================================================================
+
+    /**
+     * Gets the route spatial index, building it if necessary.
+     * <p>
+     * The route spatial index enables efficient queries like:
+     * <ul>
+     *   <li>Find route segments within a viewport distance</li>
+     *   <li>Cull route segments that are completely outside the view</li>
+     *   <li>Find which routes have visible segments</li>
+     * </ul>
+     *
+     * @return the route spatial index, or null if no routes are loaded
+     */
+    public @Nullable RouteSegmentSpatialIndex getRouteSpatialIndex() {
+        if (routeMapping.isEmpty()) {
+            return null;
+        }
+
+        if (routeSpatialIndex == null || routeSpatialIndexDirty) {
+            rebuildRouteSpatialIndex();
+        }
+
+        return routeSpatialIndex;
+    }
+
+    /**
+     * Rebuilds the route spatial index from the current routes.
+     * <p>
+     * Call this after bulk modifications to routes.
+     * The index is automatically rebuilt when accessed if dirty.
+     */
+    @TrackExecutionTime
+    public void rebuildRouteSpatialIndex() {
+        if (!routeMapping.isEmpty()) {
+            int totalSegments = routeMapping.values().stream()
+                    .mapToInt(r -> Math.max(0, r.getRouteCoordinates().size() - 1))
+                    .sum();
+            log.debug("Building route spatial index for {} routes ({} segments)",
+                    routeMapping.size(), totalSegments);
+
+            routeSpatialIndex = new RouteSegmentSpatialIndex();
+            routeSpatialIndex.addRoutes(routeMapping.values());
+            routeSpatialIndexDirty = false;
+        } else {
+            routeSpatialIndex = null;
+            routeSpatialIndexDirty = false;
+        }
+    }
+
+    /**
+     * Marks the route spatial index as needing rebuild.
+     * <p>
+     * Call this when routes are added or removed.
+     */
+    public void invalidateRouteSpatialIndex() {
+        routeSpatialIndexDirty = true;
+    }
+
+    /**
+     * Finds route segments within the specified radius of the center coordinates.
+     * <p>
+     * Uses the spatial index for O(log n + k) performance if available.
+     *
+     * @param radius the search radius
+     * @return segments within the radius, or empty list if no routes
+     */
+    public @NotNull List<IndexedRouteSegment> getRouteSegmentsWithinRadius(double radius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            return Collections.emptyList();
+        }
+
+        RouteSegmentSpatialIndex index = getRouteSpatialIndex();
+        if (index != null) {
+            return index.findSegmentsWithinRadius(
+                    centerCoordinates[0],
+                    centerCoordinates[1],
+                    centerCoordinates[2],
+                    radius);
+        }
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * Gets the set of route IDs that have segments within the viewport.
+     * <p>
+     * This is useful for determining which routes need to be rendered
+     * without checking every segment.
+     *
+     * @param radius the viewport radius
+     * @return set of route IDs with visible segments
+     */
+    public @NotNull Set<UUID> getVisibleRouteIds(double radius) {
+        if (centerCoordinates == null || centerCoordinates.length < 3) {
+            return new HashSet<>(routeMapping.keySet());
+        }
+
+        RouteSegmentSpatialIndex index = getRouteSpatialIndex();
+        if (index != null) {
+            return index.getVisibleRouteIds(
+                    centerCoordinates[0],
+                    centerCoordinates[1],
+                    centerCoordinates[2],
+                    radius);
+        }
+
+        return new HashSet<>(routeMapping.keySet());
+    }
+
+    /**
+     * Returns route spatial index statistics for monitoring.
+     *
+     * @return statistics string, or empty string if no index
+     */
+    public @NotNull String getRouteSpatialIndexStatistics() {
+        if (routeSpatialIndex != null) {
+            return routeSpatialIndex.getStatistics();
+        }
+        return "";
+    }
+
 }
+
 

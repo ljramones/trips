@@ -2,6 +2,7 @@ package com.teamgannon.trips.routing.routemanagement;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
+import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.routing.model.RouteSegment;
@@ -11,6 +12,7 @@ import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -331,5 +333,86 @@ public class RouteDisplay {
 
     public SubScene getSubScene() {
         return subScene;
+    }
+
+    // =========================================================================
+    // Spatial Index Support
+    // =========================================================================
+
+    /**
+     * Gets the route spatial index from the current plot.
+     *
+     * @return the route spatial index, or null if not available
+     */
+    public RouteSegmentSpatialIndex getRouteSpatialIndex() {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        if (currentPlot != null) {
+            return currentPlot.getRouteSpatialIndex();
+        }
+        return null;
+    }
+
+    /**
+     * Gets the set of route IDs that have segments within the specified viewport radius.
+     * <p>
+     * This is useful for quickly determining which routes need to be rendered
+     * without checking every segment individually.
+     *
+     * @param viewportRadius the viewport radius (typically the view distance)
+     * @return set of route IDs with potentially visible segments
+     */
+    public @NotNull Set<UUID> getVisibleRouteIds(double viewportRadius) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        if (currentPlot != null) {
+            return currentPlot.getVisibleRouteIds(viewportRadius);
+        }
+        return new HashSet<>(routeLookup.keySet());
+    }
+
+    /**
+     * Gets route segments within the viewport radius.
+     * <p>
+     * This can be used for selective segment rendering when many routes exist.
+     *
+     * @param viewportRadius the viewport radius
+     * @return list of indexed segments within the radius
+     */
+    public @NotNull List<IndexedRouteSegment> getVisibleSegments(double viewportRadius) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        if (currentPlot != null) {
+            return currentPlot.getRouteSegmentsWithinRadius(viewportRadius);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Logs route spatial index statistics for performance monitoring.
+     */
+    public void logSpatialIndexStatistics() {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        if (currentPlot != null) {
+            String stats = currentPlot.getRouteSpatialIndexStatistics();
+            if (!stats.isEmpty()) {
+                log.info("Route spatial index: {}", stats);
+            }
+        }
+    }
+
+    /**
+     * Gets the total number of routes currently displayed.
+     *
+     * @return route count
+     */
+    public int getRouteCount() {
+        return routeLookup.size();
+    }
+
+    /**
+     * Gets the total number of route segments tracked.
+     *
+     * @return segment count
+     */
+    public int getSegmentCount() {
+        return routeSegments.size();
     }
 }
