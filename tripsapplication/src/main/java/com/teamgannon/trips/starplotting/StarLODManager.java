@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Manages Level-of-Detail (LOD) for star rendering.
@@ -126,6 +127,20 @@ public class StarLODManager {
      */
     private double[] centerCoordinates = {0, 0, 0};
 
+    /**
+     * Object pool for reusing star spheres.
+     * Reduces garbage collection pressure during plot transitions.
+     */
+    @Getter
+    private final StarNodePool nodePool;
+
+    /**
+     * Whether to use object pooling for star creation.
+     */
+    @Getter
+    @Setter
+    private boolean poolingEnabled = true;
+
     // =========================================================================
     // Statistics (for debugging/tuning)
     // =========================================================================
@@ -138,6 +153,26 @@ public class StarLODManager {
     private int lowDetailCount = 0;
     @Getter
     private int minimalDetailCount = 0;
+
+    // =========================================================================
+    // Constructor
+    // =========================================================================
+
+    /**
+     * Creates a new StarLODManager with default pool settings.
+     */
+    public StarLODManager() {
+        this.nodePool = new StarNodePool();
+    }
+
+    /**
+     * Creates a new StarLODManager with a pre-configured pool.
+     *
+     * @param nodePool the pool to use for star nodes
+     */
+    public StarLODManager(@NotNull StarNodePool nodePool) {
+        this.nodePool = nodePool;
+    }
 
     // =========================================================================
     // Configuration Methods
@@ -189,19 +224,25 @@ public class StarLODManager {
         log.info("║                    LOD RENDERING STATISTICS                   ║");
         log.info("╠══════════════════════════════════════════════════════════════╣");
         log.info("║ Level    │ Count │ Percent │ Triangles                       ║");
-        log.info("║ HIGH     │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
-                highDetailCount, (highDetailCount * 100.0) / total, highTriangles);
-        log.info("║ MEDIUM   │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
-                mediumDetailCount, (mediumDetailCount * 100.0) / total, mediumTriangles);
-        log.info("║ LOW      │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
-                lowDetailCount, (lowDetailCount * 100.0) / total, lowTriangles);
-        log.info("║ MINIMAL  │ {:>5} │ {:>6.1f}% │ {:>12,}                       ║",
-                minimalDetailCount, (minimalDetailCount * 100.0) / total, minimalTriangles);
+        log.info(String.format("║ HIGH     │ %5d │ %6.1f%% │ %,12d                    ║",
+                highDetailCount, (highDetailCount * 100.0) / total, highTriangles));
+        log.info(String.format("║ MEDIUM   │ %5d │ %6.1f%% │ %,12d                    ║",
+                mediumDetailCount, (mediumDetailCount * 100.0) / total, mediumTriangles));
+        log.info(String.format("║ LOW      │ %5d │ %6.1f%% │ %,12d                    ║",
+                lowDetailCount, (lowDetailCount * 100.0) / total, lowTriangles));
+        log.info(String.format("║ MINIMAL  │ %5d │ %6.1f%% │ %,12d                    ║",
+                minimalDetailCount, (minimalDetailCount * 100.0) / total, minimalTriangles));
         log.info("╠══════════════════════════════════════════════════════════════╣");
-        log.info("║ TOTAL STARS: {:,}                                            ║", total);
-        log.info("║ ACTUAL TRIANGULAR TRIANGLES: {:,}                              ║", actualTriangles);
-        log.info("║ WITHOUT LOD WOULD BE: {:,}                                   ║", maxTriangles);
-        log.info("║ EFFICIENCY GAIN: {:.1f}% triangle reduction                   ║", efficiency);
+        log.info(String.format("║ TOTAL STARS: %,d                                              ║", total));
+        log.info(String.format("║ ACTUAL TRIANGLES: %,d                                        ║", actualTriangles));
+        log.info(String.format("║ WITHOUT LOD WOULD BE: %,d                                   ║", maxTriangles));
+        log.info(String.format("║ EFFICIENCY GAIN: %.1f%% triangle reduction                   ║", efficiency));
+        log.info("╠══════════════════════════════════════════════════════════════╣");
+        log.info("║ OBJECT POOL: {}                                              ║",
+                poolingEnabled ? "ENABLED" : "DISABLED");
+        if (poolingEnabled) {
+            log.info("║ {}  ║", nodePool.getStatistics());
+        }
         log.info("╚══════════════════════════════════════════════════════════════╝");
     }
 
@@ -297,6 +338,10 @@ public class StarLODManager {
 
     /**
      * Create a star node with the appropriate LOD level.
+     * <p>
+     * When pooling is enabled, spheres are acquired from the pool instead of
+     * being newly created. This reduces garbage collection pressure during
+     * plot transitions.
      *
      * @param record the star display record
      * @param baseRadius the base radius from star preferences
@@ -316,12 +361,38 @@ public class StarLODManager {
             case MINIMAL -> minimalDetailCount++;
         }
 
-        return switch (lodLevel) {
-            case HIGH -> createHighDetailStar(baseRadius, material);
-            case MEDIUM -> createMediumDetailStar(baseRadius, material);
-            case LOW -> createLowDetailStar(baseRadius, material);
-            case MINIMAL -> createMinimalDetailStar(baseRadius, material);
+        if (poolingEnabled) {
+            // Use pool for sphere acquisition
+            return createStarFromPool(baseRadius, material, lodLevel);
+        } else {
+            // Create new spheres (original behavior)
+            return switch (lodLevel) {
+                case HIGH -> createHighDetailStar(baseRadius, material);
+                case MEDIUM -> createMediumDetailStar(baseRadius, material);
+                case LOW -> createLowDetailStar(baseRadius, material);
+                case MINIMAL -> createMinimalDetailStar(baseRadius, material);
+            };
+        }
+    }
+
+    /**
+     * Creates a star by acquiring a sphere from the pool.
+     *
+     * @param baseRadius the radius for the sphere
+     * @param material the material to apply
+     * @param lodLevel the LOD level determining sphere divisions
+     * @return the configured sphere from the pool
+     */
+    private Sphere createStarFromPool(double baseRadius,
+                                       @NotNull PhongMaterial material,
+                                       @NotNull LODLevel lodLevel) {
+        double adjustedRadius = switch (lodLevel) {
+            case HIGH, MEDIUM -> baseRadius;
+            case LOW -> baseRadius * LOW_DETAIL_RADIUS_MULTIPLIER;
+            case MINIMAL -> Math.max(baseRadius * LOW_DETAIL_RADIUS_MULTIPLIER, MINIMAL_STAR_RADIUS);
         };
+
+        return nodePool.acquire(lodLevel, adjustedRadius, material);
     }
 
     /**
@@ -361,6 +432,72 @@ public class StarLODManager {
         Sphere sphere = new Sphere(adjustedRadius, MINIMAL_SPHERE_DIVISIONS);
         sphere.setMaterial(material);
         return sphere;
+    }
+
+    // =========================================================================
+    // Pool Management Methods
+    // =========================================================================
+
+    /**
+     * Releases a sphere node back to the pool for reuse.
+     * <p>
+     * The sphere should be removed from the scene graph before releasing.
+     * If the node is not a Sphere or pooling is disabled, this is a no-op.
+     *
+     * @param node the node to release (must be a Sphere)
+     */
+    public void releaseNode(@Nullable Node node) {
+        if (!poolingEnabled || node == null || !(node instanceof Sphere sphere)) {
+            return;
+        }
+
+        // Determine LOD level from sphere divisions
+        LODLevel level = getLevelFromDivisions(sphere.getDivisions());
+        nodePool.release(sphere, level);
+    }
+
+    /**
+     * Releases multiple nodes back to the pool.
+     * Non-Sphere nodes are silently ignored.
+     *
+     * @param nodes the nodes to release
+     */
+    public void releaseNodes(@NotNull Iterable<Node> nodes) {
+        if (!poolingEnabled) {
+            return;
+        }
+
+        for (Node node : nodes) {
+            releaseNode(node);
+        }
+    }
+
+    /**
+     * Determines LOD level from sphere divisions.
+     */
+    private LODLevel getLevelFromDivisions(int divisions) {
+        // Default sphere is 64 divisions (HIGH), our constants: MEDIUM=32, LOW=16, MINIMAL=8
+        if (divisions >= 64) return LODLevel.HIGH;
+        if (divisions >= MEDIUM_SPHERE_DIVISIONS) return LODLevel.MEDIUM;
+        if (divisions >= LOW_SPHERE_DIVISIONS) return LODLevel.LOW;
+        return LODLevel.MINIMAL;
+    }
+
+    /**
+     * Pre-warms the pool with spheres for faster initial rendering.
+     * Call during application initialization.
+     *
+     * @param countPerLevel number of spheres to pre-create per LOD level
+     */
+    public void prewarmPool(int countPerLevel) {
+        nodePool.prewarm(countPerLevel);
+    }
+
+    /**
+     * Clears the node pool, releasing all pooled resources.
+     */
+    public void clearPool() {
+        nodePool.clear();
     }
 
     // =========================================================================

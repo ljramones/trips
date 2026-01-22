@@ -360,6 +360,10 @@ public class StarPlotManager {
         extensionManager.initialize(world);
 
         world.getChildren().add(politiesDisplayGroup);
+
+        // Pre-warm the star node pool for faster initial rendering
+        // This creates spheres ahead of time to avoid allocation during first render
+        lodManager.prewarmPool(100);
     }
 
     @TrackExecutionTime
@@ -493,6 +497,10 @@ public class StarPlotManager {
      */
     public void clearStars() {
 
+        // Return star spheres to the pool before clearing (if pooling is enabled)
+        // This allows sphere objects to be reused in the next render cycle
+        lodManager.releaseNodes(stellarDisplayGroup.getChildren());
+
         // remove stars
         stellarDisplayGroup.getChildren().clear();
         labelManager.clear();
@@ -508,6 +516,8 @@ public class StarPlotManager {
         materialCache.clear();
         pendingStarNodes.clear();
         pendingPolityNodes.clear();
+
+        log.debug("Stars cleared. Pool statistics: {}", lodManager.getNodePool().getStatistics());
     }
 
     /**

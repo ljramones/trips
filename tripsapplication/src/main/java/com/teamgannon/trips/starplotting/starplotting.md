@@ -197,6 +197,40 @@ PhongMaterial material = getCachedMaterial(star.getColor());
 
 **Savings**: ~98% reduction in material objects
 
+### Object Pooling for Star Nodes
+
+The `StarNodePool` class manages reusable `Sphere` objects to reduce garbage collection pressure:
+
+```java
+// Acquiring a sphere from the pool
+Sphere star = pool.acquire(LODLevel.MEDIUM, radius, material);
+
+// Releasing spheres back to pool (on clearStars)
+pool.release(sphere, LODLevel.MEDIUM);
+```
+
+**How It Works:**
+- Separate pools maintained for each LOD level (spheres have fixed divisions at construction)
+- Pre-warmed at startup with 100 spheres per LOD level (400 total)
+- Max pool size of 5,000 per level prevents unbounded growth
+- Released spheres have materials cleared to help GC
+
+**Pool Statistics** (logged after each render):
+```
+╠══════════════════════════════════════════════════════════════╣
+║ OBJECT POOL: ENABLED                                         ║
+║ StarNodePool[created=400, reused=600, released=1000,         ║
+║              pooled=400, reuseRate=60.0%]                    ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+**Benefits:**
+- Eliminates repeated `Sphere` allocation for recurring renders
+- Reduces GC pressure during plot transitions
+- Higher reuse rate on subsequent renders (first render creates, later renders reuse)
+
+**Savings**: After initial render, nearly 100% sphere reuse
+
 ### Batch Scene Graph Updates
 
 Instead of adding nodes one at a time (causes N scene graph restructures):
@@ -278,11 +312,14 @@ for (star : validStars) {
 |--------------|-----------------|-----------------|
 | KD-Tree spatial index | Distance calculations | 90-99% |
 | LOD system | Triangle count | 85-95% |
+| Object pooling | Sphere allocations | 60-100%* |
 | Material caching | Material objects | 95-99% |
 | Batch scene graph | Graph restructures | 99% |
 | Lazy context menus | Upfront allocations | 100% |
 | Lazy tooltips | Upfront allocations | 90-99% |
 | Pre-validation | Exception overhead | Per-star overhead |
+
+\* Object pooling savings increase after initial render; first render creates spheres, subsequent renders reuse them.
 
 ---
 
@@ -294,7 +331,8 @@ for (star : validStars) {
 | `CurrentPlot` | Stores stars, manages spatial index, distance sorting |
 | `StarPlotManager` | Renders stars, manages LOD, batching, caching |
 | `VisualizationSpatialIndex` | KD-tree spatial queries |
-| `StarLODManager` | Determines detail level, creates geometry |
+| `StarLODManager` | Determines detail level, creates geometry, manages pool |
+| `StarNodePool` | Object pool for reusing Sphere nodes |
 | `StarLabelManager` | Label creation and positioning |
 | `StarExtensionManager` | Extension lines from grid to stars |
 
