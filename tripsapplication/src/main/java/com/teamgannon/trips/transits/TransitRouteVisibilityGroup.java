@@ -50,6 +50,24 @@ public class TransitRouteVisibilityGroup {
     private final Map<String, TransitRoute> transitRouteMap = new HashMap<>();
     private final Map<Node, Label> shapeToLabel = new HashMap<>();
 
+    /**
+     * Gets all transit routes in this visibility group.
+     *
+     * @return collection of transit routes
+     */
+    public java.util.Collection<TransitRoute> getTransitRoutes() {
+        return transitRouteMap.values();
+    }
+
+    /**
+     * Gets the number of transit routes in this group.
+     *
+     * @return route count
+     */
+    public int getTransitCount() {
+        return transitRouteMap.size();
+    }
+
     private static final double LABEL_PADDING = TransitConstants.LABEL_PADDING;
     private static final double LABEL_EDGE_MARGIN = TransitConstants.LABEL_EDGE_MARGIN;
 

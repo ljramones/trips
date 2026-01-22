@@ -6,14 +6,13 @@ import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.scene.Group;
 import javafx.scene.SubScene;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Manages transit visualization across all transit bands.
@@ -27,6 +26,12 @@ public class TransitManager {
 
     private Group transitGroup;
     private final Group labelDisplayGroup = new Group();
+
+    /**
+     * Spatial index for efficient transit queries (viewport culling, nearest neighbor, etc.).
+     */
+    @Getter
+    private TransitSpatialIndex spatialIndex = new TransitSpatialIndex();
 
     private final TripsContext tripsContext;
     private final TransitCalculatorFactory calculatorFactory;
@@ -114,6 +119,9 @@ public class TransitManager {
             }
         }
 
+        // Build spatial index from computed transits
+        rebuildSpatialIndex();
+
         updateLabels();
         log.debug("Transits computed and displayed");
     }
@@ -179,6 +187,7 @@ public class TransitManager {
         }
         transitMap.clear();
         labelDisplayGroup.getChildren().clear();
+        spatialIndex.clear();
     }
 
     /**
@@ -236,6 +245,9 @@ public class TransitManager {
             installGroup(visibilityGroup);
         }
 
+        // Build spatial index from applied transits
+        rebuildSpatialIndex();
+
         updateLabels();
         log.debug("Pre-calculated transits applied and displayed");
     }
@@ -245,5 +257,89 @@ public class TransitManager {
      */
     public TransitCalculatorFactory getCalculatorFactory() {
         return calculatorFactory;
+    }
+
+    // =========================================================================
+    // Spatial Index Support
+    // =========================================================================
+
+    /**
+     * Rebuilds the spatial index from all current transit visibility groups.
+     */
+    private void rebuildSpatialIndex() {
+        spatialIndex.clear();
+
+        for (TransitRouteVisibilityGroup group : transitMap.values()) {
+            String bandId = group.getGroupId().toString();
+            Collection<TransitRoute> routes = group.getTransitRoutes();
+            if (!routes.isEmpty()) {
+                spatialIndex.addTransits(bandId, routes);
+            }
+        }
+
+        if (!spatialIndex.isEmpty()) {
+            log.info("Transit spatial index built: {} bands, {} transits",
+                    spatialIndex.getBandCount(), spatialIndex.getTotalTransits());
+        }
+    }
+
+    /**
+     * Finds transits within the specified radius of a point.
+     * <p>
+     * This is useful for viewport culling and click detection.
+     *
+     * @param centerX query center X coordinate
+     * @param centerY query center Y coordinate
+     * @param centerZ query center Z coordinate
+     * @param radius  query sphere radius
+     * @return list of indexed transits within the radius
+     */
+    public @NotNull List<IndexedTransit> findTransitsWithinRadius(
+            double centerX, double centerY, double centerZ, double radius) {
+        return spatialIndex.findTransitsWithinRadius(centerX, centerY, centerZ, radius);
+    }
+
+    /**
+     * Finds the nearest transit to a point.
+     * <p>
+     * Useful for click detection on transit lines.
+     *
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @return the nearest transit, or null if no transits exist
+     */
+    public @Nullable IndexedTransit findNearestTransit(double x, double y, double z) {
+        return spatialIndex.findNearestTransit(x, y, z);
+    }
+
+    /**
+     * Gets the set of band IDs that have transits within the query sphere.
+     *
+     * @param centerX query center X
+     * @param centerY query center Y
+     * @param centerZ query center Z
+     * @param radius  query radius
+     * @return set of band IDs with visible transits
+     */
+    public @NotNull Set<String> getVisibleBandIds(
+            double centerX, double centerY, double centerZ, double radius) {
+        return spatialIndex.getVisibleBandIds(centerX, centerY, centerZ, radius);
+    }
+
+    /**
+     * Gets transit spatial index statistics for monitoring.
+     *
+     * @return statistics string
+     */
+    public @NotNull String getSpatialIndexStatistics() {
+        return spatialIndex.getStatistics();
+    }
+
+    /**
+     * Logs transit spatial index statistics.
+     */
+    public void logSpatialIndexStatistics() {
+        spatialIndex.logStatistics();
     }
 }
