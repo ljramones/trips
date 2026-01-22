@@ -101,12 +101,25 @@ public class TransitRouteVisibilityGroup {
 
     /**
      * Plot transits for the given stars within the transit range.
+     * Calculates routes using the distance calculator.
      */
     public void plotTransit(TransitRangeDef transitRangeDef, List<StarDisplayRecord> starsInView) {
         List<TransitRoute> transitRoutes = context.getDistanceCalculator()
                 .calculateDistances(transitRangeDef, starsInView);
         log.debug("# of routes found is {}", transitRoutes.size());
 
+        MapUtils.populateMap(transitRouteMap, transitRoutes, TransitRoute::getName);
+        plotTransitRoutes(transitRoutes);
+    }
+
+    /**
+     * Plot pre-calculated transit routes.
+     * Use this when routes have already been calculated (e.g., from async calculation).
+     *
+     * @param transitRoutes the pre-calculated routes to display
+     */
+    public void plotPreCalculatedRoutes(@NotNull List<TransitRoute> transitRoutes) {
+        log.debug("Plotting {} pre-calculated routes for band {}", transitRoutes.size(), groupName);
         MapUtils.populateMap(transitRouteMap, transitRoutes, TransitRoute::getName);
         plotTransitRoutes(transitRoutes);
     }

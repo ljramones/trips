@@ -53,8 +53,7 @@ import com.teamgannon.trips.service.*;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
-import com.teamgannon.trips.transits.FindTransitsBetweenStarsDialog;
-import com.teamgannon.trips.transits.TransitDefinitions;
+import com.teamgannon.trips.transits.*;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -206,6 +205,7 @@ public class MainPane  {
     private final StarService starService;
     private final BulkLoadService bulkLoadService;
     private final DataImportService dataImportService;
+    private final TransitCalculationService transitCalculationService;
 
     // state settings for control positions
 
@@ -243,6 +243,7 @@ public class MainPane  {
                     StarService starService,
                     BulkLoadService bulkLoadService,
                     DataImportService dataImportService,
+                    TransitCalculationService transitCalculationService,
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
                     RoutingPanel routingPanel,
@@ -269,6 +270,7 @@ public class MainPane  {
         this.starService = starService;
         this.bulkLoadService = bulkLoadService;
         this.dataImportService = dataImportService;
+        this.transitCalculationService = transitCalculationService;
 
         this.searchContext = tripsContext.getSearchContext();
         this.appContext = appContext;
@@ -738,8 +740,55 @@ public class MainPane  {
         if (optionalTransitDefinitions.isPresent()) {
             TransitDefinitions transitDefinitions = optionalTransitDefinitions.get();
             if (transitDefinitions.isSelected()) {
-                interstellarSpacePane.findTransits(transitDefinitions);
-                mainSplitPaneManager.getTransitFilterPane().setFilter(transitDefinitions, interstellarSpacePane.getTransitManager());
+                runTransitCalculationWithProgress(transitDefinitions);
+            }
+        }
+    }
+
+    /**
+     * Run transit calculation with a progress dialog.
+     * For small star counts, this completes quickly.
+     * For large star counts, shows progress and allows cancellation.
+     */
+    private void runTransitCalculationWithProgress(TransitDefinitions transitDefinitions) {
+        List<StarDisplayRecord> starsInView = interstellarSpacePane.getCurrentStarsInView();
+
+        if (starsInView.isEmpty()) {
+            showErrorAlert("Transit Finder", "No stars in view to calculate transits");
+            return;
+        }
+
+        // For very small datasets, just run synchronously (fast enough)
+        if (starsInView.size() <= 50) {
+            interstellarSpacePane.findTransits(transitDefinitions);
+            mainSplitPaneManager.getTransitFilterPane().setFilter(transitDefinitions, interstellarSpacePane.getTransitManager());
+            return;
+        }
+
+        // For larger datasets, show progress dialog
+        TransitManager transitManager = interstellarSpacePane.getTransitManager();
+        ITransitDistanceCalculator calculator = transitManager.getCalculatorFactory().getCalculator(starsInView.size());
+
+        TransitCalculationDialog calculationDialog = new TransitCalculationDialog(
+                transitDefinitions,
+                starsInView,
+                calculator,
+                eventPublisher,
+                transitCalculationService
+        );
+
+        Optional<TransitCalculationResult> resultOptional = calculationDialog.showAndWait();
+        if (resultOptional.isPresent()) {
+            TransitCalculationResult result = resultOptional.get();
+            if (result.isSuccess()) {
+                transitManager.applyCalculatedTransits(result);
+                mainSplitPaneManager.getTransitFilterPane().setFilter(transitDefinitions, transitManager);
+                log.info("Transit calculation complete: {} routes found in {} ms",
+                        result.getTotalRoutes(), result.getCalculationTimeMs());
+            } else if (result.isCancelled()) {
+                log.info("Transit calculation was cancelled");
+            } else {
+                showErrorAlert("Transit Calculation", "Calculation failed: " + result.getErrorMessage());
             }
         }
     }

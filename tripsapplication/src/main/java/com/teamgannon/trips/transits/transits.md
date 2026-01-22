@@ -42,6 +42,47 @@ Users can define multiple **transit bands**, each with its own distance range (e
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Async Calculation Flow
+
+For large datasets (> 50 stars), calculation runs asynchronously with progress reporting:
+
+```
+┌───────────────────────┐     ┌─────────────────────────────────────┐
+│       MainPane        │     │     TransitCalculationDialog        │
+│  (triggers transit    │────>│  (shows progress, allows cancel)    │
+│   calculation)        │     │                                     │
+└───────────────────────┘     └──────────────────┬──────────────────┘
+                                                 │ uses
+                                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  TransitCalculationService                       │
+│  (JavaFX Service - manages background thread, progress binding) │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ creates
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   TransitCalculationTask                         │
+│  (JavaFX Task - runs calculation, calls updateProgress())       │
+│                                                                  │
+│  Steps:                                                          │
+│  1. Build KD-Tree spatial index (5%)                            │
+│  2. For each band: query neighbors, filter by range (10-90%)    │
+│  3. Return TransitCalculationResult (100%)                      │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ returns
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  TransitCalculationResult                        │
+│  (routesByBand: Map<UUID, List<TransitRoute>>)                  │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │ applied to
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│    TransitManager.applyCalculatedTransits(result)                │
+│  (Creates visibility groups, renders pre-calculated routes)     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## Key Components
 
 ### Data Models
@@ -60,6 +101,16 @@ Users can define multiple **transit bands**, each with its own distance range (e
 | `TransitManager` | Main entry point - coordinates all transit visualization |
 | `TransitRouteBuilderService` | Builds multi-segment routes from individual transits |
 | `StarMeasurementService` | Calculates distances between stars (implements `ITransitDistanceCalculator`) |
+| `TransitCalculationService` | JavaFX Service for async calculation with progress reporting |
+| `TransitCalculatorFactory` | Selects optimal algorithm based on star count |
+
+### Async Calculation
+
+| Class | Purpose |
+|-------|---------|
+| `TransitCalculationTask` | JavaFX Task that calculates transits with progress updates |
+| `TransitCalculationResult` | Result object containing calculated routes by band |
+| `TransitCalculationDialog` | Progress dialog shown during calculation |
 
 ### Visualization
 
@@ -74,6 +125,7 @@ Users can define multiple **transit bands**, each with its own distance range (e
 |-------|---------|
 | `FindTransitsBetweenStarsDialog` | Main dialog for configuring transit bands |
 | `TransitBandEditor` | Inline editor for a single transit band (checkbox, slider, color picker) |
+| `TransitCalculationDialog` | Progress dialog with cancel button for large calculations |
 
 ### Interfaces
 
@@ -111,11 +163,32 @@ Each band can be:
 
 When "Generate Transits" is clicked:
 
-1. `TransitManager.findTransits()` is called with the definitions and visible stars
-2. For each enabled band, a `TransitRouteVisibilityGroup` is created
-3. `StarMeasurementService.calculateDistances()` computes all star pairs within range
-4. 3D cylinders are rendered between qualifying star pairs
-5. Distance labels appear at each transit's midpoint
+**For small datasets (≤ 50 stars):**
+1. Calculation runs synchronously (very fast)
+2. Results displayed immediately
+
+**For larger datasets (> 50 stars):**
+1. A progress dialog appears showing calculation status
+2. `TransitCalculationTask` runs in a background thread
+3. Progress is reported: "Processing band 'Short Range' (1 of 3)..."
+4. User can cancel at any time
+5. On completion, `TransitManager.applyCalculatedTransits()` renders all routes
+6. 3D cylinders are rendered between qualifying star pairs
+7. Distance labels appear at each transit's midpoint
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Calculating Transits                                         │
+├─────────────────────────────────────────────────────────────┤
+│ Finding transits between 2,500 stars                        │
+│                                                             │
+│ Status: Processing band 'Medium Range' (2 of 3)...          │
+│                                                             │
+│ [████████████████░░░░░░░░░░░░░░░░░░░░░░░░░] 42%            │
+│                                                             │
+│              [Close]  [Cancel]                               │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 3. Interact with Transits
 

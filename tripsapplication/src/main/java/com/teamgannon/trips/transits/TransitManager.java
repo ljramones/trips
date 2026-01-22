@@ -200,4 +200,50 @@ public class TransitManager {
             visibilityGroup.updateLabels();
         }
     }
+
+    /**
+     * Apply pre-calculated transit routes to the display.
+     * Use this when routes have been calculated asynchronously via {@link TransitCalculationService}.
+     *
+     * @param result the calculation result containing routes by band
+     */
+    public void applyCalculatedTransits(TransitCalculationResult result) {
+        clearTransits();
+
+        if (!result.isSuccess()) {
+            log.warn("Cannot apply transits: calculation was not successful (cancelled={}, error={})",
+                    result.isCancelled(), result.getErrorMessage());
+            return;
+        }
+
+        log.debug("Applying {} pre-calculated transits", result.getTotalRoutes());
+        TransitGraphicsContext context = buildContext(result.getTotalRoutes());
+
+        TransitDefinitions definitions = result.getTransitDefinitions();
+        for (TransitRangeDef rangeDef : definitions.getTransitRangeDefs()) {
+            if (!rangeDef.isEnabled()) {
+                continue;
+            }
+
+            List<TransitRoute> routes = result.getRoutesByBand().get(rangeDef.getBandId());
+            if (routes == null || routes.isEmpty()) {
+                log.debug("No routes for band {}", rangeDef.getBandName());
+                continue;
+            }
+
+            TransitRouteVisibilityGroup visibilityGroup = new TransitRouteVisibilityGroup(context, rangeDef);
+            visibilityGroup.plotPreCalculatedRoutes(routes);
+            installGroup(visibilityGroup);
+        }
+
+        updateLabels();
+        log.debug("Pre-calculated transits applied and displayed");
+    }
+
+    /**
+     * Get the calculator factory for access to calculators.
+     */
+    public TransitCalculatorFactory getCalculatorFactory() {
+        return calculatorFactory;
+    }
 }
