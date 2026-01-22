@@ -85,8 +85,11 @@ Users can define **route parameters** including:
 
 | Class | Purpose |
 |-------|---------|
-| `RouteFindingService` | Core algorithm using JGraphT for K-shortest paths |
-| `RouteFinderInView` | Route finder for stars currently visible (fast) |
+| `RouteFindingService` | Core algorithm with caching - K-shortest paths using JGraphT |
+| `RouteCache` | In-memory LRU cache for route finding results |
+| `RouteCacheKey` | Immutable cache key based on algorithmic parameters |
+| `RouteFinderInView` | Async route finder for visible stars with progress dialog |
+| `InViewRouteFinderService` | JavaFX Service for async in-view route finding |
 | `RouteFinderDataset` | Route finder across entire dataset (async, for large datasets) |
 | `RouteGraph` | JGraphT wrapper for weighted graph and Yen's algorithm |
 | `RouteBuilderHelper` | Constructs RouteDescriptor from path results |
@@ -382,16 +385,141 @@ Key constants from `RoutingConstants`:
 | `FIRST_SEGMENT_PREFIX` | "=>" | Prefix for first segment labels |
 | `LABEL_SUFFIX` | "->" | Prefix for subsequent segment labels |
 
+## Route Caching
+
+Route finding results are cached to avoid recalculating the same routes multiple times.
+
+### Cache Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       RouteFindingService                        │
+│  (checks cache before calculating, stores results after)         │
+└──────────────────────────────────┬──────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                          RouteCache                              │
+│  (LRU cache with thread-safe access, statistics tracking)       │
+└──────────────────────────────────┬──────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        RouteCacheKey                             │
+│  (immutable key: origin, dest, bounds, paths, exclusions, hash) │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Cache Key Components
+
+The cache key includes all parameters that affect route calculation:
+
+| Component | Description |
+|-----------|-------------|
+| `originStarName` | Starting star |
+| `destinationStarName` | Ending star |
+| `upperBound` | Maximum jump distance (normalized to 2 decimals) |
+| `lowerBound` | Minimum jump distance (normalized to 2 decimals) |
+| `numberPaths` | K value for K-shortest paths |
+| `starExclusions` | Spectral classes to exclude (sorted set) |
+| `polityExclusions` | Polities to exclude (sorted set) |
+| `starsHash` | Hash of available star names (for in-view caching) |
+
+**Not included:** `color`, `lineWidth` (display-only parameters)
+
+### Cache Features
+
+- **LRU Eviction**: Oldest accessed entries removed when max size (50) reached
+- **Thread-Safe**: Read/write locks for concurrent access
+- **Statistics**: Tracks hits, misses, and hit rate
+- **Manual Clear**: `RouteFindingService.clearCache()` for dataset changes
+
+### Cache Usage
+
+```java
+// Cache is used automatically - just call findRoutes()
+RouteFindingResult result = routeFindingService.findRoutes(options, starsInView, dataSet);
+
+// To bypass cache:
+RouteFindingResult result = routeFindingService.findRoutes(options, starsInView, dataSet, false);
+
+// To clear cache (on dataset change):
+routeFindingService.clearCache();
+
+// To check statistics:
+String stats = routeFindingService.getCacheStatistics();
+// e.g., "RouteCache[size=12, hits=45, misses=23, hitRate=66.2%]"
+```
+
+### Cache Invalidation
+
+The cache should be cleared when:
+- Dataset changes (new data loaded)
+- Star data is modified
+- User explicitly requests cache clear
+
+## Asynchronous Route Finding
+
+Route finding runs asynchronously to prevent UI freezing.
+
+### In-View Route Finding (Async)
+
+The `RouteFinderInView` uses `InViewRouteFinderService` (JavaFX Service) to run route
+finding in a background thread:
+
+```
+User clicks "Find Routes"
+        │
+        ▼
+RouteFinderDialogInView (collect parameters)
+        │
+        ▼
+InViewRouteFinderService.start()
+        │
+        ├───────────────────────────────────┐
+        │ (Background Thread)               │ (UI Thread)
+        ▼                                   ▼
+RouteFindingService.findRoutes()     Progress Dialog
+        │                                   │
+        ▼                                   │
+Cache check → Algorithm → Cache store       │
+        │                                   │
+        └───────────────────────────────────┘
+                        │
+                        ▼
+               onSucceeded/onFailed
+                        │
+                        ▼
+              DisplayAutoRoutesDialog
+```
+
+### Progress Feedback
+
+During route finding, users see:
+- Progress dialog with spinning indicator
+- Status messages ("Finding routes...", "Found 3 routes")
+- Cancel button to abort the operation
+
+### Dataset-Wide Route Finding (Async)
+
+For large datasets (>1500 stars), `RouteFinderDataset` uses `LargeGraphSearchService`:
+- Parallel transit calculation via thread pool
+- Detailed progress reporting (batch X of Y)
+- Cancellation support
+
 ## Testing
 
 Tests for the routing package should cover:
 
-- `RouteFindingService` - algorithm correctness, pruning logic
+- `RouteFindingService` - algorithm correctness, pruning logic, caching
+- `RouteCache` - LRU eviction, thread safety, statistics
+- `RouteCacheKey` - equality, hash codes, normalization
 - `RouteGraph` - graph construction, connectivity, path finding
 - `PartialRouteUtils` - edge cases for visibility extraction
 - `RouteGraphicsUtil` - coordinate transformations
 - `RouteLabelManager` - label positioning and clamping
 - `RoutePlotter` - route plotting and deduplication
+- `InViewRouteFinderService` - async execution, cancellation
 
 Run routing tests with:
 ```bash
@@ -405,10 +533,12 @@ Run routing tests with:
 3. **Complex Paths**: Yen's algorithm complexity increases with K
 4. **Partial Routes**: Recalculated on each view change
 5. **Segment Deduplication**: Uses HashSet for O(1) lookup
+6. **Route Caching**: Avoids recalculating same routes (LRU cache, max 50 entries)
+7. **Async In-View**: Route finding runs in background thread to prevent UI freeze
 
 ## Known Limitations
 
 1. **Graph Threshold**: 1500 star limit for in-view route finding
-2. **No Route Caching**: Routes recalculated each time
+2. **Cache Scope**: Cache is session-based (not persisted to database)
 3. **Label Performance**: Many labels may cause frame drops
-4. **Single Thread**: Route finding is synchronous for in-view mode
+4. **Cache Key Size**: Large star collections increase cache key computation time

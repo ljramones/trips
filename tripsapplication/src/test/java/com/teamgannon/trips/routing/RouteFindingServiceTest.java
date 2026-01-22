@@ -45,7 +45,8 @@ class RouteFindingServiceTest {
     @BeforeEach
     void setUp() {
         starMeasurementService = mock(StarMeasurementService.class);
-        routeFindingService = new RouteFindingService(starMeasurementService);
+        RouteCache routeCache = new RouteCache();
+        routeFindingService = new RouteFindingService(starMeasurementService, routeCache);
         dataSet = new DataSetDescriptor();
         dataSet.setDataSetName("test-dataset");
     }

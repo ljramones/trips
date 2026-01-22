@@ -6,10 +6,7 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.automation.RouteBuilderHelper;
 import com.teamgannon.trips.routing.automation.RouteGraph;
-import com.teamgannon.trips.routing.model.PossibleRoutes;
-import com.teamgannon.trips.routing.model.RouteFindingOptions;
-import com.teamgannon.trips.routing.model.RouteFindingResult;
-import com.teamgannon.trips.routing.model.RoutingMetric;
+import com.teamgannon.trips.routing.model.*;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
 import com.teamgannon.trips.transits.TransitRoute;
 import javafx.scene.paint.Color;
@@ -19,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -27,13 +25,19 @@ import java.util.Set;
  * This service encapsulates the route-finding algorithm without any UI dependencies.
  * It can be used by dialogs, automated processes, or tests.
  * <p>
+ * <b>Caching:</b> Results are cached to avoid recalculating the same routes.
+ * The cache key includes origin, destination, distance bounds, number of paths,
+ * exclusions, and a hash of the available stars.
+ * <p>
  * The algorithm:
  * <ol>
+ *   <li>Check cache for existing result</li>
  *   <li>Prunes stars based on spectral class and polity exclusions</li>
  *   <li>Calculates transits (possible jumps) within distance bounds</li>
  *   <li>Builds a graph from the transits</li>
  *   <li>Finds K-shortest paths using Yen's algorithm</li>
  *   <li>Creates route descriptors for each path</li>
+ *   <li>Cache successful results</li>
  * </ol>
  */
 @Slf4j
@@ -48,9 +52,12 @@ public class RouteFindingService {
     public static final int GRAPH_THRESHOLD = RoutingConstants.GRAPH_THRESHOLD;
 
     private final StarMeasurementService starMeasurementService;
+    private final RouteCache routeCache;
 
-    public RouteFindingService(StarMeasurementService starMeasurementService) {
+    public RouteFindingService(StarMeasurementService starMeasurementService,
+                               RouteCache routeCache) {
         this.starMeasurementService = starMeasurementService;
+        this.routeCache = routeCache;
     }
 
     /**
@@ -64,8 +71,35 @@ public class RouteFindingService {
     public @NotNull RouteFindingResult findRoutes(@NotNull RouteFindingOptions options,
                                                    @NotNull List<StarDisplayRecord> starsInView,
                                                    @NotNull DataSetDescriptor dataSet) {
+        return findRoutes(options, starsInView, dataSet, true);
+    }
+
+    /**
+     * Find routes between origin and destination stars.
+     *
+     * @param options     the route finding options (origin, destination, bounds, exclusions)
+     * @param starsInView the stars available for routing
+     * @param dataSet     the current dataset (for route metadata)
+     * @param useCache    whether to use the route cache
+     * @return result containing either the found routes or an error message
+     */
+    public @NotNull RouteFindingResult findRoutes(@NotNull RouteFindingOptions options,
+                                                   @NotNull List<StarDisplayRecord> starsInView,
+                                                   @NotNull DataSetDescriptor dataSet,
+                                                   boolean useCache) {
         try {
             log.info("Finding route from {} to {}", options.getOriginStarName(), options.getDestinationStarName());
+
+            // Check cache first
+            RouteCacheKey cacheKey = RouteCacheKey.fromOptionsWithStars(options, starsInView);
+            if (useCache) {
+                Optional<RouteFindingResult> cachedResult = routeCache.get(cacheKey);
+                if (cachedResult.isPresent()) {
+                    log.info("Returning cached route result for {} → {}",
+                            options.getOriginStarName(), options.getDestinationStarName());
+                    return cachedResult.get();
+                }
+            }
 
             String origin = options.getOriginStarName();
             String destination = options.getDestinationStarName();
@@ -125,12 +159,37 @@ public class RouteFindingService {
             }
 
             log.info("Found {} routes from {} to {}", possibleRoutes.getRoutes().size(), origin, destination);
-            return RouteFindingResult.success(possibleRoutes);
+            RouteFindingResult result = RouteFindingResult.success(possibleRoutes);
+
+            // Cache successful result
+            if (useCache) {
+                routeCache.put(cacheKey, result);
+            }
+
+            return result;
 
         } catch (Exception e) {
             log.error("Failed to find routes: {}", e.getMessage(), e);
             return RouteFindingResult.failure("Route finding failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * Clears the route cache.
+     * <p>
+     * Should be called when the dataset changes or star data is modified.
+     */
+    public void clearCache() {
+        routeCache.clear();
+    }
+
+    /**
+     * Gets cache statistics for monitoring.
+     *
+     * @return cache statistics string
+     */
+    public String getCacheStatistics() {
+        return routeCache.getStatistics();
     }
 
     /**

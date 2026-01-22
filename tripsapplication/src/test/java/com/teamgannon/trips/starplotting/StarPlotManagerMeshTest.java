@@ -60,7 +60,7 @@ class StarPlotManagerMeshTest {
         ColorPalette colorPalette = new ColorPalette();
 
         when(tripsContext.getAppViewPreferences()).thenReturn(appViewPreferences);
-        when(appViewPreferences.getColorPallete()).thenReturn(colorPalette);
+        when(appViewPreferences.getColorPalette()).thenReturn(colorPalette);
 
         RouteManager routeManager = mock(RouteManager.class);
         StarMeasurementService starMeasurementService = mock(StarMeasurementService.class);

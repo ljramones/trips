@@ -82,7 +82,7 @@ class StarPlotManagerLODTest {
         // Configure tripsContext
         AppViewPreferences appViewPreferences = mock(AppViewPreferences.class);
         ColorPalette colorPalette = new ColorPalette();
-        when(appViewPreferences.getColorPallete()).thenReturn(colorPalette);
+        when(appViewPreferences.getColorPalette()).thenReturn(colorPalette);
         when(tripsContext.getAppViewPreferences()).thenReturn(appViewPreferences);
 
         CurrentPlot currentPlot = mock(CurrentPlot.class);
