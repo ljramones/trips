@@ -42,8 +42,11 @@ public class RouteCache {
 
     /**
      * Default maximum number of cached routes.
+     * <p>
+     * Increased from 50 to 200 since KD-tree based graph building is fast enough
+     * that caching is less critical, but still beneficial for repeated queries.
      */
-    private static final int DEFAULT_MAX_SIZE = 50;
+    private static final int DEFAULT_MAX_SIZE = 200;
 
     /**
      * The cache map with LRU eviction.

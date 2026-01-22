@@ -358,7 +358,7 @@ class RouteCacheTest {
 
             // All puts should succeed (though some may be evicted due to LRU)
             assertEquals(threadCount * operationsPerThread, successCount.get());
-            assertTrue(cache.size() <= 50); // Default max size
+            assertTrue(cache.size() <= 200); // Default max size
         }
 
         @Test

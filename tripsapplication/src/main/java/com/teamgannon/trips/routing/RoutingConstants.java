@@ -26,10 +26,13 @@ public final class RoutingConstants {
     // =========================================================================
 
     /**
-     * Maximum number of stars for route finding before performance degrades.
-     * Beyond this threshold, route finding may become slow or memory-intensive.
+     * Maximum number of stars for route finding.
+     * <p>
+     * With KD-tree based graph building (O(n log n)), we can handle much larger
+     * datasets than the previous O(n²) brute-force approach. The limiting factor
+     * is now Yen's K-shortest paths algorithm rather than edge discovery.
      */
-    public static final int GRAPH_THRESHOLD = 1500;
+    public static final int GRAPH_THRESHOLD = 10000;
 
     /**
      * Threshold for switching from brute-force to KD-Tree algorithm.
