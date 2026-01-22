@@ -10,11 +10,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.data.domain.Sort;
+
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -67,13 +71,33 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
      */
     @Override
     public Page<StarObject> findBySearchQueryPaged(AstroSearchQuery astroSearchQuery, Pageable page) {
-        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
-        int totalRows = typedQuery.getResultList().size();
+        // Use efficient count query instead of loading all results
+        long totalRows = countBySearchQuery(astroSearchQuery);
         log.info("number of records found={}", totalRows);
 
+        TypedQuery<StarObject> typedQuery = getStarObjectTypedQueryWithSort(astroSearchQuery, page.getSort());
         typedQuery.setFirstResult(page.getPageNumber() * page.getPageSize());
         typedQuery.setMaxResults(page.getPageSize());
         return new PageImpl<>(typedQuery.getResultList(), page, totalRows);
+    }
+
+    /**
+     * count the number of stars matching a search query
+     *
+     * @param astroSearchQuery the astro query
+     * @return the count of matching stars
+     */
+    @Override
+    public long countBySearchQuery(AstroSearchQuery astroSearchQuery) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<StarObject> root = countQuery.from(StarObject.class);
+
+        List<Predicate> predicates = makeAstroQuery(astroSearchQuery, root, cb);
+        countQuery.select(cb.count(root));
+        countQuery.where(predicates.toArray(new Predicate[0]));
+
+        return em.createQuery(countQuery).getSingleResult();
     }
 
 
@@ -94,6 +118,10 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
 
 
     private TypedQuery<StarObject> getStarObjectTypedQuery(@NotNull AstroSearchQuery astroSearchQuery) {
+        return getStarObjectTypedQueryWithSort(astroSearchQuery, Sort.by("displayName"));
+    }
+
+    private TypedQuery<StarObject> getStarObjectTypedQueryWithSort(@NotNull AstroSearchQuery astroSearchQuery, Sort sort) {
         // create the criteria builder to start putting all this together
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
@@ -107,7 +135,28 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
         List<Predicate> predicates = makeAstroQuery(astroSearchQuery, astrographicObject, cb);
 
         query.where(predicates.toArray(new Predicate[0]));
-        query.orderBy(cb.asc(astrographicObject.get("displayName")));
+
+        // Apply Sort from Pageable (instead of hardcoded displayName)
+        if (sort != null && sort.isSorted()) {
+            List<Order> orders = new ArrayList<>();
+            for (Sort.Order sortOrder : sort) {
+                try {
+                    Path<?> path = astrographicObject.get(sortOrder.getProperty());
+                    orders.add(sortOrder.isAscending() ? cb.asc(path) : cb.desc(path));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid sort property: {}", sortOrder.getProperty());
+                }
+            }
+            if (!orders.isEmpty()) {
+                query.orderBy(orders);
+            } else {
+                // Default fallback
+                query.orderBy(cb.asc(astrographicObject.get("displayName")));
+            }
+        } else {
+            // Default sort
+            query.orderBy(cb.asc(astrographicObject.get("displayName")));
+        }
 
         return em.createQuery(query);
     }

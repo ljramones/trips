@@ -142,6 +142,18 @@ public class StarService {
         return starObjectRepository.findBySearchQueryPaged(searchQuery, pageable);
     }
 
+    /**
+     * count the number of stars matching a search query
+     *
+     * @param searchQuery the search query
+     * @return the count of matching stars
+     */
+    @TrackExecutionTime
+    @Transactional(readOnly = true)
+    public long countBySearchQuery(AstroSearchQuery searchQuery) {
+        return starObjectRepository.countBySearchQuery(searchQuery);
+    }
+
 
     /**
      * filter the list to distance by selected distance

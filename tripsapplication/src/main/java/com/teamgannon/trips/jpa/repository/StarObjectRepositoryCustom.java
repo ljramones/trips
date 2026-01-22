@@ -42,4 +42,13 @@ public interface StarObjectRepositoryCustom {
     @Transactional(readOnly = true)
     Stream<StarObject> findBySearchQueryStream(@NotNull AstroSearchQuery astroSearchQuery);
 
+    /**
+     * count the number of stars matching a search query
+     *
+     * @param astroSearchQuery the astro query
+     * @return the count of matching stars
+     */
+    @Transactional(readOnly = true)
+    long countBySearchQuery(AstroSearchQuery astroSearchQuery);
+
 }

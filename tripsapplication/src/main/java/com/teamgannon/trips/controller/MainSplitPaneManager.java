@@ -34,7 +34,7 @@ import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.StarService;
-import com.teamgannon.trips.tableviews.DataSetTable;
+import com.teamgannon.trips.tableviews.StarTableDialog;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.scene.control.*;
@@ -261,12 +261,35 @@ public class MainSplitPaneManager {
     }
 
     /**
-     * sets up list view for stellar objects
+     * Show the star table dialog with server-side pagination.
+     *
+     * @param query the search query to use
      */
+    public void showTable(@NotNull AstroSearchQuery query) {
+        if (query.getDataSetContext() == null || query.getDataSetContext().getDescriptor() == null) {
+            showErrorAlert("Display Data table", "No dataset context available");
+            return;
+        }
+        StarTableDialog dialog = new StarTableDialog(starService, query);
+        dialog.show();
+    }
 
+    /**
+     * Legacy method for backward compatibility.
+     * Shows the star table if there are stars in the list.
+     *
+     * @param starObjects the list of star objects (used only to check if non-empty)
+     * @deprecated Use showTable(AstroSearchQuery) instead for server-side pagination
+     */
+    @Deprecated
     public void showList(@NotNull List<StarObject> starObjects) {
         if (!starObjects.isEmpty()) {
-            new DataSetTable(databaseManagementService, starService, starObjects);
+            AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
+            if (query != null && query.getDataSetContext() != null) {
+                showTable(query);
+            } else {
+                showErrorAlert("Display Data table", "No search context available");
+            }
         } else {
             showErrorAlert("Display Data table", "no data to show");
         }
@@ -278,11 +301,11 @@ public class MainSplitPaneManager {
     private void showTableData() {
 
         if (tripsContext.getDataSetContext().isValidDescriptor()) {
-            List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-            if (!starObjects.isEmpty()) {
-                new DataSetTable(databaseManagementService, starService, starObjects);
+            AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
+            if (query != null) {
+                showTable(query);
             } else {
-                showErrorAlert("Show Data Table", "no data found");
+                showErrorAlert("Show Data Table", "no search query available");
             }
         } else {
             List<DataSetDescriptor> datasets = datasetService.getDataSets();
@@ -307,16 +330,18 @@ public class MainSplitPaneManager {
                     log.error("Dataset Descriptor is null. How the hell did this happen");
                     return;
                 }
-                List<StarObject> starObjects = getAstrographicObjectsOnQuery();
-                if (!starObjects.isEmpty()) {
-                    new DataSetTable(databaseManagementService, starService, starObjects);
+
+                // Set context first
+                eventPublisher.publishEvent(new SetContextDataSetEvent(this, dataSetDescriptor));
+
+                // Now show table with query
+                AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
+                if (query != null) {
+                    showTable(query);
                     eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset table loaded is: " + dataSetDescriptor.getDataSetName()));
                 } else {
                     showErrorAlert("Show Data Table", "No data to show");
                 }
-
-                // set current context
-                eventPublisher.publishEvent(new SetContextDataSetEvent(this, dataSetDescriptor));
             }
         }
     }
@@ -449,7 +474,8 @@ public class MainSplitPaneManager {
                             routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
                         }
                         if (showTable) {
-                            showList(starObjects);
+                            // Use server-side paginated table instead of loading all into memory
+                            showTable(searchQuery);
                         }
                         eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset loaded is: " + descriptor.getDataSetName()));
                     } else {

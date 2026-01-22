@@ -36,10 +36,14 @@ public class StarEditRecord {
 
     private String comment;
 
-    /**
-     * this means that the data was changed and should be updated
-     */
-    private boolean dirty;
+    // Additional optional fields
+    private String commonName;
+
+    private String constellationName;
+
+    private String polity;
+
+    private Double temperature;
 
     public static @NotNull StarEditRecord fromAstrographicObject(@NotNull StarObject starObject) {
         StarEditRecord record = new StarEditRecord();
@@ -58,6 +62,11 @@ public class StarEditRecord {
         record.setZCoord(starObject.getZ());
         record.setReal(starObject.isRealStar());
         record.setComment(starObject.getNotes());
+        // Set optional fields
+        record.setCommonName(starObject.getCommonName());
+        record.setConstellationName(starObject.getConstellationName());
+        record.setPolity(starObject.getPolity());
+        record.setTemperature(starObject.getTemperature());
         return record;
     }
 }
