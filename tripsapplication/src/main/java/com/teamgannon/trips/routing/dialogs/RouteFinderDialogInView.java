@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
@@ -13,8 +14,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +77,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
     private final CheckBox other4CheckBox = new CheckBox("Other 4");
 
 
-    Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+    Font font = RoutingConstants.createDialogFont();
 
     Button colorButton = new Button("color");
 
@@ -134,9 +133,9 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         primaryTab.setText("Primary");
         GridPane gridPane = new GridPane();
 
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
+        gridPane.setPadding(new Insets(RoutingConstants.GRID_PADDING));
+        gridPane.setVgap(RoutingConstants.BUTTON_SPACING);
+        gridPane.setHgap(RoutingConstants.BUTTON_SPACING);
         vBox.getChildren().add(gridPane);
 
         Label originStar = new Label("Origin Star");
@@ -165,19 +164,19 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         upperBound.setFont(font);
         gridPane.add(upperBound, 0, 3);
         gridPane.add(upperLengthLengthTextField, 1, 3);
-        upperLengthLengthTextField.setText("8");
+        upperLengthLengthTextField.setText(RoutingConstants.DEFAULT_UPPER_BOUND_TEXT);
 
         Label lowerBound = new Label("lower limit for route length");
         lowerBound.setFont(font);
         gridPane.add(lowerBound, 0, 4);
         gridPane.add(lowerLengthLengthTextField, 1, 4);
-        lowerLengthLengthTextField.setText("3");
+        lowerLengthLengthTextField.setText(RoutingConstants.DEFAULT_LOWER_BOUND_TEXT);
 
         Label lineWidth = new Label("route line width");
         lineWidth.setFont(font);
         gridPane.add(lineWidth, 0, 5);
         gridPane.add(lineWidthTextField, 1, 5);
-        lineWidthTextField.setText("0.5");
+        lineWidthTextField.setText(RoutingConstants.DEFAULT_LINE_WIDTH_TEXT);
 
 
         Label routeColor = new Label("route color");
@@ -193,7 +192,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         numberPaths.setFont(font);
         gridPane.add(numberPaths, 0, 7);
         gridPane.add(numPathsToFindTextField, 1, 7);
-        numPathsToFindTextField.setText("3");
+        numPathsToFindTextField.setText(RoutingConstants.DEFAULT_NUM_PATHS_TEXT);
 
     }
 
@@ -223,37 +222,37 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
         VBox vBox1 = new VBox();
         hBox.getChildren().add(vBox1);
-        oCheckBox.setMinWidth(100);
+        oCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(oCheckBox);
-        bCheckBox.setMinWidth(100);
+        bCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(bCheckBox);
-        aCheckBox.setMinWidth(100);
+        aCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(aCheckBox);
-        fCheckBox.setMinWidth(100);
+        fCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(fCheckBox);
 
         VBox vBox2 = new VBox();
         hBox.getChildren().add(vBox2);
-        gCheckBox.setMinWidth(100);
+        gCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(gCheckBox);
-        kCheckBox.setMinWidth(100);
+        kCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(kCheckBox);
-        mCheckBox.setMinWidth(100);
+        mCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(mCheckBox);
-        wCheckBox.setMinWidth(100);
+        wCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(wCheckBox);
 
         VBox vBox3 = new VBox();
         hBox.getChildren().add(vBox3);
-        lCheckBox.setMinWidth(100);
+        lCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox3.getChildren().add(lCheckBox);
-        tCheckBox.setMinWidth(100);
+        tCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox3.getChildren().add(tCheckBox);
-        yCheckBox.setMinWidth(100);
+        yCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox3.getChildren().add(yCheckBox);
-        cCheckBox.setMinWidth(100);
+        cCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox3.getChildren().add(cCheckBox);
-        sCheckBox.setMinWidth(100);
+        sCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox3.getChildren().add(sCheckBox);
 
     }
@@ -272,37 +271,37 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
         VBox vBox1 = new VBox();
         hBox.getChildren().add(vBox1);
-        terranCheckBox.setMinWidth(100);
+        terranCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(terranCheckBox);
 
-        dornaniCheckBox.setMinWidth(100);
+        dornaniCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(dornaniCheckBox);
 
-        ktorCheckBox.setMinWidth(100);
+        ktorCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(ktorCheckBox);
 
-        aratKurCheckBox.setMinWidth(100);
+        aratKurCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(aratKurCheckBox);
 
-        hkhRkhCheckBox.setMinWidth(100);
+        hkhRkhCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(hkhRkhCheckBox);
 
-        slassrithiCheckBox.setMinWidth(100);
+        slassrithiCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox1.getChildren().add(slassrithiCheckBox);
 
         VBox vBox2 = new VBox();
         hBox.getChildren().add(vBox2);
 
-        other1CheckBox.setMinWidth(100);
+        other1CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(other1CheckBox);
 
-        other2CheckBox.setMinWidth(100);
+        other2CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(other2CheckBox);
 
-        other3CheckBox.setMinWidth(100);
+        other3CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(other3CheckBox);
 
-        other4CheckBox.setMinWidth(100);
+        other4CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
         vBox2.getChildren().add(other4CheckBox);
 
     }
@@ -411,7 +410,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         try {
             String originStarSelected = originDisplayCmb.getValue();
             String destinationStarSelected = destinationDisplayCmb.getValue();
-            double maxDistance = 20;
+            double maxDistance = RoutingConstants.MAX_VALIDATION_DISTANCE;
 
             if (!searchValues.contains(originStarSelected)) {
                 showErrorAlert("Find Route", String.format("Origin star <%s> is not present in view", originStarSelected));

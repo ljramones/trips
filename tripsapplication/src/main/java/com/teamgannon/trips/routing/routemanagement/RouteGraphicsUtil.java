@@ -2,6 +2,7 @@ package com.teamgannon.trips.routing.routemanagement;
 
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
+import com.teamgannon.trips.routing.RoutingConstants;
 import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -38,7 +39,8 @@ public class RouteGraphicsUtil {
      * @return the annotated label
      */
     public @NotNull Label createLabel(boolean firstLink, double length) {
-        Label label = new Label(((firstLink) ? " Start -> " : " ") + String.format("%.2f ", length));
+        String prefix = firstLink ? RoutingConstants.FIRST_SEGMENT_PREFIX : RoutingConstants.LABEL_SUFFIX;
+        Label label = new Label(prefix + String.format("%.2f ", length));
         SerialFont serialFont = routeDisplay.getColorPallete().getLabelFont();
 
         label.setFont(serialFont.toFont());
@@ -57,7 +59,7 @@ public class RouteGraphicsUtil {
         final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.WHEAT);
         material.setSpecularColor(Color.WHEAT);
-        Sphere sphere = new Sphere(1);
+        Sphere sphere = new Sphere(RoutingConstants.ROUTE_POINT_SPHERE_RADIUS);
         sphere.setMaterial(material);
         label.setLabelFor(sphere);
         routeDisplay.linkObjectToLabel(sphere, label);
@@ -66,20 +68,44 @@ public class RouteGraphicsUtil {
 
 
     /**
-     * create a line segment from a 3D point to another
-     * this is really a cylinder of n pixels in diameter
+     * Create a 3D line segment (cylinder) connecting two points in space.
+     * <p>
+     * This method creates a cylinder oriented between the origin and target points,
+     * with an optional label attached at the midpoint.
+     * <p>
+     * <b>Geometry Calculation:</b>
+     * <ol>
+     *   <li><b>Height:</b> The cylinder height equals the distance between origin and target</li>
+     *   <li><b>Position:</b> The cylinder is translated to the midpoint between origin and target</li>
+     *   <li><b>Rotation:</b> The cylinder (initially along Y-axis) is rotated to align with
+     *       the vector from origin to target using cross-product and dot-product calculations</li>
+     * </ol>
+     * <p>
+     * <b>Rotation Mathematics:</b>
+     * <pre>
+     * yAxis = (0, 1, 0)                    // Cylinder's default orientation
+     * diff = target - origin              // Direction vector
+     * axisOfRotation = diff × yAxis       // Cross product gives rotation axis
+     * angle = acos(diff·yAxis / |diff|)   // Dot product gives rotation angle
+     * </pre>
+     * <p>
+     * <b>Transform Order:</b> JavaFX applies transforms in list order, so
+     * {@code [moveToMidpoint, rotateAroundCenter]} first moves, then rotates.
      *
-     * @param origin      the 3d origin point
-     * @param target      the 3d destination point
-     * @param lineWeight  the width of the line/cyclinder
-     * @param color       the line color
-     * @param lengthLabel the length label
-     * @return the created line segment
+     * @param origin      the 3D starting point of the line segment
+     * @param target      the 3D ending point of the line segment
+     * @param lineWeight  the diameter/width of the cylinder in scene units
+     * @param color       the color for the cylinder material
+     * @param lengthLabel the label to attach at the midpoint (shows distance)
+     * @return a Group containing the cylinder and optionally a label anchor sphere
      */
     public @NotNull Node createLineSegment(Point3D origin, @NotNull Point3D target,
                                            double lineWeight, Color color, @NotNull Label lengthLabel) {
+        // Y-axis is the cylinder's default orientation in JavaFX
         Point3D yAxis = new Point3D(0, 1, 0);
+        // Vector from origin to target
         Point3D diff = target.subtract(origin);
+        // Cylinder height = distance between points
         double height = diff.magnitude();
 
         Point3D mid = target.midpoint(origin);
@@ -105,7 +131,7 @@ public class RouteGraphicsUtil {
             pointSphere.setTranslateZ(mid.getZ());
             lengthLabel.setTextFill(color);
             Color backgroundColor = determineBckColor(color);
-            lengthLabel.setBackground(new Background(new BackgroundFill(backgroundColor, new CornerRadii(5.0), new Insets(0))));
+            lengthLabel.setBackground(new Background(new BackgroundFill(backgroundColor, new CornerRadii(RoutingConstants.LABEL_CORNER_RADIUS), new Insets(0))));
             lineGroup.getChildren().add(pointSphere);
             if (!routeDisplay.isLabelPresent(lengthLabel)) {
                 routeDisplay.linkObjectToLabel(pointSphere, lengthLabel);
@@ -118,35 +144,37 @@ public class RouteGraphicsUtil {
     }
 
     /**
-     * create an appropriate background color based on text color
+     * Determine an appropriate background color based on text color.
+     * Uses luminance-based threshold to ensure label readability.
+     * <p>
+     * If the text color is dark (sum of RGB < threshold), use white background.
+     * If the text color is light (sum of RGB >= threshold), use dark gray background.
      *
-     * @param color the test color
-     * @return the background color
+     * @param color the text color
+     * @return the background color for optimal contrast
      */
     private Color determineBckColor(Color color) {
         int red = colorNorm(color.getRed());
         int green = colorNorm(color.getGreen());
         int blue = colorNorm(color.getBlue());
         int sum = red + green + blue;
-        Color bckColor;
-        if (sum < 384) {
-//            log.info("dark color:{}", sum);
-            bckColor = Color.WHITE;
+        if (sum < RoutingConstants.DARK_BACKGROUND_THRESHOLD) {
+            // Text is dark, use light background
+            return Color.WHITE;
         } else {
-//            log.info("light color:{}", sum);
-            bckColor = Color.DARKGRAY;
+            // Text is light, use dark background
+            return Color.DARKGRAY;
         }
-        return bckColor;
     }
 
     /**
-     * Convert a raww color ro a norm
+     * Convert a raw color component (0.0-1.0) to an integer (0-255).
      *
-     * @param raw the raw value
-     * @return the nored value
+     * @param raw the raw color value (0.0-1.0)
+     * @return the normalized integer value (0-255)
      */
     private int colorNorm(double raw) {
-        return (int) (raw * 255.0);
+        return (int) (raw * RoutingConstants.RGB_MAX_VALUE);
     }
 
 }

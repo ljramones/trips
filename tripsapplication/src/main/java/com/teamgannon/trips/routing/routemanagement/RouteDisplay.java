@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.model.RouteSegment;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
@@ -227,7 +228,36 @@ public class RouteDisplay {
     /////////////////////////////////////
 
     /**
-     * update all labels to match current screen position
+     * Update all route labels to match current screen positions after view rotation/zoom.
+     * <p>
+     * This method implements the <b>billboard labels pattern</b> where 2D labels are
+     * positioned to track 3D anchor points while remaining flat on screen.
+     * <p>
+     * <b>Coordinate Transformation (Two-Step Process):</b>
+     * <ol>
+     *   <li><b>3D to Scene:</b> {@code node.localToScene(Point3D.ZERO, true)} transforms
+     *       the 3D anchor point to scene coordinates. The {@code true} parameter ensures
+     *       the entire transform chain is applied.</li>
+     *   <li><b>Scene to Local:</b> {@code labelDisplayGroup.sceneToLocal(x, y)} converts
+     *       scene coordinates to the label group's local coordinate space.</li>
+     * </ol>
+     * <p>
+     * <b>Why Two Steps Are Required:</b>
+     * Using only {@code localToScene()} would give coordinates in the Scene's space,
+     * but the labelDisplayGroup may have its own transforms. Without the second step,
+     * labels would drift as the 3D world rotates because coordinate spaces don't align.
+     * <p>
+     * <b>Visibility Logic:</b>
+     * <ul>
+     *   <li>Labels within {@link RoutingConstants#LABEL_CLIPPING_PADDING} of viewport edges are hidden</li>
+     *   <li>Labels are clamped to prevent going off-screen using {@link RoutingConstants#LABEL_EDGE_MARGIN}</li>
+     *   <li>The {@code controlPaneOffset} accounts for any control panes at the top of the view</li>
+     * </ul>
+     * <p>
+     * <b>When to Call:</b> After mouse drag (rotation), scroll (zoom), or initial render.
+     *
+     * @see RoutingConstants#LABEL_CLIPPING_PADDING
+     * @see RoutingConstants#LABEL_EDGE_MARGIN
      */
     public void updateLabels() {
         final Bounds ofParent = interstellarSpacePane.getBoundsInParent();
@@ -245,14 +275,15 @@ public class RouteDisplay {
             double xs = coordinates.getX();
             double ys = coordinates.getY();
 
-            // configure visibility
-            if (xs < (ofParent.getMinX() + 20) || xs > (ofParent.getMaxX() - 20)) {
+            // configure visibility - hide labels too close to viewport edges
+            double padding = RoutingConstants.LABEL_CLIPPING_PADDING;
+            if (xs < (ofParent.getMinX() + padding) || xs > (ofParent.getMaxX() - padding)) {
                 label.setVisible(false);
                 continue;
             } else {
                 label.setVisible(true);
             }
-            if (ys < (controlPaneOffset + 20) || (ys > ofParent.getMaxY() - 20)) {
+            if (ys < (controlPaneOffset + padding) || (ys > ofParent.getMaxY() - padding)) {
                 label.setVisible(false);
                 continue;
             } else {
@@ -278,9 +309,10 @@ public class RouteDisplay {
                 x = 0;
             }
 
-            // is it right of the view?
-            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + 5);
+            // is it right of the view? Clamp to viewport with margin
+            double margin = RoutingConstants.LABEL_EDGE_MARGIN;
+            if ((x + label.getWidth() + margin) > subScene.getWidth()) {
+                x = subScene.getWidth() - (label.getWidth() + margin);
             }
 
             // is it above the view?
@@ -288,9 +320,9 @@ public class RouteDisplay {
                 y = 0;
             }
 
-            // is it below the view
+            // is it below the view? Clamp to viewport with margin
             if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + 5);
+                y = subScene.getHeight() - (label.getHeight() + margin);
             }
 
             //update the local transform of the label.

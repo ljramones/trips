@@ -5,6 +5,7 @@ import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.dialogs.RouteEditDialog;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RouteChange;
@@ -60,20 +61,20 @@ public class RoutingPanel extends Pane implements RoutingCallback {
 
         routingTableView.setPlaceholder(new Label("No routes in this dataset"));
         routingTableView.setEditable(true);
-        routingTableView.setPrefHeight(800);
+        routingTableView.setPrefHeight(RoutingConstants.ROUTING_TABLE_PREFERRED_HEIGHT);
         routingTableView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
 
         TableColumn<RouteTree, Boolean> showRouteCol = createCheckBoxColumn();
-        showRouteCol.setPrefWidth(80);
+        showRouteCol.setPrefWidth(RoutingConstants.STATUS_COL_WIDTH);
 
         TableColumn<RouteTree, String> showStatusCol = createStatusColumn();
-        showRouteCol.setPrefWidth(40);
+        showRouteCol.setPrefWidth(RoutingConstants.SHOW_ROUTE_COL_WIDTH);
 
         TableColumn<RouteTree, Color> colorCol = createRouteColorTableColumn();
-        colorCol.setPrefWidth(60);
+        colorCol.setPrefWidth(RoutingConstants.COLOR_COL_WIDTH);
 
         TableColumn<RouteTree, String> routeCol = createRouteTableColumn();
-        routeCol.setPrefWidth(300);
+        routeCol.setPrefWidth(RoutingConstants.ROUTE_NAME_COL_WIDTH);
 
         routingTableView.getColumns().add(showRouteCol);
         routingTableView.getColumns().add(showStatusCol);
@@ -160,7 +161,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
     @NotNull
     private TableColumn<RouteTree, Color> createRouteColorTableColumn() {
         TableColumn<RouteTree, Color> colorCol = new TableColumn<>("Color");
-        colorCol.setPrefWidth(65);
+        colorCol.setPrefWidth(RoutingConstants.COLOR_COL_WIDTH);
         colorCol.setCellValueFactory(new PropertyValueFactory<>("routeColor"));
         colorCol.setCellFactory(column -> {
             ColorTableCell<RouteTree> colorTableCell = new ColorTableCell<>(column);

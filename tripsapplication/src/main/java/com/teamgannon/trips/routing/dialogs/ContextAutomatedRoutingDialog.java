@@ -145,7 +145,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
     private void findRoutesClicked(ActionEvent actionEvent) {
 
-        double maxDistance = 20;
+        double maxDistance = RoutingConstants.MAX_VALIDATION_DISTANCE;
         String destinationStarSelected = destinationDisplayCmb.getValue();
         if (!searchValues.contains(destinationStarSelected)) {
             showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
@@ -234,9 +234,9 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         primaryTab.setText("Primary");
         GridPane gridPane = new GridPane();
 
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
+        gridPane.setPadding(new Insets(RoutingConstants.GRID_PADDING));
+        gridPane.setVgap(RoutingConstants.BUTTON_SPACING);
+        gridPane.setHgap(RoutingConstants.BUTTON_SPACING);
         vBox.getChildren().add(gridPane);
 
         Label originStar = new Label("Origin Star");
@@ -266,7 +266,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         lowerBound.setFont(font);
         gridPane.add(lowerBound, 0, 4);
         gridPane.add(lowerLengthLengthTextField, 1, 4);
-        lowerLengthLengthTextField.setText("3");
+        lowerLengthLengthTextField.setText(RoutingConstants.DEFAULT_LOWER_BOUND_TEXT);
 
         Label lineWidth = new Label("route line width");
         lineWidth.setFont(font);

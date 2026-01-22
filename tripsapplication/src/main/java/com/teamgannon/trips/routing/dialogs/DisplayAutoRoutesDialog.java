@@ -1,5 +1,6 @@
 package com.teamgannon.trips.routing.dialogs;
 
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.model.PossibleRoutes;
 import com.teamgannon.trips.routing.model.RoutingMetric;
 import javafx.collections.ListChangeListener;
@@ -11,8 +12,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +39,13 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
         this.setTitle("Select Routes to Plot");
 
         VBox vBox = new VBox();
-        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+        Font font = RoutingConstants.createDialogFont();
 
         createTable(vBox);
 
         HBox buttonBox = new HBox();
         buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.setSpacing(5);
+        buttonBox.setSpacing(RoutingConstants.BUTTON_SPACING);
 
         Button choosePlotButton = new Button("Plot Selected route(s)");
         choosePlotButton.setFont(font);
@@ -73,7 +72,7 @@ public class DisplayAutoRoutesDialog extends Dialog<List<RoutingMetric>> {
     }
 
     private void createTable(@NotNull VBox vBox) {
-        routingChoicesTable.setPrefWidth(750);
+        routingChoicesTable.setPrefWidth(RoutingConstants.ROUTE_TABLE_WIDTH);
 
         TableColumn<RoutingMetric, String> rankColumn = new TableColumn<>("Rank");
         rankColumn.setCellValueFactory(new PropertyValueFactory<>("rank"));

@@ -178,4 +178,146 @@ public final class RoutingConstants {
      * Arguments: source, destination, path number
      */
     public static final String ROUTE_NAME_FORMAT = "Route %s to %s, path %s";
+
+    // =========================================================================
+    // Label Display Constants
+    // =========================================================================
+
+    /**
+     * Padding from viewport edges for label visibility clipping.
+     * Labels closer than this to the edge are hidden.
+     */
+    public static final double LABEL_CLIPPING_PADDING = 20.0;
+
+    /**
+     * Margin for clamping labels to prevent them from going off-screen.
+     */
+    public static final double LABEL_EDGE_MARGIN = 5.0;
+
+    /**
+     * Corner radius for label background.
+     */
+    public static final double LABEL_CORNER_RADIUS = 5.0;
+
+    // =========================================================================
+    // 3D Graphics Constants
+    // =========================================================================
+
+    /**
+     * Radius for route endpoint marker spheres.
+     */
+    public static final double ROUTE_POINT_SPHERE_RADIUS = 1.0;
+
+    /**
+     * Threshold for determining if text should be light or dark based on background.
+     * If the sum of RGB components (0-255 each) is less than this, use light text.
+     * Value of 384 = 128 * 3, meaning if average component < 128, background is "dark".
+     */
+    public static final int DARK_BACKGROUND_THRESHOLD = 384;
+
+    /**
+     * Maximum value for a single RGB color component.
+     */
+    public static final double RGB_MAX_VALUE = 255.0;
+
+    // =========================================================================
+    // Routing Panel UI Constants
+    // =========================================================================
+
+    /**
+     * Preferred height for the routing table view.
+     */
+    public static final int ROUTING_TABLE_PREFERRED_HEIGHT = 800;
+
+    /**
+     * Column width for the "show route" checkbox column.
+     */
+    public static final int SHOW_ROUTE_COL_WIDTH = 40;
+
+    /**
+     * Column width for the route status column.
+     */
+    public static final int STATUS_COL_WIDTH = 80;
+
+    /**
+     * Column width for the color column.
+     */
+    public static final int COLOR_COL_WIDTH = 65;
+
+    /**
+     * Column width for the route name column.
+     */
+    public static final int ROUTE_NAME_COL_WIDTH = 300;
+
+    // =========================================================================
+    // Dialog Layout Constants
+    // =========================================================================
+
+    /**
+     * Minimum width for progress dialogs.
+     */
+    public static final int PROGRESS_DIALOG_MIN_WIDTH = 600;
+
+    /**
+     * Minimum width for progress bars.
+     */
+    public static final int PROGRESS_BAR_MIN_WIDTH = 500;
+
+    /**
+     * Preferred width for route selection tables.
+     */
+    public static final int ROUTE_TABLE_WIDTH = 750;
+
+    /**
+     * Standard spacing between buttons in dialogs.
+     */
+    public static final int BUTTON_SPACING = 5;
+
+    /**
+     * Standard padding for grid panes (all sides).
+     */
+    public static final int GRID_PADDING = 10;
+
+    // =========================================================================
+    // Default Input Values
+    // =========================================================================
+
+    /**
+     * Default lower bound for transit distance in dialogs.
+     */
+    public static final String DEFAULT_LOWER_BOUND_TEXT = "3";
+
+    /**
+     * Default upper bound for transit distance in dialogs.
+     */
+    public static final String DEFAULT_UPPER_BOUND_TEXT = "8";
+
+    /**
+     * Default line width text for dialogs.
+     */
+    public static final String DEFAULT_LINE_WIDTH_TEXT = "0.5";
+
+    /**
+     * Default number of paths text for dialogs.
+     */
+    public static final String DEFAULT_NUM_PATHS_TEXT = "3";
+
+    /**
+     * Maximum transit distance used for validation.
+     */
+    public static final double MAX_VALIDATION_DISTANCE = 20.0;
+
+    // =========================================================================
+    // Route Label Formatting
+    // =========================================================================
+
+    /**
+     * Prefix text for the first segment label.
+     */
+    public static final String FIRST_SEGMENT_PREFIX = " Start -> ";
+
+    /**
+     * Suffix text for labels (space for padding).
+     */
+    public static final String LABEL_SUFFIX = " ";
 }

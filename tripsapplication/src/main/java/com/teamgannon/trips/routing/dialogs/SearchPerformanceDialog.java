@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.dialogs;
 
 
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.service.measure.PerformanceMeasure;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -11,8 +12,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -35,32 +34,32 @@ public class SearchPerformanceDialog extends Dialog<Boolean> {
         vBox.getChildren().add(gridPane);
 
         Label memoryLabel = new Label("1. Memory Available: \n(should be greater than 2 Gb)");
-        memoryLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        memoryLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(memoryLabel, 0, 0);
         gridPane.add(new Label(String.format("%,d Gb", performanceMeasure.getMemorySize())), 1, 0);
 
         Label numberProcessorsLabel = new Label("2. # Processors:\n (should be at least 2) ");
-        numberProcessorsLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        numberProcessorsLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(numberProcessorsLabel, 0, 1);
         gridPane.add(new Label(String.format("%,d", performanceMeasure.getNumberProcessors())), 1, 1);
 
         Label numberStarsLabel = new Label("3. # Stars: ");
-        numberStarsLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        numberStarsLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(numberStarsLabel, 0, 2);
         gridPane.add(new Label(String.format("%,d", performanceMeasure.getNumbersOfStars())), 1, 2);
 
         Label distanceLabel = new Label("4. Distance: ");
-        distanceLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        distanceLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(distanceLabel, 0, 3);
         gridPane.add(new Label(String.format("%,.2f ly", performanceMeasure.getDistance())), 1, 3);
 
         Label worseCasePathsLabel = new Label("5. # Worse Case Paths: ");
-        worseCasePathsLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        worseCasePathsLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(worseCasePathsLabel, 0, 4);
         gridPane.add(new Label(String.format("%,d", performanceMeasure.getWorseCasePaths())), 1, 4);
 
         Label timeToExecuteLabel = new Label("6. Expected Execution Time: ");
-        timeToExecuteLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        timeToExecuteLabel.setFont(RoutingConstants.createInfoFont());
         gridPane.add(timeToExecuteLabel, 0, 5);
         gridPane.add(new Label(String.format("%,.2f seconds", performanceMeasure.getTimeToDoRouteSearch())), 1, 5);
 

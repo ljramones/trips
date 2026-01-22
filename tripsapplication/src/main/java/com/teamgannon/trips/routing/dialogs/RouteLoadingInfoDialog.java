@@ -1,6 +1,7 @@
 package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
@@ -16,9 +17,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -50,15 +48,15 @@ public class RouteLoadingInfoDialog extends Dialog<GraphRouteResult> implements 
 
         // setup report info
         GridPane gridPane = new GridPane();
-        gridPane.setMinWidth(600);
+        gridPane.setMinWidth(RoutingConstants.PROGRESS_DIALOG_MIN_WIDTH);
 
         Label statusButtonLabel = new Label("Status: ");
-        statusButtonLabel.setFont(Font.font("Verdana", FontWeight.BOLD, FontPosture.ITALIC, 12));
+        statusButtonLabel.setFont(RoutingConstants.createInfoFont());
 
         gridPane.add(statusButtonLabel, 0, 0);
         gridPane.add(searchProgressText, 1, 0);
         searchProgressBar.setProgress(0);
-        searchProgressBar.setMinWidth(500);
+        searchProgressBar.setMinWidth(RoutingConstants.PROGRESS_BAR_MIN_WIDTH);
         gridPane.add(searchProgressBar, 0, 1, 2, 1);
         vBox.getChildren().add(gridPane);
 

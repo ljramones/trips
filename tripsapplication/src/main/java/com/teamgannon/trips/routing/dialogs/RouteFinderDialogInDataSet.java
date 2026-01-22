@@ -2,6 +2,7 @@ package com.teamgannon.trips.routing.dialogs;
 
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.routing.RoutingConstants;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoice;
 import com.teamgannon.trips.routing.dialogs.components.ColorChoiceDialog;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
@@ -18,8 +19,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -133,12 +132,12 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
     private Font topOfPanel(VBox vBox, GridPane gridPane) {
         this.setTitle("Enter parameters for Route location");
 
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setVgap(5);
-        gridPane.setHgap(5);
+        gridPane.setPadding(new Insets(RoutingConstants.GRID_PADDING));
+        gridPane.setVgap(RoutingConstants.BUTTON_SPACING);
+        gridPane.setHgap(RoutingConstants.BUTTON_SPACING);
         vBox.getChildren().add(gridPane);
 
-        Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
+        Font font = RoutingConstants.createDialogFont();
 
         Label originStar = new Label("Origin Star");
         originStar.setFont(font);
@@ -155,19 +154,19 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         upperBound.setFont(font);
         gridPane.add(upperBound, 0, 3);
         gridPane.add(upperLengthLengthTextField, 1, 3);
-        upperLengthLengthTextField.setText("8");
+        upperLengthLengthTextField.setText(RoutingConstants.DEFAULT_UPPER_BOUND_TEXT);
 
         Label lowerBound = new Label("lower limit for route length");
         lowerBound.setFont(font);
         gridPane.add(lowerBound, 0, 4);
         gridPane.add(lowerLengthLengthTextField, 1, 4);
-        lowerLengthLengthTextField.setText("3");
+        lowerLengthLengthTextField.setText(RoutingConstants.DEFAULT_LOWER_BOUND_TEXT);
 
         Label lineWidth = new Label("route line width");
         lineWidth.setFont(font);
         gridPane.add(lineWidth, 0, 5);
         gridPane.add(lineWidthTextField, 1, 5);
-        lineWidthTextField.setText("0.5");
+        lineWidthTextField.setText(RoutingConstants.DEFAULT_LINE_WIDTH_TEXT);
 
         Label routeColor = new Label("route color");
         routeColor.setFont(font);
@@ -180,7 +179,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         numberPaths.setFont(font);
         gridPane.add(numberPaths, 0, 7);
         gridPane.add(numPathsToFindTextField, 1, 7);
-        numPathsToFindTextField.setText("3");
+        numPathsToFindTextField.setText(RoutingConstants.DEFAULT_NUM_PATHS_TEXT);
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
@@ -259,7 +258,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
         try {
             String originStarSelected = originCmb.getText();
             String destinationStarSelected = destinationCmb.getText();
-            double maxDistance = 20;
+            double maxDistance = RoutingConstants.MAX_VALIDATION_DISTANCE;
 
             setResult(
                     RouteFindingOptions
