@@ -304,6 +304,176 @@ for (star : validStars) {
 }
 ```
 
+### Throttled Label Updates
+
+Label positions must be recalculated during camera rotation and zoom. Without throttling, this happens on every mouse event (potentially 100+ times per second during smooth drags):
+
+```java
+// Before: Update on every mouse event
+mouseDragEventHandler = event -> {
+    // ... rotation logic ...
+    updateLabels();  // Called 100+ times/second during drag
+};
+
+// After: Throttle to ~60fps
+private static final long LABEL_UPDATE_THROTTLE_MS = 16;  // ~60fps
+private long lastLabelUpdateTime = 0;
+
+private void throttledUpdateLabels() {
+    long now = System.currentTimeMillis();
+    if (now - lastLabelUpdateTime >= LABEL_UPDATE_THROTTLE_MS) {
+        lastLabelUpdateTime = now;
+        updateLabels();
+    }
+}
+
+mouseDragEventHandler = event -> {
+    // ... rotation logic ...
+    throttledUpdateLabels();  // Max 60 updates/second
+};
+```
+
+**Applies to:**
+- `InterstellarSpacePane` - main 3D visualization
+- `SolarSystemSpacePane` - solar system view
+
+**Savings**: Reduces label update frequency from potentially 100+ fps to a consistent 60 fps during continuous interactions.
+
+---
+
+## Route Spatial Index
+
+### What It Does
+
+Similar to the star KD-tree, the route spatial index enables fast spatial queries on route segments. This is useful for:
+- Finding routes visible in a given viewport
+- Click detection on route segments
+- Route culling for performance
+
+### Implementation
+
+Located in `RouteSegmentSpatialIndex.java`:
+
+```java
+// Route segments are indexed by their midpoint
+public record IndexedRouteSegment(
+    UUID routeId,
+    int segmentIndex,
+    Point3D startPoint,
+    Point3D endPoint,
+    Point3D midpoint,
+    double boundingRadius  // Half the segment length
+) { ... }
+
+// Building the index (automatic via CurrentPlot)
+RouteSegmentSpatialIndex index = currentPlot.getRouteSpatialIndex();
+
+// Range query - find segments within 100 light-years
+List<IndexedRouteSegment> segments = index.findSegmentsWithinRadius(x, y, z, 100.0);
+
+// Get visible route IDs for a viewport
+Set<UUID> visibleRoutes = index.getVisibleRouteIds(centerX, centerY, centerZ, radius);
+
+// Nearest segment query
+IndexedRouteSegment nearest = index.findNearestSegment(x, y, z);
+```
+
+### How It Works
+
+1. Each route segment is represented by `IndexedRouteSegment` containing:
+   - Route UUID and segment index within the route
+   - Start/end points of the segment
+   - Midpoint (used as the index key)
+   - Bounding radius (half the segment length)
+
+2. Segments are inserted into a KD-tree by midpoint coordinates
+
+3. Queries use bounding sphere intersection:
+   - Query sphere (center + radius) vs segment bounding sphere (midpoint + half-length)
+   - This provides fast culling before detailed line-intersection tests
+
+### Statistics
+
+```
+RouteSegmentSpatialIndex[routes=12, segments=156, queries=5, avgReturned=23.4, cullRate=85.0%]
+```
+
+---
+
+## Transit Spatial Index
+
+### What It Does
+
+Transits are possible jump connections between stars within a distance band. Like routes, transits benefit from spatial indexing for:
+- Viewport culling (only render visible transits)
+- Click detection on transit lines
+- Finding transits by band for selective rendering
+
+### Implementation
+
+Located in `TransitSpatialIndex.java`:
+
+```java
+// Transit segments indexed by midpoint
+public record IndexedTransit(
+    String bandId,           // Transit band (e.g., "0-5 ly", "5-10 ly")
+    String sourceName,
+    String targetName,
+    Point3D startPoint,
+    Point3D endPoint,
+    Point3D midpoint,
+    double boundingRadius,   // Half the transit distance
+    double distance,         // Actual distance in light-years
+    TransitRoute transitRoute
+) { ... }
+
+// Building the index (managed by TransitManager)
+TransitSpatialIndex index = transitManager.getSpatialIndex();
+
+// Range query - find transits within viewport
+List<IndexedTransit> transits = index.findTransitsWithinRadius(x, y, z, 100.0);
+
+// Filter by band
+List<IndexedTransit> band1Transits = index.findTransitsForBandWithinRadius(
+    "band1", x, y, z, 100.0);
+
+// Get visible band IDs
+Set<String> visibleBands = index.getVisibleBandIds(centerX, centerY, centerZ, radius);
+
+// Nearest transit (for click detection)
+IndexedTransit nearest = index.findNearestTransit(x, y, z);
+```
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Band Organization** | Transits grouped by distance band |
+| **Lazy Rebuild** | KD-tree rebuilt only when transits change |
+| **Bidirectional Keys** | A-B equals B-A for deduplication |
+| **Statistics Tracking** | Query count, checked count, cull rate |
+
+### Statistics
+
+```
+TransitSpatialIndex[bands=3, transits=2456, queries=12, avgReturned=156.2, cullRate=93.6%]
+```
+
+### Integration with TransitManager
+
+The `TransitManager` automatically maintains the spatial index:
+
+```java
+// After computing transits
+transitManager.findTransits(transitDefinitions, starsInView);
+// Index is automatically rebuilt
+
+// Query methods delegate to the index
+List<IndexedTransit> visible = transitManager.findTransitsWithinRadius(x, y, z, radius);
+IndexedTransit nearest = transitManager.findNearestTransit(x, y, z);
+Set<String> bands = transitManager.getVisibleBandIds(x, y, z, radius);
+```
+
 ---
 
 ## Performance Summary
@@ -318,6 +488,9 @@ for (star : validStars) {
 | Lazy context menus | Upfront allocations | 100% |
 | Lazy tooltips | Upfront allocations | 90-99% |
 | Pre-validation | Exception overhead | Per-star overhead |
+| Throttled label updates | Label recalculations | ~40% (100fps → 60fps) |
+| Route spatial index | Route intersection checks | 80-95% |
+| Transit spatial index | Transit intersection checks | 85-95% |
 
 \* Object pooling savings increase after initial render; first render creates spheres, subsequent renders reuse them.
 
@@ -328,13 +501,20 @@ for (star : validStars) {
 | Class | Responsibility |
 |-------|---------------|
 | `PlotManager` | Orchestrates plotting, transforms coordinates |
-| `CurrentPlot` | Stores stars, manages spatial index, distance sorting |
+| `CurrentPlot` | Stores stars, manages spatial index, distance sorting, route spatial index |
 | `StarPlotManager` | Renders stars, manages LOD, batching, caching |
-| `VisualizationSpatialIndex` | KD-tree spatial queries |
+| `VisualizationSpatialIndex` | KD-tree spatial queries for stars |
 | `StarLODManager` | Determines detail level, creates geometry, manages pool |
 | `StarNodePool` | Object pool for reusing Sphere nodes |
 | `StarLabelManager` | Label creation and positioning |
 | `StarExtensionManager` | Extension lines from grid to stars |
+| `InterstellarSpacePane` | Main 3D visualization, throttled label updates |
+| `SolarSystemSpacePane` | Solar system visualization, throttled label updates |
+| `RouteSegmentSpatialIndex` | KD-tree spatial queries for route segments |
+| `IndexedRouteSegment` | Route segment data for spatial indexing |
+| `TransitSpatialIndex` | KD-tree spatial queries for transits |
+| `IndexedTransit` | Transit segment data for spatial indexing |
+| `TransitManager` | Manages transit visualization, spatial index integration |
 
 ---
 
