@@ -99,7 +99,7 @@ public class RouteTree {
     /**
      * the list of route segments
      */
-    private List<RouteSegment> routeSegmentList = new ArrayList<>();
+    private List<RouteSegmentDisplay> routeSegmentList = new ArrayList<>();
 
     public static RouteDescriptor toRouteDescriptor(RouteTree routeTree) {
         return RouteDescriptor
@@ -116,7 +116,7 @@ public class RouteTree {
                 .build();
     }
 
-    public void addRouteSegment(RouteSegment routeSegment) {
+    public void addRouteSegment(RouteSegmentDisplay routeSegment) {
         routeSegmentList.add(routeSegment);
     }
 
@@ -140,7 +140,7 @@ public class RouteTree {
         for (int i = 0; i < route.getRouteLengths().size(); i++) {
             String endSegStar = route.getRouteStarNames().get(i + 1);
             double length = route.getRouteLengths().get(i);
-            RouteSegment routeSegment = RouteSegment.builder().fromStar(startSegStar).toStar(endSegStar).length(length).build();
+            RouteSegmentDisplay routeSegment = RouteSegmentDisplay.builder().fromStar(startSegStar).toStar(endSegStar).length(length).build();
             routeTree.addRouteSegment(routeSegment);
             startSegStar = endSegStar;
         }

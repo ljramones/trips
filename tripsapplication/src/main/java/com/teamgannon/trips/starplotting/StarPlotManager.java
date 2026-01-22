@@ -307,7 +307,7 @@ public class StarPlotManager {
                            ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
-        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         this.routeManager = routeManager;
         this.starMeasurementService = starMeasurementService;
         this.routeFindingService = routeFindingService;

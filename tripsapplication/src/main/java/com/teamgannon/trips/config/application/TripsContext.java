@@ -117,7 +117,7 @@ public class TripsContext {
 
     @EventListener
     public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
-        getAppViewPreferences().setColorPallete(event.getColorPalette());
+        getAppViewPreferences().setColorPalette(event.getColorPalette());
         log.info("Color palette changed to " + event.getColorPalette());
     }
 

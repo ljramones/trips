@@ -11,7 +11,7 @@ public class AppViewPreferences {
     /**
      * the graph color palette
      */
-    private @NotNull ColorPalette colorPallete = new ColorPalette();
+    private @NotNull ColorPalette colorPalette = new ColorPalette();
 
     /**
      * what parameters are turned on and off

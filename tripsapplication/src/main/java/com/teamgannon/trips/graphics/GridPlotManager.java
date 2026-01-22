@@ -81,7 +81,7 @@ public class GridPlotManager {
         this.height = screenSize.getSceneHeight();
         this.width = screenSize.getSceneWidth();
         this.depth = screenSize.getDepth();
-        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         this.shapeToLabel = new HashMap<>();
 
         this.lineWidth = 0.5;

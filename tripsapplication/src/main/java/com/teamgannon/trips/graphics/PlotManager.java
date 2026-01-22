@@ -154,7 +154,7 @@ public class PlotManager {
                     starObjects,
                     displayRadius,
                     astroSearchQuery.getCenterCoordinates(),
-                    tripsContext.getAppViewPreferences().getColorPallete(),
+                    tripsContext.getAppViewPreferences().getColorPalette(),
                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                     tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
             );

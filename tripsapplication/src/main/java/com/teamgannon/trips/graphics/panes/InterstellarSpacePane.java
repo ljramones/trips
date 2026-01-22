@@ -153,7 +153,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         this.routeManager = routeManager;
         this.gridPlotManager = gridPlotManager;
 
-        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
 
         // attach our custom rotation transforms so we can update the labels dynamically
@@ -295,7 +295,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     public void changeColors(ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
-        tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
+        tripsContext.getAppViewPreferences().setColorPalette(colorPalette);
     }
 
     @EventListener

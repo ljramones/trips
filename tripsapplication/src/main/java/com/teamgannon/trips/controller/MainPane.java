@@ -394,7 +394,7 @@ public class MainPane  {
 
     private void getGraphColorsFromDB() {
         ColorPalette colorPalette = systemPreferencesService.getGraphColorsFromDB();
-        tripsContext.getAppViewPreferences().setColorPallete(colorPalette);
+        tripsContext.getAppViewPreferences().setColorPalette(colorPalette);
     }
 
     private void setDefaultSizesForUI() {
@@ -1042,7 +1042,7 @@ public class MainPane  {
                                     advResultsSet.getStarsFound(),
                                     displayRadius,
                                     searchContext.getAstroSearchQuery().getCenterCoordinates(),
-                                    tripsContext.getAppViewPreferences().getColorPallete(),
+                                    tripsContext.getAppViewPreferences().getColorPalette(),
                                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                                     tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                             );

@@ -106,8 +106,8 @@ public class RouteDisplay {
         manualRoutingActive = flag;
     }
 
-    public ColorPalette getColorPallete() {
-        return tripsContext.getAppViewPreferences().getColorPallete();
+    public ColorPalette getColorPalette() {
+        return tripsContext.getAppViewPreferences().getColorPalette();
     }
 
 

@@ -441,7 +441,7 @@ public class MainSplitPaneManager {
                                     starObjects,
                                     displayRadius,
                                     searchQuery.getCenterCoordinates(),
-                                    tripsContext.getAppViewPreferences().getColorPallete(),
+                                    tripsContext.getAppViewPreferences().getColorPalette(),
                                     tripsContext.getAppViewPreferences().getStarDisplayPreferences(),
                                     tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences()
                             );

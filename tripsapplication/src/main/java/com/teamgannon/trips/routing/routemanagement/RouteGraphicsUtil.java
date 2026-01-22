@@ -41,7 +41,7 @@ public class RouteGraphicsUtil {
     public @NotNull Label createLabel(boolean firstLink, double length) {
         String prefix = firstLink ? RoutingConstants.FIRST_SEGMENT_PREFIX : RoutingConstants.LABEL_SUFFIX;
         Label label = new Label(prefix + String.format("%.2f ", length));
-        SerialFont serialFont = routeDisplay.getColorPallete().getLabelFont();
+        SerialFont serialFont = routeDisplay.getColorPalette().getLabelFont();
 
         label.setFont(serialFont.toFont());
         return label;

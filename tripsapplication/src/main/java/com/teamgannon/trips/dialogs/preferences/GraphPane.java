@@ -68,7 +68,7 @@ public class GraphPane extends Pane {
     public GraphPane(TripsContext tripsContext,
                      ApplicationEventPublisher eventPublisher) {
 
-        this.colorPalette = tripsContext.getAppViewPreferences().getColorPallete();
+        this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         graphEnablesPersist = tripsContext.getAppViewPreferences().getGraphEnablesPersist();
         this.eventPublisher = eventPublisher;
 
