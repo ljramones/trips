@@ -515,10 +515,11 @@
             <scope>test</scope>
         </dependency>
         <!-- Headless testing support (for CI environments) -->
+        <!-- Using 17.0.10 for Java 17 runtime (even though we use JavaFX 21) -->
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>openjfx-monocle</artifactId>
-            <version>jdk-12.0.1+2</version>
+            <version>17.0.10</version>
             <scope>test</scope>
         </dependency>
 
@@ -629,6 +630,26 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Maven Surefire Plugin for TestFX headless testing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <argLine>
+                        -Djava.awt.headless=true
+                        -Dtestfx.robot=glass
+                        -Dtestfx.headless=true
+                        -Dprism.order=sw
+                        -Dprism.text=t2k
+                        -Dglass.platform=Monocle
+                        -Dmonocle.platform=Headless
+                    </argLine>
+                    <!-- Run TestFX tests in a separate JVM to avoid issues -->
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                </configuration>
             </plugin>
         </plugins>
     </build>

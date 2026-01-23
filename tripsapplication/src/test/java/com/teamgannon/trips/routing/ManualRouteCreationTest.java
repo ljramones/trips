@@ -3,7 +3,6 @@ package com.teamgannon.trips.routing;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.AppViewPreferences;
 import com.teamgannon.trips.config.application.model.ColorPalette;
-import com.teamgannon.trips.events.NewRouteEvent;
 import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -13,25 +12,23 @@ import com.teamgannon.trips.routing.routemanagement.RouteBuilderUtils;
 import com.teamgannon.trips.routing.routemanagement.RouteDisplay;
 import com.teamgannon.trips.routing.routemanagement.RouteGraphicsUtil;
 import com.teamgannon.trips.support.AlertFactory;
-import javafx.application.Platform;
+import com.teamgannon.trips.test.TestFXBase;
 import javafx.geometry.Point3D;
-import javafx.scene.Group;
-import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Cylinder;
+import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import org.mockito.MockedStatic;
 
 /**
  * Tests for manual route creation workflow.
@@ -53,50 +50,6 @@ import org.mockito.MockedStatic;
 @DisplayName("Manual Route Creation Tests")
 class ManualRouteCreationTest {
 
-    private static boolean javaFxInitialized = false;
-
-    @BeforeAll
-    static void initJavaFx() {
-        // Check if we're in a headless environment
-        if (System.getenv("CI") != null || System.getProperty("java.awt.headless", "false").equals("true")) {
-            System.out.println("Headless environment detected, skipping JavaFX tests");
-            javaFxInitialized = false;
-            return;
-        }
-
-        try {
-            Platform.startup(() -> {});
-
-            // Verify that JavaFX thread is actually responding
-            CountDownLatch testLatch = new CountDownLatch(1);
-            Platform.runLater(testLatch::countDown);
-
-            if (!testLatch.await(5, TimeUnit.SECONDS)) {
-                System.out.println("JavaFX thread not responding, skipping JavaFX tests");
-                javaFxInitialized = false;
-                return;
-            }
-
-            javaFxInitialized = true;
-        } catch (IllegalStateException e) {
-            // Already initialized - verify it works
-            try {
-                CountDownLatch testLatch = new CountDownLatch(1);
-                Platform.runLater(testLatch::countDown);
-                javaFxInitialized = testLatch.await(5, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                javaFxInitialized = false;
-            }
-        } catch (UnsupportedOperationException e) {
-            // Headless environment
-            System.out.println("JavaFX not supported in headless environment");
-            javaFxInitialized = false;
-        } catch (Exception e) {
-            System.out.println("JavaFX not available: " + e.getMessage());
-            javaFxInitialized = false;
-        }
-    }
-
     // =========================================================================
     // Test Helpers
     // =========================================================================
@@ -114,12 +67,12 @@ class ManualRouteCreationTest {
     }
 
     // =========================================================================
-    // CurrentManualRoute Tests (require JavaFX)
+    // CurrentManualRoute Tests (using TestFX for headless JavaFX)
     // =========================================================================
 
     @Nested
     @DisplayName("CurrentManualRoute Tests")
-    class CurrentManualRouteTests {
+    class CurrentManualRouteTests extends TestFXBase {
 
         private CurrentManualRoute currentManualRoute;
         private TripsContext tripsContext;
@@ -129,10 +82,15 @@ class ManualRouteCreationTest {
         private ApplicationEventPublisher eventPublisher;
         private DataSetDescriptor dataSet;
 
+        @Override
+        public void start(Stage stage) {
+            // Minimal scene required for TestFX
+            stage.setScene(new Scene(new StackPane(), 100, 100));
+            stage.show();
+        }
+
         @BeforeEach
         void setUp() {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
-
             // Create mocks
             tripsContext = mock(TripsContext.class);
             routeDisplay = mock(RouteDisplay.class);
@@ -170,181 +128,127 @@ class ManualRouteCreationTest {
 
         @Test
         @DisplayName("startRoute initializes route correctly")
-        void startRouteInitializesRouteCorrectly() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
+        void startRouteInitializesRouteCorrectly() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
 
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                assertNotNull(currentManualRoute.getCurrentRoute());
-                assertEquals(routeDescriptor, currentManualRoute.getCurrentRoute());
-                return null;
-            });
+            assertNotNull(currentManualRoute.getCurrentRoute());
+            assertEquals(routeDescriptor, currentManualRoute.getCurrentRoute());
         }
 
         @Test
         @DisplayName("startRoute publishes RoutingStatusEvent")
-        void startRoutePublishesRoutingStatusEvent() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
+        void startRoutePublishesRoutingStatusEvent() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
 
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                ArgumentCaptor<RoutingStatusEvent> eventCaptor = ArgumentCaptor.forClass(RoutingStatusEvent.class);
-                verify(eventPublisher).publishEvent(eventCaptor.capture());
+            ArgumentCaptor<RoutingStatusEvent> eventCaptor = ArgumentCaptor.forClass(RoutingStatusEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
 
-                RoutingStatusEvent event = eventCaptor.getValue();
-                assertTrue(event.isStatusFlag(), "Routing should be active after starting");
-                return null;
-            });
+            RoutingStatusEvent event = eventCaptor.getValue();
+            assertTrue(event.isStatusFlag(), "Routing should be active after starting");
         }
 
         @Test
         @DisplayName("startRoute adds first coordinate")
-        void startRouteAddsFirstCoordinate() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
+        void startRouteAddsFirstCoordinate() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
 
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                assertEquals(1, currentManualRoute.getNumberSegments());
-                return null;
-            });
+            assertEquals(1, currentManualRoute.getNumberSegments());
         }
 
         @Test
         @DisplayName("startRoute activates manual routing mode")
-        void startRouteActivatesManualRoutingMode() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
+        void startRouteActivatesManualRoutingMode() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
 
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                verify(routeDisplay).setManualRoutingActive(true);
-                return null;
-            });
+            verify(routeDisplay).setManualRoutingActive(true);
         }
 
         @Test
         @DisplayName("continueRoute adds segment to route")
-        void continueRouteAddsSegmentToRoute() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
-                when(routeDisplay.isManualRoutingActive()).thenReturn(true);
+        void continueRouteAddsSegmentToRoute() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
+            when(routeDisplay.isManualRoutingActive()).thenReturn(true);
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                StarDisplayRecord nextStar = createStar("Alpha Centauri", 4, 0, 0);
-                currentManualRoute.continueRoute(nextStar);
+            StarDisplayRecord nextStar = createStar("Alpha Centauri", 4, 0, 0);
+            currentManualRoute.continueRoute(nextStar);
 
-                assertEquals(2, currentManualRoute.getNumberSegments());
-                return null;
-            });
+            assertEquals(2, currentManualRoute.getNumberSegments());
         }
 
         @Test
         @DisplayName("finishRoute deactivates manual routing")
-        void finishRouteDeactivatesManualRouting() throws Exception {
-            runOnFxThread(() -> {
-                when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
-                when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
-                        .thenReturn(new Cylinder());
-                when(routeDisplay.isManualRoutingActive()).thenReturn(true);
+        void finishRouteDeactivatesManualRouting() {
+            when(routeGraphicsUtil.createLabel(anyBoolean(), anyDouble())).thenReturn(new Label("5.0 LY"));
+            when(routeGraphicsUtil.createLineSegment(any(), any(), anyDouble(), any(), any()))
+                    .thenReturn(new Cylinder());
+            when(routeDisplay.isManualRoutingActive()).thenReturn(true);
 
-                StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
-                RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
-                currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
+            StarDisplayRecord firstStar = createStar("Sol", 0, 0, 0);
+            RouteDescriptor routeDescriptor = createRouteDescriptor("Test Route", Color.BLUE);
+            currentManualRoute.startRoute(dataSet, routeDescriptor, firstStar);
 
-                StarDisplayRecord endStar = createStar("Alpha Centauri", 4, 0, 0);
-                currentManualRoute.finishRoute(endStar);
+            StarDisplayRecord endStar = createStar("Alpha Centauri", 4, 0, 0);
+            currentManualRoute.finishRoute(endStar);
 
-                verify(routeDisplay).setManualRoutingActive(false);
-                return null;
-            });
+            verify(routeDisplay).setManualRoutingActive(false);
         }
 
         @Test
         @DisplayName("continueRoute without starting does nothing")
-        void continueRouteWithoutStartingDoesNothing() throws Exception {
-            runOnFxThread(() -> {
-                // Mock the static AlertFactory to prevent blocking dialog
-                try (MockedStatic<AlertFactory> mockedAlert = mockStatic(AlertFactory.class)) {
-                    when(routeDisplay.isManualRoutingActive()).thenReturn(false);
-                    StarDisplayRecord star = createStar("Sol", 0, 0, 0);
+        void continueRouteWithoutStartingDoesNothing() {
+            // Mock the static AlertFactory to prevent blocking dialog
+            try (MockedStatic<AlertFactory> mockedAlert = mockStatic(AlertFactory.class)) {
+                when(routeDisplay.isManualRoutingActive()).thenReturn(false);
+                StarDisplayRecord star = createStar("Sol", 0, 0, 0);
 
-                    // Should not throw (shows error alert but we mock it)
-                    assertDoesNotThrow(() -> currentManualRoute.continueRoute(star));
+                // Should not throw (shows error alert but we mock it)
+                assertDoesNotThrow(() -> currentManualRoute.continueRoute(star));
 
-                    // Verify the error alert was called
-                    mockedAlert.verify(() -> AlertFactory.showErrorAlert("Routing", "start a route first"));
-                }
-                return null;
-            });
+                // Verify the error alert was called
+                mockedAlert.verify(() -> AlertFactory.showErrorAlert("Routing", "start a route first"));
+            }
         }
 
         @Test
         @DisplayName("finishRoute without active routing does nothing")
-        void finishRouteWithoutActiveRoutingDoesNothing() throws Exception {
-            runOnFxThread(() -> {
-                when(routeDisplay.isManualRoutingActive()).thenReturn(false);
+        void finishRouteWithoutActiveRoutingDoesNothing() {
+            when(routeDisplay.isManualRoutingActive()).thenReturn(false);
 
-                assertDoesNotThrow(() -> currentManualRoute.finishRoute());
-                return null;
-            });
-        }
-
-        private <T> T runOnFxThread(java.util.concurrent.Callable<T> callable) throws Exception {
-            if (Platform.isFxApplicationThread()) {
-                return callable.call();
-            }
-
-            CountDownLatch latch = new CountDownLatch(1);
-            final Object[] result = new Object[1];
-            final Exception[] exception = new Exception[1];
-
-            Platform.runLater(() -> {
-                try {
-                    result[0] = callable.call();
-                } catch (Exception e) {
-                    exception[0] = e;
-                } finally {
-                    latch.countDown();
-                }
-            });
-
-            assertTrue(latch.await(30, TimeUnit.SECONDS), "JavaFX operation timed out");
-
-            if (exception[0] != null) {
-                throw exception[0];
-            }
-
-            @SuppressWarnings("unchecked")
-            T typedResult = (T) result[0];
-            return typedResult;
+            assertDoesNotThrow(() -> currentManualRoute.finishRoute());
         }
     }
 
@@ -495,124 +399,87 @@ class ManualRouteCreationTest {
     }
 
     // =========================================================================
-    // RouteDescriptor JavaFX Tests (require JavaFX)
+    // RouteDescriptor JavaFX Tests (using TestFX for headless JavaFX)
     // =========================================================================
 
     @Nested
     @DisplayName("RouteDescriptor JavaFX Tests")
-    class RouteDescriptorJavaFxTests {
+    class RouteDescriptorJavaFxTests extends TestFXBase {
 
-        @BeforeEach
-        void checkJavaFx() {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
+        @Override
+        public void start(Stage stage) {
+            // Minimal scene required for TestFX
+            stage.setScene(new Scene(new StackPane(), 100, 100));
+            stage.show();
         }
 
         @Test
         @DisplayName("addLink populates route correctly")
-        void addLinkPopulatesRouteCorrectly() throws Exception {
-            runOnFxThread(() -> {
-                RouteDescriptor descriptor = RouteDescriptor.builder()
-                        .name("Test Route")
-                        .build();
+        void addLinkPopulatesRouteCorrectly() {
+            RouteDescriptor descriptor = RouteDescriptor.builder()
+                    .name("Test Route")
+                    .build();
 
-                StarDisplayRecord star1 = createStar("Sol", 0, 0, 0);
-                StarDisplayRecord star2 = createStar("Alpha", 4, 0, 0);
+            StarDisplayRecord star1 = createStar("Sol", 0, 0, 0);
+            StarDisplayRecord star2 = createStar("Alpha", 4, 0, 0);
 
-                descriptor.addLink(star1, new Point3D(0, 0, 0), 0, null, null);
-                descriptor.addLink(star2, new Point3D(4, 0, 0), 4.0, new Cylinder(), new Label("4.0 LY"));
+            descriptor.addLink(star1, new Point3D(0, 0, 0), 0, null, null);
+            descriptor.addLink(star2, new Point3D(4, 0, 0), 4.0, new Cylinder(), new Label("4.0 LY"));
 
-                assertEquals(2, descriptor.getRouteCoordinates().size());
-                assertEquals(1, descriptor.getLengthList().size());
-                assertEquals(4.0, descriptor.getTotalLength(), 0.01);
-                return null;
-            });
+            assertEquals(2, descriptor.getRouteCoordinates().size());
+            assertEquals(1, descriptor.getLengthList().size());
+            assertEquals(4.0, descriptor.getTotalLength(), 0.01);
         }
 
         @Test
         @DisplayName("removeLast removes segment correctly")
-        void removeLastRemovesSegmentCorrectly() throws Exception {
-            runOnFxThread(() -> {
-                RouteDescriptor descriptor = RouteDescriptor.builder()
-                        .name("Test Route")
-                        .build();
+        void removeLastRemovesSegmentCorrectly() {
+            RouteDescriptor descriptor = RouteDescriptor.builder()
+                    .name("Test Route")
+                    .build();
 
-                StarDisplayRecord star1 = createStar("Sol", 0, 0, 0);
-                StarDisplayRecord star2 = createStar("Alpha", 4, 0, 0);
-                StarDisplayRecord star3 = createStar("Sirius", 8, 0, 0);
+            StarDisplayRecord star1 = createStar("Sol", 0, 0, 0);
+            StarDisplayRecord star2 = createStar("Alpha", 4, 0, 0);
+            StarDisplayRecord star3 = createStar("Sirius", 8, 0, 0);
 
-                descriptor.addLink(star1, new Point3D(0, 0, 0), 0, null, null);
-                descriptor.addLink(star2, new Point3D(4, 0, 0), 4.0, new Cylinder(), new Label("4.0"));
-                descriptor.addLink(star3, new Point3D(8, 0, 0), 4.0, new Cylinder(), new Label("4.0"));
+            descriptor.addLink(star1, new Point3D(0, 0, 0), 0, null, null);
+            descriptor.addLink(star2, new Point3D(4, 0, 0), 4.0, new Cylinder(), new Label("4.0"));
+            descriptor.addLink(star3, new Point3D(8, 0, 0), 4.0, new Cylinder(), new Label("4.0"));
 
-                assertEquals(3, descriptor.getRouteCoordinates().size());
+            assertEquals(3, descriptor.getRouteCoordinates().size());
 
-                boolean allRemoved = descriptor.removeLast();
+            boolean allRemoved = descriptor.removeLast();
 
-                assertFalse(allRemoved);
-                assertEquals(2, descriptor.getRouteCoordinates().size());
-                assertEquals("Alpha", descriptor.getLastStar().getStarName());
-                return null;
-            });
+            assertFalse(allRemoved);
+            assertEquals(2, descriptor.getRouteCoordinates().size());
+            assertEquals("Alpha", descriptor.getLastStar().getStarName());
         }
 
         @Test
         @DisplayName("toRoute creates correct Route object")
-        void toRouteCreatesCorrectRouteObject() throws Exception {
-            runOnFxThread(() -> {
-                RouteDescriptor descriptor = RouteDescriptor.builder()
-                        .name("Test Route")
-                        .color(Color.BLUE)
-                        .lineWidth(1.5)
-                        .routeNotes("Test notes")
-                        .startStar("Sol")
-                        .build();
+        void toRouteCreatesCorrectRouteObject() {
+            RouteDescriptor descriptor = RouteDescriptor.builder()
+                    .name("Test Route")
+                    .color(Color.BLUE)
+                    .lineWidth(1.5)
+                    .routeNotes("Test notes")
+                    .startStar("Sol")
+                    .build();
 
-                descriptor.getRouteList().add("star-id-1");
-                descriptor.getRouteList().add("star-id-2");
-                descriptor.getNameList().add("Sol");
-                descriptor.getNameList().add("Alpha");
-                descriptor.getLengthList().add(4.0);
+            descriptor.getRouteList().add("star-id-1");
+            descriptor.getRouteList().add("star-id-2");
+            descriptor.getNameList().add("Sol");
+            descriptor.getNameList().add("Alpha");
+            descriptor.getLengthList().add(4.0);
 
-                var route = descriptor.toRoute();
+            var route = descriptor.toRoute();
 
-                assertEquals("Test Route", route.getRouteName());
-                assertEquals(Color.BLUE.toString(), route.getRouteColor());
-                assertEquals(1.5, route.getLineWidth(), 0.01);
-                assertEquals("Test notes", route.getRouteNotes());
-                assertEquals("Sol", route.getStartingStar());
-                assertEquals(2, route.getRouteStars().size());
-                return null;
-            });
-        }
-
-        private <T> T runOnFxThread(java.util.concurrent.Callable<T> callable) throws Exception {
-            if (Platform.isFxApplicationThread()) {
-                return callable.call();
-            }
-
-            CountDownLatch latch = new CountDownLatch(1);
-            final Object[] result = new Object[1];
-            final Exception[] exception = new Exception[1];
-
-            Platform.runLater(() -> {
-                try {
-                    result[0] = callable.call();
-                } catch (Exception e) {
-                    exception[0] = e;
-                } finally {
-                    latch.countDown();
-                }
-            });
-
-            assertTrue(latch.await(30, TimeUnit.SECONDS), "JavaFX operation timed out");
-
-            if (exception[0] != null) {
-                throw exception[0];
-            }
-
-            @SuppressWarnings("unchecked")
-            T typedResult = (T) result[0];
-            return typedResult;
+            assertEquals("Test Route", route.getRouteName());
+            assertEquals(Color.BLUE.toString(), route.getRouteColor());
+            assertEquals(1.5, route.getLineWidth(), 0.01);
+            assertEquals("Test notes", route.getRouteNotes());
+            assertEquals("Sol", route.getStartingStar());
+            assertEquals(2, route.getRouteStars().size());
         }
     }
 }
