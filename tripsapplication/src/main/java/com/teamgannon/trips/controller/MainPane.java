@@ -73,9 +73,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -158,14 +155,6 @@ public class MainPane  {
     ////// injected properties
     public Pane mainPanel;
     public MenuBar menuBar;
-
-    public MenuItem showRoutesMenuitem;
-    public MenuItem openDatasetMenuItem;
-    public MenuItem saveMenuItem;
-
-    public MenuItem importDataSetMenuItem;
-    public MenuItem quitMenuItem;
-    public Menu scriptingMenu;
 
 
     ////  local assets
@@ -298,8 +287,6 @@ public class MainPane  {
     public void initialize() {
         log.info("initialize view");
 
-        setMnemonics();
-
         this.plotManager = new PlotManager(tripsContext, starService, eventPublisher);
         this.plotManager.setInterstellarPane(interstellarSpacePane);
 
@@ -383,12 +370,6 @@ public class MainPane  {
 
     private void handleResize() {
         sharedUIFunctions.updateSidePaneOnResize();
-    }
-
-    private void setMnemonics() {
-        openDatasetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN));
-        importDataSetMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN));
-        quitMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.CONTROL_DOWN));
     }
 
     /////////////////////////////  CREATE ASSETS  ////////////////////////////
@@ -513,7 +494,7 @@ public class MainPane  {
         originalHeight = height;
         originalWidth = width;
 
-        Platform.runLater(interstellarSpacePane::updateLabels);
+        FxThread.runOnFxThread(interstellarSpacePane::updateLabels);
 
     }
 
@@ -1416,7 +1397,7 @@ public class MainPane  {
 
     @EventListener
     public void onDistanceReportEvent(DistanceReportEvent event) {
-        Platform.runLater(() -> {
+        FxThread.runOnFxThread(() -> {
             StarDisplayRecord starDescriptor = event.getStarDisplayRecord();
             ReportManager reportManager = new ReportManager();
             reportManager.generateDistanceReport(primaryStage, starDescriptor, interstellarSpacePane.getCurrentStarsInView());
@@ -1425,7 +1406,7 @@ public class MainPane  {
 
     @EventListener
     public void onDisplayStarEvent(DisplayStarEvent event) {
-        Platform.runLater(() -> {
+        FxThread.runOnFxThread(() -> {
             log.info("MAIN PANE ::: Received display star event, star is:{}", event.getStarObject().getDisplayName());
             displayStellarProperties(event.getStarObject());
         });

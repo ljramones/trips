@@ -7,8 +7,8 @@ import com.teamgannon.trips.controller.UIElement;
 import com.teamgannon.trips.events.UIStateChangeEvent;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
@@ -174,7 +174,7 @@ public class SharedUIFunctions {
     public void applySidePaneState(boolean sidePanelOn) {
         log.info("Applying side pane state: " + sidePanelOn);
 
-        Platform.runLater(() -> {
+        FxThread.runOnFxThread(() -> {
             if (mainSplitPane == null) {
                 log.error("mainSplitPane is null");
                 return;
@@ -285,7 +285,7 @@ public class SharedUIFunctions {
         double newPosition = sidePanelOn ? 0.7 : 1.0;
         log.info("Updating side pane on resize, sidePanelOn: " + sidePanelOn);
 
-        Platform.runLater(() -> {
+        FxThread.runOnFxThread(() -> {
             if (mainSplitPane == null) {
                 log.error("mainSplitPane is null");
                 return;

@@ -51,14 +51,15 @@ public class DataExportService {
 
     public DataExportService(DatabaseManagementService databaseManagementService,
                              StarService starService,
-                             ApplicationEventPublisher eventPublisher) {
+                             ApplicationEventPublisher eventPublisher,
+                             CSVQueryExporterService csvQueryExporterService,
+                             CSVDataSetDataExportService csvDataSetDataExportService) {
 
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
         this.eventPublisher = eventPublisher;
-
-        csvQueryExporterService = new CSVQueryExporterService();
-        csvDataSetDataExportService = new CSVDataSetDataExportService();
+        this.csvQueryExporterService = csvQueryExporterService;
+        this.csvDataSetDataExportService = csvDataSetDataExportService;
     }
 
     @TrackExecutionTime

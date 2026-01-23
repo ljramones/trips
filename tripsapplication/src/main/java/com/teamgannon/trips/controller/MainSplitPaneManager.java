@@ -35,7 +35,7 @@ import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.tableviews.StarTableDialog;
-import javafx.application.Platform;
+// FxThread.runOnFxThread replaced with FxThread.runOnFxThread for consistency
 import javafx.beans.property.DoubleProperty;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -141,6 +141,7 @@ public class MainSplitPaneManager {
                                 ObjectViewPane objectViewPane,
                                 DatabaseManagementService databaseManagementService,
                                 DatasetService datasetService,
+                                DataExportService dataExportService,
                                 InterstellarSpacePane interstellarSpacePane,
                                 StarService starService,
                                 ExoPlanetRepository exoPlanetRepository,
@@ -158,15 +159,13 @@ public class MainSplitPaneManager {
         this.objectViewPane = objectViewPane;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
+        this.dataExportService = dataExportService;
         this.rightPanelCoordinator = rightPanelCoordinator;
         this.searchContextCoordinator = searchContextCoordinator;
         this.interstellarSpacePane = interstellarSpacePane;
         this.starService = starService;
         this.exoPlanetRepository = exoPlanetRepository;
         this.fxWeaver = fxWeaver;
-
-        this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
-
     }
 
     public void initialize(SliderControlManager sliderControlManager, PlotManager plotManager) {
@@ -387,12 +386,20 @@ public class MainSplitPaneManager {
 
     @EventListener
     public void onRecenterStarEvent(RecenterStarEvent event) {
-        StarDisplayRecord starId = event.getStarDisplayRecord();
-        log.info("recenter plot at {}", starId);
-        AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
-        searchContextCoordinator.recenter(starId, query.getUpperDistanceLimit());
-        log.info("New Center Range: {}", query.getCenterRangingCube());
-        FxThread.runOnFxThread(() -> showNewStellarData(query, true, false));
+        try {
+            StarDisplayRecord starId = event.getStarDisplayRecord();
+            log.info("recenter plot at {}", starId);
+            AstroSearchQuery query = searchContextCoordinator.getAstroSearchQuery();
+            searchContextCoordinator.recenter(starId, query.getUpperDistanceLimit());
+            log.info("New Center Range: {}", query.getCenterRangingCube());
+            FxThread.runOnFxThread(() -> showNewStellarData(query, true, false));
+        } catch (Exception e) {
+            log.error("Error handling recenter star event", e);
+            FxThread.runOnFxThread(() -> {
+                showErrorAlert("Recenter Error", "Failed to recenter on star: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Recenter failed"));
+            });
+        }
     }
 
 
@@ -510,25 +517,45 @@ public class MainSplitPaneManager {
 
     @EventListener
     public void onShowStellarDataEvent(ShowStellarDataEvent event) {
-        Platform.runLater(() -> {
-            if (event.hasSearchQuery()) {
-                showNewStellarData(event.getSearchQuery(), event.isShowPlot(), event.isShowTable());
-            } else if (event.hasDataSetDescriptor()) {
-                showNewStellarData(event.getDataSetDescriptor(), event.isShowPlot(), event.isShowTable());
-            } else {
-                showNewStellarData(event.isShowPlot(), event.isShowTable());
+        FxThread.runOnFxThread(() -> {
+            try {
+                if (event.hasSearchQuery()) {
+                    showNewStellarData(event.getSearchQuery(), event.isShowPlot(), event.isShowTable());
+                } else if (event.hasDataSetDescriptor()) {
+                    showNewStellarData(event.getDataSetDescriptor(), event.isShowPlot(), event.isShowTable());
+                } else {
+                    showNewStellarData(event.isShowPlot(), event.isShowTable());
+                }
+            } catch (Exception e) {
+                log.error("Error handling show stellar data event", e);
+                showErrorAlert("Display Error", "Failed to display stellar data: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Display failed"));
             }
         });
     }
 
     @EventListener
     public void onExportQueryEvent(ExportQueryEvent event) {
-        Platform.runLater(() -> doExport(event.getSearchQuery()));
+        FxThread.runOnFxThread(() -> {
+            try {
+                doExport(event.getSearchQuery());
+            } catch (Exception e) {
+                log.error("Error handling export query event", e);
+                showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Export failed"));
+            }
+        });
     }
 
     @EventListener
     public void onRoutingStatusEvent(RoutingStatusEvent event) {
-        Platform.runLater(() -> statusBarController.routingStatus(event.isStatusFlag()));
+        FxThread.runOnFxThread(() -> {
+            try {
+                statusBarController.routingStatus(event.isStatusFlag());
+            } catch (Exception e) {
+                log.error("Error handling routing status event", e);
+            }
+        });
     }
 
     @EventListener
@@ -596,7 +623,14 @@ public class MainSplitPaneManager {
 
     @EventListener
     public void onDisplayRouteEvent(DisplayRouteEvent event) {
-        Platform.runLater(() -> interstellarSpacePane.displayRoute(event.getRouteDescriptor(), event.isVisible()));
+        FxThread.runOnFxThread(() -> {
+            try {
+                interstellarSpacePane.displayRoute(event.getRouteDescriptor(), event.isVisible());
+            } catch (Exception e) {
+                log.error("Error handling display route event", e);
+                showErrorAlert("Route Display Error", "Failed to display route: " + e.getMessage());
+            }
+        });
     }
 
     @EventListener
@@ -638,14 +672,20 @@ public class MainSplitPaneManager {
         DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
 
         FxThread.runOnFxThread(() -> {
-            // add to side-panel
-            rightPanelCoordinator.handleDataSetAdded(dataSetDescriptor);
+            try {
+                // add to side-panel
+                rightPanelCoordinator.handleDataSetAdded(dataSetDescriptor);
 
-            // update the query dialog
-            if (queryDialog != null) {
-                queryDialog.updateDataContext(dataSetDescriptor);
+                // update the query dialog
+                if (queryDialog != null) {
+                    queryDialog.updateDataContext(dataSetDescriptor);
+                }
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " loaded"));
+            } catch (Exception e) {
+                log.error("Error handling add dataset event for {}", dataSetDescriptor.getDataSetName(), e);
+                showErrorAlert("Add Dataset Error", "Failed to add dataset: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to add dataset"));
             }
-            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " loaded"));
         });
     }
 
@@ -715,20 +755,26 @@ public class MainSplitPaneManager {
         }
 
         FxThread.runOnFxThread(() -> {
-            // clear all the current data
-            clearAll();
+            try {
+                // clear all the current data
+                clearAll();
 
-            // update the trips context and write through to the database
-            tripsContext.setDataSetContext(new DataSetContext(descriptor));
+                // update the trips context and write through to the database
+                tripsContext.setDataSetContext(new DataSetContext(descriptor));
 
-            // update the side panel
-            rightPanelController.selectDataSet(descriptor);
+                // update the side panel
+                rightPanelController.selectDataSet(descriptor);
 
-            if (queryDialog != null) {
-                queryDialog.setDataSetContext(descriptor);
+                if (queryDialog != null) {
+                    queryDialog.setDataSetContext(descriptor);
+                }
+
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, ("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ")));
+            } catch (Exception e) {
+                log.error("Error handling set context dataset event for {}", descriptor.getDataSetName(), e);
+                showErrorAlert("Set Context Error", "Failed to set dataset context: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to set dataset context"));
             }
-
-            eventPublisher.publishEvent(new StatusUpdateEvent(this, ("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ")));
         });
     }
 
@@ -757,127 +803,133 @@ public class MainSplitPaneManager {
 
     @EventListener
     public void onContextSelectorEvent(ContextSelectorEvent event) {
-        Platform.runLater(() -> {
-            switch (event.getContextSelectionType()) {
-                case INTERSTELLAR -> {
-                    log.info("Showing interstellar Space");
-                    leftDisplayController.showInterstellar();
-                    rightPanelCoordinator.switchToInterstellar();  // Switch side pane
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
-                }
-                case SOLARSYSTEM -> {
-                    log.info("Showing a solar system");
-                    leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
-                    rightPanelCoordinator.switchToSolarSystem(event.getStarDisplayRecord());  // Switch side pane
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
-                }
-                case PLANETARY -> {
-                    log.info("Showing planetary surface view");
-                    PlanetaryContext context = event.getPlanetaryContext();
-                    if (context == null) {
-                        StarDisplayRecord star = event.getStarDisplayRecord();
-                        ExoPlanet planet = findDefaultPlanet(star);
-                        if (planet == null) {
-                            log.warn("No planets available for {}", star != null ? star.getStarName() : "unknown star");
-                            eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                                    "No planets available for planetary view"));
-                            return;
-                        }
-                        context = PlanetaryContext.builder()
-                                .hostStar(star)
-                                .planet(planet)
-                                .localTime(22.0)
-                                .build();
+        FxThread.runOnFxThread(() -> {
+            try {
+                switch (event.getContextSelectionType()) {
+                    case INTERSTELLAR -> {
+                        log.info("Showing interstellar Space");
+                        leftDisplayController.showInterstellar();
+                        rightPanelCoordinator.switchToInterstellar();  // Switch side pane
+                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
                     }
+                    case SOLARSYSTEM -> {
+                        log.info("Showing a solar system");
+                        leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
+                        rightPanelCoordinator.switchToSolarSystem(event.getStarDisplayRecord());  // Switch side pane
+                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
+                    }
+                    case PLANETARY -> {
+                        log.info("Showing planetary surface view");
+                        PlanetaryContext context = event.getPlanetaryContext();
+                        if (context == null) {
+                            StarDisplayRecord star = event.getStarDisplayRecord();
+                            ExoPlanet planet = findDefaultPlanet(star);
+                            if (planet == null) {
+                                log.warn("No planets available for {}", star != null ? star.getStarName() : "unknown star");
+                                eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                                        "No planets available for planetary view"));
+                                return;
+                            }
+                            context = PlanetaryContext.builder()
+                                    .hostStar(star)
+                                    .planet(planet)
+                                    .localTime(22.0)
+                                    .build();
+                        }
 
-                    // Snapshot for lambdas (context is reassigned above, so it's not effectively final)
-                    final PlanetaryContext finalContext = context;
+                        // Snapshot for lambdas (context is reassigned above, so it's not effectively final)
+                        final PlanetaryContext finalContext = context;
 
-                    leftDisplayController.showPlanetary(finalContext);
-                    rightPanelCoordinator.switchToPlanetary(finalContext);  // Switch side pane
-                    rightPanelCoordinator.updatePlanetaryBrightestStars(
-                            leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                            leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+                        leftDisplayController.showPlanetary(finalContext);
+                        rightPanelCoordinator.switchToPlanetary(finalContext);  // Switch side pane
+                        rightPanelCoordinator.updatePlanetaryBrightestStars(
+                                leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                                leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
 
-                    var viewControlPane = rightPanelCoordinator.getPlanetaryViewControlPane();
-                    if (viewControlPane != null) {
-                        viewControlPane.setOnTimeChanged(time -> {
-                            leftDisplayController.getPlanetarySpacePane().updateLocalTime(time);
-                            rightPanelCoordinator.updatePlanetaryBrightestStars(
-                                    leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                                    leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
-                        });
+                        var viewControlPane = rightPanelCoordinator.getPlanetaryViewControlPane();
+                        if (viewControlPane != null) {
+                            viewControlPane.setOnTimeChanged(time -> {
+                                leftDisplayController.getPlanetarySpacePane().updateLocalTime(time);
+                                rightPanelCoordinator.updatePlanetaryBrightestStars(
+                                        leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                                        leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+                            });
 
-                        viewControlPane.setOnMagnitudeChanged(mag -> {
-                            leftDisplayController.getPlanetarySpacePane().updateMagnitudeLimit(mag);
-                            rightPanelCoordinator.updatePlanetaryBrightestStars(
-                                    leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                                    leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
-                        });
+                            viewControlPane.setOnMagnitudeChanged(mag -> {
+                                leftDisplayController.getPlanetarySpacePane().updateMagnitudeLimit(mag);
+                                rightPanelCoordinator.updatePlanetaryBrightestStars(
+                                        leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
+                                        leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
+                            });
 
-                        viewControlPane.setOnAtmosphereChanged(enabled ->
-                                leftDisplayController.getPlanetarySpacePane().updateAtmosphere(enabled));
+                            viewControlPane.setOnAtmosphereChanged(enabled ->
+                                    leftDisplayController.getPlanetarySpacePane().updateAtmosphere(enabled));
 
-                        viewControlPane.setOnOrientationGridChanged(enabled ->
-                                leftDisplayController.getPlanetarySpacePane().updateOrientationGrid(enabled));
+                            viewControlPane.setOnOrientationGridChanged(enabled ->
+                                    leftDisplayController.getPlanetarySpacePane().updateOrientationGrid(enabled));
 
-                        viewControlPane.setOnShowLabelsChanged(enabled ->
-                                leftDisplayController.getPlanetarySpacePane().setStarLabelsOn(enabled));
+                            viewControlPane.setOnShowLabelsChanged(enabled ->
+                                    leftDisplayController.getPlanetarySpacePane().setStarLabelsOn(enabled));
 
-                        viewControlPane.setOnLabelMagnitudeChanged(mag -> {
-                            leftDisplayController.getPlanetarySpacePane().updateLabelMagnitudeLimit(mag);
-                        });
+                            viewControlPane.setOnLabelMagnitudeChanged(mag -> {
+                                leftDisplayController.getPlanetarySpacePane().updateLabelMagnitudeLimit(mag);
+                            });
 
-                        // Wire star click-to-identify
-                        leftDisplayController.getPlanetarySpacePane().setOnStarClicked(star -> {
-                            rightPanelCoordinator.getPlanetarySidePane().getBrightestStarsPane().showSelectedStar(star);
-                            rightPanelCoordinator.getPlanetarySidePane().expandStarsList();
-                        });
+                            // Wire star click-to-identify
+                            leftDisplayController.getPlanetarySpacePane().setOnStarClicked(star -> {
+                                rightPanelCoordinator.getPlanetarySidePane().getBrightestStarsPane().showSelectedStar(star);
+                                rightPanelCoordinator.getPlanetarySidePane().expandStarsList();
+                            });
 
-                        viewControlPane.setOnDirectionChanged(direction ->
-                                leftDisplayController.getPlanetarySpacePane().setViewingDirection(
-                                        com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),
-                                        finalContext.getViewingAltitude()));
+                            viewControlPane.setOnDirectionChanged(direction ->
+                                    leftDisplayController.getPlanetarySpacePane().setViewingDirection(
+                                            com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),
+                                            finalContext.getViewingAltitude()));
 
-                        viewControlPane.setOnPresetSelected(preset -> {
-                            var spacePane = leftDisplayController.getPlanetarySpacePane();
-                            double azimuth = finalContext.getViewingAzimuth();
-                            double altitude = finalContext.getViewingAltitude();
-                            switch (preset) {
-                                case ZENITH -> {
-                                    altitude = 90.0;
-                                }
-                                case HIGH_SKY -> {
-                                    azimuth = 0.0;
-                                    altitude = 65.0;
-                                }
-                                case HORIZON -> {
-                                    azimuth = 0.0;
-                                    altitude = 15.0;  // Slight look-up, combined with camera Y offset
-                                }
-                                case NADIR -> {
-                                    altitude = -90.0;
-                                }
-                                case FOCUS_BRIGHTEST -> {
-                                    var brightest = spacePane.getBrightestStars();
-                                    if (brightest != null && !brightest.isEmpty()) {
-                                        var target = brightest.get(0);
-                                        azimuth = target.getAzimuth();
-                                        altitude = target.getAltitude();
+                            viewControlPane.setOnPresetSelected(preset -> {
+                                var spacePane = leftDisplayController.getPlanetarySpacePane();
+                                double azimuth = finalContext.getViewingAzimuth();
+                                double altitude = finalContext.getViewingAltitude();
+                                switch (preset) {
+                                    case ZENITH -> {
+                                        altitude = 90.0;
+                                    }
+                                    case HIGH_SKY -> {
+                                        azimuth = 0.0;
+                                        altitude = 65.0;
+                                    }
+                                    case HORIZON -> {
+                                        azimuth = 0.0;
+                                        altitude = 15.0;  // Slight look-up, combined with camera Y offset
+                                    }
+                                    case NADIR -> {
+                                        altitude = -90.0;
+                                    }
+                                    case FOCUS_BRIGHTEST -> {
+                                        var brightest = spacePane.getBrightestStars();
+                                        if (brightest != null && !brightest.isEmpty()) {
+                                            var target = brightest.get(0);
+                                            azimuth = target.getAzimuth();
+                                            altitude = target.getAltitude();
+                                        }
                                     }
                                 }
-                            }
-                            finalContext.setViewingAzimuth(azimuth);
-                            finalContext.setViewingAltitude(altitude);
-                            spacePane.setViewingDirection(azimuth, altitude);
-                        });
+                                finalContext.setViewingAzimuth(azimuth);
+                                finalContext.setViewingAltitude(altitude);
+                                spacePane.setViewingDirection(azimuth, altitude);
+                            });
+                        }
+
+                        eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                                "Viewing sky from " + finalContext.getPlanetName()));
                     }
 
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                            "Viewing sky from " + finalContext.getPlanetName()));
+                    default -> log.error("Unexpected value: {}", event.getContextSelectionType());
                 }
-
-                default -> log.error("Unexpected value: {}", event.getContextSelectionType());
+            } catch (Exception e) {
+                log.error("Error handling context selector event: {}", event.getContextSelectionType(), e);
+                showErrorAlert("View Switch Error", "Failed to switch view: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "View switch failed"));
             }
         });
     }

@@ -2,7 +2,7 @@ package com.teamgannon.trips.controller.statusbar;
 
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.events.StatusUpdateEvent;
-import javafx.application.Platform;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -62,7 +62,7 @@ public class StatusBarController {
 
     @EventListener
     public void onStatusUpdateEvent(StatusUpdateEvent event) {
-        Platform.runLater(() -> {
+        FxThread.runOnFxThread(() -> {
             setStatus(event.getStatus());
         });
     }

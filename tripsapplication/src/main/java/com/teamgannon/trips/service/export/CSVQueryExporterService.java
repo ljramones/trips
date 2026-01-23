@@ -16,9 +16,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.stereotype.Component;
+
 import static javafx.concurrent.Worker.State.RUNNING;
 
 @Slf4j
+@Component
 public class CSVQueryExporterService extends Service<ExportResults> implements ExportTaskControl {
 
     private SearchContext searchContext;

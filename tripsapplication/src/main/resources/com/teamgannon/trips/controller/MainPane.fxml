@@ -10,132 +10,12 @@
       fx:controller="com.teamgannon.trips.controller.MainPane">
     <VBox>
         <MenuBar fx:id="menuBar">
-            <Menu mnemonicParsing="false"
-                  text="File">
-                <MenuItem fx:id="importDataSetMenuItem"
-                          onAction="#loadDataSetManager"
-                          text="Import/Load or Manage dataset(s)"/>
-                <MenuItem fx:id="openDatasetMenuItem"
-                          onAction="#selectActiveDataset"
-                          text="Open Dataset..."/>
-                <MenuItem fx:id="saveMenuItem"
-                          onAction="#saveDataset"
-                          text="Save"/>
-                <SeparatorMenuItem/>
-
-                <SeparatorMenuItem/>
-                <MenuItem fx:id="quitMenuItem"
-                          onAction="#quit"
-                          text="Quit"/>
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Edit">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#runQuery"
-                          text="Select starPositionDescriptors to display from current dataset"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findInView"
-                          text="Choose a starPositionDescriptor by name from current selection"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findByCatalogId"
-                          text="Choose a starPositionDescriptor by by catalog Id"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findByConstellation"
-                          text="Retrieve all starPositionDescriptors by constellation"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findByCommonName"
-                          text="Choose a starPositionDescriptor by by common name"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findInDataset"
-                          text="Choose a starPositionDescriptor by name from entire dataset"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findRelatedStars"
-                          text="Get a list of all starPositionDescriptors related to a requested starPositionDescriptor from a specified distance in ly"/>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#editStar"
-                          text="Edit starPositionDescriptor data"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#showApplicationPreferences"
-                          text="Preferences"/>
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="View">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#plotStars"
-                          text="Plot Stars"/>
-                <fx:include source="menuBar/ToggleDisplayMenu.fxml"/>
-                <MenuItem fx:id="showRoutesMenuitem"
-                          mnemonicParsing="false"
-                          onAction="#showRoutes"
-                          text="Show routes in side pane"/>
-                <SeparatorMenuItem/>
-                <MenuItem onAction="#onSnapShot"
-                          text="Take Snapshot picture of plot"/>
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Search">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#FindCatalogId"
-                          text="Find a star by catalog id"/>
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Tools">
-                <Menu mnemonicParsing="false"
-                      text="Route">
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#routeFinderInView"
-                              text="Route finder using currently selected starPositionDescriptors"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#routeFinderDataset"
-                              text="Route finder using entire dataset"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#clickRoutes"
-                              text="Create route by clicking on starPositionDescriptors"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#editDeleteRoutes"
-                              text="Edit or delete Route information"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#clearRoutes"
-                              text="Delete all routes"/>
-                </Menu>
-                <Menu mnemonicParsing="false"
-                      text="Links">
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#transitFinder"
-                              text="Find links between starPositionDescriptors by distance"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#clearTransits"
-                              text="Clear existing links"/>
-                </Menu>
-                <Menu mnemonicParsing="false"
-                      text="Search for / Select starPositionDescriptors">
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#runQuery"
-                              text="Select starPositionDescriptors to display from current dataset"/>
-                    <MenuItem mnemonicParsing="false"
-                              onAction="#advancedSearch"
-                              text="Select starPositionDescriptors using advanced search.."/>
-                </Menu>
-                <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#openDataWorkbench"
-                          text="Data Workbench..."/>
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Reports">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#distanceReport"
-                          text="Distance .."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#routeListReport"
-                          text="Route List"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#starPropertyReport"
-                          text="Star Property Report"/>
-            </Menu>
+            <fx:include source="menuBar/FileMenu.fxml"/>
+            <fx:include source="menuBar/EditMenu.fxml"/>
+            <fx:include source="menuBar/ViewMenu.fxml"/>
+            <fx:include source="menuBar/SearchMenu.fxml"/>
+            <fx:include source="menuBar/ToolsMenu.fxml"/>
+            <fx:include source="menuBar/ReportsMenu.fxml"/>
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Galactic">-->
             <!--                <MenuItem mnemonicParsing="false"-->
@@ -145,18 +25,7 @@
             <!--                          onAction="#showInterstellarSpace"-->
             <!--                          text="Go to Interstellar Space .."/>-->
             <!--            </Menu>-->
-            <Menu mnemonicParsing="false"
-                  text="Utilities">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findDistance"
-                          text="Calculate Distance between planets .."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findXYZ"
-                          text="Calculate Equatorial Coordinates from RA and Declination .."/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findGalacticCoords"
-                          text="Calculate Galactic Coordinates from Equatorial .."/>
-            </Menu>
+            <fx:include source="menuBar/UtilitiesMenu.fxml"/>
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Scripting"-->
             <!--                  fx:id="scriptingMenu">-->
@@ -165,37 +34,8 @@
             <!--                          text="Script Editor"/>-->
             <!--                <SeparatorMenuItem/>-->
             <!--            </Menu>-->
-            <Menu mnemonicParsing="false"
-                  text="Admin">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#findInSesame"
-                          text="lookup a name in the Sesame Name Resolver"/>
-                <!--                <MenuItem mnemonicParsing="=false"-->
-                <!--                          onAction="#compareDB"-->
-                <!--                          text="Compare Databases"/>-->
-                <!--                <SeparatorMenuItem/>-->
-                <!--                <MenuItem mnemonicParsing="false"-->
-                <!--                          onAction="#Load10ParsecStars"-->
-                <!--                          text="Load 10 Parsec Stars"/>-->
-                <!--                <MenuItem mnemonicParsing="false"-->
-                <!--                          onAction="#loadExoPlanets"-->
-                <!--                          text="Load/Import Exoplanets .."/>-->
-            </Menu>
-            <Menu mnemonicParsing="false"
-                  text="Help">
-                <MenuItem mnemonicParsing="false"
-                          onAction="#aboutTrips"
-                          text="About TRIPS"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#howToSupport"
-                          text="How to get support"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#checkUpdate"
-                          text="Check for update"/>
-                <MenuItem mnemonicParsing="false"
-                          onAction="#getInventory"
-                          text="Get Computer Description"/>
-            </Menu>
+            <fx:include source="menuBar/AdminMenu.fxml"/>
+            <fx:include source="menuBar/HelpMenu.fxml"/>
 
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Leftover"-->
