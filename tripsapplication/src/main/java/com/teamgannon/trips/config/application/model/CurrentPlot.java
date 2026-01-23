@@ -269,7 +269,7 @@ public class CurrentPlot {
      * @return the set of ids
      */
     public @NotNull Set<String> getStarIds() {
-        return starLookup.keySet();
+        return new HashSet<>(starLookup.keySet());
     }
 
     /**
@@ -279,7 +279,10 @@ public class CurrentPlot {
      * @return true is present and visible
      */
     public boolean isStarVisible(UUID id) {
-        return starLookup.containsKey(id);
+        if (id == null) {
+            return false;
+        }
+        return starLookup.containsKey(id.toString());
     }
 
     ////////////////// label management  //////////////////
@@ -294,6 +297,13 @@ public class CurrentPlot {
         starToLabelLookup.put(starId, starLabel);
     }
 
+    public void mapLabelToStar(UUID starId, Label starLabel) {
+        if (starId == null) {
+            return;
+        }
+        mapLabelToStar(starId.toString(), starLabel);
+    }
+
     /**
      * get a label for the star
      *
@@ -301,6 +311,16 @@ public class CurrentPlot {
      * @return the label
      */
     public Label getLabelForStar(UUID starId) {
+        if (starId == null) {
+            return null;
+        }
+        return starToLabelLookup.get(starId.toString());
+    }
+
+    public Label getLabelForStar(String starId) {
+        if (starId == null) {
+            return null;
+        }
         return starToLabelLookup.get(starId);
     }
 
@@ -312,6 +332,10 @@ public class CurrentPlot {
     public void determineVisibleLabels(int labelCount) {
         if (labelCount > starDisplayRecordList.size()) {
             labelCount = starDisplayRecordList.size();
+        }
+
+        for (StarDisplayRecord record : starDisplayRecordList) {
+            record.setDisplayLabel(false);
         }
 
         // sort the list in order, duplicates are keep
@@ -668,5 +692,3 @@ public class CurrentPlot {
     }
 
 }
-
-

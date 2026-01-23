@@ -71,7 +71,7 @@ public class ApplicationPreferences implements Serializable {
     /**
      * the user controls
      */
-    private UserControls userControls;
+    private UserControls userControls = new UserControls();
 
     /**
      * ctor

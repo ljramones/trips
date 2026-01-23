@@ -29,7 +29,7 @@ public class Localization {
     @Value("${app.scriptDirectory:unknown}")
     private String scriptDirectory;
 
-    @Value("${app.programdata}")
+    @Value("${app.programdata:unknown}")
     private String programdata;
 
 }

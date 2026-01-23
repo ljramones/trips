@@ -1,5 +1,6 @@
 package com.teamgannon.trips.service;
 
+import com.teamgannon.trips.config.application.PreferencesConstants;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.events.CivilizationDisplayPreferencesChangeEvent;
@@ -11,17 +12,20 @@ import com.teamgannon.trips.jpa.repository.*;
 import com.teamgannon.trips.measure.TrackExecutionTime;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Service for managing system preferences persistence.
+ * Handles loading, saving, and event-driven updates of all preference types.
+ */
 @Slf4j
 @Service
 public class SystemPreferencesService {
@@ -47,13 +51,9 @@ public class SystemPreferencesService {
     @TrackExecutionTime
     @Transactional
     public void updateDataSet(DataSetDescriptor descriptor) {
-        log.info("Updating data set");
-        TripsPrefs tripsPrefs = tripsPrefsRepository.findById("main").orElseGet(() -> {
-            TripsPrefs newPrefs = new TripsPrefs();
-            newPrefs.setId("main");
-            newPrefs.setSkipStartupDialog(false);
-            return newPrefs;
-        });
+        log.info("Updating data set to: {}", descriptor.getDataSetName());
+        TripsPrefs tripsPrefs = tripsPrefsRepository.findById(PreferencesConstants.MAIN_PREFS_ID)
+                .orElseGet(this::createDefaultTripsPrefs);
         tripsPrefs.setDatasetName(descriptor.getDataSetName());
         tripsPrefsRepository.save(tripsPrefs);
     }
@@ -71,6 +71,7 @@ public class SystemPreferencesService {
             starDisplayPreferences.setDefaults();
             starDetailsPersistList = starDisplayPreferences.getStarDetails();
             starDetailsPersistRepository.saveAll(starDetailsPersistList);
+            log.info("Created default star details for {} stellar types", starDetailsPersistList.size());
         }
 
         return starDetailsPersistList;
@@ -89,6 +90,7 @@ public class SystemPreferencesService {
         GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
         graphEnablesPersist.setId(UUID.randomUUID().toString());
         graphEnablesRepository.save(graphEnablesPersist);
+        log.info("Created default graph enables");
         return graphEnablesPersist;
     }
 
@@ -103,12 +105,14 @@ public class SystemPreferencesService {
     @Transactional
     public CivilizationDisplayPreferences getCivilizationDisplayPreferences() {
         log.info("getCivilizationDisplayPreferences");
-        return civilizationDisplayPreferencesRepository.findByStorageTag("Main")
+        return civilizationDisplayPreferencesRepository.findByStorageTag(PreferencesConstants.CIVILIZATION_STORAGE_TAG)
                 .orElseGet(() -> {
                     CivilizationDisplayPreferences preferences = new CivilizationDisplayPreferences();
                     preferences.reset();
                     preferences.setId(UUID.randomUUID().toString());
+                    preferences.setStorageTag(PreferencesConstants.CIVILIZATION_STORAGE_TAG);
                     civilizationDisplayPreferencesRepository.save(preferences);
+                    log.info("Created default civilization display preferences");
                     return preferences;
                 });
     }
@@ -116,9 +120,11 @@ public class SystemPreferencesService {
     @TrackExecutionTime
     @Transactional
     public void updateCivilizationDisplayPreferences(@NotNull CivilizationDisplayPreferences preferences) {
-        log.info("Updating CivilizationDisplayPreferences with ID: {} and storageTag: {}", preferences.getId(), preferences.getStorageTag());
+        log.info("Updating CivilizationDisplayPreferences with ID: {} and storageTag: {}",
+                preferences.getId(), preferences.getStorageTag());
 
-        CivilizationDisplayPreferences existingPreferences = civilizationDisplayPreferencesRepository.findByStorageTag(preferences.getStorageTag())
+        CivilizationDisplayPreferences existingPreferences = civilizationDisplayPreferencesRepository
+                .findByStorageTag(preferences.getStorageTag())
                 .orElse(preferences);
 
         existingPreferences.setAratKurPolityColor(preferences.getAratKurPolityColor());
@@ -134,7 +140,7 @@ public class SystemPreferencesService {
         existingPreferences.setStorageTag(preferences.getStorageTag());
 
         civilizationDisplayPreferencesRepository.save(existingPreferences);
-        log.info("Saved CivilizationDisplayPreferences: {}", existingPreferences);
+        log.info("Saved CivilizationDisplayPreferences successfully");
     }
 
     @TrackExecutionTime
@@ -154,15 +160,17 @@ public class SystemPreferencesService {
         GraphColorsPersist graphColorsPersist = new GraphColorsPersist();
         graphColorsPersist.init();
         graphColorsRepository.save(graphColorsPersist);
+        log.info("Created default graph colors");
         return graphColorsPersist;
     }
 
     @TrackExecutionTime
     @Transactional
     public void updateColors(@NotNull ColorPalette colorPalette) {
-        log.info("Updating colors");
+        log.info("Updating colors for palette ID: {}", colorPalette.getId());
         GraphColorsPersist graphColorsPersist = graphColorsRepository.findById(colorPalette.getId())
-                .orElseThrow(() -> new IllegalArgumentException("ColorPalette not found"));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "ColorPalette not found with ID: " + colorPalette.getId()));
         graphColorsPersist.setGraphColors(colorPalette);
         graphColorsRepository.save(graphColorsPersist);
     }
@@ -173,50 +181,85 @@ public class SystemPreferencesService {
         log.info("Updating StarPreferences");
         List<StarDetailsPersist> starDetailsPersistListNew = starDisplayPreferences.getStarDetails();
         starDetailsPersistRepository.saveAll(starDetailsPersistListNew);
+        log.info("Saved {} star detail records", starDetailsPersistListNew.size());
     }
 
     @TrackExecutionTime
     @Transactional
     public TripsPrefs getTripsPrefs() {
         log.info("getTripsPrefs");
-        return tripsPrefsRepository.findById("main").orElseGet(() -> {
-            TripsPrefs tripsPrefs = new TripsPrefs();
-            tripsPrefs.setId("main");
-            tripsPrefs.setSkipStartupDialog(false);
-            tripsPrefsRepository.save(tripsPrefs);
-            return tripsPrefs;
-        });
+        return tripsPrefsRepository.findById(PreferencesConstants.MAIN_PREFS_ID)
+                .orElseGet(() -> {
+                    TripsPrefs tripsPrefs = createDefaultTripsPrefs();
+                    tripsPrefsRepository.save(tripsPrefs);
+                    return tripsPrefs;
+                });
+    }
+
+    private TripsPrefs createDefaultTripsPrefs() {
+        TripsPrefs tripsPrefs = new TripsPrefs();
+        tripsPrefs.setId(PreferencesConstants.MAIN_PREFS_ID);
+        tripsPrefs.setSkipStartupDialog(false);
+        log.info("Created default trips preferences");
+        return tripsPrefs;
     }
 
     @TrackExecutionTime
     @Transactional
     public void saveTripsPrefs(TripsPrefs tripsPrefs) {
         tripsPrefsRepository.save(tripsPrefs);
+        log.info("Saved trips preferences");
     }
+
+    // ==================== Event Listeners ====================
 
     @EventListener
     @Async("taskExecutor")
+    @Transactional
     public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
-        ((SystemPreferencesService) AopContext.currentProxy()).updateColors(event.getColorPalette());
+        try {
+            updateColors(event.getColorPalette());
+            log.info("Color palette persisted successfully");
+        } catch (Exception e) {
+            log.error("Failed to persist color palette change", e);
+        }
     }
 
     @EventListener
     @Async("taskExecutor")
+    @Transactional
     public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
-        ((SystemPreferencesService) AopContext.currentProxy()).updateGraphEnables(event.getGraphEnablesPersist());
+        try {
+            updateGraphEnables(event.getGraphEnablesPersist());
+            log.info("Graph enables persisted successfully");
+        } catch (Exception e) {
+            log.error("Failed to persist graph enables change", e);
+        }
     }
 
     @EventListener
     @Async("taskExecutor")
+    @Transactional
     public void onStarDisplayPreferencesChangeEvent(StarDisplayPreferencesChangeEvent event) {
-        ((SystemPreferencesService) AopContext.currentProxy()).updateStarPreferences(event.getStarDisplayPreferences());
+        try {
+            updateStarPreferences(event.getStarDisplayPreferences());
+            log.info("Star display preferences persisted successfully");
+        } catch (Exception e) {
+            log.error("Failed to persist star display preferences change", e);
+        }
     }
 
     @EventListener
     @Async("taskExecutor")
+    @Transactional
     public void onCivilizationDisplayPreferencesChangeEvent(CivilizationDisplayPreferencesChangeEvent event) {
-        CivilizationDisplayPreferences preferences = event.getCivilizationDisplayPreferences();
-        log.info("Handling CivilizationDisplayPreferencesChangeEvent for ID: {}", preferences.getId());
-        ((SystemPreferencesService) AopContext.currentProxy()).updateCivilizationDisplayPreferences(preferences);
+        try {
+            CivilizationDisplayPreferences preferences = event.getCivilizationDisplayPreferences();
+            log.info("Handling CivilizationDisplayPreferencesChangeEvent for ID: {}", preferences.getId());
+            updateCivilizationDisplayPreferences(preferences);
+            log.info("Civilization display preferences persisted successfully");
+        } catch (Exception e) {
+            log.error("Failed to persist civilization display preferences change", e);
+        }
     }
 }

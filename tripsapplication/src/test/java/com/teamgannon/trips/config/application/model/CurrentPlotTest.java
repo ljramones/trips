@@ -198,6 +198,33 @@ class CurrentPlotTest {
         }
 
         @Test
+        @DisplayName("Get star ids returns defensive copy")
+        void getStarIdsReturnsDefensiveCopy() throws Exception {
+            assumeJavaFxAvailable();
+
+            Node star = runOnFxThread(() -> new Sphere(5.0));
+            plot.addStar("star-1", star);
+
+            Set<String> ids = plot.getStarIds();
+            ids.clear();
+
+            assertEquals(1, plot.getStarIds().size());
+        }
+
+        @Test
+        @DisplayName("Is star visible checks UUID lookup")
+        void isStarVisibleChecksUuidLookup() throws Exception {
+            assumeJavaFxAvailable();
+
+            UUID starId = UUID.randomUUID();
+            Node star = runOnFxThread(() -> new Sphere(5.0));
+
+            plot.addStar(starId.toString(), star);
+
+            assertTrue(plot.isStarVisible(starId));
+        }
+
+        @Test
         @DisplayName("Get non-existent star returns null")
         void getNonExistentStarReturnsNull() {
             assertNull(plot.getStar("non-existent"));
@@ -238,13 +265,37 @@ class CurrentPlotTest {
             assumeJavaFxAvailable();
 
             Label label = runOnFxThread(() -> new Label("Test Star"));
+            UUID starId = UUID.randomUUID();
+
+            plot.mapLabelToStar(starId.toString(), label);
+
+            assertSame(label, plot.getLabelForStar(starId));
+        }
+
+        @Test
+        @DisplayName("Map label to star supports UUID overload")
+        void mapLabelToStarSupportsUuidOverload() throws Exception {
+            assumeJavaFxAvailable();
+
+            Label label = runOnFxThread(() -> new Label("Test Star"));
+            UUID starId = UUID.randomUUID();
+
+            plot.mapLabelToStar(starId, label);
+
+            assertSame(label, plot.getLabelForStar(starId.toString()));
+        }
+
+        @Test
+        @DisplayName("Get label for star supports String overload")
+        void getLabelForStarSupportsStringOverload() throws Exception {
+            assumeJavaFxAvailable();
+
+            Label label = runOnFxThread(() -> new Label("Test Star"));
             String starId = "star-123";
 
             plot.mapLabelToStar(starId, label);
 
-            // Note: getLabelForStar takes UUID but mapLabelToStar takes String
-            // This appears to be a bug in the API - testing the map directly
-            assertNotNull(plot.getStarToLabelLookup().get(starId));
+            assertSame(label, plot.getLabelForStar(starId));
         }
 
         @Test
@@ -263,6 +314,24 @@ class CurrentPlotTest {
                     .filter(StarDisplayRecord::isDisplayLabel)
                     .count();
             assertEquals(3, labeledCount);
+        }
+
+        @Test
+        @DisplayName("Determine visible labels clears previous labels")
+        void determineVisibleLabelsClearsPreviousLabels() {
+            for (int i = 0; i < 5; i++) {
+                StarDisplayRecord record = createTestRecord("star-" + i, i, 0, 0);
+                record.setCurrentLabelDisplayScore(i * 10.0);
+                plot.addRecord(record);
+            }
+
+            plot.determineVisibleLabels(4);
+            plot.determineVisibleLabels(2);
+
+            long labeledCount = plot.getStarDisplayRecordList().stream()
+                    .filter(StarDisplayRecord::isDisplayLabel)
+                    .count();
+            assertEquals(2, labeledCount);
         }
 
         @Test
