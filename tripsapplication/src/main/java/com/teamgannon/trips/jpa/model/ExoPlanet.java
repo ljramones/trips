@@ -2,6 +2,7 @@ package com.teamgannon.trips.jpa.model;
 
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import javax.persistence.Table;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Yes, this appears to be a header or schema for a dataset related to exoplanets. The fields describe various properties and characteristics of exoplanets and their host stars.
@@ -69,7 +71,8 @@ import java.util.Objects;
 @Slf4j
 @Getter
 @Setter
-@ToString
+@NoArgsConstructor
+@ToString(exclude = {"proceduralPreview", "proceduralAccreteSnapshot", "proceduralOverrides", "notes", "atmosphereComposition"})
 @DynamicUpdate
 @Entity(name = "EXOPLANET")
 @Table(indexes = {
@@ -706,6 +709,28 @@ public class ExoPlanet implements Serializable {
      */
     @Lob
     private byte[] proceduralPreview;
+
+    // ==================== Constructors ====================
+
+    /**
+     * Constructor with name - auto-generates ID
+     *
+     * @param name the planet name
+     */
+    public ExoPlanet(String name) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+    }
+
+    /**
+     * Ensure ID is generated before persist if not already set
+     */
+    @javax.persistence.PrePersist
+    private void ensureId() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

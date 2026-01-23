@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"themeStr", "astrographicDataList", "routesStr", "customDataDefsStr", "customDataValuesStr", "transitPreferencesStr"})
 @RequiredArgsConstructor
 @Entity
 public class DataSetDescriptor implements Serializable {

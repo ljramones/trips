@@ -9,6 +9,8 @@ import org.hibernate.Hibernate;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Objects;
 
 @Getter
@@ -16,7 +18,10 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class TransitSettings {
+public class TransitSettings implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     private String id;

@@ -25,7 +25,7 @@ import java.util.UUID;
 @Slf4j
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"notes"})
 @DynamicUpdate
 @Entity(name = "SOLAR_SYSTEM")
 @Table(indexes = {

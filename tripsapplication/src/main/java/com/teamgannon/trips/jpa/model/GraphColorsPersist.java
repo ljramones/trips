@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,7 +21,10 @@ import java.util.UUID;
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class GraphColorsPersist {
+public class GraphColorsPersist implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     private String id;

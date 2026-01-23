@@ -649,4 +649,47 @@ class StarObjectRepositoryIntegrationTest extends BaseRepositoryIntegrationTest 
             assertThat(otherCount).isEqualTo(1);
         }
     }
+
+    @Nested
+    @DisplayName("Alias Loading Tests")
+    class AliasLoadingTests {
+
+        @Test
+        @DisplayName("should find star by ID with aliases eagerly loaded")
+        void shouldFindByIdWithAliases() {
+            StarObject star = createStar("Alpha Centauri", 1.3, -0.8, 0.5, 4.37);
+            star.getAliasList().add("Rigil Kentaurus");
+            star.getAliasList().add("Toliman");
+            starObjectRepository.save(star);
+            flushAndClear();
+
+            StarObject found = starObjectRepository.findByIdWithAliases(star.getId());
+
+            assertThat(found).isNotNull();
+            assertThat(found.getDisplayName()).isEqualTo("Alpha Centauri");
+            // Aliases should be loaded even outside transaction
+            assertThat(found.getAliasList()).containsExactlyInAnyOrder("Rigil Kentaurus", "Toliman");
+        }
+
+        @Test
+        @DisplayName("should return null for non-existent ID with aliases query")
+        void shouldReturnNullForNonExistentIdWithAliases() {
+            StarObject found = starObjectRepository.findByIdWithAliases("non-existent-id");
+
+            assertThat(found).isNull();
+        }
+
+        @Test
+        @DisplayName("should handle star with no aliases")
+        void shouldHandleStarWithNoAliases() {
+            StarObject star = createStar("Lonely Star", 1, 1, 1, 10);
+            starObjectRepository.save(star);
+            flushAndClear();
+
+            StarObject found = starObjectRepository.findByIdWithAliases(star.getId());
+
+            assertThat(found).isNotNull();
+            assertThat(found.getAliasList()).isEmpty();
+        }
+    }
 }

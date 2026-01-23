@@ -29,7 +29,7 @@ import java.util.*;
 @Slf4j
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"notes", "source", "aliasList"})
 @DynamicUpdate
 @Entity(name = "STAR_OBJ")
 @Table(indexes = {
