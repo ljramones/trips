@@ -151,7 +151,7 @@ public class SolarSystemService {
 
                 // Try matching by RA/Dec proximity
                 if (results.isEmpty() && so.getRa() != 0 && so.getDeclination() != 0) {
-                    results.addAll(exoPlanetRepository.findByRaAndDecNear(so.getRa(), so.getDeclination()));
+                    results.addAll(exoPlanetRepository.findByRaDecNear(so.getRa(), so.getDeclination()));
                 }
             }
         }

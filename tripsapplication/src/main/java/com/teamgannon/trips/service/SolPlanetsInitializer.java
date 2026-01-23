@@ -94,14 +94,8 @@ public class SolPlanetsInitializer {
      * Find Sol in the database. Sol is at coordinates (0, 0, 0) in the TRIPS coordinate system.
      */
     private StarObject findSol() {
-        // Try to find Sol by looking for stars at origin (0,0,0) - Sol is the center of our coordinate system
-        List<StarObject> starsAtOrigin = starObjectRepository
-                .findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
-                        null, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01);
-
-        // The query above requires a dataset name, so let's try a different approach
         // Search by common name variations
-        List<StarObject> solCandidates = starObjectRepository.findByCommonNameContainsIgnoreCase("Sol");
+        List<StarObject> solCandidates = starObjectRepository.findByCommonNameContaining("Sol");
         if (solCandidates != null && !solCandidates.isEmpty()) {
             for (StarObject candidate : solCandidates) {
                 // Check if it's at the origin
@@ -116,7 +110,7 @@ public class SolPlanetsInitializer {
         }
 
         // Try "Sun"
-        solCandidates = starObjectRepository.findByCommonNameContainsIgnoreCase("Sun");
+        solCandidates = starObjectRepository.findByCommonNameContaining("Sun");
         if (solCandidates != null && !solCandidates.isEmpty()) {
             for (StarObject candidate : solCandidates) {
                 if (isAtOrigin(candidate)) {

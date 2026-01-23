@@ -125,7 +125,7 @@ public class PlanetarySystemsPane extends VBox {
 
                 // Also try common name if display name didn't match
                 if (star == null) {
-                    List<StarObject> byCommonName = starObjectRepository.findByCommonNameContainsIgnoreCase(starName);
+                    List<StarObject> byCommonName = starObjectRepository.findByCommonNameContaining(starName);
                     if (!byCommonName.isEmpty()) {
                         star = byCommonName.get(0);
                     }
@@ -168,7 +168,7 @@ public class PlanetarySystemsPane extends VBox {
                     if (sample.getRa() == null || sample.getDec() == null) continue;
 
                     // Find stars near this RA/Dec
-                    List<StarObject> nearbyStars = starObjectRepository.findByRaAndDecNear(
+                    List<StarObject> nearbyStars = starObjectRepository.findByRaDecNear(
                             sample.getRa(), sample.getDec());
 
                     for (StarObject star : nearbyStars) {

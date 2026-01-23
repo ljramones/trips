@@ -87,8 +87,7 @@ public class StarService {
         AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
         List<StarObject> starObjects;
         if (searchQuery.isRecenter()) {
-            starObjects
-                    = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+            starObjects = starObjectRepository.findInBoundingBox(
                     searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
@@ -114,8 +113,7 @@ public class StarService {
         List<StarDistances> starDistances;
         List<StarObject> starObjects;
         if (searchQuery.isRecenter()) {
-            starObjects
-                    = starObjectRepository.findByDataSetNameAndXGreaterThanAndXLessThanAndYGreaterThanAndYLessThanAndZGreaterThanAndZLessThanOrderByDisplayName(
+            starObjects = starObjectRepository.findInBoundingBox(
                     searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
@@ -269,7 +267,7 @@ public class StarService {
     @Transactional(readOnly = true)
     public Map<String, SparseStarRecord> getFromDatasetWithinRanges(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         final Map<String, SparseStarRecord> starRecordHashMap = new HashMap<>();
-        try (Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetNameAndDistanceIsLessThanEqual(dataSetDescriptor.getDataSetName(), distance)) {
+        try (Stream<StarObject> starObjectStream = starObjectRepository.streamByDistanceWithin(dataSetDescriptor.getDataSetName(), distance)) {
             starObjectStream.forEach(starObject -> {
                 SparseStarRecord sparseStarRecord = starObject.toSparseStarRecord();
                 starRecordHashMap.put(sparseStarRecord.getStarName(), sparseStarRecord);
@@ -287,7 +285,7 @@ public class StarService {
      * @return the count
      */
     public long getCountOfDatasetWithinLimit(String datasetName, double distance) {
-        return starObjectRepository.countByDataSetNameAndDistanceIsLessThanEqual(datasetName, distance);
+        return starObjectRepository.countByDistanceWithin(datasetName, distance);
     }
 
 
@@ -310,7 +308,7 @@ public class StarService {
     @TrackExecutionTime
     public List<StarObject> getFromDatasetWithinLimit(@NotNull DataSetDescriptor dataSetDescriptor, double distance) {
         // we can only effectively gather 500 at a time
-        return toList(starObjectRepository.findByDataSetNameAndDistanceIsLessThanOrderByDisplayName(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
+        return toList(starObjectRepository.findByDistanceLessThan(dataSetDescriptor.getDataSetName(), distance, PageRequest.of(0, MAX_REQUEST_SIZE)));
     }
 
     /**
@@ -475,11 +473,11 @@ public class StarService {
     @Transactional
     public @NotNull
     List<StarObject> findStarsWithName(String datasetName, String starName) {
-        return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+        return starObjectRepository.findByDisplayNameContaining(datasetName, starName);
     }
 
     public List<StarObject> findStarWithName(String datasetName, String starName) {
-        return starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(datasetName, starName);
+        return starObjectRepository.findByDisplayNameContaining(datasetName, starName);
     }
 
     public DataSetDescriptor recheckDescriptor(DataSetDescriptor descriptor, List<StarObject> starObjects) {
@@ -500,51 +498,51 @@ public class StarService {
     }
 
     public List<StarObject> findStarsWithCatalogId(String datasetName, String catalogId) {
-        return starObjectRepository.findByCatalogIds_CatalogIdListContainsIgnoreCaseAndDataSetName(catalogId, datasetName);
+        return starObjectRepository.findByCatalogId(datasetName, catalogId);
     }
 
     public StarObject findStarWithBayerId(String datasetName, String bayerId) {
-        return starObjectRepository.findByCatalogIds_BayerCatIdAndDataSetName(bayerId, datasetName);
+        return starObjectRepository.findByBayerId(datasetName, bayerId);
     }
 
     public StarObject findStarWithFlamsteedId(String datasetName, String flamsteedId) {
-        return starObjectRepository.findByCatalogIds_FlamsteedCatIdAndDataSetName(flamsteedId, datasetName);
+        return starObjectRepository.findByFlamsteedId(datasetName, flamsteedId);
     }
 
     public StarObject findStarWithGJId(String datasetName, String gjId) {
-        return starObjectRepository.findByCatalogIds_GlieseCatIdAndDataSetName(gjId, datasetName);
+        return starObjectRepository.findByGlieseId(datasetName, gjId);
     }
 
     public StarObject findStarWithHDId(String datasetName, String hdId) {
-        return starObjectRepository.findByCatalogIds_HdCatIdAndDataSetName(hdId, datasetName);
+        return starObjectRepository.findByHdId(datasetName, hdId);
     }
 
     public StarObject findStarWithHipId(String datasetName, String hipId) {
-        return starObjectRepository.findByCatalogIds_HipCatIdAndDataSetName(hipId, datasetName);
+        return starObjectRepository.findByHipId(datasetName, hipId);
     }
 
     public StarObject findWithCsiId(String datasetName, String csiId) {
-        return starObjectRepository.findByCatalogIds_CsiCatIdAndDataSetName(csiId, datasetName);
+        return starObjectRepository.findByCsiId(datasetName, csiId);
     }
 
     public StarObject findWithTychoId(String datasetName, String tychoId) {
-        return starObjectRepository.findByCatalogIds_Tycho2CatIdAndDataSetName(tychoId, datasetName);
+        return starObjectRepository.findByTychoId(datasetName, tychoId);
     }
 
     public StarObject findWithTwoMassId(String datasetName, String twoMassId) {
-        return starObjectRepository.findByCatalogIds_TwoMassCatIdAndDataSetName(twoMassId, datasetName);
+        return starObjectRepository.findByTwoMassId(datasetName, twoMassId);
     }
 
     public StarObject findWithGaiaDR2Id(String datasetName, String gaiaDr2Id) {
-        return starObjectRepository.findByCatalogIds_GaiaDR2CatIdAndDataSetName(gaiaDr2Id, datasetName);
+        return starObjectRepository.findByGaiaDR2Id(datasetName, gaiaDr2Id);
     }
 
     public StarObject findWithGaiaDR3Id(String datasetName, String gaiaDr3Id) {
-        return starObjectRepository.findByCatalogIds_GaiaDR3CatIdAndDataSetName(gaiaDr3Id, datasetName);
+        return starObjectRepository.findByGaiaDR3Id(datasetName, gaiaDr3Id);
     }
 
     public StarObject findWithGaiaEDR3Id(String datasetName, String gaiaEdr3Id) {
-        return starObjectRepository.findByCatalogIds_GaiaEDR3CatIdAndDataSetName(gaiaEdr3Id, datasetName);
+        return starObjectRepository.findByGaiaEDR3Id(datasetName, gaiaEdr3Id);
     }
 
     /**
@@ -555,7 +553,7 @@ public class StarService {
      * @return the stars that match
      */
     public List<StarObject> findStarsByCommonName(String datasetName, String commonName) {
-        return starObjectRepository.findByCommonNameContainsIgnoreCaseAndDataSetName(commonName, datasetName);
+        return starObjectRepository.findByCommonNameContaining(datasetName, commonName);
     }
 
     /**
@@ -565,7 +563,7 @@ public class StarService {
      * @return the list of stars
      */
     public List<StarObject> findStarsByConstellation(String datasetName, String constellation) {
-        return starObjectRepository.findByConstellationNameAndDataSetName(constellation, datasetName);
+        return starObjectRepository.findByConstellation(datasetName, constellation);
     }
 
     /**
@@ -608,7 +606,7 @@ public class StarService {
         List<DBReference> starsNotFound;
         try (Stream<StarObject> starObjectStream = starObjectRepository.findByDataSetName(sourceSelection)) {
             starsNotFound = starObjectStream.filter(starObject ->
-                            starObjectRepository.findByDataSetNameAndDisplayNameContainsIgnoreCase(targetSelection, starObject.getDisplayName()).isEmpty())
+                            starObjectRepository.findByDisplayNameContaining(targetSelection, starObject.getDisplayName()).isEmpty())
                     .map(
                             starObject ->
                                     DBReference.builder().id(starObject.getId()).displayName(starObject.getDisplayName()).build())

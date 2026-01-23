@@ -46,7 +46,7 @@ public class StarQueryService {
 
         // Use stream-based query for large datasets
         try (Stream<StarObject> starStream = starObjectRepository
-                .streamByDataSetNameAndCoordinateRange(
+                .streamInBoundingBox(
                         datasetName, minX, maxX, minY, maxY, minZ, maxZ)) {
 
             return starStream

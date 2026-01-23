@@ -16,7 +16,7 @@ public interface ExoPlanetRepository extends PagingAndSortingRepository<ExoPlane
     boolean existsByName(String name);
 
     @Query("SELECT s FROM EXOPLANET s WHERE s.ra BETWEEN :ra - 0.01 AND :ra + 0.01 AND s.dec BETWEEN :dec - 0.01 AND :dec + 0.01")
-    List<ExoPlanet> findByRaAndDecNear(@Param("ra") Double ra, @Param("dec") Double dec);
+    List<ExoPlanet> findByRaDecNear(@Param("ra") Double ra, @Param("dec") Double dec);
 
     /**
      * Find all exoplanets in a solar system

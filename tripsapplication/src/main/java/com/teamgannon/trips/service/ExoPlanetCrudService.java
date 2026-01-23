@@ -106,8 +106,8 @@ public class ExoPlanetCrudService {
      * @param dec the declination
      * @return list of nearby ExoPlanet entities
      */
-    public List<ExoPlanet> findByRaAndDecNear(double ra, double dec) {
-        return exoPlanetRepository.findByRaAndDecNear(ra, dec);
+    public List<ExoPlanet> findByRaDecNear(double ra, double dec) {
+        return exoPlanetRepository.findByRaDecNear(ra, dec);
     }
 
     /**

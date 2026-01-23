@@ -444,9 +444,9 @@ class ExoPlanetCrudServiceTest {
             List<ExoPlanet> expected = List.of(
                     createExoPlanet("planet-1", "Nearby Planet")
             );
-            when(exoPlanetRepository.findByRaAndDecNear(123.45, -45.67)).thenReturn(expected);
+            when(exoPlanetRepository.findByRaDecNear(123.45, -45.67)).thenReturn(expected);
 
-            List<ExoPlanet> result = service.findByRaAndDecNear(123.45, -45.67);
+            List<ExoPlanet> result = service.findByRaDecNear(123.45, -45.67);
 
             assertEquals(1, result.size());
         }
