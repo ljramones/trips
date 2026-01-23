@@ -6,7 +6,6 @@ import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProviders;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
-import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -16,13 +15,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Rotate;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -72,18 +66,17 @@ public class SolarSystemRenderer {
      */
     private static final Color MOON_ORBIT_COLOR = Color.rgb(180, 180, 200, 0.8);
 
-    private static final double DEEMPHASIZED_OPACITY = 0.6;
-    private static final double ORBIT_DEEMPHASIZED_OPACITY = 1.0;
-    private static final double LABEL_DEEMPHASIZED_OPACITY = 0.7;
-    private static final double PLANET_SELECTED_SCALE = 1.25;
-    private static final double STAR_SELECTED_SCALE = 1.15;
-
     @Getter
     private final ScaleManager scaleManager;
 
     @Getter
     private final OrbitVisualizer orbitVisualizer;
     private final OrbitSamplingProvider orbitSamplingProvider;
+
+    // Extracted helper classes
+    private final SelectionStyleManager selectionStyleManager;
+    private final GridAndZoneRenderer gridAndZoneRenderer;
+    private final OrbitMarkerRenderer orbitMarkerRenderer;
 
     /**
      * Group containing all rendered elements
@@ -178,14 +171,7 @@ public class SolarSystemRenderer {
     @Getter
     private final Map<Node, Label> shapeToLabel;
 
-    private final Map<Node, Double> baseScales;
-    private final Map<Node, Double> baseOpacities;
     private final Map<String, Node> starNodes;
-    private final Map<Node, double[]> orbitSegmentScales;
-    private final Map<PhongMaterial, Color[]> orbitSegmentMaterials;
-    private final Glow selectedBodyGlow = new Glow(0.6);
-    private Node selectedBody;
-    private Group selectedOrbit;
     private boolean showEclipticPlane = false;
     private boolean showOrbitNodes = false;
     private boolean showApsides = false;
@@ -226,6 +212,12 @@ public class SolarSystemRenderer {
         this.scaleManager = new ScaleManager();
         this.orbitSamplingProvider = OrbitSamplingProviders.defaultKepler();
         this.orbitVisualizer = new OrbitVisualizer(scaleManager, orbitSamplingProvider);
+
+        // Initialize helper classes
+        this.selectionStyleManager = new SelectionStyleManager();
+        this.gridAndZoneRenderer = new GridAndZoneRenderer(scaleManager);
+        this.orbitMarkerRenderer = new OrbitMarkerRenderer(scaleManager, orbitSamplingProvider);
+
         this.systemGroup = new Group();
         this.scaleGridGroup = new Group();
         this.habitableZoneGroup = new Group();
@@ -241,11 +233,7 @@ public class SolarSystemRenderer {
         this.moonOrbitsByParent = new HashMap<>();
         this.orbitColors = new HashMap<>();
         this.shapeToLabel = new HashMap<>();
-        this.baseScales = new HashMap<>();
-        this.baseOpacities = new HashMap<>();
         this.starNodes = new HashMap<>();
-        this.orbitSegmentScales = new HashMap<>();
-        this.orbitSegmentMaterials = new HashMap<>();
 
         // Order: scale grid (back), habitable zone, ecliptic, orbits, orbit nodes, apsides, planets, labels (front)
         systemGroup.getChildren().addAll(scaleGridGroup, habitableZoneGroup, eclipticPlaneGroup,
@@ -295,7 +283,7 @@ public class SolarSystemRenderer {
         }
         Node planetNode = planetNodes.get(planet.getName());
         Group orbitGroup = orbitGroups.get(planet.getName());
-        applySelection(planetNode, orbitGroup);
+        selectionStyleManager.applySelection(planetNode, orbitGroup, planetNodes, starNodes, orbitGroups, shapeToLabel);
     }
 
     public void selectStar(StarDisplayRecord star) {
@@ -304,17 +292,18 @@ public class SolarSystemRenderer {
             return;
         }
         Node starNode = starNodes.get(star.getStarName());
-        applySelection(starNode, null);
+        selectionStyleManager.applySelection(starNode, null, planetNodes, starNodes, orbitGroups, shapeToLabel);
     }
 
     public void clearSelection() {
-        applySelection(null, null);
+        selectionStyleManager.applySelection(null, null, planetNodes, starNodes, orbitGroups, shapeToLabel);
+        selectionStyleManager.clearSelection();
     }
 
     public void setShowEclipticPlane(boolean show) {
         this.showEclipticPlane = show;
         if (show) {
-            renderEclipticReference();
+            gridAndZoneRenderer.renderEclipticReference(eclipticPlaneGroup, show);
         } else {
             eclipticPlaneGroup.getChildren().clear();
             eclipticPlaneGroup.setVisible(false);
@@ -324,7 +313,7 @@ public class SolarSystemRenderer {
     public void setShowOrbitNodes(boolean show) {
         this.showOrbitNodes = show;
         if (show) {
-            rebuildOrbitNodeMarkers();
+            orbitMarkerRenderer.rebuildOrbitNodeMarkers(orbitNodeGroup, planetDescriptions, orbitColors, ORBIT_COLORS[0], show);
         } else {
             orbitNodeGroup.getChildren().clear();
             orbitNodeGroup.setVisible(false);
@@ -334,7 +323,7 @@ public class SolarSystemRenderer {
     public void setShowApsides(boolean show) {
         this.showApsides = show;
         if (show) {
-            rebuildApsideMarkers();
+            orbitMarkerRenderer.rebuildApsideMarkers(apsidesGroup, planetDescriptions, orbitColors, ORBIT_COLORS[0], show);
         } else {
             apsidesGroup.getChildren().clear();
             apsidesGroup.setVisible(false);
@@ -408,12 +397,13 @@ public class SolarSystemRenderer {
                 maxOrbitAU, minOrbitAU, scaleManager.getBaseScale(), useLogScale, scaleMode);
 
         // Render scale grid first (behind everything)
-        renderScaleGrid();
+        gridAndZoneRenderer.renderScaleGrid(scaleGridGroup);
 
-        renderEclipticReference();
+        gridAndZoneRenderer.renderEclipticReference(eclipticPlaneGroup, showEclipticPlane);
 
         // Render habitable zone
-        renderHabitableZone(description.getHabitableZoneInnerAU(),
+        gridAndZoneRenderer.renderHabitableZone(habitableZoneGroup,
+                description.getHabitableZoneInnerAU(),
                 description.getHabitableZoneOuterAU());
 
         // Store current star reference for context menus
@@ -643,13 +633,8 @@ public class SolarSystemRenderer {
         orbitColors.clear();
         moonOrbitsByParent.clear();
         shapeToLabel.clear();
-        baseScales.clear();
-        baseOpacities.clear();
         starNodes.clear();
-        orbitSegmentScales.clear();
-        orbitSegmentMaterials.clear();
-        selectedBody = null;
-        selectedOrbit = null;
+        selectionStyleManager.clear();
         currentStar = null;
     }
 
@@ -715,7 +700,7 @@ public class SolarSystemRenderer {
             }
         });
 
-        registerSelectableNode(starSphere);
+        selectionStyleManager.registerSelectableNode(starSphere);
         starNodes.put(star.getStarName(), starSphere);
         planetsGroup.getChildren().add(starSphere);
     }
@@ -823,8 +808,8 @@ public class SolarSystemRenderer {
         addOrbitContextMenuHandler(orbitPath, planet);
 
         orbitsGroup.getChildren().add(orbitPath);
-        registerOrbitSegments(orbitPath);
-        registerSelectableNode(orbitPath);
+        selectionStyleManager.registerOrbitSegments(orbitPath);
+        selectionStyleManager.registerSelectableNode(orbitPath);
 
         // Calculate position - use amplified SMA for moons so they appear on their visible orbit
         double positionSma = isMoonBody ? orbitSmaForRendering : semiMajorAxis;
@@ -956,15 +941,15 @@ public class SolarSystemRenderer {
             }
         });
 
-        registerSelectableNode(planetSphere);
+        selectionStyleManager.registerSelectableNode(planetSphere);
         planetsGroup.getChildren().add(planetSphere);
 
         // Store references for animation
         planetNodes.put(planet.getName(), planetSphere);
         planetDescriptions.put(planet.getName(), planet);
 
-        renderOrbitNodeMarkers(planet, orbitColor, parentOffsetAu);
-        renderApsideMarkers(planet, orbitColor, parentOffsetAu);
+        orbitMarkerRenderer.renderOrbitNodeMarkers(orbitNodeGroup, planet, orbitColor, parentOffsetAu, showOrbitNodes);
+        orbitMarkerRenderer.renderApsideMarkers(apsidesGroup, planet, orbitColor, parentOffsetAu, showApsides);
 
         return planetRadius;
     }
@@ -1001,548 +986,6 @@ public class SolarSystemRenderer {
                 }
             });
         }
-    }
-
-    private void registerSelectableNode(Node node) {
-        if (node == null) {
-            return;
-        }
-        baseScales.put(node, node.getScaleX());
-        baseOpacities.put(node, node.getOpacity());
-    }
-
-    private void applySelection(Node selectedBody, Group selectedOrbit) {
-        this.selectedBody = selectedBody;
-        this.selectedOrbit = selectedOrbit;
-        boolean hasSelection = selectedBody != null || selectedOrbit != null;
-
-        for (Map.Entry<String, Sphere> entry : planetNodes.entrySet()) {
-            Node planet = entry.getValue();
-            if (planet == null) {
-                continue;
-            }
-            if (planet == selectedBody) {
-                applySelectedBodyStyle(planet, PLANET_SELECTED_SCALE);
-            } else if (hasSelection) {
-                applyDeemphasizedStyle(planet, DEEMPHASIZED_OPACITY);
-            } else {
-                restoreBaseStyle(planet);
-            }
-        }
-
-        for (Map.Entry<String, Node> entry : starNodes.entrySet()) {
-            Node star = entry.getValue();
-            if (star == null) {
-                continue;
-            }
-            if (star == selectedBody) {
-                applySelectedBodyStyle(star, STAR_SELECTED_SCALE);
-            } else if (hasSelection) {
-                applyDeemphasizedStyle(star, 0.6);
-            } else {
-                restoreBaseStyle(star);
-            }
-        }
-
-        for (Map.Entry<String, Group> entry : orbitGroups.entrySet()) {
-            Group orbit = entry.getValue();
-            if (orbit == null) {
-                continue;
-            }
-            if (orbit == selectedOrbit) {
-                applySelectedOrbitStyle(orbit);
-            } else {
-                restoreOrbitStyle(orbit);
-            }
-        }
-
-        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
-            Label label = entry.getValue();
-            if (label == null) {
-                continue;
-            }
-            if (!hasSelection) {
-                label.setOpacity(1.0);
-            } else if (entry.getKey() == selectedBody) {
-                label.setOpacity(1.0);
-            } else {
-                label.setOpacity(LABEL_DEEMPHASIZED_OPACITY);
-            }
-        }
-    }
-
-    private void applySelectedBodyStyle(Node node, double scaleMultiplier) {
-        restoreBaseScale(node);
-        node.setScaleX(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
-        node.setScaleY(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
-        node.setScaleZ(baseScales.getOrDefault(node, 1.0) * scaleMultiplier);
-        node.setOpacity(1.0);
-        node.setEffect(selectedBodyGlow);
-    }
-
-    private void applySelectedOrbitStyle(Group orbit) {
-        restoreOrbitStyle(orbit);
-        orbit.setOpacity(1.0);
-        OrbitMeshSelection meshSelection = getOrbitMeshSelection(orbit);
-        if (meshSelection != null) {
-            meshSelection.highlightMesh().setVisible(true);
-            brightenOrbitMaterial(meshSelection.baseMesh());
-            return;
-        }
-        for (Node child : orbit.getChildren()) {
-            double[] baseScale = orbitSegmentScales.get(child);
-            if (baseScale != null) {
-                child.setScaleX(baseScale[0] * 1.6);
-                child.setScaleY(baseScale[1]);
-                child.setScaleZ(baseScale[2] * 1.6);
-            }
-            brightenOrbitMaterial(child);
-        }
-    }
-
-    private void restoreOrbitStyle(Group orbit) {
-        restoreBaseStyle(orbit);
-        orbit.setOpacity(ORBIT_DEEMPHASIZED_OPACITY);
-        OrbitMeshSelection meshSelection = getOrbitMeshSelection(orbit);
-        if (meshSelection != null) {
-            meshSelection.highlightMesh().setVisible(false);
-            restoreOrbitMaterial(meshSelection.baseMesh());
-            return;
-        }
-        for (Node child : orbit.getChildren()) {
-            double[] baseScale = orbitSegmentScales.get(child);
-            if (baseScale != null) {
-                child.setScaleX(baseScale[0]);
-                child.setScaleY(baseScale[1]);
-                child.setScaleZ(baseScale[2]);
-            }
-            restoreOrbitMaterial(child);
-        }
-    }
-
-    private void applyDeemphasizedStyle(Node node, double opacity) {
-        restoreBaseScale(node);
-        node.setOpacity(opacity);
-        node.setEffect(null);
-    }
-
-    private void restoreBaseStyle(Node node) {
-        restoreBaseScale(node);
-        node.setOpacity(baseOpacities.getOrDefault(node, 1.0));
-        node.setEffect(null);
-    }
-
-    private void restoreBaseScale(Node node) {
-        double baseScale = baseScales.getOrDefault(node, 1.0);
-        node.setScaleX(baseScale);
-        node.setScaleY(baseScale);
-        node.setScaleZ(baseScale);
-    }
-
-    private void registerOrbitSegments(Group orbitGroup) {
-        for (Node child : orbitGroup.getChildren()) {
-            orbitSegmentScales.putIfAbsent(child, new double[]{
-                    child.getScaleX(),
-                    child.getScaleY(),
-                    child.getScaleZ()
-            });
-            if (child instanceof Shape3D shape) {
-                if (shape.getMaterial() instanceof PhongMaterial material) {
-                    orbitSegmentMaterials.putIfAbsent(material, new Color[]{
-                            material.getDiffuseColor(),
-                            material.getSpecularColor()
-                    });
-                }
-            }
-        }
-    }
-
-    private OrbitMeshSelection getOrbitMeshSelection(Group orbit) {
-        Object baseNode = orbit.getProperties().get(OrbitVisualizer.ORBIT_BASE_MESH_KEY);
-        Object highlightNode = orbit.getProperties().get(OrbitVisualizer.ORBIT_HIGHLIGHT_MESH_KEY);
-        if (baseNode instanceof MeshView baseMesh && highlightNode instanceof MeshView highlightMesh) {
-            return new OrbitMeshSelection(baseMesh, highlightMesh);
-        }
-        return null;
-    }
-
-    private record OrbitMeshSelection(MeshView baseMesh, MeshView highlightMesh) {
-    }
-
-    private void brightenOrbitMaterial(Node node) {
-        if (!(node instanceof Shape3D shape)) {
-            return;
-        }
-        if (!(shape.getMaterial() instanceof PhongMaterial material)) {
-            return;
-        }
-        Color[] baseColors = orbitSegmentMaterials.get(material);
-        if (baseColors == null) {
-            return;
-        }
-        material.setDiffuseColor(baseColors[0].brighter().brighter());
-        material.setSpecularColor(baseColors[1].brighter());
-    }
-
-    private void restoreOrbitMaterial(Node node) {
-        if (!(node instanceof Shape3D shape)) {
-            return;
-        }
-        if (!(shape.getMaterial() instanceof PhongMaterial material)) {
-            return;
-        }
-        Color[] baseColors = orbitSegmentMaterials.get(material);
-        if (baseColors == null) {
-            return;
-        }
-        material.setDiffuseColor(baseColors[0]);
-        material.setSpecularColor(baseColors[1]);
-    }
-
-    /**
-     * Render the habitable zone as a translucent ring
-     */
-    private void renderHabitableZone(double innerAU, double outerAU) {
-        if (innerAU <= 0 || outerAU <= 0 || outerAU <= innerAU) {
-            return;
-        }
-
-        double innerRadius = scaleManager.auToScreen(innerAU);
-        double outerRadius = scaleManager.auToScreen(outerAU);
-        double width = outerRadius - innerRadius;
-        double centerRadius = (innerRadius + outerRadius) / 2;
-
-        // Create a torus for the habitable zone
-        // Torus parameters: major radius (center of tube) and minor radius (tube thickness)
-        int torusDivisions = 64;
-
-        // Create ring using cylinders as a simple approximation
-        Group hzGroup = new Group();
-        PhongMaterial hzMaterial = new PhongMaterial();
-        hzMaterial.setDiffuseColor(Color.rgb(0, 255, 0, 0.15));
-
-        int segments = 72;
-        for (int i = 0; i < segments; i++) {
-            double angle1 = 2 * Math.PI * i / segments;
-            double angle2 = 2 * Math.PI * (i + 1) / segments;
-
-            // Inner edge in XZ plane (Y is up)
-            double x1Inner = innerRadius * Math.cos(angle1);
-            double z1Inner = innerRadius * Math.sin(angle1);
-            double x2Inner = innerRadius * Math.cos(angle2);
-            double z2Inner = innerRadius * Math.sin(angle2);
-
-            // Outer edge in XZ plane
-            double x1Outer = outerRadius * Math.cos(angle1);
-            double z1Outer = outerRadius * Math.sin(angle1);
-            double x2Outer = outerRadius * Math.cos(angle2);
-            double z2Outer = outerRadius * Math.sin(angle2);
-
-            // Create thin cylinders for inner and outer edges
-            Cylinder innerSeg = createRingSegmentXZ(x1Inner, z1Inner, x2Inner, z2Inner, 0.3, hzMaterial);
-            Cylinder outerSeg = createRingSegmentXZ(x1Outer, z1Outer, x2Outer, z2Outer, 0.3, hzMaterial);
-
-            hzGroup.getChildren().addAll(innerSeg, outerSeg);
-        }
-
-        // Add radial connectors every 30 degrees
-        for (int i = 0; i < 12; i++) {
-            double angle = 2 * Math.PI * i / 12;
-            double xInner = innerRadius * Math.cos(angle);
-            double zInner = innerRadius * Math.sin(angle);
-            double xOuter = outerRadius * Math.cos(angle);
-            double zOuter = outerRadius * Math.sin(angle);
-
-            Cylinder radial = createRingSegmentXZ(xInner, zInner, xOuter, zOuter, 0.2, hzMaterial);
-            hzGroup.getChildren().add(radial);
-        }
-
-        habitableZoneGroup.getChildren().add(hzGroup);
-
-        log.info("Rendered habitable zone: {} - {} AU", innerAU, outerAU);
-    }
-
-    private void renderEclipticReference() {
-        eclipticPlaneGroup.getChildren().clear();
-        if (!showEclipticPlane) {
-            return;
-        }
-
-        PhongMaterial gridMaterial = new PhongMaterial();
-        gridMaterial.setDiffuseColor(Color.rgb(60, 60, 60, 0.25));
-        gridMaterial.setSpecularColor(Color.rgb(80, 80, 80, 0.2));
-
-        double[] gridValues = scaleManager.getScaleGridAuValues();
-        for (double au : gridValues) {
-            Group circle = createCircle(scaleManager.auToScreen(au), gridMaterial);
-            eclipticPlaneGroup.getChildren().add(circle);
-        }
-
-        double maxRadius = scaleManager.auToScreen(scaleManager.getMaxOrbitalDistanceAU());
-        double gridStep = maxRadius / 6;
-        int steps = 12;
-        for (int i = -steps; i <= steps; i++) {
-            double offset = i * gridStep;
-            Cylinder lineX = createRingSegmentXZ(-maxRadius, offset, maxRadius, offset, 0.15, gridMaterial);
-            Cylinder lineZ = createRingSegmentXZ(offset, -maxRadius, offset, maxRadius, 0.15, gridMaterial);
-            eclipticPlaneGroup.getChildren().addAll(lineX, lineZ);
-        }
-
-        eclipticPlaneGroup.setVisible(showEclipticPlane);
-    }
-
-    private void renderOrbitNodeMarkers(PlanetDescription planet, Color orbitColor, double[] parentOffsetAu) {
-        if (!showOrbitNodes) {
-            return;
-        }
-        double semiMajorAxis = planet.getSemiMajorAxis();
-        if (semiMajorAxis <= 0) {
-            return;
-        }
-
-        double eccentricity = Math.max(0, Math.min(0.99, planet.getEccentricity()));
-        double inclination = planet.getInclination();
-        double argPeriapsis = planet.getArgumentOfPeriapsis();
-        double longAscNode = planet.getLongitudeOfAscendingNode();
-
-        double ascendingTrueAnomaly = -argPeriapsis;
-        double descendingTrueAnomaly = 180 - argPeriapsis;
-
-        double[] ascPosAu = orbitSamplingProvider.calculatePositionAu(
-                semiMajorAxis,
-                eccentricity,
-                inclination,
-                longAscNode,
-                argPeriapsis,
-                ascendingTrueAnomaly
-        );
-        double[] descPosAu = orbitSamplingProvider.calculatePositionAu(
-                semiMajorAxis,
-                eccentricity,
-                inclination,
-                longAscNode,
-                argPeriapsis,
-                descendingTrueAnomaly
-        );
-        if (parentOffsetAu != null) {
-            ascPosAu[0] += parentOffsetAu[0];
-            ascPosAu[1] += parentOffsetAu[1];
-            ascPosAu[2] += parentOffsetAu[2];
-            descPosAu[0] += parentOffsetAu[0];
-            descPosAu[1] += parentOffsetAu[1];
-            descPosAu[2] += parentOffsetAu[2];
-        }
-        double[] ascPos = scaleManager.auVectorToScreen(ascPosAu[0], ascPosAu[1], ascPosAu[2]);
-        double[] descPos = scaleManager.auVectorToScreen(descPosAu[0], descPosAu[1], descPosAu[2]);
-
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(orbitColor.brighter());
-        material.setSpecularColor(orbitColor.brighter());
-
-        Sphere ascending = new Sphere(1.4);
-        ascending.setMaterial(material);
-        ascending.setTranslateX(ascPos[0]);
-        ascending.setTranslateY(ascPos[1]);
-        ascending.setTranslateZ(ascPos[2]);
-
-        Sphere descending = new Sphere(1.2);
-        descending.setMaterial(material);
-        descending.setTranslateX(descPos[0]);
-        descending.setTranslateY(descPos[1]);
-        descending.setTranslateZ(descPos[2]);
-
-        orbitNodeGroup.getChildren().addAll(ascending, descending);
-        orbitNodeGroup.setVisible(showOrbitNodes);
-    }
-
-    private void rebuildOrbitNodeMarkers() {
-        orbitNodeGroup.getChildren().clear();
-        if (!showOrbitNodes) {
-            return;
-        }
-        for (Map.Entry<String, PlanetDescription> entry : planetDescriptions.entrySet()) {
-            String planetName = entry.getKey();
-            PlanetDescription planet = entry.getValue();
-            if (planet == null) {
-                continue;
-            }
-            Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
-            renderOrbitNodeMarkers(planet, orbitColor, null);
-        }
-    }
-
-    /**
-     * Render periapsis and apoapsis markers for a planet's orbit.
-     * Periapsis (closest to star) is at true anomaly = 0°
-     * Apoapsis (farthest from star) is at true anomaly = 180°
-     */
-    private void renderApsideMarkers(PlanetDescription planet, Color orbitColor, double[] parentOffsetAu) {
-        if (!showApsides) {
-            return;
-        }
-        double semiMajorAxis = planet.getSemiMajorAxis();
-        if (semiMajorAxis <= 0) {
-            return;
-        }
-
-        double eccentricity = Math.max(0, Math.min(0.99, planet.getEccentricity()));
-
-        // Skip nearly circular orbits where apsides are meaningless
-        if (eccentricity < 0.01) {
-            return;
-        }
-
-        double inclination = planet.getInclination();
-        double argPeriapsis = planet.getArgumentOfPeriapsis();
-        double longAscNode = planet.getLongitudeOfAscendingNode();
-
-        // Periapsis at true anomaly = 0, Apoapsis at true anomaly = 180
-        double[] periPosAu = orbitSamplingProvider.calculatePositionAu(
-                semiMajorAxis,
-                eccentricity,
-                inclination,
-                longAscNode,
-                argPeriapsis,
-                0.0  // Periapsis
-        );
-        double[] apoPosAu = orbitSamplingProvider.calculatePositionAu(
-                semiMajorAxis,
-                eccentricity,
-                inclination,
-                longAscNode,
-                argPeriapsis,
-                180.0  // Apoapsis
-        );
-        if (parentOffsetAu != null) {
-            periPosAu[0] += parentOffsetAu[0];
-            periPosAu[1] += parentOffsetAu[1];
-            periPosAu[2] += parentOffsetAu[2];
-            apoPosAu[0] += parentOffsetAu[0];
-            apoPosAu[1] += parentOffsetAu[1];
-            apoPosAu[2] += parentOffsetAu[2];
-        }
-        double[] periPos = scaleManager.auVectorToScreen(periPosAu[0], periPosAu[1], periPosAu[2]);
-        double[] apoPos = scaleManager.auVectorToScreen(apoPosAu[0], apoPosAu[1], apoPosAu[2]);
-
-        // Use distinct colors: warm for periapsis (close/hot), cool for apoapsis (far/cold)
-        PhongMaterial periMaterial = new PhongMaterial();
-        periMaterial.setDiffuseColor(Color.ORANGERED);
-        periMaterial.setSpecularColor(Color.ORANGE);
-
-        PhongMaterial apoMaterial = new PhongMaterial();
-        apoMaterial.setDiffuseColor(Color.CORNFLOWERBLUE);
-        apoMaterial.setSpecularColor(Color.LIGHTBLUE);
-
-        // Use boxes instead of spheres to distinguish from orbit node markers
-        // Size scales with orbit distance for visibility
-        double markerSize = Math.max(4.0, Math.min(8.0, semiMajorAxis * 2));
-
-        Box periMarker = new Box(markerSize, markerSize, markerSize);
-        periMarker.setMaterial(periMaterial);
-        periMarker.setTranslateX(periPos[0]);
-        periMarker.setTranslateY(periPos[1]);
-        periMarker.setTranslateZ(periPos[2]);
-        // Rotate 45 degrees to look like a diamond
-        periMarker.setRotate(45);
-
-        Box apoMarker = new Box(markerSize, markerSize, markerSize);
-        apoMarker.setMaterial(apoMaterial);
-        apoMarker.setTranslateX(apoPos[0]);
-        apoMarker.setTranslateY(apoPos[1]);
-        apoMarker.setTranslateZ(apoPos[2]);
-        apoMarker.setRotate(45);
-
-        log.debug("Created apside markers for {} at peri=({},{},{}) apo=({},{},{}) size={}",
-                planet.getName(), periPos[0], periPos[1], periPos[2],
-                apoPos[0], apoPos[1], apoPos[2], markerSize);
-
-        apsidesGroup.getChildren().addAll(periMarker, apoMarker);
-        apsidesGroup.setVisible(showApsides);
-    }
-
-    private void rebuildApsideMarkers() {
-        apsidesGroup.getChildren().clear();
-        if (!showApsides) {
-            return;
-        }
-        for (Map.Entry<String, PlanetDescription> entry : planetDescriptions.entrySet()) {
-            String planetName = entry.getKey();
-            PlanetDescription planet = entry.getValue();
-            if (planet == null) {
-                continue;
-            }
-            Color orbitColor = orbitColors.getOrDefault(planetName, ORBIT_COLORS[0]);
-            renderApsideMarkers(planet, orbitColor, null);
-        }
-    }
-
-    /**
-     * Render scale grid circles at standard AU intervals
-     */
-    private void renderScaleGrid() {
-        double[] gridValues = scaleManager.getScaleGridAuValues();
-
-        PhongMaterial gridMaterial = new PhongMaterial();
-        gridMaterial.setDiffuseColor(Color.rgb(80, 80, 80, 0.5));
-
-        for (double au : gridValues) {
-            Group circle = createCircle(scaleManager.auToScreen(au), gridMaterial);
-            scaleGridGroup.getChildren().add(circle);
-        }
-    }
-
-    /**
-     * Create a circle in the XZ plane (Y is up)
-     */
-    private Group createCircle(double radius, PhongMaterial material) {
-        Group circleGroup = new Group();
-        int segments = 72;
-
-        for (int i = 0; i < segments; i++) {
-            double angle1 = 2 * Math.PI * i / segments;
-            double angle2 = 2 * Math.PI * (i + 1) / segments;
-
-            double x1 = radius * Math.cos(angle1);
-            double z1 = radius * Math.sin(angle1);
-            double x2 = radius * Math.cos(angle2);
-            double z2 = radius * Math.sin(angle2);
-
-            Cylinder segment = createRingSegmentXZ(x1, z1, x2, z2, 0.2, material);
-            circleGroup.getChildren().add(segment);
-        }
-
-        return circleGroup;
-    }
-
-    /**
-     * Create a cylinder segment between two points in the XZ plane (Y is up)
-     */
-    private Cylinder createRingSegmentXZ(double x1, double z1, double x2, double z2,
-                                          double radius, PhongMaterial material) {
-        double midX = (x1 + x2) / 2;
-        double midZ = (z1 + z2) / 2;
-
-        double dx = x2 - x1;
-        double dz = z2 - z1;
-        double length = Math.sqrt(dx * dx + dz * dz);
-
-        Cylinder cylinder = new Cylinder(radius, length);
-        cylinder.setMaterial(material);
-
-        cylinder.setTranslateX(midX);
-        cylinder.setTranslateY(0);  // In XZ plane
-        cylinder.setTranslateZ(midZ);
-
-        // Rotate to align with segment direction in XZ plane
-        // Default cylinder is along Y axis, we need to lay it flat and rotate
-        double angle = Math.toDegrees(Math.atan2(dx, dz));
-
-        // First lay the cylinder flat (rotate 90° around X to put it in XZ plane)
-        cylinder.getTransforms().add(new Rotate(90, Rotate.X_AXIS));
-        // Then rotate around Y to align with the segment direction
-        cylinder.getTransforms().add(new Rotate(-angle, Rotate.Y_AXIS));
-
-        return cylinder;
     }
 
     // ==================== Helper Methods ====================
