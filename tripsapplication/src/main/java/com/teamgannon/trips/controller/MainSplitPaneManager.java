@@ -5,7 +5,6 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
-import com.teamgannon.trips.controller.shared.SharedUIState;
 import com.teamgannon.trips.controller.splitpane.SplitPaneView;
 import com.teamgannon.trips.controller.splitpane.RightPanelCoordinator;
 import com.teamgannon.trips.controller.splitpane.SearchContextCoordinator;
@@ -27,15 +26,12 @@ import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
-import com.teamgannon.trips.screenobjects.ObjectViewPane;
-import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.service.DataExportService;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.tableviews.StarTableDialog;
-// FxThread.runOnFxThread replaced with FxThread.runOnFxThread for consistency
 import javafx.beans.property.DoubleProperty;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -70,7 +66,6 @@ public class MainSplitPaneManager {
     private final StatusBarController statusBarController;
     private final TripsContext tripsContext;
     private PlotManager plotManager;
-    private final SharedUIState sharedUIState;
     private final DataExportService dataExportService;
     private final Localization localization;
     private final DatasetService datasetService;
@@ -78,8 +73,6 @@ public class MainSplitPaneManager {
     private final SearchContextCoordinator searchContextCoordinator;
     private final FxWeaver fxWeaver;
 
-
-    private final StarPropertiesPane starPropertiesPane;
     private final RoutingPanel routingPanel;
 
     @Getter
@@ -96,10 +89,6 @@ public class MainSplitPaneManager {
     @Getter
     private TransitFilterPane transitFilterPane;
 
-    /**
-     * list of routes
-     */
-
     @Getter
     private SplitPane mainSplitPane;
     private BorderPane leftBorderPane;
@@ -108,8 +97,6 @@ public class MainSplitPaneManager {
     private BorderPane rightBorderPane;
     @Getter
     private VBox settingsPane;
-
-    private final ObjectViewPane objectViewPane;
 
     private final DatabaseManagementService databaseManagementService;
     /**
@@ -134,11 +121,8 @@ public class MainSplitPaneManager {
                                 ApplicationEventPublisher eventPublisher,
                                 StatusBarController statusBarController,
                                 TripsContext tripsContext,
-                                SharedUIState sharedUIState,
-                                StarPropertiesPane starPropertiesPane,
                                 RoutingPanel routingPanel,
                                 Localization localization,
-                                ObjectViewPane objectViewPane,
                                 DatabaseManagementService databaseManagementService,
                                 DatasetService datasetService,
                                 DataExportService dataExportService,
@@ -152,11 +136,8 @@ public class MainSplitPaneManager {
         this.eventPublisher = eventPublisher;
         this.statusBarController = statusBarController;
         this.tripsContext = tripsContext;
-        this.sharedUIState = sharedUIState;
-        this.starPropertiesPane = starPropertiesPane;
         this.routingPanel = routingPanel;
         this.localization = localization;
-        this.objectViewPane = objectViewPane;
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
         this.dataExportService = dataExportService;
