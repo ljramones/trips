@@ -90,16 +90,16 @@ class StarPlotManagerMeshTest {
         @Test
         @DisplayName("createCentralStar() returns non-null Node")
         void createCentralStarReturnsNonNull() throws Exception {
-            Node star = runOnFxThread(() -> starPlotManager.createCentralStar());
+            Node star = runOnFxThread(() -> starPlotManager.getMeshManager().createCentralStar());
             assertNotNull(star, "createCentralStar() should return a non-null Node");
         }
 
         @Test
         @DisplayName("createCentralStar() returns distinct instances on each call")
         void createCentralStarReturnsDistinctInstances() throws Exception {
-            Node star1 = runOnFxThread(() -> starPlotManager.createCentralStar());
-            Node star2 = runOnFxThread(() -> starPlotManager.createCentralStar());
-            Node star3 = runOnFxThread(() -> starPlotManager.createCentralStar());
+            Node star1 = runOnFxThread(() -> starPlotManager.getMeshManager().createCentralStar());
+            Node star2 = runOnFxThread(() -> starPlotManager.getMeshManager().createCentralStar());
+            Node star3 = runOnFxThread(() -> starPlotManager.getMeshManager().createCentralStar());
 
             assertNotNull(star1);
             assertNotNull(star2);
@@ -114,8 +114,8 @@ class StarPlotManagerMeshTest {
         @DisplayName("Multiple central stars can coexist in scene graph")
         void multipleCentralStarsCanCoexist() throws Exception {
             runOnFxThread(() -> {
-                Node star1 = starPlotManager.createCentralStar();
-                Node star2 = starPlotManager.createCentralStar();
+                Node star1 = starPlotManager.getMeshManager().createCentralStar();
+                Node star2 = starPlotManager.getMeshManager().createCentralStar();
 
                 Group parent1 = new Group();
                 Group parent2 = new Group();
@@ -138,7 +138,7 @@ class StarPlotManagerMeshTest {
         @Test
         @DisplayName("Central star has correct scaling applied")
         void centralStarHasScaling() throws Exception {
-            Node star = runOnFxThread(() -> starPlotManager.createCentralStar());
+            Node star = runOnFxThread(() -> starPlotManager.getMeshManager().createCentralStar());
 
             // Default scaling should be applied (30 for all axes)
             // Note: actual value depends on whether specialObjects is populated
@@ -159,16 +159,16 @@ class StarPlotManagerMeshTest {
         @Test
         @DisplayName("createHighlightStar() returns non-null Node")
         void createHighlightStarReturnsNonNull() throws Exception {
-            Node star = runOnFxThread(() -> starPlotManager.createHighlightStar(Color.RED));
+            Node star = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(Color.RED));
             assertNotNull(star, "createHighlightStar() should return a non-null Node");
         }
 
         @Test
         @DisplayName("createHighlightStar() returns distinct instances on each call")
         void createHighlightStarReturnsDistinctInstances() throws Exception {
-            Node star1 = runOnFxThread(() -> starPlotManager.createHighlightStar(Color.RED));
-            Node star2 = runOnFxThread(() -> starPlotManager.createHighlightStar(Color.BLUE));
-            Node star3 = runOnFxThread(() -> starPlotManager.createHighlightStar(Color.GREEN));
+            Node star1 = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(Color.RED));
+            Node star2 = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(Color.BLUE));
+            Node star3 = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(Color.GREEN));
 
             assertNotNull(star1);
             assertNotNull(star2);
@@ -183,8 +183,8 @@ class StarPlotManagerMeshTest {
         @DisplayName("createHighlightStar() with same color returns distinct instances")
         void createHighlightStarSameColorReturnsDistinctInstances() throws Exception {
             Color color = Color.YELLOW;
-            Node star1 = runOnFxThread(() -> starPlotManager.createHighlightStar(color));
-            Node star2 = runOnFxThread(() -> starPlotManager.createHighlightStar(color));
+            Node star1 = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(color));
+            Node star2 = runOnFxThread(() -> starPlotManager.getMeshManager().createHighlightStar(color));
 
             assertNotNull(star1);
             assertNotNull(star2);
@@ -195,8 +195,8 @@ class StarPlotManagerMeshTest {
         @DisplayName("Multiple highlight stars can coexist in scene graph")
         void multipleHighlightStarsCanCoexist() throws Exception {
             runOnFxThread(() -> {
-                Node star1 = starPlotManager.createHighlightStar(Color.RED);
-                Node star2 = starPlotManager.createHighlightStar(Color.BLUE);
+                Node star1 = starPlotManager.getMeshManager().createHighlightStar(Color.RED);
+                Node star2 = starPlotManager.getMeshManager().createHighlightStar(Color.BLUE);
 
                 Group parent1 = new Group();
                 Group parent2 = new Group();
@@ -231,7 +231,7 @@ class StarPlotManagerMeshTest {
                 // Simulate navigating between 5 star systems
                 // Each navigation creates a new central star
                 for (int i = 0; i < 5; i++) {
-                    Node centralStar = starPlotManager.createCentralStar();
+                    Node centralStar = starPlotManager.getMeshManager().createCentralStar();
                     assertNotNull(centralStar, "Navigation " + i + " should create a star");
 
                     // In real code, previous content would be cleared
@@ -256,7 +256,7 @@ class StarPlotManagerMeshTest {
 
                 // Simulate highlighting 5 different stars
                 for (int i = 0; i < colors.length; i++) {
-                    Node highlightStar = starPlotManager.createHighlightStar(colors[i]);
+                    Node highlightStar = starPlotManager.getMeshManager().createHighlightStar(colors[i]);
                     assertNotNull(highlightStar, "Highlight " + i + " should create a star");
 
                     highlightStar.setTranslateX(i * 50);
@@ -278,12 +278,12 @@ class StarPlotManagerMeshTest {
                 Group world = new Group();
 
                 // Add central stars
-                Node central1 = starPlotManager.createCentralStar();
-                Node central2 = starPlotManager.createCentralStar();
+                Node central1 = starPlotManager.getMeshManager().createCentralStar();
+                Node central2 = starPlotManager.getMeshManager().createCentralStar();
 
                 // Add highlight stars
-                Node highlight1 = starPlotManager.createHighlightStar(Color.CYAN);
-                Node highlight2 = starPlotManager.createHighlightStar(Color.MAGENTA);
+                Node highlight1 = starPlotManager.getMeshManager().createHighlightStar(Color.CYAN);
+                Node highlight2 = starPlotManager.getMeshManager().createHighlightStar(Color.MAGENTA);
 
                 world.getChildren().addAll(central1, central2, highlight1, highlight2);
 
