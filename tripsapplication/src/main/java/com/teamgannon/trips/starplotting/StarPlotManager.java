@@ -6,7 +6,6 @@ import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.graphics.entities.StarSelectionModel;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.measure.TrackExecutionTime;
@@ -14,23 +13,17 @@ import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
-import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.application.Platform;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Sphere;
-import javafx.scene.text.Font;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -62,35 +55,6 @@ public class StarPlotManager {
      * Number of blink cycles for star highlighting.
      */
     private static final int HIGHLIGHT_BLINK_CYCLES = 100;
-
-    // =========================================================================
-    // Random Generation Constants (Test/Debug Only)
-    // =========================================================================
-
-    /**
-     * Maximum radius for randomly generated test stars.
-     */
-    private static final double MAX_RANDOM_STAR_RADIUS = 7.0;
-
-    /**
-     * Fraction of max range used for random star positions.
-     */
-    private static final double RANDOM_POSITION_FRACTION = 2.0 / 3.0;
-
-    /**
-     * Maximum X coordinate for random star generation.
-     */
-    private static final double X_MAX = 300.0;
-
-    /**
-     * Maximum Y coordinate for random star generation.
-     */
-    private static final double Y_MAX = 300.0;
-
-    /**
-     * Maximum Z coordinate for random star generation.
-     */
-    private static final double Z_MAX = 300.0;
 
     // =========================================================================
     // Instance Fields
@@ -151,6 +115,16 @@ public class StarPlotManager {
     private final StarContextMenuHandler contextMenuHandler;
 
     /**
+     * Handles mouse click events on stars.
+     */
+    private StarClickHandler clickHandler;
+
+    /**
+     * Generates random stars for debugging.
+     */
+    private DebugStarGenerator debugStarGenerator;
+
+    /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
@@ -173,16 +147,6 @@ public class StarPlotManager {
      * our color palette
      */
     private ColorPalette colorPalette;
-
-    /**
-     * used to implement a selection model for selecting stars
-     */
-    private final Map<Node, StarSelectionModel> selectionModel = new HashMap<>();
-
-    /**
-     * source of reasonably random numbers
-     */
-    private final Random random = new Random();
 
     /**
      * toggle state of polities
@@ -257,6 +221,16 @@ public class StarPlotManager {
 
         // Configure the context menu handler
         contextMenuHandler.setStarsInViewSupplier(this::getCurrentStarsInView);
+
+        // Initialize click handler
+        this.clickHandler = new StarClickHandler(contextMenuHandler, this::createContextMenuForStar);
+    }
+
+    /**
+     * Creates a context menu for a star (used by click handler).
+     */
+    private ContextMenu createContextMenuForStar(StarDisplayRecord record, Node star) {
+        return contextMenuHandler.createContextMenu(star, record, this);
     }
 
     public void setGraphics(Group sceneRoot,
@@ -279,6 +253,9 @@ public class StarPlotManager {
         // Pre-warm the star node pool for faster initial rendering
         // This creates spheres ahead of time to avoid allocation during first render
         lodManager.prewarmPool(100);
+
+        // Initialize debug star generator
+        this.debugStarGenerator = new DebugStarGenerator(world, labelManager, extensionManager);
     }
 
 
@@ -692,107 +669,26 @@ public class StarPlotManager {
         return meshManager.createCentralStar();
     }
 
+    /**
+     * Sets up a context menu on a star node (eager creation).
+     * Delegates to {@link StarClickHandler#setupContextMenu}.
+     *
+     * @param record the star record
+     * @param star   the star node
+     */
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
-        star.setUserData(record);
-        String polity = record.getPolity();
-        if (polity.equals("NA")) {
-            polity = "Non-aligned";
-        }
-        ContextMenu starContextMenu = createPopup(record.getStarName() + " (" + polity + ")", star);
-        star.addEventHandler(
-                MouseEvent.MOUSE_CLICKED,
-                e -> starClickEventHandler(star, starContextMenu, e));
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.info("mouse click detected! " + starDescriptor);
-        });
+        clickHandler.setupContextMenu(record, star);
     }
 
     /**
      * Sets up lazy-loaded context menu for a star node.
-     * <p>
-     * Unlike {@link #setContextMenu}, this method does NOT create the ContextMenu upfront.
-     * Instead, the menu is created on-demand when the user clicks the node.
-     * This significantly reduces memory usage and initialization time for large star plots.
+     * Delegates to {@link StarClickHandler#setupLazyContextMenu}.
      *
      * @param record the star record
      * @param star   the star node
      */
     private void setLazyContextMenu(@NotNull StarDisplayRecord record, Node star) {
-        star.setUserData(record);
-
-        // Create context menu lazily on click
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            // Handle primary button (left-click)
-            if (e.getButton() == MouseButton.PRIMARY) {
-                log.info("Primary button pressed");
-                if (contextMenuHandler.isManualRoutingActive()) {
-                    log.info("Manual Routing is active");
-                    if (contextMenuHandler.getRoutingType().equals(RoutingType.MANUAL)) {
-                        ContextManualRoutingDialog manualDialog = contextMenuHandler.getManualRoutingDialog();
-                        if (manualDialog != null) {
-                            manualDialog.addStar(record);
-                        }
-                    }
-                    if (contextMenuHandler.getRoutingType().equals(RoutingType.AUTOMATIC)) {
-                        var automatedDialog = contextMenuHandler.getAutomatedRoutingDialog();
-                        if (automatedDialog != null) {
-                            automatedDialog.setToStar(record.getStarName());
-                        }
-                    }
-                } else {
-                    log.info("Manual routing is not active - showing context menu");
-                    ContextMenu starContextMenu = createLazyPopup(record, star);
-                    starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-                }
-            }
-            // Handle middle button
-            else if (e.getButton() == MouseButton.MIDDLE) {
-                log.info("Middle button pressed");
-                ContextMenu starContextMenu = createLazyPopup(record, star);
-                starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-            }
-            // Handle secondary button (right-click) for selection toggle
-            else if (e.getButton() == MouseButton.SECONDARY) {
-                log.info("Secondary button pressed");
-                if (selectionModel.containsKey(star)) {
-                    // remove star and selection rectangle
-                    StarSelectionModel starSelectionModel = selectionModel.get(star);
-                    Node selectionRectangle = starSelectionModel.getSelectionRectangle();
-                    if (selectionRectangle != null && selectionRectangle.getParent() instanceof Group group) {
-                        group.getChildren().remove(selectionRectangle);
-                    }
-                    selectionModel.remove(star);
-                } else {
-                    // add star selection
-                    StarSelectionModel starSelectionModel = new StarSelectionModel();
-                    starSelectionModel.setStarNode(star);
-                    selectionModel.put(star, starSelectionModel);
-                }
-            }
-        });
-
-        star.setOnMousePressed(event -> {
-            Node node = (Node) event.getSource();
-            StarDisplayRecord starDescriptor = (StarDisplayRecord) node.getUserData();
-            log.debug("mouse click detected! " + starDescriptor);
-        });
-    }
-
-    /**
-     * Creates a context menu popup lazily for a star.
-     *
-     * @param record the star record
-     * @param star   the star node
-     * @return the created context menu
-     */
-    private @NotNull ContextMenu createLazyPopup(@NotNull StarDisplayRecord record, @NotNull Node star) {
-        String polity = record.getPolity();
-        if (polity.equals("NA")) {
-            polity = "Non-aligned";
-        }
-        return createPopup(record.getStarName() + " (" + polity + ")", star);
+        clickHandler.setupLazyContextMenu(record, star);
     }
 
     /**
@@ -824,75 +720,6 @@ public class StarPlotManager {
         extensionManager.createExtension(record, colorPalette);
     }
 
-    /**
-     * setup the event click handler for a star
-     *
-     * @param star            the star
-     * @param starContextMenu the menu
-     * @param e               the exception caught
-     */
-    private void starClickEventHandler(Node star, @NotNull ContextMenu starContextMenu, @NotNull MouseEvent e) {
-        if (e.getButton() == MouseButton.PRIMARY) {
-            log.info("Primary button pressed");
-            if (contextMenuHandler.isManualRoutingActive()) {
-                log.info("Manual Routing is active");
-                StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
-                if (contextMenuHandler.getRoutingType().equals(RoutingType.MANUAL)) {
-                    ContextManualRoutingDialog manualDialog = contextMenuHandler.getManualRoutingDialog();
-                    if (manualDialog != null) {
-                        manualDialog.addStar(record);
-                    }
-                }
-                if (contextMenuHandler.getRoutingType().equals(RoutingType.AUTOMATIC)) {
-                    var automatedDialog = contextMenuHandler.getAutomatedRoutingDialog();
-                    if (automatedDialog != null) {
-                        automatedDialog.setToStar(record.getStarName());
-                    }
-                }
-            } else {
-                log.info("Manual routing is not active");
-                starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-            }
-        }
-        if (e.getButton() == MouseButton.MIDDLE) {
-            log.info("Middle button pressed");
-            starContextMenu.show(star, e.getScreenX(), e.getScreenY());
-        }
-
-        if (e.getButton() == MouseButton.SECONDARY) {
-            log.info("Secondary button pressed");
-            if (selectionModel.containsKey(star)) {
-                // remove star and selection rectangle
-                StarSelectionModel starSelectionModel = selectionModel.get(star);
-                Node selectionRectangle = starSelectionModel.getSelectionRectangle();
-                if (selectionRectangle != null && selectionRectangle.getParent() instanceof Group group) {
-                    group.getChildren().remove(selectionRectangle);
-                }
-
-                // remove the selection model
-                selectionModel.remove(star);
-
-            } else {
-                // add star selection
-                StarSelectionModel starSelectionModel = new StarSelectionModel();
-                starSelectionModel.setStarNode(star);
-                selectionModel.put(star, starSelectionModel);
-
-            }
-        }
-    }
-
-    /**
-     * create a context menu for clicking on the stars
-     *
-     * @param name the name of the star
-     * @param star the star
-     * @return the menu
-     */
-    private @NotNull ContextMenu createPopup(String name, @NotNull Node star) {
-        StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
-        return contextMenuHandler.createContextMenu(star, record, this);
-    }
 
 
 
@@ -905,72 +732,17 @@ public class StarPlotManager {
     }
 
     /**
-     * generate random stars (for testing/debug purposes)
+     * Generate random stars for testing/debug purposes.
+     * Delegates to {@link DebugStarGenerator}.
      *
-     * @param numberStars number of stars
+     * @param numberStars number of stars to generate
      */
     public void generateRandomStars(int numberStars) {
-        if (colorPalette == null) {
-            log.warn("color palette not initialized; cannot generate random stars");
-            return;
+        if (debugStarGenerator != null) {
+            debugStarGenerator.generateRandomStars(numberStars, colorPalette);
+        } else {
+            log.warn("Debug star generator not initialized; call setGraphics first");
         }
-        for (int i = 0; i < numberStars; i++) {
-            double radius = random.nextDouble() * MAX_RANDOM_STAR_RADIUS;
-            Color color = randomColor();
-            double x = random.nextDouble() * X_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
-            double y = random.nextDouble() * Y_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
-            double z = random.nextDouble() * Z_MAX * RANDOM_POSITION_FRACTION * (random.nextBoolean() ? 1 : -1);
-
-            String labelText = "Star " + i;
-            createSphereAndLabel(radius, x, y, z, color, colorPalette.getLabelFont().toFont(), labelText);
-            createExtension(x, y, z, Color.VIOLET);
-        }
-
-        log.info("shapes:{}", labelManager.getLabelCount());
-    }
-
-    private @NotNull Color randomColor() {
-        int r = random.nextInt(256);
-        int g = random.nextInt(256);
-        int b = random.nextInt(256);
-        return Color.rgb(r, g, b);
-    }
-
-    private void createSphereAndLabel(double radius, double x, double y, double z, Color color, Font font, String labelText) {
-        if (colorPalette == null) {
-            log.warn("color palette not initialized; cannot create labeled sphere");
-            return;
-        }
-        Sphere sphere = new Sphere(radius);
-        sphere.setTranslateX(x);
-        sphere.setTranslateY(y);
-        sphere.setTranslateZ(z);
-        sphere.setMaterial(new PhongMaterial(color));
-        //add our nodes to the group that will later be added to the 3D scene
-        world.getChildren().add(sphere);
-
-        Label label = new Label(labelText);
-        label.setTextFill(color);
-        label.setFont(font);
-        ObjectDescriptor descriptor = ObjectDescriptor
-                .builder()
-                .name(labelText)
-                .color(color)
-                .x(x)
-                .y(y)
-                .z(z)
-                .build();
-        sphere.setUserData(descriptor);
-        Tooltip tooltip = new Tooltip(descriptor.toString());
-        Tooltip.install(sphere, tooltip);
-
-        // Register the label with the label manager
-        labelManager.registerLabel(sphere, label);
-
-    }
-
-    private void createExtension(double x, double y, double z, Color extensionColor) {
-        extensionManager.createExtension(x, y, z, extensionColor, colorPalette.getLabelFont().toFont());
     }
 
 
