@@ -200,22 +200,22 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
             predicates.add(cb.isFalse(root.get("realStar")));
         }
 
-        // setup a predicate based on other is true
+        // setup a predicate based on other is true (field now in worldBuilding embedded object)
         if (astroSearchQuery.isOtherSearch()) {
-            predicates.add(cb.isTrue(root.get("other")));
+            predicates.add(cb.isTrue(root.get("worldBuilding").get("other")));
         } else {
-            predicates.add(cb.isFalse(root.get("other")));
+            predicates.add(cb.isFalse(root.get("worldBuilding").get("other")));
         }
 
-        // setup a predicate based on anomaly is true
+        // setup a predicate based on anomaly is true (field now in worldBuilding embedded object)
         if (astroSearchQuery.isAnomalySearch()) {
-            predicates.add(cb.isTrue(root.get("anomaly")));
+            predicates.add(cb.isTrue(root.get("worldBuilding").get("anomaly")));
         } else {
-            predicates.add(cb.isFalse(root.get("anomaly")));
+            predicates.add(cb.isFalse(root.get("worldBuilding").get("anomaly")));
         }
 
 
-        // setup a predicate based on military space types
+        // setup a predicate based on polities (field now in worldBuilding embedded object)
         Set<String> politySet = astroSearchQuery.getPolities();
         if (!politySet.isEmpty()) {
             boolean noneSelected = politySet.stream().anyMatch(polity -> polity.equalsIgnoreCase("none"));
@@ -226,7 +226,7 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
                 log.info("None selected");
                 polityList.add("NA");
             }
-            Expression<String> exp = root.get("polity");
+            Expression<String> exp = root.get("worldBuilding").get("polity");
             // setup predicates for actual matches
             Predicate setPredicate = null;
             if (polityList.size() > 0) {
@@ -234,86 +234,77 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
                 setPredicate = exp.in(polityList);
                 predicates.add(setPredicate);
             }
-            // set predicate for empty polity accepted if it was selected
-//            if (noneSelected) {
-//                log.info("None selected");
-//                Predicate nonePredicate = cb.equal(root.get("polity"), "Terran");
-//                predicates.add(nonePredicate);
-////                if (setPredicate != null) {
-////                    Predicate jointPredicate = cb.or(setPredicate, nonePredicate);
-////                }
-//            }
         }
 
 
-        // setup a predicate based on world types
+        // setup a predicate based on world types (field now in worldBuilding embedded object)
         Set<String> worldTypesSet = astroSearchQuery.getWorldTypes();
         if (!worldTypesSet.isEmpty()) {
             List<String> worldTypesList = new ArrayList<>(worldTypesSet);
-            Expression<String> exp = root.get("worldType");
+            Expression<String> exp = root.get("worldBuilding").get("worldType");
             Predicate predicate = exp.in(worldTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on fuel types
+        // setup a predicate based on fuel types (field now in worldBuilding embedded object)
         Set<String> fuelTypesSet = astroSearchQuery.getFuelTypes();
         if (!fuelTypesSet.isEmpty()) {
             List<String> fuelTypesList = new ArrayList<>(fuelTypesSet);
-            Expression<String> exp = root.get("fuelType");
+            Expression<String> exp = root.get("worldBuilding").get("fuelType");
             Predicate predicate = exp.in(fuelTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on space port types
+        // setup a predicate based on space port types (field now in worldBuilding embedded object)
         Set<String> portTypesSet = astroSearchQuery.getPortTypes();
         if (!portTypesSet.isEmpty()) {
             List<String> portTypesList = new ArrayList<>(portTypesSet);
-            Expression<String> exp = root.get("portType");
+            Expression<String> exp = root.get("worldBuilding").get("portType");
             Predicate predicate = exp.in(portTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on population types
+        // setup a predicate based on population types (field now in worldBuilding embedded object)
         Set<String> populationTypesSet = astroSearchQuery.getPopulationTypes();
         if (!populationTypesSet.isEmpty()) {
             List<String> populationTypesList = new ArrayList<>(populationTypesSet);
-            Expression<String> exp = root.get("populationType");
+            Expression<String> exp = root.get("worldBuilding").get("populationType");
             Predicate predicate = exp.in(populationTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on tech types
+        // setup a predicate based on tech types (field now in worldBuilding embedded object)
         Set<String> techTypesSet = astroSearchQuery.getTechTypes();
         if (!techTypesSet.isEmpty()) {
             List<String> techTypesList = new ArrayList<>(techTypesSet);
-            Expression<String> exp = root.get("techType");
+            Expression<String> exp = root.get("worldBuilding").get("techType");
             Predicate predicate = exp.in(techTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on product types
+        // setup a predicate based on product types (field now in worldBuilding embedded object)
         Set<String> productTypesSet = astroSearchQuery.getProductTypes();
         if (!productTypesSet.isEmpty()) {
             List<String> productTypesList = new ArrayList<>(productTypesSet);
-            Expression<String> exp = root.get("productType");
+            Expression<String> exp = root.get("worldBuilding").get("productType");
             Predicate predicate = exp.in(productTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on military space types
+        // setup a predicate based on military space types (field now in worldBuilding embedded object)
         Set<String> milSpaceTypesSet = astroSearchQuery.getMilSpaceTypes();
         if (!milSpaceTypesSet.isEmpty()) {
             List<String> milSpaceTypesList = new ArrayList<>(milSpaceTypesSet);
-            Expression<String> exp = root.get("milSpaceType");
+            Expression<String> exp = root.get("worldBuilding").get("milSpaceType");
             Predicate predicate = exp.in(milSpaceTypesList);
             predicates.add(predicate);
         }
 
-        // setup a predicate based on military planet types
+        // setup a predicate based on military planet types (field now in worldBuilding embedded object)
         Set<String> milPlanTypesSet = astroSearchQuery.getMilPlanTypes();
         if (!milPlanTypesSet.isEmpty()) {
             List<String> milPlanTypesList = new ArrayList<>(milPlanTypesSet);
-            Expression<String> exp = root.get("milPlanType");
+            Expression<String> exp = root.get("worldBuilding").get("milPlanType");
             Predicate predicate = exp.in(milPlanTypesList);
             predicates.add(predicate);
         }

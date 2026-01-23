@@ -180,9 +180,9 @@ public interface StarObjectRepository
             @Param("minY") double minY, @Param("maxY") double maxY,
             @Param("minZ") double minZ, @Param("maxZ") double maxZ);
 
-    List<StarObject> findByCatalogIdListContainsIgnoreCase(String catalogId);
+    List<StarObject> findByCatalogIds_CatalogIdListContainsIgnoreCase(String catalogId);
 
-    List<StarObject> findByCatalogIdListContainsIgnoreCaseAndDataSetName(String catalogId, String dataSetName);
+    List<StarObject> findByCatalogIds_CatalogIdListContainsIgnoreCaseAndDataSetName(String catalogId, String dataSetName);
 
     List<StarObject> findByCommonNameContainsIgnoreCase(String commonName);
 
@@ -192,32 +192,32 @@ public interface StarObjectRepository
 
     List<StarObject> findByConstellationNameAndDataSetName(String constellationName, String dataSetName);
 
-   StarObject findByBayerCatIdAndDataSetName(String bayerId, String dataSetName);
+    StarObject findByCatalogIds_BayerCatIdAndDataSetName(String bayerId, String dataSetName);
 
-   StarObject findByFlamsteedCatIdAndDataSetName(String flamsteedId, String dataSetName);
+    StarObject findByCatalogIds_FlamsteedCatIdAndDataSetName(String flamsteedId, String dataSetName);
 
-   StarObject findByGlieseCatIdAndDataSetName(String glieseId, String dataSetName);
+    StarObject findByCatalogIds_GlieseCatIdAndDataSetName(String glieseId, String dataSetName);
 
-   StarObject findByHipCatIdAndDataSetName(String hipparcosId, String dataSetName);
+    StarObject findByCatalogIds_HipCatIdAndDataSetName(String hipparcosId, String dataSetName);
 
-    StarObject findByHdCatIdAndDataSetName(String henryDraperId, String dataSetName);
+    StarObject findByCatalogIds_HdCatIdAndDataSetName(String henryDraperId, String dataSetName);
 
-    StarObject findByCsiCatIdAndDataSetName(String csiId, String dataSetName);
+    StarObject findByCatalogIds_CsiCatIdAndDataSetName(String csiId, String dataSetName);
 
-    StarObject findByTycho2CatIdAndDataSetName(String tycId, String dataSetName);
+    StarObject findByCatalogIds_Tycho2CatIdAndDataSetName(String tycId, String dataSetName);
 
-    StarObject findByTwoMassCatIdAndDataSetName(String twoMassId, String dataSetName);
+    StarObject findByCatalogIds_TwoMassCatIdAndDataSetName(String twoMassId, String dataSetName);
 
-    StarObject findByGaiaDR2CatIdAndDataSetName(String gaiaDr2Id, String dataSetName);
+    StarObject findByCatalogIds_GaiaDR2CatIdAndDataSetName(String gaiaDr2Id, String dataSetName);
 
-    StarObject findByGaiaDR3CatIdAndDataSetName(String gaiaDr3Id, String dataSetName);
+    StarObject findByCatalogIds_GaiaDR3CatIdAndDataSetName(String gaiaDr3Id, String dataSetName);
 
-    StarObject findByGaiaEDR3CatIdAndDataSetName(String gaiaEdr3Id, String dataSetName);
+    StarObject findByCatalogIds_GaiaEDR3CatIdAndDataSetName(String gaiaEdr3Id, String dataSetName);
 
     @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 "
-            + "AND ((s.gaiaDR3CatId is not null and s.gaiaDR3CatId <> '') "
-            + "OR (s.hipCatId is not null and s.hipCatId <> '') "
-            + "OR (s.catalogIdList is not null and s.catalogIdList <> ''))")
+            + "AND ((s.catalogIds.gaiaDR3CatId is not null and s.catalogIds.gaiaDR3CatId <> '') "
+            + "OR (s.catalogIds.hipCatId is not null and s.catalogIds.hipCatId <> '') "
+            + "OR (s.catalogIds.catalogIdList is not null and s.catalogIds.catalogIdList <> ''))")
     Page<StarObject> findMissingDistanceWithIds(@Param("dataSetName") String dataSetName, Pageable pageable);
 
     @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0")

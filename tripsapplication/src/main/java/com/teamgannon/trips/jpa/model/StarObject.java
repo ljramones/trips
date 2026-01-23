@@ -7,7 +7,6 @@ import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarModel;
 import com.teamgannon.trips.stellarmodelling.StarUtils;
-import com.teamgannon.trips.stellarmodelling.StellarType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -20,11 +19,9 @@ import javax.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * an relational data model for astrographic objects
+ * A relational data model for astrographic objects.
  * <p>
  * Created by larrymitchell on 2017-03-28.
  */
@@ -58,532 +55,237 @@ import java.util.regex.Pattern;
 })
 public class StarObject implements Serializable {
 
-    public final static String SIMBAD_NO_ID = "UNDEFINED";
-    public final static String SIMBAD_NO_TYPE = "UNDEFINED";
-    public final static String POLITY_NOT_SET = "NOT+SET";
+    public static final String SIMBAD_NO_ID = "UNDEFINED";
+    public static final String SIMBAD_NO_TYPE = "UNDEFINED";
+    public static final String POLITY_NOT_SET = "NOT+SET";
 
     @Serial
     private static final long serialVersionUID = -751366073413071183L;
 
-    /**
-     * match the pattern * nnn Con
-     * nnn for 3 digits
-     */
-    @Transient
-    Pattern flamsteedPattern = Pattern.compile("[\\*] +[0-9]{3} +[a-zA-Z]{3}");
+    // ==================== Identity Fields ====================
 
-    /**
-     * match the pattern * ggg Con
-     * ggg for 3 characters
-     */
-    @Transient
-    Pattern bayerPattern = Pattern.compile("[\\*] +[a-zA-Z]{3} +[a-zA-Z]{3}");
-
-
-    /**
-     * id of the object
-     */
     @Id
     private String id;
 
-    /**
-     * the dataset name which we are guaranteeing to be unique
-     */
-//    @Column(name = "DATASETNAME")
+    /** The dataset name which we are guaranteeing to be unique */
     private String dataSetName = "";
 
-    /**
-     * name to use for display
-     */
+    /** Name to use for display */
     private String displayName = "";
 
-    /**
-     * the star's common name
-     */
-    private String commonName;
+    /** The star's common name */
+    private String commonName = "";
 
-    /**
-     * name of the system
-     */
+    /** Name of the system */
     private String systemName = "";
 
     /**
      * Foreign key reference to the SolarSystem entity this star belongs to.
      * Null if the star has not been associated with a detailed solar system model.
-     * For binary/trinary systems, multiple StarObjects will share the same solarSystemId.
      */
     private String solarSystemId;
 
-    /**
-     * the epoch of the star normally J2000
-     * but in some cases can be J2016
-     */
+    /** The epoch of the star, normally J2000 but can be J2016 */
     private String epoch = "";
 
-    /**
-     * updated by external gaia data files
-     */
+    /** Updated by external Gaia data files */
     private boolean gaiaUpdated = false;
 
-    /**
-     * update date from gaia data files
-     */
+    /** Update date from Gaia data files */
     private String gaiaUpdatedDate = "";
 
     /**
-     * list of alias names for this
-     * <p>
-     * EAGER is undesirable but needed because of underlying hibernate lazy load error
+     * List of alias names.
+     * EAGER is undesirable but needed because of underlying Hibernate lazy load error.
      */
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> aliasList = new HashSet<>();
 
-    /**
-     * name of the constellation that this is part of
-     */
+    /** Name of the constellation that this is part of */
     private String constellationName = "";
 
-    /**
-     * the collapsed mass value
-     */
+    // ==================== Embedded Components ====================
+
+    /** All catalog identifiers for this star */
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "simbadId", column = @Column(name = "simbadId")),
+            @AttributeOverride(name = "bayerCatId", column = @Column(name = "bayerCatId")),
+            @AttributeOverride(name = "glieseCatId", column = @Column(name = "glieseCatId")),
+            @AttributeOverride(name = "hipCatId", column = @Column(name = "hipCatId")),
+            @AttributeOverride(name = "hdCatId", column = @Column(name = "hdCatId")),
+            @AttributeOverride(name = "flamsteedCatId", column = @Column(name = "flamsteedCatId")),
+            @AttributeOverride(name = "tycho2CatId", column = @Column(name = "tycho2CatId")),
+            @AttributeOverride(name = "gaiaDR2CatId", column = @Column(name = "gaiaDR2CatId")),
+            @AttributeOverride(name = "gaiaDR3CatId", column = @Column(name = "gaiaDR3CatId")),
+            @AttributeOverride(name = "gaiaEDR3CatId", column = @Column(name = "gaiaEDR3CatId")),
+            @AttributeOverride(name = "twoMassCatId", column = @Column(name = "twoMassCatId")),
+            @AttributeOverride(name = "csiCatId", column = @Column(name = "csiCatId")),
+            @AttributeOverride(name = "catalogIdList", column = @Column(name = "catalogIdList"))
+    })
+    private StarCatalogIds catalogIds = new StarCatalogIds();
+
+    /** World-building and fiction attributes */
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "polity", column = @Column(name = "polity")),
+            @AttributeOverride(name = "worldType", column = @Column(name = "worldType")),
+            @AttributeOverride(name = "fuelType", column = @Column(name = "fuelType")),
+            @AttributeOverride(name = "portType", column = @Column(name = "portType")),
+            @AttributeOverride(name = "populationType", column = @Column(name = "populationType")),
+            @AttributeOverride(name = "techType", column = @Column(name = "techType")),
+            @AttributeOverride(name = "productType", column = @Column(name = "productType")),
+            @AttributeOverride(name = "milSpaceType", column = @Column(name = "milSpaceType")),
+            @AttributeOverride(name = "milPlanType", column = @Column(name = "milPlanType")),
+            @AttributeOverride(name = "other", column = @Column(name = "other")),
+            @AttributeOverride(name = "anomaly", column = @Column(name = "anomaly"))
+    })
+    private StarWorldBuilding worldBuilding = new StarWorldBuilding();
+
+    // ==================== Physical Properties ====================
+
+    /** The collapsed mass value (solar masses) */
     private double mass = 0.0;
 
-    /**
-     * A free form text field for any notes we want.  Preferentially DATA will be stored in data fields, even
-     * if we have to add custom fields in the custom object, but sometimes text notes make sense.
-     */
-    @Lob
-    private String notes = "";
+    /** The radius in solar multiples */
+    private double radius = 0.0;
 
-    /**
-     * the source catalog system used to hold this star
-     * where did it come from?
-     */
-    @Lob
-    private String source = "";
+    /** The temperature of the star in Kelvin */
+    private double temperature = 0.0;
 
-    /**
-     * Same story. One object has names in many catalogs. The catalogIDs go in an array which can have
-     * one-to-many entries.
-     */
-    @Lob
-    private String catalogIdList = "";
+    /** Age of the star */
+    private double age = 0.0;
 
-    /**
-     * the Simbad id
-     */
-    private String simbadId;
+    /** Star metallicity */
+    private double metallicity = 0.0;
 
-    /**
-     * the Bayer catalog id
-     * validated by the BayerChecker based on greek letter for first part
-     * and genitive form of the constellation for the second part
-     * <p>
-     * this is derived from catalog ids or directly, not read in
-     */
-    private String bayerCatId = "";
+    // ==================== Spectral Properties ====================
 
-    /**
-     * the gliese catalog id - GJ
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String glieseCatId = "";
+    /** Spectral class from Simbad */
+    private String spectralClass = "";
 
-    /**
-     * the hipparcos catalog id - HIP
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String hipCatId = "";
+    /** One character descriptor of spectralClass (derived) */
+    private String orthoSpectralClass = "";
 
-    /**
-     * the henry draper catalog id - HD
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String hdCatId = "";
+    /** Luminosity value */
+    private String luminosity = "";
 
-    /**
-     * the flamsteed catalog id
-     * the flamsteed format has a number as the first part
-     * and the genitive form of the constellation as the second part
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String flamsteedCatId = "";
+    /** Apparent magnitude */
+    private String apparentMagnitude = "";
 
-    /**
-     * the Tycho 2 catalog id - TYC2
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String tycho2CatId = "";
+    /** Absolute magnitude */
+    private String absoluteMagnitude = "";
 
-    /**
-     * the id in the gaia catalog
-     */
-    private String gaiaDR2CatId;
+    // ==================== Position & Coordinates ====================
 
-
-    /**
-     * the Gaia DR3 catalog id - Gaia DR3
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String gaiaDR3CatId = "";
-
-    /**
-     * the Gaia EDR3 catalog id - Gaia EDR3
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String gaiaEDR3CatId = "";
-
-    /**
-     * the 2MASS catalog id - 2MASS
-     * <p>
-     * this is dervied form catalog ids or directly, not read in
-     */
-    private String twoMassCatId = "";
-
-    /**
-     * the CSI catalog id - CSI
-     * <p>
-     * this is derived form catalog ids or directly, not read in
-     */
-    private String csiCatId = "";
-
-    /*
-     * The cartesian coordinates of where the object is. Heliocentric (Sol at 0,0,0), Epoch J2000.0 the X axis
-     * is oriented from the Sun to the galactic center at that J Date. The y axis is perpendicular, through
-     * the sun, and oriented so that the X and Y axis define the plane of the earth’s orbit, and the Z axis
-     * is at right angles to that plane.
-     *
-     * Cartesian position in LY. Heliocentric (Sol at 0,0,0), Epoch J2000.0
-     */
-
-    /**
-     * X position, X axis is a line from Sol to the galactic center at that J Date
-     * <p>
-     * this is calculated directly from RA, dec and distance
-     */
+    /** X position in light years (heliocentric, J2000) */
     @Column(name = "x")
     private double x = 0.0;
 
-    /**
-     * Y position, Y axis is perpendicular, through sol, and oriented so that the X and Y axis
-     * define the plane of the earth’s orbit
-     * <p>
-     * this is calculated directly from RA, dec and distance
-     */
+    /** Y position in light years */
     @Column(name = "y")
     private double y = 0.0;
 
-    /**
-     * Z position, Z axis is through Sol at right angles to the XY plane
-     * <p>
-     * this is calculated directly from RA, dec and distance
-     */
+    /** Z position in light years */
     @Column(name = "z")
     private double z = 0.0;
 
-    /**
-     * this is the radius in solar multiples
-     */
-    private double radius = 0.0;
-
-    /**
-     * expressed as right ascension in degrees
-     */
+    /** Right ascension in degrees */
     private double ra = 0.0;
 
-    /**
-     * expressed Declination in degrees
-     */
+    /** Declination in degrees */
     private double declination = 0.0;
 
-    /**
-     * galactic latitude
-     */
-    private double galacticLat;
+    /** Galactic latitude */
+    private double galacticLat = 0.0;
 
-    /**
-     * galactic longitude
-     */
-    private double galacticLong;
+    /** Galactic longitude */
+    private double galacticLong = 0.0;
 
-    /**
-     * Proper Motion in RA direction in degrees
-     */
+    /** Proper motion in RA direction (degrees) */
     private double pmra = 0.0;
 
-    /**
-     * Proper Motion in Dec direction in degrees
-     */
+    /** Proper motion in Dec direction (degrees) */
     private double pmdec = 0.0;
 
-    /**
-     * the parallax measurement n milli-arc-seconds
-     * <p>
-     * We don't need this, we have the distance measure
-     */
+    /** Parallax measurement in milli-arc-seconds */
     private double parallax = 0.0;
 
-    /**
-     * distance in LY
-     */
+    /** Distance in light years */
     private double distance = 0.0;
 
-    /**
-     * the star's radial velocity
-     * from Sol in km/year
-     */
+    /** Radial velocity from Sol in km/year */
     private double radialVelocity = 0.0;
 
-    /**
-     * From Simbad, We’re only storing ONE per object, and in reality we’re only interested in the first character
-     * (OBAFGKMLTY) Objects which are sub-stellar such as planets should have a value of NULL.  We do not want
-     * to try to use this field to code both spec class AND if something’s a planet or a black hole, or whatever.
-     * That’s what the object type field is for. In the object type there will be types like “Planet” and
-     * “Dust Disk” and “Nebula” etc as well as the various star types.
-     * <p>
-     * Also, we will need  to decide if we want to use Simbad’s spec types that contain extra info.  For example,
-     * Simbad reports dM1.5  for a red dwarf, the initial d indicating a dwarf.  There are other such.  I don’t
-     * like it.  The spectral class should be the temp and color of the star, not trying to code more than one
-     * thing.  A stars dwarfness or giantness in my opinion goes in the Type array.
-     */
-    private String spectralClass;
+    // ==================== Magnitude Bands ====================
 
-    /**
-     * this is a one character descriptor of spectralClass
-     * <p>
-     * this is derived from spectralClass
-     */
-    private String orthoSpectralClass;
-
-    /**
-     * the temperature of the star in K
-     */
-    private double temperature = 0.0;
-
-    /**
-     * This is an indicator on whether this is a real star or one we made up
-     * <p>
-     * values are - real/fictional
-     */
-    @NotNull
-    private boolean realStar;
-
-    /**
-     * Gaia magnitude in the bprp band - crudely "red"
-     */
+    /** Gaia magnitude in bprp band (red) */
     private double bprp = 0.0;
 
-    /**
-     * Gaia magnitude in the bpg band - crudely "blue"
-     */
+    /** Gaia magnitude in bpg band (blue) */
     private double bpg = 0.0;
 
-    /**
-     * Gaia magnitude in the grp band - crudely "green"
-     */
+    /** Gaia magnitude in grp band (green) */
     private double grp = 0.0;
 
-    /**
-     * We choose to store the standard luminosity bands. Luminosity is published based on a set of standard
-     * filters that define the spectral bands. The luminosity in each band is a poor mans spectrum of the star.
-     * Fluxes are measured in watts/m2 Not every object will have a measurement in every band.  Some objects will
-     * have no flux measurements. The standard bands are:
-     */
-    private String luminosity;
-
-    /**
-     * Apparent magnitude
-     */
-    private String apparentMagnitude;
-
-    /**
-     * Absolute magnitude
-     */
-    private String absoluteMagnitude;
-
-    /**
-     * Magnitude in the astronomic "U" band
-     */
+    /** Magnitude in U band */
     private double magu = 0.0;
 
-    /**
-     * Magnitude in the astronomic "B" band
-     */
+    /** Magnitude in B band */
     private double magb = 0.0;
 
-    /**
-     * Magnitude in the astronomic "V" band
-     */
+    /** Magnitude in V band */
     private double magv = 0.0;
 
-    /**
-     * Magnitude in the astronomic "R" band
-     */
+    /** Magnitude in R band */
     private double magr = 0.0;
 
-    /**
-     * Magnitude in the astronomic "I" band
-     */
+    /** Magnitude in I band */
     private double magi = 0.0;
 
-    ///////////////////  for fiction writing   //////////////
-    /**
-     * this is a generic marker that means that this is marked by other
-     * <p>
-     * user defined
-     */
-    private boolean other;
+    // ==================== Metadata ====================
 
-    /**
-     * this is a flag for whether there is an anomaly
-     */
-    private boolean anomaly;
+    /** Free form text field for notes */
+    @Lob
+    private String notes = "";
 
-    /**
-     * What polity does this object belong to.  Obviously, it has to be null or one of the polities listed in
-     * the theme above.
-     */
-    private String polity;
+    /** Source catalog system */
+    @Lob
+    private String source = "";
 
-    /**
-     * the type of world
-     */
-    private String worldType;
+    /** Whether this is a real star or fictional */
+    @NotNull
+    private boolean realStar = true;
 
-    /**
-     * the type of fuel
-     */
-    private String fuelType;
+    /** Flag indicating if this system has exoplanets */
+    private boolean exoplanets = false;
 
-    /**
-     * the type of port
-     */
-    private String portType;
+    /** Number of exoplanets */
+    private int numExoplanets = 0;
 
-    /**
-     * the type of population
-     */
-    private String populationType;
+    // ==================== Custom/Misc Fields ====================
 
-    /**
-     * the tech type
-     */
-    private String techType;
+    private String miscText1 = "";
+    private String miscText2 = "";
+    private String miscText3 = "";
+    private String miscText4 = "";
+    private String miscText5 = "";
 
-    /**
-     * the product type
-     */
-    private String productType;
-
-    /**
-     * the type of military in space
-     */
-    private String milSpaceType;
-
-    /**
-     * the type of military on the planet
-     */
-    private String milPlanType;
-
-    /**
-     * age of the star
-     */
-    private double age;
-
-    /**
-     * star metallicity
-     */
-    private double metallicity;
-
-    /////////////   Miscellaneous   /////////////////////////////////////
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText1;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText2;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText3;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText4;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText5;
-
-    /**
-     * for user custom use in future versions
-     */
     private double miscNum1 = 0.0;
-
-    /**
-     * for user custom use in future versions
-     */
     private double miscNum2 = 0.0;
-
-    /**
-     * for user custom use in future versions
-     */
     private double miscNum3 = 0.0;
-
-    /**
-     * for user custom use in future versions
-     */
     private double miscNum4 = 0.0;
-
-    /**
-     * for user custom use in future versions
-     */
     private double miscNum5 = 0.0;
 
-    /**
-     * a flag that tells us if this system has exoplanets
-     * flag is set on read of number of exoplanets
-     */
-    private boolean exoplanets;
+    // ==================== Display Properties ====================
 
-    /**
-     * the number of exoplanets
-     */
-    private int numExoplanets;
-
-    ///////////////////////
-
-    /**
-     * there are times when we want to ensure that the label is always show and not part of the algorithm for display
-     * <p>
-     * not from file
-     */
+    /** Force the label to always be shown */
     private boolean forceLabelToBeShown = false;
 
-    /**
-     * this is a computed heuristic that tells us whether to show the label on the graphics display or not
-     * <p>
-     * not from file
-     */
-    private double displayScore = 0;
+    /** Computed heuristic for display label visibility */
+    private double displayScore = 0.0;
 
-
-    ///////////////////////////////////////
-
+    // ==================== Constructor ====================
 
     public StarObject() {
         init();
@@ -595,96 +297,19 @@ public class StarObject implements Serializable {
         realStar = true;
         displayName = "no name";
         source = "no source identified";
-        catalogIdList = "NA";
         epoch = "J2000";
-        x = 0;
-        y = 0;
-        z = 0;
-        radius = 0;
-        ra = 0;
-        pmra = 0;
-        declination = 0;
-        pmdec = 0;
-        parallax = 0;
-        distance = 0;
-        radialVelocity = 0;
-        spectralClass = "";
-        temperature = 0;
-        bprp = 0;
-        bpg = 0;
-        grp = 0;
-        other = false;
-        luminosity = " ";
-        magu = 0;
-        magb = 0;
-        magv = 0;
-        magr = 0;
-        magi = 0;
-        polity = "NA";
-        worldType = "NA";
-        fuelType = "NA";
-        portType = "NA";
-        populationType = "NA";
-        techType = "NA";
-        productType = "NA";
-        milSpaceType = "NA";
         notes = "initial star file load";
-
-        simbadId = "";
-        bayerCatId = "";
-        flamsteedCatId = "";
-        gaiaDR3CatId = "";
-        gaiaEDR3CatId = "";
-        csiCatId = "";
-        twoMassCatId = "";
-        tycho2CatId = "";
-        hipCatId = "";
-        hdCatId = "";
-        glieseCatId = "";
         commonName = "";
-        age = 0;
-        metallicity = 0;
-        galacticLat = 0.0;
-        galacticLong = 0.0;
-        gaiaDR2CatId = "";
+        constellationName = "";
 
-        exoplanets = false;
+        catalogIds = new StarCatalogIds();
+        catalogIds.initDefaults();
 
-        miscNum1 = 0;
-        miscNum2 = 0;
-        miscNum3 = 0;
-        miscNum4 = 0;
-        miscNum5 = 0;
-
-        miscText1 = "";
-        miscText2 = "";
-        miscText3 = "";
-        miscText4 = "";
-        miscText5 = "";
-
-        displayScore = 0;
+        worldBuilding = new StarWorldBuilding();
+        worldBuilding.initDefaults();
     }
 
-
-    /////////////////  convertors  /////////////
-
-    public String getRawCatalogIdList() {
-        return catalogIdList;
-    }
-
-    public List<String> getCatalogIdList() {
-        if (catalogIdList == null) {
-            return new ArrayList<>();
-        }
-        if (catalogIdList.equals("NA")) {
-            return new ArrayList<>();
-        }
-        return Arrays.asList(catalogIdList.split("\\s*,\\s*"));
-    }
-
-    public void setCatalogIdList(String catalogIdList) {
-        this.catalogIdList = catalogIdList;
-    }
+    // ==================== Coordinate Methods ====================
 
     @PrePersist
     @PreUpdate
@@ -730,197 +355,41 @@ public class StarObject implements Serializable {
         z = coordinates[2];
     }
 
+    // ==================== Display Score ====================
 
     /**
-     * calculate the display score
+     * Calculate the display score using the utility class.
      */
     public void calculateDisplayScore() {
-        displayScore = calculateBaseScore() * calculateLabelMultiplier();
+        displayScore = DisplayScoreCalculator.calculate(this);
     }
 
-    /**
-     * calculate the display score multiplier
-     *
-     * @return the multiplier
-     */
-    private double calculateLabelMultiplier() {
-
-        double cumulativeTotal = 0;
-
-        // 1. Is there something in the Common Name field?
-        if (!commonName.isEmpty()) {
-            cumulativeTotal += 3;
-        }
-
-        // 2. Does the star have a Flamsteed catalog ID?
-        //      In the CatalogID field there will be a value of "* nnn Con"
-        //      where nnn is an integer and Con is a constellation Abbreviation
-        Matcher flamMatcher = flamsteedPattern.matcher(catalogIdList);
-        if (flamMatcher.find()) {
-            cumulativeTotal += 3;
-        }
-
-        // 3. Does the star have a Bayer catalog ID?
-        //      "* ggg Con" in CatalogID where GGG is
-        //      a greek letter abbreviation, a-z, or A-Q  and Con is a constellation abbreviation
-        Matcher bayerMatcher = bayerPattern.matcher(catalogIdList);
-        if (bayerMatcher.find()) {
-            cumulativeTotal += 3;
-        }
-
-        // 4. Is the star in the BD catalog?
-        //      BD and DM are the same thing
-        //      An entry in CatalogID staring with BD+ or BD-
-        if (catalogIdList.contains("BD+") || catalogIdList.contains("BD-")) {
-            cumulativeTotal += 1.5;
-        }
-
-        // 5. Is the star in the Gliese catalog?
-        //      "GJ " in Catalog ID
-        //      This is tricky. Alph Cen is GJ 559 But because it's binary, Alph Cen A is in GJ as GJ 559A and
-        //      "GJ 559" isn't in the base catalog right now, because Simbad doesn't list it.
-        if (catalogIdList.contains("GJ")) {
-            cumulativeTotal += 1.5;
-        }
-
-        // 6. Is the star in Hipparchos?
-        //      "HIP " in Catalog ID
-        //      Same problem. Alpha Cen A is HIP 71683  Alph Cen is not in HIP…
-        if (catalogIdList.contains("HIP")) {
-            cumulativeTotal += 1.5;
-        }
-
-        // 7. Is the star in Henry Draper?
-        //      "HD " in Catalog ID?
-        if (catalogIdList.contains("HD")) {
-            cumulativeTotal += 1.5;
-        }
-
-        // 8. is there an entry in polity?
-        if (!polity.trim().isEmpty()) {
-            cumulativeTotal += 3;
-        }
-
-        // check if any other fictional item is set
-        if (otherFictionalFieldsPresent()) {
-            cumulativeTotal += 3;
-        }
-
-        // 10. If none of the above, make the multiplier one. (1)
-        if (cumulativeTotal == 0) {
-            cumulativeTotal = 1;
-        }
-
-        return cumulativeTotal;
-    }
-
-    private boolean otherFictionalFieldsPresent() {
-        if (!worldType.trim().isEmpty()) {
-            return true;
-        }
-        if (!fuelType.trim().isEmpty()) {
-            return true;
-        }
-        if (!portType.trim().isEmpty()) {
-            return true;
-        }
-        if (!populationType.trim().isEmpty()) {
-            return true;
-        }
-        if (!techType.trim().isEmpty()) {
-            return true;
-        }
-
-        if (!milSpaceType.trim().isEmpty()) {
-            return true;
-        }
-
-        return !milPlanType.trim().isEmpty();
-    }
-
-    private double calculateBaseScore() {
-        int base = 0;
-
-//        log.info("display name = <{}>, orthoSpectralClass = <{}>", displayName, orthoSpectralClass);
-        StarModel starModel = new StarCreator().parseSpectral(orthoSpectralClass);
-
-        if (starModel.getStellarClass() == null) {
-            log.error("could not find stellar class");
-            return 1;
-        }
-
-        // process harvard spectral class
-        if (orthoSpectralClass.length() > 1) {
-            StellarType x = starModel.getStellarClass();
-            String harvardSpecClass = starModel.getStellarClass().getValue();
-
-            switch (harvardSpecClass) {
-                case "O", "A", "B" -> base += 2;
-                case "F", "K" -> base += 4;
-                case "G" -> base += 5;
-                case "M" -> base += 3;
-                case "L", "T", "Y" -> base += 1;
-            }
-        }
-
-
-        // process luminosity
-        String luminosityValue = starModel.getLuminosityClass();
-        if (luminosityValue != null && !luminosityValue.isEmpty()) {
-            int lumNum = 1;
-            switch (luminosityValue) {
-                case "I" -> lumNum = 1;
-                case "II" -> lumNum = 2;
-                case "III" -> lumNum = 3;
-                case "IV" -> lumNum = 4;
-                case "V" -> lumNum = 5;
-                case "VI" -> lumNum = 6;
-                case "VII" -> lumNum = 7;
-                case "VIII" -> lumNum = 8;
-                case "IX" -> lumNum = 9;
-                case "X" -> lumNum = 10;
-            }
-            base += (11 - lumNum);
-        } else {
-            base += 1;
-        }
-
-        return base;
-    }
+    // ==================== Conversion Methods ====================
 
     public SimStar toSimStar() {
-
-        // create an idealized star model based on spectral class
         StarCreator starCreator = new StarCreator();
         StarModel starModel;
-        if (!spectralClass.contains("fictional")) {
+        if (spectralClass != null && !spectralClass.contains("fictional")) {
             starModel = starCreator.parseSpectral(spectralClass);
         } else {
             starModel = starCreator.parseSpectral(orthoSpectralClass);
         }
 
-        // generate  a sim star form the idealized star
         SimStar simStar = starModel.toSimStar();
 
         if (mass != 0) {
-            double sMass = StarUtils.relativeMass(mass);
-            simStar.setMass(sMass);
+            simStar.setMass(StarUtils.relativeMass(mass));
         }
-
         if (radius != 0) {
-            double sRadius = StarUtils.relativeRadius(radius);
-            simStar.setRadius(sRadius);
+            simStar.setRadius(StarUtils.relativeRadius(radius));
         }
-
-        if (!luminosity.isEmpty()) {
+        if (luminosity != null && !luminosity.isEmpty()) {
             try {
-                double dLuminosity = Double.parseDouble(luminosity);
-                simStar.setLuminosity(dLuminosity);
+                simStar.setLuminosity(Double.parseDouble(luminosity));
             } catch (NumberFormatException nfe) {
                 log.error("luminosity value is bad:<{}>", luminosity);
             }
         }
-
         if (temperature != 0) {
             simStar.setTemperature(temperature);
         }
@@ -929,44 +398,24 @@ public class StarObject implements Serializable {
     }
 
     public void fromChvRecord(Dataset dataset, ChViewRecord chViewRecord) {
-
-        // preset
         init();
 
         this.dataSetName = dataset.getName();
         this.realStar = true;
         this.displayName = chViewRecord.getStarName();
-
-
-        if (chViewRecord.getConstellation() != null) {
-            this.constellationName = chViewRecord.getConstellation();
-        } else {
-            this.constellationName = "";
-        }
-
-        // set the collapsed mass
+        this.constellationName = chViewRecord.getConstellation() != null ? chViewRecord.getConstellation() : "";
         this.mass = chViewRecord.getCollapsedMass();
-
-        // mark that this is the first load of this object
-        if (chViewRecord.getComment() != null) {
-            this.notes = chViewRecord.getComment();
-        } else {
-            this.notes = "";
-        }
-
+        this.notes = chViewRecord.getComment() != null ? chViewRecord.getComment() : "";
 
         this.setCoordinates(chViewRecord.getOrdinates());
         this.setDistance(Double.parseDouble(chViewRecord.getDistanceToEarth()));
-
         this.setRadius(chViewRecord.getRadius());
 
         StarModel starModel = new StarCreator().parseSpectral(chViewRecord.getOrthoSpectra());
         if (starModel.getStellarClass() == null) {
-            log.info("spectral class could not be verified, spectra = "
-                    + chViewRecord.getSpectra()
-                    + "\n\tchv record = " + chViewRecord);
+            log.info("spectral class could not be verified, spectra = {} chv record = {}",
+                    chViewRecord.getSpectra(), chViewRecord);
         }
-
 
         this.setSpectralClass(chViewRecord.getSpectra());
         this.setOrthoSpectralClass(chViewRecord.getOrthoSpectra());
@@ -978,10 +427,6 @@ public class StarObject implements Serializable {
             case 8 -> this.setPolity(CivilizationDisplayPreferences.TERRAN);
         }
         this.setSource("CHView");
-
-        // figure out display score
-//        calculateLabelMultiplier();
-
     }
 
     public SparseStarRecord toSparseStarRecord() {
@@ -992,78 +437,89 @@ public class StarObject implements Serializable {
         return sparseStarRecord;
     }
 
-    // Manual getters/setters (Lombok @Getter/@Setter should generate these but adding explicitly)
-    public void setPolity(String polity) {
-        this.polity = polity;
-    }
+    // ==================== Backward-Compatible Accessors ====================
+    // These delegate to embedded objects to maintain compatibility with existing code
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+    // --- Catalog ID Accessors ---
 
-    public String getDisplayName() {
-        return displayName;
-    }
+    public String getSimbadId() { return catalogIds.getSimbadId(); }
+    public void setSimbadId(String simbadId) { catalogIds.setSimbadId(simbadId); }
 
-    public void setDistance(double distance) {
-        this.distance = distance;
-    }
+    public String getBayerCatId() { return catalogIds.getBayerCatId(); }
+    public void setBayerCatId(String bayerCatId) { catalogIds.setBayerCatId(bayerCatId); }
 
-    public void setRadius(double radius) {
-        this.radius = radius;
-    }
+    public String getGlieseCatId() { return catalogIds.getGlieseCatId(); }
+    public void setGlieseCatId(String glieseCatId) { catalogIds.setGlieseCatId(glieseCatId); }
 
-    public void setSpectralClass(String spectralClass) {
-        this.spectralClass = spectralClass;
-    }
+    public String getHipCatId() { return catalogIds.getHipCatId(); }
+    public void setHipCatId(String hipCatId) { catalogIds.setHipCatId(hipCatId); }
 
-    public void setOrthoSpectralClass(String orthoSpectralClass) {
-        this.orthoSpectralClass = orthoSpectralClass;
-    }
+    public String getHdCatId() { return catalogIds.getHdCatId(); }
+    public void setHdCatId(String hdCatId) { catalogIds.setHdCatId(hdCatId); }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getFlamsteedCatId() { return catalogIds.getFlamsteedCatId(); }
+    public void setFlamsteedCatId(String flamsteedCatId) { catalogIds.setFlamsteedCatId(flamsteedCatId); }
 
-    public void setDataSetName(String dataSetName) {
-        this.dataSetName = dataSetName;
-    }
+    public String getTycho2CatId() { return catalogIds.getTycho2CatId(); }
+    public void setTycho2CatId(String tycho2CatId) { catalogIds.setTycho2CatId(tycho2CatId); }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
+    public String getGaiaDR2CatId() { return catalogIds.getGaiaDR2CatId(); }
+    public void setGaiaDR2CatId(String gaiaDR2CatId) { catalogIds.setGaiaDR2CatId(gaiaDR2CatId); }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+    public String getGaiaDR3CatId() { return catalogIds.getGaiaDR3CatId(); }
+    public void setGaiaDR3CatId(String gaiaDR3CatId) { catalogIds.setGaiaDR3CatId(gaiaDR3CatId); }
 
-    public void setX(double x) {
-        this.x = x;
-    }
+    public String getGaiaEDR3CatId() { return catalogIds.getGaiaEDR3CatId(); }
+    public void setGaiaEDR3CatId(String gaiaEDR3CatId) { catalogIds.setGaiaEDR3CatId(gaiaEDR3CatId); }
 
-    public void setY(double y) {
-        this.y = y;
-    }
+    public String getTwoMassCatId() { return catalogIds.getTwoMassCatId(); }
+    public void setTwoMassCatId(String twoMassCatId) { catalogIds.setTwoMassCatId(twoMassCatId); }
 
-    public void setZ(double z) {
-        this.z = z;
-    }
+    public String getCsiCatId() { return catalogIds.getCsiCatId(); }
+    public void setCsiCatId(String csiCatId) { catalogIds.setCsiCatId(csiCatId); }
 
-    public void setForceLabelToBeShown(boolean forceLabelToBeShown) {
-        this.forceLabelToBeShown = forceLabelToBeShown;
-    }
+    public String getRawCatalogIdList() { return catalogIds.getRawCatalogIdList(); }
 
-    public String getOrthoSpectralClass() {
-        return orthoSpectralClass;
-    }
+    public List<String> getCatalogIdList() { return catalogIds.getCatalogIdListParsed(); }
 
-    public double getMass() {
-        return mass;
-    }
+    public void setCatalogIdList(String catalogIdList) { catalogIds.setCatalogIdList(catalogIdList); }
 
-    public String getConstellationName() {
-        return constellationName;
-    }
+    // --- World Building Accessors ---
+
+    public String getPolity() { return worldBuilding.getPolity(); }
+    public void setPolity(String polity) { worldBuilding.setPolity(polity); }
+
+    public String getWorldType() { return worldBuilding.getWorldType(); }
+    public void setWorldType(String worldType) { worldBuilding.setWorldType(worldType); }
+
+    public String getFuelType() { return worldBuilding.getFuelType(); }
+    public void setFuelType(String fuelType) { worldBuilding.setFuelType(fuelType); }
+
+    public String getPortType() { return worldBuilding.getPortType(); }
+    public void setPortType(String portType) { worldBuilding.setPortType(portType); }
+
+    public String getPopulationType() { return worldBuilding.getPopulationType(); }
+    public void setPopulationType(String populationType) { worldBuilding.setPopulationType(populationType); }
+
+    public String getTechType() { return worldBuilding.getTechType(); }
+    public void setTechType(String techType) { worldBuilding.setTechType(techType); }
+
+    public String getProductType() { return worldBuilding.getProductType(); }
+    public void setProductType(String productType) { worldBuilding.setProductType(productType); }
+
+    public String getMilSpaceType() { return worldBuilding.getMilSpaceType(); }
+    public void setMilSpaceType(String milSpaceType) { worldBuilding.setMilSpaceType(milSpaceType); }
+
+    public String getMilPlanType() { return worldBuilding.getMilPlanType(); }
+    public void setMilPlanType(String milPlanType) { worldBuilding.setMilPlanType(milPlanType); }
+
+    public boolean isOther() { return worldBuilding.isOther(); }
+    public void setOther(boolean other) { worldBuilding.setOther(other); }
+
+    public boolean isAnomaly() { return worldBuilding.isAnomaly(); }
+    public void setAnomaly(boolean anomaly) { worldBuilding.setAnomaly(anomaly); }
+
+    // ==================== Equals & HashCode ====================
 
     @Override
     public boolean equals(Object o) {
