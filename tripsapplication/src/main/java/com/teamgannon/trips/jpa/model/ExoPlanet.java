@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Column;
@@ -13,6 +14,9 @@ import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Lob;
 import javax.persistence.Table;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Yes, this appears to be a header or schema for a dataset related to exoplanets. The fields describe various properties and characteristics of exoplanets and their host stars.
@@ -81,7 +85,10 @@ import javax.persistence.Table;
         @Index(name = "idx_exoplanet_system_status", columnList = "solarSystemId, planetStatus"),
         @Index(name = "idx_exoplanet_host_moon", columnList = "hostStarId, isMoon")
 })
-public class ExoPlanet {
+public class ExoPlanet implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     private String id;
@@ -700,4 +707,16 @@ public class ExoPlanet {
     @Lob
     private byte[] proceduralPreview;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        ExoPlanet exoPlanet = (ExoPlanet) o;
+        return id != null && Objects.equals(id, exoPlanet.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

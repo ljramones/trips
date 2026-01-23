@@ -102,17 +102,21 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
 
 
     /**
-     * get star objects that match query as a Java 8 stream
+     * Get star objects that match query as a Java 8 stream.
+     * <p>
+     * Note: The stream must be consumed within the same transaction context.
+     * Use try-with-resources to ensure proper cleanup.
      *
-     * @param astroSearchQuery the astro query the query
+     * @param astroSearchQuery the astro query
      * @return the stream of objects
-     * @TODO: 2021-02-24  Currently this fails on first read. No idea why. Don't use until I figure it out
      */
     public Stream<StarObject> findBySearchQueryStream(@NotNull AstroSearchQuery astroSearchQuery) {
-        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
-        int totalRows = typedQuery.getResultList().size();
+        // Use the dedicated count query instead of consuming the result list
+        long totalRows = countBySearchQuery(astroSearchQuery);
         log.info("number of records found={}", totalRows);
 
+        // Create a fresh query for streaming (the count query consumed the previous one conceptually)
+        TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
         return typedQuery.getResultStream();
     }
 

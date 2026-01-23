@@ -329,22 +329,43 @@ public class StarObject implements Serializable {
         }
     }
 
+    /**
+     * Get the X coordinate. Returns the raw value without side effects.
+     * Coordinates are computed by @PrePersist/@PreUpdate when the entity is saved.
+     */
     public double getX() {
-        getCoordinates();
         return x;
     }
 
+    /**
+     * Get the Y coordinate. Returns the raw value without side effects.
+     * Coordinates are computed by @PrePersist/@PreUpdate when the entity is saved.
+     */
     public double getY() {
-        getCoordinates();
         return y;
     }
 
+    /**
+     * Get the Z coordinate. Returns the raw value without side effects.
+     * Coordinates are computed by @PrePersist/@PreUpdate when the entity is saved.
+     */
     public double getZ() {
-        getCoordinates();
         return z;
     }
 
+    /**
+     * Get coordinates as an array. Returns raw values without side effects.
+     * Use computeCoordinatesIfNeeded() if you need to trigger coordinate calculation.
+     */
     public double[] getCoordinates() {
+        return new double[]{x, y, z};
+    }
+
+    /**
+     * Compute coordinates from RA/Dec/distance if they haven't been set.
+     * Call this explicitly if you need coordinates before persisting the entity.
+     */
+    public void computeCoordinatesIfNeeded() {
         if (x == 0.0 && y == 0.0 && z == 0.0 && distance > 0) {
             double[] computed = com.teamgannon.trips.astrogation.Coordinates
                     .calculateEquatorialCoordinates(ra, declination, distance);
@@ -352,7 +373,6 @@ public class StarObject implements Serializable {
             y = computed[1];
             z = computed[2];
         }
-        return new double[]{x, y, z};
     }
 
     public void setCoordinates(double[] coordinates) {
