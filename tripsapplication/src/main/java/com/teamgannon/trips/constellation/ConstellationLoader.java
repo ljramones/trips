@@ -7,9 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Slf4j
@@ -28,18 +31,20 @@ public class ConstellationLoader {
 
     @PostConstruct
     public void initialize() {
-        try {
-            File file = new File(localization.getProgramdata()+"constellation.csv");
-            List<Constellation> constellationList = new CsvToBeanBuilder(new FileReader(file))
+        Path file = Paths.get(localization.getProgramdata(), "constellation.csv");
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            List<Constellation> constellationList = new CsvToBeanBuilder(reader)
                     .withType(Constellation.class)
                     .build()
                     .parse();
             for (Constellation constellation : constellationList) {
                 tripsContext.getConstellationMap().put(constellation.getName(), constellation);
             }
-            log.info("\n\nConstellation map loaded");
-        } catch (FileNotFoundException e) {
-            log.error("file not found due to:" + e.getMessage());
+            log.info("Constellation map loaded from {}", file);
+        } catch (IOException e) {
+            log.error("Failed to read constellation data from {}: {}", file, e.getMessage(), e);
+        } catch (RuntimeException e) {
+            log.error("Failed to parse constellation data from {}: {}", file, e.getMessage(), e);
         }
     }
 
