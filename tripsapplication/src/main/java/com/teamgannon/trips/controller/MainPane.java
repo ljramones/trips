@@ -19,18 +19,9 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.*;
-import com.teamgannon.trips.measure.OshiMeasure;
 import com.teamgannon.trips.report.ReportManager;
-import com.teamgannon.trips.routing.automation.RouteFinderInView;
-import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
-import com.teamgannon.trips.screenobjects.ObjectViewPane;
-import com.teamgannon.trips.screenobjects.StarPropertiesPane;
 import com.teamgannon.trips.search.SearchContext;
 import com.teamgannon.trips.service.*;
-import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
-import com.teamgannon.trips.transits.TransitCalculationService;
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -119,12 +110,10 @@ public class MainPane  {
 
     private final Localization localization;
     private final ApplicationEventPublisher eventPublisher;
-    private final DataExportService dataExportService;
 
     ////// injected properties
     public Pane mainPanel;
     public MenuBar menuBar;
-
 
     ////  local assets
     public StackPane displayPane;
@@ -138,10 +127,7 @@ public class MainPane  {
     private Label busyLabel;
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
-    private final RoutingPanel routingPanel;
     private final SharedUIFunctions sharedUIFunctions;
-    private final StarPropertiesPane starPropertiesPane;
-    private final ObjectViewPane objectViewPane;
 
     /**
      * the query dialog
@@ -149,21 +135,12 @@ public class MainPane  {
     private QueryDialog queryDialog;
 
     private Stage primaryStage;
-    private final OshiMeasure oshiMeasure;
-    private final StarMeasurementService starMeasurementService;
-    private final LargeGraphSearchService largeGraphSearchService;
-    private final RouteFinderInView routeFinderInView;
     private final TripsContext tripsContext;
-
-
 
     private final DatasetService datasetService;
     private final SystemPreferencesService systemPreferencesService;
     private final TransitService transitService;
     private final StarService starService;
-    private final BulkLoadService bulkLoadService;
-    private final DataImportService dataImportService;
-    private final TransitCalculationService transitCalculationService;
 
     // state settings for control positions
 
@@ -173,8 +150,6 @@ public class MainPane  {
     private double originalHeight = Universe.boxHeight;
     private double originalWidth = Universe.boxWidth;
 
-    private final HostServices hostServices;
-
     private final FxWeaver fxWeaver;
 
     private final SliderControlManager sliderControlManager;
@@ -182,16 +157,26 @@ public class MainPane  {
     private final MainSplitPaneManager mainSplitPaneManager;
 
     /**
-     * constructor
+     * Constructor for MainPane.
      *
-     * @param fxWeaver     the FX Weaver for integrating Spring boot and JavaFX
-     * @param tripsContext our trips context
+     * @param fxWeaver                   the FX Weaver for integrating Spring boot and JavaFX
+     * @param tripsContext               our trips context
+     * @param appContext                 the Spring application context
+     * @param databaseManagementService  database management service
+     * @param datasetService             dataset service
+     * @param systemPreferencesService   system preferences service
+     * @param transitService             transit service
+     * @param starService                star service
+     * @param localization               localization settings
+     * @param eventPublisher             event publisher
+     * @param statusBarController        status bar controller
+     * @param sliderControlManager       slider control manager
+     * @param sharedUIFunctions          shared UI functions
+     * @param sharedUIState              shared UI state
+     * @param interstellarSpacePane      the 3D visualization pane
+     * @param mainSplitPaneManager       main split pane manager
      */
     public MainPane(FxWeaver fxWeaver,
-                    OshiMeasure oshiMeasure,
-                    StarMeasurementService starMeasurementService,
-                    LargeGraphSearchService largeGraphSearchService,
-                    RouteFinderInView routeFinderInView,
                     TripsContext tripsContext,
                     ApplicationContext appContext,
                     DatabaseManagementService databaseManagementService,
@@ -199,55 +184,32 @@ public class MainPane  {
                     SystemPreferencesService systemPreferencesService,
                     TransitService transitService,
                     StarService starService,
-                    BulkLoadService bulkLoadService,
-                    DataImportService dataImportService,
-                    TransitCalculationService transitCalculationService,
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
-                    DataExportService dataExportService,
-                    RoutingPanel routingPanel,
-                    ObjectViewPane objectViewPane,
                     StatusBarController statusBarController,
                     SliderControlManager sliderControlManager,
                     SharedUIFunctions sharedUIFunctions,
-                    StarPropertiesPane starPropertiesPane,
                     SharedUIState sharedUIState,
                     InterstellarSpacePane interstellarSpacePane,
                     MainSplitPaneManager mainSplitPaneManager) {
 
-        hostServices = fxWeaver.getBean(HostServices.class);
         this.fxWeaver = fxWeaver;
-        this.oshiMeasure = oshiMeasure;
-        this.starMeasurementService = starMeasurementService;
-        this.largeGraphSearchService = largeGraphSearchService;
-        this.routeFinderInView = routeFinderInView;
-
         this.tripsContext = tripsContext;
+        this.searchContext = tripsContext.getSearchContext();
+        this.appContext = appContext;
+        this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
         this.systemPreferencesService = systemPreferencesService;
         this.transitService = transitService;
         this.starService = starService;
-        this.bulkLoadService = bulkLoadService;
-        this.dataImportService = dataImportService;
-        this.transitCalculationService = transitCalculationService;
-
-        this.searchContext = tripsContext.getSearchContext();
-        this.appContext = appContext;
-
-        this.databaseManagementService = databaseManagementService;
         this.localization = localization;
         this.eventPublisher = eventPublisher;
-        this.routingPanel = routingPanel;
-        this.objectViewPane = objectViewPane;
         this.statusBarController = statusBarController;
         this.sliderControlManager = sliderControlManager;
         this.sharedUIFunctions = sharedUIFunctions;
-        this.starPropertiesPane = starPropertiesPane;
+        this.sharedUIState = sharedUIState;
         this.interstellarSpacePane = interstellarSpacePane;
         this.mainSplitPaneManager = mainSplitPaneManager;
-
-        this.dataExportService = dataExportService;
-        this.sharedUIState = sharedUIState;
     }
 
 
