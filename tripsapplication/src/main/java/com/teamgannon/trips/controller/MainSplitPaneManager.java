@@ -3,28 +3,18 @@ package com.teamgannon.trips.controller;
 import com.teamgannon.trips.algorithms.Universe;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
-import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
-import com.teamgannon.trips.controller.splitpane.SplitPaneView;
-import com.teamgannon.trips.controller.splitpane.RightPanelCoordinator;
-import com.teamgannon.trips.controller.splitpane.SearchContextCoordinator;
-import com.teamgannon.trips.controller.statusbar.StatusBarController;
-import com.teamgannon.trips.controller.splitpane.RightPanelController;
-import com.teamgannon.trips.controller.splitpane.LeftDisplayController;
+import com.teamgannon.trips.controller.splitpane.*;
 import com.teamgannon.trips.dialogs.ExportQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.events.*;
-import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.graphics.PlotManager;
-import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.javafxsupport.BackgroundTaskRunner;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.service.DataExportService;
@@ -48,10 +38,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
@@ -63,7 +51,6 @@ public class MainSplitPaneManager {
 
     private final SharedUIFunctions sharedUIFunctions;
     private final ApplicationEventPublisher eventPublisher;
-    private final StatusBarController statusBarController;
     private final TripsContext tripsContext;
     private PlotManager plotManager;
     private final DataExportService dataExportService;
@@ -72,6 +59,11 @@ public class MainSplitPaneManager {
     private final RightPanelCoordinator rightPanelCoordinator;
     private final SearchContextCoordinator searchContextCoordinator;
     private final FxWeaver fxWeaver;
+
+    // Event handlers
+    private final RouteEventHandler routeEventHandler;
+    private final DataSetEventHandler dataSetEventHandler;
+    private final ViewContextHandler viewContextHandler;
 
     private final RoutingPanel routingPanel;
 
@@ -104,7 +96,6 @@ public class MainSplitPaneManager {
      */
     private final InterstellarSpacePane interstellarSpacePane;
     private final StarService starService;
-    private final ExoPlanetRepository exoPlanetRepository;
     private SplitPaneView splitPaneView;
     private RightPanelController rightPanelController;
     private LeftDisplayController leftDisplayController;
@@ -119,7 +110,6 @@ public class MainSplitPaneManager {
     @Autowired
     public MainSplitPaneManager(SharedUIFunctions sharedUIFunctions,
                                 ApplicationEventPublisher eventPublisher,
-                                StatusBarController statusBarController,
                                 TripsContext tripsContext,
                                 RoutingPanel routingPanel,
                                 Localization localization,
@@ -128,13 +118,14 @@ public class MainSplitPaneManager {
                                 DataExportService dataExportService,
                                 InterstellarSpacePane interstellarSpacePane,
                                 StarService starService,
-                                ExoPlanetRepository exoPlanetRepository,
                                 FxWeaver fxWeaver,
                                 RightPanelCoordinator rightPanelCoordinator,
-                                SearchContextCoordinator searchContextCoordinator) {
+                                SearchContextCoordinator searchContextCoordinator,
+                                RouteEventHandler routeEventHandler,
+                                DataSetEventHandler dataSetEventHandler,
+                                ViewContextHandler viewContextHandler) {
         this.sharedUIFunctions = sharedUIFunctions;
         this.eventPublisher = eventPublisher;
-        this.statusBarController = statusBarController;
         this.tripsContext = tripsContext;
         this.routingPanel = routingPanel;
         this.localization = localization;
@@ -145,8 +136,10 @@ public class MainSplitPaneManager {
         this.searchContextCoordinator = searchContextCoordinator;
         this.interstellarSpacePane = interstellarSpacePane;
         this.starService = starService;
-        this.exoPlanetRepository = exoPlanetRepository;
         this.fxWeaver = fxWeaver;
+        this.routeEventHandler = routeEventHandler;
+        this.dataSetEventHandler = dataSetEventHandler;
+        this.viewContextHandler = viewContextHandler;
     }
 
     public void initialize(SliderControlManager sliderControlManager, PlotManager plotManager) {
@@ -183,6 +176,11 @@ public class MainSplitPaneManager {
 
         // Initialize SharedUIFunctions
         sharedUIFunctions.initialize(plotManager, mainSplitPane, sliderControlManager);
+
+        // Initialize event handlers
+        routeEventHandler.initialize(plotManager);
+        dataSetEventHandler.initialize(rightPanelController);
+        viewContextHandler.initialize(leftDisplayController);
     }
 
     private void connectSolarSystemReferenceControls() {
@@ -528,237 +526,13 @@ public class MainSplitPaneManager {
         });
     }
 
-    @EventListener
-    public void onRoutingStatusEvent(RoutingStatusEvent event) {
-        FxThread.runOnFxThread(() -> {
-            try {
-                statusBarController.routingStatus(event.isStatusFlag());
-            } catch (Exception e) {
-                log.error("Error handling routing status event", e);
-            }
-        });
-    }
-
-    @EventListener
-    public void onNewRouteEvent(NewRouteEvent event) {
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Saving new route..."));
-        String taskId = createTaskId("add-route");
-        BackgroundTaskRunner.TaskHandle taskHandle = BackgroundTaskRunner.runCancelable(
-                "trips-add-route",
-                () -> {
-                    DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
-                    RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    datasetService.addRouteToDataSet(dataSetDescriptor, routeDescriptor);
-                    return null;
-                },
-                result -> FxThread.runOnFxThread(() -> {
-                    log.info("new route");
-                    DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
-                    routingPanel.setContext(dataSetDescriptor, plotManager.getRouteVisibility());
-                    statusBarController.routingStatus(false);
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route saved."));
-                }),
-                exception -> FxThread.runOnFxThread(() -> {
-                    if (isCancellation(exception)) {
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route save cancelled."));
-                        return;
-                    }
-                    String message = exception == null ? "Failed to add route." : exception.getMessage();
-                    showErrorAlert("Route Update Error", message);
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to save route."));
-                }),
-                () -> eventPublisher.publishEvent(new BusyStateEvent(this, taskId, false, null, null)));
-        eventPublisher.publishEvent(new BusyStateEvent(this, taskId, true, "Saving route...", taskHandle::cancel));
-    }
-
-    @EventListener
-    public void onUpdateRouteEvent(UpdateRouteEvent event) {
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Updating route..."));
-        String taskId = createTaskId("update-route");
-        BackgroundTaskRunner.TaskHandle taskHandle = BackgroundTaskRunner.runCancelable(
-                "trips-update-route",
-                () -> {
-                    RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    String datasetName = searchContextCoordinator.getCurrentDataSetName();
-                    return datasetService.updateRoute(datasetName, routeDescriptor);
-                },
-                descriptor -> FxThread.runOnFxThread(() -> {
-                    log.info("update route");
-                    searchContextCoordinator.setDescriptor(descriptor);
-                    routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-                    interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route updated."));
-                }),
-                exception -> FxThread.runOnFxThread(() -> {
-                    if (isCancellation(exception)) {
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route update cancelled."));
-                        return;
-                    }
-                    String message = exception == null ? "Failed to update route." : exception.getMessage();
-                    showErrorAlert("Route Update Error", message);
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to update route."));
-                }),
-                () -> eventPublisher.publishEvent(new BusyStateEvent(this, taskId, false, null, null)));
-        eventPublisher.publishEvent(new BusyStateEvent(this, taskId, true, "Updating route...", taskHandle::cancel));
-    }
-
-    @EventListener
-    public void onDisplayRouteEvent(DisplayRouteEvent event) {
-        FxThread.runOnFxThread(() -> {
-            try {
-                interstellarSpacePane.displayRoute(event.getRouteDescriptor(), event.isVisible());
-            } catch (Exception e) {
-                log.error("Error handling display route event", e);
-                showErrorAlert("Route Display Error", "Failed to display route: " + e.getMessage());
-            }
-        });
-    }
-
-    @EventListener
-    public void onDeleteRouteEvent(DeleteRouteEvent event) {
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Deleting route..."));
-        String taskId = createTaskId("delete-route");
-        BackgroundTaskRunner.TaskHandle taskHandle = BackgroundTaskRunner.runCancelable(
-                "trips-delete-route",
-                () -> {
-                    RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    DataSetDescriptor descriptor = searchContextCoordinator.getCurrentDescriptor();
-                    return datasetService.deleteRoute(descriptor.getDataSetName(), routeDescriptor);
-                },
-                descriptor -> FxThread.runOnFxThread(() -> {
-                    log.info("delete route");
-                    RouteDescriptor routeDescriptor = event.getRouteDescriptor();
-                    searchContextCoordinator.setDescriptor(descriptor);
-                    // clear the route from the plot
-                    tripsContext.getCurrentPlot().removeRoute(routeDescriptor);
-                    routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
-                    interstellarSpacePane.redrawRoutes(descriptor.getRoutes());
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route deleted."));
-                }),
-                exception -> FxThread.runOnFxThread(() -> {
-                    if (isCancellation(exception)) {
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Route delete cancelled."));
-                        return;
-                    }
-                    String message = exception == null ? "Failed to delete route." : exception.getMessage();
-                    showErrorAlert("Route Update Error", message);
-                    eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to delete route."));
-                }),
-                () -> eventPublisher.publishEvent(new BusyStateEvent(this, taskId, false, null, null)));
-        eventPublisher.publishEvent(new BusyStateEvent(this, taskId, true, "Deleting route...", taskHandle::cancel));
-    }
-
-    @EventListener
-    public void onAddDataSetEvent(AddDataSetEvent event) {
-        DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
-
-        FxThread.runOnFxThread(() -> {
-            try {
-                // add to side-panel
-                rightPanelCoordinator.handleDataSetAdded(dataSetDescriptor);
-
-                // update the query dialog
-                if (queryDialog != null) {
-                    queryDialog.updateDataContext(dataSetDescriptor);
-                }
-                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " loaded"));
-            } catch (Exception e) {
-                log.error("Error handling add dataset event for {}", dataSetDescriptor.getDataSetName(), e);
-                showErrorAlert("Add Dataset Error", "Failed to add dataset: " + e.getMessage());
-                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to add dataset"));
-            }
-        });
-    }
-
-    @EventListener
-    public void onRemoveDataSetEvent(RemoveDataSetEvent event) {
-        DataSetDescriptor dataSetDescriptor = event.getDataSetDescriptor();
-        FxThread.runOnFxThread(() -> {
-            Optional<ButtonType> buttonType = showConfirmationAlert("Remove Dataset",
-                    "Remove",
-                    "Are you sure you want to remove: " + dataSetDescriptor.getDataSetName());
-
-            if ((buttonType.isPresent()) && (buttonType.get() == ButtonType.OK)) {
-                eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                        "Removing dataset " + dataSetDescriptor.getDataSetName() + "..."));
-                String taskId = createTaskId("remove-dataset");
-                BackgroundTaskRunner.TaskHandle taskHandle = BackgroundTaskRunner.runCancelable(
-                        "trips-remove-dataset",
-                        () -> {
-                            rightPanelCoordinator.removeDataSetFromContext(dataSetDescriptor);
-                            return null;
-                        },
-                        result -> FxThread.runOnFxThread(() -> {
-                            // update the query dialog
-                            if (queryDialog != null) {
-                                queryDialog.removeDataset(dataSetDescriptor);
-                            }
-
-                            // redisplay the datasets
-                            rightPanelCoordinator.refreshDataSets();
-                            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Dataset: " + dataSetDescriptor.getDataSetName() + " removed"));
-                        }),
-                        exception -> FxThread.runOnFxThread(() -> {
-                            if (isCancellation(exception)) {
-                                eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                                        "Dataset removal cancelled for " + dataSetDescriptor.getDataSetName()));
-                                return;
-                            }
-                            String message = exception == null ? "Failed to remove dataset." : exception.getMessage();
-                            showErrorAlert("Remove Dataset Error", message);
-                            eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                                    "Failed to remove dataset " + dataSetDescriptor.getDataSetName()));
-                        }),
-                        () -> eventPublisher.publishEvent(new BusyStateEvent(this, taskId, false, null, null)));
-                eventPublisher.publishEvent(new BusyStateEvent(this,
-                        taskId,
-                        true,
-                        "Removing dataset " + dataSetDescriptor.getDataSetName() + "...",
-                        taskHandle::cancel));
-            }
-        });
-    }
-
     private String createTaskId(String base) {
         return base + "-" + System.nanoTime();
     }
 
     private boolean isCancellation(Throwable exception) {
-        return exception instanceof CancellationException;
+        return exception instanceof java.util.concurrent.CancellationException;
     }
-
-    @EventListener
-    public void onSetContextDataSetEvent(SetContextDataSetEvent event) {
-        DataSetDescriptor descriptor = event.getDescriptor();
-        if (descriptor == null) {
-            log.warn("SetContextDataSetEvent received with null descriptor.");
-            return;
-        }
-
-        FxThread.runOnFxThread(() -> {
-            try {
-                // clear all the current data
-                clearAll();
-
-                // update the trips context and write through to the database
-                tripsContext.setDataSetContext(new DataSetContext(descriptor));
-
-                // update the side panel
-                rightPanelController.selectDataSet(descriptor);
-
-                if (queryDialog != null) {
-                    queryDialog.setDataSetContext(descriptor);
-                }
-
-                eventPublisher.publishEvent(new StatusUpdateEvent(this, ("You are looking at the stars in " + descriptor.getDataSetName() + " dataset.  ")));
-            } catch (Exception e) {
-                log.error("Error handling set context dataset event for {}", descriptor.getDataSetName(), e);
-                showErrorAlert("Set Context Error", "Failed to set dataset context: " + e.getMessage());
-                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Failed to set dataset context"));
-            }
-        });
-    }
-
 
     public void clearAll() {
         clearData();
@@ -781,160 +555,13 @@ public class MainSplitPaneManager {
         interstellarSpacePane.clearAll();
     }
 
-
-    @EventListener
-    public void onContextSelectorEvent(ContextSelectorEvent event) {
-        FxThread.runOnFxThread(() -> {
-            try {
-                switch (event.getContextSelectionType()) {
-                    case INTERSTELLAR -> {
-                        log.info("Showing interstellar Space");
-                        leftDisplayController.showInterstellar();
-                        rightPanelCoordinator.switchToInterstellar();  // Switch side pane
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Interstellar space"));
-                    }
-                    case SOLARSYSTEM -> {
-                        log.info("Showing a solar system");
-                        leftDisplayController.showSolarSystem(event.getStarDisplayRecord());
-                        rightPanelCoordinator.switchToSolarSystem(event.getStarDisplayRecord());  // Switch side pane
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this, "Selected Solarsystem space: " + event.getStarDisplayRecord().getStarName()));
-                    }
-                    case PLANETARY -> {
-                        log.info("Showing planetary surface view");
-                        PlanetaryContext context = event.getPlanetaryContext();
-                        if (context == null) {
-                            StarDisplayRecord star = event.getStarDisplayRecord();
-                            ExoPlanet planet = findDefaultPlanet(star);
-                            if (planet == null) {
-                                log.warn("No planets available for {}", star != null ? star.getStarName() : "unknown star");
-                                eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                                        "No planets available for planetary view"));
-                                return;
-                            }
-                            context = PlanetaryContext.builder()
-                                    .hostStar(star)
-                                    .planet(planet)
-                                    .localTime(22.0)
-                                    .build();
-                        }
-
-                        // Snapshot for lambdas (context is reassigned above, so it's not effectively final)
-                        final PlanetaryContext finalContext = context;
-
-                        leftDisplayController.showPlanetary(finalContext);
-                        rightPanelCoordinator.switchToPlanetary(finalContext);  // Switch side pane
-                        rightPanelCoordinator.updatePlanetaryBrightestStars(
-                                leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                                leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
-
-                        var viewControlPane = rightPanelCoordinator.getPlanetaryViewControlPane();
-                        if (viewControlPane != null) {
-                            viewControlPane.setOnTimeChanged(time -> {
-                                leftDisplayController.getPlanetarySpacePane().updateLocalTime(time);
-                                rightPanelCoordinator.updatePlanetaryBrightestStars(
-                                        leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                                        leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
-                            });
-
-                            viewControlPane.setOnMagnitudeChanged(mag -> {
-                                leftDisplayController.getPlanetarySpacePane().updateMagnitudeLimit(mag);
-                                rightPanelCoordinator.updatePlanetaryBrightestStars(
-                                        leftDisplayController.getPlanetarySpacePane().getBrightestStars(),
-                                        leftDisplayController.getPlanetarySpacePane().getVisibleStarCount());
-                            });
-
-                            viewControlPane.setOnAtmosphereChanged(enabled ->
-                                    leftDisplayController.getPlanetarySpacePane().updateAtmosphere(enabled));
-
-                            viewControlPane.setOnOrientationGridChanged(enabled ->
-                                    leftDisplayController.getPlanetarySpacePane().updateOrientationGrid(enabled));
-
-                            viewControlPane.setOnShowLabelsChanged(enabled ->
-                                    leftDisplayController.getPlanetarySpacePane().setStarLabelsOn(enabled));
-
-                            viewControlPane.setOnLabelMagnitudeChanged(mag -> {
-                                leftDisplayController.getPlanetarySpacePane().updateLabelMagnitudeLimit(mag);
-                            });
-
-                            // Wire star click-to-identify
-                            leftDisplayController.getPlanetarySpacePane().setOnStarClicked(star -> {
-                                rightPanelCoordinator.getPlanetarySidePane().getBrightestStarsPane().showSelectedStar(star);
-                                rightPanelCoordinator.getPlanetarySidePane().expandStarsList();
-                            });
-
-                            viewControlPane.setOnDirectionChanged(direction ->
-                                    leftDisplayController.getPlanetarySpacePane().setViewingDirection(
-                                            com.teamgannon.trips.screenobjects.planetary.PlanetaryViewControlPane.directionToAzimuth(direction),
-                                            finalContext.getViewingAltitude()));
-
-                            viewControlPane.setOnPresetSelected(preset -> {
-                                var spacePane = leftDisplayController.getPlanetarySpacePane();
-                                double azimuth = finalContext.getViewingAzimuth();
-                                double altitude = finalContext.getViewingAltitude();
-                                switch (preset) {
-                                    case ZENITH -> {
-                                        altitude = 90.0;
-                                    }
-                                    case HIGH_SKY -> {
-                                        azimuth = 0.0;
-                                        altitude = 65.0;
-                                    }
-                                    case HORIZON -> {
-                                        azimuth = 0.0;
-                                        altitude = 15.0;  // Slight look-up, combined with camera Y offset
-                                    }
-                                    case NADIR -> {
-                                        altitude = -90.0;
-                                    }
-                                    case FOCUS_BRIGHTEST -> {
-                                        var brightest = spacePane.getBrightestStars();
-                                        if (brightest != null && !brightest.isEmpty()) {
-                                            var target = brightest.get(0);
-                                            azimuth = target.getAzimuth();
-                                            altitude = target.getAltitude();
-                                        }
-                                    }
-                                }
-                                finalContext.setViewingAzimuth(azimuth);
-                                finalContext.setViewingAltitude(altitude);
-                                spacePane.setViewingDirection(azimuth, altitude);
-                            });
-                        }
-
-                        eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                                "Viewing sky from " + finalContext.getPlanetName()));
-                    }
-
-                    default -> log.error("Unexpected value: {}", event.getContextSelectionType());
-                }
-            } catch (Exception e) {
-                log.error("Error handling context selector event: {}", event.getContextSelectionType(), e);
-                showErrorAlert("View Switch Error", "Failed to switch view: " + e.getMessage());
-                eventPublisher.publishEvent(new StatusUpdateEvent(this, "View switch failed"));
-            }
-        });
+    /**
+     * Sets the query dialog reference for event handlers.
+     *
+     * @param queryDialog the query dialog
+     */
+    public void setQueryDialog(QueryDialog queryDialog) {
+        this.queryDialog = queryDialog;
+        dataSetEventHandler.setQueryDialog(queryDialog);
     }
-
-    private ExoPlanet findDefaultPlanet(StarDisplayRecord star) {
-        if (star == null) {
-            return null;
-        }
-        String recordId = star.getRecordId();
-        if (recordId != null && !recordId.isBlank()) {
-            List<ExoPlanet> planets = exoPlanetRepository.findByHostStarId(recordId);
-            if (planets != null && !planets.isEmpty()) {
-                return planets.get(0);
-            }
-        }
-        String starName = star.getStarName();
-        if (starName != null && !starName.isBlank()) {
-            List<ExoPlanet> planets = exoPlanetRepository.findByStarName(starName);
-            if (planets != null && !planets.isEmpty()) {
-                return planets.get(0);
-            }
-        }
-        return null;
-    }
-
-
 }
