@@ -515,4 +515,138 @@ class StarObjectRepositoryIntegrationTest extends BaseRepositoryIntegrationTest 
             assertThat(count).isEqualTo(1);
         }
     }
+
+    @Nested
+    @DisplayName("Composite Index Query Patterns")
+    class CompositeIndexQueryTests {
+
+        @Test
+        @DisplayName("should efficiently query by dataset and 3D coordinates (uses idx_star_dataset_coords)")
+        void shouldQueryByDatasetAndCoordinates() {
+            // Create stars spread across 3D space
+            starObjectRepository.saveAll(List.of(
+                    createStar("Quadrant1", 5, 5, 5, 10),
+                    createStar("Quadrant2", -5, 5, 5, 12),
+                    createStar("Quadrant3", 5, -5, 5, 14),
+                    createStar("Quadrant4", 5, 5, -5, 16),
+                    createStar("Quadrant5", -5, -5, 5, 18),
+                    createStar("Quadrant6", -5, 5, -5, 20),
+                    createStar("Quadrant7", 5, -5, -5, 22),
+                    createStar("Quadrant8", -5, -5, -5, 24),
+                    createStar("Origin", 0, 0, 0, 0),
+                    createStar("FarAway", 100, 100, 100, 200)
+            ));
+            flushAndClear();
+
+            // Query positive octant - should use composite index (dataSetName, x, y, z)
+            List<StarObject> positiveOctant = starObjectRepository.findInBoundingBox(
+                    TEST_DATASET, 0, 10, 0, 10, 0, 10);
+
+            assertThat(positiveOctant).hasSize(1);
+            assertThat(positiveOctant.get(0).getDisplayName()).isEqualTo("Quadrant1");
+        }
+
+        @Test
+        @DisplayName("should efficiently query by dataset and distance range (uses idx_star_dataset_distance)")
+        void shouldQueryByDatasetAndDistanceRange() {
+            // Create stars at various distances
+            starObjectRepository.saveAll(List.of(
+                    createStar("VeryNear", 1, 0, 0, 4),
+                    createStar("Near", 2, 0, 0, 8),
+                    createStar("Medium", 5, 0, 0, 15),
+                    createStar("Far", 10, 0, 0, 30),
+                    createStar("VeryFar", 20, 0, 0, 60)
+            ));
+            flushAndClear();
+
+            // Query nearby stars - should use composite index (dataSetName, distance)
+            Page<StarObject> nearbyStars = starObjectRepository.findByDistanceLessThan(
+                    TEST_DATASET, 10.0, PageRequest.of(0, 10));
+
+            assertThat(nearbyStars.getContent()).hasSize(2);
+            assertThat(nearbyStars.getContent()).extracting(StarObject::getDisplayName)
+                    .containsExactlyInAnyOrder("VeryNear", "Near");
+        }
+
+        @Test
+        @DisplayName("should handle multiple datasets with coordinate queries")
+        void shouldHandleMultipleDatasetsWithCoordinateQueries() {
+            // Create stars in test dataset
+            starObjectRepository.saveAll(List.of(
+                    createStar("TestStar1", 5, 5, 5, 10),
+                    createStar("TestStar2", 6, 6, 6, 12)
+            ));
+
+            // Create stars in other dataset
+            StarObject otherStar1 = createStar("OtherStar1", 5, 5, 5, 10);
+            otherStar1.setDataSetName("OtherDataset");
+            StarObject otherStar2 = createStar("OtherStar2", 6, 6, 6, 12);
+            otherStar2.setDataSetName("OtherDataset");
+            starObjectRepository.saveAll(List.of(otherStar1, otherStar2));
+            flushAndClear();
+
+            // Query should only return stars from the specified dataset
+            List<StarObject> testDatasetStars = starObjectRepository.findInBoundingBox(
+                    TEST_DATASET, 0, 10, 0, 10, 0, 10);
+            List<StarObject> otherDatasetStars = starObjectRepository.findInBoundingBox(
+                    "OtherDataset", 0, 10, 0, 10, 0, 10);
+
+            assertThat(testDatasetStars).hasSize(2);
+            assertThat(otherDatasetStars).hasSize(2);
+            assertThat(testDatasetStars).extracting(StarObject::getDataSetName)
+                    .allMatch(name -> name.equals(TEST_DATASET));
+        }
+
+        @Test
+        @DisplayName("should efficiently stream large coordinate range queries")
+        void shouldStreamLargeCoordinateRangeQueries() {
+            // Create a grid of stars
+            for (int x = 0; x < 5; x++) {
+                for (int y = 0; y < 5; y++) {
+                    for (int z = 0; z < 5; z++) {
+                        StarObject star = createStar(
+                                String.format("Star_%d_%d_%d", x, y, z),
+                                x * 2, y * 2, z * 2,
+                                Math.sqrt(x * x + y * y + z * z) * 2
+                        );
+                        starObjectRepository.save(star);
+                    }
+                }
+            }
+            flushAndClear();
+
+            // Stream query for a subset - should efficiently use composite index
+            try (Stream<StarObject> stream = starObjectRepository.streamInBoundingBox(
+                    TEST_DATASET, 0, 5, 0, 5, 0, 5)) {
+                List<StarObject> found = stream.collect(Collectors.toList());
+                // Should find stars at coordinates (0,0,0), (0,0,2), (0,2,0), (0,2,2), (2,0,0), (2,0,2), (2,2,0), (2,2,2)
+                // Plus (0,0,4), (0,4,0), (4,0,0), (0,2,4), etc. within the 0-5 range
+                assertThat(found).hasSizeGreaterThanOrEqualTo(8);
+            }
+        }
+
+        @Test
+        @DisplayName("should count stars in bounding box across datasets")
+        void shouldCountStarsInBoundingBoxAcrossDatasets() {
+            // Create test dataset stars
+            starObjectRepository.saveAll(List.of(
+                    createStar("Test1", 1, 1, 1, 5),
+                    createStar("Test2", 2, 2, 2, 8)
+            ));
+
+            // Create other dataset stars at same coordinates
+            StarObject other1 = createStar("Other1", 1, 1, 1, 5);
+            other1.setDataSetName("OtherDataset");
+            starObjectRepository.save(other1);
+            flushAndClear();
+
+            int testCount = starObjectRepository.countInBoundingBox(
+                    TEST_DATASET, 0, 5, 0, 5, 0, 5);
+            int otherCount = starObjectRepository.countInBoundingBox(
+                    "OtherDataset", 0, 5, 0, 5, 0, 5);
+
+            assertThat(testCount).isEqualTo(2);
+            assertThat(otherCount).isEqualTo(1);
+        }
+    }
 }

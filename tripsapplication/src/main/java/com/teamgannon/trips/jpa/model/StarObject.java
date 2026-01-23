@@ -51,7 +51,10 @@ import java.util.*;
         @Index(columnList = "bayerCatId ASC"),
         @Index(columnList = "flamsteedCatId ASC"),
         @Index(columnList = "exoplanets"),
-        @Index(columnList = "solarSystemId")
+        @Index(columnList = "solarSystemId"),
+        // Composite indexes for common query patterns
+        @Index(name = "idx_star_dataset_coords", columnList = "dataSetName, x, y, z"),
+        @Index(name = "idx_star_dataset_distance", columnList = "dataSetName, distance")
 })
 public class StarObject implements Serializable {
 

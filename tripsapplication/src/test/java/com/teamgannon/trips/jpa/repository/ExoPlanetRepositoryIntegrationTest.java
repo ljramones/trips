@@ -359,4 +359,178 @@ class ExoPlanetRepositoryIntegrationTest extends BaseRepositoryIntegrationTest {
             assertThat(remaining.get(0).getPlanetStatus()).isEqualTo("Confirmed");
         }
     }
+
+    @Nested
+    @DisplayName("Composite Index Query Patterns")
+    class CompositeIndexQueryTests {
+
+        @Test
+        @DisplayName("should efficiently query planets vs moons by solar system (uses idx_exoplanet_system_moon)")
+        void shouldQueryPlanetsVsMoonsBySolarSystem() {
+            // Create a complex system with planets and moons
+            ExoPlanet planet1 = createExoPlanet("Planet 1", "Star", testSystem.getId(), testStar.getId());
+            ExoPlanet planet2 = createExoPlanet("Planet 2", "Star", testSystem.getId(), testStar.getId());
+            ExoPlanet planet3 = createExoPlanet("Planet 3", "Star", testSystem.getId(), testStar.getId());
+            exoPlanetRepository.saveAll(List.of(planet1, planet2, planet3));
+            flushAndClear();
+
+            // Reload to get IDs
+            planet1 = exoPlanetRepository.findByName("Planet 1");
+            planet2 = exoPlanetRepository.findByName("Planet 2");
+
+            // Add moons to planets
+            ExoPlanet moon1a = createMoon("Moon 1a", planet1.getId(), testSystem.getId());
+            ExoPlanet moon1b = createMoon("Moon 1b", planet1.getId(), testSystem.getId());
+            ExoPlanet moon2a = createMoon("Moon 2a", planet2.getId(), testSystem.getId());
+            exoPlanetRepository.saveAll(List.of(moon1a, moon1b, moon2a));
+            flushAndClear();
+
+            // Query should use composite index (solarSystemId, isMoon)
+            List<ExoPlanet> planetsOnly = exoPlanetRepository.findPlanetsBySolarSystemId(testSystem.getId());
+            List<ExoPlanet> allBodies = exoPlanetRepository.findBySolarSystemId(testSystem.getId());
+
+            assertThat(planetsOnly).hasSize(3);
+            assertThat(allBodies).hasSize(6); // 3 planets + 3 moons
+            assertThat(planetsOnly).extracting(ExoPlanet::getIsMoon)
+                    .allMatch(isMoon -> isMoon == null || !isMoon);
+        }
+
+        @Test
+        @DisplayName("should efficiently query by solar system and planet status (uses idx_exoplanet_system_status)")
+        void shouldQueryBySolarSystemAndStatus() {
+            // Create planets with different statuses
+            ExoPlanet confirmed1 = createExoPlanet("Confirmed 1", "Star", testSystem.getId(), testStar.getId());
+            confirmed1.setPlanetStatus("Confirmed");
+
+            ExoPlanet confirmed2 = createExoPlanet("Confirmed 2", "Star", testSystem.getId(), testStar.getId());
+            confirmed2.setPlanetStatus("Confirmed");
+
+            ExoPlanet candidate1 = createExoPlanet("Candidate 1", "Star", testSystem.getId(), testStar.getId());
+            candidate1.setPlanetStatus("Candidate");
+
+            ExoPlanet simulated1 = createExoPlanet("Simulated 1", "Star", testSystem.getId(), testStar.getId());
+            simulated1.setPlanetStatus("Simulated");
+
+            exoPlanetRepository.saveAll(List.of(confirmed1, confirmed2, candidate1, simulated1));
+            flushAndClear();
+
+            // Delete operation uses composite index (solarSystemId, planetStatus)
+            exoPlanetRepository.deleteBySolarSystemIdAndPlanetStatus(testSystem.getId(), "Simulated");
+            flushAndClear();
+
+            List<ExoPlanet> remaining = exoPlanetRepository.findBySolarSystemId(testSystem.getId());
+            assertThat(remaining).hasSize(3);
+            assertThat(remaining).extracting(ExoPlanet::getPlanetStatus)
+                    .containsOnly("Confirmed", "Candidate");
+        }
+
+        @Test
+        @DisplayName("should efficiently query planets by host star (uses idx_exoplanet_host_moon)")
+        void shouldQueryPlanetsByHostStar() {
+            // Create a second star for binary system
+            StarObject star2 = createStar("Star B", 0.5, 0.5, 0.5, 10);
+            starObjectRepository.save(star2);
+            flushAndClear();
+
+            // Create planets orbiting different stars
+            ExoPlanet planetA1 = createExoPlanet("Planet A1", "Star A", testSystem.getId(), testStar.getId());
+            ExoPlanet planetA2 = createExoPlanet("Planet A2", "Star A", testSystem.getId(), testStar.getId());
+            ExoPlanet planetB1 = createExoPlanet("Planet B1", "Star B", testSystem.getId(), star2.getId());
+
+            exoPlanetRepository.saveAll(List.of(planetA1, planetA2, planetB1));
+            flushAndClear();
+
+            // Reload to get IDs
+            planetA1 = exoPlanetRepository.findByName("Planet A1");
+
+            // Add moon to planet A1
+            ExoPlanet moonA1 = createMoon("Moon A1", planetA1.getId(), testSystem.getId());
+            moonA1.setHostStarId(testStar.getId());
+            exoPlanetRepository.save(moonA1);
+            flushAndClear();
+
+            // Query should use composite index (hostStarId, isMoon)
+            long planetCountStarA = exoPlanetRepository.countPlanetsByHostStarId(testStar.getId());
+            long totalCountStarA = exoPlanetRepository.countByHostStarId(testStar.getId());
+            long planetCountStarB = exoPlanetRepository.countPlanetsByHostStarId(star2.getId());
+
+            assertThat(planetCountStarA).isEqualTo(2); // Only planets, not moons
+            assertThat(totalCountStarA).isEqualTo(3); // Planets + moon
+            assertThat(planetCountStarB).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("should handle mixed queries across multiple systems")
+        void shouldHandleMixedQueriesAcrossMultipleSystems() {
+            // Create a second system
+            StarObject star2 = createStar("Star 2", 10, 10, 10, 20);
+            starObjectRepository.save(star2);
+            SolarSystem system2 = createSolarSystem("System 2", star2.getId());
+            solarSystemRepository.save(system2);
+            flushAndClear();
+
+            // Populate first system
+            ExoPlanet s1p1 = createExoPlanet("S1 Planet 1", "Star 1", testSystem.getId(), testStar.getId());
+            s1p1.setPlanetStatus("Confirmed");
+            ExoPlanet s1p2 = createExoPlanet("S1 Planet 2", "Star 1", testSystem.getId(), testStar.getId());
+            s1p2.setPlanetStatus("Candidate");
+            exoPlanetRepository.saveAll(List.of(s1p1, s1p2));
+            flushAndClear();
+
+            s1p1 = exoPlanetRepository.findByName("S1 Planet 1");
+            ExoPlanet s1m1 = createMoon("S1 Moon 1", s1p1.getId(), testSystem.getId());
+            exoPlanetRepository.save(s1m1);
+
+            // Populate second system
+            ExoPlanet s2p1 = createExoPlanet("S2 Planet 1", "Star 2", system2.getId(), star2.getId());
+            s2p1.setPlanetStatus("Confirmed");
+            exoPlanetRepository.save(s2p1);
+            flushAndClear();
+
+            // Query patterns that benefit from composite indexes
+            List<ExoPlanet> s1Planets = exoPlanetRepository.findPlanetsBySolarSystemId(testSystem.getId());
+            List<ExoPlanet> s2Planets = exoPlanetRepository.findPlanetsBySolarSystemId(system2.getId());
+            long s1Total = exoPlanetRepository.countBySolarSystemId(testSystem.getId());
+            long s2Total = exoPlanetRepository.countBySolarSystemId(system2.getId());
+
+            assertThat(s1Planets).hasSize(2); // 2 planets, excluding moon
+            assertThat(s2Planets).hasSize(1);
+            assertThat(s1Total).isEqualTo(3); // 2 planets + 1 moon
+            assertThat(s2Total).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("should efficiently filter large system with many bodies")
+        void shouldFilterLargeSystemWithManyBodies() {
+            // Create a system like Jupiter with many moons
+            ExoPlanet gasGiant = createExoPlanet("Gas Giant", "Star", testSystem.getId(), testStar.getId());
+            gasGiant.setPlanetStatus("Confirmed");
+            exoPlanetRepository.save(gasGiant);
+            flushAndClear();
+
+            gasGiant = exoPlanetRepository.findByName("Gas Giant");
+
+            // Add many moons
+            for (int i = 1; i <= 20; i++) {
+                ExoPlanet moon = createMoon("Moon " + i, gasGiant.getId(), testSystem.getId());
+                moon.setPlanetStatus("Confirmed");
+                exoPlanetRepository.save(moon);
+            }
+
+            // Add some additional planets
+            for (int i = 1; i <= 5; i++) {
+                ExoPlanet planet = createExoPlanet("Planet " + i, "Star", testSystem.getId(), testStar.getId());
+                planet.setPlanetStatus(i <= 3 ? "Confirmed" : "Candidate");
+                exoPlanetRepository.save(planet);
+            }
+            flushAndClear();
+
+            // These queries benefit from composite indexes
+            List<ExoPlanet> planetsOnly = exoPlanetRepository.findPlanetsBySolarSystemId(testSystem.getId());
+            long totalBodies = exoPlanetRepository.countBySolarSystemId(testSystem.getId());
+
+            assertThat(planetsOnly).hasSize(6); // Gas Giant + 5 other planets
+            assertThat(totalBodies).isEqualTo(26); // 6 planets + 20 moons
+        }
+    }
 }

@@ -75,7 +75,11 @@ import javax.persistence.Table;
         @Index(columnList = "hostStarId"),
         @Index(columnList = "parentPlanetId"),
         @Index(columnList = "planetStatus"),
-        @Index(columnList = "isMoon")
+        @Index(columnList = "isMoon"),
+        // Composite indexes for common query patterns
+        @Index(name = "idx_exoplanet_system_moon", columnList = "solarSystemId, isMoon"),
+        @Index(name = "idx_exoplanet_system_status", columnList = "solarSystemId, planetStatus"),
+        @Index(name = "idx_exoplanet_host_moon", columnList = "hostStarId, isMoon")
 })
 public class ExoPlanet {
 
