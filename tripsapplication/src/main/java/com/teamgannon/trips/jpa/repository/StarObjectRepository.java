@@ -23,6 +23,13 @@ public interface StarObjectRepository
     // ========== Basic ID queries ==========
 
     /**
+     * Find a star by ID with aliases eagerly loaded.
+     * Use this when the star will be accessed outside a transaction (e.g., in UI code).
+     */
+    @Query("SELECT DISTINCT s FROM STAR_OBJ s LEFT JOIN FETCH s.aliasList WHERE s.id = :id")
+    StarObject findByIdWithAliases(@Param("id") String id);
+
+    /**
      * Find stars by a list of IDs (paged).
      */
     Page<StarObject> findByIdIn(Collection<String> ids, Pageable page);

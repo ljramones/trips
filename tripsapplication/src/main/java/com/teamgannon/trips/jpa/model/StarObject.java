@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
@@ -99,9 +100,11 @@ public class StarObject implements Serializable {
 
     /**
      * List of alias names.
-     * EAGER is undesirable but needed because of underlying Hibernate lazy load error.
+     * Uses LAZY loading with BatchSize to avoid N+1 queries when aliases are accessed.
+     * Access aliases within a transaction context to avoid LazyInitializationException.
      */
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @BatchSize(size = 100)
     private Set<String> aliasList = new HashSet<>();
 
     /** Name of the constellation that this is part of */

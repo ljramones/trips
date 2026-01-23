@@ -8,9 +8,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -196,6 +198,11 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         SesameResolver resolver = new SesameResolver();
         List<String> aliasList = resolver.findAliases(record.getDisplayName());
         aliasTextArea.setText(String.join(", ", aliasList));
+
+        // Safely access aliasList - it may be lazy loaded and not initialized
+        if (!Hibernate.isInitialized(record.getAliasList())) {
+            record.setAliasList(new HashSet<>());
+        }
         record.getAliasList().addAll(aliasList);
         log.info("record updated");
     }

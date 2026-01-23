@@ -5,6 +5,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.screenobjects.StarFieldValidator.*;
@@ -300,7 +301,8 @@ public class StarEditFormBinder {
 
         gaiaIdTextField.setText(record.getGaiaDR2CatId());
 
-        if (!record.getAliasList().isEmpty()) {
+        // Safely access aliasList - it may be lazy loaded and not initialized
+        if (Hibernate.isInitialized(record.getAliasList()) && !record.getAliasList().isEmpty()) {
             aliasTextArea.setText(String.join(", ", record.getAliasList()));
         }
     }
