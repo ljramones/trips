@@ -6,7 +6,6 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.CurrentPlot;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.config.application.model.UserControls;
-import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.events.ClearListEvent;
 import com.teamgannon.trips.events.ColorPaletteChangeEvent;
@@ -23,21 +22,14 @@ import com.teamgannon.trips.routing.model.RoutingMetric;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
-import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
-import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,37 +40,24 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static java.lang.Math.abs;
-
+/**
+ * Main pane for displaying the 3D interstellar space visualization.
+ * Coordinates star plotting, routing, transits, and grid display.
+ */
 @Slf4j
 @Component
 public class InterstellarSpacePane extends Pane implements RotationController {
 
-    private static final double ROTATE_SECS = 60;
-
-    // define the rest position of the image
-    private final Rotate rotateX = new Rotate(105, Rotate.X_AXIS);
-    private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
-    private final Rotate rotateZ = new Rotate(30, Rotate.Z_AXIS);
-
-
     private final Group world = new Group();
     private final @NotNull SubScene subScene;
 
-    private boolean sidePanelShiftKludgeFirstTime = true;
-
     /**
-     * animation rotator
-     */
-    private final @NotNull RotateTransition rotator;
-
-    /**
-     * application context
+     * Application context.
      */
     private final @NotNull TripsContext tripsContext;
 
     /**
-     * the grid plot manager
+     * The grid plot manager.
      */
     private final GridPlotManager gridPlotManager;
 
@@ -87,69 +66,41 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    /////////////////
     @Getter
     private final @NotNull TransitManager transitManager;
 
     @Getter
     private final @NotNull StarPlotManager starPlotManager;
 
-    @NotNull
-    PerspectiveCamera camera = new PerspectiveCamera(true);
-    private final double baseCameraTranslateX;
-
-    // mouse positions
-    private double mousePosX, mousePosY = 0;
-    private double mouseOldX, mouseOldY = 0;
-    private double mouseDeltaX, mouseDeltaY = 0;
-
     /**
-     * set user sense to engineer mode
-     * false is pilot mode
+     * Camera and view management.
      */
-    private UserControls userControls = new UserControls();
+    private final InterstellarCameraController cameraController;
 
     /**
-     * the general color palette of the graph
+     * Input handling (mouse/keyboard).
+     */
+    private final InterstellarInputHandler inputHandler;
+
+    /**
+     * The general color palette of the graph.
      */
     private ColorPalette colorPalette;
 
     /**
-     * star display specifics
+     * Star display specifics.
      */
     private StarDisplayPreferences starDisplayPreferences;
 
     /**
-     * animation toggle
-     */
-    private boolean animationPlay = false;
-
-    /**
-     * offset to scene coordinates to account for the top UI plane
+     * Offset to scene coordinates to account for the top UI plane.
      */
     private double controlPaneOffset;
 
-    private double deltaX;
     private final PauseTransition labelUpdatePause = new PauseTransition(Duration.millis(75));
 
-    // =========================================================================
-    // Throttled Label Update Fields
-    // =========================================================================
-
     /**
-     * Minimum interval between label updates during continuous interactions (ms).
-     * ~60fps = 16ms, but we use a slightly higher value for smoother performance.
-     */
-    private static final long LABEL_UPDATE_THROTTLE_MS = 16;
-
-    /**
-     * Timestamp of the last label update.
-     */
-    private long lastLabelUpdateTime = 0;
-
-
-    /**
-     * constructor for the Graphics Pane
+     * Constructor for the Graphics Pane.
      *
      * @param tripsContext the application context
      */
@@ -171,16 +122,14 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         this.starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
 
-        // attach our custom rotation transforms so we can update the labels dynamically
-        world.getTransforms().addAll(rotateX, rotateY, rotateZ);
+        // Create camera controller and attach transforms to world
+        cameraController = new InterstellarCameraController(world);
+        cameraController.setOnViewChange(this::updateLabels);
 
         subScene = new SubScene(world, screenSize.getSceneWidth(), screenSize.getSceneHeight(), true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
+        subScene.setCamera(cameraController.getCamera());
 
-        setInitialView();
-        baseCameraTranslateX = camera.getTranslateX();
-
-        subScene.setCamera(camera);
         Group sceneRoot = new Group(subScene);
 
         this.setBackground(Background.EMPTY);
@@ -196,65 +145,79 @@ public class InterstellarSpacePane extends Pane implements RotationController {
             }
         });
 
-        // event setup
-        handleUserEvents();
+        // Create input handler and initialize events
+        inputHandler = new InterstellarInputHandler(subScene, cameraController, this::updateLabels);
+        inputHandler.initialize();
 
-        // set up star plot manager
+        // Set up star plot manager
         starPlotManager.setGraphics(sceneRoot, world, subScene);
 
-        // setup route manager
+        // Setup route manager
         routeManager.setGraphics(sceneRoot, world, subScene, this);
 
-        // setup grid manager
+        // Setup grid manager
         gridPlotManager.setGraphics(sceneRoot, world, subScene);
 
-        // setup transit manager
+        // Setup transit manager
         this.transitManager.setGraphics(sceneRoot, world, subScene, this);
 
-        // create a rotation animation
-        rotator = createRotateAnimation();
-
         log.info("startup complete");
-
     }
 
+    // =========================================================================
+    // View Control Methods
+    // =========================================================================
+
     public void setRotationAngles(double xAngle, double yAngle, double zAngle) {
-        rotateX.setAngle(xAngle);
-        rotateY.setAngle(yAngle);
-        rotateZ.setAngle(zAngle);
-        updateLabels();
+        cameraController.setRotationAngles(xAngle, yAngle, zAngle);
     }
 
     public void resetPosition() {
-        setRotationAngles(105, 0, 30);
-        setPerspectiveCamera();
+        cameraController.resetPosition();
     }
 
-    private void setPerspectiveCamera() {
-        camera.setNearClip(0.1);
-        camera.setFarClip(10000.0);
-        camera.setTranslateZ(-1600);
-    }
-
-    /**
-     * set the initial view
-     */
     public void setInitialView() {
-        setPerspectiveCamera();
+        cameraController.setInitialView();
     }
 
     public void resetView() {
-        setInitialView();
-//        camera.setRotate(25);
+        cameraController.resetView();
     }
 
-    /**
-     * set user controls
-     *
-     * @param userControls the user controls
-     */
+    public void zoomIn() {
+        cameraController.zoomIn();
+    }
+
+    public void zoomIn(int amount) {
+        cameraController.zoomIn(amount);
+    }
+
+    public void zoomOut() {
+        cameraController.zoomOut();
+    }
+
+    public void zoomOut(int amount) {
+        cameraController.zoomOut(amount);
+    }
+
+    public void shiftDisplayLeft(boolean shift) {
+        double width = getWidth();
+        if (width <= 0) {
+            width = subScene.getWidth();
+        }
+        cameraController.shiftDisplayLeft(shift, width);
+    }
+
+    public void toggleAnimation() {
+        cameraController.toggleAnimation();
+    }
+
+    // =========================================================================
+    // User Controls
+    // =========================================================================
+
     public void changeUserControls(UserControls userControls) {
-        this.userControls = userControls;
+        inputHandler.setUserControls(userControls);
     }
 
     @EventListener
@@ -262,260 +225,88 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         changeUserControls(event.getUserControls());
     }
 
-    /**
-     * simulate stars
-     *
-     * @param numberStars the number to simulate
-     */
-    public void simulateStars(int numberStars) {
-        starPlotManager.generateRandomStars(numberStars);
-        Platform.runLater(this::run);
-    }
+    // =========================================================================
+    // Label Updates
+    // =========================================================================
 
     public void updateLabels() {
-
         starPlotManager.updateLabels(this);
-
         gridPlotManager.updateScale();
         gridPlotManager.updateLabels(this);
-
         routeManager.updateLabels();
-
         transitManager.updateLabels();
     }
 
-    /**
-     * Throttled version of updateLabels() for use during continuous interactions.
-     * <p>
-     * During mouse drag and scroll events, label updates can be called many times
-     * per second. This method limits updates to at most one per {@link #LABEL_UPDATE_THROTTLE_MS}
-     * milliseconds, reducing CPU usage while maintaining smooth visual feedback.
-     * <p>
-     * Use {@link #updateLabels()} directly when immediate feedback is required
-     * (e.g., after programmatic changes, toggling visibility).
-     */
-    private void throttledUpdateLabels() {
-        long now = System.currentTimeMillis();
-        if (now - lastLabelUpdateTime >= LABEL_UPDATE_THROTTLE_MS) {
-            lastLabelUpdateTime = now;
-            updateLabels();
-        }
+    private void scheduleLabelUpdate() {
+        labelUpdatePause.setOnFinished(event -> updateLabels());
+        labelUpdatePause.playFromStart();
     }
 
+    // =========================================================================
+    // Star Management
+    // =========================================================================
 
-    /**
-     * finds all the transits for stars in view
-     *
-     * @param transitDefinitions the distance range selected
-     */
-    public void findTransits(TransitDefinitions transitDefinitions) {
-        List<StarDisplayRecord> starsInView = getCurrentStarsInView();
-        transitManager.findTransits(transitDefinitions, starsInView);
+    public void simulateStars(int numberStars) {
+        starPlotManager.generateRandomStars(numberStars);
+        Platform.runLater(this::updateLabels);
     }
 
-    /**
-     * clear existing transits
-     */
-    public void clearTransits() {
-        transitManager.clearTransits();
-    }
-
-    //////////////////////
-
-    public void rebuildGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
-        gridPlotManager.rebuildGrid(centerCoordinates, transformer, colorPalette);
-    }
-
-    public void changeColors(ColorPalette colorPalette) {
-        this.colorPalette = colorPalette;
-        tripsContext.getAppViewPreferences().setColorPalette(colorPalette);
-    }
-
-    @EventListener
-    public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
-        changeColors(event.getColorPalette());
+    public void plotStars(CurrentPlot currentPlot) {
+        boolean showStems = tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayStems() &&
+                tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayGrid();
+        starPlotManager.drawStars(currentPlot, showStems);
     }
 
     public List<StarDisplayRecord> getCurrentStarsInView() {
         return starPlotManager.getCurrentStarsInView();
     }
 
-    //////////////////////////  public methods /////////////////////////////
-
-
-    public void clearAll() {
-        clearStars();
-        clearRoutes();
-        clearTransits();
-    }
-
-    /**
-     * clear the stars from the display
-     */
     public void clearStars() {
-
         starPlotManager.clearStars();
         clearRoutes();
-
-        // clear the list
         eventPublisher.publishEvent(new ClearListEvent(this));
     }
 
-    /**
-     * clear the routes
-     */
-    public void clearRoutes() {
-        // clear the routes
-        routeManager.clearRoutes();
+    // =========================================================================
+    // Transit Management
+    // =========================================================================
+
+    public void findTransits(TransitDefinitions transitDefinitions) {
+        List<StarDisplayRecord> starsInView = getCurrentStarsInView();
+        transitManager.findTransits(transitDefinitions, starsInView);
     }
+
+    public void clearTransits() {
+        transitManager.clearTransits();
+    }
+
+    public void toggleTransits(boolean transitsOn) {
+        transitManager.setVisible(transitsOn);
+    }
+
+    public void toggleTransitLengths(boolean transitsLengthsOn) {
+        transitManager.toggleTransitLengths(transitsLengthsOn);
+    }
+
+    // =========================================================================
+    // Route Management
+    // =========================================================================
 
     public void plotRoutes(@NotNull List<Route> routeList) {
         routeManager.clearRoutes();
         routeManager.plotRoutes(routeList);
     }
 
-    ////////////// zoom and move
-
-    public void zoomIn() {
-        zoomGraph(-200);
-        updateLabels();
+    public void clearRoutes() {
+        routeManager.clearRoutes();
     }
 
-    public void zoomIn(int amount) {
-        zoomGraph(-amount);
-        updateLabels();
-    }
-
-
-    public void zoomOut() {
-        zoomGraph(200);
-        updateLabels();
-    }
-
-    public void zoomOut(int amount) {
-        zoomGraph(amount);
-        updateLabels();
-    }
-
-    /**
-     * do actual zoom
-     *
-     * @param zoomAmt the amount to zoom
-     */
-    private void zoomGraph(double zoomAmt) {
-        double z = camera.getTranslateZ();
-        double newZ = z - zoomAmt;
-        camera.setTranslateZ(newZ);
-    }
-
-    ////////// toggles
-
-
-    public void setGraphPresets(@NotNull GraphEnablesPersist graphEnablesPersist) {
-        gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
-        starPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
-        gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
-        starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
-    }
-
-    public void shiftDisplayLeft(boolean shift) {
-        if (shift) {
-            double width = getWidth();
-            if (width <= 0) {
-                width = subScene.getWidth();
-            }
-            if (width <= 0) {
-                Platform.runLater(() -> shiftDisplayLeft(true));
-                return;
-            }
-            deltaX = MainPane.SIDE_PANEL_SIZE / 2.0;
-
-            log.info("shift display left by {}", deltaX);
-            camera.setTranslateX(baseCameraTranslateX + deltaX);
-        } else {
-            if (!sidePanelShiftKludgeFirstTime) {
-                log.info("shift display right!!");
-                camera.setTranslateX(baseCameraTranslateX);
-            } else {
-                sidePanelShiftKludgeFirstTime = false;
-            }
-        }
-        updateLabels();
-    }
-
-    /**
-     * toggle the grid
-     *
-     * @param gridToggle the status for the grid
-     */
-    public void toggleGrid(boolean gridToggle) {
-        gridPlotManager.toggleGrid(gridToggle);
-        starPlotManager.toggleExtensions(gridPlotManager.isVisible());
-    }
-
-    public void togglePolities(boolean polities) {
-        starPlotManager.togglePolities(polities);
-    }
-
-    /**
-     * toggle the transit lengths for the transits shown
-     *
-     * @param transitsLengthsOn flag for transit lengths
-     */
-    public void toggleTransitLengths(boolean transitsLengthsOn) {
-        transitManager.toggleTransitLengths(transitsLengthsOn);
-    }
-
-    /**
-     * toggle the extensions
-     *
-     * @param extensionsOn the status of the extensions
-     */
-    public void toggleExtensions(boolean extensionsOn) {
-        starPlotManager.toggleExtensions(extensionsOn);
-    }
-
-    /**
-     * toggle the stars
-     *
-     * @param starsOn the status of the stars
-     */
-    public void toggleStars(boolean starsOn) {
-        starPlotManager.toggleStars(starsOn);
-        if (gridPlotManager.isVisible()) {
-            starPlotManager.toggleExtensions(starsOn);
-        }
-    }
-
-    /**
-     * toggle the scale
-     *
-     * @param scaleOn the status of the scale
-     */
-    public void toggleScale(boolean scaleOn) {
-        gridPlotManager.toggleScale(scaleOn);
-    }
-
-    /**
-     * toggle the routes
-     *
-     * @param routesOn the status of the routes
-     */
     public void toggleRoutes(boolean routesOn) {
         routeManager.toggleRoutes(routesOn);
     }
 
     public void toggleRouteLengths(boolean routesLengthsOn) {
         routeManager.toggleRouteLengths(routesLengthsOn);
-    }
-
-    /**
-     * toggle the transit view
-     *
-     * @param transitsOn true means transits on, false - otherwise
-     */
-    public void toggleTransits(boolean transitsOn) {
-        transitManager.setVisible(transitsOn);
     }
 
     public void redrawRoutes(@NotNull List<Route> routes) {
@@ -529,59 +320,74 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         updateLabels();
     }
 
-    /**
-     * toggle the labels
-     *
-     * @param labelSetting true is labels should be on
-     */
+    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
+        routeManager.changeDisplayStateOfRoute(routeDescriptor, state);
+    }
+
+    // =========================================================================
+    // Grid Management
+    // =========================================================================
+
+    public void rebuildGrid(double[] centerCoordinates, @NotNull AstrographicTransformer transformer, CurrentPlot colorPalette) {
+        gridPlotManager.rebuildGrid(centerCoordinates, transformer, colorPalette);
+    }
+
+    public void toggleGrid(boolean gridToggle) {
+        gridPlotManager.toggleGrid(gridToggle);
+        starPlotManager.toggleExtensions(gridPlotManager.isVisible());
+    }
+
+    public void toggleScale(boolean scaleOn) {
+        gridPlotManager.toggleScale(scaleOn);
+    }
+
+    // =========================================================================
+    // Display Toggles
+    // =========================================================================
+
+    public void setGraphPresets(@NotNull GraphEnablesPersist graphEnablesPersist) {
+        gridPlotManager.toggleGrid(graphEnablesPersist.isDisplayGrid());
+        starPlotManager.toggleExtensions(graphEnablesPersist.isDisplayStems());
+        gridPlotManager.toggleScale(graphEnablesPersist.isDisplayLegend());
+        starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
+    }
+
+    public void togglePolities(boolean polities) {
+        starPlotManager.togglePolities(polities);
+    }
+
+    public void toggleExtensions(boolean extensionsOn) {
+        starPlotManager.toggleExtensions(extensionsOn);
+    }
+
+    public void toggleStars(boolean starsOn) {
+        starPlotManager.toggleStars(starsOn);
+        if (gridPlotManager.isVisible()) {
+            starPlotManager.toggleExtensions(starsOn);
+        }
+    }
+
     public void toggleLabels(boolean labelSetting) {
         starPlotManager.toggleLabels(labelSetting);
     }
 
-    /**
-     * start the rotation of Y-axis animation
-     */
-    public void toggleAnimation() {
-        animationPlay = !animationPlay;
-        if (animationPlay) {
-            rotator.play();
-        } else {
-            rotator.pause();
-        }
+    // =========================================================================
+    // Color and Preferences
+    // =========================================================================
+
+    public void changeColors(ColorPalette colorPalette) {
+        this.colorPalette = colorPalette;
+        tripsContext.getAppViewPreferences().setColorPalette(colorPalette);
     }
 
-    ///////////////////////////////////
-
-    public void plotStars(CurrentPlot currentPlot) {
-        boolean showStems = tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayStems() &&
-                tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayGrid();
-        starPlotManager.drawStars(currentPlot, showStems);
+    @EventListener
+    public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
+        changeColors(event.getColorPalette());
     }
 
-
-    ////////////////////////// animation helpers
-
-    /**
-     * create an animation player
-     *
-     * @return the rotation animator
-     */
-    private @NotNull RotateTransition createRotateAnimation() {
-        RotateTransition rotate = new RotateTransition(
-                Duration.seconds(ROTATE_SECS),
-                world
-        );
-        rotate.setAxis(Rotate.Y_AXIS);
-        rotate.setFromAngle(360);
-        rotate.setToAngle(0);
-        rotate.setInterpolator(Interpolator.LINEAR);
-        rotate.setCycleCount(RotateTransition.INDEFINITE);
-        return rotate;
-    }
-
-
-    ////////////// graphics helpers  /////////////////////////
-
+    // =========================================================================
+    // Control Pane Offset
+    // =========================================================================
 
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;
@@ -591,190 +397,13 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         transitManager.setControlPaneOffset(controlPaneOffset);
     }
 
-    private void run() {
-        updateLabels();
+    // =========================================================================
+    // Clear All
+    // =========================================================================
+
+    public void clearAll() {
+        clearStars();
+        clearRoutes();
+        clearTransits();
     }
-
-    private void scheduleLabelUpdate() {
-        labelUpdatePause.setOnFinished(event -> updateLabels());
-        labelUpdatePause.playFromStart();
-    }
-
-    ///////////////////////// event manager
-
-    /**
-     * handle the user events
-     */
-    private void handleUserEvents() {
-
-        // handle keyboard key press events
-        subScene.setOnKeyPressed(this::keyEventHandler);
-
-        // handle mouse scroll events
-        subScene.setOnScroll(this::mouseScrollEventHandler);
-
-        // handle mouse press events
-        subScene.setOnMousePressed(this::mousePressEventHandler);
-
-        // handle mouse drag events
-        subScene.setOnMouseDragged(this::mouseDragEventHandler);
-
-    }
-
-    private void mouseScrollEventHandler(ScrollEvent event) {
-        double deltaY = event.getDeltaY();
-        zoomGraph(deltaY * 5);
-        throttledUpdateLabels();
-    }
-
-    private void mousePressEventHandler(MouseEvent me) {
-        mousePosX = me.getSceneX();
-        mousePosY = me.getSceneY();
-        mouseOldX = me.getSceneX();
-        mouseOldY = me.getSceneY();
-        subScene.requestFocus();
-    }
-
-    private void mouseDragEventHandler(MouseEvent me) {
-        int direction = userControls.isControlSense() ? +1 : -1;
-        mouseOldX = mousePosX;
-        mouseOldY = mousePosY;
-        mousePosX = me.getSceneX();
-        mousePosY = me.getSceneY();
-        mouseDeltaX = (mousePosX - mouseOldX);
-        mouseDeltaY = (mousePosY - mouseOldY);
-        double modifier = UserControls.NORMAL_SPEED;
-
-        if (me.isPrimaryButtonDown() && me.isControlDown()) {
-            double width = getWidth();
-            double height = getHeight();
-            translateXY(width / 2 - mousePosX, height / 2 - mousePosY);
-        } else if (me.isPrimaryButtonDown()) {
-            if (me.isAltDown()) { //roll
-                roll(direction, modifier); // +
-            } else {
-                rotateXY(direction, modifier, mouseDeltaX, mouseDeltaY);
-            }
-        }
-        throttledUpdateLabels();
-    }
-
-    private void translateXY(double mousePosX, double mousePosY) {
-        camera.setTranslateX(mousePosX);
-        camera.setTranslateY(mousePosY);
-    }
-
-    private void rotateXY(int direction, double modifier, double mouseDeltaX, double mouseDeltaY) {
-        rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier) % 360));
-        rotateX.setAngle(((rotateX.getAngle() - direction * mouseDeltaY * modifier) % 360));
-
-//        rotateX.setAngle((rotateY.getAngle() - direction * mouseDeltaY * modifier)  % 360 );
-//        rotateY.setAngle((rotateX.getAngle() + direction * mouseDeltaX * modifier)  % 360 );
-    }
-
-    private void roll(int direction, double modifier) {
-        rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier)) % 360);
-    }
-
-    private void keyEventHandler(KeyEvent event) {
-        switch (event.getCode()) {
-            case Z:
-                if (event.isShiftDown()) {
-                    log.info("shift pressed -> Z");
-//                        cameraXform.ry.setAngle(0.0);
-//                        cameraXform.rx.setAngle(0.0);
-//                        camera.setTranslateZ(-300.0);
-                }
-//                    cameraXform2.t.setX(0.0);
-//                    cameraXform2.t.setY(0.0);
-                break;
-            case X:
-                if (event.isControlDown()) {
-                    log.info("control pressed -> X");
-//                        gridGroup.setVisible(!gridGroup.isVisible());
-                }
-                break;
-            case S:
-                break;
-            case SPACE:
-                break;
-            case UP:
-                if (event.isControlDown() && event.isShiftDown()) {
-                    log.info("control and shift pressed -> up");
-//                        cameraXform2.t.setY(cameraXform2.t.getY() - 10.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown() && event.isShiftDown()) {
-                    log.info("alt and shift pressed -> up");
-//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 10.0 * ALT_MULTIPLIER);
-                } else if (event.isControlDown()) {
-                    log.info("control pressed -> up");
-//                        cameraXform2.t.setY(cameraXform2.t.getY() - 1.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown()) {
-                    log.info("alt pressed -> up");
-//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() - 2.0 * ALT_MULTIPLIER);
-                } else if (event.isShiftDown()) {
-                    log.info("shift pressed -> up");
-//                        double z = camera.getTranslateZ();
-//                        double newZ = z + 5.0 * SHIFT_MULTIPLIER;
-//                        camera.setTranslateZ(newZ);
-                }
-                break;
-            case DOWN:
-                if (event.isControlDown() && event.isShiftDown()) {
-                    log.info("control shift pressed -> down");
-//                        cameraXform2.t.setY(cameraXform2.t.getY() + 10.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown() && event.isShiftDown()) {
-                    log.info("alt and shift pressed -> down");
-//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 10.0 * ALT_MULTIPLIER);
-                } else if (event.isControlDown()) {
-                    log.info("control pressed -> down");
-//                        cameraXform2.t.setY(cameraXform2.t.getY() + 1.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown()) {
-                    log.info("alt pressed -> down");
-//                        cameraXform.rx.setAngle(cameraXform.rx.getAngle() + 2.0 * ALT_MULTIPLIER);
-                } else if (event.isShiftDown()) {
-                    log.info("shift pressed -> down");
-//                        double z = camera.getTranslateZ();
-//                        double newZ = z - 5.0 * SHIFT_MULTIPLIER;
-//                        camera.setTranslateZ(newZ);
-                }
-                break;
-            case RIGHT:
-                if (event.isControlDown() && event.isShiftDown()) {
-                    log.info("shift and control pressed -> right");
-//                        cameraXform2.t.setX(cameraXform2.t.getX() + 10.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown() && event.isShiftDown()) {
-                    log.info("shift and alt pressed -> right");
-//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 10.0 * ALT_MULTIPLIER);
-                } else if (event.isControlDown()) {
-                    log.info("control pressed -> right");
-//                        cameraXform2.t.setX(cameraXform2.t.getX() + 1.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown()) {
-                    log.info("alt pressed -> right");
-//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() - 2.0 * ALT_MULTIPLIER);
-                }
-                break;
-            case LEFT:
-                if (event.isControlDown() && event.isShiftDown()) {
-                    log.info("shift and control pressed -> left");
-//                        cameraXform2.t.setX(cameraXform2.t.getX() - 10.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown() && event.isShiftDown()) {
-                    log.info("shift and alt pressed -> right");
-//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 10.0 * ALT_MULTIPLIER);  // -
-                } else if (event.isControlDown()) {
-                    log.info("control pressed -> right");
-//                        cameraXform2.t.setX(cameraXform2.t.getX() - 1.0 * CONTROL_MULTIPLIER);
-                } else if (event.isAltDown()) {
-                    log.info("alt pressed -> right");
-//                        cameraXform.ry.setAngle(cameraXform.ry.getAngle() + 2.0 * ALT_MULTIPLIER);  // -
-                }
-                break;
-            default:
-                log.info("keyboard Event is {}", event.getCode());
-        }
-    }
-
-    public void displayRoute(RouteDescriptor routeDescriptor, boolean state) {
-        routeManager.changeDisplayStateOfRoute(routeDescriptor, state);
-    }
-
 }
