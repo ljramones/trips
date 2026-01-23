@@ -23,6 +23,8 @@ import java.io.File;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.springframework.stereotype.Service;
+
 import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
@@ -32,6 +34,7 @@ import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
  * Created by larrymitchell on 2017-01-22.
  */
 @Slf4j
+@Service
 public class DataExportService {
 
     private final DatabaseManagementService databaseManagementService;

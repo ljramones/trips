@@ -246,6 +246,7 @@ public class MainPane  {
                     TransitCalculationService transitCalculationService,
                     Localization localization,
                     ApplicationEventPublisher eventPublisher,
+                    DataExportService dataExportService,
                     RoutingPanel routingPanel,
                     ObjectViewPane objectViewPane,
                     StatusBarController statusBarController,
@@ -287,7 +288,7 @@ public class MainPane  {
         this.interstellarSpacePane = interstellarSpacePane;
         this.mainSplitPaneManager = mainSplitPaneManager;
 
-        this.dataExportService = new DataExportService(databaseManagementService, starService, eventPublisher);
+        this.dataExportService = dataExportService;
         this.sharedUIState = sharedUIState;
     }
 

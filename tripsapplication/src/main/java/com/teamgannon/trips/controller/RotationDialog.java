@@ -139,7 +139,7 @@ public class RotationDialog extends Dialog<Boolean> {
     private void setAnglesClicked(ActionEvent actionEvent) {
         angleX = Double.parseDouble(xAngleTextField.getText());
         angleY = Double.parseDouble(yAngleTextField.getText());
-        angleZ = Double.parseDouble(xAngleTextField.getText());
+        angleZ = Double.parseDouble(zAngleTextField.getText());
         rotationController.setRotationAngles(angleX, angleY, angleZ);
     }
 
