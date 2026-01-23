@@ -7,7 +7,6 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -63,19 +62,19 @@ class StarPlotManagerMeshTest {
         when(appViewPreferences.getColorPalette()).thenReturn(colorPalette);
 
         RouteManager routeManager = mock(RouteManager.class);
-        StarMeasurementService starMeasurementService = mock(StarMeasurementService.class);
         RouteFindingService routeFindingService = mock(RouteFindingService.class);
         StarService starService = mock(StarService.class);
         SolarSystemService solarSystemService = mock(SolarSystemService.class);
+        StarContextMenuHandler contextMenuHandler = mock(StarContextMenuHandler.class);
         ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
         starPlotManager = new StarPlotManager(
                 tripsContext,
                 routeManager,
-                starMeasurementService,
-                routeFindingService,
                 starService,
                 solarSystemService,
+                routeFindingService,
+                contextMenuHandler,
                 eventPublisher
         );
     }

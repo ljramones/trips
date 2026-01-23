@@ -9,27 +9,16 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StarSelectionModel;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
-import com.teamgannon.trips.jpa.model.DataSetDescriptor;
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.measure.TrackExecutionTime;
-import com.teamgannon.trips.service.SolarSystemService;
-import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.objects.MeshViewShapeFactory;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RouteFindingService;
-import com.teamgannon.trips.routing.dialogs.ContextAutomatedRoutingDialog;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.routing.model.RoutingType;
-import com.teamgannon.trips.screenobjects.StarEditDialog;
-import com.teamgannon.trips.screenobjects.StarEditStatus;
+import com.teamgannon.trips.service.SolarSystemService;
+import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
-import com.teamgannon.trips.solarsystem.PlanetDialog;
-import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
-import com.teamgannon.trips.solarsystem.SolarSystemGenerationDialog;
-import com.teamgannon.trips.solarsystem.SolarSystemReport;
-import com.teamgannon.trips.solarsystem.SolarSystemSaveResult;
 import javafx.application.Platform;
-import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -42,60 +31,18 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Rotate;
-import javafx.stage.Modality;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-
 import java.util.*;
-
-import static com.teamgannon.trips.support.AlertFactory.showConfirmationAlert;
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 @Slf4j
 @Component
 public class StarPlotManager {
-
-    // =========================================================================
-    // Display Constants - Star Appearance
-    // =========================================================================
-
-    /**
-     * Default scale factor for special star meshes (central star, 4pt, 5pt stars).
-     */
-    private static final double DEFAULT_STAR_MESH_SCALE = 30.0;
-
-    /**
-     * Scale factor for smaller mesh objects (pyramid, geometric shapes).
-     */
-    private static final double SMALL_MESH_SCALE = 10.0;
-
-    /**
-     * Scale factor for polity indicator objects.
-     */
-    private static final double POLITY_MESH_SCALE = 1.0;
-
-    /**
-     * Default rotation angle for star meshes (degrees).
-     */
-    private static final double DEFAULT_ROTATION_ANGLE = 90.0;
-
-    /**
-     * Inverted rotation angle for some mesh objects (degrees).
-     */
-    private static final double INVERTED_ROTATION_ANGLE = -90.0;
-
-    /**
-     * Fallback sphere radius when mesh loading fails.
-     */
-    private static final double FALLBACK_SPHERE_RADIUS = 10.0;
-
 
     // =========================================================================
     // Animation Constants
@@ -115,7 +62,6 @@ public class StarPlotManager {
      * Number of blink cycles for star highlighting.
      */
     private static final int HIGHLIGHT_BLINK_CYCLES = 100;
-
 
     // =========================================================================
     // Random Generation Constants (Test/Debug Only)
@@ -194,6 +140,17 @@ public class StarPlotManager {
     private final StarAnimationManager animationManager = new StarAnimationManager();
 
     /**
+     * Manages special star mesh objects (central star, moravian star, etc.).
+     */
+    @Getter
+    private final SpecialStarMeshManager meshManager;
+
+    /**
+     * Handles context menu actions for stars.
+     */
+    private final StarContextMenuHandler contextMenuHandler;
+
+    /**
      * to hold all the polities
      */
     private final Group politiesDisplayGroup = new Group();
@@ -203,20 +160,9 @@ public class StarPlotManager {
     private SubScene subScene;
 
     /**
-     * to make database changes
-     */
-    private final StarService starService;
-
-    /**
-     * to manage solar systems and planet persistence
-     */
-    private final SolarSystemService solarSystemService;
-
-    /**
      * the report generator
      */
     private final ApplicationEventPublisher eventPublisher;
-
 
     /**
      * the global context of TRIPS
@@ -243,55 +189,24 @@ public class StarPlotManager {
      */
     private boolean politiesOn = true;
 
-
     /**
      * reference to the Route Manager
      */
     private final RouteManager routeManager;
 
-    /**
-     * a utility class to measure specific star qualities
-     */
-    private final StarMeasurementService starMeasurementService;
-
-    /**
-     * service for finding routes between stars
-     */
-    private final RouteFindingService routeFindingService;
-
-
     private double controlPaneOffset;
-
 
     /**
      * used as a control for highlighting stars
      */
     private Node highLightStar;
 
-
     private StarDisplayPreferences starDisplayPreferences;
-
-
-    private final static String CENTRAL_STAR = "centralStar";
-    private final static String MORAVIAN_STAR = "moravianStar";
-    private final static String FOUR_PT_STAR = "4PtStar";
-    private final static String FIVE_PT_STAR = "5PtStar";
-    private final static String PYRAMID = "pyramid";
-
-    /**
-     * the special objects
-     */
-    private final Map<String, MeshObjectDefinition> specialObjects = new HashMap<>();
 
     /**
      * used to create 3d mesh objects
      */
     private final MeshViewShapeFactory meshViewShapeFactory = new MeshViewShapeFactory();
-
-
-    private ContextAutomatedRoutingDialog automatedRoutingDialog;
-
-    private ContextManualRoutingDialog manualRoutingDialog;
 
     // =========================================================================
     // Performance Optimization Caches
@@ -322,26 +237,26 @@ public class StarPlotManager {
      */
     public StarPlotManager(TripsContext tripsContext,
                            RouteManager routeManager,
-                           StarMeasurementService starMeasurementService,
-                           RouteFindingService routeFindingService,
                            StarService starService,
                            SolarSystemService solarSystemService,
+                           RouteFindingService routeFindingService,
+                           StarContextMenuHandler contextMenuHandler,
                            ApplicationEventPublisher eventPublisher) {
 
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
         this.routeManager = routeManager;
-        this.starMeasurementService = starMeasurementService;
-        this.routeFindingService = routeFindingService;
-        this.starService = starService;
-        this.solarSystemService = solarSystemService;
+        this.contextMenuHandler = contextMenuHandler;
         this.eventPublisher = eventPublisher;
 
         // Initialize polity object factory
         this.polityObjectFactory = new PolityObjectFactory(meshViewShapeFactory);
 
-        // special graphical objects in MeshView format
-        loadSpecialObjects();
+        // Initialize special star mesh manager
+        this.meshManager = new SpecialStarMeshManager(meshViewShapeFactory);
+
+        // Configure the context menu handler
+        contextMenuHandler.setStarsInViewSupplier(this::getCurrentStarsInView);
     }
 
     public void setGraphics(Group sceneRoot,
@@ -366,106 +281,6 @@ public class StarPlotManager {
         lodManager.prewarmPool(100);
     }
 
-    @TrackExecutionTime
-    private void loadSpecialObjects() {
-
-        // load central star
-        Group centralStar = meshViewShapeFactory.starCentral();
-        if (centralStar != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(CENTRAL_STAR)
-                    .id(UUID.randomUUID())
-                    .object(centralStar)
-                    .xScale(DEFAULT_STAR_MESH_SCALE)
-                    .yScale(DEFAULT_STAR_MESH_SCALE)
-                    .zScale(DEFAULT_STAR_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-            specialObjects.put(CENTRAL_STAR, objectDefinition);
-        } else {
-            log.error("Unable to load the central star object");
-        }
-
-        // load 4 pt star
-        Node fourPtStar = meshViewShapeFactory.star4pt();
-        if (fourPtStar != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(FOUR_PT_STAR)
-                    .id(UUID.randomUUID())
-                    .object(fourPtStar)
-                    .xScale(DEFAULT_STAR_MESH_SCALE)
-                    .yScale(DEFAULT_STAR_MESH_SCALE)
-                    .zScale(DEFAULT_STAR_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-            specialObjects.put(FOUR_PT_STAR, objectDefinition);
-        } else {
-            log.error("Unable to load the 4 pt star object");
-        }
-
-        // load 5 pt star
-        Group fivePtStar = meshViewShapeFactory.star5pt();
-        if (fivePtStar != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(FIVE_PT_STAR)
-                    .id(UUID.randomUUID())
-                    .object(fivePtStar)
-                    .xScale(DEFAULT_STAR_MESH_SCALE)
-                    .yScale(DEFAULT_STAR_MESH_SCALE)
-                    .zScale(DEFAULT_STAR_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(DEFAULT_ROTATION_ANGLE)
-                    .build();
-            specialObjects.put(FIVE_PT_STAR, objectDefinition);
-        } else {
-            log.error("Unable to load the 5 pt star object");
-        }
-
-        // load pyramid
-        MeshView pyramid = meshViewShapeFactory.pyramid();
-        if (pyramid != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name(PYRAMID)
-                    .id(UUID.randomUUID())
-                    .object(pyramid)
-                    .xScale(SMALL_MESH_SCALE)
-                    .yScale(SMALL_MESH_SCALE)
-                    .zScale(SMALL_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(INVERTED_ROTATION_ANGLE)
-                    .build();
-            specialObjects.put(PYRAMID, objectDefinition);
-        } else {
-            log.error("Unable to load the pyramid object");
-        }
-
-        // load geometric shape
-        MeshView geometric0 = meshViewShapeFactory.geometric0();
-        if (geometric0 != null) {
-            MeshObjectDefinition objectDefinition = MeshObjectDefinition
-                    .builder()
-                    .name("geometric0")
-                    .id(UUID.randomUUID())
-                    .object(geometric0)
-                    .xScale(SMALL_MESH_SCALE)
-                    .yScale(SMALL_MESH_SCALE)
-                    .zScale(SMALL_MESH_SCALE)
-                    .axis(Rotate.X_AXIS)
-                    .rotateAngle(INVERTED_ROTATION_ANGLE)
-                    .build();
-            specialObjects.put("geometric0", objectDefinition);
-        } else {
-            log.error("Unable to load the geometric object");
-        }
-
-        log.info("All MeshView objects loaded");
-    }
 
     /**
      * get the plotted stars in view
@@ -605,6 +420,7 @@ public class StarPlotManager {
     public void drawStars(@NotNull CurrentPlot currentPlot, boolean extensionsVisible, double maxDistance) {
         this.colorPalette = currentPlot.getColorPalette();
         this.starDisplayPreferences = currentPlot.getStarDisplayPreferences();
+        this.contextMenuHandler.setStarDisplayPreferences(starDisplayPreferences);
 
         // Configure LOD manager with center coordinates for distance calculations
         double[] centerCoords = currentPlot.getCenterCoordinates();
@@ -867,43 +683,13 @@ public class StarPlotManager {
 
     /**
      * Create a fresh central star mesh for display.
-     * IMPORTANT: Each call creates a NEW instance because JavaFX Nodes can only
-     * be in one scene graph at a time. Reusing the same Node would cause it to
-     * be removed from its previous parent.
+     * Delegates to {@link SpecialStarMeshManager#createCentralStar()}.
      *
      * @return a new central star Node
      */
     // Package-private for testing
     Node createCentralStar() {
-        // Get the definition for scale/rotation settings
-        MeshObjectDefinition meshObjectDefinition = specialObjects.get(CENTRAL_STAR);
-
-        // Create a FRESH mesh instance - don't reuse cached objects!
-        // JavaFX Nodes can only exist in one scene graph at a time.
-        Group centralStar = meshViewShapeFactory.starCentral();
-
-        if (centralStar == null) {
-            log.error("Failed to load central star mesh from factory");
-            return new Sphere(FALLBACK_SPHERE_RADIUS);
-        }
-
-        // Apply scale and rotation from the definition
-        if (meshObjectDefinition != null) {
-            centralStar.setScaleX(meshObjectDefinition.getXScale());
-            centralStar.setScaleY(meshObjectDefinition.getYScale());
-            centralStar.setScaleZ(meshObjectDefinition.getZScale());
-            centralStar.setRotationAxis(meshObjectDefinition.getAxis());
-            centralStar.setRotate(meshObjectDefinition.getRotateAngle());
-        } else {
-            // Default settings if definition is missing
-            centralStar.setScaleX(DEFAULT_STAR_MESH_SCALE);
-            centralStar.setScaleY(DEFAULT_STAR_MESH_SCALE);
-            centralStar.setScaleZ(DEFAULT_STAR_MESH_SCALE);
-            centralStar.setRotationAxis(Rotate.X_AXIS);
-            centralStar.setRotate(DEFAULT_ROTATION_ANGLE);
-        }
-
-        return centralStar;
+        return meshManager.createCentralStar();
     }
 
     private void setContextMenu(@NotNull StarDisplayRecord record, Node star) {
@@ -941,16 +727,18 @@ public class StarPlotManager {
             // Handle primary button (left-click)
             if (e.getButton() == MouseButton.PRIMARY) {
                 log.info("Primary button pressed");
-                if (routeManager.isManualRoutingActive()) {
+                if (contextMenuHandler.isManualRoutingActive()) {
                     log.info("Manual Routing is active");
-                    if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
-                        if (manualRoutingDialog != null) {
-                            manualRoutingDialog.addStar(record);
+                    if (contextMenuHandler.getRoutingType().equals(RoutingType.MANUAL)) {
+                        ContextManualRoutingDialog manualDialog = contextMenuHandler.getManualRoutingDialog();
+                        if (manualDialog != null) {
+                            manualDialog.addStar(record);
                         }
                     }
-                    if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
-                        if (automatedRoutingDialog != null) {
-                            automatedRoutingDialog.setToStar(record.getStarName());
+                    if (contextMenuHandler.getRoutingType().equals(RoutingType.AUTOMATIC)) {
+                        var automatedDialog = contextMenuHandler.getAutomatedRoutingDialog();
+                        if (automatedDialog != null) {
+                            automatedDialog.setToStar(record.getStarName());
                         }
                     }
                 } else {
@@ -1046,17 +834,19 @@ public class StarPlotManager {
     private void starClickEventHandler(Node star, @NotNull ContextMenu starContextMenu, @NotNull MouseEvent e) {
         if (e.getButton() == MouseButton.PRIMARY) {
             log.info("Primary button pressed");
-            if (routeManager.isManualRoutingActive()) {
+            if (contextMenuHandler.isManualRoutingActive()) {
                 log.info("Manual Routing is active");
                 StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
-                if (routeManager.getRoutingType().equals(RoutingType.MANUAL)) {
-                    if (manualRoutingDialog != null) {
-                        manualRoutingDialog.addStar(record);
+                if (contextMenuHandler.getRoutingType().equals(RoutingType.MANUAL)) {
+                    ContextManualRoutingDialog manualDialog = contextMenuHandler.getManualRoutingDialog();
+                    if (manualDialog != null) {
+                        manualDialog.addStar(record);
                     }
                 }
-                if (routeManager.getRoutingType().equals(RoutingType.AUTOMATIC)) {
-                    if (automatedRoutingDialog != null) {
-                        automatedRoutingDialog.setToStar(record.getStarName());
+                if (contextMenuHandler.getRoutingType().equals(RoutingType.AUTOMATIC)) {
+                    var automatedDialog = contextMenuHandler.getAutomatedRoutingDialog();
+                    if (automatedDialog != null) {
+                        automatedDialog.setToStar(record.getStarName());
                     }
                 }
             } else {
@@ -1101,145 +891,13 @@ public class StarPlotManager {
      */
     private @NotNull ContextMenu createPopup(String name, @NotNull Node star) {
         StarDisplayRecord record = (StarDisplayRecord) star.getUserData();
-
-        return new StarContextMenuBuilder(star, record)
-                .withTitle(name)
-                .withHighlightAction(r ->
-                        eventPublisher.publishEvent(new HighlightStarEvent(this, r.getRecordId())))
-                .withPropertiesAction(r -> {
-                    StarObject starObject = starService.getStar(r.getRecordId());
-                    displayProperties(starObject);
-                })
-                .withRecenterAction(r -> {
-                    if (r != null) {
-                        eventPublisher.publishEvent(new RecenterStarEvent(this, r));
-                    } else {
-                        showErrorAlert("Recenter on star", "The star you selected was null!");
-                    }
-                })
-                .withEditAction(r -> {
-                    StarDisplayRecord editRecord = editProperties(r);
-                    if (editRecord != null) {
-                        star.setUserData(editRecord);
-                    }
-                })
-                .withDeleteAction(r -> removeNode(r))
-                .withRoutingHeader()
-                .withAutomatedRoutingAction(r -> generateAutomatedRoute(r))
-                .withManualRoutingAction(r -> generateManualRoute(r))
-                .withDistanceReportAction(r ->
-                        eventPublisher.publishEvent(new DistanceReportEvent(this, r)))
-                .withEnterSystemAction(r -> jumpToSystem(r))
-                .withGenerateSolarSystemAction(r -> generateSolarSystem(r))
-                .build();
-    }
-
-
-    private void generateAutomatedRoute(StarDisplayRecord starDescriptor) {
-        log.info("generate automated route");
-        automatedRoutingDialog = new ContextAutomatedRoutingDialog(
-                this, routeManager, routeFindingService,
-                getCurrentDataSet(), starDescriptor, getCurrentStarsInView());
-
-        automatedRoutingDialog.initModality(Modality.NONE);
-        automatedRoutingDialog.show();
-        // set the state for the routing so that clicks on stars don't invoke the context menu
-//        routeManager.setManualRoutingActive(true);
-        routeManager.setRoutingType(RoutingType.AUTOMATIC);
-    }
-
-    private void generateManualRoute(StarDisplayRecord starDescriptor) {
-        log.info("generate manual route");
-        manualRoutingDialog = new ContextManualRoutingDialog(
-                routeManager,
-                getCurrentDataSet(),
-                starDescriptor
-        );
-        manualRoutingDialog.initModality(Modality.NONE);
-        manualRoutingDialog.show();
-        // set the state for the routing so that clicks on stars don't invoke the context menu
-        routeManager.setManualRoutingActive(true);
-        routeManager.setRoutingType(RoutingType.MANUAL);
-
-    }
-
-    private DataSetDescriptor getCurrentDataSet() {
-        return tripsContext.getDataSetDescriptor();
+        return contextMenuHandler.createContextMenu(star, record, this);
     }
 
 
 
 
 
-    /**
-     * remove a star node form the db
-     *
-     * @param starDisplayRecord the star to remove
-     */
-    private void removeNode(@NotNull StarDisplayRecord starDisplayRecord) {
-        log.info("Removing object for:" + starDisplayRecord.getStarName());
-        starService.removeStar(starDisplayRecord.getRecordId());
-    }
-
-
-
-
-    ///////////////////////// Simulate  /////////
-
-    /**
-     * edit a star in the database
-     *
-     * @param starDisplayRecord the properties to edit
-     */
-    private @Nullable StarDisplayRecord editProperties(@NotNull StarDisplayRecord starDisplayRecord) {
-        StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
-        StarEditDialog starEditDialog = new StarEditDialog(starObject);
-        Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
-        if (optionalStarDisplayRecord.isPresent()) {
-            StarEditStatus status = optionalStarDisplayRecord.get();
-            if (status.isChanged()) {
-                StarObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromStarObject(record, starDisplayPreferences);
-                if (record1 != null) {
-                    record1.setCoordinates(starDisplayRecord.getCoordinates());
-                    log.info("Changed value: {}", record);
-                    starService.updateStar(record);
-                } else {
-                    log.error("Conversion of {} to star display record, returned a null-->bug!!", record);
-                }
-                return record1;
-            } else {
-                log.warn("no return");
-                return starDisplayRecord;
-            }
-        }
-        log.info("Editing properties in side panes for:" + starDisplayRecord.getStarName());
-        return starDisplayRecord;
-    }
-
-
-    /**
-     * display properties for this star
-     *
-     * @param starObject the properties to display
-     */
-    private void displayProperties(@NotNull StarObject starObject) {
-        log.info("Showing properties in side panes for:" + starObject.getDisplayName());
-        eventPublisher.publishEvent(new DisplayStarEvent(this, starObject));
-    }
-
-    /**
-     * jump to the solar system selected
-     *
-     * @param starDisplayRecord the properties of the star selected
-     */
-    private void jumpToSystem(StarDisplayRecord starDisplayRecord) {
-        eventPublisher.publishEvent(new ContextSelectorEvent(
-                this,
-                ContextSelectionType.SOLARSYSTEM,
-                starDisplayRecord,
-                (java.util.Map<String, String>) null));
-    }
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         labelManager.setControlPaneOffset(controlPaneOffset);
@@ -1347,40 +1005,15 @@ public class StarPlotManager {
 
 
     /**
-     * create a highlight star
+     * Create a highlight star for blinking animation.
+     * Delegates to {@link SpecialStarMeshManager#createHighlightStar(Color)}.
      *
      * @param color the color to display it as (used to match the star)
      * @return the star to display
      */
     // Package-private for testing
     Node createHighlightStar(Color color) {
-        // load the moravian star
-        // we have to do this each time because it has to unique
-        Group highLightStar = meshViewShapeFactory.starMoravian();
-        if (highLightStar != null) {
-
-            // extract the various meshviews and set the color to match
-            // we need to do this because the moravian object is a group of mesh objects and
-            // we need set the material color on each one.
-            for (Node node : highLightStar.getChildren()) {
-                MeshView meshView = (MeshView) node;
-                PhongMaterial material = (PhongMaterial) meshView.getMaterial();
-                material.setSpecularColor(color);
-                material.setDiffuseColor(color);
-            }
-
-            // now scale it and set it to show properly
-            highLightStar.setScaleX(DEFAULT_STAR_MESH_SCALE);
-            highLightStar.setScaleY(DEFAULT_STAR_MESH_SCALE);
-            highLightStar.setScaleZ(DEFAULT_STAR_MESH_SCALE);
-            highLightStar.setRotationAxis(Rotate.X_AXIS);
-            highLightStar.setRotate(DEFAULT_ROTATION_ANGLE);
-            return highLightStar;
-        } else {
-            log.error("Unable to load the moravian star object");
-            return null;
-        }
-
+        return meshManager.createHighlightStar(color);
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -1389,123 +1022,11 @@ public class StarPlotManager {
 
 
     public void clearRoutingFlag() {
-        routeManager.setManualRoutingActive(false);
+        contextMenuHandler.clearRoutingFlag();
     }
-
-
-    private void generateSolarSystem(StarDisplayRecord starDescriptor) {
-        StarObject starObject = starService.getStar(starDescriptor.getRecordId());
-
-        // Check for invalid stellar parameters and warn the user
-        String parameterIssues = validateStellarParameters(starObject);
-        if (parameterIssues != null) {
-            Alert warningAlert = new Alert(Alert.AlertType.WARNING);
-            warningAlert.setTitle("Missing Stellar Parameters");
-            warningAlert.setHeaderText("Some stellar parameters are missing or invalid");
-            warningAlert.setContentText(
-                    parameterIssues +
-                    "\n\nThe generator will use Sun-like default values for missing parameters. " +
-                    "This may produce unrealistic results.\n\n" +
-                    "Do you want to proceed anyway?"
-            );
-            warningAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
-
-            Optional<ButtonType> warningResult = warningAlert.showAndWait();
-            if (warningResult.isEmpty() || warningResult.get() == ButtonType.NO) {
-                log.info("User cancelled solar system generation due to missing stellar parameters for '{}'",
-                        starObject.getDisplayName());
-                return;
-            }
-            log.warn("User proceeding with solar system generation despite missing parameters for '{}': {}",
-                    starObject.getDisplayName(), parameterIssues.replace("\n", "; "));
-        }
-
-        SolarSystemGenerationDialog dialog = new SolarSystemGenerationDialog(starObject);
-        Optional<SolarSystemGenOptions> solarSystemGenOptional = dialog.showAndWait();
-        if (solarSystemGenOptional.isPresent()) {
-            SolarSystemGenOptions solarSystemGenOptions = solarSystemGenOptional.get();
-            SolarSystemReport report = new SolarSystemReport(starObject, solarSystemGenOptions);
-            report.generateReport();
-
-            PlanetDialog planetDialog = new PlanetDialog(report);
-            Optional<SolarSystemSaveResult> resultOptional = planetDialog.showAndWait();
-
-            // Handle save request
-            if (resultOptional.isPresent()) {
-                SolarSystemSaveResult saveResult = resultOptional.get();
-                if (saveResult.isSaveRequested()) {
-                    int savedCount = solarSystemService.saveGeneratedPlanets(
-                            saveResult.getSourceStar(),
-                            saveResult.getPlanets()
-                    );
-                    log.info("Saved {} generated planets to database for star '{}'",
-                            savedCount, starObject.getDisplayName());
-
-                    // Show confirmation to user
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Solar System Saved");
-                    alert.setHeaderText("Generated planets saved successfully");
-                    alert.setContentText(String.format(
-                            "Saved %d planets for %s.\n\n" +
-                            "You can now use 'Enter System' to view the generated solar system.",
-                            savedCount, starObject.getDisplayName()));
-                    alert.showAndWait();
-                }
-            }
-        }
-    }
-
-    /**
-     * Validates stellar parameters required for solar system generation.
-     *
-     * @param starObject the star to validate
-     * @return null if all parameters are valid, otherwise a string describing the issues
-     */
-    private String validateStellarParameters(StarObject starObject) {
-        StringBuilder issues = new StringBuilder();
-
-        if (starObject.getMass() <= 0) {
-            issues.append("• Mass is missing or zero\n");
-        }
-
-        if (starObject.getRadius() <= 0) {
-            issues.append("• Radius is missing or zero\n");
-        }
-
-        if (starObject.getTemperature() <= 0) {
-            issues.append("• Temperature is missing or zero\n");
-        }
-
-        // Luminosity is a String - check if it's empty or not a valid positive number
-        String luminosity = starObject.getLuminosity();
-        if (luminosity == null || luminosity.trim().isEmpty()) {
-            issues.append("• Luminosity is missing\n");
-        } else {
-            try {
-                double lumValue = Double.parseDouble(luminosity.trim());
-                if (lumValue <= 0) {
-                    issues.append("• Luminosity value is zero or negative\n");
-                }
-            } catch (NumberFormatException e) {
-                // Luminosity might be a class like "V" or "IV" - that's acceptable
-                // Only flag it if it's neither a valid number nor a known luminosity class
-                String trimmed = luminosity.trim().toUpperCase();
-                if (!trimmed.matches("^(I{1,3}|IV|V|VI|VII|0|Ia|Ib|II|III)?[ab]?$")) {
-                    // Not a standard luminosity class, might be invalid
-                    // But we'll be lenient here - only flag completely empty strings
-                }
-            }
-        }
-
-        if (issues.length() > 0) {
-            return "The following stellar parameters are missing or invalid:\n\n" + issues;
-        }
-        return null;
-    }
-
 
     public void setManualRouting(ContextManualRoutingDialog manualRoutingDialog) {
-        this.manualRoutingDialog = manualRoutingDialog;
+        contextMenuHandler.setManualRoutingDialog(manualRoutingDialog);
     }
 
 

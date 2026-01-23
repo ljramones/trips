@@ -11,7 +11,6 @@ import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
-import com.teamgannon.trips.service.measure.StarMeasurementService;
 import javafx.application.Platform;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
@@ -48,9 +47,9 @@ class StarPlotManagerLODTest {
     private StarPlotManager starPlotManager;
     private TripsContext tripsContext;
     private RouteManager routeManager;
-    private StarMeasurementService starMeasurementService;
     private StarService starService;
     private SolarSystemService solarSystemService;
+    private StarContextMenuHandler contextMenuHandler;
     private ApplicationEventPublisher eventPublisher;
 
     @BeforeAll
@@ -73,10 +72,10 @@ class StarPlotManagerLODTest {
         // Create mocks
         tripsContext = mock(TripsContext.class);
         routeManager = mock(RouteManager.class);
-        starMeasurementService = mock(StarMeasurementService.class);
         RouteFindingService routeFindingService = mock(RouteFindingService.class);
         starService = mock(StarService.class);
         solarSystemService = mock(SolarSystemService.class);
+        contextMenuHandler = mock(StarContextMenuHandler.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         // Configure tripsContext
@@ -92,10 +91,10 @@ class StarPlotManagerLODTest {
         starPlotManager = new StarPlotManager(
                 tripsContext,
                 routeManager,
-                starMeasurementService,
-                routeFindingService,
                 starService,
                 solarSystemService,
+                routeFindingService,
+                contextMenuHandler,
                 eventPublisher
         );
     }
