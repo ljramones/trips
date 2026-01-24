@@ -399,6 +399,7 @@ public class StarPlotManager {
 
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
         labelManager.setControlPaneOffset(controlPaneOffset);
+        labelManager.setCameraZ(interstellarSpacePane.getCameraZ());
         labelManager.updateLabels(interstellarSpacePane.getBoundsInParent());
     }
 

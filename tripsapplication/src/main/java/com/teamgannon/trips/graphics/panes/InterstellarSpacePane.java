@@ -212,6 +212,15 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         cameraController.toggleAnimation();
     }
 
+    /**
+     * Get the current camera Z position (for zoom-based calculations).
+     *
+     * @return camera Z translation value
+     */
+    public double getCameraZ() {
+        return cameraController.getCamera().getTranslateZ();
+    }
+
     // =========================================================================
     // User Controls
     // =========================================================================

@@ -11,6 +11,8 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
+import javafx.scene.text.Font;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +75,37 @@ public class StarLabelManager {
      */
     private static final long LABEL_UPDATE_THROTTLE_MS = 16;
 
+    /**
+     * Maximum characters to display in a label before truncating.
+     */
+    private static final int MAX_LABEL_LENGTH = 18;
+
+    /**
+     * Ellipsis appended to truncated labels.
+     */
+    private static final String ELLIPSIS = "...";
+
+    /**
+     * Default camera Z position (used as baseline for font scaling).
+     */
+    private static final double BASE_CAMERA_Z = -1600.0;
+
+    /**
+     * Minimum font scale factor (when zoomed out).
+     */
+    private static final double MIN_FONT_SCALE = 0.7;
+
+    /**
+     * Maximum font scale factor (when zoomed in).
+     */
+    private static final double MAX_FONT_SCALE = 1.3;
+
+    /**
+     * Camera Z range over which font scaling is applied.
+     * Scaling transitions from MIN to MAX over this range centered on BASE_CAMERA_Z.
+     */
+    private static final double FONT_SCALE_RANGE = 1600.0;
+
     // =========================================================================
     // State
     // =========================================================================
@@ -116,6 +149,26 @@ public class StarLabelManager {
      */
     private final Map<Node, Point2D> lastLabelPositions = new HashMap<>();
 
+    /**
+     * Base font name from color palette.
+     */
+    private String baseFontName = "System";
+
+    /**
+     * Base font size from color palette.
+     */
+    private double baseFontSize = 12.0;
+
+    /**
+     * Current camera Z position for font scaling.
+     */
+    private double currentCameraZ = BASE_CAMERA_Z;
+
+    /**
+     * Last applied font scale to avoid unnecessary font updates.
+     */
+    private double lastFontScale = 1.0;
+
     // =========================================================================
     // Initialization
     // =========================================================================
@@ -140,12 +193,71 @@ public class StarLabelManager {
         this.controlPaneOffset = offset;
     }
 
+    /**
+     * Set the current camera Z position for font scaling calculations.
+     * <p>
+     * When the camera is closer (more negative Z), labels are scaled larger.
+     * When the camera is farther (less negative Z), labels are scaled smaller.
+     *
+     * @param cameraZ the camera's Z translation value
+     */
+    public void setCameraZ(double cameraZ) {
+        this.currentCameraZ = cameraZ;
+    }
+
+    /**
+     * Calculate the font scale factor based on current camera Z position.
+     * <p>
+     * Scale ranges from MIN_FONT_SCALE (zoomed out) to MAX_FONT_SCALE (zoomed in).
+     *
+     * @return scale factor to apply to base font size
+     */
+    private double calculateFontScale() {
+        // How far from base position? Positive = zoomed in, negative = zoomed out
+        double zOffset = BASE_CAMERA_Z - currentCameraZ;
+
+        // Normalize to -1..+1 range
+        double normalized = zOffset / FONT_SCALE_RANGE;
+
+        // Clamp and map to scale range
+        normalized = Math.max(-1.0, Math.min(1.0, normalized));
+
+        // Map to MIN_FONT_SCALE..MAX_FONT_SCALE
+        double midScale = (MIN_FONT_SCALE + MAX_FONT_SCALE) / 2.0;
+        double scaleRange = (MAX_FONT_SCALE - MIN_FONT_SCALE) / 2.0;
+
+        return midScale + (normalized * scaleRange);
+    }
+
+    /**
+     * Apply font scaling to all labels based on current camera position.
+     * Only updates fonts if the scale has changed significantly.
+     */
+    private void applyFontScaling() {
+        double newScale = calculateFontScale();
+
+        // Only update if scale changed significantly (avoid unnecessary font recreations)
+        if (Math.abs(newScale - lastFontScale) < 0.02) {
+            return;
+        }
+
+        lastFontScale = newScale;
+        double scaledSize = baseFontSize * newScale;
+        Font scaledFont = Font.font(baseFontName, scaledSize);
+
+        for (Label label : shapeToLabel.values()) {
+            label.setFont(scaledFont);
+        }
+    }
+
     // =========================================================================
     // Label Creation
     // =========================================================================
 
     /**
      * Create a label for a star.
+     * <p>
+     * Long star names are truncated with ellipsis, and a tooltip shows the full name.
      *
      * @param record       the star record containing the name
      * @param colorPalette the color palette for font and color settings
@@ -153,11 +265,39 @@ public class StarLabelManager {
      */
     public @NotNull Label createLabel(@NotNull StarDisplayRecord record,
                                        @NotNull ColorPalette colorPalette) {
-        Label label = new Label(record.getStarName());
+        String fullName = record.getStarName();
+        String displayName = truncateName(fullName);
+
+        Label label = new Label(displayName);
         SerialFont serialFont = colorPalette.getLabelFont();
+
+        // Store base font settings for scaling
+        baseFontName = serialFont.getName();
+        baseFontSize = serialFont.getSize();
+
         label.setFont(serialFont.toFont());
         label.setTextFill(colorPalette.getLabelColor());
+
+        // Add tooltip for truncated names
+        if (!displayName.equals(fullName)) {
+            Tooltip tooltip = new Tooltip(fullName);
+            Tooltip.install(label, tooltip);
+        }
+
         return label;
+    }
+
+    /**
+     * Truncate a star name if it exceeds the maximum length.
+     *
+     * @param name the full star name
+     * @return truncated name with ellipsis, or original if short enough
+     */
+    private @NotNull String truncateName(@NotNull String name) {
+        if (name.length() <= MAX_LABEL_LENGTH) {
+            return name;
+        }
+        return name.substring(0, MAX_LABEL_LENGTH - ELLIPSIS.length()) + ELLIPSIS;
     }
 
     /**
@@ -263,6 +403,9 @@ public class StarLabelManager {
         if (shapeToLabel.isEmpty()) {
             return;
         }
+
+        // Apply font scaling based on current zoom level
+        applyFontScaling();
 
         // Phase 1: Build candidate list with screen positions and depths
         List<LabelCandidate> candidates = new ArrayList<>(shapeToLabel.size());
