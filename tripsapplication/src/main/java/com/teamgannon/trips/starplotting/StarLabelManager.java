@@ -3,6 +3,9 @@ package com.teamgannon.trips.starplotting;
 import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
@@ -12,8 +15,12 @@ import javafx.scene.Node;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Glow;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.transform.Translate;
+import javafx.util.Duration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -121,6 +128,21 @@ public class StarLabelManager {
     private static final String LABEL_HOVER_BACKGROUND = "rgba(70, 130, 180, 0.8)";
 
     /**
+     * Search highlight color (bright yellow-gold).
+     */
+    private static final String LABEL_SEARCH_HIGHLIGHT = "rgba(255, 215, 0, 0.9)";
+
+    /**
+     * Duration of one pulse cycle in milliseconds.
+     */
+    private static final double PULSE_CYCLE_MS = 500;
+
+    /**
+     * Number of pulse cycles for search highlight.
+     */
+    private static final int PULSE_CYCLES = 6;
+
+    /**
      * Camera Z range over which font scaling is applied.
      * Scaling transitions from MIN to MAX over this range centered on BASE_CAMERA_Z.
      */
@@ -188,6 +210,11 @@ public class StarLabelManager {
      * Last applied font scale to avoid unnecessary font updates.
      */
     private double lastFontScale = 1.0;
+
+    /**
+     * Currently running search highlight animation.
+     */
+    private Timeline currentHighlightAnimation;
 
     // =========================================================================
     // Initialization
@@ -346,6 +373,94 @@ public class StarLabelManager {
 
         label.setOnMouseEntered(e -> label.setStyle(hoverStyle));
         label.setOnMouseExited(e -> label.setStyle(normalStyle));
+    }
+
+    // =========================================================================
+    // Search Highlight Animation
+    // =========================================================================
+
+    /**
+     * Highlight a label with a pulsing animation to draw attention to it.
+     * Used when a star is found via search.
+     *
+     * @param starNode the star node whose label should be highlighted
+     */
+    public void pulseHighlightLabel(@NotNull Node starNode) {
+        Label label = shapeToLabel.get(starNode);
+        if (label == null) {
+            log.warn("No label found for star node to highlight");
+            return;
+        }
+
+        pulseHighlightLabel(label);
+    }
+
+    /**
+     * Highlight a label with a pulsing animation.
+     *
+     * @param label the label to highlight
+     */
+    public void pulseHighlightLabel(@NotNull Label label) {
+        // Stop any existing animation
+        stopHighlightAnimation();
+
+        // Make sure label is visible
+        label.setVisible(true);
+
+        // Create glow effect for pulsing
+        Glow glow = new Glow(0);
+        DropShadow dropShadow = new DropShadow();
+        dropShadow.setColor(Color.GOLD);
+        dropShadow.setRadius(10);
+        dropShadow.setSpread(0.5);
+        glow.setInput(dropShadow);
+        label.setEffect(glow);
+
+        // Set highlight background
+        String highlightStyle =
+                "-fx-background-color: " + LABEL_SEARCH_HIGHLIGHT + ";" +
+                "-fx-padding: " + LABEL_BACKGROUND_PADDING + ";" +
+                "-fx-background-radius: " + LABEL_BACKGROUND_RADIUS + ";";
+        label.setStyle(highlightStyle);
+
+        // Create pulsing animation
+        currentHighlightAnimation = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(glow.levelProperty(), 0.0),
+                        new KeyValue(label.scaleXProperty(), 1.0),
+                        new KeyValue(label.scaleYProperty(), 1.0)),
+                new KeyFrame(Duration.millis(PULSE_CYCLE_MS / 2),
+                        new KeyValue(glow.levelProperty(), 0.8),
+                        new KeyValue(label.scaleXProperty(), 1.2),
+                        new KeyValue(label.scaleYProperty(), 1.2)),
+                new KeyFrame(Duration.millis(PULSE_CYCLE_MS),
+                        new KeyValue(glow.levelProperty(), 0.0),
+                        new KeyValue(label.scaleXProperty(), 1.0),
+                        new KeyValue(label.scaleYProperty(), 1.0))
+        );
+
+        currentHighlightAnimation.setCycleCount(PULSE_CYCLES);
+        currentHighlightAnimation.setOnFinished(e -> {
+            // Restore normal appearance
+            label.setEffect(null);
+            label.setScaleX(1.0);
+            label.setScaleY(1.0);
+            applyLabelBackground(label);
+            currentHighlightAnimation = null;
+        });
+
+        currentHighlightAnimation.play();
+        log.info("Started pulse highlight animation for label: {}", label.getText());
+    }
+
+    /**
+     * Stop the current highlight animation if running.
+     */
+    public void stopHighlightAnimation() {
+        if (currentHighlightAnimation != null) {
+            currentHighlightAnimation.stop();
+            currentHighlightAnimation = null;
+        }
     }
 
     /**

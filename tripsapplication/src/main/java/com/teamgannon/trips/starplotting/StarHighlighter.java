@@ -37,6 +37,7 @@ public class StarHighlighter {
     private final SpecialStarMeshManager meshManager;
     private final StarAnimationManager animationManager;
     private final StarClickHandler clickHandler;
+    private final StarLabelManager labelManager;
 
     /**
      * The currently highlighted star node.
@@ -64,11 +65,13 @@ public class StarHighlighter {
     public StarHighlighter(TripsContext tripsContext,
                            SpecialStarMeshManager meshManager,
                            StarAnimationManager animationManager,
-                           StarClickHandler clickHandler) {
+                           StarClickHandler clickHandler,
+                           StarLabelManager labelManager) {
         this.tripsContext = tripsContext;
         this.meshManager = meshManager;
         this.animationManager = animationManager;
         this.clickHandler = clickHandler;
+        this.labelManager = labelManager;
     }
 
     /**
@@ -122,7 +125,21 @@ public class StarHighlighter {
         stellarDisplayGroup.getChildren().add(highlightStar);
         startBlinkAnimation(highlightStar);
 
+        // Also highlight the label if it exists
+        highlightLabel(starShape);
+
         log.info("Highlighting star: {}", record.getStarName());
+    }
+
+    /**
+     * Highlight the label associated with a star node.
+     *
+     * @param starNode the star node whose label should be highlighted
+     */
+    private void highlightLabel(Node starNode) {
+        if (labelManager != null) {
+            labelManager.pulseHighlightLabel(starNode);
+        }
     }
 
     /**

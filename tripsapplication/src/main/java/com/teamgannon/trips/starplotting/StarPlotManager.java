@@ -179,7 +179,7 @@ public class StarPlotManager {
 
         // Initialize star highlighter
         this.starHighlighter = new StarHighlighter(
-                tripsContext, meshManager, animationManager, clickHandler
+                tripsContext, meshManager, animationManager, clickHandler, labelManager
         );
         this.starHighlighter.setContextMenuFactory((record, star) ->
                 clickHandler.setupContextMenu(record, star)

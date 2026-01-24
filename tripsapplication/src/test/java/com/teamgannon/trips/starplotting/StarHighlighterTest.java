@@ -44,6 +44,9 @@ class StarHighlighterTest {
     private StarClickHandler clickHandler;
 
     @Mock
+    private StarLabelManager labelManager;
+
+    @Mock
     private CurrentPlot currentPlot;
 
     private StarHighlighter highlighter;
@@ -51,7 +54,7 @@ class StarHighlighterTest {
 
     @BeforeEach
     void setUp() {
-        highlighter = new StarHighlighter(tripsContext, meshManager, animationManager, clickHandler);
+        highlighter = new StarHighlighter(tripsContext, meshManager, animationManager, clickHandler, labelManager);
         stellarDisplayGroup = new Group();
         highlighter.initialize(stellarDisplayGroup);
 
@@ -73,7 +76,7 @@ class StarHighlighterTest {
         @DisplayName("should accept display group during initialization")
         void shouldAcceptDisplayGroupDuringInitialization() {
             StarHighlighter newHighlighter = new StarHighlighter(
-                    tripsContext, meshManager, animationManager, clickHandler
+                    tripsContext, meshManager, animationManager, clickHandler, labelManager
             );
             Group group = new Group();
 
@@ -204,7 +207,7 @@ class StarHighlighterTest {
         @DisplayName("should not throw when not initialized")
         void shouldNotThrowWhenNotInitialized() {
             StarHighlighter uninitializedHighlighter = new StarHighlighter(
-                    tripsContext, meshManager, animationManager, clickHandler
+                    tripsContext, meshManager, animationManager, clickHandler, labelManager
             );
             // Not calling initialize()
 
