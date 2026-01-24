@@ -4,7 +4,9 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
@@ -15,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +57,22 @@ public class StarLabelManager {
      */
     private static final double LABEL_PADDING = 5.0;
 
+    /**
+     * Padding around labels for collision detection (pixels).
+     */
+    private static final double LABEL_COLLISION_PADDING = 4.0;
+
+    /**
+     * Minimum movement threshold to avoid unnecessary redraws (pixels).
+     */
+    private static final double LABEL_MOVE_EPSILON = 0.5;
+
+    /**
+     * Minimum interval between label updates during continuous interactions (ms).
+     * ~60fps = 16ms.
+     */
+    private static final long LABEL_UPDATE_THROTTLE_MS = 16;
+
     // =========================================================================
     // State
     // =========================================================================
@@ -85,6 +105,16 @@ public class StarLabelManager {
      * Offset from top of viewport (e.g., for toolbar).
      */
     private double controlPaneOffset = 0;
+
+    /**
+     * Timestamp of last label update (for throttling).
+     */
+    private long lastLabelUpdateTime = 0;
+
+    /**
+     * Cache of last label positions to avoid unnecessary transforms.
+     */
+    private final Map<Node, Point2D> lastLabelPositions = new HashMap<>();
 
     // =========================================================================
     // Initialization
@@ -217,6 +247,9 @@ public class StarLabelManager {
      * and positions the label accordingly. Labels that would extend outside
      * the viewport are either hidden or clamped to the edge.
      * <p>
+     * Includes collision detection: labels are sorted by depth (camera distance),
+     * and overlapping labels are hidden with priority given to closer stars.
+     * <p>
      * Call this method after any camera movement (rotation, zoom, pan).
      *
      * @param parentBounds the bounds of the parent container
@@ -227,30 +260,65 @@ public class StarLabelManager {
             return;
         }
 
+        if (shapeToLabel.isEmpty()) {
+            return;
+        }
+
+        // Phase 1: Build candidate list with screen positions and depths
+        List<LabelCandidate> candidates = new ArrayList<>(shapeToLabel.size());
         for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
             Node node = entry.getKey();
             Label label = entry.getValue();
 
+            // Skip nodes with invalid coordinates (NaN check)
+            if (Double.isNaN(node.getTranslateX())) {
+                label.setVisible(false);
+                continue;
+            }
+
             // Project 3D position to 2D screen coordinates
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
+
+            // Skip if localToScene returned NaN
+            if (Double.isNaN(coordinates.getX()) || Double.isNaN(coordinates.getY())) {
+                label.setVisible(false);
+                continue;
+            }
 
             double xs = coordinates.getX();
             double ys = coordinates.getY();
 
-            // Hide labels outside viewport (with margin)
+            // Skip labels outside viewport (with margin)
             if (xs < (parentBounds.getMinX() + VIEWPORT_MARGIN) ||
                 xs > (parentBounds.getMaxX() - VIEWPORT_MARGIN)) {
                 label.setVisible(false);
                 continue;
             }
-            label.setVisible(true);
 
             if (ys < (controlPaneOffset + VIEWPORT_MARGIN) ||
                 ys > (parentBounds.getMaxY() - VIEWPORT_MARGIN)) {
                 label.setVisible(false);
                 continue;
             }
-            label.setVisible(true);
+
+            // Distance to camera (Z coordinate - closer = smaller value)
+            double distanceToCamera = coordinates.getZ();
+            candidates.add(new LabelCandidate(node, label, coordinates, distanceToCamera));
+        }
+
+        // Phase 2: Sort by distance (closest to camera first = highest priority)
+        candidates.sort((a, b) -> Double.compare(a.distanceToCamera(), b.distanceToCamera()));
+
+        // Phase 3: Process with collision detection
+        List<Rectangle2D> occupied = new ArrayList<>();
+
+        for (LabelCandidate candidate : candidates) {
+            Node node = candidate.node();
+            Label label = candidate.label();
+            Point3D coordinates = candidate.scenePoint();
+
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
 
             // Convert from scene coordinates to local coordinates
             double x = parentBounds.getMinX() > 0 ? xs - parentBounds.getMinX() : xs;
@@ -262,12 +330,71 @@ public class StarLabelManager {
                 y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
             }
 
+            // Measure label dimensions
+            label.applyCss();
+            label.autosize();
+            double labelWidth = label.getWidth();
+            double labelHeight = label.getHeight();
+
             // Clamp to viewport bounds
-            x = clampX(x, label.getWidth());
-            y = clampY(y, label.getHeight());
+            x = clampX(x, labelWidth);
+            y = clampY(y, labelHeight);
+
+            // Create bounds rectangle with padding for collision detection
+            Rectangle2D bounds = new Rectangle2D(
+                    x - LABEL_COLLISION_PADDING,
+                    y - LABEL_COLLISION_PADDING,
+                    labelWidth + (LABEL_COLLISION_PADDING * 2),
+                    labelHeight + (LABEL_COLLISION_PADDING * 2));
+
+            // Check for collision with already-placed labels
+            boolean collides = false;
+            for (Rectangle2D occupiedBounds : occupied) {
+                if (occupiedBounds.intersects(bounds)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                label.setVisible(false);
+                continue;
+            }
+
+            // No collision - show label and track its bounds
+            label.setVisible(true);
+            occupied.add(bounds);
+
+            // Check if position changed enough to warrant redraw
+            Point2D lastPosition = lastLabelPositions.get(node);
+            if (lastPosition != null) {
+                double dx = Math.abs(lastPosition.getX() - x);
+                double dy = Math.abs(lastPosition.getY() - y);
+                if (dx < LABEL_MOVE_EPSILON && dy < LABEL_MOVE_EPSILON) {
+                    continue;
+                }
+            }
 
             // Apply position via transform
             label.getTransforms().setAll(new Translate(x, y));
+            lastLabelPositions.put(node, new Point2D(x, y));
+        }
+    }
+
+    /**
+     * Throttled version of updateLabels() for use during continuous interactions.
+     * <p>
+     * During mouse drag and scroll events, label updates can be called many times
+     * per second. This method limits updates to at most one per {@link #LABEL_UPDATE_THROTTLE_MS}
+     * milliseconds, reducing CPU usage while maintaining smooth visual feedback.
+     *
+     * @param parentBounds the bounds of the parent container
+     */
+    public void throttledUpdateLabels(@NotNull Bounds parentBounds) {
+        long now = System.currentTimeMillis();
+        if (now - lastLabelUpdateTime >= LABEL_UPDATE_THROTTLE_MS) {
+            lastLabelUpdateTime = now;
+            updateLabels(parentBounds);
         }
     }
 
@@ -308,6 +435,7 @@ public class StarLabelManager {
     public void clear() {
         labelDisplayGroup.getChildren().clear();
         shapeToLabel.clear();
+        lastLabelPositions.clear();
     }
 
     /**
@@ -328,4 +456,24 @@ public class StarLabelManager {
     public boolean hasLabel(@NotNull Node node) {
         return shapeToLabel.containsKey(node);
     }
+
+    // =========================================================================
+    // Internal Records
+    // =========================================================================
+
+    /**
+     * Internal record for sorting labels by distance to camera.
+     * Holds all data needed to position a label during collision detection.
+     *
+     * @param node             the 3D node the label is attached to
+     * @param label            the Label node to position
+     * @param scenePoint       the 3D node's position in scene coordinates
+     * @param distanceToCamera the Z-distance from the camera (for sorting)
+     */
+    private record LabelCandidate(
+            Node node,
+            Label label,
+            Point3D scenePoint,
+            double distanceToCamera
+    ) {}
 }

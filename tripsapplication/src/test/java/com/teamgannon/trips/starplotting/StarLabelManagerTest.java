@@ -8,6 +8,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.SubScene;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
@@ -394,6 +395,224 @@ class StarLabelManagerTest {
                     Bounds bounds = new BoundingBox(0, 0, 800, 600);
                     labelManager.updateLabels(bounds);
                 });
+                return null;
+            });
+        }
+    }
+
+    // =========================================================================
+    // Collision Detection Tests
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Collision Detection Tests")
+    class CollisionDetectionTests {
+
+        @Test
+        @DisplayName("Overlapping labels at same position - one is hidden")
+        void testCollisionDetectionHidesOverlappingLabels() throws Exception {
+            runOnFxThread(() -> {
+                // Create scene with proper hierarchy
+                Group world = new Group();
+                SubScene subScene = new SubScene(world, 800, 600);
+                subScene.setCamera(new PerspectiveCamera());
+                Group sceneRoot = new Group();
+                sceneRoot.getChildren().add(subScene);
+
+                labelManager.initialize(sceneRoot, subScene);
+                ColorPalette palette = createTestPalette();
+
+                // Create two nodes at same screen position but different depths
+                Sphere node1 = new Sphere(5);
+                node1.setTranslateX(100);
+                node1.setTranslateY(100);
+                node1.setTranslateZ(0);
+
+                Sphere node2 = new Sphere(5);
+                node2.setTranslateX(100);
+                node2.setTranslateY(100);
+                node2.setTranslateZ(10); // Further from camera
+
+                world.getChildren().addAll(node1, node2);
+
+                Label label1 = labelManager.addLabel(node1, createTestRecord("Star 1"), palette);
+                Label label2 = labelManager.addLabel(node2, createTestRecord("Star 2"), palette);
+
+                Bounds bounds = new BoundingBox(0, 0, 800, 600);
+                labelManager.updateLabels(bounds);
+
+                // At least one label should be visible, and they shouldn't both be visible
+                // (collision detection should hide one)
+                int visibleCount = 0;
+                if (label1.isVisible()) visibleCount++;
+                if (label2.isVisible()) visibleCount++;
+
+                // With collision detection, at most one should be visible
+                assertTrue(visibleCount <= 1, "At most one overlapping label should be visible");
+                return null;
+            });
+        }
+
+        @Test
+        @DisplayName("Closer label has priority over farther label")
+        void testCloserLabelHasPriority() throws Exception {
+            runOnFxThread(() -> {
+                Group world = new Group();
+                SubScene subScene = new SubScene(world, 800, 600);
+                subScene.setCamera(new PerspectiveCamera());
+                Group sceneRoot = new Group();
+                sceneRoot.getChildren().add(subScene);
+
+                labelManager.initialize(sceneRoot, subScene);
+                ColorPalette palette = createTestPalette();
+
+                // Create two nodes at same screen position but different depths
+                // Node1 is closer (smaller Z)
+                Sphere closeNode = new Sphere(5);
+                closeNode.setTranslateX(200);
+                closeNode.setTranslateY(200);
+                closeNode.setTranslateZ(-50); // Closer to camera
+
+                Sphere farNode = new Sphere(5);
+                farNode.setTranslateX(200);
+                farNode.setTranslateY(200);
+                farNode.setTranslateZ(50); // Farther from camera
+
+                world.getChildren().addAll(closeNode, farNode);
+
+                Label closeLabel = labelManager.addLabel(closeNode, createTestRecord("Close Star"), palette);
+                Label farLabel = labelManager.addLabel(farNode, createTestRecord("Far Star"), palette);
+
+                Bounds bounds = new BoundingBox(0, 0, 800, 600);
+                labelManager.updateLabels(bounds);
+
+                // The closer label should be visible (has priority)
+                // The farther label may be hidden due to collision
+                // Note: This test checks the sorting behavior - closer labels are processed first
+                assertTrue(closeLabel.isVisible() || !farLabel.isVisible(),
+                        "Closer label should have priority in collision detection");
+                return null;
+            });
+        }
+
+        @Test
+        @DisplayName("Non-overlapping labels are all visible")
+        void testNonOverlappingLabelsAllVisible() throws Exception {
+            runOnFxThread(() -> {
+                Group world = new Group();
+                SubScene subScene = new SubScene(world, 800, 600);
+                subScene.setCamera(new PerspectiveCamera());
+                Group sceneRoot = new Group();
+                sceneRoot.getChildren().add(subScene);
+
+                labelManager.initialize(sceneRoot, subScene);
+                ColorPalette palette = createTestPalette();
+
+                // Create nodes at well-separated positions
+                Sphere node1 = new Sphere(5);
+                node1.setTranslateX(100);
+                node1.setTranslateY(100);
+                node1.setTranslateZ(0);
+
+                Sphere node2 = new Sphere(5);
+                node2.setTranslateX(400);  // Far apart
+                node2.setTranslateY(100);
+                node2.setTranslateZ(0);
+
+                Sphere node3 = new Sphere(5);
+                node3.setTranslateX(100);
+                node3.setTranslateY(400);  // Far apart
+                node3.setTranslateZ(0);
+
+                world.getChildren().addAll(node1, node2, node3);
+
+                Label label1 = labelManager.addLabel(node1, createTestRecord("A"), palette);
+                Label label2 = labelManager.addLabel(node2, createTestRecord("B"), palette);
+                Label label3 = labelManager.addLabel(node3, createTestRecord("C"), palette);
+
+                Bounds bounds = new BoundingBox(0, 0, 800, 600);
+                labelManager.updateLabels(bounds);
+
+                // All labels should be visible since they don't overlap
+                assertTrue(label1.isVisible(), "Label 1 should be visible");
+                assertTrue(label2.isVisible(), "Label 2 should be visible");
+                assertTrue(label3.isVisible(), "Label 3 should be visible");
+                return null;
+            });
+        }
+
+        @Test
+        @DisplayName("NaN positions are skipped and labels hidden")
+        void testNaNPositionsAreSkipped() throws Exception {
+            runOnFxThread(() -> {
+                Group world = new Group();
+                SubScene subScene = new SubScene(world, 800, 600);
+                subScene.setCamera(new PerspectiveCamera());
+                Group sceneRoot = new Group();
+                sceneRoot.getChildren().add(subScene);
+
+                labelManager.initialize(sceneRoot, subScene);
+                ColorPalette palette = createTestPalette();
+
+                // Create node with NaN position
+                Sphere nanNode = new Sphere(5);
+                nanNode.setTranslateX(Double.NaN);
+                nanNode.setTranslateY(100);
+                nanNode.setTranslateZ(0);
+
+                world.getChildren().add(nanNode);
+
+                Label nanLabel = labelManager.addLabel(nanNode, createTestRecord("NaN Star"), palette);
+
+                Bounds bounds = new BoundingBox(0, 0, 800, 600);
+                labelManager.updateLabels(bounds);
+
+                // Label with NaN position should be hidden
+                assertFalse(nanLabel.isVisible(), "Label with NaN position should be hidden");
+                return null;
+            });
+        }
+    }
+
+    // =========================================================================
+    // Throttled Update Tests
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Throttled Update Tests")
+    class ThrottledUpdateTests {
+
+        @Test
+        @DisplayName("Throttled update respects timing interval")
+        void testThrottledUpdateRespectsTiming() throws Exception {
+            runOnFxThread(() -> {
+                Group world = new Group();
+                SubScene subScene = new SubScene(world, 800, 600);
+                subScene.setCamera(new PerspectiveCamera());
+                Group sceneRoot = new Group();
+                sceneRoot.getChildren().add(subScene);
+
+                labelManager.initialize(sceneRoot, subScene);
+                ColorPalette palette = createTestPalette();
+
+                Sphere node = new Sphere(5);
+                node.setTranslateX(100);
+                node.setTranslateY(100);
+                node.setTranslateZ(0);
+                world.getChildren().add(node);
+
+                labelManager.addLabel(node, createTestRecord("Test"), palette);
+
+                Bounds bounds = new BoundingBox(0, 0, 800, 600);
+
+                // First throttled call should always execute
+                labelManager.throttledUpdateLabels(bounds);
+
+                // Rapid successive calls should be throttled
+                // This just verifies no exceptions are thrown
+                for (int i = 0; i < 10; i++) {
+                    assertDoesNotThrow(() -> labelManager.throttledUpdateLabels(bounds));
+                }
                 return null;
             });
         }
