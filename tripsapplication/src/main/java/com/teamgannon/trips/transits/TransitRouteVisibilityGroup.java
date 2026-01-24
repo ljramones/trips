@@ -4,7 +4,9 @@ import com.teamgannon.trips.config.application.model.SerialFont;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -20,10 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Manages the visualization of transit routes for a specific transit band.
@@ -70,6 +70,7 @@ public class TransitRouteVisibilityGroup {
 
     private static final double LABEL_PADDING = TransitConstants.LABEL_PADDING;
     private static final double LABEL_EDGE_MARGIN = TransitConstants.LABEL_EDGE_MARGIN;
+    private static final double LABEL_COLLISION_PADDING = 4.0;
 
     /**
      * Create a new transit visibility group.
@@ -297,9 +298,10 @@ public class TransitRouteVisibilityGroup {
     /**
      * Update label positions after view rotation/zoom.
      * Uses two-step coordinate transformation for proper tracking.
+     * Includes collision detection to prevent overlapping labels.
      */
     public void updateLabels() {
-        if (!group.isVisible()) {
+        if (!group.isVisible() || shapeToLabel.isEmpty()) {
             return;
         }
 
@@ -307,6 +309,9 @@ public class TransitRouteVisibilityGroup {
         var pane = context.getInterstellarSpacePane();
         double controlPaneOffset = context.getControlPaneOffset();
         Bounds ofParent = pane.getBoundsInParent();
+
+        // Phase 1: Build candidate list with screen positions and depths
+        List<LabelCandidate> candidates = new ArrayList<>(shapeToLabel.size());
 
         for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
             Node node = entry.getKey();
@@ -336,24 +341,80 @@ public class TransitRouteVisibilityGroup {
                 continue;
             }
 
-            label.setVisible(true);
+            double distanceToCamera = sceneCoords.getZ();
+            candidates.add(new LabelCandidate(node, label, sceneCoords, distanceToCamera));
+        }
 
-            javafx.geometry.Point2D localPoint = labelGroup.sceneToLocal(xs, ys);
+        // Phase 2: Sort by distance (closest to camera first = highest priority)
+        candidates.sort((a, b) -> Double.compare(a.distanceToCamera(), b.distanceToCamera()));
+
+        // Phase 3: Process with collision detection
+        List<Rectangle2D> occupied = new ArrayList<>();
+
+        for (LabelCandidate candidate : candidates) {
+            Label label = candidate.label();
+            Point3D sceneCoords = candidate.scenePoint();
+
+            double xs = sceneCoords.getX();
+            double ys = sceneCoords.getY();
+
+            Point2D localPoint = labelGroup.sceneToLocal(xs, ys);
             double x = localPoint.getX();
             double y = localPoint.getY() - controlPaneOffset;
 
             x = Math.max(0, x);
             y = Math.max(0, y);
 
-            if ((x + label.getWidth() + LABEL_EDGE_MARGIN) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + LABEL_EDGE_MARGIN);
+            // Measure label dimensions
+            label.applyCss();
+            label.autosize();
+            double labelWidth = label.getWidth();
+            double labelHeight = label.getHeight();
+
+            if ((x + labelWidth + LABEL_EDGE_MARGIN) > subScene.getWidth()) {
+                x = subScene.getWidth() - (labelWidth + LABEL_EDGE_MARGIN);
             }
 
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + LABEL_EDGE_MARGIN);
+            if ((y + labelHeight) > subScene.getHeight()) {
+                y = subScene.getHeight() - (labelHeight + LABEL_EDGE_MARGIN);
             }
+
+            // Create bounds rectangle with padding for collision detection
+            Rectangle2D bounds = new Rectangle2D(
+                    x - LABEL_COLLISION_PADDING,
+                    y - LABEL_COLLISION_PADDING,
+                    labelWidth + (LABEL_COLLISION_PADDING * 2),
+                    labelHeight + (LABEL_COLLISION_PADDING * 2));
+
+            // Check for collision with already-placed labels
+            boolean collides = false;
+            for (Rectangle2D occupiedBounds : occupied) {
+                if (occupiedBounds.intersects(bounds)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                label.setVisible(false);
+                continue;
+            }
+
+            // No collision - show label and track its bounds
+            label.setVisible(true);
+            occupied.add(bounds);
 
             label.getTransforms().setAll(new Translate(x, y));
         }
     }
+
+    /**
+     * Internal record for sorting labels by distance to camera.
+     */
+    private record LabelCandidate(
+            Node node,
+            Label label,
+            Point3D scenePoint,
+            double distanceToCamera
+    ) {}
 }

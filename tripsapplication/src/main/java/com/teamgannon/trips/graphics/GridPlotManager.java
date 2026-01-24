@@ -10,6 +10,7 @@ import com.teamgannon.trips.graphics.entities.StellarEntityFactory;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
@@ -26,7 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.Math.abs;
@@ -37,6 +40,16 @@ import static java.lang.Math.ceil;
 public class GridPlotManager {
 
     private static final String scaleString = "Scale: 1 grid is %.2f ly square";
+
+    /**
+     * Padding around labels for collision detection (pixels).
+     */
+    private static final double LABEL_COLLISION_PADDING = 4.0;
+
+    /**
+     * Margin from viewport edge (pixels).
+     */
+    private static final double VIEWPORT_MARGIN = 20.0;
 
     /**
      * contains the labels so we can redraw when the display shifts
@@ -422,58 +435,131 @@ public class GridPlotManager {
 
 
     /**
-     * update labels
+     * Update labels with collision detection.
+     * Labels are sorted by depth and overlapping labels are hidden.
      */
     public void updateLabels(@NotNull InterstellarSpacePane interstellarSpacePane) {
-        shapeToLabel.forEach((node, label) -> {
+        if (shapeToLabel.isEmpty()) {
+            return;
+        }
+
+        Bounds ofParent = interstellarSpacePane.getBoundsInParent();
+
+        // Phase 1: Build candidate list with screen positions and depths
+        List<LabelCandidate> candidates = new ArrayList<>(shapeToLabel.size());
+
+        for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
+            Node node = entry.getKey();
+            Label label = entry.getValue();
+
             Point3D coordinates = node.localToScene(Point3D.ZERO, true);
 
-            //Clipping Logic
-            //if coordinates are outside of the scene it could
-            //stretch the screen so don't transform them
+            // Skip if NaN
+            if (Double.isNaN(coordinates.getX()) || Double.isNaN(coordinates.getY())) {
+                label.setVisible(false);
+                continue;
+            }
+
             double xs = coordinates.getX();
             double ys = coordinates.getY();
 
-            double x;
-            double y;
-
-            Bounds ofParent = interstellarSpacePane.getBoundsInParent();
-            if (ofParent.getMinX() > 0) {
-                x = xs - ofParent.getMinX();
-            } else {
-                x = xs;
+            // Skip labels outside viewport
+            if (xs < (ofParent.getMinX() + VIEWPORT_MARGIN) ||
+                xs > (ofParent.getMaxX() - VIEWPORT_MARGIN)) {
+                label.setVisible(false);
+                continue;
             }
+            if (ys < (controlPaneOffset + VIEWPORT_MARGIN) ||
+                ys > (ofParent.getMaxY() - VIEWPORT_MARGIN)) {
+                label.setVisible(false);
+                continue;
+            }
+
+            double distanceToCamera = coordinates.getZ();
+            candidates.add(new LabelCandidate(node, label, coordinates, distanceToCamera));
+        }
+
+        // Phase 2: Sort by distance (closest to camera first = highest priority)
+        candidates.sort((a, b) -> Double.compare(a.distanceToCamera(), b.distanceToCamera()));
+
+        // Phase 3: Process with collision detection
+        List<Rectangle2D> occupied = new ArrayList<>();
+
+        for (LabelCandidate candidate : candidates) {
+            Label label = candidate.label();
+            Point3D coordinates = candidate.scenePoint();
+
+            double xs = coordinates.getX();
+            double ys = coordinates.getY();
+
+            // Convert to local coordinates
+            double x = ofParent.getMinX() > 0 ? xs - ofParent.getMinX() : xs;
+            double y;
             if (ofParent.getMinY() >= 0) {
                 y = ys - ofParent.getMinY() - controlPaneOffset;
             } else {
                 y = ys < 0 ? ys - controlPaneOffset : ys + controlPaneOffset;
             }
 
-            // is it left of the view?
+            // Measure label dimensions
+            label.applyCss();
+            label.autosize();
+            double labelWidth = label.getWidth();
+            double labelHeight = label.getHeight();
+
+            // Clamp to viewport bounds
             if (x < 0) {
                 x = 0;
             }
-
-            // is it right of the view?
-            if ((x + label.getWidth() + 5) > subScene.getWidth()) {
-                x = subScene.getWidth() - (label.getWidth() + 5);
+            if ((x + labelWidth + 5) > subScene.getWidth()) {
+                x = subScene.getWidth() - (labelWidth + 5);
             }
-
-            // is it above the view?
             if (y < 0) {
                 y = 0;
             }
-
-            // is it below the view
-            if ((y + label.getHeight()) > subScene.getHeight()) {
-                y = subScene.getHeight() - (label.getHeight() + 5);
+            if ((y + labelHeight) > subScene.getHeight()) {
+                y = subScene.getHeight() - (labelHeight + 5);
             }
 
-            //update the local transform of the label.
-            label.getTransforms().setAll(new Translate(x, y));
-        });
+            // Create bounds rectangle with padding for collision detection
+            Rectangle2D bounds = new Rectangle2D(
+                    x - LABEL_COLLISION_PADDING,
+                    y - LABEL_COLLISION_PADDING,
+                    labelWidth + (LABEL_COLLISION_PADDING * 2),
+                    labelHeight + (LABEL_COLLISION_PADDING * 2));
 
+            // Check for collision with already-placed labels
+            boolean collides = false;
+            for (Rectangle2D occupiedBounds : occupied) {
+                if (occupiedBounds.intersects(bounds)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                label.setVisible(false);
+                continue;
+            }
+
+            // No collision - show label and track its bounds
+            label.setVisible(true);
+            occupied.add(bounds);
+
+            // Update the local transform of the label
+            label.getTransforms().setAll(new Translate(x, y));
+        }
     }
+
+    /**
+     * Internal record for sorting labels by distance to camera.
+     */
+    private record LabelCandidate(
+            Node node,
+            Label label,
+            Point3D scenePoint,
+            double distanceToCamera
+    ) {}
 
     public void setControlPaneOffset(double controlPaneOffset) {
         this.controlPaneOffset = controlPaneOffset;

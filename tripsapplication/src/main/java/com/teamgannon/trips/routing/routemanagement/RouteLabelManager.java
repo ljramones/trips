@@ -3,6 +3,7 @@ package com.teamgannon.trips.routing.routemanagement;
 import com.teamgannon.trips.routing.RoutingConstants;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point3D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
@@ -11,7 +12,9 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -36,6 +39,11 @@ import java.util.function.Supplier;
  */
 @Slf4j
 public class RouteLabelManager {
+
+    /**
+     * Padding around labels for collision detection (pixels).
+     */
+    private static final double LABEL_COLLISION_PADDING = 4.0;
 
     /**
      * Maps 3D anchor nodes to their associated 2D labels.
@@ -174,41 +182,116 @@ public class RouteLabelManager {
      *   <li>Clamp coordinates to prevent labels going off-screen</li>
      *   <li>Apply position via {@link Translate} transform</li>
      * </ol>
+     * <p>
+     * Includes collision detection: labels are sorted by depth and overlapping labels
+     * are hidden with priority given to labels closer to the camera.
      *
      * @see RoutingConstants#LABEL_CLIPPING_PADDING
      * @see RoutingConstants#LABEL_EDGE_MARGIN
      */
     public void updateLabels() {
+        if (shapeToLabel.isEmpty()) {
+            return;
+        }
+
         final Bounds viewportBounds = boundsSupplier.get();
+
+        // Phase 1: Build candidate list with screen positions and depths
+        List<LabelCandidate> candidates = new ArrayList<>(shapeToLabel.size());
 
         for (Map.Entry<Node, Label> entry : shapeToLabel.entrySet()) {
             Node anchorNode = entry.getKey();
             Label label = entry.getValue();
 
-            // Step 1: Project 3D position to scene coordinates
+            // Project 3D position to scene coordinates
             Point3D sceneCoords = anchorNode.localToScene(Point3D.ZERO, true);
+
+            // Skip if NaN
+            if (Double.isNaN(sceneCoords.getX()) || Double.isNaN(sceneCoords.getY())) {
+                label.setVisible(false);
+                continue;
+            }
+
             double sceneX = sceneCoords.getX();
             double sceneY = sceneCoords.getY();
 
-            // Step 2: Check visibility within viewport
+            // Check visibility within viewport
             if (!isWithinViewport(sceneX, sceneY, viewportBounds)) {
                 label.setVisible(false);
                 continue;
             }
-            label.setVisible(true);
 
-            // Step 3: Convert scene coordinates to local viewport coordinates
+            // Distance to camera (Z coordinate)
+            double distanceToCamera = sceneCoords.getZ();
+            candidates.add(new LabelCandidate(anchorNode, label, sceneCoords, distanceToCamera));
+        }
+
+        // Phase 2: Sort by distance (closest to camera first = highest priority)
+        candidates.sort((a, b) -> Double.compare(a.distanceToCamera(), b.distanceToCamera()));
+
+        // Phase 3: Process with collision detection
+        List<Rectangle2D> occupied = new ArrayList<>();
+
+        for (LabelCandidate candidate : candidates) {
+            Label label = candidate.label();
+            Point3D sceneCoords = candidate.scenePoint();
+
+            double sceneX = sceneCoords.getX();
+            double sceneY = sceneCoords.getY();
+
+            // Convert scene coordinates to local viewport coordinates
             double localX = toLocalX(sceneX, viewportBounds);
             double localY = toLocalY(sceneY, viewportBounds);
 
-            // Step 4: Clamp to prevent going off-screen
-            double clampedX = clampX(localX, label.getWidth());
-            double clampedY = clampY(localY, label.getHeight());
+            // Measure label dimensions
+            label.applyCss();
+            label.autosize();
+            double labelWidth = label.getWidth();
+            double labelHeight = label.getHeight();
 
-            // Step 5: Apply position
+            // Clamp to prevent going off-screen
+            double clampedX = clampX(localX, labelWidth);
+            double clampedY = clampY(localY, labelHeight);
+
+            // Create bounds rectangle with padding for collision detection
+            Rectangle2D bounds = new Rectangle2D(
+                    clampedX - LABEL_COLLISION_PADDING,
+                    clampedY - LABEL_COLLISION_PADDING,
+                    labelWidth + (LABEL_COLLISION_PADDING * 2),
+                    labelHeight + (LABEL_COLLISION_PADDING * 2));
+
+            // Check for collision with already-placed labels
+            boolean collides = false;
+            for (Rectangle2D occupiedBounds : occupied) {
+                if (occupiedBounds.intersects(bounds)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                label.setVisible(false);
+                continue;
+            }
+
+            // No collision - show label and track its bounds
+            label.setVisible(true);
+            occupied.add(bounds);
+
+            // Apply position
             label.getTransforms().setAll(new Translate(clampedX, clampedY));
         }
     }
+
+    /**
+     * Internal record for sorting labels by distance to camera.
+     */
+    private record LabelCandidate(
+            Node node,
+            Label label,
+            Point3D scenePoint,
+            double distanceToCamera
+    ) {}
 
     /**
      * Checks if a point is within the visible viewport bounds.
