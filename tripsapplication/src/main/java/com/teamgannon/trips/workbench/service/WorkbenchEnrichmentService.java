@@ -14,6 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +34,10 @@ public class WorkbenchEnrichmentService {
     private static final String SIMBAD_TAP_BASE_URL = "https://simbad.cds.unistra.fr/simbad/sim-tap";
     private static final String VIZIER_TAP_BASE_URL = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap";
     private static final Pattern DIGIT_PATTERN = Pattern.compile("(\\d+)");
+
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(30))
+            .build();
 
     private final StarService starService;
 
@@ -276,14 +281,13 @@ public class WorkbenchEnrichmentService {
     }
 
     private String submitTapSyncCsv(String baseUrl, String adql, String label) throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
         String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY="
                 + URLEncoder.encode(adql, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/sync"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         log.info("{} sync status: {}", label, response.statusCode());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             String bodyPreview = response.body();

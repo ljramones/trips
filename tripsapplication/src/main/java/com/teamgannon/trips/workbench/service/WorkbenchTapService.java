@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -26,6 +27,10 @@ public class WorkbenchTapService {
     private static final long GAIA_TAP_MAX_DELAY_MS = 60 * 1000;
     private static final long GAIA_TAP_INITIAL_DELAY_MS = 1000;
 
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(30))
+            .build();
+
     private volatile boolean tapCancelRequested = false;
     private volatile String tapJobUrl;
     private volatile long tapStartMillis = 0L;
@@ -39,9 +44,8 @@ public class WorkbenchTapService {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
-                HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(outputPath));
+                HttpResponse<Path> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(outputPath));
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
                     throw new IOException("HTTP " + response.statusCode());
                 }
@@ -123,13 +127,12 @@ public class WorkbenchTapService {
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                HttpClient client = HttpClient.newHttpClient();
                 String body = "PHASE=ABORT";
                 HttpRequest request = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build();
-                client.send(request, HttpResponse.BodyHandlers.discarding());
+                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
                 return null;
             }
         };
@@ -160,14 +163,13 @@ public class WorkbenchTapService {
             protected Void call() throws Exception {
                 tapCancelRequested = false;
                 tapLabel = label;
-                HttpClient client = HttpClient.newHttpClient();
                 String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&PHASE=RUN&QUERY="
                         + URLEncoder.encode(adql, StandardCharsets.UTF_8);
                 HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/async"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .build();
-                HttpResponse<Void> submitResponse = client.send(request, HttpResponse.BodyHandlers.discarding());
+                HttpResponse<Void> submitResponse = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
                 log.info("{} submit status: {}", label, submitResponse.statusCode());
                 Optional<String> locationHeader = submitResponse.headers().firstValue("location");
                 if (locationHeader.isEmpty()) {
@@ -180,8 +182,8 @@ public class WorkbenchTapService {
                 if (statusConsumer != null) {
                     statusConsumer.accept(label + " job submitted.");
                 }
-                startTapJobIfPending(client, jobUrl, statusConsumer);
-                waitForTapCompletion(client, jobUrl, statusConsumer);
+                startTapJobIfPending(jobUrl, statusConsumer);
+                waitForTapCompletion(jobUrl, statusConsumer);
                 if (statusConsumer != null) {
                     statusConsumer.accept(label + " completed. Downloading results...");
                 }
@@ -189,7 +191,7 @@ public class WorkbenchTapService {
                 HttpRequest resultRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/results/result"))
                         .GET()
                         .build();
-                HttpResponse<Path> resultResponse = client.send(resultRequest, HttpResponse.BodyHandlers.ofFile(outputPath));
+                HttpResponse<Path> resultResponse = HTTP_CLIENT.send(resultRequest, HttpResponse.BodyHandlers.ofFile(outputPath));
                 log.info("{} result status: {}", label, resultResponse.statusCode());
                 if (resultResponse.statusCode() < 200 || resultResponse.statusCode() >= 300) {
                     throw new IOException(label + " download failed. HTTP " + resultResponse.statusCode());
@@ -214,8 +216,7 @@ public class WorkbenchTapService {
         thread.start();
     }
 
-    private void waitForTapCompletion(HttpClient client,
-                                      String jobUrl,
+    private void waitForTapCompletion(String jobUrl,
                                       Consumer<String> statusConsumer) throws IOException, InterruptedException {
         long delayMs = GAIA_TAP_INITIAL_DELAY_MS;
         long maxDelayMs = GAIA_TAP_MAX_DELAY_MS;
@@ -228,7 +229,7 @@ public class WorkbenchTapService {
             HttpRequest phaseRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
                     .GET()
                     .build();
-            HttpResponse<String> phaseResponse = client.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> phaseResponse = HTTP_CLIENT.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
             String phase = phaseResponse.body().trim();
             log.info("TAP phase status: {} body: {}", phaseResponse.statusCode(), phase);
             if (statusConsumer != null) {
@@ -238,7 +239,7 @@ public class WorkbenchTapService {
                 return;
             }
             if ("ERROR".equalsIgnoreCase(phase) || "ABORTED".equalsIgnoreCase(phase)) {
-                logTapError(client, jobUrl);
+                logTapError(jobUrl);
                 throw new IOException("TAP job " + phase);
             }
             Thread.sleep(delayMs);
@@ -248,13 +249,12 @@ public class WorkbenchTapService {
         throw new IOException(tapLabel + " job timed out.");
     }
 
-    private void startTapJobIfPending(HttpClient client,
-                                      String jobUrl,
+    private void startTapJobIfPending(String jobUrl,
                                       Consumer<String> statusConsumer) throws IOException, InterruptedException {
         HttpRequest phaseRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/phase"))
                 .GET()
                 .build();
-        HttpResponse<String> phaseResponse = client.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> phaseResponse = HTTP_CLIENT.send(phaseRequest, HttpResponse.BodyHandlers.ofString());
         String phase = phaseResponse.body().trim();
         if (!"PENDING".equalsIgnoreCase(phase)) {
             return;
@@ -267,22 +267,22 @@ public class WorkbenchTapService {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString("PHASE=RUN"))
                 .build();
-        client.send(runRequest, HttpResponse.BodyHandlers.discarding());
+        HTTP_CLIENT.send(runRequest, HttpResponse.BodyHandlers.discarding());
     }
 
-    private void logTapError(HttpClient client, String jobUrl) {
+    private void logTapError(String jobUrl) {
         try {
             HttpRequest errorRequest = HttpRequest.newBuilder(URI.create(jobUrl + "/error"))
                     .GET()
                     .build();
-            HttpResponse<String> errorResponse = client.send(errorRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> errorResponse = HTTP_CLIENT.send(errorRequest, HttpResponse.BodyHandlers.ofString());
             if (errorResponse.statusCode() == 303) {
                 Optional<String> location = errorResponse.headers().firstValue("location");
                 if (location.isPresent()) {
                     HttpRequest redirectRequest = HttpRequest.newBuilder(URI.create(location.get()))
                             .GET()
                             .build();
-                    HttpResponse<String> redirectResponse = client.send(redirectRequest, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<String> redirectResponse = HTTP_CLIENT.send(redirectRequest, HttpResponse.BodyHandlers.ofString());
                     log.error("TAP error redirect status: {} body: {}",
                             redirectResponse.statusCode(), redirectResponse.body());
                 }
