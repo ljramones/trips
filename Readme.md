@@ -106,12 +106,12 @@ Import stellar data from multiple sources:
 
 TRIPS uses a pluggable view system with paired 3D and side panes:
 
-| View | 3D Pane | Side Pane | Status |
-|------|---------|-----------|--------|
+| View | 3D Pane | Side Pane | Status      |
+|------|---------|-----------|-------------|
 | Interstellar | Star field with routes | Datasets, Objects, Properties, Routing | Implemented |
 | Solar System | Orbital view with planets | System Overview, Planets, Selected Object | Implemented |
-| Galactic | Galaxy-wide visualization | Galactic Position, Coverage, Statistics | Planned |
-| Planetary | Night sky from surface | Location, Sky Overview, Brightest Stars | Planned |
+| Galactic | Galaxy-wide visualization | Galactic Position, Coverage, Statistics | Planned     |
+| Planetary | Night sky from surface | Location, Sky Overview, Brightest Stars | Implemented |
 
 ---
 
