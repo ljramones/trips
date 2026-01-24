@@ -101,6 +101,26 @@ public class StarLabelManager {
     private static final double MAX_FONT_SCALE = 1.3;
 
     /**
+     * Default label background color (semi-transparent dark).
+     */
+    private static final String LABEL_BACKGROUND_COLOR = "rgba(0, 0, 0, 0.6)";
+
+    /**
+     * Label padding for background.
+     */
+    private static final String LABEL_BACKGROUND_PADDING = "2px 4px";
+
+    /**
+     * Label corner radius.
+     */
+    private static final String LABEL_BACKGROUND_RADIUS = "3px";
+
+    /**
+     * Hover highlight color for labels.
+     */
+    private static final String LABEL_HOVER_BACKGROUND = "rgba(70, 130, 180, 0.8)";
+
+    /**
      * Camera Z range over which font scaling is applied.
      * Scaling transitions from MIN to MAX over this range centered on BASE_CAMERA_Z.
      */
@@ -258,6 +278,8 @@ public class StarLabelManager {
      * Create a label for a star.
      * <p>
      * Long star names are truncated with ellipsis, and a tooltip shows the full name.
+     * Labels have a semi-transparent background for better readability and
+     * highlight on hover.
      *
      * @param record       the star record containing the name
      * @param colorPalette the color palette for font and color settings
@@ -278,6 +300,12 @@ public class StarLabelManager {
         label.setFont(serialFont.toFont());
         label.setTextFill(colorPalette.getLabelColor());
 
+        // Add semi-transparent background for readability
+        applyLabelBackground(label);
+
+        // Add hover highlight effect
+        setupLabelHoverEffect(label);
+
         // Add tooltip for truncated names
         if (!displayName.equals(fullName)) {
             Tooltip tooltip = new Tooltip(fullName);
@@ -285,6 +313,39 @@ public class StarLabelManager {
         }
 
         return label;
+    }
+
+    /**
+     * Apply semi-transparent background styling to a label.
+     *
+     * @param label the label to style
+     */
+    private void applyLabelBackground(@NotNull Label label) {
+        label.setStyle(
+                "-fx-background-color: " + LABEL_BACKGROUND_COLOR + ";" +
+                "-fx-padding: " + LABEL_BACKGROUND_PADDING + ";" +
+                "-fx-background-radius: " + LABEL_BACKGROUND_RADIUS + ";"
+        );
+    }
+
+    /**
+     * Set up hover highlight effect on a label.
+     *
+     * @param label the label to add hover effect to
+     */
+    private void setupLabelHoverEffect(@NotNull Label label) {
+        String normalStyle =
+                "-fx-background-color: " + LABEL_BACKGROUND_COLOR + ";" +
+                "-fx-padding: " + LABEL_BACKGROUND_PADDING + ";" +
+                "-fx-background-radius: " + LABEL_BACKGROUND_RADIUS + ";";
+
+        String hoverStyle =
+                "-fx-background-color: " + LABEL_HOVER_BACKGROUND + ";" +
+                "-fx-padding: " + LABEL_BACKGROUND_PADDING + ";" +
+                "-fx-background-radius: " + LABEL_BACKGROUND_RADIUS + ";";
+
+        label.setOnMouseEntered(e -> label.setStyle(hoverStyle));
+        label.setOnMouseExited(e -> label.setStyle(normalStyle));
     }
 
     /**
