@@ -33,37 +33,70 @@
         <TabPane fx:id="workbenchTabs" tabClosingPolicy="UNAVAILABLE">
             <tabs>
                 <Tab text="Connect">
-                    <VBox spacing="10.0" alignment="TOP_LEFT">
-                        <padding>
-                            <Insets top="12.0" right="12.0" bottom="12.0" left="12.0"/>
-                        </padding>
-                        <Label text="Connect to a source repository (Gaia, SIMBAD, VizieR, local files)."/>
-                        <HBox spacing="8.0">
-                            <Button onAction="#onAddSource" text="Add Source..."/>
-                            <Button onAction="#onRemoveSource" text="Remove"/>
-                            <Button onAction="#onDownloadSource" text="Download"/>
-                            <Button onAction="#onConvertHygCsv" text="Convert HYG CSV..."/>
-                            <Button onAction="#onEnrichDistances" text="Enrich Distances (Gaia/HIP)..."/>
-                            <Button onAction="#onEnrichMissingDistancesLive" text="Enrich Missing Distances (Live TAP)..."/>
-                            <Button onAction="#onCancelTap" text="Cancel Gaia"/>
-                            <Separator orientation="VERTICAL"/>
-                            <Button onAction="#onRefreshSources" text="Refresh"/>
-                        </HBox>
-                        <HBox spacing="8.0" alignment="CENTER_LEFT">
-                            <Label text="Live TAP batch size:"/>
-                            <TextField fx:id="liveTapBatchField" prefWidth="80.0"/>
-                            <Label text="Backoff (ms):"/>
-                            <TextField fx:id="liveTapBackoffField" prefWidth="100.0"/>
-                        </HBox>
-                        <HBox spacing="8.0" alignment="CENTER_LEFT">
-                            <Label text="Cache directory:"/>
-                            <TextField fx:id="cacheDirField" prefWidth="420.0"/>
-                            <Button onAction="#onChooseCacheDir" text="Choose"/>
-                            <CheckBox fx:id="cacheDefaultCheckbox" text="Use for downloads"/>
-                        </HBox>
-                        <ListView fx:id="sourceListView" prefHeight="220.0"/>
-                        <Label fx:id="sourceStatusLabel" text="No sources configured."/>
-                    </VBox>
+                    <BorderPane>
+                        <top>
+                            <VBox spacing="8.0">
+                                <padding>
+                                    <Insets top="12.0" right="12.0" bottom="8.0" left="12.0"/>
+                                </padding>
+                                <!-- Source Management Section -->
+                                <Label text="Source Management" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="8.0">
+                                    <Button onAction="#onAddSource" text="Add Source..."/>
+                                    <Button onAction="#onRemoveSource" text="Remove"/>
+                                    <Button onAction="#onDownloadSource" text="Download"/>
+                                    <Button onAction="#onRefreshSources" text="Refresh"/>
+                                    <Separator orientation="VERTICAL"/>
+                                    <Button onAction="#onConvertHygCsv" text="Convert HYG CSV..."/>
+                                </HBox>
+                                <Separator/>
+                                <!-- Data Enrichment Section -->
+                                <Label text="Data Enrichment" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="8.0">
+                                    <Button onAction="#onEnrichDistances" text="Enrich Distances (Gaia/HIP)..."/>
+                                    <Button onAction="#onEnrichMissingDistancesLive" text="Live TAP Distances..."/>
+                                    <Button onAction="#onPhotometricEstimation" text="Photometric Distances..."/>
+                                </HBox>
+                                <HBox spacing="8.0">
+                                    <Button onAction="#onEstimateMassPhotometric" text="Estimate Mass (Photometric)..."/>
+                                    <Button onAction="#onCancelTap" text="Cancel TAP Query"/>
+                                </HBox>
+                                <Separator/>
+                                <!-- Settings Section -->
+                                <Label text="Settings" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                    <Label text="TAP batch size:"/>
+                                    <TextField fx:id="liveTapBatchField" prefWidth="60.0"/>
+                                    <Label text="Backoff (ms):"/>
+                                    <TextField fx:id="liveTapBackoffField" prefWidth="80.0"/>
+                                </HBox>
+                                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                    <Label text="Cache:"/>
+                                    <TextField fx:id="cacheDirField" prefWidth="400.0"/>
+                                    <Button onAction="#onChooseCacheDir" text="Choose"/>
+                                    <CheckBox fx:id="cacheDefaultCheckbox" text="Use for downloads"/>
+                                </HBox>
+                            </VBox>
+                        </top>
+                        <center>
+                            <VBox spacing="4.0">
+                                <padding>
+                                    <Insets top="4.0" right="12.0" bottom="4.0" left="12.0"/>
+                                </padding>
+                                <Label text="Sources" style="-fx-font-weight: bold;"/>
+                                <ListView fx:id="sourceListView" VBox.vgrow="ALWAYS"/>
+                            </VBox>
+                        </center>
+                        <bottom>
+                            <VBox spacing="6.0">
+                                <padding>
+                                    <Insets top="8.0" right="12.0" bottom="12.0" left="12.0"/>
+                                </padding>
+                                <ProgressBar fx:id="enrichmentProgressBar" prefWidth="600.0" progress="-1"/>
+                                <Label fx:id="sourceStatusLabel" text="Ready." style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+                            </VBox>
+                        </bottom>
+                    </BorderPane>
                 </Tab>
                 <Tab text="Map">
                     <VBox spacing="10.0" alignment="TOP_LEFT">

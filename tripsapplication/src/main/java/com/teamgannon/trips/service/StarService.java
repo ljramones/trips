@@ -462,6 +462,53 @@ public class StarService {
         return starObjectRepository.countMissingDistance(dataSetName);
     }
 
+    @TrackExecutionTime
+    public Page<StarObject> findMissingDistanceWithPhotometry(@NotNull String dataSetName, @NotNull Pageable pageable) {
+        return starObjectRepository.findMissingDistanceWithPhotometry(dataSetName, pageable);
+    }
+
+    @TrackExecutionTime
+    public long countMissingDistanceWithPhotometry(@NotNull String dataSetName) {
+        return starObjectRepository.countMissingDistanceWithPhotometry(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public Page<StarObject> findMissingMassWithGaiaId(@NotNull String dataSetName, @NotNull Pageable pageable) {
+        return starObjectRepository.findMissingMassWithGaiaId(dataSetName, pageable);
+    }
+
+    @TrackExecutionTime
+    public long countMissingMassWithGaiaId(@NotNull String dataSetName) {
+        return starObjectRepository.countMissingMassWithGaiaId(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public long countMissingMass(@NotNull String dataSetName) {
+        return starObjectRepository.countMissingMass(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public Page<StarObject> findMissingMassWithPhotometry(@NotNull String dataSetName, @NotNull Pageable pageable) {
+        return starObjectRepository.findMissingMassWithPhotometry(dataSetName, pageable);
+    }
+
+    @TrackExecutionTime
+    public long countMissingMassWithPhotometry(@NotNull String dataSetName) {
+        return starObjectRepository.countMissingMassWithPhotometry(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public List<String> findMissingMassWithPhotometryIds(@NotNull String dataSetName) {
+        return starObjectRepository.findMissingMassWithPhotometryIds(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public List<StarObject> findStarsByIds(@NotNull List<String> ids) {
+        List<StarObject> result = new ArrayList<>();
+        starObjectRepository.findAllById(ids).forEach(result::add);
+        return result;
+    }
+
     /**
      * find a set of stars that match our search term
      *

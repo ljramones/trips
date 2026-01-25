@@ -375,4 +375,89 @@ public interface StarObjectRepository
     @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0")
     long countMissingDistance(@Param("dataSetName") String dataSetName);
 
+    /**
+     * Find stars eligible for photometric distance estimation.
+     * These are stars with missing distance that have both apparent magnitude (magv)
+     * and color data (bprp) needed for photometric calculations.
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 " +
+           "AND s.magv <> 0 AND s.bprp <> 0")
+    Page<StarObject> findMissingDistanceWithPhotometry(
+            @Param("dataSetName") String dataSetName,
+            Pageable pageable);
+
+    /**
+     * Count stars eligible for photometric distance estimation.
+     */
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 " +
+           "AND s.magv <> 0 AND s.bprp <> 0")
+    long countMissingDistanceWithPhotometry(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Find stars with missing mass that have Gaia DR3 IDs (for mass enrichment).
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL) " +
+           "AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''")
+    Page<StarObject> findMissingMassWithGaiaId(
+            @Param("dataSetName") String dataSetName,
+            Pageable pageable);
+
+    /**
+     * Count stars with missing mass that have Gaia DR3 IDs.
+     */
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL) " +
+           "AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''")
+    long countMissingMassWithGaiaId(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Count all stars with missing mass.
+     */
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL)")
+    long countMissingMass(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Find stars eligible for photometric mass estimation.
+     * These are stars with missing mass but have distance and apparent magnitude.
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL) " +
+           "AND s.distance > 0 AND s.magv <> 0")
+    Page<StarObject> findMissingMassWithPhotometry(
+            @Param("dataSetName") String dataSetName,
+            Pageable pageable);
+
+    /**
+     * Count stars eligible for photometric mass estimation.
+     */
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL) " +
+           "AND s.distance > 0 AND s.magv <> 0")
+    long countMissingMassWithPhotometry(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Get IDs of stars eligible for photometric mass estimation.
+     * Much faster than loading full objects - use with findAllById for batch processing.
+     */
+    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND (s.mass = 0 OR s.mass IS NULL) " +
+           "AND s.distance > 0 AND s.magv <> 0")
+    List<String> findMissingMassWithPhotometryIds(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Get IDs of stars with BP-RP color but missing temperature.
+     */
+    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND s.bprp <> 0 AND (s.temperature = 0 OR s.temperature IS NULL)")
+    List<String> findMissingTemperatureWithBprpIds(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Get IDs of stars with BP-RP color but missing spectral class.
+     */
+    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND s.bprp <> 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')")
+    List<String> findMissingSpectralWithBprpIds(@Param("dataSetName") String dataSetName);
+
 }

@@ -112,6 +112,9 @@ public class DataWorkbenchController {
     @FXML
     private TextField liveTapBackoffField;
 
+    @FXML
+    private ProgressBar enrichmentProgressBar;
+
     // Exoplanet tab FXML fields
     @FXML
     private TableView<ExoplanetPreviewRow> exoplanetPreviewTable;
@@ -218,6 +221,10 @@ public class DataWorkbenchController {
     @FXML
     public void initialize() {
         log.info("Data Workbench: initialize");
+        // Hide progress bar initially
+        if (enrichmentProgressBar != null) {
+            enrichmentProgressBar.setVisible(false);
+        }
         updateStatus("Data Workbench ready");
         sourceActions = new WorkbenchSourceActions(
                 sources,
@@ -486,6 +493,7 @@ public class DataWorkbenchController {
         }
 
         updateStatus("Converting HYG TSV to TRIPS CSV...");
+        showProgress();
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -495,10 +503,14 @@ public class DataWorkbenchController {
             }
         };
         task.setOnSucceeded(event -> {
+            hideProgress();
             updateStatus("Converted: " + outputFile.getName());
             sourceActions.addLocalSourceIfMissing(outputFile.toPath());
         });
-        task.setOnFailed(event -> showError("HYG Converter", String.valueOf(task.getException().getMessage())));
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("HYG Converter", String.valueOf(task.getException().getMessage()));
+        });
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
@@ -551,6 +563,7 @@ public class DataWorkbenchController {
         }
 
         updateStatus("Enriching distances...");
+        showProgress();
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -563,10 +576,14 @@ public class DataWorkbenchController {
             }
         };
         task.setOnSucceeded(event -> {
+            hideProgress();
             updateStatus("Enriched CSV saved: " + outputFile.getName());
             sourceActions.addLocalSourceIfMissing(outputFile.toPath());
         });
-        task.setOnFailed(event -> showError("Enrich Distances", String.valueOf(task.getException().getMessage())));
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Enrich Distances", String.valueOf(task.getException().getMessage()));
+        });
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
@@ -613,6 +630,7 @@ public class DataWorkbenchController {
         int finalBatchSize = batchSize;
         int finalBackoffMs = backoffMs;
         updateStatus("Enriching missing distances (live TAP)...");
+        showProgress();
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -620,8 +638,162 @@ public class DataWorkbenchController {
                 return null;
             }
         };
-        task.setOnSucceeded(event -> updateStatus("Live TAP enrichment complete."));
-        task.setOnFailed(event -> showError("Enrich Distances", String.valueOf(task.getException().getMessage())));
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Live TAP enrichment complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Enrich Distances", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onPhotometricEstimation() {
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Photometric Estimation", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Photometric Distance Estimation");
+        dialog.setHeaderText("Estimate distances for orphan stars using magnitude/color.\nThis runs AFTER TAP enrichment for stars that couldn't be matched.");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        updateStatus("Estimating distances photometrically...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                enrichmentService.enrichOrphanDistancesPhotometric(dataSetName, DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Photometric estimation complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Photometric Estimation", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onEnrichMasses() {
+        int batchSize = 50;
+        int backoffMs = 1000;
+        if (liveTapBatchField != null && !liveTapBatchField.getText().isBlank()) {
+            Integer parsed = parseIntStrict(liveTapBatchField.getText(), "Live TAP batch size");
+            if (parsed == null || parsed <= 0) {
+                showError("Mass Enrichment", "Batch size must be a positive integer.");
+                return;
+            }
+            batchSize = parsed;
+        }
+        if (liveTapBackoffField != null && !liveTapBackoffField.getText().isBlank()) {
+            Integer parsed = parseIntStrict(liveTapBackoffField.getText(), "Live TAP backoff");
+            if (parsed == null || parsed < 0) {
+                showError("Mass Enrichment", "Backoff must be 0 or greater.");
+                return;
+            }
+            backoffMs = parsed;
+        }
+
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Mass Enrichment", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Enrich Stellar Parameters from Gaia DR3");
+        dialog.setHeaderText("Look up stellar parameters from Gaia DR3 astrophysical_parameters.\nFetches: mass, radius, luminosity, temperature, metallicity\nOnly fills in values that are currently missing.");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        int finalBatchSize = batchSize;
+        int finalBackoffMs = backoffMs;
+        updateStatus("Enriching stellar parameters from Gaia DR3...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                enrichmentService.enrichMissingMassesFromGaia(dataSetName, finalBatchSize, finalBackoffMs,
+                        DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Stellar parameters enrichment complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Stellar Parameters Enrichment", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onEstimateMassPhotometric() {
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Mass Estimation", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Estimate Mass (Photometric)");
+        dialog.setHeaderText("Estimate stellar mass from luminosity using the mass-luminosity relation.\nRequires distance and apparent magnitude data.\nAlso estimates radius and luminosity.");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        updateStatus("Estimating masses photometrically...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                enrichmentService.enrichMassPhotometric(dataSetName, DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Photometric mass estimation complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Mass Estimation", String.valueOf(task.getException().getMessage()));
+        });
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
@@ -878,6 +1050,34 @@ public class DataWorkbenchController {
         }
         if (eventPublisher != null) {
             eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
+        }
+        log.info("Status: {}", message);
+    }
+
+    private void showProgress() {
+        Runnable updateUi = () -> {
+            if (enrichmentProgressBar != null) {
+                enrichmentProgressBar.setVisible(true);
+                enrichmentProgressBar.setProgress(-1); // Indeterminate
+            }
+        };
+        if (Platform.isFxApplicationThread()) {
+            updateUi.run();
+        } else {
+            Platform.runLater(updateUi);
+        }
+    }
+
+    private void hideProgress() {
+        Runnable updateUi = () -> {
+            if (enrichmentProgressBar != null) {
+                enrichmentProgressBar.setVisible(false);
+            }
+        };
+        if (Platform.isFxApplicationThread()) {
+            updateUi.run();
+        } else {
+            Platform.runLater(updateUi);
         }
     }
 
