@@ -1378,4 +1378,455 @@ public class WorkbenchEnrichmentService {
             return 0.0;
         }
     }
+
+    // ==================== Temperature & Spectral Class Enrichment ====================
+
+    /**
+     * Enriches temperature from BP-RP color for stars missing temperature.
+     * Uses polynomial fit from Gaia DR2 color-temperature relations.
+     */
+    public void enrichTemperatureFromBprp(String dataSetName, Consumer<String> statusConsumer) {
+        int batchSize = 5000;
+        long estimated = 0;
+        long skipped = 0;
+
+        updateStatus(statusConsumer, "Temperature estimation: fetching eligible star IDs...");
+        List<String> allIds = starService.findMissingTemperatureWithBprpIds(dataSetName);
+        log.info("Temperature estimation: found {} eligible stars", allIds.size());
+
+        if (allIds.isEmpty()) {
+            updateStatus(statusConsumer, "Temperature estimation: no eligible stars found");
+            return;
+        }
+
+        int totalBatches = (allIds.size() + batchSize - 1) / batchSize;
+        updateStatus(statusConsumer, "Temperature estimation: processing " + allIds.size() +
+                " stars in " + totalBatches + " batches");
+
+        for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
+            int start = batchNum * batchSize;
+            int end = Math.min(start + batchSize, allIds.size());
+            List<String> batchIds = allIds.subList(start, end);
+
+            List<StarObject> candidates = starService.findStarsByIds(batchIds);
+            List<StarObject> updatedStars = new ArrayList<>();
+
+            for (StarObject star : candidates) {
+                if (star.getTemperature() > 0) {
+                    continue;
+                }
+
+                Double temp = estimateTemperatureFromBprp(star.getBprp());
+                if (temp != null && temp > 0) {
+                    star.setTemperature(temp);
+                    star.setSource(appendToken(star.getSource(), "temp from BP-RP", "|"));
+                    updatedStars.add(star);
+                } else {
+                    skipped++;
+                }
+            }
+
+            if (!updatedStars.isEmpty()) {
+                starService.updateStars(updatedStars);
+                estimated += updatedStars.size();
+                log.info("Temperature estimation: batch {}/{} estimated {}, total {}",
+                        batchNum + 1, totalBatches, updatedStars.size(), estimated);
+            }
+
+            int remaining = allIds.size() - end;
+            updateStatus(statusConsumer, "Temperature estimation: " + estimated +
+                    " estimated, " + remaining + " remaining (batch " + (batchNum + 1) + "/" + totalBatches + ")");
+        }
+
+        log.info("Temperature estimation complete: {} estimated, {} skipped", estimated, skipped);
+        updateStatus(statusConsumer, "Temperature estimation complete: " + estimated + " estimated");
+    }
+
+    /**
+     * Enriches spectral class from BP-RP color for stars missing spectral classification.
+     */
+    public void enrichSpectralFromBprp(String dataSetName, Consumer<String> statusConsumer) {
+        int batchSize = 5000;
+        long estimated = 0;
+        long skipped = 0;
+
+        updateStatus(statusConsumer, "Spectral classification: fetching eligible star IDs...");
+        List<String> allIds = starService.findMissingSpectralWithBprpIds(dataSetName);
+        log.info("Spectral classification: found {} eligible stars", allIds.size());
+
+        if (allIds.isEmpty()) {
+            updateStatus(statusConsumer, "Spectral classification: no eligible stars found");
+            return;
+        }
+
+        int totalBatches = (allIds.size() + batchSize - 1) / batchSize;
+        updateStatus(statusConsumer, "Spectral classification: processing " + allIds.size() +
+                " stars in " + totalBatches + " batches");
+
+        for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
+            int start = batchNum * batchSize;
+            int end = Math.min(start + batchSize, allIds.size());
+            List<String> batchIds = allIds.subList(start, end);
+
+            List<StarObject> candidates = starService.findStarsByIds(batchIds);
+            List<StarObject> updatedStars = new ArrayList<>();
+
+            for (StarObject star : candidates) {
+                if (star.getSpectralClass() != null && !star.getSpectralClass().isBlank()) {
+                    continue;
+                }
+
+                String spectral = estimateSpectralClassFromBprp(star.getBprp());
+                if (spectral != null && !spectral.isBlank()) {
+                    star.setSpectralClass(spectral);
+                    star.setSource(appendToken(star.getSource(), "spectral from BP-RP", "|"));
+                    updatedStars.add(star);
+                } else {
+                    skipped++;
+                }
+            }
+
+            if (!updatedStars.isEmpty()) {
+                starService.updateStars(updatedStars);
+                estimated += updatedStars.size();
+                log.info("Spectral classification: batch {}/{} estimated {}, total {}",
+                        batchNum + 1, totalBatches, updatedStars.size(), estimated);
+            }
+
+            int remaining = allIds.size() - end;
+            updateStatus(statusConsumer, "Spectral classification: " + estimated +
+                    " estimated, " + remaining + " remaining (batch " + (batchNum + 1) + "/" + totalBatches + ")");
+        }
+
+        log.info("Spectral classification complete: {} estimated, {} skipped", estimated, skipped);
+        updateStatus(statusConsumer, "Spectral classification complete: " + estimated + " estimated");
+    }
+
+    /**
+     * Estimates effective temperature from Gaia BP-RP color.
+     * Based on polynomial fits from Gaia DR2/DR3 documentation and Pecaut & Mamajek (2013).
+     * Valid for main-sequence stars with BP-RP roughly between -0.5 and 5.0
+     *
+     * @param bprp Gaia BP-RP color index
+     * @return estimated temperature in Kelvin, or null if out of range
+     */
+    private Double estimateTemperatureFromBprp(double bprp) {
+        // Sanity check - BP-RP typically ranges from -0.5 (hot O/B) to 5+ (cool M/L)
+        if (bprp < -0.6 || bprp > 6.0) {
+            return null;
+        }
+
+        double temp;
+
+        if (bprp < 0.0) {
+            // Hot stars (O, B): T ~ 10000-40000K
+            // Linear approximation for very blue stars
+            temp = 10000 - bprp * 30000;
+        } else if (bprp < 0.5) {
+            // A stars: BP-RP 0.0-0.5 → T ~ 7500-10000K
+            temp = 10000 - bprp * 5000;
+        } else if (bprp < 0.8) {
+            // F stars: BP-RP 0.5-0.8 → T ~ 6000-7500K
+            temp = 8333 - bprp * 3333;
+        } else if (bprp < 1.0) {
+            // G stars: BP-RP 0.8-1.0 → T ~ 5300-6000K
+            temp = 7800 - bprp * 2500;
+        } else if (bprp < 1.5) {
+            // K stars: BP-RP 1.0-1.5 → T ~ 4000-5300K
+            temp = 7700 - bprp * 2400;
+        } else if (bprp < 3.0) {
+            // M stars (early-mid): BP-RP 1.5-3.0 → T ~ 2800-4000K
+            temp = 5200 - bprp * 800;
+        } else {
+            // Late M / L dwarfs: BP-RP 3.0-6.0 → T ~ 1500-2800K
+            temp = 3700 - bprp * 400;
+        }
+
+        // Sanity check
+        if (temp < 1000 || temp > 50000) {
+            return null;
+        }
+
+        return temp;
+    }
+
+    /**
+     * Estimates spectral class from Gaia BP-RP color.
+     * Returns MK spectral classification (e.g., "G2V", "K5V", "M3V").
+     *
+     * @param bprp Gaia BP-RP color index
+     * @return estimated spectral class, or null if out of range
+     */
+    private String estimateSpectralClassFromBprp(double bprp) {
+        // Sanity check
+        if (bprp < -0.6 || bprp > 6.0) {
+            return null;
+        }
+
+        // Map BP-RP ranges to spectral types (main sequence assumed - luminosity class V)
+        // Based on Pecaut & Mamajek (2013) and Gaia documentation
+        if (bprp < -0.35) {
+            return "O";  // Very hot
+        } else if (bprp < -0.15) {
+            return "B0V";
+        } else if (bprp < 0.0) {
+            return "B5V";
+        } else if (bprp < 0.15) {
+            return "A0V";
+        } else if (bprp < 0.30) {
+            return "A5V";
+        } else if (bprp < 0.45) {
+            return "F0V";
+        } else if (bprp < 0.60) {
+            return "F5V";
+        } else if (bprp < 0.75) {
+            return "G0V";
+        } else if (bprp < 0.90) {
+            return "G5V";
+        } else if (bprp < 1.05) {
+            return "K0V";
+        } else if (bprp < 1.25) {
+            return "K3V";
+        } else if (bprp < 1.50) {
+            return "K5V";
+        } else if (bprp < 1.85) {
+            return "M0V";
+        } else if (bprp < 2.20) {
+            return "M1V";
+        } else if (bprp < 2.55) {
+            return "M2V";
+        } else if (bprp < 2.90) {
+            return "M3V";
+        } else if (bprp < 3.30) {
+            return "M4V";
+        } else if (bprp < 3.90) {
+            return "M5V";
+        } else if (bprp < 4.50) {
+            return "M6V";
+        } else if (bprp < 5.20) {
+            return "M7V";
+        } else {
+            return "M8V";  // Very cool
+        }
+    }
+
+    // ==================== Cross-fill Temperature <-> Spectral ====================
+
+    /**
+     * Cross-fills temperature from spectral class for stars that have spectral but no temperature.
+     */
+    public void crossFillTemperatureFromSpectral(String dataSetName, Consumer<String> statusConsumer) {
+        int batchSize = 5000;
+        long estimated = 0;
+        long skipped = 0;
+
+        updateStatus(statusConsumer, "Cross-fill temp from spectral: fetching eligible star IDs...");
+        List<String> allIds = starService.findMissingTempWithSpectralIds(dataSetName);
+        log.info("Cross-fill temp from spectral: found {} eligible stars", allIds.size());
+
+        if (allIds.isEmpty()) {
+            updateStatus(statusConsumer, "Cross-fill temp from spectral: no eligible stars found");
+            return;
+        }
+
+        int totalBatches = (allIds.size() + batchSize - 1) / batchSize;
+        updateStatus(statusConsumer, "Cross-fill temp from spectral: processing " + allIds.size() +
+                " stars in " + totalBatches + " batches");
+
+        for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
+            int start = batchNum * batchSize;
+            int end = Math.min(start + batchSize, allIds.size());
+            List<String> batchIds = allIds.subList(start, end);
+
+            List<StarObject> candidates = starService.findStarsByIds(batchIds);
+            List<StarObject> updatedStars = new ArrayList<>();
+
+            for (StarObject star : candidates) {
+                if (star.getTemperature() > 0) {
+                    continue;
+                }
+
+                Double temp = estimateTemperatureFromSpectral(star.getSpectralClass());
+                if (temp != null && temp > 0) {
+                    star.setTemperature(temp);
+                    star.setSource(appendToken(star.getSource(), "temp from spectral", "|"));
+                    updatedStars.add(star);
+                } else {
+                    skipped++;
+                }
+            }
+
+            if (!updatedStars.isEmpty()) {
+                starService.updateStars(updatedStars);
+                estimated += updatedStars.size();
+                log.info("Cross-fill temp from spectral: batch {}/{} estimated {}, total {}",
+                        batchNum + 1, totalBatches, updatedStars.size(), estimated);
+            }
+
+            int remaining = allIds.size() - end;
+            updateStatus(statusConsumer, "Cross-fill temp from spectral: " + estimated +
+                    " estimated, " + remaining + " remaining (batch " + (batchNum + 1) + "/" + totalBatches + ")");
+        }
+
+        log.info("Cross-fill temp from spectral complete: {} estimated, {} skipped", estimated, skipped);
+        updateStatus(statusConsumer, "Cross-fill temp from spectral complete: " + estimated + " estimated");
+    }
+
+    /**
+     * Cross-fills spectral class from temperature for stars that have temperature but no spectral.
+     */
+    public void crossFillSpectralFromTemperature(String dataSetName, Consumer<String> statusConsumer) {
+        int batchSize = 5000;
+        long estimated = 0;
+        long skipped = 0;
+
+        updateStatus(statusConsumer, "Cross-fill spectral from temp: fetching eligible star IDs...");
+        List<String> allIds = starService.findMissingSpectralWithTempIds(dataSetName);
+        log.info("Cross-fill spectral from temp: found {} eligible stars", allIds.size());
+
+        if (allIds.isEmpty()) {
+            updateStatus(statusConsumer, "Cross-fill spectral from temp: no eligible stars found");
+            return;
+        }
+
+        int totalBatches = (allIds.size() + batchSize - 1) / batchSize;
+        updateStatus(statusConsumer, "Cross-fill spectral from temp: processing " + allIds.size() +
+                " stars in " + totalBatches + " batches");
+
+        for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
+            int start = batchNum * batchSize;
+            int end = Math.min(start + batchSize, allIds.size());
+            List<String> batchIds = allIds.subList(start, end);
+
+            List<StarObject> candidates = starService.findStarsByIds(batchIds);
+            List<StarObject> updatedStars = new ArrayList<>();
+
+            for (StarObject star : candidates) {
+                if (star.getSpectralClass() != null && !star.getSpectralClass().isBlank()) {
+                    continue;
+                }
+
+                String spectral = estimateSpectralFromTemperature(star.getTemperature());
+                if (spectral != null && !spectral.isBlank()) {
+                    star.setSpectralClass(spectral);
+                    star.setSource(appendToken(star.getSource(), "spectral from temp", "|"));
+                    updatedStars.add(star);
+                } else {
+                    skipped++;
+                }
+            }
+
+            if (!updatedStars.isEmpty()) {
+                starService.updateStars(updatedStars);
+                estimated += updatedStars.size();
+                log.info("Cross-fill spectral from temp: batch {}/{} estimated {}, total {}",
+                        batchNum + 1, totalBatches, updatedStars.size(), estimated);
+            }
+
+            int remaining = allIds.size() - end;
+            updateStatus(statusConsumer, "Cross-fill spectral from temp: " + estimated +
+                    " estimated, " + remaining + " remaining (batch " + (batchNum + 1) + "/" + totalBatches + ")");
+        }
+
+        log.info("Cross-fill spectral from temp complete: {} estimated, {} skipped", estimated, skipped);
+        updateStatus(statusConsumer, "Cross-fill spectral from temp complete: " + estimated + " estimated");
+    }
+
+    /**
+     * Estimates temperature from spectral class.
+     * Based on standard MK spectral classification temperature scales.
+     */
+    private Double estimateTemperatureFromSpectral(String spectralClass) {
+        if (spectralClass == null || spectralClass.isBlank()) {
+            return null;
+        }
+
+        String spec = spectralClass.trim().toUpperCase();
+        char type = spec.charAt(0);
+
+        // Try to extract subtype number (e.g., "G2V" -> 2)
+        int subtype = 5; // default to middle of range
+        if (spec.length() > 1 && Character.isDigit(spec.charAt(1))) {
+            subtype = spec.charAt(1) - '0';
+        }
+
+        // Temperature ranges for each spectral type (main sequence)
+        // Based on Pecaut & Mamajek (2013) and Gray & Corbally
+        switch (type) {
+            case 'O':
+                // O0-O9: 50000K - 30000K
+                return 50000.0 - subtype * 2000.0;
+            case 'B':
+                // B0-B9: 30000K - 10000K
+                return 30000.0 - subtype * 2000.0;
+            case 'A':
+                // A0-A9: 10000K - 7500K
+                return 10000.0 - subtype * 250.0;
+            case 'F':
+                // F0-F9: 7500K - 6000K
+                return 7500.0 - subtype * 150.0;
+            case 'G':
+                // G0-G9: 6000K - 5200K
+                return 6000.0 - subtype * 80.0;
+            case 'K':
+                // K0-K9: 5200K - 3700K
+                return 5200.0 - subtype * 150.0;
+            case 'M':
+                // M0-M9: 3700K - 2400K
+                return 3700.0 - subtype * 130.0;
+            case 'L':
+                // L0-L9: 2400K - 1300K
+                return 2400.0 - subtype * 110.0;
+            case 'T':
+                // T0-T9: 1300K - 600K
+                return 1300.0 - subtype * 70.0;
+            case 'Y':
+                // Y dwarfs: < 600K
+                return 500.0;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Estimates spectral class from temperature.
+     * Returns MK classification assuming main sequence.
+     */
+    private String estimateSpectralFromTemperature(double temp) {
+        if (temp <= 0 || temp > 60000) {
+            return null;
+        }
+
+        // Map temperature ranges to spectral types
+        if (temp >= 30000) {
+            int subtype = Math.min(9, (int) ((50000 - temp) / 2000));
+            return "O" + subtype + "V";
+        } else if (temp >= 10000) {
+            int subtype = Math.min(9, (int) ((30000 - temp) / 2000));
+            return "B" + subtype + "V";
+        } else if (temp >= 7500) {
+            int subtype = Math.min(9, (int) ((10000 - temp) / 250));
+            return "A" + subtype + "V";
+        } else if (temp >= 6000) {
+            int subtype = Math.min(9, (int) ((7500 - temp) / 150));
+            return "F" + subtype + "V";
+        } else if (temp >= 5200) {
+            int subtype = Math.min(9, (int) ((6000 - temp) / 80));
+            return "G" + subtype + "V";
+        } else if (temp >= 3700) {
+            int subtype = Math.min(9, (int) ((5200 - temp) / 150));
+            return "K" + subtype + "V";
+        } else if (temp >= 2400) {
+            int subtype = Math.min(9, (int) ((3700 - temp) / 130));
+            return "M" + subtype + "V";
+        } else if (temp >= 1300) {
+            int subtype = Math.min(9, (int) ((2400 - temp) / 110));
+            return "L" + subtype;
+        } else if (temp >= 600) {
+            int subtype = Math.min(9, (int) ((1300 - temp) / 70));
+            return "T" + subtype;
+        } else {
+            return "Y0";
+        }
+    }
 }

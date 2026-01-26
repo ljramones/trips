@@ -460,4 +460,19 @@ public interface StarObjectRepository
            "AND s.bprp <> 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')")
     List<String> findMissingSpectralWithBprpIds(@Param("dataSetName") String dataSetName);
 
+    /**
+     * Get IDs of stars with temperature but missing spectral class.
+     */
+    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND s.temperature > 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')")
+    List<String> findMissingSpectralWithTempIds(@Param("dataSetName") String dataSetName);
+
+    /**
+     * Get IDs of stars with spectral class but missing temperature.
+     */
+    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND s.spectralClass IS NOT NULL AND s.spectralClass <> '' " +
+           "AND (s.temperature = 0 OR s.temperature IS NULL)")
+    List<String> findMissingTempWithSpectralIds(@Param("dataSetName") String dataSetName);
+
 }

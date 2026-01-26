@@ -503,6 +503,26 @@ public class StarService {
     }
 
     @TrackExecutionTime
+    public List<String> findMissingTemperatureWithBprpIds(@NotNull String dataSetName) {
+        return starObjectRepository.findMissingTemperatureWithBprpIds(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public List<String> findMissingSpectralWithBprpIds(@NotNull String dataSetName) {
+        return starObjectRepository.findMissingSpectralWithBprpIds(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public List<String> findMissingSpectralWithTempIds(@NotNull String dataSetName) {
+        return starObjectRepository.findMissingSpectralWithTempIds(dataSetName);
+    }
+
+    @TrackExecutionTime
+    public List<String> findMissingTempWithSpectralIds(@NotNull String dataSetName) {
+        return starObjectRepository.findMissingTempWithSpectralIds(dataSetName);
+    }
+
+    @TrackExecutionTime
     public List<StarObject> findStarsByIds(@NotNull List<String> ids) {
         List<StarObject> result = new ArrayList<>();
         starObjectRepository.findAllById(ids).forEach(result::add);

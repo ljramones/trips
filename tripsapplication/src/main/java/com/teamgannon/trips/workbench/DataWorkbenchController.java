@@ -805,6 +805,137 @@ public class DataWorkbenchController {
     }
 
     @FXML
+    private void onEstimateTemperature() {
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Temperature Estimation", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Estimate Temperature from BP-RP");
+        dialog.setHeaderText("Estimate stellar temperature from Gaia BP-RP color.\nRequires BP-RP color data.");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        updateStatus("Estimating temperatures from BP-RP...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                enrichmentService.enrichTemperatureFromBprp(dataSetName, DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Temperature estimation complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Temperature Estimation", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onEstimateSpectral() {
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Spectral Estimation", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Estimate Spectral Class from BP-RP");
+        dialog.setHeaderText("Estimate spectral classification from Gaia BP-RP color.\nAssumes main-sequence (luminosity class V).");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        updateStatus("Estimating spectral classes from BP-RP...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                enrichmentService.enrichSpectralFromBprp(dataSetName, DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Spectral classification complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Spectral Estimation", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
+    private void onCrossFillTempSpectral() {
+        List<String> datasetNames = datasetService.getDescriptors().stream()
+                .map(descriptor -> descriptor.getDataSetName())
+                .sorted()
+                .collect(Collectors.toList());
+        if (datasetNames.isEmpty()) {
+            showError("Cross-Fill", "No datasets available.");
+            return;
+        }
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
+        dialog.setTitle("Cross-Fill Temperature & Spectral");
+        dialog.setHeaderText("Cross-fill missing data:\n" +
+                "- Estimate temperature from spectral class\n" +
+                "- Estimate spectral class from temperature");
+        dialog.setContentText("Dataset:");
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String dataSetName = selection.get();
+        updateStatus("Cross-filling temperature and spectral...");
+        showProgress();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                // First: fill temperature from spectral
+                enrichmentService.crossFillTemperatureFromSpectral(dataSetName, DataWorkbenchController.this::updateStatus);
+                // Then: fill spectral from temperature
+                enrichmentService.crossFillSpectralFromTemperature(dataSetName, DataWorkbenchController.this::updateStatus);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
+            hideProgress();
+            updateStatus("Cross-fill complete.");
+        });
+        task.setOnFailed(event -> {
+            hideProgress();
+            showError("Cross-Fill", String.valueOf(task.getException().getMessage()));
+        });
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @FXML
     private void onLoadSourceFields() {
         WorkbenchSource selected = sourceListView.getSelectionModel().getSelectedItem();
         if (selected == null) {

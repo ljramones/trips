@@ -58,8 +58,13 @@
                                     <Button onAction="#onPhotometricEstimation" text="Photometric Distances..."/>
                                 </HBox>
                                 <HBox spacing="8.0">
-                                    <Button onAction="#onEstimateMassPhotometric" text="Estimate Mass (Photometric)..."/>
-                                    <Button onAction="#onCancelTap" text="Cancel TAP Query"/>
+                                    <Button onAction="#onEstimateMassPhotometric" text="Estimate Mass..."/>
+                                    <Button onAction="#onEstimateTemperature" text="Estimate Temp..."/>
+                                    <Button onAction="#onEstimateSpectral" text="Estimate Spectral..."/>
+                                    <Button onAction="#onCrossFillTempSpectral" text="Cross-Fill Temp/Spectral..."/>
+                                </HBox>
+                                <HBox spacing="8.0">
+                                    <Button onAction="#onCancelTap" text="Cancel Operation"/>
                                 </HBox>
                                 <Separator/>
                                 <!-- Settings Section -->
