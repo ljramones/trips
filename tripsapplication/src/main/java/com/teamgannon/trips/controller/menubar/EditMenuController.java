@@ -133,7 +133,13 @@ public class EditMenuController {
                     log.info("name to search: {}", results.getNameToSearch());
                     List<StarObject> starObjects = starService.findStarsWithCatalogId(datasetName, catalogId);
                     log.info("number of stars found ={}", starObjects.size());
-                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
+                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(
+                            databaseManagementService,
+                            starService,
+                            starObjects,
+                            eventPublisher,
+                            tripsContext.getSearchContext().getDatasetMap().get(datasetName),
+                            "Catalog ID: " + catalogId);
                     showStarMatchesDialog.showAndWait();
                 }
             }
@@ -156,7 +162,13 @@ public class EditMenuController {
                     List<StarObject> starObjectList = starService.findStarsByConstellation(
                             tripsContext.getDataSetDescriptor().getDataSetName(),
                             selected.getConstellation());
-                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjectList);
+                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(
+                            databaseManagementService,
+                            starService,
+                            starObjectList,
+                            eventPublisher,
+                            tripsContext.getDataSetDescriptor(),
+                            "Constellation: " + selected.getConstellation());
                     showStarMatchesDialog.showAndWait();
                 }
             }
@@ -190,7 +202,13 @@ public class EditMenuController {
                     log.info("name to search: {}", results.getNameToSearch());
                     List<StarObject> starObjects = starService.findStarsByCommonName(datasetName, commonName);
                     log.info("number of stars found ={}", starObjects.size());
-                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
+                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(
+                            databaseManagementService,
+                            starService,
+                            starObjects,
+                            eventPublisher,
+                            tripsContext.getSearchContext().getDatasetMap().get(datasetName),
+                            "Common Name: " + commonName);
                     showStarMatchesDialog.showAndWait();
                 }
             }
@@ -220,7 +238,13 @@ public class EditMenuController {
                     log.info("name to search: {}", starSearchResults.getNameToSearch());
                     List<StarObject> starObjects = starService.findStarsWithName(datasetName, starName);
                     log.info("number of stars found ={}", starObjects.size());
-                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(databaseManagementService, starService, starObjects);
+                    ShowStarMatchesDialog showStarMatchesDialog = new ShowStarMatchesDialog(
+                            databaseManagementService,
+                            starService,
+                            starObjects,
+                            eventPublisher,
+                            tripsContext.getSearchContext().getDatasetMap().get(datasetName),
+                            "Name: " + starName);
                     showStarMatchesDialog.showAndWait();
                 }
             }

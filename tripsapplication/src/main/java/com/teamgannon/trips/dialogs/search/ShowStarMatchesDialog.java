@@ -1,6 +1,8 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.SingleStarSelection;
+import com.teamgannon.trips.events.PlotStarsEvent;
+import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
@@ -10,6 +12,7 @@ import com.teamgannon.trips.utility.DialogUtils;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -18,7 +21,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,31 +53,97 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
     private final List<StarObject> starObjects;
     private final DatabaseManagementService databaseManagementService;
 
+    /**
+     * Optional event publisher for plot actions.
+     */
+    @Nullable
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Optional dataset descriptor for plot actions.
+     */
+    @Nullable
+    private final DataSetDescriptor dataSetDescriptor;
+
+    /**
+     * Optional description for plot status messages (e.g., "Constellation: Orion").
+     */
+    @Nullable
+    private final String plotDescription;
+
+    /**
+     * Constructor without plot support (for backward compatibility).
+     */
     public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService,
                                  StarService starService,
                                  List<StarObject> starObjects) {
+        this(databaseManagementService, starService, starObjects, null, null, null);
+    }
+
+    /**
+     * Constructor with plot support.
+     *
+     * @param databaseManagementService the database management service
+     * @param starService               the star service
+     * @param starObjects               the list of stars to display
+     * @param eventPublisher            the event publisher for plot events (can be null)
+     * @param dataSetDescriptor         the dataset descriptor (required for plotting)
+     * @param plotDescription           optional description for status messages
+     */
+    public ShowStarMatchesDialog(DatabaseManagementService databaseManagementService,
+                                 StarService starService,
+                                 List<StarObject> starObjects,
+                                 @Nullable ApplicationEventPublisher eventPublisher,
+                                 @Nullable DataSetDescriptor dataSetDescriptor,
+                                 @Nullable String plotDescription) {
         this.databaseManagementService = databaseManagementService;
         this.starService = starService;
         this.starObjects = starObjects;
+        this.eventPublisher = eventPublisher;
+        this.dataSetDescriptor = dataSetDescriptor;
+        this.plotDescription = plotDescription;
+
         this.setTitle("Show discovered stars");
         this.setHeight(700);
         this.setWidth(1000);
 
         VBox vBox = new VBox();
+        vBox.setSpacing(10);
         vBox.getChildren().add(tableView);
 
-        HBox hBox2 = new HBox();
-        hBox2.setAlignment(Pos.CENTER);
-        vBox.getChildren().add(hBox2);
+        // Button row
+        HBox buttonBox = new HBox();
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setSpacing(10);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+        // Plot buttons (only if event publisher is available)
+        if (eventPublisher != null && dataSetDescriptor != null) {
+            Button plotAllButton = new Button("Plot All");
+            plotAllButton.setOnAction(this::plotAllStars);
+            plotAllButton.setTooltip(new Tooltip("Plot all stars in the 3D view"));
+            buttonBox.getChildren().add(plotAllButton);
+
+            Button plotSelectedButton = new Button("Plot Selected");
+            plotSelectedButton.setOnAction(this::plotSelectedStar);
+            plotSelectedButton.setTooltip(new Tooltip("Plot only the selected star"));
+            buttonBox.getChildren().add(plotSelectedButton);
+
+            // Add separator
+            Separator separator = new Separator();
+            separator.setOrientation(javafx.geometry.Orientation.VERTICAL);
+            buttonBox.getChildren().add(separator);
+        }
 
         Button selectButton = new Button("Select");
         selectButton.setOnAction(this::select);
-        hBox2.getChildren().add(selectButton);
+        buttonBox.getChildren().add(selectButton);
 
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
-        hBox2.getChildren().add(cancelDataSetButton);
+        buttonBox.getChildren().add(cancelDataSetButton);
 
+        vBox.getChildren().add(buttonBox);
         this.getDialogPane().setContent(vBox);
 
         // set up the table structure
@@ -82,7 +154,37 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
 
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
+    }
 
+    /**
+     * Plot all stars in the table.
+     */
+    private void plotAllStars(ActionEvent actionEvent) {
+        if (eventPublisher != null && dataSetDescriptor != null && !starObjects.isEmpty()) {
+            eventPublisher.publishEvent(new PlotStarsEvent(
+                    this,
+                    starObjects,
+                    dataSetDescriptor,
+                    plotDescription
+            ));
+            close();
+        }
+    }
+
+    /**
+     * Plot only the selected star.
+     */
+    private void plotSelectedStar(ActionEvent actionEvent) {
+        StarObject selected = tableView.getSelectionModel().getSelectedItem();
+        if (selected != null && eventPublisher != null && dataSetDescriptor != null) {
+            eventPublisher.publishEvent(new PlotStarsEvent(
+                    this,
+                    Collections.singletonList(selected),
+                    dataSetDescriptor,
+                    "Star: " + selected.getDisplayName()
+            ));
+            close();
+        }
     }
 
     private void select(ActionEvent actionEvent) {

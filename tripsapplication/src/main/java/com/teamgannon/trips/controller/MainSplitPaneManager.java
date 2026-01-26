@@ -526,6 +526,109 @@ public class MainSplitPaneManager {
         });
     }
 
+    /**
+     * Handle PlotStarsEvent to plot a specific list of stars.
+     * This is triggered when the user clicks "Plot" in a table dialog.
+     */
+    @EventListener
+    public void onPlotStarsEvent(PlotStarsEvent event) {
+        FxThread.runOnFxThread(() -> {
+            try {
+                List<StarObject> starObjects = event.getStarObjects();
+                DataSetDescriptor descriptor = event.getDataSetDescriptor();
+
+                if (starObjects == null || starObjects.isEmpty()) {
+                    showErrorAlert("Plot Stars", "No stars to plot");
+                    return;
+                }
+                if (descriptor == null) {
+                    showErrorAlert("Plot Stars", "No dataset descriptor available");
+                    return;
+                }
+
+                // Get preferences from context
+                var colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
+                var starDisplayPreferences = tripsContext.getAppViewPreferences().getStarDisplayPreferences();
+                var civilizationDisplayPreferences = tripsContext.getAppViewPreferences().getCivilizationDisplayPreferences();
+
+                // Calculate center coordinates from the star list
+                double[] centerCoordinates = calculateCenterCoordinates(starObjects);
+
+                // Calculate display radius to encompass all stars
+                double displayRadius = calculateDisplayRadius(starObjects, centerCoordinates);
+
+                // Update search context for consistency
+                searchContextCoordinator.setDescriptor(descriptor);
+
+                // Plot the stars
+                plotManager.drawAstrographicData(
+                        descriptor,
+                        starObjects,
+                        displayRadius,
+                        centerCoordinates,
+                        colorPalette,
+                        starDisplayPreferences,
+                        civilizationDisplayPreferences
+                );
+
+                // Update routing panel
+                routingPanel.setContext(descriptor, plotManager.getRouteVisibility());
+
+                // Status message
+                String statusMsg = event.getDescription() != null
+                        ? String.format("Plotted %d stars (%s)", starObjects.size(), event.getDescription())
+                        : String.format("Plotted %d stars", starObjects.size());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, statusMsg));
+
+                log.info("Plotted {} stars from PlotStarsEvent", starObjects.size());
+
+            } catch (Exception e) {
+                log.error("Error handling plot stars event", e);
+                showErrorAlert("Plot Stars Error", "Failed to plot stars: " + e.getMessage());
+                eventPublisher.publishEvent(new StatusUpdateEvent(this, "Plot failed"));
+            }
+        });
+    }
+
+    /**
+     * Calculate the center coordinates from a list of stars.
+     */
+    private double[] calculateCenterCoordinates(List<StarObject> starObjects) {
+        if (starObjects.isEmpty()) {
+            return new double[]{0, 0, 0};
+        }
+
+        double sumX = 0, sumY = 0, sumZ = 0;
+        for (StarObject star : starObjects) {
+            sumX += star.getX();
+            sumY += star.getY();
+            sumZ += star.getZ();
+        }
+        int count = starObjects.size();
+        return new double[]{sumX / count, sumY / count, sumZ / count};
+    }
+
+    /**
+     * Calculate a display radius that encompasses all stars.
+     */
+    private double calculateDisplayRadius(List<StarObject> starObjects, double[] center) {
+        if (starObjects.isEmpty()) {
+            return 20.0; // Default radius
+        }
+
+        double maxDistance = 0;
+        for (StarObject star : starObjects) {
+            double dx = star.getX() - center[0];
+            double dy = star.getY() - center[1];
+            double dz = star.getZ() - center[2];
+            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            maxDistance = Math.max(maxDistance, distance);
+        }
+
+        // Add some padding
+        return Math.max(maxDistance * 1.2, 10.0);
+    }
+
     private String createTaskId(String base) {
         return base + "-" + System.nanoTime();
     }

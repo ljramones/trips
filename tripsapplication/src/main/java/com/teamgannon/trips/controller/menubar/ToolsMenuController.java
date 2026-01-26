@@ -5,6 +5,7 @@ import com.teamgannon.trips.controller.MainSplitPaneManager;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
 import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
+import com.teamgannon.trips.events.PlotStarsEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
 import com.teamgannon.trips.controller.UIElement;
 import com.teamgannon.trips.graphics.PlotManager;
@@ -301,9 +302,11 @@ public class ToolsMenuController {
                                 mainSplitPaneManager.showList(advResultsSet.getStarsFound());
                             }
                             if (advResultsSet.isPlotStars()) {
-                                // Get PlotManager from MainSplitPaneManager if needed
-                                // For now, log the request
-                                log.info("Advanced search results plot requested for {} stars", advResultsSet.getStarsFound().size());
+                                eventPublisher.publishEvent(new PlotStarsEvent(
+                                        this,
+                                        advResultsSet.getStarsFound(),
+                                        advResultsSet.getDataSetDescriptor(),
+                                        "Advanced Query Results"));
                             }
                         } else {
                             showInfoMessage("Advanced Query", "No stars were found to match query");
