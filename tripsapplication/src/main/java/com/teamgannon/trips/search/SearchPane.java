@@ -4,6 +4,8 @@ import com.teamgannon.trips.events.ExportQueryEvent;
 import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.search.components.*;
+import javafx.scene.Node;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -110,23 +112,45 @@ public class SearchPane extends VBox {
     @FXML
     private void initialize() {
         dataSetChoicePanel = new DataSetPanel(searchContext, eventPublisher);
-        datasetBox.getChildren().add(dataSetChoicePanel.getPane());
-        distanceBox.getChildren().add(d2EarthSlider.getPane());
+        // Dataset and Distance are essential - keep expanded
+        datasetBox.getChildren().add(createTitledPane("Dataset", dataSetChoicePanel.getPane(), true));
+        distanceBox.getChildren().add(createTitledPane("Distance Range", d2EarthSlider.getPane(), true));
 
-        stellarClassBox.getChildren().add(stellarClassSelectionPanel.getPane());
-        categoryBox.getChildren().add(categorySelectionPanel.getPane());
-        fuelBox.getChildren().add(fuelSelectionPanel.getPane());
-        worldBox.getChildren().add(worldSelectionPanel.getPane());
-        portBox.getChildren().add(portSelectionPanel.getPane());
-        populationBox.getChildren().add(populationSelectionPanel.getPane());
-        polityBox.getChildren().add(politySelectionPanel.getPane());
+        // Stellar filters - collapsed by default
+        stellarClassBox.getChildren().add(createTitledPane("Stellar Class", stellarClassSelectionPanel.getPane(), false));
+        categoryBox.getChildren().add(createTitledPane("Star Category", categorySelectionPanel.getPane(), false));
 
-        techBox.getChildren().add(techSelectionPanel.getPane());
-        productsBox.getChildren().add(productsSelectionPanel.getPane());
-        milSpaceBox.getChildren().add(milSpaceSelectionPanel.getPane());
-        milPlanetBox.getChildren().add(milPlanetSelectionPanel.getPane());
-        miscBox.getChildren().add(miscellaneousSelectionPanel.getPane());
-        spectralComponentBox.getChildren().add(spectralComponentSelectionPanel);
+        // World building filters - collapsed by default
+        fuelBox.getChildren().add(createTitledPane("Fuel Types", fuelSelectionPanel.getPane(), false));
+        worldBox.getChildren().add(createTitledPane("World Types", worldSelectionPanel.getPane(), false));
+        portBox.getChildren().add(createTitledPane("Port Types", portSelectionPanel.getPane(), false));
+        populationBox.getChildren().add(createTitledPane("Population", populationSelectionPanel.getPane(), false));
+        polityBox.getChildren().add(createTitledPane("Polity", politySelectionPanel.getPane(), false));
+
+        techBox.getChildren().add(createTitledPane("Technology", techSelectionPanel.getPane(), false));
+        productsBox.getChildren().add(createTitledPane("Products", productsSelectionPanel.getPane(), false));
+        milSpaceBox.getChildren().add(createTitledPane("Military Space", milSpaceSelectionPanel.getPane(), false));
+        milPlanetBox.getChildren().add(createTitledPane("Military Planet", milPlanetSelectionPanel.getPane(), false));
+        miscBox.getChildren().add(createTitledPane("Miscellaneous", miscellaneousSelectionPanel.getPane(), false));
+
+        // Advanced spectral component filter
+        spectralComponentBox.getChildren().add(createTitledPane("Advanced Spectral Filter", spectralComponentSelectionPanel, false));
+    }
+
+    /**
+     * Create a collapsible TitledPane wrapper for a panel.
+     *
+     * @param title    the title for the section
+     * @param content  the content node to wrap
+     * @param expanded whether the section starts expanded
+     * @return the TitledPane wrapper
+     */
+    private TitledPane createTitledPane(String title, Node content, boolean expanded) {
+        TitledPane titledPane = new TitledPane(title, content);
+        titledPane.setExpanded(expanded);
+        titledPane.setCollapsible(true);
+        titledPane.setAnimated(true);
+        return titledPane;
     }
 
     public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
