@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the plotting and display of stars in the interstellar space view.
@@ -273,6 +274,18 @@ public class StarPlotManager {
                     starsToRender.size(), maxDistance, currentPlot.getStarDisplayRecordList().size());
         } else {
             starsToRender = currentPlot.getStarsSortedByDistance();
+        }
+
+        // Apply route star filter if active (show only stars on selected routes)
+        if (currentPlot.isRouteStarFilterActive()) {
+            Set<String> filteredIds = currentPlot.getFilteredStarIds();
+            if (filteredIds != null) {
+                int beforeCount = starsToRender.size();
+                starsToRender = starsToRender.stream()
+                        .filter(star -> filteredIds.contains(star.getRecordId()))
+                        .collect(java.util.stream.Collectors.toList());
+                log.info("Route star filter applied: {} stars -> {} stars", beforeCount, starsToRender.size());
+            }
         }
 
         // Plot each star

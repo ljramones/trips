@@ -143,6 +143,9 @@ public class CurrentPlot {
         spatialIndexDirty = true;
         routeSpatialIndex = null;
         routeSpatialIndexDirty = true;
+        // Clear route star filters
+        routeStarFilterIds.clear();
+        filteredStarIds = null;
     }
 
     ////////////////  route management   //////////////////////
@@ -220,6 +223,144 @@ public class CurrentPlot {
             visibilityMap.put(id, routeDescriptor.getVisibility());
         }
         return visibilityMap;
+    }
+
+    ////////////////// route star filter /////////////////
+
+    /**
+     * Set of route IDs to filter stars by.
+     * When not empty, only stars that are part of these routes will be displayed.
+     */
+    private final Set<UUID> routeStarFilterIds = new HashSet<>();
+
+    /**
+     * Cached set of star IDs that are part of filtered routes.
+     * Rebuilt when filter changes.
+     */
+    private transient Set<String> filteredStarIds = null;
+
+    /**
+     * Enable filtering to show only stars from the specified route.
+     *
+     * @param routeId the route ID to filter by
+     */
+    public void addRouteStarFilter(UUID routeId) {
+        if (routeId != null && routeMapping.containsKey(routeId)) {
+            routeStarFilterIds.add(routeId);
+            rebuildFilteredStarIds();
+            log.info("Added route star filter for route: {}", routeId);
+        }
+    }
+
+    /**
+     * Enable filtering to show only stars from the specified routes.
+     *
+     * @param routeIds the set of route IDs to filter by
+     */
+    public void setRouteStarFilters(Set<UUID> routeIds) {
+        routeStarFilterIds.clear();
+        if (routeIds != null) {
+            for (UUID id : routeIds) {
+                if (routeMapping.containsKey(id)) {
+                    routeStarFilterIds.add(id);
+                }
+            }
+        }
+        rebuildFilteredStarIds();
+        log.info("Set route star filters: {} routes", routeStarFilterIds.size());
+    }
+
+    /**
+     * Remove a route from the star filter.
+     *
+     * @param routeId the route ID to remove from filter
+     */
+    public void removeRouteStarFilter(UUID routeId) {
+        if (routeStarFilterIds.remove(routeId)) {
+            rebuildFilteredStarIds();
+            log.info("Removed route star filter for route: {}", routeId);
+        }
+    }
+
+    /**
+     * Clear all route star filters, showing all stars again.
+     */
+    public void clearRouteStarFilters() {
+        routeStarFilterIds.clear();
+        filteredStarIds = null;
+        log.info("Cleared all route star filters");
+    }
+
+    /**
+     * Check if route star filtering is active.
+     *
+     * @return true if filtering is active
+     */
+    public boolean isRouteStarFilterActive() {
+        return !routeStarFilterIds.isEmpty();
+    }
+
+    /**
+     * Get the IDs of routes currently being used for filtering.
+     *
+     * @return unmodifiable set of route IDs
+     */
+    public Set<UUID> getRouteStarFilterIds() {
+        return Collections.unmodifiableSet(routeStarFilterIds);
+    }
+
+    /**
+     * Check if a star should be displayed based on the current route filter.
+     * If no filter is active, all stars are shown.
+     *
+     * @param starId the star's record ID
+     * @return true if the star should be displayed
+     */
+    public boolean shouldDisplayStar(String starId) {
+        if (!isRouteStarFilterActive()) {
+            return true; // No filter active, show all stars
+        }
+        if (filteredStarIds == null) {
+            rebuildFilteredStarIds();
+        }
+        return filteredStarIds.contains(starId);
+    }
+
+    /**
+     * Get the set of star IDs that pass the current route filter.
+     * Returns null if no filter is active.
+     *
+     * @return set of filtered star IDs, or null if no filter
+     */
+    @Nullable
+    public Set<String> getFilteredStarIds() {
+        if (!isRouteStarFilterActive()) {
+            return null;
+        }
+        if (filteredStarIds == null) {
+            rebuildFilteredStarIds();
+        }
+        return Collections.unmodifiableSet(filteredStarIds);
+    }
+
+    /**
+     * Rebuild the cached set of filtered star IDs from the current route filters.
+     */
+    private void rebuildFilteredStarIds() {
+        if (routeStarFilterIds.isEmpty()) {
+            filteredStarIds = null;
+            return;
+        }
+
+        filteredStarIds = new HashSet<>();
+        for (UUID routeId : routeStarFilterIds) {
+            RouteDescriptor route = routeMapping.get(routeId);
+            if (route != null && route.getRouteList() != null) {
+                filteredStarIds.addAll(route.getRouteList());
+            }
+        }
+        log.info("Rebuilt filtered star IDs: {} stars from {} routes",
+                filteredStarIds.size(), routeStarFilterIds.size());
     }
 
     //////////////////// star records  ///////////////////

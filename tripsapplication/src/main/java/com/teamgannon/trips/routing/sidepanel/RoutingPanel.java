@@ -132,7 +132,58 @@ public class RoutingPanel extends Pane implements RoutingCallback {
             }
         });
 
-        tableContextMenu.getItems().addAll(editRouteMenuItem, deleteRouteMenuItem);
+        // Separator before filter options
+        final SeparatorMenuItem separator = new SeparatorMenuItem();
+
+        final MenuItem showRouteStarsMenuItem = new MenuItem("Show only this route's stars");
+        showRouteStarsMenuItem.setOnAction(event -> {
+            final RouteTree routeTree = routingTableView.getSelectionModel().getSelectedItem();
+            if (routeTree != null) {
+                eventPublisher.publishEvent(new RouteStarFilterEvent(
+                        this,
+                        RouteStarFilterEvent.FilterAction.FILTER_BY_ROUTE,
+                        routeTree.getUuid(),
+                        routeTree.getRouteName()));
+            }
+        });
+
+        final MenuItem addRouteToFilterMenuItem = new MenuItem("Add route stars to filter");
+        addRouteToFilterMenuItem.setOnAction(event -> {
+            final RouteTree routeTree = routingTableView.getSelectionModel().getSelectedItem();
+            if (routeTree != null) {
+                eventPublisher.publishEvent(new RouteStarFilterEvent(
+                        this,
+                        RouteStarFilterEvent.FilterAction.ADD_TO_FILTER,
+                        routeTree.getUuid(),
+                        routeTree.getRouteName()));
+            }
+        });
+
+        final MenuItem removeRouteFromFilterMenuItem = new MenuItem("Remove route stars from filter");
+        removeRouteFromFilterMenuItem.setOnAction(event -> {
+            final RouteTree routeTree = routingTableView.getSelectionModel().getSelectedItem();
+            if (routeTree != null) {
+                eventPublisher.publishEvent(new RouteStarFilterEvent(
+                        this,
+                        RouteStarFilterEvent.FilterAction.REMOVE_FROM_FILTER,
+                        routeTree.getUuid(),
+                        routeTree.getRouteName()));
+            }
+        });
+
+        final MenuItem clearStarFilterMenuItem = new MenuItem("Show all stars (clear filter)");
+        clearStarFilterMenuItem.setOnAction(event -> {
+            eventPublisher.publishEvent(new RouteStarFilterEvent(this));
+        });
+
+        tableContextMenu.getItems().addAll(
+                editRouteMenuItem,
+                deleteRouteMenuItem,
+                separator,
+                showRouteStarsMenuItem,
+                addRouteToFilterMenuItem,
+                removeRouteFromFilterMenuItem,
+                clearStarFilterMenuItem);
         routingTableView.setContextMenu(tableContextMenu);
     }
 

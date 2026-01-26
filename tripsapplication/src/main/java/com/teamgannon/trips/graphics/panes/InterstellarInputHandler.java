@@ -103,7 +103,12 @@ public class InterstellarInputHandler {
                 processKeyboardNavigation();
             }
         }));
-        keyboardTimeline.play();
+        try {
+            keyboardTimeline.play();
+        } catch (NullPointerException e) {
+            // JavaFX toolkit not fully initialized (e.g., in unit tests without full FX runtime)
+            log.debug("Could not start keyboard timeline - JavaFX runtime may not be fully initialized");
+        }
     }
 
     /**

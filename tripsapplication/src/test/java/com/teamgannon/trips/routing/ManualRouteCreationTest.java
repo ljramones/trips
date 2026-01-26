@@ -104,6 +104,11 @@ class ManualRouteCreationTest {
             when(tripsContext.getAppViewPreferences()).thenReturn(appViewPreferences);
             when(appViewPreferences.getColorPalette()).thenReturn(colorPalette);
 
+            // Mock CurrentPlot for route registration
+            com.teamgannon.trips.config.application.model.CurrentPlot currentPlot =
+                    mock(com.teamgannon.trips.config.application.model.CurrentPlot.class);
+            when(tripsContext.getCurrentPlot()).thenReturn(currentPlot);
+
             // Create the object under test
             currentManualRoute = new CurrentManualRoute(
                     tripsContext,

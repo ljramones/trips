@@ -9,6 +9,8 @@ import com.teamgannon.trips.config.application.model.UserControls;
 import com.teamgannon.trips.controller.RotationController;
 import com.teamgannon.trips.events.ClearListEvent;
 import com.teamgannon.trips.events.ColorPaletteChangeEvent;
+import com.teamgannon.trips.events.RouteStarFilterEvent;
+import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.events.UserControlsChangeEvent;
 import com.teamgannon.trips.graphics.AstrographicTransformer;
 import com.teamgannon.trips.graphics.GridPlotManager;
@@ -39,6 +41,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Main pane for displaying the 3D interstellar space visualization.
@@ -381,6 +385,99 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     // =========================================================================
+    // Route Star Filtering
+    // =========================================================================
+
+    /**
+     * Filter the display to show only stars that are part of the specified routes.
+     * This helps visualize route overlaps and identify key crossroads systems.
+     *
+     * @param routeIds the IDs of routes whose stars should be displayed
+     */
+    public void filterStarsByRoutes(Set<UUID> routeIds) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        currentPlot.setRouteStarFilters(routeIds);
+        refreshStarDisplay();
+    }
+
+    /**
+     * Filter the display to show only stars that are part of the specified route.
+     *
+     * @param routeId the ID of the route whose stars should be displayed
+     */
+    public void filterStarsByRoute(UUID routeId) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        currentPlot.clearRouteStarFilters();
+        currentPlot.addRouteStarFilter(routeId);
+        refreshStarDisplay();
+    }
+
+    /**
+     * Add a route to the current star filter (shows stars from this route in addition to existing filter).
+     *
+     * @param routeId the ID of the route to add to filter
+     */
+    public void addRouteToStarFilter(UUID routeId) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        currentPlot.addRouteStarFilter(routeId);
+        refreshStarDisplay();
+    }
+
+    /**
+     * Remove a route from the current star filter.
+     *
+     * @param routeId the ID of the route to remove from filter
+     */
+    public void removeRouteFromStarFilter(UUID routeId) {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        currentPlot.removeRouteStarFilter(routeId);
+        refreshStarDisplay();
+    }
+
+    /**
+     * Clear all route star filters, showing all stars again.
+     */
+    public void clearRouteStarFilters() {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        currentPlot.clearRouteStarFilters();
+        refreshStarDisplay();
+    }
+
+    /**
+     * Check if route star filtering is currently active.
+     *
+     * @return true if filtering is active
+     */
+    public boolean isRouteStarFilterActive() {
+        return tripsContext.getCurrentPlot().isRouteStarFilterActive();
+    }
+
+    /**
+     * Refresh the star display, applying any active filters.
+     */
+    private void refreshStarDisplay() {
+        CurrentPlot currentPlot = tripsContext.getCurrentPlot();
+        boolean showStems = tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayStems() &&
+                tripsContext.getAppViewPreferences().getGraphEnablesPersist().isDisplayGrid();
+
+        // Clear current stars and redraw with filter applied
+        starPlotManager.clearStars();
+        starPlotManager.drawStars(currentPlot, showStems);
+        updateLabels();
+
+        // Update status to show filter state
+        if (currentPlot.isRouteStarFilterActive()) {
+            Set<String> filteredIds = currentPlot.getFilteredStarIds();
+            int starCount = filteredIds != null ? filteredIds.size() : 0;
+            int routeCount = currentPlot.getRouteStarFilterIds().size();
+            eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                    String.format("Showing %d stars from %d route(s)", starCount, routeCount)));
+        } else {
+            eventPublisher.publishEvent(new StatusUpdateEvent(this, "Showing all stars"));
+        }
+    }
+
+    // =========================================================================
     // Color and Preferences
     // =========================================================================
 
@@ -392,6 +489,38 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     @EventListener
     public void onColorPaletteChangeEvent(ColorPaletteChangeEvent event) {
         changeColors(event.getColorPalette());
+    }
+
+    // =========================================================================
+    // Route Star Filter Event Handling
+    // =========================================================================
+
+    @EventListener
+    public void onRouteStarFilterEvent(RouteStarFilterEvent event) {
+        javafx.application.Platform.runLater(() -> {
+            switch (event.getAction()) {
+                case FILTER_BY_ROUTE:
+                    filterStarsByRoute(event.getRouteId());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                            "Showing stars from route: " + event.getRouteName()));
+                    break;
+                case ADD_TO_FILTER:
+                    addRouteToStarFilter(event.getRouteId());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                            "Added stars from route: " + event.getRouteName()));
+                    break;
+                case REMOVE_FROM_FILTER:
+                    removeRouteFromStarFilter(event.getRouteId());
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                            "Removed stars from route: " + event.getRouteName()));
+                    break;
+                case CLEAR_FILTER:
+                    clearRouteStarFilters();
+                    eventPublisher.publishEvent(new StatusUpdateEvent(this,
+                            "Showing all stars"));
+                    break;
+            }
+        });
     }
 
     // =========================================================================
