@@ -197,6 +197,67 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
             predicates.add(predicate);
         }
 
+        // Spectral component filtering (Chuck's special query)
+        // Allows filtering by class letter, subtype, and luminosity class separately
+        if (astroSearchQuery.hasSpectralComponentFilter()) {
+            List<Predicate> spectralPredicates = new ArrayList<>();
+            Expression<String> spectralClassExp = root.get("spectralClass");
+
+            // Filter by spectral class letter (O, B, A, F, G, K, M, etc.)
+            Set<String> classLetters = astroSearchQuery.getSpectralClassLetters();
+            if (!classLetters.isEmpty()) {
+                // Build OR predicate for class letters: spectralClass LIKE 'O%' OR spectralClass LIKE 'B%' ...
+                List<Predicate> classPredicates = new ArrayList<>();
+                for (String letter : classLetters) {
+                    classPredicates.add(cb.like(spectralClassExp, letter + "%"));
+                }
+                if (!classPredicates.isEmpty()) {
+                    spectralPredicates.add(cb.or(classPredicates.toArray(new Predicate[0])));
+                }
+            }
+
+            // Filter by subtype (0-9)
+            Set<String> subtypes = astroSearchQuery.getSpectralSubtypes();
+            if (!subtypes.isEmpty()) {
+                // Build regex-like pattern to match subtypes at position 2 (or after multi-char class)
+                // We use LIKE patterns: spectralClass LIKE '_0%' OR spectralClass LIKE '_1%' ...
+                // For multi-char classes, use additional patterns
+                List<Predicate> subtypePredicates = new ArrayList<>();
+                for (String subtype : subtypes) {
+                    // Single char class (e.g., G2V): spectralClass LIKE '_X%' where X is subtype
+                    subtypePredicates.add(cb.like(spectralClassExp, "_" + subtype + "%"));
+                    // Two char class (e.g., DA2): spectralClass LIKE '__X%'
+                    subtypePredicates.add(cb.like(spectralClassExp, "__" + subtype + "%"));
+                }
+                if (!subtypePredicates.isEmpty()) {
+                    spectralPredicates.add(cb.or(subtypePredicates.toArray(new Predicate[0])));
+                }
+            }
+
+            // Filter by luminosity class (I, II, III, IV, V, VI, VII)
+            Set<String> lumClasses = astroSearchQuery.getLuminosityClasses();
+            if (!lumClasses.isEmpty()) {
+                // Build OR predicate for luminosity: spectralClass LIKE '%V' OR spectralClass LIKE '%III' ...
+                // Note: Order matters - check longer patterns first (VII before VI before V)
+                List<Predicate> lumPredicates = new ArrayList<>();
+                // Sort by length descending to avoid partial matches (VII vs V)
+                List<String> sortedLumClasses = lumClasses.stream()
+                        .sorted((a, b) -> b.length() - a.length())
+                        .collect(Collectors.toList());
+                for (String lum : sortedLumClasses) {
+                    lumPredicates.add(cb.like(spectralClassExp, "%" + lum));
+                }
+                if (!lumPredicates.isEmpty()) {
+                    spectralPredicates.add(cb.or(lumPredicates.toArray(new Predicate[0])));
+                }
+            }
+
+            // All spectral component predicates must match (AND)
+            if (!spectralPredicates.isEmpty()) {
+                predicates.add(cb.and(spectralPredicates.toArray(new Predicate[0])));
+            }
+        }
+
         // create a query with a real star type
         if (astroSearchQuery.isRealStars()) {
             predicates.add(cb.isTrue(root.get("realStar")));

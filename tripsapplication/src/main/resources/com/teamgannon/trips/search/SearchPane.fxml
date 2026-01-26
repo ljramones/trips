@@ -1,42 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="VBox" xmlns:fx="http://javafx.com/fxml/1" spacing="10" styleClass="search-pane" stylesheets="@SearchPane.css">
     <children>
-        <GridPane fx:id="queryBox" hgap="5" vgap="5" styleClass="search-grid">
-            <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
-            </padding>
-            <columnConstraints>
-                <ColumnConstraints hgrow="ALWAYS" minWidth="320" />
-                <ColumnConstraints hgrow="ALWAYS" minWidth="320" />
-            </columnConstraints>
-            <children>
-                <VBox fx:id="datasetBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" />
-                <VBox fx:id="distanceBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" />
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+            <content>
+                <GridPane fx:id="queryBox" hgap="5" vgap="5" styleClass="search-grid">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10" />
+                    </padding>
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="320" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="320" />
+                    </columnConstraints>
+                    <children>
+                        <VBox fx:id="datasetBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" />
+                        <VBox fx:id="distanceBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" />
 
-                <VBox fx:id="stellarClassBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                <VBox fx:id="techBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <VBox fx:id="stellarClassBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <VBox fx:id="techBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 
-                <VBox fx:id="categoryBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                <VBox fx:id="productsBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                        <VBox fx:id="categoryBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                        <VBox fx:id="productsBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="4" />
 
-                <VBox fx:id="fuelBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                <VBox fx:id="milSpaceBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                        <VBox fx:id="fuelBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                        <VBox fx:id="milSpaceBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 
-                <VBox fx:id="worldBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="6" />
-                <VBox fx:id="milPlanetBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                        <VBox fx:id="worldBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                        <VBox fx:id="milPlanetBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="6" />
 
-                <VBox fx:id="portBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="7" />
-                <VBox fx:id="miscBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                        <VBox fx:id="portBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                        <VBox fx:id="miscBox" styleClass="search-cell" GridPane.columnIndex="1" GridPane.rowIndex="7" />
 
-                <VBox fx:id="populationBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="8" />
-                <VBox fx:id="polityBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="9" />
-            </children>
-        </GridPane>
+                        <VBox fx:id="populationBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                        <VBox fx:id="polityBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="9" />
+                        <VBox fx:id="spectralComponentBox" styleClass="search-cell" GridPane.columnIndex="0" GridPane.rowIndex="10" GridPane.columnSpan="2" />
+                    </children>
+                </GridPane>
+            </content>
+        </ScrollPane>
     </children>
 </fx:root>

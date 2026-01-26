@@ -54,6 +54,12 @@ public class AstroSearchQuery {
 
     private @NotNull Set<StellarType> stellarTypes = new HashSet<>();
 
+    // Spectral component filtering (Chuck's special query)
+    private boolean spectralComponentFilterEnabled = false;
+    private @NotNull Set<String> spectralClassLetters = new HashSet<>();  // O, B, A, F, G, K, M, etc.
+    private @NotNull Set<String> spectralSubtypes = new HashSet<>();       // 0-9
+    private @NotNull Set<String> luminosityClasses = new HashSet<>();      // I, II, III, IV, V, VI, VII
+
     private @NotNull Set<String> fuelTypes = new HashSet<>();
 
     private @NotNull Set<String> worldTypes = new HashSet<>();
@@ -95,6 +101,25 @@ public class AstroSearchQuery {
 
     public void clearStellarTypes() {
         stellarTypes = new HashSet<>();
+    }
+
+    public void clearSpectralComponentFilter() {
+        spectralComponentFilterEnabled = false;
+        spectralClassLetters = new HashSet<>();
+        spectralSubtypes = new HashSet<>();
+        luminosityClasses = new HashSet<>();
+    }
+
+    public void setSpectralComponentFilter(Set<String> classLetters, Set<String> subtypes, Set<String> lumClasses) {
+        this.spectralComponentFilterEnabled = true;
+        this.spectralClassLetters = classLetters != null ? classLetters : new HashSet<>();
+        this.spectralSubtypes = subtypes != null ? subtypes : new HashSet<>();
+        this.luminosityClasses = lumClasses != null ? lumClasses : new HashSet<>();
+    }
+
+    public boolean hasSpectralComponentFilter() {
+        return spectralComponentFilterEnabled &&
+                (!spectralClassLetters.isEmpty() || !spectralSubtypes.isEmpty() || !luminosityClasses.isEmpty());
     }
 
     public void clearFuelTypes() {

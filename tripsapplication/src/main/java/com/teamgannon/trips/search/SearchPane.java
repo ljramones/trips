@@ -35,6 +35,7 @@ public class SearchPane extends VBox {
     private final MilPlanetSelectionPanel milPlanetSelectionPanel = new MilPlanetSelectionPanel();
     private final ProductsSelectionPanel productsSelectionPanel = new ProductsSelectionPanel();
     private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
+    private final SpectralComponentSelectionPanel spectralComponentSelectionPanel = new SpectralComponentSelectionPanel();
     private DataSetPanel dataSetChoicePanel;
 
     @FXML
@@ -67,6 +68,8 @@ public class SearchPane extends VBox {
     private Pane milPlanetBox;
     @FXML
     private Pane miscBox;
+    @FXML
+    private Pane spectralComponentBox;
 
     /**
      * constructor
@@ -123,6 +126,7 @@ public class SearchPane extends VBox {
         milSpaceBox.getChildren().add(milSpaceSelectionPanel.getPane());
         milPlanetBox.getChildren().add(milPlanetSelectionPanel.getPane());
         miscBox.getChildren().add(miscellaneousSelectionPanel.getPane());
+        spectralComponentBox.getChildren().add(spectralComponentSelectionPanel);
     }
 
     public void setDataSetContext(@NotNull DataSetDescriptor descriptor) {
@@ -196,6 +200,7 @@ public class SearchPane extends VBox {
 
         getPolityValues(astroSearchQuery);
         getStellarTypes(astroSearchQuery);
+        getSpectralComponentFilter(astroSearchQuery);
         getPortTypes(astroSearchQuery);
         getTechTypes(astroSearchQuery);
         getFuelTypes(astroSearchQuery);
@@ -293,6 +298,17 @@ public class SearchPane extends VBox {
         List<String> stellarTypes = stellarClassSelectionPanel.getSelection();
         if (stellarClassSelectionPanel.isSelected()) {
             astroSearchQuery.addStellarTypes(stellarTypes);
+        }
+    }
+
+    private void getSpectralComponentFilter(@NotNull AstroSearchQuery astroSearchQuery) {
+        astroSearchQuery.clearSpectralComponentFilter();
+        if (spectralComponentSelectionPanel.hasSelections()) {
+            astroSearchQuery.setSpectralComponentFilter(
+                    spectralComponentSelectionPanel.getSelectedClasses(),
+                    spectralComponentSelectionPanel.getSelectedSubtypes(),
+                    spectralComponentSelectionPanel.getSelectedLuminosityClasses()
+            );
         }
     }
 
