@@ -11,21 +11,23 @@ import javafx.concurrent.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.data.domain.Page;
 
-import java.io.Writer;
+import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class CSVDataSetDataExportTask extends Task<ExportResults> implements ProgressUpdater {
 
-    private final int PAGE_SIZE = 1000;
+    private static final int PROGRESS_UPDATE_INTERVAL = 1000;
 
     private final ExportOptions export;
     private final DatabaseManagementService databaseManagementService;
     private final StarService starService;
+
+    // Reusable StringBuilder to avoid allocations per record
+    private final StringBuilder csvBuilder = new StringBuilder(1024);
 
     public CSVDataSetDataExportTask(ExportOptions export,
                                     DatabaseManagementService databaseManagementService,
@@ -45,50 +47,52 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
     protected ExportResults call() throws Exception {
         ExportResults result = processCSVFile(export);
         if (result.isSuccess()) {
-            log.info("New dataset {} added", export.getFileName());
+            log.info("Dataset {} exported", export.getFileName());
         } else {
-            log.error("load csv: " + result.getMessage());
+            log.error("Export failed: " + result.getMessage());
         }
 
         return result;
     }
 
     private ExportResults processCSVFile(ExportOptions export) {
-
         ExportResults exportResults = ExportResults.builder().success(false).build();
+        String dataSetName = export.getDataset().getDataSetName();
 
-        log.info("about to process file");
-        try {
-            Writer writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"));
+        log.info("Starting streaming export for dataset: {}", dataSetName);
+        long startTime = System.currentTimeMillis();
 
-//            createDescriptorHeading(writer, dataSetDescriptor);
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(export.getFileName() + ".trips.csv"))) {
 
-            String headers = getHeaders();
-            writer.write(headers);
+            // Write headers
+            writer.write(getHeaders());
 
-            int total = 0;
-            int pageNumber = 0;
-            Page<StarObject> starObjectPage = starService.getFromDatasetByPage(export.getDataset(), pageNumber, PAGE_SIZE);
-            int totalPages = starObjectPage.getTotalPages();
+            // Use atomic counter for lambda
+            AtomicLong count = new AtomicLong(0);
 
-            for (int i = 0; i < totalPages; i++) {
-                starObjectPage = starService.getFromDatasetByPage(export.getDataset(), i, PAGE_SIZE);
-                List<StarObject> starObjects = starObjectPage.getContent();
-                for (StarObject starObject : starObjects) {
+            // Stream and write each star within transaction - constant memory usage
+            long totalProcessed = starService.processDatasetStream(dataSetName, starObject -> {
+                try {
                     String csvRecord = convertToCSV(starObject);
                     writer.write(csvRecord);
-                    total++;
+                    long current = count.incrementAndGet();
+                    if (current % PROGRESS_UPDATE_INTERVAL == 0) {
+                        updateTaskInfo(current + " elements written so far");
+                    }
+                } catch (Exception e) {
+                    log.error("Error writing star {}: {}", starObject.getDisplayName(), e.getMessage());
                 }
-                updateTaskInfo(total + " elements written so far");
-            }
+            });
+
             writer.flush();
-            writer.close();
-            log.info("finished exporting file");
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("Finished exporting {} stars in {} ms", totalProcessed, elapsed);
             exportResults.setSuccess(true);
+            exportResults.setMessage("Exported " + totalProcessed + " stars to " + export.getFileName() + ".trips.csv");
 
         } catch (Exception e) {
-            exportResults.setMessage("caught error opening the file:{}" + e.getMessage());
-            log.error("caught error opening the file:{}", e.getMessage());
+            exportResults.setMessage("Export failed: " + e.getMessage());
+            log.error("Export error: {}", e.getMessage(), e);
         }
         return exportResults;
     }
@@ -155,77 +159,87 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
     }
 
     private @NotNull String convertToCSV(@NotNull StarObject starObject) {
-
-        // set the Gaia DR2 id if it is not set - note this is to get around a weird edge condition
+        // Set the Gaia DR2 id if it is not set
         if (starObject.getGaiaDR2CatId() == null || starObject.getGaiaDR2CatId().isEmpty()) {
             CatalogUtils.setGaiaDR2Id(starObject);
         }
 
-        return removeCommas(starObject.getId()) + ", " +
-                removeCommas(starObject.getDataSetName()) + ", " +
-                removeCommas(starObject.getDisplayName()) + ", " +
-                removeCommas(starObject.getCommonName()) + ", " +
-                removeCommas(starObject.getSystemName()) + ", " +
-                removeCommas(starObject.getEpoch()) + ", " +
-                removeCommas(starObject.getConstellationName()) + ", " +
-                starObject.getMass() + ", " +
-                removeCommas(starObject.getNotes()) + ", " +
-                removeCommas(starObject.getSource()) + ", " +
-                String.join("~", starObject.getCatalogIdList()) + ", " +
-                removeCommas(starObject.getSimbadId()) + ", " +
-                removeCommas(starObject.getGaiaDR2CatId()) + ", " +
-                starObject.getRadius() + ", " +
-                starObject.getRa() + ", " +
-                starObject.getDeclination() + ", " +
-                starObject.getPmra() + ", " +
-                starObject.getPmdec() + ", " +
-                starObject.getDistance() + ", " +
-                starObject.getRadialVelocity() + ", " +
-                starObject.getSpectralClass() + ", " +
-                starObject.getTemperature() + ", " +
-                starObject.isRealStar() + ", " +
-                starObject.getBprp() + ", " +
-                starObject.getBpg() + ", " +
-                starObject.getGrp() + ", " +
-                starObject.getLuminosity() + ", " +
-                starObject.getMagu() + ", " +
-                starObject.getMagb() + ", " +
-                starObject.getMagv() + ", " +
-                starObject.getMagr() + ", " +
-                starObject.getMagi() + ", " +
-                starObject.isOther() + ", " +
-                starObject.isAnomaly() + ", " +
-                starObject.getPolity() + ", " +
-                starObject.getWorldType() + ", " +
-                starObject.getFuelType() + ", " +
-                starObject.getPortType() + ", " +
-                starObject.getPopulationType() + ", " +
-                starObject.getTechType() + ", " +
-                starObject.getProductType() + ", " +
-                starObject.getMilSpaceType() + ", " +
-                starObject.getMilPlanType() + ", " +
-                starObject.getAge() + ", " +
-                starObject.getMetallicity() + ", " +
-                removeCommas(starObject.getMiscText1()) + ", " +
-                removeCommas(starObject.getMiscText2()) + ", " +
-                removeCommas(starObject.getMiscText3()) + ", " +
-                removeCommas(starObject.getMiscText4()) + ", " +
-                removeCommas(starObject.getMiscText5()) + ", " +
-                starObject.getMiscNum1() + ", " +
-                starObject.getMiscNum2() + ", " +
-                starObject.getMiscNum3() + ", " +
-                starObject.getMiscNum4() + ", " +
-                starObject.getMiscNum5() + ", " +
-                starObject.getNumExoplanets() +
-                "\n";
+        // Reuse StringBuilder to avoid allocations
+        csvBuilder.setLength(0);
+
+        appendField(csvBuilder, starObject.getId());
+        appendField(csvBuilder, starObject.getDataSetName());
+        appendField(csvBuilder, starObject.getDisplayName());
+        appendField(csvBuilder, starObject.getCommonName());
+        appendField(csvBuilder, starObject.getSystemName());
+        appendField(csvBuilder, starObject.getEpoch());
+        appendField(csvBuilder, starObject.getConstellationName());
+        csvBuilder.append(starObject.getMass()).append(", ");
+        appendField(csvBuilder, starObject.getNotes());
+        appendField(csvBuilder, starObject.getSource());
+        csvBuilder.append(String.join("~", starObject.getCatalogIdList())).append(", ");
+        appendField(csvBuilder, starObject.getSimbadId());
+        appendField(csvBuilder, starObject.getGaiaDR2CatId());
+        csvBuilder.append(starObject.getRadius()).append(", ");
+        csvBuilder.append(starObject.getRa()).append(", ");
+        csvBuilder.append(starObject.getDeclination()).append(", ");
+        csvBuilder.append(starObject.getPmra()).append(", ");
+        csvBuilder.append(starObject.getPmdec()).append(", ");
+        csvBuilder.append(starObject.getDistance()).append(", ");
+        csvBuilder.append(starObject.getRadialVelocity()).append(", ");
+        csvBuilder.append(starObject.getSpectralClass()).append(", ");
+        csvBuilder.append(starObject.getTemperature()).append(", ");
+        csvBuilder.append(starObject.isRealStar()).append(", ");
+        csvBuilder.append(starObject.getBprp()).append(", ");
+        csvBuilder.append(starObject.getBpg()).append(", ");
+        csvBuilder.append(starObject.getGrp()).append(", ");
+        csvBuilder.append(starObject.getLuminosity()).append(", ");
+        csvBuilder.append(starObject.getMagu()).append(", ");
+        csvBuilder.append(starObject.getMagb()).append(", ");
+        csvBuilder.append(starObject.getMagv()).append(", ");
+        csvBuilder.append(starObject.getMagr()).append(", ");
+        csvBuilder.append(starObject.getMagi()).append(", ");
+        csvBuilder.append(starObject.isOther()).append(", ");
+        csvBuilder.append(starObject.isAnomaly()).append(", ");
+        csvBuilder.append(starObject.getPolity()).append(", ");
+        csvBuilder.append(starObject.getWorldType()).append(", ");
+        csvBuilder.append(starObject.getFuelType()).append(", ");
+        csvBuilder.append(starObject.getPortType()).append(", ");
+        csvBuilder.append(starObject.getPopulationType()).append(", ");
+        csvBuilder.append(starObject.getTechType()).append(", ");
+        csvBuilder.append(starObject.getProductType()).append(", ");
+        csvBuilder.append(starObject.getMilSpaceType()).append(", ");
+        csvBuilder.append(starObject.getMilPlanType()).append(", ");
+        csvBuilder.append(starObject.getAge()).append(", ");
+        csvBuilder.append(starObject.getMetallicity()).append(", ");
+        appendField(csvBuilder, starObject.getMiscText1());
+        appendField(csvBuilder, starObject.getMiscText2());
+        appendField(csvBuilder, starObject.getMiscText3());
+        appendField(csvBuilder, starObject.getMiscText4());
+        appendField(csvBuilder, starObject.getMiscText5());
+        csvBuilder.append(starObject.getMiscNum1()).append(", ");
+        csvBuilder.append(starObject.getMiscNum2()).append(", ");
+        csvBuilder.append(starObject.getMiscNum3()).append(", ");
+        csvBuilder.append(starObject.getMiscNum4()).append(", ");
+        csvBuilder.append(starObject.getMiscNum5()).append(", ");
+        csvBuilder.append(starObject.getNumExoplanets());
+        csvBuilder.append('\n');
+
+        return csvBuilder.toString();
     }
 
-    private @Nullable String removeCommas(@Nullable String origin) {
-        String replaced = origin;
-        if (origin != null) {
-            replaced = origin.replace(",", "~");
+    /**
+     * Append a string field to the builder, replacing commas with tildes.
+     */
+    private void appendField(@NotNull StringBuilder sb, @Nullable String value) {
+        if (value != null) {
+            // Replace commas inline without creating intermediate String
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                sb.append(c == ',' ? '~' : c);
+            }
         }
-        return replaced;
+        sb.append(", ");
     }
 
 

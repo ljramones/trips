@@ -26,6 +26,13 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+        # Batch insert optimization - groups INSERT statements
+        jdbc:
+          batch_size: 50
+          batch_versioned_data: true
+        # Reorder inserts/updates for better batching
+        order_inserts: true
+        order_updates: true
   sql:
     init:
       continue-on-error: true

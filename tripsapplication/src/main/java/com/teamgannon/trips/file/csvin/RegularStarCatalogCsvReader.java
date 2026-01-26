@@ -17,9 +17,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static com.teamgannon.trips.astrogation.Coordinates.calculateEquatorialCoordinates;
@@ -29,6 +30,12 @@ import static com.teamgannon.trips.dialogs.gaiadata.CatalogUtils.setCatalogIds;
 
 @Slf4j
 public class RegularStarCatalogCsvReader {
+
+    // Pre-compiled pattern for CSV splitting - handles quoted fields with commas
+    private static final Pattern CSV_SPLIT_PATTERN = Pattern.compile(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+    // Increased batch size for better throughput with Hibernate batching
+    private static final int BATCH_SIZE = 5000;
 
     private final DatabaseManagementService databaseManagementService;
     private final StarService starService;
@@ -55,9 +62,9 @@ public class RegularStarCatalogCsvReader {
                 .csvFile(csvFile)
                 .build();
 
-        try {
-            log.info("starting read of CSV file={}", file.getAbsolutePath());
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+        try (BufferedReader reader = new BufferedReader(new FileReader(file), 65536)) {
+            log.info("Starting read of CSV file={}", file.getAbsolutePath());
+            long fileStart = System.currentTimeMillis();
 
             // read descriptor
             // read first to determine whether this file follows the backup protocol or not.
@@ -75,28 +82,31 @@ public class RegularStarCatalogCsvReader {
                 csvFile.setDataSetDescriptor(createDescriptor(dataset));
             }
 
-            // read stars
-            // skip header
-//            String line = reader.readLine();
-
+            // read stars in batches
             do {
                 loadStats.clearLoopCounter();
                 long start = System.currentTimeMillis();
-                Set<StarObject> starSet = parseBulkRecords(2000, reader, loadStats);
-                long end = System.currentTimeMillis();
-                log.info("Metrics:: time to load 2000 records from file = {}", (end - start));
+                List<StarObject> starList = parseBulkRecords(BATCH_SIZE, reader, loadStats);
+                long parseTime = System.currentTimeMillis() - start;
 
                 // save all the stars we've read so far
-                starService.starBulkSave(starSet);
+                long saveStart = System.currentTimeMillis();
+                starService.starBulkSave(starList);
+                long saveTime = System.currentTimeMillis() - saveStart;
+
                 loadStats.addToTotalCount(loadStats.getLoopCounter());
                 progressUpdater.updateTaskInfo(String.format("--> %d loaded so far, please wait ", loadStats.getTotalCount()));
-                log.info("\n\nsaving {} entries, total count is {}\n\n", loadStats.getLoopCounter(), loadStats.getTotalCount());
+                log.info("Batch: {} records parsed in {}ms, saved in {}ms, total: {}",
+                        loadStats.getLoopCounter(), parseTime, saveTime, loadStats.getTotalCount());
             } while (!loadStats.isReadComplete()); // the moment readComplete turns true, we stop
 
-            log.info("File load report: total:{}, accepts:{}, rejects:{}", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects());
+            long totalTime = System.currentTimeMillis() - fileStart;
+            log.info("File load complete: total:{}, accepts:{}, rejects:{}, time:{}ms",
+                    csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects(), totalTime);
             csvFile.setReadSuccess(true);
 
-            csvFile.setProcessMessage(String.format("File load report: total:%d, accepts:%d, rejects:%d", csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects()));
+            csvFile.setProcessMessage(String.format("File load report: total:%d, accepts:%d, rejects:%d, time:%.1fs",
+                    csvFile.getSize(), csvFile.getNumbAccepts(), csvFile.getNumbRejects(), totalTime / 1000.0));
         } catch (IOException e) {
             progressUpdater.updateTaskInfo("failed to read file because: " + e.getMessage());
             log.error("failed to read file because: {}", e.getMessage());
@@ -114,37 +124,42 @@ public class RegularStarCatalogCsvReader {
         return csvFile;
     }
 
-    private Set<StarObject> parseBulkRecords(int numberToParse,
-                                             BufferedReader reader,
-                                             LoadStats loadStats) throws IOException {
-        Set<StarObject> astroCSVStarSet = new HashSet<>();
-        for (int i = 0; i < numberToParse; i++) {
+    private List<StarObject> parseBulkRecords(int numberToParse,
+                                              BufferedReader reader,
+                                              LoadStats loadStats) throws IOException {
+        // Use ArrayList with pre-sized capacity for better performance
+        List<StarObject> starList = new ArrayList<>(numberToParse);
 
+        for (int i = 0; i < numberToParse; i++) {
             String line = reader.readLine();
 
             if (line == null) {
-                log.error(">>> Null line encountered at line={}", loadStats.getTotalCount());
+                log.debug("End of file reached at line={}", loadStats.getTotalCount());
                 loadStats.setReadComplete(true);
                 break;
             }
 
-            String[] splitLine = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            // Use pre-compiled pattern for faster splitting
+            String[] splitLine = CSV_SPLIT_PATTERN.split(line, -1);
             String[] lineRead = linePad(splitLine, splitLine.length);
             loadStats.incLoopCounter();
-            AstroCSVStar star = parseAstroCSVStar(loadStats.getDataSet(), lineRead);
+
             try {
+                AstroCSVStar star = parseAstroCSVStar(loadStats.getDataSet(), lineRead);
                 StarObject starObject = star.toStarObject();
+
                 if (starObject != null) {
                     starObject.setDataSetName(loadStats.getDataSet().getName());
 
                     if (starObject.getX() == 0.0 && starObject.getY() == 0.0 && starObject.getZ() == 0.0) {
-                        // calculate the equatorial XYZ coordinates and replace the read in values from the star data in file
-                        double[] coordinates = calculateEquatorialCoordinates(starObject.getRa(), starObject.getDeclination(), starObject.getDistance());
-                        // replace the star values
+                        // calculate the equatorial XYZ coordinates
+                        double[] coordinates = calculateEquatorialCoordinates(
+                                starObject.getRa(), starObject.getDeclination(), starObject.getDistance());
                         starObject.setX(coordinates[0]);
                         starObject.setY(coordinates[1]);
                         starObject.setZ(coordinates[2]);
                     }
+
                     if (loadStats.getTotalCount() < 5) {
                         log.info("CSV import sample: name={}, ra={}, dec={}, dist={}, x={}, y={}, z={}",
                                 starObject.getDisplayName(), starObject.getRa(), starObject.getDeclination(),
@@ -155,29 +170,29 @@ public class RegularStarCatalogCsvReader {
                     starObject.setGalacticLong(galacticCoordinates[0]);
                     starObject.setGalacticLat(galacticCoordinates[1]);
 
-                    astroCSVStarSet.add(starObject);
+                    // Pull catalog ids and clean up
+                    setCatalogIds(starObject);
+                    cleanUpEntries(starObject);
+
+                    starList.add(starObject);
                     loadStats.getCsvFile().incAccepts();
 
                     double distance = starObject.getDistance();
                     if (distance > loadStats.getMaxDistance()) {
                         loadStats.setMaxDistance(distance);
                     }
-
-                    log.debug("setting catalog ids for star {}", starObject.getDisplayName());
-                    // pull catalog ids
-                    setCatalogIds(starObject);
-                    cleanUpEntries(starObject);
-
                 } else {
                     loadStats.getCsvFile().incRejects();
                 }
 
                 loadStats.getCsvFile().incTotal();
             } catch (Exception e) {
-                log.error("failed to parse star:{}, because of {}", star, e.getMessage());
+                log.error("Failed to parse line {}: {}", loadStats.getTotalCount() + i, e.getMessage());
+                loadStats.getCsvFile().incRejects();
+                loadStats.getCsvFile().incTotal();
             }
         }
-        return astroCSVStarSet;
+        return starList;
     }
 
     private AstroCSVStar parseAstroCSVStar(@NotNull Dataset dataset, String[] lineRead) {

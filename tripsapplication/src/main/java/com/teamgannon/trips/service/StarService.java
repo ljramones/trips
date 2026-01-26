@@ -440,10 +440,16 @@ public class StarService {
      *
      * @param starSet the star set
      */
+    /**
+     * Bulk save stars to the database.
+     * Uses Hibernate batch inserts for better performance.
+     *
+     * @param stars the collection of stars to save
+     */
     @TrackExecutionTime
     @Transactional
-    public void starBulkSave(@NotNull Set<StarObject> starSet) {
-        starObjectRepository.saveAll(starSet);
+    public void starBulkSave(@NotNull java.util.Collection<StarObject> stars) {
+        starObjectRepository.saveAll(stars);
     }
 
     @TrackExecutionTime
@@ -715,5 +721,50 @@ public class StarService {
         return getAstrographicObjectsOnQuery(searchQuery);
     }
 
+    // ========== Streaming methods for export ==========
+
+    /**
+     * Process all stars in a dataset using streaming.
+     * The consumer is called for each star within a single transaction.
+     * This ensures constant memory usage regardless of dataset size.
+     *
+     * @param dataSetName the dataset name
+     * @param processor consumer to process each star
+     * @return count of stars processed
+     */
+    @Transactional(readOnly = true)
+    public long processDatasetStream(@NotNull String dataSetName, @NotNull java.util.function.Consumer<StarObject> processor) {
+        long count = 0;
+        try (Stream<StarObject> stream = starObjectRepository.findByDataSetName(dataSetName)) {
+            java.util.Iterator<StarObject> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                processor.accept(iterator.next());
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Process stars matching a search query using streaming.
+     * The consumer is called for each star within a single transaction.
+     * This ensures constant memory usage regardless of result size.
+     *
+     * @param query the search query
+     * @param processor consumer to process each star
+     * @return count of stars processed
+     */
+    @Transactional(readOnly = true)
+    public long processQueryStream(@NotNull AstroSearchQuery query, @NotNull java.util.function.Consumer<StarObject> processor) {
+        long count = 0;
+        try (Stream<StarObject> stream = starObjectRepository.findBySearchQueryStream(query)) {
+            java.util.Iterator<StarObject> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                processor.accept(iterator.next());
+                count++;
+            }
+        }
+        return count;
+    }
 
 }
