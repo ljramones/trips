@@ -102,6 +102,38 @@ Import stellar data from multiple sources:
 - **Validation**: Data validation with detailed error reporting
 - **Exoplanet Import**: Import exoplanet.eu catalog data with star matching
 
+### AT-HYG Data Enrichment
+
+The Data Workbench includes tools to fill gaps in the AT-HYG stellar database (~2.5 million stars). The enrichment pipeline addresses missing values that are critical for simulations (ACCRETE, OreKit) and visualization:
+
+#### Distance Enrichment
+- **Gaia/Hipparcos TAP Lookup**: Query Gaia DR3 and Hipparcos catalogs for parallax data, calculate distances
+- **Photometric Distance Estimation**: For stars without parallax, estimate distance from apparent magnitude and color index (B-V or BP-RP)
+
+#### Stellar Parameter Estimation
+- **Mass from Luminosity**: Estimate stellar mass using the mass-luminosity relation for main-sequence stars
+- **Radius from Mass**: Estimate stellar radius using mass-radius relations
+- **Temperature from BP-RP Color**: Estimate effective temperature from Gaia BP-RP color index (~2.4M stars)
+- **Spectral Class from BP-RP Color**: Estimate MK spectral classification (e.g., G2V, K5V, M3V) from color
+- **Cross-Fill Temperature/Spectral**: Fill remaining gaps by converting between temperature and spectral class
+
+#### Enrichment Results (AT-HYG 2.5M stars)
+
+| Field | Before | After | Coverage |
+|-------|--------|-------|----------|
+| Distance | ~1.2M | 2.55M | 99.95% |
+| Mass | 1 | 2.55M | 99.95% |
+| Radius | 1 | 2.55M | 99.95% |
+| Temperature | 6 | 2.42M | 95% |
+| Spectral Class | 360K | 2.44M | 95.5% |
+
+#### Performance
+The enrichment uses a batch-ID optimization for large datasets:
+1. Single query fetches all eligible star IDs
+2. Stars loaded and processed in batches of 5,000
+3. ~1,000 stars/second throughput
+4. Full enrichment of 2.5M stars completes in ~2 hours (vs. days with naive approach)
+
 ### Multi-View Architecture
 
 TRIPS uses a pluggable view system with paired 3D and side panes:
