@@ -1,6 +1,7 @@
 package com.teamgannon.trips.service.graphsearch.task;
 
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.routing.automation.RouteGraph;
@@ -418,6 +419,10 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
         Map<String, SparseStarRecord> starRecordMap = getStarsForRoute(route, sparseStarRecordList);
 
         route.setRouteList(getRouteStarList(route, sparseStarRecordList));
+
+        // Routes from dataset search are initially marked as FULL since they were found
+        // in the full dataset. Visibility may be updated later based on current view.
+        route.setVisibility(RouteVisibility.FULL);
 
         // set routing metric
         return RoutingMetric

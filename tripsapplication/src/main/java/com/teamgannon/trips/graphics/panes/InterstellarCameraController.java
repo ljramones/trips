@@ -151,11 +151,34 @@ public class InterstellarCameraController {
     }
 
     /**
-     * Translate camera in XY plane.
+     * Translate camera in XY plane (absolute position).
      */
     public void translateXY(double x, double y) {
         camera.setTranslateX(x);
         camera.setTranslateY(y);
+    }
+
+    /**
+     * Move camera incrementally in XY plane (relative movement).
+     * Used for keyboard-based panning.
+     */
+    public void moveXY(double deltaX, double deltaY) {
+        camera.setTranslateX(camera.getTranslateX() + deltaX);
+        camera.setTranslateY(camera.getTranslateY() + deltaY);
+    }
+
+    /**
+     * Rotate around X axis only (pitch).
+     */
+    public void rotateX(double delta) {
+        rotateX.setAngle((rotateX.getAngle() + delta) % 360);
+    }
+
+    /**
+     * Rotate around Z axis only (yaw).
+     */
+    public void rotateZAxis(double delta) {
+        rotateZ.setAngle((rotateZ.getAngle() + delta) % 360);
     }
 
     /**

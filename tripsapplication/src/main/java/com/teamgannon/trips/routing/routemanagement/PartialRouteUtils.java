@@ -59,7 +59,10 @@ public class PartialRouteUtils {
             // add the partial routes to the current display
             tripsContext.getCurrentPlot().addRoutes(route.getUuid(), partialRoutes);
         } else {
-            log.info("!!!!!route {} is not visible in this view port", route.getRouteName());
+            log.info("Route {} is not visible in this view port", route.getRouteName());
+            // Still track the route as OFFSCREEN so the side panel shows correct status
+            RouteDescriptor offscreenDescriptor = createOffscreenRouteDescriptor(route);
+            tripsContext.getCurrentPlot().addRoute(route.getUuid(), offscreenDescriptor);
         }
     }
 
@@ -157,6 +160,21 @@ public class PartialRouteUtils {
         descriptor.setRouteNotes(route.getRouteNotes());
         descriptor.setColor(Color.valueOf(route.getRouteColor()));
         descriptor.setVisibility(RouteVisibility.PARTIAL);
+        return descriptor;
+    }
+
+    /**
+     * Create a RouteDescriptor for a route that is completely off-screen.
+     * This is used to track routes in CurrentPlot so the side panel displays correct visibility.
+     */
+    private RouteDescriptor createOffscreenRouteDescriptor(@NotNull Route route) {
+        RouteDescriptor descriptor = RouteDescriptor.builder().build();
+        descriptor.setId(route.getUuid());
+        descriptor.setName(route.getRouteName());
+        descriptor.setLineWidth(route.getLineWidth());
+        descriptor.setRouteNotes(route.getRouteNotes());
+        descriptor.setColor(Color.valueOf(route.getRouteColor()));
+        descriptor.setVisibility(RouteVisibility.OFFSCREEN);
         return descriptor;
     }
 

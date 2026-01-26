@@ -5,6 +5,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.events.NewRouteEvent;
 import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.graphics.entities.RouteDescriptor;
+import com.teamgannon.trips.graphics.entities.RouteVisibility;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.geometry.Point3D;
@@ -194,18 +195,36 @@ public class CurrentManualRoute {
             createRouteSegment(endingStar);
             routeDisplay.setManualRoutingActive(false);
             routeDisplay.updateLabels();
-            eventPublisher.publishEvent(new NewRouteEvent(this, getCurrentRoute().getDescriptor(), getCurrentRoute()));
+
+            // Set visibility to FULL - manual routes are always fully visible since user clicked each star
+            RouteDescriptor route = getCurrentRoute();
+            route.setVisibility(RouteVisibility.FULL);
+
+            // Register route in CurrentPlot so side panel shows it correctly
+            tripsContext.getCurrentPlot().addRoute(route.getId(), route);
+
+            // Publish event to persist the route to database
+            eventPublisher.publishEvent(new NewRouteEvent(this, route.getDescriptor(), route));
         } else {
             showErrorAlert("Routing", "start a route first");
         }
     }
 
     public void finishRoute() {
-        log.info("Fininshing manual route");
+        log.info("Finishing manual route");
         if (routeDisplay.isManualRoutingActive()) {
             log.info("manual route is active, so turn it off");
             routeDisplay.setManualRoutingActive(false);
-            eventPublisher.publishEvent(new NewRouteEvent(this, getCurrentRoute().getDescriptor(), getCurrentRoute()));
+
+            // Set visibility to FULL - manual routes are always fully visible since user clicked each star
+            RouteDescriptor route = getCurrentRoute();
+            route.setVisibility(RouteVisibility.FULL);
+
+            // Register route in CurrentPlot so side panel shows it correctly
+            tripsContext.getCurrentPlot().addRoute(route.getId(), route);
+
+            // Publish event to persist the route to database
+            eventPublisher.publishEvent(new NewRouteEvent(this, route.getDescriptor(), route));
             routeDisplay.updateLabels();
         } else {
             log.info("Manual routing is not active");
