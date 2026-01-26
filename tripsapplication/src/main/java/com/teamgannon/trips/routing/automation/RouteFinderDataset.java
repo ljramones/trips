@@ -84,16 +84,24 @@ public class RouteFinderDataset {
                     }
                     if (graphRouteResult.isRouteFound()) {
                         PossibleRoutes possibleRoutes = graphRouteResult.getPossibleRoutes();
-                        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(possibleRoutes);
-                        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
-                        if (optionalRoutingMetrics.isPresent()) {
-                            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
-                            if (selectedRoutingMetrics.size() > 0) {
-                                log.info("plotting selected routes:{}", selectedRoutingMetrics);
-                                // plot the stars and routes found
-                                plot(selectedRoutingMetrics);
-                            }
-                        }
+                        // Create non-modal dialog with preview and accept callbacks
+                        DisplayAutoRoutesDialog dialog = new DisplayAutoRoutesDialog(
+                                possibleRoutes,
+                                // Preview callback: plot routes without closing dialog
+                                selectedRoutes -> {
+                                    log.info("Previewing {} routes", selectedRoutes.size());
+                                    plot(selectedRoutes);
+                                },
+                                // Accept callback: final plot when user clicks Accept
+                                selectedRoutes -> {
+                                    if (!selectedRoutes.isEmpty()) {
+                                        log.info("Accepted {} routes", selectedRoutes.size());
+                                        plot(selectedRoutes);
+                                    }
+                                }
+                        );
+                        // Show non-modal dialog (user can interact with map)
+                        dialog.show();
                     }
                 }
             }

@@ -196,20 +196,26 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
     }
 
     private void displayFoundRoutes(@NotNull RouteFindingResult result) {
-        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(result.getRoutes());
-        Stage dialogStage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
-        dialogStage.setAlwaysOnTop(true);
-        dialogStage.toFront();
+        // Create non-modal dialog with preview and accept callbacks
+        DisplayAutoRoutesDialog dialog = new DisplayAutoRoutesDialog(
+                result.getRoutes(),
+                // Preview callback: plot routes without closing dialog
+                selectedRoutes -> {
+                    log.info("Previewing {} routes", selectedRoutes.size());
+                    plot(currentDataSet, selectedRoutes);
+                },
+                // Accept callback: final plot when user clicks Accept
+                selectedRoutes -> {
+                    if (!selectedRoutes.isEmpty()) {
+                        log.info("Accepted {} routes", selectedRoutes.size());
+                        plot(currentDataSet, selectedRoutes);
+                        setResult(true);
+                    }
+                }
+        );
 
-        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
-        if (optionalRoutingMetrics.isPresent()) {
-            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
-            if (!selectedRoutingMetrics.isEmpty()) {
-                log.info("Plotting {} selected routes", selectedRoutingMetrics.size());
-                plot(currentDataSet, selectedRoutingMetrics);
-                setResult(true);
-            }
-        }
+        // Show non-modal dialog (user can interact with map)
+        dialog.show();
     }
 
 

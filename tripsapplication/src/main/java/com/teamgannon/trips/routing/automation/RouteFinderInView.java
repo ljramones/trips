@@ -8,8 +8,10 @@ import com.teamgannon.trips.routing.dialogs.DisplayAutoRoutesDialog;
 import com.teamgannon.trips.routing.dialogs.RouteFinderDialogInView;
 import com.teamgannon.trips.routing.model.RouteFindingOptions;
 import com.teamgannon.trips.routing.model.RouteFindingResult;
-import com.teamgannon.trips.routing.model.RoutingMetric;
 import javafx.application.Platform;
+
+import java.util.List;
+import java.util.Optional;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -23,9 +25,6 @@ import javafx.stage.StageStyle;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
@@ -200,20 +199,27 @@ public class RouteFinderInView {
 
     /**
      * Display the found routes for user selection.
+     * Non-modal dialog allows user to interact with map while comparing routes.
      */
     private void displayFoundRoutes(DataSetDescriptor currentDataSet, @NotNull RouteFindingResult result) {
-        DisplayAutoRoutesDialog displayAutoRoutesDialog = new DisplayAutoRoutesDialog(result.getRoutes());
-        Stage dialogStage = (Stage) displayAutoRoutesDialog.getDialogPane().getScene().getWindow();
-        dialogStage.setAlwaysOnTop(true);
-        dialogStage.toFront();
+        // Create non-modal dialog with preview and accept callbacks
+        DisplayAutoRoutesDialog dialog = new DisplayAutoRoutesDialog(
+                result.getRoutes(),
+                // Preview callback: plot routes without closing dialog
+                selectedRoutes -> {
+                    log.info("Previewing {} routes", selectedRoutes.size());
+                    interstellarSpacePane.plotRouteDescriptors(currentDataSet, selectedRoutes);
+                },
+                // Accept callback: final plot when user clicks Accept
+                selectedRoutes -> {
+                    if (!selectedRoutes.isEmpty()) {
+                        log.info("Accepted {} routes", selectedRoutes.size());
+                        interstellarSpacePane.plotRouteDescriptors(currentDataSet, selectedRoutes);
+                    }
+                }
+        );
 
-        Optional<List<RoutingMetric>> optionalRoutingMetrics = displayAutoRoutesDialog.showAndWait();
-        if (optionalRoutingMetrics.isPresent()) {
-            List<RoutingMetric> selectedRoutingMetrics = optionalRoutingMetrics.get();
-            if (!selectedRoutingMetrics.isEmpty()) {
-                log.info("Plotting {} selected routes", selectedRoutingMetrics.size());
-                interstellarSpacePane.plotRouteDescriptors(currentDataSet, selectedRoutingMetrics);
-            }
-        }
+        // Show non-modal dialog (user can interact with map)
+        dialog.show();
     }
 }
