@@ -88,7 +88,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
 
-        <spring.boot.version>3.5.9</spring.boot.version>
+        <spring.boot.version>4.0.2</spring.boot.version>
 
         <javafx.version>21.0.5</javafx.version>
         <fxweaver.version>2.0.1</fxweaver.version>
@@ -140,13 +140,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.10.2</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            <!-- JUnit version managed by Spring Boot -->
             <!-- spring boot dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -180,7 +174,7 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
 
         <dependency>
@@ -488,10 +482,10 @@
             <version>0.16</version>
         </dependency>
 
-        <!-- testing libraries  -->
+        <!-- testing libraries - using classic starter for Spring Boot 4 compatibility -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-starter-test-classic</artifactId>
             <scope>test</scope>
         </dependency>
 
