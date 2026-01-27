@@ -104,7 +104,7 @@ public class StarTableCsvExporter {
 
         FileChooser fileChooser = createFileChooser(
                 "Export All Stars to CSV",
-                dataSetName + "-all.csv"
+                dataSetName + "-query.trips.csv"
         );
 
         File file = fileChooser.showSaveDialog(window);
@@ -170,7 +170,8 @@ public class StarTableCsvExporter {
     private FileChooser createFileChooser(String title, String initialFileName) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
-        fileChooser.getExtensionFilters().add(
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("TRIPS CSV Files", "*.trips.csv"),
                 new FileChooser.ExtensionFilter("CSV Files", "*.csv")
         );
         fileChooser.setInitialFileName(initialFileName);

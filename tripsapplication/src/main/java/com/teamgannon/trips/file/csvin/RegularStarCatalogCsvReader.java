@@ -145,11 +145,33 @@ public class RegularStarCatalogCsvReader {
             loadStats.incLoopCounter();
 
             try {
+                // Log raw CSV values for first few records to diagnose parsing issues
+                if (loadStats.getTotalCount() < 5) {
+                    log.info("=== IMPORT ROW {} ===", loadStats.getTotalCount());
+                    log.info("  Total columns: {}", lineRead.length);
+                    log.info("  col[0] id: '{}'", lineRead.length > 0 ? lineRead[0] : "N/A");
+                    log.info("  col[2] displayName: '{}'", lineRead.length > 2 ? lineRead[2] : "N/A");
+                    log.info("  col[14] ra: '{}'", lineRead.length > 14 ? lineRead[14] : "N/A");
+                    log.info("  col[15] dec: '{}'", lineRead.length > 15 ? lineRead[15] : "N/A");
+                    log.info("  col[18] distance: '{}'", lineRead.length > 18 ? lineRead[18] : "N/A");
+                    log.info("  col[22] realStar: '{}'", lineRead.length > 22 ? lineRead[22] : "N/A");
+                    log.info("  col[58] x: '{}'", lineRead.length > 58 ? lineRead[58] : "N/A");
+                    log.info("  col[59] y: '{}'", lineRead.length > 59 ? lineRead[59] : "N/A");
+                    log.info("  col[60] z: '{}'", lineRead.length > 60 ? lineRead[60] : "N/A");
+                    if (lineRead.length < 62) {
+                        log.warn("CSV has only {} columns, expected 62 for full .trips.csv format!", lineRead.length);
+                    }
+                }
+
                 AstroCSVStar star = parseAstroCSVStar(loadStats.getDataSet(), lineRead);
                 StarObject starObject = star.toStarObject();
 
                 if (starObject != null) {
                     starObject.setDataSetName(loadStats.getDataSet().getName());
+
+                    if (loadStats.getTotalCount() == 0) {
+                        log.info("Dataset name being assigned: '{}'", loadStats.getDataSet().getName());
+                    }
 
                     if (starObject.getX() == 0.0 && starObject.getY() == 0.0 && starObject.getZ() == 0.0) {
                         // calculate the equatorial XYZ coordinates
@@ -160,10 +182,11 @@ public class RegularStarCatalogCsvReader {
                         starObject.setZ(coordinates[2]);
                     }
 
-                    if (loadStats.getTotalCount() < 5) {
-                        log.info("CSV import sample: name={}, ra={}, dec={}, dist={}, x={}, y={}, z={}",
-                                starObject.getDisplayName(), starObject.getRa(), starObject.getDeclination(),
-                                starObject.getDistance(), starObject.getX(), starObject.getY(), starObject.getZ());
+                    if (loadStats.getTotalCount() < 10) {
+                        log.info("CSV import PARSED: name='{}', dist={}, realStar={}, other={}, anomaly={}, dataSetName='{}'",
+                                starObject.getDisplayName(), starObject.getDistance(),
+                                starObject.isRealStar(), starObject.isOther(), starObject.isAnomaly(),
+                                starObject.getDataSetName());
                     }
 
                     double[] galacticCoordinates = equatorialToGalactic(starObject.getRa(), starObject.getDeclination());
@@ -279,7 +302,7 @@ public class RegularStarCatalogCsvReader {
 
     private String testForNull(String[] lineRead, int i, String optional) {
         if (i >= lineRead.length) {
-            return "";
+            return optional;  // Return the default value when column doesn't exist
         } else {
             String value = lineRead[i].trim();
             return value.isEmpty() ? optional : value;

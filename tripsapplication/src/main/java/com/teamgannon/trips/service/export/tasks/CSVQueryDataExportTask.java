@@ -103,133 +103,139 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
 
 
     private @NotNull String getHeaders() {
-        return "id," +
-                "dataSetName," +
-                "displayName," +
-                "commonName," +
-                "gaiaId," +
-                "simbadId," +
-                "constellationName," +
-                "mass," +
-                "age," +
-                "metallicity," +
-                "source," +
-                "catalogIdList," +
-                "X," +
-                "Y," +
-                "Z," +
-                "radius," +
-                "ra," +
-                "pmra," +
-                "declination," +
-                "pmdec," +
-                "parallax," +
-                "distance," +
-                "radialVelocity," +
-                "spectralClass," +
-                "orthoSpectralClass," +
-                "temperature," +
-                "realStar," +
-                "bprp," +
-                "bpg," +
-                "grp," +
-                "luminosity," +
-                "magu," +
-                "magb," +
-                "magv," +
-                "magr," +
-                "magi," +
-                "other," +
-                "anomaly," +
-                "polity," +
-                "worldType," +
-                "fuelType," +
-                "portType," +
-                "populationType," +
-                "techType," +
-                "productType," +
-                "milSpaceType," +
-                "milPlanType," +
-                "miscText1," +
-                "miscText2," +
-                "miscText3," +
-                "miscText4," +
-                "miscText5," +
-                "miscNum1," +
-                "miscNum2," +
-                "miscNum3," +
-                "miscNum4," +
-                "miscNum5," +
-                "Notes," +
-                "L," +
-                "B" +
+        // Column order MUST match RegularStarCatalogCsvReader.parseAstroCSVStar() exactly!
+        return "id," +                    // 0
+                "dataSetName," +          // 1
+                "displayName," +          // 2
+                "commonName," +           // 3
+                "systemName," +           // 4
+                "epoch," +                // 5
+                "constellationName," +    // 6
+                "mass," +                 // 7
+                "notes," +                // 8
+                "source," +               // 9
+                "catalogIdList," +        // 10
+                "simbadId," +             // 11
+                "gaiaDR2," +              // 12
+                "radius," +               // 13
+                "ra," +                   // 14
+                "declination," +          // 15
+                "pmra," +                 // 16
+                "pmdec," +                // 17
+                "distance," +             // 18
+                "radialVelocity," +       // 19
+                "spectralClass," +        // 20
+                "temperature," +          // 21
+                "realStar," +             // 22
+                "bprp," +                 // 23
+                "bpg," +                  // 24
+                "grp," +                  // 25
+                "luminosity," +           // 26
+                "magu," +                 // 27
+                "magb," +                 // 28
+                "magv," +                 // 29
+                "magr," +                 // 30
+                "magi," +                 // 31
+                "other," +                // 32
+                "anomaly," +              // 33
+                "polity," +               // 34
+                "worldType," +            // 35
+                "fuelType," +             // 36
+                "portType," +             // 37
+                "populationType," +       // 38
+                "techType," +             // 39
+                "productType," +          // 40
+                "milSpaceType," +         // 41
+                "milPlanType," +          // 42
+                "age," +                  // 43
+                "metallicity," +          // 44
+                "miscText1," +            // 45
+                "miscText2," +            // 46
+                "miscText3," +            // 47
+                "miscText4," +            // 48
+                "miscText5," +            // 49
+                "miscNum1," +             // 50
+                "miscNum2," +             // 51
+                "miscNum3," +             // 52
+                "miscNum4," +             // 53
+                "miscNum5," +             // 54
+                "numExoplanets," +        // 55
+                "absoluteMagnitude," +    // 56
+                "gaiaDR3," +              // 57
+                "x," +                    // 58
+                "y," +                    // 59
+                "z," +                    // 60
+                "parallax" +              // 61
                 "\n";
     }
 
     private @NotNull String convertToCSV(@NotNull StarObject starObject) {
         // Reuse StringBuilder to avoid allocations
+        // Column order MUST match getHeaders() and RegularStarCatalogCsvReader.parseAstroCSVStar()!
         csvBuilder.setLength(0);
 
-        appendField(csvBuilder, starObject.getId().toString());
-        appendField(csvBuilder, starObject.getDataSetName());
-        appendField(csvBuilder, starObject.getDisplayName());
-        appendField(csvBuilder, starObject.getCommonName());
-        appendField(csvBuilder, starObject.getGaiaDR2CatId());
-        appendField(csvBuilder, starObject.getSimbadId());
-        appendField(csvBuilder, starObject.getConstellationName());
-        csvBuilder.append(starObject.getMass()).append(", ");
-        csvBuilder.append(starObject.getAge()).append(", ");
-        csvBuilder.append(starObject.getMetallicity()).append(", ");
-        appendField(csvBuilder, starObject.getSource());
-        csvBuilder.append(String.join("~", starObject.getCatalogIdList())).append(", ");
-        csvBuilder.append(starObject.getX()).append(", ");
-        csvBuilder.append(starObject.getY()).append(", ");
-        csvBuilder.append(starObject.getZ()).append(", ");
-        csvBuilder.append(starObject.getRadius()).append(", ");
-        csvBuilder.append(starObject.getRa()).append(", ");
-        csvBuilder.append(starObject.getPmra()).append(", ");
-        csvBuilder.append(starObject.getDeclination()).append(", ");
-        csvBuilder.append(starObject.getPmdec()).append(", ");
-        csvBuilder.append(starObject.getParallax()).append(", ");
-        csvBuilder.append(starObject.getDistance()).append(", ");
-        csvBuilder.append(starObject.getRadialVelocity()).append(", ");
-        csvBuilder.append(starObject.getSpectralClass()).append(", ");
-        csvBuilder.append(starObject.getOrthoSpectralClass()).append(", ");
-        csvBuilder.append(starObject.getTemperature()).append(", ");
-        csvBuilder.append(starObject.isRealStar()).append(", ");
-        csvBuilder.append(starObject.getBprp()).append(", ");
-        csvBuilder.append(starObject.getBpg()).append(", ");
-        csvBuilder.append(starObject.getGrp()).append(", ");
-        csvBuilder.append(starObject.getLuminosity()).append(", ");
-        csvBuilder.append(starObject.getMagu()).append(", ");
-        csvBuilder.append(starObject.getMagb()).append(", ");
-        csvBuilder.append(starObject.getMagv()).append(", ");
-        csvBuilder.append(starObject.getMagr()).append(", ");
-        csvBuilder.append(starObject.getMagi()).append(", ");
-        csvBuilder.append(starObject.isOther()).append(", ");
-        csvBuilder.append(starObject.isAnomaly()).append(", ");
-        csvBuilder.append(starObject.getPolity()).append(", ");
-        csvBuilder.append(starObject.getWorldType()).append(", ");
-        csvBuilder.append(starObject.getFuelType()).append(", ");
-        csvBuilder.append(starObject.getPortType()).append(", ");
-        csvBuilder.append(starObject.getPopulationType()).append(", ");
-        csvBuilder.append(starObject.getTechType()).append(", ");
-        csvBuilder.append(starObject.getProductType()).append(", ");
-        csvBuilder.append(starObject.getMilSpaceType()).append(", ");
-        csvBuilder.append(starObject.getMilPlanType()).append(", ");
-        appendField(csvBuilder, starObject.getMiscText1());
-        appendField(csvBuilder, starObject.getMiscText2());
-        appendField(csvBuilder, starObject.getMiscText3());
-        appendField(csvBuilder, starObject.getMiscText4());
-        appendField(csvBuilder, starObject.getMiscText5());
-        csvBuilder.append(starObject.getMiscNum1()).append(", ");
-        csvBuilder.append(starObject.getMiscNum2()).append(", ");
-        csvBuilder.append(starObject.getMiscNum3()).append(", ");
-        csvBuilder.append(starObject.getMiscNum4()).append(", ");
-        csvBuilder.append(starObject.getMiscNum5()).append(", ");
-        appendField(csvBuilder, starObject.getNotes());
-        csvBuilder.append(starObject.getGalacticLat()).append(", ");
-        csvBuilder.append(starObject.getGalacticLong());
+        appendField(csvBuilder, starObject.getId().toString());           // 0: id
+        appendField(csvBuilder, starObject.getDataSetName());             // 1: dataSetName
+        appendField(csvBuilder, starObject.getDisplayName());             // 2: displayName
+        appendField(csvBuilder, starObject.getCommonName());              // 3: commonName
+        appendField(csvBuilder, starObject.getSystemName());              // 4: systemName
+        appendField(csvBuilder, starObject.getEpoch());                   // 5: epoch
+        appendField(csvBuilder, starObject.getConstellationName());       // 6: constellationName
+        csvBuilder.append(starObject.getMass()).append(", ");             // 7: mass
+        appendField(csvBuilder, starObject.getNotes());                   // 8: notes
+        appendField(csvBuilder, starObject.getSource());                  // 9: source
+        csvBuilder.append(String.join("~", starObject.getCatalogIdList())).append(", "); // 10: catalogIdList
+        appendField(csvBuilder, starObject.getSimbadId());                // 11: simbadId
+        appendField(csvBuilder, starObject.getGaiaDR2CatId());            // 12: gaiaDR2
+        csvBuilder.append(starObject.getRadius()).append(", ");           // 13: radius
+        csvBuilder.append(starObject.getRa()).append(", ");               // 14: ra
+        csvBuilder.append(starObject.getDeclination()).append(", ");      // 15: declination
+        csvBuilder.append(starObject.getPmra()).append(", ");             // 16: pmra
+        csvBuilder.append(starObject.getPmdec()).append(", ");            // 17: pmdec
+        csvBuilder.append(starObject.getDistance()).append(", ");         // 18: distance
+        csvBuilder.append(starObject.getRadialVelocity()).append(", ");   // 19: radialVelocity
+        appendField(csvBuilder, starObject.getSpectralClass());           // 20: spectralClass
+        csvBuilder.append(starObject.getTemperature()).append(", ");      // 21: temperature
+        csvBuilder.append(starObject.isRealStar()).append(", ");          // 22: realStar
+        csvBuilder.append(starObject.getBprp()).append(", ");             // 23: bprp
+        csvBuilder.append(starObject.getBpg()).append(", ");              // 24: bpg
+        csvBuilder.append(starObject.getGrp()).append(", ");              // 25: grp
+        appendField(csvBuilder, starObject.getLuminosity());              // 26: luminosity
+        csvBuilder.append(starObject.getMagu()).append(", ");             // 27: magu
+        csvBuilder.append(starObject.getMagb()).append(", ");             // 28: magb
+        csvBuilder.append(starObject.getMagv()).append(", ");             // 29: magv
+        csvBuilder.append(starObject.getMagr()).append(", ");             // 30: magr
+        csvBuilder.append(starObject.getMagi()).append(", ");             // 31: magi
+        csvBuilder.append(starObject.isOther()).append(", ");             // 32: other
+        csvBuilder.append(starObject.isAnomaly()).append(", ");           // 33: anomaly
+        appendField(csvBuilder, starObject.getPolity());                  // 34: polity
+        appendField(csvBuilder, starObject.getWorldType());               // 35: worldType
+        appendField(csvBuilder, starObject.getFuelType());                // 36: fuelType
+        appendField(csvBuilder, starObject.getPortType());                // 37: portType
+        appendField(csvBuilder, starObject.getPopulationType());          // 38: populationType
+        appendField(csvBuilder, starObject.getTechType());                // 39: techType
+        appendField(csvBuilder, starObject.getProductType());             // 40: productType
+        appendField(csvBuilder, starObject.getMilSpaceType());            // 41: milSpaceType
+        appendField(csvBuilder, starObject.getMilPlanType());             // 42: milPlanType
+        csvBuilder.append(starObject.getAge()).append(", ");              // 43: age
+        csvBuilder.append(starObject.getMetallicity()).append(", ");      // 44: metallicity
+        appendField(csvBuilder, starObject.getMiscText1());               // 45: miscText1
+        appendField(csvBuilder, starObject.getMiscText2());               // 46: miscText2
+        appendField(csvBuilder, starObject.getMiscText3());               // 47: miscText3
+        appendField(csvBuilder, starObject.getMiscText4());               // 48: miscText4
+        appendField(csvBuilder, starObject.getMiscText5());               // 49: miscText5
+        csvBuilder.append(starObject.getMiscNum1()).append(", ");         // 50: miscNum1
+        csvBuilder.append(starObject.getMiscNum2()).append(", ");         // 51: miscNum2
+        csvBuilder.append(starObject.getMiscNum3()).append(", ");         // 52: miscNum3
+        csvBuilder.append(starObject.getMiscNum4()).append(", ");         // 53: miscNum4
+        csvBuilder.append(starObject.getMiscNum5()).append(", ");         // 54: miscNum5
+        csvBuilder.append(starObject.getNumExoplanets()).append(", ");    // 55: numExoplanets
+        appendField(csvBuilder, starObject.getAbsoluteMagnitude());       // 56: absoluteMagnitude
+        appendField(csvBuilder, starObject.getGaiaDR3CatId());            // 57: gaiaDR3
+        csvBuilder.append(starObject.getX()).append(", ");                // 58: x
+        csvBuilder.append(starObject.getY()).append(", ");                // 59: y
+        csvBuilder.append(starObject.getZ()).append(", ");                // 60: z
+        csvBuilder.append(starObject.getParallax());                      // 61: parallax (no trailing comma)
         csvBuilder.append('\n');
 
         return csvBuilder.toString();

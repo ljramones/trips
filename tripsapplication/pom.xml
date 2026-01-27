@@ -128,7 +128,8 @@
 
         <jpackage.type>APP_IMAGE</jpackage.type>
         <jpackage.name>TRIPS</jpackage.name>
-        <jpackage.appVersion>${project.version}</jpackage.appVersion>
+        <!-- macOS jpackage requires version to start with positive integer, not 0 -->
+        <jpackage.appVersion>1.7.1</jpackage.appVersion>
     </properties>
 
     <dependencyManagement>
@@ -155,14 +156,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- pull in all the camel spring boot dependencies -->
-            <!--            <dependency>-->
-            <!--                <groupId>org.apache.camel.springboot</groupId>-->
-            <!--                <artifactId>camel-spring-boot-dependencies</artifactId>-->
-            <!--                <version>${camel.version}</version>-->
-            <!--                <type>pom</type>-->
-            <!--                <scope>import</scope>-->
-            <!--            </dependency>-->
         </dependencies>
 
     </dependencyManagement>
@@ -730,7 +723,7 @@
                             <appVersion>${jpackage.appVersion}</appVersion>
                             <vendor>Charles Gannon</vendor>
                             <type>${jpackage.type}</type>
-                            <mainClass>com.teamgannon.trips.TripsSpringBootApplication</mainClass>
+                            <mainClass>org.springframework.boot.loader.JarLauncher</mainClass>
                             <mainJar>${project.build.finalName}.jar</mainJar>
                             <input>${project.build.directory}/jpackage-input</input>
                             <destination>${project.build.directory}/jpackage</destination>

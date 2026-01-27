@@ -154,7 +154,13 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 "miscNum3," +
                 "miscNum4," +
                 "miscNum5," +
-                "numExoplanets" +
+                "numExoplanets," +
+                "absoluteMagnitude," +
+                "gaiaDR3CatId," +
+                "x," +
+                "y," +
+                "z," +
+                "parallax" +
                 "\n";
     }
 
@@ -222,7 +228,13 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
         csvBuilder.append(starObject.getMiscNum3()).append(", ");
         csvBuilder.append(starObject.getMiscNum4()).append(", ");
         csvBuilder.append(starObject.getMiscNum5()).append(", ");
-        csvBuilder.append(starObject.getNumExoplanets());
+        csvBuilder.append(starObject.getNumExoplanets()).append(", ");
+        appendField(csvBuilder, starObject.getAbsoluteMagnitude());
+        appendField(csvBuilder, starObject.getGaiaDR3CatId());
+        csvBuilder.append(starObject.getX()).append(", ");
+        csvBuilder.append(starObject.getY()).append(", ");
+        csvBuilder.append(starObject.getZ()).append(", ");
+        csvBuilder.append(starObject.getParallax());
         csvBuilder.append('\n');
 
         return csvBuilder.toString();

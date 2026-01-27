@@ -10,12 +10,12 @@
       fx:controller="com.teamgannon.trips.controller.MainPane">
     <VBox>
         <MenuBar fx:id="menuBar">
-            <fx:include source="menuBar/FileMenu.fxml"/>
-            <fx:include source="menuBar/EditMenu.fxml"/>
-            <fx:include source="menuBar/ViewMenu.fxml"/>
-            <fx:include source="menuBar/SearchMenu.fxml"/>
-            <fx:include source="menuBar/ToolsMenu.fxml"/>
-            <fx:include source="menuBar/ReportsMenu.fxml"/>
+            <fx:include source="menubar/FileMenu.fxml"/>
+            <fx:include source="menubar/EditMenu.fxml"/>
+            <fx:include source="menubar/ViewMenu.fxml"/>
+            <fx:include source="menubar/SearchMenu.fxml"/>
+            <fx:include source="menubar/ToolsMenu.fxml"/>
+            <fx:include source="menubar/ReportsMenu.fxml"/>
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Galactic">-->
             <!--                <MenuItem mnemonicParsing="false"-->
@@ -25,7 +25,7 @@
             <!--                          onAction="#showInterstellarSpace"-->
             <!--                          text="Go to Interstellar Space .."/>-->
             <!--            </Menu>-->
-            <fx:include source="menuBar/UtilitiesMenu.fxml"/>
+            <fx:include source="menubar/UtilitiesMenu.fxml"/>
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Scripting"-->
             <!--                  fx:id="scriptingMenu">-->
@@ -34,8 +34,8 @@
             <!--                          text="Script Editor"/>-->
             <!--                <SeparatorMenuItem/>-->
             <!--            </Menu>-->
-            <fx:include source="menuBar/AdminMenu.fxml"/>
-            <fx:include source="menuBar/HelpMenu.fxml"/>
+            <fx:include source="menubar/AdminMenu.fxml"/>
+            <fx:include source="menubar/HelpMenu.fxml"/>
 
             <!--            <Menu mnemonicParsing="false"-->
             <!--                  text="Leftover"-->
@@ -61,6 +61,6 @@
         </MenuBar>
         <fx:include source="toolbar/toolbar.fxml"/>
         <StackPane fx:id="displayPane"/> <!-- all the magic happens here -->
-        <fx:include source="statusBar/StatusBar.fxml" fx:id="statusBar"/>
+        <fx:include source="statusbar/StatusBar.fxml" fx:id="statusBar"/>
     </VBox>
 </Pane>
