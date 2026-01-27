@@ -471,7 +471,7 @@ public class InterstellarSpacePane extends Pane implements RotationController {
             int starCount = filteredIds != null ? filteredIds.size() : 0;
             int routeCount = currentPlot.getRouteStarFilterIds().size();
             eventPublisher.publishEvent(new StatusUpdateEvent(this,
-                    String.format("Showing %d stars from %d route(s)", starCount, routeCount)));
+                    "Showing %d stars from %d route(s)".formatted(starCount, routeCount)));
         } else {
             eventPublisher.publishEvent(new StatusUpdateEvent(this, "Showing all stars"));
         }

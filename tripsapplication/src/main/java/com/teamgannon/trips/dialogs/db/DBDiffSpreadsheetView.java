@@ -66,9 +66,11 @@ public class DBDiffSpreadsheetView extends SpreadsheetView {
             @Override
             public void onClick() {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setContentText("This row contains several fictive companies. "
-                        + "The cells are not editable.\n"
-                        + "A custom tooltip is applied for the first cell.");
+                alert.setContentText("""
+                        This row contains several fictive companies. \
+                        The cells are not editable.
+                        A custom tooltip is applied for the first cell.\
+                        """);
                 alert.show();
             }
         });
@@ -108,8 +110,10 @@ public class DBDiffSpreadsheetView extends SpreadsheetView {
             @Override
             public void onClick() {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setContentText("This row contains Double editable cells. "
-                        + "Except for ControlsFX compagny where it's a String.");
+                alert.setContentText("""
+                        This row contains Double editable cells. \
+                        Except for ControlsFX compagny where it's a String.\
+                        """);
                 alert.show();
             }
         });
@@ -118,9 +122,11 @@ public class DBDiffSpreadsheetView extends SpreadsheetView {
             @Override
             public void onClick() {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setContentText("This row contains Double editable cells with "
-                        + "a special format (%). Some cells also have "
-                        + "a little icon next to their value.");
+                alert.setContentText("""
+                        This row contains Double editable cells with \
+                        a special format (%). Some cells also have \
+                        a little icon next to their value.\
+                        """);
                 alert.show();
             }
         });
@@ -130,9 +136,11 @@ public class DBDiffSpreadsheetView extends SpreadsheetView {
             @Override
             public void onClick() {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setContentText("Each cell of this column (except for the "
-                        + "separator in the middle) has a particular css "
-                        + "class for changing its color.\n");
+                alert.setContentText("""
+                        Each cell of this column (except for the \
+                        separator in the middle) has a particular css \
+                        class for changing its color.
+                        """);
                 alert.show();
             }
         });

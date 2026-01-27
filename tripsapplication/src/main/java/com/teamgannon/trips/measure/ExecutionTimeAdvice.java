@@ -39,7 +39,7 @@ public class ExecutionTimeAdvice {
         log.info("Metrics:: Class Name:" + clazzName +
                 ". Method Name: " + methodName +
                 ". execution time is : " +
-                String.format("%,d", timeInMs) + "ms"
+                "%,d".formatted(timeInMs) + "ms"
         );
         return object;
     }

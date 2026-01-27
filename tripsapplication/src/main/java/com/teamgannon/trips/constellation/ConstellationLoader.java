@@ -3,10 +3,10 @@ package com.teamgannon.trips.constellation;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.config.application.TripsContext;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;

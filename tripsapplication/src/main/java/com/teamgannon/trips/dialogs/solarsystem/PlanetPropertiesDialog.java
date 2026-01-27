@@ -650,9 +650,9 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private String formatDouble(Double value) {
         if (value == null) return "";
         if (Math.abs(value) > 1e10 || (value != 0 && Math.abs(value) < 0.0001)) {
-            return String.format("%.4g", value);
+            return "%.4g".formatted(value);
         }
-        return String.format("%.4f", value);
+        return "%.4f".formatted(value);
     }
 
     // ==================== PARSE HELPERS ====================
@@ -699,7 +699,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
             double sibSMA = sibling.getSemiMajorAxis();
             if (sibSMA > 0 && Math.abs(newSMA - sibSMA) / sibSMA < 0.05) {
                 validationLabel.setText("Warning: Orbit overlaps with " + sibling.getName() +
-                        " (SMA: " + String.format("%.4f", sibSMA) + " AU)");
+                        " (SMA: " + "%.4f".formatted(sibSMA) + " AU)");
                 return;
             }
         }

@@ -90,13 +90,13 @@ public class SkyOverviewPane extends VBox {
         if (Double.isNaN(altitude)) {
             hostStarPositionLabel.setText(dayNight);
         } else {
-            hostStarPositionLabel.setText(String.format("%s (alt %.1f deg)", dayNight, altitude));
+            hostStarPositionLabel.setText("%s (alt %.1f deg)".formatted(dayNight, altitude));
         }
 
         // Brightest star
         if (brightestStars != null && !brightestStars.isEmpty()) {
             PlanetarySkyRenderer.BrightStarEntry brightest = brightestStars.get(0);
-            brightestStarLabel.setText(String.format("%s (%.1f)",
+            brightestStarLabel.setText("%s (%.1f)".formatted(
                     brightest.getName(), brightest.getApparentMagnitude()));
         } else {
             brightestStarLabel.setText("-");

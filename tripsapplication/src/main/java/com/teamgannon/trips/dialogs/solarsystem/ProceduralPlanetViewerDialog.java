@@ -376,7 +376,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox waterBox = new VBox(2);
         HBox waterHeader = new HBox(5);
         waterHeader.setAlignment(Pos.CENTER_LEFT);
-        waterLabel = new Label(String.format("Water: %.0f%%", currentWaterFraction * 100));
+        waterLabel = new Label("Water: %.0f%%".formatted(currentWaterFraction * 100));
         waterLabel.setStyle(LABEL_STYLE);
         waterHeader.getChildren().add(waterLabel);
         waterSlider = new Slider(0, 1, currentWaterFraction);
@@ -384,7 +384,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         waterSlider.setMajorTickUnit(0.25);
         waterSlider.valueProperty().addListener((obs, old, val) -> {
             currentWaterFraction = val.doubleValue();
-            waterLabel.setText(String.format("Water: %.0f%%", currentWaterFraction * 100));
+            waterLabel.setText("Water: %.0f%%".formatted(currentWaterFraction * 100));
         });
         waterBox.getChildren().addAll(waterHeader, waterSlider);
 
@@ -403,7 +403,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox riverBox = new VBox(2);
         HBox riverHeader = new HBox(5);
         riverHeader.setAlignment(Pos.CENTER_LEFT);
-        riverLabel = new Label(String.format("River Thresh: %.2f", currentRiverThreshold));
+        riverLabel = new Label("River Thresh: %.2f".formatted(currentRiverThreshold));
         riverLabel.setStyle(LABEL_STYLE);
         riverHeader.getChildren().add(riverLabel);
         riverSlider = new Slider(0.1, 1.0, currentRiverThreshold);
@@ -411,7 +411,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         riverSlider.setMajorTickUnit(0.2);
         riverSlider.valueProperty().addListener((obs, old, val) -> {
             currentRiverThreshold = val.doubleValue();
-            riverLabel.setText(String.format("River Thresh: %.2f", currentRiverThreshold));
+            riverLabel.setText("River Thresh: %.2f".formatted(currentRiverThreshold));
         });
         riverBox.getChildren().addAll(riverHeader, riverSlider);
 
@@ -419,7 +419,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox heightBox = new VBox(2);
         HBox heightHeader = new HBox(5);
         heightHeader.setAlignment(Pos.CENTER_LEFT);
-        heightLabel = new Label(String.format("Height Scale: %.1f", currentHeightScale));
+        heightLabel = new Label("Height Scale: %.1f".formatted(currentHeightScale));
         heightLabel.setStyle(LABEL_STYLE);
         heightHeader.getChildren().add(heightLabel);
         heightSlider = new Slider(0.5, 3.0, currentHeightScale);
@@ -427,7 +427,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         heightSlider.setMajorTickUnit(0.5);
         heightSlider.valueProperty().addListener((obs, old, val) -> {
             currentHeightScale = val.doubleValue();
-            heightLabel.setText(String.format("Height Scale: %.1f", currentHeightScale));
+            heightLabel.setText("Height Scale: %.1f".formatted(currentHeightScale));
         });
         heightBox.getChildren().addAll(heightHeader, heightSlider);
 
@@ -435,7 +435,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox tiltBox = new VBox(2);
         HBox tiltHeader = new HBox(5);
         tiltHeader.setAlignment(Pos.CENTER_LEFT);
-        axialTiltLabel = new Label(String.format("Axial Tilt: %.1f°", currentAxialTilt));
+        axialTiltLabel = new Label("Axial Tilt: %.1f°".formatted(currentAxialTilt));
         axialTiltLabel.setStyle(LABEL_STYLE);
         tiltHeader.getChildren().add(axialTiltLabel);
         axialTiltSlider = new Slider(0, 60, currentAxialTilt);
@@ -443,7 +443,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         axialTiltSlider.setMajorTickUnit(10);
         axialTiltSlider.valueProperty().addListener((obs, old, val) -> {
             currentAxialTilt = val.doubleValue();
-            axialTiltLabel.setText(String.format("Axial Tilt: %.1f°", currentAxialTilt));
+            axialTiltLabel.setText("Axial Tilt: %.1f°".formatted(currentAxialTilt));
             updateAxialTilt();
         });
         tiltBox.getChildren().addAll(tiltHeader, axialTiltSlider);
@@ -452,7 +452,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox seasonBox = new VBox(2);
         HBox seasonHeader = new HBox(5);
         seasonHeader.setAlignment(Pos.CENTER_LEFT);
-        seasonalOffsetLabel = new Label(String.format("Season Offset: %.0f°", currentSeasonalOffset));
+        seasonalOffsetLabel = new Label("Season Offset: %.0f°".formatted(currentSeasonalOffset));
         seasonalOffsetLabel.setStyle(LABEL_STYLE);
         seasonHeader.getChildren().add(seasonalOffsetLabel);
         seasonalOffsetSlider = new Slider(0, 360, currentSeasonalOffset);
@@ -460,7 +460,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         seasonalOffsetSlider.setMajorTickUnit(90);
         seasonalOffsetSlider.valueProperty().addListener((obs, old, val) -> {
             currentSeasonalOffset = val.doubleValue();
-            seasonalOffsetLabel.setText(String.format("Season Offset: %.0f°", currentSeasonalOffset));
+            seasonalOffsetLabel.setText("Season Offset: %.0f°".formatted(currentSeasonalOffset));
         });
         seasonBox.getChildren().addAll(seasonHeader, seasonalOffsetSlider);
 

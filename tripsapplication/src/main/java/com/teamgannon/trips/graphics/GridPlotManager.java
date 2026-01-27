@@ -168,7 +168,7 @@ public class GridPlotManager {
 
 
     private void createScaleLegend(double scaleValue) {
-        scaleText = new Label(String.format(scaleString, scaleValue));
+        scaleText = new Label(scaleString.formatted(scaleValue));
         scaleText.setFont(Font.font("Verdana", 20));
         scaleText.setTextFill(colorPalette.getLegendColor());
         updateScale();

@@ -6,11 +6,11 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
 import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -259,7 +259,7 @@ public class SolPlanetsInitializer {
         planet.setOmega(0.0);  // Argument of periapsis
 
         exoPlanetRepository.save(planet);
-        log.info("Created planet: {} at {} AU", name, String.format("%.2f", semiMajorAxisAU));
+        log.info("Created planet: {} at {} AU", name, "%.2f".formatted(semiMajorAxisAU));
         return planet;
     }
 

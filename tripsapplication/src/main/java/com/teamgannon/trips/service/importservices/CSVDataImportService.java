@@ -76,7 +76,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     protected void succeeded() {
         log.info("dataset loaded");
         String datasetName = dataset != null ? dataset.getName() : "unknown dataset";
-        String message = String.format("new Dataset loaded -> %s", datasetName);
+        String message = "new Dataset loaded -> %s".formatted(datasetName);
         eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();

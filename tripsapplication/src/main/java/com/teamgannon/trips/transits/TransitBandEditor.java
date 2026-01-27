@@ -81,10 +81,10 @@ public class TransitBandEditor {
     private void setupBindings() {
         // Slider → Text field bindings
         rangeSlider.lowValueProperty().addListener((obs, oldVal, newVal) ->
-                lowerRangeField.setText(String.format("%.2f", newVal.doubleValue())));
+                lowerRangeField.setText("%.2f".formatted(newVal.doubleValue())));
 
         rangeSlider.highValueProperty().addListener((obs, oldVal, newVal) ->
-                upperRangeField.setText(String.format("%.2f", newVal.doubleValue())));
+                upperRangeField.setText("%.2f".formatted(newVal.doubleValue())));
 
         // Text field → Slider bindings
         lowerRangeField.textProperty().addListener((obs, oldVal, newVal) ->

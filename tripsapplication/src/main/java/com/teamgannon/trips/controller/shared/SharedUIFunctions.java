@@ -68,16 +68,14 @@ public class SharedUIFunctions {
 
     private void setSplitPaneParentLayout(SplitPane splitPane) {
         Parent currentParent = splitPane.getParent();
-        if (currentParent instanceof VBox) {
-            VBox parentBox = (VBox) currentParent;
+        if (currentParent instanceof VBox parentBox) {
             VBox.setVgrow(splitPane, Priority.ALWAYS);
             parentBox.setFillWidth(true);
             return;
         }
 
         splitPane.parentProperty().addListener((obs, oldParent, newParent) -> {
-            if (newParent instanceof VBox) {
-                VBox parentBox = (VBox) newParent;
+            if (newParent instanceof VBox parentBox) {
                 VBox.setVgrow(splitPane, Priority.ALWAYS);
                 parentBox.setFillWidth(true);
             }
@@ -203,11 +201,11 @@ public class SharedUIFunctions {
         Node leftPane = mainSplitPane.getItems().get(0);
         Node rightPane = mainSplitPane.getItems().get(1);
 
-        if (leftPane instanceof Region) {
-            ((Region) leftPane).setPrefWidth(leftWidth);
+        if (leftPane instanceof Region region) {
+            region.setPrefWidth(leftWidth);
         }
-        if (rightPane instanceof Region) {
-            ((Region) rightPane).setPrefWidth(rightWidth);
+        if (rightPane instanceof Region region) {
+            region.setPrefWidth(rightWidth);
         }
 
         if (rightPane instanceof Region rightRegion) {

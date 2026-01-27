@@ -236,12 +236,14 @@ public record TectonicBias(
 
     @Override
     public String toString() {
-        return String.format(
-            "TectonicBias[plates=%d-%d, oceanicRatio=%.2f, heightMult=%.2f, " +
-            "riftMult=%.2f, hotspotProb=%.2f, activeTectonics=%s]",
-            minPlateCount, maxPlateCount, oceanicPlateRatio,
-            mountainHeightMultiplier, riftDepthMultiplier,
-            hotspotProbability, hasActivePlateTectonics
+        return (
+                """
+                TectonicBias[plates=%d-%d, oceanicRatio=%.2f, heightMult=%.2f, \
+                riftMult=%.2f, hotspotProb=%.2f, activeTectonics=%s]\
+                """).formatted(
+                minPlateCount, maxPlateCount, oceanicPlateRatio,
+                mountainHeightMultiplier, riftDepthMultiplier,
+                hotspotProbability, hasActivePlateTectonics
         );
     }
 }

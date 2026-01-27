@@ -74,7 +74,7 @@ public class PlanetaryViewControlPane extends VBox {
             double time = newVal.doubleValue();
             int hours = (int) time;
             int minutes = (int) ((time - hours) * 60);
-            timeOfDayLabel.setText(String.format("%02d:%02d", hours, minutes));
+            timeOfDayLabel.setText("%02d:%02d".formatted(hours, minutes));
             if (onTimeChanged != null) {
                 onTimeChanged.accept(time);
             }
@@ -124,7 +124,7 @@ public class PlanetaryViewControlPane extends VBox {
 
         magnitudeLimitSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             double mag = newVal.doubleValue();
-            magnitudeLimitLabel.setText(String.format("%.1f", mag));
+            magnitudeLimitLabel.setText("%.1f".formatted(mag));
             if (onMagnitudeChanged != null) {
                 onMagnitudeChanged.accept(mag);
             }
@@ -171,7 +171,7 @@ public class PlanetaryViewControlPane extends VBox {
 
         labelMagnitudeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             double mag = newVal.doubleValue();
-            labelMagnitudeLabel.setText(String.format("%.1f", mag));
+            labelMagnitudeLabel.setText("%.1f".formatted(mag));
             if (onLabelMagnitudeChanged != null) {
                 onLabelMagnitudeChanged.accept(mag);
             }

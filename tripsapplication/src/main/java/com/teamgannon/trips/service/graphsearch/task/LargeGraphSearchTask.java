@@ -112,14 +112,14 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
             updateTaskInfo("begin link calculation");
             List<SparseTransit> transitRoutes = calculateTransits(lower, upper, new ArrayList<>(sparseStarRecordList.values()));
             log.info("Number of transits found is {}", transitRoutes.size());
-            updateTaskInfo(String.format("Number of transits found is %d", transitRoutes.size()));
+            updateTaskInfo("Number of transits found is %d".formatted(transitRoutes.size()));
 
             routeGraph = new RouteGraph();
             routeGraph.calculateGraphForSparseTransits(transitRoutes);
         }
 
         long endTime = System.currentTimeMillis();
-        log.info("Metrics: in long route search, graph building, time = {} ms", String.format("%,d", endTime - startTime));
+        log.info("Metrics: in long route search, graph building, time = {} ms", "%,d".formatted(endTime - startTime));
         updateTaskInfo(String.format("Graph built with %d vertices and %d edges in %d ms",
                 routeGraph.getRoutingGraph().vertexSet().size(),
                 routeGraph.getRoutingGraph().edgeSet().size(),
@@ -138,7 +138,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
                     origin.getDisplayName(), destination.getDisplayName(), routeFindingOptions.getNumberPaths() + 1);
             kShortestPaths.forEach(System.out::println);
             endTime = System.currentTimeMillis();
-            log.info("Metrics: in long route search, get shortest paths, time = {}", String.format("%,d", endTime - startTime));
+            log.info("Metrics: in long route search, get shortest paths, time = {}", "%,d".formatted(endTime - startTime));
 
             PossibleRoutes possibleRoutes = new PossibleRoutes();
             possibleRoutes.setDesiredPath(String.format("Route %s to %s", origin.getDisplayName(), destination.getDisplayName()));
@@ -149,7 +149,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
             possibleRoutes = createRoutesFromPaths(routeGraph, pathToPlot, routeFindingOptions, sparseStarRecordList);
             log.info("paths are:" + possibleRoutes);
             endTime = System.currentTimeMillis();
-            log.info("Metrics: in long route search, create paths form graph, time = {}", String.format("%,d", endTime - startTime));
+            log.info("Metrics: in long route search, create paths form graph, time = {}", "%,d".formatted(endTime - startTime));
 
             graphRouteResult.setRouteFound(true);
             graphRouteResult.setSearchCancelled(false);
@@ -201,7 +201,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
         Map<String, SparseStarRecord> sparseStarRecordList = starService.getFromDatasetWithinRanges(currentDataset, maxDistance);
         long time1 = System.currentTimeMillis();
         log.info("query took={} ms", time1 - time0);
-        updateTaskInfo(String.format("%d stars found in volume in %d ms", sparseStarRecordList.size(), time1 - time0));
+        updateTaskInfo("%d stars found in volume in %d ms".formatted(sparseStarRecordList.size(), time1 - time0));
 
         log.info("number of stars = {}", sparseStarRecordList.size());
         return sparseStarRecordList;

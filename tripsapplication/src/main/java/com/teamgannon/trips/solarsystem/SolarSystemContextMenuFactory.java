@@ -294,10 +294,10 @@ public class SolarSystemContextMenuFactory {
 
         StringBuilder sb = new StringBuilder();
         sb.append("Spectral Class: ").append(star.getSpectralClass()).append("\n");
-        sb.append("Distance: ").append(String.format("%.2f", star.getDistance())).append(" ly\n");
+        sb.append("Distance: ").append("%.2f".formatted(star.getDistance())).append(" ly\n");
 
         if (star.getRadius() > 0) {
-            sb.append("Radius: ").append(String.format("%.2f", star.getRadius())).append(" solar radii\n");
+            sb.append("Radius: ").append("%.2f".formatted(star.getRadius())).append(" solar radii\n");
         }
         if (star.getLuminosity() > 0) {
             sb.append("Luminosity: ").append(String.format("%.4f", star.getLuminosity())).append(" solar\n");

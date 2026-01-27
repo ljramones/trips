@@ -413,11 +413,11 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
             double maxDistance = RoutingConstants.MAX_VALIDATION_DISTANCE;
 
             if (!searchValues.contains(originStarSelected)) {
-                showErrorAlert("Find Route", String.format("Origin star <%s> is not present in view", originStarSelected));
+                showErrorAlert("Find Route", "Origin star <%s> is not present in view".formatted(originStarSelected));
                 return;
             }
             if (!searchValues.contains(destinationStarSelected)) {
-                showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
+                showErrorAlert("Find Route", "Destination star <%s> is not present in view".formatted(destinationStarSelected));
                 return;
             }
 

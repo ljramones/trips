@@ -200,7 +200,7 @@ public class ScriptDialog extends Dialog<Boolean> {
 
     private File selectFile(ScriptEngineEnum scriptEngineEnum) {
         final FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(String.format("Select a %s file to load", scriptEngineEnum));
+        fileChooser.setTitle("Select a %s file to load".formatted(scriptEngineEnum));
         File filesFolder = new File(localization.getScriptDirectory());
         if (!filesFolder.exists()) {
             boolean created = filesFolder.mkdirs();

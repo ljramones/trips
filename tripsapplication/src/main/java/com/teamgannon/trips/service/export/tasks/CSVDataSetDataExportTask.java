@@ -99,69 +99,70 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
 
 
     private @NotNull String getHeaders() {
-        return "id," +
-                "dataSetName," +
-                "displayName," +
-                "commonName," +
-                "System Name," +
-                "Epoch," +
-                "constellationName," +
-                "mass," +
-                "notes," +
-                "source," +
-                "catalogIdList," +
-                "simbadId," +
-                "Gaia DR2," +
-                "radius," +
-                "ra," +
-                "declination," +
-                "pmra," +
-                "pmdec," +
-                "distance," +
-                "radialVelocity," +
-                "spectralClass," +
-                "temperature," +
-                "realStar," +
-                "bprp," +
-                "bpg," +
-                "grp," +
-                "luminosity," +
-                "magu," +
-                "magb," +
-                "magv," +
-                "magr," +
-                "magi," +
-                "other," +
-                "anomaly," +
-                "polity," +
-                "worldType," +
-                "fuelType," +
-                "portType," +
-                "populationType," +
-                "techType," +
-                "productType," +
-                "milSpaceType," +
-                "milPlanType," +
-                "age," +
-                "metallicity," +
-                "miscText1," +
-                "miscText2," +
-                "miscText3," +
-                "miscText4," +
-                "miscText5," +
-                "miscNum1," +
-                "miscNum2," +
-                "miscNum3," +
-                "miscNum4," +
-                "miscNum5," +
-                "numExoplanets," +
-                "absoluteMagnitude," +
-                "gaiaDR3CatId," +
-                "x," +
-                "y," +
-                "z," +
-                "parallax" +
-                "\n";
+        return """
+                id,\
+                dataSetName,\
+                displayName,\
+                commonName,\
+                System Name,\
+                Epoch,\
+                constellationName,\
+                mass,\
+                notes,\
+                source,\
+                catalogIdList,\
+                simbadId,\
+                Gaia DR2,\
+                radius,\
+                ra,\
+                declination,\
+                pmra,\
+                pmdec,\
+                distance,\
+                radialVelocity,\
+                spectralClass,\
+                temperature,\
+                realStar,\
+                bprp,\
+                bpg,\
+                grp,\
+                luminosity,\
+                magu,\
+                magb,\
+                magv,\
+                magr,\
+                magi,\
+                other,\
+                anomaly,\
+                polity,\
+                worldType,\
+                fuelType,\
+                portType,\
+                populationType,\
+                techType,\
+                productType,\
+                milSpaceType,\
+                milPlanType,\
+                age,\
+                metallicity,\
+                miscText1,\
+                miscText2,\
+                miscText3,\
+                miscText4,\
+                miscText5,\
+                miscNum1,\
+                miscNum2,\
+                miscNum3,\
+                miscNum4,\
+                miscNum5,\
+                numExoplanets,\
+                absoluteMagnitude,\
+                gaiaDR3CatId,\
+                x,\
+                y,\
+                z,\
+                parallax
+                """;
     }
 
     private @NotNull String convertToCSV(@NotNull StarObject starObject) {

@@ -51,12 +51,14 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
 
         GridPane leftPane = new GridPane();
         leftPane.setPadding(insets1);
-        leftPane.setStyle("-fx-padding: 10;" +
-                "-fx-border-style: solid inside;" +
-                "-fx-border-width: 2;" +
-                "-fx-border-insets: 5;" +
-                "-fx-border-radius: 5;" +
-                "-fx-border-color: blue;");
+        leftPane.setStyle("""
+                -fx-padding: 10;\
+                -fx-border-style: solid inside;\
+                -fx-border-width: 2;\
+                -fx-border-insets: 5;\
+                -fx-border-radius: 5;\
+                -fx-border-color: blue;\
+                """);
         gridPane.add(leftPane, 0, 0);
 
         Label equXLabel = new Label("X: ");
@@ -96,12 +98,14 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
         middlePane.add(toGalactic, 0, 3, 2, 1);
 
         GridPane rightPane = new GridPane();
-        rightPane.setStyle("-fx-padding: 10;" +
-                "-fx-border-style: solid inside;" +
-                "-fx-border-width: 2;" +
-                "-fx-border-insets: 5;" +
-                "-fx-border-radius: 5;" +
-                "-fx-border-color: blue;");
+        rightPane.setStyle("""
+                -fx-padding: 10;\
+                -fx-border-style: solid inside;\
+                -fx-border-width: 2;\
+                -fx-border-insets: 5;\
+                -fx-border-radius: 5;\
+                -fx-border-color: blue;\
+                """);
         rightPane.setPadding(insets1);
         gridPane.add(rightPane, 2, 0);
 
@@ -151,9 +155,9 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
                 log.info("Using J2000 epoch");
                 galactic = StarMath.epoch2000ToGalacticCoordinates(equatorial);
             }
-            galX.setText(String.format("%.4f", galactic[0]));
-            galY.setText(String.format("%.4f", galactic[1]));
-            galZ.setText(String.format("%.4f", galactic[2]));
+            galX.setText("%.4f".formatted(galactic[0]));
+            galY.setText("%.4f".formatted(galactic[1]));
+            galZ.setText("%.4f".formatted(galactic[2]));
         }
     }
 
@@ -166,9 +170,9 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
             double z = Double.parseDouble(galZ.getText());
             double[] galactic = new double[]{x, y, z};
             double[] equatorial = StarMath.galacticToEquatorialCoordinates(galactic);
-            equX.setText(String.format("%.4f", equatorial[0]));
-            equY.setText(String.format("%.4f", equatorial[1]));
-            equZ.setText(String.format("%.4f", equatorial[2]));
+            equX.setText("%.4f".formatted(equatorial[0]));
+            equY.setText("%.4f".formatted(equatorial[1]));
+            equZ.setText("%.4f".formatted(equatorial[2]));
         }
     }
 

@@ -308,16 +308,18 @@ public class EditMenuController {
         StringBuilder string = new StringBuilder();
         for (StarDistances starDistance : starDistancesList) {
             StarObject star = starDistance.getStarObject();
-            string.append(String.format("Name = %s, " +
-                            "spectral class = %s, " +
-                            "temperature = %5.1f, " +
-                            "mass = %5.1f," +
-                            "distance from Sol =%5.1f, " +
-                            "declination = %4.1f, " +
-                            "ra = %4.1f, " +
-                            "Simbad id = %s, " +
-                            "coordinates = (%5.1f, %5.1f, %5.1f), " +
-                            "distance = %3.1f ly\n",
+            string.append(String.format("""
+                            Name = %s, \
+                            spectral class = %s, \
+                            temperature = %5.1f, \
+                            mass = %5.1f,\
+                            distance from Sol =%5.1f, \
+                            declination = %4.1f, \
+                            ra = %4.1f, \
+                            Simbad id = %s, \
+                            coordinates = (%5.1f, %5.1f, %5.1f), \
+                            distance = %3.1f ly
+                            """,
                     star.getDisplayName(),
                     star.getSpectralClass(),
                     star.getTemperature(),

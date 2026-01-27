@@ -113,7 +113,7 @@ public class RouteFindingService {
             // Validate star count
             if (prunedStars.size() > GRAPH_THRESHOLD) {
                 return RouteFindingResult.failure(
-                        String.format("Too many stars (%d) to plan a route. Maximum is %d.",
+                        "Too many stars (%d) to plan a route. Maximum is %d.".formatted(
                                 prunedStars.size(), GRAPH_THRESHOLD));
             }
 
@@ -123,13 +123,13 @@ public class RouteFindingService {
             // Validate origin star
             if (!routeBuilderHelper.has(origin)) {
                 return RouteFindingResult.failure(
-                        String.format("Origin star '%s' is not in the available stars (may have been excluded).", origin));
+                        "Origin star '%s' is not in the available stars (may have been excluded).".formatted(origin));
             }
 
             // Validate destination star
             if (!routeBuilderHelper.has(destination)) {
                 return RouteFindingResult.failure(
-                        String.format("Destination star '%s' is not in the available stars (may have been excluded).", destination));
+                        "Destination star '%s' is not in the available stars (may have been excluded).".formatted(destination));
             }
 
             // Build route graph using appropriate algorithm
@@ -147,8 +147,10 @@ public class RouteFindingService {
             // Check connectivity
             if (!routeGraph.isConnected(origin, destination)) {
                 return RouteFindingResult.failure(
-                        "No path exists between origin and destination with the given parameters. " +
-                        "Try adjusting distance bounds or removing exclusions.");
+                        """
+                        No path exists between origin and destination with the given parameters. \
+                        Try adjusting distance bounds or removing exclusions.\
+                        """);
             }
 
             // Find K-shortest paths
@@ -293,7 +295,7 @@ public class RouteFindingService {
                 origin, destination, options.getNumberPaths() + 1);
 
         PossibleRoutes possibleRoutes = new PossibleRoutes();
-        possibleRoutes.setDesiredPath(String.format("Route %s to %s", origin, destination));
+        possibleRoutes.setDesiredPath("Route %s to %s".formatted(origin, destination));
 
         int rank = 1;
         for (String path : kShortestPaths) {

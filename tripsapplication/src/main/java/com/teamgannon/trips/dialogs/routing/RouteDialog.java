@@ -92,7 +92,7 @@ public class RouteDialog extends Dialog<RouteSelector> {
         double x = starDisplayRecord.getX();
         double y = starDisplayRecord.getY();
         double z = starDisplayRecord.getZ();
-        Label routeStartCoordinates = new Label(String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z));
+        Label routeStartCoordinates = new Label("x(%.2f), y(%.2f), z(%.2f)".formatted(x, y, z));
         grid.add(routeStartCoordinatesLabel, 1, 5);
         grid.add(routeStartCoordinates, 2, 5);
 

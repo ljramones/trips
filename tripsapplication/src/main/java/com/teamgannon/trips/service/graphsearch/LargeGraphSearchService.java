@@ -70,7 +70,7 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     @Override
     protected void succeeded() {
         log.info("graph search found");
-        String message = String.format("new graph search found -> %s", "graph search name TBD");
+        String message = "new graph search found -> %s".formatted("graph search name TBD");
         eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
         graphSearchComplete.complete(true, "some message");

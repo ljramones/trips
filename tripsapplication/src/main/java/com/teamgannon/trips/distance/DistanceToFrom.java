@@ -61,7 +61,7 @@ public class DistanceToFrom implements Comparable<DistanceToFrom> {
      * @return the line of a star to star
      */
     public String toString() {
-        return String.format("%s\t%s\t\t%5.2f\n", starFrom, starTo, distance);
+        return "%s\t%s\t\t%5.2f\n".formatted(starFrom, starTo, distance);
     }
 
 }

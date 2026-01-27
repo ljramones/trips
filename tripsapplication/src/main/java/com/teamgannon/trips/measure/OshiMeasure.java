@@ -1,5 +1,6 @@
 package com.teamgannon.trips.measure;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import oshi.SystemInfo;
@@ -8,7 +9,6 @@ import oshi.hardware.CentralProcessor.ProcessorIdentifier;
 import oshi.software.os.*;
 import oshi.software.os.OperatingSystem.OSVersionInfo;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +82,7 @@ public class OshiMeasure {
         String fileStorage = getFileStorageAsString(osFileStoreList);
         Sensors sensors = hal.getSensors();
 
-        return String.format(
+        return 
                 """
                         \nPlatform Inventory::
                         \tHardware
@@ -109,7 +109,7 @@ public class OshiMeasure {
                         \t\tAvailable Memory = %s Mb,
                         \t\tTotal Memory     = %s Mb
                         \tFile System: %s
-                        """,
+                        """.formatted(
                 firmware,
                 computerSystem,
                 getGraphicsCardsAsString(),
@@ -137,7 +137,7 @@ public class OshiMeasure {
         List<OSSession> osSessionList = operatingSystem.getSessions();
         int i = 0;
         for (OSSession osSession : osSessionList) {
-            stringBuilder.append("\n\t\t\tsession ").append(String.format("%d = %s", i, osSession));
+            stringBuilder.append("\n\t\t\tsession ").append("%d = %s".formatted(i, osSession));
             i++;
         }
         return stringBuilder.toString();
@@ -151,7 +151,7 @@ public class OshiMeasure {
         StringBuilder stringBuilder = new StringBuilder();
         int i = 0;
         for (GraphicsCard graphicsCard : graphicsCards) {
-            stringBuilder.append("\n\t\t\tcard ").append(String.format("%d = %s", i, graphicsCard));
+            stringBuilder.append("\n\t\t\tcard ").append("%d = %s".formatted(i, graphicsCard));
             i++;
         }
         return stringBuilder.toString();
@@ -301,12 +301,12 @@ public class OshiMeasure {
         stringBuilder.append("\n\t\t\tpath = ").append(path);
 
         stringBuilder.append("\n\t\t\tpriority = ").append(priority);
-        stringBuilder.append("\n\t\t\tcumLoad = ").append(String.format("%.6f", cumLoad));
-        stringBuilder.append("\n\t\t\tstartTime = ").append(String.format("%,d", startTime));
-        stringBuilder.append("\n\t\t\tupTime = ").append(String.format("%,d", upTime));
+        stringBuilder.append("\n\t\t\tcumLoad = ").append("%.6f".formatted(cumLoad));
+        stringBuilder.append("\n\t\t\tstartTime = ").append("%,d".formatted(startTime));
+        stringBuilder.append("\n\t\t\tupTime = ").append("%,d".formatted(upTime));
         stringBuilder.append("\n\t\t\tstate = ").append(state);
-        stringBuilder.append("\n\t\t\tvirtualSize = ").append(String.format("%,d", virtualSize));
-        stringBuilder.append("\n\t\t\tthreadCount = ").append(String.format("%,d", threadCount));
+        stringBuilder.append("\n\t\t\tvirtualSize = ").append("%,d".formatted(virtualSize));
+        stringBuilder.append("\n\t\t\tthreadCount = ").append("%,d".formatted(threadCount));
 
         List<OSThread> osThreadList = currentOsProcess.getThreadDetails();
         for (OSThread osThread : osThreadList) {
@@ -332,9 +332,9 @@ public class OshiMeasure {
         stringBuilder.append("\n\t\t\t\tthread id = ").append(id);
         stringBuilder.append("\n\t\t\t\t\tstate = ").append(state);
         stringBuilder.append("\n\t\t\t\t\tpriority = ").append(priority);
-        stringBuilder.append("\n\t\t\t\t\tstartTime = ").append(String.format("%,d", startTime));
-        stringBuilder.append("\n\t\t\t\t\tupTime = ").append(String.format("%,d", upTime));
-        stringBuilder.append("\n\t\t\t\t\tcumulativeLoad = ").append(String.format("%.6f", cumulativeLoad));
+        stringBuilder.append("\n\t\t\t\t\tstartTime = ").append("%,d".formatted(startTime));
+        stringBuilder.append("\n\t\t\t\t\tupTime = ").append("%,d".formatted(upTime));
+        stringBuilder.append("\n\t\t\t\t\tcumulativeLoad = ").append("%.6f".formatted(cumulativeLoad));
         stringBuilder.append("\n\t\t\t\t\tcontextSwitches = ").append(contextSwitches);
 
         return stringBuilder.toString();
@@ -366,7 +366,7 @@ public class OshiMeasure {
      */
     private String toMbCommas(long value) {
         long mbValue = toMb(value);
-        return String.format("%,d", mbValue);
+        return "%,d".formatted(mbValue);
     }
 
 }

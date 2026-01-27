@@ -16,10 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -117,7 +117,7 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
         String starToFind = nameToFindField.getText();
 
         // create a HTTP request to ask for it
-        String urlString = String.format(urlTemplate, starToFind.trim());
+        String urlString = urlTemplate.formatted(starToFind.trim());
 
         // clreate the webclient request to access it
         WebClient.ResponseSpec responseSpec = client.get()

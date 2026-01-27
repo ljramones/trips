@@ -59,11 +59,11 @@ public class DistanceSelectionPanel extends BasePane {
         d2EarthSlider.setShowTickMarks(true);
         d2EarthSlider.setShowTickLabels(true);
         d2EarthSlider.lowValueProperty().addListener((observable, oldValue, newValue) -> {
-            lowRangeTextField.setText(String.format("%.2f", newValue.doubleValue()));
+            lowRangeTextField.setText("%.2f".formatted(newValue.doubleValue()));
         });
 
         d2EarthSlider.highValueProperty().addListener((observable, oldValue, newValue) -> {
-            highRangeTextField.setText(String.format("%.2f", newValue.doubleValue()));
+            highRangeTextField.setText("%.2f".formatted(newValue.doubleValue()));
         });
 
         final Tooltip tooltip = new Tooltip();

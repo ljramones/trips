@@ -4,7 +4,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  * Created by larrymitchell on 2017-03-28.
  */
 public interface StarObjectRepository
-        extends PagingAndSortingRepository<StarObject, String>, StarObjectRepositoryCustom {
+        extends JpaRepository<StarObject, String>, StarObjectRepositoryCustom {
 
     // ========== Basic ID queries ==========
 
@@ -72,8 +72,10 @@ public interface StarObjectRepository
     /**
      * Find stars within a distance limit (paged, ordered by display name).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.distance < :maxDistance ORDER BY s.displayName")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.distance < :maxDistance ORDER BY s.displayName\
+           """)
     Page<StarObject> findByDistanceLessThan(
             @Param("dataSetName") String dataSetName,
             @Param("maxDistance") double maxDistance,
@@ -82,8 +84,10 @@ public interface StarObjectRepository
     /**
      * Stream stars within a distance limit.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.distance <= :maxDistance")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.distance <= :maxDistance\
+           """)
     Stream<StarObject> streamByDistanceWithin(
             @Param("dataSetName") String dataSetName,
             @Param("maxDistance") double maxDistance);
@@ -91,8 +95,10 @@ public interface StarObjectRepository
     /**
      * Count stars within a distance limit.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.distance <= :maxDistance")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.distance <= :maxDistance\
+           """)
     long countByDistanceWithin(
             @Param("dataSetName") String dataSetName,
             @Param("maxDistance") double maxDistance);
@@ -102,11 +108,13 @@ public interface StarObjectRepository
     /**
      * Find stars within a 3D coordinate bounding box (ordered by display name).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.x > :minX AND s.x < :maxX " +
-           "AND s.y > :minY AND s.y < :maxY " +
-           "AND s.z > :minZ AND s.z < :maxZ " +
-           "ORDER BY s.displayName")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.x > :minX AND s.x < :maxX \
+           AND s.y > :minY AND s.y < :maxY \
+           AND s.z > :minZ AND s.z < :maxZ \
+           ORDER BY s.displayName\
+           """)
     List<StarObject> findInBoundingBox(
             @Param("dataSetName") String dataSetName,
             @Param("minX") double minX, @Param("maxX") double maxX,
@@ -116,11 +124,13 @@ public interface StarObjectRepository
     /**
      * Find stars within a 3D coordinate bounding box (paged, ordered by display name).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.x > :minX AND s.x < :maxX " +
-           "AND s.y > :minY AND s.y < :maxY " +
-           "AND s.z > :minZ AND s.z < :maxZ " +
-           "ORDER BY s.displayName")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.x > :minX AND s.x < :maxX \
+           AND s.y > :minY AND s.y < :maxY \
+           AND s.z > :minZ AND s.z < :maxZ \
+           ORDER BY s.displayName\
+           """)
     Page<StarObject> findInBoundingBoxPaged(
             @Param("dataSetName") String dataSetName,
             @Param("minX") double minX, @Param("maxX") double maxX,
@@ -131,10 +141,12 @@ public interface StarObjectRepository
     /**
      * Count stars within a 3D coordinate bounding box.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.x > :minX AND s.x < :maxX " +
-           "AND s.y > :minY AND s.y < :maxY " +
-           "AND s.z > :minZ AND s.z < :maxZ")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.x > :minX AND s.x < :maxX \
+           AND s.y > :minY AND s.y < :maxY \
+           AND s.z > :minZ AND s.z < :maxZ\
+           """)
     int countInBoundingBox(
             @Param("dataSetName") String dataSetName,
             @Param("minX") double minX, @Param("maxX") double maxX,
@@ -145,10 +157,12 @@ public interface StarObjectRepository
      * Stream stars within a 3D coordinate bounding box.
      * Used by NightSkyService for efficient star queries on large datasets.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.x >= :minX AND s.x <= :maxX " +
-           "AND s.y >= :minY AND s.y <= :maxY " +
-           "AND s.z >= :minZ AND s.z <= :maxZ")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.x >= :minX AND s.x <= :maxX \
+           AND s.y >= :minY AND s.y <= :maxY \
+           AND s.z >= :minZ AND s.z <= :maxZ\
+           """)
     @Transactional(readOnly = true)
     Stream<StarObject> streamInBoundingBox(
             @Param("dataSetName") String dataSetName,
@@ -167,8 +181,10 @@ public interface StarObjectRepository
     /**
      * Find stars by partial display name match in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND LOWER(s.displayName) LIKE LOWER(CONCAT('%', :nameMatch, '%'))")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND LOWER(s.displayName) LIKE LOWER(CONCAT('%', :nameMatch, '%'))\
+           """)
     List<StarObject> findByDisplayNameContaining(
             @Param("dataSetName") String dataSetName,
             @Param("nameMatch") String nameMatch);
@@ -182,8 +198,10 @@ public interface StarObjectRepository
     /**
      * Find stars by partial common name match in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND LOWER(s.commonName) LIKE LOWER(CONCAT('%', :commonName, '%'))")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND LOWER(s.commonName) LIKE LOWER(CONCAT('%', :commonName, '%'))\
+           """)
     List<StarObject> findByCommonNameContaining(
             @Param("dataSetName") String dataSetName,
             @Param("commonName") String commonName);
@@ -203,8 +221,10 @@ public interface StarObjectRepository
     /**
      * Find stars by constellation name in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.constellationName = :constellationName")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.constellationName = :constellationName\
+           """)
     List<StarObject> findByConstellation(
             @Param("dataSetName") String dataSetName,
             @Param("constellationName") String constellationName);
@@ -212,16 +232,18 @@ public interface StarObjectRepository
     // ========== Catalog ID queries ==========
 
     /**
-     * Find stars by catalog ID list containing a value (case insensitive).
+     * Find stars by catalog ID list containing a value.
+     * Note: Case-sensitive search due to Hibernate 6 LOB handling.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE LOWER(s.catalogIds.catalogIdList) LIKE LOWER(CONCAT('%', :catalogId, '%'))")
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.catalogIds.catalogIdList LIKE CONCAT('%', :catalogId, '%')")
     List<StarObject> findByCatalogId(@Param("catalogId") String catalogId);
 
     /**
      * Find stars by catalog ID list containing a value in a dataset.
+     * Note: Case-sensitive search due to Hibernate 6 LOB handling.
      */
     @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND LOWER(s.catalogIds.catalogIdList) LIKE LOWER(CONCAT('%', :catalogId, '%'))")
+           "AND s.catalogIds.catalogIdList LIKE CONCAT('%', :catalogId, '%')")
     List<StarObject> findByCatalogId(
             @Param("dataSetName") String dataSetName,
             @Param("catalogId") String catalogId);
@@ -229,8 +251,10 @@ public interface StarObjectRepository
     /**
      * Find star by Bayer catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.bayerCatId = :bayerId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.bayerCatId = :bayerId\
+           """)
     StarObject findByBayerId(
             @Param("dataSetName") String dataSetName,
             @Param("bayerId") String bayerId);
@@ -238,8 +262,10 @@ public interface StarObjectRepository
     /**
      * Find star by Flamsteed catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.flamsteedCatId = :flamsteedId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.flamsteedCatId = :flamsteedId\
+           """)
     StarObject findByFlamsteedId(
             @Param("dataSetName") String dataSetName,
             @Param("flamsteedId") String flamsteedId);
@@ -247,8 +273,10 @@ public interface StarObjectRepository
     /**
      * Find star by Gliese catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.glieseCatId = :glieseId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.glieseCatId = :glieseId\
+           """)
     StarObject findByGlieseId(
             @Param("dataSetName") String dataSetName,
             @Param("glieseId") String glieseId);
@@ -256,8 +284,10 @@ public interface StarObjectRepository
     /**
      * Find star by Hipparcos catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.hipCatId = :hipId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.hipCatId = :hipId\
+           """)
     StarObject findByHipId(
             @Param("dataSetName") String dataSetName,
             @Param("hipId") String hipId);
@@ -265,8 +295,10 @@ public interface StarObjectRepository
     /**
      * Find star by Henry Draper catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.hdCatId = :hdId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.hdCatId = :hdId\
+           """)
     StarObject findByHdId(
             @Param("dataSetName") String dataSetName,
             @Param("hdId") String hdId);
@@ -274,8 +306,10 @@ public interface StarObjectRepository
     /**
      * Find star by CSI catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.csiCatId = :csiId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.csiCatId = :csiId\
+           """)
     StarObject findByCsiId(
             @Param("dataSetName") String dataSetName,
             @Param("csiId") String csiId);
@@ -283,8 +317,10 @@ public interface StarObjectRepository
     /**
      * Find star by Tycho-2 catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.tycho2CatId = :tychoId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.tycho2CatId = :tychoId\
+           """)
     StarObject findByTychoId(
             @Param("dataSetName") String dataSetName,
             @Param("tychoId") String tychoId);
@@ -292,8 +328,10 @@ public interface StarObjectRepository
     /**
      * Find star by 2MASS catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.twoMassCatId = :twoMassId")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.twoMassCatId = :twoMassId\
+           """)
     StarObject findByTwoMassId(
             @Param("dataSetName") String dataSetName,
             @Param("twoMassId") String twoMassId);
@@ -301,8 +339,10 @@ public interface StarObjectRepository
     /**
      * Find star by Gaia DR2 catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.gaiaDR2CatId = :gaiaDr2Id")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.gaiaDR2CatId = :gaiaDr2Id\
+           """)
     StarObject findByGaiaDR2Id(
             @Param("dataSetName") String dataSetName,
             @Param("gaiaDr2Id") String gaiaDr2Id);
@@ -310,8 +350,10 @@ public interface StarObjectRepository
     /**
      * Find star by Gaia DR3 catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.gaiaDR3CatId = :gaiaDr3Id")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.gaiaDR3CatId = :gaiaDr3Id\
+           """)
     StarObject findByGaiaDR3Id(
             @Param("dataSetName") String dataSetName,
             @Param("gaiaDr3Id") String gaiaDr3Id);
@@ -319,8 +361,10 @@ public interface StarObjectRepository
     /**
      * Find star by Gaia EDR3 catalog ID in a dataset.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.catalogIds.gaiaEDR3CatId = :gaiaEdr3Id")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.catalogIds.gaiaEDR3CatId = :gaiaEdr3Id\
+           """)
     StarObject findByGaiaEDR3Id(
             @Param("dataSetName") String dataSetName,
             @Param("gaiaEdr3Id") String gaiaEdr3Id);
@@ -340,9 +384,11 @@ public interface StarObjectRepository
     /**
      * Find all stars that have exoplanets.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.id IN " +
-           "(SELECT DISTINCT e.hostStarId FROM EXOPLANET e " +
-           "WHERE e.hostStarId IS NOT NULL AND (e.isMoon IS NULL OR e.isMoon = false))")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.id IN \
+           (SELECT DISTINCT e.hostStarId FROM EXOPLANET e \
+           WHERE e.hostStarId IS NOT NULL AND (e.isMoon IS NULL OR e.isMoon = false))\
+           """)
     List<StarObject> findStarsWithPlanets();
 
     // ========== Coordinate queries ==========
@@ -350,8 +396,10 @@ public interface StarObjectRepository
     /**
      * Find stars near a given RA/Dec coordinate (within 0.01 degrees).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.ra BETWEEN :ra - 0.01 AND :ra + 0.01 " +
-           "AND s.declination BETWEEN :dec - 0.01 AND :dec + 0.01")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.ra BETWEEN :ra - 0.01 AND :ra + 0.01 \
+           AND s.declination BETWEEN :dec - 0.01 AND :dec + 0.01\
+           """)
     List<StarObject> findByRaDecNear(
             @Param("ra") Double ra,
             @Param("dec") Double dec);
@@ -361,10 +409,12 @@ public interface StarObjectRepository
     /**
      * Find stars with missing distance that have catalog IDs (for enrichment).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 " +
-           "AND ((s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> '') " +
-           "OR (s.catalogIds.hipCatId IS NOT NULL AND s.catalogIds.hipCatId <> '') " +
-           "OR (s.catalogIds.catalogIdList IS NOT NULL AND s.catalogIds.catalogIdList <> ''))")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 \
+           AND ((s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> '') \
+           OR (s.catalogIds.hipCatId IS NOT NULL AND s.catalogIds.hipCatId <> '') \
+           OR (s.catalogIds.catalogIdList IS NOT NULL AND s.catalogIds.catalogIdList <> ''))\
+           """)
     Page<StarObject> findMissingDistanceWithIds(
             @Param("dataSetName") String dataSetName,
             Pageable pageable);
@@ -380,8 +430,10 @@ public interface StarObjectRepository
      * These are stars with missing distance that have both apparent magnitude (magv)
      * and color data (bprp) needed for photometric calculations.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 " +
-           "AND s.magv <> 0 AND s.bprp <> 0")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 \
+           AND s.magv <> 0 AND s.bprp <> 0\
+           """)
     Page<StarObject> findMissingDistanceWithPhotometry(
             @Param("dataSetName") String dataSetName,
             Pageable pageable);
@@ -389,16 +441,20 @@ public interface StarObjectRepository
     /**
      * Count stars eligible for photometric distance estimation.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 " +
-           "AND s.magv <> 0 AND s.bprp <> 0")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName AND s.distance = 0 \
+           AND s.magv <> 0 AND s.bprp <> 0\
+           """)
     long countMissingDistanceWithPhotometry(@Param("dataSetName") String dataSetName);
 
     /**
      * Find stars with missing mass that have Gaia DR3 IDs (for mass enrichment).
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL) " +
-           "AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL) \
+           AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''\
+           """)
     Page<StarObject> findMissingMassWithGaiaId(
             @Param("dataSetName") String dataSetName,
             Pageable pageable);
@@ -406,25 +462,31 @@ public interface StarObjectRepository
     /**
      * Count stars with missing mass that have Gaia DR3 IDs.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL) " +
-           "AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL) \
+           AND s.catalogIds.gaiaDR3CatId IS NOT NULL AND s.catalogIds.gaiaDR3CatId <> ''\
+           """)
     long countMissingMassWithGaiaId(@Param("dataSetName") String dataSetName);
 
     /**
      * Count all stars with missing mass.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL)")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL)\
+           """)
     long countMissingMass(@Param("dataSetName") String dataSetName);
 
     /**
      * Find stars eligible for photometric mass estimation.
      * These are stars with missing mass but have distance and apparent magnitude.
      */
-    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL) " +
-           "AND s.distance > 0 AND s.magv <> 0")
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL) \
+           AND s.distance > 0 AND s.magv <> 0\
+           """)
     Page<StarObject> findMissingMassWithPhotometry(
             @Param("dataSetName") String dataSetName,
             Pageable pageable);
@@ -432,47 +494,59 @@ public interface StarObjectRepository
     /**
      * Count stars eligible for photometric mass estimation.
      */
-    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL) " +
-           "AND s.distance > 0 AND s.magv <> 0")
+    @Query("""
+           SELECT COUNT(s) FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL) \
+           AND s.distance > 0 AND s.magv <> 0\
+           """)
     long countMissingMassWithPhotometry(@Param("dataSetName") String dataSetName);
 
     /**
      * Get IDs of stars eligible for photometric mass estimation.
      * Much faster than loading full objects - use with findAllById for batch processing.
      */
-    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND (s.mass = 0 OR s.mass IS NULL) " +
-           "AND s.distance > 0 AND s.magv <> 0")
+    @Query("""
+           SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND (s.mass = 0 OR s.mass IS NULL) \
+           AND s.distance > 0 AND s.magv <> 0\
+           """)
     List<String> findMissingMassWithPhotometryIds(@Param("dataSetName") String dataSetName);
 
     /**
      * Get IDs of stars with BP-RP color but missing temperature.
      */
-    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.bprp <> 0 AND (s.temperature = 0 OR s.temperature IS NULL)")
+    @Query("""
+           SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.bprp <> 0 AND (s.temperature = 0 OR s.temperature IS NULL)\
+           """)
     List<String> findMissingTemperatureWithBprpIds(@Param("dataSetName") String dataSetName);
 
     /**
      * Get IDs of stars with BP-RP color but missing spectral class.
      */
-    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.bprp <> 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')")
+    @Query("""
+           SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.bprp <> 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')\
+           """)
     List<String> findMissingSpectralWithBprpIds(@Param("dataSetName") String dataSetName);
 
     /**
      * Get IDs of stars with temperature but missing spectral class.
      */
-    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.temperature > 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')")
+    @Query("""
+           SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.temperature > 0 AND (s.spectralClass IS NULL OR s.spectralClass = '')\
+           """)
     List<String> findMissingSpectralWithTempIds(@Param("dataSetName") String dataSetName);
 
     /**
      * Get IDs of stars with spectral class but missing temperature.
      */
-    @Query("SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
-           "AND s.spectralClass IS NOT NULL AND s.spectralClass <> '' " +
-           "AND (s.temperature = 0 OR s.temperature IS NULL)")
+    @Query("""
+           SELECT s.id FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.spectralClass IS NOT NULL AND s.spectralClass <> '' \
+           AND (s.temperature = 0 OR s.temperature IS NULL)\
+           """)
     List<String> findMissingTempWithSpectralIds(@Param("dataSetName") String dataSetName);
 
 }

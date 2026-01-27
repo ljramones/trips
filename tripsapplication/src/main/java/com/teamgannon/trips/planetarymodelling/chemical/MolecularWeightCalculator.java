@@ -2,10 +2,10 @@ package com.teamgannon.trips.planetarymodelling.chemical;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.teamgannon.trips.config.application.Localization;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

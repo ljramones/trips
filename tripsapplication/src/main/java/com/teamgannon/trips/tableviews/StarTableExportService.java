@@ -81,14 +81,14 @@ public class StarTableExportService extends Service<Long> {
                             long current = exported.incrementAndGet();
                             if (current % PROGRESS_UPDATE_INTERVAL == 0) {
                                 updateProgress(current, total);
-                                updateMessage(String.format("Exported %d of %d records...", current, total));
+                                updateMessage("Exported %d of %d records...".formatted(current, total));
                             }
                         } catch (Exception e) {
                             log.error("Error writing star {}: {}", star.getDisplayName(), e.getMessage());
                         }
                     });
 
-                    updateMessage(String.format("Export complete: %d records", exported.get()));
+                    updateMessage("Export complete: %d records".formatted(exported.get()));
                 }
 
                 return exported.get();
@@ -96,68 +96,70 @@ public class StarTableExportService extends Service<Long> {
 
             private void writeHeader(BufferedWriter writer) throws Exception {
                 // Write header in .trips.csv format for re-import compatibility
-                writer.write("id," +
-                        "dataSetName," +
-                        "displayName," +
-                        "commonName," +
-                        "System Name," +
-                        "Epoch," +
-                        "constellationName," +
-                        "mass," +
-                        "notes," +
-                        "source," +
-                        "catalogIdList," +
-                        "simbadId," +
-                        "Gaia DR2," +
-                        "radius," +
-                        "ra," +
-                        "declination," +
-                        "pmra," +
-                        "pmdec," +
-                        "distance," +
-                        "radialVelocity," +
-                        "spectralClass," +
-                        "temperature," +
-                        "realStar," +
-                        "bprp," +
-                        "bpg," +
-                        "grp," +
-                        "luminosity," +
-                        "magu," +
-                        "magb," +
-                        "magv," +
-                        "magr," +
-                        "magi," +
-                        "other," +
-                        "anomaly," +
-                        "polity," +
-                        "worldType," +
-                        "fuelType," +
-                        "portType," +
-                        "populationType," +
-                        "techType," +
-                        "productType," +
-                        "milSpaceType," +
-                        "milPlanType," +
-                        "age," +
-                        "metallicity," +
-                        "miscText1," +
-                        "miscText2," +
-                        "miscText3," +
-                        "miscText4," +
-                        "miscText5," +
-                        "miscNum1," +
-                        "miscNum2," +
-                        "miscNum3," +
-                        "miscNum4," +
-                        "miscNum5," +
-                        "numExoplanets," +
-                        "absoluteMagnitude," +
-                        "gaiaDR3CatId," +
-                        "x," +
-                        "y," +
-                        "z," +
-                        "parallax");
+                writer.write("""
+                        id,\
+                        dataSetName,\
+                        displayName,\
+                        commonName,\
+                        System Name,\
+                        Epoch,\
+                        constellationName,\
+                        mass,\
+                        notes,\
+                        source,\
+                        catalogIdList,\
+                        simbadId,\
+                        Gaia DR2,\
+                        radius,\
+                        ra,\
+                        declination,\
+                        pmra,\
+                        pmdec,\
+                        distance,\
+                        radialVelocity,\
+                        spectralClass,\
+                        temperature,\
+                        realStar,\
+                        bprp,\
+                        bpg,\
+                        grp,\
+                        luminosity,\
+                        magu,\
+                        magb,\
+                        magv,\
+                        magr,\
+                        magi,\
+                        other,\
+                        anomaly,\
+                        polity,\
+                        worldType,\
+                        fuelType,\
+                        portType,\
+                        populationType,\
+                        techType,\
+                        productType,\
+                        milSpaceType,\
+                        milPlanType,\
+                        age,\
+                        metallicity,\
+                        miscText1,\
+                        miscText2,\
+                        miscText3,\
+                        miscText4,\
+                        miscText5,\
+                        miscNum1,\
+                        miscNum2,\
+                        miscNum3,\
+                        miscNum4,\
+                        miscNum5,\
+                        numExoplanets,\
+                        absoluteMagnitude,\
+                        gaiaDR3CatId,\
+                        x,\
+                        y,\
+                        z,\
+                        parallax\
+                        """);
                 writer.newLine();
             }
 

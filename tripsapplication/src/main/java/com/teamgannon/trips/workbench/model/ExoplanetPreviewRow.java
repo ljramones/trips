@@ -29,7 +29,7 @@ public class ExoplanetPreviewRow {
         if (value == null || value.isNaN()) {
             return "";
         }
-        return String.format(format, value);
+        return format.formatted(value);
     }
 
     /**

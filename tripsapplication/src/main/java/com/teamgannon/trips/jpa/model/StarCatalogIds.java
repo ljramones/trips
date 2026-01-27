@@ -3,8 +3,8 @@ package com.teamgannon.trips.jpa.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Lob;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Lob;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;

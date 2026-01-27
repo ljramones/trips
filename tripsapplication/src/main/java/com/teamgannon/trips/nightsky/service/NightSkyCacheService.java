@@ -92,7 +92,7 @@ public class NightSkyCacheService {
         long valid = cache.values().stream()
                 .filter(e -> !e.isExpired())
                 .count();
-        return String.format("Cache: %d entries (%d valid)", cache.size(), valid);
+        return "Cache: %d entries (%d valid)".formatted(cache.size(), valid);
     }
 
     private String computeKey(NightSkyRequest request) {

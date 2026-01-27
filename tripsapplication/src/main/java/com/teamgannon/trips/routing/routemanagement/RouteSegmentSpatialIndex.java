@@ -356,9 +356,11 @@ public class RouteSegmentSpatialIndex {
         double cullRate = segmentsChecked > 0
                 ? (1.0 - (double) segmentsReturned / segmentsChecked) * 100
                 : 0;
-        return String.format(
-                "RouteSegmentSpatialIndex[routes=%d, segments=%d, queries=%d, " +
-                "avgReturned=%.1f, cullRate=%.1f%%]",
+        return (
+                """
+                RouteSegmentSpatialIndex[routes=%d, segments=%d, queries=%d, \
+                avgReturned=%.1f, cullRate=%.1f%%]\
+                """).formatted(
                 segmentsByRoute.size(), totalSegments, queryCount, avgReturned, cullRate);
     }
 

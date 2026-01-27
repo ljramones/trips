@@ -176,7 +176,7 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
             double[] toStarCoordinates = distanceCalculationObject.getToStar().getCoordinates();
 
             double distance = StarMath.getDistance(fromStarCoordinates, toStarCoordinates);
-            distanceLabel.setText(String.format("%.3f", distance));
+            distanceLabel.setText("%.3f".formatted(distance));
             distanceCalculationObject.setDistance(distance);
             distanceCalculationObject.setCalculated(true);
         } else {

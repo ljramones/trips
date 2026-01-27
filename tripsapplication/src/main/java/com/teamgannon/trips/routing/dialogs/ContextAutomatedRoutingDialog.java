@@ -148,7 +148,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         double maxDistance = RoutingConstants.MAX_VALIDATION_DISTANCE;
         String destinationStarSelected = destinationDisplayCmb.getValue();
         if (!searchValues.contains(destinationStarSelected)) {
-            showErrorAlert("Find Route", String.format("Destination star <%s> is not present in view", destinationStarSelected));
+            showErrorAlert("Find Route", "Destination star <%s> is not present in view".formatted(destinationStarSelected));
             return;
         }
 

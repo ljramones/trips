@@ -72,7 +72,7 @@ public class TransitCalculationTask extends Task<TransitCalculationResult> {
                 return buildResult(routesByBand, 0, startTime, false, null);
             }
 
-            updateMessage(String.format("Processing %,d stars for %d transit bands...",
+            updateMessage("Processing %,d stars for %d transit bands...".formatted(
                     starsInView.size(), enabledBands.size()));
             updateProgress(5, 100);
 
@@ -129,7 +129,7 @@ public class TransitCalculationTask extends Task<TransitCalculationResult> {
                 }
             }
 
-            updateMessage(String.format("Complete: found %,d transits", totalRoutes));
+            updateMessage("Complete: found %,d transits".formatted(totalRoutes));
             updateProgress(100, 100);
 
             return buildResult(routesByBand, totalRoutes, startTime, false, null);

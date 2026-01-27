@@ -20,7 +20,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for RouteManager.

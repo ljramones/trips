@@ -235,8 +235,8 @@ public class StarNodePool {
                 ? (100.0 * totalReused / (totalCreated + totalReused))
                 : 0.0;
 
-        return String.format(
-                "StarNodePool[created=%d, reused=%d, released=%d, pooled=%d, reuseRate=%.1f%%]",
+        return 
+                "StarNodePool[created=%d, reused=%d, released=%d, pooled=%d, reuseRate=%.1f%%]".formatted(
                 totalCreated, totalReused, totalReleased, totalPooled, reuseRate);
     }
 

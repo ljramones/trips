@@ -982,7 +982,7 @@ public class WorkbenchEnrichmentService {
         if (distanceLy < 0.1 || distanceLy > 500000) {
             if (distanceRejectCount < 10) {
                 log.info("Distance rejected: {} ly (apparentMag={}, absoluteMag={}, modulus={})",
-                        String.format("%.1f", distanceLy), apparentMag, absoluteMag, distanceModulus);
+                        "%.1f".formatted(distanceLy), apparentMag, absoluteMag, distanceModulus);
                 distanceRejectCount++;
             }
             return 0;

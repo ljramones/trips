@@ -182,8 +182,8 @@ public final class RouteCacheKey {
 
     @Override
     public String toString() {
-        String starsInfo = starsHash != 0 ? String.format(", stars=%08x", starsHash) : "";
-        return String.format("RouteCacheKey[%s → %s, bounds=%.2f-%.2f, paths=%d, excl=%d/%d%s]",
+        String starsInfo = starsHash != 0 ? ", stars=%08x".formatted(starsHash) : "";
+        return "RouteCacheKey[%s → %s, bounds=%.2f-%.2f, paths=%d, excl=%d/%d%s]".formatted(
                 originStarName,
                 destinationStarName,
                 normalizedUpperBound / (double) DISTANCE_PRECISION,

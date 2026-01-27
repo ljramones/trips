@@ -209,7 +209,7 @@ public class RouteCache {
         try {
             long total = hits + misses;
             double hitRate = total > 0 ? (100.0 * hits / total) : 0.0;
-            return String.format("RouteCache[size=%d, hits=%d, misses=%d, hitRate=%.1f%%]",
+            return "RouteCache[size=%d, hits=%d, misses=%d, hitRate=%.1f%%]".formatted(
                     cache.size(), hits, misses, hitRate);
         } finally {
             lock.readLock().unlock();

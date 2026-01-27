@@ -43,7 +43,7 @@ public class PlanetarySystemCell extends ListCell<PlanetarySystemRecord> {
                 if (star.getSpectralClass() != null && !star.getSpectralClass().isEmpty()) {
                     tipText.append("\nSpectral: ").append(star.getSpectralClass());
                 }
-                tipText.append("\nDistance: ").append(String.format("%.2f", star.getDistance())).append(" ly");
+                tipText.append("\nDistance: ").append("%.2f".formatted(star.getDistance())).append(" ly");
                 tipText.append("\nPlanets: ").append(record.getPlanetCount());
                 tooltip.setText(tipText.toString());
                 setTooltip(tooltip);

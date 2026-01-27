@@ -33,7 +33,7 @@ public class RouteSegmentDisplay {
 
     @Override
     public String toString() {
-        return String.format("%s --> %s :: %.2f ly", fromStar, toStar, length);
+        return "%s --> %s :: %.2f ly".formatted(fromStar, toStar, length);
     }
 
 }

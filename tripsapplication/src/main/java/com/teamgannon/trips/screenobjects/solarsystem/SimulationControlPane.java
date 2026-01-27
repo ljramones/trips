@@ -198,7 +198,7 @@ public class SimulationControlPane extends VBox {
         // Time scale slider - convert 0.1-10 range to speed multiplier
         // 1.0 on slider = 1 day/sec (86400x), scaled logarithmically
         timeScaleSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            timeScaleLabel.setText(String.format("%.1fx", newVal.doubleValue()));
+            timeScaleLabel.setText("%.1fx".formatted(newVal.doubleValue()));
             // Convert slider value to speed multiplier:
             // slider 0.1 -> 1 hour/sec (3600)
             // slider 1.0 -> 1 day/sec (86400)
@@ -210,7 +210,7 @@ public class SimulationControlPane extends VBox {
 
         // Zoom slider
         zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            zoomLabel.setText(String.format("%.1fx", newVal.doubleValue()));
+            zoomLabel.setText("%.1fx".formatted(newVal.doubleValue()));
             log.info("Zoom changed to: {}", newVal);
             eventPublisher.publishEvent(new SolarSystemScaleEvent(this, newVal.doubleValue()));
         });
