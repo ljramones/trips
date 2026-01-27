@@ -144,6 +144,7 @@ public abstract class BaseRepositoryIntegrationTest {
         descriptor.setFileCreator("Test");
         descriptor.setFileNotes("Test dataset");
         descriptor.setDatasetType("Test");
+        descriptor.setFilePath("/test/path/" + name + ".csv"); // Required field in Hibernate 6
         return descriptor;
     }
 
