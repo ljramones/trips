@@ -45,3 +45,4 @@ files/hyg_db/
 /tripsapplication/logs/terranrepublicviewer.log
 /tripsapplication/data/tripsdb.mv.db
 /tripsapplication/logs/terranrepublicviewer.log.2026-01-15.0.log.gz
+/tripsapplication/data/tripsdb.trace.db
