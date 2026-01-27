@@ -54,106 +54,10 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
      */
     @Override
     public List<StarObject> findBySearchQuery(@NotNull AstroSearchQuery astroSearchQuery) {
-        String dataSetName = astroSearchQuery.getDataSetContext().getDescriptor().getDataSetName();
-
-        // Diagnostic: count ALL records in dataset (no filters)
-        long rawCount = countAllInDataset(dataSetName);
-        log.info("DIAGNOSTIC: Raw count in dataset '{}' (no filters): {}", dataSetName, rawCount);
-
-        // Diagnostic: count records with distance > 0
-        long withDistanceCount = countWithDistance(dataSetName);
-        log.info("DIAGNOSTIC: Records with distance > 0: {}", withDistanceCount);
-
-        // Diagnostic: count records with realStar=true
-        long realStarCount = countRealStars(dataSetName, true);
-        log.info("DIAGNOSTIC: Records with realStar=true: {}", realStarCount);
-
-        // Diagnostic: count records with other=false
-        long otherFalseCount = countOtherFalse(dataSetName);
-        log.info("DIAGNOSTIC: Records with other=false: {}", otherFalseCount);
-
-        // Diagnostic: count records with anomaly=false
-        long anomalyFalseCount = countAnomalyFalse(dataSetName);
-        log.info("DIAGNOSTIC: Records with anomaly=false: {}", anomalyFalseCount);
-
-        // Diagnostic: log sample records to see actual values
-        logSampleRecords(dataSetName);
-
         TypedQuery<StarObject> typedQuery = getStarObjectTypedQuery(astroSearchQuery);
-        int totalRows = typedQuery.getResultList().size();
-        log.info("number of records found={}", totalRows);
-
-        return typedQuery.getResultList();
-    }
-
-    private long countAllInDataset(String dataSetName) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.select(cb.count(root));
-        query.where(cb.equal(root.get("dataSetName"), dataSetName));
-        return em.createQuery(query).getSingleResult();
-    }
-
-    private long countWithDistance(String dataSetName) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.select(cb.count(root));
-        query.where(
-            cb.equal(root.get("dataSetName"), dataSetName),
-            cb.greaterThan(root.get("distance"), 0.0)
-        );
-        return em.createQuery(query).getSingleResult();
-    }
-
-    private long countRealStars(String dataSetName, boolean realStar) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.select(cb.count(root));
-        query.where(
-            cb.equal(root.get("dataSetName"), dataSetName),
-            cb.equal(root.get("realStar"), realStar)
-        );
-        return em.createQuery(query).getSingleResult();
-    }
-
-    private long countOtherFalse(String dataSetName) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.select(cb.count(root));
-        query.where(
-            cb.equal(root.get("dataSetName"), dataSetName),
-            cb.isFalse(root.get("worldBuilding").get("other"))
-        );
-        return em.createQuery(query).getSingleResult();
-    }
-
-    private long countAnomalyFalse(String dataSetName) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<Long> query = cb.createQuery(Long.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.select(cb.count(root));
-        query.where(
-            cb.equal(root.get("dataSetName"), dataSetName),
-            cb.isFalse(root.get("worldBuilding").get("anomaly"))
-        );
-        return em.createQuery(query).getSingleResult();
-    }
-
-    private void logSampleRecords(String dataSetName) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<StarObject> query = cb.createQuery(StarObject.class);
-        Root<StarObject> root = query.from(StarObject.class);
-        query.where(cb.equal(root.get("dataSetName"), dataSetName));
-        List<StarObject> samples = em.createQuery(query).setMaxResults(3).getResultList();
-        for (StarObject star : samples) {
-            log.info("SAMPLE RECORD: name='{}', distance={}, realStar={}, other={}, anomaly={}",
-                    star.getDisplayName(), star.getDistance(), star.isRealStar(),
-                    star.isOther(), star.isAnomaly());
-        }
+        List<StarObject> results = typedQuery.getResultList();
+        log.info("number of records found={}", results.size());
+        return results;
     }
 
     /**
