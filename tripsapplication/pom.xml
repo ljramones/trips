@@ -95,13 +95,13 @@
 
         <lombok.version>1.18.42</lombok.version>
 
-        <groovy.version>4.0.4</groovy.version>
+        <groovy.version>4.0.24</groovy.version>
 
         <commons.collections4.version>4.4</commons.collections4.version>
-        <commons.io.version>2.6</commons.io.version>
-        <commons.lang.version>20030203.000129</commons.lang.version>
+        <commons.io.version>2.15.1</commons.io.version>
+        <!-- Removed ancient commons.lang - use commons-lang3 instead -->
         <commons.math.version>3.6.1</commons.math.version>
-        <commons-codec.version>20041127.091804</commons-codec.version>
+        <!-- commons-codec managed by Spring Boot -->
 
         <hipparchus.version>3.0</hipparchus.version>
         <jzy3d.version>2.2.1</jzy3d.version>
@@ -110,17 +110,17 @@
 
         <metrics.version>4.2.10</metrics.version>
 
-        <jackson-databind.version>2.12.4</jackson-databind.version>
+        <!-- Jackson version managed by Spring Boot -->
 
         <jsr305.version>3.0.2</jsr305.version>
-        <javax-validation.version>2.0.1.Final</javax-validation.version>
+        <!-- javax-validation removed - using jakarta.validation -->
 
-        <org.jgrapht.core.version>1.5.1</org.jgrapht.core.version>
+        <org.jgrapht.core.version>1.5.2</org.jgrapht.core.version>
         <org.jgrapht.ext.version>1.0.1</org.jgrapht.ext.version>
 
-        <controlsfx.version>11.1.1</controlsfx.version>
+        <controlsfx.version>11.2.1</controlsfx.version>
 
-        <poi.ooxml.version>5.0.0</poi.ooxml.version>
+        <poi.ooxml.version>5.2.5</poi.ooxml.version>
         <xlsx-streamer.version>2.2.0</xlsx-streamer.version>
 
         <jsqlparser.version>4.5</jsqlparser.version>
@@ -136,7 +136,7 @@
             <dependency>
                 <groupId>org.kordamp.ikonli</groupId>
                 <artifactId>ikonli-bom</artifactId>
-                <version>12.1.0</version>
+                <version>12.3.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -242,11 +242,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.14.0-rc1</version>
-        </dependency>
+        <!-- Jackson version managed by Spring Boot (includes jackson-databind) -->
 
         <!-- SQL parsing support -->
         <dependency>
@@ -258,7 +254,7 @@
         <dependency>
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
-            <version>2.7.2</version>
+            <version>2.7.3</version>
         </dependency>
 
         <!-- University of Bristol JCDF -->
@@ -295,12 +291,7 @@
             <version>${commons.collections4.version}</version>
         </dependency>
 
-        <!-- Apache Commons language -->
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons.lang.version}</version>
-        </dependency>
+        <!-- Removed ancient commons-lang (2003 version) - use commons-lang3 below -->
 
         <!-- Apache Commons Codec  -->
         <dependency>
