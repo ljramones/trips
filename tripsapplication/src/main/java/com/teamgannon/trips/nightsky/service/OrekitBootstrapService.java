@@ -34,8 +34,10 @@ public class OrekitBootstrapService {
             try {
                 File orekitData = new File(orekitDataPath);
                 if (!orekitData.exists()) {
-                    log.warn("Orekit data directory not found at: {}. " +
-                            "Download from https://gitlab.orekit.org/orekit/orekit-data",
+                    log.warn("""
+                            Orekit data directory not found at: {}. \
+                            Download from https://gitlab.orekit.org/orekit/orekit-data\
+                            """,
                             orekitDataPath);
                     return;
                 }

@@ -15,8 +15,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;

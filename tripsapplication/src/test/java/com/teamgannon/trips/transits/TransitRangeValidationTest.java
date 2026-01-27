@@ -122,7 +122,7 @@ class TransitRangeValidationTest {
             TransitRangeDef band2 = createBand("band2", l2, u2);
 
             assertEquals(shouldOverlap, rangesOverlap(band1, band2),
-                    String.format("Range [%.1f,%.1f] vs [%.1f,%.1f]", l1, u1, l2, u2));
+                    "Range [%.1f,%.1f] vs [%.1f,%.1f]".formatted(l1, u1, l2, u2));
         }
     }
 

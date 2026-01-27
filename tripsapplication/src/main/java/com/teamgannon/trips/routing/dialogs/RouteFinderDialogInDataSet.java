@@ -245,7 +245,7 @@ public class RouteFinderDialogInDataSet extends Dialog<RouteFindingOptions> {
             PerformanceMeasure performanceMeasure = starMeasurementService.calculateTimeToDoSearch(starCount);
             performanceMeasure.setDistance(distance);
             log.info("time required to find a route through {} stars is {} secs",
-                    String.format("%,d", starCount),
+                    "%,d".formatted(starCount),
                     String.format("%,.2f", performanceMeasure.getTimeToDoRouteSearch())
             );
             SearchPerformanceDialog searchPerformanceDialog = new SearchPerformanceDialog(performanceMeasure);

@@ -2,7 +2,7 @@ package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.SolarSystem;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Optional;
  * Repository for SolarSystem entities.
  * Provides methods to query solar systems by various criteria.
  */
-public interface SolarSystemRepository extends PagingAndSortingRepository<SolarSystem, String> {
+public interface SolarSystemRepository extends JpaRepository<SolarSystem, String> {
 
     /**
      * Find a solar system by its name

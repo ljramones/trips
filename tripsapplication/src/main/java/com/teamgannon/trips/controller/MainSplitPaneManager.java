@@ -577,7 +577,7 @@ public class MainSplitPaneManager {
                 // Status message
                 String statusMsg = event.getDescription() != null
                         ? String.format("Plotted %d stars (%s)", starObjects.size(), event.getDescription())
-                        : String.format("Plotted %d stars", starObjects.size());
+                        : "Plotted %d stars".formatted(starObjects.size());
                 eventPublisher.publishEvent(new StatusUpdateEvent(this, statusMsg));
 
                 log.info("Plotted {} stars from PlotStarsEvent", starObjects.size());

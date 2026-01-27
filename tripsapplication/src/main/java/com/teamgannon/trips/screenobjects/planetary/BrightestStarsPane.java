@@ -68,7 +68,7 @@ public class BrightestStarsPane extends VBox {
                     setGraphic(null);
                 } else {
                     String compassDir = getCompassDirection(entry.getAzimuth());
-                    setText(String.format("%s  mag:%.1f  %.1f ly  %s %.0f°",
+                    setText("%s  mag:%.1f  %.1f ly  %s %.0f°".formatted(
                             entry.getName(),
                             entry.getApparentMagnitude(),
                             entry.getDistanceFromPlanet(),
@@ -102,11 +102,13 @@ public class BrightestStarsPane extends VBox {
         selectedStarLabel.setText(star.getName());
 
         String compassDir = getCompassDirection(star.getAzimuth());
-        String details = String.format(
-                "Magnitude: %.2f\n" +
-                "Distance: %.2f ly\n" +
-                "Position: %s, %.1f° altitude\n" +
-                "Azimuth: %.1f°",
+        String details = (
+                """
+                Magnitude: %.2f
+                Distance: %.2f ly
+                Position: %s, %.1f° altitude
+                Azimuth: %.1f°\
+                """).formatted(
                 star.getApparentMagnitude(),
                 star.getDistanceFromPlanet(),
                 compassDir,
@@ -153,7 +155,7 @@ public class BrightestStarsPane extends VBox {
             starList.addAll(stars);
         }
 
-        headerLabel.setText(String.format("Top %d Brightest Stars", starList.size()));
+        headerLabel.setText("Top %d Brightest Stars".formatted(starList.size()));
         log.debug("Updated brightest stars list with {} entries", starList.size());
     }
 

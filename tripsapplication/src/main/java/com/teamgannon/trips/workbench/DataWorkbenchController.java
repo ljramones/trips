@@ -900,9 +900,11 @@ public class DataWorkbenchController {
         }
         ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
         dialog.setTitle("Cross-Fill Temperature & Spectral");
-        dialog.setHeaderText("Cross-fill missing data:\n" +
-                "- Estimate temperature from spectral class\n" +
-                "- Estimate spectral class from temperature");
+        dialog.setHeaderText("""
+                Cross-fill missing data:
+                - Estimate temperature from spectral class
+                - Estimate spectral class from temperature\
+                """);
         dialog.setContentText("Dataset:");
         Optional<String> selection = dialog.showAndWait();
         if (selection.isEmpty()) {

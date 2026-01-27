@@ -678,7 +678,7 @@ public class SolarSystemRenderer {
         }
 
         // Add tooltip with star info
-        String tooltipText = String.format("%s\nSpectral: %s\nDistance: %.2f ly",
+        String tooltipText = "%s\nSpectral: %s\nDistance: %.2f ly".formatted(
                 star.getStarName(),
                 star.getSpectralClass(),
                 star.getDistance());
@@ -845,9 +845,9 @@ public class SolarSystemRenderer {
             };
             log.info("  Moon {} screen position: local=[{},{},{}] + parent=[{},{},{}] = [{},{},{}]",
                     planet.getName(),
-                    String.format("%.1f", localScreen[0]), String.format("%.1f", localScreen[1]), String.format("%.1f", localScreen[2]),
-                    String.format("%.1f", parentScreen[0]), String.format("%.1f", parentScreen[1]), String.format("%.1f", parentScreen[2]),
-                    String.format("%.1f", position[0]), String.format("%.1f", position[1]), String.format("%.1f", position[2]));
+                    "%.1f".formatted(localScreen[0]), "%.1f".formatted(localScreen[1]), "%.1f".formatted(localScreen[2]),
+                    "%.1f".formatted(parentScreen[0]), "%.1f".formatted(parentScreen[1]), "%.1f".formatted(parentScreen[2]),
+                    "%.1f".formatted(position[0]), "%.1f".formatted(position[1]), "%.1f".formatted(position[2]));
         } else if (parentOffsetAu != null) {
             // Non-moon with parent offset (shouldn't happen, but handle gracefully)
             localPosAu[0] += parentOffsetAu[0];
@@ -873,12 +873,12 @@ public class SolarSystemRenderer {
             double ratio = moonPhysical / parentPhysicalRadius;
             log.info("Moon {} sizing: moonR={} Earth, parentR={} Earth, ratio={} (1/{}), parentDisplay={}, moonDisplay={}",
                     planet.getName(),
-                    String.format("%.3f", moonPhysical),
-                    String.format("%.2f", parentPhysicalRadius),
-                    String.format("%.4f", ratio),
-                    String.format("%.0f", 1.0 / ratio),
-                    String.format("%.2f", parentDisplayRadius),
-                    String.format("%.3f", planetRadius));
+                    "%.3f".formatted(moonPhysical),
+                    "%.2f".formatted(parentPhysicalRadius),
+                    "%.4f".formatted(ratio),
+                    "%.0f".formatted(1.0 / ratio),
+                    "%.2f".formatted(parentDisplayRadius),
+                    "%.3f".formatted(planetRadius));
         } else {
             // Primary planet sizing
             planetRadius = scaleManager.calculatePlanetDisplayRadius(

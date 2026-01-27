@@ -12,7 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.*;
 
 /**
@@ -144,6 +144,7 @@ public abstract class BaseRepositoryIntegrationTest {
         descriptor.setFileCreator("Test");
         descriptor.setFileNotes("Test dataset");
         descriptor.setDatasetType("Test");
+        descriptor.setFilePath("/test/path/" + name + ".csv"); // Required field in Hibernate 6
         return descriptor;
     }
 

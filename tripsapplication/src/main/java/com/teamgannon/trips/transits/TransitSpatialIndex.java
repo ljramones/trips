@@ -353,9 +353,11 @@ public class TransitSpatialIndex {
         double cullRate = transitsChecked > 0
                 ? (1.0 - (double) transitsReturned / transitsChecked) * 100
                 : 0;
-        return String.format(
-                "TransitSpatialIndex[bands=%d, transits=%d, queries=%d, " +
-                        "avgReturned=%.1f, cullRate=%.1f%%]",
+        return (
+                """
+                TransitSpatialIndex[bands=%d, transits=%d, queries=%d, \
+                avgReturned=%.1f, cullRate=%.1f%%]\
+                """).formatted(
                 transitsByBand.size(), totalTransits, queryCount, avgReturned, cullRate);
     }
 

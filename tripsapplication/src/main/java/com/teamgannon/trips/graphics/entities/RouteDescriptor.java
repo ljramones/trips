@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

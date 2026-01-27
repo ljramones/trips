@@ -228,7 +228,7 @@ public class StarTablePane extends BorderPane {
     private void updateStatus(int pageIndex, long totalElements) {
         int start = pageIndex * PAGE_SIZE + 1;
         int end = Math.min((pageIndex + 1) * PAGE_SIZE, (int) totalElements);
-        statusLabel.setText(String.format("Showing %d - %d of %d stars | Dataset: %s",
+        statusLabel.setText("Showing %d - %d of %d stars | Dataset: %s".formatted(
                 start, end, totalElements, dataSetName));
     }
 

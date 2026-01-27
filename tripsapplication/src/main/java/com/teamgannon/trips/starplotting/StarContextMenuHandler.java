@@ -312,8 +312,11 @@ public class StarContextMenuHandler {
                     alert.setTitle("Solar System Saved");
                     alert.setHeaderText("Generated planets saved successfully");
                     alert.setContentText(String.format(
-                            "Saved %d planets for %s.\n\n" +
-                            "You can now use 'Enter System' to view the generated solar system.",
+                            """
+                            Saved %d planets for %s.
+                            
+                            You can now use 'Enter System' to view the generated solar system.\
+                            """,
                             savedCount, starObject.getDisplayName()));
                     alert.showAndWait();
                 }

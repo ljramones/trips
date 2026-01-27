@@ -81,9 +81,11 @@ public class DisplayAutoRoutesDialog {
 
         // Add instruction label
         Label instructionLabel = new Label(
-                "Select route(s) and click 'Preview' to see them on the map. " +
-                "You can interact with the map while this window is open. " +
-                "Click 'Accept' when done.");
+                """
+                Select route(s) and click 'Preview' to see them on the map. \
+                You can interact with the map while this window is open. \
+                Click 'Accept' when done.\
+                """);
         instructionLabel.setFont(font);
         instructionLabel.setWrapText(true);
         vBox.getChildren().add(instructionLabel);
@@ -202,7 +204,7 @@ public class DisplayAutoRoutesDialog {
                 if (empty || value == null) {
                     setText(null);
                 } else {
-                    setText(String.format("%.2f", value));
+                    setText("%.2f".formatted(value));
                 }
             }
         });

@@ -59,7 +59,7 @@ public class DataImportService {
                 return ImportResult
                         .builder()
                         .success(false)
-                        .message(String.format("There is a current import happening, please wait for %s to finish", currentDataSet))
+                        .message("There is a current import happening, please wait for %s to finish".formatted(currentDataSet))
                         .build();
             }
             currentlyRunning.set(false);
@@ -86,7 +86,7 @@ public class DataImportService {
                     currentlyRunning.set(false);
                     runningImportService = null;
                     chvDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
+                    return ImportResult.builder().success(false).message("failed to start the import for %s".formatted(dataset.getName())).build();
                 }
                 // start the work
                 chvDataImportService.reset();
@@ -104,7 +104,7 @@ public class DataImportService {
                     currentlyRunning.set(false);
                     runningImportService = null;
                     csvDataImportService.reset();
-                    return ImportResult.builder().success(false).message(String.format("failed to start the import for %s", dataset.getName())).build();
+                    return ImportResult.builder().success(false).message("failed to start the import for %s".formatted(dataset.getName())).build();
                 }
                 // start the work
                 csvDataImportService.reset();
@@ -117,7 +117,7 @@ public class DataImportService {
             }
         }
 
-        return ImportResult.builder().success(true).message(String.format("import process started for %s", dataset.getName())).build();
+        return ImportResult.builder().success(true).message("import process started for %s".formatted(dataset.getName())).build();
     }
 
     public void cancelCurrent() {

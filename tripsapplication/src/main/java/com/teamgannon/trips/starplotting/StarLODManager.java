@@ -224,19 +224,19 @@ public class StarLODManager {
         log.info("║                    LOD RENDERING STATISTICS                   ║");
         log.info("╠══════════════════════════════════════════════════════════════╣");
         log.info("║ Level    │ Count │ Percent │ Triangles                       ║");
-        log.info(String.format("║ HIGH     │ %5d │ %6.1f%% │ %,12d                    ║",
+        log.info("║ HIGH     │ %5d │ %6.1f%% │ %,12d                    ║".formatted(
                 highDetailCount, (highDetailCount * 100.0) / total, highTriangles));
-        log.info(String.format("║ MEDIUM   │ %5d │ %6.1f%% │ %,12d                    ║",
+        log.info("║ MEDIUM   │ %5d │ %6.1f%% │ %,12d                    ║".formatted(
                 mediumDetailCount, (mediumDetailCount * 100.0) / total, mediumTriangles));
-        log.info(String.format("║ LOW      │ %5d │ %6.1f%% │ %,12d                    ║",
+        log.info("║ LOW      │ %5d │ %6.1f%% │ %,12d                    ║".formatted(
                 lowDetailCount, (lowDetailCount * 100.0) / total, lowTriangles));
-        log.info(String.format("║ MINIMAL  │ %5d │ %6.1f%% │ %,12d                    ║",
+        log.info("║ MINIMAL  │ %5d │ %6.1f%% │ %,12d                    ║".formatted(
                 minimalDetailCount, (minimalDetailCount * 100.0) / total, minimalTriangles));
         log.info("╠══════════════════════════════════════════════════════════════╣");
-        log.info(String.format("║ TOTAL STARS: %,d                                              ║", total));
-        log.info(String.format("║ ACTUAL TRIANGLES: %,d                                        ║", actualTriangles));
-        log.info(String.format("║ WITHOUT LOD WOULD BE: %,d                                   ║", maxTriangles));
-        log.info(String.format("║ EFFICIENCY GAIN: %.1f%% triangle reduction                   ║", efficiency));
+        log.info("║ TOTAL STARS: %,d                                              ║".formatted(total));
+        log.info("║ ACTUAL TRIANGLES: %,d                                        ║".formatted(actualTriangles));
+        log.info("║ WITHOUT LOD WOULD BE: %,d                                   ║".formatted(maxTriangles));
+        log.info("║ EFFICIENCY GAIN: %.1f%% triangle reduction                   ║".formatted(efficiency));
         log.info("╠══════════════════════════════════════════════════════════════╣");
         log.info("║ OBJECT POOL: {}                                              ║",
                 poolingEnabled ? "ENABLED" : "DISABLED");
@@ -520,7 +520,7 @@ public class StarLODManager {
             return "No stars rendered";
         }
 
-        return String.format("HIGH: %.1f%%, MEDIUM: %.1f%%, LOW: %.1f%%, MINIMAL: %.1f%%",
+        return "HIGH: %.1f%%, MEDIUM: %.1f%%, LOW: %.1f%%, MINIMAL: %.1f%%".formatted(
                 (highDetailCount * 100.0) / total,
                 (mediumDetailCount * 100.0) / total,
                 (lowDetailCount * 100.0) / total,

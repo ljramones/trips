@@ -112,9 +112,9 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
             raDecXYZObject.setDistance(Double.parseDouble(distanceTextField.getText()));
             double[] coordinates = StarMath.getPosition(raDecXYZObject.getRightAscension(), raDecXYZObject.getDeclination(), raDecXYZObject.getDistance());
             raDecXYZObject.setCoordinates(coordinates);
-            xLabel.setText(String.format("%.4f", coordinates[0]));
-            yLabel.setText(String.format("%.4f",coordinates[1]));
-            zLabel.setText(String.format("%.4f",coordinates[2]));
+            xLabel.setText("%.4f".formatted(coordinates[0]));
+            yLabel.setText("%.4f".formatted(coordinates[1]));
+            zLabel.setText("%.4f".formatted(coordinates[2]));
         } catch (NumberFormatException nfe) {
             showErrorAlert("Calculate XYZ", "Entered value is not a double!");
         }

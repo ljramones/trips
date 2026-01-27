@@ -86,9 +86,9 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         if (starDisplayRecord != null && !empty) {
             double[] actualCoordinates = starDisplayRecord.getActualCoordinates();
             entry = starDisplayRecord.getStarName() + " at (" +
-                    String.format("%.2f", actualCoordinates[0]) + "," +
-                    String.format("%.2f", actualCoordinates[1]) + "," +
-                    String.format("%.2f", actualCoordinates[2]) + ")";
+                    "%.2f".formatted(actualCoordinates[0]) + "," +
+                    "%.2f".formatted(actualCoordinates[1]) + "," +
+                    "%.2f".formatted(actualCoordinates[2]) + ")";
 
             tooltip.setText("tooltip here");
             setTooltip(tooltip);

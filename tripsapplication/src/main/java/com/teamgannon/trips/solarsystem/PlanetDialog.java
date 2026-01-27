@@ -121,13 +121,13 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
         gridPane.add(hzHeaderLabel, 0, 1, 3, 1);
 
         gridPane.add(new Label("Conservative:"), 0, 2);
-        Label optimalHZLabel = new Label(String.format("%.2f - %.2f AU",
+        Label optimalHZLabel = new Label("%.2f - %.2f AU".formatted(
                 star.getHzInnerOptimal(), star.getHzOuterOptimal()));
         optimalHZLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;");
         gridPane.add(optimalHZLabel, 1, 2);
 
         gridPane.add(new Label("Optimistic:"), 0, 3);
-        Label maxHZLabel = new Label(String.format("%.2f - %.2f AU",
+        Label maxHZLabel = new Label("%.2f - %.2f AU".formatted(
                 star.getHzInnerMax(), star.getHzOuterMax()));
         maxHZLabel.setStyle("-fx-text-fill: #66BB6A;");
         gridPane.add(maxHZLabel, 1, 3);

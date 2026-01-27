@@ -67,7 +67,7 @@ public class CHVDataImportService extends Service<FileProcessResult> implements 
     protected void succeeded() {
         log.info("dataset loaded");
         String datasetName = dataset != null ? dataset.getName() : "unknown dataset";
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, String.format("new Dataset loaded -> %s", datasetName)));
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, "new Dataset loaded -> %s".formatted(datasetName)));
         unsetProgressControls();
         FileProcessResult fileProcessResult = this.getValue();
         if (fileProcessResult == null) {

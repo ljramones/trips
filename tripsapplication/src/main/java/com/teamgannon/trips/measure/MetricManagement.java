@@ -1,10 +1,10 @@
 package com.teamgannon.trips.measure;
 
 import com.codahale.metrics.MetricRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.management.MBeanServer;
 import java.lang.management.*;
 import java.util.List;

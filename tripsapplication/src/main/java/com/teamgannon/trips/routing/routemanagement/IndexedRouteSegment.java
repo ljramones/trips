@@ -92,7 +92,7 @@ public record IndexedRouteSegment(
 
     @Override
     public String toString() {
-        return String.format("Segment[route=%s, idx=%d, mid=(%.1f,%.1f,%.1f), r=%.1f]",
+        return "Segment[route=%s, idx=%d, mid=(%.1f,%.1f,%.1f), r=%.1f]".formatted(
                 routeId.toString().substring(0, 8),
                 segmentIndex,
                 midpoint.getX(), midpoint.getY(), midpoint.getZ(),

@@ -84,7 +84,7 @@ public class ViewingLocationPane extends VBox {
         // Distance from star in AU
         Double semiMajorAxis = planet.getSemiMajorAxis();
         if (semiMajorAxis != null) {
-            distanceFromStarLabel.setText(String.format("%.2f AU", semiMajorAxis));
+            distanceFromStarLabel.setText("%.2f AU".formatted(semiMajorAxis));
         } else {
             distanceFromStarLabel.setText("-");
         }
@@ -93,13 +93,13 @@ public class ViewingLocationPane extends VBox {
         double azimuth = context.getViewingAzimuth();
         String direction = getCompassDirection(azimuth);
         double altitude = context.getViewingAltitude();
-        viewDirectionLabel.setText(String.format("%s (%.0f° alt)", direction, altitude));
+        viewDirectionLabel.setText("%s (%.0f° alt)".formatted(direction, altitude));
 
         // Local time
         double localTime = context.getLocalTime();
         int hours = (int) localTime;
         int minutes = (int) ((localTime - hours) * 60);
-        localTimeLabel.setText(String.format("%02d:%02d", hours, minutes));
+        localTimeLabel.setText("%02d:%02d".formatted(hours, minutes));
 
         log.debug("Updated viewing location for planet: {}", planet.getName());
     }

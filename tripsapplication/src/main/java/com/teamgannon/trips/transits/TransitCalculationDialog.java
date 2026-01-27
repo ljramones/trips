@@ -63,7 +63,7 @@ public class TransitCalculationDialog extends Dialog<TransitCalculationResult>
         this.calculationService = calculationService;
 
         setTitle("Calculating Transits");
-        setHeaderText(String.format("Finding transits between %,d stars", starsInView.size()));
+        setHeaderText("Finding transits between %,d stars".formatted(starsInView.size()));
 
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));

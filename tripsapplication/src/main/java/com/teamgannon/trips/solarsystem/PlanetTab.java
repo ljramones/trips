@@ -359,7 +359,7 @@ public class PlanetTab extends Tab {
             return "--";
         }
         double celsius = kelvin - 273.15;
-        return String.format("%.0f K (%.0f\u00B0C)", kelvin, celsius);
+        return "%.0f K (%.0f\u00B0C)".formatted(kelvin, celsius);
     }
 
     private TitledPane createClimateSection(Planet planet) {
@@ -430,9 +430,9 @@ public class PlanetTab extends Tab {
         }
         double atm = pressure / 1013.25;
         if (atm > 0.1) {
-            return String.format("%.0f mb (%.2f atm)", pressure, atm);
+            return "%.0f mb (%.2f atm)".formatted(pressure, atm);
         } else {
-            return String.format("%.2f mb", pressure);
+            return "%.2f mb".formatted(pressure);
         }
     }
 
@@ -443,7 +443,7 @@ public class PlanetTab extends Tab {
         if (value > 10e10 || value < 0) {
             return "--";
         }
-        return String.format("%.1f%%", value * 100);
+        return "%.1f%%".formatted(value * 100);
     }
 
     /**
@@ -461,19 +461,19 @@ public class PlanetTab extends Tab {
             }
             if (value >= 1_000_000) {
                 // Use scientific notation for very large values
-                return String.format("%.2e", value);
+                return "%.2e".formatted(value);
             } else if (value >= 1000) {
                 // Use comma formatting for thousands
-                return String.format("%,.0f", value);
+                return "%,.0f".formatted(value);
             } else if (value >= 1) {
                 // Standard 2 decimal places
-                return String.format("%.2f", value);
+                return "%.2f".formatted(value);
             } else if (value >= 0.0001) {
                 // Small values with more precision
-                return String.format("%.4f", value);
+                return "%.4f".formatted(value);
             } else if (value > 0) {
                 // Very small values use scientific notation
-                return String.format("%.2e", value);
+                return "%.2e".formatted(value);
             } else {
                 return "0";
             }

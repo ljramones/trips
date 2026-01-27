@@ -476,7 +476,7 @@ public class ContextManualRoutingDialog extends Dialog<Boolean> {
     // =========================================================================
 
     private String formatCoordinates(double x, double y, double z) {
-        return String.format("x(%.2f), y(%.2f), z(%.2f)", x, y, z);
+        return "x(%.2f), y(%.2f), z(%.2f)".formatted(x, y, z);
     }
 
     private double parseLineWidth() {

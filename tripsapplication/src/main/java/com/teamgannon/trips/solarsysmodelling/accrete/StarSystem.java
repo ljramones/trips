@@ -133,8 +133,10 @@ public class StarSystem {
         }
 
         if (invalid) {
-            log.warn("Fixed invalid stellar parameters for '{}': {} " +
-                     "Please update the star record with correct values.", starName, issues);
+            log.warn("""
+                     Fixed invalid stellar parameters for '{}': {} \
+                     Please update the star record with correct values.\
+                     """, starName, issues);
             // Recalculate derived values after fixing
             centralBody.recalc();
         }
@@ -152,7 +154,7 @@ public class StarSystem {
         ListIterator<Planet> i = this.planets.listIterator();
         int x = 1;
         while (i.hasNext()) {
-            str = str.concat("\tPlanet " + String.format("%02d", x++) + ": " + i.next() + cr);
+            str = str.concat("\tPlanet " + "%02d".formatted(x++) + ": " + i.next() + cr);
         }
         return str;
     }
@@ -220,12 +222,12 @@ public class StarSystem {
 
             if (verbose && extraVerbose) {
                 // this really isn't significant
-                log.debug("Checking at " + String.format("%1$,.2f", sma) + " AU...");
+                log.debug("Checking at " + "%1$,.2f".formatted(sma) + " AU...");
             }
 
             if (dustAvailable(innerEffectLimit(sma, ecc, mass), outerEffectLimit(sma, ecc, mass))) {
                 if (verbose) {
-                    log.debug("Injecting protoplanet at " + String.format("%1$,.2f", sma) + " AU...");
+                    log.debug("Injecting protoplanet at " + "%1$,.2f".formatted(sma) + " AU...");
                 }
                 dustDensity = DUST_DENSITY_COEFF * sqrt(centralBody.mass) * exp(-ALPHA * pow(sma, (1.0 / N)));
                 criticalMass = criticalMass(sma, ecc);
@@ -591,9 +593,9 @@ public class StarSystem {
                             finished = true;
 
                             if (verbose) {
-                                log.debug("Moon Captured... " + String.format("%1$,.2f", thePlanet.sma) + "AU (" +
-                                        String.format("%1$,.2f", thePlanet.massInEarthMasses()) + "EM) <- "
-                                        + String.format("%1$,.2f", Planet.massInEarthMasses(mass)) + "EM");
+                                log.debug("Moon Captured... " + "%1$,.2f".formatted(thePlanet.sma) + "AU (" +
+                                        "%1$,.2f".formatted(thePlanet.massInEarthMasses()) + "EM) <- "
+                                        + "%1$,.2f".formatted(Planet.massInEarthMasses(mass)) + "EM");
                             }
                         } else {
                             // save the moon
@@ -606,7 +608,7 @@ public class StarSystem {
                             escapedMoons.add(p);
 
                             if (verbose) {
-                                String msg = "Moon Escapes... " + String.format("%1$,.2f", thePlanet.sma) + " AU (" + String.format("%1$,.2f", thePlanet.massInEarthMasses()) + "EM)";
+                                String msg = "Moon Escapes... " + "%1$,.2f".formatted(thePlanet.sma) + " AU (" + "%1$,.2f".formatted(thePlanet.massInEarthMasses()) + "EM)";
                                 if (existingMass >= thePlanet.mass * 0.05) {
                                     msg += " (big moons)";
                                 }
@@ -615,7 +617,7 @@ public class StarSystem {
                                 } else if (Planet.massInEarthMasses(mass) <= 0.0001) {
                                     msg += ", too small";
                                 }
-                                msg += " moon at " + String.format("%1$,.2f", Planet.massInEarthMasses(mass)) + "EM";
+                                msg += " moon at " + "%1$,.2f".formatted(Planet.massInEarthMasses(mass)) + "EM";
                                 log.debug(msg);
                             }
                         }
@@ -624,11 +626,11 @@ public class StarSystem {
 
                 if (!finished) {
                     if (verbose) {
-                        log.debug("Collision between two planetesimals: " + String.format("%1$,.2f", thePlanet.sma) + " AU (" +
-                                String.format("%1$,.2f", thePlanet.massInEarthMasses()) + "EM), " + String.format("%1$,.2f", sma) + " AU (" +
-                                String.format("%1$,.2f", SystemObject.massInEarthMasses(mass)) + "EM = " + String.format("%1$,.2f", SystemObject.massInEarthMasses(dustMass)) +
-                                "EM dust + " + String.format("%1$,.2f", SystemObject.massInEarthMasses(gasMass)) + "EM gas [" +
-                                String.format("%1$,.2f", SystemObject.massInEarthMasses(criticalMass)) + "EM])-> " + String.format("%1$,.2f", newSMA) + " AU (" + String.format("%1$,.2f", ecc) + ")");
+                        log.debug("Collision between two planetesimals: " + "%1$,.2f".formatted(thePlanet.sma) + " AU (" +
+                                "%1$,.2f".formatted(thePlanet.massInEarthMasses()) + "EM), " + "%1$,.2f".formatted(sma) + " AU (" +
+                                "%1$,.2f".formatted(SystemObject.massInEarthMasses(mass)) + "EM = " + "%1$,.2f".formatted(SystemObject.massInEarthMasses(dustMass)) +
+                                "EM dust + " + "%1$,.2f".formatted(SystemObject.massInEarthMasses(gasMass)) + "EM gas [" +
+                                "%1$,.2f".formatted(SystemObject.massInEarthMasses(criticalMass)) + "EM])-> " + "%1$,.2f".formatted(newSMA) + " AU (" + "%1$,.2f".formatted(ecc) + ")");
                     }
                     temp = thePlanet.mass + mass;
                     temp = accreteDust(temp, newDust, newGas, newSMA, ecc, centralBody.luminosity, innerBound, outerBound);
@@ -752,9 +754,9 @@ public class StarSystem {
                             finished = true;
 
                             if (verbose) {
-                                log.debug("Moon Captured... " + String.format("%1$,.2f", thePlanet.sma) + "AU (" +
-                                        String.format("%1$,.2f", thePlanet.massInEarthMasses()) + "EM) <- "
-                                        + String.format("%1$,.2f", Planet.massInEarthMasses(mass)) + "EM");
+                                log.debug("Moon Captured... " + "%1$,.2f".formatted(thePlanet.sma) + "AU (" +
+                                        "%1$,.2f".formatted(thePlanet.massInEarthMasses()) + "EM) <- "
+                                        + "%1$,.2f".formatted(Planet.massInEarthMasses(mass)) + "EM");
                             }
                         }
                     }
@@ -762,15 +764,15 @@ public class StarSystem {
 
                 if (!finished) {
                     if (verbose) {
-                        log.debug("Collision between two planetesimals: " + String.format("%1$,.2f", thePlanet.sma) + " AU (" +
-                                String.format("%1$,.2f", thePlanet.massInEarthMasses()) + "EM), "
-                                + String.format("%1$,.2f", sma) + " AU (" +
-                                String.format("%1$,.2f", SystemObject.massInEarthMasses(mass)) + "EM = "
-                                + String.format("%1$,.2f",
+                        log.debug("Collision between two planetesimals: " + "%1$,.2f".formatted(thePlanet.sma) + " AU (" +
+                                "%1$,.2f".formatted(thePlanet.massInEarthMasses()) + "EM), "
+                                + "%1$,.2f".formatted(sma) + " AU (" +
+                                "%1$,.2f".formatted(SystemObject.massInEarthMasses(mass)) + "EM = "
+                                + "%1$,.2f".formatted(
                                 SystemObject.massInEarthMasses(dustMass)) +
-                                "EM dust + " + String.format("%1$,.2f", SystemObject.massInEarthMasses(gasMass)) + "EM gas [" +
-                                String.format("%1$,.2f", SystemObject.massInEarthMasses(criticalMass)) + "EM])-> "
-                                + String.format("%1$,.2f", newSMA) + " AU (" + String.format("%1$,.2f", ecc) + ")");
+                                "EM dust + " + "%1$,.2f".formatted(SystemObject.massInEarthMasses(gasMass)) + "EM gas [" +
+                                "%1$,.2f".formatted(SystemObject.massInEarthMasses(criticalMass)) + "EM])-> "
+                                + "%1$,.2f".formatted(newSMA) + " AU (" + "%1$,.2f".formatted(ecc) + ")");
                     }
                     thePlanet.sma = newSMA;
                     thePlanet.eccentricity = ecc;

@@ -2,7 +2,7 @@ package com.teamgannon.trips.dataset.model;
 
 import lombok.Data;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 /**
  * Font descriptor

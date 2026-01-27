@@ -294,7 +294,7 @@ public class VisualizationSpatialIndex {
      * Returns statistics about the index.
      */
     public @NotNull String getStatistics() {
-        return String.format("VisualizationSpatialIndex[stars=%d, algorithm=%s]",
+        return "VisualizationSpatialIndex[stars=%d, algorithm=%s]".formatted(
                 stars.size(), useTree ? "KD-Tree" : "Linear");
     }
 

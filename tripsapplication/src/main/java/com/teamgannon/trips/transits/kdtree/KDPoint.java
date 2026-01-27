@@ -67,7 +67,7 @@ public record KDPoint<T>(double @NotNull [] coordinates, @NotNull T data) {
 
     @Override
     public String toString() {
-        return String.format("KDPoint[(%.3f, %.3f, %.3f) -> %s]",
+        return "KDPoint[(%.3f, %.3f, %.3f) -> %s]".formatted(
                 coordinates[0], coordinates[1], coordinates[2], data);
     }
 }

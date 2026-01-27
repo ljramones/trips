@@ -337,7 +337,7 @@ public class WorkbenchExoplanetImportService {
             }
         }
 
-        statusConsumer.accept(String.format("Matching complete: %d exact, %d fuzzy, %d RA/Dec, %d unmatched",
+        statusConsumer.accept("Matching complete: %d exact, %d fuzzy, %d RA/Dec, %d unmatched".formatted(
                 exactMatches, fuzzyMatches, raDecMatches, unmatched));
 
         return new ExoplanetMatchResult(matches, exoplanets.size(),
@@ -534,7 +534,7 @@ public class WorkbenchExoplanetImportService {
             }
         }
 
-        statusConsumer.accept(String.format("Import complete: %d imported, %d skipped, %d solar systems created",
+        statusConsumer.accept("Import complete: %d imported, %d skipped, %d solar systems created".formatted(
                 imported, skipped, solarSystemsCreated));
 
         if (!errors.isEmpty()) {
@@ -688,7 +688,7 @@ public class WorkbenchExoplanetImportService {
         if (value == null || value.isNaN()) {
             return "";
         }
-        return String.format(format, value);
+        return format.formatted(value);
     }
 
     // ==================== Inner Classes ====================

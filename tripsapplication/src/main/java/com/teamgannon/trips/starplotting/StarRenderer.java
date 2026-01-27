@@ -279,16 +279,20 @@ public class StarRenderer {
         if (highlight) {
             // Trigger the label's hover style
             label.setStyle(
-                    "-fx-background-color: rgba(70, 130, 180, 0.8);" +
-                    "-fx-padding: 2px 4px;" +
-                    "-fx-background-radius: 3px;"
+                    """
+                    -fx-background-color: rgba(70, 130, 180, 0.8);\
+                    -fx-padding: 2px 4px;\
+                    -fx-background-radius: 3px;\
+                    """
             );
         } else {
             // Restore normal style
             label.setStyle(
-                    "-fx-background-color: rgba(0, 0, 0, 0.6);" +
-                    "-fx-padding: 2px 4px;" +
-                    "-fx-background-radius: 3px;"
+                    """
+                    -fx-background-color: rgba(0, 0, 0, 0.6);\
+                    -fx-padding: 2px 4px;\
+                    -fx-background-radius: 3px;\
+                    """
             );
         }
     }

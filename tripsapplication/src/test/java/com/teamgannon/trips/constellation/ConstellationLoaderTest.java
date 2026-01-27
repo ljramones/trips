@@ -25,8 +25,10 @@ class ConstellationLoaderTest {
     void initializeLoadsConstellationsFromProgramData() throws Exception {
         Path csv = tempDir.resolve("constellation.csv");
         Files.writeString(csv,
-                "Orion,Ori,ORI,Orions,Greek,Hunter,Rigel\n" +
-                        "Lyra,Lyr,LYR,Lyras,Greek,Lyre,Vega\n",
+                """
+                Orion,Ori,ORI,Orions,Greek,Hunter,Rigel
+                Lyra,Lyr,LYR,Lyras,Greek,Lyre,Vega
+                """,
                 StandardCharsets.UTF_8);
 
         Localization localization = new Localization();

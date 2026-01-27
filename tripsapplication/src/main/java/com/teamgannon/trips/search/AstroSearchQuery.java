@@ -172,9 +172,9 @@ public class AstroSearchQuery {
     }
 
     public @NotNull String getCenterRangingCube() {
-        return "Range Cube is :" + String.format("(x[%5.2f, %5.2f]),", xMinus, xPlus) +
-                String.format("(y[%5.2f, %5.2f]),", yMinus, yPlus) +
-                String.format("(z[%5.2f, %5.2f])", zMinus, zPlus);
+        return "Range Cube is :" + "(x[%5.2f, %5.2f]),".formatted(xMinus, xPlus) +
+                "(y[%5.2f, %5.2f]),".formatted(yMinus, yPlus) +
+                "(z[%5.2f, %5.2f])".formatted(zMinus, zPlus);
     }
 
     public void addPolity(String polity) {

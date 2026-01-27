@@ -283,7 +283,7 @@ class KDTree3DTest {
                 }
 
                 assertEquals(bruteForce, treeResultSet,
-                        String.format("Query (%.2f, %.2f, %.2f) r=%.2f", qx, qy, qz, radius));
+                        "Query (%.2f, %.2f, %.2f) r=%.2f".formatted(qx, qy, qz, radius));
             }
         }
 
@@ -310,7 +310,7 @@ class KDTree3DTest {
             for (KDPoint<Integer> result : results) {
                 double dist = result.distanceTo(query);
                 assertTrue(dist <= radius + EPS,
-                        String.format("Point at distance %.4f exceeds radius %.4f", dist, radius));
+                        "Point at distance %.4f exceeds radius %.4f".formatted(dist, radius));
             }
         }
     }
@@ -376,7 +376,7 @@ class KDTree3DTest {
 
             // KD-Tree should be significantly faster
             assertTrue(treeTime < bruteTime,
-                    String.format("KD-Tree (%d ms) should be faster than brute force (%d ms)",
+                    "KD-Tree (%d ms) should be faster than brute force (%d ms)".formatted(
                             treeTime / 1_000_000, bruteTime / 1_000_000));
         }
     }

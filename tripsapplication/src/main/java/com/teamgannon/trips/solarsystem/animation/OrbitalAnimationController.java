@@ -110,12 +110,12 @@ public class OrbitalAnimationController {
             // Debug logging (every ~60 frames = 1 second)
             if (frameCount % 60 == 0 && planet == planets.get(0)) {
                 log.debug("Animation frame: elapsedDays={}, planet={}, trueAnomaly={}, pos=[{},{},{}]",
-                        String.format("%.2f", elapsedDays),
+                        "%.2f".formatted(elapsedDays),
                         planet.getName(),
-                        String.format("%.2f", trueAnomaly),
-                        String.format("%.4f", posAu[0]),
-                        String.format("%.4f", posAu[1]),
-                        String.format("%.4f", posAu[2]));
+                        "%.2f".formatted(trueAnomaly),
+                        "%.4f".formatted(posAu[0]),
+                        "%.4f".formatted(posAu[1]),
+                        "%.4f".formatted(posAu[2]));
             }
         }
 

@@ -605,7 +605,7 @@ class StarObjectRepositoryIntegrationTest extends BaseRepositoryIntegrationTest 
                 for (int y = 0; y < 5; y++) {
                     for (int z = 0; z < 5; z++) {
                         StarObject star = createStar(
-                                String.format("Star_%d_%d_%d", x, y, z),
+                                "Star_%d_%d_%d".formatted(x, y, z),
                                 x * 2, y * 2, z * 2,
                                 Math.sqrt(x * x + y * y + z * z) * 2
                         );

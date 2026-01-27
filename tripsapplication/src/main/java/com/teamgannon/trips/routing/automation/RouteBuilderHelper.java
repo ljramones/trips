@@ -46,7 +46,7 @@ public class RouteBuilderHelper {
         String[] starList = extractPath.split(",");
 
         // set route info
-        route.setName(String.format("Route %s to %s, path %s", source, destination, pathName));
+        route.setName("Route %s to %s, path %s".formatted(source, destination, pathName));
         route.setRouteNotes(path);
         route.setColor(color);
         route.setMaxLength(starList.length - 1);

@@ -219,13 +219,13 @@ public class InterstellarScaleManager {
         }
 
         log.info("Calculated scaling: center=[{},{},{}], ranges=[{},{},{}], factor={}",
-                String.format("%.2f", centerCoordinates[0]),
-                String.format("%.2f", centerCoordinates[1]),
-                String.format("%.2f", centerCoordinates[2]),
-                String.format("%.2f", xRange),
-                String.format("%.2f", yRange),
-                String.format("%.2f", zRange),
-                String.format("%.4f", baseScalingFactor));
+                "%.2f".formatted(centerCoordinates[0]),
+                "%.2f".formatted(centerCoordinates[1]),
+                "%.2f".formatted(centerCoordinates[2]),
+                "%.2f".formatted(xRange),
+                "%.2f".formatted(yRange),
+                "%.2f".formatted(zRange),
+                "%.4f".formatted(baseScalingFactor));
     }
 
     // ==================== Coordinate Transformation Methods ====================
@@ -522,14 +522,16 @@ public class InterstellarScaleManager {
      */
     public String getScaleDescription() {
         double lyPerScreenUnit = 1.0 / getEffectiveScalingFactor();
-        return String.format("1 screen unit = %.3f light-years (zoom: %.1fx)",
+        return "1 screen unit = %.3f light-years (zoom: %.1fx)".formatted(
                 lyPerScreenUnit, zoomLevel);
     }
 
     @Override
     public String toString() {
-        return String.format("InterstellarScaleManager[center=(%.2f,%.2f,%.2f), " +
-                        "factor=%.4f, zoom=%.2f, ranges=(%.2f,%.2f,%.2f)]",
+        return ("""
+                InterstellarScaleManager[center=(%.2f,%.2f,%.2f), \
+                factor=%.4f, zoom=%.2f, ranges=(%.2f,%.2f,%.2f)]\
+                """).formatted(
                 centerCoordinatesLY[0], centerCoordinatesLY[1], centerCoordinatesLY[2],
                 baseScalingFactor, zoomLevel,
                 getXRange(), getYRange(), getZRange());

@@ -305,22 +305,22 @@ public class SimStar extends SystemObject {
         StringBuilder sb = new StringBuilder();
         sb.append(stellarType)
                 .append(" (")
-                .append(String.format("%1$,.2f", mass))
+                .append("%1$,.2f".formatted(mass))
                 .append("sm, ")
-                .append(String.format("%1$,.2f", luminosity))
+                .append("%1$,.2f".formatted(luminosity))
                 .append("L☉, ")
-                .append(String.format("%1$,.0f", temperature))
+                .append("%1$,.0f".formatted(temperature))
                 .append("K)");
 
         // Include habitable zone information
         sb.append(" HZ: ")
-                .append(String.format("%1$,.2f", hzInnerOptimal))
+                .append("%1$,.2f".formatted(hzInnerOptimal))
                 .append("-")
-                .append(String.format("%1$,.2f", hzOuterOptimal))
+                .append("%1$,.2f".formatted(hzOuterOptimal))
                 .append(" AU (optimal), ")
-                .append(String.format("%1$,.2f", hzInnerMax))
+                .append("%1$,.2f".formatted(hzInnerMax))
                 .append("-")
-                .append(String.format("%1$,.2f", hzOuterMax))
+                .append("%1$,.2f".formatted(hzOuterMax))
                 .append(" AU (max)");
 
         return sb.toString();

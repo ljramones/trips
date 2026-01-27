@@ -111,7 +111,7 @@ public record IndexedTransit(
 
     @Override
     public String toString() {
-        return String.format("Transit[%s→%s, band=%s, dist=%.1f ly, mid=(%.1f,%.1f,%.1f)]",
+        return "Transit[%s→%s, band=%s, dist=%.1f ly, mid=(%.1f,%.1f,%.1f)]".formatted(
                 sourceName, targetName, bandId, distance,
                 midpoint.getX(), midpoint.getY(), midpoint.getZ());
     }

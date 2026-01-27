@@ -101,7 +101,7 @@ public class InViewRouteFinderService extends Service<RouteFindingResult> {
 
                 if (result.isSuccess()) {
                     int routeCount = result.getRoutes().getRoutes().size();
-                    updateMessage(String.format("Found %d route%s", routeCount, routeCount == 1 ? "" : "s"));
+                    updateMessage("Found %d route%s".formatted(routeCount, routeCount == 1 ? "" : "s"));
                     log.info("Async route finding completed: {} routes found", routeCount);
                 } else {
                     updateMessage("No routes found");

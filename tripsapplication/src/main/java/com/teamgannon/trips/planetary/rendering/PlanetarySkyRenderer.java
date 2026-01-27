@@ -710,7 +710,7 @@ public class PlanetarySkyRenderer {
 
         @Override
         public String toString() {
-            return String.format("%s (mag %.1f, %.1f ly)", name, apparentMagnitude, distanceFromPlanet);
+            return "%s (mag %.1f, %.1f ly)".formatted(name, apparentMagnitude, distanceFromPlanet);
         }
     }
 }

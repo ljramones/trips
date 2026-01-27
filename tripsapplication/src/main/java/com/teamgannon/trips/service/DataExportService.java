@@ -93,7 +93,7 @@ public class DataExportService {
                 return ExportResult
                         .builder()
                         .success(false)
-                        .message(String.format("There is a current import happening, please wait for %s to finish", runningExportService.whoAmI()))
+                        .message("There is a current import happening, please wait for %s to finish".formatted(runningExportService.whoAmI()))
                         .build();
 
             }
@@ -158,7 +158,7 @@ public class DataExportService {
                 return ExportResult
                         .builder()
                         .success(false)
-                        .message(String.format("There is a current import happening, please wait for %s to finish", runningExportService.whoAmI()))
+                        .message("There is a current import happening, please wait for %s to finish".formatted(runningExportService.whoAmI()))
                         .build();
 
             }

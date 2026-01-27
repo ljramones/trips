@@ -937,7 +937,7 @@ Always verify coordinate system when working with star positions:
 
 - **Language**: Java 17
 - **UI Framework**: JavaFX 21.0.5
-- **Backend**: Spring Boot 2.7.4
+- **Backend**: Spring Boot 3.5.9
 - **Database**: H2 (embedded, file-based)
 - **ORM**: Spring Data JPA with Hibernate
 - **Dependency Injection**: Spring Framework + FxWeaver

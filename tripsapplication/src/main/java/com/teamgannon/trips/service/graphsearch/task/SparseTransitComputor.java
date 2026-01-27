@@ -247,7 +247,7 @@ public class SparseTransitComputor {
         long start = System.currentTimeMillis();
         List<SparseTransit> transits = sparseTransitComputor.calculateTransits(lower, upper, starRecords);
         long end = System.currentTimeMillis();
-        log.info(String.format("Time required for %d stars with %,d possible connections is %d ms gives %,d valid transits",
+        log.info("Time required for %d stars with %,d possible connections is %d ms gives %,d valid transits".formatted(
                 count, (long) count * count / 2, end - start, transits.size()));
 
         log.info("numbers of discovered transits=" + transits.size());
