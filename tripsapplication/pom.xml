@@ -88,7 +88,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
 
-        <camel.version>3.13.0</camel.version>
         <spring.boot.version>2.7.4</spring.boot.version>
 
         <javafx.version>21.0.5</javafx.version>
