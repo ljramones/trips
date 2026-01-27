@@ -197,7 +197,7 @@ TRIPS uses a pluggable view system with paired 3D and side panes:
 
 - **Language**: Java 17
 - **UI Framework**: JavaFX 21.0.5
-- **Backend**: Spring Boot 2.7.4
+- **Backend**: Spring Boot 4.0.2
 - **Database**: H2 (embedded, file-based)
 - **ORM**: Spring Data JPA with Hibernate
 - **Graph Algorithms**: JGraphT 1.5.1
