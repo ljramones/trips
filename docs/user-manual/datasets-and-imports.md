@@ -1,6 +1,8 @@
 # Datasets and Imports
 
-TRIPS supports multiple datasets. You can import new data, switch between datasets, and configure which catalog is active.
+TRIPS supports multiple datasets. You can import new data, switch between datasets, and configure which catalog is active for operations.
+
+A sample dataset derived from Gaia DR2 data (`30ly.trips.csv`) is included with TRIPS. On first launch, you'll need to import this file (or your own data) before you can visualize stars.
 
 ## Importing a Dataset
 
@@ -22,7 +24,7 @@ Once you have imported datasets, the table shows them with columns for:
 The buttons at the bottom allow you to:
 - **Add Dataset**: Import a new dataset from a CSV file
 - **Delete**: Remove the selected dataset
-- **Export**: Export the selected dataset
+- **Export**: Export the selected dataset as CSV
 - **Close**: Close the dialog
 
 ### Adding a Dataset
@@ -32,18 +34,17 @@ Click **Add Dataset** to open the import dialog:
 ![Add a Dataset dialog](images/AddDsImportDialog.png)
 
 Fill in the following fields:
-- **Dataset Type**: Select the format (e.g., "csv import")
-- **Select File**: Click to browse for the data file. A file browser will open:
+
+1. **Dataset Type**: Select the format (e.g., "csv import")
+2. **Select File**: Click to browse for the data file:
 
 ![Selecting a CSV file](images/AddSelectFile.png)
 
 Navigate to your CSV file and click **Open**. The included sample dataset is named `30ly.trips.csv`.
 
-Then fill in the remaining fields:
-- **Dataset File**: Shows the path to the selected file
-- **Dataset Name**: Give your dataset a meaningful name
-- **Author**: Optionally record who created/provided the data
-- **Notes**: Add any descriptive information about the dataset
+3. **Dataset Name**: Give your dataset a meaningful name
+4. **Author**: Optionally record who created/provided the data
+5. **Notes**: Add any descriptive information about the dataset
 
 ![Completed Add Dataset form](images/AddinfoOnDs.png)
 
@@ -59,7 +60,7 @@ The dataset now appears in the management table:
 
 ![Dataset loaded in management dialog](images/AfterExport2.png)
 
-With a dataset selected, you can use the **Delete** or **Export** buttons. Click **Close** to return to the main application.
+With a dataset selected, the **Delete** and **Export** buttons become active. Click **Close** to return to the main application.
 
 ### Deleting a Dataset
 
@@ -77,8 +78,6 @@ To export a dataset as CSV, select it in the table and click **Export**:
 
 Click **OK** to proceed. You'll be prompted to choose a location and filename for the exported CSV file.
 
-A dataset derived from Gaia DR2 data is included with TRIPS as a CSV file. On first launch, you'll need to use this dialog to import it (or your own data) before you can visualize stars.
-
 ## Opening a Dataset (Setting the Context)
 
 TRIPS operates on a single dataset at a time, called the **context**. The context determines which stars are available for searching, plotting, and routing operations.
@@ -89,13 +88,15 @@ To set the context, use **File → Open Dataset...** to select from your previou
 
 Use the **Active Dataset** dropdown to choose which dataset to work with. Once selected, all operations will work with that dataset until you switch to another.
 
-You can also set the context using the **DataSets Available** section in the side panel:
+### Using the Side Panel
+
+You can also manage datasets using the **DataSets Available** section in the side panel:
 
 ![Datasets in side panel](images/sidePanelDataSet.png)
 
-1. Open the side panel (click **Side Pane** in the toolbar).
-2. Expand the **DataSets Available** section.
-3. Your imported datasets are listed with their star count (e.g., "Set 1: 30 ly dataset has 566 stars").
+1. Open the side panel (click **Side Pane** in the toolbar)
+2. Expand the **DataSets Available** section
+3. Your imported datasets are listed with their star count (e.g., "Set 1: 30 ly dataset has 566 stars")
 
 Right-click on a dataset to see the available actions:
 
@@ -128,6 +129,6 @@ Access the Data Workbench by clicking the **Workbench** button in the toolbar.
 
 ## Troubleshooting
 
-- If no datasets appear, confirm you have imported at least one dataset via File → Import/Load or Manage dataset(s).
-- If the import dialog doesn't recognize your file format, ensure it's a properly formatted CSV with the expected columns.
-- For issues with the Data Workbench online queries, check your internet connection and that the astronomical services are available.
+- **No datasets appear**: Confirm you have imported at least one dataset via File → Import/Load or Manage dataset(s).
+- **Import doesn't recognize file format**: Ensure the file is a properly formatted CSV with the expected columns.
+- **Data Workbench queries fail**: Check your internet connection and that the astronomical services (Gaia, SIMBAD, VizieR) are available.
