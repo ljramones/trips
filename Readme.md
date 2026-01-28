@@ -259,23 +259,66 @@ problemreport:
 
 ### Building with Dropbox Upload
 
-For release builds, the Dropbox token is embedded at build time (never stored in source control):
+For release builds, the Dropbox token is embedded at build time (never stored in source control).
 
-1. **Set up Dropbox App** (one-time):
-   - Go to [Dropbox App Console](https://www.dropbox.com/developers/apps)
-   - Create app with **App folder** access (limits access to one folder only)
-   - Enable `files.content.write` permission
-   - Generate an access token
+#### 1. Set up Dropbox App (one-time)
 
-2. **Build the release**:
-   ```bash
-   export TRIPS_DROPBOX_TOKEN="sl.your-token-here"
-   ./mvnw-java17.sh clean package -Prelease -Dspring.profiles.active=release
-   ```
+1. Go to [Dropbox App Console](https://www.dropbox.com/developers/apps)
+2. Click **Create app**
+3. Select **Scoped access**
+4. Select **App folder** (limits access to one folder only - more secure)
+5. Name your app (e.g., "tripsapplication")
+6. Click **Create app**
 
-3. **Distribute**: The resulting JAR has the token embedded. All users can submit reports without any configuration.
+After creation, configure permissions:
+1. Go to the **Permissions** tab
+2. Under **Files and folders**, enable:
+   - `files.content.write` - to upload reports
+   - `files.content.read` - to verify uploads (optional)
+3. Click **Submit** to save permissions
 
-**Development mode**: Without the `-Prelease` profile, reports are saved locally to the pending directory and can be manually reviewed.
+Generate the access token:
+1. Go to the **Settings** tab
+2. Under **OAuth 2**, find **Generated access token**
+3. Click **Generate** to create a token
+4. Copy the token (starts with `sl.`)
+
+**Important**: If you add permissions after generating a token, you must generate a new token for the permissions to take effect.
+
+#### 2. Build the Release JAR
+
+```bash
+cd /path/to/trips
+export TRIPS_DROPBOX_TOKEN="sl.your-token-here"
+./mvnw-java17.sh clean package -Prelease
+```
+
+The token is embedded into `application-release.yml` via Maven resource filtering during the build. The token is **not** stored in source control.
+
+#### 3. Run the Release JAR
+
+```bash
+cd tripsapplication
+java -Dspring.profiles.active=release -jar target/tripsapplication-*.jar
+```
+
+**Important**: Run from the `tripsapplication` directory so the relative database path (`./data/tripsdb`) resolves correctly.
+
+#### 4. Distribute
+
+The resulting JAR at `tripsapplication/target/tripsapplication-*.jar` has the token embedded. Users can submit problem reports without any configuration.
+
+Uploaded reports appear in your Dropbox at:
+```
+Apps/tripsapplication/trips-problem-reports/<install-id>/<date>/RPT-<report-id>.zip
+```
+
+#### Development Mode
+
+Without the `-Prelease` profile, or when `TRIPS_DROPBOX_TOKEN` environment variable is not set:
+- Reports are saved locally to the pending directory
+- Location varies by platform (see Report Storage Locations above)
+- Reports can be manually reviewed or will retry upload on next startup if a token becomes available
 
 ---
 
