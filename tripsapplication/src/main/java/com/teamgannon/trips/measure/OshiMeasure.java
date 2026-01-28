@@ -280,6 +280,15 @@ public class OshiMeasure {
         return currentOsProcess;
     }
 
+    /**
+     * Gets the process ID of the current process.
+     *
+     * @return the current process PID
+     */
+    public int getCurrentProcessPid() {
+        return currentProcessPid;
+    }
+
     public String currentOsProcessAsString() {
         StringBuilder stringBuilder = new StringBuilder();
         String name = currentOsProcess.getName();

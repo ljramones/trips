@@ -57,5 +57,19 @@ orekit:
   data:
     path: ${user.home}/orekit-data
 
+# Problem report feature configuration
+# For development/testing: set TRIPS_DROPBOX_TOKEN environment variable
+# For release builds: use -Prelease profile which embeds token at build time
+problemreport:
+  enabled: true
+  logTailLines: 500
+  pendingReportMaxDays: 30
+  dropbox:
+    accessToken: ${TRIPS_DROPBOX_TOKEN:}
+    uploadPath: /trips-problem-reports/
+  crashfile:
+    enabled: true
+    maxAgeDays: 7
+
 
 

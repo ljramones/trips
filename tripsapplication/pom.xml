@@ -696,6 +696,35 @@
     </build>
 
     <profiles>
+        <!-- Release profile: embeds Dropbox token at build time -->
+        <!-- Usage: TRIPS_DROPBOX_TOKEN="sl.xxx" ./mvnw-java17.sh clean package -Prelease -->
+        <profile>
+            <id>release</id>
+            <properties>
+                <!-- Read token from environment variable -->
+                <dropbox.token>${env.TRIPS_DROPBOX_TOKEN}</dropbox.token>
+            </properties>
+            <build>
+                <resources>
+                    <!-- Filter application-release.yml to embed the token -->
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                        <includes>
+                            <include>application-release.yml</include>
+                        </includes>
+                    </resource>
+                    <!-- Copy all other resources without filtering -->
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>false</filtering>
+                        <excludes>
+                            <exclude>application-release.yml</exclude>
+                        </excludes>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
         <profile>
             <id>jpackage</id>
             <build>

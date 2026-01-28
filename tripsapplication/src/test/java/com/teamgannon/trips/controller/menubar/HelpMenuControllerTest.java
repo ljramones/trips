@@ -2,6 +2,7 @@ package com.teamgannon.trips.controller.menubar;
 
 import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.measure.OshiMeasure;
+import com.teamgannon.trips.service.problemreport.ProblemReportService;
 import javafx.application.HostServices;
 import javafx.event.ActionEvent;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -34,6 +35,9 @@ class HelpMenuControllerTest {
     private OshiMeasure oshiMeasure;
 
     @Mock
+    private ProblemReportService problemReportService;
+
+    @Mock
     private ActionEvent actionEvent;
 
     private HelpMenuController controller;
@@ -43,7 +47,7 @@ class HelpMenuControllerTest {
         MockitoAnnotations.openMocks(this);
         // FxWeaver.getBean returns HostServices mock
         when(fxWeaver.getBean(HostServices.class)).thenReturn(hostServices);
-        controller = new HelpMenuController(fxWeaver, localization, oshiMeasure);
+        controller = new HelpMenuController(fxWeaver, localization, oshiMeasure, problemReportService);
     }
 
     @Test

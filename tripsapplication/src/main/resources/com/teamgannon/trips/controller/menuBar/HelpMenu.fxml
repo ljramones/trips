@@ -16,4 +16,8 @@
     <MenuItem mnemonicParsing="false"
               onAction="#getInventory"
               text="Get Computer Description"/>
+    <SeparatorMenuItem/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#reportProblem"
+              text="Report a Problem..."/>
 </Menu>

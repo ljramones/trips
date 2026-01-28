@@ -1,0 +1,7 @@
+# Release configuration - token embedded at build time
+# Build with: TRIPS_DROPBOX_TOKEN="sl.xxx" ./mvnw-java17.sh clean package -Prelease
+# Then run with: java -Dspring.profiles.active=release -jar trips.jar
+
+problemreport:
+  dropbox:
+    accessToken: @dropbox.token@

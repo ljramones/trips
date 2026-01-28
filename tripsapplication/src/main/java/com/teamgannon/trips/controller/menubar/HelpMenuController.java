@@ -5,6 +5,7 @@ import com.teamgannon.trips.dialogs.AboutDialog;
 import com.teamgannon.trips.dialogs.inventory.InventoryReport;
 import com.teamgannon.trips.measure.OshiMeasure;
 import com.teamgannon.trips.report.ReportManager;
+import com.teamgannon.trips.service.problemreport.ProblemReportService;
 import javafx.application.HostServices;
 import javafx.event.ActionEvent;
 import javafx.stage.Stage;
@@ -26,13 +27,16 @@ public class HelpMenuController {
     private final Localization localization;
     private final HostServices hostServices;
     private final OshiMeasure oshiMeasure;
+    private final ProblemReportService problemReportService;
 
     public HelpMenuController(FxWeaver fxWeaver,
                               Localization localization,
-                              OshiMeasure oshiMeasure) {
+                              OshiMeasure oshiMeasure,
+                              ProblemReportService problemReportService) {
         this.localization = localization;
         this.hostServices = fxWeaver.getBean(HostServices.class);
         this.oshiMeasure = oshiMeasure;
+        this.problemReportService = problemReportService;
     }
 
     /**
@@ -82,6 +86,19 @@ public class HelpMenuController {
         } catch (Exception e) {
             log.error("Error generating inventory report", e);
             showErrorAlert("Inventory Report", "Failed to generate report: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Opens the Report a Problem dialog for submitting diagnostic reports.
+     */
+    public void reportProblem(ActionEvent actionEvent) {
+        try {
+            Stage stage = getStageFromEvent(actionEvent);
+            problemReportService.reportProblem(stage);
+        } catch (Exception e) {
+            log.error("Error opening problem report dialog", e);
+            showErrorAlert("Report a Problem", "Failed to open dialog: " + e.getMessage());
         }
     }
 

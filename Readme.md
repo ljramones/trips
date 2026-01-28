@@ -102,6 +102,16 @@ Import stellar data from multiple sources:
 - **Validation**: Data validation with detailed error reporting
 - **Exoplanet Import**: Import exoplanet.eu catalog data with star matching
 
+### Built-in Problem Reporting
+
+Report issues directly from the application:
+
+- **Help > Report a Problem**: Submit diagnostic reports with one click
+- **Automatic Attachments**: Include logs, screenshots, and system info
+- **Crash Detection**: Automatically detects JVM crash files (`hs_err_pid*.log`)
+- **Offline Support**: Reports saved locally and retried when connectivity returns
+- **Privacy Aware**: You control exactly what gets included in each report
+
 ### AT-HYG Data Enrichment
 
 The Data Workbench includes tools to fill gaps in the AT-HYG stellar database (~2.5 million stars). The enrichment pipeline addresses missing values that are critical for simulations (ACCRETE, OreKit) and visualization:
@@ -190,6 +200,82 @@ TRIPS uses a pluggable view system with paired 3D and side panes:
 * [Code of Conduct](CODE_OF_CONDUCT.md)
 * [PRs with IntelliJ](PR_WITH_INTELLIJ.md)
 * [AGENTS Instructions](AGENTS.md)
+
+---
+
+## Problem Reporting
+
+TRIPS includes a built-in problem reporting feature to help developers diagnose and fix issues.
+
+### Submitting a Report
+
+1. Go to **Help > Report a Problem...**
+2. On first use, enter your email and name (stored locally for follow-up)
+3. Describe the problem you're experiencing
+4. Select optional attachments:
+   - **System information**: OS, Java version, memory, CPU details
+   - **Application logs**: Last 500 lines from the log file
+   - **Screenshot**: Capture of the current window
+   - **JVM crash files**: Any `hs_err_pid*.log` files from recent crashes
+5. Click **Submit Report**
+
+### How It Works
+
+- Reports are bundled as ZIP files containing:
+  - `report.json` - Metadata and problem description
+  - `system.json` - System information (if included)
+  - `screenshot.png` - Window capture (if included)
+  - `log_tail.txt` - Recent log entries (if included)
+  - `crash/*.log` - JVM crash files (if detected)
+
+- Reports are uploaded to a secure Dropbox folder for developer review
+- If offline, reports are saved locally and automatically retried on next startup
+- Pending reports older than 30 days are automatically cleaned up
+
+### Report Storage Locations
+
+| Platform | Location |
+|----------|----------|
+| macOS | `~/Library/Application Support/TRIPS/reports/` |
+| Windows | `%APPDATA%\TRIPS\reports\` |
+| Linux | `~/.trips/reports/` |
+
+### Configuration
+
+The feature can be configured in `application.yml`:
+
+```yaml
+problemreport:
+  enabled: true                    # Enable/disable the feature
+  logTailLines: 500               # Number of log lines to include
+  pendingReportMaxDays: 30        # Days to keep pending reports
+  dropbox:
+    accessToken:                  # Embedded at build time (see below)
+    uploadPath: /trips-problem-reports/
+  crashfile:
+    enabled: true                 # Detect JVM crash files
+    maxAgeDays: 7                 # Only include recent crash files
+```
+
+### Building with Dropbox Upload
+
+For release builds, the Dropbox token is embedded at build time (never stored in source control):
+
+1. **Set up Dropbox App** (one-time):
+   - Go to [Dropbox App Console](https://www.dropbox.com/developers/apps)
+   - Create app with **App folder** access (limits access to one folder only)
+   - Enable `files.content.write` permission
+   - Generate an access token
+
+2. **Build the release**:
+   ```bash
+   export TRIPS_DROPBOX_TOKEN="sl.your-token-here"
+   ./mvnw-java17.sh clean package -Prelease -Dspring.profiles.active=release
+   ```
+
+3. **Distribute**: The resulting JAR has the token embedded. All users can submit reports without any configuration.
+
+**Development mode**: Without the `-Prelease` profile, reports are saved locally to the pending directory and can be manually reviewed.
 
 ---
 
