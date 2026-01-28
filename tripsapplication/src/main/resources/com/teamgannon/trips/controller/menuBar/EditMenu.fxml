@@ -6,7 +6,7 @@
       fx:controller="com.teamgannon.trips.controller.menubar.EditMenuController">
     <MenuItem mnemonicParsing="false"
               onAction="#runQuery"
-              text="Select starPositionDescriptors to display from current dataset"/>
+              text="Select stars to display from current dataset"/>
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#findInView"
@@ -16,7 +16,7 @@
               text="Choose a starPositionDescriptor by by catalog Id"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findByConstellation"
-              text="Retrieve all starPositionDescriptors by constellation"/>
+              text="Retrieve all stars by constellation"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findByCommonName"
               text="Choose a starPositionDescriptor by by common name"/>
@@ -26,7 +26,7 @@
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#findRelatedStars"
-              text="Get a list of all starPositionDescriptors related to a requested starPositionDescriptor from a specified distance in ly"/>
+              text="Get a list of all stars related to a requested starPositionDescriptor from a specified distance in ly"/>
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#editStar"
