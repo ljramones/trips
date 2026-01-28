@@ -726,7 +726,73 @@
             </build>
         </profile>
         <profile>
-            <id>jpackage</id>
+            <id>jpackage-mac</id>
+            <properties>
+                <jpackage.type>DMG</jpackage.type>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Copy the jar to a staging directory for jpackage -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-jar-for-jpackage</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/jpackage-input</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>${project.build.finalName}.jar</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <name>${jpackage.name}</name>
+                            <appVersion>${jpackage.appVersion}</appVersion>
+                            <vendor>Charles Gannon</vendor>
+                            <type>${jpackage.type}</type>
+                            <mainClass>org.springframework.boot.loader.JarLauncher</mainClass>
+                            <mainJar>${project.build.finalName}.jar</mainJar>
+                            <input>${project.build.directory}/jpackage-input</input>
+                            <destination>${project.build.directory}/jpackage</destination>
+                            <javaOptions>
+                                <javaOption>-Dfile.encoding=UTF-8</javaOption>
+                            </javaOptions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-app-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jpackage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>jpackage-win</id>
+            <properties>
+                <jpackage.type>EXE</jpackage.type>
+            </properties>
             <build>
                 <plugins>
                     <!-- Copy the jar to a staging directory for jpackage -->
