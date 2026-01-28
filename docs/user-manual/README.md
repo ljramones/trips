@@ -16,3 +16,7 @@ Welcome to the TRIPS user manual. This guide focuses on common workflows and how
 - [Data Files and Storage](data-files-and-storage.md)
 - [Troubleshooting](troubleshooting.md)
 - [Glossary](glossary.md)
+
+## Reference
+
+- [Data Models](data-models/README.md) - Database entity documentation for StarObject, SolarSystem, ExoPlanet, and other models
