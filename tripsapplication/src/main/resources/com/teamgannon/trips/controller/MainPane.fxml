@@ -35,6 +35,7 @@
             <!--                <SeparatorMenuItem/>-->
             <!--            </Menu>-->
             <fx:include source="menubar/AdminMenu.fxml"/>
+            <fx:include source="menubar/ExperimentalMenu.fxml"/>
             <fx:include source="menubar/HelpMenu.fxml"/>
 
             <!--            <Menu mnemonicParsing="false"-->

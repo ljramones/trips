@@ -11,5 +11,6 @@
     <fx:include source="ReportsMenu.fxml"/>
     <fx:include source="UtilitiesMenu.fxml"/>
     <fx:include source="AdminMenu.fxml"/>
+    <fx:include source="ExperimentalMenu.fxml"/>
     <fx:include source="HelpMenu.fxml"/>
 </MenuBar>

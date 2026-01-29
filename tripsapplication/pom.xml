@@ -201,6 +201,20 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- ode4j physics engine for asteroid/debris simulation -->
+        <dependency>
+            <groupId>org.ode4j</groupId>
+            <artifactId>core</artifactId>
+            <version>0.5.3</version>
+        </dependency>
+
+        <!-- FXyz for advanced 3D shapes and point clouds -->
+        <dependency>
+            <groupId>org.fxyz3d</groupId>
+            <artifactId>fxyz3d</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+
         <!-- Override transitive Guava from jzy3d to fix CVE-2023-2976 and CVE-2020-8908 -->
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -461,6 +475,12 @@
             <groupId>org.orekit</groupId>
             <artifactId>orekit</artifactId>
             <version>${orekit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hipparchus</groupId>
+            <artifactId>hipparchus-geometry</artifactId>
+            <version>3.0</version>  <!-- or the version Orekit 11.1.2 expects -->
         </dependency>
 
         <!-- Apache Commons Math -->
