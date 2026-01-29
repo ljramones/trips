@@ -221,6 +221,11 @@ public class SolarSystemRenderer {
      */
     private boolean showRings = true;
 
+    /**
+     * Whether to show asteroid belts and Kuiper belt
+     */
+    private boolean showAsteroidBelts = true;
+
     private boolean showEclipticPlane = false;
     private boolean showOrbitNodes = false;
     private boolean showApsides = false;
@@ -421,6 +426,25 @@ public class SolarSystemRenderer {
      */
     public boolean isShowRings() {
         return showRings;
+    }
+
+    /**
+     * Set whether to show asteroid belts and Kuiper belt.
+     *
+     * @param show true to show belts, false to hide
+     */
+    public void setShowAsteroidBelts(boolean show) {
+        this.showAsteroidBelts = show;
+        featuresGroup.setVisible(show);
+    }
+
+    /**
+     * Check if asteroid belts are currently visible.
+     *
+     * @return true if belts are visible
+     */
+    public boolean isShowAsteroidBelts() {
+        return showAsteroidBelts;
     }
 
     public void setScaleMode(ScaleMode scaleMode) {

@@ -226,6 +226,14 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         }
     }
 
+    public void toggleRings(boolean enabled) {
+        solarSystemRenderer.setShowRings(enabled);
+    }
+
+    public void toggleAsteroidBelts(boolean enabled) {
+        solarSystemRenderer.setShowAsteroidBelts(enabled);
+    }
+
     @EventListener
     public void onSolarSystemDisplayToggleEvent(SolarSystemDisplayToggleEvent event) {
         log.info("Solar system display toggle: {} -> {}", event.getToggleType(), event.isEnabled());
@@ -238,6 +246,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             case HABITABLE_ZONE -> toggleHabitableZone(event.isEnabled());
             case SCALE_GRID -> toggleScaleGrid(event.isEnabled());
             case RELATIVE_PLANET_SIZES -> toggleRelativePlanetSizes(event.isEnabled());
+            case PLANETARY_RINGS -> toggleRings(event.isEnabled());
+            case ASTEROID_BELTS -> toggleAsteroidBelts(event.isEnabled());
         }
     }
 

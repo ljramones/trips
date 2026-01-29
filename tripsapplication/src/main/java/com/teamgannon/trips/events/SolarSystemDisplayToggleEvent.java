@@ -17,7 +17,9 @@ public class SolarSystemDisplayToggleEvent extends ApplicationEvent {
         LABELS,
         HABITABLE_ZONE,
         SCALE_GRID,
-        RELATIVE_PLANET_SIZES
+        RELATIVE_PLANET_SIZES,
+        PLANETARY_RINGS,
+        ASTEROID_BELTS
     }
 
     private final ToggleType toggleType;

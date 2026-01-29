@@ -50,6 +50,10 @@ public class SimulationControlPane extends VBox {
     private final CheckBox showGridCheckbox = new CheckBox("Show Scale Grid");
     @Getter
     private final CheckBox showRelativeSizesCheckbox = new CheckBox("True Relative Planet Sizes");
+    @Getter
+    private final CheckBox showRingsCheckbox = new CheckBox("Show Planetary Rings");
+    @Getter
+    private final CheckBox showAsteroidBeltsCheckbox = new CheckBox("Show Asteroid Belts");
 
     private final Button topDownPresetButton = new Button("Top");
     private final Button edgeOnPresetButton = new Button("Edge");
@@ -158,6 +162,8 @@ public class SimulationControlPane extends VBox {
         showHabitableZoneCheckbox.setSelected(true);
         showGridCheckbox.setSelected(true);
         showRelativeSizesCheckbox.setSelected(false);  // Default to clamped sizes
+        showRingsCheckbox.setSelected(true);
+        showAsteroidBeltsCheckbox.setSelected(true);
 
         VBox checkboxes = new VBox(5);
         checkboxes.setPadding(new Insets(0, 0, 0, 10));
@@ -166,7 +172,9 @@ public class SimulationControlPane extends VBox {
                 showLabelsCheckbox,
                 showHabitableZoneCheckbox,
                 showGridCheckbox,
-                showRelativeSizesCheckbox
+                showRelativeSizesCheckbox,
+                showRingsCheckbox,
+                showAsteroidBeltsCheckbox
         );
 
         VBox section = new VBox(8);
@@ -263,6 +271,20 @@ public class SimulationControlPane extends VBox {
                     this, SolarSystemDisplayToggleEvent.ToggleType.RELATIVE_PLANET_SIZES, enabled));
         });
 
+        showRingsCheckbox.setOnAction(e -> {
+            boolean enabled = showRingsCheckbox.isSelected();
+            log.info("Show planetary rings: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.PLANETARY_RINGS, enabled));
+        });
+
+        showAsteroidBeltsCheckbox.setOnAction(e -> {
+            boolean enabled = showAsteroidBeltsCheckbox.isSelected();
+            log.info("Show asteroid belts: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.ASTEROID_BELTS, enabled));
+        });
+
         // Camera preset buttons with tooltips
         topDownPresetButton.setTooltip(new Tooltip("Top-down view (looking down at orbital plane)"));
         topDownPresetButton.setOnAction(e -> eventPublisher.publishEvent(
@@ -299,6 +321,8 @@ public class SimulationControlPane extends VBox {
         showHabitableZoneCheckbox.setSelected(true);
         showGridCheckbox.setSelected(true);
         showRelativeSizesCheckbox.setSelected(false);
+        showRingsCheckbox.setSelected(true);
+        showAsteroidBeltsCheckbox.setSelected(true);
     }
 
     /**
