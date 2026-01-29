@@ -19,7 +19,8 @@ public class SolarSystemDisplayToggleEvent extends ApplicationEvent {
         SCALE_GRID,
         RELATIVE_PLANET_SIZES,
         PLANETARY_RINGS,
-        ASTEROID_BELTS
+        ASTEROID_BELT,
+        KUIPER_BELT
     }
 
     private final ToggleType toggleType;

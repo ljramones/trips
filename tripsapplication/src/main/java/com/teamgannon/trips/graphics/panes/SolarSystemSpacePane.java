@@ -230,8 +230,12 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         solarSystemRenderer.setShowRings(enabled);
     }
 
-    public void toggleAsteroidBelts(boolean enabled) {
-        solarSystemRenderer.setShowAsteroidBelts(enabled);
+    public void toggleAsteroidBelt(boolean enabled) {
+        solarSystemRenderer.setShowAsteroidBelt(enabled);
+    }
+
+    public void toggleKuiperBelt(boolean enabled) {
+        solarSystemRenderer.setShowKuiperBelt(enabled);
     }
 
     @EventListener
@@ -247,7 +251,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             case SCALE_GRID -> toggleScaleGrid(event.isEnabled());
             case RELATIVE_PLANET_SIZES -> toggleRelativePlanetSizes(event.isEnabled());
             case PLANETARY_RINGS -> toggleRings(event.isEnabled());
-            case ASTEROID_BELTS -> toggleAsteroidBelts(event.isEnabled());
+            case ASTEROID_BELT -> toggleAsteroidBelt(event.isEnabled());
+            case KUIPER_BELT -> toggleKuiperBelt(event.isEnabled());
         }
     }
 

@@ -145,10 +145,20 @@ public class SolarSystemRenderer {
     private final Group ringsGroup;
 
     /**
-     * Group for system-level features (asteroid belts, stations, gates, etc.)
+     * Group for system-level features (stations, gates, other point features)
      */
     @Getter
     private final Group featuresGroup;
+
+    /**
+     * Group for asteroid belt (Main Belt between Mars and Jupiter)
+     */
+    private final Group asteroidBeltGroup;
+
+    /**
+     * Group for Kuiper Belt (beyond Neptune)
+     */
+    private final Group kuiperBeltGroup;
 
     /**
      * Map of feature ID to its RingFieldRenderer (for belt-type features)
@@ -222,9 +232,14 @@ public class SolarSystemRenderer {
     private boolean showRings = true;
 
     /**
-     * Whether to show asteroid belts and Kuiper belt
+     * Whether to show asteroid belt (Main Belt)
      */
-    private boolean showAsteroidBelts = true;
+    private boolean showAsteroidBelt = true;
+
+    /**
+     * Whether to show Kuiper Belt
+     */
+    private boolean showKuiperBelt = true;
 
     private boolean showEclipticPlane = false;
     private boolean showOrbitNodes = false;
@@ -283,6 +298,8 @@ public class SolarSystemRenderer {
         this.apsidesGroup = new Group();
         this.ringsGroup = new Group();
         this.featuresGroup = new Group();
+        this.asteroidBeltGroup = new Group();
+        this.kuiperBeltGroup = new Group();
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
@@ -298,10 +315,10 @@ public class SolarSystemRenderer {
         this.ringAdapter = new SolarSystemRingAdapter(scaleManager);
 
         // Order: scale grid (back), habitable zone, ecliptic, features, orbits, orbit nodes, apsides, rings, planets, labels (front)
-        // Features (asteroid belts) are rendered early so they appear behind planets
+        // Belts are rendered early so they appear behind planets
         // Rings are rendered between orbits and planets so they appear around planets
         systemGroup.getChildren().addAll(scaleGridGroup, habitableZoneGroup, eclipticPlaneGroup,
-                featuresGroup, orbitsGroup, orbitNodeGroup, apsidesGroup, ringsGroup, planetsGroup, labelsGroup);
+                asteroidBeltGroup, kuiperBeltGroup, featuresGroup, orbitsGroup, orbitNodeGroup, apsidesGroup, ringsGroup, planetsGroup, labelsGroup);
     }
 
     /**
@@ -429,22 +446,41 @@ public class SolarSystemRenderer {
     }
 
     /**
-     * Set whether to show asteroid belts and Kuiper belt.
+     * Set whether to show asteroid belt (Main Belt).
      *
-     * @param show true to show belts, false to hide
+     * @param show true to show belt, false to hide
      */
-    public void setShowAsteroidBelts(boolean show) {
-        this.showAsteroidBelts = show;
-        featuresGroup.setVisible(show);
+    public void setShowAsteroidBelt(boolean show) {
+        this.showAsteroidBelt = show;
+        asteroidBeltGroup.setVisible(show);
     }
 
     /**
-     * Check if asteroid belts are currently visible.
+     * Check if asteroid belt is currently visible.
      *
-     * @return true if belts are visible
+     * @return true if belt is visible
      */
-    public boolean isShowAsteroidBelts() {
-        return showAsteroidBelts;
+    public boolean isShowAsteroidBelt() {
+        return showAsteroidBelt;
+    }
+
+    /**
+     * Set whether to show Kuiper Belt.
+     *
+     * @param show true to show belt, false to hide
+     */
+    public void setShowKuiperBelt(boolean show) {
+        this.showKuiperBelt = show;
+        kuiperBeltGroup.setVisible(show);
+    }
+
+    /**
+     * Check if Kuiper Belt is currently visible.
+     *
+     * @return true if belt is visible
+     */
+    public boolean isShowKuiperBelt() {
+        return showKuiperBelt;
     }
 
     public void setScaleMode(ScaleMode scaleMode) {
@@ -762,6 +798,8 @@ public class SolarSystemRenderer {
         featureRenderers.clear();
         featureNodes.clear();
         featuresGroup.getChildren().clear();
+        asteroidBeltGroup.getChildren().clear();
+        kuiperBeltGroup.getChildren().clear();
     }
 
     /**
@@ -1724,12 +1762,20 @@ public class SolarSystemRenderer {
         // Position at origin (around the star)
         renderer.setPosition(0, 0, 0);
 
-        // Add to the features group
-        featuresGroup.getChildren().add(renderer.getGroup());
+        // Add to the appropriate group based on feature type
+        Group targetGroup = switch (feature.getFeatureType()) {
+            case "ASTEROID_BELT" -> asteroidBeltGroup;
+            case "KUIPER_BELT" -> kuiperBeltGroup;
+            default -> featuresGroup;  // Other belt-type features go to general features
+        };
+        targetGroup.getChildren().add(renderer.getGroup());
         featureRenderers.put(feature.getId(), renderer);
 
-        log.info("Rendered belt feature '{}' ({}): {} - {} AU",
-                feature.getName(), feature.getFeatureType(), innerAU, outerAU);
+        log.info("Rendered belt feature '{}' ({}) to {}: {} - {} AU",
+                feature.getName(), feature.getFeatureType(),
+                targetGroup == asteroidBeltGroup ? "asteroidBeltGroup" :
+                targetGroup == kuiperBeltGroup ? "kuiperBeltGroup" : "featuresGroup",
+                innerAU, outerAU);
     }
 
     /**

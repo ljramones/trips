@@ -53,7 +53,9 @@ public class SimulationControlPane extends VBox {
     @Getter
     private final CheckBox showRingsCheckbox = new CheckBox("Show Planetary Rings");
     @Getter
-    private final CheckBox showAsteroidBeltsCheckbox = new CheckBox("Show Asteroid Belts");
+    private final CheckBox showAsteroidBeltCheckbox = new CheckBox("Show Asteroid Belt");
+    @Getter
+    private final CheckBox showKuiperBeltCheckbox = new CheckBox("Show Kuiper Belt");
 
     private final Button topDownPresetButton = new Button("Top");
     private final Button edgeOnPresetButton = new Button("Edge");
@@ -163,7 +165,8 @@ public class SimulationControlPane extends VBox {
         showGridCheckbox.setSelected(true);
         showRelativeSizesCheckbox.setSelected(false);  // Default to clamped sizes
         showRingsCheckbox.setSelected(true);
-        showAsteroidBeltsCheckbox.setSelected(true);
+        showAsteroidBeltCheckbox.setSelected(true);
+        showKuiperBeltCheckbox.setSelected(true);
 
         VBox checkboxes = new VBox(5);
         checkboxes.setPadding(new Insets(0, 0, 0, 10));
@@ -174,7 +177,8 @@ public class SimulationControlPane extends VBox {
                 showGridCheckbox,
                 showRelativeSizesCheckbox,
                 showRingsCheckbox,
-                showAsteroidBeltsCheckbox
+                showAsteroidBeltCheckbox,
+                showKuiperBeltCheckbox
         );
 
         VBox section = new VBox(8);
@@ -278,11 +282,18 @@ public class SimulationControlPane extends VBox {
                     this, SolarSystemDisplayToggleEvent.ToggleType.PLANETARY_RINGS, enabled));
         });
 
-        showAsteroidBeltsCheckbox.setOnAction(e -> {
-            boolean enabled = showAsteroidBeltsCheckbox.isSelected();
-            log.info("Show asteroid belts: {}", enabled);
+        showAsteroidBeltCheckbox.setOnAction(e -> {
+            boolean enabled = showAsteroidBeltCheckbox.isSelected();
+            log.info("Show asteroid belt: {}", enabled);
             eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
-                    this, SolarSystemDisplayToggleEvent.ToggleType.ASTEROID_BELTS, enabled));
+                    this, SolarSystemDisplayToggleEvent.ToggleType.ASTEROID_BELT, enabled));
+        });
+
+        showKuiperBeltCheckbox.setOnAction(e -> {
+            boolean enabled = showKuiperBeltCheckbox.isSelected();
+            log.info("Show Kuiper belt: {}", enabled);
+            eventPublisher.publishEvent(new SolarSystemDisplayToggleEvent(
+                    this, SolarSystemDisplayToggleEvent.ToggleType.KUIPER_BELT, enabled));
         });
 
         // Camera preset buttons with tooltips
@@ -322,7 +333,8 @@ public class SimulationControlPane extends VBox {
         showGridCheckbox.setSelected(true);
         showRelativeSizesCheckbox.setSelected(false);
         showRingsCheckbox.setSelected(true);
-        showAsteroidBeltsCheckbox.setSelected(true);
+        showAsteroidBeltCheckbox.setSelected(true);
+        showKuiperBeltCheckbox.setSelected(true);
     }
 
     /**
