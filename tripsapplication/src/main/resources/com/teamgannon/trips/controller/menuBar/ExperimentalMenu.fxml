@@ -5,6 +5,23 @@
 <Menu xmlns:fx="http://javafx.com/fxml/1" text="Experimental" mnemonicParsing="false"
       fx:controller="com.teamgannon.trips.controller.menubar.ExperimentalMenuController">
     <MenuItem fx:id="asteroidFieldMenuItem"
-              text="Asteroid Field"
+              text="Asteroid Field (Legacy)"
               onAction="#showAsteroidField"/>
+    <SeparatorMenuItem/>
+    <Menu text="Ring Field Presets">
+        <MenuItem text="Saturn Ring" onAction="#showSaturnRing"/>
+        <MenuItem text="Uranus Ring" onAction="#showUranusRing"/>
+        <SeparatorMenuItem/>
+        <MenuItem text="Asteroid Belt" onAction="#showAsteroidBelt"/>
+        <MenuItem text="Kuiper Belt" onAction="#showKuiperBelt"/>
+        <SeparatorMenuItem/>
+        <MenuItem text="Protoplanetary Disk" onAction="#showProtoplanetaryDisk"/>
+        <MenuItem text="Collision Debris" onAction="#showCollisionDebris"/>
+        <SeparatorMenuItem/>
+        <MenuItem text="Emission Nebula" onAction="#showEmissionNebula"/>
+        <MenuItem text="Dark Nebula" onAction="#showDarkNebula"/>
+        <SeparatorMenuItem/>
+        <MenuItem text="Black Hole Accretion" onAction="#showBlackHoleAccretion"/>
+        <MenuItem text="Neutron Star Accretion" onAction="#showNeutronStarAccretion"/>
+    </Menu>
 </Menu>

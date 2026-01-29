@@ -80,9 +80,10 @@ public class AsteroidFieldWindow {
     private static final String WINDOW_TITLE_BASE = "Asteroid Field – Procedural (working version)";
 
     private static final int HERO_BODY_COUNT = 120;
-    private static final double ODE_STEP_SECONDS = 0.016;
-    // ODE uses a visual-time scale to match the analytic per-frame angular speeds.
-    private static final double ODE_TIME_STEP = ODE_STEP_SECONDS;
+    // Target physics step size (will be adjusted based on actual frame time)
+    private static final double TARGET_FRAME_SECONDS = 1.0 / 60.0;
+    // Clamp delta to avoid physics explosions on long pauses
+    private static final double MAX_DELTA_SECONDS = 0.1;
 
     private final Stage stage = new Stage();
     private final Group world = new Group();
@@ -122,6 +123,14 @@ public class AsteroidFieldWindow {
     private AnimationTimer animationTimer;
     private boolean animating = true;
     private int frameCounter = 0;
+    private long lastFrameNanos = 0;
+
+    // Reusable lists for mesh building (avoids allocation each frame)
+    private final List<Point3D> smallPoints = new ArrayList<>();
+    private final List<Point3D> mediumPoints = new ArrayList<>();
+    private final List<Point3D> largePoints = new ArrayList<>();
+    // Pre-computed size category for each asteroid (0=small, 1=medium, 2=large)
+    private int[] sizeCategories;
 
     private final Random random = new Random(42);
 
@@ -223,58 +232,89 @@ public class AsteroidFieldWindow {
             shuffleMapping[i] = indices.get(i);
         }
 
+        // Pre-compute size categories to avoid repeated comparisons during refresh
+        sizeCategories = new int[NUM_ASTEROIDS];
+        for (int i = 0; i < NUM_ASTEROIDS; i++) {
+            double sz = asteroids.get(i).size();
+            if (sz >= THRESH_LARGE) {
+                sizeCategories[i] = 2;
+            } else if (sz >= THRESH_MEDIUM) {
+                sizeCategories[i] = 1;
+            } else {
+                sizeCategories[i] = 0;
+            }
+        }
+
         assignHeroBodies();
         refreshMeshes();
     }
 
     /**
-     * Rebuilds meshes from size‑partitioned display positions
+     * Rebuilds meshes from size‑partitioned display positions.
+     * Reuses pre-allocated lists to minimize GC pressure.
      */
     private void refreshMeshes() {
         world.getChildren().removeAll(meshSmall, meshMedium, meshLarge);
 
-        List<Point3D> small  = new ArrayList<>();
-        List<Point3D> medium = new ArrayList<>();
-        List<Point3D> large  = new ArrayList<>();
+        // Clear and reuse existing lists instead of allocating new ones
+        smallPoints.clear();
+        mediumPoints.clear();
+        largePoints.clear();
 
-        // Populates size‑based mesh lists from shuffled positions
+        // Populates size‑based mesh lists using pre-computed categories
         for (int dispIdx = 0; dispIdx < NUM_ASTEROIDS; dispIdx++) {
             int origIdx = shuffleMapping[dispIdx];
             Point3D p = displayPositions.get(origIdx);
-            double sz = asteroids.get(origIdx).size();
 
-            if (sz >= THRESH_LARGE)      large.add(p);
-            else if (sz >= THRESH_MEDIUM) medium.add(p);
-            else                          small.add(p);
+            switch (sizeCategories[origIdx]) {
+                case 2 -> largePoints.add(p);
+                case 1 -> mediumPoints.add(p);
+                default -> smallPoints.add(p);
+            }
         }
 
-        if (!small.isEmpty()) {
-            meshSmall = new ScatterMesh(small, true, SIZE_SMALL, 0);
+        if (!smallPoints.isEmpty()) {
+            meshSmall = new ScatterMesh(smallPoints, true, SIZE_SMALL, 0);
             meshSmall.setTextureModeNone(Color.LIGHTGRAY);
             world.getChildren().add(meshSmall);
         }
 
-        if (!medium.isEmpty()) {
-            meshMedium = new ScatterMesh(medium, true, SIZE_MEDIUM, 0);
+        if (!mediumPoints.isEmpty()) {
+            meshMedium = new ScatterMesh(mediumPoints, true, SIZE_MEDIUM, 0);
             meshMedium.setTextureModeNone(Color.LIGHTGRAY);
             world.getChildren().add(meshMedium);
         }
 
-        if (!large.isEmpty()) {
-            meshLarge = new ScatterMesh(large, true, SIZE_LARGE, 0);
+        if (!largePoints.isEmpty()) {
+            meshLarge = new ScatterMesh(largePoints, true, SIZE_LARGE, 0);
             meshLarge.setTextureModeNone(Color.LIGHTGRAY);
             world.getChildren().add(meshLarge);
         }
     }
 
     private void startAnimation() {
+        lastFrameNanos = System.nanoTime();
+
         // Defines frame handler; updates positions; refreshes meshes periodically
         animationTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                if (!animating) return;
+                if (!animating) {
+                    lastFrameNanos = now;
+                    return;
+                }
 
-                updateAsteroidPositions();
+                // Compute actual delta time
+                double deltaSeconds = (now - lastFrameNanos) / 1_000_000_000.0;
+                lastFrameNanos = now;
+
+                // Clamp to avoid physics explosions after pauses or debugger stops
+                deltaSeconds = Math.min(deltaSeconds, MAX_DELTA_SECONDS);
+
+                // Scale relative to target frame rate for consistent speed
+                double timeScale = deltaSeconds / TARGET_FRAME_SECONDS;
+
+                updateAsteroidPositions(timeScale, deltaSeconds);
 
                 frameCounter++;
                 if (frameCounter % MESH_REFRESH_INTERVAL == 0) {
@@ -286,15 +326,18 @@ public class AsteroidFieldWindow {
     }
 
     /**
-     * Updates asteroid positions using ODE or analytic model
+     * Updates asteroid positions using ODE or analytic model.
+     *
+     * @param timeScale multiplier for angular speed (1.0 at 60fps)
+     * @param deltaSeconds actual elapsed time for ODE physics
      */
-    private void updateAsteroidPositions() {
+    private void updateAsteroidPositions(double timeScale, double deltaSeconds) {
         boolean odeActive = false;
         if (useOde) {
-            initializeOdeIfNeeded();
+            initializeOdeIfNeeded(deltaSeconds);
             odeActive = odeInitialized && !odeBodies.isEmpty();
             if (odeActive) {
-                stepOdeSimulation();
+                stepOdeSimulation(deltaSeconds);
             }
         }
 
@@ -305,7 +348,8 @@ public class AsteroidFieldWindow {
             }
 
             AsteroidData asteroid = asteroids.get(i);
-            double angle = angles[i] + asteroid.speed();
+            // Scale angular movement by actual frame time
+            double angle = angles[i] + asteroid.speed() * timeScale;
             angles[i] = angle;
 
             Point3D position = useOrekit
@@ -333,9 +377,11 @@ public class AsteroidFieldWindow {
     }
 
     /**
-     * Initializes ODE world and bodies if needed
+     * Initializes ODE world and bodies if needed.
+     *
+     * @param deltaSeconds time step for velocity calculation
      */
-    private void initializeOdeIfNeeded() {
+    private void initializeOdeIfNeeded(double deltaSeconds) {
         if (odeInitialized) return;
 
         OdeHelper.initODE();
@@ -364,8 +410,10 @@ public class AsteroidFieldWindow {
                             asteroid.inclination(), angle, asteroid.height());
             body.setPosition(startPos.x, startPos.y, startPos.z);
 
-            // Tangential velocity to match the analytic per-frame angular speed.
-            double v = asteroid.radius() * asteroid.speed() / ODE_TIME_STEP;
+            // Tangential velocity based on angular speed
+            // v = r * omega, where omega = speed (radians per frame at 60fps)
+            // Convert to velocity per second: v = r * speed / targetFrameTime
+            double v = asteroid.radius() * asteroid.speed() / TARGET_FRAME_SECONDS;
             double vx = -v * Math.sin(angle);
             double vz = v * Math.cos(angle);
             double vy = 0.0;
@@ -382,7 +430,12 @@ public class AsteroidFieldWindow {
         log.info("ODE initialized with {} hero bodies", odeBodies.size());
     }
 
-    private void stepOdeSimulation() {
+    /**
+     * Steps the ODE physics simulation.
+     *
+     * @param deltaSeconds actual elapsed time for this frame
+     */
+    private void stepOdeSimulation(double deltaSeconds) {
         // Applies inward acceleration based on hero speed
         for (int i = 0; i < odeBodies.size(); i++) {
             DBody body = odeBodies.get(i);
@@ -400,13 +453,15 @@ public class AsteroidFieldWindow {
             }
 
             double radius = Math.max(r, 1e-6);
-            double v = radius * asteroid.speed() / ODE_TIME_STEP;
+            // Velocity per second (not per frame)
+            double v = radius * asteroid.speed() / TARGET_FRAME_SECONDS;
             double accel = -(v * v) / radius;
             double invR = 1.0 / radius;
             body.addForce(x * accel * invR, y * accel * invR, z * accel * invR);
         }
 
-        odeWorld.quickStep(ODE_STEP_SECONDS);
+        // Step physics with actual delta time
+        odeWorld.quickStep(deltaSeconds);
     }
 
     private void syncHeroPositionsFromOde() {
