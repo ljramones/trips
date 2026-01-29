@@ -1,6 +1,10 @@
 package com.teamgannon.trips.solarsystem.rendering;
 
+import com.teamgannon.trips.particlefields.RingConfiguration;
+import com.teamgannon.trips.particlefields.RingFieldRenderer;
+import com.teamgannon.trips.particlefields.SolarSystemRingAdapter;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.planetarymodelling.FeatureDescription;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
@@ -25,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Renders a solar system in 3D.
@@ -133,6 +138,28 @@ public class SolarSystemRenderer {
     private final Group labelsGroup;
 
     /**
+     * Group for planetary ring systems (e.g., Saturn's rings)
+     */
+    @Getter
+    private final Group ringsGroup;
+
+    /**
+     * Group for system-level features (asteroid belts, stations, gates, etc.)
+     */
+    @Getter
+    private final Group featuresGroup;
+
+    /**
+     * Map of feature ID to its RingFieldRenderer (for belt-type features)
+     */
+    private final Map<String, RingFieldRenderer> featureRenderers;
+
+    /**
+     * Map of feature ID to its 3D node (for point-type features)
+     */
+    private final Map<String, Node> featureNodes;
+
+    /**
      * Map of planet name to its sphere node (for animation updates)
      */
     @Getter
@@ -172,6 +199,27 @@ public class SolarSystemRenderer {
     private final Map<Node, Label> shapeToLabel;
 
     private final Map<String, Node> starNodes;
+
+    /**
+     * Map of planet ID/name to its RingFieldRenderer (for animated ring systems)
+     */
+    private final Map<String, RingFieldRenderer> planetRings;
+
+    /**
+     * Adapter for converting AU-based ring configurations to screen units
+     */
+    private SolarSystemRingAdapter ringAdapter;
+
+    /**
+     * Random generator for reproducible ring particle placement
+     */
+    private final Random ringRandom = new Random(42);
+
+    /**
+     * Whether to show planetary rings
+     */
+    private boolean showRings = true;
+
     private boolean showEclipticPlane = false;
     private boolean showOrbitNodes = false;
     private boolean showApsides = false;
@@ -227,6 +275,8 @@ public class SolarSystemRenderer {
         this.eclipticPlaneGroup = new Group();
         this.orbitNodeGroup = new Group();
         this.apsidesGroup = new Group();
+        this.ringsGroup = new Group();
+        this.featuresGroup = new Group();
         this.planetNodes = new HashMap<>();
         this.planetDescriptions = new HashMap<>();
         this.orbitGroups = new HashMap<>();
@@ -234,10 +284,18 @@ public class SolarSystemRenderer {
         this.orbitColors = new HashMap<>();
         this.shapeToLabel = new HashMap<>();
         this.starNodes = new HashMap<>();
+        this.planetRings = new HashMap<>();
+        this.featureRenderers = new HashMap<>();
+        this.featureNodes = new HashMap<>();
 
-        // Order: scale grid (back), habitable zone, ecliptic, orbits, orbit nodes, apsides, planets, labels (front)
+        // Create ring adapter using our scale manager
+        this.ringAdapter = new SolarSystemRingAdapter(scaleManager);
+
+        // Order: scale grid (back), habitable zone, ecliptic, features, orbits, orbit nodes, apsides, rings, planets, labels (front)
+        // Features (asteroid belts) are rendered early so they appear behind planets
+        // Rings are rendered between orbits and planets so they appear around planets
         systemGroup.getChildren().addAll(scaleGridGroup, habitableZoneGroup, eclipticPlaneGroup,
-                orbitsGroup, orbitNodeGroup, apsidesGroup, planetsGroup, labelsGroup);
+                featuresGroup, orbitsGroup, orbitNodeGroup, apsidesGroup, ringsGroup, planetsGroup, labelsGroup);
     }
 
     /**
@@ -343,6 +401,25 @@ public class SolarSystemRenderer {
     public void setShowScaleGrid(boolean show) {
         this.showScaleGrid = show;
         scaleGridGroup.setVisible(show);
+    }
+
+    /**
+     * Set whether to show planetary ring systems.
+     *
+     * @param show true to show rings, false to hide
+     */
+    public void setShowRings(boolean show) {
+        this.showRings = show;
+        ringsGroup.setVisible(show);
+    }
+
+    /**
+     * Check if rings are currently visible.
+     *
+     * @return true if rings are visible
+     */
+    public boolean isShowRings() {
+        return showRings;
     }
 
     public void setScaleMode(ScaleMode scaleMode) {
@@ -518,6 +595,11 @@ public class SolarSystemRenderer {
             log.warn("No moons found in planet list. If expecting moons, check that moon data is loaded.");
         }
 
+        // Render system features (asteroid belts, stations, gates, etc.)
+        if (description.hasFeatures()) {
+            renderFeatures(description.getFeatures());
+        }
+
         return systemGroup;
     }
 
@@ -627,6 +709,13 @@ public class SolarSystemRenderer {
         apsidesGroup.getChildren().clear();
         planetsGroup.getChildren().clear();
         labelsGroup.getChildren().clear();
+
+        // Dispose ring renderers to free resources
+        clearRings();
+
+        // Dispose feature renderers
+        clearFeatures();
+
         planetNodes.clear();
         planetDescriptions.clear();
         orbitGroups.clear();
@@ -636,6 +725,29 @@ public class SolarSystemRenderer {
         starNodes.clear();
         selectionStyleManager.clear();
         currentStar = null;
+    }
+
+    /**
+     * Clear all system features and dispose of their resources.
+     */
+    public void clearFeatures() {
+        for (RingFieldRenderer renderer : featureRenderers.values()) {
+            renderer.dispose();
+        }
+        featureRenderers.clear();
+        featureNodes.clear();
+        featuresGroup.getChildren().clear();
+    }
+
+    /**
+     * Clear all planetary ring systems and dispose of their resources.
+     */
+    public void clearRings() {
+        for (RingFieldRenderer renderer : planetRings.values()) {
+            renderer.dispose();
+        }
+        planetRings.clear();
+        ringsGroup.getChildren().clear();
     }
 
     /**
@@ -951,7 +1063,79 @@ public class SolarSystemRenderer {
         orbitMarkerRenderer.renderOrbitNodeMarkers(orbitNodeGroup, planet, orbitColor, parentOffsetAu, showOrbitNodes);
         orbitMarkerRenderer.renderApsideMarkers(apsidesGroup, planet, orbitColor, parentOffsetAu, showApsides);
 
+        // Render ring system if planet has one
+        if (planet.isHasRings() && !isMoonBody) {
+            renderPlanetRing(planet, position);
+        }
+
         return planetRadius;
+    }
+
+    /**
+     * Render a ring system for a planet.
+     *
+     * @param planet   the planet with ring data
+     * @param position the planet's screen position [x, y, z]
+     */
+    private void renderPlanetRing(PlanetDescription planet, double[] position) {
+        String ringType = planet.getRingType();
+        double innerAU = planet.getRingInnerRadiusAU();
+        double outerAU = planet.getRingOuterRadiusAU();
+
+        // Validate ring parameters
+        if (innerAU <= 0 || outerAU <= 0 || outerAU <= innerAU) {
+            // Calculate default ring radii based on planet radius if not specified
+            double planetRadiusAU = planet.getRadius() * 4.2635e-5;  // Earth radii to AU
+            if (innerAU <= 0) {
+                innerAU = planetRadiusAU * 1.5;
+            }
+            if (outerAU <= 0 || outerAU <= innerAU) {
+                outerAU = planetRadiusAU * 2.5;
+            }
+        }
+
+        // Determine preset to use based on ring type
+        String presetName = switch (ringType != null ? ringType.toUpperCase() : "SATURN") {
+            case "URANUS" -> "Uranus Ring";
+            case "NEPTUNE" -> "Uranus Ring";  // Neptune rings are similar to Uranus
+            case "CUSTOM" -> "Saturn Ring";    // Use Saturn as base for custom
+            default -> "Saturn Ring";
+        };
+
+        // Create ring configuration
+        RingConfiguration config;
+        if ("CUSTOM".equalsIgnoreCase(ringType) && planet.getRingPrimaryColor() != null) {
+            // Custom ring with user-specified colors
+            config = ringAdapter.createPlanetaryRing(innerAU, outerAU, planet.getName() + " Ring");
+            // Note: For full custom color support, we'd need to modify createPlanetaryRing
+            // or create a new method that accepts colors
+        } else {
+            // Use preset with custom radii
+            config = ringAdapter.createAdaptedConfiguration(presetName, innerAU, outerAU);
+        }
+
+        // Create and initialize the renderer
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(planet.getName().hashCode());
+        renderer.initialize(config, ringRandom);
+
+        // Position at planet location
+        renderer.setPosition(position[0], position[1], position[2]);
+
+        // Apply ring inclination if specified
+        if (planet.getRingInclination() != 0) {
+            // The ring inclination would be applied via rotation transforms
+            // For now, the default ring lies in the XZ plane
+            log.debug("Ring inclination {} for {} (rotation not yet implemented)",
+                    planet.getRingInclination(), planet.getName());
+        }
+
+        // Add to scene
+        ringsGroup.getChildren().add(renderer.getGroup());
+        planetRings.put(planet.getName(), renderer);
+
+        log.info("Rendered {} ring for planet '{}': {} - {} AU (type: {})",
+                presetName, planet.getName(), innerAU, outerAU, ringType);
     }
 
     /**
@@ -1105,6 +1289,510 @@ public class SolarSystemRenderer {
         }
 
         return TEMPERATE_PLANET_COLOR;
+    }
+
+    // ==================== Planetary Ring Methods ====================
+
+    /**
+     * Add a planetary ring system to a planet.
+     * The ring will be positioned at the planet's current location.
+     *
+     * @param planetName   the name of the planet (must already be rendered)
+     * @param innerRadiusAU inner ring radius in AU (from planet center)
+     * @param outerRadiusAU outer ring radius in AU (from planet center)
+     * @param ringName     display name for the ring
+     * @return true if ring was successfully added
+     */
+    public boolean addPlanetaryRing(String planetName, double innerRadiusAU, double outerRadiusAU, String ringName) {
+        Sphere planetSphere = planetNodes.get(planetName);
+        if (planetSphere == null) {
+            log.warn("Cannot add ring to planet '{}': planet not found", planetName);
+            return false;
+        }
+
+        // Create ring configuration using the adapter
+        RingConfiguration config = ringAdapter.createPlanetaryRing(innerRadiusAU, outerRadiusAU, ringName);
+
+        // Create and initialize the renderer
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(planetName.hashCode());  // Reproducible but unique per planet
+        renderer.initialize(config, ringRandom);
+
+        // Position the ring at the planet's location
+        renderer.setPosition(
+                planetSphere.getTranslateX(),
+                planetSphere.getTranslateY(),
+                planetSphere.getTranslateZ()
+        );
+
+        // Add to the rings group
+        ringsGroup.getChildren().add(renderer.getGroup());
+        planetRings.put(planetName, renderer);
+
+        log.info("Added planetary ring '{}' to planet '{}': {} - {} AU",
+                ringName, planetName, innerRadiusAU, outerRadiusAU);
+
+        return true;
+    }
+
+    /**
+     * Add a ring system using a preset configuration.
+     *
+     * @param planetName   the name of the planet
+     * @param presetName   name of the ring preset (e.g., "Saturn Ring", "Uranus Ring")
+     * @param innerRadiusAU inner radius in AU
+     * @param outerRadiusAU outer radius in AU
+     * @return true if ring was successfully added
+     */
+    public boolean addRingFromPreset(String planetName, String presetName, double innerRadiusAU, double outerRadiusAU) {
+        Sphere planetSphere = planetNodes.get(planetName);
+        if (planetSphere == null) {
+            log.warn("Cannot add ring to planet '{}': planet not found", planetName);
+            return false;
+        }
+
+        // Create ring configuration from preset, adapted to our scale
+        RingConfiguration config = ringAdapter.createAdaptedConfiguration(presetName, innerRadiusAU, outerRadiusAU);
+
+        // Create and initialize the renderer
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(planetName.hashCode());
+        renderer.initialize(config, ringRandom);
+
+        // Position at planet
+        renderer.setPosition(
+                planetSphere.getTranslateX(),
+                planetSphere.getTranslateY(),
+                planetSphere.getTranslateZ()
+        );
+
+        ringsGroup.getChildren().add(renderer.getGroup());
+        planetRings.put(planetName, renderer);
+
+        log.info("Added '{}' ring preset to planet '{}'", presetName, planetName);
+
+        return true;
+    }
+
+    /**
+     * Add an asteroid belt around the central star.
+     *
+     * @param innerRadiusAU inner belt radius in AU
+     * @param outerRadiusAU outer belt radius in AU
+     * @param name          display name for the belt
+     * @return true if belt was successfully added
+     */
+    public boolean addAsteroidBelt(double innerRadiusAU, double outerRadiusAU, String name) {
+        // Create asteroid belt configuration
+        RingConfiguration config = ringAdapter.createAsteroidBelt(innerRadiusAU, outerRadiusAU, name);
+
+        // Create and initialize the renderer
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(name.hashCode());
+        renderer.initialize(config, ringRandom);
+
+        // Position at origin (around the star)
+        renderer.setPosition(0, 0, 0);
+
+        ringsGroup.getChildren().add(renderer.getGroup());
+        planetRings.put("__belt__" + name, renderer);
+
+        log.info("Added asteroid belt '{}': {} - {} AU", name, innerRadiusAU, outerRadiusAU);
+
+        return true;
+    }
+
+    /**
+     * Add a debris disk around the central star.
+     *
+     * @param innerRadiusAU inner disk radius in AU
+     * @param outerRadiusAU outer disk radius in AU
+     * @param name          display name for the disk
+     * @return true if disk was successfully added
+     */
+    public boolean addDebrisDisk(double innerRadiusAU, double outerRadiusAU, String name) {
+        RingConfiguration config = ringAdapter.createDebrisDisk(innerRadiusAU, outerRadiusAU, name);
+
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(name.hashCode());
+        renderer.initialize(config, ringRandom);
+
+        renderer.setPosition(0, 0, 0);
+
+        ringsGroup.getChildren().add(renderer.getGroup());
+        planetRings.put("__disk__" + name, renderer);
+
+        log.info("Added debris disk '{}': {} - {} AU", name, innerRadiusAU, outerRadiusAU);
+
+        return true;
+    }
+
+    /**
+     * Remove a planetary ring from a planet.
+     *
+     * @param planetName the name of the planet
+     * @return true if a ring was removed
+     */
+    public boolean removeRing(String planetName) {
+        RingFieldRenderer renderer = planetRings.remove(planetName);
+        if (renderer != null) {
+            ringsGroup.getChildren().remove(renderer.getGroup());
+            renderer.dispose();
+            log.info("Removed ring from planet '{}'", planetName);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if a planet has a ring system.
+     *
+     * @param planetName the planet name
+     * @return true if the planet has a ring
+     */
+    public boolean hasRing(String planetName) {
+        return planetRings.containsKey(planetName);
+    }
+
+    /**
+     * Get the ring renderer for a planet.
+     *
+     * @param planetName the planet name
+     * @return the ring renderer, or null if no ring exists
+     */
+    public RingFieldRenderer getRingRenderer(String planetName) {
+        return planetRings.get(planetName);
+    }
+
+    /**
+     * Update all ring animations.
+     * Call this from the animation loop to animate ring particles.
+     *
+     * @param timeScale time scale factor (1.0 = normal speed)
+     */
+    public void updateRings(double timeScale) {
+        if (!showRings) {
+            return;
+        }
+
+        for (RingFieldRenderer renderer : planetRings.values()) {
+            renderer.update(timeScale);
+        }
+    }
+
+    /**
+     * Refresh ring meshes after updates.
+     * Call this periodically (e.g., every 5 frames) to update visual appearance.
+     */
+    public void refreshRingMeshes() {
+        if (!showRings) {
+            return;
+        }
+
+        for (RingFieldRenderer renderer : planetRings.values()) {
+            renderer.refreshMeshes();
+        }
+    }
+
+    /**
+     * Update ring positions to follow their parent planets.
+     * Call this after updatePlanetPositions() if planets are being animated.
+     */
+    public void updateRingPositions() {
+        for (Map.Entry<String, RingFieldRenderer> entry : planetRings.entrySet()) {
+            String planetName = entry.getKey();
+
+            // Skip belts/disks (they orbit the star at origin)
+            if (planetName.startsWith("__")) {
+                continue;
+            }
+
+            Sphere planetSphere = planetNodes.get(planetName);
+            if (planetSphere != null) {
+                RingFieldRenderer renderer = entry.getValue();
+                renderer.setPosition(
+                        planetSphere.getTranslateX(),
+                        planetSphere.getTranslateY(),
+                        planetSphere.getTranslateZ()
+                );
+            }
+        }
+    }
+
+    /**
+     * Automatically add rings to gas giant planets based on mass.
+     * Planets with mass > 50 Earth masses are considered gas giants.
+     * Ring sizes are scaled based on planet radius.
+     *
+     * @param massThreshold minimum mass in Earth masses to be considered a gas giant
+     */
+    public void addRingsToGasGiants(double massThreshold) {
+        for (Map.Entry<String, PlanetDescription> entry : planetDescriptions.entrySet()) {
+            String planetName = entry.getKey();
+            PlanetDescription planet = entry.getValue();
+
+            // Skip moons
+            if (planet.isMoon()) {
+                continue;
+            }
+
+            // Check if it's a gas giant
+            if (planet.getMass() >= massThreshold) {
+                // Skip if already has a ring
+                if (hasRing(planetName)) {
+                    continue;
+                }
+
+                // Calculate ring radii based on planet radius
+                // Rings typically extend from ~1.2 to ~2.5 planet radii
+                double planetRadiusAU = planet.getRadius() * 4.2635e-5;  // Earth radii to AU
+                double innerRadiusAU = planetRadiusAU * 1.5;
+                double outerRadiusAU = planetRadiusAU * 2.5;
+
+                // Scale ring size based on planet mass (larger planets get larger rings)
+                double massScale = Math.sqrt(planet.getMass() / 300.0);  // Normalized to Jupiter mass
+                innerRadiusAU *= Math.max(0.5, massScale);
+                outerRadiusAU *= Math.max(0.5, massScale);
+
+                // Use Saturn-style ring
+                addRingFromPreset(planetName, "Saturn Ring", innerRadiusAU, outerRadiusAU);
+
+                log.info("Auto-added ring to gas giant '{}' (mass={} Earth masses)",
+                        planetName, planet.getMass());
+            }
+        }
+    }
+
+    /**
+     * Get the number of active ring systems.
+     *
+     * @return number of ring systems
+     */
+    public int getRingCount() {
+        return planetRings.size();
+    }
+
+    // ==================== System Feature Rendering ====================
+
+    /**
+     * Render all system features (asteroid belts, stations, gates, etc.)
+     *
+     * @param features list of feature descriptions to render
+     */
+    private void renderFeatures(List<FeatureDescription> features) {
+        int beltCount = 0;
+        int pointCount = 0;
+
+        for (FeatureDescription feature : features) {
+            if (feature.isBeltType()) {
+                renderBeltFeature(feature);
+                beltCount++;
+            } else if (feature.isPointType()) {
+                renderPointFeature(feature);
+                pointCount++;
+            }
+        }
+
+        log.info("Rendered {} belt features and {} point features", beltCount, pointCount);
+    }
+
+    /**
+     * Render a belt-type feature (asteroid belt, debris disk, etc.)
+     */
+    private void renderBeltFeature(FeatureDescription feature) {
+        double innerAU = feature.getInnerRadiusAU();
+        double outerAU = feature.getOuterRadiusAU();
+
+        if (innerAU <= 0 || outerAU <= 0 || outerAU <= innerAU) {
+            log.warn("Invalid belt dimensions for feature '{}': inner={}, outer={}",
+                    feature.getName(), innerAU, outerAU);
+            return;
+        }
+
+        // Determine the preset based on feature type
+        String presetName = switch (feature.getFeatureType()) {
+            case "ASTEROID_BELT" -> "Main Asteroid Belt";
+            case "KUIPER_BELT" -> "Kuiper Belt";
+            case "DEBRIS_DISK" -> "Protoplanetary Disk";
+            case "OORT_CLOUD" -> "Emission Nebula";  // Use nebula for spherical distribution
+            case "ZODIACAL_DUST" -> "Protoplanetary Disk";
+            case "DYSON_SWARM" -> "Saturn Ring";  // Thin dense particles
+            case "DEFENSE_PERIMETER" -> "Main Asteroid Belt";  // Sparse distribution
+            case "SENSOR_NETWORK" -> "Main Asteroid Belt";
+            default -> "Main Asteroid Belt";
+        };
+
+        // Create the configuration
+        RingConfiguration config = ringAdapter.createAdaptedConfiguration(presetName, innerAU, outerAU);
+
+        // Create and initialize the renderer
+        RingFieldRenderer renderer = new RingFieldRenderer();
+        ringRandom.setSeed(feature.getId().hashCode());
+        renderer.initialize(config, ringRandom);
+
+        // Position at origin (around the star)
+        renderer.setPosition(0, 0, 0);
+
+        // Add to the features group
+        featuresGroup.getChildren().add(renderer.getGroup());
+        featureRenderers.put(feature.getId(), renderer);
+
+        log.info("Rendered belt feature '{}' ({}): {} - {} AU",
+                feature.getName(), feature.getFeatureType(), innerAU, outerAU);
+    }
+
+    /**
+     * Render a point-type feature (station, gate, etc.)
+     */
+    private void renderPointFeature(FeatureDescription feature) {
+        double orbitalRadius = feature.getOrbitalRadiusAU();
+        double orbitalAngle = feature.getOrbitalAngleDeg();
+        double orbitalHeight = feature.getOrbitalHeightAU();
+
+        if (orbitalRadius <= 0) {
+            log.warn("Invalid orbital radius for feature '{}': {}", feature.getName(), orbitalRadius);
+            return;
+        }
+
+        // Calculate position in AU
+        double angleRad = Math.toRadians(orbitalAngle);
+        double xAU = orbitalRadius * Math.cos(angleRad);
+        double zAU = orbitalRadius * Math.sin(angleRad);
+        double yAU = orbitalHeight;
+
+        // Convert to screen coordinates
+        double[] screen = scaleManager.auVectorToScreen(xAU, yAU, zAU);
+
+        // Determine appearance based on feature type
+        double size = getFeatureSize(feature);
+        Color color = getFeatureColor(feature);
+
+        // Create the visual representation
+        Sphere featureSphere = new Sphere(size);
+        PhongMaterial material = new PhongMaterial(color);
+        material.setSpecularColor(Color.WHITE);
+        featureSphere.setMaterial(material);
+
+        featureSphere.setTranslateX(screen[0]);
+        featureSphere.setTranslateY(screen[1]);
+        featureSphere.setTranslateZ(screen[2]);
+
+        // Add glow for artificial structures
+        if (feature.isArtificial()) {
+            featureSphere.setEffect(new Glow(0.4));
+        }
+
+        // Add tooltip
+        String tooltipText = buildFeatureTooltip(feature);
+        Tooltip.install(featureSphere, new Tooltip(tooltipText));
+
+        // Store reference
+        featureSphere.setUserData(feature);
+        featureNodes.put(feature.getId(), featureSphere);
+        featuresGroup.getChildren().add(featureSphere);
+
+        log.info("Rendered point feature '{}' ({}) at {} AU",
+                feature.getName(), feature.getFeatureType(), orbitalRadius);
+    }
+
+    private double getFeatureSize(FeatureDescription feature) {
+        // Base size for features (relative to scale)
+        double baseSize = scaleManager.auToScreen(0.02);  // About 0.02 AU in size
+
+        return switch (feature.getFeatureType()) {
+            case "JUMP_GATE" -> baseSize * 2.0;       // Large and prominent
+            case "ORBITAL_HABITAT" -> baseSize * 1.5;
+            case "SHIPYARD" -> baseSize * 1.8;
+            case "RESEARCH_STATION" -> baseSize * 1.0;
+            case "MINING_OPERATION" -> baseSize * 1.2;
+            case "TROJAN_CLUSTER" -> baseSize * 2.5;  // Represents cluster of objects
+            default -> baseSize;
+        };
+    }
+
+    private Color getFeatureColor(FeatureDescription feature) {
+        // Try to use the feature's custom color if specified
+        if (feature.getPrimaryColor() != null && !feature.getPrimaryColor().isEmpty()) {
+            try {
+                return Color.web(feature.getPrimaryColor());
+            } catch (Exception e) {
+                // Fall through to default
+            }
+        }
+
+        // Default colors based on feature type
+        return switch (feature.getFeatureType()) {
+            case "JUMP_GATE" -> Color.CYAN;
+            case "ORBITAL_HABITAT" -> Color.LIGHTGREEN;
+            case "SHIPYARD" -> Color.ORANGE;
+            case "RESEARCH_STATION" -> Color.LIGHTYELLOW;
+            case "MINING_OPERATION" -> Color.BROWN;
+            case "TROJAN_CLUSTER" -> Color.GRAY;
+            case "DEFENSE_PERIMETER" -> Color.RED;
+            default -> Color.WHITE;
+        };
+    }
+
+    private String buildFeatureTooltip(FeatureDescription feature) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(feature.getName());
+        sb.append("\nType: ").append(feature.getFeatureType().replace("_", " "));
+
+        if (feature.getControllingPolity() != null && !feature.getControllingPolity().isEmpty()) {
+            sb.append("\nPolity: ").append(feature.getControllingPolity());
+        }
+
+        if (feature.getPopulation() > 0) {
+            sb.append("\nPopulation: ").append(String.format("%,d", feature.getPopulation()));
+        }
+
+        if (feature.getPurpose() != null && !feature.getPurpose().isEmpty()) {
+            sb.append("\nPurpose: ").append(feature.getPurpose());
+        }
+
+        if (feature.getStatus() != null && !feature.getStatus().isEmpty()) {
+            sb.append("\nStatus: ").append(feature.getStatus());
+        }
+
+        if (feature.isNavigationHazard()) {
+            sb.append("\n⚠ Navigation Hazard");
+            if (feature.getHazardType() != null) {
+                sb.append(" (").append(feature.getHazardType()).append(")");
+            }
+        }
+
+        if (feature.getTransitDestinations() != null && !feature.getTransitDestinations().isEmpty()) {
+            sb.append("\nDestinations: ").append(feature.getTransitDestinations());
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Update all feature animations.
+     *
+     * @param timeScale time scale factor
+     */
+    public void updateFeatures(double timeScale) {
+        for (RingFieldRenderer renderer : featureRenderers.values()) {
+            renderer.update(timeScale);
+        }
+    }
+
+    /**
+     * Refresh feature meshes.
+     */
+    public void refreshFeatureMeshes() {
+        for (RingFieldRenderer renderer : featureRenderers.values()) {
+            renderer.refreshMeshes();
+        }
+    }
+
+    /**
+     * Get the number of rendered features.
+     */
+    public int getFeatureCount() {
+        return featureRenderers.size() + featureNodes.size();
     }
 
 }

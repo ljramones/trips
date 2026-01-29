@@ -67,4 +67,46 @@ public class PlanetDescription {
      */
     private String parentPlanetId;
 
+    // --- Ring System Properties ---
+
+    /**
+     * Whether this planet has a ring system
+     */
+    private boolean hasRings;
+
+    /**
+     * Type of ring system: "SATURN", "URANUS", "NEPTUNE", or "CUSTOM"
+     */
+    private String ringType;
+
+    /**
+     * Inner radius of ring system in AU (from planet center)
+     */
+    private double ringInnerRadiusAU;
+
+    /**
+     * Outer radius of ring system in AU (from planet center)
+     */
+    private double ringOuterRadiusAU;
+
+    /**
+     * Thickness of ring system as a ratio (0.01 = very thin, 0.1 = moderate)
+     */
+    private double ringThickness;
+
+    /**
+     * Inclination of ring plane relative to planet's equator in degrees
+     */
+    private double ringInclination;
+
+    /**
+     * Primary color of the ring system as hex string (e.g., "#E6DCC8")
+     */
+    private String ringPrimaryColor;
+
+    /**
+     * Secondary color of the ring system as hex string
+     */
+    private String ringSecondaryColor;
+
 }

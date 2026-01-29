@@ -450,6 +450,64 @@ public class ExoPlanet implements Serializable {
      */
     private Boolean gasGiant;
 
+    // --- Ring System Properties ---
+
+    /**
+     * Whether this planet has a ring system
+     */
+    private Boolean hasRings;
+
+    /**
+     * Type of ring system. Valid values:
+     * - "SATURN" - Bright, icy, dense ring system (like Saturn)
+     * - "URANUS" - Dark, narrow ring bands (like Uranus)
+     * - "NEPTUNE" - Faint, clumpy ring arcs (like Neptune)
+     * - "CUSTOM" - User-defined ring parameters
+     * Null if hasRings is false.
+     */
+    private String ringType;
+
+    /**
+     * Inner radius of ring system in AU (from planet center).
+     * For reference: Saturn's rings start at ~0.04 Saturn radii ≈ 0.0004 AU
+     */
+    @Column(nullable = true)
+    private Double ringInnerRadiusAU;
+
+    /**
+     * Outer radius of ring system in AU (from planet center).
+     * For reference: Saturn's rings extend to ~2.3 Saturn radii ≈ 0.0014 AU
+     */
+    @Column(nullable = true)
+    private Double ringOuterRadiusAU;
+
+    /**
+     * Thickness of ring system as a ratio of the radial extent.
+     * 0.01 = very thin (Saturn-like), 0.1 = moderate, 0.5+ = thick torus.
+     * Default is type-dependent if not specified.
+     */
+    @Column(nullable = true)
+    private Double ringThickness;
+
+    /**
+     * Inclination of ring plane relative to planet's equator in degrees.
+     * 0 = aligned with equator (most common), other values for tilted rings.
+     */
+    @Column(nullable = true)
+    private Double ringInclination;
+
+    /**
+     * Primary color of the ring system as hex string (e.g., "#E6DCC8").
+     * If null, uses default color for the ring type.
+     */
+    private String ringPrimaryColor;
+
+    /**
+     * Secondary color of the ring system as hex string (e.g., "#B4AA96").
+     * Used for color variation in ring particles.
+     */
+    private String ringSecondaryColor;
+
     /**
      * Whether this is a habitable Jovian (gas giant with potentially habitable moons)
      */

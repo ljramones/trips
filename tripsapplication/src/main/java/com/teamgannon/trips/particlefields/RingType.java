@@ -1,4 +1,4 @@
-package com.teamgannon.trips.experimental.rings;
+package com.teamgannon.trips.particlefields;
 
 /**
  * Categorizes different types of ring/particle field systems.

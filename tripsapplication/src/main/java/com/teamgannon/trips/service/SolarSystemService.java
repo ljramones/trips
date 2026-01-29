@@ -3,10 +3,13 @@ package com.teamgannon.trips.service;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.SolarSystem;
+import com.teamgannon.trips.jpa.model.SolarSystemFeature;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
+import com.teamgannon.trips.jpa.repository.SolarSystemFeatureRepository;
 import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
+import com.teamgannon.trips.planetarymodelling.FeatureDescription;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
@@ -31,15 +34,18 @@ public class SolarSystemService {
     private final SolarSystemRepository solarSystemRepository;
     private final ExoPlanetRepository exoPlanetRepository;
     private final StarObjectRepository starObjectRepository;
+    private final SolarSystemFeatureRepository featureRepository;
     private final ExoPlanetCrudService exoPlanetCrudService;
 
     public SolarSystemService(SolarSystemRepository solarSystemRepository,
                               ExoPlanetRepository exoPlanetRepository,
                               StarObjectRepository starObjectRepository,
+                              SolarSystemFeatureRepository featureRepository,
                               ExoPlanetCrudService exoPlanetCrudService) {
         this.solarSystemRepository = solarSystemRepository;
         this.exoPlanetRepository = exoPlanetRepository;
         this.starObjectRepository = starObjectRepository;
+        this.featureRepository = featureRepository;
         this.exoPlanetCrudService = exoPlanetCrudService;
     }
 
@@ -77,6 +83,10 @@ public class SolarSystemService {
         List<ExoPlanet> exoPlanets = exoPlanetRepository.findBySolarSystemId(solarSystem.getId());
         description.setPlanetDescriptionList(PlanetDescriptionConverter.convert(exoPlanets));
 
+        // Load features (asteroid belts, stations, gates, etc.)
+        List<SolarSystemFeature> features = featureRepository.findBySolarSystemId(solarSystem.getId());
+        description.setFeatures(FeatureDescriptionConverter.convert(features));
+
         // Set habitable zone from stored values
         if (solarSystem.getHabitableZoneInnerAU() != null) {
             description.setHabitableZoneInnerAU(solarSystem.getHabitableZoneInnerAU());
@@ -90,8 +100,8 @@ public class SolarSystemService {
             loadCompanionStars(description, solarSystem, starId);
         }
 
-        log.info("Loaded existing solar system '{}' with {} planets",
-                solarSystem.getSystemName(), exoPlanets.size());
+        log.info("Loaded existing solar system '{}' with {} planets and {} features",
+                solarSystem.getSystemName(), exoPlanets.size(), features.size());
     }
 
     private void populateFromStarMatch(SolarSystemDescription description,
@@ -482,6 +492,186 @@ public class SolarSystemService {
                 savedCount, moonCount, sourceStar.getDisplayName(), solarSystem.getId());
 
         return savedCount + moonCount;
+    }
+
+    // ==================== Feature CRUD ====================
+
+    /**
+     * Add a feature to a solar system.
+     *
+     * @param feature the feature to add
+     * @return the saved feature
+     */
+    @Transactional
+    public SolarSystemFeature addFeature(SolarSystemFeature feature) {
+        SolarSystemFeature saved = featureRepository.save(feature);
+        log.info("Added {} feature '{}' to solar system {}",
+                feature.getFeatureType(), feature.getName(), feature.getSolarSystemId());
+        return saved;
+    }
+
+    /**
+     * Update an existing feature.
+     *
+     * @param feature the feature to update
+     * @return the updated feature
+     */
+    @Transactional
+    public SolarSystemFeature updateFeature(SolarSystemFeature feature) {
+        return featureRepository.save(feature);
+    }
+
+    /**
+     * Delete a feature by ID.
+     *
+     * @param featureId the feature ID
+     */
+    @Transactional
+    public void deleteFeature(String featureId) {
+        featureRepository.deleteById(featureId);
+        log.info("Deleted feature {}", featureId);
+    }
+
+    /**
+     * Find a feature by ID.
+     *
+     * @param featureId the feature ID
+     * @return the feature, or null if not found
+     */
+    public SolarSystemFeature findFeatureById(String featureId) {
+        return featureRepository.findById(featureId).orElse(null);
+    }
+
+    /**
+     * Find all features for a solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of features
+     */
+    public List<SolarSystemFeature> findFeaturesBySolarSystem(String solarSystemId) {
+        return featureRepository.findBySolarSystemId(solarSystemId);
+    }
+
+    /**
+     * Find all belt-type features (asteroid belts, debris disks, etc.) for a solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of belt features
+     */
+    public List<SolarSystemFeature> findBeltFeatures(String solarSystemId) {
+        return featureRepository.findBeltFeatures(solarSystemId);
+    }
+
+    /**
+     * Find all point-type features (stations, gates, etc.) for a solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of point features
+     */
+    public List<SolarSystemFeature> findPointFeatures(String solarSystemId) {
+        return featureRepository.findPointFeatures(solarSystemId);
+    }
+
+    /**
+     * Find all navigation hazards in a solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of hazardous features
+     */
+    public List<SolarSystemFeature> findNavigationHazards(String solarSystemId) {
+        return featureRepository.findNavigationHazards(solarSystemId);
+    }
+
+    /**
+     * Find all jump gates in a solar system.
+     *
+     * @param solarSystemId the solar system ID
+     * @return list of jump gates
+     */
+    public List<SolarSystemFeature> findJumpGates(String solarSystemId) {
+        return featureRepository.findJumpGates(solarSystemId);
+    }
+
+    /**
+     * Create a standard asteroid belt feature.
+     *
+     * @param solarSystemId the solar system ID
+     * @param name          display name
+     * @param innerAU       inner radius in AU
+     * @param outerAU       outer radius in AU
+     * @return the created feature
+     */
+    @Transactional
+    public SolarSystemFeature createAsteroidBelt(String solarSystemId, String name,
+                                                  double innerAU, double outerAU) {
+        SolarSystemFeature belt = new SolarSystemFeature(name,
+                SolarSystemFeature.FeatureType.ASTEROID_BELT,
+                SolarSystemFeature.FeatureCategory.NATURAL);
+        belt.setSolarSystemId(solarSystemId);
+        belt.setInnerRadiusAU(innerAU);
+        belt.setOuterRadiusAU(outerAU);
+        belt.setThickness(0.1);  // Default moderate thickness
+        belt.setParticleCount(5000);
+        belt.setPrimaryColor("#8C8278");
+        belt.setSecondaryColor("#645A50");
+        belt.setAnimated(true);
+        belt.setAnimationSpeed(1.0);
+        return featureRepository.save(belt);
+    }
+
+    /**
+     * Create a jump gate feature.
+     *
+     * @param solarSystemId      the solar system ID
+     * @param name               display name
+     * @param orbitalRadiusAU    distance from star
+     * @param orbitalAngleDeg    position on orbit
+     * @param destinations       comma-separated destination system names
+     * @param controllingPolity  faction controlling the gate
+     * @return the created feature
+     */
+    @Transactional
+    public SolarSystemFeature createJumpGate(String solarSystemId, String name,
+                                              double orbitalRadiusAU, double orbitalAngleDeg,
+                                              String destinations, String controllingPolity) {
+        SolarSystemFeature gate = new SolarSystemFeature(name,
+                SolarSystemFeature.FeatureType.JUMP_GATE,
+                SolarSystemFeature.FeatureCategory.ARTIFICIAL);
+        gate.setSolarSystemId(solarSystemId);
+        gate.setOrbitalRadiusAU(orbitalRadiusAU);
+        gate.setOrbitalAngleDeg(orbitalAngleDeg);
+        gate.setTransitDestinations(destinations);
+        gate.setControllingPolity(controllingPolity);
+        gate.setStatus(SolarSystemFeature.FeatureStatus.ACTIVE);
+        gate.setPrimaryColor("#00AAFF");
+        return featureRepository.save(gate);
+    }
+
+    /**
+     * Create an orbital habitat feature.
+     *
+     * @param solarSystemId      the solar system ID
+     * @param name               display name
+     * @param orbitalRadiusAU    distance from star
+     * @param population         habitat population
+     * @param controllingPolity  faction controlling the habitat
+     * @return the created feature
+     */
+    @Transactional
+    public SolarSystemFeature createOrbitalHabitat(String solarSystemId, String name,
+                                                    double orbitalRadiusAU, long population,
+                                                    String controllingPolity) {
+        SolarSystemFeature habitat = new SolarSystemFeature(name,
+                SolarSystemFeature.FeatureType.ORBITAL_HABITAT,
+                SolarSystemFeature.FeatureCategory.ARTIFICIAL);
+        habitat.setSolarSystemId(solarSystemId);
+        habitat.setOrbitalRadiusAU(orbitalRadiusAU);
+        habitat.setOrbitalAngleDeg(Math.random() * 360);  // Random position
+        habitat.setPopulation(population);
+        habitat.setControllingPolity(controllingPolity);
+        habitat.setStatus(SolarSystemFeature.FeatureStatus.ACTIVE);
+        habitat.setPrimaryColor("#AAFFAA");
+        return featureRepository.save(habitat);
     }
 
     // ==================== Helper Methods ====================

@@ -43,6 +43,12 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private final Double origOmega;
     private final Double origOrbitalPeriod;
 
+    // Original ring values for change detection
+    private final Boolean origHasRings;
+    private final String origRingType;
+    private final Double origRingInnerRadius;
+    private final Double origRingOuterRadius;
+
     // === GENERAL/IDENTITY SECTION ===
     private TextField nameField;
     private TextField statusField;
@@ -100,6 +106,16 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField atmosphereTypeField;
     private TextArea atmosphereCompField;
 
+    // === RING SYSTEM SECTION ===
+    private CheckBox hasRingsCheck;
+    private ComboBox<String> ringTypeCombo;
+    private TextField ringInnerRadiusField;
+    private TextField ringOuterRadiusField;
+    private TextField ringThicknessField;
+    private TextField ringInclinationField;
+    private TextField ringPrimaryColorField;
+    private TextField ringSecondaryColorField;
+
     // === SCIENCE FICTION SECTION ===
     private TextField populationField;
     private TextField techLevelField;
@@ -127,6 +143,12 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         this.origInclination = planet.getInclination();
         this.origOmega = planet.getOmega();
         this.origOrbitalPeriod = planet.getOrbitalPeriod();
+
+        // Store original ring values for change detection
+        this.origHasRings = planet.getHasRings();
+        this.origRingType = planet.getRingType();
+        this.origRingInnerRadius = planet.getRingInnerRadiusAU();
+        this.origRingOuterRadius = planet.getRingOuterRadiusAU();
 
         setTitle("Planet Properties: " + planet.getName());
 
@@ -283,6 +305,10 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         TitledPane physicalPane = createPhysicalSection();
         vbox.getChildren().add(physicalPane);
 
+        // Ring system section
+        TitledPane ringPane = createRingSection();
+        vbox.getChildren().add(ringPane);
+
         return vbox;
     }
 
@@ -359,6 +385,74 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         grid.add(escapeVelocityField, 1, 4);
 
         TitledPane pane = new TitledPane("Physical Properties", grid);
+        pane.setCollapsible(false);
+        return pane;
+    }
+
+    private TitledPane createRingSection() {
+        GridPane grid = createGridPane();
+
+        hasRingsCheck = new CheckBox("Has Ring System");
+        hasRingsCheck.selectedProperty().addListener((obs, old, newVal) -> {
+            boolean enabled = newVal;
+            ringTypeCombo.setDisable(!enabled);
+            ringInnerRadiusField.setDisable(!enabled);
+            ringOuterRadiusField.setDisable(!enabled);
+            ringThicknessField.setDisable(!enabled);
+            ringInclinationField.setDisable(!enabled);
+            ringPrimaryColorField.setDisable(!enabled);
+            ringSecondaryColorField.setDisable(!enabled);
+        });
+        grid.add(hasRingsCheck, 0, 0, 2, 1);
+
+        grid.add(createBoldLabel("Ring Type:"), 2, 0);
+        ringTypeCombo = new ComboBox<>();
+        ringTypeCombo.getItems().addAll("SATURN", "URANUS", "NEPTUNE", "CUSTOM");
+        ringTypeCombo.setValue("SATURN");
+        ringTypeCombo.setPrefWidth(120);
+        grid.add(ringTypeCombo, 3, 0);
+
+        grid.add(createBoldLabel("Inner Radius (AU):"), 0, 1);
+        ringInnerRadiusField = createTextField(120);
+        ringInnerRadiusField.setPromptText("e.g., 0.0004");
+        grid.add(ringInnerRadiusField, 1, 1);
+
+        grid.add(createBoldLabel("Outer Radius (AU):"), 2, 1);
+        ringOuterRadiusField = createTextField(120);
+        ringOuterRadiusField.setPromptText("e.g., 0.0014");
+        grid.add(ringOuterRadiusField, 3, 1);
+
+        grid.add(createBoldLabel("Thickness (ratio):"), 0, 2);
+        ringThicknessField = createTextField(120);
+        ringThicknessField.setPromptText("0.01 = thin");
+        grid.add(ringThicknessField, 1, 2);
+
+        grid.add(createBoldLabel("Inclination (deg):"), 2, 2);
+        ringInclinationField = createTextField(120);
+        ringInclinationField.setPromptText("0 = equatorial");
+        grid.add(ringInclinationField, 3, 2);
+
+        grid.add(createBoldLabel("Primary Color:"), 0, 3);
+        ringPrimaryColorField = createTextField(120);
+        ringPrimaryColorField.setPromptText("#E6DCC8");
+        grid.add(ringPrimaryColorField, 1, 3);
+
+        grid.add(createBoldLabel("Secondary Color:"), 2, 3);
+        ringSecondaryColorField = createTextField(120);
+        ringSecondaryColorField.setPromptText("#B4AA96");
+        grid.add(ringSecondaryColorField, 3, 3);
+
+        // Initially disable ring fields if no rings
+        boolean hasRings = Boolean.TRUE.equals(planet.getHasRings());
+        ringTypeCombo.setDisable(!hasRings);
+        ringInnerRadiusField.setDisable(!hasRings);
+        ringOuterRadiusField.setDisable(!hasRings);
+        ringThicknessField.setDisable(!hasRings);
+        ringInclinationField.setDisable(!hasRings);
+        ringPrimaryColorField.setDisable(!hasRings);
+        ringSecondaryColorField.setDisable(!hasRings);
+
+        TitledPane pane = new TitledPane("Ring System", grid);
         pane.setCollapsible(false);
         return pane;
     }
@@ -632,6 +726,20 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         atmosphereTypeField.setText(safeString(planet.getAtmosphereType()));
         atmosphereCompField.setText(safeString(planet.getAtmosphereComposition()));
 
+        // === RING SYSTEM ===
+        hasRingsCheck.setSelected(Boolean.TRUE.equals(planet.getHasRings()));
+        if (planet.getRingType() != null && !planet.getRingType().isEmpty()) {
+            ringTypeCombo.setValue(planet.getRingType().toUpperCase());
+        } else {
+            ringTypeCombo.setValue("SATURN");
+        }
+        ringInnerRadiusField.setText(formatDouble(planet.getRingInnerRadiusAU()));
+        ringOuterRadiusField.setText(formatDouble(planet.getRingOuterRadiusAU()));
+        ringThicknessField.setText(formatDouble(planet.getRingThickness()));
+        ringInclinationField.setText(formatDouble(planet.getRingInclination()));
+        ringPrimaryColorField.setText(safeString(planet.getRingPrimaryColor()));
+        ringSecondaryColorField.setText(safeString(planet.getRingSecondaryColor()));
+
         // === SCI-FI ===
         populationField.setText(planet.getPopulation() != null ? planet.getPopulation().toString() : "");
         techLevelField.setText(planet.getTechLevel() != null ? planet.getTechLevel().toString() : "");
@@ -765,6 +873,29 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planet.setAtmosphereType(atmosphereTypeField.getText().trim());
         planet.setAtmosphereComposition(atmosphereCompField.getText().trim());
 
+        // === UPDATE RING SYSTEM ===
+        planet.setHasRings(hasRingsCheck.isSelected());
+        if (hasRingsCheck.isSelected()) {
+            planet.setRingType(ringTypeCombo.getValue());
+            planet.setRingInnerRadiusAU(parseDouble(ringInnerRadiusField.getText()));
+            planet.setRingOuterRadiusAU(parseDouble(ringOuterRadiusField.getText()));
+            planet.setRingThickness(parseDouble(ringThicknessField.getText()));
+            planet.setRingInclination(parseDouble(ringInclinationField.getText()));
+            String primaryColor = ringPrimaryColorField.getText().trim();
+            planet.setRingPrimaryColor(primaryColor.isEmpty() ? null : primaryColor);
+            String secondaryColor = ringSecondaryColorField.getText().trim();
+            planet.setRingSecondaryColor(secondaryColor.isEmpty() ? null : secondaryColor);
+        } else {
+            // Clear ring values if rings are disabled
+            planet.setRingType(null);
+            planet.setRingInnerRadiusAU(null);
+            planet.setRingOuterRadiusAU(null);
+            planet.setRingThickness(null);
+            planet.setRingInclination(null);
+            planet.setRingPrimaryColor(null);
+            planet.setRingSecondaryColor(null);
+        }
+
         // === UPDATE SCI-FI ===
         planet.setPopulation(parseLong(populationField.getText()));
         planet.setTechLevel(parseInteger(techLevelField.getText()));
@@ -775,8 +906,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planet.setColonized(colonizedCheck.isSelected());
         planet.setNotes(notesField.getText().trim());
 
-        // Determine if anything changed
-        boolean orbitalChanged = hasOrbitalChanged();
+        // Determine if anything changed (include ring changes as orbital changes to trigger redraw)
+        boolean orbitalChanged = hasOrbitalChanged() || hasRingsChanged();
 
         log.info("Planet edit completed: orbitalChanged={}", orbitalChanged);
 
@@ -788,6 +919,30 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
                !nullSafeEquals(origEccentricity, planet.getEccentricity()) ||
                !nullSafeEquals(origInclination, planet.getInclination()) ||
                !nullSafeEquals(origOmega, planet.getOmega());
+    }
+
+    private boolean hasRingsChanged() {
+        boolean currentHasRings = Boolean.TRUE.equals(planet.getHasRings());
+        boolean originalHasRings = Boolean.TRUE.equals(origHasRings);
+
+        if (currentHasRings != originalHasRings) {
+            return true;  // Ring status changed
+        }
+
+        if (!currentHasRings) {
+            return false;  // No rings before or after, no change
+        }
+
+        // Ring exists, check if parameters changed
+        return !stringEquals(origRingType, planet.getRingType()) ||
+               !nullSafeEquals(origRingInnerRadius, planet.getRingInnerRadiusAU()) ||
+               !nullSafeEquals(origRingOuterRadius, planet.getRingOuterRadiusAU());
+    }
+
+    private boolean stringEquals(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
     }
 
     private boolean nullSafeEquals(Double a, Double b) {

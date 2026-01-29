@@ -1,8 +1,8 @@
 package com.teamgannon.trips.controller.menubar;
 
 import com.teamgannon.trips.experimental.AsteroidFieldWindow;
-import com.teamgannon.trips.experimental.rings.RingFieldFactory;
-import com.teamgannon.trips.experimental.rings.RingFieldWindow;
+import com.teamgannon.trips.particlefields.RingFieldFactory;
+import com.teamgannon.trips.particlefields.RingFieldWindow;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.MenuItem;

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.experimental.rings;
+package com.teamgannon.trips.particlefields;
 
 import java.util.List;
 import java.util.Random;

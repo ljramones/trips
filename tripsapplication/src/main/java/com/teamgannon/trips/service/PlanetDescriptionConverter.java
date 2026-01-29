@@ -84,9 +84,34 @@ public class PlanetDescriptionConverter {
             desc.setSurfaceGravity(exoPlanet.getLogG());
         }
 
+        // Longitude of ascending node
+        if (exoPlanet.getLongitudeOfAscendingNode() != null) {
+            desc.setLongitudeOfAscendingNode(exoPlanet.getLongitudeOfAscendingNode());
+        }
+
         // Moon properties
         desc.setMoon(Boolean.TRUE.equals(exoPlanet.getIsMoon()));
         desc.setParentPlanetId(exoPlanet.getParentPlanetId());
+
+        // Ring system properties
+        desc.setHasRings(Boolean.TRUE.equals(exoPlanet.getHasRings()));
+        if (desc.isHasRings()) {
+            desc.setRingType(exoPlanet.getRingType());
+            if (exoPlanet.getRingInnerRadiusAU() != null) {
+                desc.setRingInnerRadiusAU(exoPlanet.getRingInnerRadiusAU());
+            }
+            if (exoPlanet.getRingOuterRadiusAU() != null) {
+                desc.setRingOuterRadiusAU(exoPlanet.getRingOuterRadiusAU());
+            }
+            if (exoPlanet.getRingThickness() != null) {
+                desc.setRingThickness(exoPlanet.getRingThickness());
+            }
+            if (exoPlanet.getRingInclination() != null) {
+                desc.setRingInclination(exoPlanet.getRingInclination());
+            }
+            desc.setRingPrimaryColor(exoPlanet.getRingPrimaryColor());
+            desc.setRingSecondaryColor(exoPlanet.getRingSecondaryColor());
+        }
 
         return desc;
     }

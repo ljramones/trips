@@ -41,6 +41,11 @@ public class SolarSystemDescription {
     private List<CometDescription> cometDescriptions = new ArrayList<>();
 
     /**
+     * The list of system features (asteroid belts, stations, gates, etc.)
+     */
+    private List<FeatureDescription> features = new ArrayList<>();
+
+    /**
      * Inner edge of habitable zone in AU
      */
     private double habitableZoneInnerAU;
@@ -86,6 +91,49 @@ public class SolarSystemDescription {
             solarSystem = new SolarSystem();
         }
         solarSystem.setId(solarSystemId);
+    }
+
+    /**
+     * Whether this system has any features (belts, stations, etc.)
+     */
+    public boolean hasFeatures() {
+        return !features.isEmpty();
+    }
+
+    /**
+     * Get belt-type features (asteroid belts, debris disks, etc.)
+     */
+    public List<FeatureDescription> getBeltFeatures() {
+        return features.stream()
+                .filter(FeatureDescription::isBeltType)
+                .toList();
+    }
+
+    /**
+     * Get point-type features (stations, gates, etc.)
+     */
+    public List<FeatureDescription> getPointFeatures() {
+        return features.stream()
+                .filter(FeatureDescription::isPointType)
+                .toList();
+    }
+
+    /**
+     * Get natural features only
+     */
+    public List<FeatureDescription> getNaturalFeatures() {
+        return features.stream()
+                .filter(FeatureDescription::isNatural)
+                .toList();
+    }
+
+    /**
+     * Get artificial features only
+     */
+    public List<FeatureDescription> getArtificialFeatures() {
+        return features.stream()
+                .filter(FeatureDescription::isArtificial)
+                .toList();
     }
 
 }

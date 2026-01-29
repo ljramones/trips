@@ -1,4 +1,4 @@
-package com.teamgannon.trips.experimental.rings;
+package com.teamgannon.trips.particlefields;
 
 import javafx.scene.paint.Color;
 
@@ -7,17 +7,18 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Generator for planetary rings (Saturn-like).
+ * Generator for asteroid belts (Main belt-like).
  *
  * Characteristics:
- * - Extremely thin vertical distribution
- * - Nearly circular orbits (very low eccentricity)
- * - Very low orbital inclination
- * - Dense particle distribution
- * - Fast Keplerian rotation (inner particles faster than outer)
- * - Icy/rocky composition (whites, grays, subtle browns)
+ * - Thick vertical distribution
+ * - Moderate eccentricity (elliptical orbits)
+ * - Significant orbital inclination variation
+ * - Sparse distribution (large gaps between bodies)
+ * - Large rocky bodies
+ * - Slower rotation than planetary rings
+ * - Rocky composition (grays, browns, dark colors)
  */
-public class PlanetaryRingGenerator implements RingElementGenerator {
+public class AsteroidBeltGenerator implements RingElementGenerator {
 
     @Override
     public List<RingElement> generate(RingConfiguration config, Random random) {
@@ -27,36 +28,38 @@ public class PlanetaryRingGenerator implements RingElementGenerator {
         double sizeRange = config.maxSize() - config.minSize();
 
         for (int i = 0; i < config.numElements(); i++) {
-            // Radial distribution - slightly favor middle of ring
-            double radialFactor = random.nextGaussian() * 0.3 + 0.5;
-            radialFactor = Math.max(0, Math.min(1, radialFactor));
-            double semiMajorAxis = config.innerRadius() + radialFactor * radialRange;
+            // Radial distribution - more uniform than planetary rings
+            double semiMajorAxis = config.innerRadius() + random.nextDouble() * radialRange;
 
-            // Very low eccentricity for planetary rings
-            double eccentricity = random.nextDouble() * config.maxEccentricity() * 0.1;
+            // Moderate eccentricity - elliptical orbits
+            double eccentricity = random.nextDouble() * config.maxEccentricity();
 
-            // Very low inclination - rings are flat
+            // Significant inclination variation
             double maxIncRad = Math.toRadians(config.maxInclinationDeg());
-            double inclination = (random.nextGaussian() * 0.3) * maxIncRad;
+            double inclination = (random.nextDouble() - 0.5) * 2 * maxIncRad;
 
             // Random orbital angles
             double argumentOfPeriapsis = random.nextDouble() * 2 * Math.PI;
             double longitudeOfAscendingNode = random.nextDouble() * 2 * Math.PI;
             double initialAngle = random.nextDouble() * 2 * Math.PI;
 
-            // Keplerian speed: inner particles orbit faster
+            // Keplerian speed with more variation
             double speedFactor = Math.sqrt(config.innerRadius() / semiMajorAxis);
             double angularSpeed = config.baseAngularSpeed() * speedFactor;
-            // Small random variation
-            angularSpeed *= (0.98 + random.nextDouble() * 0.04);
+            // More random variation than planetary rings
+            angularSpeed *= (0.8 + random.nextDouble() * 0.4);
 
-            // Very thin vertical offset
-            double heightOffset = (random.nextGaussian() * 0.5) * config.thickness();
+            // Thick vertical distribution
+            double heightOffset = (random.nextDouble() - 0.5) * config.thickness();
 
-            // Particle size - planetary rings have smaller particles
+            // Larger particles with more size variation
             double size = config.minSize() + random.nextDouble() * sizeRange;
+            // Bias toward medium sizes (fewer very large or very small)
+            if (random.nextDouble() < 0.7) {
+                size = config.minSize() + (0.3 + random.nextDouble() * 0.4) * sizeRange;
+            }
 
-            // Color variation - icy whites to subtle browns
+            // Color variation - rocky grays and browns
             Color color = interpolateColor(config.primaryColor(), config.secondaryColor(),
                     random.nextDouble());
 
@@ -72,12 +75,12 @@ public class PlanetaryRingGenerator implements RingElementGenerator {
 
     @Override
     public RingType getRingType() {
-        return RingType.PLANETARY_RING;
+        return RingType.ASTEROID_BELT;
     }
 
     @Override
     public String getDescription() {
-        return "Planetary ring generator - thin, dense, fast-rotating icy/rocky particles";
+        return "Asteroid belt generator - thick, sparse, eccentric rocky bodies";
     }
 
     private Color interpolateColor(Color c1, Color c2, double t) {
