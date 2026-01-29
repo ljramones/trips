@@ -19,6 +19,12 @@ import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.fxyz3d.geometry.Point3D;
 import org.fxyz3d.shapes.primitives.ScatterMesh;
+import org.orekit.frames.FramesFactory;
+import org.orekit.orbits.KeplerianOrbit;
+import org.orekit.orbits.PositionAngle;
+import org.orekit.time.AbsoluteDate;
+import org.orekit.utils.Constants;
+import org.orekit.utils.PVCoordinates;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +38,7 @@ import java.util.Random;
 @Slf4j
 public class AsteroidFieldWindow {
 
+    private boolean useOrekit = true;
     private static final double WINDOW_WIDTH  = 1200;
     private static final double WINDOW_HEIGHT = 900;
 
@@ -50,6 +57,11 @@ public class AsteroidFieldWindow {
 
     private static final double THRESH_MEDIUM = 1.4;
     private static final double THRESH_LARGE  = 2.2;
+
+    private static final AbsoluteDate ORBIT_EPOCH = AbsoluteDate.J2000_EPOCH;
+    private static final double CENTRAL_MU = Constants.JPL_SSD_SUN_GM;
+
+    private static final String WINDOW_TITLE_BASE = "Asteroid Field – Procedural (working version)";
 
     private final Stage stage = new Stage();
     private final Group world = new Group();
@@ -113,7 +125,7 @@ public class AsteroidFieldWindow {
 
         Scene scene = new Scene(sceneRoot, WINDOW_WIDTH, WINDOW_HEIGHT);
         stage.setScene(scene);
-        stage.setTitle("Asteroid Field – Procedural (working version)");
+        updateWindowTitle();
 
         setupKeyHandlers();  // safe now
 
@@ -253,16 +265,48 @@ public class AsteroidFieldWindow {
             double ecc = eccentricities.get(i);
             double inc = inclinations.get(i);
 
-            double r = radius * (1 - ecc * Math.cos(angle));
+            Point3D position = useOrekit
+                    ? computeOrekitPosition(radius, ecc, inc, angle, heights.get(i))
+                    : computeAnalyticPosition(radius, ecc, inc, angle, heights.get(i));
 
-            double x = r * Math.cos(angle);
-            double z = r * Math.sin(angle);
-
-            double y = heights.get(i) * Math.cos(inc) - z * Math.sin(inc);
-            z = heights.get(i) * Math.sin(inc) + z * Math.cos(inc);
-
-            displayPositions.set(i, new Point3D((float) x, (float) y, (float) z));
+            displayPositions.set(i, position);
         }
+    }
+
+    private Point3D computeOrekitPosition(double radius, double eccentricity, double inclination,
+                                          double trueAnomaly, double heightOffset) {
+        KeplerianOrbit orbit = new KeplerianOrbit(
+                radius,
+                eccentricity,
+                inclination,
+                0.0,
+                0.0,
+                trueAnomaly,
+                PositionAngle.TRUE,
+                FramesFactory.getGCRF(),
+                ORBIT_EPOCH,
+                CENTRAL_MU
+        );
+
+        PVCoordinates pv = orbit.getPVCoordinates(ORBIT_EPOCH, FramesFactory.getGCRF());
+        double x = pv.getPosition().getX();
+        double y = pv.getPosition().getY() + heightOffset;
+        double z = pv.getPosition().getZ();
+
+        return new Point3D((float) x, (float) y, (float) z);
+    }
+
+    private Point3D computeAnalyticPosition(double radius, double eccentricity, double inclination,
+                                            double trueAnomaly, double heightOffset) {
+        double r = radius * (1 - eccentricity * Math.cos(trueAnomaly));
+
+        double x = r * Math.cos(trueAnomaly);
+        double z = r * Math.sin(trueAnomaly);
+
+        double y = heightOffset * Math.cos(inclination) - z * Math.sin(inclination);
+        z = heightOffset * Math.sin(inclination) + z * Math.cos(inclination);
+
+        return new Point3D((float) x, (float) y, (float) z);
     }
 
     private void setupMouseHandlers() {
@@ -305,6 +349,7 @@ public class AsteroidFieldWindow {
             scene.setOnKeyPressed(e -> {
                 switch (e.getCode()) {
                     case SPACE -> toggleAnimation();
+                    case O     -> toggleOrekit();
                     case R     -> resetView();
                 }
             });
@@ -324,6 +369,17 @@ public class AsteroidFieldWindow {
     public void toggleAnimation() {
         animating = !animating;
         log.info("Animation {}", animating ? "resumed" : "paused");
+    }
+
+    public void toggleOrekit() {
+        useOrekit = !useOrekit;
+        updateWindowTitle();
+        log.info("Orekit {}", useOrekit ? "enabled" : "disabled");
+    }
+
+    private void updateWindowTitle() {
+        String mode = useOrekit ? "Orekit" : "Analytic";
+        stage.setTitle(WINDOW_TITLE_BASE + " [" + mode + "]");
     }
 
     public void show() {
