@@ -19,6 +19,10 @@ import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.fxyz3d.geometry.Point3D;
 import org.fxyz3d.shapes.primitives.ScatterMesh;
+import org.ode4j.ode.DBody;
+import org.ode4j.ode.DMass;
+import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeHelper;
 import org.orekit.frames.FramesFactory;
 import org.orekit.orbits.KeplerianOrbit;
 import org.orekit.orbits.PositionAngle;
@@ -38,7 +42,6 @@ import java.util.Random;
 @Slf4j
 public class AsteroidFieldWindow {
 
-    private boolean useOrekit = true;
     private static final double WINDOW_WIDTH  = 1200;
     private static final double WINDOW_HEIGHT = 900;
 
@@ -62,6 +65,11 @@ public class AsteroidFieldWindow {
     private static final double CENTRAL_MU = Constants.JPL_SSD_SUN_GM;
 
     private static final String WINDOW_TITLE_BASE = "Asteroid Field – Procedural (working version)";
+
+    private static final int HERO_BODY_COUNT = 120;
+    private static final double ODE_STEP_SECONDS = 0.016;
+    // ODE uses a visual-time scale to match the analytic per-frame angular speeds.
+    private static final double ODE_TIME_STEP = ODE_STEP_SECONDS;
 
     private final Stage stage = new Stage();
     private final Group world = new Group();
@@ -88,6 +96,15 @@ public class AsteroidFieldWindow {
 
     private int[] shuffleMapping;
 
+    private boolean useOrekit = true;
+    private boolean useOde = false;
+
+    private final boolean[] heroBodies = new boolean[NUM_ASTEROIDS];
+    private final List<DBody> odeBodies = new ArrayList<>();
+    private final List<Integer> odeBodyIndices = new ArrayList<>();
+    private DWorld odeWorld;
+    private boolean odeInitialized = false;
+
     private ScatterMesh meshSmall;
     private ScatterMesh meshMedium;
     private ScatterMesh meshLarge;
@@ -104,6 +121,9 @@ public class AsteroidFieldWindow {
         initialize();
     }
 
+    /**
+     * Initializes camera, lighting, asteroids, and event handlers
+     */
     private void initialize() {
         camera.setTranslateX(0);
         camera.setTranslateY(0);
@@ -135,6 +155,9 @@ public class AsteroidFieldWindow {
         log.info("AsteroidFieldWindow initialized with {} asteroids", NUM_ASTEROIDS);
     }
 
+    /**
+     * Adds ambient and directional lighting to the scene
+     */
     private void setupLighting() {
         AmbientLight ambient = new AmbientLight(Color.rgb(180, 180, 180));
         PointLight sun = new PointLight(Color.rgb(220, 200, 150));
@@ -152,9 +175,13 @@ public class AsteroidFieldWindow {
         return sphere;
     }
 
+    /**
+     * Generates randomized asteroid field and assigns hero bodies
+     */
     private void generateAsteroidField() {
         clearLists();
 
+        // Populates asteroid field with randomized orbital parameters
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
             double radius = FIELD_INNER_RADIUS + random.nextDouble() * (FIELD_OUTER_RADIUS - FIELD_INNER_RADIUS);
             double eccentricity = random.nextDouble() * 0.06;
@@ -189,9 +216,13 @@ public class AsteroidFieldWindow {
             shuffleMapping[i] = indices.get(i);
         }
 
+        assignHeroBodies();
         refreshMeshes();
     }
 
+    /**
+     * Clears lists to prepare for recalculation
+     */
     private void clearLists() {
         radii.clear();
         angles.clear();
@@ -203,6 +234,9 @@ public class AsteroidFieldWindow {
         displayPositions.clear();
     }
 
+    /**
+     * Rebuilds meshes from size‑partitioned display positions
+     */
     private void refreshMeshes() {
         world.getChildren().removeAll(meshSmall, meshMedium, meshLarge);
 
@@ -210,6 +244,7 @@ public class AsteroidFieldWindow {
         List<Point3D> medium = new ArrayList<>();
         List<Point3D> large  = new ArrayList<>();
 
+        // Populates size‑based mesh lists from shuffled positions
         for (int dispIdx = 0; dispIdx < NUM_ASTEROIDS; dispIdx++) {
             int origIdx = shuffleMapping[dispIdx];
             Point3D p = displayPositions.get(origIdx);
@@ -240,6 +275,7 @@ public class AsteroidFieldWindow {
     }
 
     private void startAnimation() {
+        // Defines frame handler; updates positions; refreshes meshes periodically
         animationTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -256,13 +292,30 @@ public class AsteroidFieldWindow {
         animationTimer.start();
     }
 
+    /**
+     * Updates asteroid positions using ODE or analytic model
+     */
     private void updateAsteroidPositions() {
+        boolean odeActive = false;
+        if (useOde) {
+            initializeOdeIfNeeded();
+            odeActive = odeInitialized && !odeBodies.isEmpty();
+            if (odeActive) {
+                stepOdeSimulation();
+            }
+        }
+
+        // Updates asteroid positions using ODE or analytic method
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
+            if (odeActive && heroBodies[i]) {
+                continue;
+            }
+
             double angle = angles.get(i) + speeds.get(i);
             angles.set(i, angle);
 
             double radius = radii.get(i);
-            double ecc = eccentricities.get(i);
+            double ecc = 0.0;
             double inc = inclinations.get(i);
 
             Point3D position = useOrekit
@@ -271,8 +324,112 @@ public class AsteroidFieldWindow {
 
             displayPositions.set(i, position);
         }
+
+        if (odeActive) {
+            syncHeroPositionsFromOde();
+        }
     }
 
+    private void assignHeroBodies() {
+        for (int i = 0; i < heroBodies.length; i++) {
+            heroBodies[i] = false;
+        }
+        for (int i = 0; i < HERO_BODY_COUNT && i < shuffleMapping.length; i++) {
+            int idx = shuffleMapping[i];
+            heroBodies[idx] = true;
+        }
+    }
+
+    /**
+     * Initializes ODE world and bodies if needed
+     */
+    private void initializeOdeIfNeeded() {
+        if (odeInitialized) return;
+
+        OdeHelper.initODE();
+        odeWorld = OdeHelper.createWorld();
+        odeWorld.setGravity(0, 0, 0);
+
+        odeBodies.clear();
+        odeBodyIndices.clear();
+        // Creates and positions ODE bodies for hero asteroids
+        for (int i = 0; i < NUM_ASTEROIDS; i++) {
+            if (!heroBodies[i]) continue;
+
+            double angle = angles.get(i);
+            double radius = radii.get(i);
+            double height = 0.0;
+            double ecc = 0.0;
+            double inc = 0.0;
+
+            DBody body = OdeHelper.createBody(odeWorld);
+            DMass mass = OdeHelper.createMass();
+            mass.setSphereTotal(0.1, 0.2);
+            body.setMass(mass);
+            Point3D startPos = useOrekit
+                    ? computeOrekitPosition(radius, ecc, inc, angle, height)
+                    : computeAnalyticPosition(radius, ecc, inc, angle, height);
+            body.setPosition(startPos.x, startPos.y, startPos.z);
+
+            // Tangential velocity to match the analytic per-frame angular speed.
+            double v = radius * speeds.get(i) / ODE_TIME_STEP;
+            double vx = -v * Math.sin(angle);
+            double vz = v * Math.cos(angle);
+            double vy = 0.0;
+            double vyRot = vy * Math.cos(inc) - vz * Math.sin(inc);
+            double vzRot = vy * Math.sin(inc) + vz * Math.cos(inc);
+            body.setLinearVel(vx, vyRot, vzRot);
+
+            odeBodies.add(body);
+            odeBodyIndices.add(i);
+        }
+
+        odeInitialized = true;
+        log.info("ODE initialized with {} hero bodies", odeBodies.size());
+    }
+
+    private void stepOdeSimulation() {
+        // Applies inward acceleration based on hero speed
+        for (int i = 0; i < odeBodies.size(); i++) {
+            DBody body = odeBodies.get(i);
+            int idx = odeBodyIndices.get(i);
+            double x = body.getPosition().get0();
+            double y = body.getPosition().get1();
+            double z = body.getPosition().get2();
+
+            double r2 = x * x + y * y + z * z;
+            double r = Math.sqrt(r2);
+            if (r < 1e-6) {
+                continue;
+            }
+
+            double radius = Math.max(r, 1e-6);
+            double v = radius * speeds.get(idx) / ODE_TIME_STEP;
+            double accel = -(v * v) / radius;
+            double invR = 1.0 / radius;
+            body.addForce(x * accel * invR, y * accel * invR, z * accel * invR);
+        }
+
+        odeWorld.quickStep(ODE_STEP_SECONDS);
+    }
+
+    private void syncHeroPositionsFromOde() {
+        int bodyIndex = 0;
+        // Copies ODE positions to display positions
+        for (int i = 0; i < NUM_ASTEROIDS; i++) {
+            if (!heroBodies[i]) continue;
+
+            DBody body = odeBodies.get(bodyIndex++);
+            double x = body.getPosition().get0();
+            double y = body.getPosition().get1();
+            double z = body.getPosition().get2();
+            displayPositions.set(i, new Point3D((float) x, (float) y, (float) z));
+        }
+    }
+
+    /**
+     * Computes position from Keplerian orbital elements
+     */
     private Point3D computeOrekitPosition(double radius, double eccentricity, double inclination,
                                           double trueAnomaly, double heightOffset) {
         KeplerianOrbit orbit = new KeplerianOrbit(
@@ -296,6 +453,9 @@ public class AsteroidFieldWindow {
         return new Point3D((float) x, (float) y, (float) z);
     }
 
+    /**
+     * Computes position from orbital elements and height
+     */
     private Point3D computeAnalyticPosition(double radius, double eccentricity, double inclination,
                                             double trueAnomaly, double heightOffset) {
         double r = radius * (1 - eccentricity * Math.cos(trueAnomaly));
@@ -330,6 +490,7 @@ public class AsteroidFieldWindow {
         double dx = mousePosX - mouseOldX;
         double dy = mousePosY - mouseOldY;
 
+        // Rotates or translates camera based on mouse button
         if (e.isPrimaryButtonDown()) {
             rotateY.setAngle(rotateY.getAngle() + dx * 0.42);
             rotateX.setAngle(rotateX.getAngle() - dy * 0.42);
@@ -345,17 +506,22 @@ public class AsteroidFieldWindow {
 
     private void setupKeyHandlers() {
         Scene scene = stage.getScene();
+        // Sets key press event handler on the scene
         if (scene != null) {
             scene.setOnKeyPressed(e -> {
                 switch (e.getCode()) {
                     case SPACE -> toggleAnimation();
                     case O     -> toggleOrekit();
+                    case D     -> toggleOde();
                     case R     -> resetView();
                 }
             });
         }
     }
 
+    /**
+     * Resets camera transform and logs action
+     */
     private void resetView() {
         rotateX.setAngle(30);
         rotateY.setAngle(0);
@@ -377,9 +543,20 @@ public class AsteroidFieldWindow {
         log.info("Orekit {}", useOrekit ? "enabled" : "disabled");
     }
 
+    public void toggleOde() {
+        useOde = !useOde;
+        if (useOde) {
+            odeInitialized = false;
+            odeBodies.clear();
+        }
+        updateWindowTitle();
+        log.info("ODE {}", useOde ? "enabled" : "disabled");
+    }
+
     private void updateWindowTitle() {
         String mode = useOrekit ? "Orekit" : "Analytic";
-        stage.setTitle(WINDOW_TITLE_BASE + " [" + mode + "]");
+        String odeSuffix = useOde ? " + ODE" : "";
+        stage.setTitle(WINDOW_TITLE_BASE + " [" + mode + odeSuffix + "]");
     }
 
     public void show() {
