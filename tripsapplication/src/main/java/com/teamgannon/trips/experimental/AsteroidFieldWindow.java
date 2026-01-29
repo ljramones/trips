@@ -40,6 +40,19 @@ import java.util.Random;
 @Slf4j
 public class AsteroidFieldWindow {
 
+    /**
+     * Immutable orbital parameters for a single asteroid.
+     * Angle is stored separately since it's updated each frame.
+     */
+    private record AsteroidData(
+            double radius,
+            double speed,
+            double height,
+            double eccentricity,
+            double inclination,
+            double size
+    ) {}
+
     private static final double WINDOW_WIDTH  = 1200;
     private static final double WINDOW_HEIGHT = 900;
 
@@ -84,15 +97,12 @@ public class AsteroidFieldWindow {
     private double mousePosX, mousePosY;
     private double mouseOldX, mouseOldY;
 
-    private final List<Double> radii         = new ArrayList<>();
-    private final List<Double> angles        = new ArrayList<>();
-    private final List<Double> speeds        = new ArrayList<>();
-    private final List<Double> heights       = new ArrayList<>();
-    private final List<Double> eccentricities = new ArrayList<>();
-    private final List<Double> inclinations  = new ArrayList<>();
-    private final List<Double> sizes         = new ArrayList<>();
-
-    private List<Point3D> displayPositions = new ArrayList<>();
+    // Immutable orbital parameters for each asteroid
+    private final List<AsteroidData> asteroids = new ArrayList<>();
+    // Mutable current angle for each asteroid (updated every frame)
+    private final double[] angles = new double[NUM_ASTEROIDS];
+    // Computed display positions
+    private final List<Point3D> displayPositions = new ArrayList<>();
 
     private int[] shuffleMapping;
 
@@ -179,7 +189,8 @@ public class AsteroidFieldWindow {
      * Generates randomized asteroid field and assigns hero bodies
      */
     private void generateAsteroidField() {
-        clearLists();
+        asteroids.clear();
+        displayPositions.clear();
 
         // Populates asteroid field with randomized orbital parameters
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
@@ -193,15 +204,11 @@ public class AsteroidFieldWindow {
             speed *= 0.8 + random.nextDouble() * 0.4;
             double size = 0.9 + random.nextDouble() * 1.7;
 
-            radii.add(radius);
-            eccentricities.add(eccentricity);
-            inclinations.add(inclinationRad);
-            heights.add(height);
-            angles.add(angle);
-            speeds.add(speed);
-            sizes.add(size);
+            asteroids.add(new AsteroidData(radius, speed, height, eccentricity, inclinationRad, size));
+            angles[i] = angle;
 
-            double r = radius * (1 - eccentricity * Math.cos(angle));
+            // Compute initial display position
+            double r = radius * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
             double x = r * Math.cos(angle);
             double z = r * Math.sin(angle);
             displayPositions.add(new Point3D((float) x, (float) height, (float) z));
@@ -221,20 +228,6 @@ public class AsteroidFieldWindow {
     }
 
     /**
-     * Clears lists to prepare for recalculation
-     */
-    private void clearLists() {
-        radii.clear();
-        angles.clear();
-        speeds.clear();
-        heights.clear();
-        eccentricities.clear();
-        inclinations.clear();
-        sizes.clear();
-        displayPositions.clear();
-    }
-
-    /**
      * Rebuilds meshes from size‑partitioned display positions
      */
     private void refreshMeshes() {
@@ -248,7 +241,7 @@ public class AsteroidFieldWindow {
         for (int dispIdx = 0; dispIdx < NUM_ASTEROIDS; dispIdx++) {
             int origIdx = shuffleMapping[dispIdx];
             Point3D p = displayPositions.get(origIdx);
-            double sz = sizes.get(origIdx);
+            double sz = asteroids.get(origIdx).size();
 
             if (sz >= THRESH_LARGE)      large.add(p);
             else if (sz >= THRESH_MEDIUM) medium.add(p);
@@ -311,16 +304,15 @@ public class AsteroidFieldWindow {
                 continue;
             }
 
-            double angle = angles.get(i) + speeds.get(i);
-            angles.set(i, angle);
-
-            double radius = radii.get(i);
-            double ecc = eccentricities.get(i);
-            double inc = inclinations.get(i);
+            AsteroidData asteroid = asteroids.get(i);
+            double angle = angles[i] + asteroid.speed();
+            angles[i] = angle;
 
             Point3D position = useOrekit
-                    ? computeOrekitPosition(radius, ecc, inc, angle, heights.get(i))
-                    : computeAnalyticPosition(radius, ecc, inc, angle, heights.get(i));
+                    ? computeOrekitPosition(asteroid.radius(), asteroid.eccentricity(),
+                            asteroid.inclination(), angle, asteroid.height())
+                    : computeAnalyticPosition(asteroid.radius(), asteroid.eccentricity(),
+                            asteroid.inclination(), angle, asteroid.height());
 
             displayPositions.set(i, position);
         }
@@ -356,26 +348,28 @@ public class AsteroidFieldWindow {
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
             if (!heroBodies[i]) continue;
 
-            double angle = angles.get(i);
-            double radius = radii.get(i);
-            double height = 0.0;
-            double ecc = 0.0;
-            double inc = 0.0;
+            AsteroidData asteroid = asteroids.get(i);
+            double angle = angles[i];
 
             DBody body = OdeHelper.createBody(odeWorld);
             DMass mass = OdeHelper.createMass();
             mass.setSphereTotal(0.1, 0.2);
             body.setMass(mass);
+
+            // Use stored orbital parameters including height
             Point3D startPos = useOrekit
-                    ? computeOrekitPosition(radius, ecc, inc, angle, height)
-                    : computeAnalyticPosition(radius, ecc, inc, angle, height);
+                    ? computeOrekitPosition(asteroid.radius(), asteroid.eccentricity(),
+                            asteroid.inclination(), angle, asteroid.height())
+                    : computeAnalyticPosition(asteroid.radius(), asteroid.eccentricity(),
+                            asteroid.inclination(), angle, asteroid.height());
             body.setPosition(startPos.x, startPos.y, startPos.z);
 
             // Tangential velocity to match the analytic per-frame angular speed.
-            double v = radius * speeds.get(i) / ODE_TIME_STEP;
+            double v = asteroid.radius() * asteroid.speed() / ODE_TIME_STEP;
             double vx = -v * Math.sin(angle);
             double vz = v * Math.cos(angle);
             double vy = 0.0;
+            double inc = asteroid.inclination();
             double vyRot = vy * Math.cos(inc) - vz * Math.sin(inc);
             double vzRot = vy * Math.sin(inc) + vz * Math.cos(inc);
             body.setLinearVel(vx, vyRot, vzRot);
@@ -393,6 +387,8 @@ public class AsteroidFieldWindow {
         for (int i = 0; i < odeBodies.size(); i++) {
             DBody body = odeBodies.get(i);
             int idx = odeBodyIndices.get(i);
+            AsteroidData asteroid = asteroids.get(idx);
+
             double x = body.getPosition().get0();
             double y = body.getPosition().get1();
             double z = body.getPosition().get2();
@@ -404,7 +400,7 @@ public class AsteroidFieldWindow {
             }
 
             double radius = Math.max(r, 1e-6);
-            double v = radius * speeds.get(idx) / ODE_TIME_STEP;
+            double v = radius * asteroid.speed() / ODE_TIME_STEP;
             double accel = -(v * v) / radius;
             double invR = 1.0 / radius;
             body.addForce(x * accel * invR, y * accel * invR, z * accel * invR);
