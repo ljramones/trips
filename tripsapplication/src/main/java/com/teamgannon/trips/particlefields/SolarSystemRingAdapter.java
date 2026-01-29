@@ -170,9 +170,9 @@ public class SolarSystemRingAdapter implements RingScaleAdapter {
         int numElements = Math.max(1000, (int) (beltWidth * 50));
         numElements = Math.min(numElements, 8000);
 
-        // Larger particles for asteroids
-        double minSize = Math.max(0.3, beltWidth * 0.01);
-        double maxSize = Math.max(1.0, beltWidth * 0.05);
+        // Larger particles for asteroids - must be visible
+        double minSize = Math.max(1.5, beltWidth * 0.02);
+        double maxSize = Math.max(4.0, beltWidth * 0.08);
 
         return RingConfiguration.builder()
                 .type(RingType.ASTEROID_BELT)
@@ -186,8 +186,8 @@ public class SolarSystemRingAdapter implements RingScaleAdapter {
                 .maxEccentricity(0.08)
                 .baseAngularSpeed(0.002)
                 .centralBodyRadius(toVisualUnits(0.005))  // Small star
-                .primaryColor(Color.rgb(140, 130, 120))
-                .secondaryColor(Color.rgb(100, 90, 80))
+                .primaryColor(Color.rgb(180, 170, 155))   // Brighter rocky tan
+                .secondaryColor(Color.rgb(150, 140, 125)) // Brighter brown-gray
                 .name(name)
                 .build();
     }
@@ -249,9 +249,9 @@ public class SolarSystemRingAdapter implements RingScaleAdapter {
     private double scaleParticleSize(double originalSize, RingConfiguration config) {
         // Scale particle size proportionally, but with limits
         double scaleFactor = toVisualUnits(1.0);  // Screen units per AU
-        double scaledSize = originalSize * scaleFactor * 0.01;  // Particles much smaller than orbital scale
+        double scaledSize = originalSize * scaleFactor * 0.05;  // Particles visible at orbital scale
 
-        // Clamp to reasonable display sizes
-        return Math.max(0.1, Math.min(5.0, scaledSize));
+        // Clamp to reasonable display sizes - minimum must be visible
+        return Math.max(1.0, Math.min(8.0, scaledSize));
     }
 }

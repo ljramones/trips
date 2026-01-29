@@ -2,8 +2,10 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.SolarSystem;
+import com.teamgannon.trips.jpa.model.SolarSystemFeature;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
+import com.teamgannon.trips.jpa.repository.SolarSystemFeatureRepository;
 import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import jakarta.annotation.PostConstruct;
@@ -26,6 +28,7 @@ public class SolPlanetsInitializer {
     private final StarObjectRepository starObjectRepository;
     private final SolarSystemRepository solarSystemRepository;
     private final ExoPlanetRepository exoPlanetRepository;
+    private final SolarSystemFeatureRepository featureRepository;
 
     // Earth constants for unit conversion
     private static final double EARTH_MASS_KG = 5.97e24;  // kg
@@ -35,10 +38,12 @@ public class SolPlanetsInitializer {
 
     public SolPlanetsInitializer(StarObjectRepository starObjectRepository,
                                   SolarSystemRepository solarSystemRepository,
-                                  ExoPlanetRepository exoPlanetRepository) {
+                                  ExoPlanetRepository exoPlanetRepository,
+                                  SolarSystemFeatureRepository featureRepository) {
         this.starObjectRepository = starObjectRepository;
         this.solarSystemRepository = solarSystemRepository;
         this.exoPlanetRepository = exoPlanetRepository;
+        this.featureRepository = featureRepository;
     }
 
     @PostConstruct
@@ -164,26 +169,27 @@ public class SolPlanetsInitializer {
         log.info("Creating Sol's planets...");
 
         // Planet data: name, mass (10^24 kg), diameter (km), distance (10^6 km),
-        //              orbital period (days), eccentricity, inclination (deg)
+        //              orbital period (days), eccentricity, inclination (deg), temp (C),
+        //              habitable, planetType, hasRings, ringType
         Object[][] planetData = {
                 // Mercury
-                {"Mercury", 0.33, 4879.0, 57.9, 88.0, 0.206, 7.0, 167.0, false, "Terrestrial"},
+                {"Mercury", 0.33, 4879.0, 57.9, 88.0, 0.206, 7.0, 167.0, false, "Terrestrial", false, null},
                 // Venus
-                {"Venus", 4.87, 12104.0, 108.2, 224.7, 0.007, 3.4, 464.0, false, "Terrestrial"},
+                {"Venus", 4.87, 12104.0, 108.2, 224.7, 0.007, 3.4, 464.0, false, "Terrestrial", false, null},
                 // Earth
-                {"Earth", 5.97, 12756.0, 149.6, 365.2, 0.017, 0.0, 15.0, true, "Terrestrial"},
+                {"Earth", 5.97, 12756.0, 149.6, 365.2, 0.017, 0.0, 15.0, true, "Terrestrial", false, null},
                 // Mars
-                {"Mars", 0.642, 6792.0, 228.0, 687.0, 0.094, 1.8, -65.0, false, "Terrestrial"},
-                // Jupiter
-                {"Jupiter", 1898.0, 142984.0, 778.5, 4331.0, 0.049, 1.3, -110.0, false, "Gas Giant"},
-                // Saturn
-                {"Saturn", 568.0, 120536.0, 1432.0, 10747.0, 0.052, 2.5, -140.0, false, "Gas Giant"},
-                // Uranus
-                {"Uranus", 86.8, 51118.0, 2867.0, 30589.0, 0.047, 0.8, -195.0, false, "Ice Giant"},
-                // Neptune
-                {"Neptune", 102.0, 49528.0, 4515.0, 59800.0, 0.01, 1.8, -200.0, false, "Ice Giant"},
+                {"Mars", 0.642, 6792.0, 228.0, 687.0, 0.094, 1.8, -65.0, false, "Terrestrial", false, null},
+                // Jupiter (faint ring system)
+                {"Jupiter", 1898.0, 142984.0, 778.5, 4331.0, 0.049, 1.3, -110.0, false, "Gas Giant", true, "CUSTOM"},
+                // Saturn (prominent ring system)
+                {"Saturn", 568.0, 120536.0, 1432.0, 10747.0, 0.052, 2.5, -140.0, false, "Gas Giant", true, "SATURN"},
+                // Uranus (narrow dark rings)
+                {"Uranus", 86.8, 51118.0, 2867.0, 30589.0, 0.047, 0.8, -195.0, false, "Ice Giant", true, "URANUS"},
+                // Neptune (faint ring arcs)
+                {"Neptune", 102.0, 49528.0, 4515.0, 59800.0, 0.01, 1.8, -200.0, false, "Ice Giant", true, "NEPTUNE"},
                 // Pluto (dwarf planet)
-                {"Pluto", 0.013, 2376.0, 5906.4, 90560.0, 0.244, 17.2, -225.0, false, "Dwarf Planet"}
+                {"Pluto", 0.013, 2376.0, 5906.4, 90560.0, 0.244, 17.2, -225.0, false, "Dwarf Planet", false, null}
         };
 
         java.util.Map<String, ExoPlanet> createdPlanets = new java.util.HashMap<>();
@@ -193,6 +199,9 @@ public class SolPlanetsInitializer {
         }
 
         createSolMoons(sol, solarSystem, createdPlanets);
+
+        // Create asteroid belts and other features
+        createSolFeatures(solarSystem);
 
         // Update solar system planet count
         solarSystem.setPlanetCount(planetData.length);
@@ -210,6 +219,8 @@ public class SolPlanetsInitializer {
         double tempCelsius = (Double) data[7];
         boolean habitable = (Boolean) data[8];
         String planetType = (String) data[9];
+        boolean hasRings = (Boolean) data[10];
+        String ringType = (String) data[11];
 
         ExoPlanet planet = new ExoPlanet();
         planet.setId(UUID.randomUUID().toString());
@@ -258,9 +269,132 @@ public class SolPlanetsInitializer {
         planet.setLongitudeOfAscendingNode(0.0);
         planet.setOmega(0.0);  // Argument of periapsis
 
+        // Ring system properties
+        if (hasRings) {
+            planet.setHasRings(true);
+            planet.setRingType(ringType);
+            setRingParameters(planet, name, radiusKm);
+        }
+
         exoPlanetRepository.save(planet);
-        log.info("Created planet: {} at {} AU", name, "%.2f".formatted(semiMajorAxisAU));
+        log.info("Created planet: {} at {} AU{}", name, "%.2f".formatted(semiMajorAxisAU),
+                hasRings ? " (with rings)" : "");
         return planet;
+    }
+
+    /**
+     * Sets ring parameters for planets with ring systems.
+     * Ring radii are in planetary radii, converted to AU for storage.
+     */
+    private void setRingParameters(ExoPlanet planet, String planetName, double planetRadiusKm) {
+        // Convert planetary radius to AU for ring calculations
+        double planetRadiusAU = planetRadiusKm / KM_TO_AU;
+
+        switch (planetName) {
+            case "Jupiter" -> {
+                // Jupiter's faint ring: 1.29 to 1.81 planetary radii (Halo + Main ring)
+                planet.setRingInnerRadiusAU(1.29 * planetRadiusAU);
+                planet.setRingOuterRadiusAU(1.81 * planetRadiusAU);
+                planet.setRingThickness(0.001);  // Very thin
+                planet.setRingInclination(0.0);
+                planet.setRingPrimaryColor("#4A4A4A");  // Dark gray
+                planet.setRingSecondaryColor("#3A3A3A");
+            }
+            case "Saturn" -> {
+                // Saturn's prominent rings: D ring inner (~1.11) to E ring outer (~8.0) radii
+                // Main visible rings: 1.24 (C ring) to 2.27 (A ring) radii
+                planet.setRingInnerRadiusAU(1.24 * planetRadiusAU);
+                planet.setRingOuterRadiusAU(2.27 * planetRadiusAU);
+                planet.setRingThickness(0.001);  // Extremely thin
+                planet.setRingInclination(26.7);  // Saturn's axial tilt
+                planet.setRingPrimaryColor("#E6DCC8");  // Icy tan
+                planet.setRingSecondaryColor("#B4AAA0");  // Dusty gray
+            }
+            case "Uranus" -> {
+                // Uranus rings: 1.64 to 2.0 planetary radii
+                planet.setRingInnerRadiusAU(1.64 * planetRadiusAU);
+                planet.setRingOuterRadiusAU(2.0 * planetRadiusAU);
+                planet.setRingThickness(0.0005);
+                planet.setRingInclination(97.8);  // Uranus's extreme tilt
+                planet.setRingPrimaryColor("#505A5C");  // Dark gray
+                planet.setRingSecondaryColor("#32323C");  // Darker
+            }
+            case "Neptune" -> {
+                // Neptune's faint ring arcs: 1.69 to 2.54 planetary radii
+                planet.setRingInnerRadiusAU(1.69 * planetRadiusAU);
+                planet.setRingOuterRadiusAU(2.54 * planetRadiusAU);
+                planet.setRingThickness(0.0005);
+                planet.setRingInclination(28.3);  // Neptune's axial tilt
+                planet.setRingPrimaryColor("#3C3C4A");  // Very dark blue-gray
+                planet.setRingSecondaryColor("#28283C");
+            }
+        }
+    }
+
+    /**
+     * Creates natural features for the Sol system: asteroid belt and Kuiper belt.
+     */
+    private void createSolFeatures(SolarSystem solarSystem) {
+        log.info("Creating Sol's asteroid belts...");
+
+        // Check if features already exist
+        java.util.List<SolarSystemFeature> existing = featureRepository.findBySolarSystemId(solarSystem.getId());
+        if (existing != null && !existing.isEmpty()) {
+            log.info("Sol system already has {} features", existing.size());
+            return;
+        }
+
+        // Main Asteroid Belt: 2.1 to 3.3 AU
+        SolarSystemFeature asteroidBelt = new SolarSystemFeature(
+                "Main Asteroid Belt",
+                SolarSystemFeature.FeatureType.ASTEROID_BELT,
+                SolarSystemFeature.FeatureCategory.NATURAL
+        );
+        asteroidBelt.setSolarSystemId(solarSystem.getId());
+        asteroidBelt.setInnerRadiusAU(2.1);
+        asteroidBelt.setOuterRadiusAU(3.3);
+        asteroidBelt.setThickness(0.15);  // Thick vertical distribution
+        asteroidBelt.setInclinationDeg(10.0);  // Typical asteroid inclination
+        asteroidBelt.setEccentricity(0.08);
+        asteroidBelt.setParticleCount(5000);
+        asteroidBelt.setMinParticleSize(0.5);
+        asteroidBelt.setMaxParticleSize(2.0);
+        asteroidBelt.setPrimaryColor("#8C8278");  // Rocky gray
+        asteroidBelt.setSecondaryColor("#645A50");  // Brown-gray
+        asteroidBelt.setOpacity(0.8);
+        asteroidBelt.setAnimated(true);
+        asteroidBelt.setAnimationSpeed(1.0);
+        asteroidBelt.setNavigationHazard(false);  // Not really hazardous despite sci-fi depictions
+        asteroidBelt.setNotes("The asteroid belt between Mars and Jupiter, containing millions of rocky bodies. " +
+                "Despite popular depictions, asteroids are widely spaced (average ~1 million km apart).");
+        featureRepository.save(asteroidBelt);
+        log.info("Created Main Asteroid Belt: 2.1-3.3 AU");
+
+        // Kuiper Belt: 30 to 50 AU
+        SolarSystemFeature kuiperBelt = new SolarSystemFeature(
+                "Kuiper Belt",
+                SolarSystemFeature.FeatureType.KUIPER_BELT,
+                SolarSystemFeature.FeatureCategory.NATURAL
+        );
+        kuiperBelt.setSolarSystemId(solarSystem.getId());
+        kuiperBelt.setInnerRadiusAU(30.0);
+        kuiperBelt.setOuterRadiusAU(50.0);
+        kuiperBelt.setThickness(0.2);  // Thicker than asteroid belt
+        kuiperBelt.setInclinationDeg(15.0);
+        kuiperBelt.setEccentricity(0.1);
+        kuiperBelt.setParticleCount(3000);
+        kuiperBelt.setMinParticleSize(0.8);
+        kuiperBelt.setMaxParticleSize(3.0);
+        kuiperBelt.setPrimaryColor("#B4BEC8");  // Icy blue-gray
+        kuiperBelt.setSecondaryColor("#8C8C96");
+        kuiperBelt.setOpacity(0.6);
+        kuiperBelt.setAnimated(true);
+        kuiperBelt.setAnimationSpeed(0.5);  // Slower due to greater distance
+        kuiperBelt.setNavigationHazard(false);
+        kuiperBelt.setNotes("A region of icy bodies beyond Neptune, including dwarf planets like Pluto, Eris, and Makemake. " +
+                "Contains an estimated 100,000+ objects larger than 100 km.");
+        featureRepository.save(kuiperBelt);
+        log.info("Created Kuiper Belt: 30-50 AU");
     }
 
     private void createSolMoons(StarObject sol,

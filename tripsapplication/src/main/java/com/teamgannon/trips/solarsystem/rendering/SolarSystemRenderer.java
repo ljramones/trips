@@ -2,6 +2,7 @@ package com.teamgannon.trips.solarsystem.rendering;
 
 import com.teamgannon.trips.particlefields.RingConfiguration;
 import com.teamgannon.trips.particlefields.RingFieldRenderer;
+import com.teamgannon.trips.particlefields.RingType;
 import com.teamgannon.trips.particlefields.SolarSystemRingAdapter;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.planetarymodelling.FeatureDescription;
@@ -1065,7 +1066,7 @@ public class SolarSystemRenderer {
 
         // Render ring system if planet has one
         if (planet.isHasRings() && !isMoonBody) {
-            renderPlanetRing(planet, position);
+            renderPlanetRing(planet, position, planetRadius);
         }
 
         return planetRadius;
@@ -1074,50 +1075,101 @@ public class SolarSystemRenderer {
     /**
      * Render a ring system for a planet.
      *
-     * @param planet   the planet with ring data
-     * @param position the planet's screen position [x, y, z]
+     * @param planet        the planet with ring data
+     * @param position      the planet's screen position [x, y, z]
+     * @param displayRadius the planet's display radius in screen units
      */
-    private void renderPlanetRing(PlanetDescription planet, double[] position) {
+    private void renderPlanetRing(PlanetDescription planet, double[] position, double displayRadius) {
         String ringType = planet.getRingType();
         double innerAU = planet.getRingInnerRadiusAU();
         double outerAU = planet.getRingOuterRadiusAU();
 
-        // Validate ring parameters
-        if (innerAU <= 0 || outerAU <= 0 || outerAU <= innerAU) {
-            // Calculate default ring radii based on planet radius if not specified
-            double planetRadiusAU = planet.getRadius() * 4.2635e-5;  // Earth radii to AU
-            if (innerAU <= 0) {
-                innerAU = planetRadiusAU * 1.5;
+        // Calculate ring radii as multiples of the planet's physical radius
+        // Ring radii in AU are stored relative to planet center
+        // Planet radius in AU = planet.getRadius() (Jupiter radii) * 4.778e-4 (AU per Jupiter radius)
+        // Note: Jupiter radius = 71,492 km; 1 AU = 149,597,870.7 km
+        double planetRadiusAU = planet.getRadius() * 4.778e-4;
+
+        // Default ring ratios if not specified
+        double innerRatio = 1.5;  // Default: ring starts at 1.5x planet radius
+        double outerRatio = 2.5;  // Default: ring ends at 2.5x planet radius
+
+        if (innerAU > 0 && outerAU > 0 && outerAU > innerAU && planetRadiusAU > 0) {
+            // Calculate the actual ratios from the stored AU values
+            innerRatio = innerAU / planetRadiusAU;
+            outerRatio = outerAU / planetRadiusAU;
+        }
+
+        // Scale rings relative to the planet's DISPLAY radius, not physical size
+        // This ensures rings are visible around the rendered planet sphere
+        double innerScreen = displayRadius * innerRatio;
+        double outerScreen = displayRadius * outerRatio;
+
+        // Determine preset colors based on ring type
+        Color primaryColor = Color.rgb(230, 220, 200);  // Default: icy tan
+        Color secondaryColor = Color.rgb(180, 170, 160);
+        int numElements = 8000;
+
+        switch (ringType != null ? ringType.toUpperCase() : "SATURN") {
+            case "URANUS" -> {
+                primaryColor = Color.rgb(80, 80, 90);    // Dark gray
+                secondaryColor = Color.rgb(50, 50, 60);
+                numElements = 5000;
             }
-            if (outerAU <= 0 || outerAU <= innerAU) {
-                outerAU = planetRadiusAU * 2.5;
+            case "NEPTUNE" -> {
+                primaryColor = Color.rgb(60, 60, 75);    // Very dark blue-gray
+                secondaryColor = Color.rgb(40, 40, 60);
+                numElements = 4000;
+            }
+            case "CUSTOM" -> {
+                // Jupiter's faint ring
+                primaryColor = Color.rgb(74, 74, 74);    // Dark gray
+                secondaryColor = Color.rgb(58, 58, 58);
+                numElements = 3000;
             }
         }
 
-        // Determine preset to use based on ring type
-        String presetName = switch (ringType != null ? ringType.toUpperCase() : "SATURN") {
-            case "URANUS" -> "Uranus Ring";
-            case "NEPTUNE" -> "Uranus Ring";  // Neptune rings are similar to Uranus
-            case "CUSTOM" -> "Saturn Ring";    // Use Saturn as base for custom
-            default -> "Saturn Ring";
-        };
+        // Create ring configuration in screen units (not AU)
+        double ringWidth = outerScreen - innerScreen;
+        double minSize = Math.max(0.3, ringWidth * 0.01);
+        double maxSize = Math.max(0.8, ringWidth * 0.03);
 
-        // Create ring configuration
-        RingConfiguration config;
-        if ("CUSTOM".equalsIgnoreCase(ringType) && planet.getRingPrimaryColor() != null) {
-            // Custom ring with user-specified colors
-            config = ringAdapter.createPlanetaryRing(innerAU, outerAU, planet.getName() + " Ring");
-            // Note: For full custom color support, we'd need to modify createPlanetaryRing
-            // or create a new method that accepts colors
-        } else {
-            // Use preset with custom radii
-            config = ringAdapter.createAdaptedConfiguration(presetName, innerAU, outerAU);
-        }
+        RingConfiguration config = RingConfiguration.builder()
+                .type(RingType.PLANETARY_RING)
+                .innerRadius(innerScreen)
+                .outerRadius(outerScreen)
+                .numElements(numElements)
+                .minSize(minSize)
+                .maxSize(maxSize)
+                .thickness(ringWidth * 0.02)  // Very thin
+                .maxInclinationDeg(0.5)
+                .maxEccentricity(0.01)
+                .baseAngularSpeed(0.004)
+                .centralBodyRadius(displayRadius)
+                .primaryColor(primaryColor)
+                .secondaryColor(secondaryColor)
+                .name(planet.getName() + " Ring")
+                .build();
+
+        log.info("Planet '{}' ring config: displayRadius={}, innerScreen={}, outerScreen={}, ratio={}x-{}x, elements={}",
+                planet.getName(), String.format("%.1f", displayRadius), String.format("%.1f", innerScreen),
+                String.format("%.1f", outerScreen), String.format("%.2f", innerRatio),
+                String.format("%.2f", outerRatio), config.numElements());
 
         // Create and initialize the renderer
         RingFieldRenderer renderer = new RingFieldRenderer();
         ringRandom.setSeed(planet.getName().hashCode());
         renderer.initialize(config, ringRandom);
+
+        // Debug: sample element positions
+        var elements = renderer.getElements();
+        if (!elements.isEmpty()) {
+            var sample = elements.get(0);
+            log.info("Planet '{}' ring sample: pos=({}, {}, {}), sma={}, size={}",
+                    planet.getName(), sample.getX(), sample.getY(), sample.getZ(),
+                    sample.getSemiMajorAxis(), sample.getSize());
+        }
+        log.info("Planet '{}' ring renderer group children: {}", planet.getName(), renderer.getGroup().getChildren().size());
 
         // Position at planet location
         renderer.setPosition(position[0], position[1], position[2]);
@@ -1134,8 +1186,9 @@ public class SolarSystemRenderer {
         ringsGroup.getChildren().add(renderer.getGroup());
         planetRings.put(planet.getName(), renderer);
 
-        log.info("Rendered {} ring for planet '{}': {} - {} AU (type: {})",
-                presetName, planet.getName(), innerAU, outerAU, ringType);
+        log.info("Rendered ring for planet '{}': {} - {} screen units, ratio {}x-{}x (type: {})",
+                planet.getName(), String.format("%.1f", innerScreen), String.format("%.1f", outerScreen),
+                String.format("%.2f", innerRatio), String.format("%.2f", outerRatio), ringType);
     }
 
     /**
@@ -1625,10 +1678,24 @@ public class SolarSystemRenderer {
         // Create the configuration
         RingConfiguration config = ringAdapter.createAdaptedConfiguration(presetName, innerAU, outerAU);
 
+        log.info("Belt '{}' config: innerScreen={}, outerScreen={}, elements={}, minSize={}, maxSize={}, thickness={}",
+                feature.getName(), config.innerRadius(), config.outerRadius(), config.numElements(),
+                config.minSize(), config.maxSize(), config.thickness());
+
         // Create and initialize the renderer
         RingFieldRenderer renderer = new RingFieldRenderer();
         ringRandom.setSeed(feature.getId().hashCode());
         renderer.initialize(config, ringRandom);
+
+        // Debug: sample element positions
+        var elements = renderer.getElements();
+        if (!elements.isEmpty()) {
+            var sample = elements.get(0);
+            log.info("Belt '{}' sample element: pos=({}, {}, {}), sma={}, size={}",
+                    feature.getName(), sample.getX(), sample.getY(), sample.getZ(),
+                    sample.getSemiMajorAxis(), sample.getSize());
+        }
+        log.info("Belt '{}' renderer group children: {}", feature.getName(), renderer.getGroup().getChildren().size());
 
         // Position at origin (around the star)
         renderer.setPosition(0, 0, 0);

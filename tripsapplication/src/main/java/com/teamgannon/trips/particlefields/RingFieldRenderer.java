@@ -1,7 +1,10 @@
 package com.teamgannon.trips.particlefields;
 
 import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.CullFace;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.fxyz3d.geometry.Point3D;
@@ -139,12 +142,14 @@ public class RingFieldRenderer {
         mediumSize = config.minSize() + sizeRange * 0.5;
         largeSize = config.minSize() + sizeRange * 0.85;
 
+        // Mark as initialized BEFORE building meshes (refreshMeshes checks this flag)
+        initialized = true;
+
         // Build initial meshes
         refreshMeshes();
 
-        initialized = true;
-        log.debug("RingFieldRenderer initialized: {} with {} elements",
-                config.name(), elements.size());
+        log.debug("RingFieldRenderer initialized: {} with {} elements, group children: {}",
+                config.name(), elements.size(), group.getChildren().size());
     }
 
     /**
@@ -233,9 +238,11 @@ public class RingFieldRenderer {
         }
 
         // Create meshes for each size category
+        // Disable backface culling so particles are visible from all angles
         if (!smallPoints.isEmpty()) {
             meshSmall = new ScatterMesh(smallPoints, true, smallSize, 0);
             meshSmall.setTextureModeNone(config.primaryColor());
+            disableCulling(meshSmall);
             group.getChildren().add(meshSmall);
         }
 
@@ -243,13 +250,40 @@ public class RingFieldRenderer {
             meshMedium = new ScatterMesh(mediumPoints, true, mediumSize, 0);
             Color mediumColor = config.primaryColor().interpolate(config.secondaryColor(), 0.3);
             meshMedium.setTextureModeNone(mediumColor);
+            disableCulling(meshMedium);
             group.getChildren().add(meshMedium);
         }
 
         if (!largePoints.isEmpty()) {
             meshLarge = new ScatterMesh(largePoints, true, largeSize, 0);
             meshLarge.setTextureModeNone(config.secondaryColor());
+            disableCulling(meshLarge);
             group.getChildren().add(meshLarge);
+        }
+    }
+
+    /**
+     * Disables backface culling on a ScatterMesh so particles are visible from all angles.
+     * ScatterMesh is a Parent containing MeshView children, so we need to set CullFace.NONE
+     * on each child MeshView.
+     */
+    private void disableCulling(ScatterMesh mesh) {
+        // ScatterMesh extends TexturedMesh which extends Group
+        // The actual MeshView is inside the group hierarchy
+        disableCullingRecursive(mesh);
+    }
+
+    /**
+     * Recursively sets CullFace.NONE on all MeshView nodes in the hierarchy.
+     */
+    private void disableCullingRecursive(Node node) {
+        if (node instanceof javafx.scene.shape.MeshView meshView) {
+            meshView.setCullFace(CullFace.NONE);
+        }
+        if (node instanceof javafx.scene.Parent parent) {
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                disableCullingRecursive(child);
+            }
         }
     }
 
