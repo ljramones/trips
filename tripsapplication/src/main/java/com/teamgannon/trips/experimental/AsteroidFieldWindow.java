@@ -8,7 +8,6 @@ import javafx.scene.PointLight;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
@@ -27,7 +26,6 @@ import org.orekit.frames.FramesFactory;
 import org.orekit.orbits.KeplerianOrbit;
 import org.orekit.orbits.PositionAngle;
 import org.orekit.time.AbsoluteDate;
-import org.orekit.utils.Constants;
 import org.orekit.utils.PVCoordinates;
 
 import java.util.ArrayList;
@@ -62,7 +60,9 @@ public class AsteroidFieldWindow {
     private static final double THRESH_LARGE  = 2.2;
 
     private static final AbsoluteDate ORBIT_EPOCH = AbsoluteDate.J2000_EPOCH;
-    private static final double CENTRAL_MU = Constants.JPL_SSD_SUN_GM;
+    // Use a synthetic GM that works with visual units (radius ~100) instead of real meters
+    // This gives orbital velocities that match the visual scale
+    private static final double VISUAL_SCALE_MU = 1.0e6;
 
     private static final String WINDOW_TITLE_BASE = "Asteroid Field – Procedural (working version)";
 
@@ -315,7 +315,7 @@ public class AsteroidFieldWindow {
             angles.set(i, angle);
 
             double radius = radii.get(i);
-            double ecc = 0.0;
+            double ecc = eccentricities.get(i);
             double inc = inclinations.get(i);
 
             Point3D position = useOrekit
@@ -442,7 +442,7 @@ public class AsteroidFieldWindow {
                 PositionAngle.TRUE,
                 FramesFactory.getGCRF(),
                 ORBIT_EPOCH,
-                CENTRAL_MU
+                VISUAL_SCALE_MU
         );
 
         PVCoordinates pv = orbit.getPVCoordinates(ORBIT_EPOCH, FramesFactory.getGCRF());
@@ -458,7 +458,8 @@ public class AsteroidFieldWindow {
      */
     private Point3D computeAnalyticPosition(double radius, double eccentricity, double inclination,
                                             double trueAnomaly, double heightOffset) {
-        double r = radius * (1 - eccentricity * Math.cos(trueAnomaly));
+        // Correct formula for radius at true anomaly: r = a(1-e²)/(1+e*cos(ν))
+        double r = radius * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(trueAnomaly));
 
         double x = r * Math.cos(trueAnomaly);
         double z = r * Math.sin(trueAnomaly);
@@ -546,11 +547,26 @@ public class AsteroidFieldWindow {
     public void toggleOde() {
         useOde = !useOde;
         if (useOde) {
-            odeInitialized = false;
-            odeBodies.clear();
+            cleanupOde();
         }
         updateWindowTitle();
         log.info("ODE {}", useOde ? "enabled" : "disabled");
+    }
+
+    /**
+     * Cleans up ODE resources
+     */
+    private void cleanupOde() {
+        if (odeWorld != null) {
+            for (DBody body : odeBodies) {
+                body.destroy();
+            }
+            odeWorld.destroy();
+            odeWorld = null;
+        }
+        odeBodies.clear();
+        odeBodyIndices.clear();
+        odeInitialized = false;
     }
 
     private void updateWindowTitle() {
@@ -567,6 +583,7 @@ public class AsteroidFieldWindow {
 
     public void dispose() {
         if (animationTimer != null) animationTimer.stop();
+        cleanupOde();
     }
 
     public Stage getStage() { return stage; }
