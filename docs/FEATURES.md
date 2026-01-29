@@ -11,6 +11,8 @@ The main view displays stars in a 3D space with the following features:
 - **Spectral Class Coloring**: Stars colored by spectral type (O=blue through M=red)
 - **Interactive Selection**: Click to select stars, view properties, and access context menus
 
+> **Technical Details**: [Star Plotting Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/starplotting/starplotting.md)
+
 ## Route Planning
 
 TRIPS includes sophisticated graph-based pathfinding for interstellar route planning:
@@ -21,6 +23,8 @@ TRIPS includes sophisticated graph-based pathfinding for interstellar route plan
 - **Route Caching**: Computed routes are cached for performance
 - **Dataset-Wide Search**: Asynchronous pathfinding across entire datasets (100K+ stars)
 
+> **Technical Details**: [Routing Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/routing/routing.md)
+
 ## Transit System
 
 Transit calculations determine possible jumps between stars:
@@ -29,6 +33,8 @@ Transit calculations determine possible jumps between stars:
 - **KD-Tree Optimization**: Fast spatial queries for transit calculations
 - **Configurable Filters**: Filter transits by distance, spectral class, or custom criteria
 - **Parallel Computation**: Multi-threaded transit calculation for large datasets
+
+> **Technical Details**: [Transits Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/transits/transits.md)
 
 ## Solar System Visualization
 
@@ -39,6 +45,43 @@ Transit calculations determine possible jumps between stars:
 - **Real-Time Animation**: Animate planetary orbits with configurable time speed
 - **Multi-Star Systems**: Support for binary and multiple star systems
 - **Planet Properties**: View detailed planet information including mass, radius, temperature
+- **Planetary Rings**: Saturn, Uranus, Neptune-style ring systems with customizable parameters
+- **Context Menu Editing**: Right-click planets to edit properties, orbits, and rings
+
+### Solar System Features
+
+Add natural and artificial structures to any solar system for world-building:
+
+**Natural Features:**
+- Asteroid Belt, Kuiper Belt, Oort Cloud
+- Debris Disk, Zodiacal Dust
+- Trojan Clusters (at Lagrange points)
+- Comet Trails
+
+**Artificial Structures (Sci-Fi):**
+- **Jump Gates**: FTL transit infrastructure with destination links
+- **Orbital Habitats**: Space stations and O'Neill cylinders
+- **Shipyards**: Construction facilities with production capacity
+- **Mining Operations**: Industrial extraction sites
+- **Research Stations**: Scientific outposts
+- **Defense Perimeters**: Military installations (rendered as particle belts)
+- **Sensor Networks**: Detection and communication arrays
+- **Dyson Swarms**: Energy collection arrays around stars
+
+**World-Building Properties:**
+Each feature can be customized with:
+- Controlling polity/faction
+- Population (for habitats)
+- Technology level (1-10)
+- Year established
+- Operational status (Active, Abandoned, Under Construction, Destroyed)
+- Strategic importance rating
+- Defensive capability rating
+- Production capacity
+- Navigation hazard warnings (type and severity)
+- Notes for lore and background
+
+> **Technical Details**: [Solar System View Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/SOLAR_SYSTEM_VIEW.md)
 
 ## Procedural Planet Generation
 
@@ -52,6 +95,8 @@ Generate detailed 3D planets with realistic terrain:
 - **Rain Shadow Effect**: Realistic moisture patterns based on prevailing winds
 - **Reproducible Generation**: Seed-based generation for consistent results
 
+> **Technical Details**: [Procedural Planet Generator Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/planetarymodelling/procedural/procedural-planet-generator.md)
+
 ## Night Sky View (Planetary)
 
 View the night sky from the surface of any planet:
@@ -61,6 +106,8 @@ View the night sky from the surface of any planet:
 - **Atmospheric Effects**: Atmospheric extinction dims stars near the horizon
 - **Magnitude Calculations**: Apparent magnitude adjusted for distance from observer
 - **Sky Dome Rendering**: Stars rendered on a spherical sky projection
+
+> **Technical Details**: [Night Sky Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/nightsky/nightsky.md)
 
 ## Solar System Generation (ACCRETE)
 
@@ -72,6 +119,23 @@ Generate realistic planetary systems using the ACCRETE model:
 - **Atmosphere Calculation**: Gas retention based on escape velocity and temperature
 - **Kopparapu Habitable Zones**: Conservative and optimistic HZ boundary calculations
 - **Planet Classification**: Automatic typing (Gas Giant, Super-Earth, Terrestrial, etc.)
+
+> **Technical Details**: [Solar System Generation Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/solarsystem_generation.md)
+
+## Particle Fields
+
+Render distributed particle structures for astronomical and sci-fi visualization:
+
+- **Planetary Rings**: Saturn-like (bright, icy) and Uranus-like (dark, narrow) ring systems
+- **Asteroid Belts**: Main Belt and Kuiper Belt with realistic orbital mechanics
+- **Debris Disks**: Protoplanetary disks and collision remnants with density wave structure
+- **Nebulae**: Emission nebulae (glowing), dark nebulae (obscuring), reflection nebulae
+- **Accretion Disks**: Black hole and neutron star accretion with temperature gradients
+- **Keplerian Motion**: Particles follow proper orbital mechanics (inner particles orbit faster)
+- **10 Built-in Presets**: Access via **Experimental → Ring Field Presets** menu
+- **Scale Adapters**: Render at solar system scale (AU) or interstellar scale (light-years)
+
+> **Technical Details**: [Particle Fields Documentation](../tripsapplication/src/main/java/com/teamgannon/trips/particlefields/PARTICLE_FIELDS.md)
 
 ## Data Import & Workbench
 
