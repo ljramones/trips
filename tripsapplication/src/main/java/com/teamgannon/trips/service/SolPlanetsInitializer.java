@@ -1,5 +1,6 @@
 package com.teamgannon.trips.service;
 
+import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.SolarSystem;
 import com.teamgannon.trips.jpa.model.SolarSystemFeature;
@@ -10,6 +11,7 @@ import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Initializes Sol's solar system with the 8 planets (plus Pluto) at application startup.
+ * Initializes Sol's solar system with the 8 planets (plus Pluto) at application startup
+ * and whenever a new dataset is activated.
  * This ensures that when a user "Enters System" on Sol, they see our familiar planets.
  */
 @Slf4j
@@ -93,6 +96,70 @@ public class SolPlanetsInitializer {
         createSolPlanets(sol, solarSystem);
 
         log.info("Sol's planets have been initialized successfully");
+    }
+
+    /**
+     * Event listener that triggers Sol planet initialization when a new dataset is activated.
+     * This ensures Sol's planets are available for any dataset that contains Sol.
+     *
+     * @param event the dataset context change event
+     */
+    @EventListener
+    @Transactional
+    public void onDatasetContextChange(SetContextDataSetEvent event) {
+        if (event.getDescriptor() != null) {
+            log.info("Dataset context changed to '{}', checking Sol initialization...",
+                    event.getDescriptor().getDataSetName());
+            initializeSolPlanetsInternal();
+        }
+    }
+
+    /**
+     * Internal initialization logic, called by both @PostConstruct and event listener.
+     */
+    private void initializeSolPlanetsInternal() {
+        // Find Sol - it's at coordinates (0, 0, 0) or named "Sol"
+        StarObject sol = findSol();
+        if (sol == null) {
+            log.debug("Sol not found in current dataset - no planets to initialize");
+            return;
+        }
+
+        // Check if Sol already has planets
+        List<ExoPlanet> existingPlanets = exoPlanetRepository.findByStarName("Sol");
+        if (existingPlanets == null || existingPlanets.isEmpty()) {
+            existingPlanets = exoPlanetRepository.findByHostStarId(sol.getId());
+        }
+
+        if (existingPlanets != null && !existingPlanets.isEmpty()) {
+            boolean hasMoons = existingPlanets.stream()
+                .anyMatch(planet -> Boolean.TRUE.equals(planet.getIsMoon()));
+            if (hasMoons) {
+                log.debug("Sol already has {} planets/moons initialized", existingPlanets.size());
+                return;
+            }
+
+            SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
+            java.util.Map<String, ExoPlanet> planetsByName = new java.util.HashMap<>();
+            for (ExoPlanet planet : existingPlanets) {
+                if (!Boolean.TRUE.equals(planet.getIsMoon())) {
+                    planetsByName.put(planet.getName(), planet);
+                }
+            }
+            if (!planetsByName.isEmpty()) {
+                createSolMoons(sol, solarSystem, planetsByName);
+                log.info("Sol planets existed but moons were missing; moons created");
+            }
+            return;
+        }
+
+        // Get or create Sol's solar system
+        SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
+
+        // Create the planets
+        createSolPlanets(sol, solarSystem);
+
+        log.info("Sol's planets have been initialized for current dataset");
     }
 
     /**
