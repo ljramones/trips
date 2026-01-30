@@ -170,6 +170,43 @@ public interface StarObjectRepository
             @Param("minY") double minY, @Param("maxY") double maxY,
             @Param("minZ") double minZ, @Param("maxZ") double maxZ);
 
+    // ========== Magnitude-based queries for night sky rendering ==========
+
+    /**
+     * Stream all stars with V-band magnitude brighter than limit.
+     * Used for efficient night sky rendering - filters at database level.
+     */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.magv <= :maxMag AND s.magv <> 0")
+    @Transactional(readOnly = true)
+    Stream<StarObject> streamByMagnitudeBrighterThan(@Param("maxMag") double maxMag);
+
+    /**
+     * Stream stars in a dataset with V-band magnitude brighter than limit.
+     * Used for efficient night sky rendering - filters at database level.
+     */
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.magv <= :maxMag AND s.magv <> 0\
+           """)
+    @Transactional(readOnly = true)
+    Stream<StarObject> streamByDatasetAndMagnitude(
+            @Param("dataSetName") String dataSetName,
+            @Param("maxMag") double maxMag);
+
+    /**
+     * Count stars with magnitude brighter than limit (for progress reporting).
+     */
+    @Query("SELECT COUNT(s) FROM STAR_OBJ s WHERE s.magv <= :maxMag AND s.magv <> 0")
+    long countByMagnitudeBrighterThan(@Param("maxMag") double maxMag);
+
+    /**
+     * Stream all stars (for night sky when no magnitude filter is practical).
+     * More efficient than findAll() as it doesn't load into memory all at once.
+     */
+    @Query("SELECT s FROM STAR_OBJ s")
+    @Transactional(readOnly = true)
+    Stream<StarObject> streamAll();
+
     // ========== Name search queries ==========
 
     /**

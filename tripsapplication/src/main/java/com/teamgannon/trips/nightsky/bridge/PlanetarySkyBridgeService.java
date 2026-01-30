@@ -12,12 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Bridge service that adapts the top-level nightsky package to the solarsystem.nightsky models.
@@ -50,7 +52,16 @@ public class PlanetarySkyBridgeService {
      * @param radiusLy   Search radius in light years
      * @return PlanetarySkyModel compatible with existing rendering
      */
+    @Transactional(readOnly = true)
     public PlanetarySkyModel computeSky(PlanetaryContext context, String datasetName, double radiusLy) {
+        return computeSkyInternal(context, datasetName, radiusLy);
+    }
+
+    /**
+     * Internal implementation that performs the actual computation.
+     * Called within a transaction context from the public methods.
+     */
+    private PlanetarySkyModel computeSkyInternal(PlanetaryContext context, String datasetName, double radiusLy) {
         if (context == null) {
             log.warn("Null planetary context provided");
             return emptyModel(0.0, 6.0);
@@ -94,8 +105,17 @@ public class PlanetarySkyBridgeService {
             return convertFromNightSkyResult(cachedResult, hostStarAltitudeDeg, effectiveMagLimit);
         }
 
-        // Load all stars (matching legacy behavior - no pre-filtering)
-        List<StarRenderRow> allStars = queryAllStars();
+        // Load stars efficiently with magnitude pre-filtering at DB level
+        // Add some headroom to the magnitude limit to account for atmospheric extinction
+        double dbMagLimit = effectiveMagLimit + 1.0;
+        List<StarRenderRow> allStars = queryStarsEfficiently(dbMagLimit, datasetName);
+
+        // Fallback: if very few stars found, some may have magnitude in other fields
+        // In that case, use the full streaming query
+        if (allStars.size() < 50) {
+            log.info("Few stars found with magv filter ({}), using full streaming query", allStars.size());
+            allStars = queryAllStars();
+        }
 
         // Build horizon basis for the observer (same as NightSkyQuery3D)
         PlanetRotationModel rotationModel = new PlanetRotationModel(0.0, 86400.0, 0.0);
@@ -123,15 +143,17 @@ public class PlanetarySkyBridgeService {
     /**
      * Compute sky using default radius.
      */
+    @Transactional(readOnly = true)
     public PlanetarySkyModel computeSky(PlanetaryContext context, String datasetName) {
-        return computeSky(context, datasetName, DEFAULT_RADIUS_LY);
+        return computeSkyInternal(context, datasetName, DEFAULT_RADIUS_LY);
     }
 
     /**
      * Compute sky without specifying dataset (queries all).
      */
+    @Transactional(readOnly = true)
     public PlanetarySkyModel computeSky(PlanetaryContext context) {
-        return computeSky(context, null, DEFAULT_RADIUS_LY);
+        return computeSkyInternal(context, null, DEFAULT_RADIUS_LY);
     }
 
     private double[] computeObserverPositionLy(PlanetaryContext context) {
@@ -198,18 +220,48 @@ public class PlanetarySkyBridgeService {
         return new double[]{altitudeDeg, azimuthDeg};
     }
 
-    private List<StarRenderRow> queryAllStars() {
-        // Match legacy behavior: load ALL stars, let transform phase filter
+    /**
+     * Query stars efficiently using streaming with magnitude pre-filtering.
+     * This is much faster than loading ALL stars and filtering in memory.
+     *
+     * @param magLimit Maximum magnitude to include (dimmer stars filtered at DB level)
+     * @param datasetName Optional dataset name filter
+     * @return List of star render rows
+     */
+    private List<StarRenderRow> queryStarsEfficiently(double magLimit, String datasetName) {
         List<StarRenderRow> results = new ArrayList<>();
-        int starIndex = 0;
 
-        for (StarObject star : starObjectRepository.findAll()) {
-            if (star == null) continue;
+        // Use streaming query with magnitude filter for efficiency
+        // The database filters out stars that are definitely too dim
+        try (Stream<StarObject> starStream = (datasetName != null && !datasetName.isEmpty())
+                ? starObjectRepository.streamByDatasetAndMagnitude(datasetName, magLimit)
+                : starObjectRepository.streamByMagnitudeBrighterThan(magLimit)) {
 
-            // Log magnitude fields for first few stars
-            logMagnitudeFields(star, starIndex++);
+            starStream.forEach(star -> {
+                if (star != null) {
+                    results.add(toStarRenderRow(star));
+                }
+            });
+        }
 
-            results.add(toStarRenderRow(star));
+        log.info("Loaded {} stars with mag <= {} from database", results.size(), magLimit);
+        return results;
+    }
+
+    /**
+     * Query all stars (legacy fallback when magnitude filtering isn't practical).
+     * Uses streaming to avoid loading everything into memory at once.
+     */
+    private List<StarRenderRow> queryAllStars() {
+        List<StarRenderRow> results = new ArrayList<>();
+
+        // Use streaming instead of findAll() for better memory efficiency
+        try (Stream<StarObject> starStream = starObjectRepository.streamAll()) {
+            starStream.forEach(star -> {
+                if (star != null) {
+                    results.add(toStarRenderRow(star));
+                }
+            });
         }
 
         log.info("Loaded {} total stars from database", results.size());
@@ -255,73 +307,82 @@ public class PlanetarySkyBridgeService {
                                                         HorizonBasis basis,
                                                         double magLimit,
                                                         boolean applyAtmosphere) {
-        List<VisibleStarResult> visible = new ArrayList<>();
         AtmosphereModel atmosphere = applyAtmosphere
                 ? AtmosphereModel.earthLike()
                 : AtmosphereModel.none();
 
         Vector3D observerPos = new Vector3D(observerLy[0], observerLy[1], observerLy[2]);
 
-        int belowHorizon = 0;
-        int tooDim = 0;
-        int zeroDistance = 0;
+        // Use parallel stream for large datasets (>1000 stars)
+        boolean useParallel = candidates.size() > 1000;
+        Stream<StarRenderRow> stream = useParallel ? candidates.parallelStream() : candidates.stream();
 
-        for (StarRenderRow candidate : candidates) {
-            // Get star position in world coordinates
-            Vector3D starPos = new Vector3D(candidate.getXLy(), candidate.getYLy(), candidate.getZLy());
-            Vector3D delta = starPos.subtract(observerPos);
-            double distanceLy = delta.getNorm();
+        List<VisibleStarResult> visible = stream
+                .map(candidate -> transformStar(candidate, observerPos, basis, magLimit, atmosphere, applyAtmosphere))
+                .filter(result -> result != null)
+                .collect(Collectors.toList());
 
-            if (distanceLy == 0.0) {
-                zeroDistance++;
-                continue;
-            }
-
-            // Compute direction and transform to horizon coordinates using NightSkyMath
-            Vector3D direction = delta.normalize();
-            Vector3D horizon = NightSkyMath.toHorizonCoords(direction, basis);
-            double altDeg = NightSkyMath.altitudeDeg(horizon);
-            double azDeg = NightSkyMath.azimuthDeg(horizon);
-
-            // Skip stars below horizon (with small tolerance)
-            if (altDeg < -0.5) {
-                belowHorizon++;
-                continue;
-            }
-
-            // Use magnitude directly from database (same as legacy NightSkyQuery3D)
-            // The database stores apparent magnitudes, not absolute magnitudes
-            double magnitude = selectMagnitude(candidate);
-
-            // Optionally apply atmospheric extinction near horizon (makes stars dimmer)
-            if (applyAtmosphere && altDeg > 0 && altDeg < 15) {
-                double altRad = Math.toRadians(altDeg);
-                magnitude = photometryService.applyAtmosphericExtinction((float) magnitude, altRad, atmosphere);
-            }
-
-            // Skip if too dim
-            if (magnitude > magLimit) {
-                tooDim++;
-                continue;
-            }
-
-            float apparentMag = (float) magnitude;
-
-            // Create a minimal StarObject for VisibleStarResult
-            StarObject starObj = new StarObject();
-            starObj.setX(candidate.getXLy());
-            starObj.setY(candidate.getYLy());
-            starObj.setZ(candidate.getZLy());
-            starObj.setDisplayName(candidate.getStarName());
-            starObj.setSpectralClass(candidate.getSpectralClass());
-
-            visible.add(new VisibleStarResult(starObj, altDeg, azDeg, apparentMag, distanceLy));
-        }
-
-        log.info("Transform filter results: {} visible, {} below horizon, {} too dim, {} zero distance (out of {} candidates)",
-                visible.size(), belowHorizon, tooDim, zeroDistance, candidates.size());
+        log.info("Transform filter: {} visible out of {} candidates (parallel={})",
+                visible.size(), candidates.size(), useParallel);
 
         return visible;
+    }
+
+    /**
+     * Transform a single star to horizon coordinates and filter by visibility.
+     * Returns null if the star is not visible.
+     */
+    private VisibleStarResult transformStar(StarRenderRow candidate,
+                                             Vector3D observerPos,
+                                             HorizonBasis basis,
+                                             double magLimit,
+                                             AtmosphereModel atmosphere,
+                                             boolean applyAtmosphere) {
+        // Get star position in world coordinates
+        Vector3D starPos = new Vector3D(candidate.getXLy(), candidate.getYLy(), candidate.getZLy());
+        Vector3D delta = starPos.subtract(observerPos);
+        double distanceLy = delta.getNorm();
+
+        if (distanceLy == 0.0) {
+            return null;
+        }
+
+        // Compute direction and transform to horizon coordinates using NightSkyMath
+        Vector3D direction = delta.normalize();
+        Vector3D horizon = NightSkyMath.toHorizonCoords(direction, basis);
+        double altDeg = NightSkyMath.altitudeDeg(horizon);
+        double azDeg = NightSkyMath.azimuthDeg(horizon);
+
+        // Skip stars below horizon (with small tolerance)
+        if (altDeg < -0.5) {
+            return null;
+        }
+
+        // Use magnitude directly from database
+        double magnitude = selectMagnitude(candidate);
+
+        // Optionally apply atmospheric extinction near horizon (makes stars dimmer)
+        if (applyAtmosphere && altDeg > 0 && altDeg < 15) {
+            double altRad = Math.toRadians(altDeg);
+            magnitude = photometryService.applyAtmosphericExtinction((float) magnitude, altRad, atmosphere);
+        }
+
+        // Skip if too dim
+        if (magnitude > magLimit) {
+            return null;
+        }
+
+        float apparentMag = (float) magnitude;
+
+        // Create a minimal StarObject for VisibleStarResult
+        StarObject starObj = new StarObject();
+        starObj.setX(candidate.getXLy());
+        starObj.setY(candidate.getYLy());
+        starObj.setZ(candidate.getZLy());
+        starObj.setDisplayName(candidate.getStarName());
+        starObj.setSpectralClass(candidate.getSpectralClass());
+
+        return new VisibleStarResult(starObj, altDeg, azDeg, apparentMag, distanceLy);
     }
 
     /**
