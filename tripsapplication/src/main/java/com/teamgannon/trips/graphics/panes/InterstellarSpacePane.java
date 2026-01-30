@@ -18,9 +18,11 @@ import com.teamgannon.trips.graphics.entities.RouteDescriptor;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.GraphEnablesPersist;
+import com.teamgannon.trips.particlefields.InterstellarRingAdapter;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
+import com.teamgannon.trips.starplotting.NebulaManager;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;
@@ -77,6 +79,12 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     private final @NotNull StarPlotManager starPlotManager;
 
     /**
+     * Nebula rendering manager.
+     */
+    @Getter
+    private final @NotNull NebulaManager nebulaManager;
+
+    /**
      * Camera and view management.
      */
     private final InterstellarCameraController cameraController;
@@ -113,11 +121,13 @@ public class InterstellarSpacePane extends Pane implements RotationController {
                                  StarPlotManager starPlotManager,
                                  RouteManager routeManager,
                                  GridPlotManager gridPlotManager,
-                                 @NotNull TransitManager transitManager) {
+                                 @NotNull TransitManager transitManager,
+                                 @NotNull NebulaManager nebulaManager) {
 
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
         this.transitManager = transitManager;
+        this.nebulaManager = nebulaManager;
         ScreenSize screenSize = tripsContext.getScreenSize();
         this.starPlotManager = starPlotManager;
         this.routeManager = routeManager;
@@ -164,6 +174,9 @@ public class InterstellarSpacePane extends Pane implements RotationController {
 
         // Setup transit manager
         this.transitManager.setGraphics(sceneRoot, world, subScene, this);
+
+        // Setup nebula manager
+        nebulaManager.setParentGroup(world);
 
         log.info("startup complete");
     }
@@ -355,6 +368,76 @@ public class InterstellarSpacePane extends Pane implements RotationController {
     }
 
     // =========================================================================
+    // Nebula Management
+    // =========================================================================
+
+    /**
+     * Render nebulae within the plot range.
+     *
+     * @param datasetName     the dataset to query for nebulae
+     * @param centerX         plot center X in light-years
+     * @param centerY         plot center Y in light-years
+     * @param centerZ         plot center Z in light-years
+     * @param plotRadius      plot radius in light-years
+     * @param scalingFactor   screen units per light-year (from AstrographicTransformer)
+     */
+    public void renderNebulae(String datasetName,
+                               double centerX, double centerY, double centerZ,
+                               double plotRadius, double scalingFactor) {
+        // Configure adapter with the current scale
+        InterstellarRingAdapter adapter = new InterstellarRingAdapter(scalingFactor);
+        nebulaManager.setAdapter(adapter);
+
+        // Render nebulae in range
+        nebulaManager.renderNebulaeInRange(datasetName, centerX, centerY, centerZ, plotRadius);
+
+        log.info("Rendered {} nebulae in plot range", nebulaManager.getActiveNebulaCount());
+    }
+
+    /**
+     * Clear all rendered nebulae.
+     */
+    public void clearNebulae() {
+        nebulaManager.clearRenderers();
+    }
+
+    /**
+     * Toggle nebula visibility.
+     *
+     * @param visible true to show nebulae, false to hide
+     */
+    public void toggleNebulae(boolean visible) {
+        nebulaManager.setVisible(visible);
+    }
+
+    /**
+     * Toggle nebula animation.
+     *
+     * @param enabled true to enable animation, false to disable
+     */
+    public void toggleNebulaAnimation(boolean enabled) {
+        nebulaManager.setAnimationEnabled(enabled);
+    }
+
+    /**
+     * Update nebula animation. Call this from animation loop if needed.
+     *
+     * @param timeScale animation speed multiplier
+     */
+    public void updateNebulaAnimation(double timeScale) {
+        nebulaManager.updateAnimation(timeScale);
+    }
+
+    /**
+     * Get the number of active nebulae.
+     *
+     * @return count of rendered nebulae
+     */
+    public int getActiveNebulaCount() {
+        return nebulaManager.getActiveNebulaCount();
+    }
+
+    // =========================================================================
     // Display Toggles
     // =========================================================================
 
@@ -543,5 +626,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         clearStars();
         clearRoutes();
         clearTransits();
+        clearNebulae();
     }
 }

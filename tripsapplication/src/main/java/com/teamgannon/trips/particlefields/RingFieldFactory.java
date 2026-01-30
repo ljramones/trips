@@ -184,6 +184,7 @@ public class RingFieldFactory {
 
     /**
      * Emission nebula: colorful, glowing gas cloud.
+     * Features dense core with gradual falloff and moderate filamentary structure.
      */
     public static RingConfiguration emissionNebula() {
         return RingConfiguration.builder()
@@ -201,11 +202,17 @@ public class RingFieldFactory {
                 .primaryColor(Color.rgb(255, 100, 150))  // Pink-red (hydrogen alpha)
                 .secondaryColor(Color.rgb(100, 200, 255)) // Blue-cyan (oxygen)
                 .name("Emission Nebula")
+                // Nebula-specific parameters
+                .radialPower(0.4)         // Dense core concentration
+                .noiseStrength(0.4)       // Moderate filaments
+                .noiseOctaves(3)          // Good detail level
+                .seed(42L)
                 .build();
     }
 
     /**
      * Dark nebula: obscuring dust cloud.
+     * Features fairly uniform distribution with some turbulent structure.
      */
     public static RingConfiguration darkNebula() {
         return RingConfiguration.builder()
@@ -223,6 +230,94 @@ public class RingFieldFactory {
                 .primaryColor(Color.rgb(40, 35, 30))     // Very dark brown
                 .secondaryColor(Color.rgb(20, 18, 15))   // Nearly black
                 .name("Dark Nebula")
+                // Nebula-specific parameters
+                .radialPower(0.5)         // Fairly uniform
+                .noiseStrength(0.3)       // Some structure
+                .noiseOctaves(3)
+                .seed(43L)
+                .build();
+    }
+
+    /**
+     * Planetary nebula: expanding shell from dying star.
+     * Features shell-like distribution with hollow center.
+     */
+    public static RingConfiguration planetaryNebula() {
+        return RingConfiguration.builder()
+                .type(RingType.DUST_CLOUD)
+                .innerRadius(15)          // Hollow center (white dwarf remnant)
+                .outerRadius(50)
+                .numElements(8000)
+                .minSize(0.3)
+                .maxSize(1.2)
+                .thickness(40.0)
+                .maxInclinationDeg(90.0)
+                .maxEccentricity(0.01)
+                .baseAngularSpeed(0.0003)  // Slow expansion
+                .centralBodyRadius(2)
+                .primaryColor(Color.rgb(100, 255, 200))  // Ionized oxygen green
+                .secondaryColor(Color.rgb(200, 100, 255)) // Ionized nitrogen purple
+                .name("Planetary Nebula")
+                // Nebula-specific parameters
+                .radialPower(0.7)         // Shell-like (hollow center)
+                .noiseStrength(0.25)      // Some asymmetry
+                .noiseOctaves(3)
+                .seed(44L)
+                .build();
+    }
+
+    /**
+     * Supernova remnant: explosive debris with complex filaments.
+     * Features expanding shell with highly turbulent structure.
+     */
+    public static RingConfiguration supernovaRemnant() {
+        return RingConfiguration.builder()
+                .type(RingType.DUST_CLOUD)
+                .innerRadius(20)
+                .outerRadius(80)
+                .numElements(10000)
+                .minSize(0.4)
+                .maxSize(1.8)
+                .thickness(60.0)
+                .maxInclinationDeg(90.0)
+                .maxEccentricity(0.03)
+                .baseAngularSpeed(0.0004)  // Rapid expansion
+                .centralBodyRadius(1)      // Neutron star/pulsar
+                .primaryColor(Color.rgb(255, 150, 100))  // Orange-red
+                .secondaryColor(Color.rgb(255, 220, 100)) // Yellow
+                .name("Supernova Remnant")
+                // Nebula-specific parameters
+                .radialPower(0.65)        // Expanding shell
+                .noiseStrength(0.6)       // Complex filaments (shock waves)
+                .noiseOctaves(4)          // High detail
+                .seed(45L)
+                .build();
+    }
+
+    /**
+     * Reflection nebula: dust reflecting starlight (blue-shifted).
+     */
+    public static RingConfiguration reflectionNebula() {
+        return RingConfiguration.builder()
+                .type(RingType.DUST_CLOUD)
+                .innerRadius(5)
+                .outerRadius(60)
+                .numElements(6000)
+                .minSize(0.3)
+                .maxSize(1.5)
+                .thickness(40.0)
+                .maxInclinationDeg(90.0)
+                .maxEccentricity(0.02)
+                .baseAngularSpeed(0.00015)
+                .centralBodyRadius(3)
+                .primaryColor(Color.rgb(100, 150, 255))   // Blue (scattered light)
+                .secondaryColor(Color.rgb(150, 180, 255)) // Lighter blue
+                .name("Reflection Nebula")
+                // Nebula-specific parameters
+                .radialPower(0.35)        // Concentrated near illuminating star
+                .noiseStrength(0.2)       // Smoother appearance
+                .noiseOctaves(2)
+                .seed(46L)
                 .build();
     }
 
@@ -283,8 +378,24 @@ public class RingFieldFactory {
                 "Collision Debris",
                 "Emission Nebula",
                 "Dark Nebula",
+                "Planetary Nebula",
+                "Supernova Remnant",
+                "Reflection Nebula",
                 "Black Hole Accretion",
                 "Neutron Star Accretion"
+        };
+    }
+
+    /**
+     * Returns preset names for nebulae only.
+     */
+    public static String[] getNebulaPresetNames() {
+        return new String[]{
+                "Emission Nebula",
+                "Dark Nebula",
+                "Planetary Nebula",
+                "Supernova Remnant",
+                "Reflection Nebula"
         };
     }
 
@@ -301,6 +412,9 @@ public class RingFieldFactory {
             case "Collision Debris" -> collisionDebris();
             case "Emission Nebula" -> emissionNebula();
             case "Dark Nebula" -> darkNebula();
+            case "Planetary Nebula" -> planetaryNebula();
+            case "Supernova Remnant" -> supernovaRemnant();
+            case "Reflection Nebula" -> reflectionNebula();
             case "Black Hole Accretion" -> blackHoleAccretion();
             case "Neutron Star Accretion" -> neutronStarAccretion();
             default -> throw new IllegalArgumentException("Unknown preset: " + name);

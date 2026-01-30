@@ -8,6 +8,12 @@
     <MenuItem mnemonicParsing="false"
               onAction="#plotStars"
               text="Plot Stars"/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#manageNebulae"
+              text="Manage Nebulae..."/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#importNebulaeFromCatalog"
+              text="Import Nebulae from Catalog..."/>
     <fx:include source="ToggleDisplayMenu.fxml"/>
     <MenuItem fx:id="showRoutesMenuitem"
               mnemonicParsing="false"

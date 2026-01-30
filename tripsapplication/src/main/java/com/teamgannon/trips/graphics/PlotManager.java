@@ -255,6 +255,16 @@ public class PlotManager {
         // draw the routes for this descriptor
         interstellarSpacePane.redrawRoutes(dataSetDescriptor.getRoutes());
 
+        // render nebulae in the plot range
+        interstellarSpacePane.renderNebulae(
+                dataSetDescriptor.getDataSetName(),
+                centerCoordinates[0],
+                centerCoordinates[1],
+                centerCoordinates[2],
+                displayRadius,
+                scalingParameters.getScalingFactor()
+        );
+
         // draw the labels for this plot
         interstellarSpacePane.updateLabels();
 

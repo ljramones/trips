@@ -4,7 +4,10 @@ import javafx.scene.paint.Color;
 
 /**
  * Configuration parameters for a ring/particle field system.
- * This is the base structure used by all ring types.
+ * This is the base structure used by all ring types including nebulae.
+ * <p>
+ * The nebula-specific parameters (radialPower, noiseStrength, noiseOctaves, seed)
+ * are primarily used by DustCloudGenerator but are available for all types.
  */
 public record RingConfiguration(
         /** The type of ring system */
@@ -47,7 +50,38 @@ public record RingConfiguration(
         Color secondaryColor,
 
         /** Display name for the window title */
-        String name
+        String name,
+
+        // ==================== Nebula-Specific Parameters ====================
+
+        /**
+         * Radial power for density falloff (used by DustCloudGenerator).
+         * < 0.5 = dense core with gradual falloff (e.g., 0.3 for emission nebulae)
+         * = 0.5 = uniform distribution
+         * > 0.5 = shell-like, hollow center (e.g., 0.7 for planetary nebulae)
+         */
+        double radialPower,
+
+        /**
+         * Noise strength for filamentary structure (0.0 - 1.0).
+         * 0.0 = no noise (smooth distribution)
+         * 0.3-0.5 = moderate filaments (typical nebulae)
+         * 0.6+ = highly turbulent (supernova remnants)
+         */
+        double noiseStrength,
+
+        /**
+         * Number of noise octaves for detail level (1-6).
+         * More octaves = finer detail but more computation.
+         * 2-3 = typical, 4+ = high detail
+         */
+        int noiseOctaves,
+
+        /**
+         * Random seed for reproducible procedural generation.
+         * Same seed with same parameters = identical particle distribution.
+         */
+        long seed
 ) {
     /**
      * Builder for creating RingConfiguration instances with defaults.
@@ -67,6 +101,12 @@ public record RingConfiguration(
         private Color primaryColor = Color.LIGHTGRAY;
         private Color secondaryColor = Color.DARKGRAY;
         private String name = "Ring Field";
+
+        // Nebula-specific defaults
+        private double radialPower = 0.5;      // Uniform distribution by default
+        private double noiseStrength = 0.0;    // No noise by default
+        private int noiseOctaves = 3;          // Moderate detail
+        private long seed = System.currentTimeMillis();
 
         public Builder type(RingType type) {
             this.type = type;
@@ -138,17 +178,83 @@ public record RingConfiguration(
             return this;
         }
 
+        // Nebula-specific builder methods
+
+        /**
+         * Set the radial power for density falloff.
+         * @param radialPower 0.0-1.0, where < 0.5 = dense core, > 0.5 = shell-like
+         */
+        public Builder radialPower(double radialPower) {
+            this.radialPower = radialPower;
+            return this;
+        }
+
+        /**
+         * Set the noise strength for filamentary structure.
+         * @param noiseStrength 0.0-1.0
+         */
+        public Builder noiseStrength(double noiseStrength) {
+            this.noiseStrength = noiseStrength;
+            return this;
+        }
+
+        /**
+         * Set the number of noise octaves.
+         * @param noiseOctaves 1-6 typically
+         */
+        public Builder noiseOctaves(int noiseOctaves) {
+            this.noiseOctaves = noiseOctaves;
+            return this;
+        }
+
+        /**
+         * Set the random seed for reproducible generation.
+         * @param seed any long value
+         */
+        public Builder seed(long seed) {
+            this.seed = seed;
+            return this;
+        }
+
         public RingConfiguration build() {
             return new RingConfiguration(
                     type, innerRadius, outerRadius, numElements,
                     minSize, maxSize, thickness, maxInclinationDeg,
                     maxEccentricity, baseAngularSpeed, centralBodyRadius,
-                    primaryColor, secondaryColor, name
+                    primaryColor, secondaryColor, name,
+                    radialPower, noiseStrength, noiseOctaves, seed
             );
         }
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a copy of this configuration with a new seed.
+     * Useful for creating variations of the same nebula.
+     */
+    public RingConfiguration withSeed(long newSeed) {
+        return new RingConfiguration(
+                type, innerRadius, outerRadius, numElements,
+                minSize, maxSize, thickness, maxInclinationDeg,
+                maxEccentricity, baseAngularSpeed, centralBodyRadius,
+                primaryColor, secondaryColor, name,
+                radialPower, noiseStrength, noiseOctaves, newSeed
+        );
+    }
+
+    /**
+     * Returns a copy with adjusted particle count (for LOD).
+     */
+    public RingConfiguration withNumElements(int newNumElements) {
+        return new RingConfiguration(
+                type, innerRadius, outerRadius, newNumElements,
+                minSize, maxSize, thickness, maxInclinationDeg,
+                maxEccentricity, baseAngularSpeed, centralBodyRadius,
+                primaryColor, secondaryColor, name,
+                radialPower, noiseStrength, noiseOctaves, seed
+        );
     }
 }

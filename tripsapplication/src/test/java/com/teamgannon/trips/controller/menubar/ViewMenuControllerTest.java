@@ -4,7 +4,9 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controller.MainSplitPaneManager;
 import com.teamgannon.trips.controller.shared.SharedUIFunctions;
 import com.teamgannon.trips.controller.shared.SharedUIState;
+import com.teamgannon.trips.dialogs.nebula.catalog.NebulaCatalogService;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.service.NebulaService;
 import javafx.event.ActionEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +39,12 @@ class ViewMenuControllerTest {
     private MainSplitPaneManager mainSplitPaneManager;
 
     @Mock
+    private NebulaService nebulaService;
+
+    @Mock
+    private NebulaCatalogService nebulaCatalogService;
+
+    @Mock
     private ActionEvent actionEvent;
 
     private ViewMenuController controller;
@@ -49,7 +57,9 @@ class ViewMenuControllerTest {
                 sharedUIFunctions,
                 sharedUIState,
                 interstellarSpacePane,
-                mainSplitPaneManager
+                mainSplitPaneManager,
+                nebulaService,
+                nebulaCatalogService
         );
     }
 
