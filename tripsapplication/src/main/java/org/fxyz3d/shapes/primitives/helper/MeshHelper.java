@@ -365,9 +365,9 @@ public class MeshHelper {
                     points.length + numPoints * idx, numPoints);
 
             // Add f values
-            float[] ff = new float[numF / 3 * 3]; // same size as f array
+            float[] ff = mh.getF().clone();
             Arrays.fill(ff, p3d.f);
-            System.arraycopy(ff, 0, newF, f.length + (numF) * idx, mh.getF().length);
+            System.arraycopy(ff, 0, newF, f.length + numF * idx, ff.length);
 
             // Add palette texCoord for this particle (single U,V pair)
             // U = colorIndex/255 (picks color column in texture)
