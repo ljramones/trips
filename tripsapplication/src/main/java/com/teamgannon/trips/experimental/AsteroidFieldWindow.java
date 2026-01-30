@@ -12,6 +12,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
@@ -29,6 +30,7 @@ import org.orekit.time.AbsoluteDate;
 import org.orekit.utils.PVCoordinates;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -36,6 +38,13 @@ import java.util.Random;
 /**
  * Simple, reliable procedural asteroid field (no Orekit).
  * Restored from your earlier working versions.
+ *
+ * <p>Uses ScatterMesh with per-particle size for efficient rendering:
+ * <ul>
+ *   <li>Single mesh instead of 3 size-categorized meshes</li>
+ *   <li>Per-particle scale from asteroid size</li>
+ *   <li>Efficient position updates without mesh rebuild</li>
+ * </ul>
  */
 @Slf4j
 public class AsteroidFieldWindow {
@@ -63,14 +72,13 @@ public class AsteroidFieldWindow {
     private static final double MAX_INCLINATION_DEG = 12.0;
 
     private static final double BASE_ANGULAR_SPEED = 0.002;
-    private static final int    MESH_REFRESH_INTERVAL = 5;
 
-    private static final double SIZE_SMALL   = 1.0;
-    private static final double SIZE_MEDIUM  = 1.8;
-    private static final double SIZE_LARGE   = 2.6;
-
-    private static final double THRESH_MEDIUM = 1.4;
-    private static final double THRESH_LARGE  = 2.2;
+    /** Base size for scale calculations (midpoint of size range) */
+    private static final double BASE_SIZE = 1.4;
+    /** Minimum asteroid size */
+    private static final double MIN_SIZE = 0.9;
+    /** Maximum asteroid size */
+    private static final double MAX_SIZE = 2.6;
 
     private static final AbsoluteDate ORBIT_EPOCH = AbsoluteDate.J2000_EPOCH;
     // Use a synthetic GM that works with visual units (radius ~100) instead of real meters
@@ -102,8 +110,9 @@ public class AsteroidFieldWindow {
     private final List<AsteroidData> asteroids = new ArrayList<>();
     // Mutable current angle for each asteroid (updated every frame)
     private final double[] angles = new double[NUM_ASTEROIDS];
-    // Computed display positions
-    private final List<Point3D> displayPositions = new ArrayList<>();
+
+    /** Cached Point3D list with per-particle scale for efficient updates */
+    private final List<Point3D> displayPoints = new ArrayList<>();
 
     private int[] shuffleMapping;
 
@@ -116,21 +125,20 @@ public class AsteroidFieldWindow {
     private DWorld odeWorld;
     private boolean odeInitialized = false;
 
-    private ScatterMesh meshSmall;
-    private ScatterMesh meshMedium;
-    private ScatterMesh meshLarge;
+    /** Single mesh for all asteroids (replaces meshSmall/meshMedium/meshLarge) */
+    private ScatterMesh mesh;
+
+    /** Color palette for per-particle coloring (gray gradient for asteroids) */
+    private final List<Color> colorPalette = Arrays.asList(
+            Color.DARKGRAY,
+            Color.GRAY,
+            Color.LIGHTGRAY
+    );
 
     private AnimationTimer animationTimer;
     private boolean animating = true;
     private int frameCounter = 0;
     private long lastFrameNanos = 0;
-
-    // Reusable lists for mesh building (avoids allocation each frame)
-    private final List<Point3D> smallPoints = new ArrayList<>();
-    private final List<Point3D> mediumPoints = new ArrayList<>();
-    private final List<Point3D> largePoints = new ArrayList<>();
-    // Pre-computed size category for each asteroid (0=small, 1=medium, 2=large)
-    private int[] sizeCategories;
 
     private final Random random = new Random(42);
 
@@ -171,7 +179,8 @@ public class AsteroidFieldWindow {
         subScene.setFocusTraversable(true);
         startAnimation();
 
-        log.info("AsteroidFieldWindow initialized with {} asteroids", NUM_ASTEROIDS);
+        log.info("AsteroidFieldWindow initialized with {} asteroids (single mesh with per-particle scale)",
+                NUM_ASTEROIDS);
     }
 
     /**
@@ -195,11 +204,11 @@ public class AsteroidFieldWindow {
     }
 
     /**
-     * Generates randomized asteroid field and assigns hero bodies
+     * Generates randomized asteroid field and builds the mesh with per-particle scale.
      */
     private void generateAsteroidField() {
         asteroids.clear();
-        displayPositions.clear();
+        displayPoints.clear();
 
         // Populates asteroid field with randomized orbital parameters
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
@@ -211,7 +220,7 @@ public class AsteroidFieldWindow {
             double angle = random.nextDouble() * 2 * Math.PI;
             double speed = BASE_ANGULAR_SPEED / Math.sqrt(radius / FIELD_INNER_RADIUS);
             speed *= 0.8 + random.nextDouble() * 0.4;
-            double size = 0.9 + random.nextDouble() * 1.7;
+            double size = MIN_SIZE + random.nextDouble() * (MAX_SIZE - MIN_SIZE);
 
             asteroids.add(new AsteroidData(radius, speed, height, eccentricity, inclinationRad, size));
             angles[i] = angle;
@@ -220,7 +229,15 @@ public class AsteroidFieldWindow {
             double r = radius * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
             double x = r * Math.cos(angle);
             double z = r * Math.sin(angle);
-            displayPositions.add(new Point3D((float) x, (float) height, (float) z));
+
+            // Calculate scale relative to base size
+            float scale = (float) (size / BASE_SIZE);
+
+            // Map size to color index (smaller = darker, larger = lighter)
+            int colorIndex = (int) ((size - MIN_SIZE) / (MAX_SIZE - MIN_SIZE) * 255);
+
+            // Create Point3D with position, colorIndex, and scale
+            displayPoints.add(new Point3D((float) x, (float) height, (float) z, colorIndex, scale));
         }
 
         List<Integer> indices = new ArrayList<>();
@@ -232,70 +249,41 @@ public class AsteroidFieldWindow {
             shuffleMapping[i] = indices.get(i);
         }
 
-        // Pre-compute size categories to avoid repeated comparisons during refresh
-        sizeCategories = new int[NUM_ASTEROIDS];
-        for (int i = 0; i < NUM_ASTEROIDS; i++) {
-            double sz = asteroids.get(i).size();
-            if (sz >= THRESH_LARGE) {
-                sizeCategories[i] = 2;
-            } else if (sz >= THRESH_MEDIUM) {
-                sizeCategories[i] = 1;
-            } else {
-                sizeCategories[i] = 0;
-            }
-        }
-
         assignHeroBodies();
-        refreshMeshes();
+        buildMesh();
     }
 
     /**
-     * Rebuilds meshes from size‑partitioned display positions.
-     * Reuses pre-allocated lists to minimize GC pressure.
+     * Builds the single mesh with per-particle scale.
      */
-    private void refreshMeshes() {
-        world.getChildren().removeAll(meshSmall, meshMedium, meshLarge);
-
-        // Clear and reuse existing lists instead of allocating new ones
-        smallPoints.clear();
-        mediumPoints.clear();
-        largePoints.clear();
-
-        // Populates size‑based mesh lists using pre-computed categories
-        for (int dispIdx = 0; dispIdx < NUM_ASTEROIDS; dispIdx++) {
-            int origIdx = shuffleMapping[dispIdx];
-            Point3D p = displayPositions.get(origIdx);
-
-            switch (sizeCategories[origIdx]) {
-                case 2 -> largePoints.add(p);
-                case 1 -> mediumPoints.add(p);
-                default -> smallPoints.add(p);
-            }
+    private void buildMesh() {
+        if (mesh != null) {
+            world.getChildren().remove(mesh);
         }
 
-        if (!smallPoints.isEmpty()) {
-            meshSmall = new ScatterMesh(smallPoints, true, SIZE_SMALL, 0);
-            meshSmall.setTextureModeNone(Color.LIGHTGRAY);
-            world.getChildren().add(meshSmall);
-        }
+        mesh = new ScatterMesh(displayPoints, true, BASE_SIZE, 0);
+        mesh.enablePerParticleAttributes(colorPalette);
+        mesh.setCullFace(CullFace.NONE);
+        world.getChildren().add(mesh);
+    }
 
-        if (!mediumPoints.isEmpty()) {
-            meshMedium = new ScatterMesh(mediumPoints, true, SIZE_MEDIUM, 0);
-            meshMedium.setTextureModeNone(Color.LIGHTGRAY);
-            world.getChildren().add(meshMedium);
+    /**
+     * Updates mesh positions efficiently without full rebuild.
+     * Can be called every frame.
+     *
+     * @return true if efficient update was used
+     */
+    private boolean updateMeshPositions() {
+        if (mesh == null || displayPoints.isEmpty()) {
+            return false;
         }
-
-        if (!largePoints.isEmpty()) {
-            meshLarge = new ScatterMesh(largePoints, true, SIZE_LARGE, 0);
-            meshLarge.setTextureModeNone(Color.LIGHTGRAY);
-            world.getChildren().add(meshLarge);
-        }
+        return mesh.updatePositions(displayPoints);
     }
 
     private void startAnimation() {
         lastFrameNanos = System.nanoTime();
 
-        // Defines frame handler; updates positions; refreshes meshes periodically
+        // Defines frame handler; updates positions; uses efficient mesh updates
         animationTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -316,9 +304,10 @@ public class AsteroidFieldWindow {
 
                 updateAsteroidPositions(timeScale, deltaSeconds);
 
-                frameCounter++;
-                if (frameCounter % MESH_REFRESH_INTERVAL == 0) {
-                    refreshMeshes();
+                // Use efficient position update every frame
+                if (!updateMeshPositions()) {
+                    // Fall back to full rebuild if efficient update fails
+                    buildMesh();
                 }
             }
         };
@@ -353,12 +342,14 @@ public class AsteroidFieldWindow {
             angles[i] = angle;
 
             Point3D position = useOrekit
-                    ? computeOrekitPosition(asteroid.radius(), asteroid.eccentricity(),
-                            asteroid.inclination(), angle, asteroid.height())
-                    : computeAnalyticPosition(asteroid.radius(), asteroid.eccentricity(),
-                            asteroid.inclination(), angle, asteroid.height());
+                    ? computeOrekitPosition(asteroid, angle)
+                    : computeAnalyticPosition(asteroid, angle);
 
-            displayPositions.set(i, position);
+            // Update position while preserving colorIndex and scale
+            Point3D existing = displayPoints.get(i);
+            existing.x = position.x;
+            existing.y = position.y;
+            existing.z = position.z;
         }
 
         if (odeActive) {
@@ -404,10 +395,8 @@ public class AsteroidFieldWindow {
 
             // Use stored orbital parameters including height
             Point3D startPos = useOrekit
-                    ? computeOrekitPosition(asteroid.radius(), asteroid.eccentricity(),
-                            asteroid.inclination(), angle, asteroid.height())
-                    : computeAnalyticPosition(asteroid.radius(), asteroid.eccentricity(),
-                            asteroid.inclination(), angle, asteroid.height());
+                    ? computeOrekitPosition(asteroid, angle)
+                    : computeAnalyticPosition(asteroid, angle);
             body.setPosition(startPos.x, startPos.y, startPos.z);
 
             // Tangential velocity based on angular speed
@@ -466,7 +455,7 @@ public class AsteroidFieldWindow {
 
     private void syncHeroPositionsFromOde() {
         int bodyIndex = 0;
-        // Copies ODE positions to display positions
+        // Copies ODE positions to display points
         for (int i = 0; i < NUM_ASTEROIDS; i++) {
             if (!heroBodies[i]) continue;
 
@@ -474,19 +463,23 @@ public class AsteroidFieldWindow {
             double x = body.getPosition().get0();
             double y = body.getPosition().get1();
             double z = body.getPosition().get2();
-            displayPositions.set(i, new Point3D((float) x, (float) y, (float) z));
+
+            // Update position while preserving colorIndex and scale
+            Point3D existing = displayPoints.get(i);
+            existing.x = (float) x;
+            existing.y = (float) y;
+            existing.z = (float) z;
         }
     }
 
     /**
      * Computes position from Keplerian orbital elements
      */
-    private Point3D computeOrekitPosition(double radius, double eccentricity, double inclination,
-                                          double trueAnomaly, double heightOffset) {
+    private Point3D computeOrekitPosition(AsteroidData asteroid, double trueAnomaly) {
         KeplerianOrbit orbit = new KeplerianOrbit(
-                radius,
-                eccentricity,
-                inclination,
+                asteroid.radius(),
+                asteroid.eccentricity(),
+                asteroid.inclination(),
                 0.0,
                 0.0,
                 trueAnomaly,
@@ -498,7 +491,7 @@ public class AsteroidFieldWindow {
 
         PVCoordinates pv = orbit.getPVCoordinates(ORBIT_EPOCH, FramesFactory.getGCRF());
         double x = pv.getPosition().getX();
-        double y = pv.getPosition().getY() + heightOffset;
+        double y = pv.getPosition().getY() + asteroid.height();
         double z = pv.getPosition().getZ();
 
         return new Point3D((float) x, (float) y, (float) z);
@@ -507,16 +500,18 @@ public class AsteroidFieldWindow {
     /**
      * Computes position from orbital elements and height
      */
-    private Point3D computeAnalyticPosition(double radius, double eccentricity, double inclination,
-                                            double trueAnomaly, double heightOffset) {
+    private Point3D computeAnalyticPosition(AsteroidData asteroid, double trueAnomaly) {
         // Correct formula for radius at true anomaly: r = a(1-e²)/(1+e*cos(ν))
-        double r = radius * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(trueAnomaly));
+        double r = asteroid.radius() * (1 - asteroid.eccentricity() * asteroid.eccentricity())
+                / (1 + asteroid.eccentricity() * Math.cos(trueAnomaly));
 
         double x = r * Math.cos(trueAnomaly);
         double z = r * Math.sin(trueAnomaly);
 
-        double y = heightOffset * Math.cos(inclination) - z * Math.sin(inclination);
-        z = heightOffset * Math.sin(inclination) + z * Math.cos(inclination);
+        double inc = asteroid.inclination();
+        double height = asteroid.height();
+        double y = height * Math.cos(inc) - z * Math.sin(inc);
+        z = height * Math.sin(inc) + z * Math.cos(inc);
 
         return new Point3D((float) x, (float) y, (float) z);
     }

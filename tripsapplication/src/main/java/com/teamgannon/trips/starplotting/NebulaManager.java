@@ -19,7 +19,7 @@ import java.util.*;
  * Responsibilities:
  * - Query nebulae within plot range from repository
  * - Create and manage RingFieldRenderer instances for each nebula
- * - Handle animation updates
+ * - Handle animation updates with efficient per-frame position updates
  * - Manage visibility and LOD
  * <p>
  * Usage:
@@ -31,11 +31,8 @@ import java.util.*;
  * // When plotting stars
  * nebulaManager.renderNebulaeInRange(datasetName, centerX, centerY, centerZ, plotRadius);
  *
- * // In animation loop
+ * // In animation loop - efficient per-frame updates
  * nebulaManager.updateAnimation(timeScale);
- * if (frameCount % 5 == 0) {
- *     nebulaManager.refreshMeshes();
- * }
  * }</pre>
  */
 @Slf4j
@@ -87,15 +84,8 @@ public class NebulaManager {
     @Getter
     private boolean animationEnabled = true;
 
-    /**
-     * Frame counter for mesh refresh timing
-     */
-    private int frameCounter = 0;
-
-    /**
-     * Refresh meshes every N frames
-     */
-    private static final int MESH_REFRESH_INTERVAL = 5;
+    // Note: With efficient position updates in RingFieldRenderer, we no longer
+    // need frame counting or periodic mesh refresh - updates can be every frame
 
     public NebulaManager(NebulaRepository nebulaRepository) {
         this.nebulaRepository = nebulaRepository;
@@ -225,23 +215,22 @@ public class NebulaManager {
 
         for (RingFieldRenderer renderer : activeRenderers.values()) {
             renderer.update(timeScale);
-        }
-
-        // Refresh meshes periodically
-        frameCounter++;
-        if (frameCounter >= MESH_REFRESH_INTERVAL) {
-            refreshMeshes();
-            frameCounter = 0;
+            // Use efficient position update every frame (no full mesh rebuild)
+            renderer.updateMeshPositions();
         }
     }
 
     /**
      * Refresh meshes for all active renderers.
-     * Call periodically (e.g., every 5 frames), not every frame.
+     *
+     * @deprecated Use {@link #updateAnimation(double)} which now handles efficient
+     * per-frame position updates. This method is kept for compatibility but
+     * updateAnimation already calls updateMeshPositions() every frame.
      */
+    @Deprecated
     public void refreshMeshes() {
         for (RingFieldRenderer renderer : activeRenderers.values()) {
-            renderer.refreshMeshes();
+            renderer.updateMeshPositions();
         }
     }
 

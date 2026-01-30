@@ -9,6 +9,7 @@ import org.fxyz3d.geometry.Point3D;
 import org.fxyz3d.shapes.primitives.ScatterMesh;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -16,6 +17,14 @@ import java.util.Random;
  * Renders ring/particle field elements to a JavaFX Group.
  * This class is decoupled from window management, allowing rings to be
  * rendered in any 3D scene (standalone window, solar system view, interstellar view).
+ *
+ * <p>Uses ScatterMesh with per-particle attributes for efficient rendering:
+ * <ul>
+ *   <li>Per-particle color via colorIndex (maps to palette texture)</li>
+ *   <li>Per-particle size via scale factor</li>
+ *   <li>Per-particle opacity via opacity field</li>
+ *   <li>Efficient position updates without full mesh rebuild</li>
+ * </ul>
  *
  * <p>Usage:
  * <pre>{@code
@@ -25,15 +34,14 @@ import java.util.Random;
  *
  * // In animation loop:
  * renderer.update(timeScale);
- * renderer.refreshMeshes();  // Call periodically, not every frame
+ * renderer.updateMeshPositions();  // Efficient update, can call every frame
  * }</pre>
  */
 @Slf4j
 public class RingFieldRenderer {
 
-    // Size thresholds for mesh partitioning (as fraction of size range)
-    private static final double THRESH_MEDIUM_FRACTION = 0.4;
-    private static final double THRESH_LARGE_FRACTION = 0.7;
+    /** Number of colors in the palette (matches ScatterMesh palette size) */
+    private static final int PALETTE_SIZE = 256;
 
     /** The group containing all rendered ring elements */
     @Getter
@@ -47,31 +55,24 @@ public class RingFieldRenderer {
     @Getter
     private List<RingElement> elements = new ArrayList<>();
 
-    /** Pre-computed size categories (0=small, 1=medium, 2=large) */
-    private int[] sizeCategories;
+    /** Single mesh for all particles (replaces meshSmall/meshMedium/meshLarge) */
+    private ScatterMesh mesh;
 
-    /** Size thresholds computed from config */
-    private double smallThreshold;
-    private double largeThreshold;
+    /** Color palette for per-particle coloring */
+    private List<Color> colorPalette;
 
-    /** Meshes for different size particles */
-    private ScatterMesh meshSmall;
-    private ScatterMesh meshMedium;
-    private ScatterMesh meshLarge;
+    /** Base particle size (used as reference for scale factors) */
+    private double baseSize;
 
-    /** Reusable lists for mesh building (minimizes GC) */
-    private final List<Point3D> smallPoints = new ArrayList<>();
-    private final List<Point3D> mediumPoints = new ArrayList<>();
-    private final List<Point3D> largePoints = new ArrayList<>();
-
-    /** Computed mesh sizes based on config */
-    private double smallSize;
-    private double mediumSize;
-    private double largeSize;
+    /** Cached Point3D list for efficient position updates */
+    private List<Point3D> cachedPoints;
 
     /** Whether the renderer has been initialized */
     @Getter
     private boolean initialized = false;
+
+    /** Whether per-particle opacity is enabled (based on element colors having opacity < 1) */
+    private boolean useOpacity = false;
 
     /**
      * Creates an uninitialized renderer.
@@ -114,7 +115,7 @@ public class RingFieldRenderer {
 
     /**
      * Initializes or reinitializes the renderer with a new configuration.
-     * Generates new elements and rebuilds meshes.
+     * Generates new elements and builds the mesh with per-particle attributes.
      *
      * @param config the ring configuration
      * @param random random number generator for reproducible results
@@ -122,32 +123,122 @@ public class RingFieldRenderer {
     public void initialize(RingConfiguration config, Random random) {
         this.config = config;
 
-        // Clear existing meshes
+        // Clear existing mesh
         group.getChildren().clear();
-        meshSmall = null;
-        meshMedium = null;
-        meshLarge = null;
+        mesh = null;
+        cachedPoints = null;
 
         // Generate elements using the appropriate generator
         elements = RingFieldFactory.generateElements(config, random);
 
-        // Compute size thresholds and categories
-        computeSizeCategories();
+        // Compute base size (midpoint of size range)
+        baseSize = (config.minSize() + config.maxSize()) / 2.0;
 
-        // Compute mesh sizes
-        double sizeRange = config.maxSize() - config.minSize();
-        smallSize = config.minSize() + sizeRange * 0.2;
-        mediumSize = config.minSize() + sizeRange * 0.5;
-        largeSize = config.minSize() + sizeRange * 0.85;
+        // Build color palette from primary and secondary colors
+        colorPalette = buildColorPalette(config.primaryColor(), config.secondaryColor());
 
-        // Mark as initialized BEFORE building meshes (refreshMeshes checks this flag)
+        // Check if any elements have opacity < 1
+        useOpacity = elements.stream()
+                .anyMatch(e -> e.getColor().getOpacity() < 0.99);
+
+        // Mark as initialized BEFORE building mesh
         initialized = true;
 
-        // Build initial meshes
-        refreshMeshes();
+        // Build the mesh with per-particle attributes
+        buildMesh();
 
-        log.debug("RingFieldRenderer initialized: {} with {} elements, group children: {}",
-                config.name(), elements.size(), group.getChildren().size());
+        log.debug("RingFieldRenderer initialized: {} with {} elements, using per-particle attributes (opacity={})",
+                config.name(), elements.size(), useOpacity);
+    }
+
+    /**
+     * Builds the color palette as a gradient from primary to secondary color.
+     * The palette has 256 entries for smooth color mapping.
+     */
+    private List<Color> buildColorPalette(Color primary, Color secondary) {
+        List<Color> palette = new ArrayList<>(PALETTE_SIZE);
+        for (int i = 0; i < PALETTE_SIZE; i++) {
+            double t = i / (double) (PALETTE_SIZE - 1);
+            palette.add(primary.interpolate(secondary, t));
+        }
+        return palette;
+    }
+
+    /**
+     * Maps a color to a palette index (0-255) by finding its position in the
+     * primary-to-secondary gradient.
+     */
+    private int colorToIndex(Color color, Color primary, Color secondary) {
+        // Calculate how close this color is to secondary vs primary
+        // Using a simple hue/saturation/brightness distance metric
+        double primaryDist = colorDistance(color, primary);
+        double secondaryDist = colorDistance(color, secondary);
+        double totalDist = primaryDist + secondaryDist;
+
+        if (totalDist < 0.001) {
+            return 0; // Identical to primary
+        }
+
+        // Position in gradient: 0 = primary, 1 = secondary
+        double t = primaryDist / totalDist;
+        return Math.min(255, Math.max(0, (int) (t * 255)));
+    }
+
+    /**
+     * Calculates a simple color distance metric.
+     */
+    private double colorDistance(Color c1, Color c2) {
+        double dr = c1.getRed() - c2.getRed();
+        double dg = c1.getGreen() - c2.getGreen();
+        double db = c1.getBlue() - c2.getBlue();
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+
+    /**
+     * Builds the mesh with per-particle color, scale, and opacity.
+     */
+    private void buildMesh() {
+        if (elements.isEmpty()) return;
+
+        // Build Point3D list with per-particle attributes
+        cachedPoints = new ArrayList<>(elements.size());
+
+        for (RingElement element : elements) {
+            // Map element color to palette index
+            int colorIndex = colorToIndex(element.getColor(), config.primaryColor(), config.secondaryColor());
+
+            // Calculate scale relative to base size
+            float scale = (float) (element.getSize() / baseSize);
+
+            // Get opacity from element color
+            float opacity = (float) element.getColor().getOpacity();
+
+            // Create Point3D with all attributes
+            Point3D point = new Point3D(
+                    (float) element.getX(),
+                    (float) element.getY(),
+                    (float) element.getZ(),
+                    colorIndex,
+                    scale,
+                    opacity
+            );
+            cachedPoints.add(point);
+        }
+
+        // Create single mesh with all particles
+        mesh = new ScatterMesh(cachedPoints, true, baseSize, 0);
+
+        // Enable per-particle attributes
+        if (useOpacity) {
+            mesh.enableAllPerParticleAttributes(colorPalette);
+        } else {
+            mesh.enablePerParticleAttributes(colorPalette);
+        }
+
+        // Disable culling so particles are visible from all angles
+        mesh.setCullFace(CullFace.NONE);
+
+        group.getChildren().add(mesh);
     }
 
     /**
@@ -170,27 +261,6 @@ public class RingFieldRenderer {
     }
 
     /**
-     * Pre-computes size categories for all elements to avoid per-frame comparisons.
-     */
-    private void computeSizeCategories() {
-        double sizeRange = config.maxSize() - config.minSize();
-        smallThreshold = config.minSize() + sizeRange * THRESH_MEDIUM_FRACTION;
-        largeThreshold = config.minSize() + sizeRange * THRESH_LARGE_FRACTION;
-
-        sizeCategories = new int[elements.size()];
-        for (int i = 0; i < elements.size(); i++) {
-            double size = elements.get(i).getSize();
-            if (size >= largeThreshold) {
-                sizeCategories[i] = 2;
-            } else if (size >= smallThreshold) {
-                sizeCategories[i] = 1;
-            } else {
-                sizeCategories[i] = 0;
-            }
-        }
-    }
-
-    /**
      * Updates all element positions based on time scale.
      * Call this every frame for smooth animation.
      *
@@ -205,58 +275,44 @@ public class RingFieldRenderer {
     }
 
     /**
-     * Rebuilds the meshes from current element positions.
-     * This is expensive - call periodically (e.g., every 5 frames), not every frame.
+     * Updates the mesh positions efficiently without full rebuild.
+     * This can be called every frame as it only updates the vertex buffer.
+     *
+     * @return true if efficient update was used, false if full rebuild was needed
      */
-    public void refreshMeshes() {
-        if (!initialized || elements.isEmpty()) return;
+    public boolean updateMeshPositions() {
+        if (!initialized || elements.isEmpty() || mesh == null || cachedPoints == null) {
+            return false;
+        }
 
-        // Remove old meshes
-        group.getChildren().removeAll(meshSmall, meshMedium, meshLarge);
-
-        // Clear and reuse lists
-        smallPoints.clear();
-        mediumPoints.clear();
-        largePoints.clear();
-
-        // Partition elements by size
+        // Update cached Point3D positions from elements
         for (int i = 0; i < elements.size(); i++) {
             RingElement element = elements.get(i);
-            Point3D p = new Point3D(
-                    (float) element.getX(),
-                    (float) element.getY(),
-                    (float) element.getZ()
-            );
-
-            switch (sizeCategories[i]) {
-                case 2 -> largePoints.add(p);
-                case 1 -> mediumPoints.add(p);
-                default -> smallPoints.add(p);
-            }
+            Point3D point = cachedPoints.get(i);
+            point.x = (float) element.getX();
+            point.y = (float) element.getY();
+            point.z = (float) element.getZ();
         }
 
-        // Create meshes for each size category
-        // Use built-in CullFace.NONE so particles are visible from all angles
-        if (!smallPoints.isEmpty()) {
-            meshSmall = new ScatterMesh(smallPoints, true, smallSize, 0);
-            meshSmall.setTextureModeNone(config.primaryColor());
-            meshSmall.setCullFace(CullFace.NONE);
-            group.getChildren().add(meshSmall);
-        }
+        // Use efficient position update (doesn't rebuild mesh, just updates vertices)
+        return mesh.updatePositions(cachedPoints);
+    }
 
-        if (!mediumPoints.isEmpty()) {
-            meshMedium = new ScatterMesh(mediumPoints, true, mediumSize, 0);
-            Color mediumColor = config.primaryColor().interpolate(config.secondaryColor(), 0.3);
-            meshMedium.setTextureModeNone(mediumColor);
-            meshMedium.setCullFace(CullFace.NONE);
-            group.getChildren().add(meshMedium);
-        }
-
-        if (!largePoints.isEmpty()) {
-            meshLarge = new ScatterMesh(largePoints, true, largeSize, 0);
-            meshLarge.setTextureModeNone(config.secondaryColor());
-            meshLarge.setCullFace(CullFace.NONE);
-            group.getChildren().add(meshLarge);
+    /**
+     * Rebuilds the meshes from current element positions.
+     * This is more expensive than updateMeshPositions() but handles changes
+     * in particle count or attributes.
+     *
+     * @deprecated Use {@link #updateMeshPositions()} for animation loops.
+     * This method is kept for compatibility but now just calls updateMeshPositions().
+     */
+    @Deprecated
+    public void refreshMeshes() {
+        if (!updateMeshPositions()) {
+            // If efficient update failed, do a full rebuild
+            group.getChildren().clear();
+            mesh = null;
+            buildMesh();
         }
     }
 
@@ -314,15 +370,21 @@ public class RingFieldRenderer {
     }
 
     /**
+     * Returns the number of meshes used (always 1 with new implementation).
+     */
+    public int getMeshCount() {
+        return mesh != null ? 1 : 0;
+    }
+
+    /**
      * Clears all elements and meshes.
      */
     public void clear() {
         elements.clear();
         group.getChildren().clear();
-        meshSmall = null;
-        meshMedium = null;
-        meshLarge = null;
-        sizeCategories = null;
+        mesh = null;
+        cachedPoints = null;
+        colorPalette = null;
         initialized = false;
     }
 
