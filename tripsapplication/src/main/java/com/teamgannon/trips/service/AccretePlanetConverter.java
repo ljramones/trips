@@ -87,6 +87,9 @@ public class AccretePlanetConverter {
         // Populate host star properties
         populateHostStarProperties(exoPlanet, hostStar);
 
+        // Populate ring properties (if planet has rings)
+        populateRingProperties(exoPlanet, planet);
+
         return exoPlanet;
     }
 
@@ -222,6 +225,15 @@ public class AccretePlanetConverter {
         double starRadius = hostStar.getRadius();
         if (starRadius > 0) {
             exoPlanet.setStarRadius(starRadius);
+        }
+    }
+
+    private static void populateRingProperties(ExoPlanet exoPlanet, Planet planet) {
+        String ringType = planet.getRingType();
+        if (ringType != null && !ringType.isEmpty()) {
+            exoPlanet.setRingType(ringType);
+            exoPlanet.setRingInnerRadiusAU(planet.getRingInnerRadiusAU());
+            exoPlanet.setRingOuterRadiusAU(planet.getRingOuterRadiusAU());
         }
     }
 

@@ -73,6 +73,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
     private List<Planet> moons = new ArrayList<>();
     private List<AtmosphericChemical> atmosphere = new ArrayList<>();
 
+    // Ring system properties (set by PostAccretionGenerator)
+    private String ringType = null;           // "SATURN", "URANUS", "NEPTUNE", "JUPITER", or null
+    private double ringInnerRadiusAU = 0.0;   // Inner ring radius in AU
+    private double ringOuterRadiusAU = 0.0;   // Outer ring radius in AU
+
     public Planet(SimStar primary) {
         this.primary = primary;
     }

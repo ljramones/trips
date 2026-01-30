@@ -43,6 +43,11 @@ public class StarSystem {
     private List<Planet> failedPlanets = new ArrayList<>();
     private List<Planet> escapedMoons = new ArrayList<>();
 
+    // Post-accretion structures
+    private PostAccretionGenerator postAccretionGenerator;
+    private PostAccretionGenerator.AsteroidBeltData asteroidBelt;
+    private PostAccretionGenerator.KuiperBeltData kuiperBelt;
+
     // planetary formation variables, these are mostly temporary
     private boolean dustLeft = false;
     private double radiusInner = 0.0;
@@ -70,6 +75,7 @@ public class StarSystem {
         checkPlanets();
         migratePlanets();
         setEnvironments();
+        generatePostAccretionStructures();
     }
 
     /**
@@ -98,6 +104,7 @@ public class StarSystem {
         checkPlanets();
         migratePlanets();
         setEnvironments();
+        generatePostAccretionStructures();
     }
 
     /**
@@ -901,6 +908,52 @@ public class StarSystem {
                 this.habitable = true;
             }
         }
+    }
+
+    ///////////////////////////  Post-Accretion Structures   //////////////////////////
+
+    /**
+     * Generate post-accretion structures: planetary rings, asteroid belts, and Kuiper belt.
+     * This should be called after setEnvironments() when all planet properties are finalized.
+     */
+    private void generatePostAccretionStructures() {
+        postAccretionGenerator = new PostAccretionGenerator(centralBody, Utils.instance().getSeed());
+        postAccretionGenerator.generate(planets);
+
+        // Store the belt data for later access
+        asteroidBelt = postAccretionGenerator.getAsteroidBelt();
+        kuiperBelt = postAccretionGenerator.getKuiperBelt();
+
+        if (asteroidBelt != null) {
+            log.info("System has asteroid belt: {:.2f} - {:.2f} AU",
+                    asteroidBelt.getInnerRadiusAU(), asteroidBelt.getOuterRadiusAU());
+        }
+        if (kuiperBelt != null) {
+            log.info("System has Kuiper belt: {:.2f} - {:.2f} AU",
+                    kuiperBelt.getInnerRadiusAU(), kuiperBelt.getOuterRadiusAU());
+        }
+
+        // Log rings for planets
+        for (Planet p : planets) {
+            if (p.getRingType() != null) {
+                log.info("Planet at {:.2f} AU has {} ring system",
+                        p.getSma(), p.getRingType());
+            }
+        }
+    }
+
+    /**
+     * Check if this system has an asteroid belt.
+     */
+    public boolean hasAsteroidBelt() {
+        return asteroidBelt != null;
+    }
+
+    /**
+     * Check if this system has a Kuiper belt.
+     */
+    public boolean hasKuiperBelt() {
+        return kuiperBelt != null;
     }
 
 }
