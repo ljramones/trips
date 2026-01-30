@@ -209,10 +209,34 @@
         </dependency>
 
         <!-- FXyz for advanced 3D shapes and point clouds -->
+<!--        <dependency>-->
+<!--            <groupId>org.fxyz3d</groupId>-->
+<!--            <artifactId>fxyz3d</artifactId>-->
+<!--            <version>0.6.0</version>-->
+<!--        </dependency>-->
+
+        <!-- Core dependencies from FXyz3D core module -->
         <dependency>
-            <groupId>org.fxyz3d</groupId>
-            <artifactId>fxyz3d</artifactId>
-            <version>0.6.0</version>
+            <groupId>eu.mihosoft.vrl.jcsg</groupId>
+            <artifactId>jcsg</artifactId>
+            <version>0.5.7</version>
+            <!-- Equivalent to api with transitive=false: scope compile, exclude all transitives if needed, but in Maven, use exclusions for specifics -->
+        </dependency>
+        <dependency>
+            <groupId>eu.mihosoft.vvecmath</groupId>
+            <artifactId>vvecmath</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.orbisgis</groupId>
+            <artifactId>poly2tri-core</artifactId>
+            <version>0.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Override transitive Guava from jzy3d to fix CVE-2023-2976 and CVE-2020-8908 -->
