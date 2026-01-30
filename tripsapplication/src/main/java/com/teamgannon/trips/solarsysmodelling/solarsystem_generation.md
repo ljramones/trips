@@ -13,6 +13,7 @@ solarsysmodelling/
 │   ├── SystemObject.java        # Base class with physical constants
 │   ├── Utils.java               # Random number generation, star/chemical tables
 │   ├── DustRecord.java          # Protoplanetary disk dust band tracking
+│   ├── PostAccretionGenerator.java # Generates rings, asteroid/Kuiper belts
 │   ├── Chemical.java            # Atmospheric chemical element data
 │   ├── AtmosphericChemical.java # Chemical in planet atmosphere
 │   ├── PlanetTypeEnum.java      # Planet classification types
@@ -52,6 +53,7 @@ The ACCRETE algorithm simulates planetary formation through the following phases
 4. **Validation** - Handle failed planetesimals and escaped moons
 5. **Migration** - (Placeholder for planetary migration)
 6. **Environment** - Calculate atmospheres, temperatures, habitability
+7. **Post-Accretion** - Generate planetary rings, asteroid belts, and Kuiper belts
 
 ## TRIPS Extensions to Classic Accrete
 
@@ -73,6 +75,7 @@ habitability models, and data consistency checks:
 - **Orekit Dynamics Integration**: Orekit time and propagator utilities are integrated in `dynamics/`.
 - **Stellar Parameter Validation**: `StarSystem` validates and fixes invalid stellar parameters.
 - **Procedural Planet Integration**: Bridge to `PlanetGenerator` for terrain generation from Accrete data.
+- **Post-Accretion Structure Generation**: `PostAccretionGenerator` creates planetary rings, asteroid belts, and Kuiper belts based on the final planet configuration.
 
 ## Orbital Dynamics Framework
 
@@ -175,13 +178,14 @@ The constructor executes the full pipeline:
 ```java
 public StarSystem(StarObject starObject, boolean doMoons, boolean verbose, boolean extraVerbose) {
     centralBody = starObject.toSimStar();
-    validateAndFixStarParams(starObject.getDisplayName());  // NEW: Parameter validation
+    validateAndFixStarParams(starObject.getDisplayName());  // Parameter validation
     centralBody.setAge();
 
-    distributePlanetaryMasses();  // Phase 1-3: Accretion & coalescence
-    checkPlanets();               // Phase 4: Validation
-    migratePlanets();             // Phase 5: Migration (stub)
-    setEnvironments();            // Phase 6: Finalize planets
+    distributePlanetaryMasses();       // Phase 1-3: Accretion & coalescence
+    checkPlanets();                    // Phase 4: Validation
+    migratePlanets();                  // Phase 5: Migration (stub)
+    setEnvironments();                 // Phase 6: Finalize planets
+    generatePostAccretionStructures(); // Phase 7: Rings, asteroid belts, Kuiper belt
 }
 ```
 
@@ -932,6 +936,313 @@ if (orbitalPeriodYears >= 1.0) {
 
 **Important**: Greenhouse tag only shows when `surfacePressure > 0.001` (actual atmosphere present).
 
+## Phase 7: Post-Accretion Structure Generation
+
+After all planets are finalized, the system generates secondary structures that don't form through direct accretion: planetary rings, asteroid belts, and Kuiper belts.
+
+### generatePostAccretionStructures()
+
+Orchestrates post-accretion structure generation:
+
+```java
+private void generatePostAccretionStructures() {
+    postAccretionGenerator = new PostAccretionGenerator(centralBody, Utils.instance().getSeed());
+    postAccretionGenerator.generate(planets);
+
+    asteroidBelt = postAccretionGenerator.getAsteroidBelt();
+    kuiperBelt = postAccretionGenerator.getKuiperBelt();
+
+    // Log results
+    if (asteroidBelt != null) {
+        log.info("System has asteroid belt: {} - {} AU",
+                asteroidBelt.getInnerRadiusAU(), asteroidBelt.getOuterRadiusAU());
+    }
+    if (kuiperBelt != null) {
+        log.info("System has Kuiper belt: {} - {} AU",
+                kuiperBelt.getInnerRadiusAU(), kuiperBelt.getOuterRadiusAU());
+    }
+}
+```
+
+### PostAccretionGenerator
+
+The `PostAccretionGenerator` class analyzes the final planet configuration and creates structures based on physical principles.
+
+#### Asteroid Belt Generation
+
+Asteroid belts form where a massive planet (gas giant) gravitationally prevented planetesimal accretion. The algorithm:
+
+1. **Find the innermost giant planet** - Any planet with mass ≥ 10 Earth masses or flagged as gas giant
+2. **Calculate the resonance zone** - The region at 35-65% of the giant's semi-major axis (roughly the 3:1 resonance)
+3. **Check if region is clear** - No existing planet's orbit overlaps with the belt zone
+4. **Scale by stellar luminosity** - More luminous stars have wider planet spacing
+
+```java
+private void generateAsteroidBelt(List<Planet> planets, Planet innermostGiant) {
+    double giantSma = innermostGiant.getSma();
+    double luminosityFactor = sqrt(centralBody.luminosity);
+
+    // Belt region (roughly 3:1 resonance with giant)
+    double beltInner = giantSma * 0.35;  // ASTEROID_BELT_GAP_RATIO_MIN
+    double beltOuter = giantSma * 0.65;  // ASTEROID_BELT_GAP_RATIO_MAX
+
+    // Check no planet exists in this region
+    boolean regionClear = true;
+    for (Planet p : planets) {
+        double periapsis = p.getSma() * (1 - p.getEccentricity());
+        double apoapsis = p.getSma() * (1 + p.getEccentricity());
+        if (periapsis < beltOuter && apoapsis > beltInner) {
+            regionClear = false;
+            break;
+        }
+    }
+
+    if (regionClear && beltInner > 0.3 * luminosityFactor) {
+        asteroidBelt = new AsteroidBeltData(
+            "Main Asteroid Belt",
+            beltInner, beltOuter,
+            estimateAsteroidBeltMass(beltInner, beltOuter),
+            8.0 + random.nextDouble() * 4.0,    // Inclination 8-12°
+            0.05 + random.nextDouble() * 0.06   // Eccentricity 0.05-0.11
+        );
+    }
+}
+```
+
+**Real-World Comparison**: In our solar system, Jupiter is at 5.2 AU, and the asteroid belt spans 2.1-3.3 AU (40-63% of Jupiter's orbit), matching this model.
+
+#### Kuiper Belt Generation
+
+The Kuiper belt forms from primordial icy material beyond the outermost giant planet:
+
+1. **Find the outermost giant planet** - Any planet with mass ≥ 10 Earth masses
+2. **Check minimum distance** - The outer giant must be at least 5 AU out (scaled by √luminosity)
+3. **Calculate belt region** - Extends from 1.0× to 1.7× the outer giant's orbit
+4. **Allow small bodies** - Dwarf planets (< 0.01 Earth masses) don't block belt formation
+
+```java
+private void generateKuiperBelt(List<Planet> planets, Planet outermostGiant) {
+    double giantSma = outermostGiant.getSma();
+    double luminosityFactor = sqrt(centralBody.luminosity);
+    double minSma = 5.0 * luminosityFactor;  // MIN_GIANT_SMA_FOR_KUIPER
+
+    if (giantSma < minSma) {
+        return;  // Giant too close for Kuiper belt
+    }
+
+    double kuiperInner = giantSma * 1.0;   // KUIPER_BELT_INNER_RATIO
+    double kuiperOuter = giantSma * 1.7;   // KUIPER_BELT_OUTER_RATIO
+
+    // Check region (allow small dwarf planets)
+    boolean regionClear = true;
+    for (Planet p : planets) {
+        if (p.getSma() > kuiperInner && p.getSma() < kuiperOuter) {
+            if (p.massInEarthMasses() > 0.01) {
+                regionClear = false;
+                break;
+            }
+        }
+    }
+
+    if (regionClear) {
+        kuiperBelt = new KuiperBeltData(
+            "Kuiper Belt",
+            kuiperInner, kuiperOuter,
+            estimateKuiperBeltMass(kuiperInner, kuiperOuter),
+            10.0 + random.nextDouble() * 10.0,  // Inclination 10-20°
+            0.05 + random.nextDouble() * 0.1    // Eccentricity 0.05-0.15
+        );
+    }
+}
+```
+
+**Real-World Comparison**: Neptune is at 30 AU, and the Kuiper belt spans 30-50 AU (1.0-1.7× Neptune's orbit).
+
+#### Planetary Ring Generation
+
+Rings form through several mechanisms: tidal disruption of moons, captured material, or primordial debris inside the Roche limit. The algorithm assigns rings probabilistically based on planet properties:
+
+**Ring Probability by Planet Type:**
+
+| Planet Type | Mass Range | Ring Probability |
+|-------------|------------|------------------|
+| Gas Giant | ≥ 50 M⊕ | 85% |
+| Ice Giant | 10-50 M⊕ | 60% |
+| Terrestrial | < 10 M⊕ | 2% |
+
+**Ring Type Selection:**
+
+For gas giants (≥ 50 M⊕):
+- **Saturn-like** (25%): Bright, icy, prominent rings
+- **Uranus-like** (35%): Dark, narrow ring bands
+- **Neptune-like** (25%): Faint, dusty rings
+- **Jupiter-like** (15%): Very faint dust rings
+
+For ice giants (10-50 M⊕):
+- **Uranus-like** (50%): Dark, narrow rings
+- **Neptune-like** (35%): Faint rings
+- **Saturn-like** (15%): Rare bright rings
+
+```java
+private void generatePlanetaryRing(Planet planet) {
+    double mass = planet.massInEarthMasses();
+    double ringProbability = mass >= 50 ? 0.85 : mass >= 10 ? 0.60 : 0.02;
+
+    if (random.nextDouble() >= ringProbability) {
+        return;  // No ring
+    }
+
+    RingType ringType = determineRingType(planet);
+    double planetRadiusAU = planet.getRadius() / SystemObject.KM_PER_AU;
+    double rocheLimit = calculateRocheLimit(planet, planetRadiusAU);
+
+    // Ring dimensions based on type
+    double innerRadius = planetRadiusAU * ringType.innerRadiusFactor;
+    double outerRadius = min(rocheLimit, planetRadiusAU * ringType.outerRadiusFactor);
+
+    if (outerRadius > innerRadius) {
+        planet.setRingType(ringType.name());
+        planet.setRingInnerRadiusAU(innerRadius);
+        planet.setRingOuterRadiusAU(outerRadius);
+    }
+}
+```
+
+**Ring Type Dimensions:**
+
+| Ring Type | Inner Radius | Outer Radius | Visual Appearance |
+|-----------|--------------|--------------|-------------------|
+| SATURN | 1.2 × R | 2.5 × R | Bright, icy, prominent |
+| URANUS | 1.5 × R | 2.0 × R | Dark, narrow bands |
+| NEPTUNE | 1.3 × R | 2.3 × R | Faint, dusty |
+| JUPITER | 1.3 × R | 1.8 × R | Very faint dust |
+
+**Roche Limit Calculation:**
+
+The Roche limit determines the maximum stable ring radius:
+
+```java
+private double calculateRocheLimit(Planet planet, double planetRadiusAU) {
+    // Roche limit = 2.44 × R_planet × (ρ_planet / ρ_ring)^(1/3)
+    double ringDensity = 0.9;  // Icy material (g/cm³)
+    double planetDensity = planet.getDensity() > 0 ? planet.getDensity() : 1.3;
+    return 2.44 * planetRadiusAU * pow(planetDensity / ringDensity, 1.0/3.0);
+}
+```
+
+### Planet Ring Fields
+
+The `Planet` class stores ring data:
+
+```java
+// Ring system properties (set by PostAccretionGenerator)
+private String ringType = null;           // "SATURN", "URANUS", "NEPTUNE", "JUPITER"
+private double ringInnerRadiusAU = 0.0;   // Inner ring radius in AU
+private double ringOuterRadiusAU = 0.0;   // Outer ring radius in AU
+```
+
+### Belt Data Classes
+
+**AsteroidBeltData:**
+```java
+public static class AsteroidBeltData {
+    private final String name;
+    private final double innerRadiusAU;
+    private final double outerRadiusAU;
+    private final double massEarthMasses;
+    private final double inclinationDeg;
+    private final double eccentricity;
+}
+```
+
+**KuiperBeltData:**
+```java
+public static class KuiperBeltData {
+    private final String name;
+    private final double innerRadiusAU;
+    private final double outerRadiusAU;
+    private final double massEarthMasses;
+    private final double inclinationDeg;
+    private final double eccentricity;
+}
+```
+
+### Mass Estimation
+
+**Asteroid Belt Mass:**
+```java
+// Real main belt is ~0.0005 Earth masses
+private double estimateAsteroidBeltMass(double innerAU, double outerAU) {
+    double width = outerAU - innerAU;
+    double baseMass = 0.0005;
+    return baseMass * (width / 1.2) * (0.5 + random.nextDouble());
+}
+```
+
+**Kuiper Belt Mass:**
+```java
+// Real Kuiper belt is estimated at ~0.1 Earth masses
+private double estimateKuiperBeltMass(double innerAU, double outerAU) {
+    double width = outerAU - innerAU;
+    double baseMass = 0.1;
+    return baseMass * (width / 20.0) * (0.5 + random.nextDouble());
+}
+```
+
+### Persistence via SolarSystemService
+
+The generated structures are persisted to the database:
+
+```java
+// Save planets and post-accretion structures
+solarSystemService.saveGeneratedSystem(sourceStar, starSystem);
+
+// Internally calls:
+// 1. saveGeneratedPlanets() - Converts Planet → ExoPlanet with ring data
+// 2. saveGeneratedBelts() - Creates SolarSystemFeature entries for belts
+```
+
+**AccretePlanetConverter** transfers ring properties:
+```java
+private static void populateRingProperties(ExoPlanet exoPlanet, Planet planet) {
+    String ringType = planet.getRingType();
+    if (ringType != null && !ringType.isEmpty()) {
+        exoPlanet.setRingType(ringType);
+        exoPlanet.setRingInnerRadiusAU(planet.getRingInnerRadiusAU());
+        exoPlanet.setRingOuterRadiusAU(planet.getRingOuterRadiusAU());
+    }
+}
+```
+
+**Belt features** are stored as `SolarSystemFeature` entities with types `ASTEROID_BELT` and `KUIPER_BELT`.
+
+### Checking Generated Structures
+
+```java
+StarSystem system = new StarSystem(starObject, true, false, false);
+
+// Check for belts
+if (system.hasAsteroidBelt()) {
+    AsteroidBeltData belt = system.getAsteroidBelt();
+    System.out.println("Asteroid belt: " + belt.getInnerRadiusAU() +
+                       " - " + belt.getOuterRadiusAU() + " AU");
+}
+
+if (system.hasKuiperBelt()) {
+    KuiperBeltData belt = system.getKuiperBelt();
+    System.out.println("Kuiper belt: " + belt.getInnerRadiusAU() +
+                       " - " + belt.getOuterRadiusAU() + " AU");
+}
+
+// Check for planetary rings
+for (Planet p : system.getPlanets()) {
+    if (p.getRingType() != null) {
+        System.out.println(p.getPlanetType() + " at " + p.getSma() +
+                          " AU has " + p.getRingType() + " rings");
+    }
+}
+```
+
 ### Number Formatting
 
 ```java
@@ -1364,6 +1675,48 @@ the solar system view keeps a clean seam for swapping orbit samplers:
 8. Fogg, M. J. (1985). "Extra-solar Planetary Systems: A Microcomputer Simulation". *JBIS*, 38, 501-514.
 
 ## Changelog
+
+### Version 2.3 (January 2026)
+
+**New: Post-Accretion Structure Generation** (`PostAccretionGenerator.java`):
+
+Automatic generation of secondary structures after planet formation:
+
+- **Planetary Rings**:
+  - Probabilistic ring assignment based on planet mass
+  - Gas giants (≥50 M⊕): 85% probability
+  - Ice giants (10-50 M⊕): 60% probability
+  - Four ring types: SATURN (bright, icy), URANUS (dark, narrow), NEPTUNE (faint), JUPITER (very faint)
+  - Ring dimensions based on Roche limit calculation
+  - Added `ringType`, `ringInnerRadiusAU`, `ringOuterRadiusAU` fields to `Planet`
+
+- **Asteroid Belt**:
+  - Forms in resonance zone (35-65% of innermost giant's orbit)
+  - Only generated if region is clear of planets
+  - Scaled by stellar luminosity
+  - Typical inclination 8-12°, eccentricity 0.05-0.11
+  - Mass estimate based on region width
+
+- **Kuiper Belt**:
+  - Forms beyond outermost giant (1.0-1.7× giant's orbit)
+  - Requires outer giant at ≥5 AU (luminosity-scaled)
+  - Allows dwarf planets (<0.01 M⊕) in belt region
+  - Typical inclination 10-20°, eccentricity 0.05-0.15
+  - Mass estimate ~0.1 M⊕ baseline
+
+**Integration Points**:
+- `StarSystem` now calls `generatePostAccretionStructures()` after `setEnvironments()`
+- `StarSystem` has `getAsteroidBelt()`, `getKuiperBelt()`, `hasAsteroidBelt()`, `hasKuiperBelt()` accessors
+- `AccretePlanetConverter.populateRingProperties()` transfers ring data to `ExoPlanet`
+- `SolarSystemService.saveGeneratedSystem()` persists planets and belts together
+- `SolarSystemService.saveGeneratedBelts()` creates `SolarSystemFeature` entries for belts
+
+**UI Display**:
+- Planetary rings rendered via `RingFieldRenderer` in solar system view
+- Asteroid/Kuiper belts rendered as particle fields
+- Display toggles: "Show Planetary Rings", "Show Asteroid Belt", "Show Kuiper Belt"
+
+---
 
 ### Version 2.2 (January 2026)
 
