@@ -28,10 +28,16 @@
  */
 package org.fxyz3d.shapes.primitives.helper;
 
-import org.fxyz3d.geometry.Point3D;
 import javafx.scene.DepthTest;
 import javafx.scene.shape.DrawMode;
-import org.fxyz3d.shapes.primitives.*;
+import org.fxyz3d.geometry.Point3D;
+import org.fxyz3d.shapes.primitives.CuboidMesh;
+import org.fxyz3d.shapes.primitives.FrustumMesh;
+import org.fxyz3d.shapes.primitives.OctahedronMarkerMesh;
+import org.fxyz3d.shapes.primitives.QuadMesh;
+import org.fxyz3d.shapes.primitives.SegmentedSphereMesh;
+import org.fxyz3d.shapes.primitives.TetrahedraMesh;
+import org.fxyz3d.shapes.primitives.TexturedMesh;
 
 public class MarkerFactory {
 
@@ -86,6 +92,48 @@ public class MarkerFactory {
                 TexturedMesh dot = new FrustumMesh(size / 3d, 0, size, level,
                         point3D != null ? point3D.add((float)(-size / 2d), 0f, 0f) : null,
                         point3D != null ? point3D.add((float)(size / 2d), 0f, 0f) : null);
+                dot.setId(id);
+                dot.setDrawMode(DrawMode.FILL);
+                dot.setDepthTest(DepthTest.ENABLE);
+                return dot;
+            }
+        },
+        /**
+         * Low-polygon sphere approximation using a regular octahedron.
+         * <p>
+         * Much more efficient than SPHERE or DIAMOND:
+         * <ul>
+         *   <li>Only 6 vertices and 8 faces</li>
+         *   <li>Looks roughly spherical from a distance</li>
+         *   <li>Ideal for particle systems with many particles</li>
+         * </ul>
+         */
+        OCTAHEDRON {
+            @Override
+            public TexturedMesh getMarker(String id, double size, int level, Point3D point3D) {
+                TexturedMesh dot = new OctahedronMarkerMesh(size / 2d, point3D);
+                dot.setId(id);
+                dot.setDrawMode(DrawMode.FILL);
+                dot.setDepthTest(DepthTest.ENABLE);
+                return dot;
+            }
+        },
+        /**
+         * Simple flat quad (two triangles) for billboard-style markers.
+         * <p>
+         * The most lightweight marker type:
+         * <ul>
+         *   <li>Only 4 vertices and 2 faces</li>
+         *   <li>Flat quad in XY plane, facing +Z</li>
+         *   <li>Ideal for 2D sprites or when combined with camera-facing rotation</li>
+         * </ul>
+         * <p>
+         * Note: CullFace is set to NONE by default so the quad is visible from both sides.
+         */
+        QUAD {
+            @Override
+            public TexturedMesh getMarker(String id, double size, int level, Point3D point3D) {
+                TexturedMesh dot = new QuadMesh(size, point3D);
                 dot.setId(id);
                 dot.setDrawMode(DrawMode.FILL);
                 dot.setDepthTest(DepthTest.ENABLE);

@@ -217,19 +217,118 @@ public class MeshHelper {
     }
 
     /**
-     * Add meshes with per-particle color support via colorIndex.
+     * Transforms points by scaling around origin then translating to position.
      * <p>
-     * Instead of copying the template's texture coordinates, this method generates
-     * new texture coordinates based on each Point3D's colorIndex field. All vertices
-     * of a single particle share the same texture coordinate, which maps to a position
-     * in a 1D color palette texture.
+     * The scale is applied first (around origin), then translation is applied.
+     * This produces markers of different sizes at their correct positions.
+     *
+     * @param points the template marker vertices
+     * @param p3d the position with scale factor
+     * @return transformed points array
+     */
+    private float[] transformWithScale(float[] points, Point3D p3d) {
+        float[] newPoints = new float[points.length];
+        float scale = p3d.scale > 0 ? p3d.scale : 1.0f;
+
+        for (int i = 0; i < points.length / 3; i++) {
+            // Scale around origin, then translate
+            newPoints[3 * i] = points[3 * i] * scale + p3d.x;
+            newPoints[3 * i + 1] = points[3 * i + 1] * scale + p3d.y;
+            newPoints[3 * i + 2] = points[3 * i + 2] * scale + p3d.z;
+        }
+        return newPoints;
+    }
+
+    /**
+     * Add meshes with per-particle scale support.
+     * <p>
+     * Each particle's scale field determines its size relative to the base marker size.
+     * Scale of 1.0 = normal size, 0.5 = half size, 2.0 = double size.
+     *
+     * @param mh the template mesh to duplicate
+     * @param positions list of positions with scale set for per-particle sizing
+     */
+    public void addMeshWithScale(MeshHelper mh, List<Point3D> positions) {
+        float[] newPoints = new float[points.length + mh.getPoints().length * positions.size()];
+        float[] newF = new float[f.length + mh.getF().length * positions.size()];
+        float[] newTexCoords = new float[texCoords.length + mh.getTexCoords().length * positions.size()];
+        int[] newFaces = new int[faces.length + mh.getFaces().length * positions.size()];
+        int[] newFaceSmoothingGroups = new int[faceSmoothingGroups.length + mh.getFaceSmoothingGroups().length * positions.size()];
+
+        System.arraycopy(points, 0, newPoints, 0, points.length);
+        System.arraycopy(f, 0, newF, 0, f.length);
+        System.arraycopy(texCoords, 0, newTexCoords, 0, texCoords.length);
+        System.arraycopy(faces, 0, newFaces, 0, faces.length);
+        System.arraycopy(faceSmoothingGroups, 0, newFaceSmoothingGroups, 0, faceSmoothingGroups.length);
+
+        int numPoints = mh.getPoints().length;
+        int numF = mh.getF().length;
+        int numTexCoords = mh.getTexCoords().length;
+        int numFaces = mh.getFaces().length;
+        int numFaceSmoothingGroups = mh.getFaceSmoothingGroups().length;
+        AtomicInteger count = new AtomicInteger();
+
+        positions.forEach(p3d -> {
+            // Use transformWithScale instead of transform
+            System.arraycopy(transformWithScale(mh.getPoints(), p3d), 0, newPoints,
+                    points.length + numPoints * count.get(), mh.getPoints().length);
+            float[] ff = mh.getF();
+            Arrays.fill(ff, p3d.f);
+            System.arraycopy(ff, 0, newF, f.length + numF * count.get(), ff.length);
+            System.arraycopy(mh.getTexCoords(), 0, newTexCoords,
+                    texCoords.length + numTexCoords * count.get(), mh.getTexCoords().length);
+            System.arraycopy(traslateFaces(mh.getFaces(), numPoints / 3 * (count.get() + 1),
+                    numTexCoords / 2 * (count.get() + 1)), 0, newFaces,
+                    faces.length + numFaces * count.get(), mh.getFaces().length);
+            System.arraycopy(mh.getFaceSmoothingGroups(), 0, newFaceSmoothingGroups,
+                    faceSmoothingGroups.length + numFaceSmoothingGroups * count.getAndIncrement(),
+                    mh.getFaceSmoothingGroups().length);
+        });
+
+        points = newPoints;
+        f = newF;
+        texCoords = newTexCoords;
+        faces = newFaces;
+        faceSmoothingGroups = newFaceSmoothingGroups;
+    }
+
+    /**
+     * Add meshes with per-particle color and scale support.
+     * <p>
+     * This method combines per-particle coloring (via colorIndex) and per-particle
+     * sizing (via scale). Instead of copying the template's texture coordinates,
+     * it generates new texture coordinates based on each Point3D's colorIndex field.
      * <p>
      * The palette texture should be 256x1 pixels, where U coordinate = colorIndex/255.0
      *
      * @param mh the template mesh to duplicate
-     * @param positions list of positions with colorIndex set for per-particle coloring
+     * @param positions list of positions with colorIndex and scale set
      */
     public void addMeshWithColorIndex(MeshHelper mh, List<Point3D> positions) {
+        addMeshWithColorIndex(mh, positions, false);
+    }
+
+    /**
+     * Add meshes with per-particle color, scale, and optional opacity support.
+     * <p>
+     * This method combines per-particle coloring (via colorIndex), per-particle
+     * sizing (via scale), and optionally per-particle transparency (via opacity).
+     * <p>
+     * When useOpacity is false:
+     * - Palette texture should be 256x1 pixels
+     * - U coordinate = colorIndex/255.0
+     * - V coordinate = 0.5 (middle of texture)
+     * <p>
+     * When useOpacity is true:
+     * - Palette texture should be 256x256 pixels (color x opacity)
+     * - U coordinate = colorIndex/255.0 (picks color column)
+     * - V coordinate = opacity (picks opacity row, where 0=transparent, 1=opaque)
+     *
+     * @param mh the template mesh to duplicate
+     * @param positions list of positions with colorIndex, scale, and optionally opacity set
+     * @param useOpacity whether to use per-particle opacity from the opacity field
+     */
+    public void addMeshWithColorIndex(MeshHelper mh, List<Point3D> positions, boolean useOpacity) {
         int templateVertexCount = mh.getPoints().length / 3;
 
         // For palette mode, we need one texCoord per particle (all vertices share same UV)
@@ -261,8 +360,8 @@ public class MeshHelper {
         positions.forEach(p3d -> {
             int idx = count.get();
 
-            // Add transformed points
-            System.arraycopy(transform(mh.getPoints(), p3d), 0, newPoints,
+            // Add transformed and scaled points
+            System.arraycopy(transformWithScale(mh.getPoints(), p3d), 0, newPoints,
                     points.length + numPoints * idx, numPoints);
 
             // Add f values
@@ -271,8 +370,10 @@ public class MeshHelper {
             System.arraycopy(ff, 0, newF, f.length + (numF) * idx, mh.getF().length);
 
             // Add palette texCoord for this particle (single U,V pair)
+            // U = colorIndex/255 (picks color column in texture)
+            // V = opacity when useOpacity is true, else 0.5 (middle of 1-pixel-high texture)
             float u = p3d.colorIndex / 255.0f;
-            float v = 0.5f;
+            float v = useOpacity ? p3d.opacity : 0.5f;
             int texCoordOffset = texCoords.length + 2 * idx;
             newTexCoords[texCoordOffset] = u;
             newTexCoords[texCoordOffset + 1] = v;

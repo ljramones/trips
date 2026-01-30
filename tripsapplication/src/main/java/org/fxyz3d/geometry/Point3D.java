@@ -58,6 +58,13 @@ public class Point3D {
      */
     public float scale = 1.0f;
 
+    /**
+     * Opacity for per-particle transparency.
+     * 1.0 = fully opaque, 0.0 = fully transparent.
+     * Default is 1.0 (fully opaque).
+     */
+    public float opacity = 1.0f;
+
     /*
      * @param X,Y,Z are all floats to align with TriangleMesh needs
      */
@@ -125,7 +132,7 @@ public class Point3D {
     }
 
     /**
-     * Creates a Point3D with all attributes.
+     * Creates a Point3D with position, color index, scale, and opacity.
      * @param x x coordinate
      * @param y y coordinate
      * @param z z coordinate
@@ -140,6 +147,44 @@ public class Point3D {
         this.f = f;
         this.colorIndex = Math.max(0, Math.min(255, colorIndex));
         this.scale = scale > 0 ? scale : 1.0f;
+    }
+
+    /**
+     * Creates a Point3D with all particle attributes including opacity.
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param colorIndex palette index (0-255)
+     * @param scale size multiplier (1.0 = normal, 0.5 = half, 2.0 = double)
+     * @param opacity transparency (0.0 = transparent, 1.0 = opaque)
+     */
+    public Point3D(float x, float y, float z, int colorIndex, float scale, float opacity) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.colorIndex = Math.max(0, Math.min(255, colorIndex));
+        this.scale = scale > 0 ? scale : 1.0f;
+        this.opacity = Math.max(0f, Math.min(1f, opacity));
+    }
+
+    /**
+     * Creates a Point3D with all attributes.
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param f function value
+     * @param colorIndex palette index (0-255)
+     * @param scale size multiplier (1.0 = normal, 0.5 = half, 2.0 = double)
+     * @param opacity transparency (0.0 = transparent, 1.0 = opaque)
+     */
+    public Point3D(float x, float y, float z, float f, int colorIndex, float scale, float opacity) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.f = f;
+        this.colorIndex = Math.max(0, Math.min(255, colorIndex));
+        this.scale = scale > 0 ? scale : 1.0f;
+        this.opacity = Math.max(0f, Math.min(1f, opacity));
     }
 
     public DoubleStream getCoordinates() { return DoubleStream.of(x,y,z); }
@@ -219,7 +264,9 @@ public class Point3D {
 
     @Override
     public String toString() {
-        return "Point3D{" + "x=" + x + ", y=" + y + ", z=" + z + ", colorIndex=" + colorIndex + '}';
+        return "Point3D{" + "x=" + x + ", y=" + y + ", z=" + z +
+               ", colorIndex=" + colorIndex + ", scale=" + scale +
+               ", opacity=" + opacity + '}';
     }
 
     @Override
@@ -230,6 +277,8 @@ public class Point3D {
         hash = 29 * hash + Float.floatToIntBits(this.z);
         hash = 29 * hash + Float.floatToIntBits(this.f);
         hash = 29 * hash + this.colorIndex;
+        hash = 29 * hash + Float.floatToIntBits(this.scale);
+        hash = 29 * hash + Float.floatToIntBits(this.opacity);
         return hash;
     }
 
@@ -255,6 +304,12 @@ public class Point3D {
             return false;
         }
         if (this.colorIndex != other.colorIndex) {
+            return false;
+        }
+        if (Float.floatToIntBits(this.scale) != Float.floatToIntBits(other.scale)) {
+            return false;
+        }
+        if (Float.floatToIntBits(this.opacity) != Float.floatToIntBits(other.opacity)) {
             return false;
         }
         return true;

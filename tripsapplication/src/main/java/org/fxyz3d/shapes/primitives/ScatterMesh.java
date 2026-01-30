@@ -319,9 +319,55 @@ public class ScatterMesh extends Group implements TextureMode {
     private List<Color> colorPaletteColors = null;
 
     /**
-     * The generated palette texture (256x1 pixels).
+     * The generated palette texture.
+     * When opacity support is disabled: 256x1 pixels (color only).
+     * When opacity support is enabled: 256x256 pixels (color x opacity).
      */
     private WritableImage paletteTexture = null;
+
+    /**
+     * Whether per-particle opacity is enabled.
+     * When true, each particle's opacity field is used to set its transparency.
+     */
+    private final BooleanProperty perParticleOpacity = new SimpleBooleanProperty(false) {
+        @Override
+        protected void invalidated() {
+            if (meshes != null) {
+                // Rebuild palette texture with opacity support
+                if (colorPaletteColors != null) {
+                    paletteTexture = createPaletteTexture(colorPaletteColors);
+                    if (perParticleColor.get()) {
+                        updateMesh();
+                    }
+                }
+            }
+        }
+    };
+
+    /**
+     * Gets whether per-particle opacity is enabled.
+     * @return true if per-particle opacity is enabled
+     */
+    public boolean isPerParticleOpacity() {
+        return perParticleOpacity.get();
+    }
+
+    /**
+     * Enables or disables per-particle opacity.
+     * When enabled, each Point3D's opacity field (0.0-1.0) determines its transparency.
+     * @param value true to enable per-particle opacity
+     */
+    public void setPerParticleOpacity(boolean value) {
+        perParticleOpacity.set(value);
+    }
+
+    /**
+     * Property for per-particle opacity mode.
+     * @return the perParticleOpacity property
+     */
+    public BooleanProperty perParticleOpacityProperty() {
+        return perParticleOpacity;
+    }
 
     /**
      * Sets the color palette for per-particle coloring.
@@ -355,33 +401,86 @@ public class ScatterMesh extends Group implements TextureMode {
     }
 
     /**
-     * Creates a 256x1 pixel palette texture from the given colors.
-     * Colors are interpolated to fill all 256 entries.
+     * Creates a palette texture from the given colors.
+     * <p>
+     * When per-particle opacity is disabled: Creates a 256x1 texture (color only).
+     * When per-particle opacity is enabled: Creates a 256x256 texture where:
+     * <ul>
+     *   <li>X (U coord) = color index (0-255)</li>
+     *   <li>Y (V coord) = opacity level (row 0 = transparent, row 255 = opaque)</li>
+     * </ul>
      *
      * @param colors the source colors
      * @return the palette texture
      */
     private WritableImage createPaletteTexture(List<Color> colors) {
+        if (perParticleOpacity.get()) {
+            return createPaletteTextureWithOpacity(colors);
+        } else {
+            return createPaletteTextureColorOnly(colors);
+        }
+    }
+
+    /**
+     * Creates a 256x1 pixel palette texture (color only, no opacity support).
+     */
+    private WritableImage createPaletteTextureColorOnly(List<Color> colors) {
         WritableImage img = new WritableImage(256, 1);
         PixelWriter pw = img.getPixelWriter();
 
         for (int i = 0; i < 256; i++) {
-            Color c;
-            if (colors.size() == 1) {
-                c = colors.get(0);
-            } else {
-                // Interpolate between colors
-                double t = i / 255.0;
-                double scaledIndex = t * (colors.size() - 1);
-                int lowerIdx = (int) Math.floor(scaledIndex);
-                int upperIdx = Math.min(lowerIdx + 1, colors.size() - 1);
-                double fraction = scaledIndex - lowerIdx;
-                c = colors.get(lowerIdx).interpolate(colors.get(upperIdx), fraction);
-            }
+            Color c = interpolateColor(colors, i);
             pw.setColor(i, 0, c);
         }
 
         return img;
+    }
+
+    /**
+     * Creates a 256x256 pixel palette texture with opacity support.
+     * X dimension = color index (0-255)
+     * Y dimension = opacity level (0 = transparent, 255 = opaque)
+     */
+    private WritableImage createPaletteTextureWithOpacity(List<Color> colors) {
+        WritableImage img = new WritableImage(256, 256);
+        PixelWriter pw = img.getPixelWriter();
+
+        for (int x = 0; x < 256; x++) {
+            // Get the base color for this column
+            Color baseColor = interpolateColor(colors, x);
+
+            for (int y = 0; y < 256; y++) {
+                // y = 0 is top of texture (v = 0) = transparent
+                // y = 255 is bottom of texture (v = 1) = opaque
+                // So opacity = y / 255.0
+                double alpha = y / 255.0;
+                Color c = new Color(
+                        baseColor.getRed(),
+                        baseColor.getGreen(),
+                        baseColor.getBlue(),
+                        alpha
+                );
+                pw.setColor(x, y, c);
+            }
+        }
+
+        return img;
+    }
+
+    /**
+     * Interpolates a color from the palette at the given index (0-255).
+     */
+    private Color interpolateColor(List<Color> colors, int index) {
+        if (colors.size() == 1) {
+            return colors.get(0);
+        }
+        // Interpolate between colors
+        double t = index / 255.0;
+        double scaledIndex = t * (colors.size() - 1);
+        int lowerIdx = (int) Math.floor(scaledIndex);
+        int upperIdx = Math.min(lowerIdx + 1, colors.size() - 1);
+        double fraction = scaledIndex - lowerIdx;
+        return colors.get(lowerIdx).interpolate(colors.get(upperIdx), fraction);
     }
 
     /**
@@ -421,6 +520,104 @@ public class ScatterMesh extends Group implements TextureMode {
                 m.setMaterial(material);
             });
         }
+    }
+
+    // ==================== Per-Particle Scale Support (Phase 3) ====================
+
+    /**
+     * Whether per-particle scaling is enabled.
+     * When true, each particle's scale field is used to size its marker.
+     */
+    private final BooleanProperty perParticleScale = new SimpleBooleanProperty(false) {
+        @Override
+        protected void invalidated() {
+            if (meshes != null) {
+                updateMesh();
+            }
+        }
+    };
+
+    /**
+     * Gets whether per-particle scaling is enabled.
+     * @return true if per-particle scaling is enabled
+     */
+    public boolean isPerParticleScale() {
+        return perParticleScale.get();
+    }
+
+    /**
+     * Enables or disables per-particle scaling.
+     * When enabled, each Point3D's scale field determines its marker size.
+     * Scale of 1.0 = normal (height property), 0.5 = half, 2.0 = double.
+     * @param value true to enable per-particle scaling
+     */
+    public void setPerParticleScale(boolean value) {
+        perParticleScale.set(value);
+    }
+
+    /**
+     * Property for per-particle scale mode.
+     * @return the perParticleScale property
+     */
+    public BooleanProperty perParticleScaleProperty() {
+        return perParticleScale;
+    }
+
+    /**
+     * Convenience method to enable per-particle color and scale with a palette.
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * // Create points with color and scale
+     * points.add(new Point3D(x, y, z, colorIndex, scale));
+     *
+     * // Enable both features
+     * scatterMesh.enablePerParticleAttributes(Arrays.asList(Color.RED, Color.YELLOW));
+     * }</pre>
+     *
+     * @param paletteColors the colors for the gradient palette (null to skip color)
+     */
+    public void enablePerParticleAttributes(List<Color> paletteColors) {
+        if (paletteColors != null && !paletteColors.isEmpty()) {
+            setColorPaletteColors(paletteColors);
+            setPerParticleColor(true);
+        }
+        setPerParticleScale(true);
+    }
+
+    /**
+     * Convenience method to enable all per-particle attributes: color, scale, and opacity.
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * // Create points with color, scale, and opacity
+     * points.add(new Point3D(x, y, z, colorIndex, scale, opacity));
+     *
+     * // Enable all features
+     * scatterMesh.enableAllPerParticleAttributes(Arrays.asList(Color.RED, Color.YELLOW));
+     * }</pre>
+     * <p>
+     * Note: Opacity requires per-particle color to also be enabled (they share the palette texture).
+     *
+     * @param paletteColors the colors for the gradient palette (required for opacity)
+     */
+    public void enableAllPerParticleAttributes(List<Color> paletteColors) {
+        if (paletteColors == null || paletteColors.isEmpty()) {
+            throw new IllegalArgumentException("Color palette is required for opacity support");
+        }
+        setPerParticleOpacity(true);  // Set first so texture is created correctly
+        setColorPaletteColors(paletteColors);
+        setPerParticleColor(true);
+        setPerParticleScale(true);
+    }
+
+    /**
+     * Disables all per-particle attributes (color, scale, and opacity).
+     */
+    public void disablePerParticleAttributes() {
+        setPerParticleColor(false);
+        setPerParticleScale(false);
+        setPerParticleOpacity(false);
     }
 
     // ==================== Efficient Position Updates (Phase 2) ====================
@@ -668,10 +865,13 @@ public class ScatterMesh extends Group implements TextureMode {
                     markers.add(getMarker().getMarker(getId() + "-" + index.getAndIncrement(), height.get(), level.get(), point3d)));
             meshes.addAll(markers);
         } else if (perParticleColor.get() && colorPaletteColors != null) {
-            // Per-particle color mode: use colorIndex from each Point3D
+            // Per-particle color mode (also supports scale): use colorIndex from each Point3D
             createMarkersWithPerParticleColor();
+        } else if (perParticleScale.get()) {
+            // Per-particle scale mode (without color): use scale from each Point3D
+            createMarkersWithPerParticleScale();
         } else {
-            // Standard mode: single color for all particles
+            // Standard mode: single color and size for all particles
             // Set marker id as f
             AtomicInteger i = new AtomicInteger();
             List<Point3D> indexedData = scatterData.get().stream()
@@ -694,6 +894,7 @@ public class ScatterMesh extends Group implements TextureMode {
     /**
      * Creates markers with per-particle color support.
      * Each particle uses its colorIndex to look up its color from the palette texture.
+     * If per-particle opacity is enabled, the opacity field determines the V texture coordinate.
      */
     private void createMarkersWithPerParticleColor() {
         List<Point3D> data = scatterData.get();
@@ -712,10 +913,12 @@ public class ScatterMesh extends Group implements TextureMode {
         // Build combined mesh
         MeshHelper mh = new MeshHelper((TriangleMesh) marker.getMesh());
 
-        // For the first marker, we need to set its texCoords to use colorIndex
-        // Reset mh to use colorIndex-based texCoords
+        // For the first marker, we need to set its texCoords to use colorIndex and opacity
+        // U = colorIndex/255 (picks column in texture)
+        // V = opacity (picks row in texture, where 0=transparent, 1=opaque)
         float u = firstPoint.colorIndex / 255.0f;
-        mh.setTexCoords(new float[]{u, 0.5f});
+        float v = perParticleOpacity.get() ? firstPoint.opacity : 0.5f;
+        mh.setTexCoords(new float[]{u, v});
 
         // Update face texCoord indices to point to index 0
         int[] faces = mh.getFaces();
@@ -724,9 +927,9 @@ public class ScatterMesh extends Group implements TextureMode {
         }
         mh.setFaces(faces);
 
-        // Add remaining particles with their colorIndex values
+        // Add remaining particles with their colorIndex and opacity values
         if (data.size() > 1) {
-            mh.addMeshWithColorIndex(template, data.subList(1, data.size()));
+            mh.addMeshWithColorIndex(template, data.subList(1, data.size()), perParticleOpacity.get());
         }
 
         marker.updateMesh(mh);
@@ -734,6 +937,40 @@ public class ScatterMesh extends Group implements TextureMode {
 
         // Apply the palette texture
         applyPaletteTexture();
+    }
+
+    /**
+     * Creates markers with per-particle scale support (without per-particle color).
+     * Each particle uses its scale field to size its marker.
+     */
+    private void createMarkersWithPerParticleScale() {
+        List<Point3D> data = scatterData.get();
+        if (data.isEmpty()) {
+            return;
+        }
+
+        // Create the first marker at the first point's position with scale
+        Point3D firstPoint = data.get(0);
+        float firstScale = firstPoint.scale > 0 ? firstPoint.scale : 1.0f;
+        TexturedMesh marker = getMarker().getMarker(getId(), height.get() * firstScale, level.get(), firstPoint);
+
+        if (data.size() == 1) {
+            meshes.add(marker);
+            return;
+        }
+
+        // Create template marker at origin (unscaled) for combining
+        TexturedMesh templateMarker = getMarker().getMarker("", height.get(), level.get(), null);
+        MeshHelper template = new MeshHelper((TriangleMesh) templateMarker.getMesh());
+
+        // Build combined mesh starting with the first (already scaled) marker
+        MeshHelper mh = new MeshHelper((TriangleMesh) marker.getMesh());
+
+        // Add remaining particles with their scale values
+        mh.addMeshWithScale(template, data.subList(1, data.size()));
+
+        marker.updateMesh(mh);
+        meshes.add(marker);
     }
 
     @Override
