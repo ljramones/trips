@@ -119,6 +119,47 @@ NoiseUtils.PrimeW           // Prime constant for W dimension
 
 ---
 
+## Cheat Sheet: What To Use When
+
+Quick reference for common procedural generation tasks:
+
+| Goal | Primary Tool / Class | Key Setting / Method |
+|------|---------------------|----------------------|
+| **Smooth terrain / clouds** | OpenSimplex2 + FBm | `SetFractalOctaves(5-8)` |
+| **Sharp ridges / mountains** | Ridged or Billow | `SetFractalType(Ridged)` |
+| **Soft puffy clouds** | Billow fractal | `SetFractalType(Billow)` |
+| **Eroded terrain** | HybridMulti | `SetFractalType(HybridMulti)` |
+| **Mesa / plateau steps** | TerraceTransform | `TerraceTransform.contours(8)` |
+| **Posterized / retro look** | QuantizeTransform | `QuantizeTransform.posterize(8)` |
+| **Animated volumetrics** | 4D noise | `GetNoise(x, y, z, time)` |
+| **Looping animations** | TiledNoise (4D torus) | `tiled.getNoise(x, y, z, time)` |
+| **Infinite world, huge coords** | ChunkedNoise | `new ChunkedNoise(base, 1024)` |
+| **Astronomical distances** | DoublePrecisionNoise | `precise.getNoise(1e12, 2e12)` |
+| **Distant detail optimization** | LODNoise | `lod.getNoise(x, y, distance)` |
+| **Adaptive sampling (quadtree)** | HierarchicalNoise | `hier.sampleAdaptive(x, y, err)` |
+| **Tileable planetary textures** | TiledNoise | `tiled.getSeamlessImage(1024, 1024)` |
+| **Terrain color mapping** | TiledNoise mappers | `TERRAIN_GRADIENT`, `HEAT_GRADIENT` |
+| **Realistic lighting / bumps** | NoiseDerivatives | `deriv.computeNormal2D(x, y, scale)` |
+| **Normal map textures** | NoiseDerivatives | `deriv.generateNormalMapRGB(...)` |
+| **Bump mapping (TBN basis)** | NoiseDerivatives | `deriv.computeTBN(x, y, scale)` |
+| **Nebula filaments** | Ridged + curl noise | `turbulence.curl3D(x, y, z)` |
+| **Fluid / smoke motion** | TurbulenceNoise | `turbulence.curlFBm3D(...)` |
+| **Particle advection** | TurbulenceNoise curl | `curl3D()` → velocity field |
+| **Organic distortion** | Domain Warp | `noise.DomainWarp(coord)` |
+| **Band-limited (mipmap safe)** | WaveletNoiseGen | `wavelet.sampleFBm2D(...)` |
+| **Memory-efficient detail** | SparseConvolutionNoise | `sparse.getFBm(x, y, 4, 2, 0.5)` |
+| **Voronoi cells / cracks** | Cellular noise | `SetNoiseType(Cellular)` |
+| **Organic biome boundaries** | Cellular + Domain Warp | `DomainWarp()` → `Cellular` |
+
+**Combining Extensions:** Most utilities wrap `FastNoiseLite` and can be chained:
+```java
+DoublePrecisionNoise precise = new DoublePrecisionNoise(base);
+LODNoise lod = new LODNoise(precise, 6);  // precise -> lod
+// Now lod.getNoise() has both double-precision AND LOD support
+```
+
+---
+
 ## Quick Start
 
 ### Basic Usage
@@ -905,6 +946,19 @@ float centered = precise.getNoiseWithOffset(x, y, centerX, centerY);
 | TiledNoise | No | Yes | No | Same seed |
 | DoublePrecisionNoise | Yes | No | No | Same seed |
 
+### When to Use Which Wrapper
+
+| Goal | Recommended Class(es) |
+|------|----------------------|
+| Infinite world, no seams | `ChunkedNoise` |
+| Astronomical distances | `DoublePrecisionNoise` or `ChunkedNoise` |
+| Distant/low-detail performance | `LODNoise` or `HierarchicalNoise` |
+| Tileable/repeating textures | `TiledNoise` |
+| Realistic lighting & bump maps | `NoiseDerivatives` (analytical mode) |
+| Animated volumetrics/nebulae | 4D noise + `TurbulenceNoise.curl*` |
+| Memory-efficient infinite detail | `SparseConvolutionNoise` |
+| Clean mipmapping / no aliasing | `WaveletNoiseGen` |
+
 **Combining utilities:** You can layer these utilities for specific needs:
 
 ```java
@@ -1092,7 +1146,87 @@ turbulence.setFrequency(0.02f)
 
 **Curl noise explained:** Curl noise computes the curl (rotational component) of a potential field, producing divergence-free flow. This means particles following curl noise paths never converge or diverge - perfect for incompressible fluids.
 
-**Best for:** Fluid simulations, smoke/fire effects, particle motion, marble/wood textures, organic animations.
+#### Particle Advection for Nebulae & Atmospheres
+
+Curl noise is ideal for particle systems in nebulae, atmospheres, and fluid simulations because:
+- **Divergence-free**: Particles don't bunch up or disperse unrealistically
+- **Volume-preserving**: Gas density stays consistent over time
+- **Natural swirling**: Creates organic, turbulent motion
+
+```java
+/**
+ * Simple particle advection using curl noise.
+ * Perfect for nebula dust, atmospheric particles, smoke trails.
+ */
+public class CurlParticleSystem {
+    private final TurbulenceNoise curl;
+    private final float timeScale;
+    private final float velocityScale;
+
+    public CurlParticleSystem(int seed, float frequency) {
+        FastNoiseLite base = new FastNoiseLite(seed);
+        base.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        this.curl = new TurbulenceNoise(base, frequency);
+        this.timeScale = 0.1f;
+        this.velocityScale = 10f;
+    }
+
+    /**
+     * Advect a particle through the curl field.
+     * Call each frame with deltaTime.
+     */
+    public void advect(float[] position, float time, float deltaTime) {
+        // Sample curl velocity at particle position (with time animation)
+        float[] velocity = curl.curl3D(
+            position[0],
+            position[1],
+            position[2] + time * timeScale  // Animate field over time
+        );
+
+        // Euler integration (use RK4 for higher quality)
+        position[0] += velocity[0] * velocityScale * deltaTime;
+        position[1] += velocity[1] * velocityScale * deltaTime;
+        position[2] += velocity[2] * velocityScale * deltaTime;
+    }
+
+    /**
+     * Higher quality advection using multi-octave curl.
+     * More detailed swirls at multiple scales.
+     */
+    public void advectFBm(float[] position, float time, float deltaTime) {
+        float[] velocity = curl.curlFBm3D(
+            position[0],
+            position[1],
+            position[2] + time * timeScale,
+            4  // 4 octaves of curl detail
+        );
+
+        position[0] += velocity[0] * velocityScale * deltaTime;
+        position[1] += velocity[1] * velocityScale * deltaTime;
+        position[2] += velocity[2] * velocityScale * deltaTime;
+    }
+}
+
+// Usage for nebula visualization:
+CurlParticleSystem nebula = new CurlParticleSystem(1337, 0.001f);  // Low freq = large swirls
+float[] particle = {100f, 200f, 50f};  // Starting position
+float time = 0f;
+
+// Animation loop
+while (running) {
+    nebula.advectFBm(particle, time, 0.016f);  // 60fps deltaTime
+    renderParticle(particle);
+    time += 0.016f;
+}
+```
+
+**Tips for realistic nebula/atmosphere motion:**
+- **Low frequency** (0.0001-0.01): Large, sweeping gas motions
+- **High octaves** (4-6): Fine turbulent detail
+- **Time animation**: Add `time * scale` to Z coordinate for evolving flow
+- **Combine with density**: Use separate noise for particle spawn probability
+
+**Best for:** Fluid simulations, smoke/fire effects, particle motion, marble/wood textures, organic animations, nebula visualization, atmospheric effects.
 
 ### Algorithm Comparison
 
@@ -1404,6 +1538,115 @@ public int getBiome(float x, float y) {
 }
 ```
 
+### Organic Voronoi with Domain Warp
+
+Combine Cellular noise with Domain Warp for organic, natural-looking cell boundaries. Perfect for biome edges, nebula gas patches, or biological structures.
+
+```java
+/**
+ * Organic Voronoi generator for biomes / nebula patches.
+ * Domain warp creates wavy, natural cell boundaries instead of
+ * the hard geometric edges of standard Voronoi.
+ */
+public class OrganicVoronoi {
+    private final FastNoiseLite warpNoise;
+    private final FastNoiseLite cellNoise;
+
+    public OrganicVoronoi(int seed) {
+        // Domain warp noise (distorts the coordinate space)
+        warpNoise = new FastNoiseLite(seed);
+        warpNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2S);
+        warpNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
+        warpNoise.SetDomainWarpAmp(50f);       // Warp strength
+        warpNoise.SetFrequency(0.01f);         // Warp detail scale
+        warpNoise.SetFractalType(FastNoiseLite.FractalType.DomainWarpProgressive);
+        warpNoise.SetFractalOctaves(3);        // Multi-scale warping
+
+        // Cellular noise (the actual Voronoi cells)
+        cellNoise = new FastNoiseLite(seed + 1000);
+        cellNoise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
+        cellNoise.SetFrequency(0.005f);        // Cell size
+        cellNoise.SetCellularJitter(0.9f);     // Cell irregularity
+    }
+
+    /**
+     * Get cell ID for biome selection.
+     * Each cell returns a unique-ish value for biome mapping.
+     */
+    public float getCellValue(float x, float y) {
+        // Warp coordinates first
+        FastNoiseLite.Vector2 coord = new FastNoiseLite.Vector2(x, y);
+        warpNoise.DomainWarp(coord);
+
+        // Sample cellular noise at warped position
+        cellNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
+        return cellNoise.GetNoise(coord.x, coord.y);
+    }
+
+    /**
+     * Get distance to cell edge.
+     * Useful for edge highlighting, blending, or boundary effects.
+     */
+    public float getEdgeDistance(float x, float y) {
+        FastNoiseLite.Vector2 coord = new FastNoiseLite.Vector2(x, y);
+        warpNoise.DomainWarp(coord);
+
+        cellNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.Distance);
+        return cellNoise.GetNoise(coord.x, coord.y);
+    }
+
+    /**
+     * Get edge factor (0 at cell center, 1 at edge).
+     * Perfect for transition zones between biomes.
+     */
+    public float getEdgeFactor(float x, float y) {
+        FastNoiseLite.Vector2 coord = new FastNoiseLite.Vector2(x, y);
+        warpNoise.DomainWarp(coord);
+
+        // Distance2Div = distance to second nearest / distance to nearest
+        // Approaches 1.0 near edges, larger values in cell centers
+        cellNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.Distance2Div);
+        float ratio = cellNoise.GetNoise(coord.x, coord.y);
+
+        // Invert and clamp: 0 at center, 1 at edge
+        return Math.max(0f, Math.min(1f, 2f - ratio));
+    }
+}
+
+// === Usage: Organic Biomes ===
+OrganicVoronoi biomes = new OrganicVoronoi(1337);
+
+float cellValue = biomes.getCellValue(worldX, worldY);
+int biomeId = (int)((cellValue + 1f) * 0.5f * NUM_BIOMES);
+
+// Smooth transitions at edges
+float edgeFactor = biomes.getEdgeFactor(worldX, worldY);
+if (edgeFactor > 0.8f) {
+    // Blend with neighboring biome
+}
+
+// === Usage: Nebula Gas Patches ===
+OrganicVoronoi nebulaCells = new OrganicVoronoi(42);
+
+// Each cell = different gas density/color
+float patchId = nebulaCells.getCellValue(x, y);
+float edgeDist = nebulaCells.getEdgeDistance(x, y);
+
+// Soft edges between patches
+float density = baseDensity * (1f - edgeDist * 0.5f);
+Color gasColor = getColorForPatch(patchId);
+```
+
+**Warp strength guide:**
+| DomainWarpAmp | Effect |
+|---------------|--------|
+| 10-30 | Subtle waviness, still recognizable cells |
+| 50-100 | Organic, natural boundaries |
+| 150-300 | Very distorted, amoeba-like shapes |
+| 500+ | Extreme distortion, cells barely recognizable |
+
+**Best for:** Biome boundaries, nebula gas regions, organic tissue, territory maps, cloud layers.
+
 ### Animated Noise (Time-based)
 
 ```java
@@ -1418,6 +1661,187 @@ public float getAnimatedNoise(float x, float y, float time) {
     return noise.GetNoise(x, y, time * 0.5f);
 }
 ```
+
+### TRIPS Example: Animated Nebula Filaments with Curl Motion
+
+This advanced example combines multiple extensions for TRIPS-style interstellar visualization: animated, LOD-aware, double-precision nebula filaments with divergence-free curl motion for particle systems.
+
+```java
+import com.teamgannon.trips.noisegen.*;
+import com.teamgannon.trips.noisegen.spatial.*;
+import com.teamgannon.trips.noisegen.transforms.*;
+import com.teamgannon.trips.noisegen.derivatives.*;
+
+/**
+ * Nebula renderer combining 5+ noise extensions for realistic
+ * interstellar gas cloud visualization at astronomical scales.
+ */
+public class NebulaFilamentGenerator {
+
+    private final FastNoiseLite baseNoise;
+    private final FastNoiseLite warpNoise;
+    private final DoublePrecisionNoise precise;
+    private final LODNoise lodDensity;
+    private final TurbulenceNoise turbulence;
+    private final NoiseDerivatives derivatives;
+    private final NoiseTransform filamentShaper;
+
+    public NebulaFilamentGenerator(int seed) {
+        // === Layer 1: Base density field (sharp filament structure) ===
+        baseNoise = new FastNoiseLite(seed);
+        baseNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        baseNoise.SetFractalType(FastNoiseLite.FractalType.Ridged);  // Sharp filaments
+        baseNoise.SetFractalOctaves(6);
+        baseNoise.SetFrequency(0.00001f);  // Galaxy-scale features
+        baseNoise.SetFractalLacunarity(2.2f);
+        baseNoise.SetFractalGain(0.45f);
+
+        // === Layer 2: Domain warp for organic distortion ===
+        warpNoise = new FastNoiseLite(seed + 1);
+        warpNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2S);
+        warpNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2Reduced);
+        warpNoise.SetDomainWarpAmp(50000f);  // Large-scale warping
+        warpNoise.SetFrequency(0.000005f);
+
+        // === Layer 3: Double precision for astronomical coordinates ===
+        // Handles coordinates like 1.2 trillion light-years without precision loss
+        precise = new DoublePrecisionNoise(baseNoise);
+
+        // === Layer 4: LOD for distance-based detail optimization ===
+        // Reduces octaves for distant nebulae (performance optimization)
+        lodDensity = new LODNoise(baseNoise, 6);  // Max 6 octaves up close
+
+        // === Layer 5: Curl noise for divergence-free particle motion ===
+        // Particles follow curl field = no compression/expansion artifacts
+        turbulence = new TurbulenceNoise(baseNoise);
+
+        // === Layer 6: Derivatives for lighting/normal computation ===
+        derivatives = new NoiseDerivatives(baseNoise);
+
+        // === Layer 7: Transform chain for final shaping ===
+        filamentShaper = ChainedTransform.builder()
+            .add(new RidgeTransform(0.6f))       // Enhance ridges
+            .add(new PowerTransform(1.5f))       // Sharpen contrast
+            .add(RangeTransform.zeroToOne())     // Normalize to [0,1]
+            .add(new ClampTransform(0f, 1f))     // Safety clamp
+            .build();
+    }
+
+    /**
+     * Sample nebula density at astronomical coordinates.
+     *
+     * @param x X coordinate in light-years (can be huge, e.g., 1e12)
+     * @param y Y coordinate in light-years
+     * @param z Z coordinate in light-years
+     * @param time Animation time in seconds
+     * @param cameraDistance Distance from camera (for LOD)
+     * @return Density value [0, 1] for rendering
+     */
+    public float sampleDensity(double x, double y, double z,
+                               float time, float cameraDistance) {
+        // Apply domain warp for organic look
+        FastNoiseLite.Vector3 pos = new FastNoiseLite.Vector3(
+            (float)(x % 1e8), (float)(y % 1e8), (float)(z % 1e8));
+        warpNoise.DomainWarp(pos);
+
+        // Use LOD-aware sampling based on camera distance
+        // Far nebulae use fewer octaves (faster, still looks good)
+        float rawDensity = lodDensity.getNoise(
+            pos.x + time * 1000f,  // Slow drift animation
+            pos.y,
+            pos.z,
+            cameraDistance
+        );
+
+        // Apply filament shaping transforms
+        return filamentShaper.transform(rawDensity);
+    }
+
+    /**
+     * Get curl velocity field for particle advection.
+     * Returns divergence-free flow (no compression/expansion).
+     *
+     * @return float[3] velocity vector {vx, vy, vz}
+     */
+    public float[] getParticleVelocity(double x, double y, double z, float time) {
+        // Curl noise produces swirling, incompressible flow
+        // Perfect for gas/dust particle systems
+        return turbulence.curl3D(
+            (float)(x * 0.00001),  // Scale to noise frequency
+            (float)(y * 0.00001),
+            (float)(z * 0.00001) + time * 0.1f  // Animated
+        );
+    }
+
+    /**
+     * Get surface normal for nebula lighting (volumetric scattering).
+     *
+     * @return float[3] normal vector for lighting calculations
+     */
+    public float[] getDensityGradient(float x, float y, float z) {
+        return derivatives.computeNormal3D(x, y, z);
+    }
+
+    /**
+     * Full particle state: position update + density for rendering.
+     */
+    public ParticleState advectParticle(double x, double y, double z,
+                                        float time, float dt,
+                                        float cameraDistance) {
+        // Get curl velocity (divergence-free = volume-preserving)
+        float[] vel = getParticleVelocity(x, y, z, time);
+
+        // Advect position
+        double newX = x + vel[0] * dt * 10000;  // Scale velocity
+        double newY = y + vel[1] * dt * 10000;
+        double newZ = z + vel[2] * dt * 10000;
+
+        // Sample density at new position
+        float density = sampleDensity(newX, newY, newZ, time, cameraDistance);
+
+        return new ParticleState(newX, newY, newZ, density, vel);
+    }
+
+    // Simple particle state holder
+    public record ParticleState(
+        double x, double y, double z,
+        float density,
+        float[] velocity
+    ) {}
+}
+
+// === Usage Example ===
+NebulaFilamentGenerator nebula = new NebulaFilamentGenerator(1337);
+
+// Sample at astronomical coordinates (1.2 trillion, 340 billion, -560 billion LY)
+double hugeX = 1.2e12, hugeY = 3.4e11, hugeZ = -5.6e11;
+float time = (float)(System.currentTimeMillis() / 1000.0);
+float cameraDistance = 1000f;  // 1000 LY from nebula
+
+// Get density for volumetric rendering
+float density = nebula.sampleDensity(hugeX, hugeY, hugeZ, time, cameraDistance);
+
+// Get curl velocity for particle system
+float[] curlVel = nebula.getParticleVelocity(hugeX, hugeY, hugeZ, time);
+
+// Advect a particle through the nebula
+NebulaFilamentGenerator.ParticleState particle =
+    nebula.advectParticle(hugeX, hugeY, hugeZ, time, 0.016f, cameraDistance);
+
+// Use density for spawn probability, curlVel for particle motion
+// → Particles swirl through filaments without bunching or dispersing
+```
+
+**Extensions Used:**
+1. **Ridged Fractal** - Sharp filament structure
+2. **Domain Warp** - Organic distortion
+3. **DoublePrecisionNoise** - Astronomical coordinate support
+4. **LODNoise** - Distance-based detail optimization
+5. **TurbulenceNoise (curl)** - Divergence-free particle motion
+6. **NoiseDerivatives** - Lighting/gradient computation
+7. **ChainedTransform** - Post-processing pipeline
+
+This pattern scales from small dust clouds to galaxy-spanning nebulae while maintaining visual quality and performance.
 
 ---
 

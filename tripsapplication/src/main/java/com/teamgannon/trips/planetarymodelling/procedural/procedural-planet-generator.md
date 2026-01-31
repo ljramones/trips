@@ -16,9 +16,12 @@ com.teamgannon.trips.planetarymodelling.procedural
 - **Tectonic Plate Simulation**: Flood-fill plate assignment with configurable plate count (7-21)
 - **Plate Boundary Interactions**: Convergent, divergent, and transform boundaries
 - **Terrain Generation**: Heights from -4 (deep ocean) to +4 (high mountains)
+- **Impact Features**: Craters and volcanic features with configurable density and profiles
 - **Continuous Heights**: Optional continuous height field with relief normalization
 - **Hydrology**: Flow accumulation, river width scaling, and lake filling
 - **Climate Zones**: Multiple climate models including seasonal insolation with axial tilt
+- **Biome Classification**: 16 biome types based on elevation, climate, and rainfall
+- **City Suitability Analysis**: Post-generation analysis for settlement placement
 - **Reproducible**: Seed-based generation for consistent results
 - **JavaFX Integration**: Native JavaFX 3D rendering via `JavaFxPlanetMeshConverter`
 
@@ -90,12 +93,21 @@ PlanetGenerator.GeneratedPlanet planet = PlanetGenerator.generate(biasedConfig);
 | `ElevationCalculator` | Terrain height from plate tectonics |
 | `ClimateCalculator` | Climate zones (6 models, incl. seasonal insolation) |
 | `ErosionCalculator` | Erosion simulation, rivers, rainfall, flow accumulation |
-| `GenerationProgressListener` | Progress callback interface for UI updates |
+| `GenerationProgressListener` | Progress callback interface for UI updates (8 phases) |
 | `TectonicBias` | Translates Accrete parameters to tectonic settings |
 | `JavaFxPlanetMeshConverter` | Converts mesh to JavaFX TriangleMesh |
 | `PlanetRenderer` | Jzy3d renderer (optional) |
 | `TectonicService` | Spring-compatible service with caching (in `service/` subpackage) |
 | `ProceduralPlanetPersistenceHelper` | Stores/restores procedural planet data in ExoPlanet entities |
+| **Impact Features** (`impact/` subpackage) | |
+| `CraterProfile` | Enum with 8 crater/volcano height profiles (radial functions) |
+| `CraterCalculator` | Places craters and volcanoes using FastNoiseLite and BFS traversal |
+| `ImpactResult` | Immutable record with crater/volcano positions and metadata |
+| **Biome Classification** (`biome/` subpackage) | |
+| `BiomeType` | Enum with 16 biome types including habitability scores |
+| `BiomeClassifier` | Maps climate + rainfall + elevation to biome types |
+| **Post-Generation Analysis** (`analysis/` subpackage) | |
+| `CitySuitabilityAnalyzer` | Settlement suitability analysis based on terrain factors |
 
 ## Size Presets
 
@@ -177,11 +189,25 @@ double[] flow = planet.flowAccumulation();       // flow accumulation for rivers
 boolean[] lakes = planet.lakeMask();              // lake-filled basins
 List<List<Integer>> rivers = planet.rivers();    // river paths as polygon index lists
 boolean[] frozen = planet.frozenRiverTerminus(); // which rivers end frozen
+
+// Biome classification (16 types)
+BiomeType[] biomes = planet.biomes();
+Map<BiomeType, Integer> distribution = planet.biomeDistribution();  // count per type
+Map<BiomeType, Double> landPercentages = planet.landBiomePercentages();  // % of land area
+
+// City suitability analysis (post-generation)
+double[] suitability = CitySuitabilityAnalyzer.analyze(planet);
+CitySuitabilityAnalyzer analyzer = new CitySuitabilityAnalyzer(planet);
+CitySuitabilityAnalyzer.SuitabilityResult result = analyzer.analyzeWithStatistics(10);
+List<Integer> bestLocations = result.bestLocations();  // top N polygon indices
+double maxSuitability = result.maxSuitability();
+double avgSuitability = result.averageSuitability();
 ```
 
 ## Configuration Examples
 
 ```java
+// Basic configuration with climate and terrain
 PlanetConfig config = PlanetConfig.builder()
     .seed(12345L)
     .size(PlanetConfig.Size.STANDARD)
@@ -194,7 +220,28 @@ PlanetConfig config = PlanetConfig.builder()
     .axialTiltDegrees(23.5)
     .seasonalOffsetDegrees(0.0)
     .build();
+
+// With impact craters and volcanoes
+PlanetConfig cratered = PlanetConfig.builder()
+    .seed(42L)
+    .size(PlanetConfig.Size.STANDARD)
+    .craterDensity(0.3)           // 0.0-1.0, probability of crater placement
+    .craterDepthMultiplier(1.0)   // Scale crater depth
+    .craterMaxRadius(8)           // Maximum polygon hops from center
+    .enableVolcanos(true)         // Enable volcanic features
+    .volcanoDensity(0.2)          // 0.0-1.0, volcano placement density
+    .build();
 ```
+
+### Impact Feature Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `craterDensity` | 0.0 | Probability of crater placement (0.0 = none, 1.0 = dense) |
+| `craterDepthMultiplier` | 1.0 | Scales crater depth (affects terrain modification) |
+| `craterMaxRadius` | 8 | Maximum crater size in polygon hops |
+| `enableVolcanos` | false | Enable volcanic feature placement |
+| `volcanoDensity` | 0.0 | Probability of volcano placement (0.0-1.0) |
 
 ## Reproducibility
 
@@ -213,8 +260,9 @@ Sub-seeds derived for each generation phase:
 - Phase 3: Plate assignment
 - Phase 4: Boundary detection
 - Phase 5: Elevation calculation
-- Phase 6: Climate calculation
-- Phase 7: Erosion calculation
+- Phase 6: Impact features (craters/volcanoes)
+- Phase 7: Climate calculation
+- Phase 8: Erosion calculation
 
 ## Persistence Layer
 
@@ -325,6 +373,21 @@ ProceduralPlanetViewerDialog dialog = new ProceduralPlanetViewerDialog("My Plane
 dialog.showAndWait();
 ```
 
+#### Keyboard Controls (Flight Simulator Style)
+
+Click on the 3D view to give it focus, then use:
+
+| Key | Action |
+|-----|--------|
+| W | Zoom in (move camera forward) |
+| S | Zoom out (move camera back) |
+| A | Rotate left (Y-axis) |
+| D | Rotate right (Y-axis) |
+| Q | Rotate up (X-axis) |
+| E | Rotate down (X-axis) |
+| R | Reset view to default |
+| SPACE | Toggle auto-spin |
+
 #### UI Controls (Current)
 
 **Generation**
@@ -335,7 +398,7 @@ dialog.showAndWait();
 - Climate model dropdown
 
 **View**
-- Zoom, Auto-spin, Reset view
+- Zoom slider, Auto-spin checkbox, Reset view button
 
 **Overlays**
 - Rivers, Lakes, Flow-scaled rivers
@@ -358,19 +421,23 @@ and pole markers show the current north/south poles.
 ```
 PlanetConfig
     ↓
-IcosahedralMesh.generate()     → List<Polygon>
+IcosahedralMesh.generate()      → List<Polygon>           [Phase 1: MESH_GENERATION]
     ↓
-AdjacencyGraph                  → neighbor relationships
+AdjacencyGraph                   → neighbor relationships  [Phase 2: ADJACENCY_GRAPH]
     ↓
-PlateAssigner.assign()          → polygon-to-plate mapping
+PlateAssigner.assign()           → polygon-to-plate        [Phase 3: PLATE_ASSIGNMENT]
     ↓
-BoundaryDetector.analyze()      → plate types + boundary types
+BoundaryDetector.analyze()       → plate/boundary types    [Phase 4: BOUNDARY_DETECTION]
     ↓
-ElevationCalculator.calculate() → int[] heights (+ continuous heights optional)
+ElevationCalculator.calculate()  → int[] heights           [Phase 5: ELEVATION_CALCULATION]
     ↓
-ClimateCalculator.calculate()   → ClimateZone[] climates
+CraterCalculator.calculate()     → craters + volcanoes     [Phase 6: IMPACT_FEATURES] (optional)
     ↓
-ErosionCalculator.calculate()   → rivers, rainfall, flow, lake fill, eroded heights
+ClimateCalculator.calculate()    → ClimateZone[] climates  [Phase 7: CLIMATE_CALCULATION]
+    ↓
+ErosionCalculator.calculate()    → rivers, rainfall, etc.  [Phase 8: EROSION_CALCULATION]
+    ↓
+BiomeClassifier.classify()       → BiomeType[] biomes      (post-processing)
     ↓
 GeneratedPlanet (result record)
 ```
@@ -613,6 +680,114 @@ cos(zenith) = sin(lat) * sin(subsolarLat)
 Where `subsolarLat = axialTilt * sin(phase)`. Higher axial tilt expands
 temperate zones into high latitudes and reduces permanent polar caps.
 
+### Impact Craters and Volcanic Features
+
+The impact system simulates meteorite craters and volcanic landforms on the polygon mesh.
+
+#### Crater Placement Algorithm
+
+Craters are placed using FastNoiseLite's Cellular noise:
+1. Each polygon's center is evaluated against cellular noise
+2. Noise values above `(1.0 - craterDensity)` threshold become crater centers
+3. BFS traversal identifies all polygons within the crater radius
+4. Height profiles are applied based on normalized distance from center
+
+#### Crater Profiles (8 Types)
+
+| Profile | Description | Typical Size |
+|---------|-------------|--------------|
+| **SIMPLE_ROUND** | Bowl-shaped with raised rim | Small impacts (<15km) |
+| **SIMPLE_FLAT** | Flat floor with raised rim | Sedimentary terrain |
+| **COMPLEX_FLAT** | Central peak + flat annular floor | Large impacts |
+| **COMPLEX_STEPS** | Terraced interior walls | Very large impacts |
+| **COMPLEX_RINGS** | Multi-ring basin | Massive impacts |
+| **DOME_VOLCANO** | Gentle Gaussian dome | Viscous lava buildup |
+| **STRATO_VOLCANO** | Steep conical slopes | Explosive eruptions |
+| **SHIELD_VOLCANO** | Broad, gently sloping | Fluid basaltic lava |
+
+Each profile implements a radial height function returning values from -1.0 (crater floor) to +1.0 (rim/cone peak), scaled by depth/height multipliers.
+
+#### Volcano Placement
+
+Volcanoes are placed based on plate tectonics:
+
+**Boundary-Based:**
+- **Convergent (subduction zones)** → Strato volcanoes (steep, explosive)
+- **Divergent (rifts)** → Shield volcanoes (broad, fluid lava)
+- **Transform** → Occasional dome volcanoes
+
+**Hotspot-Based:**
+- Random placement on land using OpenSimplex2 noise
+- 70% shield volcanoes, 30% dome volcanoes
+- Creates mid-plate volcanic islands (e.g., Hawaiian chain)
+
+### Biome Classification System
+
+Biomes are classified post-generation based on elevation, climate, and rainfall.
+
+#### Classification Factors
+
+| Factor | Weight | Source |
+|--------|--------|--------|
+| Elevation | Primary | `heights[]` array |
+| Climate Zone | Primary | `ClimateCalculator.ClimateZone` |
+| Rainfall | Secondary | `ErosionCalculator.rainfall[]` |
+| Water Proximity | Tertiary | Adjacency to negative-height polygons |
+
+#### Biome Types (16 Categories)
+
+**Water Bodies:**
+- DEEP_OCEAN (height ≤ -3)
+- OCEAN (height -2)
+- COASTAL (height -1)
+- FRESHWATER (adjacent to rivers/lakes)
+
+**Cold Biomes:**
+- ICE_CAP (polar + low rainfall)
+- TUNDRA (polar zone)
+- BOREAL_FOREST (polar + rainfall > 0.3)
+
+**Temperate Biomes:**
+- TEMPERATE_GRASSLAND (rainfall < 0.4)
+- TEMPERATE_FOREST (rainfall 0.4-0.7)
+- TEMPERATE_RAINFOREST (rainfall > 0.7)
+
+**Hot Biomes:**
+- DESERT (rainfall < 0.2)
+- SAVANNA (tropical + rainfall 0.2-0.7)
+- TROPICAL_RAINFOREST (tropical + rainfall > 0.7)
+
+**Elevation Biomes:**
+- ALPINE (height 2 + non-tropical)
+- MOUNTAIN (height ≥ 3)
+- WETLAND (low elevation + high rainfall + water proximity)
+
+Each biome has `habitabilityScore` (0.0-1.0) and `agriculturalPotential` (0.0-1.0) for downstream analysis.
+
+### City Suitability Analysis
+
+The `CitySuitabilityAnalyzer` evaluates settlement potential as a post-generation step.
+
+#### Scoring Factors
+
+| Factor | Weight | Best Score |
+|--------|--------|------------|
+| Elevation | 0.25 | Lowlands (height 0-1) |
+| Climate | 0.30 | Temperate zone |
+| Coastal Proximity | 0.25 | Adjacent to ocean |
+| River Proximity | 0.20 | Near rivers (not in flood zone) |
+
+**Suitability Formula:**
+```
+score = (elevation × 0.25) + (climate × 0.30) + (coastal × 0.25) + (river × 0.20)
+```
+
+**Output:**
+- Per-polygon suitability scores (0.0-1.0)
+- Top N best locations
+- Statistics (max, average suitability)
+- `isSuitable()` (score > 0.5) and `isHighlySuitable()` (score > 0.8) helpers
+
 ### Integration with Accrete Physical Parameters
 
 When generating terrain from Accrete++ simulation data, physical parameters translate to geological activity:
@@ -644,14 +819,18 @@ The generator simplifies complex geophysics for practical terrain generation:
 6. **No Glaciation**: Ice ages and glacial erosion not modeled separately
 7. **No Ocean Currents**: Ocean heat transport and currents are not modeled
 8. **Simplified Hydrology**: No groundwater, aquifers, or evapotranspiration
+9. **No Crater Erosion**: Craters don't weather over time
+10. **Static Volcanism**: Volcanoes don't erupt or grow; placement is static
+11. **Simplified Biomes**: No microclimate variations or soil composition modeling
+12. **No Population Dynamics**: City suitability is static; no growth simulation
 
-Despite these simplifications, the generator produces visually convincing Earth-like terrain with recognizable geological features (mountain ranges, island arcs, rift valleys, etc.).
+Despite these simplifications, the generator produces visually convincing Earth-like terrain with recognizable geological features (mountain ranges, island arcs, rift valleys, craters, volcanic peaks, etc.).
 
 ---
 
 ## Origin
 
-Ported from GDScript (Godot 3.x) to Java 17.
+Ported from GDScript (Godot 3.x) to Java 25.
 
 **Original:** [VictorGordan/4x_planet_generator_godot](https://github.com/VictorGordan/4x_planet_generator_godot) (2020)
 
@@ -695,6 +874,12 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | Sub-seed derivation | `config.subSeed(phase)` for reproducibility |
 | `fromAccreteRadius()` | Auto-select mesh resolution from Accrete data |
 | Multiple climate models | HADLEY_CELLS, ICE_WORLD, TROPICAL_WORLD, TIDALLY_LOCKED, SEASONAL |
+| `impact/CraterProfile` | 8 crater/volcano height profiles (radial functions) |
+| `impact/CraterCalculator` | Crater/volcano placement using FastNoiseLite |
+| `impact/ImpactResult` | Immutable result record for impact features |
+| `biome/BiomeType` | 16 biome types with habitability scores |
+| `biome/BiomeClassifier` | Biome classification from climate + rainfall + elevation |
+| `analysis/CitySuitabilityAnalyzer` | Settlement suitability analysis |
 
 ## Key Adaptations
 
@@ -707,24 +892,6 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | `randf()`, `randi_range()` | `Random` with seed |
 | Godot `ArrayMesh` | JavaFX `TriangleMesh` |
 | `.size` / `.adj` cache files | Generated on-the-fly |
-
----
-
-## Critical Review (January 2026)
-
-### Overall Rating: ⭐⭐⭐⭐ (Good, needs polish)
-
-**Strengths:**
-- Clean pipeline architecture with excellent facade pattern
-- Reproducible generation with proper seed isolation
-- Good Accrete integration
-- Feature-rich erosion with rivers and climate
-
-**Weaknesses:**
-- ElevationCalculator is overly complex (575 lines, nested logic)
-- Magic numbers throughout without documentation
-- JavaFxPlanetMeshConverter has heavy code duplication
-- Test coverage gaps for edge cases
 
 ---
 
@@ -957,8 +1124,17 @@ Ported from GDScript (Godot 3.x) to Java 17.
 | PlanetRenderer | ~440 | Low | ✅ Good | — |
 | JavaFxPlanetMeshConverter | ~1200 | Medium | ✅ Good | Consolidated |
 | ProceduralPlanetPersistenceHelper | ~530 | Low | ✅ Good | Store/restore config |
-| PlanetConfig | ~520 | Low | ✅ Good | Climate model + erosion config |
+| PlanetConfig | ~580 | Low | ✅ Good | Climate model + erosion + impact config |
 | ProceduralPlanetViewerDialog* | ~950 | Medium | ✅ Good | Side panel, interactive regeneration |
+| **Impact Features** (`impact/` subpackage) | | | | |
+| CraterProfile | ~340 | Low | ✅ Good | 8 height profiles |
+| CraterCalculator | ~460 | Medium | ✅ Good | Crater/volcano placement |
+| ImpactResult | ~70 | Low | ✅ Good | Immutable result record |
+| **Biome Classification** (`biome/` subpackage) | | | | |
+| BiomeType | ~130 | Low | ✅ Good | 16 biome types |
+| BiomeClassifier | ~180 | Medium | ✅ Good | Classification logic |
+| **Analysis** (`analysis/` subpackage) | | | | |
+| CitySuitabilityAnalyzer | ~180 | Low | ✅ Good | Settlement analysis |
 
 *Located in `dialogs/solarsystem/` package
 
@@ -977,6 +1153,34 @@ Ported from GDScript (Godot 3.x) to Java 17.
 ---
 
 ## Recent Changes (January 2026)
+
+### Planetgen Features Integration
+
+Major integration of features from the legacy `planetgen` package into the modern procedural system.
+
+#### Impact Features System (NEW)
+- **CraterProfile enum** with 8 crater/volcano height profiles
+- **CraterCalculator** using FastNoiseLite Cellular noise for placement
+- **ImpactResult** immutable record for results
+- Polygon-based BFS traversal for radial distance measurement
+- Boundary-aware volcano placement (convergent → strato, divergent → shield)
+- Hotspot volcanism with OpenSimplex2 noise
+
+#### Biome Classification System (NEW)
+- **BiomeType enum** with 16 biome types
+- Classification based on elevation + climate + rainfall
+- Habitability and agricultural potential scores per biome
+- `biomes()`, `biomeDistribution()`, `landBiomePercentages()` accessors on GeneratedPlanet
+
+#### City Suitability Analysis (NEW)
+- **CitySuitabilityAnalyzer** for post-generation settlement scoring
+- Scoring weights: elevation (0.25), climate (0.30), coastal (0.25), river (0.20)
+- `SuitabilityResult` record with statistics and best locations
+
+#### Pipeline Updates
+- Added IMPACT_FEATURES phase (Phase 6, between elevation and climate)
+- 8 generation phases total (was 7)
+- New config parameters: `craterDensity`, `craterDepthMultiplier`, `craterMaxRadius`, `enableVolcanos`, `volcanoDensity`
 
 ### Low Priority Features Completed
 
@@ -1021,6 +1225,7 @@ Ported from GDScript (Godot 3.x) to Java 17.
 - Extracted per-polygon methods for parallel execution
 
 ### Viewer Polish Features
+- **Keyboard controls** (WASD/QE/R/SPACE) for flight simulator style navigation
 - Screenshot export (PNG) via "Save" button
 - Color legend overlay with elevation and boundary colors
 - Plate boundary visualization (convergent=red, divergent=cyan, transform=yellow)

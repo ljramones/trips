@@ -6,7 +6,7 @@
 
     <groupId>com.teamgannon.trips</groupId>
     <artifactId>trips</artifactId>
-    <version>0.7.1</version>
+    <version>1.0.0</version>
 
     <name>Terran Republic Interstellar Plotter</name>
     <description>
@@ -99,9 +99,7 @@
 
         <commons.collections4.version>4.4</commons.collections4.version>
         <commons.io.version>2.15.1</commons.io.version>
-        <!-- Removed ancient commons.lang - use commons-lang3 instead -->
         <commons.math.version>3.6.1</commons.math.version>
-        <!-- commons-codec managed by Spring Boot -->
 
         <hipparchus.version>3.0</hipparchus.version>
         <jzy3d.version>2.2.1</jzy3d.version>
@@ -110,10 +108,8 @@
 
         <metrics5.version>5.0.6</metrics5.version>
 
-        <!-- Jackson version managed by Spring Boot -->
 
         <jsr305.version>3.0.2</jsr305.version>
-        <!-- javax-validation removed - using jakarta.validation -->
 
         <org.jgrapht.core.version>1.5.2</org.jgrapht.core.version>
         <org.jgrapht.ext.version>1.0.1</org.jgrapht.ext.version>
@@ -129,8 +125,9 @@
 
         <jpackage.type>APP_IMAGE</jpackage.type>
         <jpackage.name>TRIPS</jpackage.name>
+
         <!-- macOS jpackage requires version to start with positive integer, not 0 -->
-        <jpackage.appVersion>1.7.1</jpackage.appVersion>
+        <jpackage.appVersion>1.0.0</jpackage.appVersion>
     </properties>
 
     <dependencyManagement>
@@ -275,8 +272,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Jackson version managed by Spring Boot (includes jackson-databind) -->
-
         <!-- SQL parsing support -->
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
@@ -323,8 +318,6 @@
             <artifactId>commons-collections4</artifactId>
             <version>${commons.collections4.version}</version>
         </dependency>
-
-        <!-- Removed ancient commons-lang (2003 version) - use commons-lang3 below -->
 
         <!-- Apache Commons Codec  -->
         <dependency>
@@ -390,8 +383,6 @@
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-zondicons-pack</artifactId>
         </dependency>
-
-        <!-- validation apis for database work-->
 
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

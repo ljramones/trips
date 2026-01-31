@@ -1,5 +1,6 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
+import com.teamgannon.trips.noisegen.FastNoiseLite;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.*;
@@ -50,6 +51,9 @@ public class ErosionCalculator {
     private List<List<Integer>> rivers;
     private List<Boolean> frozenTerminus;  // Track if each river ends frozen
     private boolean[] nearDivergentBoundary;  // Cache for boundary proximity
+
+    // Noise generator for coastal variation (uses noisegen package)
+    private final FastNoiseLite coastNoise;
 
     /**
      * Result of erosion calculations.
@@ -124,6 +128,13 @@ public class ErosionCalculator {
 
         // Pre-calculate divergent boundary proximity
         this.nearDivergentBoundary = calculateDivergentProximity();
+
+        // Initialize coastal noise using FastNoiseLite for high-quality variation
+        this.coastNoise = new FastNoiseLite((int) config.subSeed(5));
+        this.coastNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        this.coastNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        this.coastNoise.SetFractalOctaves(3);
+        this.coastNoise.SetFrequency(5.0f);  // Matches original freq = 5.0
     }
 
     /**
@@ -1003,24 +1014,15 @@ public class ErosionCalculator {
     }
 
     /**
-     * Simple 3D simplex-like noise function for coastal variation.
-     * Uses a pseudo-random approach based on position.
+     * 3D noise function for coastal variation using FastNoiseLite.
+     * Provides high-quality OpenSimplex2 noise with FBm for natural coastlines.
+     *
+     * @return Noise value in range [0, 1]
      */
     private double simplexNoise(double x, double y, double z) {
-        // Simple hash-based noise (not true Simplex, but adequate for coastlines)
-        long seed = config.seed();
-        double freq = 5.0;  // Noise frequency
-
-        // Hash the coordinates
-        double nx = x * freq + seed * 0.001;
-        double ny = y * freq + seed * 0.002;
-        double nz = z * freq + seed * 0.003;
-
-        // Generate pseudo-random value in range [0, 1]
-        double v1 = Math.sin(nx * 12.9898 + ny * 78.233 + nz * 37.719) * 43758.5453;
-        double noise = v1 - Math.floor(v1);
-
-        return noise;
+        // FastNoiseLite returns values in [-1, 1], convert to [0, 1]
+        float noise = coastNoise.GetNoise((float) x, (float) y, (float) z);
+        return (noise + 1.0) * 0.5;
     }
 
     private void normalizeWorkingHeights() {

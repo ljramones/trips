@@ -52,6 +52,8 @@ public interface GenerationProgressListener {
         BOUNDARY_DETECTION("Detecting plate boundaries"),
         /** Calculating terrain elevations */
         ELEVATION_CALCULATION("Calculating elevations"),
+        /** Placing impact craters and volcanic features */
+        IMPACT_FEATURES("Placing impact features"),
         /** Assigning climate zones */
         CLIMATE_CALCULATION("Calculating climate zones"),
         /** Running erosion simulation and river formation */

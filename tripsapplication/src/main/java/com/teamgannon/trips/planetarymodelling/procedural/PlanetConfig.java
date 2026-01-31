@@ -61,7 +61,14 @@ public record PlanetConfig(
     ClimateCalculator.ClimateModel climateModel,
     double axialTiltDegrees,       // axial tilt in degrees (0-60, default 23.5)
     double seasonalOffsetDegrees,  // seasonal phase offset in degrees (0-360)
-    int seasonalSamples            // number of samples for insolation averaging
+    int seasonalSamples,           // number of samples for insolation averaging
+
+    // Impact feature parameters (craters and volcanoes)
+    double craterDensity,          // 0.0-1.0, probability of crater placement (0 = none)
+    double craterDepthMultiplier,  // multiplier for crater depth (default 1.0)
+    int craterMaxRadius,           // max crater radius in polygon hops (default 8)
+    boolean enableVolcanos,        // whether to place volcanic features
+    double volcanoDensity          // 0.0-1.0, probability of volcano placement (0 = none)
 ) {
 
     /**
@@ -292,6 +299,12 @@ public record PlanetConfig(
         private double axialTiltDegrees = 23.5;
         private double seasonalOffsetDegrees = 0.0;
         private int seasonalSamples = 12;
+        // Impact feature defaults (disabled by default)
+        private double craterDensity = 0.0;
+        private double craterDepthMultiplier = 1.0;
+        private int craterMaxRadius = 8;
+        private boolean enableVolcanos = false;
+        private double volcanoDensity = 0.0;
 
 
         public Builder seed(long seed) { this.seed = seed; return this; }
@@ -430,6 +443,51 @@ public record PlanetConfig(
             return this;
         }
 
+        /**
+         * Sets crater density (probability of crater placement).
+         * @param density 0.0 = no craters, 1.0 = maximum density
+         */
+        public Builder craterDensity(double density) {
+            this.craterDensity = Math.max(0.0, Math.min(1.0, density));
+            return this;
+        }
+
+        /**
+         * Sets the depth multiplier for craters.
+         * @param multiplier 1.0 = standard depth, higher = deeper craters
+         */
+        public Builder craterDepthMultiplier(double multiplier) {
+            this.craterDepthMultiplier = Math.max(0.1, multiplier);
+            return this;
+        }
+
+        /**
+         * Sets maximum crater radius in polygon hops.
+         * @param maxRadius Maximum number of polygon hops from center (2-20)
+         */
+        public Builder craterMaxRadius(int maxRadius) {
+            this.craterMaxRadius = Math.max(2, Math.min(20, maxRadius));
+            return this;
+        }
+
+        /**
+         * Enables or disables volcanic feature placement.
+         * @param enabled true to place volcanoes at plate boundaries and hotspots
+         */
+        public Builder enableVolcanos(boolean enabled) {
+            this.enableVolcanos = enabled;
+            return this;
+        }
+
+        /**
+         * Sets volcano density (probability of volcano placement).
+         * @param density 0.0 = no volcanoes (even if enabled), 1.0 = maximum density
+         */
+        public Builder volcanoDensity(double density) {
+            this.volcanoDensity = Math.max(0.0, Math.min(1.0, density));
+            return this;
+        }
+
         public PlanetConfig build() {
             if (distortionProgressThresholds.size() != distortionValues.size()) {
                 throw new IllegalArgumentException("Distortion thresholds and values must have the same size.");
@@ -449,7 +507,9 @@ public record PlanetConfig(
                 maxLowlandPercentage, lowlandIncreaseChance,
                 distortionProgressThresholds, distortionValues,
                 boundaryEffects, climateModel,
-                axialTiltDegrees, seasonalOffsetDegrees, seasonalSamples
+                axialTiltDegrees, seasonalOffsetDegrees, seasonalSamples,
+                craterDensity, craterDepthMultiplier, craterMaxRadius,
+                enableVolcanos, volcanoDensity
             );
         }
     }
@@ -496,7 +556,12 @@ public record PlanetConfig(
             .climateModel(climateModel)
             .axialTiltDegrees(axialTiltDegrees)
             .seasonalOffsetDegrees(seasonalOffsetDegrees)
-            .seasonalSamples(seasonalSamples);
+            .seasonalSamples(seasonalSamples)
+            .craterDensity(craterDensity)
+            .craterDepthMultiplier(craterDepthMultiplier)
+            .craterMaxRadius(craterMaxRadius)
+            .enableVolcanos(enableVolcanos)
+            .volcanoDensity(volcanoDensity);
     }
 
     /**

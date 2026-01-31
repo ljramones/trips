@@ -10,39 +10,41 @@ TRIPS (Terran Republic Interstellar Plotting System) is a JavaFX-based 3D stella
 
 ### Java Version Requirement
 
-**IMPORTANT**: This project requires **Java 17**. The system may have Java 25 installed, but the project will not compile with it.
+**IMPORTANT**: This project now uses **Java 25** (updated from Java 17).
 
-Use the included wrapper script to automatically use Java 17:
+Use the included wrapper script to automatically use Java 25:
 ```bash
-# From repository root - this automatically uses Java 17
-./mvnw-java17.sh clean install
+# From repository root - this automatically uses Java 25
+./mvnw-java25.sh clean install
 
 # Run the application
 cd tripsapplication
-../mvnw-java17.sh spring-boot:run
+../mvnw-java25.sh spring-boot:run
 ```
 
 Alternatively, manually set JAVA_HOME before running Maven:
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home
 mvn clean install
 ```
+
+**Note**: Legacy wrapper scripts (`mvnw-java17.sh`, `mvnw-java21.sh`) are still available for compatibility testing.
 
 ### Building and Running
 
 ```bash
 # Build the entire project (from repository root)
-./mvnw-java17.sh clean install
+./mvnw-java25.sh clean install
 
 # Run the application
 cd tripsapplication
-../mvnw-java17.sh spring-boot:run
+../mvnw-java25.sh spring-boot:run
 
 # Build without running tests (if tests exist)
-./mvnw-java17.sh clean install -DskipTests
+./mvnw-java25.sh clean install -DskipTests
 
 # Package for distribution
-./mvnw-java17.sh clean package
+./mvnw-java25.sh clean package
 ```
 
 ### Running in IntelliJ IDEA
@@ -51,7 +53,7 @@ The project uses **JavaFX 21.0.5** which has good macOS compatibility. No specia
 
 **Important**:
 - Do NOT add `--add-modules` flags (project uses classpath, not module path)
-- Ensure the **JRE** is set to Java 17 (temurin-17)
+- Ensure the **JRE** is set to Java 25 (temurin-25)
 
 **Historical Note**: Earlier versions of this project used JavaFX 17.0.1, which had critical bugs on macOS (especially Apple Silicon) causing `NSTrackingRectTag` crashes. If you encounter these crashes, ensure you're using JavaFX 21+ by checking the `<javafx.version>` property in pom.xml.
 
@@ -82,9 +84,9 @@ Run `mvn validate` to install these if needed.
 ### Lombok Configuration
 
 The project uses **Lombok 1.18.34** for code generation (@Data, @Getter, @Setter, @Slf4j annotations). The `maven-compiler-plugin` is configured with annotation processing to generate getters, setters, constructors, and logger fields at compile time. If you see compilation errors about missing methods, ensure:
-- You're using Java 17 (not a newer version)
+- You're using Java 25
 - The `maven-compiler-plugin` in `tripsapplication/pom.xml` has the `annotationProcessorPaths` configuration
-- You run a clean build: `./mvnw-java17.sh clean compile`
+- You run a clean build: `./mvnw-java25.sh clean compile`
 
 ## Architecture Overview
 
@@ -935,8 +937,8 @@ Always verify coordinate system when working with star positions:
 
 ## Technology Stack
 
-- **Language**: Java 17
-- **UI Framework**: JavaFX 21.0.5
+- **Language**: Java 25
+- **UI Framework**: JavaFX 25.0.2
 - **Backend**: Spring Boot 4.0.2
 - **Database**: H2 (embedded, file-based)
 - **ORM**: Spring Data JPA with Hibernate

@@ -1,6 +1,6 @@
 package com.teamgannon.trips.config.application.model;
 
-import com.teamgannon.trips.planetarymodelling.planetgen.math.Color;
+import javafx.scene.paint.Color;
 import lombok.Data;
 
 import java.io.Serial;
@@ -18,8 +18,8 @@ public class DisplayPreferences implements Serializable {
 
     private int gridScale = 5;
 
-    private Color gridColor = Color.BLUE;
+    private transient Color gridColor = Color.BLUE;
 
-    private Color stemColor = Color.BLUE;
+    private transient Color stemColor = Color.BLUE;
 
 }

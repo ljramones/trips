@@ -217,8 +217,8 @@ class ProgressListenerTest {
         @Test
         @DisplayName("Phase count matches generation steps")
         void phaseCountMatchesSteps() {
-            // Should have 7 phases for the generation pipeline
-            assertThat(Phase.values()).hasSize(7);
+            // Should have 8 phases for the generation pipeline (includes IMPACT_FEATURES)
+            assertThat(Phase.values()).hasSize(8);
         }
     }
 

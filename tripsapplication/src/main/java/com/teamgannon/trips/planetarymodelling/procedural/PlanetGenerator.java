@@ -1,5 +1,9 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
+import com.teamgannon.trips.planetarymodelling.procedural.biome.BiomeClassifier;
+import com.teamgannon.trips.planetarymodelling.procedural.biome.BiomeType;
+import com.teamgannon.trips.planetarymodelling.procedural.impact.CraterCalculator;
+import com.teamgannon.trips.planetarymodelling.procedural.impact.ImpactResult;
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
 import org.jzy3d.plot3d.primitives.Composite;
 import org.jzy3d.plot3d.primitives.Shape;
@@ -206,6 +210,36 @@ public class PlanetGenerator {
             return new PlanetRenderer(polygons, heights, scale)
                 .createTerrainWithRainfallOverlay(rainfall(), blendFactor);
         }
+
+        /**
+         * Classifies each polygon into a biome type based on elevation, climate, and rainfall.
+         * The classification is computed on demand (not cached).
+         *
+         * @return Array of BiomeType for each polygon
+         */
+        public BiomeType[] biomes() {
+            // Build adjacency array format expected by BiomeClassifier
+            int[][] adjacencies = new int[polygons.size()][];
+            for (int i = 0; i < polygons.size(); i++) {
+                adjacencies[i] = adjacency.neighbors(i);
+            }
+
+            return BiomeClassifier.classify(heights, climates, erosionResult, adjacencies);
+        }
+
+        /**
+         * Returns the biome distribution as a map of biome type to count.
+         */
+        public java.util.Map<BiomeType, Integer> biomeDistribution() {
+            return BiomeClassifier.getDistribution(biomes());
+        }
+
+        /**
+         * Returns the land biome distribution as percentages.
+         */
+        public java.util.Map<BiomeType, Double> landBiomePercentages() {
+            return BiomeClassifier.getLandDistribution(biomes());
+        }
     }
 
     public GeneratedPlanet generate() {
@@ -260,6 +294,23 @@ public class PlanetGenerator {
             double[] baseHeights = elevationResult.continuousHeights();
             listener.onProgressUpdate(currentPhase, 1.0);
             listener.onPhaseCompleted(currentPhase);
+
+            // Phase 5.5: Impact features (craters and volcanoes)
+            if (config.craterDensity() > 0 || (config.enableVolcanos() && config.volcanoDensity() > 0)) {
+                currentPhase = GenerationProgressListener.Phase.IMPACT_FEATURES;
+                listener.onPhaseStarted(currentPhase,
+                    "Placing impact craters and volcanic features");
+                CraterCalculator craterCalc = new CraterCalculator(
+                    config, polygons, adjacency, baseHeights, plateAssignment, boundaryAnalysis);
+                ImpactResult impactResult = craterCalc.calculate();
+                // Update baseHeights with impact modifications (already done in place)
+                // Update integer heights to match
+                for (int i = 0; i < heights.length; i++) {
+                    heights[i] = (int) Math.round(Math.max(-4, Math.min(4, baseHeights[i])));
+                }
+                listener.onProgressUpdate(currentPhase, 1.0);
+                listener.onPhaseCompleted(currentPhase);
+            }
 
             // Phase 6: Climate calculation
             currentPhase = GenerationProgressListener.Phase.CLIMATE_CALCULATION;

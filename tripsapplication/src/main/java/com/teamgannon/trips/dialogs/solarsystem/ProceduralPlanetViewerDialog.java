@@ -37,12 +37,16 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
+import javafx.scene.input.KeyCode;
+
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -74,6 +78,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     // Mouse drag state
     private double mouseX, mouseY;
     private double mouseOldX, mouseOldY;
+
+    // Keyboard input tracking
+    private final Set<KeyCode> pressedKeys = new HashSet<>();
 
     // Rendering options
     private boolean showWireframe = false;
@@ -234,6 +241,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         // Set up mouse interaction
         setupMouseHandlers();
+
+        // Start animation loop for keyboard input processing
+        ensureAnimationRunning();
 
         // Wrap SubScene in a simple container with fixed size
         StackPane viewPane = new StackPane();
@@ -1477,6 +1487,20 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             newZ = Math.max(-8, Math.min(-1.5, newZ));
             camera.setTranslateZ(newZ);
         });
+
+        // Keyboard input handlers
+        subScene.setOnKeyPressed(event -> {
+            pressedKeys.add(event.getCode());
+            event.consume();
+        });
+        subScene.setOnKeyReleased(event -> {
+            pressedKeys.remove(event.getCode());
+            event.consume();
+        });
+        subScene.setFocusTraversable(true);
+
+        // Request focus when clicked
+        subScene.setOnMouseClicked(event -> subScene.requestFocus());
     }
 
     /**
@@ -1494,22 +1518,85 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                 if (autoRotate) {
                     spinRotate.setAngle(spinRotate.getAngle() + 0.3);
                 }
+                processKeyboardInput();
             })
         );
         rotationAnimation.setCycleCount(Animation.INDEFINITE);
     }
 
+    /**
+     * Process keyboard input for flight simulator style controls.
+     * Called every animation frame (30ms).
+     *
+     * Key bindings:
+     * - W/S: Zoom in/out (camera Z)
+     * - A/D: Rotate left/right (rotateY)
+     * - Q/E: Rotate up/down (rotateX)
+     * - R: Reset view
+     * - SPACE: Toggle auto-spin
+     */
+    private void processKeyboardInput() {
+        double rotateSpeed = 1.0;
+        double zoomSpeed = 0.05;
+
+        // Zoom in/out
+        if (pressedKeys.contains(KeyCode.W)) {
+            camera.setTranslateZ(camera.getTranslateZ() + zoomSpeed);
+        }
+        if (pressedKeys.contains(KeyCode.S)) {
+            camera.setTranslateZ(camera.getTranslateZ() - zoomSpeed);
+        }
+
+        // Rotate left/right
+        if (pressedKeys.contains(KeyCode.A)) {
+            rotateY.setAngle(rotateY.getAngle() - rotateSpeed);
+        }
+        if (pressedKeys.contains(KeyCode.D)) {
+            rotateY.setAngle(rotateY.getAngle() + rotateSpeed);
+        }
+
+        // Rotate up/down
+        if (pressedKeys.contains(KeyCode.Q)) {
+            double newAngle = rotateX.getAngle() + rotateSpeed;
+            rotateX.setAngle(Math.min(85, newAngle));
+        }
+        if (pressedKeys.contains(KeyCode.E)) {
+            double newAngle = rotateX.getAngle() - rotateSpeed;
+            rotateX.setAngle(Math.max(-85, newAngle));
+        }
+
+        // Reset view (single action)
+        if (pressedKeys.contains(KeyCode.R)) {
+            resetView();
+            pressedKeys.remove(KeyCode.R);
+        }
+
+        // Toggle auto-spin (single action)
+        if (pressedKeys.contains(KeyCode.SPACE)) {
+            setAutoRotate(!autoRotate);
+            pressedKeys.remove(KeyCode.SPACE);
+        }
+
+        // Clamp zoom
+        double z = camera.getTranslateZ();
+        camera.setTranslateZ(Math.max(-8, Math.min(-1.5, z)));
+    }
+
     private void setAutoRotate(boolean enabled) {
         this.autoRotate = enabled;
-        if (enabled) {
-            if (rotationAnimation == null) {
-                initializeAnimation();
-            }
+        // Always ensure animation is running for keyboard input processing
+        ensureAnimationRunning();
+    }
+
+    /**
+     * Ensure the animation loop is running for keyboard input processing.
+     */
+    private void ensureAnimationRunning() {
+        if (rotationAnimation == null) {
+            initializeAnimation();
+        }
+        if (rotationAnimation.getStatus() != Animation.Status.RUNNING) {
             rotationAnimation.play();
-        } else {
-            if (rotationAnimation != null) {
-                rotationAnimation.pause();
-            }
         }
     }
 
