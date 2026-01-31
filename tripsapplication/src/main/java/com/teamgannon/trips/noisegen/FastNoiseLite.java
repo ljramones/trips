@@ -147,6 +147,14 @@ public class FastNoiseLite {
     }
 
     /**
+     * Gets the current frequency used for all noise types.
+     * @return The current frequency value
+     */
+    public float GetFrequency() {
+        return config.getFrequency();
+    }
+
+    /**
      * Sets frequency for all noise types
      * Default: 0.01
      */

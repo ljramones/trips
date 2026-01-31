@@ -14,9 +14,10 @@ A comprehensive guide to using the FastNoiseLite noise generation library for pr
 8. [Noise Transforms](#noise-transforms) *(Extension)*
 9. [Spatial Utilities](#spatial-utilities) *(Extension)*
 10. [Advanced Algorithms](#advanced-algorithms) *(Extension)*
-11. [Configuration Reference](#configuration-reference)
-12. [Advanced Usage](#advanced-usage)
-13. [Package Structure](#package-structure)
+11. [Noise Derivatives](#noise-derivatives) *(Extension)*
+12. [Configuration Reference](#configuration-reference)
+13. [Advanced Usage](#advanced-usage)
+14. [Package Structure](#package-structure)
 
 ---
 
@@ -48,6 +49,7 @@ This implementation extends the original FastNoiseLite with additional features 
 | **Chunked Noise** | Infinite worlds without float precision issues | [Spatial Utilities](#spatial-utilities) |
 | **LOD Noise** | Distance-based octave reduction for performance | [Spatial Utilities](#spatial-utilities) |
 | **Tiled Noise** | Seamlessly tileable noise for textures | [Spatial Utilities](#spatial-utilities) |
+| **Seamless Image API** | Godot-style getSeamlessImage() for textures | [Spatial Utilities](#spatial-utilities) |
 | **Double Precision** | Double-precision coordinates for astronomical scales | [Spatial Utilities](#spatial-utilities) |
 | **Billow Fractal** | Soft, cloud-like fractal (inverted ridged) | [Fractal Noise](#fractal-noise) |
 | **Hybrid Multifractal** | Multiplicative/additive blend for terrain | [Fractal Noise](#fractal-noise) |
@@ -57,6 +59,9 @@ This implementation extends the original FastNoiseLite with additional features 
 | **Sparse Convolution** | Memory-efficient procedural detail | [Advanced Algorithms](#advanced-algorithms) |
 | **Hierarchical Noise** | Quadtree/octree-based adaptive sampling | [Advanced Algorithms](#advanced-algorithms) |
 | **Turbulence Noise** | Curl noise and advanced turbulence effects | [Advanced Algorithms](#advanced-algorithms) |
+| **Analytical Derivatives** | Exact noise gradients without numerical differentiation | [Noise Derivatives](#noise-derivatives) |
+| **Normal Map Generation** | GPU-ready normal maps from noise | [Noise Derivatives](#noise-derivatives) |
+| **TBN Basis Computation** | Tangent-Bitangent-Normal for bump mapping | [Noise Derivatives](#noise-derivatives) |
 
 ### New Classes
 
@@ -85,6 +90,10 @@ spatial/                      # [NEW] Entire package
 ├── SparseConvolutionNoise.java # Memory-efficient sparse sampling
 ├── HierarchicalNoise.java    # Quadtree/octree adaptive sampling
 └── TurbulenceNoise.java      # Curl noise and turbulence effects
+
+derivatives/                  # [NEW] Entire package
+├── NoiseDerivatives.java     # Main utility: gradients, normals, FBm+derivatives
+└── SimplexDerivatives.java   # Analytical simplex derivative computation
 ```
 
 ### New API Methods
@@ -811,9 +820,45 @@ float vNorm = tiled.getNoiseNormalized(0.5f, 0.5f);  // Center of tile
 float animated = tiled.getNoise2DWithZ(x, y, time);
 ```
 
+#### Seamless Image Generation (Godot-style API)
+
+Generate ready-to-use image data directly:
+
+```java
+TiledNoise tiled = new TiledNoise(baseNoise, 256, 256);
+
+// Grayscale image (1 byte per pixel)
+byte[] grayscale = tiled.getSeamlessImage(256, 256);
+
+// RGBA image (4 bytes per pixel, full opacity)
+byte[] rgba = tiled.getSeamlessImageRGBA(256, 256);
+
+// RGB with custom color mapping
+byte[] terrain = tiled.getSeamlessImageRGB(256, 256, TiledNoise.TERRAIN_GRADIENT);
+byte[] heatmap = tiled.getSeamlessImageRGB(256, 256, TiledNoise.HEAT_GRADIENT);
+
+// Custom grayscale mapping
+byte[] binary = tiled.getSeamlessImage(256, 256, TiledNoise.threshold(0f));
+byte[] inverted = tiled.getSeamlessImage(256, 256, TiledNoise.GRAYSCALE_INVERTED);
+
+// Float arrays for further processing
+float[] rawValues = tiled.getSeamlessImageFloat(256, 256);        // Range [-1, 1]
+float[] normalized = tiled.getSeamlessImageFloatNormalized(256, 256);  // Range [0, 1]
+
+// 3D texture slice
+byte[] slice = tiled.getSeamlessImage3DSlice(256, 256, zDepth);
+```
+
+**Built-in Color Mappers:**
+- `GRAYSCALE` - Standard grayscale mapping
+- `GRAYSCALE_INVERTED` - Inverted grayscale
+- `TERRAIN_GRADIENT` - Blue (water) → Green (land) → Brown (hills) → White (snow)
+- `HEAT_GRADIENT` - Blue → Cyan → Green → Yellow → Red
+- `threshold(float t)` - Binary black/white at threshold
+
 **How it works:** Maps 2D coordinates onto a 4D torus surface where opposite edges naturally connect. For 3D tiling, approximates with blended 4D samples.
 
-**Best for:** Tileable textures, infinite scrolling backgrounds, spherical mapping.
+**Best for:** Tileable textures, infinite scrolling backgrounds, spherical mapping, texture atlases.
 
 ### DoublePrecisionNoise
 
@@ -1072,6 +1117,171 @@ SparseConvolutionNoise detailNoise = new SparseConvolutionNoise(42, 0.4f, 2.0f);
 
 ---
 
+## Noise Derivatives
+
+> **Extension**: This entire feature set is not part of the original FastNoiseLite library.
+
+Compute analytical noise gradients (derivatives) and generate normal maps directly from noise. Essential for terrain lighting, bump mapping, and rock/cliff shaders that need surface normals without expensive numerical differentiation.
+
+```java
+import com.teamgannon.trips.noisegen.derivatives.NoiseDerivatives;
+import com.teamgannon.trips.noisegen.derivatives.SimplexDerivatives;
+```
+
+### Why Analytical Derivatives?
+
+Traditional normal map generation requires sampling noise at 2-6 additional points per pixel to compute finite differences. Analytical derivatives compute exact gradients in a single pass, significantly faster for large normal map textures or real-time terrain rendering.
+
+| Method | 2D Samples | 3D Samples | Accuracy |
+|--------|------------|------------|----------|
+| Numerical (central diff) | 5 | 7 | Approximate |
+| Numerical (forward diff) | 3 | 4 | Less accurate |
+| Analytical | 1 | 1 | Exact |
+
+### Basic Usage
+
+```java
+FastNoiseLite noise = new FastNoiseLite(1337);
+noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+noise.SetFrequency(0.02f);
+
+// Create derivatives utility
+NoiseDerivatives deriv = new NoiseDerivatives(noise);
+
+// Get noise value and gradient in one call
+NoiseDerivatives.NoiseWithGradient2D result = deriv.getNoiseWithGradient2D(x, y);
+float value = result.value;   // Noise value at (x, y)
+float dx = result.dx;         // Partial derivative dN/dx
+float dy = result.dy;         // Partial derivative dN/dy
+
+// 3D version
+NoiseDerivatives.NoiseWithGradient3D result3D = deriv.getNoiseWithGradient3D(x, y, z);
+```
+
+### Analytical vs Numerical Mode
+
+```java
+// Use analytical derivatives (faster, uses SimplexDerivatives)
+NoiseDerivatives analytical = new NoiseDerivatives(noise);
+analytical.setUseAnalytical(true);  // Default
+
+// Use numerical derivatives (slower, but matches FastNoiseLite exactly)
+NoiseDerivatives numerical = new NoiseDerivatives(noise, 0.001f);  // epsilon for finite diff
+numerical.setUseAnalytical(false);
+```
+
+Note: Analytical mode uses a simplex noise implementation, which may produce slightly different values than FastNoiseLite's OpenSimplex2. For terrain rendering where visual quality matters more than exact matching, analytical mode is recommended.
+
+### Computing Surface Normals
+
+```java
+// 2D heightmap normal (for terrain)
+float heightScale = 10.0f;  // How much height affects normal
+float[] normal = deriv.computeNormal2D(x, y, heightScale);
+// Returns [nx, ny, nz] normalized vector pointing "up" from terrain
+
+// 3D volumetric normal (for isosurfaces/marching cubes)
+float[] normal3D = deriv.computeNormal3D(x, y, z);
+// Returns gradient direction (points toward higher values)
+```
+
+### Generating Normal Maps
+
+```java
+// Generate 256x256 normal map
+int width = 256, height = 256;
+float worldSize = 10.0f;      // Covers 10x10 world units
+float heightScale = 5.0f;     // Height multiplier for normal intensity
+
+byte[] rgbData = deriv.generateNormalMapRGB(width, height, worldSize, heightScale);
+// Returns width*height*3 bytes (RGB format, ready for GPU upload)
+
+// Save to file (example with JavaFX)
+WritableImage image = new WritableImage(width, height);
+PixelWriter writer = image.getPixelWriter();
+for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+        int i = (y * width + x) * 3;
+        int r = rgbData[i] & 0xFF;
+        int g = rgbData[i + 1] & 0xFF;
+        int b = rgbData[i + 2] & 0xFF;
+        writer.setColor(x, y, Color.rgb(r, g, b));
+    }
+}
+```
+
+### FBm with Accumulated Derivatives
+
+For fractal noise, derivatives accumulate across octaves:
+
+```java
+// FBm noise with derivatives (matches FastNoiseLite's FBm behavior)
+NoiseDerivatives.NoiseWithGradient2D fbmResult =
+    deriv.getFBmWithGradient2D(x, y, 4, 2.0f, 0.5f);
+// 4 octaves, lacunarity 2.0, gain 0.5
+
+NoiseDerivatives.NoiseWithGradient3D fbmResult3D =
+    deriv.getFBmWithGradient3D(x, y, z, 6, 2.0f, 0.5f);
+```
+
+### TBN Basis Computation
+
+For proper bump mapping with rotated textures, compute the Tangent-Bitangent-Normal basis:
+
+```java
+// Compute TBN basis for bump mapping
+float[][] tbn = deriv.computeTBN(x, y, heightScale);
+float[] tangent = tbn[0];    // T vector
+float[] bitangent = tbn[1];  // B vector
+float[] normal = tbn[2];     // N vector
+
+// Transform detail normal map sample into world space
+float detailNx = ..., detailNy = ..., detailNz = ...;  // From detail normal map
+float worldNx = tangent[0]*detailNx + bitangent[0]*detailNy + normal[0]*detailNz;
+float worldNy = tangent[1]*detailNx + bitangent[1]*detailNy + normal[1]*detailNz;
+float worldNz = tangent[2]*detailNx + bitangent[2]*detailNy + normal[2]*detailNz;
+```
+
+### Direct SimplexDerivatives Access
+
+For maximum control, use the underlying analytical implementation directly:
+
+```java
+SimplexDerivatives simplex = new SimplexDerivatives(1337);
+
+// Evaluate 2D simplex with analytical derivatives
+NoiseDerivatives.NoiseWithGradient2D result = simplex.evaluate2D(seed, x, y);
+
+// Evaluate 3D simplex with analytical derivatives
+NoiseDerivatives.NoiseWithGradient3D result3D = simplex.evaluate3D(seed, x, y, z);
+```
+
+### Terrain Lighting Example
+
+```java
+public Color getTerrainColor(float x, float y) {
+    // Get terrain height and normal
+    NoiseDerivatives.NoiseWithGradient2D result = deriv.getNoiseWithGradient2D(x, y);
+    float height = result.value;
+    float[] normal = deriv.computeNormal2D(x, y, 1.0f);
+
+    // Simple directional lighting
+    float[] lightDir = {0.5f, 0.5f, 0.707f};  // Normalized
+    float diffuse = Math.max(0,
+        normal[0]*lightDir[0] + normal[1]*lightDir[1] + normal[2]*lightDir[2]);
+
+    // Base color based on height
+    Color baseColor = height > 0.3f ? Color.GRAY : Color.GREEN;
+
+    // Apply lighting
+    float ambient = 0.3f;
+    float brightness = ambient + (1 - ambient) * diffuse;
+    return baseColor.deriveColor(0, 1, brightness, 1);
+}
+```
+
+---
+
 ## Configuration Reference
 
 ### All Settings with Defaults
@@ -1253,6 +1463,9 @@ noisegen/
 │   ├── SparseConvolutionNoise.java # Memory-efficient sparse sampling
 │   ├── HierarchicalNoise.java   # Quadtree/octree adaptive LOD
 │   └── TurbulenceNoise.java     # [EXT] Curl noise and turbulence
+├── derivatives/                  # [EXT] Entire package
+│   ├── NoiseDerivatives.java    # Main utility: gradients, normals, normal maps
+│   └── SimplexDerivatives.java  # Analytical simplex derivative computation
 └── warp/
     └── DomainWarpProcessor.java # Domain warp algorithms
 ```

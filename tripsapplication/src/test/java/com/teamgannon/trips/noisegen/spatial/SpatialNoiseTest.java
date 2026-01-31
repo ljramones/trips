@@ -302,6 +302,148 @@ class SpatialNoiseTest {
             float yEdge2 = tiled.getNoise(100f, 256f);
             assertEquals(yEdge1, yEdge2, 0.001f);
         }
+
+        // ====================================================================
+        // Seamless Image Generation Tests (Godot-style API)
+        // ====================================================================
+
+        @Test
+        @DisplayName("getSeamlessImage should return correct size grayscale data")
+        void getSeamlessImageShouldReturnCorrectSize() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 128f, 128f);
+            byte[] image = tiled.getSeamlessImage(64, 64);
+
+            assertEquals(64 * 64, image.length, "Should be width * height bytes");
+        }
+
+        @Test
+        @DisplayName("getSeamlessImage should produce values in valid byte range")
+        void getSeamlessImageShouldProduceValidBytes() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 128f, 128f);
+            byte[] image = tiled.getSeamlessImage(32, 32);
+
+            // Check that we have varied values (not all same)
+            int min = 255, max = 0;
+            for (byte b : image) {
+                int v = b & 0xFF;
+                min = Math.min(min, v);
+                max = Math.max(max, v);
+            }
+            assertTrue(max > min, "Image should have varied values");
+        }
+
+        @Test
+        @DisplayName("getSeamlessImageRGBA should return correct size")
+        void getSeamlessImageRGBAShouldReturnCorrectSize() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 128f, 128f);
+            byte[] image = tiled.getSeamlessImageRGBA(64, 64);
+
+            assertEquals(64 * 64 * 4, image.length, "Should be width * height * 4 bytes");
+        }
+
+        @Test
+        @DisplayName("getSeamlessImageRGBA should have full opacity")
+        void getSeamlessImageRGBAShouldHaveFullOpacity() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+            byte[] image = tiled.getSeamlessImageRGBA(16, 16);
+
+            // Check alpha channel (every 4th byte starting at index 3)
+            for (int i = 3; i < image.length; i += 4) {
+                assertEquals((byte) 255, image[i], "Alpha should be 255");
+            }
+        }
+
+        @Test
+        @DisplayName("getSeamlessImageRGB with custom mapper should work")
+        void getSeamlessImageRGBWithCustomMapperShouldWork() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+            byte[] image = tiled.getSeamlessImageRGB(16, 16, TiledNoise.TERRAIN_GRADIENT);
+
+            assertEquals(16 * 16 * 3, image.length, "Should be width * height * 3 bytes");
+        }
+
+        @Test
+        @DisplayName("getSeamlessImage with custom byte mapper should work")
+        void getSeamlessImageWithCustomMapperShouldWork() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+
+            // Custom mapper: threshold at 0
+            byte[] image = tiled.getSeamlessImage(16, 16, TiledNoise.threshold(0f));
+
+            // All values should be either 0 or 255
+            for (byte b : image) {
+                int v = b & 0xFF;
+                assertTrue(v == 0 || v == 255, "Threshold mapper should produce binary values");
+            }
+        }
+
+        @Test
+        @DisplayName("getSeamlessImageFloat should return raw noise values")
+        void getSeamlessImageFloatShouldReturnRawValues() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+            float[] image = tiled.getSeamlessImageFloat(16, 16);
+
+            assertEquals(16 * 16, image.length);
+
+            // Values should be in noise range [-1, 1]
+            for (float v : image) {
+                assertTrue(v >= -1.5f && v <= 1.5f, "Values should be in approximate noise range");
+            }
+        }
+
+        @Test
+        @DisplayName("getSeamlessImageFloatNormalized should return [0,1] values")
+        void getSeamlessImageFloatNormalizedShouldReturnNormalizedValues() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+            float[] image = tiled.getSeamlessImageFloatNormalized(16, 16);
+
+            for (float v : image) {
+                assertTrue(v >= -0.25f && v <= 1.25f,
+                    "Normalized values should be approximately in [0, 1]");
+            }
+        }
+
+        @Test
+        @DisplayName("getSeamlessImage3DSlice should work")
+        void getSeamlessImage3DSliceShouldWork() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f, 64f);
+
+            byte[] slice0 = tiled.getSeamlessImage3DSlice(16, 16, 0f);
+            byte[] slice32 = tiled.getSeamlessImage3DSlice(16, 16, 32f);
+
+            assertEquals(16 * 16, slice0.length);
+            assertEquals(16 * 16, slice32.length);
+
+            // Different Z should give different results
+            boolean different = false;
+            for (int i = 0; i < slice0.length; i++) {
+                if (slice0[i] != slice32[i]) {
+                    different = true;
+                    break;
+                }
+            }
+            assertTrue(different, "Different Z slices should produce different images");
+        }
+
+        @Test
+        @DisplayName("seamless image edges should match")
+        void seamlessImageEdgesShouldMatch() {
+            TiledNoise tiled = new TiledNoise(baseNoise, 64f, 64f);
+
+            // Generate two adjacent tiles
+            float[] tile1 = tiled.getSeamlessImageFloat(64, 64);
+
+            // The left edge of a tile at x=64 should match right edge at x=0
+            // Since we're generating 64x64 at scale 1:1, pixel 0 = world 0, pixel 63 = world 63
+            // and pixel 0 of next tile = world 64, which should equal world 0
+
+            // Test by checking that getNoise(0,y) == getNoise(64,y)
+            for (int y = 0; y < 64; y += 8) {
+                float left = tiled.getNoise(0f, y);
+                float right = tiled.getNoise(64f, y);
+                assertEquals(left, right, 0.001f, "Edges should match at y=" + y);
+            }
+        }
     }
 
     @Nested

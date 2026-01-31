@@ -278,4 +278,306 @@ public class TiledNoise {
     public FastNoiseLite getNoise() {
         return noise;
     }
+
+    // ========================================================================
+    // Seamless Image Generation (Godot-style convenience methods)
+    // ========================================================================
+
+    /**
+     * Generate a seamless grayscale image.
+     *
+     * <p>Similar to Godot's {@code get_seamless_image()} - returns image data
+     * ready for texture creation.
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @return Grayscale pixel data (width * height bytes, values 0-255)
+     */
+    public byte[] getSeamlessImage(int width, int height) {
+        byte[] pixels = new byte[width * height];
+        float scaleX = tileWidth / width;
+        float scaleY = tileHeight / height;
+
+        int index = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float value = getNoise(x * scaleX, y * scaleY);
+                // Map from [-1, 1] to [0, 255]
+                int gray = (int) ((value + 1.0f) * 0.5f * 255.0f);
+                pixels[index++] = (byte) Math.max(0, Math.min(255, gray));
+            }
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Generate a seamless RGBA image.
+     *
+     * <p>Returns 4 bytes per pixel (R, G, B, A) with noise mapped to grayscale
+     * and full opacity.
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @return RGBA pixel data (width * height * 4 bytes)
+     */
+    public byte[] getSeamlessImageRGBA(int width, int height) {
+        byte[] pixels = new byte[width * height * 4];
+        float scaleX = tileWidth / width;
+        float scaleY = tileHeight / height;
+
+        int index = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float value = getNoise(x * scaleX, y * scaleY);
+                int gray = (int) ((value + 1.0f) * 0.5f * 255.0f);
+                gray = Math.max(0, Math.min(255, gray));
+
+                pixels[index++] = (byte) gray;  // R
+                pixels[index++] = (byte) gray;  // G
+                pixels[index++] = (byte) gray;  // B
+                pixels[index++] = (byte) 255;   // A (fully opaque)
+            }
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Generate a seamless image with custom value mapping.
+     *
+     * <p>Allows custom transformation of noise values before conversion to pixels.
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @param mapper Function to map noise value [-1,1] to byte [0,255]
+     * @return Grayscale pixel data (width * height bytes)
+     */
+    public byte[] getSeamlessImage(int width, int height, NoiseToByteMapper mapper) {
+        byte[] pixels = new byte[width * height];
+        float scaleX = tileWidth / width;
+        float scaleY = tileHeight / height;
+
+        int index = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float value = getNoise(x * scaleX, y * scaleY);
+                pixels[index++] = mapper.map(value);
+            }
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Generate a seamless RGB image with custom color mapping.
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @param mapper Function to map noise value [-1,1] to RGB values
+     * @return RGB pixel data (width * height * 3 bytes)
+     */
+    public byte[] getSeamlessImageRGB(int width, int height, NoiseToRGBMapper mapper) {
+        byte[] pixels = new byte[width * height * 3];
+        float scaleX = tileWidth / width;
+        float scaleY = tileHeight / height;
+
+        int index = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float value = getNoise(x * scaleX, y * scaleY);
+                byte[] rgb = mapper.map(value);
+                pixels[index++] = rgb[0];  // R
+                pixels[index++] = rgb[1];  // G
+                pixels[index++] = rgb[2];  // B
+            }
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Generate a seamless 3D texture slice.
+     *
+     * <p>Generates a 2D slice of seamlessly tiling 3D noise at a given Z depth.
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @param z Z coordinate for the slice
+     * @return Grayscale pixel data (width * height bytes)
+     */
+    public byte[] getSeamlessImage3DSlice(int width, int height, float z) {
+        byte[] pixels = new byte[width * height];
+        float scaleX = tileWidth / width;
+        float scaleY = tileHeight / height;
+
+        int index = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float value = getNoise(x * scaleX, y * scaleY, z);
+                int gray = (int) ((value + 1.0f) * 0.5f * 255.0f);
+                pixels[index++] = (byte) Math.max(0, Math.min(255, gray));
+            }
+        }
+
+        return pixels;
+    }
+
+    /**
+     * Generate seamless image as float array (for further processing).
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @return Float array with noise values in range [-1, 1]
+     */
+    public float[] getSeamlessImageFloat(int width, int height) {
+        return generateTileFlat(width, height);
+    }
+
+    /**
+     * Generate seamless image with normalized float values [0, 1].
+     *
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @return Float array with noise values in range [0, 1]
+     */
+    public float[] getSeamlessImageFloatNormalized(int width, int height) {
+        float[] raw = generateTileFlat(width, height);
+        for (int i = 0; i < raw.length; i++) {
+            raw[i] = (raw[i] + 1.0f) * 0.5f;
+        }
+        return raw;
+    }
+
+    // ========================================================================
+    // Functional Interfaces for Custom Mapping
+    // ========================================================================
+
+    /**
+     * Maps a noise value to a single byte (grayscale).
+     */
+    @FunctionalInterface
+    public interface NoiseToByteMapper {
+        /**
+         * Map noise value to byte.
+         * @param noiseValue Noise value in range [-1, 1]
+         * @return Byte value [0, 255] (returned as byte)
+         */
+        byte map(float noiseValue);
+    }
+
+    /**
+     * Maps a noise value to RGB bytes.
+     */
+    @FunctionalInterface
+    public interface NoiseToRGBMapper {
+        /**
+         * Map noise value to RGB.
+         * @param noiseValue Noise value in range [-1, 1]
+         * @return Array of 3 bytes [R, G, B]
+         */
+        byte[] map(float noiseValue);
+    }
+
+    // ========================================================================
+    // Built-in Mappers
+    // ========================================================================
+
+    /**
+     * Standard grayscale mapper: [-1,1] → [0,255].
+     */
+    public static final NoiseToByteMapper GRAYSCALE = value -> {
+        int gray = (int) ((value + 1.0f) * 0.5f * 255.0f);
+        return (byte) Math.max(0, Math.min(255, gray));
+    };
+
+    /**
+     * Inverted grayscale mapper: [-1,1] → [255,0].
+     */
+    public static final NoiseToByteMapper GRAYSCALE_INVERTED = value -> {
+        int gray = (int) ((1.0f - value) * 0.5f * 255.0f);
+        return (byte) Math.max(0, Math.min(255, gray));
+    };
+
+    /**
+     * High contrast mapper with adjustable threshold.
+     */
+    public static NoiseToByteMapper threshold(float threshold) {
+        return value -> (byte) (value > threshold ? 255 : 0);
+    }
+
+    /**
+     * Terrain color gradient mapper (blue → green → brown → white).
+     */
+    public static final NoiseToRGBMapper TERRAIN_GRADIENT = value -> {
+        // Normalize to [0, 1]
+        float t = (value + 1.0f) * 0.5f;
+
+        byte r, g, b;
+        if (t < 0.3f) {
+            // Deep water to shallow water (dark blue to light blue)
+            float lt = t / 0.3f;
+            r = (byte) (int) (30 + lt * 50);
+            g = (byte) (int) (60 + lt * 100);
+            b = (byte) (int) (150 + lt * 50);
+        } else if (t < 0.5f) {
+            // Beach/lowland (tan to green)
+            float lt = (t - 0.3f) / 0.2f;
+            r = (byte) (int) (80 - lt * 40);
+            g = (byte) (int) (160 + lt * 40);
+            b = (byte) (int) (80 - lt * 30);
+        } else if (t < 0.7f) {
+            // Hills (green to brown)
+            float lt = (t - 0.5f) / 0.2f;
+            r = (byte) (int) (40 + lt * 100);
+            g = (byte) (int) (200 - lt * 100);
+            b = (byte) (int) (50 - lt * 20);
+        } else if (t < 0.85f) {
+            // Mountains (brown to gray)
+            float lt = (t - 0.7f) / 0.15f;
+            r = (byte) (int) (140 - lt * 20);
+            g = (byte) (int) (100 + lt * 20);
+            b = (byte) (int) (30 + lt * 70);
+        } else {
+            // Snow caps (gray to white)
+            float lt = (t - 0.85f) / 0.15f;
+            r = (byte) (int) (120 + lt * 135);
+            g = (byte) (int) (120 + lt * 135);
+            b = (byte) (int) (100 + lt * 155);
+        }
+
+        return new byte[]{r, g, b};
+    };
+
+    /**
+     * Heat map gradient (blue → cyan → green → yellow → red).
+     */
+    public static final NoiseToRGBMapper HEAT_GRADIENT = value -> {
+        float t = (value + 1.0f) * 0.5f;
+        byte r, g, b;
+
+        if (t < 0.25f) {
+            float lt = t / 0.25f;
+            r = 0;
+            g = (byte) (int) (lt * 255);
+            b = (byte) 255;
+        } else if (t < 0.5f) {
+            float lt = (t - 0.25f) / 0.25f;
+            r = 0;
+            g = (byte) 255;
+            b = (byte) (int) ((1 - lt) * 255);
+        } else if (t < 0.75f) {
+            float lt = (t - 0.5f) / 0.25f;
+            r = (byte) (int) (lt * 255);
+            g = (byte) 255;
+            b = 0;
+        } else {
+            float lt = (t - 0.75f) / 0.25f;
+            r = (byte) 255;
+            g = (byte) (int) ((1 - lt) * 255);
+            b = 0;
+        }
+
+        return new byte[]{r, g, b};
+    };
 }
