@@ -112,11 +112,11 @@ public class ScatterMeshTest {
     class CullFaceTests {
 
         @Test
-        @DisplayName("Default cullFace is BACK")
+        @DisplayName("Default cullFace is NONE for particle visibility from all angles")
         void testDefaultCullFace() {
             ScatterMesh mesh = new ScatterMesh(testPoints);
 
-            assertThat(mesh.getCullFace(), is(CullFace.BACK));
+            assertThat(mesh.getCullFace(), is(CullFace.NONE));
         }
 
         @Test
@@ -124,9 +124,9 @@ public class ScatterMeshTest {
         void testSetCullFace() {
             ScatterMesh mesh = new ScatterMesh(testPoints);
 
-            mesh.setCullFace(CullFace.NONE);
+            mesh.setCullFace(CullFace.BACK);
 
-            assertThat(mesh.getCullFace(), is(CullFace.NONE));
+            assertThat(mesh.getCullFace(), is(CullFace.BACK));
         }
 
         @Test

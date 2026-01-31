@@ -228,9 +228,10 @@ public class ScatterMesh extends Group implements TextureMode {
 
     /**
      * CullFace property for controlling backface culling on all particle meshes.
-     * Default is CullFace.BACK. Set to CullFace.NONE for particles visible from all angles.
+     * Default is CullFace.NONE so particles are visible from all angles.
+     * Set to CullFace.BACK if you want standard backface culling.
      */
-    private final ObjectProperty<CullFace> cullFace = new SimpleObjectProperty<>(CullFace.BACK) {
+    private final ObjectProperty<CullFace> cullFace = new SimpleObjectProperty<>(CullFace.NONE) {
         @Override
         protected void invalidated() {
             applyCullFace(get());

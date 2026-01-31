@@ -131,6 +131,9 @@ public class NebulaManager {
             return;
         }
 
+        log.info("DIAG Adapter: baseScale={}, zoomLevel={}, scaleFactor={}",
+                adapter.getBaseScale(), adapter.getZoomLevel(), adapter.getScaleFactor());
+
         // Store plot center for LOD calculations
         this.plotCenterX = centerX;
         this.plotCenterY = centerY;
@@ -167,23 +170,28 @@ public class NebulaManager {
             RingConfiguration config = NebulaConfigConverter.toRingConfiguration(
                     nebula, adapter, distance);
 
-            // Create renderer
+            // Create renderer - uses centroid rebasing by default to avoid float precision issues
+            // Centroid rebasing keeps mesh vertices small (near zero) while using double-precision
+            // group transforms for world placement
             RingFieldRenderer renderer = new RingFieldRenderer(config, new Random(nebula.getSeed()));
 
-            // Position in screen coordinates
+            // Position in screen coordinates - this triggers centroid computation and group translation
             double[] screenPos = NebulaConfigConverter.toScreenPosition(nebula, adapter);
             renderer.setPosition(screenPos[0], screenPos[1], screenPos[2]);
 
-            // Add to scene
+            // Add the renderer's group to the scene - DO NOT extract the mesh!
+            // The group's translation is essential for centroid rebasing to work correctly
             nebulaGroup.getChildren().add(renderer.getGroup());
+
+            log.info("Nebula '{}' rendered at screenPos=({}, {}, {}), group translate=({}, {}, {})",
+                    nebula.getName(), screenPos[0], screenPos[1], screenPos[2],
+                    renderer.getGroup().getTranslateX(),
+                    renderer.getGroup().getTranslateY(),
+                    renderer.getGroup().getTranslateZ());
 
             // Track
             activeRenderers.put(nebula.getId(), renderer);
             activeNebulae.put(nebula.getId(), nebula);
-
-            log.debug("Rendered nebula '{}' at ({}, {}, {}) with {} particles",
-                    nebula.getName(), screenPos[0], screenPos[1], screenPos[2],
-                    config.numElements());
 
         } catch (Exception e) {
             log.error("Failed to render nebula '{}': {}", nebula.getName(), e.getMessage(), e);

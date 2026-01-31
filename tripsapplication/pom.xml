@@ -84,9 +84,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <java.version>17</java.version>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.source>17</maven.compiler.source>
+        <java.version>25</java.version>
+        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
 
         <spring.boot.version>4.0.2</spring.boot.version>
 
@@ -122,6 +122,8 @@
 
         <poi.ooxml.version>5.2.5</poi.ooxml.version>
         <xlsx-streamer.version>2.2.0</xlsx-streamer.version>
+
+        <jacoco.version>0.8.14</jacoco.version>
 
         <jsqlparser.version>4.5</jsqlparser.version>
 
@@ -697,7 +699,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
+                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
