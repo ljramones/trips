@@ -1,6 +1,10 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
+import com.teamgannon.trips.noisegen.FastNoiseLite;
+import com.teamgannon.trips.noisegen.spatial.HierarchicalNoise;
+import com.teamgannon.trips.noisegen.transforms.RidgeTransform;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector.*;
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.*;
 
@@ -25,6 +29,11 @@ public class ElevationCalculator {
     private final PlateAssigner.PlateAssignment plateAssignment;
     private final BoundaryAnalysis boundaryAnalysis;
     private final Random random;
+    private final List<Polygon> polygons;
+
+    // HierarchicalNoise for fine terrain detail (adaptive LOD noise)
+    private final HierarchicalNoise terrainDetailNoise;
+    private final RidgeTransform ridgeTransform;
 
     public record ElevationResult(int[] heights, double[] continuousHeights) {}
 
@@ -37,11 +46,44 @@ public class ElevationCalculator {
             AdjacencyGraph adjacency,
             PlateAssigner.PlateAssignment plateAssignment,
             BoundaryAnalysis boundaryAnalysis) {
+        this(config, adjacency, plateAssignment, boundaryAnalysis, null);
+    }
+
+    /**
+     * Creates elevation calculator with polygon data for fine detail noise.
+     *
+     * @param config           Planet configuration
+     * @param adjacency        Adjacency graph
+     * @param plateAssignment  Plate assignments
+     * @param boundaryAnalysis Boundary analysis results
+     * @param polygons         Polygon mesh (null to skip fine detail noise)
+     */
+    public ElevationCalculator(
+            PlanetConfig config,
+            AdjacencyGraph adjacency,
+            PlateAssigner.PlateAssignment plateAssignment,
+            BoundaryAnalysis boundaryAnalysis,
+            List<Polygon> polygons) {
         this.config = config;
         this.adjacency = adjacency;
         this.plateAssignment = plateAssignment;
         this.boundaryAnalysis = boundaryAnalysis;
         this.random = new Random(config.subSeed(2));
+        this.polygons = polygons;
+
+        // Initialize HierarchicalNoise for fine terrain detail
+        // Uses 6 levels of detail for adaptive LOD terrain features
+        FastNoiseLite baseNoise = new FastNoiseLite((int) config.subSeed(7));
+        baseNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        this.terrainDetailNoise = HierarchicalNoise.builder(baseNoise)
+            .maxLevels(6)
+            .baseFrequency(1.0f)  // Adjusted for unit sphere coordinates
+            .lacunarity(2.0f)
+            .persistence(0.5f)
+            .build();
+
+        // Ridge transform for mountain terrain detail
+        this.ridgeTransform = new RidgeTransform(false, 1.5f);
     }
 
     public int[] calculate() {
@@ -110,7 +152,86 @@ public class ElevationCalculator {
         // Generate volcanic hotspots based on probability from config
         generateHotspots(plates, types);
 
+        // Apply fine terrain detail using HierarchicalNoise
+        if (polygons != null && config.useContinuousHeights()) {
+            applyTerrainDetailNoise();
+        }
+
         return new ElevationResult(heights, continuousHeights);
+    }
+
+    /**
+     * Applies fine terrain detail using HierarchicalNoise.
+     * Uses adaptive LOD where the detail level varies by terrain type:
+     * - Mountains/hills: More high-frequency detail with ridge transform
+     * - Plains/lowlands: Medium detail, smooth variation
+     * - Ocean: Minimal detail for smooth appearance
+     *
+     * This adds realism by breaking up the plate-driven terrain with
+     * natural-looking micro-terrain features.
+     */
+    private void applyTerrainDetailNoise() {
+        if (polygons == null || terrainDetailNoise == null) return;
+
+        // Detail amplitude scales with mesh resolution
+        // Finer meshes can show more detail without looking noisy
+        double baseAmplitude = 0.3 * Math.min(1.0, config.n() / 15.0);
+
+        for (int i = 0; i < polygons.size(); i++) {
+            Polygon poly = polygons.get(i);
+            Vector3D center = poly.center().normalize();
+
+            // Convert to spherical coords for 3D noise sampling
+            float x = (float) center.getX();
+            float y = (float) center.getY();
+            float z = (float) center.getZ();
+
+            // Determine detail level and amplitude based on terrain type
+            int terrainHeight = heights[i];
+            int detailLevel;
+            double amplitude;
+
+            if (terrainHeight >= MOUNTAINS) {
+                // Mountains: max detail with ridge transform for sharp features
+                detailLevel = 5;  // All levels
+                float rawNoise = terrainDetailNoise.sampleCumulative(x * 3, y * 3, z * 3, detailLevel);
+                float ridgedNoise = ridgeTransform.apply(rawNoise);
+                // Map ridge from [0,1] to [-0.5, 0.5] and apply
+                amplitude = baseAmplitude * 1.5;
+                continuousHeights[i] += (ridgedNoise - 0.5) * amplitude;
+
+            } else if (terrainHeight >= HILLS) {
+                // Hills: high detail, standard noise
+                detailLevel = 4;
+                float noise = terrainDetailNoise.sampleCumulative(x * 2.5f, y * 2.5f, z * 2.5f, detailLevel);
+                amplitude = baseAmplitude * 1.2;
+                continuousHeights[i] += noise * amplitude;
+
+            } else if (terrainHeight >= LOWLAND) {
+                // Plains/lowland: medium detail, gentle variation
+                detailLevel = 3;
+                float noise = terrainDetailNoise.sampleCumulative(x * 2, y * 2, z * 2, detailLevel);
+                amplitude = baseAmplitude * 0.8;
+                continuousHeights[i] += noise * amplitude;
+
+            } else if (terrainHeight >= COASTAL) {
+                // Coastal/shallow: low detail
+                detailLevel = 2;
+                float noise = terrainDetailNoise.sampleCumulative(x * 1.5f, y * 1.5f, z * 1.5f, detailLevel);
+                amplitude = baseAmplitude * 0.5;
+                continuousHeights[i] += noise * amplitude;
+
+            } else {
+                // Deep ocean: minimal detail for smooth appearance
+                detailLevel = 1;
+                float noise = terrainDetailNoise.sampleCumulative(x, y, z, detailLevel);
+                amplitude = baseAmplitude * 0.2;
+                continuousHeights[i] += noise * amplitude;
+            }
+
+            // Clamp to valid range
+            continuousHeights[i] = clampContinuous(continuousHeights[i]);
+        }
     }
 
     /**

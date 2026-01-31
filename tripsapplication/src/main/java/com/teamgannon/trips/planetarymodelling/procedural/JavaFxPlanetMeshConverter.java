@@ -23,8 +23,19 @@ import java.util.Map;
  * - Basic: Integer height displacement with faceted terrain
  * - Smooth: Precise height displacement with interpolated colors
  * - Per-height: Separate meshes per height level for distinct coloring
+ * <p>
+ * Supports terrain-aware normals using NoiseDerivatives for proper lighting
+ * that shows terrain relief instead of smooth spherical shading.
  */
 public class JavaFxPlanetMeshConverter {
+
+    // Mode for normal computation
+    public enum NormalMode {
+        /** Radial normals - always point outward from sphere center (smooth shading) */
+        RADIAL,
+        /** Terrain normals - perpendicular to local terrain surface (shows relief) */
+        TERRAIN
+    }
 
     // Height displacement scale factor (how much height affects radial distance).
     // Tuned lower to avoid exaggerated mountain relief in JavaFX rendering.
@@ -1140,6 +1151,210 @@ public class JavaFxPlanetMeshConverter {
             sum += h;
         }
         return (int) (sum / heights.length);
+    }
+
+    // ==================== Terrain Normal Computation ====================
+
+    /**
+     * Computes terrain-aware normals for polygon vertices.
+     * Instead of using radial normals (which give smooth spherical shading),
+     * this computes normals perpendicular to the local terrain surface.
+     *
+     * <p>For each triangle in the fan (center → edge[i] → edge[i+1]):
+     * <ul>
+     *   <li>Calculates two edge vectors</li>
+     *   <li>Cross product gives face normal</li>
+     *   <li>Accumulated per-vertex for smooth shading</li>
+     * </ul>
+     *
+     * @param center      Center vertex position
+     * @param edgeVerts   Edge vertex positions
+     * @param vertexCount Number of edge vertices (5 for pentagon, 6 for hexagon)
+     * @return Array of normals: [centerNormal, edge0Normal, edge1Normal, ...]
+     */
+    public static Vector3D[] computeTerrainNormals(Vector3D center, List<Vector3D> edgeVerts, int vertexCount) {
+        // Initialize accumulated normals for each vertex
+        Vector3D[] accumulated = new Vector3D[vertexCount + 1]; // +1 for center
+        for (int i = 0; i < accumulated.length; i++) {
+            accumulated[i] = Vector3D.ZERO;
+        }
+
+        // For each triangle in the fan, compute face normal and accumulate
+        for (int i = 0; i < vertexCount; i++) {
+            int nextI = (i + 1) % vertexCount;
+
+            Vector3D v0 = center;
+            Vector3D v1 = edgeVerts.get(i);
+            Vector3D v2 = edgeVerts.get(nextI);
+
+            // Edge vectors
+            Vector3D edge1 = v1.subtract(v0);
+            Vector3D edge2 = v2.subtract(v0);
+
+            // Face normal (cross product, outward-facing)
+            Vector3D faceNormal = edge1.crossProduct(edge2);
+
+            // Check if normal points outward (same direction as radial)
+            // If not, flip it
+            Vector3D radialDir = v0.normalize();
+            if (faceNormal.dotProduct(radialDir) < 0) {
+                faceNormal = faceNormal.negate();
+            }
+
+            // Accumulate to all three vertices of this triangle
+            accumulated[0] = accumulated[0].add(faceNormal);           // center
+            accumulated[i + 1] = accumulated[i + 1].add(faceNormal);   // edge[i]
+            accumulated[nextI + 1] = accumulated[nextI + 1].add(faceNormal); // edge[nextI]
+        }
+
+        // Normalize all accumulated normals
+        Vector3D[] normals = new Vector3D[accumulated.length];
+        for (int i = 0; i < accumulated.length; i++) {
+            double len = accumulated[i].getNorm();
+            if (len > 1e-10) {
+                normals[i] = accumulated[i].scalarMultiply(1.0 / len);
+            } else {
+                // Fallback to radial normal if degenerate
+                normals[i] = (i == 0) ? center.normalize() : edgeVerts.get(i - 1).normalize();
+            }
+        }
+
+        return normals;
+    }
+
+    /**
+     * Creates per-height colored meshes with terrain-aware normals.
+     * Uses terrain normal computation for proper lighting that shows terrain relief.
+     *
+     * @param polygons       The icosahedral mesh polygons
+     * @param heights        Integer height values per polygon (for color grouping)
+     * @param adjacency      The polygon adjacency graph (used for vertex averaging)
+     * @param scale          Scale factor for rendering
+     * @param preciseHeights Optional precise (double) heights for finer averaging
+     * @param normalMode     Normal computation mode (RADIAL or TERRAIN)
+     * @return Map of height value to TriangleMesh
+     */
+    public static Map<Integer, TriangleMesh> convertByHeightWithTerrainNormals(
+            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency, double scale,
+            double[] preciseHeights, NormalMode normalMode) {
+
+        // Build vertex indexing data ONCE for all polygons
+        VertexData vertexData = buildVertexData(polygons);
+
+        // Use precise heights for averaging if available
+        double[] averagedEdgeHeights;
+        if (preciseHeights != null && preciseHeights.length == polygons.size()) {
+            averagedEdgeHeights = computeAveragedHeightsPrecise(vertexData, preciseHeights);
+        } else {
+            averagedEdgeHeights = computeAveragedHeights(vertexData, heights);
+        }
+
+        Map<Integer, List<Integer>> heightToPolygons = new HashMap<>();
+        for (int i = 0; i < polygons.size(); i++) {
+            int height = heights[i];
+            heightToPolygons.computeIfAbsent(height, k -> new ArrayList<>()).add(i);
+        }
+
+        Map<Integer, TriangleMesh> result = new HashMap<>();
+
+        for (Map.Entry<Integer, List<Integer>> entry : heightToPolygons.entrySet()) {
+            int height = entry.getKey();
+            List<Integer> polyIndices = entry.getValue();
+
+            TriangleMesh mesh = new TriangleMesh();
+            mesh.setVertexFormat(VertexFormat.POINT_NORMAL_TEXCOORD);
+
+            List<Float> points = new ArrayList<>();
+            List<Float> normals = new ArrayList<>();
+            List<Integer> faces = new ArrayList<>();
+
+            mesh.getTexCoords().addAll(0.5f, 0.5f);
+
+            int vertexIndex = 0;
+
+            for (int polyIdx : polyIndices) {
+                Polygon poly = polygons.get(polyIdx);
+                List<Vector3D> vertices = poly.vertices();
+                int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+
+                // Compute center height from edge average
+                double centerSum = 0.0;
+                for (int local = 0; local < polyVertIndices.length; local++) {
+                    centerSum += averagedEdgeHeights[polyVertIndices[local]];
+                }
+                double centerHeight = centerSum / polyVertIndices.length;
+                double centerDisplacement = 1.0 + centerHeight * HEIGHT_SCALE;
+
+                Vector3D center = poly.center().normalize().scalarMultiply(centerDisplacement * scale);
+
+                // Build displaced edge vertices
+                List<Vector3D> displacedEdges = new ArrayList<>();
+                for (int i = 0; i < vertices.size(); i++) {
+                    int globalVertIdx = polyVertIndices[i];
+                    double avgHeight = averagedEdgeHeights[globalVertIdx];
+                    double edgeDisplacement = 1.0 + avgHeight * EDGE_HEIGHT_SCALE;
+                    Vector3D v = vertices.get(i).normalize().scalarMultiply(edgeDisplacement * scale);
+                    displacedEdges.add(v);
+                }
+
+                // Compute normals based on mode
+                Vector3D[] vertNormals;
+                if (normalMode == NormalMode.TERRAIN) {
+                    vertNormals = computeTerrainNormals(center, displacedEdges, vertices.size());
+                } else {
+                    // Radial normals (default)
+                    vertNormals = new Vector3D[vertices.size() + 1];
+                    vertNormals[0] = center.normalize();
+                    for (int i = 0; i < vertices.size(); i++) {
+                        vertNormals[i + 1] = displacedEdges.get(i).normalize();
+                    }
+                }
+
+                // Add center point and normal
+                points.add((float) center.getX());
+                points.add((float) center.getY());
+                points.add((float) center.getZ());
+                normals.add((float) vertNormals[0].getX());
+                normals.add((float) vertNormals[0].getY());
+                normals.add((float) vertNormals[0].getZ());
+                int centerIdx = vertexIndex++;
+
+                // Add edge vertices and normals
+                int[] edgeIndices = new int[vertices.size()];
+                for (int i = 0; i < vertices.size(); i++) {
+                    Vector3D v = displacedEdges.get(i);
+                    points.add((float) v.getX());
+                    points.add((float) v.getY());
+                    points.add((float) v.getZ());
+                    normals.add((float) vertNormals[i + 1].getX());
+                    normals.add((float) vertNormals[i + 1].getY());
+                    normals.add((float) vertNormals[i + 1].getZ());
+                    edgeIndices[i] = vertexIndex++;
+                }
+
+                // Create fan triangles
+                for (int i = 0; i < vertices.size(); i++) {
+                    int nextI = (i + 1) % vertices.size();
+                    faces.add(centerIdx);
+                    faces.add(centerIdx);
+                    faces.add(0);
+                    faces.add(edgeIndices[i]);
+                    faces.add(edgeIndices[i]);
+                    faces.add(0);
+                    faces.add(edgeIndices[nextI]);
+                    faces.add(edgeIndices[nextI]);
+                    faces.add(0);
+                }
+            }
+
+            mesh.getPoints().addAll(toFloatArray(points));
+            mesh.getNormals().addAll(toFloatArray(normals));
+            mesh.getFaces().addAll(toIntArray(faces));
+
+            result.put(height, mesh);
+        }
+
+        return result;
     }
 
     // ==================== Rainfall Heatmap Support ====================

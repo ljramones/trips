@@ -1,6 +1,7 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
 import com.teamgannon.trips.noisegen.FastNoiseLite;
+import com.teamgannon.trips.noisegen.spatial.TiledNoise;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.*;
@@ -54,6 +55,9 @@ public class ErosionCalculator {
 
     // Noise generator for coastal variation (uses noisegen package)
     private final FastNoiseLite coastNoise;
+
+    // Seamless noise for global rainfall patterns (uses TiledNoise for sphere wrapping)
+    private final TiledNoise rainfallNoise;
 
     /**
      * Result of erosion calculations.
@@ -135,6 +139,16 @@ public class ErosionCalculator {
         this.coastNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         this.coastNoise.SetFractalOctaves(3);
         this.coastNoise.SetFrequency(5.0f);  // Matches original freq = 5.0
+
+        // Initialize seamless rainfall noise using TiledNoise for global patterns.
+        // Uses 4D torus projection for seamless wrapping on a sphere.
+        // Tile size of 2π matches spherical lat/lon mapping.
+        FastNoiseLite rainfallBaseNoise = new FastNoiseLite((int) config.subSeed(6));
+        rainfallBaseNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        rainfallBaseNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        rainfallBaseNoise.SetFractalOctaves(4);
+        rainfallBaseNoise.SetFrequency(2.0f);  // Lower frequency for large-scale weather patterns
+        this.rainfallNoise = new TiledNoise(rainfallBaseNoise, (float) (2 * Math.PI));
     }
 
     /**
@@ -405,18 +419,31 @@ public class ErosionCalculator {
 
     /**
      * Calculate rainfall for a single polygon.
+     * Uses TiledNoise for seamless global patterns instead of random variation.
      */
     private double calculateRainfallForPolygon(int i, Random rng, double rainfallScale,
             double stagnantLidFactor, double rainShadowFactor) {
         Vector3D center = polygons.get(i).center();
-        double lat = Math.toDegrees(Math.asin(center.normalize().getY()));
+        Vector3D normalized = center.normalize();
+        double lat = Math.toDegrees(Math.asin(normalized.getY()));
         Vector3D windDir = getPrevailingWindDirection(lat, center);
 
-        // Base rain from climate zone
+        // Convert spherical coordinates to seamless noise coordinates
+        // Use spherical to lat/lon mapping for TiledNoise
+        double lon = Math.atan2(normalized.getZ(), normalized.getX());  // [-π, π]
+        double latRad = Math.asin(normalized.getY());  // [-π/2, π/2]
+
+        // Sample seamless noise for coherent global weather patterns
+        // TiledNoise wraps at 2π for both dimensions
+        float noiseValue = rainfallNoise.getNoise((float) (lon + Math.PI), (float) (latRad + Math.PI / 2));
+        // Map from [-1, 1] to [0, 1] for variation factor
+        double noiseVariation = (noiseValue + 1.0) * 0.5;
+
+        // Base rain from climate zone modulated by seamless noise
         double baseRain = switch (climates[i]) {
-            case TROPICAL -> 1.0 + rng.nextDouble() * 0.5;   // 1.0-1.5
-            case TEMPERATE -> 0.5 + rng.nextDouble() * 0.5;  // 0.5-1.0
-            case POLAR -> 0.1 + rng.nextDouble() * 0.2;      // 0.1-0.3
+            case TROPICAL -> 1.0 + noiseVariation * 0.5;   // 1.0-1.5
+            case TEMPERATE -> 0.5 + noiseVariation * 0.5;  // 0.5-1.0
+            case POLAR -> 0.1 + noiseVariation * 0.2;      // 0.1-0.3
         };
 
         // Reduce rain at high elevations (orographic effect on peaks)

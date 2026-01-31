@@ -1,6 +1,10 @@
 package com.teamgannon.trips.planetarymodelling.procedural.impact;
 
 import com.teamgannon.trips.noisegen.FastNoiseLite;
+import com.teamgannon.trips.noisegen.NoiseConfig;
+import com.teamgannon.trips.noisegen.NoiseTypes;
+import com.teamgannon.trips.noisegen.Vector3;
+import com.teamgannon.trips.noisegen.warp.DomainWarpProcessor;
 import com.teamgannon.trips.planetarymodelling.procedural.AdjacencyGraph;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
@@ -44,6 +48,10 @@ public class CraterCalculator {
     // Noise generator for crater placement
     private final FastNoiseLite cellularNoise;
 
+    // Domain warp processor for organic crater clustering
+    private final DomainWarpProcessor domainWarp;
+    private final boolean useDomainWarp;
+
     // Results tracking
     private final List<Integer> craterCenters = new ArrayList<>();
     private final List<Integer> volcanoCenters = new ArrayList<>();
@@ -84,6 +92,23 @@ public class CraterCalculator {
         this.cellularNoise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
         this.cellularNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
         this.cellularNoise.SetFrequency(0.5f);  // Adjust for crater spacing
+
+        // Initialize domain warp for organic crater clustering
+        // Domain warp distorts coordinates before sampling, creating more natural distributions
+        this.useDomainWarp = config.craterDensity() > 0.1;  // Only use warp for moderate-to-high density
+        if (this.useDomainWarp) {
+            NoiseConfig warpConfig = new NoiseConfig();
+            warpConfig.setSeed((int) config.subSeed(9));
+            warpConfig.setDomainWarpType(NoiseTypes.DomainWarpType.OpenSimplex2);
+            warpConfig.setDomainWarpAmp(0.8f);  // Moderate warping for natural feel
+            warpConfig.setFrequency(0.3f);
+            warpConfig.setOctaves(2);
+            warpConfig.setLacunarity(2.0f);
+            warpConfig.setGain(0.5f);
+            this.domainWarp = new DomainWarpProcessor(warpConfig);
+        } else {
+            this.domainWarp = null;
+        }
     }
 
     /**
@@ -137,11 +162,22 @@ public class CraterCalculator {
             if (craterMask[i]) continue;
 
             Vector3D center = polygons.get(i).center();
-            float cellValue = cellularNoise.GetNoise(
-                (float) center.getX() * 10,
-                (float) center.getY() * 10,
-                (float) center.getZ() * 10
-            );
+
+            // Apply domain warp for more organic crater distributions
+            // This distorts the sampling coordinates to break up regular patterns
+            float sampleX = (float) center.getX() * 10;
+            float sampleY = (float) center.getY() * 10;
+            float sampleZ = (float) center.getZ() * 10;
+
+            if (useDomainWarp && domainWarp != null) {
+                Vector3 warpCoord = new Vector3(sampleX, sampleY, sampleZ);
+                domainWarp.domainWarpFractalProgressive(warpCoord);
+                sampleX = warpCoord.x;
+                sampleY = warpCoord.y;
+                sampleZ = warpCoord.z;
+            }
+
+            float cellValue = cellularNoise.GetNoise(sampleX, sampleY, sampleZ);
 
             // Normalize cellValue from [-1,1] to [0,1]
             double normalizedValue = (cellValue + 1.0) / 2.0;
@@ -271,11 +307,21 @@ public class CraterCalculator {
             if (heights[i] < 0) continue;
 
             Vector3D center = polygons.get(i).center();
-            float noiseValue = hotspotNoise.GetNoise(
-                (float) center.getX() * 8,
-                (float) center.getY() * 8,
-                (float) center.getZ() * 8
-            );
+
+            // Apply domain warp for organic hotspot distribution
+            float sampleX = (float) center.getX() * 8;
+            float sampleY = (float) center.getY() * 8;
+            float sampleZ = (float) center.getZ() * 8;
+
+            if (useDomainWarp && domainWarp != null) {
+                Vector3 warpCoord = new Vector3(sampleX, sampleY, sampleZ);
+                domainWarp.domainWarpSingle(warpCoord);
+                sampleX = warpCoord.x;
+                sampleY = warpCoord.y;
+                sampleZ = warpCoord.z;
+            }
+
+            float noiseValue = hotspotNoise.GetNoise(sampleX, sampleY, sampleZ);
 
             double normalizedValue = (noiseValue + 1.0) / 2.0;
 

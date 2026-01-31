@@ -10,6 +10,30 @@ Generates procedural planets with tectonic plate simulation, producing spherical
 com.teamgannon.trips.planetarymodelling.procedural
 ```
 
+## FastNoiseLite Integration Summary
+
+The procedural planet generator integrates with the extended FastNoiseLite noise system:
+
+| Feature | FastNoiseLite Usage | Extension Used |
+|---------|---------------------|----------------|
+| Terrain height base | OpenSimplex2 + HybridMulti / Ridged | `HierarchicalNoise`, `RidgeTransform`, `PowerTransform` |
+| Crater/volcano placement | Cellular (Voronoi) + domain warp | `CellularNoiseGen`, `DomainWarpProcessor` |
+| Rainfall/wind patterns | 2D OpenSimplex2 + wind direction tracing | `TiledNoise` (seamless global) |
+| Erosion flow direction | Downhill neighbor selection + noise perturbation | — |
+| Atmosphere motion | Curl noise for divergence-free flow | `TurbulenceNoise.curl3D()` |
+| Lighting/bump mapping | Analytical normals from noise gradients | `NoiseDerivatives.computeNormal3D()` |
+| Large coordinate precision | Chunked evaluation for galaxy-scale coords | `ChunkedNoise`, `DoublePrecisionNoise` |
+| LOD/streaming | Adaptive detail by view distance | `HierarchicalNoise.sampleAdaptive()`, `LODNoise` |
+
+**Key Classes:**
+- `FastNoiseLite` — Facade maintaining backward compatibility
+- `HierarchicalNoise` — Quadtree/octree LOD with `sampleAdaptive()` for view-distance scaling
+- `TiledNoise` — Seamless wrapping via 4D torus projection
+- `TurbulenceNoise` — Curl noise (`curl2D`, `curl3D`) for incompressible flow fields
+- `NoiseDerivatives` — Analytical gradients and normal computation
+- `DomainWarpProcessor` — Coordinate distortion for organic features
+- `ChainedTransform` — Composable transforms: `RidgeTransform` → `PowerTransform` → `RangeTransform`
+
 ## Features
 
 - **Goldberg Polyhedron Mesh**: Subdivided icosahedron producing 12 pentagons + hexagons
