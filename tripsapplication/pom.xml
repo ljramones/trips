@@ -525,7 +525,7 @@
         <dependency>
             <groupId>org.openjdk.jol</groupId>
             <artifactId>jol-core</artifactId>
-            <version>0.16</version>
+            <version>0.17</version>
         </dependency>
 
         <!-- testing libraries - using classic starter for Spring Boot 4 compatibility -->
@@ -541,7 +541,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.3</version>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -553,13 +553,13 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>1.19.3</version>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.7</version>
+            <version>42.7.9</version>
             <scope>test</scope>
         </dependency>
 
@@ -567,7 +567,7 @@
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-core</artifactId>
-            <version>4.0.16-alpha</version>
+            <version>4.0.18</version>
             <scope>test</scope>
         </dependency>
         <dependency>

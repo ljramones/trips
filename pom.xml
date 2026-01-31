@@ -27,14 +27,14 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
     </properties>
-    <dependencies>
-        <dependency>
-            <groupId>org.jzy3d</groupId>
-            <artifactId>jzy3d-core</artifactId>
-            <version>2.2.1</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
+<!--    <dependencies>-->
+<!--        <dependency>-->
+<!--            <groupId>org.jzy3d</groupId>-->
+<!--            <artifactId>jzy3d-core</artifactId>-->
+<!--            <version>2.2.1</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
+<!--    </dependencies>-->
 
     <modules>
         <module>tripsapplication</module>
