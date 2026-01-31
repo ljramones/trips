@@ -1,13 +1,13 @@
-package com.teamgannon.trips.service;
+package com.teamgannon.trips.nebula.service;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.model.NebulaType;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.model.NebulaType;
+import com.teamgannon.trips.nebula.rendering.NebulaLODManager;
+import com.teamgannon.trips.nebula.rendering.NebulaLODManager.LODLevel;
 import com.teamgannon.trips.particlefields.ColorGradientMode;
 import com.teamgannon.trips.particlefields.InterstellarRingAdapter;
 import com.teamgannon.trips.particlefields.RingConfiguration;
 import com.teamgannon.trips.particlefields.RingType;
-import com.teamgannon.trips.starplotting.NebulaLODManager;
-import com.teamgannon.trips.starplotting.NebulaLODManager.LODLevel;
 import javafx.scene.paint.Color;
 import lombok.extern.slf4j.Slf4j;
 

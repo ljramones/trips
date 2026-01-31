@@ -1,8 +1,8 @@
-package com.teamgannon.trips.dialogs.nebula;
+package com.teamgannon.trips.nebula.dialogs;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.model.NebulaType;
-import com.teamgannon.trips.service.NebulaService;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.model.NebulaType;
+import com.teamgannon.trips.nebula.service.NebulaService;
 import com.teamgannon.trips.utility.DialogUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;

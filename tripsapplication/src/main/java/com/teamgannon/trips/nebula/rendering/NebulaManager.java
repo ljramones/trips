@@ -1,11 +1,11 @@
-package com.teamgannon.trips.starplotting;
+package com.teamgannon.trips.nebula.rendering;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.repository.NebulaRepository;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.repository.NebulaRepository;
+import com.teamgannon.trips.nebula.service.NebulaConfigConverter;
 import com.teamgannon.trips.particlefields.InterstellarRingAdapter;
 import com.teamgannon.trips.particlefields.RingConfiguration;
 import com.teamgannon.trips.particlefields.RingFieldRenderer;
-import com.teamgannon.trips.service.NebulaConfigConverter;
 import javafx.scene.Group;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

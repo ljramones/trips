@@ -1,6 +1,6 @@
-package com.teamgannon.trips.dialogs.nebula.catalog;
+package com.teamgannon.trips.nebula.dialogs.catalog;
 
-import com.teamgannon.trips.jpa.model.NebulaType;
+import com.teamgannon.trips.nebula.model.NebulaType;
 import com.teamgannon.trips.utility.DialogUtils;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,7 +21,6 @@ import javafx.stage.WindowEvent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 

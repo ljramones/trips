@@ -22,7 +22,7 @@ import com.teamgannon.trips.particlefields.InterstellarRingAdapter;
 import com.teamgannon.trips.routing.RouteManager;
 import com.teamgannon.trips.routing.model.Route;
 import com.teamgannon.trips.routing.model.RoutingMetric;
-import com.teamgannon.trips.starplotting.NebulaManager;
+import com.teamgannon.trips.nebula.rendering.NebulaManager;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.TransitDefinitions;
 import com.teamgannon.trips.transits.TransitManager;

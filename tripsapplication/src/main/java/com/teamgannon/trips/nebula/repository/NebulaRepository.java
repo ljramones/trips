@@ -1,7 +1,7 @@
-package com.teamgannon.trips.jpa.repository;
+package com.teamgannon.trips.nebula.repository;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.model.NebulaType;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.model.NebulaType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

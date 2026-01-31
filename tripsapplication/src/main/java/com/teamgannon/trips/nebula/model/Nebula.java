@@ -1,4 +1,4 @@
-package com.teamgannon.trips.jpa.model;
+package com.teamgannon.trips.nebula.model;
 
 import lombok.Getter;
 import lombok.Setter;

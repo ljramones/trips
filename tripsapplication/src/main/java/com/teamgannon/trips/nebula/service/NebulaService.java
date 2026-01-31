@@ -1,8 +1,8 @@
-package com.teamgannon.trips.service;
+package com.teamgannon.trips.nebula.service;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.model.NebulaType;
-import com.teamgannon.trips.jpa.repository.NebulaRepository;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.model.NebulaType;
+import com.teamgannon.trips.nebula.repository.NebulaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.teamgannon.trips.starplotting;
+package com.teamgannon.trips.nebula.rendering;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

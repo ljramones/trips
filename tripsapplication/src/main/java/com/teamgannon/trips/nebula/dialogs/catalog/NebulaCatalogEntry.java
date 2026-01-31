@@ -1,7 +1,7 @@
-package com.teamgannon.trips.dialogs.nebula.catalog;
+package com.teamgannon.trips.nebula.dialogs.catalog;
 
-import com.teamgannon.trips.jpa.model.Nebula;
-import com.teamgannon.trips.jpa.model.NebulaType;
+import com.teamgannon.trips.nebula.model.Nebula;
+import com.teamgannon.trips.nebula.model.NebulaType;
 import lombok.Builder;
 import lombok.Data;
 
