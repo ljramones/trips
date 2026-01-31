@@ -39,6 +39,7 @@ public final class NoiseUtils {
     public static final int PrimeX = 501125321;
     public static final int PrimeY = 1136930381;
     public static final int PrimeZ = 1720413743;
+    public static final int PrimeW = 1183186591;
 
     // ==================== Fast Math Functions ====================
 

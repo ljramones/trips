@@ -7,7 +7,7 @@ package com.teamgannon.trips.noisegen.generators;
 
 /**
  * Interface for noise generation algorithms.
- * Implementations provide 2D and 3D noise sampling at single points.
+ * Implementations provide 2D, 3D, and optionally 4D noise sampling at single points.
  */
 public interface NoiseGenerator {
 
@@ -31,4 +31,29 @@ public interface NoiseGenerator {
      * @return Noise value typically in range [-1, 1]
      */
     float single3D(int seed, float x, float y, float z);
+
+    /**
+     * Generate noise at a 4D coordinate.
+     * Default implementation throws UnsupportedOperationException.
+     * Override in implementations that support 4D noise.
+     *
+     * @param seed The random seed
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @param w W coordinate (often used for time-based animation)
+     * @return Noise value typically in range [-1, 1]
+     */
+    default float single4D(int seed, float x, float y, float z, float w) {
+        throw new UnsupportedOperationException("4D noise not supported by this generator");
+    }
+
+    /**
+     * Check if this generator supports 4D noise.
+     *
+     * @return true if single4D is implemented
+     */
+    default boolean supports4D() {
+        return false;
+    }
 }

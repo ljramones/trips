@@ -69,6 +69,10 @@ public class FastNoiseLite {
         FBm,
         Ridged,
         PingPong,
+        /** [EXT] Billow noise - soft, cloud-like (inverted ridged) */
+        Billow,
+        /** [EXT] Hybrid multifractal - multiplicative/additive blend for terrain */
+        HybridMulti,
         DomainWarpProgressive,
         DomainWarpIndependent
     }
@@ -106,6 +110,7 @@ public class FastNoiseLite {
     private NoiseGenerator perlinGen;
     private NoiseGenerator valueCubicGen;
     private NoiseGenerator valueGen;
+    private NoiseGenerator simplex4DGen;
 
     // Processors
     private DomainWarpProcessor warpProcessor;
@@ -131,6 +136,14 @@ public class FastNoiseLite {
      */
     public void SetSeed(int seed) {
         config.setSeed(seed);
+    }
+
+    /**
+     * Gets the current seed used for all noise types.
+     * @return The current seed value
+     */
+    public int GetSeed() {
+        return config.getSeed();
     }
 
     /**
@@ -291,6 +304,10 @@ public class FastNoiseLite {
                 return getFractalProcessor().genFractalRidged2D(x, y);
             case PingPong:
                 return getFractalProcessor().genFractalPingPong2D(x, y);
+            case Billow:
+                return getFractalProcessor().genFractalBillow2D(x, y);
+            case HybridMulti:
+                return getFractalProcessor().genFractalHybridMulti2D(x, y);
             default:
                 return getNoiseGenerator().single2D(config.getSeed(), x, y);
         }
@@ -345,8 +362,51 @@ public class FastNoiseLite {
                 return getFractalProcessor().genFractalRidged3D(x, y, z);
             case PingPong:
                 return getFractalProcessor().genFractalPingPong3D(x, y, z);
+            case Billow:
+                return getFractalProcessor().genFractalBillow3D(x, y, z);
+            case HybridMulti:
+                return getFractalProcessor().genFractalHybridMulti3D(x, y, z);
             default:
                 return getNoiseGenerator().single3D(config.getSeed(), x, y, z);
+        }
+    }
+
+    /**
+     * 4D noise at given position using current settings.
+     * The W dimension is typically used for time-based animation or looping effects.
+     *
+     * <p>Note: Only simplex noise supports 4D. Other noise types will use
+     * a dedicated 4D simplex generator regardless of the noise type setting.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param z Z coordinate
+     * @param w W coordinate (typically time or animation parameter)
+     * @return Noise output bounded between -1...1
+     */
+    public float GetNoise(float x, float y, float z, float w) {
+        x *= config.getFrequency();
+        y *= config.getFrequency();
+        z *= config.getFrequency();
+        w *= config.getFrequency();
+
+        // 4D only uses simplex noise (other types don't support 4D)
+        NoiseGenerator gen = get4DNoiseGenerator();
+
+        NoiseTypes.FractalType fractalType = config.getFractalType();
+        switch (fractalType) {
+            case FBm:
+                return genFractalFBm4D(gen, x, y, z, w);
+            case Ridged:
+                return genFractalRidged4D(gen, x, y, z, w);
+            case PingPong:
+                return genFractalPingPong4D(gen, x, y, z, w);
+            case Billow:
+                return genFractalBillow4D(gen, x, y, z, w);
+            case HybridMulti:
+                return genFractalHybridMulti4D(gen, x, y, z, w);
+            default:
+                return gen.single4D(config.getSeed(), x, y, z, w);
         }
     }
 
@@ -443,6 +503,137 @@ public class FastNoiseLite {
             warpProcessor = new DomainWarpProcessor(config);
         }
         return warpProcessor;
+    }
+
+    private NoiseGenerator get4DNoiseGenerator() {
+        if (simplex4DGen == null) {
+            simplex4DGen = new Simplex4DNoiseGen();
+        }
+        return simplex4DGen;
+    }
+
+    // ==================== 4D Fractal Methods ====================
+
+    private float genFractalFBm4D(NoiseGenerator gen, float x, float y, float z, float w) {
+        int seed = config.getSeed();
+        float sum = 0;
+        float amp = config.getFractalBounding();
+        float lacunarity = config.getLacunarity();
+        float gain = config.getGain();
+
+        for (int i = 0; i < config.getOctaves(); i++) {
+            float noise = gen.single4D(seed++, x, y, z, w);
+            sum += noise * amp;
+            amp *= gain;
+
+            x *= lacunarity;
+            y *= lacunarity;
+            z *= lacunarity;
+            w *= lacunarity;
+        }
+
+        return sum;
+    }
+
+    private float genFractalRidged4D(NoiseGenerator gen, float x, float y, float z, float w) {
+        int seed = config.getSeed();
+        float sum = 0;
+        float amp = config.getFractalBounding();
+        float lacunarity = config.getLacunarity();
+        float gain = config.getGain();
+
+        for (int i = 0; i < config.getOctaves(); i++) {
+            float noise = Math.abs(gen.single4D(seed++, x, y, z, w));
+            sum += (noise * -2 + 1) * amp;
+            amp *= gain;
+
+            x *= lacunarity;
+            y *= lacunarity;
+            z *= lacunarity;
+            w *= lacunarity;
+        }
+
+        return sum;
+    }
+
+    private float genFractalPingPong4D(NoiseGenerator gen, float x, float y, float z, float w) {
+        int seed = config.getSeed();
+        float sum = 0;
+        float amp = config.getFractalBounding();
+        float lacunarity = config.getLacunarity();
+        float gain = config.getGain();
+        float pingPongStrength = config.getPingPongStrength();
+
+        for (int i = 0; i < config.getOctaves(); i++) {
+            float noise = NoiseUtils.PingPong((gen.single4D(seed++, x, y, z, w) + 1) * pingPongStrength);
+            sum += (noise - 0.5f) * 2 * amp;
+            amp *= gain;
+
+            x *= lacunarity;
+            y *= lacunarity;
+            z *= lacunarity;
+            w *= lacunarity;
+        }
+
+        return sum;
+    }
+
+    private float genFractalBillow4D(NoiseGenerator gen, float x, float y, float z, float w) {
+        int seed = config.getSeed();
+        float sum = 0;
+        float amp = config.getFractalBounding();
+        float lacunarity = config.getLacunarity();
+        float gain = config.getGain();
+        float weightedStrength = config.getWeightedStrength();
+
+        for (int i = 0; i < config.getOctaves(); i++) {
+            float noise = NoiseUtils.FastAbs(gen.single4D(seed++, x, y, z, w)) * 2 - 1;
+            sum += noise * amp;
+            amp *= NoiseUtils.Lerp(1.0f, (noise + 1) * 0.5f, weightedStrength);
+            amp *= gain;
+
+            x *= lacunarity;
+            y *= lacunarity;
+            z *= lacunarity;
+            w *= lacunarity;
+        }
+
+        return sum;
+    }
+
+    private float genFractalHybridMulti4D(NoiseGenerator gen, float x, float y, float z, float w) {
+        int seed = config.getSeed();
+        float lacunarity = config.getLacunarity();
+        float gain = config.getGain();
+
+        // First octave (additive base)
+        float result = gen.single4D(seed++, x, y, z, w) + 1;
+        float weight = result;
+        float amp = gain;
+
+        x *= lacunarity;
+        y *= lacunarity;
+        z *= lacunarity;
+        w *= lacunarity;
+
+        // Remaining octaves (multiplicative blend)
+        for (int i = 1; i < config.getOctaves(); i++) {
+            if (weight > 1) {
+                weight = 1;
+            }
+
+            float noise = (gen.single4D(seed++, x, y, z, w) + 1) * amp;
+            result += weight * noise;
+            weight *= noise;
+
+            x *= lacunarity;
+            y *= lacunarity;
+            z *= lacunarity;
+            w *= lacunarity;
+            amp *= gain;
+        }
+
+        return result * config.getFractalBounding() - 1;
     }
 
     // ==================== Enum Conversion Helpers ====================

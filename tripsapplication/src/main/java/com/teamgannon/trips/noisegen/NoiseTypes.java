@@ -63,6 +63,10 @@ public final class NoiseTypes {
         FBm,
         Ridged,
         PingPong,
+        /** [EXT] Billow noise - soft, cloud-like (inverted ridged) */
+        Billow,
+        /** [EXT] Hybrid multifractal - multiplicative/additive blend for terrain */
+        HybridMulti,
         DomainWarpProgressive,
         DomainWarpIndependent
     }
