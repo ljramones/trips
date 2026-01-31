@@ -1,46 +1,54 @@
 package com.teamgannon.trips.measure;
 
-import com.codahale.metrics.MetricRegistry;
-import com.teamgannon.trips.config.application.MetricsConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
+
 @Aspect
 @Component
 @Slf4j
-//@ConditionalOnExpression("${aspect.enabled.true}")
 public class ExecutionTimeAdvice {
 
-    private MetricRegistry metricRegistry;
+    private final MeterRegistry meterRegistry;
 
-    public ExecutionTimeAdvice(MetricsConfiguration metricsConfiguration) {
-        this.metricRegistry = metricsConfiguration.getMetricsRegistry();
+    public ExecutionTimeAdvice(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
     }
 
     /**
-     * around advice which measures the time for an object to execute
+     * Around advice which measures the time for an object to execute.
      *
      * @param point the advice crosscut point to measure
      * @return return the crosscut point for further execution
-     * @throws Throwable if there is an execution thrown
+     * @throws Throwable if there is an exception thrown
      */
     @Around("@annotation(TrackExecutionTime)")
     public Object executionTime(ProceedingJoinPoint point) throws Throwable {
-        long startTime = System.currentTimeMillis();
-        Object object = point.proceed();
-        long endTime = System.currentTimeMillis();
-        String clazzName = point.getSignature().getDeclaringTypeName();
-        String methodName = point.getSignature().getName();
-        long timeInMs = endTime - startTime;
+        long startNanos = System.nanoTime();
+        try {
+            return point.proceed();
+        } finally {
+            long durationNanos = System.nanoTime() - startNanos;
 
-        log.info("Metrics:: Class Name:" + clazzName +
-                ". Method Name: " + methodName +
-                ". execution time is : " +
-                "%,d".formatted(timeInMs) + "ms"
-        );
-        return object;
+            String clazzName = point.getSignature().getDeclaringTypeName();
+            String methodName = point.getSignature().getName();
+
+            // Metric name + tags (Micrometer style)
+            Timer.builder("trips.method.execution.time")
+                    .description("Execution time of methods annotated with @TrackExecutionTime")
+                    .tag("class", clazzName)
+                    .tag("method", methodName)
+                    .register(meterRegistry)
+                    .record(durationNanos, TimeUnit.NANOSECONDS);
+
+            log.info("Metrics:: Class Name: {}. Method Name: {}. execution time is : {}ms",
+                    clazzName, methodName, TimeUnit.NANOSECONDS.toMillis(durationNanos));
+        }
     }
 }

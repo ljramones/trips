@@ -108,7 +108,7 @@
 
         <orekit.version>11.1.2</orekit.version>
 
-        <metrics.version>4.2.10</metrics.version>
+        <metrics5.version>5.0.6</metrics5.version>
 
         <!-- Jackson version managed by Spring Boot -->
 
@@ -125,7 +125,7 @@
 
         <jacoco.version>0.8.14</jacoco.version>
 
-        <jsqlparser.version>4.5</jsqlparser.version>
+        <jsqlparser.version>5.3</jsqlparser.version>
 
         <jpackage.type>APP_IMAGE</jpackage.type>
         <jpackage.name>TRIPS</jpackage.name>
@@ -138,7 +138,7 @@
             <dependency>
                 <groupId>org.kordamp.ikonli</groupId>
                 <artifactId>ikonli-bom</artifactId>
-                <version>12.3.1</version>
+                <version>12.4.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -172,6 +172,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <dependency>
@@ -210,13 +215,6 @@
             <version>0.5.3</version>
         </dependency>
 
-        <!-- FXyz for advanced 3D shapes and point clouds -->
-<!--        <dependency>-->
-<!--            <groupId>org.fxyz3d</groupId>-->
-<!--            <artifactId>fxyz3d</artifactId>-->
-<!--            <version>0.6.0</version>-->
-<!--        </dependency>-->
-
         <!-- Core dependencies from FXyz3D core module -->
         <dependency>
             <groupId>eu.mihosoft.vrl.jcsg</groupId>
@@ -229,6 +227,7 @@
             <artifactId>vvecmath</artifactId>
             <version>0.4.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.orbisgis</groupId>
             <artifactId>poly2tri-core</artifactId>
@@ -252,7 +251,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.2.224</version>
+            <version>2.4.240</version>
             <scope>runtime</scope>
         </dependency>
         <!-- Jakarta JAXB for XML binding (replaces javax.xml.bind) -->
@@ -264,7 +263,7 @@
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>4.0.5</version>
+            <version>4.0.6</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -301,7 +300,7 @@
         <dependency>
             <groupId>gov.nasa.gsfc.heasarc</groupId>
             <artifactId>nom-tam-fits</artifactId>
-            <version>1.16.1</version>
+            <version>1.21.2</version>
         </dependency>
 
         <dependency>
@@ -358,35 +357,22 @@
 <!--            <version>1.0.0</version>-->
 <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>Acme</groupId>-->
-<!--            <artifactId>acme</artifactId>-->
-<!--            <version>1.0.0</version>-->
-<!--        </dependency>-->
-
-        <!-- tracking metrics -->
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>${metrics.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.12.1</version>
+            <version>5.18.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
-            <version>6.2.2</version>
+            <version>6.9.3</version>
         </dependency>
 
         <dependency>
             <groupId>com.dustinredmond.fxtrayicon</groupId>
             <artifactId>FXTrayIcon</artifactId>
-            <version>3.2.0</version>
+            <version>4.2.3</version>
         </dependency>
 
         <!-- icon libraries -->

@@ -71,5 +71,19 @@ problemreport:
     enabled: true
     maxAgeDays: 7
 
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.ui.title}
 
 
