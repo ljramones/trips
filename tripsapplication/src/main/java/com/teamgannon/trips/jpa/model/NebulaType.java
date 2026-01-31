@@ -148,4 +148,26 @@ public enum NebulaType {
             case PLANETARY, SUPERNOVA_REMNANT -> true;  // Expanding
         };
     }
+
+    /**
+     * Get default glow intensity for this nebula type (0.0 - 1.0).
+     * Emission nebulae and planetary nebulae glow brightly.
+     * Dark nebulae have no glow.
+     */
+    public double getDefaultGlowIntensity() {
+        return switch (this) {
+            case EMISSION -> 0.6;           // Bright emission glow
+            case DARK -> 0.0;               // No glow (absorbing)
+            case REFLECTION -> 0.4;         // Moderate reflected glow
+            case PLANETARY -> 0.7;          // Bright ionized gas
+            case SUPERNOVA_REMNANT -> 0.5;  // Moderate shock-heated glow
+        };
+    }
+
+    /**
+     * Whether glow should be enabled by default for this nebula type.
+     */
+    public boolean isGlowEnabledByDefault() {
+        return getDefaultGlowIntensity() > 0.0;
+    }
 }

@@ -1,1 +1,1 @@
-./mvnw-java17.sh  -pl tripsapplication -am spring-boot:run
+./mvnw-java25.sh  -pl tripsapplication -am spring-boot:run

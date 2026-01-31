@@ -55,6 +55,18 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
         updateTable();
 
+        // Add Cancel button so user can close dialog without selecting a dataset
+        ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        this.getDialogPane().getButtonTypes().add(cancelButtonType);
+
+        // Handle Cancel button click
+        this.setResultConverter(buttonType -> {
+            if (buttonType == cancelButtonType) {
+                return false;
+            }
+            return getResult();
+        });
+
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
     }
@@ -64,6 +76,11 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
         List<DataSetDescriptor> descriptors = datasetService.getDataSets();
         // fill in table
         descriptorListView.setItems(FXCollections.observableArrayList(descriptors));
+
+        // Show placeholder message when no datasets exist
+        if (descriptors.isEmpty()) {
+            descriptorListView.setPlaceholder(new Label("No datasets available.\nUse File > Import to add a dataset, or click Cancel to close."));
+        }
     }
 
     private void createSelectedDatasetContext(@NotNull VBox vBox) {
@@ -129,7 +146,8 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
 
     private void close(WindowEvent we) {
-        setResult(true);
+        // Set result to false when closing via X button (no selection made)
+        setResult(false);
         close();
     }
 }

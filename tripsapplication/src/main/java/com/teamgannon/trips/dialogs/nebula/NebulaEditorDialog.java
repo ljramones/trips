@@ -7,8 +7,10 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -119,8 +121,8 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         mainBox.getChildren().addAll(tabPane, createButtonBar());
 
         this.getDialogPane().setContent(mainBox);
-        this.getDialogPane().setPrefWidth(500);
-        this.getDialogPane().setPrefHeight(480);
+        this.getDialogPane().setPrefWidth(650);
+        this.getDialogPane().setPrefHeight(520);
 
         DialogUtils.bindCloseHandler(this, this::handleClose);
 
@@ -427,18 +429,43 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.setHgap(10);
         grid.setVgap(8);
         grid.setPadding(new Insets(10));
+
+        // Set column constraints for 4-column layout
+        // Column 0: Label (fixed width)
+        ColumnConstraints labelCol1 = new ColumnConstraints();
+        labelCol1.setMinWidth(110);
+        labelCol1.setPrefWidth(110);
+
+        // Column 1: Field (grows)
+        ColumnConstraints fieldCol1 = new ColumnConstraints();
+        fieldCol1.setMinWidth(120);
+        fieldCol1.setHgrow(Priority.SOMETIMES);
+
+        // Column 2: Label (fixed width)
+        ColumnConstraints labelCol2 = new ColumnConstraints();
+        labelCol2.setMinWidth(110);
+        labelCol2.setPrefWidth(110);
+
+        // Column 3: Field (grows)
+        ColumnConstraints fieldCol2 = new ColumnConstraints();
+        fieldCol2.setMinWidth(120);
+        fieldCol2.setHgrow(Priority.SOMETIMES);
+
+        grid.getColumnConstraints().addAll(labelCol1, fieldCol1, labelCol2, fieldCol2);
         return grid;
     }
 
     private TextField createTextField(double width) {
         TextField field = new TextField();
         field.setPrefWidth(width);
+        field.setMinWidth(80);
         return field;
     }
 
     private Label createBoldLabel(String text) {
         Label label = new Label(text);
         label.setFont(Font.font("System", FontWeight.BOLD, 12));
+        label.setMinWidth(100);
         return label;
     }
 

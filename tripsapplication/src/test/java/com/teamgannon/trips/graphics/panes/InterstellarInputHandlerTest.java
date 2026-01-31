@@ -1,8 +1,10 @@
 package com.teamgannon.trips.graphics.panes;
 
 import com.teamgannon.trips.config.application.model.UserControls;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.SubScene;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,9 +21,21 @@ import static org.mockito.Mockito.any;
 
 /**
  * Tests for InterstellarInputHandler.
+ * <p>
+ * Note: JavaFX 25+ requires toolkit initialization before mocking SubScene.
  */
 @ExtendWith(MockitoExtension.class)
 class InterstellarInputHandlerTest {
+
+    @BeforeAll
+    static void initToolkit() {
+        // Ensure JavaFX toolkit is initialized before mocking SubScene
+        try {
+            Platform.startup(() -> {});
+        } catch (IllegalStateException e) {
+            // Already initialized
+        }
+    }
 
     @Mock
     private SubScene subScene;

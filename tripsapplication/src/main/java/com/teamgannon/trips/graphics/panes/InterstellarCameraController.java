@@ -188,12 +188,6 @@ public class InterstellarCameraController {
     public void rotateXY(int direction, double modifier, double mouseDeltaX, double mouseDeltaY) {
         rotateZ.setAngle(((rotateZ.getAngle() + direction * mouseDeltaX * modifier) % 360));
         rotateX.setAngle(((rotateX.getAngle() - direction * mouseDeltaY * modifier) % 360));
-        // Diagnostic logging for rotation debugging (temporarily at INFO level)
-        log.info("DIAG Camera: rotateX={}, rotateY={}, rotateZ={}, cameraZ={}",
-                String.format("%.1f", rotateX.getAngle()),
-                String.format("%.1f", rotateY.getAngle()),
-                String.format("%.1f", rotateZ.getAngle()),
-                String.format("%.1f", camera.getTranslateZ()));
     }
 
     /**

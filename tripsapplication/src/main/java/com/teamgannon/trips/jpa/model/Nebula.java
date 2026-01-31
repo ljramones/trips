@@ -140,6 +140,38 @@ public class Nebula implements Serializable {
      */
     private int noiseOctaves = 3;
 
+    /**
+     * Noise persistence (amplitude decay per octave).
+     * Range: 0.0 - 1.0, default 0.5
+     * Lower = smoother, higher = more detail preserved
+     */
+    private double noisePersistence = 0.5;
+
+    /**
+     * Noise lacunarity (frequency multiplier per octave).
+     * Range: 1.0 - 3.0, default 2.2
+     * Higher = finer detail
+     */
+    private double noiseLacunarity = 2.2;
+
+    /**
+     * Filament anisotropy X factor (default 1.0).
+     * Values < 1.0 compress filaments in X direction.
+     */
+    private double filamentAnisotropyX = 1.0;
+
+    /**
+     * Filament anisotropy Y factor (default 0.7).
+     * Values < 1.0 compress filaments in Y direction.
+     */
+    private double filamentAnisotropyY = 0.7;
+
+    /**
+     * Filament anisotropy Z factor (default 0.4).
+     * Values < 1.0 compress filaments in Z direction.
+     */
+    private double filamentAnisotropyZ = 0.4;
+
     // ==================== Appearance ====================
 
     /**
@@ -153,9 +185,37 @@ public class Nebula implements Serializable {
     private String secondaryColor;
 
     /**
+     * Tertiary color as hex string for multi-zone gradients.
+     * Used in MULTI_ZONE gradient mode for middle color band.
+     */
+    private String tertiaryColor;
+
+    /**
+     * Color gradient mode for particle coloring.
+     * LINEAR = simple gradient between colors
+     * RADIAL = core color at center, edge color at boundary
+     * NOISE_BASED = color varies with noise
+     * TEMPERATURE = color based on distance from center (hot core)
+     * MULTI_ZONE = three-color bands from core to edge
+     */
+    private String colorGradientMode = "LINEAR";
+
+    /**
      * Base opacity (0.0 - 1.0)
      */
     private double opacity = 0.7;
+
+    /**
+     * Whether glow effect is enabled for this nebula
+     */
+    private boolean enableGlow = true;
+
+    /**
+     * Glow intensity (0.0 - 1.0).
+     * 0.0 = no glow, 1.0 = maximum glow.
+     * Emission nebulae typically have higher glow, dark nebulae have none.
+     */
+    private double glowIntensity = 0.5;
 
     // ==================== Animation ====================
 
@@ -240,6 +300,8 @@ public class Nebula implements Serializable {
             noiseStrength = type.getDefaultNoiseStrength();
             particleDensity = type.getDefaultParticleDensity();
             enableAnimation = type.isAnimationEnabledByDefault();
+            enableGlow = type.isGlowEnabledByDefault();
+            glowIntensity = type.getDefaultGlowIntensity();
         }
     }
 
@@ -249,6 +311,25 @@ public class Nebula implements Serializable {
     public double getVolume() {
         return (4.0 / 3.0) * Math.PI *
                 (Math.pow(outerRadius, 3) - Math.pow(innerRadius, 3));
+    }
+
+    /**
+     * Get filament anisotropy as an array [x, y, z].
+     * Used for creating directional filament structures.
+     */
+    public double[] getFilamentAnisotropy() {
+        return new double[]{filamentAnisotropyX, filamentAnisotropyY, filamentAnisotropyZ};
+    }
+
+    /**
+     * Set filament anisotropy from an array [x, y, z].
+     */
+    public void setFilamentAnisotropy(double[] anisotropy) {
+        if (anisotropy != null && anisotropy.length == 3) {
+            this.filamentAnisotropyX = anisotropy[0];
+            this.filamentAnisotropyY = anisotropy[1];
+            this.filamentAnisotropyZ = anisotropy[2];
+        }
     }
 
     /**

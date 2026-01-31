@@ -90,7 +90,7 @@
 
         <spring.boot.version>4.0.2</spring.boot.version>
 
-        <javafx.version>21.0.5</javafx.version>
+        <javafx.version>25.0.2</javafx.version>
         <fxweaver.version>2.0.1</fxweaver.version>
 
         <lombok.version>1.18.42</lombok.version>

@@ -2,6 +2,7 @@ package com.teamgannon.trips.particlefields;
 
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
+import javafx.scene.effect.Glow;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -47,6 +48,21 @@ import java.util.Random;
 @Slf4j
 public class RingFieldRenderer {
 
+    /**
+     * Rendering mode for particle clouds.
+     * ScatterMesh modes are default since JavaFX 25 fixed frustum culling.
+     */
+    public enum RenderingMode {
+        /** Default: auto-choose chunked or single mesh based on particle count */
+        SCATTER_MESH_AUTO,
+        /** Force single combined ScatterMesh */
+        SCATTER_MESH_SINGLE,
+        /** Force chunked ScatterMesh (many small meshes) */
+        SCATTER_MESH_CHUNKED,
+        /** Debug only: individual Sphere objects (matches star rendering) */
+        INDIVIDUAL_SPHERES
+    }
+
     /** Number of colors in the palette (matches ScatterMesh palette size) */
     private static final int PALETTE_SIZE = 256;
 
@@ -68,17 +84,25 @@ public class RingFieldRenderer {
     /** List of chunked meshes when using chunked rendering mode */
     private List<ScatterMesh> chunkedMeshes = new ArrayList<>();
 
-    /** Maximum particles per chunk to avoid frustum culling issues */
-    private static final int MAX_PARTICLES_PER_CHUNK = 500;
+    /** Maximum particles per chunk - increased from 500 since JavaFX 25 fixed frustum culling */
+    private static final int MAX_PARTICLES_PER_CHUNK = 2000;
 
-    /** Whether to use chunked rendering (many small meshes) vs single large mesh */
+    /** Current rendering mode */
+    @Getter
+    private RenderingMode renderingMode = RenderingMode.SCATTER_MESH_AUTO;
+
+    /** Whether to use chunked rendering (derived from renderingMode) */
     private boolean useChunkedRendering = true;
 
     /** Whether spatial binning was used (requires full rebuild for animation) */
     private boolean usedSpatialBinning = false;
 
-    /** Whether to use individual Sphere objects instead of ScatterMesh (matches star rendering, avoids clipping) */
+    /** Whether to use individual Sphere objects (derived from renderingMode) */
     private boolean useIndividualSpheres = false;
+
+    /** Current LOD level (for tracking and logging) */
+    @Getter
+    private String currentLodLevel = "FULL";
 
     /** Maximum particles when using individual spheres (for performance) */
     private static final int MAX_INDIVIDUAL_SPHERES = 10000;
@@ -177,8 +201,8 @@ public class RingFieldRenderer {
         // Compute base size (midpoint of size range)
         baseSize = (config.minSize() + config.maxSize()) / 2.0;
 
-        // Build color palette from primary and secondary colors
-        colorPalette = buildColorPalette(config.primaryColor(), config.secondaryColor());
+        // Build color palette based on gradient mode
+        colorPalette = buildColorPalette(config);
 
         // Check if any elements have opacity < 1
         useOpacity = elements.stream()
@@ -190,20 +214,116 @@ public class RingFieldRenderer {
         // Build the mesh with per-particle attributes
         buildMesh();
 
-        log.debug("RingFieldRenderer initialized: {} with {} elements, using per-particle attributes (opacity={})",
-                config.name(), elements.size(), useOpacity);
+        // Apply glow effect if enabled
+        applyGlowEffect();
+
+        log.debug("RingFieldRenderer initialized: {} with {} elements, mode={}, using per-particle attributes (opacity={}), glow={}",
+                config.name(), elements.size(), renderingMode, useOpacity,
+                config.glowEnabled() ? config.glowIntensity() : "disabled");
+
+        // Log performance stats for larger particle clouds
+        if (elements.size() > 10000) {
+            logRenderingStats();
+        }
     }
 
     /**
-     * Builds the color palette as a gradient from primary to secondary color.
+     * Applies glow effect to the group if enabled in configuration.
+     */
+    private void applyGlowEffect() {
+        if (config.glowEnabled() && config.glowIntensity() > 0) {
+            Glow glow = new Glow(config.glowIntensity());
+            group.setEffect(glow);
+            log.debug("Applied glow effect with intensity {} to {}", config.glowIntensity(), config.name());
+        } else {
+            group.setEffect(null);
+        }
+    }
+
+    /**
+     * Updates the glow intensity dynamically.
+     * Can be called to adjust glow without full rebuild.
+     *
+     * @param intensity new glow intensity (0.0 - 1.0), or 0 to disable
+     */
+    public void setGlowIntensity(double intensity) {
+        if (intensity > 0) {
+            group.setEffect(new Glow(Math.min(1.0, intensity)));
+        } else {
+            group.setEffect(null);
+        }
+    }
+
+    /**
+     * Builds the color palette based on the gradient mode.
      * The palette has 256 entries for smooth color mapping.
      */
-    private List<Color> buildColorPalette(Color primary, Color secondary) {
+    private List<Color> buildColorPalette(RingConfiguration config) {
+        Color primary = config.primaryColor();
+        Color secondary = config.secondaryColor();
+        Color tertiary = config.tertiaryColor() != null ? config.tertiaryColor() :
+                primary.interpolate(secondary, 0.5);
+        ColorGradientMode mode = config.colorGradientMode() != null ?
+                config.colorGradientMode() : ColorGradientMode.LINEAR;
+
         List<Color> palette = new ArrayList<>(PALETTE_SIZE);
-        for (int i = 0; i < PALETTE_SIZE; i++) {
-            double t = i / (double) (PALETTE_SIZE - 1);
-            palette.add(primary.interpolate(secondary, t));
+
+        switch (mode) {
+            case LINEAR:
+            case RADIAL:  // Same palette, different index calculation
+            case NOISE_BASED:
+                // Simple linear gradient
+                for (int i = 0; i < PALETTE_SIZE; i++) {
+                    double t = i / (double) (PALETTE_SIZE - 1);
+                    palette.add(primary.interpolate(secondary, t));
+                }
+                break;
+
+            case TEMPERATURE:
+                // Hot (red/white) at index 0, cool (blue) at index 255
+                Color hot = Color.color(1.0, 0.9, 0.7);  // Yellow-white
+                Color warm = primary;
+                Color cool = secondary;
+                for (int i = 0; i < PALETTE_SIZE; i++) {
+                    double t = i / (double) (PALETTE_SIZE - 1);
+                    if (t < 0.3) {
+                        // Hot core (0-30%): hot to primary
+                        palette.add(hot.interpolate(warm, t / 0.3));
+                    } else if (t < 0.7) {
+                        // Middle (30-70%): primary to secondary
+                        palette.add(warm.interpolate(cool, (t - 0.3) / 0.4));
+                    } else {
+                        // Cool edge (70-100%): secondary to darker
+                        palette.add(cool.interpolate(cool.darker(), (t - 0.7) / 0.3));
+                    }
+                }
+                break;
+
+            case MULTI_ZONE:
+                // Three-color bands: 0-85: primary->tertiary, 86-170: tertiary->secondary, 171-255: secondary
+                for (int i = 0; i < PALETTE_SIZE; i++) {
+                    if (i <= 85) {
+                        double t = i / 85.0;
+                        palette.add(primary.interpolate(tertiary, t));
+                    } else if (i <= 170) {
+                        double t = (i - 86) / 84.0;
+                        palette.add(tertiary.interpolate(secondary, t));
+                    } else {
+                        // Keep secondary color for outer region
+                        double t = (i - 171) / 84.0;
+                        palette.add(secondary.interpolate(secondary.darker(), t * 0.3));
+                    }
+                }
+                break;
+
+            default:
+                // Default to linear
+                for (int i = 0; i < PALETTE_SIZE; i++) {
+                    double t = i / (double) (PALETTE_SIZE - 1);
+                    palette.add(primary.interpolate(secondary, t));
+                }
         }
+
         return palette;
     }
 
@@ -548,20 +668,90 @@ public class RingFieldRenderer {
     }
 
     /**
+     * Sets the rendering mode for this renderer.
+     * ScatterMesh modes are recommended since JavaFX 25 fixed frustum culling.
+     *
+     * @param mode the rendering mode to use
+     */
+    public void setRenderingMode(RenderingMode mode) {
+        this.renderingMode = mode;
+        switch (mode) {
+            case SCATTER_MESH_AUTO:
+                this.useIndividualSpheres = false;
+                this.useChunkedRendering = true;  // Will auto-choose based on count
+                break;
+            case SCATTER_MESH_SINGLE:
+                this.useIndividualSpheres = false;
+                this.useChunkedRendering = false;
+                break;
+            case SCATTER_MESH_CHUNKED:
+                this.useIndividualSpheres = false;
+                this.useChunkedRendering = true;
+                break;
+            case INDIVIDUAL_SPHERES:
+                this.useIndividualSpheres = true;
+                this.useChunkedRendering = false;
+                break;
+        }
+    }
+
+    /**
      * Sets whether to use chunked rendering (many small meshes) to avoid frustum culling issues.
      * @param useChunked true to use chunked rendering, false for single large mesh
+     * @deprecated Use {@link #setRenderingMode(RenderingMode)} instead
      */
+    @Deprecated
     public void setUseChunkedRendering(boolean useChunked) {
         this.useChunkedRendering = useChunked;
+        if (!useIndividualSpheres) {
+            this.renderingMode = useChunked ? RenderingMode.SCATTER_MESH_CHUNKED : RenderingMode.SCATTER_MESH_SINGLE;
+        }
     }
 
     /**
      * Sets whether to use individual Sphere objects instead of ScatterMesh.
      * Individual spheres match how stars are rendered and avoid frustum clipping issues.
      * @param useSpheres true to use individual spheres, false for ScatterMesh
+     * @deprecated Use {@link #setRenderingMode(RenderingMode)} instead. Individual spheres
+     * are now debug-only since JavaFX 25 fixed ScatterMesh frustum culling.
      */
+    @Deprecated
     public void setUseIndividualSpheres(boolean useSpheres) {
         this.useIndividualSpheres = useSpheres;
+        if (useSpheres) {
+            this.renderingMode = RenderingMode.INDIVIDUAL_SPHERES;
+        }
+    }
+
+    /**
+     * Sets the current LOD level (for tracking purposes).
+     * @param lodLevel the LOD level name (e.g., "FULL", "HIGH", "MEDIUM", "LOW", "MINIMAL")
+     */
+    public void setCurrentLodLevel(String lodLevel) {
+        this.currentLodLevel = lodLevel;
+    }
+
+    /**
+     * Logs rendering performance statistics.
+     * Useful for debugging and performance tuning.
+     */
+    public void logRenderingStats() {
+        String mode = renderingMode.name();
+        int elementCount = elements.size();
+        int meshCount = getMeshCount();
+        String rendering = useIndividualSpheres ? "Individual Spheres" :
+                (usedSpatialBinning ? "Chunked ScatterMesh" : "Single ScatterMesh");
+
+        log.info("PERF [{}]: mode={}, elements={}, meshes={}, rendering={}, lod={}",
+                config != null ? config.name() : "unknown",
+                mode, elementCount, meshCount, rendering, currentLodLevel);
+
+        if (mesh != null && !useIndividualSpheres) {
+            Bounds bounds = mesh.getBoundsInLocal();
+            log.info("PERF [{}]: mesh bounds size=({:.1f}, {:.1f}, {:.1f})",
+                    config != null ? config.name() : "unknown",
+                    bounds.getWidth(), bounds.getHeight(), bounds.getDepth());
+        }
     }
 
     /**

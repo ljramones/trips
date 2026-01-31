@@ -1,14 +1,18 @@
 package com.teamgannon.trips.particlefields;
 
 /**
- * Simple 3D noise generator for procedural nebula structure.
+ * Enhanced 3D noise generator for procedural nebula structure.
  * <p>
  * Uses a hash-based approach for fast, deterministic noise generation.
  * Supports layered octaves for fractal-like detail at multiple scales.
  * <p>
- * This is intentionally simple and fast rather than high-quality.
- * For interstellar-scale nebulae, the noise doesn't need to be smooth
- * since individual particles are not closely examined.
+ * Features:
+ * <ul>
+ *   <li>Configurable persistence and lacunarity</li>
+ *   <li>Ridged noise for sharp filaments</li>
+ *   <li>Multi-scale filament displacement</li>
+ *   <li>Anisotropic stretching for directional structures</li>
+ * </ul>
  */
 public class NoiseGenerator {
 
@@ -20,6 +24,10 @@ public class NoiseGenerator {
 
     private final long seed;
 
+    // Configurable noise parameters
+    private double persistence = 0.5;     // Amplitude decay per octave (0.0-1.0)
+    private double lacunarity = 2.2;      // Frequency multiplier per octave (1.0-3.0)
+
     /**
      * Creates a noise generator with the given seed.
      *
@@ -27,6 +35,47 @@ public class NoiseGenerator {
      */
     public NoiseGenerator(long seed) {
         this.seed = seed;
+    }
+
+    /**
+     * Creates a noise generator with configurable parameters.
+     *
+     * @param seed        random seed for reproducible noise
+     * @param persistence amplitude decay per octave (0.0-1.0, default 0.5)
+     * @param lacunarity  frequency multiplier per octave (1.0-3.0, default 2.2)
+     */
+    public NoiseGenerator(long seed, double persistence, double lacunarity) {
+        this.seed = seed;
+        this.persistence = Math.max(0.1, Math.min(1.0, persistence));
+        this.lacunarity = Math.max(1.0, Math.min(4.0, lacunarity));
+    }
+
+    /**
+     * Sets the persistence (amplitude decay per octave).
+     * Lower values = smoother, higher values = more detail preserved.
+     *
+     * @param persistence value between 0.0 and 1.0
+     */
+    public void setPersistence(double persistence) {
+        this.persistence = Math.max(0.1, Math.min(1.0, persistence));
+    }
+
+    /**
+     * Sets the lacunarity (frequency multiplier per octave).
+     * Higher values = more rapid frequency increase = finer detail.
+     *
+     * @param lacunarity value between 1.0 and 4.0
+     */
+    public void setLacunarity(double lacunarity) {
+        this.lacunarity = Math.max(1.0, Math.min(4.0, lacunarity));
+    }
+
+    public double getPersistence() {
+        return persistence;
+    }
+
+    public double getLacunarity() {
+        return lacunarity;
     }
 
     /**
@@ -55,6 +104,7 @@ public class NoiseGenerator {
     /**
      * Generate layered noise with multiple octaves for fractal-like detail.
      * Each octave adds finer detail at higher frequency but lower amplitude.
+     * Uses the configured persistence and lacunarity values.
      *
      * @param x         x coordinate
      * @param y         y coordinate
@@ -67,14 +117,13 @@ public class NoiseGenerator {
         double total = 0;
         double amplitude = 1.0;
         double maxValue = 0;  // For normalization
-        double persistence = 0.5;  // Amplitude decay per octave
-        double lacunarity = 2.2;   // Frequency increase per octave
+        double freq = frequency;
 
         for (int i = 0; i < octaves; i++) {
-            total += noise3D(x * frequency, y * frequency, z * frequency) * amplitude;
+            total += noise3D(x * freq, y * freq, z * freq) * amplitude;
             maxValue += amplitude;
             amplitude *= persistence;
-            frequency *= lacunarity;
+            freq *= lacunarity;
         }
 
         // Normalize to approximately [-1, 1]
@@ -103,8 +152,6 @@ public class NoiseGenerator {
         double amplitude = 1.0;
         double maxValue = 0;
         double frequency = 1.0;
-        double persistence = 0.5;
-        double lacunarity = 2.0;
 
         for (int i = 0; i < octaves; i++) {
             total += Math.abs(noise3D(x * frequency, y * frequency, z * frequency)) * amplitude;
@@ -114,6 +161,83 @@ public class NoiseGenerator {
         }
 
         return total / maxValue;
+    }
+
+    /**
+     * Generate ridged noise for sharp, dramatic filaments.
+     * Ridged noise inverts the absolute value to create sharp ridges.
+     *
+     * @param x       x coordinate
+     * @param y       y coordinate
+     * @param z       z coordinate
+     * @param octaves number of layers
+     * @return ridged noise value in [0, 1]
+     */
+    public double ridgedNoise(double x, double y, double z, int octaves) {
+        double total = 0;
+        double amplitude = 1.0;
+        double maxValue = 0;
+        double frequency = 1.0;
+        double weight = 1.0;
+
+        for (int i = 0; i < octaves; i++) {
+            // Get absolute noise and invert it (1 - |noise|)
+            double signal = 1.0 - Math.abs(noise3D(x * frequency, y * frequency, z * frequency));
+            // Square the signal to sharpen the ridges
+            signal = signal * signal;
+            // Weight by previous amplitude for self-similar ridges
+            signal *= weight;
+            weight = Math.min(1.0, signal * 2.0);
+
+            total += signal * amplitude;
+            maxValue += amplitude;
+            amplitude *= persistence;
+            frequency *= lacunarity;
+        }
+
+        return total / maxValue;
+    }
+
+    /**
+     * Generate multi-scale filament displacement with both coarse and fine detail.
+     * Combines low-frequency large displacement with high-frequency fine detail.
+     *
+     * @param x              x coordinate
+     * @param y              y coordinate
+     * @param z              z coordinate
+     * @param octaves        number of noise layers for fine detail
+     * @param strength       overall displacement strength
+     * @param coarseWeight   weight of coarse displacement (0.0-1.0, default 0.7)
+     * @param fineWeight     weight of fine displacement (0.0-1.0, default 0.3)
+     * @param anisotropy     anisotropic factors [xFactor, yFactor, zFactor]
+     * @return displacement vector [dx, dy, dz]
+     */
+    public double[] multiScaleFilamentDisplacement(double x, double y, double z,
+                                                    int octaves, double strength,
+                                                    double coarseWeight, double fineWeight,
+                                                    double[] anisotropy) {
+        // Coarse displacement (low frequency, large scale)
+        double coarseScale = 0.3;
+        double nxCoarse = layeredNoise(x * coarseScale, y * coarseScale, z * coarseScale, 2, 1.0);
+        double nyCoarse = layeredNoise((x + 1000) * coarseScale, (y + 1000) * coarseScale, (z + 1000) * coarseScale, 2, 1.0);
+        double nzCoarse = layeredNoise((x + 2000) * coarseScale, (y + 2000) * coarseScale, (z + 2000) * coarseScale, 2, 1.0);
+
+        // Fine displacement (high frequency, small scale)
+        double fineScale = 1.5;
+        double nxFine = ridgedNoise(x * fineScale, y * fineScale, z * fineScale, octaves);
+        double nyFine = ridgedNoise((x + 1000) * fineScale, (y + 1000) * fineScale, (z + 1000) * fineScale, octaves);
+        double nzFine = ridgedNoise((x + 2000) * fineScale, (y + 2000) * fineScale, (z + 2000) * fineScale, octaves);
+
+        // Combine with weights
+        double nx = nxCoarse * coarseWeight + (nxFine * 2 - 1) * fineWeight;
+        double ny = nyCoarse * coarseWeight + (nyFine * 2 - 1) * fineWeight;
+        double nz = nzCoarse * coarseWeight + (nzFine * 2 - 1) * fineWeight;
+
+        return new double[]{
+                nx * strength * anisotropy[0],
+                ny * strength * anisotropy[1],
+                nz * strength * anisotropy[2]
+        };
     }
 
     /**

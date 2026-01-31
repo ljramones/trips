@@ -34,8 +34,12 @@ public class DustCloudGenerator implements RingElementGenerator {
         double radialRange = config.outerRadius() - config.innerRadius();
         double sizeRange = config.maxSize() - config.minSize();
 
-        // Create noise generator with the seed from config
-        NoiseGenerator noise = new NoiseGenerator(config.seed());
+        // Create noise generator with configurable parameters from config
+        NoiseGenerator noise = new NoiseGenerator(
+                config.seed(),
+                config.noisePersistence(),
+                config.noiseLacunarity()
+        );
 
         // Noise scale based on nebula size (larger nebulae need coarser noise)
         double noiseScale = 0.8 / Math.max(1, radialRange * 0.01);
@@ -79,14 +83,25 @@ public class DustCloudGenerator implements RingElementGenerator {
         double py = r * Math.sin(phi) * Math.sin(theta);
         double pz = r * Math.cos(phi);
 
-        // === NOISE DISPLACEMENT (Filamentary Structure) ===
+        // === NOISE DISPLACEMENT (Enhanced Multi-Scale Filamentary Structure) ===
         if (config.noiseStrength() > 0) {
-            double[] displacement = noise.filamentDisplacement(
+            // Get anisotropy from config (defaults to [1.0, 0.7, 0.4] for horizontal streaks)
+            double[] anisotropy = config.filamentAnisotropy();
+            if (anisotropy == null || anisotropy.length != 3) {
+                anisotropy = new double[]{1.0, 0.7, 0.4};
+            }
+
+            // Use multi-scale displacement for more realistic filaments
+            // Combines coarse (large-scale) and fine (small-scale) displacement
+            double[] displacement = noise.multiScaleFilamentDisplacement(
                     px * noiseScale,
                     py * noiseScale,
                     pz * noiseScale,
                     config.noiseOctaves(),
-                    radialRange * 0.15 * config.noiseStrength()
+                    radialRange * 0.15 * config.noiseStrength(),
+                    0.7,  // Coarse weight (large scale structures)
+                    0.3,  // Fine weight (small scale detail)
+                    anisotropy
             );
 
             px += displacement[0];
@@ -143,18 +158,15 @@ public class DustCloudGenerator implements RingElementGenerator {
     }
 
     /**
-     * Calculate particle color with core-biased gradient and noise variation.
+     * Calculate particle color with gradient mode support.
      */
     private Color calculateColor(RingConfiguration config, Random random,
                                    NoiseGenerator noise,
                                    double px, double py, double pz,
                                    double r, double radialRange,
                                    double coreFactor) {
-        // Base color interpolation
-        double colorFactor = random.nextDouble();
-
-        // Bias toward primary color near core, secondary at edges
-        colorFactor = colorFactor * (1.0 - coreFactor * 0.3);
+        // Calculate color factor based on gradient mode
+        double colorFactor = calculateColorFactor(config, random, noise, px, py, pz, r, radialRange, coreFactor);
 
         Color base = interpolateColor(config.primaryColor(), config.secondaryColor(), colorFactor);
 
@@ -208,6 +220,46 @@ public class DustCloudGenerator implements RingElementGenerator {
     public String getDescription() {
         return "Enhanced dust cloud generator - 3D diffuse distribution with " +
                "configurable density falloff, noise-based filaments, and core-biased gradients";
+    }
+
+    /**
+     * Calculate color factor based on gradient mode.
+     * Returns a value 0.0-1.0 that maps to the color palette.
+     */
+    private double calculateColorFactor(RingConfiguration config, Random random,
+                                         NoiseGenerator noise,
+                                         double px, double py, double pz,
+                                         double r, double radialRange,
+                                         double coreFactor) {
+        ColorGradientMode mode = config.colorGradientMode() != null ?
+                config.colorGradientMode() : ColorGradientMode.LINEAR;
+
+        switch (mode) {
+            case LINEAR:
+                // Original behavior: random with core bias
+                double colorFactor = random.nextDouble();
+                return colorFactor * (1.0 - coreFactor * 0.3);
+
+            case RADIAL:
+                // Pure radial: 0 at core, 1 at edge
+                return 1.0 - coreFactor;
+
+            case NOISE_BASED:
+                // Color varies with noise value
+                double noiseValue = noise.layeredNoise(px * 0.5, py * 0.5, pz * 0.5, 2);
+                return (noiseValue + 1.0) * 0.5;  // Map [-1,1] to [0,1]
+
+            case TEMPERATURE:
+                // Radial but inverted: hot core (0), cool edge (1)
+                return 1.0 - coreFactor;
+
+            case MULTI_ZONE:
+                // Radial mapping to three zones
+                return 1.0 - coreFactor;
+
+            default:
+                return random.nextDouble();
+        }
     }
 
     /**

@@ -6,7 +6,9 @@ import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.routing.model.Route;
+import javafx.application.Platform;
 import javafx.geometry.Point3D;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +33,21 @@ import static org.mockito.Mockito.*;
  *   <li>Handling routes with all visible stars</li>
  * </ul>
  * <p>
- * Note: Some tests involving JavaFX components are limited due to toolkit initialization requirements.
+ * Note: JavaFX 25+ made Node sealed, so we use a concrete Group instance instead of mocking.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PartialRouteUtilsTest {
+
+    @BeforeAll
+    static void initToolkit() {
+        // Ensure JavaFX toolkit is initialized (required for creating Group)
+        try {
+            Platform.startup(() -> {});
+        } catch (IllegalStateException e) {
+            // Already initialized
+        }
+    }
 
     @Mock
     private TripsContext tripsContext;
@@ -55,8 +67,8 @@ class PartialRouteUtilsTest {
     @Mock
     private DataSetContext dataSetContext;
 
-    @Mock
-    private Node mockNode;
+    // Use a concrete Group instead of mocking Node (Node is sealed in JavaFX 25+)
+    private Node testNode;
 
     private PartialRouteUtils partialRouteUtils;
 
@@ -72,6 +84,8 @@ class PartialRouteUtilsTest {
                 routeBuilderUtils
         );
         starLookup = new HashMap<>();
+        // Create a concrete Group instance (Node is sealed in JavaFX 25+)
+        testNode = new Group();
     }
 
     // =========================================================================
@@ -101,7 +115,7 @@ class PartialRouteUtilsTest {
 
     private void setupStarLookup(String... starIds) {
         for (String starId : starIds) {
-            starLookup.put(starId, mockNode);  // Use mock Node
+            starLookup.put(starId, testNode);  // Use concrete Group instance
         }
         lenient().when(currentPlot.getStarLookup()).thenReturn(starLookup);
     }

@@ -49,6 +49,12 @@ public record RingConfiguration(
         /** Secondary color for particles (for gradients/variation) */
         Color secondaryColor,
 
+        /** Tertiary color for multi-zone gradients (middle color band) */
+        Color tertiaryColor,
+
+        /** Color gradient mode */
+        ColorGradientMode colorGradientMode,
+
         /** Display name for the window title */
         String name,
 
@@ -78,10 +84,45 @@ public record RingConfiguration(
         int noiseOctaves,
 
         /**
+         * Noise persistence (amplitude decay per octave).
+         * Lower values = smoother, higher values = more detail.
+         * Range: 0.0 - 1.0, default 0.5
+         */
+        double noisePersistence,
+
+        /**
+         * Noise lacunarity (frequency multiplier per octave).
+         * Higher values = more rapid frequency increase = finer detail.
+         * Range: 1.0 - 3.0, default 2.2
+         */
+        double noiseLacunarity,
+
+        /**
+         * Anisotropic factors for filament stretching [x, y, z].
+         * Creates directional filaments (e.g., [1.0, 0.7, 0.4] for horizontal streaks).
+         * Default: [1.0, 1.0, 1.0] for isotropic noise.
+         */
+        double[] filamentAnisotropy,
+
+        /**
          * Random seed for reproducible procedural generation.
          * Same seed with same parameters = identical particle distribution.
          */
-        long seed
+        long seed,
+
+        // ==================== Glow Parameters ====================
+
+        /**
+         * Whether glow effect is enabled.
+         * Emission nebulae glow brightly; dark nebulae have no glow.
+         */
+        boolean glowEnabled,
+
+        /**
+         * Glow intensity (0.0 - 1.0).
+         * Only applied when glowEnabled is true.
+         */
+        double glowIntensity
 ) {
     /**
      * Builder for creating RingConfiguration instances with defaults.
@@ -100,13 +141,22 @@ public record RingConfiguration(
         private double centralBodyRadius = 8.0;
         private Color primaryColor = Color.LIGHTGRAY;
         private Color secondaryColor = Color.DARKGRAY;
+        private Color tertiaryColor = Color.GRAY;
+        private ColorGradientMode colorGradientMode = ColorGradientMode.LINEAR;
         private String name = "Ring Field";
 
         // Nebula-specific defaults
         private double radialPower = 0.5;      // Uniform distribution by default
         private double noiseStrength = 0.0;    // No noise by default
         private int noiseOctaves = 3;          // Moderate detail
+        private double noisePersistence = 0.5; // Default persistence
+        private double noiseLacunarity = 2.2;  // Default lacunarity
+        private double[] filamentAnisotropy = new double[]{1.0, 1.0, 1.0}; // Isotropic default
         private long seed = System.currentTimeMillis();
+
+        // Glow defaults
+        private boolean glowEnabled = false;   // Off by default for non-nebula rings
+        private double glowIntensity = 0.0;
 
         public Builder type(RingType type) {
             this.type = type;
@@ -173,6 +223,22 @@ public record RingConfiguration(
             return this;
         }
 
+        /**
+         * Set the tertiary color for multi-zone gradients.
+         */
+        public Builder tertiaryColor(Color tertiaryColor) {
+            this.tertiaryColor = tertiaryColor;
+            return this;
+        }
+
+        /**
+         * Set the color gradient mode.
+         */
+        public Builder colorGradientMode(ColorGradientMode mode) {
+            this.colorGradientMode = mode;
+            return this;
+        }
+
         public Builder name(String name) {
             this.name = name;
             return this;
@@ -208,6 +274,36 @@ public record RingConfiguration(
         }
 
         /**
+         * Set the noise persistence (amplitude decay per octave).
+         * @param persistence 0.0-1.0, default 0.5
+         */
+        public Builder noisePersistence(double persistence) {
+            this.noisePersistence = persistence;
+            return this;
+        }
+
+        /**
+         * Set the noise lacunarity (frequency multiplier per octave).
+         * @param lacunarity 1.0-3.0, default 2.2
+         */
+        public Builder noiseLacunarity(double lacunarity) {
+            this.noiseLacunarity = lacunarity;
+            return this;
+        }
+
+        /**
+         * Set the filament anisotropy factors [x, y, z].
+         * Creates directional filaments (e.g., [1.0, 0.7, 0.4] for horizontal streaks).
+         * @param anisotropy array of 3 factors
+         */
+        public Builder filamentAnisotropy(double[] anisotropy) {
+            if (anisotropy != null && anisotropy.length == 3) {
+                this.filamentAnisotropy = anisotropy.clone();
+            }
+            return this;
+        }
+
+        /**
          * Set the random seed for reproducible generation.
          * @param seed any long value
          */
@@ -216,13 +312,33 @@ public record RingConfiguration(
             return this;
         }
 
+        /**
+         * Set whether glow effect is enabled.
+         * @param enabled true to enable glow
+         */
+        public Builder glowEnabled(boolean enabled) {
+            this.glowEnabled = enabled;
+            return this;
+        }
+
+        /**
+         * Set the glow intensity (0.0 - 1.0).
+         * @param intensity glow intensity
+         */
+        public Builder glowIntensity(double intensity) {
+            this.glowIntensity = intensity;
+            return this;
+        }
+
         public RingConfiguration build() {
             return new RingConfiguration(
                     type, innerRadius, outerRadius, numElements,
                     minSize, maxSize, thickness, maxInclinationDeg,
                     maxEccentricity, baseAngularSpeed, centralBodyRadius,
-                    primaryColor, secondaryColor, name,
-                    radialPower, noiseStrength, noiseOctaves, seed
+                    primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                    radialPower, noiseStrength, noiseOctaves,
+                    noisePersistence, noiseLacunarity, filamentAnisotropy,
+                    seed, glowEnabled, glowIntensity
             );
         }
     }
@@ -240,8 +356,10 @@ public record RingConfiguration(
                 type, innerRadius, outerRadius, numElements,
                 minSize, maxSize, thickness, maxInclinationDeg,
                 maxEccentricity, baseAngularSpeed, centralBodyRadius,
-                primaryColor, secondaryColor, name,
-                radialPower, noiseStrength, noiseOctaves, newSeed
+                primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                radialPower, noiseStrength, noiseOctaves,
+                noisePersistence, noiseLacunarity, filamentAnisotropy,
+                newSeed, glowEnabled, glowIntensity
         );
     }
 
@@ -253,8 +371,55 @@ public record RingConfiguration(
                 type, innerRadius, outerRadius, newNumElements,
                 minSize, maxSize, thickness, maxInclinationDeg,
                 maxEccentricity, baseAngularSpeed, centralBodyRadius,
-                primaryColor, secondaryColor, name,
-                radialPower, noiseStrength, noiseOctaves, seed
+                primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                radialPower, noiseStrength, noiseOctaves,
+                noisePersistence, noiseLacunarity, filamentAnisotropy,
+                seed, glowEnabled, glowIntensity
+        );
+    }
+
+    /**
+     * Returns a copy with glow settings adjusted (for LOD).
+     */
+    public RingConfiguration withGlow(boolean enabled, double intensity) {
+        return new RingConfiguration(
+                type, innerRadius, outerRadius, numElements,
+                minSize, maxSize, thickness, maxInclinationDeg,
+                maxEccentricity, baseAngularSpeed, centralBodyRadius,
+                primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                radialPower, noiseStrength, noiseOctaves,
+                noisePersistence, noiseLacunarity, filamentAnisotropy,
+                seed, enabled, intensity
+        );
+    }
+
+    /**
+     * Returns a copy with adjusted noise octaves (for LOD).
+     */
+    public RingConfiguration withNoiseOctaves(int newOctaves) {
+        return new RingConfiguration(
+                type, innerRadius, outerRadius, numElements,
+                minSize, maxSize, thickness, maxInclinationDeg,
+                maxEccentricity, baseAngularSpeed, centralBodyRadius,
+                primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                radialPower, noiseStrength, newOctaves,
+                noisePersistence, noiseLacunarity, filamentAnisotropy,
+                seed, glowEnabled, glowIntensity
+        );
+    }
+
+    /**
+     * Returns a copy with adjusted noise strength (for LOD).
+     */
+    public RingConfiguration withNoiseStrength(double newStrength) {
+        return new RingConfiguration(
+                type, innerRadius, outerRadius, numElements,
+                minSize, maxSize, thickness, maxInclinationDeg,
+                maxEccentricity, baseAngularSpeed, centralBodyRadius,
+                primaryColor, secondaryColor, tertiaryColor, colorGradientMode, name,
+                radialPower, newStrength, noiseOctaves,
+                noisePersistence, noiseLacunarity, filamentAnisotropy,
+                seed, glowEnabled, glowIntensity
         );
     }
 }

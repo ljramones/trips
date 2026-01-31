@@ -20,7 +20,7 @@ import java.util.*;
  * - Query nebulae within plot range from repository
  * - Create and manage RingFieldRenderer instances for each nebula
  * - Handle animation updates with efficient per-frame position updates
- * - Manage visibility and LOD
+ * - Manage visibility and LOD with camera-aware updates
  * <p>
  * Usage:
  * <pre>{@code
@@ -33,6 +33,9 @@ import java.util.*;
  *
  * // In animation loop - efficient per-frame updates
  * nebulaManager.updateAnimation(timeScale);
+ *
+ * // When camera moves/zooms - update LOD
+ * nebulaManager.updateLODFromCamera(cameraX, cameraY, cameraZ, zoomLevel);
  * }</pre>
  */
 @Slf4j
@@ -83,6 +86,21 @@ public class NebulaManager {
      */
     @Getter
     private boolean animationEnabled = true;
+
+    /**
+     * Current zoom level for LOD calculations
+     */
+    private double currentZoomLevel = 1.0;
+
+    /**
+     * Current camera position for LOD calculations
+     */
+    private double cameraX, cameraY, cameraZ;
+
+    /**
+     * LOD manager for distance-based detail adjustment
+     */
+    private final NebulaLODManager lodManager = NebulaLODManager.getInstance();
 
     // Note: With efficient position updates in RingFieldRenderer, we no longer
     // need frame counting or periodic mesh refresh - updates can be every frame
@@ -166,14 +184,26 @@ public class NebulaManager {
             double distance = NebulaConfigConverter.calculateDistance(
                     nebula, plotCenterX, plotCenterY, plotCenterZ);
 
-            // Convert to RingConfiguration
+            // Convert to RingConfiguration with LOD
             RingConfiguration config = NebulaConfigConverter.toRingConfiguration(
-                    nebula, adapter, distance);
+                    nebula, adapter, distance, currentZoomLevel);
+
+            // Check if nebula was culled by LOD
+            if (config == null) {
+                log.debug("Nebula '{}' culled by LOD at distance {:.1f}ly", nebula.getName(), distance);
+                return;
+            }
 
             // Create renderer - uses centroid rebasing by default to avoid float precision issues
             // Centroid rebasing keeps mesh vertices small (near zero) while using double-precision
             // group transforms for world placement
             RingFieldRenderer renderer = new RingFieldRenderer(config, new Random(nebula.getSeed()));
+
+            // Set current LOD level on renderer for tracking
+            NebulaLODManager.LODLevel lodLevel = lodManager.getCurrentLevel(nebula.getId());
+            if (lodLevel != null) {
+                renderer.setCurrentLodLevel(lodLevel.name());
+            }
 
             // Position in screen coordinates - this triggers centroid computation and group translation
             double[] screenPos = NebulaConfigConverter.toScreenPosition(nebula, adapter);
@@ -183,11 +213,9 @@ public class NebulaManager {
             // The group's translation is essential for centroid rebasing to work correctly
             nebulaGroup.getChildren().add(renderer.getGroup());
 
-            log.info("Nebula '{}' rendered at screenPos=({}, {}, {}), group translate=({}, {}, {})",
+            log.info("Nebula '{}' rendered at screenPos=({}, {}, {}), LOD={}, particles={}",
                     nebula.getName(), screenPos[0], screenPos[1], screenPos[2],
-                    renderer.getGroup().getTranslateX(),
-                    renderer.getGroup().getTranslateY(),
-                    renderer.getGroup().getTranslateZ());
+                    lodLevel, config.numElements());
 
             // Track
             activeRenderers.put(nebula.getId(), renderer);
@@ -265,6 +293,80 @@ public class NebulaManager {
     }
 
     /**
+     * Set the current zoom level for LOD calculations.
+     *
+     * @param zoomLevel the zoom level (1.0 = normal)
+     */
+    public void setZoomLevel(double zoomLevel) {
+        this.currentZoomLevel = zoomLevel;
+    }
+
+    /**
+     * Update LOD based on camera position.
+     * Call this when the camera moves or zooms to potentially update nebula detail levels.
+     *
+     * @param cameraX   camera X position in light-years
+     * @param cameraY   camera Y position in light-years
+     * @param cameraZ   camera Z position in light-years
+     * @param zoomLevel current zoom level
+     */
+    public void updateLODFromCamera(double cameraX, double cameraY, double cameraZ, double zoomLevel) {
+        this.cameraX = cameraX;
+        this.cameraY = cameraY;
+        this.cameraZ = cameraZ;
+        this.currentZoomLevel = zoomLevel;
+
+        // Check each active nebula for LOD changes
+        List<String> nebulaesToRebuild = new ArrayList<>();
+
+        for (Map.Entry<String, Nebula> entry : activeNebulae.entrySet()) {
+            String nebulaId = entry.getKey();
+            Nebula nebula = entry.getValue();
+
+            // Calculate new distance
+            double distance = nebula.distanceTo(cameraX, cameraY, cameraZ);
+
+            // Get current and new LOD levels
+            NebulaLODManager.LODLevel currentLevel = lodManager.getCurrentLevel(nebulaId);
+            NebulaLODManager.LODLevel newLevel = lodManager.calculateLOD(nebulaId, distance, zoomLevel);
+
+            // If LOD changed significantly, mark for rebuild
+            if (currentLevel != newLevel) {
+                log.debug("Nebula '{}' LOD changed: {} -> {} at distance {:.1f}ly",
+                        nebula.getName(), currentLevel, newLevel, distance);
+                nebulaesToRebuild.add(nebulaId);
+            }
+        }
+
+        // Rebuild nebulae with changed LOD
+        for (String nebulaId : nebulaesToRebuild) {
+            Nebula nebula = activeNebulae.get(nebulaId);
+            RingFieldRenderer oldRenderer = activeRenderers.get(nebulaId);
+
+            if (nebula != null && oldRenderer != null) {
+                // Remove old renderer
+                nebulaGroup.getChildren().remove(oldRenderer.getGroup());
+                oldRenderer.dispose();
+                activeRenderers.remove(nebulaId);
+
+                // Re-render with new LOD
+                renderNebula(nebula);
+            }
+        }
+
+        if (!nebulaesToRebuild.isEmpty()) {
+            log.info("Rebuilt {} nebulae due to LOD changes", nebulaesToRebuild.size());
+        }
+    }
+
+    /**
+     * Get the LOD summary for debugging.
+     */
+    public String getLODSummary() {
+        return lodManager.getLODSummary();
+    }
+
+    /**
      * Get the number of active nebulae.
      */
     public int getActiveNebulaCount() {
@@ -309,6 +411,7 @@ public class NebulaManager {
      */
     public void dispose() {
         clearRenderers();
+        lodManager.clearAllCaches();
         if (parentGroup != null) {
             parentGroup.getChildren().remove(nebulaGroup);
         }

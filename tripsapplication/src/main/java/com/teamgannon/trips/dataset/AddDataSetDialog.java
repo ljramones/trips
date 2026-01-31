@@ -10,8 +10,10 @@ import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
@@ -50,8 +52,8 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
 
-        this.setHeight(400);
-        this.setWidth(400);
+        this.setHeight(450);
+        this.setWidth(550);
 
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
@@ -61,7 +63,18 @@ public class AddDataSetDialog extends Dialog<Dataset> {
 
         GridPane gridPane = new GridPane();
         gridPane.setVgap(5);
-        gridPane.setHgap(5);
+        gridPane.setHgap(10);
+
+        // Set column constraints so labels don't get truncated
+        ColumnConstraints labelColumn = new ColumnConstraints();
+        labelColumn.setMinWidth(100);
+        labelColumn.setPrefWidth(100);
+
+        ColumnConstraints fieldColumn = new ColumnConstraints();
+        fieldColumn.setHgrow(Priority.ALWAYS);
+        fieldColumn.setMinWidth(350);
+
+        gridPane.getColumnConstraints().addAll(labelColumn, fieldColumn);
         vBox.getChildren().add(gridPane);
 
         Label dataSetTypeLabel = new Label("Dataset Type:");
@@ -79,7 +92,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         gridPane.add(hBox, 1, 0);
 
         Label dataSetFileSelectedLabel = new Label("Dataset File:");
-        dataSetFileSelectedLabel.setMinWidth(20);
         gridPane.add(dataSetFileSelectedLabel, 0, 1);
         fileSelected.setPromptText("use button to navigate to file, or enter it");
         gridPane.add(fileSelected, 1, 1);
@@ -99,7 +111,6 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         gridPane.add(dataSetAuthor, 1, 3);
 
         Label dataSetNotesLabel = new Label("Notes:");
-        dataSetNotesLabel.setMinWidth(20);
         gridPane.add(dataSetNotesLabel, 0, 4);
         notes.setMinSize(200, 60);
         notes.setPromptText("add descriptive information for this entry");
