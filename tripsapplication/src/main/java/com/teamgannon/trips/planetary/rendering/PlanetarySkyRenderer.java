@@ -3,7 +3,9 @@ package com.teamgannon.trips.planetary.rendering;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetary.PlanetaryContext;
+import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.solarsysmodelling.accrete.PlanetTypeEnum;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -55,10 +57,16 @@ public class PlanetarySkyRenderer {
     private final Group skyGroup = new Group();
     private final Group groundGroup = new Group();
     private final Group gridGroup = new Group();
+    private final Group milkyWayGroup = new Group();
     private final Group starsGroup = new Group();
     private final Group hostStarGroup = new Group();
     private final Group horizonGroup = new Group();
     private final Group siblingPlanetsGroup = new Group();
+
+    /**
+     * Random number generator for Milky Way particle placement
+     */
+    private java.util.Random milkyWayRandom;
 
     /**
      * List of brightest stars from current view (for side pane display)
@@ -81,7 +89,8 @@ public class PlanetarySkyRenderer {
     private java.util.function.Consumer<BrightStarEntry> onStarClicked;
 
     public PlanetarySkyRenderer() {
-        skyGroup.getChildren().addAll(groundGroup, gridGroup, horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
+        // Milky Way renders behind stars (added first)
+        skyGroup.getChildren().addAll(groundGroup, milkyWayGroup, gridGroup, horizonGroup, starsGroup, hostStarGroup, siblingPlanetsGroup);
     }
 
     /**
@@ -120,6 +129,11 @@ public class PlanetarySkyRenderer {
             renderOrientationGrid();
         }
 
+        // Render the Milky Way as a particle field (behind everything else)
+        if (context.isShowMilkyWay()) {
+            renderMilkyWay(context, planetPos);
+        }
+
         // Render the host star as the "sun"
         renderHostStar(context, planetPos);
 
@@ -127,18 +141,12 @@ public class PlanetarySkyRenderer {
         renderStars(context, allStars, planetPos);
 
         // Render sibling planets if visible
-        renderSiblingPlanets(context, planetPos);
+        if (context.isShowSiblingPlanets()) {
+            renderSiblingPlanets(context, planetPos);
+        }
 
-        log.info("Rendered sky dome from {} with {} visible stars",
-                context.getPlanetName(), brightestStars.size());
-
-        // DEBUG: Add visible test sphere at origin
-        Sphere testSphere = new Sphere(50);
-        testSphere.setCullFace(CullFace.NONE);
-        PhongMaterial testMat = new PhongMaterial(Color.MAGENTA);
-        testSphere.setMaterial(testMat);
-        starsGroup.getChildren().add(testSphere);
-        log.info("DEBUG: Added test sphere, starsGroup has {} children", starsGroup.getChildren().size());
+        log.info("Rendered sky dome from {} with {} visible stars, {} Milky Way particles",
+                context.getPlanetName(), brightestStars.size(), milkyWayGroup.getChildren().size());
 
         return skyGroup;
     }
@@ -224,6 +232,176 @@ public class PlanetarySkyRenderer {
         material.setSpecularColor(Color.rgb(0, 0, 0));
         ground.setMaterial(material);
         groundGroup.getChildren().add(ground);
+    }
+
+    /**
+     * Render the Milky Way as a particle field across the sky.
+     * The Milky Way appears as a diffuse band of light along the galactic plane.
+     */
+    private void renderMilkyWay(PlanetaryContext context, double[] planetPos) {
+        // Use a seeded random for consistent particle placement
+        long seed = (long) (planetPos[0] * 1000 + planetPos[1] * 100 + planetPos[2] * 10);
+        milkyWayRandom = new java.util.Random(seed);
+
+        // Number of particles depends on whether it's nighttime
+        // During day, the Milky Way is not visible
+        double localTime = context.getLocalTime();
+        boolean isNight = localTime < 6.0 || localTime > 18.0;
+        boolean isTwilight = (localTime >= 5.0 && localTime < 6.0) || (localTime > 18.0 && localTime <= 19.0);
+
+        if (!isNight && !isTwilight) {
+            log.debug("Milky Way not visible during daytime");
+            return;
+        }
+
+        // Reduce particle count during twilight
+        int particleCount = isNight ? 3000 : 1000;
+        double baseOpacity = isNight ? 0.4 : 0.15;
+
+        log.info("Rendering Milky Way with {} particles", particleCount);
+
+        // The galactic plane is tilted ~63° from the celestial equator
+        // Galactic center is at RA=17h45m, Dec=-29° (in Sagittarius)
+        // For simplicity, we'll use a rotated coordinate system
+
+        // The observer's position affects the apparent rotation of the Milky Way
+        // For now, use a simplified model based on viewing direction
+
+        // Precompute materials for different brightness levels (performance optimization)
+        PhongMaterial[] materials = createMilkyWayMaterials(baseOpacity);
+
+        for (int i = 0; i < particleCount; i++) {
+            // Generate particle in galactic coordinates
+            // Galactic longitude (l): 0-360° around the plane
+            double galLon = milkyWayRandom.nextDouble() * 360.0;
+
+            // Galactic latitude (b): concentrated near 0° with Gaussian spread
+            // Use a tighter distribution near the galactic center
+            double latitudeSpread = 12.0; // degrees
+            double galLat = milkyWayRandom.nextGaussian() * latitudeSpread;
+
+            // Clamp latitude to reasonable range
+            galLat = Math.max(-30, Math.min(30, galLat));
+
+            // Higher density toward galactic center (l ≈ 0° or 360°)
+            // The galactic center is at l=0°
+            double centerWeight = Math.cos(Math.toRadians(galLon)) * 0.5 + 0.5;
+            if (milkyWayRandom.nextDouble() > centerWeight * 0.7 + 0.3) {
+                // Skip some particles away from center for density variation
+                if (milkyWayRandom.nextDouble() > 0.5) continue;
+            }
+
+            // Convert galactic to equatorial coordinates (simplified transformation)
+            // Galactic north pole is at RA=12h51m, Dec=+27.1°
+            // Galactic center is at RA=17h45m, Dec=-29°
+            double[] equatorial = galacticToEquatorial(galLon, galLat);
+            double ra = equatorial[0];  // Right Ascension in degrees
+            double dec = equatorial[1]; // Declination in degrees
+
+            // Convert equatorial to horizontal (alt/az) based on observer location
+            // This is simplified - we rotate based on local time
+            double hourAngle = (localTime / 24.0) * 360.0;
+            double azimuth = ra - hourAngle + context.getViewingAzimuth();
+            double altitude = dec;
+
+            // Adjust altitude based on observer's assumed latitude (~45° N for variety)
+            double observerLat = 45.0;
+            altitude = dec * Math.cos(Math.toRadians(observerLat)) +
+                       (90 - Math.abs(dec)) * Math.sin(Math.toRadians(observerLat)) *
+                       Math.cos(Math.toRadians(azimuth));
+            altitude = Math.max(-90, Math.min(90, altitude));
+
+            // Only render particles above horizon
+            if (altitude < -2) continue;
+
+            // Position on sky dome (slightly inside to appear behind stars)
+            double[] skyPos = sphericalToCartesian(SKY_DOME_RADIUS * 0.98, azimuth, altitude);
+
+            // Particle brightness varies with galactic latitude and random variation
+            double brightness = Math.exp(-Math.abs(galLat) / 8.0);  // Brighter near plane
+            brightness *= (0.5 + milkyWayRandom.nextDouble() * 0.5); // Random variation
+            brightness *= centerWeight;  // Brighter toward center
+
+            // Select material based on brightness
+            int matIndex = (int) (brightness * (materials.length - 1));
+            matIndex = Math.max(0, Math.min(materials.length - 1, matIndex));
+
+            // Create small particle
+            double size = 0.3 + brightness * 0.4 + milkyWayRandom.nextDouble() * 0.2;
+            Sphere particle = new Sphere(size);
+            particle.setCullFace(CullFace.NONE);
+            particle.setMaterial(materials[matIndex]);
+            particle.setTranslateX(skyPos[0]);
+            particle.setTranslateY(skyPos[1]);
+            particle.setTranslateZ(skyPos[2]);
+
+            milkyWayGroup.getChildren().add(particle);
+        }
+
+        log.info("Rendered {} Milky Way particles", milkyWayGroup.getChildren().size());
+    }
+
+    /**
+     * Create an array of materials for Milky Way particles at different brightness levels.
+     */
+    private PhongMaterial[] createMilkyWayMaterials(double baseOpacity) {
+        int levels = 8;
+        PhongMaterial[] materials = new PhongMaterial[levels];
+
+        for (int i = 0; i < levels; i++) {
+            double brightness = (double) i / (levels - 1);
+            double opacity = baseOpacity * (0.3 + brightness * 0.7);
+
+            // Milky Way has a warm, slightly yellowish color
+            int r = (int) (200 + brightness * 55);
+            int g = (int) (190 + brightness * 50);
+            int b = (int) (170 + brightness * 40);
+
+            PhongMaterial mat = new PhongMaterial();
+            mat.setDiffuseColor(Color.rgb(r, g, b, opacity));
+            materials[i] = mat;
+        }
+
+        return materials;
+    }
+
+    /**
+     * Convert galactic coordinates to equatorial coordinates.
+     * This is a simplified transformation for visualization purposes.
+     *
+     * @param galLon Galactic longitude in degrees (0-360)
+     * @param galLat Galactic latitude in degrees (-90 to +90)
+     * @return [RA, Dec] in degrees
+     */
+    private double[] galacticToEquatorial(double galLon, double galLat) {
+        // Galactic coordinate system parameters
+        // North Galactic Pole: RA = 192.85948° (12h 51m 26.28s), Dec = +27.12825°
+        // Galactic Center: RA = 266.405° (17h 45m 37.2s), Dec = -28.936°
+
+        double l = Math.toRadians(galLon);
+        double b = Math.toRadians(galLat);
+
+        // Transformation matrix parameters
+        double ngpRa = Math.toRadians(192.85948);
+        double ngpDec = Math.toRadians(27.12825);
+        double lonNcp = Math.toRadians(122.932);  // Longitude of North Celestial Pole
+
+        // Convert galactic to equatorial
+        double sinDec = Math.sin(b) * Math.sin(ngpDec) +
+                       Math.cos(b) * Math.cos(ngpDec) * Math.sin(l - lonNcp);
+        double dec = Math.asin(Math.max(-1, Math.min(1, sinDec)));
+
+        double y = Math.cos(b) * Math.cos(l - lonNcp);
+        double x = Math.sin(b) * Math.cos(ngpDec) -
+                  Math.cos(b) * Math.sin(ngpDec) * Math.sin(l - lonNcp);
+        double ra = ngpRa + Math.atan2(y, x);
+
+        // Normalize RA to 0-360
+        double raDeg = Math.toDegrees(ra);
+        while (raDeg < 0) raDeg += 360;
+        while (raDeg >= 360) raDeg -= 360;
+
+        return new double[]{raDeg, Math.toDegrees(dec)};
     }
 
     /**
@@ -362,13 +540,322 @@ public class PlanetarySkyRenderer {
 
     /**
      * Render sibling planets visible in the sky.
+     * Planets appear as bright, non-twinkling points in the night sky.
      */
     private void renderSiblingPlanets(PlanetaryContext context, double[] planetPos) {
         SolarSystemDescription system = context.getSystem();
         if (system == null) return;
 
-        // TODO: Implement sibling planet rendering
-        // These would appear as bright points in the sky
+        ExoPlanet observerPlanet = context.getPlanet();
+        StarDisplayRecord hostStar = context.getHostStar();
+        if (hostStar == null) return;
+
+        double localTime = context.getLocalTime();
+        List<PlanetDescription> siblings = system.getPlanetDescriptionList();
+
+        if (siblings == null || siblings.isEmpty()) {
+            log.debug("No sibling planets to render");
+            return;
+        }
+
+        log.info("Rendering {} sibling planets", siblings.size());
+
+        for (PlanetDescription sibling : siblings) {
+            // Skip the planet we're standing on
+            if (sibling.getId() != null && observerPlanet.getId() != null &&
+                    sibling.getId().equals(observerPlanet.getId().toString())) {
+                continue;
+            }
+            if (sibling.getName() != null && observerPlanet.getName() != null &&
+                    sibling.getName().equals(observerPlanet.getName())) {
+                continue;
+            }
+
+            // Calculate sibling planet's orbital position
+            double[] siblingPos = calculatePlanetOrbitalPosition(sibling, hostStar, localTime);
+
+            // Calculate direction from observer to sibling
+            double[] direction = calculateDirection(planetPos, siblingPos);
+
+            // Convert direction to azimuth/altitude
+            double azimuth = Math.toDegrees(Math.atan2(direction[0], direction[2]));
+            double altitude = Math.toDegrees(Math.asin(direction[1]));
+
+            // Only show planets above horizon
+            if (altitude < 0) {
+                log.debug("Planet {} is below horizon (alt={})", sibling.getName(), altitude);
+                continue;
+            }
+
+            // Calculate apparent brightness based on distance and planet size
+            double distanceLy = calculateDistance(planetPos, siblingPos);
+            double distanceAU = distanceLy / AU_TO_LY;  // Convert back to AU for brightness calc
+            double apparentMag = calculatePlanetApparentMagnitude(sibling, distanceAU);
+
+            // Position on sky dome
+            double[] skyPos = sphericalToCartesian(SKY_DOME_RADIUS, azimuth, altitude);
+
+            // Get planet color based on type
+            Color planetColor = getPlanetColor(sibling);
+
+            // Create planet visual (brighter than most stars, steady light)
+            Group planetVisual = createPlanetVisual(sibling.getName(), apparentMag, planetColor, skyPos);
+            siblingPlanetsGroup.getChildren().add(planetVisual);
+
+            log.info("Rendered planet {} at alt={:.1f}, az={:.1f}, mag={:.1f}",
+                    sibling.getName(), altitude, azimuth, apparentMag);
+        }
+
+        // Also render companion stars in multi-star systems
+        renderCompanionStars(context, planetPos);
+    }
+
+    /**
+     * Render companion stars in multi-star systems.
+     * These appear as additional suns in the sky.
+     */
+    private void renderCompanionStars(PlanetaryContext context, double[] planetPos) {
+        SolarSystemDescription system = context.getSystem();
+        if (system == null || !system.isMultiStarSystem()) return;
+
+        List<StarDisplayRecord> companions = system.getCompanionStars();
+        if (companions == null || companions.isEmpty()) return;
+
+        log.info("Rendering {} companion stars", companions.size());
+
+        for (StarDisplayRecord companion : companions) {
+            double[] companionPos = {companion.getX(), companion.getY(), companion.getZ()};
+
+            // Calculate direction from observer to companion star
+            double[] direction = calculateDirection(planetPos, companionPos);
+
+            // Convert direction to azimuth/altitude
+            double azimuth = Math.toDegrees(Math.atan2(direction[0], direction[2]));
+            double altitude = Math.toDegrees(Math.asin(direction[1]));
+
+            // Show companion stars even if below horizon (they're so bright)
+            // but render them dimmer at low altitudes
+            double[] skyPos = sphericalToCartesian(SKY_DOME_RADIUS * 0.95, azimuth, Math.max(-5, altitude));
+
+            // Calculate apparent magnitude based on distance
+            double distanceLy = calculateDistance(planetPos, companionPos);
+            double apparentMag = companion.getMagnitude() + 5.0 * Math.log10(distanceLy / companion.getDistance());
+
+            // Create companion star visual (like a second sun)
+            Color starColor = getStarColor(companion.getSpectralClass());
+            double size = Math.max(8, 15 - apparentMag * 2);  // Larger than planets
+
+            Sphere companionSphere = new Sphere(size);
+            companionSphere.setCullFace(CullFace.NONE);
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(starColor);
+            material.setSpecularColor(Color.WHITE);
+            companionSphere.setMaterial(material);
+
+            companionSphere.setTranslateX(skyPos[0]);
+            companionSphere.setTranslateY(skyPos[1]);
+            companionSphere.setTranslateZ(skyPos[2]);
+
+            siblingPlanetsGroup.getChildren().add(companionSphere);
+
+            // Add label for companion star
+            String starName = companion.getStarName();
+            if (starName != null && !starName.isEmpty()) {
+                Label label = new Label(starName);
+                label.setTextFill(starColor.brighter());
+                label.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+                shapeToLabel.put(companionSphere, label);
+            }
+
+            log.info("Rendered companion star {} at alt={:.1f}, az={:.1f}",
+                    companion.getStarName(), altitude, azimuth);
+        }
+    }
+
+    /**
+     * Calculate a planet's position in light years based on its orbital elements.
+     */
+    private double[] calculatePlanetOrbitalPosition(PlanetDescription planet, StarDisplayRecord hostStar, double localTime) {
+        double starX = hostStar.getX();
+        double starY = hostStar.getY();
+        double starZ = hostStar.getZ();
+
+        double semiMajorAU = planet.getSemiMajorAxis();
+        double eccentricity = planet.getEccentricity();
+        double inclination = Math.toRadians(planet.getInclination());
+        double argPeri = Math.toRadians(planet.getArgumentOfPeriapsis());
+        double longAscNode = Math.toRadians(planet.getLongitudeOfAscendingNode());
+
+        // Calculate mean anomaly based on orbital period and local time
+        // This gives different planets different positions in their orbits
+        double orbitalPeriod = planet.getOrbitalPeriod();
+        if (orbitalPeriod <= 0) orbitalPeriod = 365.25; // Default to Earth year
+
+        // Use local time as a fraction of the orbital period for variety
+        double meanAnomaly = (localTime / 24.0) * 2 * Math.PI * (365.25 / orbitalPeriod);
+
+        // Solve Kepler's equation: E - e*sin(E) = M
+        double eccentricAnomaly = solveKeplerEquation(meanAnomaly, eccentricity);
+
+        // Calculate true anomaly
+        double trueAnomaly = 2 * Math.atan2(
+                Math.sqrt(1 + eccentricity) * Math.sin(eccentricAnomaly / 2),
+                Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2)
+        );
+
+        // Calculate orbital radius at this position
+        double radius = semiMajorAU * (1 - eccentricity * eccentricity) /
+                       (1 + eccentricity * Math.cos(trueAnomaly));
+
+        // Position in orbital plane
+        double xOrbit = radius * Math.cos(trueAnomaly);
+        double yOrbit = radius * Math.sin(trueAnomaly);
+
+        // Apply 3D rotations: argument of periapsis, inclination, longitude of ascending node
+        // R = R_z(Omega) * R_x(i) * R_z(omega) * [x, y, 0]
+        double cosO = Math.cos(longAscNode);
+        double sinO = Math.sin(longAscNode);
+        double cosI = Math.cos(inclination);
+        double sinI = Math.sin(inclination);
+        double cosW = Math.cos(argPeri);
+        double sinW = Math.sin(argPeri);
+
+        // Combined rotation
+        double x = (cosO * cosW - sinO * sinW * cosI) * xOrbit +
+                   (-cosO * sinW - sinO * cosW * cosI) * yOrbit;
+        double y = (sinO * cosW + cosO * sinW * cosI) * xOrbit +
+                   (-sinO * sinW + cosO * cosW * cosI) * yOrbit;
+        double z = (sinW * sinI) * xOrbit + (cosW * sinI) * yOrbit;
+
+        // Convert AU to light years and add to star position
+        return new double[]{
+                starX + x * AU_TO_LY,
+                starY + y * AU_TO_LY,
+                starZ + z * AU_TO_LY
+        };
+    }
+
+    /**
+     * Solve Kepler's equation using Newton-Raphson iteration.
+     */
+    private double solveKeplerEquation(double meanAnomaly, double eccentricity) {
+        double E = meanAnomaly;  // Initial guess
+        for (int i = 0; i < 10; i++) {
+            double dE = (E - eccentricity * Math.sin(E) - meanAnomaly) /
+                       (1 - eccentricity * Math.cos(E));
+            E -= dE;
+            if (Math.abs(dE) < 1e-8) break;
+        }
+        return E;
+    }
+
+    /**
+     * Calculate apparent magnitude of a planet based on distance and size.
+     * Planets are much closer than stars so they can be very bright.
+     */
+    private double calculatePlanetApparentMagnitude(PlanetDescription planet, double distanceAU) {
+        // Base magnitude depends on planet size and type
+        double baseMag;
+        if (planet.getPlanetTypeEnum() != null) {
+            baseMag = switch (planet.getPlanetTypeEnum()) {
+                case tGasGiant, tSubGasGiant, tSubSubGasGiant -> -2.5;  // Jupiter-like, very bright
+                case tIce, tWater -> -1.5;                              // Neptune-like / icy
+                case tSuperEarth, tTerrestrial -> 0.0;                  // Earth-like
+                case tRock, tMartian, tAsteroids -> 2.0;                // Small rocky bodies
+                case tVenusian -> -0.5;                                  // Venus is very bright
+                default -> 0.5;
+            };
+        } else {
+            // Estimate from radius (Earth radii)
+            double radius = planet.getRadius();
+            if (radius > 5) baseMag = -2.5;      // Gas giant
+            else if (radius > 2) baseMag = -1.0; // Ice giant / super-Earth
+            else if (radius > 0.5) baseMag = 0.5; // Terrestrial
+            else baseMag = 2.0;                   // Small body
+        }
+
+        // Adjust for distance (inverse square law)
+        // At 1 AU, we use base magnitude; further = dimmer
+        double distanceFactor = 5.0 * Math.log10(Math.max(0.1, distanceAU));
+
+        return baseMag + distanceFactor;
+    }
+
+    /**
+     * Get color for a planet based on its type.
+     */
+    private Color getPlanetColor(PlanetDescription planet) {
+        if (planet.getPlanetTypeEnum() != null) {
+            return switch (planet.getPlanetTypeEnum()) {
+                case tGasGiant -> Color.rgb(255, 200, 150);           // Jupiter - orange/tan
+                case tSubGasGiant, tSubSubGasGiant -> Color.rgb(230, 190, 140);  // Saturn-like - pale gold
+                case tIce -> Color.rgb(150, 200, 255);                // Neptune/Uranus - blue
+                case tWater -> Color.rgb(100, 150, 220);              // Water world - deep blue
+                case tSuperEarth -> Color.rgb(180, 200, 180);         // Greenish-blue
+                case tTerrestrial -> Color.rgb(200, 180, 160);        // Earth-like - tan
+                case tRock, tMartian -> Color.rgb(180, 140, 120);     // Rocky - reddish-brown
+                case tVenusian -> Color.rgb(255, 230, 180);           // Venus - yellowish-white
+                case tAsteroids -> Color.rgb(150, 140, 130);          // Dark gray
+                default -> Color.rgb(200, 200, 200);                  // White
+            };
+        }
+
+        // Fallback: estimate from temperature
+        double temp = planet.getEquilibriumTemperature();
+        if (temp > 500) return Color.rgb(255, 180, 120);   // Hot - orange
+        if (temp > 300) return Color.rgb(200, 180, 160);   // Warm - tan
+        if (temp > 200) return Color.rgb(150, 180, 200);   // Cool - blue-ish
+        return Color.rgb(200, 220, 255);                    // Cold - pale blue/white
+    }
+
+    /**
+     * Create a planet visual for the sky dome.
+     * Planets appear as steady, bright points (unlike twinkling stars).
+     */
+    private Group createPlanetVisual(String name, double magnitude, Color planetColor, double[] position) {
+        Group group = new Group();
+        double x = position[0];
+        double y = position[1];
+        double z = position[2];
+
+        // Planets are rendered larger and steadier than stars of similar magnitude
+        double size = Math.max(1.5, 4.0 - magnitude * 0.5);
+
+        // Create the planet point
+        Sphere planet = new Sphere(size);
+        planet.setCullFace(CullFace.NONE);
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(planetColor);
+        material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 1, 0.3));
+        planet.setMaterial(material);
+        planet.setTranslateX(x);
+        planet.setTranslateY(y);
+        planet.setTranslateZ(z);
+
+        // Add a subtle glow for bright planets
+        if (magnitude < 0) {
+            Sphere glow = new Sphere(size * 2.5);
+            glow.setCullFace(CullFace.NONE);
+            PhongMaterial glowMat = new PhongMaterial();
+            glowMat.setDiffuseColor(planetColor.deriveColor(0, 0.5, 1.2, 0.15));
+            glow.setMaterial(glowMat);
+            glow.setTranslateX(x);
+            glow.setTranslateY(y);
+            glow.setTranslateZ(z);
+            group.getChildren().add(glow);
+        }
+
+        group.getChildren().add(planet);
+
+        // Create label for the planet
+        if (name != null && !name.isEmpty()) {
+            Label label = new Label(name);
+            label.setTextFill(planetColor.brighter());
+            label.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+            shapeToLabel.put(planet, label);
+        }
+
+        return group;
     }
 
     /**
@@ -497,6 +984,7 @@ public class PlanetarySkyRenderer {
      */
     public void clear() {
         groundGroup.getChildren().clear();
+        milkyWayGroup.getChildren().clear();
         gridGroup.getChildren().clear();
         starsGroup.getChildren().clear();
         hostStarGroup.getChildren().clear();

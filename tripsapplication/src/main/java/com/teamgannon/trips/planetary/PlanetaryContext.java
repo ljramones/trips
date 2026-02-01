@@ -106,6 +106,18 @@ public class PlanetaryContext {
     private boolean showOrientationGrid = true;
 
     /**
+     * Whether to show the Milky Way particle field.
+     */
+    @Builder.Default
+    private boolean showMilkyWay = true;
+
+    /**
+     * Whether to show sibling planets in the sky.
+     */
+    @Builder.Default
+    private boolean showSiblingPlanets = true;
+
+    /**
      * Get the planet name for display purposes.
      */
     public String getPlanetName() {

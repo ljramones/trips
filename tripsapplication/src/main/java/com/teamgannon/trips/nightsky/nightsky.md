@@ -154,10 +154,16 @@ Alt/Az for sky dome placement
 Input data container with:
 - `planet`: The ExoPlanet being viewed from
 - `hostStar`: The star the planet orbits
+- `system`: The SolarSystemDescription (for sibling planets)
 - `localTime`: Time of day (0-24 hours)
 - `magnitudeLimit`: Faintest stars to show
 - `viewingAzimuth`, `viewingAltitude`: Camera direction
 - `showAtmosphereEffects`: Enable/disable extinction
+- `showHostStar`: Show/hide the host star (sun)
+- `showHorizon`: Show/hide horizon ring
+- `showOrientationGrid`: Show/hide alt/az grid
+- `showMilkyWay`: Show/hide Milky Way particle field (default: true)
+- `showSiblingPlanets`: Show/hide other planets in system (default: true)
 
 ### PlanetarySkyModel
 Output data container with:
@@ -190,10 +196,77 @@ PlanetarySkyBridgeService.computeSky()
    PlanetarySkyModel
          ↓
 PlanetarySkyRenderer.render()
-   ├── renderGroundMask()
-   ├── renderHostStar()
-   └── renderStars()  → 3D spheres on sky dome
+   ├── renderGroundMask()         → Dark hemisphere below horizon
+   ├── renderMilkyWay()           → Particle field along galactic plane
+   ├── renderOrientationGrid()    → Alt/Az grid overlay
+   ├── renderHostStar()           → The "sun" in the sky
+   ├── renderStars()              → 3D spheres on sky dome
+   └── renderSiblingPlanets()     → Other planets & companion stars
 ```
+
+## Sky Objects
+
+### Stars
+- Positioned on a 500-unit radius sky dome
+- Size and glow based on apparent magnitude
+- Color based on spectral class (O=blue → M=red)
+- Labels for stars brighter than magnitude 3.0
+- Click-to-identify support
+
+### Host Star (Sun)
+- Rendered as a large yellow sphere
+- Position determined by local time (noon = zenith)
+- Always visible when above horizon
+
+### Sibling Planets
+Other planets in the same solar system appear as bright, steady points:
+
+- **Position calculation**: Uses Keplerian orbital elements (semi-major axis, eccentricity, inclination, argument of periapsis, longitude of ascending node)
+- **Kepler's equation**: Solved via Newton-Raphson iteration for true anomaly
+- **Apparent magnitude**: Based on planet type and distance from observer
+- **Colors by type**:
+  - Gas giant (tGasGiant): Orange/tan
+  - Sub-gas giant (tSubGasGiant): Pale gold
+  - Ice world (tIce): Blue
+  - Water world (tWater): Deep blue
+  - Super-Earth (tSuperEarth): Greenish-blue
+  - Terrestrial (tTerrestrial): Tan
+  - Rocky/Martian (tRock, tMartian): Reddish-brown
+  - Venusian (tVenusian): Yellowish-white
+- **Labels**: All visible planets are labeled with their names
+
+### Companion Stars (Multi-star Systems)
+In binary or multi-star systems, companion stars appear as secondary "suns":
+
+- Position calculated from actual star coordinates
+- Color based on spectral class
+- Size based on apparent magnitude
+- Labeled with star name
+
+### Milky Way
+The Milky Way is rendered as a particle field of ~3,000 particles:
+
+- **Galactic plane**: Particles concentrated within ±12° of b=0° (Gaussian distribution)
+- **Density gradient**: Higher particle density toward galactic center (Sagittarius direction)
+- **Coordinate transformation**: Galactic → Equatorial → Horizontal coordinates
+- **Color**: Warm yellowish-white with brightness variation
+- **Visibility**:
+  - **Daytime**: Not visible (skipped)
+  - **Twilight**: 1,000 particles at 15% opacity
+  - **Night**: 3,000 particles at 40% opacity
+- **Rendering**: Particles placed on sky dome at 98% radius (behind stars)
+
+#### Galactic Coordinate Transformation
+
+The Milky Way uses proper galactic-to-equatorial coordinate transformation:
+
+```
+Galactic North Pole: RA = 192.85948°, Dec = +27.12825°
+Galactic Center: RA = 266.405°, Dec = -28.936°
+Longitude of North Celestial Pole: 122.932°
+```
+
+The transformation preserves the ~63° tilt of the galactic plane relative to the celestial equator.
 
 ## Performance Considerations
 
@@ -273,5 +346,29 @@ Where:
 ## Related Files
 
 - `PlanetarySpacePane.java` - UI component that hosts the sky view
-- `PlanetarySkyRenderer.java` - 3D rendering of stars on sky dome
+- `PlanetarySkyRenderer.java` - 3D rendering of stars, planets, and Milky Way on sky dome
 - `PlanetaryContext.java` - Input context data container
+- `SolarSystemDescription.java` - Contains sibling planets, companion stars, comets, and features
+
+## Rendering Layers (Back to Front)
+
+1. **Ground mask** - Dark hemisphere hiding objects below horizon
+2. **Milky Way** - Particle field at 98% dome radius
+3. **Orientation grid** - Alt/az reference lines
+4. **Horizon ring** - Circle at altitude 0°
+5. **Stars** - Database stars with magnitude-based sizing
+6. **Host star** - The system's primary star (sun)
+7. **Sibling planets & companion stars** - Other objects in the solar system
+
+## Future Enhancements
+
+Potential additions to the night sky system:
+
+- **Moons**: Render moons of the current planet or sibling planets
+- **Comets**: Data structure exists in SolarSystemDescription (`cometDescriptions`)
+- **Deep sky objects**: Nebulae (Orion, Crab), galaxies (Andromeda, M31)
+- **Asteroids/dwarf planets**: For systems with defined asteroid belts
+- **Artificial satellites**: Space stations, orbital habitats from `FeatureDescription`
+- **Constellation lines**: Connect stars with traditional or custom patterns
+- **Star twinkle animation**: Atmospheric scintillation effect
+- **Aurora effects**: For planets with magnetic fields near their poles
