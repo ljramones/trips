@@ -206,6 +206,9 @@ class ElevationCalculatorTest {
 
         double actualWater = (double) waterCount / heights.length;
 
+        // Note: Even with 0% water target, plate tectonics may create some low terrain.
+        // The elevation algorithm tries to reduce this, but small amounts can remain.
+        // The key is that rendering uses appropriate colors (browns) for dry planets.
         assertThat(actualWater)
             .as("Water fraction should be low when target is near zero")
             .isLessThan(0.2);

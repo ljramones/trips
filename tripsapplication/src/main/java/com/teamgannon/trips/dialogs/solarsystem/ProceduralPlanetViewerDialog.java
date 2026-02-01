@@ -7,6 +7,7 @@ import com.teamgannon.trips.planetarymodelling.procedural.ClimateCalculator;
 import com.teamgannon.trips.planetarymodelling.procedural.ElevationCalculator;
 import com.teamgannon.trips.planetarymodelling.procedural.GenerationProgressListener;
 import com.teamgannon.trips.planetarymodelling.procedural.JavaFxPlanetMeshConverter;
+import com.teamgannon.trips.planetarymodelling.procedural.JavaFxPlanetMeshConverter.TerrainType;
 import com.teamgannon.trips.planetarymodelling.procedural.PlateAssigner;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
@@ -110,6 +111,25 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private AdjacencyGraph adjacency;
     private PlateAssigner.PlateAssignment plateAssignment;
     private BoundaryDetector.BoundaryAnalysis boundaryAnalysis;
+
+    // Surface temperature in Kelvin (for terrain type determination)
+    // Default 288K (~15°C) is Earth-like. Set via setSurfaceTemperature() before showing.
+    private double surfaceTemperatureK = 288.0;
+
+    // Planet type string (e.g., "Gas Giant", "Ice Giant", "Rock", "Terrestrial")
+    // Used to determine if this is a Jovian world. Set via setPlanetType() before showing.
+    private String planetType = null;
+
+    // Ice cover fraction (0.0-1.0) for determining ICE terrain type
+    // Set via setIceCover() before showing. High ice cover = ICE terrain even if no liquid water.
+    private double iceCoverFraction = 0.0;
+
+    // Density in g/cm³ for ice/rock determination
+    // Low density (< 2.5) suggests ice-rich composition
+    private Double densityGcm3 = null;
+
+    // Semi-major axis in AU for frost line determination
+    private Double semiMajorAxisAU = null;
 
     // Generation parameters (editable)
     private long currentSeed;
@@ -280,6 +300,156 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         log.info("Created procedural planet viewer for: {}", planetName);
+    }
+
+    /**
+     * Set the surface temperature in Kelvin.
+     * This affects terrain type determination:
+     * - Below 273K (freezing): ICE terrain (white/blue/gray)
+     * - Above 273K with water: WET terrain (ocean blues)
+     * - No water: DRY terrain (browns/tans)
+     *
+     * @param temperatureK Surface temperature in Kelvin
+     */
+    public void setSurfaceTemperature(double temperatureK) {
+        this.surfaceTemperatureK = temperatureK;
+        // Re-render if already displayed
+        if (generatedPlanet != null) {
+            renderPlanet();
+            createAtmosphere();
+        }
+    }
+
+    /**
+     * Set the planet type (e.g., "Gas Giant", "Ice Giant", "Rock", "Terrestrial").
+     * Gas giants use cloud band colors instead of terrain colors.
+     *
+     * @param type Planet type string from ExoPlanet.getPlanetType()
+     */
+    public void setPlanetType(String type) {
+        this.planetType = type;
+        // Re-render if already displayed
+        if (generatedPlanet != null) {
+            renderPlanet();
+            createAtmosphere();
+        }
+    }
+
+    /**
+     * Set the ice cover fraction (0.0-1.0).
+     * High ice cover indicates an icy world even if there's no liquid water.
+     *
+     * @param iceCover Ice cover fraction from ExoPlanet.getIceCover()
+     */
+    public void setIceCover(double iceCover) {
+        this.iceCoverFraction = iceCover;
+        // Re-render if already displayed
+        if (generatedPlanet != null) {
+            renderPlanet();
+            createAtmosphere();
+        }
+    }
+
+    /**
+     * Set the planet density in g/cm³.
+     * Low density (< 2.5) indicates ice-rich composition.
+     *
+     * @param density Density from ExoPlanet.getDensity()
+     */
+    public void setDensity(double density) {
+        this.densityGcm3 = density;
+    }
+
+    /**
+     * Set the semi-major axis in AU.
+     * Beyond ~2.7 AU (frost line), planets are more likely to be icy.
+     *
+     * @param semiMajorAxis Semi-major axis from ExoPlanet.getSemiMajorAxis()
+     */
+    public void setSemiMajorAxis(double semiMajorAxis) {
+        this.semiMajorAxisAU = semiMajorAxis;
+    }
+
+    /**
+     * Determine terrain type based on multiple physical indicators.
+     * Uses a priority system with multiple fallback checks.
+     */
+    private TerrainType determineTerrainType() {
+        // Check for gas giants first - they don't have solid surfaces
+        if (planetType != null) {
+            String typeLower = planetType.toLowerCase();
+            if (typeLower.contains("gas giant") || typeLower.contains("jovian")) {
+                return TerrainType.JOVIAN;
+            }
+            if (typeLower.contains("ice giant")) {
+                return TerrainType.ICE_GIANT;
+            }
+            // Planet type explicitly says "Ice"
+            if (typeLower.contains("ice") && !typeLower.contains("giant")) {
+                return TerrainType.ICE;
+            }
+        }
+
+        // Check if this is an icy world using multiple indicators
+        if (isIcyWorld()) {
+            return TerrainType.ICE;
+        }
+
+        double waterFraction = generatedPlanet.config() != null
+            ? generatedPlanet.config().waterFraction() : currentWaterFraction;
+
+        // No water AND no significant ice = dry terrain (browns/tans)
+        if (waterFraction < 0.05 && iceCoverFraction < 0.1) {
+            return TerrainType.DRY;
+        }
+
+        // Has liquid water = wet terrain (ocean blues)
+        return TerrainType.WET;
+    }
+
+    /**
+     * Determine if this is an icy world using multiple physical indicators.
+     * Returns true if any reliable indicator suggests ice-rich composition.
+     */
+    private boolean isIcyWorld() {
+        // 1. Explicit ice cover > 30%
+        if (iceCoverFraction > 0.3) {
+            return true;
+        }
+
+        // 2. Low density (< 2.5 g/cm³) + cold temperature (< 200K)
+        //    Low density indicates ice-rich composition (ice ~0.9, rock ~3-5)
+        if (densityGcm3 != null && densityGcm3 < 2.5 && surfaceTemperatureK < 200.0) {
+            return true;
+        }
+
+        // 3. Very low density (< 2.0 g/cm³) even without temperature data
+        //    Almost certainly ice-dominated (Enceladus: 1.61, Pluto: 1.85)
+        if (densityGcm3 != null && densityGcm3 < 2.0) {
+            return true;
+        }
+
+        // 4. Beyond frost line (> 2.7 AU) + cold (< 200K) + some water/ice
+        double waterFraction = generatedPlanet.config() != null
+            ? generatedPlanet.config().waterFraction() : currentWaterFraction;
+        if (semiMajorAxisAU != null && semiMajorAxisAU > 2.7
+                && surfaceTemperatureK < 200.0
+                && (waterFraction > 0.01 || iceCoverFraction > 0.05)) {
+            return true;
+        }
+
+        // 5. Very cold (< 150K) with any water/ice indication
+        //    At these temperatures, any volatiles are frozen solid
+        if (surfaceTemperatureK < 150.0 && (waterFraction > 0.01 || iceCoverFraction > 0.05)) {
+            return true;
+        }
+
+        // 6. Cold (< 273K) with significant water or ice
+        if (surfaceTemperatureK < 273.0 && (waterFraction > 0.05 || iceCoverFraction > 0.1)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -999,6 +1169,12 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
     /**
      * Create an atmosphere glow effect around the planet.
+     * Atmosphere behavior:
+     * - Gas giants: Always have thick atmospheres
+     * - Ice giants: Always have atmospheres
+     * - Very dry rocky planets (< 5% water): No atmosphere
+     * - Frozen airless worlds (< 200K): No atmosphere
+     * - Others: Atmosphere based on conditions
      */
     private void createAtmosphere() {
         // Remove existing atmosphere if any
@@ -1010,21 +1186,60 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             return;
         }
 
+        TerrainType terrainType = determineTerrainType();
+
+        // Gas giants ALWAYS have massive atmospheres
+        if (terrainType == TerrainType.JOVIAN || terrainType == TerrainType.ICE_GIANT) {
+            double atmosphereRadius = PLANET_SCALE * 1.08;  // Thicker for gas giants
+            atmosphereSphere = new Sphere(atmosphereRadius);
+
+            Color atmosphereColor = (terrainType == TerrainType.JOVIAN)
+                ? Color.rgb(200, 180, 150, 0.15)  // Tan/orange haze for Jupiter-like
+                : Color.rgb(100, 150, 200, 0.18); // Blue haze for Neptune-like
+
+            PhongMaterial material = new PhongMaterial();
+            material.setDiffuseColor(atmosphereColor);
+            material.setSpecularColor(Color.TRANSPARENT);
+            atmosphereSphere.setMaterial(material);
+            atmosphereSphere.setCullFace(CullFace.NONE);
+            world.getChildren().add(atmosphereSphere);
+            return;
+        }
+
+        // Get planet's water fraction
+        double waterFraction = generatedPlanet.config() != null
+            ? generatedPlanet.config().waterFraction()
+            : currentWaterFraction;
+
+        // Very dry planets (< 5% water) don't have significant atmospheres
+        // Skip atmosphere for Rock, Mercury-like, Moon-like worlds
+        if (waterFraction < 0.05) {
+            return;
+        }
+
+        // Very cold ice worlds (< 200K) typically lack atmospheres
+        // Skip atmosphere for Europa, Enceladus, Pluto-like worlds
+        if (surfaceTemperatureK < 200.0) {
+            return;
+        }
+
         // Create atmosphere sphere (5% larger than planet)
         double atmosphereRadius = PLANET_SCALE * 1.05;
         atmosphereSphere = new Sphere(atmosphereRadius);
 
-        // Atmosphere color varies based on planet water content
-        double waterFraction = generatedPlanet.config() != null
-            ? generatedPlanet.config().waterFraction()
-            : 0.66;
-
+        // Atmosphere color varies based on conditions
         Color atmosphereColor;
-        if (waterFraction > 0.5) {
+        if (surfaceTemperatureK < 273.0) {
+            // Cold but with atmosphere (Mars-like, 200-273K)
+            atmosphereColor = Color.rgb(200, 180, 160, 0.04);
+        } else if (waterFraction > 0.5) {
+            // Wet world - blue, Earth-like atmosphere
             atmosphereColor = Color.rgb(100, 150, 255, 0.12);
         } else if (waterFraction > 0.2) {
+            // Semi-arid - lighter blue
             atmosphereColor = Color.rgb(135, 180, 255, 0.08);
         } else {
+            // Mostly dry - very thin, dusty atmosphere
             atmosphereColor = Color.rgb(180, 200, 230, 0.05);
         }
 
@@ -1123,12 +1338,18 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                     polygons, renderHeights, adjacency, PLANET_SCALE, renderPreciseHeights)
                 : JavaFxPlanetMeshConverter.convertByHeight(polygons, renderHeights, PLANET_SCALE);
 
+            // Determine terrain type based on water fraction and temperature
+            // - DRY: No water (browns/tans)
+            // - ICE: Water but frozen (whites/light blues)
+            // - WET: Liquid water (ocean blues)
+            TerrainType terrainType = determineTerrainType();
+
             for (Map.Entry<Integer, TriangleMesh> entry : meshByHeight.entrySet()) {
                 int height = entry.getKey();
                 TriangleMesh mesh = entry.getValue();
 
                 MeshView meshView = new MeshView(mesh);
-                meshView.setMaterial(JavaFxPlanetMeshConverter.createMaterialForHeight(height));
+                meshView.setMaterial(JavaFxPlanetMeshConverter.createMaterialForHeight(height, terrainType));
                 meshView.setCullFace(CullFace.BACK);
                 meshView.setDrawMode(showWireframe ? DrawMode.LINE : DrawMode.FILL);
 

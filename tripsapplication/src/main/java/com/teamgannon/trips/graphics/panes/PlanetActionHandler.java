@@ -176,6 +176,37 @@ public class PlanetActionHandler {
                                 exoPlanet, planetConfig, planetConfig.seed(), planet, "USER_OVERRIDES");
                         solarSystemService.updateExoPlanet(exoPlanet);
                     });
+
+            // Set planet type for terrain type determination (JOVIAN/ICE_GIANT/etc)
+            String planetType = exoPlanet.getPlanetType();
+            if (planetType != null && !planetType.isBlank()) {
+                dialog.setPlanetType(planetType);
+            }
+
+            // Set ice cover for terrain type determination (ICE for icy moons like Europa, Pluto)
+            Double iceCover = exoPlanet.getIceCover();
+            if (iceCover != null && iceCover > 0) {
+                dialog.setIceCover(iceCover);
+            }
+
+            // Set surface temperature for terrain type determination (DRY/WET/ICE)
+            Double surfaceTemp = exoPlanet.getSurfaceTemperature();
+            if (surfaceTemp != null && surfaceTemp > 0) {
+                dialog.setSurfaceTemperature(surfaceTemp);
+            }
+
+            // Set density for ice detection (ice-rich bodies have lower density)
+            Double density = exoPlanet.getDensity();
+            if (density != null && density > 0) {
+                dialog.setDensity(density);
+            }
+
+            // Set semi-major axis for frost line detection (ice beyond ~2.7 AU)
+            Double sma = exoPlanet.getSemiMajorAxis();
+            if (sma != null && sma > 0) {
+                dialog.setSemiMajorAxis(sma);
+            }
+
             dialog.showAndWait();
 
         } catch (Exception e) {

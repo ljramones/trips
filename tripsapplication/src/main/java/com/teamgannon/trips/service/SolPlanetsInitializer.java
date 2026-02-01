@@ -577,7 +577,7 @@ public class SolPlanetsInitializer {
         planet.setTidallyLocked(false);
         planet.setGreenhouseEffect(false);  // Natural greenhouse, not runaway
         planet.setHasRings(false);
-        planet.setHabitableMoon(true);  // Moon could potentially support life
+        planet.setHabitableMoon(false);  // Moon is not habitable (no atmosphere)
 
         // Host star properties
         setSolStarProperties(planet);
@@ -719,7 +719,7 @@ public class SolPlanetsInitializer {
         planet.setGasGiant(true);
         planet.setHabitable(false);
         planet.setEarthlike(false);
-        planet.setHabitableJovian(true);  // Has potentially habitable moons
+        planet.setHabitableJovian(false);  // Not habitable itself; moons have astrobiological interest
         planet.setTidallyLocked(false);
         planet.setHasRings(true);
         planet.setRingType("CUSTOM");
@@ -785,7 +785,7 @@ public class SolPlanetsInitializer {
         planet.setOrbitalZone(3);
         planet.setGasGiant(true);
         planet.setHabitable(false);
-        planet.setHabitableJovian(true);  // Titan, Enceladus
+        planet.setHabitableJovian(false);  // Not habitable itself; Titan/Enceladus have astrobiological interest
         planet.setHasRings(true);
         planet.setRingType("SATURN");
         setRingParameters(planet, "Saturn", 58232.0);
@@ -1196,8 +1196,7 @@ public class SolPlanetsInitializer {
         moon.setIceCover(1.0);  // 100% ice surface
         moon.setHydrosphere(1.0);  // Subsurface ocean
         moon.setTidallyLocked(true);
-        moon.setHabitable(false);
-        moon.setHabitableMoon(true);  // Potential subsurface habitability
+        moon.setHabitable(false);  // Not habitable, but has astrobiological potential (subsurface ocean)
         moon.setNotes("Smooth ice surface with subsurface ocean. Prime target for astrobiology.");
         exoPlanetRepository.save(moon);
         log.info("Created Europa");
@@ -1285,7 +1284,7 @@ public class SolPlanetsInitializer {
         moon.setIceCover(0.0);  // Water ice is bedrock
 
         moon.setTidallyLocked(true);
-        moon.setHabitableMoon(true);  // Prebiotic chemistry
+        moon.setHabitable(false);  // Not habitable, but has prebiotic chemistry interest
         moon.setNotes("Only moon with a dense atmosphere. Has methane lakes and rivers. Prebiotic chemistry.");
         exoPlanetRepository.save(moon);
         log.info("Created Titan");
@@ -1314,7 +1313,7 @@ public class SolPlanetsInitializer {
         moon.setIceCover(1.0);
         moon.setHydrosphere(1.0);  // Global subsurface ocean
         moon.setTidallyLocked(true);
-        moon.setHabitableMoon(true);  // Hydrothermal vents possible
+        moon.setHabitable(false);  // Not habitable, but has astrobiological potential (hydrothermal vents)
         moon.setNotes("Active water geysers from south pole. Global subsurface ocean with potential habitability.");
         exoPlanetRepository.save(moon);
         log.info("Created Enceladus");

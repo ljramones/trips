@@ -84,7 +84,24 @@ public class JavaFxPlanetMeshConverter {
         }
     }
 
-    // Height color mapping (same as PlanetRenderer)
+    /**
+     * Terrain surface type for color palette selection.
+     * Determines the color scheme based on planet surface conditions.
+     */
+    public enum TerrainType {
+        /** Planet has liquid surface water - negative elevations are oceans (blue colors) */
+        WET,
+        /** Planet has no surface water - negative elevations are basins/canyons (brown/tan colors) */
+        DRY,
+        /** Planet is frozen - all terrain is ice/frost (white/light blue/gray colors) */
+        ICE,
+        /** Gas giant (Jupiter-like) - cloud bands in orange/brown/white */
+        JOVIAN,
+        /** Ice giant (Neptune/Uranus-like) - cloud bands in blue/cyan */
+        ICE_GIANT
+    }
+
+    // Height color mapping for WET planets (with liquid water) - same as PlanetRenderer
     private static final Color[] HEIGHT_COLORS = {
         Color.rgb(0, 0, 102),     // -4: deep ocean
         Color.rgb(0, 0, 128),     // -3: ocean
@@ -95,6 +112,61 @@ public class JavaFxPlanetMeshConverter {
         Color.rgb(166, 153, 102), //  2: hills
         Color.rgb(102, 51, 0),    //  3: mountains
         Color.rgb(51, 0, 0)       //  4: high mountains
+    };
+
+    // Height color mapping for DRY planets (no water) - canyons/basins use browns/tans
+    private static final Color[] DRY_TERRAIN_COLORS = {
+        Color.rgb(89, 60, 31),    // -4: deep canyon/basin (dark brown)
+        Color.rgb(120, 85, 50),   // -3: canyon floor (medium brown)
+        Color.rgb(150, 110, 70),  // -2: shallow basin (tan)
+        Color.rgb(180, 145, 100), // -1: low depression (light tan)
+        Color.rgb(204, 180, 140), //  0: lowlands (sandy)
+        Color.rgb(190, 170, 120), //  1: plains (dusty tan)
+        Color.rgb(160, 140, 100), //  2: hills (brown)
+        Color.rgb(110, 80, 50),   //  3: mountains (dark brown)
+        Color.rgb(70, 50, 30)     //  4: high mountains (very dark brown)
+    };
+
+    // Height color mapping for ICE planets (frozen world, no atmosphere)
+    // Think Europa, Enceladus, Pluto - white/blue/gray ice terrain
+    private static final Color[] ICE_TERRAIN_COLORS = {
+        Color.rgb(140, 160, 180), // -4: deep crevasse (dark blue-gray ice)
+        Color.rgb(160, 180, 200), // -3: ice canyon (blue-gray)
+        Color.rgb(180, 200, 220), // -2: ice basin (light blue-gray)
+        Color.rgb(200, 215, 230), // -1: low ice plain (pale blue)
+        Color.rgb(220, 230, 240), //  0: ice flats (very light blue)
+        Color.rgb(235, 240, 250), //  1: ice plains (near white)
+        Color.rgb(245, 248, 255), //  2: ice ridges (white)
+        Color.rgb(255, 255, 255), //  3: ice mountains (pure white)
+        Color.rgb(240, 245, 255)  //  4: high ice peaks (bright white with blue tint)
+    };
+
+    // Cloud band colors for JOVIAN (gas giant like Jupiter/Saturn)
+    // "Heights" represent cloud band layers - no solid surface
+    private static final Color[] JOVIAN_COLORS = {
+        Color.rgb(120, 80, 60),   // -4: deep brown belt
+        Color.rgb(150, 100, 70),  // -3: brown belt
+        Color.rgb(180, 130, 90),  // -2: tan belt
+        Color.rgb(200, 160, 120), // -1: light tan zone
+        Color.rgb(230, 200, 170), //  0: cream zone
+        Color.rgb(245, 230, 200), //  1: pale cream zone
+        Color.rgb(255, 245, 220), //  2: white zone
+        Color.rgb(220, 150, 100), //  3: orange storm band
+        Color.rgb(180, 100, 60)   //  4: deep orange/red storm (Great Red Spot)
+    };
+
+    // Cloud band colors for ICE_GIANT (Neptune/Uranus-like)
+    // Blue/cyan bands with occasional white clouds
+    private static final Color[] ICE_GIANT_COLORS = {
+        Color.rgb(20, 50, 100),   // -4: deep blue
+        Color.rgb(30, 70, 130),   // -3: dark blue
+        Color.rgb(50, 100, 160),  // -2: medium blue
+        Color.rgb(70, 130, 190),  // -1: blue
+        Color.rgb(100, 160, 210), //  0: light blue
+        Color.rgb(130, 190, 220), //  1: pale blue
+        Color.rgb(160, 210, 230), //  2: cyan-white
+        Color.rgb(200, 230, 240), //  3: white cloud
+        Color.rgb(180, 220, 235)  //  4: bright cloud band
     };
 
     /**
@@ -1091,26 +1163,65 @@ public class JavaFxPlanetMeshConverter {
     }
 
     /**
-     * Returns color for a given integer height value.
+     * Returns color for a given integer height value using WET terrain colors.
      * Maps height from [-4, 4] to color gradient.
      *
      * @param height Integer height value
      * @return JavaFX Color for that height
      */
     public static Color getColorForHeight(int height) {
-        int index = height + 4;
-        index = Math.max(0, Math.min(HEIGHT_COLORS.length - 1, index));
-        return HEIGHT_COLORS[index];
+        return getColorForHeight(height, TerrainType.WET);
     }
 
     /**
-     * Returns a smoothly interpolated color for a precise height value.
+     * Returns color for a given integer height value using the specified terrain type.
+     * Maps height from [-4, 4] to color gradient.
+     *
+     * @param height      Integer height value (or cloud band layer for gas giants)
+     * @param terrainType WET, DRY, ICE, JOVIAN, or ICE_GIANT
+     * @return JavaFX Color for that height/layer
+     */
+    public static Color getColorForHeight(int height, TerrainType terrainType) {
+        Color[] palette = switch (terrainType) {
+            case DRY -> DRY_TERRAIN_COLORS;
+            case ICE -> ICE_TERRAIN_COLORS;
+            case JOVIAN -> JOVIAN_COLORS;
+            case ICE_GIANT -> ICE_GIANT_COLORS;
+            default -> HEIGHT_COLORS;
+        };
+        int index = height + 4;
+        index = Math.max(0, Math.min(palette.length - 1, index));
+        return palette[index];
+    }
+
+    /**
+     * Returns a smoothly interpolated color for a precise height value using WET terrain.
      * Blends between adjacent height colors based on fractional part.
      *
      * @param height Precise height value (typically -4 to 4)
      * @return JavaFX Color interpolated for that height
      */
     public static Color getColorForPreciseHeight(double height) {
+        return getColorForPreciseHeight(height, TerrainType.WET);
+    }
+
+    /**
+     * Returns a smoothly interpolated color for a precise height value.
+     * Blends between adjacent height colors based on fractional part.
+     *
+     * @param height      Precise height value (typically -4 to 4)
+     * @param terrainType WET, DRY, ICE, JOVIAN, or ICE_GIANT
+     * @return JavaFX Color interpolated for that height
+     */
+    public static Color getColorForPreciseHeight(double height, TerrainType terrainType) {
+        Color[] palette = switch (terrainType) {
+            case DRY -> DRY_TERRAIN_COLORS;
+            case ICE -> ICE_TERRAIN_COLORS;
+            case JOVIAN -> JOVIAN_COLORS;
+            case ICE_GIANT -> ICE_GIANT_COLORS;
+            default -> HEIGHT_COLORS;
+        };
+
         // Map height from [-4, 4] to [0, 8]
         double normalized = height + 4.0;
         normalized = Math.max(0, Math.min(8, normalized));
@@ -1119,24 +1230,35 @@ public class JavaFxPlanetMeshConverter {
         int upperIndex = lowerIndex + 1;
         double fraction = normalized - lowerIndex;
 
-        lowerIndex = Math.max(0, Math.min(HEIGHT_COLORS.length - 1, lowerIndex));
-        upperIndex = Math.max(0, Math.min(HEIGHT_COLORS.length - 1, upperIndex));
+        lowerIndex = Math.max(0, Math.min(palette.length - 1, lowerIndex));
+        upperIndex = Math.max(0, Math.min(palette.length - 1, upperIndex));
 
-        Color lowerColor = HEIGHT_COLORS[lowerIndex];
-        Color upperColor = HEIGHT_COLORS[upperIndex];
+        Color lowerColor = palette[lowerIndex];
+        Color upperColor = palette[upperIndex];
 
         return lowerColor.interpolate(upperColor, fraction);
     }
 
     /**
-     * Creates a material for a specific height level.
+     * Creates a material for a specific height level using WET terrain colors.
      *
      * @param height The height level
      * @return PhongMaterial with appropriate color
      */
     public static PhongMaterial createMaterialForHeight(int height) {
+        return createMaterialForHeight(height, TerrainType.WET);
+    }
+
+    /**
+     * Creates a material for a specific height level using the specified terrain type.
+     *
+     * @param height      The height level
+     * @param terrainType WET for water planets, DRY for rock/desert planets
+     * @return PhongMaterial with appropriate color
+     */
+    public static PhongMaterial createMaterialForHeight(int height, TerrainType terrainType) {
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(getColorForHeight(height));
+        material.setDiffuseColor(getColorForHeight(height, terrainType));
         material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.2, 1));
         material.setSpecularPower(12.0);
         return material;
