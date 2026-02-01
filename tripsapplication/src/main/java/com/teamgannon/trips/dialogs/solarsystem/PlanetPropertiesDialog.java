@@ -103,8 +103,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField exosphericTempField;
     private TextField boilingPointField;
     private TextField greenhouseRiseField;
+    private TextField tempCalculatedField;
+    private TextField tempMeasuredField;
     private TextField atmosphereTypeField;
     private TextArea atmosphereCompField;
+    private TextField moleculesField;
 
     // === RING SYSTEM SECTION ===
     private CheckBox hasRingsCheck;
@@ -115,6 +118,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField ringInclinationField;
     private TextField ringPrimaryColorField;
     private TextField ringSecondaryColorField;
+
+    // === PROCEDURAL/METADATA SECTION ===
+    private TextField starSpTypeField;
+    private TextField proceduralSeedField;
+    private TextField proceduralSourceField;
 
     // === SCIENCE FICTION SECTION ===
     private TextField populationField;
@@ -176,6 +184,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         atmosphereTab.setContent(createAtmosphereContent());
         tabPane.getTabs().add(atmosphereTab);
 
+        // Rings tab
+        Tab ringsTab = new Tab("Rings");
+        ringsTab.setContent(createRingsContent());
+        tabPane.getTabs().add(ringsTab);
+
         // Sci-Fi tab (for world-building)
         Tab sciFiTab = new Tab("Sci-Fi");
         sciFiTab.setContent(createSciFiContent());
@@ -194,8 +207,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         mainBox.getChildren().add(createButtonBar());
 
         this.getDialogPane().setContent(mainBox);
-        this.getDialogPane().setPrefWidth(580);
-        this.getDialogPane().setPrefHeight(570);
+        this.getDialogPane().setPrefWidth(680);
+        this.getDialogPane().setPrefHeight(600);
 
         DialogUtils.bindCloseHandler(this, this::handleClose);
 
@@ -216,7 +229,29 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         TitledPane habitabilityPane = createHabitabilitySection();
         vbox.getChildren().add(habitabilityPane);
 
+        // Procedural metadata section
+        TitledPane proceduralPane = createProceduralSection();
+        vbox.getChildren().add(proceduralPane);
+
         return vbox;
+    }
+
+    private TitledPane createProceduralSection() {
+        GridPane grid = createGridPane();
+
+        grid.add(createBoldLabel("Procedural Source:"), 0, 0);
+        proceduralSourceField = createTextField(200);
+        proceduralSourceField.setPromptText("e.g., stargen, accrete, manual");
+        grid.add(proceduralSourceField, 1, 0);
+
+        grid.add(createBoldLabel("Procedural Seed:"), 2, 0);
+        proceduralSeedField = createTextField(150);
+        proceduralSeedField.setPromptText("Seed for reproducibility");
+        grid.add(proceduralSeedField, 3, 0);
+
+        TitledPane pane = new TitledPane("Procedural Metadata", grid);
+        pane.setCollapsible(false);
+        return pane;
     }
 
     private TitledPane createIdentitySection() {
@@ -253,6 +288,12 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         parentPlanetField.setEditable(false);
         parentPlanetField.setStyle("-fx-background-color: #e8e8e8;");
         grid.add(parentPlanetField, 3, 3);
+
+        grid.add(createBoldLabel("Star Spectral Type:"), 0, 4);
+        starSpTypeField = createTextField(200);
+        starSpTypeField.setEditable(false);
+        starSpTypeField.setStyle("-fx-background-color: #e8e8e8;");
+        grid.add(starSpTypeField, 1, 4);
 
         TitledPane pane = new TitledPane("Identity", grid);
         pane.setCollapsible(false);
@@ -305,10 +346,6 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         TitledPane physicalPane = createPhysicalSection();
         vbox.getChildren().add(physicalPane);
 
-        // Ring system section
-        TitledPane ringPane = createRingSection();
-        vbox.getChildren().add(ringPane);
-
         return vbox;
     }
 
@@ -324,19 +361,19 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         eccentricityField = createTextField(120);
         grid.add(eccentricityField, 3, 0);
 
-        grid.add(createBoldLabel("Inclination (deg):"), 0, 1);
+        grid.add(createBoldLabel("Inclination (°):"), 0, 1);
         inclinationField = createTextField(120);
         grid.add(inclinationField, 1, 1);
 
-        grid.add(createBoldLabel("Arg. of Periapsis (deg):"), 2, 1);
+        grid.add(createBoldLabel("Arg. Periapsis (°):"), 2, 1);
         omegaField = createTextField(120);
         grid.add(omegaField, 3, 1);
 
-        grid.add(createBoldLabel("Lon. Asc. Node (deg):"), 0, 2);
+        grid.add(createBoldLabel("Lon. Asc. Node (°):"), 0, 2);
         lonAscNodeField = createTextField(120);
         grid.add(lonAscNodeField, 1, 2);
 
-        grid.add(createBoldLabel("Orbital Period (days):"), 2, 2);
+        grid.add(createBoldLabel("Period (days):"), 2, 2);
         orbitalPeriodField = createTextField(120);
         grid.add(orbitalPeriodField, 3, 2);
 
@@ -348,11 +385,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TitledPane createPhysicalSection() {
         GridPane grid = createGridPane();
 
-        grid.add(createBoldLabel("Radius (Earth radii):"), 0, 0);
+        grid.add(createBoldLabel("Radius (R⊕):"), 0, 0);
         radiusField = createTextField(120);
         grid.add(radiusField, 1, 0);
 
-        grid.add(createBoldLabel("Mass (Earth masses):"), 2, 0);
+        grid.add(createBoldLabel("Mass (M⊕):"), 2, 0);
         massField = createTextField(120);
         grid.add(massField, 3, 0);
 
@@ -364,11 +401,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         coreRadiusField = createTextField(120);
         grid.add(coreRadiusField, 3, 1);
 
-        grid.add(createBoldLabel("Axial Tilt (deg):"), 0, 2);
+        grid.add(createBoldLabel("Axial Tilt (°):"), 0, 2);
         axialTiltField = createTextField(120);
         grid.add(axialTiltField, 1, 2);
 
-        grid.add(createBoldLabel("Day Length (hours):"), 2, 2);
+        grid.add(createBoldLabel("Day Length (h):"), 2, 2);
         dayLengthField = createTextField(120);
         grid.add(dayLengthField, 3, 2);
 
@@ -376,11 +413,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         surfaceGravityField = createTextField(120);
         grid.add(surfaceGravityField, 1, 3);
 
-        grid.add(createBoldLabel("Surface Accel (m/s²):"), 2, 3);
+        grid.add(createBoldLabel("Surf. Accel (m/s²):"), 2, 3);
         surfaceAccelField = createTextField(120);
         grid.add(surfaceAccelField, 3, 3);
 
-        grid.add(createBoldLabel("Escape Velocity (km/s):"), 0, 4);
+        grid.add(createBoldLabel("Escape Vel. (km/s):"), 0, 4);
         escapeVelocityField = createTextField(120);
         grid.add(escapeVelocityField, 1, 4);
 
@@ -389,7 +426,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         return pane;
     }
 
-    private TitledPane createRingSection() {
+    // ==================== RINGS TAB ====================
+    private VBox createRingsContent() {
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+
         GridPane grid = createGridPane();
 
         hasRingsCheck = new CheckBox("Has Ring System");
@@ -413,32 +454,32 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         grid.add(ringTypeCombo, 3, 0);
 
         grid.add(createBoldLabel("Inner Radius (AU):"), 0, 1);
-        ringInnerRadiusField = createTextField(120);
+        ringInnerRadiusField = createTextField(130);
         ringInnerRadiusField.setPromptText("e.g., 0.0004");
         grid.add(ringInnerRadiusField, 1, 1);
 
         grid.add(createBoldLabel("Outer Radius (AU):"), 2, 1);
-        ringOuterRadiusField = createTextField(120);
+        ringOuterRadiusField = createTextField(130);
         ringOuterRadiusField.setPromptText("e.g., 0.0014");
         grid.add(ringOuterRadiusField, 3, 1);
 
-        grid.add(createBoldLabel("Thickness (ratio):"), 0, 2);
-        ringThicknessField = createTextField(120);
+        grid.add(createBoldLabel("Thickness:"), 0, 2);
+        ringThicknessField = createTextField(130);
         ringThicknessField.setPromptText("0.01 = thin");
         grid.add(ringThicknessField, 1, 2);
 
-        grid.add(createBoldLabel("Inclination (deg):"), 2, 2);
-        ringInclinationField = createTextField(120);
+        grid.add(createBoldLabel("Inclination (°):"), 2, 2);
+        ringInclinationField = createTextField(130);
         ringInclinationField.setPromptText("0 = equatorial");
         grid.add(ringInclinationField, 3, 2);
 
         grid.add(createBoldLabel("Primary Color:"), 0, 3);
-        ringPrimaryColorField = createTextField(120);
+        ringPrimaryColorField = createTextField(130);
         ringPrimaryColorField.setPromptText("#E6DCC8");
         grid.add(ringPrimaryColorField, 1, 3);
 
         grid.add(createBoldLabel("Secondary Color:"), 2, 3);
-        ringSecondaryColorField = createTextField(120);
+        ringSecondaryColorField = createTextField(130);
         ringSecondaryColorField.setPromptText("#B4AA96");
         grid.add(ringSecondaryColorField, 3, 3);
 
@@ -452,9 +493,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         ringPrimaryColorField.setDisable(!hasRings);
         ringSecondaryColorField.setDisable(!hasRings);
 
-        TitledPane pane = new TitledPane("Ring System", grid);
-        pane.setCollapsible(false);
-        return pane;
+        TitledPane ringPane = new TitledPane("Ring System Properties", grid);
+        ringPane.setCollapsible(false);
+        vbox.getChildren().add(ringPane);
+
+        return vbox;
     }
 
     // ==================== CLIMATE TAB ====================
@@ -480,15 +523,15 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         albedoField = createTextField(120);
         grid.add(albedoField, 3, 1);
 
-        grid.add(createBoldLabel("Surface Pressure (atm):"), 0, 2);
+        grid.add(createBoldLabel("Surf. Pressure (atm):"), 0, 2);
         surfacePressureField = createTextField(120);
         grid.add(surfacePressureField, 1, 2);
 
-        grid.add(createBoldLabel("Volatile Gas Inventory:"), 2, 2);
+        grid.add(createBoldLabel("Volatile Gas Inv.:"), 2, 2);
         volatileGasField = createTextField(120);
         grid.add(volatileGasField, 3, 2);
 
-        grid.add(createBoldLabel("Min Molecular Weight:"), 0, 3);
+        grid.add(createBoldLabel("Min Mol. Weight:"), 0, 3);
         minMolWeightField = createTextField(120);
         grid.add(minMolWeightField, 1, 3);
 
@@ -538,17 +581,25 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         minTempField = createTextField(100);
         grid.add(minTempField, 1, 2);
 
-        grid.add(createBoldLabel("Exospheric Temp (K):"), 2, 2);
+        grid.add(createBoldLabel("Exospheric (K):"), 2, 2);
         exosphericTempField = createTextField(100);
         grid.add(exosphericTempField, 3, 2);
 
-        grid.add(createBoldLabel("Boiling Point (K):"), 0, 3);
+        grid.add(createBoldLabel("Boiling Pt (K):"), 0, 3);
         boilingPointField = createTextField(100);
         grid.add(boilingPointField, 1, 3);
 
-        grid.add(createBoldLabel("Greenhouse Rise (K):"), 2, 3);
+        grid.add(createBoldLabel("Greenhouse (K):"), 2, 3);
         greenhouseRiseField = createTextField(100);
         grid.add(greenhouseRiseField, 3, 3);
+
+        grid.add(createBoldLabel("Calculated (K):"), 0, 4);
+        tempCalculatedField = createTextField(100);
+        grid.add(tempCalculatedField, 1, 4);
+
+        grid.add(createBoldLabel("Measured (K):"), 2, 4);
+        tempMeasuredField = createTextField(100);
+        grid.add(tempMeasuredField, 3, 4);
 
         TitledPane pane = new TitledPane("Temperature", grid);
         pane.setCollapsible(false);
@@ -568,6 +619,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         atmosphereCompField.setPrefWidth(350);
         atmosphereCompField.setPromptText("Format: N2:780;O2:210;Ar:9...");
         grid.add(atmosphereCompField, 1, 1, 3, 1);
+
+        grid.add(createBoldLabel("Molecules:"), 0, 2);
+        moleculesField = createTextField(350);
+        moleculesField.setPromptText("Detected molecules (e.g., H2O, CO2, CH4)");
+        grid.add(moleculesField, 1, 2, 3, 1);
 
         TitledPane pane = new TitledPane("Atmosphere Composition", grid);
         pane.setCollapsible(false);
@@ -592,7 +648,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         techLevelField = createTextField(150);
         grid.add(techLevelField, 1, 1);
 
-        grid.add(createBoldLabel("Colonization Year:"), 2, 1);
+        grid.add(createBoldLabel("Colony Year:"), 2, 1);
         colonizationYearField = createTextField(100);
         grid.add(colonizationYearField, 3, 1);
 
@@ -600,11 +656,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         polityField = createTextField(150);
         grid.add(polityField, 1, 2);
 
-        grid.add(createBoldLabel("Strategic Importance:"), 2, 2);
+        grid.add(createBoldLabel("Importance:"), 2, 2);
         strategicImportanceField = createTextField(100);
         grid.add(strategicImportanceField, 3, 2);
 
-        grid.add(createBoldLabel("Primary Resource:"), 0, 3);
+        grid.add(createBoldLabel("Resource:"), 0, 3);
         primaryResourceField = createTextField(150);
         grid.add(primaryResourceField, 1, 3);
 
@@ -686,6 +742,13 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         greenhouseCheck.setSelected(Boolean.TRUE.equals(planet.getGreenhouseEffect()));
         tidallyLockedCheck.setSelected(Boolean.TRUE.equals(planet.getTidallyLocked()));
 
+        // Star spectral type (read-only)
+        starSpTypeField.setText(safeString(planet.getStarSpType()));
+
+        // Procedural metadata
+        proceduralSourceField.setText(safeString(planet.getProceduralSource()));
+        proceduralSeedField.setText(planet.getProceduralSeed() != null ? planet.getProceduralSeed().toString() : "");
+
         // === ORBITAL ===
         semiMajorAxisField.setText(formatDouble(planet.getSemiMajorAxis()));
         eccentricityField.setText(formatDouble(planet.getEccentricity()));
@@ -723,8 +786,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         exosphericTempField.setText(formatDouble(planet.getExosphericTemperature()));
         boilingPointField.setText(formatDouble(planet.getBoilingPoint()));
         greenhouseRiseField.setText(formatDouble(planet.getGreenhouseRise()));
+        tempCalculatedField.setText(formatDouble(planet.getTempCalculated()));
+        tempMeasuredField.setText(formatDouble(planet.getTempMeasured()));
         atmosphereTypeField.setText(safeString(planet.getAtmosphereType()));
         atmosphereCompField.setText(safeString(planet.getAtmosphereComposition()));
+        moleculesField.setText(safeString(planet.getMolecules()));
 
         // === RING SYSTEM ===
         hasRingsCheck.setSelected(Boolean.TRUE.equals(planet.getHasRings()));
@@ -833,6 +899,11 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planet.setGreenhouseEffect(greenhouseCheck.isSelected());
         planet.setTidallyLocked(tidallyLockedCheck.isSelected());
 
+        // Procedural metadata (starSpType is read-only, not saved)
+        String procSource = proceduralSourceField.getText().trim();
+        planet.setProceduralSource(procSource.isEmpty() ? null : procSource);
+        planet.setProceduralSeed(parseLong(proceduralSeedField.getText()));
+
         // === UPDATE ORBITAL ===
         planet.setSemiMajorAxis(parseDouble(semiMajorAxisField.getText()));
         planet.setEccentricity(parseDouble(eccentricityField.getText()));
@@ -870,8 +941,12 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         planet.setExosphericTemperature(parseDouble(exosphericTempField.getText()));
         planet.setBoilingPoint(parseDouble(boilingPointField.getText()));
         planet.setGreenhouseRise(parseDouble(greenhouseRiseField.getText()));
+        planet.setTempCalculated(parseDouble(tempCalculatedField.getText()));
+        planet.setTempMeasured(parseDouble(tempMeasuredField.getText()));
         planet.setAtmosphereType(atmosphereTypeField.getText().trim());
         planet.setAtmosphereComposition(atmosphereCompField.getText().trim());
+        String molecules = moleculesField.getText().trim();
+        planet.setMolecules(molecules.isEmpty() ? null : molecules);
 
         // === UPDATE RING SYSTEM ===
         planet.setHasRings(hasRingsCheck.isSelected());
