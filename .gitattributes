@@ -1,5 +1,1 @@
-specific: filter=lfs diff=lfs merge=lfs -text
-files/hyg_db/*.csv filter=lfs diff=lfs merge=lfs -text
-*.csv filter=lfs diff=lfs merge=lfs -text
-\# filter=lfs diff=lfs merge=lfs -text
-or filter=lfs diff=lfs merge=lfs -text
+* text=auto eol=lf
