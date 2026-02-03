@@ -181,7 +181,9 @@ Click **Edit Star** to modify the star's attributes.
 
 ### Link Control
 
-Configure transit rules including jump distance limits and type filters. Define which star connections are valid for routing.
+![Link Control panel](images/link-control-panel.png)
+
+Shows the transit bands defined for the current dataset. Use the **Show?** checkboxes to toggle visibility of each distance band. For detailed information on generating and configuring transit links, see [Route Planning](route-planning.md).
 
 ### Planetary Systems
 
