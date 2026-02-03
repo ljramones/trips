@@ -263,6 +263,53 @@ The status bar at the bottom of the window displays:
 
 The grid displays axis labels showing distance from the origin in light-years. In the screenshot, the grid ranges from -15 to +15 light-years on each axis.
 
+## Taking Snapshots
+
+To save an image of the current 3D view, select **View > Take Snapshot picture of plot**:
+
+![View menu - Snapshot](images/view-menu-snapshot.png)
+
+A file dialog opens where you can choose the location and filename:
+
+![Save snapshot dialog](images/save-snapshot-dialog.png)
+
+The snapshot is saved as a PNG image file.
+
+## Utilities
+
+The **Utilities** menu provides calculation tools:
+
+![Utilities menu](images/utilities-menu.png)
+
+### Calculate Distance Between Stars
+
+Select **Utilities > Calculate Distance between planets..** to measure the distance between any two stars:
+
+![Calculate distance dialog](images/calculate-distance-dialog.png)
+
+1. Enter a partial name for the **from** star and click **Find from Star**
+2. Enter a partial name for the **to** star and click **Find to Star**
+3. Select the dataset
+4. Click **Calculate Distance** to see the result
+
+### Coordinate Converters
+
+Select **Utilities > Calculate Galactic Coordinates from Equatorial**:
+
+![Utilities menu - Galactic](images/utilities-menu-galactic.png)
+
+This opens the coordinate converter:
+
+![Coordinate converter dialog](images/coordinate-converter-dialog.png)
+
+The converter supports:
+- **Epoch selection**: J1950 or J2000 reference frame
+- **Equatorial to Galactic**: Enter X, Y, Z on the left, click **Convert to Galactic-->**
+- **Galactic to Equatorial**: Enter X, Y, Z on the right, click **<--Convert to Equatorial**
+
+Also available:
+- **Calculate Equatorial Coordinates from RA and Declination**: Convert Right Ascension and Declination to X,Y,Z coordinates
+
 ## Tips
 
 - Use **Escape** to quickly reset your view if you get disoriented

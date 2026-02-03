@@ -86,7 +86,11 @@ You can also toggle all links on/off using the **Links** button in the toolbar.
 
 ### Clearing Links
 
-To remove existing transit links, go to **Tools > Links > Clear existing links**.
+To remove existing transit links, go to **Tools > Links > Clear existing links**:
+
+![Clear existing links](images/tools-menu-clear-links.png)
+
+This removes all calculated transits from the display. You'll need to regenerate transits if you want to see them again.
 
 ## Planning a Route
 
@@ -121,6 +125,28 @@ The side panel's **Star Routing** section shows:
 - Total route distance
 - Individual jump distances
 - Options to save, export, or modify the route
+
+## Reports
+
+The **Reports** menu provides route and distance reports:
+
+![Reports menu](images/reports-menu.png)
+
+### Route List Report
+
+Select **Reports > Route List** to generate a report of all routes in the current dataset:
+
+![Route report dialog](images/route-report-dialog.png)
+
+Select the dataset and click **Run Report** to generate a list of all saved routes with their waypoints and distances.
+
+### Distance Report
+
+Select **Reports > Distance..** to generate a distance report from a selected star to all other visible stars.
+
+### Star Property Report
+
+Select **Reports > Star Property Report** to generate a comprehensive report of star properties for the current selection.
 
 ## Tips
 

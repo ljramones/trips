@@ -10,27 +10,27 @@
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#findInView"
-              text="Choose a starPositionDescriptor by name from current selection"/>
+              text="Choose a stars by name from current selection"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findByCatalogId"
-              text="Choose a starPositionDescriptor by by catalog Id"/>
+              text="Choose a stars by by catalog Id"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findByConstellation"
               text="Retrieve all stars by constellation"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findByCommonName"
-              text="Choose a starPositionDescriptor by by common name"/>
+              text="Choose a stars by by common name"/>
     <MenuItem mnemonicParsing="false"
               onAction="#findInDataset"
-              text="Choose a starPositionDescriptor by name from entire dataset"/>
+              text="Choose a stars by name from entire dataset"/>
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#findRelatedStars"
-              text="Get a list of all stars related to a requested starPositionDescriptor from a specified distance in ly"/>
+              text="Get a list of all stars related to a requested stars from a specified distance in ly"/>
     <SeparatorMenuItem/>
     <MenuItem mnemonicParsing="false"
               onAction="#editStar"
-              text="Edit starPositionDescriptor data"/>
+              text="Edit stars data"/>
     <MenuItem mnemonicParsing="false"
               onAction="#showApplicationPreferences"
               text="Preferences"/>

@@ -20,13 +20,142 @@ The **Edit** menu provides several search options:
 | **Choose a star by name from entire dataset** | Search the full database, not just plotted stars |
 | **Get a list of all stars within distance** | Find neighbors within a specified light-year radius |
 
+### Using the Search Menu
+
+The **Search** menu provides quick access to catalog ID search:
+
+![Search menu](images/search-menu-catalog.png)
+
+Select **Search > Find a star by catalog id** to open the catalog search dialog.
+
 ### Using the Objects in View List
 
 The side panel's **Objects in View** section lists all currently visible stars with their coordinates. Click any star to select it and view its properties.
 
-### Using the Search Menu
+### Using the Tools Menu
 
-The **Search** menu provides additional query options for filtering the display by various criteria including distance, spectral class, and custom attributes.
+The **Tools** menu also provides search options:
+
+![Tools menu - Search](images/tools-menu-search.png)
+
+- **Select stars to display from current dataset**: Opens the comprehensive query dialog
+- **Select stars using advanced search...**: Opens an advanced search interface
+
+### Finding a Star by Name
+
+Select **Edit > Choose a star by name from current selection** to search for a star by typing its name:
+
+![Edit menu - Find by name](images/edit-menu-find-by-name.png)
+
+This opens a search dialog with autocomplete:
+
+![Find by name dialog](images/find-by-name-dialog.png)
+
+Start typing and matching stars will appear in the dropdown. Select one and click **go to star** to navigate to it.
+
+### Finding a Star by Catalog ID
+
+Select **Edit > Choose a star by catalog Id** to search using astronomical catalog identifiers:
+
+![Find by Catalog ID dialog](images/find-by-catalog-id-dialog.png)
+
+1. Select the **dataset** to search
+2. Choose the **Catalog Id type** from the dropdown:
+   - **Hipparcos** (HIP numbers)
+   - **Henry Draper** (HD numbers)
+   - **Bayer** (Greek letter designations like α Centauri)
+   - **Flamsteed** (numbered designations like 61 Cygni)
+   - **GLIESE** (nearby star catalog)
+   - **Gaia DR2/DR3/EDR3** (Gaia mission IDs)
+   - **Tycho-2** (Tycho catalog)
+   - **CSI** (Catalog of Stellar Identifications)
+   - **2MASS** (Two Micron All Sky Survey)
+   - **Other**
+3. Enter the catalog number
+4. Click **find star**
+
+### Finding Stars by Constellation
+
+Select **Edit > Retrieve all stars by constellation**:
+
+![Edit menu - Constellation](images/edit-menu-constellation.png)
+
+This opens a dialog with all 88 constellations:
+
+![Find by constellation dialog](images/find-by-constellation-dialog.png)
+
+Select a constellation from the dropdown (e.g., Fornax, Cetus, Andromeda) and click **Find Stars** to display all stars in that constellation.
+
+### Finding a Star by Common Name
+
+Select **Edit > Choose a star by common name**:
+
+![Edit menu - Common name](images/edit-menu-common-name.png)
+
+![Find by common name dialog](images/find-by-common-name-dialog.png)
+
+Enter a partial common name (e.g., "Sirius", "Proxima", "Barnard") and select the dataset. Click **find star** to search.
+
+### Finding Nearby Stars
+
+Select **Edit > Get a list of all stars within distance**:
+
+![Find related stars by distance](images/find-related-by-distance-dialog.png)
+
+1. Enter a partial star name to search from
+2. Select the dataset
+3. Enter the maximum distance in light-years
+4. Click **find stars** to see all neighbors within that radius
+
+## Advanced Search
+
+For complex queries, use **Tools > Search for / Select stars > Select stars using advanced search...**:
+
+![Tools menu - Advanced search](images/tools-menu-advanced-search.png)
+
+This opens a SQL-like query builder:
+
+![Advanced search dialog](images/advanced-search-dialog.png)
+
+The advanced search interface provides:
+
+### Fields to Query On
+
+A scrollable list of all available database fields with their types:
+- `CATALOG_ID_LIST` (string)
+- `ACTUAL_MASS` (double) - stellar mass
+- `DISTANCE` (double) - distance in light-years
+- `MAGV` (double) - visual magnitude
+- `WORLD_TYPE` (string)
+- And many more...
+
+### Operators to Use
+
+SQL operators for building conditions:
+- `=` Equal to
+- `>` Greater than
+- `<` Less than
+- `>=` Greater than or equal to
+- `<=` Less than or equal to
+- `<>` Not equal to
+- `BETWEEN` - within a range
+- `LIKE` - pattern matching
+- `IN` - matches one of a list
+- `AND`, `OR`, `NOT` - logical operators
+
+### Building a Query
+
+1. Select a field from the left panel
+2. Choose an operator from the middle panel
+3. Type your condition in the query expression area
+4. The query preview shows: `SELECT * FROM STARS WHERE [your condition]`
+
+### Output Options
+
+- **Plot Results**: Display matching stars in the 3D view
+- **View Results as table**: Show results in a tabular format
+
+Click **Show Examples** for sample queries, **Run Query** to execute, or **Ok** to close.
 
 ## The Query Dialog
 
