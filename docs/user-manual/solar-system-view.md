@@ -156,13 +156,79 @@ Right-click on any planet or moon to access options:
 | **Add Moon...** | Add a new moon to this planet |
 | **Delete Planet...** | Remove this planet from the system |
 
-## Generating Systems
+## Generating Solar Systems
 
-For stars without defined planets, you can generate a simulated solar system:
+For stars without defined planets, you can generate a procedural solar system.
 
-1. Right-click the star in the Interstellar view
-2. Select **Generate Simulated Solar System from this star**
-3. A procedurally generated system will be created
+### Starting Generation
+
+Right-click on any star in the Interstellar view and select **Generate Simulated Solar System from this star**:
+
+![Generate solar system menu](images/generate-solar-system-menu.png)
+
+### Generation Options
+
+![Generation options dialog](images/generate-solar-system-options.png)
+
+The generation dialog offers these options:
+
+| Option | Description |
+|--------|-------------|
+| **Create Moons** | Generate moons for the planets |
+| **Verbose mode** | Show generation details in the console |
+| **Extra Verbose mode** | Show detailed generation calculations |
+
+Click **Generate** to create the system, or **Cancel** to abort.
+
+### Viewing Generated System Details
+
+After generation, a detailed view of the planetary system appears:
+
+![Generated system details](images/generated-system-details.png)
+
+**Star Information:**
+- Stellar mass, luminosity, and temperature
+- **Habitable Zone** ranges:
+  - **Conservative**: Stricter estimate for liquid water
+  - **Optimistic**: Broader estimate including edge cases
+
+**Planet Tabs:**
+Click tabs (Planet 1, Planet 2, etc.) to view each generated planet. Click the X to remove a planet.
+
+**Status Badges:**
+- **Asteroids** (blue): Located in asteroid belt region
+- **Outside HZ** (gray): Outside the habitable zone
+- **Tidally Locked** (orange): One side always faces the star
+
+**Orbital Properties:**
+- Semi-major axis (AU)
+- Eccentricity
+- Mass
+- Density
+
+**Physical Properties:**
+- Radius (Earth radii)
+- Core size
+- Surface gravity
+- Escape velocity
+- Axial tilt
+
+**Atmosphere:**
+- Surface pressure
+- Albedo (reflectivity)
+- Hydrosphere (water coverage)
+- Cloud cover
+- Ice cover
+
+**Temperature:**
+- Equilibrium temperature
+- Surface temperature
+- Day/Night temperature range
+
+**Actions:**
+- **Save to Database**: Store this system permanently
+- **Report**: Generate a detailed report
+- **Dismiss**: Close without saving
 
 ## Related Topics
 
