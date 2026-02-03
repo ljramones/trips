@@ -24,6 +24,8 @@ The Solar System view shows:
 - **Planetary orbits**: Colored elliptical paths showing each planet's orbit
 - **Planets and moons**: Labeled spheres positioned along their orbits
 - **Habitable zone**: Dashed blue rings indicating the zone where liquid water could exist
+- **Asteroid Belt**: A ring of debris between Mars and Jupiter (toggleable)
+- **Kuiper Belt**: The outer debris field beyond Neptune (toggleable)
 - **Background stars**: Distant stars visible in the background
 
 ### Orbit Colors
@@ -107,7 +109,37 @@ Toggle display of reference markers and grids.
 
 ### Display & Controls
 
-Additional display options for the visualization.
+![Display & Controls panel](images/solar-system-display-controls.png)
+
+The Display & Controls panel provides animation and visualization options:
+
+**Animation:**
+- **Play/Pause**: Start or stop orbital animation
+- **Reset**: Return to initial time position
+- **Time Scale**: Speed of animation (0.1x to 10x)
+
+**Scale & Zoom:**
+- **Scale Mode**: Auto, Linear, or Logarithmic scaling
+- **Zoom**: Adjust view magnification (0.5x to 5x)
+
+**Display Options:**
+| Option | Description |
+|--------|-------------|
+| **Show Orbits** | Display orbital paths |
+| **Show Labels** | Display planet and moon names |
+| **Show Habitable Zone** | Display the liquid water zone |
+| **Show Scale Grid** | Display distance reference grid |
+| **True Relative Planet Sizes** | Show planets at actual relative sizes |
+| **Show Planetary Rings** | Display rings (Saturn, etc.) |
+| **Show Asteroid Belt** | Display the main asteroid belt between Mars and Jupiter |
+| **Show Kuiper Belt** | Display the outer Kuiper Belt beyond Neptune |
+
+**View Presets:**
+- **Top**: View from above the orbital plane
+- **Edge**: View from the edge (side view)
+- **45°**: Angled view
+- **Focus**: Center on selected object
+- **Reset**: Return to default view
 
 ## Planet Context Menu
 
