@@ -1,7 +1,7 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
-import com.teamgannon.trips.noisegen.FastNoiseLite;
-import com.teamgannon.trips.noisegen.spatial.TurbulenceNoise;
+import com.cognitivedynamics.noisegen.FastNoiseLite;
+import com.cognitivedynamics.noisegen.spatial.TurbulenceNoise;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.List;

@@ -1,10 +1,10 @@
 package com.teamgannon.trips.planetarymodelling.procedural.impact;
 
-import com.teamgannon.trips.noisegen.FastNoiseLite;
-import com.teamgannon.trips.noisegen.NoiseConfig;
-import com.teamgannon.trips.noisegen.NoiseTypes;
-import com.teamgannon.trips.noisegen.Vector3;
-import com.teamgannon.trips.noisegen.warp.DomainWarpProcessor;
+import com.cognitivedynamics.noisegen.FastNoiseLite;
+import com.cognitivedynamics.noisegen.NoiseConfig;
+import com.cognitivedynamics.noisegen.NoiseTypes;
+import com.cognitivedynamics.noisegen.Vector3;
+import com.cognitivedynamics.noisegen.warp.DomainWarpProcessor;
 import com.teamgannon.trips.planetarymodelling.procedural.AdjacencyGraph;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetConfig;

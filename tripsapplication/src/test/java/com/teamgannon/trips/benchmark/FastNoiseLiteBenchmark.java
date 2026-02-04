@@ -1,6 +1,6 @@
 package com.teamgannon.trips.benchmark;
 
-import com.teamgannon.trips.noisegen.FastNoiseLite;
+import com.cognitivedynamics.noisegen.FastNoiseLite;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 

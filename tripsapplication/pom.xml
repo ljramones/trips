@@ -200,6 +200,12 @@
             <version>${hipparchus.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.cognitivedynamics</groupId>
+            <artifactId>fastnoiselitenouveau</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+
         <!-- Jzy3d for 3D rendering (optional, use PlanetRenderer) -->
         <dependency>
             <groupId>org.jzy3d</groupId>

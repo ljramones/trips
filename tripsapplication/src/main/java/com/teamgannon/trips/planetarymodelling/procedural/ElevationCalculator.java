@@ -1,8 +1,8 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
-import com.teamgannon.trips.noisegen.FastNoiseLite;
-import com.teamgannon.trips.noisegen.spatial.HierarchicalNoise;
-import com.teamgannon.trips.noisegen.transforms.RidgeTransform;
+import com.cognitivedynamics.noisegen.FastNoiseLite;
+import com.cognitivedynamics.noisegen.spatial.HierarchicalNoise;
+import com.cognitivedynamics.noisegen.transforms.RidgeTransform;
 import com.teamgannon.trips.planetarymodelling.procedural.BoundaryDetector.*;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
