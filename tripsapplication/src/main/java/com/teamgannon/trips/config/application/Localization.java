@@ -1,10 +1,15 @@
 package com.teamgannon.trips.config.application;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+
 @Data
+@Slf4j
 @Component
 public class Localization {
 
@@ -31,5 +36,21 @@ public class Localization {
 
     @Value("${app.programdata:unknown}")
     private String programdata;
+
+    @PostConstruct
+    public void ensureDirectoriesExist() {
+        createDir(fileDirectory);
+        createDir(scriptDirectory);
+        createDir(programdata);
+    }
+
+    private void createDir(String path) {
+        if (path != null && !path.equals("unknown")) {
+            File dir = new File(path);
+            if (!dir.exists() && dir.mkdirs()) {
+                log.info("Created directory: {}", dir.getAbsolutePath());
+            }
+        }
+    }
 
 }

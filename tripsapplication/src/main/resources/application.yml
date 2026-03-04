@@ -13,7 +13,7 @@ spring:
       connectionTimeout: 20000
       maximumPoolSize: 5
       poolName: HikariPoolTrips
-    url: jdbc:h2:file:./data/tripsdb;DB_CLOSE_ON_EXIT=TRUE;WRITE_DELAY=100;FILE_LOCK=FS
+    url: jdbc:h2:file:${user.home}/Library/Application Support/TRIPS/data/tripsdb;DB_CLOSE_ON_EXIT=TRUE;WRITE_DELAY=100;FILE_LOCK=FS
     driverClassName: org.h2.Driver
     username: sa
     password:
@@ -43,9 +43,9 @@ app:
   releaseDate: 10 December 2023
   contributors: LJ Mitchell, CE Gannon, R Boatright
   projectPage: https://github.com/ljramones/trips
-  fileDirectory: files
-  programdata: files/programdata/
-  scriptDirectory: files/scriptfiles/
+  fileDirectory: ${user.home}/Library/Application Support/TRIPS/files
+  programdata: ${user.home}/Library/Application Support/TRIPS/files/programdata/
+  scriptDirectory: ${user.home}/Library/Application Support/TRIPS/files/scriptfiles/
   ui:
     window:
       width: 1080

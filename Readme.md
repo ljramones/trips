@@ -17,6 +17,55 @@ Origins: Initially developed with Chuck Gannon to help visualize the stellar nei
 
 ---
 
+## Prerequisites
+
+- **Java 25** (Eclipse Temurin recommended)
+- **Maven** (or use the included `mvnw-java25.sh` wrapper)
+- **Docker** — required for running integration tests (the project uses [Testcontainers](https://testcontainers.com/) with PostgreSQL for database testing). Docker Desktop or a compatible runtime must be running before you execute `mvn test` or `mvn install`. To skip tests: `./mvnw-java25.sh clean install -DskipTests`
+
+## Building
+
+```bash
+# Build the project
+./mvnw-java25.sh clean install
+
+# Build without tests (no Docker required)
+./mvnw-java25.sh clean install -DskipTests
+
+# Run the application
+cd tripsapplication
+../mvnw-java25.sh spring-boot:run
+```
+
+### Packaging for Distribution
+
+```bash
+# macOS (.dmg installer)
+./mvnw-java25.sh clean package -Pjpackage-mac
+
+# Windows (.exe installer)
+./mvnw-java25.sh clean package -Pjpackage-win
+```
+
+Output is written to `tripsapplication/target/jpackage/`. See the [Packaging Guide](PACKAGING.md) for more details.
+
+### macOS Application Data
+
+When running as a packaged macOS application, TRIPS stores all data under `~/Library/Application Support/TRIPS/`. For example, for a user named `jsmith`:
+
+```
+/Users/jsmith/Library/Application Support/TRIPS/
+├── data/
+│   └── tripsdb.mv.db          # H2 database
+├── files/
+│   ├── programdata/            # Application preferences and saved state
+│   └── scriptfiles/            # Groovy scripts
+```
+
+Logs are written to `~/Library/Logs/TRIPS/terranrepublicviewer.log`.
+
+To reset the application to a clean state, delete the `~/Library/Application Support/TRIPS/` directory.
+
 ## Quick Start
 
 - [Installation](docs/INSTALLATION.md)

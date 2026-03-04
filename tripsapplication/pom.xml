@@ -818,7 +818,7 @@
                             <appVersion>${jpackage.appVersion}</appVersion>
                             <vendor>Charles Gannon</vendor>
                             <type>${jpackage.type}</type>
-                            <mainClass>org.springframework.boot.loader.JarLauncher</mainClass>
+                            <mainClass>org.springframework.boot.loader.launch.JarLauncher</mainClass>
                             <mainJar>${project.build.finalName}.jar</mainJar>
                             <input>${project.build.directory}/jpackage-input</input>
                             <destination>${project.build.directory}/jpackage</destination>
@@ -881,7 +881,7 @@
                             <appVersion>${jpackage.appVersion}</appVersion>
                             <vendor>Charles Gannon</vendor>
                             <type>${jpackage.type}</type>
-                            <mainClass>org.springframework.boot.loader.JarLauncher</mainClass>
+                            <mainClass>org.springframework.boot.loader.launch.JarLauncher</mainClass>
                             <mainJar>${project.build.finalName}.jar</mainJar>
                             <input>${project.build.directory}/jpackage-input</input>
                             <destination>${project.build.directory}/jpackage</destination>

@@ -30,6 +30,13 @@ public class TripsSpringBootApplication implements CommandLineRunner {
 
 
     public static void main(String[] args) {
+        // Ensure application data directories exist before Spring Boot initializes.
+        // When launched as a packaged app (e.g. from /Applications), the working
+        // directory is '/', so all paths must be absolute under user.home.
+        String tripsHome = System.getProperty("user.home") + "/Library/Application Support/TRIPS";
+        new java.io.File(tripsHome + "/data").mkdirs();
+        new java.io.File(tripsHome + "/files/programdata").mkdirs();
+        new java.io.File(tripsHome + "/files/scriptfiles").mkdirs();
 
         System.setProperty("javafx.preloader", TripsPreloader.class.getName());
         Application.launch(TripsFxApplication.class, args);
