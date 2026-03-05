@@ -2,6 +2,7 @@
 *.class
 target/
 *.jar
+!3rdpartylibs/*.jar
 *.war
 *.ear
 
