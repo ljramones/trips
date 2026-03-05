@@ -563,11 +563,10 @@
             <scope>test</scope>
         </dependency>
         <!-- Headless testing support (for CI environments) -->
-        <!-- Headless testing support -->
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>openjfx-monocle</artifactId>
-            <version>17.0.10</version>
+            <version>21.0.2</version>
             <scope>test</scope>
         </dependency>
 

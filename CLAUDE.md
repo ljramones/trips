@@ -10,7 +10,7 @@ TRIPS (Terran Republic Interstellar Plotting System) is a JavaFX-based 3D stella
 
 ### Java Version Requirement
 
-**IMPORTANT**: This project now uses **Java 25** (updated from Java 17).
+**IMPORTANT**: This project uses **Java 25**.
 
 Use the included wrapper script to automatically use Java 25:
 ```bash
@@ -27,8 +27,6 @@ Alternatively, manually set JAVA_HOME before running Maven:
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home
 mvn clean install
 ```
-
-**Note**: Legacy wrapper scripts (`mvnw-java17.sh`, `mvnw-java21.sh`) are still available for compatibility testing.
 
 ### Building and Running
 
