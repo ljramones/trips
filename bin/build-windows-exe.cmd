@@ -1,10 +1,12 @@
 @echo off
 setlocal
 
-for /f "usebackq delims=" %%v in (`mvnw.cmd -q -pl tripsapplication -Dexpression=project.version -DforceStdout help:evaluate`) do set VERSION=%%v
+call mvnw-java25.cmd -q -pl tripsapplication -Dexpression=project.version -DforceStdout help:evaluate > "%TEMP%\trips_version.txt"
+set /p VERSION=<"%TEMP%\trips_version.txt"
+del "%TEMP%\trips_version.txt"
 set APP_VERSION=%VERSION%
 if "%APP_VERSION:~0,1%"=="0" set APP_VERSION=1%APP_VERSION:~1%
 
-call mvnw.cmd -pl tripsapplication clean -Pjpackage -Djpackage.type=EXE -Djpackage.appVersion=%APP_VERSION% package
+call mvnw-java25.cmd -pl tripsapplication clean -Pjpackage-win -Djpackage.type=EXE -Djpackage.appVersion=%APP_VERSION% package
 
 endlocal
