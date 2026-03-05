@@ -7,7 +7,7 @@ target OS/architecture (macOS, Windows, Linux).
 
 Prerequisites
 -------------
-- Java 17 JDK (includes jpackage)
+- Java 25 JDK (includes jpackage)
 - Maven (system install, or use the wrapper script)
 
 Building
@@ -18,8 +18,8 @@ Building
 Convenience scripts:
 - macOS DMG: `./bin/build-macos-dmg.sh`
 - macOS App: `./bin/build-macos-app.sh`
-- Windows EXE: `bin\\build-windows-exe.cmd`
-- Windows MSI: `bin\\build-windows-msi.cmd`
+- Windows EXE: `bin\build-windows-exe.cmd`
+- Windows MSI: `bin\build-windows-msi.cmd`
 
 Scripts are OS-specific and should be run on their target platform.
 
@@ -31,7 +31,7 @@ Profiles:
 Build an app image (macOS):
 
 ```bash
-./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=APP_IMAGE package
+./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=APP_IMAGE package
 ```
 
 Output: `tripsapplication/target/jpackage/TRIPS.app` (macOS)
@@ -39,7 +39,7 @@ Output: `tripsapplication/target/jpackage/TRIPS.app` (macOS)
 Build a DMG installer (macOS):
 
 ```bash
-./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac package
+./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac package
 ```
 
 Output: `tripsapplication/target/jpackage/TRIPS-${jpackage.appVersion}.dmg`
@@ -52,12 +52,12 @@ Run these commands on the corresponding OS:
 
 | Platform | Command | Output |
 |----------|---------|--------|
-| macOS app | `./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=APP_IMAGE package` | `TRIPS.app` |
-| macOS DMG | `./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac package` | `TRIPS-${jpackage.appVersion}.dmg` |
+| macOS app | `./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=APP_IMAGE package` | `TRIPS.app` |
+| macOS DMG | `./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac package` | `TRIPS-${jpackage.appVersion}.dmg` |
 | Windows EXE | `mvnw.cmd -pl tripsapplication clean -Pjpackage-win package` | `TRIPS-${jpackage.appVersion}.exe` |
 | Windows MSI | `mvnw.cmd -pl tripsapplication clean -Pjpackage-win -Djpackage.type=MSI package` | `TRIPS-${jpackage.appVersion}.msi` |
-| Linux DEB | `./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=DEB package` | `trips_${project.version}_amd64.deb` |
-| Linux RPM | `./mvnw-java17.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=RPM package` | `trips-${project.version}-1.x86_64.rpm` |
+| Linux DEB | `./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=DEB package` | `trips_${project.version}_amd64.deb` |
+| Linux RPM | `./mvnw-java25.sh -pl tripsapplication clean -Pjpackage-mac -Djpackage.type=RPM package` | `trips-${project.version}-1.x86_64.rpm` |
 
 Windows requires [WiX Toolset 3.0+](https://wixtoolset.org/) for EXE/MSI installers.
 

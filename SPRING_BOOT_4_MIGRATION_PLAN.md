@@ -7,7 +7,7 @@ This document outlines the migration path from Spring Boot 3.5.9 to Spring Boot 
 **Current State:**
 - Spring Boot 3.5.9
 - Hibernate 6.6.39
-- Java 17
+- Java 25
 - Jakarta EE 10
 
 **Target State:**
@@ -15,7 +15,7 @@ This document outlines the migration path from Spring Boot 3.5.9 to Spring Boot 
 - Spring Framework 7.0.3
 - Hibernate 7.x (via Spring Data 2025.1)
 - Jakarta EE 11 / Servlet 6.1
-- Java 17 (compatible) or Java 21 (recommended)
+- Java 25
 
 ## Risk Assessment
 
@@ -143,17 +143,17 @@ Spring Boot 4 adds JSpecify annotations. If using null checkers:
 
 ### 7.1 Build Verification
 ```bash
-./mvnw-java17.sh clean compile
+./mvnw-java25.sh clean compile
 ```
 
 ### 7.2 Test Execution
 ```bash
-./mvnw-java17.sh test
+./mvnw-java25.sh test
 ```
 
 ### 7.3 Application Startup
 ```bash
-./mvnw-java17.sh spring-boot:run
+./mvnw-java25.sh spring-boot:run
 ```
 
 ### 7.4 Functional Testing
@@ -161,19 +161,9 @@ Spring Boot 4 adds JSpecify annotations. If using null checkers:
 - Verify database operations work
 - Verify data import/export works
 
-## Phase 8: Java 21 Upgrade (Optional)
+## Phase 8: Java 25 (Already Done)
 
-Spring Boot 4 recommends Java 21. Benefits:
-- Virtual threads support
-- Pattern matching improvements
-- Better performance
-
-If upgrading:
-```xml
-<java.version>21</java.version>
-<maven.compiler.target>21</maven.compiler.target>
-<maven.compiler.source>21</maven.compiler.source>
-```
+Project already uses Java 25 with temurin-25 JDK.
 
 ## Rollback Plan
 
@@ -181,7 +171,7 @@ If migration fails:
 1. Revert `spring.boot.version` to `3.5.9`
 2. Revert any Jackson package changes
 3. Revert starter POM changes
-4. Run `./mvnw-java17.sh clean install`
+4. Run `./mvnw-java25.sh clean install`
 
 ## Estimated Complexity
 
@@ -194,7 +184,7 @@ If migration fails:
 | Phase 5 | Low | Configuration tweaks |
 | Phase 6 | Optional | Only if using null checkers |
 | Phase 7 | Medium | Testing time |
-| Phase 8 | Optional | Java upgrade |
+| Phase 8 | Done | Already on Java 25 |
 
 **Total Estimated Effort:** Lower than the 2.7→3.5 migration. The Jackson 3 package rename is the main work.
 

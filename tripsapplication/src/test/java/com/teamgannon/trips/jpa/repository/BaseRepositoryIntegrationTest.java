@@ -22,7 +22,7 @@ import java.util.*;
  * These tests require Docker to be running. To skip integration tests when Docker
  * is not available, run Maven with:
  * <pre>
- * ./mvnw-java17.sh test -DexcludedGroups=integration
+ * ./mvnw-java25.sh test -DexcludedGroups=integration
  * </pre>
  */
 @DataJpaTest

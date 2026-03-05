@@ -381,7 +381,7 @@ Comprehensive tests are available in `src/test/java/com/teamgannon/trips/transit
 
 Run all transit tests with:
 ```bash
-./mvnw-java17.sh test -Dtest="com.teamgannon.trips.transits.**"
+./mvnw-java25.sh test -Dtest="com.teamgannon.trips.transits.**"
 ```
 
 Total: 162 tests covering data models, validation, spatial indexing, and parallel processing.

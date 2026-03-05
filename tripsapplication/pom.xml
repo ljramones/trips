@@ -563,7 +563,7 @@
             <scope>test</scope>
         </dependency>
         <!-- Headless testing support (for CI environments) -->
-        <!-- Using 17.0.10 for Java 17 runtime (even though we use JavaFX 21) -->
+        <!-- Headless testing support -->
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>openjfx-monocle</artifactId>
@@ -748,7 +748,7 @@
 
     <profiles>
         <!-- Release profile: embeds Dropbox token at build time -->
-        <!-- Usage: TRIPS_DROPBOX_TOKEN="sl.xxx" ./mvnw-java17.sh clean package -Prelease -->
+        <!-- Usage: TRIPS_DROPBOX_TOKEN="sl.xxx" ./mvnw-java25.sh clean package -Prelease -->
         <profile>
             <id>release</id>
             <properties>

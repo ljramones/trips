@@ -523,7 +523,7 @@ Tests for the routing package should cover:
 
 Run routing tests with:
 ```bash
-./mvnw-java17.sh test -Dtest="com.teamgannon.trips.routing.**"
+./mvnw-java25.sh test -Dtest="com.teamgannon.trips.routing.**"
 ```
 
 ## Performance Considerations
