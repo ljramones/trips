@@ -22,6 +22,7 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
+import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPreviewDialog;
 import javafx.scene.*;
 import javafx.scene.control.Button;
@@ -71,6 +72,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private final SolarSystemContextMenuFactory contextMenuFactory;
     private final SpaceshipService spaceshipService;
     private final TransferPlannerBridge transferPlannerBridge;
+    private final TransferPlannerLauncher transferPlannerLauncher;
 
     /**
      * graphical groups
@@ -135,7 +137,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                                 SolarSystemService solarSystemService,
                                 SolarSystemContextMenuFactory contextMenuFactory,
                                 SpaceshipService spaceshipService,
-                                TransferPlannerBridge transferPlannerBridge) {
+                                TransferPlannerBridge transferPlannerBridge,
+                                TransferPlannerLauncher transferPlannerLauncher) {
 
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
@@ -143,6 +146,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         this.contextMenuFactory = contextMenuFactory;
         this.spaceshipService = spaceshipService;
         this.transferPlannerBridge = transferPlannerBridge;
+        this.transferPlannerLauncher = transferPlannerLauncher;
         ScreenSize screenSize = tripsContext.getScreenSize();
 
         // Initialize the solar system renderer
@@ -665,7 +669,10 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 && currentSystem.getStarDisplayRecord().getMass() > 0) {
             starMass = currentSystem.getStarDisplayRecord().getMass();
         }
-        new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass).showAndWait();
+        String solarSystemId = currentSystem != null ? currentSystem.getSolarSystemId() : null;
+        new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass)
+                .onCreate(transferPlannerLauncher::createAndOpen, solarSystemId)
+                .showAndWait();
     }
 
     /**

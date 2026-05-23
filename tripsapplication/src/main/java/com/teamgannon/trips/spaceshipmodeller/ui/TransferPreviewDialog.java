@@ -4,8 +4,10 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferEstimate;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlanSink;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferType;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -60,6 +62,10 @@ public class TransferPreviewDialog extends Dialog<Void> {
     private final Label feasibleValue = new Label();
     private final Label feasibilityMessage = new Label();
     private final Button createPlanButton = new Button(get("transfer.createPlan", "Create Full Transfer Plan"));
+
+    /** Optional: when set, "Create Full Transfer Plan" hands the plan off to be saved/opened. */
+    private TransferPlanSink onCreate;
+    private String solarSystemId;
 
     /**
      * Ship-centric entry point (Spaceship Modeller): one fixed ship against Solar-System presets.
@@ -210,6 +216,20 @@ public class TransferPreviewDialog extends Dialog<Void> {
         createPlanButton.setDisable(!e.feasible());
     }
 
+    /**
+     * Registers a sink for "Create Full Transfer Plan" (e.g. save and open the planner). Without a sink,
+     * the button just shows a read-only {@link TransferPlanDialog}.
+     *
+     * @param sink          handler for the created plan
+     * @param solarSystemId solar system id to record with the plan (may be {@code null})
+     * @return this dialog
+     */
+    public TransferPreviewDialog onCreate(TransferPlanSink sink, String solarSystemId) {
+        this.onCreate = sink;
+        this.solarSystemId = solarSystemId;
+        return this;
+    }
+
     private void onCreatePlan() {
         SpaceshipDesign ship = shipCombo.getValue();
         TransferBody origin = originCombo.getValue();
@@ -219,7 +239,15 @@ public class TransferPreviewDialog extends Dialog<Void> {
         }
         double starMass = parse(starMassField, 1.0);
         TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, TransferType.HOHMANN);
-        new TransferPlanDialog(plan).showAndWait();
+        if (onCreate != null) {
+            TransferPlanSink sink = onCreate;
+            String sysId = solarSystemId;
+            close();
+            // open after this modal dialog has closed, so the planner window is interactive
+            Platform.runLater(() -> sink.accept(plan, ship, sysId, starMass));
+        } else {
+            new TransferPlanDialog(plan).showAndWait();
+        }
     }
 
     private static String feasibilityText(TransferEstimate e) {

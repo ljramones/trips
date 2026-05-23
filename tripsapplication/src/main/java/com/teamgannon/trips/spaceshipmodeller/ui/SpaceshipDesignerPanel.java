@@ -75,6 +75,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final SpaceshipJsonService jsonService;
     private final SpaceshipTemplateLibrary templateLibrary;
     private final TransferPlannerBridge transferPlannerBridge;
+    private final TransferPlannerLauncher transferPlannerLauncher;
 
     private final TableView<SpaceshipRow> table = new TableView<>();
     private final ComboBox<String> classFilter = new ComboBox<>();
@@ -108,11 +109,13 @@ public class SpaceshipDesignerPanel extends BorderPane {
     public SpaceshipDesignerPanel(SpaceshipService spaceshipService,
                                   SpaceshipJsonService jsonService,
                                   SpaceshipTemplateLibrary templateLibrary,
-                                  TransferPlannerBridge transferPlannerBridge) {
+                                  TransferPlannerBridge transferPlannerBridge,
+                                  TransferPlannerLauncher transferPlannerLauncher) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
         this.transferPlannerBridge = transferPlannerBridge;
+        this.transferPlannerLauncher = transferPlannerLauncher;
         setPadding(new Insets(10));
         setTop(buildHeader());
         setCenter(buildCenter());
@@ -347,7 +350,9 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private void onPlanTransfer() {
         SpaceshipDesign selected = selectedDesign();
         if (selected != null) {
-            new TransferPreviewDialog(selected, transferPlannerBridge).showAndWait();
+            new TransferPreviewDialog(selected, transferPlannerBridge)
+                    .onCreate(transferPlannerLauncher::createAndOpen, null)
+                    .showAndWait();
         }
     }
 

@@ -6,6 +6,7 @@ import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
 import com.teamgannon.trips.spaceshipmodeller.templates.SpaceshipTemplateLibrary;
 import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipDesignerPanel;
 import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipModellerLabels;
+import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
@@ -30,6 +31,7 @@ public class DesignMenuController {
     private final SpaceshipJsonService jsonService;
     private final SpaceshipTemplateLibrary templateLibrary;
     private final TransferPlannerBridge transferPlannerBridge;
+    private final TransferPlannerLauncher transferPlannerLauncher;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
@@ -37,11 +39,13 @@ public class DesignMenuController {
     public DesignMenuController(SpaceshipService spaceshipService,
                                SpaceshipJsonService jsonService,
                                SpaceshipTemplateLibrary templateLibrary,
-                               TransferPlannerBridge transferPlannerBridge) {
+                               TransferPlannerBridge transferPlannerBridge,
+                               TransferPlannerLauncher transferPlannerLauncher) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
         this.transferPlannerBridge = transferPlannerBridge;
+        this.transferPlannerLauncher = transferPlannerLauncher;
     }
 
     /**
@@ -53,7 +57,8 @@ public class DesignMenuController {
         try {
             if (spaceshipStage == null || !spaceshipStage.isShowing()) {
                 SpaceshipDesignerPanel panel = new SpaceshipDesignerPanel(
-                        spaceshipService, jsonService, templateLibrary, transferPlannerBridge);
+                        spaceshipService, jsonService, templateLibrary, transferPlannerBridge,
+                        transferPlannerLauncher);
                 spaceshipStage = new Stage();
                 spaceshipStage.setTitle(SpaceshipModellerLabels.get("window.title"));
                 spaceshipStage.initModality(Modality.NONE);
@@ -66,6 +71,20 @@ public class DesignMenuController {
         } catch (Exception e) {
             log.error("Error opening Spaceship Modeller", e);
             showErrorAlert("Spaceship Modeller", "Failed to open modeller: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Opens (or re-focuses) the Transfer Planner window.
+     *
+     * @param actionEvent the menu action
+     */
+    public void openTransferPlanner(ActionEvent actionEvent) {
+        try {
+            transferPlannerLauncher.open();
+        } catch (Exception e) {
+            log.error("Error opening Transfer Planner", e);
+            showErrorAlert("Transfer Planner", "Failed to open planner: " + e.getMessage());
         }
     }
 }
