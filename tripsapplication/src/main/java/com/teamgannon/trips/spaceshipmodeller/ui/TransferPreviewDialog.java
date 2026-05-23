@@ -4,9 +4,12 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferCategory;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferCost;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlanSink;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferSuitability;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferType;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -15,6 +18,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -23,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipModellerLabels.get;
@@ -63,6 +68,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
     private final Label burnValue = new Label();
     private final Label feasibleValue = new Label();
     private final Label feasibilityMessage = new Label();
+    private final Label typeDescription = new Label();
     private final Button createPlanButton = new Button(get("transfer.createPlan", "Create Full Transfer Plan"));
 
     /** Optional: when set, "Create Full Transfer Plan" hands the plan off to be saved/opened. */
@@ -123,18 +129,9 @@ public class TransferPreviewDialog extends Dialog<Void> {
         originCombo.setValue(originSel);
         destCombo.setValue(firstDifferent(bodyList, originSel));
 
-        typeCombo.getItems().setAll(TransferType.values());
-        typeCombo.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(TransferType t) {
-                return t == null ? "" : t.label();
-            }
-
-            @Override
-            public TransferType fromString(String s) {
-                return null;
-            }
-        });
+        typeCombo.getItems().setAll(orderedTypes());
+        typeCombo.setButtonCell(typeCell());
+        typeCombo.setCellFactory(lv -> typeCell());
         typeCombo.setValue(ships.isEmpty()
                 ? TransferType.HOHMANN : TransferCalculator.defaultTypeFor(ships.get(0)));
 
@@ -197,9 +194,50 @@ public class TransferPreviewDialog extends Dialog<Void> {
         HBox planRow = new HBox(8, createPlanButton);
         planRow.setPadding(new Insets(4, 0, 0, 0));
 
-        VBox box = new VBox(10, inputs, new Separator(), results, feasibilityMessage, planRow);
+        typeDescription.setWrapText(true);
+        typeDescription.setMaxWidth(470);
+        typeDescription.setStyle("-fx-text-fill: #555; -fx-font-style: italic;");
+
+        VBox box = new VBox(10, inputs, typeDescription, new Separator(), results, feasibilityMessage, planRow);
         box.setPadding(new Insets(14));
         return box;
+    }
+
+    private static List<TransferType> orderedTypes() {
+        List<TransferType> ordered = new ArrayList<>();
+        for (TransferCategory category : TransferCategory.values()) {
+            ordered.addAll(TransferType.byCategory(category));
+        }
+        return ordered;
+    }
+
+    private ListCell<TransferType> typeCell() {
+        return new ListCell<>() {
+            @Override
+            protected void updateItem(TransferType type, boolean empty) {
+                super.updateItem(type, empty);
+                if (empty || type == null) {
+                    setText(null);
+                    setDisable(false);
+                    setStyle("");
+                    return;
+                }
+                setText("[" + type.category().label() + "] " + type.label());
+                setTextFill(costColor(type.cost()));
+                SpaceshipDesign ship = shipCombo.getValue();
+                boolean ok = ship == null || TransferSuitability.suitable(type, ship);
+                setDisable(!ok);
+                setStyle(ok ? "" : "-fx-opacity: 0.45;");
+            }
+        };
+    }
+
+    private static Color costColor(TransferCost cost) {
+        return switch (cost) {
+            case EFFICIENT -> Color.web("#1e8449");
+            case EXPENSIVE_FAST -> Color.web("#d68910");
+            case EXOTIC -> Color.web("#8e44ad");
+        };
     }
 
     private void recompute() {
@@ -213,13 +251,16 @@ public class TransferPreviewDialog extends Dialog<Void> {
                     propellantValue, burnValue, feasibleValue)) {
                 l.setText("");
             }
+            typeDescription.setText("");
             feasibilityMessage.setText("");
             createPlanButton.setDisable(true);
             return;
         }
         double starMass = parse(starMassField, 1.0);
         TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, type);
+        boolean suitable = TransferSuitability.suitable(type, ship);
 
+        typeDescription.setText(type.description());
         routeValue.setText(origin.name() + " → " + dest.name() + "  (" + type.label() + ")");
         requiredDvValue.setText("%.2f km/s".formatted(plan.totalDeltaVKmps()));
         shipDvValue.setText(formatDeltaV(plan.shipDeltaVKmps()));
@@ -229,6 +270,15 @@ public class TransferPreviewDialog extends Dialog<Void> {
                 + formatTons(ship.massBudget().propellantMassTons()));
         burnValue.setText(formatDuration(totalBurnSeconds(plan)));
 
+        if (!suitable) {
+            feasibleValue.setText("Unavailable for this drive");
+            feasibleValue.setTextFill(Color.web("#c0392b"));
+            feasibilityMessage.setText("This ship's drive cannot perform a " + type.label()
+                    + ". Choose a drive suited to it (greyed types are unavailable for this ship).");
+            feasibilityMessage.setTextFill(Color.web("#c0392b"));
+            createPlanButton.setDisable(true);
+            return;
+        }
         if (plan.feasible()) {
             feasibleValue.setText(get("transfer.feasible.yes", "Feasible"));
             feasibleValue.setTextFill(Color.web("#1e8449"));

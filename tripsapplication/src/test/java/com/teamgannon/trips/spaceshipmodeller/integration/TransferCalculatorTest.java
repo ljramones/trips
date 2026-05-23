@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Tests for the orbital-transfer maths in {@link TransferCalculator}. */
@@ -97,6 +98,70 @@ class TransferCalculatorTest {
         // ship-dependent quantities differ substantially
         assertNotEquals(a.totalPropellantTons(), b.totalPropellantTons(), 1.0);
         assertNotEquals(a.shipDeltaVKmps(), b.shipDeltaVKmps(), 1.0);
+    }
+
+    private SpaceshipDesign antimatterFrigate() {
+        return SpaceshipBuilder.create("AM Frigate")
+                .shipClass(ShipClass.FRIGATE).driveType(DriveType.ANTIMATTER_BEAM_CORE)
+                .structureTons(300).engineTons(200).propellantTons(600)
+                .payloadTons(100).crewTons(40).radiatorTons(400).build();
+    }
+
+    private SpaceshipDesign solarSail() {
+        return SpaceshipBuilder.create("Sail")
+                .shipClass(ShipClass.CORVETTE).driveType(DriveType.SOLAR_SAIL)
+                .structureTons(1).payloadTons(1).build();
+    }
+
+    @Test
+    @DisplayName("every transfer type computes a plan with at least one node, no exceptions")
+    void allTypesComputeWithoutError() {
+        SpaceshipDesign ship = antimatterFrigate();
+        TransferBody earth = new TransferBody("Earth", 1.0);
+        TransferBody mars = new TransferBody("Mars", 1.52);
+        for (TransferType type : TransferType.values()) {
+            TransferPlan p = TransferCalculator.plan(earth, mars, 1.0, ship, type);
+            assertNotNull(p, type + " produced no plan");
+            assertFalse(p.nodes().isEmpty(), type + " produced no maneuver nodes");
+        }
+    }
+
+    @Test
+    @DisplayName("suitability gates types by drive (chemical basic, antimatter exotic, sail beam)")
+    void suitabilityGating() {
+        SpaceshipDesign chemical = chemicalCorvette();
+        SpaceshipDesign antimatter = antimatterFrigate();
+        SpaceshipDesign sail = solarSail();
+
+        assertTrue(TransferSuitability.suitable(TransferType.HOHMANN, chemical));
+        assertFalse(TransferSuitability.suitable(TransferType.BRACHISTOCHRONE, chemical));
+        assertFalse(TransferSuitability.suitable(TransferType.WORMHOLE, chemical));
+        assertTrue(TransferSuitability.suitable(TransferType.WORMHOLE, antimatter));
+        assertTrue(TransferSuitability.suitable(TransferType.ANTIMATTER_TORCH, antimatter));
+        assertTrue(TransferSuitability.suitable(TransferType.LASER_SAIL_BEAM, sail));
+        assertFalse(TransferSuitability.suitable(TransferType.HOHMANN, sail));
+    }
+
+    @Test
+    @DisplayName("an exotic transfer is far faster than Hohmann for the same route")
+    void exoticIsFasterThanHohmann() {
+        SpaceshipDesign ship = fusionFrigate();
+        TransferBody earth = new TransferBody("Earth", 1.0);
+        TransferBody jupiter = new TransferBody("Jupiter", 5.2);
+        double hohmannDays = TransferCalculator.plan(earth, jupiter, 1.0, ship, TransferType.HOHMANN)
+                .transferTimeDays();
+        double relativisticDays = TransferCalculator.plan(earth, jupiter, 1.0, ship, TransferType.RELATIVISTIC)
+                .transferTimeDays();
+        assertTrue(relativisticDays < hohmannDays, "relativistic should be much faster than Hohmann");
+    }
+
+    @Test
+    @DisplayName("type catalogue has the expected category counts")
+    void typeCountsByCategory() {
+        assertEquals(21, TransferType.values().length);
+        assertEquals(8, TransferType.byCategory(TransferCategory.REALISTIC).size());
+        assertEquals(5, TransferType.byCategory(TransferCategory.ADVANCED).size());
+        assertEquals(8, TransferType.byCategory(TransferCategory.EXOTIC).size());
     }
 
     @Test

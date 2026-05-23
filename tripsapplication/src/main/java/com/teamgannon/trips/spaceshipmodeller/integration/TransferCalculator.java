@@ -8,11 +8,14 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * First-order orbital-transfer maths for circular, coplanar orbits.
+ * Orbital- and interstellar-transfer maths, from established orbital mechanics through hard-SF to
+ * speculative concepts.
  * <p>
- * Pure and dependency-free (no UI, no Spring) so it is easy to unit-test. Uses SI internally; inputs are in
- * AU and solar masses. The model is a two-impulse Hohmann transfer (via vis-viva), the Tsiolkovsky rocket
- * equation for propellant, and a constant-thrust approximation for burn time.
+ * Pure and dependency-free (no UI, no Spring). Realistic types ({@link TransferType#HOHMANN},
+ * {@link TransferType#BI_ELLIPTIC}, etc.) use vis-viva and the rocket equation; advanced types use
+ * constant-thrust / Δv-budget models; exotic types use deliberately illustrative approximations (a fixed
+ * fraction of light speed, instantaneous traversal, etc.). Every type is reduced to a list of equivalent
+ * impulsive burns plus a transfer time, then {@link #assemble} does the propellant/mass accounting.
  */
 public final class TransferCalculator {
 
@@ -22,8 +25,12 @@ public final class TransferCalculator {
     public static final double SOLAR_MASS_KG = 1.989e30;
     /** Astronomical unit (m). */
     public static final double AU_METERS = 1.495978707e11;
+    /** Astronomical unit (km). */
+    public static final double AU_KM = AU_METERS / 1000.0;
     /** Seconds in a day. */
     public static final double DAY_SECONDS = 86_400.0;
+    /** Speed of light (km/s). */
+    public static final double SPEED_OF_LIGHT_KMPS = 299_792.458;
 
     private TransferCalculator() {
     }
@@ -42,12 +49,12 @@ public final class TransferCalculator {
      * @param r1Au             starting orbital radius (AU)
      * @param r2Au             target orbital radius (AU)
      * @param centralMassSolar central body mass (solar masses)
-     * @return total delta-V (sum of both burns), in km/s
+     * @return total delta-V, in km/s
      */
     public static double hohmannDeltaVKmps(double r1Au, double r2Au, double centralMassSolar) {
         double r1 = r1Au * AU_METERS;
         double r2 = r2Au * AU_METERS;
-        if (r1 <= 0 || r2 <= 0 || centralMassSolar <= 0) {
+        if (!valid(r1, r2, centralMassSolar)) {
             return 0;
         }
         double mu = mu(centralMassSolar);
@@ -56,12 +63,11 @@ public final class TransferCalculator {
         double vPeri = Math.sqrt(mu * (2.0 / r1 - 1.0 / a));
         double v2 = Math.sqrt(mu / r2);
         double vApo = Math.sqrt(mu * (2.0 / r2 - 1.0 / a));
-        double dv = Math.abs(vPeri - v1) + Math.abs(v2 - vApo);
-        return dv / 1000.0;
+        return (Math.abs(vPeri - v1) + Math.abs(v2 - vApo)) / 1000.0;
     }
 
     /**
-     * Hohmann transfer (coast) time: half the period of the transfer ellipse.
+     * Hohmann transfer (coast) time.
      *
      * @param r1Au             starting orbital radius (AU)
      * @param r2Au             target orbital radius (AU)
@@ -71,23 +77,14 @@ public final class TransferCalculator {
     public static double hohmannTransferTimeDays(double r1Au, double r2Au, double centralMassSolar) {
         double r1 = r1Au * AU_METERS;
         double r2 = r2Au * AU_METERS;
-        if (r1 <= 0 || r2 <= 0 || centralMassSolar <= 0) {
+        if (!valid(r1, r2, centralMassSolar)) {
             return 0;
         }
-        double mu = mu(centralMassSolar);
-        double a = (r1 + r2) / 2.0;
-        double seconds = Math.PI * Math.sqrt(a * a * a / mu);
-        return seconds / DAY_SECONDS;
+        return halfPeriodDays((r1 + r2) / 2.0, mu(centralMassSolar));
     }
 
     /**
-     * Builds a {@link TransferEstimate} between two named bodies.
-     *
-     * @param origin           origin body
-     * @param destination      destination body
-     * @param centralMassSolar central body mass (solar masses)
-     * @param ship             the ship attempting the transfer
-     * @return the estimate
+     * Builds a {@link TransferEstimate} (Hohmann basis) between two named bodies.
      */
     public static TransferEstimate estimate(TransferBody origin, TransferBody destination,
                                             double centralMassSolar, SpaceshipDesign ship) {
@@ -95,52 +92,55 @@ public final class TransferCalculator {
     }
 
     /**
-     * Builds a full {@link TransferEstimate} for a ship between two orbits.
-     *
-     * @param originAu         origin orbital radius (AU)
-     * @param destAu           destination orbital radius (AU)
-     * @param centralMassSolar central body mass (solar masses)
-     * @param ship             the ship attempting the transfer
-     * @return the estimate
+     * Builds a Hohmann-basis {@link TransferEstimate} for a ship between two orbits.
      */
     public static TransferEstimate estimate(double originAu, double destAu,
                                             double centralMassSolar, SpaceshipDesign ship) {
         double requiredDv = hohmannDeltaVKmps(originAu, destAu, centralMassSolar);
         double transferDays = hohmannTransferTimeDays(originAu, destAu, centralMassSolar);
-        double shipDv = ship.estimateDeltaVKmps(); // NaN for reactionless drives
+        double shipDv = ship.estimateDeltaVKmps();
         boolean feasible = !Double.isNaN(shipDv) && shipDv >= requiredDv;
 
-        // Propellant for this manoeuvre via the rocket equation, taking dry mass as the final mass.
         double propellantRequired = Double.NaN;
-        double veKmps = ship.driveSpecs().exhaustVelocityAverageKmps(); // infinite for sails
+        double veKmps = ship.driveSpecs().exhaustVelocityAverageKmps();
         if (Double.isFinite(veKmps) && veKmps > 0) {
             double dry = ship.massBudget().dryMassTons();
             propellantRequired = dry * (Math.exp(requiredDv / veKmps) - 1.0);
         }
         double propellantAvailable = ship.massBudget().propellantMassTons();
 
-        // Rough constant-thrust burn time: t ≈ Δv · m / F (using wet mass and average thrust).
-        double burnSeconds = Double.NaN;
+        double burnSecondsValue = Double.NaN;
         double thrustMN = ship.driveSpecs().typicalThrustAverageMN();
         if (thrustMN > 0) {
-            double thrustN = thrustMN * 1.0e6;
             double wetKg = ship.massBudget().wetMassTons() * 1000.0;
-            burnSeconds = (requiredDv * 1000.0) * wetKg / thrustN;
+            burnSecondsValue = (requiredDv * 1000.0) * wetKg / (thrustMN * 1.0e6);
         }
 
         return new TransferEstimate(originAu, destAu, centralMassSolar, requiredDv, shipDv,
-                transferDays, propellantRequired, propellantAvailable, burnSeconds, feasible);
+                transferDays, propellantRequired, propellantAvailable, burnSecondsValue, feasible);
     }
 
     /**
-     * Builds a full {@link TransferPlan} with separate departure and arrival burns, sequential
-     * propellant accounting (rocket equation, arriving at dry mass), and per-burn timing.
+     * @param ship the ship
+     * @return a sensible default transfer type: low-thrust drives default to a spiral, others to Hohmann
+     */
+    public static TransferType defaultTypeFor(SpaceshipDesign ship) {
+        if (ship.driveSpecs().reactionless()) {
+            return TransferType.LASER_SAIL_BEAM; // sails ride a beam; no impulsive burns
+        }
+        ThrustLevel level = ship.driveSpecs().thrustLevel();
+        return level.ordinal() <= ThrustLevel.LOW.ordinal()
+                ? TransferType.LOW_THRUST_APPROX : TransferType.HOHMANN;
+    }
+
+    /**
+     * Builds a full {@link TransferPlan} for a ship between two bodies using the given transfer type.
      *
      * @param origin           origin body
      * @param destination      destination body
      * @param centralMassSolar central body mass (solar masses)
      * @param ship             the ship
-     * @param type             the transfer type (only {@link TransferType#HOHMANN} is computed)
+     * @param type             the transfer type
      * @return the plan
      */
     public static TransferPlan plan(TransferBody origin, TransferBody destination,
@@ -149,57 +149,90 @@ public final class TransferCalculator {
         System.out.println("Calculating transfer for ship: " + ship.name()
                 + " | Drive: " + ship.driveType()
                 + " | IspAvg(s): " + ship.driveSpecs().ispAverageSeconds()
-                + " | Total Mass (t): " + ship.grossMassTons());
+                + " | Total Mass (t): " + ship.grossMassTons()
+                + " | Type: " + (type == null ? "HOHMANN" : type));
         TransferType t = type == null ? TransferType.HOHMANN : type;
-        return switch (t) {
-            case HOHMANN -> planHohmann(origin, destination, centralMassSolar, ship);
-            case BI_ELLIPTIC -> planBiElliptic(origin, destination, centralMassSolar, ship);
-            case LOW_THRUST_APPROX -> planLowThrust(origin, destination, centralMassSolar, ship);
+        BurnSpec spec = buildSpec(origin, destination, centralMassSolar, ship, t);
+        return assemble(origin, destination, t, ship,
+                spec.burnsKmps(), spec.names(), spec.timesDays(), spec.transferDays());
+    }
+
+    /** Equivalent impulsive burns + timing for a transfer, before propellant accounting. */
+    private record BurnSpec(double[] burnsKmps, String[] names, double[] timesDays, double transferDays) {
+    }
+
+    private static BurnSpec buildSpec(TransferBody origin, TransferBody dest,
+                                      double mass, SpaceshipDesign ship, TransferType type) {
+        double r1 = origin.semiMajorAxisAu() * AU_METERS;
+        double r2 = dest.semiMajorAxisAu() * AU_METERS;
+        boolean ok = valid(r1, r2, mass);
+        double mu = ok ? mu(mass) : 0;
+
+        double hd1 = 0;
+        double hd2 = 0;
+        double ht = 0;
+        if (ok) {
+            double a = (r1 + r2) / 2.0;
+            hd1 = Math.abs(Math.sqrt(mu * (2.0 / r1 - 1.0 / a)) - Math.sqrt(mu / r1)) / 1000.0;
+            hd2 = Math.abs(Math.sqrt(mu / r2) - Math.sqrt(mu * (2.0 / r2 - 1.0 / a))) / 1000.0;
+            ht = halfPeriodDays(a, mu);
+        }
+        double hd = hd1 + hd2;
+
+        double dKm = Math.abs(r2 - r1) / 1000.0;
+        if (dKm < 1.0) {
+            dKm = Math.max(r1, r2) / 1000.0; // degenerate same-orbit fallback
+        }
+        double dM = dKm * 1000.0;
+
+        double s = ship.estimateDeltaVKmps();
+        double shipDv = Double.isNaN(s) ? 0 : s;
+        double thrustN = ship.driveSpecs().typicalThrustAverageMN() * 1.0e6;
+        double wetKg = ship.massBudget().wetMassTons() * 1000.0;
+        double accel = (thrustN > 0 && wetKg > 0) ? thrustN / wetKg : 0;
+        final double c = SPEED_OF_LIGHT_KMPS;
+
+        return switch (type) {
+            case HOHMANN -> new BurnSpec(new double[]{hd1, hd2},
+                    new String[]{"Departure burn", "Arrival burn"}, new double[]{0, ht}, ht);
+            case BI_ELLIPTIC -> biElliptic(r1, r2, mu, ok);
+            case HIGH_ENERGY -> new BurnSpec(new double[]{hd1 * 1.4, hd2 * 1.4},
+                    new String[]{"High-energy departure", "Arrival burn"}, new double[]{0, ht * 0.6}, ht * 0.6);
+            case OBERTH -> new BurnSpec(new double[]{hd1 * 0.8, hd2 * 0.85},
+                    new String[]{"Oberth periapsis burn", "Arrival burn"}, new double[]{0, ht}, ht);
+            case AEROBRAKING -> new BurnSpec(new double[]{hd1, 0.0},
+                    new String[]{"Departure burn", "Aerobraking capture"}, new double[]{0, ht}, ht);
+            case GRAVITY_ASSIST -> new BurnSpec(new double[]{hd * 0.35, hd * 0.05},
+                    new String[]{"Departure burn", "Flyby correction"}, new double[]{0, ht * 3}, ht * 3);
+            case RESONANT_PHASING -> new BurnSpec(new double[]{hd1, hd2, hd * 0.1},
+                    new String[]{"Departure burn", "Arrival burn", "Phasing trim"},
+                    new double[]{0, ht, ht * 1.8}, ht * 1.8);
+            case LOW_THRUST_APPROX -> lowThrust(r1, r2, mu, ok, ship);
+            case HYBRID_CHEM_ELECTRIC -> hybrid(r1, r2, mu, ok, ship, ht);
+            case LOW_ENERGY_WSB -> new BurnSpec(new double[]{hd1 * 0.7, hd2 * 0.6},
+                    new String[]{"WSB departure", "WSB capture"}, new double[]{0, ht * 4}, ht * 4);
+            case BRACHISTOCHRONE -> brachistochrone(dM, accel, "Accelerate (flip point)", "Decelerate");
+            case FAST_TRANSIT -> coastTransfer(dKm, shipDv * 0.4, "Boost burn", "Braking burn");
+            case MINIMUM_TIME -> coastTransfer(dKm, shipDv, "Maximum boost", "Maximum braking");
+            case RELATIVISTIC -> relativistic(dKm, c, 0.3);
+            case LASER_SAIL_BEAM -> cruise(dKm, 0.2 * c, "Beam-riding cruise");
+            case BUSSARD_RAMJET_TRANSIT -> cruise(dKm, 0.12 * c, "Ramjet cruise");
+            case ANTIMATTER_TORCH -> brachistochrone(dM, accel, "Antimatter boost", "Antimatter brake");
+            case WORMHOLE -> instant(3600.0, "Wormhole traversal");
+            case ALCUBIERRE_WARP -> cruise(dKm, 10.0 * c, "Warp bubble transit");
+            case JUMP_DRIVE -> instant(DAY_SECONDS, "Hyperspace jump (charge + transit)");
+            case QUANTUM_TELEPORT -> instant(1.0, "Quantum teleport");
         };
     }
 
-    /**
-     * @param ship the ship
-     * @return a sensible default transfer type: low-thrust drives default to a spiral, others to Hohmann
-     */
-    public static TransferType defaultTypeFor(SpaceshipDesign ship) {
-        ThrustLevel level = ship.driveSpecs().thrustLevel();
-        return level.ordinal() <= ThrustLevel.LOW.ordinal()
-                ? TransferType.LOW_THRUST_APPROX : TransferType.HOHMANN;
-    }
-
-    private static TransferPlan planHohmann(TransferBody origin, TransferBody destination,
-                                            double centralMassSolar, SpaceshipDesign ship) {
-        double r1 = origin.semiMajorAxisAu() * AU_METERS;
-        double r2 = destination.semiMajorAxisAu() * AU_METERS;
-        double dv1 = 0;
-        double dv2 = 0;
-        double transferDays = 0;
-        if (valid(r1, r2, centralMassSolar)) {
-            double mu = mu(centralMassSolar);
-            double a = (r1 + r2) / 2.0;
-            dv1 = Math.abs(Math.sqrt(mu * (2.0 / r1 - 1.0 / a)) - Math.sqrt(mu / r1)) / 1000.0;
-            dv2 = Math.abs(Math.sqrt(mu / r2) - Math.sqrt(mu * (2.0 / r2 - 1.0 / a))) / 1000.0;
-            transferDays = halfPeriodDays(a, mu);
-        }
-        return assemble(origin, destination, TransferType.HOHMANN, ship,
-                new double[]{dv1, dv2},
-                new String[]{"Departure burn", "Arrival burn"},
-                new double[]{0, transferDays}, transferDays);
-    }
-
-    private static TransferPlan planBiElliptic(TransferBody origin, TransferBody destination,
-                                               double centralMassSolar, SpaceshipDesign ship) {
-        double r1 = origin.semiMajorAxisAu() * AU_METERS;
-        double r2 = destination.semiMajorAxisAu() * AU_METERS;
+    private static BurnSpec biElliptic(double r1, double r2, double mu, boolean ok) {
         double dv1 = 0;
         double dv2 = 0;
         double dv3 = 0;
-        double t1Days = 0;
-        double transferDays = 0;
-        if (valid(r1, r2, centralMassSolar)) {
-            double mu = mu(centralMassSolar);
-            double rb = 2.0 * Math.max(r1, r2); // intermediate apoapsis
+        double t1 = 0;
+        double total = 0;
+        if (ok) {
+            double rb = 2.0 * Math.max(r1, r2);
             double a1 = (r1 + rb) / 2.0;
             double a2 = (r2 + rb) / 2.0;
             double vc1 = Math.sqrt(mu / r1);
@@ -211,44 +244,87 @@ public final class TransferCalculator {
             dv1 = Math.abs(vp1 - vc1) / 1000.0;
             dv2 = Math.abs(va2 - va1) / 1000.0;
             dv3 = Math.abs(vp2 - vc2) / 1000.0;
-            t1Days = halfPeriodDays(a1, mu);
-            transferDays = t1Days + halfPeriodDays(a2, mu);
+            t1 = halfPeriodDays(a1, mu);
+            total = t1 + halfPeriodDays(a2, mu);
         }
-        return assemble(origin, destination, TransferType.BI_ELLIPTIC, ship,
-                new double[]{dv1, dv2, dv3},
+        return new BurnSpec(new double[]{dv1, dv2, dv3},
                 new String[]{"Departure burn", "Apoapsis raise", "Arrival burn"},
-                new double[]{0, t1Days, transferDays}, transferDays);
+                new double[]{0, t1, total}, total);
     }
 
-    private static TransferPlan planLowThrust(TransferBody origin, TransferBody destination,
-                                              double centralMassSolar, SpaceshipDesign ship) {
-        double r1 = origin.semiMajorAxisAu() * AU_METERS;
-        double r2 = destination.semiMajorAxisAu() * AU_METERS;
-        double dv = 0;
-        if (valid(r1, r2, centralMassSolar)) {
-            double mu = mu(centralMassSolar);
-            // continuous-thrust circle-to-circle spiral approximation: dv = |v_c1 - v_c2|
-            dv = Math.abs(Math.sqrt(mu / r1) - Math.sqrt(mu / r2)) / 1000.0;
+    private static BurnSpec lowThrust(double r1, double r2, double mu, boolean ok, SpaceshipDesign ship) {
+        double dv = ok ? Math.abs(Math.sqrt(mu / r1) - Math.sqrt(mu / r2)) / 1000.0 : 0;
+        double days = burnSeconds(dv, ship.massBudget().wetMassTons(),
+                ship.driveSpecs().typicalThrustAverageMN()) / DAY_SECONDS;
+        return new BurnSpec(new double[]{dv}, new String[]{"Continuous low-thrust spiral"},
+                new double[]{0}, days);
+    }
+
+    private static BurnSpec hybrid(double r1, double r2, double mu, boolean ok,
+                                   SpaceshipDesign ship, double ht) {
+        double chem = 0;
+        double spiral = 0;
+        if (ok) {
+            double a = (r1 + r2) / 2.0;
+            chem = Math.abs(Math.sqrt(mu * (2.0 / r1 - 1.0 / a)) - Math.sqrt(mu / r1)) / 1000.0;
+            spiral = Math.abs(Math.sqrt(mu / r1) - Math.sqrt(mu / r2)) / 1000.0 * 0.6;
         }
-        // continuous burn drives the (long) transfer time; estimate from wet mass and thrust
-        double thrustMN = ship.driveSpecs().typicalThrustAverageMN();
-        double transferDays = burnSeconds(dv, ship.massBudget().wetMassTons(), thrustMN) / DAY_SECONDS;
-        return assemble(origin, destination, TransferType.LOW_THRUST_APPROX, ship,
-                new double[]{dv},
-                new String[]{"Continuous low-thrust spiral"},
-                new double[]{0}, transferDays);
+        double spiralDays = burnSeconds(spiral, ship.massBudget().wetMassTons(),
+                ship.driveSpecs().typicalThrustAverageMN()) / DAY_SECONDS;
+        double total = ht * 0.5 + spiralDays;
+        return new BurnSpec(new double[]{chem, spiral},
+                new String[]{"Chemical departure", "Electric spiral cruise"},
+                new double[]{0, ht * 0.5}, total);
+    }
+
+    private static BurnSpec brachistochrone(double dM, double accel, String n1, String n2) {
+        double dv;
+        double days;
+        if (accel > 0) {
+            dv = 2.0 * Math.sqrt(accel * dM) / 1000.0;
+            days = (2.0 * Math.sqrt(dM / accel)) / DAY_SECONDS;
+        } else {
+            dv = Double.NaN;
+            days = Double.NaN;
+        }
+        return new BurnSpec(new double[]{dv / 2.0, dv / 2.0}, new String[]{n1, n2},
+                new double[]{0, days}, days);
+    }
+
+    private static BurnSpec coastTransfer(double dKm, double dvUsedKmps, String n1, String n2) {
+        double vCruise = dvUsedKmps / 2.0;
+        double days = vCruise > 0 ? (dKm / vCruise) / DAY_SECONDS : Double.NaN;
+        return new BurnSpec(new double[]{dvUsedKmps / 2.0, dvUsedKmps / 2.0},
+                new String[]{n1, n2}, new double[]{0, days}, days);
+    }
+
+    private static BurnSpec relativistic(double dKm, double c, double fraction) {
+        double vCruise = fraction * c;
+        double days = (dKm / vCruise) / DAY_SECONDS;
+        return new BurnSpec(new double[]{vCruise, vCruise},
+                new String[]{"Relativistic boost", "Relativistic decel"}, new double[]{0, days}, days);
+    }
+
+    private static BurnSpec cruise(double dKm, double vKmps, String name) {
+        double days = vKmps > 0 ? (dKm / vKmps) / DAY_SECONDS : Double.NaN;
+        return new BurnSpec(new double[]{0.0}, new String[]{name}, new double[]{0}, days);
+    }
+
+    private static BurnSpec instant(double seconds, String name) {
+        return new BurnSpec(new double[]{0.0}, new String[]{name}, new double[]{0}, seconds / DAY_SECONDS);
     }
 
     /**
-     * Assembles a plan from a sequence of burns, accounting propellant and mass backwards from the dry
-     * mass arrived with, so each node carries the propellant it uses and the mass remaining afterwards.
+     * Assembles a plan from a sequence of burns, accounting propellant and mass backwards from the dry mass
+     * arrived with. Transfers needing no delta-V (sails, wormholes) are feasible regardless of budget.
      */
     private static TransferPlan assemble(TransferBody origin, TransferBody destination, TransferType type,
                                          SpaceshipDesign ship, double[] burnsKmps, String[] names,
                                          double[] timesDays, double transferDays) {
         double totalReqDv = Arrays.stream(burnsKmps).sum();
         double shipDv = ship.estimateDeltaVKmps();
-        boolean feasible = !Double.isNaN(shipDv) && shipDv >= totalReqDv;
+        boolean feasible = totalReqDv <= 1e-9
+                || (!Double.isNaN(shipDv) && shipDv >= totalReqDv);
 
         double veKmps = ship.driveSpecs().exhaustVelocityAverageKmps();
         double thrustMN = ship.driveSpecs().typicalThrustAverageMN();
@@ -259,7 +335,7 @@ public final class TransferCalculator {
         double[] prop = new double[n];
         boolean derivable = Double.isFinite(veKmps) && veKmps > 0;
         if (derivable) {
-            double m = dry; // mass after the final burn is the dry mass
+            double m = dry;
             for (int i = n - 1; i >= 0; i--) {
                 massAfter[i] = m;
                 double before = m * Math.exp(burnsKmps[i] / veKmps);

@@ -57,14 +57,14 @@ public class SpaceshipTemplateLibrary {
         return SpaceshipBuilder.create("Battlestar-type Carrier")
                 .designation("BS-75")
                 .shipClass(ShipClass.CARRIER)
-                .driveType(DriveType.NUCLEAR_THERMAL)
-                .structureTons(3000).engineTons(1000).propellantTons(2000)
-                .payloadTons(2000).crewTons(600).radiatorTons(0)
+                .driveType(DriveType.FUSION_TORCH)
+                .structureTons(3000).engineTons(1000).propellantTons(4000)
+                .payloadTons(2000).crewTons(600).radiatorTons(1500)
                 .crew(2500).lengthMeters(1400)
                 .carry("Viper", ShipClass.FIGHTER, 40, 12, "space superiority")
                 .carry("Raptor", ShipClass.DROPSHIP, 8, 20, "recon and assault")
                 .description("Military carrier built around its embarked Viper wing and Raptor dropships; "
-                        + "robust nuclear-thermal main drive.")
+                        + "powerful fusion-torch main drive for high-energy and fast-transit maneuvers.")
                 .build();
     }
 
