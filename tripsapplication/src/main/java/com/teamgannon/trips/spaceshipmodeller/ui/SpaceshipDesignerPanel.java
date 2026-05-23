@@ -102,6 +102,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final Button exportButton = new Button(get("button.export"));
     private final Button exportJsonButton = new Button(get("button.exportJson"));
     private final Button planButton = new Button(get("button.planTransfer"));
+    private final Button useInSolarSystemButton = new Button(get("button.useInSolarSystem"));
     private final ListView<String> validationMessages = new ListView<>();
 
     public SpaceshipDesignerPanel(SpaceshipService spaceshipService,
@@ -251,11 +252,13 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
         planButton.setTooltip(new Tooltip(get("tooltip.planTransfer")));
         planButton.setOnAction(e -> onPlanTransfer());
+        useInSolarSystemButton.setTooltip(new Tooltip(get("tooltip.useInSolarSystem")));
+        useInSolarSystemButton.setOnAction(e -> onUseInSolarSystem());
         exportJsonButton.setTooltip(new Tooltip(get("tooltip.exportJson")));
         exportJsonButton.setOnAction(e -> onExportJson());
         exportButton.setTooltip(new Tooltip(get("tooltip.export")));
         exportButton.setOnAction(e -> onExport());
-        HBox actions = new HBox(8, planButton, exportJsonButton, exportButton);
+        HBox actions = new HBox(8, planButton, useInSolarSystemButton, exportJsonButton, exportButton);
         actions.setPadding(new Insets(6, 0, 6, 0));
 
         validationMessages.setPrefHeight(120);
@@ -344,8 +347,17 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private void onPlanTransfer() {
         SpaceshipDesign selected = selectedDesign();
         if (selected != null) {
-            transferPlannerBridge.planTransfer(selected);
+            new TransferPreviewDialog(selected, transferPlannerBridge).showAndWait();
         }
+    }
+
+    private void onUseInSolarSystem() {
+        SpaceshipDesign selected = selectedDesign();
+        String name = selected == null ? "the ship" : "\"" + selected.name() + "\"";
+        showInfoMessage(get("button.useInSolarSystem"),
+                "To plan a transfer for " + name + " in context, open a system in the Solar System view, "
+                        + "then right-click a body and choose \"Plan Transfer from Here...\". "
+                        + "Every saved ship is available there.");
     }
 
     private void onLoadTemplates() {

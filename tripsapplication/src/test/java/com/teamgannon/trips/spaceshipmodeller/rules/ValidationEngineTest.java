@@ -92,6 +92,19 @@ class ValidationEngineTest {
     }
 
     @Test
+    @DisplayName("a cruiser may now carry small craft (carrier-capable)")
+    void cruiserCanCarryCraft() {
+        SpaceshipDesign d = SpaceshipBuilder.create("CA")
+                .shipClass(ShipClass.CRUISER).driveType(DriveType.FUSION_TORCH)
+                .structureTons(800).engineTons(400).propellantTons(1000)
+                .payloadTons(300).crewTons(150).radiatorTons(400)
+                .carry("Pinnace", ShipClass.SHUTTLE, 2, 40, "boarding").build();
+        ValidationResult r = engine.validate(d);
+        assertFalse(hasCode(r, "CARRY_NOT_CAPABLE"));
+        assertTrue(r.isValid());
+    }
+
+    @Test
     @DisplayName("a reactionless drive produces a delta-V N/A info note")
     void reactionlessProducesInfo() {
         SpaceshipDesign d = SpaceshipBuilder.create("Sail")

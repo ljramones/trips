@@ -245,7 +245,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
             if (transferPlannerBridge != null) {
                 SpaceshipDesign draft = buildDraft();
                 if (draft != null) {
-                    transferPlannerBridge.planTransfer(draft);
+                    new TransferPreviewDialog(draft, transferPlannerBridge).showAndWait();
                 }
             }
         });

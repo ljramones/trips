@@ -7,6 +7,7 @@ import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,5 +53,18 @@ class TransferPlannerBridgeImplTest {
     @DisplayName("null is not plannable")
     void cannotPlanNull() {
         assertFalse(bridge.canPlan(null));
+    }
+
+    @Test
+    @DisplayName("estimateTransfer delegates to the calculator")
+    void estimateTransferDelegates() {
+        SpaceshipDesign frigate = SpaceshipBuilder.create("Roci")
+                .shipClass(ShipClass.FRIGATE).driveType(DriveType.FUSION_TORCH)
+                .structureTons(200).engineTons(150).propellantTons(450)
+                .payloadTons(50).crewTons(20).radiatorTons(120).crew(4).build();
+        TransferEstimate e = bridge.estimateTransfer(1.0, 1.52, 1.0, frigate);
+        assertEquals(TransferCalculator.hohmannDeltaVKmps(1.0, 1.52, 1.0),
+                e.requiredDeltaVKmps(), 1e-9);
+        assertTrue(e.feasible());
     }
 }

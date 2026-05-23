@@ -90,6 +90,8 @@ public class SpaceshipTemplateLibrary {
                 .structureTons(800).engineTons(400).propellantTons(1200)
                 .payloadTons(300).crewTons(150).radiatorTons(400)
                 .crew(400).lengthMeters(480)
+                .carry("Pinnace", ShipClass.SHUTTLE, 2, 40, "courier / boarding")
+                .carry("Assault Shuttle", ShipClass.DROPSHIP, 4, 25, "marine boarding")
                 .description("Heavy line cruiser with internal bays for pinnaces and assault shuttles; "
                         + "fusion-torch acceleration for the wall of battle.")
                 .build();

@@ -5,18 +5,11 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 /**
  * Seam between the Spaceship Modeller and TRIPS mission/transfer planning.
  * <p>
- * A real implementation will hand the ship's performance envelope (mass, drive Isp/thrust, delta-V budget)
- * to the transfer planner once that feature exists. Until then {@link TransferPlannerBridgeImpl} provides a
- * informative placeholder so the UI wiring is complete and testable.
+ * Today this produces a first-order {@link TransferEstimate} (Hohmann Δv, propellant, burn/transfer time)
+ * that the UI presents in a preview dialog. When a full Transfer Planner exists, this interface is the
+ * place to delegate to it; the {@link #canPlan} precondition already encodes who is eligible.
  */
 public interface TransferPlannerBridge {
-
-    /**
-     * Opens transfer planning for the given ship (or reports that the planner is not yet available).
-     *
-     * @param ship the design to plan a transfer for
-     */
-    void planTransfer(SpaceshipDesign ship);
 
     /**
      * @param ship the design to check
@@ -24,4 +17,16 @@ public interface TransferPlannerBridge {
      * reaction-mass-free (sails have no rocket-equation delta-V to plan with)
      */
     boolean canPlan(SpaceshipDesign ship);
+
+    /**
+     * Estimates a Hohmann transfer between two circular orbits for the given ship.
+     *
+     * @param originAxisAu          origin orbital radius, in AU
+     * @param destinationAxisAu     destination orbital radius, in AU
+     * @param centralStarMassSolar  central star mass, in solar masses
+     * @param ship                  the ship attempting the transfer
+     * @return the transfer estimate
+     */
+    TransferEstimate estimateTransfer(double originAxisAu, double destinationAxisAu,
+                                      double centralStarMassSolar, SpaceshipDesign ship);
 }

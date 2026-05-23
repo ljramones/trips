@@ -33,8 +33,8 @@ public enum ShipClass {
     /** Mid-weight warship. */
     FRIGATE("Frigate", false, false, false, "Escort and independent operations"),
 
-    /** Heavy warship. */
-    CRUISER("Cruiser", false, false, false, "Line combatant"),
+    /** Heavy warship; large enough to carry a few small craft (pinnaces, assault shuttles). */
+    CRUISER("Cruiser", false, true, false, "Line combatant"),
 
     /** Bulk cargo hauler. */
     FREIGHTER("Freighter", false, false, false, "Bulk cargo transport"),

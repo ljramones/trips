@@ -90,6 +90,32 @@ public class SolarSystemContextMenuFactory {
             Consumer<ExoPlanet> onDeletePlanet,
             Consumer<ExoPlanet> onLandOnPlanet,
             Consumer<ExoPlanet> onViewTerrain) {
+        return createPlanetContextMenu(planet, exoPlanet, siblingPlanets, onEditComplete,
+                onDeletePlanet, onLandOnPlanet, onViewTerrain, null);
+    }
+
+    /**
+     * Create a planet context menu that additionally offers "Plan Transfer from Here...".
+     *
+     * @param planet         the planet description
+     * @param exoPlanet      the ExoPlanet entity for editing
+     * @param siblingPlanets other planets in the system (for orbit validation)
+     * @param onEditComplete callback when editing is complete
+     * @param onDeletePlanet callback when planet should be deleted
+     * @param onLandOnPlanet callback when user wants to land on planet
+     * @param onViewTerrain  callback when user wants to view procedural terrain
+     * @param onPlanTransfer callback invoked with the body chosen as the transfer origin
+     * @return the context menu
+     */
+    public ContextMenu createPlanetContextMenu(
+            PlanetDescription planet,
+            ExoPlanet exoPlanet,
+            List<PlanetDescription> siblingPlanets,
+            Consumer<PlanetEditResult> onEditComplete,
+            Consumer<ExoPlanet> onDeletePlanet,
+            Consumer<ExoPlanet> onLandOnPlanet,
+            Consumer<ExoPlanet> onViewTerrain,
+            Consumer<PlanetDescription> onPlanTransfer) {
 
         ContextMenu menu = new ContextMenu();
 
@@ -149,6 +175,19 @@ public class SolarSystemContextMenuFactory {
         });
         editOrbitItem.setDisable(exoPlanet == null);
         menu.getItems().add(editOrbitItem);
+
+        menu.getItems().add(new SeparatorMenuItem());
+
+        // Plan a transfer using this body as the origin
+        MenuItem planTransferItem = new MenuItem("Plan Transfer from Here...");
+        planTransferItem.setOnAction(e -> {
+            if (onPlanTransfer != null) {
+                log.info("User selected 'Plan Transfer from Here' for: {}", planet.getName());
+                onPlanTransfer.accept(planet);
+            }
+        });
+        planTransferItem.setDisable(onPlanTransfer == null);
+        menu.getItems().add(planTransferItem);
 
         menu.getItems().add(new SeparatorMenuItem());
 
