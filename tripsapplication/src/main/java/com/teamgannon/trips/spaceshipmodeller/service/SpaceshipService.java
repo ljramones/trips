@@ -139,25 +139,25 @@ public class SpaceshipService {
     }
 
     /**
-     * Seeds template designs into the library, skipping any whose name already exists (case-insensitive).
-     * Safe to call repeatedly; it never creates duplicates.
+     * Loads template designs into the library, upserting by name (case-insensitive): an existing template of
+     * the same name is refreshed in place (keeping its id), otherwise a new one is created. This lets users
+     * pull in improved templates without creating duplicates.
      *
-     * @param templates the candidate designs to add
-     * @return how many were actually added
+     * @param templates the templates to load
+     * @return how many were created or refreshed
      */
     @Transactional
     public int seedTemplates(List<SpaceshipDesign> templates) {
-        int added = 0;
+        int count = 0;
         for (SpaceshipDesign template : templates) {
-            if (!repository.existsByNameIgnoreCase(template.name())) {
-                repository.save(mapper.toEntity(template));
-                added++;
-            }
+            SpaceshipEntity entity = mapper.toEntity(template);
+            repository.findByNameIgnoreCase(template.name())
+                    .ifPresent(existing -> entity.setId(existing.getId())); // overwrite the existing row
+            repository.save(entity);
+            count++;
         }
-        if (added > 0) {
-            log.info("Seeded {} spaceship template(s) into the library", added);
-        }
-        return added;
+        log.info("Loaded {} spaceship template(s) into the library (created or refreshed)", count);
+        return count;
     }
 
     /**

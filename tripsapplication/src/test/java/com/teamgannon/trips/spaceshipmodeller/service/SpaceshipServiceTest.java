@@ -93,17 +93,17 @@ class SpaceshipServiceTest {
     }
 
     @Test
-    @DisplayName("seedTemplates saves only designs whose name does not already exist")
-    void seedTemplatesSkipsExisting() {
+    @DisplayName("seedTemplates upserts by name (refreshing existing, creating new)")
+    void seedTemplatesUpsertsByName() {
         SpaceshipDesign a = design("Alpha", DriveType.FUSION_TORCH);
         SpaceshipDesign b = design("Beta", DriveType.FUSION_TORCH);
-        when(repository.existsByNameIgnoreCase("Alpha")).thenReturn(true);
-        when(repository.existsByNameIgnoreCase("Beta")).thenReturn(false);
+        when(repository.findByNameIgnoreCase("Alpha")).thenReturn(Optional.of(mapper.toEntity(a)));
+        when(repository.findByNameIgnoreCase("Beta")).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        int added = service.seedTemplates(List.of(a, b));
-        assertEquals(1, added);
-        verify(repository, times(1)).save(any(SpaceshipEntity.class));
+        int count = service.seedTemplates(List.of(a, b));
+        assertEquals(2, count);
+        verify(repository, times(2)).save(any(SpaceshipEntity.class));
     }
 
     @Test

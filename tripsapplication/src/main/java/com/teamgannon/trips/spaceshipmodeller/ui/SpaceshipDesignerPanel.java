@@ -367,10 +367,10 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     private void onLoadTemplates() {
         try {
-            int added = spaceshipService.seedTemplates(templateLibrary.getAllTemplates());
+            int loaded = spaceshipService.seedTemplates(templateLibrary.getAllTemplates());
             reload();
             showInfoMessage(get("button.loadTemplates"),
-                    added == 0 ? "All templates are already in the library." : "Added " + added + " template(s).");
+                    "Loaded or refreshed " + loaded + " built-in template(s).");
         } catch (Exception e) {
             log.error("Failed to load templates", e);
             showErrorAlert(get("button.loadTemplates"), "Failed to load templates: " + e.getMessage());

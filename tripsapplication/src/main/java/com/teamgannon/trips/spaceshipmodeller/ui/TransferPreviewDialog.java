@@ -147,7 +147,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
         starMassField.textProperty().addListener((o, a, b) -> recompute());
 
         getDialogPane().setContent(buildContent());
-        getDialogPane().setPrefWidth(500);
+        getDialogPane().setPrefWidth(560);
         recompute();
         setResultConverter(bt -> null);
     }
@@ -188,14 +188,15 @@ public class TransferPreviewDialog extends Dialog<Void> {
         addResult(results, q++, get("transfer.feasible", "Feasibility"), feasibleValue);
 
         feasibilityMessage.setWrapText(true);
-        feasibilityMessage.setMaxWidth(460);
+        feasibilityMessage.setMaxWidth(510);
+        feasibilityMessage.setMinHeight(48);
 
         createPlanButton.setOnAction(e -> onCreatePlan());
         HBox planRow = new HBox(8, createPlanButton);
         planRow.setPadding(new Insets(4, 0, 0, 0));
 
         typeDescription.setWrapText(true);
-        typeDescription.setMaxWidth(470);
+        typeDescription.setMaxWidth(510);
         typeDescription.setStyle("-fx-text-fill: #555; -fx-font-style: italic;");
 
         VBox box = new VBox(10, inputs, typeDescription, new Separator(), results, feasibilityMessage, planRow);
@@ -260,12 +261,12 @@ public class TransferPreviewDialog extends Dialog<Void> {
         TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, type);
         boolean suitable = TransferSuitability.suitable(type, ship);
 
-        typeDescription.setText(type.description());
+        typeDescription.setText("Realism: " + type.category().label() + " — " + type.description());
         routeValue.setText(origin.name() + " → " + dest.name() + "  (" + type.label() + ")");
         requiredDvValue.setText("%.2f km/s".formatted(plan.totalDeltaVKmps()));
         shipDvValue.setText(formatDeltaV(plan.shipDeltaVKmps()));
         marginValue.setText(formatDeltaV(plan.shipDeltaVKmps() - plan.totalDeltaVKmps()));
-        timeValue.setText("%.0f days".formatted(plan.transferTimeDays()));
+        timeValue.setText(formatDays(plan.transferTimeDays()));
         propellantValue.setText(formatTons(plan.totalPropellantTons()) + " / "
                 + formatTons(ship.massBudget().propellantMassTons()));
         burnValue.setText(formatDuration(totalBurnSeconds(plan)));
@@ -273,8 +274,9 @@ public class TransferPreviewDialog extends Dialog<Void> {
         if (!suitable) {
             feasibleValue.setText("Unavailable for this drive");
             feasibleValue.setTextFill(Color.web("#c0392b"));
-            feasibilityMessage.setText("This ship's drive cannot perform a " + type.label()
-                    + ". Choose a drive suited to it (greyed types are unavailable for this ship).");
+            feasibilityMessage.setText("A " + type.label() + " (" + type.category().label()
+                    + ") requires technology far beyond this ship's " + ship.driveType().name()
+                    + " drive. Greyed-out types in the list are unavailable for this ship.");
             feasibilityMessage.setTextFill(Color.web("#c0392b"));
             createPlanButton.setDisable(true);
             return;
@@ -286,7 +288,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
             feasibleValue.setText(get("transfer.feasible.no", "Insufficient Δv"));
             feasibleValue.setTextFill(Color.web("#c0392b"));
         }
-        feasibilityMessage.setText(feasibilityText(plan));
+        feasibilityMessage.setText(feasibilityText(plan, ship.massBudget().propellantMassTons()));
         feasibilityMessage.setTextFill(plan.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
         createPlanButton.setDisable(!plan.feasible());
     }
@@ -338,26 +340,33 @@ public class TransferPreviewDialog extends Dialog<Void> {
         }
     }
 
-    private static String feasibilityText(TransferPlan plan) {
+    private static String feasibilityText(TransferPlan plan, double availablePropellantTons) {
         String typeLabel = plan.type().label();
+        String ship = plan.shipName();
         if (Double.isNaN(plan.shipDeltaVKmps())) {
             return "This drive carries no reaction mass, so a " + typeLabel
-                    + " can't be planned from its Δv budget.";
+                    + " can't be planned from a Δv budget.";
         }
         if (!plan.feasible()) {
-            return "Insufficient Δv: this %s needs %.1f km/s but the ship has only %.1f km/s."
-                    .formatted(typeLabel, plan.totalDeltaVKmps(), plan.shipDeltaVKmps());
+            double need = plan.totalDeltaVKmps();
+            double have = plan.shipDeltaVKmps();
+            if (need >= 100_000) {
+                return ("A %s is not feasible with this drive — it would need about %,.0f km/s of Δv, "
+                        + "while the %s has only %,.0f km/s.").formatted(typeLabel, need, ship, have);
+            }
+            return ("The %s does not have enough Δv for a %s: it needs %.1f km/s but has only %.1f km/s.")
+                    .formatted(ship, typeLabel, need, have);
         }
         if (!plan.propellantSufficient() && !Double.isNaN(plan.totalPropellantTons())) {
-            return "Enough Δv, but this %s needs %.0f t of propellant — more than the ship carries."
-                    .formatted(typeLabel, plan.totalPropellantTons());
+            return ("The %s lacks the propellant for this route using a %s (needs %,.0f t, carries %,.0f t).")
+                    .formatted(ship, typeLabel, plan.totalPropellantTons(), availablePropellantTons);
         }
         double ratio = plan.shipDeltaVKmps() / Math.max(plan.totalDeltaVKmps(), 1e-9);
         if (ratio >= 3) {
-            return "This ship can comfortably perform this %s (%.0f× the required Δv)."
-                    .formatted(typeLabel, ratio);
+            return "The %s can comfortably perform this %s (%.0f× the required Δv)."
+                    .formatted(ship, typeLabel, ratio);
         }
-        return "This ship can perform this " + typeLabel + ", with limited margin.";
+        return "The " + ship + " can perform this " + typeLabel + ", with limited margin.";
     }
 
     // -------------------------------------------------------------- helpers
@@ -382,6 +391,26 @@ public class TransferPreviewDialog extends Dialog<Void> {
 
     private static String formatTons(double tons) {
         return Double.isNaN(tons) ? "n/a" : "%.0f t".formatted(tons);
+    }
+
+    private static String formatDays(double days) {
+        if (Double.isNaN(days)) {
+            return "n/a";
+        }
+        double seconds = days * 86_400.0;
+        if (seconds < 1) {
+            return "instantaneous";
+        }
+        if (days < 1.0 / 24.0) {
+            return "%.0f min".formatted(seconds / 60.0);
+        }
+        if (days < 1.0) {
+            return "%.1f hours".formatted(days * 24.0);
+        }
+        if (days < 365.0) {
+            return "%.0f days".formatted(days);
+        }
+        return "%.1f years".formatted(days / 365.25);
     }
 
     private static String formatDuration(double seconds) {
