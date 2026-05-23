@@ -8,6 +8,7 @@ import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipDesignerPanel;
 import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipModellerLabels;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -46,6 +47,15 @@ public class DesignMenuController {
         this.templateLibrary = templateLibrary;
         this.transferPlannerBridge = transferPlannerBridge;
         this.transferPlannerLauncher = transferPlannerLauncher;
+    }
+
+    /**
+     * Confirms the Design menu's controller was instantiated and wired when the menu bar loaded.
+     */
+    @FXML
+    public void initialize() {
+        log.info("=== DesignMenuController initialized ===");
+        System.out.println("=== DesignMenuController initialized ===");
     }
 
     /**
