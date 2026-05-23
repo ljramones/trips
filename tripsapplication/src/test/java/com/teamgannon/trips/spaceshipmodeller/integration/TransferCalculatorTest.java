@@ -27,6 +27,13 @@ class TransferCalculatorTest {
                 .structureTons(100).engineTons(50).propellantTons(100).payloadTons(20).build();
     }
 
+    private SpaceshipDesign electricTug() {
+        return SpaceshipBuilder.create("Tug")
+                .shipClass(ShipClass.FREIGHTER).driveType(DriveType.VASIMR)
+                .structureTons(200).engineTons(100).propellantTons(150)
+                .payloadTons(400).crewTons(20).radiatorTons(80).build();
+    }
+
     @Test
     @DisplayName("Earth->Mars Hohmann delta-V is ~5.6 km/s")
     void earthToMarsDeltaV() {
@@ -71,6 +78,49 @@ class TransferCalculatorTest {
         TransferEstimate e = TransferCalculator.estimate(1.0, 5.2, 1.0, chemicalCorvette());
         assertFalse(e.feasible());
         assertTrue(e.requiredDeltaVKmps() > e.shipDeltaVKmps());
+    }
+
+    @Test
+    @DisplayName("bi-elliptic plan has three burns summing to its total delta-V")
+    void biEllipticHasThreeBurns() {
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Neptune", 30.1), 1.0,
+                fusionFrigate(), TransferType.BI_ELLIPTIC);
+        assertEquals(3, plan.nodes().size());
+        double sum = plan.nodes().stream().mapToDouble(ManeuverNode::deltaVKmps).sum();
+        assertEquals(plan.totalDeltaVKmps(), sum, 1e-9);
+        assertTrue(plan.totalDeltaVKmps() > 0);
+    }
+
+    @Test
+    @DisplayName("low-thrust plan is a single continuous burn with a long duration")
+    void lowThrustHasOneLongBurn() {
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52), 1.0,
+                electricTug(), TransferType.LOW_THRUST_APPROX);
+        assertEquals(1, plan.nodes().size());
+        assertTrue(plan.transferTimeDays() > 0);
+    }
+
+    @Test
+    @DisplayName("default transfer type follows the drive's thrust level")
+    void defaultTypeByDrive() {
+        assertEquals(TransferType.HOHMANN, TransferCalculator.defaultTypeFor(fusionFrigate()));
+        assertEquals(TransferType.LOW_THRUST_APPROX, TransferCalculator.defaultTypeFor(electricTug()));
+    }
+
+    @Test
+    @DisplayName("nodes carry cumulative mass; the last burn ends at dry mass")
+    void nodesCarryMassAfter() {
+        SpaceshipDesign ship = fusionFrigate();
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52), 1.0,
+                ship, TransferType.HOHMANN);
+        for (ManeuverNode n : plan.nodes()) {
+            assertFalse(Double.isNaN(n.massAfterTons()));
+        }
+        ManeuverNode last = plan.nodes().get(plan.nodes().size() - 1);
+        assertEquals(ship.massBudget().dryMassTons(), last.massAfterTons(), 1e-6);
     }
 
     @Test

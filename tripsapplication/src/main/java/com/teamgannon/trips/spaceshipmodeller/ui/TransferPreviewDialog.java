@@ -1,8 +1,9 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
-import com.teamgannon.trips.spaceshipmodeller.integration.TransferEstimate;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlanSink;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
@@ -29,10 +30,10 @@ import static com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipModellerLabels.
 /**
  * A mission-transfer preview for a ship between two named bodies.
  * <p>
- * The user picks a ship, an origin and a destination body (by name), and a central star mass; the dialog
- * shows a live {@link TransferEstimate} from the {@link TransferPlannerBridge}: required vs available
- * delta-V, transfer time, propellant, a rough burn time, and feasibility. It is informational only
- * ({@code Dialog<Void>} with a Close button).
+ * The user picks a ship, an origin and a destination body (by name), a transfer type, and a central star
+ * mass; the dialog shows the live {@link TransferPlan} from the {@link TransferPlannerBridge}: required vs
+ * available delta-V, transfer time, propellant, a rough burn time, and feasibility. "Create Full Transfer
+ * Plan" either hands the plan to a sink (save and open the planner) or shows the read-only plan dialog.
  * <p>
  * Two entry points share one implementation: the Spaceship Modeller opens it for a single ship against
  * Solar-System presets; the Solar System view opens it with the system's planets as the body list and the
@@ -50,6 +51,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
     private final ComboBox<SpaceshipDesign> shipCombo = new ComboBox<>();
     private final ComboBox<TransferBody> originCombo = new ComboBox<>();
     private final ComboBox<TransferBody> destCombo = new ComboBox<>();
+    private final ComboBox<TransferType> typeCombo = new ComboBox<>();
     private final TextField starMassField = new TextField();
 
     private final Label routeValue = new Label();
@@ -121,9 +123,30 @@ public class TransferPreviewDialog extends Dialog<Void> {
         originCombo.setValue(originSel);
         destCombo.setValue(firstDifferent(bodyList, originSel));
 
-        shipCombo.valueProperty().addListener((o, a, b) -> recompute());
+        typeCombo.getItems().setAll(TransferType.values());
+        typeCombo.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(TransferType t) {
+                return t == null ? "" : t.label();
+            }
+
+            @Override
+            public TransferType fromString(String s) {
+                return null;
+            }
+        });
+        typeCombo.setValue(ships.isEmpty()
+                ? TransferType.HOHMANN : TransferCalculator.defaultTypeFor(ships.get(0)));
+
+        shipCombo.valueProperty().addListener((o, a, b) -> {
+            if (b != null) {
+                typeCombo.setValue(TransferCalculator.defaultTypeFor(b));
+            }
+            recompute();
+        });
         originCombo.valueProperty().addListener((o, a, b) -> recompute());
         destCombo.valueProperty().addListener((o, a, b) -> recompute());
+        typeCombo.valueProperty().addListener((o, a, b) -> recompute());
         starMassField.textProperty().addListener((o, a, b) -> recompute());
 
         getDialogPane().setContent(buildContent());
@@ -150,6 +173,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
         inputs.add(originCombo, 1, r++);
         inputs.add(new Label(get("transfer.destination", "Destination") + ":"), 0, r);
         inputs.add(destCombo, 1, r++);
+        inputs.add(new Label(get("transfer.type", "Transfer type") + ":"), 0, r);
+        inputs.add(typeCombo, 1, r++);
         inputs.add(new Label(get("transfer.starMass", "Central star mass (Msun)") + ":"), 0, r);
         inputs.add(starMassField, 1, r++);
 
@@ -181,7 +206,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
         SpaceshipDesign ship = shipCombo.getValue();
         TransferBody origin = originCombo.getValue();
         TransferBody dest = destCombo.getValue();
-        if (ship == null || origin == null || dest == null) {
+        TransferType type = typeCombo.getValue();
+        if (ship == null || origin == null || dest == null || type == null) {
             routeValue.setText(get("transfer.noShips", "Select a ship and bodies"));
             for (Label l : List.of(requiredDvValue, shipDvValue, marginValue, timeValue,
                     propellantValue, burnValue, feasibleValue)) {
@@ -192,28 +218,39 @@ public class TransferPreviewDialog extends Dialog<Void> {
             return;
         }
         double starMass = parse(starMassField, 1.0);
-        TransferEstimate e = bridge.estimateTransfer(
-                origin.semiMajorAxisAu(), dest.semiMajorAxisAu(), starMass, ship);
+        TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, type);
 
-        routeValue.setText(origin.name() + " → " + dest.name());
-        requiredDvValue.setText("%.2f km/s".formatted(e.requiredDeltaVKmps()));
-        shipDvValue.setText(formatDeltaV(e.shipDeltaVKmps()));
-        marginValue.setText(formatDeltaV(e.deltaVMarginKmps()));
-        timeValue.setText("%.0f days".formatted(e.transferTimeDays()));
-        propellantValue.setText(formatTons(e.propellantRequiredTons()) + " / "
-                + formatTons(e.propellantAvailableTons()));
-        burnValue.setText(formatDuration(e.burnTimeSeconds()));
+        routeValue.setText(origin.name() + " → " + dest.name() + "  (" + type.label() + ")");
+        requiredDvValue.setText("%.2f km/s".formatted(plan.totalDeltaVKmps()));
+        shipDvValue.setText(formatDeltaV(plan.shipDeltaVKmps()));
+        marginValue.setText(formatDeltaV(plan.shipDeltaVKmps() - plan.totalDeltaVKmps()));
+        timeValue.setText("%.0f days".formatted(plan.transferTimeDays()));
+        propellantValue.setText(formatTons(plan.totalPropellantTons()) + " / "
+                + formatTons(ship.massBudget().propellantMassTons()));
+        burnValue.setText(formatDuration(totalBurnSeconds(plan)));
 
-        if (e.feasible()) {
+        if (plan.feasible()) {
             feasibleValue.setText(get("transfer.feasible.yes", "Feasible"));
             feasibleValue.setTextFill(Color.web("#1e8449"));
         } else {
             feasibleValue.setText(get("transfer.feasible.no", "Insufficient Δv"));
             feasibleValue.setTextFill(Color.web("#c0392b"));
         }
-        feasibilityMessage.setText(feasibilityText(e));
-        feasibilityMessage.setTextFill(e.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
-        createPlanButton.setDisable(!e.feasible());
+        feasibilityMessage.setText(feasibilityText(plan));
+        feasibilityMessage.setTextFill(plan.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
+        createPlanButton.setDisable(!plan.feasible());
+    }
+
+    private static double totalBurnSeconds(TransferPlan plan) {
+        double sum = 0;
+        boolean any = false;
+        for (ManeuverNode n : plan.nodes()) {
+            if (!Double.isNaN(n.burnTimeSeconds())) {
+                sum += n.burnTimeSeconds();
+                any = true;
+            }
+        }
+        return any ? sum : Double.NaN;
     }
 
     /**
@@ -238,7 +275,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
             return;
         }
         double starMass = parse(starMassField, 1.0);
-        TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, TransferType.HOHMANN);
+        TransferType type = typeCombo.getValue() == null ? TransferType.HOHMANN : typeCombo.getValue();
+        TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, type);
         if (onCreate != null) {
             TransferPlanSink sink = onCreate;
             String sysId = solarSystemId;
@@ -250,21 +288,26 @@ public class TransferPreviewDialog extends Dialog<Void> {
         }
     }
 
-    private static String feasibilityText(TransferEstimate e) {
-        if (Double.isNaN(e.shipDeltaVKmps())) {
-            return "This drive carries no reaction mass, so a Hohmann transfer can't be planned from its "
-                    + "Δv budget.";
+    private static String feasibilityText(TransferPlan plan) {
+        String typeLabel = plan.type().label();
+        if (Double.isNaN(plan.shipDeltaVKmps())) {
+            return "This drive carries no reaction mass, so a " + typeLabel
+                    + " can't be planned from its Δv budget.";
         }
-        if (!e.feasible()) {
-            return "Insufficient Δv: this transfer needs %.1f km/s but the ship has only %.1f km/s."
-                    .formatted(e.requiredDeltaVKmps(), e.shipDeltaVKmps());
+        if (!plan.feasible()) {
+            return "Insufficient Δv: this %s needs %.1f km/s but the ship has only %.1f km/s."
+                    .formatted(typeLabel, plan.totalDeltaVKmps(), plan.shipDeltaVKmps());
         }
-        double ratio = e.shipDeltaVKmps() / Math.max(e.requiredDeltaVKmps(), 1e-9);
+        if (!plan.propellantSufficient() && !Double.isNaN(plan.totalPropellantTons())) {
+            return "Enough Δv, but this %s needs %.0f t of propellant — more than the ship carries."
+                    .formatted(typeLabel, plan.totalPropellantTons());
+        }
+        double ratio = plan.shipDeltaVKmps() / Math.max(plan.totalDeltaVKmps(), 1e-9);
         if (ratio >= 3) {
-            return "This ship can comfortably perform this Hohmann transfer (%.0f× the required Δv)."
-                    .formatted(ratio);
+            return "This ship can comfortably perform this %s (%.0f× the required Δv)."
+                    .formatted(typeLabel, ratio);
         }
-        return "This ship can perform this Hohmann transfer, with limited margin.";
+        return "This ship can perform this " + typeLabel + ", with limited margin.";
     }
 
     // -------------------------------------------------------------- helpers

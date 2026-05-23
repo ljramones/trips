@@ -21,6 +21,7 @@ import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
+import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEvent;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPreviewDialog;
@@ -349,8 +350,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         // Clean up previous animation if any
         cleanupAnimation();
 
-        // Clear previous rendering
+        // Clear previous rendering (incl. any transfer trajectory overlay)
         systemEntityGroup.getChildren().clear();
+        solarSystemRenderer.clearTransferOverlay();
         labelManager.clearLabels();
 
         if (solarSystemDescription == null) {
@@ -673,6 +675,22 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass)
                 .onCreate(transferPlannerLauncher::createAndOpen, solarSystemId)
                 .showAndWait();
+    }
+
+    /**
+     * Highlight a transfer trajectory if it belongs to the currently displayed system.
+     */
+    @EventListener
+    public void onShowTransferTrajectoryEvent(ShowTransferTrajectoryEvent event) {
+        if (currentSystem == null) {
+            return;
+        }
+        String sysId = currentSystem.getSolarSystemId();
+        if (event.getSolarSystemId() == null || sysId == null || !sysId.equals(event.getSolarSystemId())) {
+            return;
+        }
+        javafx.application.Platform.runLater(() -> solarSystemRenderer.drawTransferTrajectory(
+                event.getOriginAu(), event.getDestinationAu(), Color.ORANGE));
     }
 
     /**

@@ -21,8 +21,8 @@ class TransferPlanMapperTest {
     private SavedTransferPlan sample() {
         TransferPlan plan = new TransferPlan("Roci", TransferType.HOHMANN,
                 new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52),
-                List.of(new ManeuverNode("Departure", 2.5, 0.0, 10.0, 100.0),
-                        new ManeuverNode("Arrival", 2.0, 259.0, 8.0, 80.0)),
+                List.of(new ManeuverNode("Departure", 2.5, 0.0, 10.0, 100.0, 90.0),
+                        new ManeuverNode("Arrival", 2.0, 259.0, 8.0, 80.0, 82.0)),
                 4.5, 18.0, 259.0, 3000.0, true, true);
         return SavedTransferPlan.fromComputed(plan, "ship-1", "sys-1", 1.0);
     }

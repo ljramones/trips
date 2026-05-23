@@ -4,12 +4,14 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.SavedTransferPlan;
+import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEvent;
 import com.teamgannon.trips.spaceshipmodeller.planner.TransferPlanService;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,16 +28,19 @@ public class TransferPlannerLauncher {
     private final TransferPlanService planService;
     private final SpaceshipService spaceshipService;
     private final TransferPlannerBridge bridge;
+    private final ApplicationEventPublisher eventPublisher;
 
     private Stage stage;
     private TransferPlannerPanel panel;
 
     public TransferPlannerLauncher(TransferPlanService planService,
                                    SpaceshipService spaceshipService,
-                                   TransferPlannerBridge bridge) {
+                                   TransferPlannerBridge bridge,
+                                   ApplicationEventPublisher eventPublisher) {
         this.planService = planService;
         this.spaceshipService = spaceshipService;
         this.bridge = bridge;
+        this.eventPublisher = eventPublisher;
     }
 
     /** Opens (or re-focuses) the Transfer Planner window. */
@@ -51,7 +56,7 @@ public class TransferPlannerLauncher {
     public void open(String selectPlanId) {
         try {
             if (stage == null || !stage.isShowing()) {
-                panel = new TransferPlannerPanel(planService, spaceshipService, bridge);
+                panel = new TransferPlannerPanel(planService, spaceshipService, bridge, eventPublisher);
                 stage = new Stage();
                 stage.setTitle(SpaceshipModellerLabels.get("planner.title", "Transfer Planner"));
                 stage.initModality(Modality.NONE);
@@ -85,6 +90,8 @@ public class TransferPlannerLauncher {
                               String solarSystemId, double centralStarMassSolar) {
         SavedTransferPlan saved = planService.saveComputed(
                 plan, ship == null ? null : ship.id(), solarSystemId, centralStarMassSolar);
+        eventPublisher.publishEvent(new ShowTransferTrajectoryEvent(
+                this, saved.solarSystemId(), saved.originAu(), saved.destinationAu()));
         open(saved.id());
     }
 }

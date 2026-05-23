@@ -14,8 +14,10 @@ import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.SavedTransferPlan;
+import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEvent;
 import com.teamgannon.trips.spaceshipmodeller.planner.TransferPlanService;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
+import org.springframework.context.ApplicationEventPublisher;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -63,6 +65,7 @@ public class TransferPlannerPanel extends BorderPane {
     private final TransferPlanService planService;
     private final SpaceshipService spaceshipService;
     private final TransferPlannerBridge bridge;
+    private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper jsonMapper = buildJsonMapper();
 
     private final TableView<TransferPlanRow> table = new TableView<>();
@@ -71,7 +74,9 @@ public class TransferPlannerPanel extends BorderPane {
     private final Label detailRoute = new Label();
     private final Label detailShip = new Label();
     private final Label detailType = new Label();
-    private final Label detailTotals = new Label();
+    private final Label detailDeltaV = new Label();
+    private final Label detailPropellant = new Label();
+    private final Label detailDuration = new Label();
     private final Label detailStatus = new Label();
 
     private final Button deleteButton = new Button(get("button.delete", "Delete"));
@@ -79,10 +84,12 @@ public class TransferPlannerPanel extends BorderPane {
 
     public TransferPlannerPanel(TransferPlanService planService,
                                 SpaceshipService spaceshipService,
-                                TransferPlannerBridge bridge) {
+                                TransferPlannerBridge bridge,
+                                ApplicationEventPublisher eventPublisher) {
         this.planService = planService;
         this.spaceshipService = spaceshipService;
         this.bridge = bridge;
+        this.eventPublisher = eventPublisher;
         setPadding(new Insets(10));
         setTop(buildHeader());
         setCenter(buildCenter());
@@ -115,8 +122,8 @@ public class TransferPlannerPanel extends BorderPane {
         detailsHeader.setStyle("-fx-font-weight: bold;");
         detailStatus.setStyle("-fx-font-weight: bold;");
 
-        VBox details = new VBox(6, detailsHeader, detailRoute, detailShip, detailType,
-                detailTotals, detailStatus, new Separator(), nodeTable);
+        VBox details = new VBox(6, detailsHeader, detailShip, detailRoute, detailType,
+                detailDeltaV, detailPropellant, detailDuration, detailStatus, new Separator(), nodeTable);
         details.setPadding(new Insets(0, 0, 0, 10));
         VBox.setVgrow(nodeTable, Priority.ALWAYS);
 
@@ -134,8 +141,14 @@ public class TransferPlannerPanel extends BorderPane {
                 col(get("planner.col.ship", "Ship"), "ship", 130),
                 col(get("planner.col.deltaV", "Total Δv"), "deltaV", 100),
                 col(get("planner.col.status", "Status"), "status", 140)));
-        table.getSelectionModel().selectedItemProperty().addListener(
-                (o, a, b) -> showDetails(b == null ? null : b.getPlan()));
+        table.getSelectionModel().selectedItemProperty().addListener((o, a, b) -> {
+            SavedTransferPlan plan = b == null ? null : b.getPlan();
+            showDetails(plan);
+            if (plan != null) {
+                eventPublisher.publishEvent(new ShowTransferTrajectoryEvent(
+                        this, plan.solarSystemId(), plan.originAu(), plan.destinationAu()));
+            }
+        });
     }
 
     private static TableColumn<TransferPlanRow, String> col(String header, String property, int width) {
@@ -157,7 +170,10 @@ public class TransferPlannerPanel extends BorderPane {
         TableColumn<ManeuverNode, String> propCol = new TableColumn<>("Propellant");
         propCol.setCellValueFactory(c -> new SimpleStringProperty(
                 Double.isNaN(c.getValue().propellantTons()) ? "n/a" : "%.0f t".formatted(c.getValue().propellantTons())));
-        nodeTable.getColumns().setAll(List.of(nameCol, dvCol, timeCol, propCol));
+        TableColumn<ManeuverNode, String> massCol = new TableColumn<>("Mass after");
+        massCol.setCellValueFactory(c -> new SimpleStringProperty(
+                Double.isNaN(c.getValue().massAfterTons()) ? "n/a" : "%.0f t".formatted(c.getValue().massAfterTons())));
+        nodeTable.getColumns().setAll(List.of(nameCol, dvCol, timeCol, propCol, massCol));
         nodeTable.setPrefHeight(160);
     }
 
@@ -255,18 +271,21 @@ public class TransferPlannerPanel extends BorderPane {
             detailRoute.setText("");
             detailShip.setText("");
             detailType.setText("");
-            detailTotals.setText("");
+            detailDeltaV.setText("");
+            detailPropellant.setText("");
+            detailDuration.setText("");
             detailStatus.setText(get("planner.selectHint", "Select a plan to view its maneuvers."));
             detailStatus.setTextFill(javafx.scene.paint.Color.GRAY);
             nodeTable.setItems(FXCollections.observableArrayList());
             return;
         }
-        detailRoute.setText("Route: " + plan.route());
         detailShip.setText("Ship: " + plan.shipName());
+        detailRoute.setText("Route: " + plan.route());
         detailType.setText("Type: " + plan.transferType().label());
-        detailTotals.setText("Total Δv: %.2f km/s   |   Transfer time: %.0f days   |   Propellant: %s"
-                .formatted(plan.totalDeltaVKmps(), plan.transferTimeDays(),
-                        Double.isNaN(plan.totalPropellantTons()) ? "n/a" : "%.0f t".formatted(plan.totalPropellantTons())));
+        detailDeltaV.setText("Total Δv: %.2f km/s".formatted(plan.totalDeltaVKmps()));
+        detailPropellant.setText("Total propellant: " + (Double.isNaN(plan.totalPropellantTons())
+                ? "n/a" : "%.0f t".formatted(plan.totalPropellantTons())));
+        detailDuration.setText("Mission duration: %.0f days".formatted(plan.transferTimeDays()));
         detailStatus.setText("Status: " + plan.status().label());
         detailStatus.setTextFill(plan.feasible()
                 ? javafx.scene.paint.Color.web("#1e8449") : javafx.scene.paint.Color.web("#c0392b"));

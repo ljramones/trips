@@ -11,6 +11,7 @@ import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProviders;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
+import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -20,8 +21,10 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.Font;
+import javafx.scene.transform.Rotate;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -95,6 +98,10 @@ public class SolarSystemRenderer {
      */
     @Getter
     private final Group orbitsGroup;
+
+    /** Overlay for a temporary transfer trajectory arc (added to systemGroup on demand). */
+    @Getter
+    private final Group transferOverlayGroup = new Group();
 
     /**
      * Group for ecliptic reference plane/grid
@@ -759,6 +766,67 @@ public class SolarSystemRenderer {
     }
 
     /**
+     * Draw a temporary transfer trajectory: a dashed half-ellipse arc between two circular orbits, in the
+     * ecliptic (XZ) plane, using the renderer's radial scaling so it lines up with the planet orbits.
+     *
+     * @param r1Au  origin orbital radius, in AU
+     * @param r2Au  destination orbital radius, in AU
+     * @param color arc colour
+     */
+    public void drawTransferTrajectory(double r1Au, double r2Au, Color color) {
+        clearTransferOverlay();
+        if (!systemGroup.getChildren().contains(transferOverlayGroup)) {
+            systemGroup.getChildren().add(transferOverlayGroup);
+        }
+        if (r1Au <= 0 || r2Au <= 0) {
+            return;
+        }
+        double a = (r1Au + r2Au) / 2.0;
+        double e = Math.abs(r2Au - r1Au) / (r1Au + r2Au);
+        int segments = 64;
+        List<double[]> screenPoints = new ArrayList<>();
+        for (int i = 0; i <= segments; i++) {
+            double nu = Math.PI * i / segments; // true anomaly 0..180 degrees
+            double r = a * (1 - e * e) / (1 + e * Math.cos(nu)); // AU
+            screenPoints.add(scaleManager.auVectorToScreen(r * Math.cos(nu), 0, r * Math.sin(nu)));
+        }
+        PhongMaterial material = new PhongMaterial(color);
+        for (int i = 0; i < screenPoints.size() - 1; i++) {
+            if (i % 10 < 6) { // dashed: 6 segments on, 4 off
+                transferOverlayGroup.getChildren().add(
+                        transferSegment(screenPoints.get(i), screenPoints.get(i + 1), 0.6, material));
+            }
+        }
+    }
+
+    /** Remove any drawn transfer trajectory. */
+    public void clearTransferOverlay() {
+        transferOverlayGroup.getChildren().clear();
+    }
+
+    private Cylinder transferSegment(double[] p0, double[] p1, double radius, PhongMaterial material) {
+        double dx = p1[0] - p0[0];
+        double dy = p1[1] - p0[1];
+        double dz = p1[2] - p0[2];
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        Cylinder cylinder = new Cylinder(radius, length);
+        cylinder.setMaterial(material);
+        cylinder.setTranslateX((p0[0] + p1[0]) / 2);
+        cylinder.setTranslateY((p0[1] + p1[1]) / 2);
+        cylinder.setTranslateZ((p0[2] + p1[2]) / 2);
+        if (length > 1e-9) {
+            // rotate the default (Y-axis) cylinder to align with the segment direction
+            Point3D dir = new Point3D(dx, dy, dz).normalize();
+            Point3D axis = new Point3D(0, 1, 0).crossProduct(dir);
+            if (axis.magnitude() > 1e-9) {
+                double angle = Math.toDegrees(Math.acos(new Point3D(0, 1, 0).dotProduct(dir)));
+                cylinder.getTransforms().add(new Rotate(angle, axis));
+            }
+        }
+        return cylinder;
+    }
+
+    /**
      * Clear all rendered elements
      */
     public void clear() {
@@ -770,6 +838,7 @@ public class SolarSystemRenderer {
         apsidesGroup.getChildren().clear();
         planetsGroup.getChildren().clear();
         labelsGroup.getChildren().clear();
+        clearTransferOverlay();
 
         // Dispose ring renderers to free resources
         clearRings();
