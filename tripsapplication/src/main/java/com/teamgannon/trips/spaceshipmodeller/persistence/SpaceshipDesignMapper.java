@@ -1,0 +1,117 @@
+package com.teamgannon.trips.spaceshipmodeller.persistence;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
+import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
+import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.List;
+
+/**
+ * Converts between the immutable domain {@link SpaceshipDesign} record and the mutable JPA
+ * {@link SpaceshipEntity}.
+ * <p>
+ * The carried-craft list is the only non-flat field: it is serialised to JSON for storage and parsed back
+ * on read, mirroring how other TRIPS entities persist collections. The mapper owns a private
+ * {@link ObjectMapper} so it does not depend on the application's shared, possibly differently-configured
+ * instance.
+ */
+@Slf4j
+@Component
+public class SpaceshipDesignMapper {
+
+    private static final TypeReference<List<CarriedCraft>> CARRIED_CRAFT_LIST = new TypeReference<>() {
+    };
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Converts a domain design into a persistable entity, preserving the design's id and creation time.
+     *
+     * @param design the domain design
+     * @return a new entity ready to be saved
+     */
+    public SpaceshipEntity toEntity(SpaceshipDesign design) {
+        SpaceshipEntity entity = new SpaceshipEntity();
+        entity.setId(design.id());
+        entity.setName(design.name());
+        entity.setDesignation(design.designation());
+        entity.setShipClass(design.shipClass());
+        entity.setDriveType(design.driveType());
+
+        MassBudget mass = design.massBudget();
+        entity.setStructureMassTons(mass.structureMassTons());
+        entity.setEngineMassTons(mass.engineMassTons());
+        entity.setPropellantMassTons(mass.propellantMassTons());
+        entity.setPayloadMassTons(mass.payloadMassTons());
+        entity.setCrewMassTons(mass.crewMassTons());
+        entity.setRadiatorMassTons(mass.radiatorMassTons());
+
+        entity.setCrewComplement(design.crewComplement());
+        entity.setLengthMeters(design.lengthMeters());
+        entity.setCarriedCraftJson(writeCarriedCraft(design.carriedCraft()));
+        entity.setIconPath(design.iconPath());
+        entity.setDescription(design.description());
+        entity.setCreatedAt(design.createdAt());
+        return entity;
+    }
+
+    /**
+     * Converts a persisted entity back into an immutable domain design.
+     *
+     * @param entity the persisted entity
+     * @return the reconstructed domain design
+     */
+    public SpaceshipDesign toDomain(SpaceshipEntity entity) {
+        MassBudget mass = new MassBudget(
+                entity.getStructureMassTons(),
+                entity.getEngineMassTons(),
+                entity.getPropellantMassTons(),
+                entity.getPayloadMassTons(),
+                entity.getCrewMassTons(),
+                entity.getRadiatorMassTons());
+
+        return new SpaceshipDesign(
+                entity.getId(),
+                entity.getName(),
+                entity.getDesignation(),
+                entity.getShipClass(),
+                entity.getDriveType(),
+                mass,
+                entity.getCrewComplement(),
+                entity.getLengthMeters(),
+                readCarriedCraft(entity.getCarriedCraftJson()),
+                entity.getIconPath(),
+                entity.getDescription(),
+                entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now());
+    }
+
+    private String writeCarriedCraft(List<CarriedCraft> carriedCraft) {
+        if (carriedCraft == null || carriedCraft.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(carriedCraft);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialise carried craft; storing none: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private List<CarriedCraft> readCarriedCraft(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, CARRIED_CRAFT_LIST);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialise carried craft; returning none: {}", e.getMessage());
+            return List.of();
+        }
+    }
+}
