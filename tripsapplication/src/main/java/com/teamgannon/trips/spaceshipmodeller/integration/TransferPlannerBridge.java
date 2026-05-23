@@ -29,4 +29,18 @@ public interface TransferPlannerBridge {
      */
     TransferEstimate estimateTransfer(double originAxisAu, double destinationAxisAu,
                                       double centralStarMassSolar, SpaceshipDesign ship);
+
+    /**
+     * Creates a full transfer plan (departure/arrival burns, propellant, timing) for the ship between two
+     * bodies. This is the structured artefact a fuller mission planner would consume or refine.
+     *
+     * @param origin               origin body
+     * @param destination          destination body
+     * @param centralStarMassSolar central star mass, in solar masses
+     * @param ship                 the ship
+     * @param type                 the transfer type
+     * @return the plan
+     */
+    TransferPlan createTransferPlan(TransferBody origin, TransferBody destination,
+                                    double centralStarMassSolar, SpaceshipDesign ship, TransferType type);
 }

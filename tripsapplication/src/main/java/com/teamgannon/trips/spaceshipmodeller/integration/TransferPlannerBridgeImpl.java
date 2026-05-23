@@ -29,4 +29,11 @@ public class TransferPlannerBridgeImpl implements TransferPlannerBridge {
                                              double centralStarMassSolar, SpaceshipDesign ship) {
         return TransferCalculator.estimate(originAxisAu, destinationAxisAu, centralStarMassSolar, ship);
     }
+
+    @Override
+    public TransferPlan createTransferPlan(TransferBody origin, TransferBody destination,
+                                           double centralStarMassSolar, SpaceshipDesign ship,
+                                           TransferType type) {
+        return TransferCalculator.plan(origin, destination, centralStarMassSolar, ship, type);
+    }
 }

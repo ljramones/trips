@@ -2,6 +2,8 @@ package com.teamgannon.trips.spaceshipmodeller.integration;
 
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 
+import java.util.List;
+
 /**
  * First-order orbital-transfer maths for circular, coplanar orbits.
  * <p>
@@ -125,5 +127,83 @@ public final class TransferCalculator {
 
         return new TransferEstimate(originAu, destAu, centralMassSolar, requiredDv, shipDv,
                 transferDays, propellantRequired, propellantAvailable, burnSeconds, feasible);
+    }
+
+    /**
+     * Builds a full {@link TransferPlan} with separate departure and arrival burns, sequential
+     * propellant accounting (rocket equation, arriving at dry mass), and per-burn timing.
+     *
+     * @param origin           origin body
+     * @param destination      destination body
+     * @param centralMassSolar central body mass (solar masses)
+     * @param ship             the ship
+     * @param type             the transfer type (only {@link TransferType#HOHMANN} is computed)
+     * @return the plan
+     */
+    public static TransferPlan plan(TransferBody origin, TransferBody destination,
+                                    double centralMassSolar, SpaceshipDesign ship, TransferType type) {
+        double r1 = origin.semiMajorAxisAu() * AU_METERS;
+        double r2 = destination.semiMajorAxisAu() * AU_METERS;
+
+        double dv1Kmps = 0;
+        double dv2Kmps = 0;
+        if (r1 > 0 && r2 > 0 && centralMassSolar > 0) {
+            double mu = mu(centralMassSolar);
+            double a = (r1 + r2) / 2.0;
+            double v1 = Math.sqrt(mu / r1);
+            double vPeri = Math.sqrt(mu * (2.0 / r1 - 1.0 / a));
+            double v2 = Math.sqrt(mu / r2);
+            double vApo = Math.sqrt(mu * (2.0 / r2 - 1.0 / a));
+            dv1Kmps = Math.abs(vPeri - v1) / 1000.0;
+            dv2Kmps = Math.abs(v2 - vApo) / 1000.0;
+        }
+        double totalReqDv = dv1Kmps + dv2Kmps;
+        double transferDays = hohmannTransferTimeDays(
+                origin.semiMajorAxisAu(), destination.semiMajorAxisAu(), centralMassSolar);
+
+        double shipDv = ship.estimateDeltaVKmps();
+        boolean feasible = !Double.isNaN(shipDv) && shipDv >= totalReqDv;
+
+        // Sequential masses, computed backwards from the dry mass we want to arrive with.
+        double veKmps = ship.driveSpecs().exhaustVelocityAverageKmps();
+        double thrustMN = ship.driveSpecs().typicalThrustAverageMN();
+        double dry = ship.massBudget().dryMassTons();
+
+        double massBeforeArrival;
+        double massBeforeDeparture;
+        double propArrival;
+        double propDeparture;
+        if (Double.isFinite(veKmps) && veKmps > 0) {
+            massBeforeArrival = dry * Math.exp(dv2Kmps / veKmps);
+            propArrival = massBeforeArrival - dry;
+            massBeforeDeparture = massBeforeArrival * Math.exp(dv1Kmps / veKmps);
+            propDeparture = massBeforeDeparture - massBeforeArrival;
+        } else {
+            massBeforeArrival = dry;
+            massBeforeDeparture = dry;
+            propArrival = Double.NaN;
+            propDeparture = Double.NaN;
+        }
+        double totalProp = (Double.isNaN(propDeparture) || Double.isNaN(propArrival))
+                ? Double.NaN : propDeparture + propArrival;
+
+        ManeuverNode departure = new ManeuverNode("Departure burn", dv1Kmps, 0.0,
+                propDeparture, burnSeconds(dv1Kmps, massBeforeDeparture, thrustMN));
+        ManeuverNode arrival = new ManeuverNode("Arrival burn", dv2Kmps, transferDays,
+                propArrival, burnSeconds(dv2Kmps, massBeforeArrival, thrustMN));
+
+        boolean propellantSufficient = !Double.isNaN(totalProp)
+                && ship.massBudget().propellantMassTons() >= totalProp;
+
+        return new TransferPlan(ship.name(), type, origin, destination,
+                List.of(departure, arrival), totalReqDv, totalProp, transferDays, shipDv,
+                feasible, propellantSufficient);
+    }
+
+    private static double burnSeconds(double dvKmps, double massTons, double thrustMN) {
+        if (thrustMN <= 0) {
+            return Double.NaN;
+        }
+        return (dvKmps * 1000.0) * (massTons * 1000.0) / (thrustMN * 1.0e6);
     }
 }

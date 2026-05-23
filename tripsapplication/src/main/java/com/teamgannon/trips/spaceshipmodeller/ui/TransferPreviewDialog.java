@@ -3,8 +3,11 @@ package com.teamgannon.trips.spaceshipmodeller.ui;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferEstimate;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferType;
 import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
@@ -12,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
@@ -54,6 +58,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
     private final Label propellantValue = new Label();
     private final Label burnValue = new Label();
     private final Label feasibleValue = new Label();
+    private final Label feasibilityMessage = new Label();
+    private final Button createPlanButton = new Button(get("transfer.createPlan", "Create Full Transfer Plan"));
 
     /**
      * Ship-centric entry point (Spaceship Modeller): one fixed ship against Solar-System presets.
@@ -153,7 +159,14 @@ public class TransferPreviewDialog extends Dialog<Void> {
         feasibleValue.setStyle("-fx-font-weight: bold;");
         addResult(results, q++, get("transfer.feasible", "Feasibility"), feasibleValue);
 
-        VBox box = new VBox(10, inputs, new Separator(), results);
+        feasibilityMessage.setWrapText(true);
+        feasibilityMessage.setMaxWidth(460);
+
+        createPlanButton.setOnAction(e -> onCreatePlan());
+        HBox planRow = new HBox(8, createPlanButton);
+        planRow.setPadding(new Insets(4, 0, 0, 0));
+
+        VBox box = new VBox(10, inputs, new Separator(), results, feasibilityMessage, planRow);
         box.setPadding(new Insets(14));
         return box;
     }
@@ -168,6 +181,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
                     propellantValue, burnValue, feasibleValue)) {
                 l.setText("");
             }
+            feasibilityMessage.setText("");
+            createPlanButton.setDisable(true);
             return;
         }
         double starMass = parse(starMassField, 1.0);
@@ -190,6 +205,38 @@ public class TransferPreviewDialog extends Dialog<Void> {
             feasibleValue.setText(get("transfer.feasible.no", "Insufficient Δv"));
             feasibleValue.setTextFill(Color.web("#c0392b"));
         }
+        feasibilityMessage.setText(feasibilityText(e));
+        feasibilityMessage.setTextFill(e.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
+        createPlanButton.setDisable(!e.feasible());
+    }
+
+    private void onCreatePlan() {
+        SpaceshipDesign ship = shipCombo.getValue();
+        TransferBody origin = originCombo.getValue();
+        TransferBody dest = destCombo.getValue();
+        if (ship == null || origin == null || dest == null) {
+            return;
+        }
+        double starMass = parse(starMassField, 1.0);
+        TransferPlan plan = bridge.createTransferPlan(origin, dest, starMass, ship, TransferType.HOHMANN);
+        new TransferPlanDialog(plan).showAndWait();
+    }
+
+    private static String feasibilityText(TransferEstimate e) {
+        if (Double.isNaN(e.shipDeltaVKmps())) {
+            return "This drive carries no reaction mass, so a Hohmann transfer can't be planned from its "
+                    + "Δv budget.";
+        }
+        if (!e.feasible()) {
+            return "Insufficient Δv: this transfer needs %.1f km/s but the ship has only %.1f km/s."
+                    .formatted(e.requiredDeltaVKmps(), e.shipDeltaVKmps());
+        }
+        double ratio = e.shipDeltaVKmps() / Math.max(e.requiredDeltaVKmps(), 1e-9);
+        if (ratio >= 3) {
+            return "This ship can comfortably perform this Hohmann transfer (%.0f× the required Δv)."
+                    .formatted(ratio);
+        }
+        return "This ship can perform this Hohmann transfer, with limited margin.";
     }
 
     // -------------------------------------------------------------- helpers

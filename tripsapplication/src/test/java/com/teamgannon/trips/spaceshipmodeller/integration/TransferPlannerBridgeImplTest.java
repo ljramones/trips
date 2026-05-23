@@ -67,4 +67,18 @@ class TransferPlannerBridgeImplTest {
                 e.requiredDeltaVKmps(), 1e-9);
         assertTrue(e.feasible());
     }
+
+    @Test
+    @DisplayName("createTransferPlan returns a feasible two-burn plan for a capable ship")
+    void createTransferPlanDelegates() {
+        SpaceshipDesign frigate = SpaceshipBuilder.create("Roci")
+                .shipClass(ShipClass.FRIGATE).driveType(DriveType.FUSION_TORCH)
+                .structureTons(200).engineTons(150).propellantTons(450)
+                .payloadTons(50).crewTons(20).radiatorTons(120).crew(4).build();
+        TransferPlan plan = bridge.createTransferPlan(
+                new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52), 1.0,
+                frigate, TransferType.HOHMANN);
+        assertEquals(2, plan.nodes().size());
+        assertTrue(plan.feasible());
+    }
 }

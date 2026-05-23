@@ -83,4 +83,28 @@ class TransferCalculatorTest {
         assertEquals(byAu.requiredDeltaVKmps(), byBodies.requiredDeltaVKmps(), 1e-9);
         assertEquals(byAu.transferTimeDays(), byBodies.transferTimeDays(), 1e-9);
     }
+
+    @Test
+    @DisplayName("plan produces two burns that sum to the total delta-V")
+    void planHasTwoBurns() {
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52), 1.0,
+                fusionFrigate(), TransferType.HOHMANN);
+        assertEquals(2, plan.nodes().size());
+        double sum = plan.nodes().stream().mapToDouble(ManeuverNode::deltaVKmps).sum();
+        assertEquals(plan.totalDeltaVKmps(), sum, 1e-9);
+        assertEquals(TransferCalculator.hohmannDeltaVKmps(1.0, 1.52, 1.0), plan.totalDeltaVKmps(), 1e-6);
+        assertTrue(plan.feasible());
+        assertTrue(plan.totalPropellantTons() > 0);
+        assertTrue(plan.transferTimeDays() > 0);
+    }
+
+    @Test
+    @DisplayName("plan is infeasible for a low-delta-V chemical ship to Jupiter")
+    void planInfeasibleForChemical() {
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Jupiter", 5.2), 1.0,
+                chemicalCorvette(), TransferType.HOHMANN);
+        assertFalse(plan.feasible());
+    }
 }
