@@ -1,6 +1,8 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
+import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferFeasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -58,26 +60,37 @@ public class TransferPlanDialog extends Dialog<Void> {
                         .formatted(plan.totalDeltaVKmps(), kmps(plan.shipDeltaVKmps()),
                                 plan.transferTimeDays(), tons(plan.totalPropellantTons())));
 
-        Label verdict = new Label(verdictText(plan));
+        Feasibility f = plan.feasibility();
+        Label verdict = new Label(verdictText(plan, f));
         verdict.setStyle("-fx-font-weight: bold;");
         verdict.setWrapText(true);
-        verdict.setTextFill(plan.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
+        verdict.setTextFill(switch (f) {
+            case FEASIBLE -> Color.web("#1e8449");
+            case MARGINAL -> Color.web("#d68910");
+            case INSUFFICIENT -> Color.web("#c0392b");
+        });
 
         VBox box = new VBox(10, header, table, new Separator(), totals, verdict);
         box.setPadding(new Insets(14));
         return box;
     }
 
-    private static String verdictText(TransferPlan plan) {
-        if (!plan.feasible()) {
+    private static String verdictText(TransferPlan plan, Feasibility f) {
+        Feasibility dv = TransferFeasibility.deltaVStatus(plan.totalDeltaVKmps(), plan.shipDeltaVKmps());
+        Feasibility prop = TransferFeasibility.propellantStatus(
+                plan.totalPropellantTons(), plan.availablePropellantTons());
+        if (dv == Feasibility.INSUFFICIENT) {
             return "Not feasible: the ship's Δv budget (%s) is below the %.2f km/s required."
                     .formatted(kmps(plan.shipDeltaVKmps()), plan.totalDeltaVKmps());
         }
-        if (!plan.propellantSufficient() && !Double.isNaN(plan.totalPropellantTons())) {
-            return "Feasible on Δv, but the burns would need %.0f t of propellant — more than the ship carries."
-                    .formatted(plan.totalPropellantTons());
+        if (prop == Feasibility.INSUFFICIENT) {
+            return "Not feasible: needs %,.0f t of propellant but the ship carries only %,.0f t."
+                    .formatted(plan.totalPropellantTons(), plan.availablePropellantTons());
         }
-        return "Plan is feasible: the ship has the Δv and propellant for these burns.";
+        if (f == Feasibility.MARGINAL) {
+            return "Marginal: the ship can barely perform this transfer (just enough Δv / propellant).";
+        }
+        return "Feasible: the ship has comfortable Δv and propellant for these burns.";
     }
 
     private static String kmps(double v) {

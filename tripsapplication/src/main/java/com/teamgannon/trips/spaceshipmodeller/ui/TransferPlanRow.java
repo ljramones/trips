@@ -31,7 +31,7 @@ public class TransferPlanRow {
     }
 
     public String getStatus() {
-        return plan.status().label();
+        return plan.feasibility().label();
     }
 
     public String getTime() {

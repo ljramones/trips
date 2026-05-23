@@ -113,6 +113,23 @@ class TransferCalculatorTest {
                 .structureTons(1).payloadTons(1).build();
     }
 
+    private SpaceshipDesign galaxyExplorer() {
+        return SpaceshipBuilder.create("Galaxy-class Explorer")
+                .shipClass(ShipClass.MOTHERSHIP).driveType(DriveType.FUSION_TORCH)
+                .structureTons(2000).engineTons(800).propellantTons(3000)
+                .payloadTons(1500).crewTons(400).radiatorTons(900).build();
+    }
+
+    @Test
+    @DisplayName("Galaxy-class minimum-time to Uranus is MARGINAL (uses essentially all Δv/propellant)")
+    void galaxyMinimumTimeToUranusIsMarginal() {
+        TransferPlan plan = TransferCalculator.plan(
+                new TransferBody("Earth", 1.0), new TransferBody("Uranus", 19.2), 1.0,
+                galaxyExplorer(), TransferType.MINIMUM_TIME);
+        assertEquals(Feasibility.MARGINAL, plan.feasibility());
+        assertTrue(plan.feasible(), "marginal plans are still achievable");
+    }
+
     @Test
     @DisplayName("every transfer type computes a plan with at least one node, no exceptions")
     void allTypesComputeWithoutError() {

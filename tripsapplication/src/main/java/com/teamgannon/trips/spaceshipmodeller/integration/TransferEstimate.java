@@ -36,6 +36,12 @@ public record TransferEstimate(
         return shipDeltaVKmps - requiredDeltaVKmps;
     }
 
+    /** @return the three-level feasibility (delta-V and propellant) of this estimate */
+    public Feasibility feasibility() {
+        return TransferFeasibility.evaluate(
+                requiredDeltaVKmps, shipDeltaVKmps, propellantRequiredTons, propellantAvailableTons);
+    }
+
     /** @return {@code true} if the ship carries enough propellant for the manoeuvre */
     public boolean propellantSufficient() {
         return !Double.isNaN(propellantRequiredTons) && propellantAvailableTons >= propellantRequiredTons;

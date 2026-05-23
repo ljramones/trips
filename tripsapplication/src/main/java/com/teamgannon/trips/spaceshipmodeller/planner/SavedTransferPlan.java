@@ -1,6 +1,8 @@
 package com.teamgannon.trips.spaceshipmodeller.planner;
 
+import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferFeasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferType;
 
@@ -49,6 +51,7 @@ public record SavedTransferPlan(
         List<ManeuverNode> nodes,
         double totalDeltaVKmps,
         double totalPropellantTons,
+        double availablePropellantTons,
         double transferTimeDays,
         double shipDeltaVKmps,
         boolean feasible,
@@ -64,6 +67,12 @@ public record SavedTransferPlan(
     /** @return "Origin → Destination" for display */
     public String route() {
         return originName + " → " + destinationName;
+    }
+
+    /** @return the three-level feasibility (delta-V and propellant) of this plan */
+    public Feasibility feasibility() {
+        return TransferFeasibility.evaluate(
+                totalDeltaVKmps, shipDeltaVKmps, totalPropellantTons, availablePropellantTons);
     }
 
     /**
@@ -91,7 +100,7 @@ public record SavedTransferPlan(
                 plan.origin().name(), plan.origin().semiMajorAxisAu(),
                 plan.destination().name(), plan.destination().semiMajorAxisAu(),
                 centralMassSolar, plan.nodes(), plan.totalDeltaVKmps(), plan.totalPropellantTons(),
-                plan.transferTimeDays(), plan.shipDeltaVKmps(), plan.feasible(),
-                plan.propellantSufficient(), status, Instant.now());
+                plan.availablePropellantTons(), plan.transferTimeDays(), plan.shipDeltaVKmps(),
+                plan.feasible(), plan.propellantSufficient(), status, Instant.now());
     }
 }

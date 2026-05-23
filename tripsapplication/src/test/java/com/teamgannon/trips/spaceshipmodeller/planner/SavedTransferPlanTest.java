@@ -19,7 +19,7 @@ class SavedTransferPlanTest {
         return new TransferPlan("Roci", TransferType.HOHMANN,
                 new TransferBody("Earth", 1.0), new TransferBody("Mars", 1.52),
                 List.of(new ManeuverNode("Departure", 2.5, 0.0, 10.0, 100.0, 90.0)),
-                5.0, 18.0, 259.0, 3000.0, feasible, propellantSufficient);
+                5.0, 18.0, 20.0, 259.0, 3000.0, feasible, propellantSufficient);
     }
 
     @Test

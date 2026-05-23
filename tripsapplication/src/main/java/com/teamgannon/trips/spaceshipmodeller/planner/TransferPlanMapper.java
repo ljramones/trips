@@ -38,6 +38,7 @@ public class TransferPlanMapper {
         e.setManeuverNodesJson(writeNodes(plan.nodes()));
         e.setTotalDeltaVKmps(plan.totalDeltaVKmps());
         e.setTotalPropellantTons(plan.totalPropellantTons());
+        e.setAvailablePropellantTons(plan.availablePropellantTons());
         e.setTransferTimeDays(plan.transferTimeDays());
         e.setShipDeltaVKmps(plan.shipDeltaVKmps());
         e.setFeasible(plan.feasible());
@@ -52,8 +53,8 @@ public class TransferPlanMapper {
                 e.getId(), e.getShipId(), e.getShipName(), e.getSolarSystemId(), e.getTransferType(),
                 e.getOriginName(), e.getOriginAu(), e.getDestinationName(), e.getDestinationAu(),
                 e.getCentralMassSolar(), readNodes(e.getManeuverNodesJson()), e.getTotalDeltaVKmps(),
-                e.getTotalPropellantTons(), e.getTransferTimeDays(), e.getShipDeltaVKmps(),
-                e.isFeasible(), e.isPropellantSufficient(), e.getStatus(),
+                e.getTotalPropellantTons(), e.getAvailablePropellantTons(), e.getTransferTimeDays(),
+                e.getShipDeltaVKmps(), e.isFeasible(), e.isPropellantSufficient(), e.getStatus(),
                 e.getCreatedAt() != null ? e.getCreatedAt() : Instant.now());
     }
 

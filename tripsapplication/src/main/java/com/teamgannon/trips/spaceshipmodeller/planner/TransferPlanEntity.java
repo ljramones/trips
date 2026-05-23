@@ -64,6 +64,7 @@ public class TransferPlanEntity implements Serializable {
 
     private double totalDeltaVKmps;
     private double totalPropellantTons;
+    private double availablePropellantTons;
     private double transferTimeDays;
     private double shipDeltaVKmps;
     private boolean feasible;

@@ -3,11 +3,13 @@ package com.teamgannon.trips.spaceshipmodeller.ui;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
+import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferCategory;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferCost;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlanSink;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferFeasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferSuitability;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferType;
@@ -281,16 +283,13 @@ public class TransferPreviewDialog extends Dialog<Void> {
             createPlanButton.setDisable(true);
             return;
         }
-        if (plan.feasible()) {
-            feasibleValue.setText(get("transfer.feasible.yes", "Feasible"));
-            feasibleValue.setTextFill(Color.web("#1e8449"));
-        } else {
-            feasibleValue.setText(get("transfer.feasible.no", "Insufficient Δv"));
-            feasibleValue.setTextFill(Color.web("#c0392b"));
-        }
-        feasibilityMessage.setText(feasibilityText(plan, ship.massBudget().propellantMassTons()));
-        feasibilityMessage.setTextFill(plan.feasible() ? Color.web("#1e8449") : Color.web("#c0392b"));
-        createPlanButton.setDisable(!plan.feasible());
+        Feasibility f = plan.feasibility();
+        Color color = feasibilityColor(f);
+        feasibleValue.setText(f.label());
+        feasibleValue.setTextFill(color);
+        feasibilityMessage.setText(feasibilityText(plan));
+        feasibilityMessage.setTextFill(color);
+        createPlanButton.setDisable(f == Feasibility.INSUFFICIENT);
     }
 
     private static double totalBurnSeconds(TransferPlan plan) {
@@ -340,14 +339,26 @@ public class TransferPreviewDialog extends Dialog<Void> {
         }
     }
 
-    private static String feasibilityText(TransferPlan plan, double availablePropellantTons) {
-        String typeLabel = plan.type().label();
+    private static Color feasibilityColor(Feasibility f) {
+        return switch (f) {
+            case FEASIBLE -> Color.web("#1e8449");
+            case MARGINAL -> Color.web("#d68910");
+            case INSUFFICIENT -> Color.web("#c0392b");
+        };
+    }
+
+    private static String feasibilityText(TransferPlan plan) {
         String ship = plan.shipName();
-        if (Double.isNaN(plan.shipDeltaVKmps())) {
-            return "This drive carries no reaction mass, so a " + typeLabel
-                    + " can't be planned from a Δv budget.";
-        }
-        if (!plan.feasible()) {
+        String typeLabel = plan.type().label();
+        Feasibility dv = TransferFeasibility.deltaVStatus(plan.totalDeltaVKmps(), plan.shipDeltaVKmps());
+        Feasibility prop = TransferFeasibility.propellantStatus(
+                plan.totalPropellantTons(), plan.availablePropellantTons());
+
+        if (dv == Feasibility.INSUFFICIENT) {
+            if (Double.isNaN(plan.shipDeltaVKmps())) {
+                return "This drive carries no reaction mass, so a " + typeLabel
+                        + " can't be planned from a Δv budget.";
+            }
             double need = plan.totalDeltaVKmps();
             double have = plan.shipDeltaVKmps();
             if (need >= 100_000) {
@@ -357,16 +368,26 @@ public class TransferPreviewDialog extends Dialog<Void> {
             return ("The %s does not have enough Δv for a %s: it needs %.1f km/s but has only %.1f km/s.")
                     .formatted(ship, typeLabel, need, have);
         }
-        if (!plan.propellantSufficient() && !Double.isNaN(plan.totalPropellantTons())) {
+        if (prop == Feasibility.INSUFFICIENT) {
             return ("The %s lacks the propellant for this route using a %s (needs %,.0f t, carries %,.0f t).")
-                    .formatted(ship, typeLabel, plan.totalPropellantTons(), availablePropellantTons);
+                    .formatted(ship, typeLabel, plan.totalPropellantTons(), plan.availablePropellantTons());
+        }
+        if (dv == Feasibility.MARGINAL && prop == Feasibility.MARGINAL) {
+            return "The %s has just enough Δv and uses nearly all its propellant for this %s (marginal)."
+                    .formatted(ship, typeLabel);
+        }
+        if (dv == Feasibility.MARGINAL) {
+            return "The %s has just enough Δv for this %s (marginal).".formatted(ship, typeLabel);
+        }
+        if (prop == Feasibility.MARGINAL) {
+            return "The %s uses all available propellant for this %s (marginal).".formatted(ship, typeLabel);
         }
         double ratio = plan.shipDeltaVKmps() / Math.max(plan.totalDeltaVKmps(), 1e-9);
         if (ratio >= 3) {
             return "The %s can comfortably perform this %s (%.0f× the required Δv)."
                     .formatted(ship, typeLabel, ratio);
         }
-        return "The " + ship + " can perform this " + typeLabel + ", with limited margin.";
+        return "The " + ship + " can perform this " + typeLabel + ".";
     }
 
     // -------------------------------------------------------------- helpers

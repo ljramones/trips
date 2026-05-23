@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.SavedTransferPlan;
@@ -286,9 +287,13 @@ public class TransferPlannerPanel extends BorderPane {
         detailPropellant.setText("Total propellant: " + (Double.isNaN(plan.totalPropellantTons())
                 ? "n/a" : "%.0f t".formatted(plan.totalPropellantTons())));
         detailDuration.setText("Mission duration: %.0f days".formatted(plan.transferTimeDays()));
-        detailStatus.setText("Status: " + plan.status().label());
-        detailStatus.setTextFill(plan.feasible()
-                ? javafx.scene.paint.Color.web("#1e8449") : javafx.scene.paint.Color.web("#c0392b"));
+        Feasibility f = plan.feasibility();
+        detailStatus.setText("Status: " + f.label());
+        detailStatus.setTextFill(switch (f) {
+            case FEASIBLE -> javafx.scene.paint.Color.web("#1e8449");
+            case MARGINAL -> javafx.scene.paint.Color.web("#d68910");
+            case INSUFFICIENT -> javafx.scene.paint.Color.web("#c0392b");
+        });
         nodeTable.setItems(FXCollections.observableArrayList(plan.nodes()));
     }
 

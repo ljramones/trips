@@ -323,8 +323,6 @@ public final class TransferCalculator {
                                          double[] timesDays, double transferDays) {
         double totalReqDv = Arrays.stream(burnsKmps).sum();
         double shipDv = ship.estimateDeltaVKmps();
-        boolean feasible = totalReqDv <= 1e-9
-                || (!Double.isNaN(shipDv) && shipDv >= totalReqDv);
 
         double veKmps = ship.driveSpecs().exhaustVelocityAverageKmps();
         double thrustMN = ship.driveSpecs().typicalThrustAverageMN();
@@ -354,11 +352,14 @@ public final class TransferCalculator {
             nodes.add(new ManeuverNode(names[i], burnsKmps[i], timesDays[i], prop[i],
                     burnSeconds(burnsKmps[i], massBefore, thrustMN), massAfter[i]));
         }
-        boolean propellantSufficient = !Double.isNaN(totalProp)
-                && ship.massBudget().propellantMassTons() >= totalProp;
+        double availableProp = ship.massBudget().propellantMassTons();
+        boolean feasible = TransferFeasibility.evaluate(totalReqDv, shipDv, totalProp, availableProp)
+                != Feasibility.INSUFFICIENT;
+        boolean propellantSufficient =
+                TransferFeasibility.propellantStatus(totalProp, availableProp) != Feasibility.INSUFFICIENT;
 
         return new TransferPlan(ship.name(), type, origin, destination, nodes,
-                totalReqDv, totalProp, transferDays, shipDv, feasible, propellantSufficient);
+                totalReqDv, totalProp, availableProp, transferDays, shipDv, feasible, propellantSufficient);
     }
 
     private static boolean valid(double r1, double r2, double centralMassSolar) {
