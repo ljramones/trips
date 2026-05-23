@@ -51,6 +51,24 @@ class TransferCalculatorTest {
     }
 
     @Test
+    @DisplayName("Earth->Mars Hohmann with the Sun (1 Msun) is ~5.57 km/s, incl. when normalised from kg")
+    void earthToMarsDefaultDeltaV() {
+        assertEquals(5.57, TransferCalculator.hohmannDeltaVKmps(1.0, 1.52, 1.0), 0.1);
+        double normalised = TransferCalculator.toSolarMasses(TransferCalculator.SOLAR_MASS_KG);
+        assertEquals(5.57, TransferCalculator.hohmannDeltaVKmps(1.0, 1.52, normalised), 0.1);
+    }
+
+    @Test
+    @DisplayName("toSolarMasses converts raw kg to Msun but leaves real Msun values alone")
+    void toSolarMassesNormalizes() {
+        assertEquals(1.0, TransferCalculator.toSolarMasses(TransferCalculator.SOLAR_MASS_KG), 1e-6);
+        assertEquals(1.0, TransferCalculator.toSolarMasses(1.0), 1e-9);
+        assertEquals(0.5, TransferCalculator.toSolarMasses(0.5), 1e-9);
+        assertEquals(2.0, TransferCalculator.toSolarMasses(2.0 * TransferCalculator.SOLAR_MASS_KG), 1e-6);
+        assertEquals(1.0, TransferCalculator.toSolarMasses(0.0), 1e-9);
+    }
+
+    @Test
     @DisplayName("same orbit needs no delta-V")
     void sameOrbitNeedsNoDeltaV() {
         assertEquals(0.0, TransferCalculator.hohmannDeltaVKmps(1.0, 1.0, 1.0), 1e-6);

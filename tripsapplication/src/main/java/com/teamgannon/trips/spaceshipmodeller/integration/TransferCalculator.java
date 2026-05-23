@@ -44,6 +44,21 @@ public final class TransferCalculator {
     }
 
     /**
+     * Normalises a central-star mass to solar masses (Sun = 1.0). Real stellar masses are at most ~150
+     * Msun, so a value far larger (e.g. 1.989e30) is a raw kilogram value and is converted back; a
+     * non-positive value falls back to 1.0. Use at UI boundaries where the source units may vary.
+     *
+     * @param rawMass a star mass in solar masses or kilograms
+     * @return the mass in solar masses
+     */
+    public static double toSolarMasses(double rawMass) {
+        if (rawMass <= 0) {
+            return 1.0;
+        }
+        return rawMass > 1000 ? rawMass / SOLAR_MASS_KG : rawMass;
+    }
+
+    /**
      * Total Hohmann transfer delta-V between two circular orbits.
      *
      * @param r1Au             starting orbital radius (AU)

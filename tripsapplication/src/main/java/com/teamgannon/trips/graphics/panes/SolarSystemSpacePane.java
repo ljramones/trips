@@ -20,6 +20,7 @@ import com.teamgannon.trips.solarsystem.animation.OrbitalAnimationController;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
+import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEvent;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
@@ -666,11 +667,10 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         TransferBody originBody = origin != null
                 ? new TransferBody(origin.getName(), origin.getSemiMajorAxis())
                 : bodies.get(0);
-        double starMass = 1.0;
-        if (currentSystem != null && currentSystem.getStarDisplayRecord() != null
-                && currentSystem.getStarDisplayRecord().getMass() > 0) {
-            starMass = currentSystem.getStarDisplayRecord().getMass();
-        }
+        // star mass may be in solar masses or raw kg; normalise to solar masses (Sun = 1.0)
+        double starMass = (currentSystem != null && currentSystem.getStarDisplayRecord() != null)
+                ? TransferCalculator.toSolarMasses(currentSystem.getStarDisplayRecord().getMass())
+                : 1.0;
         String solarSystemId = currentSystem != null ? currentSystem.getSolarSystemId() : null;
         new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass)
                 .onCreate(transferPlannerLauncher::createAndOpen, solarSystemId)

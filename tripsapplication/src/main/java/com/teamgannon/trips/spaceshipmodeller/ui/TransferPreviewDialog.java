@@ -125,7 +125,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
 
         originCombo.getItems().setAll(bodyList);
         destCombo.getItems().setAll(bodyList);
-        starMassField.setText(Double.toString(centralStarMassSolar));
+        starMassField.setText(Double.toString(TransferCalculator.toSolarMasses(centralStarMassSolar)));
 
         TransferBody originSel = (origin != null && bodyList.contains(origin)) ? origin : bodyList.get(0);
         originCombo.setValue(originSel);
@@ -175,7 +175,9 @@ public class TransferPreviewDialog extends Dialog<Void> {
         inputs.add(new Label(get("transfer.type", "Transfer type") + ":"), 0, r);
         inputs.add(typeCombo, 1, r++);
         inputs.add(new Label(get("transfer.starMass", "Central star mass (Msun)") + ":"), 0, r);
-        inputs.add(starMassField, 1, r++);
+        Button resetMass = new Button(get("transfer.resetMass", "Reset to 1.0"));
+        resetMass.setOnAction(e -> starMassField.setText("1.0"));
+        inputs.add(new HBox(6, starMassField, resetMass), 1, r++);
 
         GridPane results = grid();
         int q = 0;
