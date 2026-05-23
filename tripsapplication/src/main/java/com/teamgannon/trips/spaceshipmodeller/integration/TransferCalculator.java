@@ -145,6 +145,11 @@ public final class TransferCalculator {
      */
     public static TransferPlan plan(TransferBody origin, TransferBody destination,
                                     double centralMassSolar, SpaceshipDesign ship, TransferType type) {
+        // TEMP diagnostic: confirms the actual ship/drive/Isp/mass reaching the calculator.
+        System.out.println("Calculating transfer for ship: " + ship.name()
+                + " | Drive: " + ship.driveType()
+                + " | IspAvg(s): " + ship.driveSpecs().ispAverageSeconds()
+                + " | Total Mass (t): " + ship.grossMassTons());
         TransferType t = type == null ? TransferType.HOHMANN : type;
         return switch (t) {
             case HOHMANN -> planHohmann(origin, destination, centralMassSolar, ship);

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Tests for the orbital-transfer maths in {@link TransferCalculator}. */
@@ -78,6 +79,24 @@ class TransferCalculatorTest {
         TransferEstimate e = TransferCalculator.estimate(1.0, 5.2, 1.0, chemicalCorvette());
         assertFalse(e.feasible());
         assertTrue(e.requiredDeltaVKmps() > e.shipDeltaVKmps());
+    }
+
+    @Test
+    @DisplayName("different ships differ in propellant/ship-Δv for the same route (route Δv stays equal)")
+    void transfersDifferByShip() {
+        TransferBody earth = new TransferBody("Earth", 1.0);
+        TransferBody mars = new TransferBody("Mars", 1.52);
+        SpaceshipDesign chemicalLander = SpaceshipBuilder.create("Lander")
+                .shipClass(ShipClass.LANDER).driveType(DriveType.CHEMICAL_BIPROPELLANT)
+                .structureTons(30).engineTons(15).propellantTons(80).payloadTons(20).crewTons(5).build();
+        TransferPlan a = TransferCalculator.plan(earth, mars, 1.0, chemicalLander, TransferType.HOHMANN);
+        TransferPlan b = TransferCalculator.plan(earth, mars, 1.0, fusionFrigate(), TransferType.HOHMANN);
+
+        // route-only quantities are identical (correct orbital mechanics)
+        assertEquals(a.totalDeltaVKmps(), b.totalDeltaVKmps(), 1e-9);
+        // ship-dependent quantities differ substantially
+        assertNotEquals(a.totalPropellantTons(), b.totalPropellantTons(), 1.0);
+        assertNotEquals(a.shipDeltaVKmps(), b.shipDeltaVKmps(), 1.0);
     }
 
     @Test
