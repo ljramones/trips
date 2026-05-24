@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DriveTypeTest {
 
     @Test
-    @DisplayName("catalogue contains 15 drives")
-    void catalogueHasFifteenDrives() {
-        assertEquals(15, DriveType.values().length);
+    @DisplayName("catalogue contains 17 drives")
+    void catalogueHasExpectedDriveCount() {
+        assertEquals(17, DriveType.values().length);
     }
 
     @Test

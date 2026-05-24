@@ -215,6 +215,26 @@ public enum DriveType {
             .notes("Pellet detonations at kilohertz rates; a credible first interstellar flyby drive.")
             .build()),
 
+    /** Epstein drive: a high-efficiency magnetic-bottle fusion torch (The Expanse). */
+    EPSTEIN_DRIVE(Category.FUSION, DriveSpecs.builder()
+            .isp(11000, 1500000)
+            .thrustToWeight(0.05, 3.0)
+            .typicalThrustMN(0.5, 200)
+            .minDryMassPercent(25)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.VERY_HIGH)
+            .radiator(RadiatorLevel.MASSIVE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("High thrust AND very high Isp (efficient torchship)")
+            .constraints(
+                    DesignConstraint.blocking("MASSIVE_RADIATORS", "Sustained fusion dumps waste heat that dominates the dry mass."),
+                    DesignConstraint.advisory("EXOTIC_ENGINEERING", "Solomon Epstein's efficiency is unexplained by known engineering."))
+            .sciFiReferences("The Expanse (Epstein Drive)")
+            .notes("High-efficiency fusion torch enabling sustained multi-g burns across the system; "
+                    + "the drive that opened the Solar System in The Expanse.")
+            .build()),
+
     /** Antimatter beam-core drive: pion exhaust from proton-antiproton annihilation. */
     ANTIMATTER_BEAM_CORE(Category.ANTIMATTER, DriveSpecs.builder()
             .isp(100000, 10000000)
@@ -291,6 +311,26 @@ public enum DriveType {
                     DesignConstraint.advisory("EXOTIC_ENGINEERING", "Net thrust may be defeated by scoop drag in sparse media."))
             .sciFiReferences("Tau Zero (Poul Anderson)", "A World Out of Time (Niven)", "Star Trek (Bussard collectors)")
             .notes("Needs no stored fuel once up to speed, the dream of fuel-free interstellar cruise.")
+            .build()),
+
+    /** Astrophage/Taumoeba spin drive: near-total mass-to-light conversion (Project Hail Mary). */
+    SPIN_DRIVE(Category.EXOTIC, DriveSpecs.builder()
+            .isp(1000000, 20000000)
+            .thrustToWeight(0.1, 2.0)
+            .typicalThrustMN(0.1, 100)
+            .minDryMassPercent(25)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.VERY_HIGH)
+            .radiator(RadiatorLevel.MASSIVE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Extreme Isp with usable thrust (near-total mass conversion)")
+            .constraints(
+                    DesignConstraint.blocking("MASSIVE_RADIATORS", "Near-light exhaust still leaves enormous waste heat to radiate."),
+                    DesignConstraint.advisory("EXOTIC_BIOLOGY", "Relies on Astrophage/Taumoeba converting mass to light at near-total efficiency."))
+            .sciFiReferences("Project Hail Mary (Astrophage spin drive)")
+            .notes("Living-fuel drive emitting Petrova-frequency light at near-total mass conversion; "
+                    + "near-c exhaust at usable thrust enables ~1.5g interstellar cruise.")
             .build());
 
     private final Category category;

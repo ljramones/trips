@@ -19,10 +19,10 @@ class SpaceshipTemplateLibraryTest {
     private final ValidationEngine engine = new ValidationEngine();
 
     @Test
-    @DisplayName("library provides between 8 and 10 templates")
-    void hasEightToTenTemplates() {
+    @DisplayName("library provides a large catalogue of templates (30+)")
+    void hasManyTemplates() {
         int n = library.getAllTemplates().size();
-        assertTrue(n >= 8 && n <= 10, "expected 8-10 templates, got " + n);
+        assertTrue(n >= 30, "expected 30+ templates, got " + n);
     }
 
     @Test
