@@ -235,6 +235,46 @@ public enum DriveType {
                     + "the drive that opened the Solar System in The Expanse.")
             .build()),
 
+    /** Terran Republic standard fusion thrust drive: capable mid-tier torch (Caine Riordan universe). */
+    TERRAN_FUSION_DRIVE(Category.FUSION, DriveSpecs.builder()
+            .isp(12000, 250000)
+            .thrustToWeight(0.01, 1.2)
+            .typicalThrustMN(0.2, 80)
+            .minDryMassPercent(25)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.HIGH)
+            .radiator(RadiatorLevel.MODERATE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Balanced fusion thrust (capable mid-tier torch)")
+            .constraints(
+                    DesignConstraint.blocking("HEAT_REJECTION", "Sustained fusion needs real radiators, though less than a hard torch."),
+                    DesignConstraint.advisory("SHIFT_PAIRED", "Sublight thrust drive; interstellar legs are flown under shift, not modelled here."))
+            .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
+            .notes("United Earth / Terran Republic workhorse fusion thrust drive: reliable and capable, but a "
+                    + "step behind the Ktoran Dominion's engines.")
+            .build()),
+
+    /** Hkh'Rkh warrior-race fusion drive: brute thrust, modest efficiency (Caine Riordan universe). */
+    HKHRKH_THRUST(Category.FUSION, DriveSpecs.builder()
+            .isp(8000, 120000)
+            .thrustToWeight(0.05, 2.5)
+            .typicalThrustMN(0.5, 120)
+            .minDryMassPercent(25)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.VERY_HIGH)
+            .radiator(RadiatorLevel.MODERATE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Brute-force fusion thrust (high thrust, modest Isp)")
+            .constraints(
+                    DesignConstraint.blocking("HEAT_REJECTION", "Hard-driven cores demand radiators."),
+                    DesignConstraint.advisory("RUGGED_OVERBUILD", "Favours raw thrust and survivability over fuel economy."))
+            .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
+            .notes("Hkh'Rkh drive philosophy: a warrior race that prizes closing speed and durability, "
+                    + "trading efficiency for raw acceleration.")
+            .build()),
+
     /** Antimatter beam-core drive: pion exhaust from proton-antiproton annihilation. */
     ANTIMATTER_BEAM_CORE(Category.ANTIMATTER, DriveSpecs.builder()
             .isp(100000, 10000000)
@@ -311,6 +351,26 @@ public enum DriveType {
                     DesignConstraint.advisory("EXOTIC_ENGINEERING", "Net thrust may be defeated by scoop drag in sparse media."))
             .sciFiReferences("Tau Zero (Poul Anderson)", "A World Out of Time (Niven)", "Star Trek (Bussard collectors)")
             .notes("Needs no stored fuel once up to speed, the dream of fuel-free interstellar cruise.")
+            .build()),
+
+    /** Ktoran Dominion advanced drive: high thrust AND high Isp, generations beyond human fusion. */
+    KTORAN_ADVANCED(Category.EXOTIC, DriveSpecs.builder()
+            .isp(100000, 2000000)
+            .thrustToWeight(0.1, 3.0)
+            .typicalThrustMN(0.5, 150)
+            .minDryMassPercent(15)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.VERY_HIGH)
+            .radiator(RadiatorLevel.MODERATE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Very high thrust AND very high Isp (beyond Terran tech)")
+            .constraints(
+                    DesignConstraint.blocking("HEAT_REJECTION", "Even superior heat management still needs radiators."),
+                    DesignConstraint.advisory("EXOTIC_ENGINEERING", "Dominion drive internals are not understood by human science."))
+            .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
+            .notes("The Ktoran Dominion's signature drive: both faster-accelerating and far more efficient than "
+                    + "human fusion, reflecting an arrogant, ancient technological lead.")
             .build()),
 
     /** Astrophage/Taumoeba spin drive: near-total mass-to-light conversion (Project Hail Mary). */

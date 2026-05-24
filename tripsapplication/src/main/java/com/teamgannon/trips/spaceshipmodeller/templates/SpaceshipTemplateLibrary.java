@@ -75,7 +75,43 @@ public class SpaceshipTemplateLibrary {
                 hermes(),
                 normandy(),
                 heartOfGold(),
-                executor());
+                executor(),
+
+                // --- Terran Republic universe: United Earth / Terran Republic (Caine Riordan) ---
+                ekraniCruiser(),
+                arduinosDestroyer(),
+                indrajitSupercarrier(),
+                ospreyAssaultTransport(),
+                caineRiordanCorvette(),
+                ueBattleship(),
+                ueBattlecruiser(),
+                ueNavyPatrolCorvette(),
+                diplomaticCourier(),
+                terranColonyTransport(),
+                uegFirstContactSurveyShip(),
+
+                // --- Terran Republic universe: Ktoran Dominion (very advanced) ---
+                ktoranDreadnought(),
+                ktoranCruiser(),
+                ktoranFastAttackShip(),
+
+                // --- Terran Republic universe: Hkh'Rkh (warrior race) ---
+                hkhRkhWarcruiser(),
+                hkhRkhAssaultShip(),
+
+                // --- Terran Republic universe: SpinDog / RockHound (Murphy's Lawless) ---
+                spinDogQShip(),
+                spinDogHabitatMonitor(),
+                rockHoundRaider(),
+
+                // --- Terran Republic universe: other notable powers ---
+                aratKurWarship(),
+                slaasriithiShiftCarrier(),
+                dornaaniPatrolCruiser(),
+                roachHiveShip(),
+                roachSwarmRaider(),
+                gokWarship(),
+                lostSoldiersTransport());
     }
 
     private SpaceshipDesign galaxyClassExplorer() {
@@ -643,6 +679,410 @@ public class SpaceshipTemplateLibrary {
                 .carry("Assault Lander", ShipClass.DROPSHIP, 20, 25, "ground assault")
                 .description("Command Super Star Destroyer carrying a vast complement of fighters and "
                         + "landers (sublight drive modelled; hyperdrive omitted).")
+                .build();
+    }
+
+    // ==================================================================
+    // Terran Republic universe (Charles E. Gannon: Caine Riordan / Terran
+    // Republic, and the Murphy's Lawless / Lost Soldiers spinoff)
+    //
+    // Sublight thrust drives only; interstellar travel in these books is by
+    // "shift", which is instantaneous between fixed points and so is not a
+    // delta-V budget. The Terran Republic is deliberately capable-but-not-
+    // dominant; the Ktoran Dominion runs visibly ahead on the KTORAN_ADVANCED
+    // drive (higher Isp and thrust, lighter structures).
+    // ==================================================================
+
+    private static final String TR = "Terran Republic";
+
+    // ---------------------------- United Earth / Terran Republic ----------
+
+    private SpaceshipDesign ekraniCruiser() {
+        return SpaceshipBuilder.create("Ekrani-class Cruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("CA-EKR")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(800).engineTons(350).propellantTons(900)
+                .payloadTons(250).crewTons(120).radiatorTons(300)
+                .crew(250).lengthMeters(300)
+                .carry("Pinnace", ShipClass.SHUTTLE, 2, 40, "boarding / courier")
+                .carry("Assault Shuttle", ShipClass.DROPSHIP, 2, 25, "marine boarding")
+                .description("Mainstay Terran Republic line cruiser: balanced armour, rail and missile "
+                        + "armament and a pair of boarding craft. Capable, but no match one-on-one for a "
+                        + "Ktoran cruiser.")
+                .build();
+    }
+
+    private SpaceshipDesign arduinosDestroyer() {
+        return SpaceshipBuilder.create("Arduinos-class Destroyer")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("DD-ARD")
+                .shipClass(ShipClass.FRIGATE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(300).engineTons(150).propellantTons(400)
+                .payloadTons(80).crewTons(50).radiatorTons(130)
+                .crew(90).lengthMeters(180)
+                .description("Fast Terran Republic destroyer/frigate for escort, picket and anti-shipping "
+                        + "work; relies on speed and missiles rather than weight of armour.")
+                .build();
+    }
+
+    private SpaceshipDesign indrajitSupercarrier() {
+        return SpaceshipBuilder.create("Indrajit-class Supercarrier")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("CV-IND")
+                .shipClass(ShipClass.CARRIER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(4000).engineTons(1500).propellantTons(5000)
+                .payloadTons(3000).crewTons(800).radiatorTons(1500)
+                .crew(2000).lengthMeters(700)
+                .carry("Strike Fighter", ShipClass.FIGHTER, 48, 12, "space superiority / strike")
+                .carry("Assault Dropship", ShipClass.DROPSHIP, 12, 25, "planetary assault")
+                .carry("Shuttle", ShipClass.SHUTTLE, 6, 30, "logistics")
+                .description("Terran Republic fleet supercarrier and command flagship; its air wing of strike "
+                        + "fighters and dropships is the Republic's main force-projection tool.")
+                .build();
+    }
+
+    private SpaceshipDesign ospreyAssaultTransport() {
+        return SpaceshipBuilder.create("Osprey-class Assault Transport")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("LPA-OSP")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(600).engineTons(250).propellantTons(700)
+                .payloadTons(800).crewTons(100).radiatorTons(250)
+                .crew(300).lengthMeters(280)
+                .carry("Assault Dropship", ShipClass.DROPSHIP, 8, 25, "ship-to-surface assault")
+                .carry("Heavy Lander", ShipClass.LANDER, 4, 60, "armour / heavy lift")
+                .description("Terran Republic assault transport: carries a reinforced ground element and lands "
+                        + "it via dropships and heavy landers under contested conditions.")
+                .build();
+    }
+
+    private SpaceshipDesign caineRiordanCorvette() {
+        return SpaceshipBuilder.create("Caine Riordan's Corvette")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("CRF-1")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(25).engineTons(12).propellantTons(35)
+                .payloadTons(15).crewTons(5).radiatorTons(12)
+                .crew(6).lengthMeters(40)
+                .description("Representative of the fast, lightly-armed vessels Caine Riordan crews across the "
+                        + "series for survey, contact and covert insertion work — long legs, small footprint.")
+                .build();
+    }
+
+    private SpaceshipDesign ueBattleship() {
+        return SpaceshipBuilder.create("UE Battleship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("BB-UE")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(1500).engineTons(600).propellantTons(1500)
+                .payloadTons(400).crewTons(250).radiatorTons(500)
+                .crew(600).lengthMeters(360)
+                .description("United Earth heavy line-of-battle ship: maximum armour and primary armament for "
+                        + "the wall of battle, accepting lower acceleration than a battlecruiser.")
+                .build();
+    }
+
+    private SpaceshipDesign ueBattlecruiser() {
+        return SpaceshipBuilder.create("UE Battlecruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("BC-UE")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(1000).engineTons(500).propellantTons(1400)
+                .payloadTons(300).crewTons(180).radiatorTons(400)
+                .crew(450).lengthMeters(340)
+                .description("United Earth battlecruiser: battleship-grade guns on a faster, lighter hull, "
+                        + "trading protection for the acceleration to dictate the engagement range.")
+                .build();
+    }
+
+    private SpaceshipDesign ueNavyPatrolCorvette() {
+        return SpaceshipBuilder.create("UE Navy Patrol Corvette")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("PC-UE")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(40).engineTons(20).propellantTons(50)
+                .payloadTons(20).crewTons(8).radiatorTons(15)
+                .crew(12).lengthMeters(60)
+                .description("United Earth patrol and customs corvette: system policing, interdiction and "
+                        + "showing the flag at the Republic's expanding frontier.")
+                .build();
+    }
+
+    private SpaceshipDesign diplomaticCourier() {
+        return SpaceshipBuilder.create("Diplomatic Courier Vessel")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("DC-1")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(30).engineTons(18).propellantTons(45)
+                .payloadTons(15).crewTons(8).radiatorTons(12)
+                .crew(10).lengthMeters(55)
+                .description("Fast, lightly-armed courier carrying Terran Republic delegations to Accord "
+                        + "gatherings and first-contact meetings; speed and prestige over firepower.")
+                .build();
+    }
+
+    private SpaceshipDesign terranColonyTransport() {
+        return SpaceshipBuilder.create("Terran Colony Transport")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("CT-TR")
+                .shipClass(ShipClass.COLONY_SHIP)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(3000).engineTons(1200).propellantTons(3500)
+                .payloadTons(4000).crewTons(1500).radiatorTons(1000)
+                .crew(4000).lengthMeters(900)
+                .carry("Colony Lander", ShipClass.LANDER, 6, 200, "surface colonisation")
+                .description("Terran Republic colony transport moving settlers and infrastructure to new "
+                        + "worlds opened by shift routes; carries heavy landers to seed a colony.")
+                .build();
+    }
+
+    private SpaceshipDesign uegFirstContactSurveyShip() {
+        return SpaceshipBuilder.create("UEG First Contact Survey Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("SV-UEG")
+                .shipClass(ShipClass.FRIGATE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(200).engineTons(100).propellantTons(350)
+                .payloadTons(120).crewTons(60).radiatorTons(120)
+                .crew(40).lengthMeters(160)
+                .description("United Earth survey ship of the first-contact era (the Fire with Fire period): "
+                        + "sensors and labs over weapons, sent down newly-opened shift lines to make contact.")
+                .build();
+    }
+
+    // ---------------------------- Ktoran Dominion (very advanced) ----------
+
+    private SpaceshipDesign ktoranDreadnought() {
+        return SpaceshipBuilder.create("Ktoran Dreadnought")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("KDN")
+                .shipClass(ShipClass.CARRIER)
+                .driveType(DriveType.KTORAN_ADVANCED)
+                .structureTons(5000).engineTons(2500).propellantTons(9000)
+                .payloadTons(3500).crewTons(700).radiatorTons(1500)
+                .crew(1500).lengthMeters(800)
+                .carry("Ktoran Interceptor", ShipClass.FIGHTER, 60, 12, "space superiority")
+                .carry("Boarding Craft", ShipClass.DROPSHIP, 12, 25, "boarding / suppression")
+                .description("Capital ship of the Ktoran Dominion: superior drive, weapons and automation make "
+                        + "it the benchmark every other power measures itself against — and falls short of.")
+                .build();
+    }
+
+    private SpaceshipDesign ktoranCruiser() {
+        return SpaceshipBuilder.create("Ktoran Cruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("KCA")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.KTORAN_ADVANCED)
+                .structureTons(700).engineTons(400).propellantTons(1600)
+                .payloadTons(250).crewTons(100).radiatorTons(350)
+                .crew(200).lengthMeters(320)
+                .description("Dominion line cruiser: out-accelerates and outranges its Terran equivalent, "
+                        + "reflecting the Ktor's arrogant, generations-long technological lead.")
+                .build();
+    }
+
+    private SpaceshipDesign ktoranFastAttackShip() {
+        return SpaceshipBuilder.create("Ktoran Fast Attack Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("KFA")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.KTORAN_ADVANCED)
+                .structureTons(60).engineTons(50).propellantTons(200)
+                .payloadTons(25).crewTons(10).radiatorTons(40)
+                .crew(15).lengthMeters(90)
+                .description("Ktoran raider/interceptor built around a vast propellant fraction and an advanced "
+                        + "drive — blistering acceleration and reach for hit-and-run strikes.")
+                .build();
+    }
+
+    // ---------------------------- Hkh'Rkh (warrior race) ----------
+
+    private SpaceshipDesign hkhRkhWarcruiser() {
+        return SpaceshipBuilder.create("Hkh'Rkh Warcruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("HRW")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.HKHRKH_THRUST)
+                .structureTons(1200).engineTons(700).propellantTons(1200)
+                .payloadTons(300).crewTons(200).radiatorTons(400)
+                .crew(500).lengthMeters(350)
+                .description("Hkh'Rkh warcruiser: heavily overbuilt and hard-accelerating, crewed by a proud "
+                        + "warrior species that closes to decisive range and accepts losses to win honour.")
+                .build();
+    }
+
+    private SpaceshipDesign hkhRkhAssaultShip() {
+        return SpaceshipBuilder.create("Hkh'Rkh Assault Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("HRA")
+                .shipClass(ShipClass.CARRIER)
+                .driveType(DriveType.HKHRKH_THRUST)
+                .structureTons(2000).engineTons(1000).propellantTons(1800)
+                .payloadTons(1500).crewTons(400).radiatorTons(600)
+                .crew(800).lengthMeters(450)
+                .carry("War Dropship", ShipClass.DROPSHIP, 12, 25, "boarding / planetary assault")
+                .carry("Heavy Lander", ShipClass.LANDER, 4, 60, "armour landing")
+                .description("Hkh'Rkh assault ship carrying boarding parties and ground forces; built to deliver "
+                        + "warriors into contact rather than to fence at long range.")
+                .build();
+    }
+
+    // ---------------------------- SpinDog / RockHound (Murphy's Lawless) ----
+
+    private SpaceshipDesign spinDogQShip() {
+        return SpaceshipBuilder.create("SpinDog Q-Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Murphy's Lawless")
+                .designation("SD-Q")
+                .shipClass(ShipClass.FREIGHTER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(300).engineTons(150).propellantTons(400)
+                .payloadTons(600).crewTons(40).radiatorTons(150)
+                .crew(60).lengthMeters(250)
+                .description("SpinDog armed freighter: a habitat-built hauler with concealed weapons and "
+                        + "armour, looking like an ordinary trader until it bares its teeth.")
+                .build();
+    }
+
+    private SpaceshipDesign spinDogHabitatMonitor() {
+        return SpaceshipBuilder.create("SpinDog Habitat Monitor")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Murphy's Lawless")
+                .designation("SD-MON")
+                .shipClass(ShipClass.FRIGATE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(250).engineTons(120).propellantTons(300)
+                .payloadTons(100).crewTons(40).radiatorTons(130)
+                .crew(80).lengthMeters(200)
+                .description("SpinDog defensive monitor guarding the spin habitats: short-legged but heavily "
+                        + "armed, optimised to fight near home rather than to range across the system.")
+                .build();
+    }
+
+    private SpaceshipDesign rockHoundRaider() {
+        return SpaceshipBuilder.create("RockHound Raider")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Murphy's Lawless")
+                .designation("RH-R")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.NUCLEAR_THERMAL)
+                .structureTons(50).engineTons(25).propellantTons(90)
+                .payloadTons(30).crewTons(8).radiatorTons(0)
+                .crew(12).lengthMeters(70)
+                .description("RockHound raider converted from an asteroid-mining boat: rugged, cheap and crewed "
+                        + "by hardened belters who fight dirty and disappear into the rocks.")
+                .build();
+    }
+
+    // ---------------------------- Other notable powers ----------
+
+    private SpaceshipDesign aratKurWarship() {
+        return SpaceshipBuilder.create("Arat Kur Warship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("AK-W")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.FUSION_TORCH)
+                .structureTons(700).engineTons(350).propellantTons(900)
+                .payloadTons(200).crewTons(80).radiatorTons(350)
+                .crew(150).lengthMeters(280)
+                .description("Arat Kur warship: the cautious, subterranean species that besieged Earth in Trial "
+                        + "by Fire — technically strong and methodical, but brittle when its plans unravel.")
+                .build();
+    }
+
+    private SpaceshipDesign slaasriithiShiftCarrier() {
+        return SpaceshipBuilder.create("Slaasriithi Shift-Carrier")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("SL-SC")
+                .shipClass(ShipClass.CARRIER)
+                .driveType(DriveType.FUSION_TORCH)
+                .structureTons(3000).engineTons(1200).propellantTons(3000)
+                .payloadTons(2500).crewTons(500).radiatorTons(1000)
+                .crew(1000).lengthMeters(650)
+                .carry("Biotech Shuttle", ShipClass.SHUTTLE, 8, 30, "transfer / contact")
+                .carry("Survey Lander", ShipClass.LANDER, 4, 60, "exploration")
+                .description("Slaasriithi shift-carrier: the grown-not-built craft of a gentle, communal, "
+                        + "biotechnological species who become wary allies of humanity.")
+                .build();
+    }
+
+    private SpaceshipDesign dornaaniPatrolCruiser() {
+        return SpaceshipBuilder.create("Dornaani Patrol Cruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("DOR-PC")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.KTORAN_ADVANCED)
+                .structureTons(500).engineTons(300).propellantTons(1400)
+                .payloadTons(200).crewTons(60).radiatorTons(300)
+                .crew(40).lengthMeters(260)
+                .description("Dornaani Custodian patrol cruiser: small, lightly crewed and heavily automated, "
+                        + "fielding technology at or beyond the Ktoran level on behalf of the Accord.")
+                .build();
+    }
+
+    private SpaceshipDesign roachHiveShip() {
+        return SpaceshipBuilder.create("Roach Hive Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("RCH-H")
+                .shipClass(ShipClass.MOTHERSHIP)
+                .driveType(DriveType.HKHRKH_THRUST)
+                .structureTons(4000).engineTons(1500).propellantTons(4000)
+                .payloadTons(3500).crewTons(600).radiatorTons(1500)
+                .crew(5000).lengthMeters(900)
+                .carry("Swarm Attack Craft", ShipClass.FIGHTER, 80, 12, "swarm assault")
+                .carry("Spore Lander", ShipClass.DROPSHIP, 8, 25, "infestation")
+                .description("Roach hive ship: an insectoid mothership that fights by drowning opponents in "
+                        + "expendable swarm craft rather than by individual quality.")
+                .build();
+    }
+
+    private SpaceshipDesign roachSwarmRaider() {
+        return SpaceshipBuilder.create("Roach Swarm Raider")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("RCH-R")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.HKHRKH_THRUST)
+                .structureTons(30).engineTons(15).propellantTons(40)
+                .payloadTons(15).crewTons(5).radiatorTons(15)
+                .crew(20).lengthMeters(45)
+                .description("Roach swarm raider: a cheap, numerous attack craft meant to be spent freely, "
+                        + "dangerous in numbers and all but disposable individually.")
+                .build();
+    }
+
+    private SpaceshipDesign gokWarship() {
+        return SpaceshipBuilder.create("Gok Warship")
+                .sourceType(SourceType.SCIENCE_FICTION).series(TR)
+                .designation("GOK-W")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.NUCLEAR_THERMAL)
+                .structureTons(900).engineTons(300).propellantTons(1400)
+                .payloadTons(200).crewTons(100).radiatorTons(0)
+                .crew(300).lengthMeters(320)
+                .description("Gok warship: the large, aggressive client species fields crude, heavily-built "
+                        + "vessels — strong and stubborn, but technologically a tier below their patrons.")
+                .build();
+    }
+
+    private SpaceshipDesign lostSoldiersTransport() {
+        return SpaceshipBuilder.create("Lost Soldiers Transport")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Lost Soldiers")
+                .designation("LS-T")
+                .shipClass(ShipClass.FREIGHTER)
+                .driveType(DriveType.FUSION_TORCH)
+                .structureTons(800).engineTons(300).propellantTons(700)
+                .payloadTons(1500).crewTons(100).radiatorTons(300)
+                .crew(200).lengthMeters(400)
+                .description("Transport of the Lost Soldiers / Murphy's Lawless thread: a hold full of displaced "
+                        + "human troops carried far from home to fight someone else's war.")
                 .build();
     }
 }
