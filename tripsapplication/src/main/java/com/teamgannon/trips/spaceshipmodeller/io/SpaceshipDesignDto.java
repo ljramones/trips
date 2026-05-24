@@ -32,7 +32,9 @@ import java.util.List;
  * @param iconPath        icon path/key
  * @param description     free-form description
  * @param sourceType      provenance (real, proposed or science fiction)
- * @param series          franchise/program name
+ * @param sourceUniverse  source universe / franchise
+ * @param faction         in-universe faction / operator
+ * @param era             era / timeframe
  * @param createdAt       creation timestamp
  */
 public record SpaceshipDesignDto(
@@ -48,7 +50,9 @@ public record SpaceshipDesignDto(
         String iconPath,
         String description,
         SourceType sourceType,
-        String series,
+        String sourceUniverse,
+        String faction,
+        String era,
         Instant createdAt
 ) {
 
@@ -60,8 +64,8 @@ public record SpaceshipDesignDto(
         return new SpaceshipDesignDto(
                 design.id(), design.name(), design.designation(), design.shipClass(), design.driveType(),
                 design.massBudget(), design.crewComplement(), design.lengthMeters(), design.carriedCraft(),
-                design.iconPath(), design.description(), design.sourceType(), design.series(),
-                design.createdAt());
+                design.iconPath(), design.description(), design.sourceType(), design.sourceUniverse(),
+                design.faction(), design.era(), design.createdAt());
     }
 
     /**
@@ -70,7 +74,7 @@ public record SpaceshipDesignDto(
     public SpaceshipDesign toDomain() {
         return new SpaceshipDesign(
                 id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
-                carriedCraft, iconPath, description, sourceType, series,
+                carriedCraft, iconPath, description, sourceType, sourceUniverse, faction, era,
                 createdAt != null ? createdAt : Instant.now());
     }
 }

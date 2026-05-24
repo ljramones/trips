@@ -29,7 +29,7 @@ class SpaceshipJsonServiceTest {
                 .structureTons(1000).engineTons(500).propellantTons(2000)
                 .payloadTons(800).crewTons(200).radiatorTons(400)
                 .crew(80).lengthMeters(500).icon("ship.png").description("flagship")
-                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse("The Expanse").faction("MCRN").era("~2350")
                 .carry("Viper", ShipClass.FIGHTER, 12, 8, "escort").build();
     }
 
@@ -40,7 +40,9 @@ class SpaceshipJsonServiceTest {
         SpaceshipDesign back = json.parseDesign(json.toJson(d));
         assertEquals(d, back);
         assertEquals(SourceType.SCIENCE_FICTION, back.sourceType());
-        assertEquals("The Expanse", back.series());
+        assertEquals("The Expanse", back.sourceUniverse());
+        assertEquals("MCRN", back.faction());
+        assertEquals("~2350", back.era());
     }
 
     @Test

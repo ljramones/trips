@@ -44,7 +44,9 @@ public record SpaceshipDesign(
         String iconPath,
         String description,
         SourceType sourceType,
-        String series,
+        String sourceUniverse,
+        String faction,
+        String era,
         Instant createdAt
 ) {
 
@@ -72,20 +74,34 @@ public record SpaceshipDesign(
         iconPath = iconPath == null ? "" : iconPath;
         description = description == null ? "" : description;
         sourceType = sourceType == null ? SourceType.UNKNOWN : sourceType;
-        series = series == null ? "" : series;
+        sourceUniverse = sourceUniverse == null ? "" : sourceUniverse;
+        faction = faction == null ? "" : faction;
+        era = era == null ? "" : era;
     }
 
     /**
-     * @return a display label for this design's provenance: the {@code series} for fictional ships (or any
-     * design that names one), otherwise the {@link SourceType} label (e.g. "Real", "Proposed")
+     * @return a one-line display label for this design's provenance: universe and faction where present
+     * (e.g. "The Expanse — MCRN (~2350)"), otherwise the {@link SourceType} label, with the era appended
+     * in parentheses when known
      */
     public String sourceLabel() {
-        if (series != null && !series.isBlank()) {
-            return sourceType == SourceType.SCIENCE_FICTION
-                    ? series
-                    : sourceType.label() + " — " + series;
+        StringBuilder sb = new StringBuilder();
+        if (!sourceUniverse.isBlank()) {
+            sb.append(sourceUniverse);
         }
-        return sourceType.label();
+        if (!faction.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append(" — ");
+            }
+            sb.append(faction);
+        }
+        if (sb.length() == 0) {
+            sb.append(sourceType.label());
+        }
+        if (!era.isBlank()) {
+            sb.append(" (").append(era).append(')');
+        }
+        return sb.toString();
     }
 
     /** @return convenience accessor for the installed drive's performance envelope */

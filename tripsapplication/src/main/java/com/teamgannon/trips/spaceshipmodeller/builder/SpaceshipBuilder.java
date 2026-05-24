@@ -54,7 +54,9 @@ public final class SpaceshipBuilder {
     private String iconPath = "";
     private String description = "";
     private SourceType sourceType = SourceType.UNKNOWN;
-    private String series = "";
+    private String sourceUniverse = "";
+    private String faction = "";
+    private String era = "";
 
     private SpaceshipBuilder() {
     }
@@ -191,9 +193,21 @@ public final class SpaceshipBuilder {
         return this;
     }
 
-    /** Sets the franchise/program name (e.g. "The Expanse", "NASA / JPL"). */
-    public SpaceshipBuilder series(String series) {
-        this.series = series;
+    /** Sets the source universe / franchise (e.g. "The Expanse", "Caine Riordan"). */
+    public SpaceshipBuilder sourceUniverse(String sourceUniverse) {
+        this.sourceUniverse = sourceUniverse;
+        return this;
+    }
+
+    /** Sets the in-universe faction / operator (e.g. "Terran Republic", "UN Navy", "NASA / JPL"). */
+    public SpaceshipBuilder faction(String faction) {
+        this.faction = faction;
+        return this;
+    }
+
+    /** Sets the era / timeframe (e.g. "2045", "Post-Contact", "1977"). */
+    public SpaceshipBuilder era(String era) {
+        this.era = era;
         return this;
     }
 
@@ -225,7 +239,9 @@ public final class SpaceshipBuilder {
                 iconPath,
                 description,
                 sourceType,
-                series,
+                sourceUniverse,
+                faction,
+                era,
                 Instant.now());
     }
 }

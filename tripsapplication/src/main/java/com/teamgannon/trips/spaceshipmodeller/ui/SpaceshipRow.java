@@ -63,8 +63,18 @@ public class SpaceshipRow {
         return design.isMothership() ? "Yes" : "No";
     }
 
-    /** @return provenance label: the series for fictional ships, else the source type ("Real", "Proposed") */
-    public String getSource() {
-        return design.sourceLabel();
+    /** @return source universe / franchise, or an em dash when not set */
+    public String getUniverse() {
+        return design.sourceUniverse().isBlank() ? "—" : design.sourceUniverse();
+    }
+
+    /** @return in-universe faction / operator */
+    public String getFaction() {
+        return design.faction();
+    }
+
+    /** @return era / timeframe */
+    public String getEra() {
+        return design.era();
     }
 }

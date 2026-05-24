@@ -58,7 +58,9 @@ public class SpaceshipDesignMapper {
         entity.setIconPath(design.iconPath());
         entity.setDescription(design.description());
         entity.setSourceType(design.sourceType());
-        entity.setSeries(design.series());
+        entity.setSourceUniverse(design.sourceUniverse());
+        entity.setFaction(design.faction());
+        entity.setEra(design.era());
         entity.setCreatedAt(design.createdAt());
         return entity;
     }
@@ -91,7 +93,9 @@ public class SpaceshipDesignMapper {
                 entity.getIconPath(),
                 entity.getDescription(),
                 entity.getSourceType(),
-                entity.getSeries(),
+                entity.getSourceUniverse(),
+                entity.getFaction(),
+                entity.getEra(),
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now());
     }
 

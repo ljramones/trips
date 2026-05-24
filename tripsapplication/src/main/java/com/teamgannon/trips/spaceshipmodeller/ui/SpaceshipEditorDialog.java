@@ -72,7 +72,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     private final TextField iconField = new TextField();
     private final TextArea descriptionArea = new TextArea();
     private final ComboBox<SourceType> sourceTypeCombo = new ComboBox<>();
-    private final TextField seriesField = new TextField();
+    private final TextField universeField = new TextField();
+    private final TextField factionField = new TextField();
+    private final TextField eraField = new TextField();
 
     // mass budget
     private final TextField structureField = new TextField();
@@ -189,8 +191,10 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         addRow(g, 4, get("editor.field.length"), lengthField);
         addRow(g, 5, get("editor.field.icon"), iconField);
         addRow(g, 6, get("editor.field.sourceType"), sourceTypeCombo);
-        addRow(g, 7, get("editor.field.series"), seriesField);
-        addRow(g, 8, get("editor.field.description"), descriptionArea);
+        addRow(g, 7, get("editor.field.sourceUniverse"), universeField);
+        addRow(g, 8, get("editor.field.faction"), factionField);
+        addRow(g, 9, get("editor.field.era"), eraField);
+        addRow(g, 10, get("editor.field.description"), descriptionArea);
         return g;
     }
 
@@ -386,7 +390,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
                 .icon(text(iconField))
                 .description(text(descriptionArea))
                 .sourceType(sourceTypeCombo.getValue() == null ? SourceType.UNKNOWN : sourceTypeCombo.getValue())
-                .series(text(seriesField));
+                .sourceUniverse(text(universeField))
+                .faction(text(factionField))
+                .era(text(eraField));
         for (CarriedCraft c : carried) {
             builder.carry(c);
         }
@@ -398,7 +404,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
                     existing.id(), built.name(), built.designation(), built.shipClass(),
                     built.driveType(), built.massBudget(), built.crewComplement(),
                     built.lengthMeters(), built.carriedCraft(), built.iconPath(),
-                    built.description(), built.sourceType(), built.series(), existing.createdAt());
+                    built.description(), built.sourceType(), built.sourceUniverse(), built.faction(),
+                    built.era(), existing.createdAt());
         }
         return built;
     }
@@ -412,7 +419,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         lengthField.setText(Double.toString(d.lengthMeters()));
         iconField.setText(d.iconPath());
         sourceTypeCombo.setValue(d.sourceType());
-        seriesField.setText(d.series());
+        universeField.setText(d.sourceUniverse());
+        factionField.setText(d.faction());
+        eraField.setText(d.era());
         descriptionArea.setText(d.description());
         structureField.setText(Double.toString(d.massBudget().structureMassTons()));
         engineField.setText(Double.toString(d.massBudget().engineMassTons()));
@@ -428,7 +437,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         classCombo.setValue(ShipClass.FRIGATE);
         driveCombo.setValue(DriveType.CHEMICAL_BIPROPELLANT);
         sourceTypeCombo.setValue(SourceType.UNKNOWN);
-        seriesField.setPromptText(get("editor.series.prompt", "e.g. The Expanse, NASA / JPL"));
+        universeField.setPromptText(get("editor.universe.prompt", "e.g. The Expanse, Caine Riordan"));
+        factionField.setPromptText(get("editor.faction.prompt", "e.g. Terran Republic, NASA / JPL"));
+        eraField.setPromptText(get("editor.era.prompt", "e.g. 2045, Post-Contact"));
         crewField.setText(Integer.toString(getInt("default.crew", 1)));
         lengthField.setText(Double.toString(getDouble("default.length", 50)));
         structureField.setText(Double.toString(getDouble("default.mass.structure", 100)));

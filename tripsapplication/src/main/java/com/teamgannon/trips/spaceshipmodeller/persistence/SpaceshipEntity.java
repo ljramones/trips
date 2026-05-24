@@ -99,8 +99,14 @@ public class SpaceshipEntity implements Serializable {
     @Enumerated(EnumType.STRING)
     private SourceType sourceType;
 
-    /** Franchise/program name (e.g. "The Expanse", "NASA / JPL"); free text. */
-    private String series;
+    /** Source universe / franchise (e.g. "The Expanse", "Caine Riordan"); free text. */
+    private String sourceUniverse;
+
+    /** In-universe faction / operator (e.g. "Terran Republic", "UN Navy"); free text. */
+    private String faction;
+
+    /** Era / timeframe (e.g. "2045", "Post-Contact"); free text. */
+    private String era;
 
     private Instant createdAt;
 
