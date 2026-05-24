@@ -1,6 +1,7 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.io.SpaceshipJsonService;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.Category;
@@ -82,6 +83,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final ComboBox<String> classFilter = new ComboBox<>();
     private final ComboBox<String> driveFilter = new ComboBox<>();
     private final ComboBox<String> categoryFilter = new ComboBox<>();
+    private final ComboBox<String> sourceFilter = new ComboBox<>();
     private final TextField searchField = new TextField();
 
     private List<SpaceshipDesign> allDesigns = List.of();
@@ -92,6 +94,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final Label detailClass = new Label();
     private final Label detailDrive = new Label();
     private final Label detailCategory = new Label();
+    private final Label detailSource = new Label();
     private final Label detailMass = new Label();
     private final Label detailMassRatio = new Label();
     private final Label detailDeltaV = new Label();
@@ -139,12 +142,16 @@ public class SpaceshipDesignerPanel extends BorderPane {
         Arrays.stream(DriveType.values()).map(Enum::name).forEach(driveFilter.getItems()::add);
         categoryFilter.getItems().add(ALL);
         Arrays.stream(Category.values()).map(Enum::name).forEach(categoryFilter.getItems()::add);
+        sourceFilter.getItems().add(ALL);
+        Arrays.stream(SourceType.values()).map(Enum::name).forEach(sourceFilter.getItems()::add);
         classFilter.setValue(ALL);
         driveFilter.setValue(ALL);
         categoryFilter.setValue(ALL);
+        sourceFilter.setValue(ALL);
         classFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         driveFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         categoryFilter.valueProperty().addListener((o, a, b) -> applyFilters());
+        sourceFilter.valueProperty().addListener((o, a, b) -> applyFilters());
 
         searchField.setPromptText(get("filter.search.prompt"));
         searchField.textProperty().addListener((o, a, b) -> applyFilters());
@@ -165,6 +172,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
                 new Label(get("filter.shipClass")), classFilter,
                 new Label(get("filter.driveType")), driveFilter,
                 new Label(get("filter.category")), categoryFilter,
+                new Label(get("filter.source")), sourceFilter,
                 searchField,
                 new Separator(),
                 newButton, importButton, templatesButton, refreshButton);
@@ -204,13 +212,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
         TableColumn<SpaceshipRow, String> classCol = col(get("column.class"), "shipClass", 90);
         TableColumn<SpaceshipRow, String> driveCol = col(get("column.drive"), "driveType", 150);
         TableColumn<SpaceshipRow, String> catCol = col(get("column.category"), "category", 120);
+        TableColumn<SpaceshipRow, String> sourceCol = col(get("column.source"), "source", 130);
         TableColumn<SpaceshipRow, Number> massCol = col(get("column.mass"), "mass", 100);
         TableColumn<SpaceshipRow, Number> crewCol = col(get("column.crew"), "crew", 60);
         TableColumn<SpaceshipRow, Number> deltaVCol = deltaVColumn(get("column.deltaV"), 90);
         TableColumn<SpaceshipRow, String> motherCol = col(get("column.mothership"), "mothership", 90);
 
         table.getColumns().setAll(
-                nameCol, desigCol, classCol, driveCol, catCol, massCol, crewCol, deltaVCol, motherCol);
+                nameCol, desigCol, classCol, driveCol, catCol, sourceCol, massCol, crewCol, deltaVCol, motherCol);
         table.getSelectionModel().selectedItemProperty().addListener(
                 (o, a, b) -> showDetails(b == null ? null : b.getDesign()));
 
@@ -269,6 +278,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         addDetail(grid, r++, get("column.class"), detailClass);
         addDetail(grid, r++, get("column.drive"), detailDrive);
         addDetail(grid, r++, get("column.category"), detailCategory);
+        addDetail(grid, r++, get("column.source"), detailSource);
         addDetail(grid, r++, get("column.mass"), detailMass);
         addDetail(grid, r++, get("details.massRatio"), detailMassRatio);
         addDetail(grid, r++, get("details.deltaV"), detailDeltaV);
@@ -328,15 +338,18 @@ public class SpaceshipDesignerPanel extends BorderPane {
         String cls = classFilter.getValue();
         String drv = driveFilter.getValue();
         String cat = categoryFilter.getValue();
+        String src = sourceFilter.getValue();
         String q = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
 
         List<SpaceshipRow> rows = allDesigns.stream()
                 .filter(d -> cls == null || ALL.equals(cls) || d.shipClass().name().equals(cls))
                 .filter(d -> drv == null || ALL.equals(drv) || d.driveType().name().equals(drv))
                 .filter(d -> cat == null || ALL.equals(cat) || d.driveType().category().name().equals(cat))
+                .filter(d -> src == null || ALL.equals(src) || d.sourceType().name().equals(src))
                 .filter(d -> q.isEmpty()
                         || d.name().toLowerCase().contains(q)
-                        || d.designation().toLowerCase().contains(q))
+                        || d.designation().toLowerCase().contains(q)
+                        || d.series().toLowerCase().contains(q))
                 .map(SpaceshipRow::new)
                 .toList();
         table.setItems(FXCollections.observableArrayList(rows));
@@ -367,7 +380,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
                 UUID.randomUUID().toString(), "Copy of " + selected.name(), selected.designation(),
                 selected.shipClass(), selected.driveType(), selected.massBudget(), selected.crewComplement(),
                 selected.lengthMeters(), selected.carriedCraft(), selected.iconPath(), selected.description(),
-                Instant.now());
+                selected.sourceType(), selected.series(), Instant.now());
         saveAndReload(copy);
     }
 
@@ -514,7 +527,8 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
         if (!has) {
             for (Label l : List.of(detailName, detailDesignation, detailClass, detailDrive,
-                    detailCategory, detailMass, detailMassRatio, detailDeltaV, detailCrew, detailCarried)) {
+                    detailCategory, detailSource, detailMass, detailMassRatio, detailDeltaV, detailCrew,
+                    detailCarried)) {
                 l.setText("");
             }
             planButton.setDisable(true);
@@ -529,6 +543,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         detailClass.setText(d.shipClass().label());
         detailDrive.setText(d.driveType().name());
         detailCategory.setText(d.driveType().category().label());
+        detailSource.setText(d.sourceLabel());
         detailMass.setText("%.1f t".formatted(d.massBudget().wetMassTons()));
         detailMassRatio.setText("%.2f".formatted(d.massBudget().massRatio()));
         double dv = d.estimateDeltaVKmps();

@@ -43,6 +43,8 @@ public record SpaceshipDesign(
         List<CarriedCraft> carriedCraft,
         String iconPath,
         String description,
+        SourceType sourceType,
+        String series,
         Instant createdAt
 ) {
 
@@ -69,6 +71,21 @@ public record SpaceshipDesign(
         designation = designation == null ? "" : designation;
         iconPath = iconPath == null ? "" : iconPath;
         description = description == null ? "" : description;
+        sourceType = sourceType == null ? SourceType.UNKNOWN : sourceType;
+        series = series == null ? "" : series;
+    }
+
+    /**
+     * @return a display label for this design's provenance: the {@code series} for fictional ships (or any
+     * design that names one), otherwise the {@link SourceType} label (e.g. "Real", "Proposed")
+     */
+    public String sourceLabel() {
+        if (series != null && !series.isBlank()) {
+            return sourceType == SourceType.SCIENCE_FICTION
+                    ? series
+                    : sourceType.label() + " — " + series;
+        }
+        return sourceType.label();
     }
 
     /** @return convenience accessor for the installed drive's performance envelope */

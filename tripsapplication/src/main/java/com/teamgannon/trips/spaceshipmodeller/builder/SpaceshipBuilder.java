@@ -3,6 +3,7 @@ package com.teamgannon.trips.spaceshipmodeller.builder;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
@@ -52,6 +53,8 @@ public final class SpaceshipBuilder {
     private final List<CarriedCraft> carriedCraft = new ArrayList<>();
     private String iconPath = "";
     private String description = "";
+    private SourceType sourceType = SourceType.UNKNOWN;
+    private String series = "";
 
     private SpaceshipBuilder() {
     }
@@ -182,6 +185,18 @@ public final class SpaceshipBuilder {
         return this;
     }
 
+    /** Sets the provenance type (real, proposed or science fiction). */
+    public SpaceshipBuilder sourceType(SourceType sourceType) {
+        this.sourceType = sourceType;
+        return this;
+    }
+
+    /** Sets the franchise/program name (e.g. "The Expanse", "NASA / JPL"). */
+    public SpaceshipBuilder series(String series) {
+        this.series = series;
+        return this;
+    }
+
     /**
      * Assembles the immutable {@link SpaceshipDesign}, assigning a fresh id and creation timestamp.
      *
@@ -209,6 +224,8 @@ public final class SpaceshipBuilder {
                 carriedCraft,
                 iconPath,
                 description,
+                sourceType,
+                series,
                 Instant.now());
     }
 }

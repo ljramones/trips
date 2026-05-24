@@ -62,4 +62,9 @@ public class SpaceshipRow {
     public String getMothership() {
         return design.isMothership() ? "Yes" : "No";
     }
+
+    /** @return provenance label: the series for fictional ships, else the source type ("Real", "Proposed") */
+    public String getSource() {
+        return design.sourceLabel();
+    }
 }

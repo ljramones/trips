@@ -3,6 +3,7 @@ package com.teamgannon.trips.spaceshipmodeller.ui;
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
@@ -70,6 +71,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     private final TextField lengthField = new TextField();
     private final TextField iconField = new TextField();
     private final TextArea descriptionArea = new TextArea();
+    private final ComboBox<SourceType> sourceTypeCombo = new ComboBox<>();
+    private final TextField seriesField = new TextField();
 
     // mass budget
     private final TextField structureField = new TextField();
@@ -122,6 +125,18 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         classCombo.getItems().setAll(ShipClass.values());
         driveCombo.getItems().setAll(DriveType.values());
         craftClassCombo.getItems().setAll(ShipClass.values());
+        sourceTypeCombo.getItems().setAll(SourceType.values());
+        sourceTypeCombo.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(SourceType t) {
+                return t == null ? "" : sourceTypeLabel(t);
+            }
+
+            @Override
+            public SourceType fromString(String s) {
+                return null;
+            }
+        });
 
         buildContent();
         if (existing != null) {
@@ -173,7 +188,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         addRow(g, 3, get("editor.field.crew"), crewField);
         addRow(g, 4, get("editor.field.length"), lengthField);
         addRow(g, 5, get("editor.field.icon"), iconField);
-        addRow(g, 6, get("editor.field.description"), descriptionArea);
+        addRow(g, 6, get("editor.field.sourceType"), sourceTypeCombo);
+        addRow(g, 7, get("editor.field.series"), seriesField);
+        addRow(g, 8, get("editor.field.description"), descriptionArea);
         return g;
     }
 
@@ -367,7 +384,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
                 .crew((int) parse(crewField, 0))
                 .lengthMeters(parse(lengthField, 0))
                 .icon(text(iconField))
-                .description(text(descriptionArea));
+                .description(text(descriptionArea))
+                .sourceType(sourceTypeCombo.getValue() == null ? SourceType.UNKNOWN : sourceTypeCombo.getValue())
+                .series(text(seriesField));
         for (CarriedCraft c : carried) {
             builder.carry(c);
         }
@@ -379,7 +398,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
                     existing.id(), built.name(), built.designation(), built.shipClass(),
                     built.driveType(), built.massBudget(), built.crewComplement(),
                     built.lengthMeters(), built.carriedCraft(), built.iconPath(),
-                    built.description(), existing.createdAt());
+                    built.description(), built.sourceType(), built.series(), existing.createdAt());
         }
         return built;
     }
@@ -392,6 +411,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         crewField.setText(Integer.toString(d.crewComplement()));
         lengthField.setText(Double.toString(d.lengthMeters()));
         iconField.setText(d.iconPath());
+        sourceTypeCombo.setValue(d.sourceType());
+        seriesField.setText(d.series());
         descriptionArea.setText(d.description());
         structureField.setText(Double.toString(d.massBudget().structureMassTons()));
         engineField.setText(Double.toString(d.massBudget().engineMassTons()));
@@ -406,6 +427,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         nameField.setText(get("default.name", "New Vessel"));
         classCombo.setValue(ShipClass.FRIGATE);
         driveCombo.setValue(DriveType.CHEMICAL_BIPROPELLANT);
+        sourceTypeCombo.setValue(SourceType.UNKNOWN);
+        seriesField.setPromptText(get("editor.series.prompt", "e.g. The Expanse, NASA / JPL"));
         crewField.setText(Integer.toString(getInt("default.crew", 1)));
         lengthField.setText(Double.toString(getDouble("default.length", 50)));
         structureField.setText(Double.toString(getDouble("default.mass.structure", 100)));
@@ -417,6 +440,15 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     }
 
     // -------------------------------------------------------------- helpers
+
+    private static String sourceTypeLabel(SourceType t) {
+        return switch (t) {
+            case REAL -> get("source.real", t.label());
+            case PROPOSED -> get("source.proposed", t.label());
+            case SCIENCE_FICTION -> get("source.scienceFiction", t.label());
+            case UNKNOWN -> get("source.unknown", t.label());
+        };
+    }
 
     private static String badgeText(SpaceshipDesign d) {
         double dv = d.estimateDeltaVKmps();

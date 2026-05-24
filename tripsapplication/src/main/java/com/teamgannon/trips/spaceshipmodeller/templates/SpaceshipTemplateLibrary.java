@@ -2,6 +2,7 @@ package com.teamgannon.trips.spaceshipmodeller.templates;
 
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.springframework.stereotype.Component;
@@ -79,6 +80,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign galaxyClassExplorer() {
         return SpaceshipBuilder.create("Galaxy-class Explorer")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Star Trek")
                 .designation("NCC-EXP")
                 .shipClass(ShipClass.MOTHERSHIP)
                 .driveType(DriveType.FUSION_TORCH)
@@ -94,6 +96,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign battlestarCarrier() {
         return SpaceshipBuilder.create("Battlestar-type Carrier")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Battlestar Galactica")
                 .designation("BS-75")
                 .shipClass(ShipClass.CARRIER)
                 .driveType(DriveType.NUCLEAR_THERMAL)
@@ -110,6 +113,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign daedalusArk() {
         return SpaceshipBuilder.create("Daedalus Interstellar Ark")
+                .sourceType(SourceType.PROPOSED).series("Project Daedalus")
                 .designation("ARK-1")
                 .shipClass(ShipClass.COLONY_SHIP)
                 .driveType(DriveType.FUSION_PULSE)
@@ -124,6 +128,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign honorverseCruiser() {
         return SpaceshipBuilder.create("Honorverse Heavy Cruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Honorverse")
                 .designation("CA-HH")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -139,6 +144,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign orionBattleship() {
         return SpaceshipBuilder.create("Orion Pulse Battleship")
+                .sourceType(SourceType.PROPOSED).series("Project Orion")
                 .designation("BB-ORION")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.ORION_PULSE)
@@ -152,6 +158,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign heavyChemicalLander() {
         return SpaceshipBuilder.create("Heavy Chemical Lander")
+                .sourceType(SourceType.PROPOSED).series("Generic concept")
                 .designation("HCL-9")
                 .shipClass(ShipClass.LANDER)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -165,6 +172,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign vasimrDeepSpaceTug() {
         return SpaceshipBuilder.create("VASIMR Deep Space Tug")
+                .sourceType(SourceType.PROPOSED).series("VASIMR")
                 .designation("TUG-V")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.VASIMR)
@@ -178,6 +186,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign starshotProbe() {
         return SpaceshipBuilder.create("Breakthrough Starshot Probe")
+                .sourceType(SourceType.PROPOSED).series("Breakthrough Starshot")
                 .designation("SHOT-1")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.LASER_SAIL)
@@ -191,6 +200,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign bussardRamjetExplorer() {
         return SpaceshipBuilder.create("Bussard Ramjet Explorer")
+                .sourceType(SourceType.PROPOSED).series("Bussard ramjet")
                 .designation("RAM-1")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.BUSSARD_RAMJET)
@@ -204,6 +214,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign antimatterFrigate() {
         return SpaceshipBuilder.create("Antimatter Beam-Core Frigate")
+                .sourceType(SourceType.PROPOSED).series("Antimatter concept")
                 .designation("FF-AM")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.ANTIMATTER_BEAM_CORE)
@@ -221,6 +232,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign spaceShuttleOrbiter() {
         return SpaceshipBuilder.create("Space Shuttle Orbiter")
+                .sourceType(SourceType.REAL).series("NASA")
                 .designation("OV-105")
                 .shipClass(ShipClass.SHUTTLE)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -234,6 +246,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign starship() {
         return SpaceshipBuilder.create("Starship (SpaceX)")
+                .sourceType(SourceType.REAL).series("SpaceX")
                 .designation("SN")
                 .shipClass(ShipClass.LANDER)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -247,6 +260,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign crewDragon() {
         return SpaceshipBuilder.create("SpaceX Crew Dragon")
+                .sourceType(SourceType.REAL).series("SpaceX")
                 .designation("Falcon Heavy / Dragon")
                 .shipClass(ShipClass.SHUTTLE)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -260,6 +274,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign apolloCsm() {
         return SpaceshipBuilder.create("Apollo Command/Service Module")
+                .sourceType(SourceType.REAL).series("NASA")
                 .designation("CSM")
                 .shipClass(ShipClass.SHUTTLE)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -273,6 +288,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign orionMpcv() {
         return SpaceshipBuilder.create("Orion MPCV")
+                .sourceType(SourceType.REAL).series("NASA / ESA")
                 .designation("Artemis")
                 .shipClass(ShipClass.SHUTTLE)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -286,6 +302,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign voyagerProbe() {
         return SpaceshipBuilder.create("Voyager Probe")
+                .sourceType(SourceType.REAL).series("NASA / JPL")
                 .designation("V'Ger")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -299,6 +316,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign dawnSpacecraft() {
         return SpaceshipBuilder.create("Dawn Ion Spacecraft")
+                .sourceType(SourceType.REAL).series("NASA / JPL")
                 .designation("Dawn")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.ION_GRIDDED)
@@ -316,6 +334,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign rocinante() {
         return SpaceshipBuilder.create("Rocinante")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("MCRN Tachi / ECF-270")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.EPSTEIN_DRIVE)
@@ -329,6 +348,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign donnager() {
         return SpaceshipBuilder.create("MCRN Donnager")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("Donnager-class")
                 .shipClass(ShipClass.MOTHERSHIP)
                 .driveType(DriveType.EPSTEIN_DRIVE)
@@ -344,6 +364,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign thomasPrince() {
         return SpaceshipBuilder.create("UNN Thomas Prince")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("Truman-class")
                 .shipClass(ShipClass.CARRIER)
                 .driveType(DriveType.EPSTEIN_DRIVE)
@@ -358,6 +379,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign freeNavyPella() {
         return SpaceshipBuilder.create("Free Navy Pella")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("Pella")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.EPSTEIN_DRIVE)
@@ -371,6 +393,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign tychoConstructionShip() {
         return SpaceshipBuilder.create("Tycho Construction Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("Tycho")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -384,6 +407,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign behemoth() {
         return SpaceshipBuilder.create("Behemoth / Medina Station")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("LDSS Nauvoo")
                 .shipClass(ShipClass.COLONY_SHIP)
                 .driveType(DriveType.EPSTEIN_DRIVE)
@@ -398,6 +422,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign purnKleenIceHauler() {
         return SpaceshipBuilder.create("Pur'n'Kleen Ice Hauler")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("early-era")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.CHEMICAL_BIPROPELLANT)
@@ -411,6 +436,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign canterbury() {
         return SpaceshipBuilder.create("Canterbury")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .designation("Cant")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.NUCLEAR_THERMAL)
@@ -428,6 +454,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign foundationTrader() {
         return SpaceshipBuilder.create("Foundation Trader Ship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Foundation")
                 .designation("early-era")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.NUCLEAR_THERMAL)
@@ -441,6 +468,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign imperialNavyCruiser() {
         return SpaceshipBuilder.create("Imperial Navy Cruiser")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Foundation")
                 .designation("Trantor")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -454,6 +482,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign mulesFlagship() {
         return SpaceshipBuilder.create("The Mule's Flagship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Foundation")
                 .designation("Mutant")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.ANTIMATTER_BEAM_CORE)
@@ -467,6 +496,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign terminusWarship() {
         return SpaceshipBuilder.create("Terminus Foundation Warship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Foundation")
                 .designation("Star Bridge")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -480,6 +510,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign cleonDreadnought() {
         return SpaceshipBuilder.create("Cleon-era Imperial Dreadnought")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Foundation")
                 .designation("Genetic Dynasty")
                 .shipClass(ShipClass.CARRIER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -499,6 +530,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign hailMary() {
         return SpaceshipBuilder.create("Hail Mary Spacecraft")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Project Hail Mary")
                 .designation("Project Hail Mary")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.SPIN_DRIVE)
@@ -516,6 +548,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign millenniumFalcon() {
         return SpaceshipBuilder.create("Millennium Falcon")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Star Wars")
                 .designation("YT-1300")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.FUSION_TORCH)
@@ -529,6 +562,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign serenity() {
         return SpaceshipBuilder.create("Serenity (Firefly)")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Firefly")
                 .designation("Firefly-class")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -542,6 +576,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign discoveryOne() {
         return SpaceshipBuilder.create("Discovery One")
+                .sourceType(SourceType.SCIENCE_FICTION).series("2001: A Space Odyssey")
                 .designation("XD-1")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.GAS_CORE_NUCLEAR)
@@ -555,6 +590,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign hermes() {
         return SpaceshipBuilder.create("Hermes (The Martian)")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Martian")
                 .designation("Ares")
                 .shipClass(ShipClass.CRUISER)
                 .driveType(DriveType.NUCLEAR_ELECTRIC)
@@ -568,6 +604,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign normandy() {
         return SpaceshipBuilder.create("Normandy SR-2")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Mass Effect")
                 .designation("SR-2")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.FUSION_TORCH)
@@ -581,6 +618,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign heartOfGold() {
         return SpaceshipBuilder.create("Heart of Gold")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Hitchhiker's Guide to the Galaxy")
                 .designation("Improbable")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.ANTIMATTER_BEAM_CORE)
@@ -594,6 +632,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign executor() {
         return SpaceshipBuilder.create("Executor-class Star Dreadnought")
+                .sourceType(SourceType.SCIENCE_FICTION).series("Star Wars")
                 .designation("Super Star Destroyer")
                 .shipClass(ShipClass.CARRIER)
                 .driveType(DriveType.FUSION_TORCH)

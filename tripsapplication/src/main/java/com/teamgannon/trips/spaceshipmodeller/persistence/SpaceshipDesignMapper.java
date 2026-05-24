@@ -57,6 +57,8 @@ public class SpaceshipDesignMapper {
         entity.setCarriedCraftJson(writeCarriedCraft(design.carriedCraft()));
         entity.setIconPath(design.iconPath());
         entity.setDescription(design.description());
+        entity.setSourceType(design.sourceType());
+        entity.setSeries(design.series());
         entity.setCreatedAt(design.createdAt());
         return entity;
     }
@@ -88,6 +90,8 @@ public class SpaceshipDesignMapper {
                 readCarriedCraft(entity.getCarriedCraftJson()),
                 entity.getIconPath(),
                 entity.getDescription(),
+                entity.getSourceType(),
+                entity.getSeries(),
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now());
     }
 

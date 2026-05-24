@@ -1,6 +1,7 @@
 package com.teamgannon.trips.spaceshipmodeller.persistence;
 
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,7 +51,8 @@ import java.util.UUID;
 @Table(indexes = {
         @Index(columnList = "name ASC"),
         @Index(columnList = "shipClass"),
-        @Index(columnList = "driveType")
+        @Index(columnList = "driveType"),
+        @Index(columnList = "sourceType")
 })
 public class SpaceshipEntity implements Serializable {
 
@@ -92,6 +94,13 @@ public class SpaceshipEntity implements Serializable {
 
     @Column(length = 4000)
     private String description;
+
+    /** Provenance: real, proposed or science fiction. */
+    @Enumerated(EnumType.STRING)
+    private SourceType sourceType;
+
+    /** Franchise/program name (e.g. "The Expanse", "NASA / JPL"); free text. */
+    private String series;
 
     private Instant createdAt;
 

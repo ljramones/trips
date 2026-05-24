@@ -3,6 +3,7 @@ package com.teamgannon.trips.spaceshipmodeller.io;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
@@ -30,6 +31,8 @@ import java.util.List;
  * @param carriedCraft    embarked smaller craft
  * @param iconPath        icon path/key
  * @param description     free-form description
+ * @param sourceType      provenance (real, proposed or science fiction)
+ * @param series          franchise/program name
  * @param createdAt       creation timestamp
  */
 public record SpaceshipDesignDto(
@@ -44,6 +47,8 @@ public record SpaceshipDesignDto(
         List<CarriedCraft> carriedCraft,
         String iconPath,
         String description,
+        SourceType sourceType,
+        String series,
         Instant createdAt
 ) {
 
@@ -55,7 +60,8 @@ public record SpaceshipDesignDto(
         return new SpaceshipDesignDto(
                 design.id(), design.name(), design.designation(), design.shipClass(), design.driveType(),
                 design.massBudget(), design.crewComplement(), design.lengthMeters(), design.carriedCraft(),
-                design.iconPath(), design.description(), design.createdAt());
+                design.iconPath(), design.description(), design.sourceType(), design.series(),
+                design.createdAt());
     }
 
     /**
@@ -64,6 +70,7 @@ public record SpaceshipDesignDto(
     public SpaceshipDesign toDomain() {
         return new SpaceshipDesign(
                 id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
-                carriedCraft, iconPath, description, createdAt != null ? createdAt : Instant.now());
+                carriedCraft, iconPath, description, sourceType, series,
+                createdAt != null ? createdAt : Instant.now());
     }
 }

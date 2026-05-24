@@ -2,6 +2,7 @@ package com.teamgannon.trips.spaceshipmodeller.persistence;
 
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ class SpaceshipDesignMapperTest {
                 .structureTons(1000).engineTons(500).propellantTons(2000)
                 .payloadTons(800).crewTons(200).radiatorTons(400)
                 .crew(80).lengthMeters(500).icon("ship.png").description("flagship")
+                .sourceType(SourceType.SCIENCE_FICTION).series("The Expanse")
                 .carry("Viper", ShipClass.FIGHTER, 12, 8, "escort").build();
     }
 
@@ -31,6 +33,8 @@ class SpaceshipDesignMapperTest {
         SpaceshipDesign original = sample();
         SpaceshipDesign back = mapper.toDomain(mapper.toEntity(original));
         assertEquals(original, back);
+        assertEquals(SourceType.SCIENCE_FICTION, back.sourceType());
+        assertEquals("The Expanse", back.series());
     }
 
     @Test
