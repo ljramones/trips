@@ -111,7 +111,15 @@ public class SpaceshipTemplateLibrary {
                 roachHiveShip(),
                 roachSwarmRaider(),
                 gokWarship(),
-                lostSoldiersTransport());
+                lostSoldiersTransport(),
+
+                // --- Terran Republic universe: additional lore vessels ---
+                caineRiordanSurveyCutter(),
+                ueDreadnought(),
+                lostSoldiersArmedFreighter(),
+                hkhRkhStrikeCraft(),
+                aratKurDreadnought(),
+                dornaaniCustodianCarrier());
     }
 
     private SpaceshipDesign galaxyClassExplorer() {
@@ -942,7 +950,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign spinDogQShip() {
         return SpaceshipBuilder.create("SpinDog Q-Ship")
-                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("SpinDogs").era("Murphy's Lawless")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("SpinDog").era("Lost Soldiers Era")
                 .designation("SD-Q")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.TERRAN_FUSION_DRIVE)
@@ -956,7 +964,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign spinDogHabitatMonitor() {
         return SpaceshipBuilder.create("SpinDog Habitat Monitor")
-                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("SpinDogs").era("Murphy's Lawless")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("SpinDog").era("Lost Soldiers Era")
                 .designation("SD-MON")
                 .shipClass(ShipClass.FRIGATE)
                 .driveType(DriveType.TERRAN_FUSION_DRIVE)
@@ -970,7 +978,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign rockHoundRaider() {
         return SpaceshipBuilder.create("RockHound Raider")
-                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("RockHounds").era("Murphy's Lawless")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("RockHound").era("Lost Soldiers Era")
                 .designation("RH-R")
                 .shipClass(ShipClass.CORVETTE)
                 .driveType(DriveType.NUCLEAR_THERMAL)
@@ -1074,7 +1082,7 @@ public class SpaceshipTemplateLibrary {
 
     private SpaceshipDesign lostSoldiersTransport() {
         return SpaceshipBuilder.create("Lost Soldiers Transport")
-                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Lost Soldiers").era("Murphy's Lawless")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Lost Soldiers").era("Lost Soldiers Era")
                 .designation("LS-T")
                 .shipClass(ShipClass.FREIGHTER)
                 .driveType(DriveType.FUSION_TORCH)
@@ -1083,6 +1091,95 @@ public class SpaceshipTemplateLibrary {
                 .crew(200).lengthMeters(400)
                 .description("Transport of the Lost Soldiers / Murphy's Lawless thread: a hold full of displaced "
                         + "human troops carried far from home to fight someone else's war.")
+                .build();
+    }
+
+    // ---------------------------- additional lore vessels ----------
+
+    private SpaceshipDesign caineRiordanSurveyCutter() {
+        return SpaceshipBuilder.create("Caine Riordan's Survey Cutter")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("United Earth (UEG)").era("First Contact (2105)")
+                .designation("CRF-0")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(20).engineTons(10).propellantTons(30)
+                .payloadTons(12).crewTons(4).radiatorTons(10)
+                .crew(5).lengthMeters(35)
+                .description("The lightly-armed survey cutter of Caine Riordan's first-contact years: sensors and "
+                        + "long endurance over weapons, the kind of hull that drops him into trouble far from home.")
+                .build();
+    }
+
+    private SpaceshipDesign ueDreadnought() {
+        return SpaceshipBuilder.create("UE Dreadnought")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("United Earth").era("First Contact era")
+                .designation("DN-UE")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(2000).engineTons(700).propellantTons(1800)
+                .payloadTons(500).crewTons(350).radiatorTons(650)
+                .crew(800).lengthMeters(420)
+                .description("The heaviest United Earth line-of-battle ship: maximum armour and main armament to "
+                        + "anchor the wall of battle. Formidable against peers, yet still outclassed ship-for-ship "
+                        + "by the Ktoran Dominion.")
+                .build();
+    }
+
+    private SpaceshipDesign lostSoldiersArmedFreighter() {
+        return SpaceshipBuilder.create("Lost Soldiers Armed Freighter")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Lost Soldiers").era("Lost Soldiers Era")
+                .designation("LS-AF")
+                .shipClass(ShipClass.FREIGHTER)
+                .driveType(DriveType.TERRAN_FUSION_DRIVE)
+                .structureTons(280).engineTons(140).propellantTons(380)
+                .payloadTons(550).crewTons(35).radiatorTons(140)
+                .crew(50).lengthMeters(240)
+                .description("A displaced-soldiers crew's working freighter, quietly up-gunned for the Lost Soldiers / "
+                        + "Murphy's Lawless campaigns: a hauler that can fight when cornered.")
+                .build();
+    }
+
+    private SpaceshipDesign hkhRkhStrikeCraft() {
+        return SpaceshipBuilder.create("Hkh'Rkh Strike Craft")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Hkh'Rkh").era("Post-Contact")
+                .designation("HRS")
+                .shipClass(ShipClass.CORVETTE)
+                .driveType(DriveType.HKHRKH_THRUST)
+                .structureTons(45).engineTons(35).propellantTons(90)
+                .payloadTons(20).crewTons(10).radiatorTons(25)
+                .crew(8).lengthMeters(60)
+                .description("Fast Hkh'Rkh attack craft: all thrust and aggression, flown by warriors who measure "
+                        + "worth by closing the range and striking first.")
+                .build();
+    }
+
+    private SpaceshipDesign aratKurDreadnought() {
+        return SpaceshipBuilder.create("Arat Kur Dreadnought")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Arat Kur Wholenest").era("First Contact era")
+                .designation("AK-DN")
+                .shipClass(ShipClass.CRUISER)
+                .driveType(DriveType.FUSION_TORCH)
+                .structureTons(1200).engineTons(600).propellantTons(1500)
+                .payloadTons(350).crewTons(150).radiatorTons(600)
+                .crew(250).lengthMeters(380)
+                .description("Heavy capital ship of the Arat Kur Wholenest, of the kind that besieged Earth: "
+                        + "methodical, technically strong and dangerous — until its careful plans are upset.")
+                .build();
+    }
+
+    private SpaceshipDesign dornaaniCustodianCarrier() {
+        return SpaceshipBuilder.create("Dornaani Custodian Shift-Carrier")
+                .sourceType(SourceType.SCIENCE_FICTION).sourceUniverse(CR).faction("Dornaani Collective").era("Post-Contact")
+                .designation("DOR-CC")
+                .shipClass(ShipClass.CARRIER)
+                .driveType(DriveType.KTORAN_ADVANCED)
+                .structureTons(3500).engineTons(1800).propellantTons(7000)
+                .payloadTons(2500).crewTons(300).radiatorTons(1200)
+                .crew(60).lengthMeters(700)
+                .carry("Custodian Drone", ShipClass.FIGHTER, 24, 12, "automated enforcement")
+                .carry("Shuttle", ShipClass.SHUTTLE, 8, 30, "contact / transfer")
+                .description("Enforcement carrier of the Dornaani Custodians: pinnacle Accord technology, heavily "
+                        + "automated and barely crewed, policing the Slaasriithi-Dornaani sphere with overwhelming reach.")
                 .build();
     }
 }
