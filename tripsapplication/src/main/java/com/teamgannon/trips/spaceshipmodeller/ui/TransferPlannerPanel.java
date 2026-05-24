@@ -29,6 +29,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -140,7 +141,7 @@ public class TransferPlannerPanel extends BorderPane {
         table.getColumns().setAll(List.of(
                 col(get("planner.col.route", "Origin → Destination"), "route", 180),
                 col(get("planner.col.ship", "Ship"), "ship", 130),
-                col(get("planner.col.deltaV", "Total Δv"), "deltaV", 100),
+                deltaVColumn(get("planner.col.deltaV", "Total Δv"), 100),
                 col(get("planner.col.status", "Status"), "status", 140)));
         table.getSelectionModel().selectedItemProperty().addListener((o, a, b) -> {
             SavedTransferPlan plan = b == null ? null : b.getPlan();
@@ -156,6 +157,21 @@ public class TransferPlannerPanel extends BorderPane {
         TableColumn<TransferPlanRow, String> c = new TableColumn<>(header);
         c.setCellValueFactory(new PropertyValueFactory<>(property));
         c.setPrefWidth(width);
+        return c;
+    }
+
+    /** Δv column bound to the raw number so it sorts numerically, rendered with the "km/s" suffix. */
+    private static TableColumn<TransferPlanRow, Number> deltaVColumn(String header, int width) {
+        TableColumn<TransferPlanRow, Number> c = new TableColumn<>(header);
+        c.setCellValueFactory(new PropertyValueFactory<>("deltaVValue"));
+        c.setPrefWidth(width);
+        c.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Number value, boolean empty) {
+                super.updateItem(value, empty);
+                setText(empty || value == null ? null : "%.2f km/s".formatted(value.doubleValue()));
+            }
+        });
         return c;
     }
 

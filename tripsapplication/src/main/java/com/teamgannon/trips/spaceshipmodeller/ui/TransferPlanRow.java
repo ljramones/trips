@@ -30,6 +30,11 @@ public class TransferPlanRow {
         return "%.2f km/s".formatted(plan.totalDeltaVKmps());
     }
 
+    /** @return total delta-V in km/s as a raw number, so the table column sorts numerically */
+    public double getDeltaVValue() {
+        return plan.totalDeltaVKmps();
+    }
+
     public String getStatus() {
         return plan.feasibility().label();
     }

@@ -50,10 +50,12 @@ public class SpaceshipRow {
         return design.crewComplement();
     }
 
-    /** @return estimated delta-V, formatted for display ("n/a" for reactionless drives) */
-    public String getDeltaV() {
-        double dv = design.estimateDeltaVKmps();
-        return Double.isNaN(dv) ? "n/a" : "%.0f km/s".formatted(dv);
+    /**
+     * @return estimated delta-V in km/s as a raw number, so the table column sorts numerically
+     * (NaN for reactionless drives, which sorts to the end)
+     */
+    public double getDeltaVValue() {
+        return design.estimateDeltaVKmps();
     }
 
     /** @return "Yes" if this design is acting as a mothership, otherwise "No" */

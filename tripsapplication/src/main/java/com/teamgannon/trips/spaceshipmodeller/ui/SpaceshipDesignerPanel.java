@@ -22,6 +22,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -205,7 +206,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         TableColumn<SpaceshipRow, String> catCol = col(get("column.category"), "category", 120);
         TableColumn<SpaceshipRow, Number> massCol = col(get("column.mass"), "mass", 100);
         TableColumn<SpaceshipRow, Number> crewCol = col(get("column.crew"), "crew", 60);
-        TableColumn<SpaceshipRow, String> deltaVCol = col(get("column.deltaV"), "deltaV", 90);
+        TableColumn<SpaceshipRow, Number> deltaVCol = deltaVColumn(get("column.deltaV"), 90);
         TableColumn<SpaceshipRow, String> motherCol = col(get("column.mothership"), "mothership", 90);
 
         table.getColumns().setAll(
@@ -228,6 +229,29 @@ public class SpaceshipDesignerPanel extends BorderPane {
         TableColumn<S, T> c = new TableColumn<>(header);
         c.setCellValueFactory(new PropertyValueFactory<>(property));
         c.setPrefWidth(prefWidth);
+        return c;
+    }
+
+    /**
+     * Δv column bound to the raw numeric value so it sorts numerically, but rendered with the "km/s"
+     * suffix (and "n/a" for reactionless drives, whose Δv is NaN).
+     */
+    private static TableColumn<SpaceshipRow, Number> deltaVColumn(String header, int prefWidth) {
+        TableColumn<SpaceshipRow, Number> c = new TableColumn<>(header);
+        c.setCellValueFactory(new PropertyValueFactory<>("deltaVValue"));
+        c.setPrefWidth(prefWidth);
+        c.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Number value, boolean empty) {
+                super.updateItem(value, empty);
+                if (empty || value == null) {
+                    setText(null);
+                } else {
+                    double dv = value.doubleValue();
+                    setText(Double.isNaN(dv) ? "n/a" : "%.0f km/s".formatted(dv));
+                }
+            }
+        });
         return c;
     }
 
