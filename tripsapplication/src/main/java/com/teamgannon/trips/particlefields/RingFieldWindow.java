@@ -137,6 +137,11 @@ public class RingFieldWindow {
         stage.setScene(scene);
         updateWindowTitle();
 
+        // Phase 2.4: stop the AnimationTimer and release the renderer when the
+        // user closes the window. Without this the timer keeps firing per-frame
+        // after the stage is gone.
+        stage.setOnCloseRequest(event -> dispose());
+
         setupKeyHandlers();
         subScene.setFocusTraversable(true);
         startAnimation();

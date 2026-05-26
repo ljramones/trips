@@ -267,6 +267,14 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     @EventListener
     public void onSolarSystemDisplayToggleEvent(SolarSystemDisplayToggleEvent event) {
+        // Phase 2.2: defensive FX-thread wrap. Spring delivers events on the publisher
+        // thread; this handler mutates the scene graph (toggle*-methods), so we must
+        // be on the FX thread before touching it. runOnFxThread is a no-op when
+        // already on the FX thread.
+        FxThread.runOnFxThread(() -> handleDisplayToggle(event));
+    }
+
+    private void handleDisplayToggle(SolarSystemDisplayToggleEvent event) {
         log.info("Solar system display toggle: {} -> {}", event.getToggleType(), event.isEnabled());
         switch (event.getToggleType()) {
             case ECLIPTIC_PLANE -> toggleEclipticPlane(event.isEnabled());
@@ -285,6 +293,11 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     @EventListener
     public void onSolarSystemScaleEvent(SolarSystemScaleEvent event) {
+        // Phase 2.2: defensive FX-thread wrap.
+        FxThread.runOnFxThread(() -> handleScaleEvent(event));
+    }
+
+    private void handleScaleEvent(SolarSystemScaleEvent event) {
         log.info("Solar system scale event: {} ", event.getChangeType());
         switch (event.getChangeType()) {
             case SCALE_MODE -> {
@@ -311,6 +324,12 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     @EventListener
     public void onSolarSystemAnimationEvent(SolarSystemAnimationEvent event) {
+        // Phase 2.2: defensive FX-thread wrap. animationController drives an
+        // AnimationTimer, which must be started/stopped on the FX thread.
+        FxThread.runOnFxThread(() -> handleAnimationEvent(event));
+    }
+
+    private void handleAnimationEvent(SolarSystemAnimationEvent event) {
         if (animationController == null) {
             log.warn("Animation event received but no animation controller available");
             return;
@@ -693,13 +712,17 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
     @EventListener
     public void onSolarSystemCameraEvent(SolarSystemCameraEvent event) {
-        switch (event.getAction()) {
-            case TOP_DOWN -> cameraController.animatePreset(90, 0, 0);
-            case EDGE_ON -> cameraController.animatePreset(0, 90, 0);
-            case OBLIQUE -> cameraController.animatePreset(35, 45, 0);
-            case FOCUS_SELECTED -> cameraController.focusOn(selectedNode, world);
-            case RESET_VIEW -> cameraController.resetView();
-        }
+        // Phase 2.2: defensive FX-thread wrap. Camera transforms mutate the
+        // scene graph.
+        FxThread.runOnFxThread(() -> {
+            switch (event.getAction()) {
+                case TOP_DOWN -> cameraController.animatePreset(90, 0, 0);
+                case EDGE_ON -> cameraController.animatePreset(0, 90, 0);
+                case OBLIQUE -> cameraController.animatePreset(35, 45, 0);
+                case FOCUS_SELECTED -> cameraController.focusOn(selectedNode, world);
+                case RESET_VIEW -> cameraController.resetView();
+            }
+        });
     }
 
     // ==================== Transfer Planning ====================

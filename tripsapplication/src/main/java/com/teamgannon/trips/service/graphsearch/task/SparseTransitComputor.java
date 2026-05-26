@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 
@@ -23,14 +24,29 @@ public class SparseTransitComputor {
 
     private final List<SparseTransit> sparseTransitList = new ArrayList<>();
 
+    /** How long to wait for graceful executor termination before force-killing. */
+    private static final long SHUTDOWN_AWAIT_SECONDS = 30L;
+
     /**
      * the constructor
      */
     public SparseTransitComputor() {
         collisionSet = ConcurrentHashMap.newKeySet();
 
-        // create a thread pool based on the number of cores on the machine
-        executorService = Executors.newFixedThreadPool(getNumCores());
+        // Phase 2.3: daemon-thread pool so worker threads don't keep the JVM alive
+        // after this computor finishes. (Used only by the standalone main() entry
+        // point today, but kept consistent with LargeGraphSearchTask.)
+        executorService = Executors.newFixedThreadPool(getNumCores(), daemonThreadFactory("sparse-transit"));
+    }
+
+    /** Daemon-thread factory with a stable name prefix for log readability. */
+    private static ThreadFactory daemonThreadFactory(String namePrefix) {
+        AtomicLong seq = new AtomicLong();
+        return r -> {
+            Thread t = new Thread(r, namePrefix + "-" + seq.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        };
     }
 
     /**
@@ -140,8 +156,18 @@ public class SparseTransitComputor {
             // return what was done so far if anything
             return sparseTransitList;
         } finally {
-            // clear our thread pool
+            // Phase 2.3: orderly shutdown + bounded await + force kill if needed.
             executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(SHUTDOWN_AWAIT_SECONDS, TimeUnit.SECONDS)) {
+                    log.warn("Sparse-transit executor did not terminate within {}s; forcing shutdown",
+                            SHUTDOWN_AWAIT_SECONDS);
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                executorService.shutdownNow();
+            }
         }
     }
 

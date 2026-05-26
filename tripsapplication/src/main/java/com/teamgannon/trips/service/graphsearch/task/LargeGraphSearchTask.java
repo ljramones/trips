@@ -18,6 +18,7 @@ import org.jgrapht.graph.DefaultEdge;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class LargeGraphSearchTask extends Task<GraphRouteResult> {
@@ -62,8 +63,32 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
         collisionSet = ConcurrentHashMap.newKeySet();
 
-        // create a thread pool based on the number of cores on the machine
-        executorService = Executors.newFixedThreadPool(getNumCores());
+        // Phase 2.3: daemon-thread pool so worker threads don't keep the JVM alive
+        // after the search task ends. Named for log clarity.
+        executorService = Executors.newFixedThreadPool(getNumCores(), daemonThreadFactory("graph-search"));
+    }
+
+    /** Daemon-thread factory with a stable name prefix for log readability. */
+    private static ThreadFactory daemonThreadFactory(String namePrefix) {
+        AtomicLong seq = new AtomicLong();
+        return r -> {
+            Thread t = new Thread(r, namePrefix + "-" + seq.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        };
+    }
+
+    /**
+     * JavaFX hook fired when the Task is cancelled (by `cancel()` from any thread).
+     * Phase 2.3: aggressively tear down the executor so worker threads stop
+     * promptly and release JPA connections / memory.
+     */
+    @Override
+    protected void cancelled() {
+        super.cancelled();
+        log.info("Graph search cancelled; shutting down worker pool");
+        shutdownExecutorNow();
+        releaseInternalState();
     }
 
     /**
@@ -315,10 +340,51 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
             // return what was done so far if anything
             return sparseTransitList;
         } finally {
-            // clear our thread pool
-            executorService.shutdown();
+            // Phase 2.3: orderly shutdown + bounded await + force kill if needed.
+            shutdownExecutorOrderly();
         }
     }
+
+    /**
+     * Orderly executor shutdown — refuses new tasks, waits up to {@link #SHUTDOWN_AWAIT_SECONDS}
+     * for in-flight work to finish, then force-kills any stragglers. Used at the end of a
+     * successful run; for cancellation use {@link #shutdownExecutorNow()} directly.
+     */
+    private void shutdownExecutorOrderly() {
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(SHUTDOWN_AWAIT_SECONDS, TimeUnit.SECONDS)) {
+                log.warn("Graph search executor did not terminate within {}s; forcing shutdown",
+                        SHUTDOWN_AWAIT_SECONDS);
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            executorService.shutdownNow();
+        }
+    }
+
+    /** Eager shutdown — cancels any in-flight tasks immediately. Used on Task cancellation. */
+    private void shutdownExecutorNow() {
+        executorService.shutdownNow();
+        try {
+            if (!executorService.awaitTermination(SHUTDOWN_AWAIT_SECONDS, TimeUnit.SECONDS)) {
+                log.warn("Graph search executor failed to terminate within {}s after shutdownNow()",
+                        SHUTDOWN_AWAIT_SECONDS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** Release the large in-memory structures so the GC can reclaim ~5M-edge graph state. */
+    private void releaseInternalState() {
+        sparseTransitList.clear();
+        collisionSet.clear();
+    }
+
+    /** How long to wait for graceful executor termination before force-killing. */
+    private static final long SHUTDOWN_AWAIT_SECONDS = 30L;
 
 
     /**

@@ -289,7 +289,8 @@ public class MainPane  {
 
     @EventListener
     public void onOpenWorkbenchEvent(com.teamgannon.trips.events.OpenWorkbenchEvent event) {
-        openDataWorkbench(null);
+        // Phase 2.2: defensive FX-thread wrap; opens a Stage.
+        FxThread.runOnFxThread(() -> openDataWorkbench(null));
     }
 
     private void addResizeListeners() {
@@ -584,7 +585,8 @@ public class MainPane  {
 
     @EventListener
     public void onGraphEnablesPersistEvent(GraphEnablesPersistEvent event) {
-        updateToggles(event.getGraphEnablesPersist());
+        // Phase 2.2: defensive FX-thread wrap; updateToggles mutates toolbar state.
+        FxThread.runOnFxThread(() -> updateToggles(event.getGraphEnablesPersist()));
     }
 
     /**

@@ -482,17 +482,16 @@ Verification:
 - `./mvnw-java25.sh -pl tripsapplication test -Dtest='StarMassNormalizerTest,TransferCalculatorTest,FlywayBaselineSmokeTest' test` passed — the smoke test exercises V1→V2→V3→V4 against in-memory H2 followed by Hibernate `validate` against the entity model.
 - Full non-integration suite: **2,714 tests pass, 0 failures** (+5 from new `StarMassNormalizerTest`).
 
-## Phase 2 — Fix FX-thread Freezes (user-visible)
+## Phase 2 — Fix FX-thread Freezes (user-visible) — **COMPLETE**
 
 | # | Action | Issue(s) | Status |
 |---|---|---|---|
-| 2.1 | Wrapped `SolarSystemSpacePane.setSystemToDisplay()` and `refreshCurrentSystem()` in `javafx.concurrent.Task`; added a transient loading indicator; render now happens on `setOnSucceeded`, and stale loads are cancelled/ignored. | 11 | done |
-| 2.2 | Audit every `@EventListener` that mutates the scene graph: ensure each wraps work in `Platform.runLater` *or* document a publisher-thread invariant. Fix `PythonScriptEngine` event delivery first. | 14, 52 | 2 days |
-| 2.3 | Move graph search and transit computation to a single shared daemon executor. Always `awaitTermination` + `shutdownNow` on cancellation. Clear large in-memory graph structures in `finally`. | 27 | 1-2 days |
-| 2.4 | Add an `@PreDestroy` / dialog-close hook to unregister listeners on disposable dialogs. Audit each dialog controller's event subscriptions. | 37 | 2 days |
+| 2.1 | Wrapped `SolarSystemSpacePane.setSystemToDisplay()` and `refreshCurrentSystem()` in `javafx.concurrent.Task` via a shared `loadAndRenderSystem(...)` helper; added a transient loading indicator; render now happens on `setOnSucceeded`, stale loads are cancelled/ignored, failures surface via `setOnFailed` + error alert. | 11 | done |
+| 2.2 | Audited 22 `@EventListener`-bearing classes. Confirmed UIStateSynchronizer/PlotManager/SystemPreferencesService don't touch the scene graph. Defensively wrapped six listeners that DID mutate scene graph but lacked an FX-thread wrap: `SolarSystemSpacePane.onSolarSystemDisplayToggleEvent`, `onSolarSystemScaleEvent`, `onSolarSystemAnimationEvent`, `onSolarSystemCameraEvent`; `MainPane.onOpenWorkbenchEvent`, `onGraphEnablesPersistEvent`. Fixed `PythonScriptEngine` to publish via `FxThread.runOnFxThread` (plus fixed two `log.error` typo + string-concat sites it carried). Documented the threading contract in `CLAUDE.md` under "JavaFX Thread Safety > `@EventListener` threading contract" with the canonical defensive idiom. | 14, 52 | done |
+| 2.3 | `LargeGraphSearchTask` + `SparseTransitComputor` now use a **daemon** `ThreadFactory` (named `graph-search-N` / `sparse-transit-N` for log clarity). After the work completes the executor is shut down orderly with bounded `awaitTermination(30s)` followed by `shutdownNow()` on timeout. `LargeGraphSearchTask` also overrides `Task.cancelled()` to call `shutdownNow()` eagerly + release the ~5M-edge `sparseTransitList` and `collisionSet` so the GC can reclaim graph state immediately. `SparseTransitComputor` is dead code in production today (only its own `main()` calls it) but got the same treatment for consistency. | 27 | done |
+| 2.4 | Audited the `dialogs/` and `workbench/` packages — **zero** `@EventListener` annotations there, so Issue 37's premise (dialogs holding listener registrations) doesn't apply in this codebase. The real leak risk was `AnimationTimer` lifecycle in stand-alone windows: `AsteroidFieldWindow` and `RingFieldWindow` each had a `dispose()` method but no `setOnCloseRequest` hook, so the timer kept firing after the user closed the window. Both got `stage.setOnCloseRequest(event -> dispose())`. Verified `ProceduralPlanetViewerDialog` (the real "dialog" of the bunch) already has its close→stopAnimation hook, and `OrbitalAnimationController` is fully lifecycle-managed by `SolarSystemSpacePane`. | 37 | done |
 
-Verification for Phase 2.1:
-- `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
+**Verification**: full non-integration suite 2,714 tests, no regressions. Compile clean. `FlywayBaselineSmokeTest` still asserts entity↔V1+V2+V3+V4 schema match.
 
 ## Phase 3 — Architectural Sanity (before adding more features)
 

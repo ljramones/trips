@@ -908,14 +908,36 @@ The direction vector is preserved; only the magnitude changes. This maintains th
 
 ### JavaFX Thread Safety
 
-All UI updates must occur on JavaFX Application Thread:
+All UI updates must occur on the JavaFX Application Thread. The project ships a tiny helper, `com.teamgannon.trips.javafxsupport.FxThread`, that handles the "already on FX thread? run inline; else `Platform.runLater`" check:
+
 ```java
-Platform.runLater(() -> {
+FxThread.runOnFxThread(() -> {
     // UI update code
 });
 ```
 
-For background tasks, use `Service<T>` and update UI via progress/message properties.
+For background tasks, use `Service<T>` / `Task<T>` and update UI via progress/message properties, or via `setOnSucceeded` / `setOnFailed` (both fire on the FX thread by the Task contract).
+
+#### `@EventListener` threading contract
+
+Spring delivers `ApplicationEvent`s **synchronously on the publisher's thread** by default. Any `@EventListener` method that mutates the scene graph must therefore wrap its body in `FxThread.runOnFxThread(...)` — even if every known caller is currently on the FX thread, since a future caller from a background `Task` or `@Async` method would corrupt the scene graph silently.
+
+The defensive idiom landed in Phase 2.2 (see `trips-full-codebase-review-2026.md`):
+
+```java
+@EventListener
+public void onSolarSystemDisplayToggleEvent(SolarSystemDisplayToggleEvent event) {
+    FxThread.runOnFxThread(() -> handleDisplayToggle(event));
+}
+
+private void handleDisplayToggle(SolarSystemDisplayToggleEvent event) {
+    // ... mutates scene graph ...
+}
+```
+
+Publishers that may run off the FX thread (e.g. `PythonScriptEngine`, async script runners, import services) should publish via `FxThread.runOnFxThread(() -> eventPublisher.publishEvent(...))` so listeners can stay simple. Belt-and-suspenders is fine — both ends of the bus benefit from the discipline.
+
+Listeners that only mutate plain beans (no scene-graph touch) can skip the wrap, but a comment noting "no scene-graph mutation" is helpful for the next maintainer.
 
 ### Database Transactions
 

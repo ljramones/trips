@@ -174,6 +174,11 @@ public class AsteroidFieldWindow {
         stage.setScene(scene);
         updateWindowTitle();
 
+        // Phase 2.4: when the user closes the window, stop the AnimationTimer and
+        // release the ODE world. Without this hook the timer keeps firing
+        // updateAsteroidPositions() on every frame after the stage is gone.
+        stage.setOnCloseRequest(event -> dispose());
+
         setupKeyHandlers();  // safe now
 
         subScene.setFocusTraversable(true);
