@@ -823,6 +823,18 @@ The codebase uses Lombok extensively:
 
 Ensure Lombok is configured in your IDE.
 
+### Logging
+
+Always use SLF4J parameter substitution; never string-concatenate inside `log.*` calls. The full rule lives in `AGENTS.md` ("Logging" section). TL;DR:
+
+```java
+log.info("loaded {} stars from {}", count, datasetName);   // GOOD
+log.info("loaded " + count + " stars");                    // BAD — defeats lazy eval, allocates
+log.error("import failed for {}", path, ex);               // last arg can be a Throwable
+```
+
+Replace any `e.printStackTrace()` you find with `log.error("...", e)`. Run `scripts/check-logging.sh` to surface violations.
+
 ## Common Pitfalls
 
 ### JavaFX Transform Order

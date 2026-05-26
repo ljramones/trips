@@ -1,9 +1,9 @@
 # TRIPS Codebase Review
 
-**Date**: 2026 (Grok 4.3 review)  
-**Repository**: /Users/larrymitchell/tripsnew/trips (branch: master, +1 commit ahead of origin/master)  
-**Scope**: Full codebase review (917 Java source files, 158 test files)  
-**Focus**: Architecture, code quality, maintainability, adherence to project guidelines (AGENTS.md, Claude.md), Java 25 + Spring Boot 4 + JavaFX 25 specifics, recent additions (spaceshipmodeller, fleet modeling)
+**Date**: 2026 (initial pass: Grok 4.3 — review and remediation; second pass: Claude Opus 4.7, 2026-05-26)
+**Repository**: /Users/larrymitchell/tripsnew/trips (branch: master)
+**Scope**: Full codebase review (~1,135 Java source files, ~158 test files at second pass)
+**Focus**: Architecture, code quality, maintainability, adherence to project guidelines (AGENTS.md, CLAUDE.md), Java 25 + Spring Boot 4 + JavaFX 25 specifics, recent additions (spaceshipmodeller, fleet modelling, transfer planner).
 
 ---
 
@@ -19,33 +19,35 @@ The application successfully integrates:
 - JPA/Hibernate with H2 embedded DB and batch loading for large catalogs
 - Extensive sci-fi features (polities, procedural planet generation via accretion models, spaceship design with mass budgets and transfer planning)
 
-**Overall Assessment**: The codebase is in good health. Core visualization and data layers are mature and incorporate hard-won lessons (documented extensively in Claude.md). Recent feature work (spaceshipmodeller, Caine Riordan fleet additions) follows existing architectural patterns well. 
+**Overall Assessment**: The codebase is in good health. Core visualization and data layers are mature and incorporate hard-won lessons (documented extensively in CLAUDE.md). Recent feature work (spaceshipmodeller, Caine Riordan fleet additions) follows existing architectural patterns well.
 
-**Dominant Risk Areas**:
-1. **Incomplete Spring Boot 4 / Jackson 3 migration** (active plan exists; mixed Jackson 2 usage remains in new code).
-2. **Platform-specific hardcoding** (macOS paths in main bootstrap and config).
-3. **Central "God class" tendencies** in MainPane and large orchestrators.
-4. **Debug artifacts** left in production paths (System.out.println in graph search task).
-5. **Growing complexity** in new subsystems (54 files in spaceshipmodeller) without clear integration boundaries yet.
+**Dominant Risk Areas** (after first-pass remediation):
+1. **Bulk-import session hygiene & schema-migration story** — `ddl-auto: update` with no migration tool and no flush/clear in the import path. Both will bite at the 2M-star scale.
+2. **FX-thread blocking on JPA queries** in solar-system jump-into and refresh paths.
+3. **Mutable global state** (`TripsContext`) injected into ~113 sites with no synchronization.
+4. **God-class growth** in renderers, workbench, and the procedural-planet dialog (several files >1,500 lines).
+5. **Event-bus used as synchronous RPC** — chains of listeners that publish follow-up events instead of calling methods directly.
+6. **Unit ambiguity on `StarObject.mass`** — patched in the transfer calculator but the underlying entity still stores heterogeneous units.
 
-No critical runtime bugs or security vulnerabilities were found in the reviewed core paths. Test coverage is above average for a UI-heavy scientific application (~17% test-to-source file ratio, with dedicated test packages for planetary modelling and spaceshipmodeller).
+No critical runtime bugs or security vulnerabilities found in core paths. Test coverage is above average for a UI-heavy scientific application but has hard gaps in `service/importservices/`, `dialogs/`, and `graphics/panes/`.
 
 ---
 
 ## Strengths
 
-- **3D Label Billboard Implementation** (`StarLabelManager`, `SolarSystemLabelManager`): Excellent depth-sorted collision detection, throttling, NaN/visibility clipping, font scaling with camera Z, and correct two-step coordinate transforms. Matches "lessons learned" in Claude.md precisely.
+- **3D Label Billboard Implementation** (`StarLabelManager`, `SolarSystemLabelManager`): Excellent depth-sorted collision detection, throttling, NaN/visibility clipping, font scaling with camera Z, and correct two-step coordinate transforms. Matches "lessons learned" in CLAUDE.md precisely.
 - **Performance-conscious routing**: KD-Tree graph building (O(n log n)) for large datasets in `LargeGraphSearchTask`; concurrent transit computation; proper use of JavaFX `Service`/`Task` for long-running work.
 - **Domain modeling**: Rich `StarObject`, `SolarSystem`, `ExoPlanet` entities with proper embedded components, indexes, and relationships. New `SpaceshipEntity` follows the same conventions with excellent Javadoc.
 - **Event-driven decoupling**: Heavy, correct use of `ApplicationEventPublisher` and `@EventListener` for cross-component communication (avoids tight coupling between UI and services).
 - **Test discipline in complex areas**: Dedicated tests for procedural planet generation (biome, tectonics, elevation, erosion), routing automation, spaceship integration/transfer feasibility, and repository integration. Many benchmarks (JMH) for hot paths.
-- **Documentation of pitfalls**: `Claude.md` is exceptional – captures real lessons about JavaFX transform order, radial vs. per-axis scaling, label updates, etc. Rare in open projects.
+- **Documentation of pitfalls**: `CLAUDE.md` is exceptional — captures real lessons about JavaFX transform order, radial vs. per-axis scaling, label updates, etc. Rare in open projects.
 - **Modern service patterns**: `@Transactional` on write paths in `SolarSystemService` and new spaceship services; constructor injection; proper async handling.
-- **Recent feature work quality**: Spaceshipmodeller (`MassBudget`, `TransferPlanService`, validation rules engine, JSON persistence) follows existing entity/mapper/service patterns and is well-tested.
+- **Spaceshipmodeller internal layering**: 19 phases of additions without rot inside the module — domain → entity → service → UI stays clean.
+- **First-pass remediation actually landed**: commit `02716ae2 address codebase review findings` closed Issues 1-9 (see Status fields below).
 
 ---
 
-## Issues
+## First-Pass Issues (2026 — Grok 4.3)
 
 ### Issue 1 -- Severity: bug
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:139
@@ -79,68 +81,39 @@ No critical runtime bugs or security vulnerabilities were found in the reviewed 
 
 ### Issue 6 -- Severity: suggestion
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/ExoPlanet.java:24-70 (Javadoc block)
-- **Description**: The class Javadoc is a verbatim copy-paste of the exoplanet.eu CSV format description instead of proper entity documentation. Similar pollution may exist elsewhere.
+- **Description**: The class Javadoc is a verbatim copy-paste of the exoplanet.eu CSV format description instead of proper entity documentation.
 - **Suggestion**: Replace with concise entity purpose, key relationships (`solarSystemId`, `hostStarId`, `parentPlanetId`), and status/usage notes.
 - **Status**: done -- replaced the copied CSV-schema prose with concise entity documentation.
 
 ### Issue 7 -- Severity: suggestion
-- **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/persistence/SpaceshipDesignMapper.java and related Jackson usage across ~14 files (see SPRING_BOOT_4_MIGRATION_PLAN.md)
-- **Description**: Active migration to Spring Boot 4 / Jackson 3 (`tools.jackson.*`) is incomplete. New spaceshipmodeller code still uses `com.fasterxml.jackson`. Risk of breakage on full enforcement or when compatibility layer is removed.
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/persistence/SpaceshipDesignMapper.java and related Jackson usage across ~14 files
+- **Description**: Active migration to Spring Boot 4 / Jackson 3 (`tools.jackson.*`) was incomplete; new spaceshipmodeller code still used `com.fasterxml.jackson`.
 - **Suggestion**: Complete the Jackson 3 migration (or document the decision to stay on Jackson 2 compatibility for now). Update the migration plan status.
 - **Status**: done -- application and affected test code now use `tools.jackson.*`; Jackson annotations intentionally remain under `com.fasterxml.jackson.annotation`.
 
 ### Issue 8 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:64
-- **Description**: `collisionSet = ConcurrentHashMap.newKeySet(collisionMap.size());` where `collisionMap` is a freshly created empty `ConcurrentHashMap`. The size is 0; this is likely dead or incorrect initialization.
-- **Suggestion**: Simplify to `ConcurrentHashMap.newKeySet()` (no-arg) or remove if unused.
+- **Description**: `collisionSet = ConcurrentHashMap.newKeySet(collisionMap.size());` where `collisionMap` is a freshly created empty `ConcurrentHashMap`. Size is 0.
+- **Suggestion**: Simplify to `ConcurrentHashMap.newKeySet()` (no-arg).
 - **Status**: done -- simplified to `ConcurrentHashMap.newKeySet()`.
 
 ### Issue 9 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java (and other large orchestrators)
-- **Description**: `MainPane` (~781 lines) acts as a central hub with many responsibilities (menu wiring, plot control, event listening, system tray, dialog orchestration, busy state). Similar patterns in other controllers.
+- **Description**: `MainPane` (~781 lines) acts as a central hub with many responsibilities.
 - **Suggestion**: Continue the existing split (see `MainSplitPaneManager`, sub-controllers) and extract more focused coordinators for menu vs. visualization concerns.
-- **Status**: follow-up -- system tray startup was extracted; further decomposition should target dialog orchestration and busy-state handling in separate coordinators.
+- **Status**: follow-up -- system tray startup was extracted; further decomposition should target dialog orchestration and busy-state handling in separate coordinators. **Tracked in second-pass Issue 18 (god classes).**
 
 ### Issue 10 -- Severity: nit
 - **File**: Multiple (e.g., `LargeGraphSearchService`, import tasks, UI panels)
-- **Description**: Inconsistent string formatting (`String.format`, `"%s".formatted()`, `+` concatenation) and log message style. Some logs use parameterized logging, others do not.
-- **Suggestion**: Standardize on SLF4J parameterized logging (`log.info("Loaded {} stars", count)`) everywhere. Prefer `formatted()` or text blocks for complex messages.
-- **Status**: partial -- touched reviewed graph-search and startup/logging paths; repo-wide formatting/log-style cleanup remains a broad follow-up.
+- **Description**: Inconsistent string formatting and log message style.
+- **Suggestion**: Standardize on SLF4J parameterized logging (`log.info("Loaded {} stars", count)`) everywhere.
+- **Status**: partial -- touched reviewed graph-search and startup/logging paths; **repo-wide cleanup tracked in second-pass Issue 41.**
 
 ---
 
-## Additional Observations & Recommendations
+## First-Pass Remediation Pass Completed
 
-1. **Testing**: Excellent investment in the planetary modelling and spaceshipmodeller test suites. Consider adding more TestFX or headless JavaFX tests for the core `InterstellarSpacePane` / label update paths (currently light). The 1412 surefire reports suggest heavy use of parameterized / inner-class tests – verify this doesn't mask coverage gaps.
-
-2. **Documentation**: `Claude.md` and `AGENTS.md` are outstanding. The user manual under `docs/user-manual/` is comprehensive. Consider adding architecture decision records (ADRs) for major choices (e.g., "Why custom Kepler sampling vs. full Orekit propagation today").
-
-3. **Performance / Scaling**: The KD-Tree + concurrent transit work for large graphs is a strong foundation. Monitor memory during 100k+ star imports (H2 + Hibernate batching at 50 may need tuning for very large catalogs).
-
-4. **Future-proofing**: Orekit is present for future orbital animation. The `planetNodes` map in `SolarSystemRenderer` is already prepared for position updates – good incremental design.
-
-5. **Build / Tooling**: Maven wrapper + Java 25 enforcement via `mvnw-java25.sh` is correct. The custom 3rd-party lib installation (toxi physics, etc.) during validate phase is fragile – consider shading or proper Maven deployment if possible.
-
-6. **Recent Commits**: The last 5 commits focus on sci-fi fleet modeling (Caine Riordan provenance, faction drives, gap-filling vessels). This work is consistent with the app's dual "real astronomy + hard sci-fi" mission.
-
----
-
-## Verdict
-
-**Healthy, mature codebase with strong recent engineering.** The core 3D + data + routing heart is solid and battle-tested. New subsystems are being added with good fidelity to existing patterns. The main risks are around the ongoing Spring Boot 4 / Jackson migration and a handful of platform / debug hygiene issues.
-
-**Recommended next steps** (prioritized):
-1. Remove the `System.out.println` and TBD placeholders in graph search (quick wins).
-2. Centralize and parameterize all user-home / platform data paths.
-3. Complete or explicitly defer the Jackson 3 migration with a clear decision.
-4. Audit and isolate AWT/SystemTray usage.
-5. Add a proper global exception handler + user-facing crash reporting flow.
-
-**Implementation progress**: Steps 1-4 are complete. Step 5 now has SLF4J logging and a user-facing alert path; deeper integration with the problem-report workflow remains a future enhancement.
-
-## Remediation Pass Completed
-
-The review remediation pass addressed the concrete issues above in application-owned code:
+The first remediation pass addressed Issues 1-10 in application-owned code:
 
 - Completed the Jackson 3 migration for application and affected test sources by moving core/databind usage to `tools.jackson.*`; Jackson annotations intentionally remain under `com.fasterxml.jackson.annotation`.
 - Added `TripsApplicationPaths` and wired startup, `application.yml`, logback, reports, and scripting to centralized cross-platform paths.
@@ -151,19 +124,447 @@ The review remediation pass addressed the concrete issues above in application-o
 - Replaced the copied exoplanet CSV schema prose in `ExoPlanet` with concise entity documentation.
 - Updated `SPRING_BOOT_4_MIGRATION_PLAN.md` to show the Jackson migration as complete.
 
-Verification was run with the mandated Java 25 Maven wrapper:
-
+Verification:
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
-- Focused Jackson persistence tests passed: `DataSetDescriptorSerializationServiceTest`, `ProceduralPlanetPersistenceHelperTest`, `SpaceshipJsonServiceTest`, `SpaceshipDesignMapperTest`, and `TransferPlanMapperTest`.
-- Full `./mvnw-java25.sh -q -pl tripsapplication test` executed 2711 tests with 0 assertion failures and 4 Testcontainers errors caused by Docker being unavailable in the sandbox (`DataSetDescriptorRepositoryIntegrationTest`, `ExoPlanetRepositoryIntegrationTest`, `SolarSystemRepositoryIntegrationTest`, `StarObjectRepositoryIntegrationTest`).
+- Focused Jackson persistence tests passed: `DataSetDescriptorSerializationServiceTest`, `ProceduralPlanetPersistenceHelperTest`, `SpaceshipJsonServiceTest`, `SpaceshipDesignMapperTest`, `TransferPlanMapperTest`.
+- Full `./mvnw-java25.sh -q -pl tripsapplication test` executed 2,711 tests with 0 assertion failures and 4 Testcontainers errors caused by Docker being unavailable in the sandbox.
 
-No blockers to continued development. The project is in a good position for its ambitious scope.
+---
+
+# Second Review Pass — 2026-05-26 (Claude Opus 4.7)
+
+**Methodology**: Six parallel `Explore` sub-agents, each briefed not to re-report items in Issues 1-10. Concern areas: architecture & coupling, data model & JPA persistence, JavaFX concurrency & threading, UI/UX/accessibility, performance & memory, and code quality/hygiene. Synthesis and ordering by the main agent.
+
+**Headline**: First-pass remediation holds up. The new pass surfaces **47 additional findings** weighted toward:
+- (a) FX-thread blocking on JPA queries in solar-system flows
+- (b) absent schema-migration story under `ddl-auto: update`
+- (c) bulk-import session hygiene & batch-size mismatch
+- (d) god-class growth in renderers / workbench / procedural-planet dialog
+- (e) an event bus that is increasingly used as synchronous RPC
+- (f) unit ambiguity on `StarObject.mass` that was only patched at one call site
+
+None are blocker-grade. Several are silent correctness bugs that will keep biting.
+
+---
+
+## Second-Pass Issues
+
+### Issue 11 -- Severity: bug (critical)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/graphics/panes/SolarSystemSpacePane.java:327-332 ; also 699-707 (`refreshCurrentSystem`)
+- **Description**: `setSystemToDisplay()` and `refreshCurrentSystem()` call `solarSystemService.getSolarSystem()` synchronously on the JavaFX Application Thread. That method runs `exoPlanetRepository.findBySolarSystemId()` and `featureRepository.findBySolarSystemId()` (`SolarSystemService.java:85,89`). The UI freezes during "Jump Into…" while DB I/O completes.
+- **Suggestion**: Wrap the load in `javafx.concurrent.Task<SolarSystemDescription>`; show a transient progress indicator; render on the `setOnSucceeded` callback.
+- **Status**: open
+
+### Issue 12 -- Severity: bug (critical)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java (`starBulkSave`) ; tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:38,94 ; tripsapplication/src/main/resources/application.yml:31
+- **Description**: `starBulkSave()` calls `saveAll()` with no `flush()` + `clear()` between batches. Parser uses `BATCH_SIZE = 5000` while `hibernate.jdbc.batch_size: 50` is 100× smaller. For a 2M-star catalog the first-level cache retains every persisted entity; RAM grows linearly with the import.
+- **Suggestion**: Bump `hibernate.jdbc.batch_size` to match the parse batch (e.g., 1,000-5,000); add `entityManager.flush(); entityManager.clear()` after each batch save inside a dedicated `@Transactional` method; consider Spring Batch for very large catalogs.
+- **Status**: open
+
+### Issue 13 -- Severity: bug (critical)
+- **File**: tripsapplication/src/main/resources/application.yml (Hibernate `ddl-auto: update`)
+- **Description**: No migration tool (Flyway/Liquibase). Per project memory, phase 18 abandoned the `series` column on the spaceship entity and phase 12 added `availablePropellantTons` with no backfill — `ddl-auto: update` adds columns but never drops or backfills. Schema drift accumulates silently; old rows lie about their feasibility status.
+- **Suggestion**: Adopt Flyway. Baseline the current schema. Add migrations for every entity addition going forward. Switch `ddl-auto` to `validate` in non-dev profiles. Write a one-time cleanup migration to drop confirmed-orphan columns.
+- **Status**: open
+
+### Issue 14 -- Severity: bug (high)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/config/application/TripsContext.java:74,118-127 (and ~113 injection sites)
+- **Description**: Singleton holding mutable state — `searchContext`, `currentPlot`, `appViewPreferences`, `constellationMap` (HashMap). Mutated from `@EventListener` methods that Spring delivers on the publisher's thread (which can be a background `Task`). No `volatile`, no `synchronized`. Races on dataset-context switches are possible.
+- **Suggestion**: Either (a) wrap mutable fields in `AtomicReference` snapshots / copy-on-write, or (b) split into typed read-only services + a single mutator service guarded by a lock. Document threading invariants on each field.
+- **Status**: open
+
+### Issue 15 -- Severity: bug (high)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:153-154 ; tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/integration/TransferCalculator.java (`toSolarMasses`)
+- **Description**: `StarObject.mass` is documented as solar masses but accrete-generated systems store kg values. Phase 13 patched the *transfer calculator* with a heuristic (`>1000` ⇒ kg). Anything else reading `mass` (gravity calculations, stellar evolution, exports, future Orekit propagation) silently inherits the bug.
+- **Suggestion**: One-time data migration to normalize all stored masses to solar masses + an import validator. If heterogeneous units must be supported, add a `massUnit` enum column and stop relying on a magnitude heuristic.
+- **Status**: open
+
+### Issue 16 -- Severity: suggestion (critical hygiene)
+- **File**: repository root: `HYG-MERGED-2M-TRIPS-11012026202505.csv` (878 MB) ; `exoplanet.eu_catalog_13-01-26_15_50_52.csv` (2.8 MB) ; `30ly.trips.csv` (337 KB) ; `30ly.trips.csv.zip` (107 KB)
+- **Description**: Massive CSVs checked into git. Inflates clones, bloats history forever, and risks accidental wholesale loads.
+- **Suggestion**: Add to `.gitignore`; move sample dataset to a download script with checksum; consider `git filter-repo` to scrub the 878 MB file from history. Document in CLAUDE.md where catalogs live.
+- **Status**: open
+
+### Issue 17 -- Severity: suggestion (architecture)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/{solarsystem,solarsysmodelling,planetary,planetarymodelling} (also `solarsystem/sol/`)
+- **Description**: Four parallel packages whose responsibilities overlap and whose names are easily confused. Cross-imports include `SolarSystemRenderer` ← `planetarymodelling.PlanetDescription` and `PlanetarySkyRenderer` ← `solarsysmodelling.accrete.PlanetTypeEnum` — bidirectional coupling. New developers can't infer which package owns business logic vs presentation.
+- **Suggestion**: Pick a convention (`*modelling` = algorithms; `*` = rendering/UI) and consolidate. Introduce a neutral `model/` package containing shared specs (PlanetSpec, StarSpec) that UI and modelling both depend on.
+- **Status**: open
+
+### Issue 18 -- Severity: suggestion (architecture)
+- **File**: multiple — top offenders by line count:
+  - `solarsystem/rendering/SolarSystemRenderer.java` — 2,004 lines
+  - `dialogs/solarsystem/ProceduralPlanetViewerDialog.java` — 1,936 lines (mixes generation logic + UI + I/O)
+  - `workbench/service/WorkbenchEnrichmentService.java` — 1,832 lines
+  - `workbench/DataWorkbenchController.java` — 1,706 lines
+  - `planetarymodelling/procedural/JavaFxPlanetMeshConverter.java` — 1,644 lines
+  - `service/SolPlanetsInitializer.java` — 1,410 lines
+  - `planetary/rendering/PlanetarySkyRenderer.java` — 1,204 lines
+  - `service/SolarSystemService.java` — 793 lines (generate, save, export, import all in one)
+  - `controller/MainSplitPaneManager.java` — 670 lines (no dedicated test)
+- **Description**: Each does too much; testing & refactor become high-risk. `SolPlanetsInitializer` is the worst architecturally: it treats Sol as a magical special case bypassing the procedural pipeline.
+- **Suggestion**: Decompose one per sprint (see Remediation Plan §4). For Sol specifically, unify with procedural generation via an `ISolarSystemFactory` so it follows the same lifecycle as everything else.
+- **Status**: open
+
+### Issue 19 -- Severity: suggestion (architecture)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/splitting/RouteEventHandler.java:80-108 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/* ; tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java (event listeners)
+- **Description**: 64 components inject `ApplicationEventPublisher`. Event listeners frequently publish follow-up events (e.g., `NewRouteEvent` → `StatusUpdateEvent` → `BusyStateEvent`) creating synchronous RPC chains routed through the bus. Ordering and failure semantics become opaque. Grep suggests some events have no live listeners (e.g., `ShowStellarDataEvent` after refactors).
+- **Suggestion**: Audit the event graph. For chains that are really "do A then B", promote to direct service calls. Keep the bus for genuinely-broadcast UI updates (status, palette, dataset switch). Optionally add a startup validator that fails fast on events with zero listeners.
+- **Status**: open
+
+### Issue 20 -- Severity: suggestion (architecture)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/graphics/panes/SolarSystemSpacePane.java (constructor — 8 args per phase 8 memory)
+- **Description**: The spaceshipmodeller module's intended boundary is slipping. `SolarSystemSpacePane` now directly injects `SpaceshipService`, `TransferPlannerBridge`, and `TransferPlannerLauncher`. The module is no longer self-contained — the core view code depends on a feature module.
+- **Suggestion**: Invert: have spaceshipmodeller listen for a `TransferTargetRequestedEvent` published by `SolarSystemSpacePane`, and publish `TransferPlanCreatedEvent` / `ShowTransferTrajectoryEvent` back. Remove the direct service refs from the pane constructor.
+- **Status**: open
+
+### Issue 21 -- Severity: suggestion (architecture)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java ; tripsapplication/src/main/java/com/teamgannon/trips/nebula/dialogs/NebulaEditorDialog.java ; vs FxWeaver-loaded controllers elsewhere
+- **Description**: Most controllers load via FxWeaver. A handful of dialogs still call `new FXMLLoader()` directly. Some controllers are Spring-managed, some aren't — inconsistent injection surface.
+- **Suggestion**: Pick one convention. Either route every FXML through FxWeaver, or define a `DialogFactory` that wraps both styles. Add a checkstyle/ArchUnit rule to enforce.
+- **Status**: open
+
+### Issue 22 -- Severity: suggestion (architecture)
+- **File**: tripsapplication/src/main/java/org/fxyz3d/ (117 files)
+- **Description**: A copy of the `org.fxyz3d` library lives inside the source tree. No README or fork-point notes — unclear whether it's modified or verbatim. License + maintenance risk.
+- **Suggestion**: If unmodified, delete and add the upstream Maven coordinate. If forked, move to a separate module (`tripsapplication-fxyz3d-fork/`) with a CHANGELOG describing the diff from upstream.
+- **Status**: open
+
+### Issue 23 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java:85,90-91 ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:106-108 (`aliasList @ElementCollection(fetch = LAZY)`)
+- **Description**: Dialog code calls `Hibernate.isInitialized(record.getAliasList())` and mutates the lazy collection. The dialog runs outside any transactional boundary, so detached entities will throw `LazyInitializationException`. The defensive `isInitialized` check hides — not solves — the problem.
+- **Suggestion**: Load with `JOIN FETCH` in the service layer; pass a `StarEditViewModel` DTO to the UI. Stop letting JPA entities escape into JavaFX bindings.
+- **Status**: open
+
+### Issue 24 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/StarObjectRepository.java:58,216,225,232,256,414,429 (and similar in other repos)
+- **Description**: `findByDataSetNameOrderByDisplayName`, `findByDisplayNameContaining`, `findByConstellationName`, `findBySolarSystemId`, etc., return `List` without `Pageable`. On a 2M-star dataset, an accidental "list all by dataset" call OOMs the JVM.
+- **Suggestion**: Add paginated overloads. Mark the unbounded variants `@Deprecated` with a migration note; remove once callers migrated.
+- **Status**: open
+
+### Issue 25 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/ExoPlanetRepository.java (`findByHostStarId`) + callers
+- **Description**: When code iterates exoplanets and dereferences the host star, each pair becomes a separate query. No `@EntityGraph` or `JOIN FETCH` variant.
+- **Suggestion**: Add `findByHostStarIdGraph(...)` with `@EntityGraph(attributePaths = "hostStar")` (or move to a JPQL `JOIN FETCH`). Document expected eager-vs-lazy assumptions on each finder method.
+- **Status**: open
+
+### Issue 26 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/rendering/OrbitVisualizer.java:81-82,323
+- **Description**: Each orbit creates two fresh `PhongMaterial` instances (`baseMaterial`, `highlightMaterial`). With 10+ planets and moons, hundreds of duplicate materials accumulate. Mesh caching exists (line 78); material caching does not. Adds GPU memory + GC pressure.
+- **Suggestion**: Cache materials by color in a thread-confined map (FX thread) and reuse across orbits.
+- **Status**: open
+
+### Issue 27 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:319 ; tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/SparseTransitComputor.java:33,144
+- **Description**: `LargeGraphSearchTask` calls `shutdown()` in `finally` but never `awaitTermination()` — worker threads can outlive the Task. `SparseTransitComputor` creates a fresh `Executors.newFixedThreadPool(getNumCores())` per instance; multiple concurrent searches stack non-daemon pools that block JVM exit.
+- **Suggestion**: Use one shared, daemon-threaded executor for graph search. Always `shutdown()` + `awaitTermination(timeout)` + `shutdownNow()` fallback. Clear `sparseTransitList` and `collisionSet` in `finally` to release ~5 M-edge graph memory.
+- **Status**: open
+
+### Issue 28 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/BulkLoadService.java:63 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/factories/DataSetDescriptorFactory.java:91
+- **Description**: `loadCSVFile()` is not `@Transactional` and orchestrates a chain that includes `starObjectRepository.saveAll(...)` plus descriptor save. A mid-import crash leaves a partial dataset with no descriptor (or vice versa) — no rollback across the whole import.
+- **Suggestion**: Wrap the entire import in a top-level `@Transactional(rollbackFor = Exception.class)`. Make sure parse-errors abort with a clean state, not "half a dataset".
+- **Status**: open
+
+### Issue 29 -- Severity: suggestion (UX)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/search/FindStarByCommonNameDialog.java:93 (and 27 other `new Alert(...)` sites)
+- **Description**: Modal `Alert` is used for inline validation messages like "you must enter a partial id". Blocks the whole app for a non-critical UX nudge.
+- **Suggestion**: Use inline validation (red border + small error label below the field). Reserve modal `Alert` for genuinely-blocking errors (DB failure, unreadable file).
+- **Status**: open
+
+### Issue 30 -- Severity: suggestion (correctness audit)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/utils/* (and any other 3D coordinate transforms)
+- **Description**: CLAUDE.md documents that non-linear scaling MUST be radial, not per-axis. `OrbitVisualizer.toScreen()` is correct. Other 3D paths haven't been audited — if any do `auToScreen(x), auToScreen(y), auToScreen(z)` independently with log scaling, geometry gets squashed.
+- **Suggestion**: Grep for `auToScreen(` and `Math.log` uses on coordinates; verify every site uses the shared radial helper. Add a unit test that fails if anyone reintroduces per-axis scaling.
+- **Status**: open
+
+### Issue 31 -- Severity: suggestion (data model)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:273-284 (`miscText1..5`, `miscNum1..5`, `customData1..10`) ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/SolarSystem.java:149-170
+- **Description**: 15+ unused extensibility columns per entity. Always fetched. No schema, no validation. Anti-pattern — looks like extensibility but is actually noise.
+- **Suggestion**: Remove unused fields. If extensibility is genuinely needed, use one JSON column with a JSON Schema validator, or a side `EntityExtension` table keyed by entity id.
+- **Status**: open
+
+### Issue 32 -- Severity: suggestion (UX / i18n)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/ui/TransferPlannerPanel.java:179,299-302
+- **Description**: Hardcoded English strings ("Ship:", "Route:", "Total Δv:", "No maneuvers") in a module that elsewhere routes UI text through `SpaceshipModellerLabels.get(...)`. Drifts from the user's stated `.properties` preference (see memory `trips-properties-file-preference`).
+- **Suggestion**: Move every visible string into `spaceshipmodeller.properties`. Add a build-time scan to warn on hardcoded strings in `spaceshipmodeller/ui/*`.
+- **Status**: open
+
+### Issue 33 -- Severity: suggestion (accessibility)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/ui/TransferPreviewDialog.java:231,240-245,289-293
+- **Description**: Feasibility and transfer-type signaling use color only (green/orange/red text fill). Red-green colorblind users lose the channel.
+- **Suggestion**: Pair every color cue with a glyph prefix (✓ ⚠ ✗) or text token (`[EFFICIENT]`, `[MARGINAL]`, `[INSUFFICIENT]`). Verify WCAG-AA contrast on foreground/background pairs.
+- **Status**: open
+
+### Issue 34 -- Severity: suggestion (UX)
+- **File**: dialog FXMLs under `src/main/resources/com/teamgannon/trips/` (multiple)
+- **Description**: Fixed pixel sizes (e.g., `TransferPlannerPanel` nameCol 150px, nodeTable 160px; `SpaceshipDesignerPanel.validationMessages.prefHeight = 120`) prevent responsive resizing. Users frequently resize the main stage.
+- **Suggestion**: Switch to `HGrow.ALWAYS` / `VGrow.ALWAYS` and percentage column constraints. Test at 1024×768 and 4K.
+- **Status**: open
+
+### Issue 35 -- Severity: suggestion (UX)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/search/FindStarByCommonNameDialog.java:26 (and other text-input dialogs)
+- **Description**: Search/filter `TextField`s lack `promptText` and tooltips. Users have to guess input format.
+- **Suggestion**: Add `setPromptText("e.g., Sol, Alpha C")` and tooltips for non-obvious fields. Document accepted formats inline.
+- **Status**: open
+
+### Issue 36 -- Severity: suggestion (UX)
+- **File**: `controller/menubar/*.fxml` ; main MainPane.fxml
+- **Description**: Menus have no `mnemonicParsing="true"` Alt-key shortcuts. Buttons inconsistent ("Update", "Dismiss", "Confirm").
+- **Suggestion**: Standardize button labels (OK / Cancel / Apply). Add mnemonics to top-level menus (`_File`, `_Tools`, `_Design`).
+- **Status**: open
+
+### Issue 37 -- Severity: bug (medium)
+- **File**: ~50 `@EventListener` Spring beans, especially dialog controllers
+- **Description**: When a dialog closes, its `@EventListener` bean stays in the Spring context and may hold references to disposed JavaFX nodes. Over a long session this compounds into a real leak.
+- **Suggestion**: Either (a) use `@Scope("prototype")` + an explicit unregister hook on dialog close, or (b) move event handling out of dialogs into a coordinator that outlives them. Audit the dialog → listener wiring.
+- **Status**: open
+
+### Issue 38 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:212
+- **Description**: Broad `catch (Exception)` inside the parse loop swallows per-row failures, increments a reject counter, and continues with no context for the bad row.
+- **Suggestion**: Catch `NumberFormatException` / `ArrayIndexOutOfBoundsException` / `DateTimeParseException` specifically. Capture the row number and offending field; emit a summary at end with first N bad rows for the user to inspect.
+- **Status**: open
+
+### Issue 39 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/SolarSystemService.java:239-240 (and other `return null` on error sites)
+- **Description**: `createSolarSystem()` logs an error and returns `null`. Callers either crash on the surprise NPE or have to add defensive null-checks that obscure intent.
+- **Suggestion**: Return `Optional<SolarSystem>` (or throw a checked domain exception). Apply the same fix to the `OptionalValue` bridge methods and `Planet.findPrimaryJovian()`.
+- **Status**: open
+
+### Issue 40 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/accrete/Utils.java:84-103
+- **Description**: `loadFile()` opens a `BufferedReader` and `close()`s manually in a `try/finally`; on exception during read, the close path is fragile. Worse, the catch path calls `System.exit(1)` from a library helper.
+- **Suggestion**: Convert to try-with-resources. Replace `System.exit` with a thrown `IOException` so the caller decides how to handle a missing data file.
+- **Status**: open
+
+### Issue 41 -- Severity: nit
+- **File**: ~67 `log.*` call sites across the codebase
+- **Description**: String-concatenation log messages (`log.info("Discarded " + count + " systems")`) instead of SLF4J parameter substitution. Defeats lazy evaluation; adds GC pressure in hot paths.
+- **Suggestion**: Convert to `log.info("Discarded {} systems", count)`. Add a checkstyle rule to fail builds on `+` inside `log.*` arguments.
+- **Status**: open
+
+### Issue 42 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java:264 ; tripsapplication/src/main/java/com/teamgannon/trips/scripting/ScriptDialog.java:225-239
+- **Description**: Manual `FileInputStream` / `BufferedReader` without try-with-resources. On exception, streams may leak.
+- **Suggestion**: Use try-with-resources everywhere. Add a pass over `file/`, `scripting/`, and `service/importservices/` to confirm.
+- **Status**: open
+
+### Issue 43 -- Severity: nit (correctness debt)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/accrete/StarSystem.java (18+ TODOs) ; `Planet.java` (similar)
+- **Description**: Constants like `PROTOPLANET_MASS`, `DUST_DENSITY_COEFF` carry open `TODO` comments questioning their values. The accrete algorithm correctness is therefore unverified.
+- **Suggestion**: Audit against Dole 1970 (the canonical accretion paper) or document the values as "known approximations" with the reference paper. Convert unresolved TODOs into tracked issues.
+- **Status**: open
+
+### Issue 44 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/astrogation/Coordinates.java:11-27
+- **Description**: 3×3 transformation matrices hardcoded as numeric literals with no source citation. Future maintainers can't tell whether they're equatorial-to-galactic, what epoch (J2000?), or where they came from.
+- **Suggestion**: Extract to named constants (`EQUATORIAL_TO_GALACTIC_J2000`); add Javadoc linking to the IAU definition; add a round-trip unit test.
+- **Status**: open
+
+### Issue 45 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:301 ; SolarSystem.java:237-242 ; ExoPlanet.java:754-764
+- **Description**: ID-only `equals/hashCode` is correct, but `id` itself is not `final`. If any code path mutates `id` after construction, hash-based collections corrupt silently.
+- **Suggestion**: Make UUID `@Id` fields `final` (assign in constructor); add a static factory helper if needed. Add an `@PrePersist` assertion that `id` is non-null and untouched.
+- **Status**: open
+
+### Issue 46 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:255-260 (notes, source) ; ExoPlanet.java:711-729 (procedural snapshots) ; DataSetDescriptor.java:114-144 (JSON LOBs)
+- **Description**: `@Lob` columns lack explicit `@Column(length = ...)` and aren't `@Basic(fetch = LAZY)`. Every find loads them — a non-trivial cost when the catalog has 2M rows.
+- **Suggestion**: Add length caps and `@Basic(fetch = LAZY)`; or split into a side `*_Lob` table joined only when the field is requested.
+- **Status**: open
+
+### Issue 47 -- Severity: suggestion (test coverage)
+- **File**: tripsapplication/src/test/java/...
+- **Description**: Hard gaps: `service/importservices/` has 0 tests (mission-critical), `dialogs/` has 3 tests covering 94 source files, `graphics/panes/` has 6 tests covering 14 source files. `controller/MainSplitPaneManager.java` (670 lines) is untested.
+- **Suggestion**: Prioritize importservices (refactor + characterization tests first). Use TestFX for the most-used dialogs. Add a smoke test for `SolarSystemSpacePane.setSystemToDisplay()` to catch FX-thread regressions.
+- **Status**: open
+
+### Issue 48 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainSplitPaneManager.java:375-376,508-509,521-522,585
+- **Description**: Four event-handler methods do `catch (Exception)` + log + show `Alert`, mixing recoverable failures (parse error) with unrecoverable ones (OOM). Hides bugs.
+- **Suggestion**: Narrow each catch to the specific exception expected. Let unexpected throwables propagate to the global uncaught-exception handler so they're reported via the existing problem-report flow.
+- **Status**: open
+
+### Issue 49 -- Severity: suggestion (accessibility)
+- **File**: ~60 dialogs across the codebase
+- **Description**: No `accessibleText`, `accessibleHelp`, or `AccessibleRole` annotations anywhere. Screen readers see opaque widgets.
+- **Suggestion**: Systematic pass on high-traffic dialogs first (search, route planning, transfer preview). Add `accessibleText` to every button and labelled input.
+- **Status**: open
+
+### Issue 50 -- Severity: suggestion (UI consistency)
+- **File**: only 3 CSS files exist (SearchPane.css, viewer.css, tree-table-view.css). Inline `-fx-...` strings scattered across many dialogs (e.g., `TransferPreviewDialog.java:204`).
+- **Description**: No central stylesheet; per-dialog inline styles make theme changes fragile. Color palette is hardcoded in Java string literals.
+- **Suggestion**: Create `theme.css` with CSS variables (font, spacing, severity colors). Reference from FXML via `stylesheets` attribute. Remove inline `-fx-style` strings.
+- **Status**: open
+
+### Issue 51 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/experimental/AsteroidFieldWindow.java:287-314
+- **Description**: `AnimationTimer.handle()` mutates `displayPoints` and `angles[]` without synchronization. Safe today because `AnimationTimer.handle` runs on the FX thread, but the thread invariant isn't documented; future "let's parallelize the ODE step" changes will silently break it.
+- **Suggestion**: Add a comment on the field declaration that says "mutated on FX thread only via `AnimationTimer`". Optionally add a runtime assertion in the handle method.
+- **Status**: open
+
+### Issue 52 -- Severity: bug (medium)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/scripting/engine/PythonScriptEngine.java:30
+- **Description**: `publishEvent(new StatusUpdateEvent(...))` is called synchronously from `runAScript()`. If callers run scripts on a background thread, Spring delivers the event on that thread — listeners that mutate the scene graph without wrapping in `Platform.runLater` will corrupt the UI.
+- **Suggestion**: Document the threading contract on every event class ("delivered on publisher's thread; listeners must wrap scene-graph mutations in `Platform.runLater`"). Or publish via a dedicated `FxEventBus` that always re-dispatches on the FX thread.
+- **Status**: open
+
+### Issue 53 -- Severity: suggestion (performance)
+- **File**: tripsapplication/src/main/resources/application.yml (Hibernate caching)
+- **Description**: Hibernate second-level cache disabled. Repeated query patterns (e.g., `getFromDatasetWithinRanges`, repeated `findBySolarSystemId` during a render) re-hit the DB every time.
+- **Suggestion**: Enable second-level cache with JCache region factory for read-mostly entities (`DataSetDescriptor`, `StarObject` lookups by id). Benchmark before/after.
+- **Status**: open
+
+### Issue 54 -- Severity: nit (UX)
+- **File**: tripsapplication/src/main/resources/com/teamgannon/trips/screenobjects/StarEditDialog.fxml:232-293
+- **Description**: A "User Special Info" tab exposes raw `misc1`–`misc5` field names with no labels. Useless to end-users; coupled to Issue 31's customData smell.
+- **Suggestion**: Remove the tab once Issue 31 lands; if extensibility is kept, present a key/value editor instead of raw `miscN` fields.
+- **Status**: open
+
+### Issue 55 -- Severity: nit (UX)
+- **File**: search-pane FXMLs under `src/main/resources/com/teamgannon/trips/search/components/`
+- **Description**: 13 search-pane FXMLs repeat the same Label + control + grid layout. Boilerplate; inconsistent spacing creeps in across copies.
+- **Suggestion**: Build a `SearchPanelBase.fxml` (or a Java composite) and inherit. Saves maintenance and enforces visual consistency.
+- **Status**: open
+
+### Issue 56 -- Severity: suggestion (visibility)
+- **File**: every `ApplicationEvent` class in `events/`
+- **Description**: 64 publishers + ~50 listeners with no map of the event graph. Grep finds events with apparently zero listeners (e.g., `ShowStellarDataEvent` after some refactor).
+- **Suggestion**: Add an `EventCatalog` doc (or a startup `@PostConstruct` validator) listing every event with its publishers and subscribers. Fail-fast if an event has zero subscribers.
+- **Status**: open
+
+### Issue 57 -- Severity: nit
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainSplitPaneManager.java:499-514 (and several event-handler lambdas)
+- **Description**: `@EventListener` methods contain inline business logic — query dispatch wrapped in `FxThread` lambdas wrapped in try/catch. Hard to test; failure modes opaque.
+- **Suggestion**: Extract dispatch into a coordinator service; have the `@EventListener` delegate. Test the coordinator, not the controller.
+- **Status**: open
+
+---
+
+# Comprehensive Remediation Plan
+
+Phases are ordered by dependency and risk. Each phase is independently shippable; later phases assume earlier ones landed (especially Phase 0 — a migration tool unlocks everything that touches schema). Reference issue numbers tie back to the catalog above.
+
+## Phase 0 — Foundation (do these first; everything else assumes them) — **COMPLETE**
+
+| # | Action | Issue(s) | Status |
+|---|---|---|---|
+| 0.1 | `git rm --cached` the 6 large tracked CSVs (`30ly.trips.csv`, `30ly.trips.csv.zip`, `exoplanet.eu_catalog_*.csv`, `newDataset1-page-1.csv`, `files/30ly_dataset.trips.csv`, `files/exoplanet.eu_catalog.csv`, `files/exoplanets/exoplanets.csv`). `.gitignore` updated with explicit `*.csv` rules + positive exceptions for `files/programdata/*.csv` and `tripsapplication/src/main/resources/**/*.csv` (the small reference data the app ships with). `Readme.md` gained a "Sample Datasets" section with sources. History rewrite (`git filter-repo`) deferred. | 16 | done |
+| 0.2 | Added `org.springframework.boot:spring-boot-flyway` (the 4.x-renamed module — `spring-boot-autoconfigure` no longer carries `FlywayAutoConfiguration` as of Boot 4). Generated `tripsapplication/src/main/resources/db/migration/V1__baseline.sql` (17 tables, 85 lines) via a new `SchemaBaselineExporterTest` (`@Disabled` regen tool — see `db/migration/README.md`). `application.yml` wired with `spring.flyway.{enabled, baseline-on-migrate, baseline-version, locations, table}`. Default profile keeps `ddl-auto=update` for now; **new `application-prod.yml`** sets `ddl-auto=validate`. Added `FlywayBaselineSmokeTest` (runs on every `mvn test`) that boots `@DataJpaTest` against H2, applies V1, then runs Hibernate `validate` — a permanent regression guard for entity↔schema drift. `BaseRepositoryIntegrationTest` patched to disable Flyway (its Postgres testcontainer can't ingest the H2-flavoured baseline). Full non-integration test suite (2,709 tests) still green. | 13 | done |
+| 0.3 | Style guide added under `AGENTS.md > "Logging"` and `CLAUDE.md > Lombok Usage > "Logging"`. Shipped `scripts/check-logging.sh` (executable; supports `--count`). Current violation count: **113**. Wiring into `maven-checkstyle-plugin` as an enforcing step lands in Phase 7.4 once the existing violations are cleaned up — adding it now would pollute every build with 113 warnings. | 41 (rule) | done |
+
+## Phase 1 — Data Correctness (silent bugs that compound)
+
+| # | Action | Issue(s) | Rough effort |
+|---|---|---|---|
+| 1.1 | Write a Flyway migration that normalizes `StarObject.mass` to solar masses for any row whose magnitude indicates kg (>1e10). Add an import-time validator. Remove the `TransferCalculator.toSolarMasses(...)` heuristic; assume the column is canonical. | 15 | 1-2 days |
+| 1.2 | Wrap `BulkLoadService.loadCSVFile` in top-level `@Transactional(rollbackFor = Exception.class)`. Verify partial-import failure leaves no orphan `DataSetDescriptor`. | 28 | 1 day |
+| 1.3 | Align `hibernate.jdbc.batch_size` with the CSV parse batch (e.g., 1,000-5,000). Refactor `starBulkSave` to `flush()` + `clear()` after each batch inside its own `@Transactional` method. Add JFR/memory benchmark for the 2M-star import. | 12 | 2 days |
+| 1.4 | Drop confirmed-orphan columns (e.g., the abandoned `series` column from spaceshipmodeller phase 18) via Flyway. Backfill `availablePropellantTons` for legacy `TransferPlanEntity` rows. | 13 (followup) | 0.5 day |
+
+## Phase 2 — Fix FX-thread Freezes (user-visible)
+
+| # | Action | Issue(s) | Rough effort |
+|---|---|---|---|
+| 2.1 | Wrap `SolarSystemSpacePane.setSystemToDisplay()` and `refreshCurrentSystem()` in `javafx.concurrent.Task`. Show a transient progress overlay. Render on `setOnSucceeded`. | 11 | 1 day |
+| 2.2 | Audit every `@EventListener` that mutates the scene graph: ensure each wraps work in `Platform.runLater` *or* document a publisher-thread invariant. Fix `PythonScriptEngine` event delivery first. | 14, 52 | 2 days |
+| 2.3 | Move graph search and transit computation to a single shared daemon executor. Always `awaitTermination` + `shutdownNow` on cancellation. Clear large in-memory graph structures in `finally`. | 27 | 1-2 days |
+| 2.4 | Add an `@PreDestroy` / dialog-close hook to unregister listeners on disposable dialogs. Audit each dialog controller's event subscriptions. | 37 | 2 days |
+
+## Phase 3 — Architectural Sanity (before adding more features)
+
+| # | Action | Issue(s) | Rough effort |
+|---|---|---|---|
+| 3.1 | Make `TripsContext` thread-safe. Either AtomicReference snapshots + copy-on-write, or split into typed read services + one mutator service guarded by a lock. Document threading invariants per field. | 14 | 2-3 days |
+| 3.2 | Audit the event graph (Issue 56 deliverable: `events/EVENT_CATALOG.md` + startup validator). Promote synchronous RPC chains to direct service calls. Keep the bus for genuine UI broadcasts. | 19, 56 | 3-5 days |
+| 3.3 | Decouple `spaceshipmodeller` from `SolarSystemSpacePane`. Replace direct ctor injection with events (`TransferTargetRequestedEvent` → `TransferPlanCreatedEvent`). Pane goes back to 5 ctor args. | 20 | 1-2 days |
+| 3.4 | Pick FXML loading convention (FxWeaver everywhere, or `DialogFactory` for both styles). Add an ArchUnit rule. | 21 | 1 day |
+| 3.5 | Externalize the in-tree `org.fxyz3d` copy. Either Maven dep (if unmodified) or move to a sibling module with a CHANGELOG. | 22 | 1-2 days |
+
+## Phase 4 — God-class Decomposition (one per sprint; in this order)
+
+Each step: extract focused collaborators, leave the original class as a thin coordinator, add characterization tests before splitting.
+
+| # | Target | Issue | Rough effort |
+|---|---|---|---|
+| 4.1 | `SolarSystemRenderer` (2,004 lines) → `ScaleManager`, `OrbitVisualizer`, `BodyRenderer`, `HabitableZoneRenderer`, `GridRenderer` orchestrated by a thin `SolarSystemRenderer`. | 18 | 1-2 sprints |
+| 4.2 | `ProceduralPlanetViewerDialog` (1,936) → `PlanetGenerationController` (logic) + `PlanetViewerPane` (UI) + `PlanetExporter` (I/O). | 18 | 1 sprint |
+| 4.3 | `WorkbenchEnrichmentService` (1,832) → `GaiaEnrichmentClient`, `VizierEnrichmentClient`, `SimbadEnrichmentClient`, all behind an `EnrichmentSource` interface. | 18 | 1 sprint |
+| 4.4 | `DataWorkbenchController` (1,706) → `WorkbenchSchemaMapper`, `WorkbenchPreviewManager`, `WorkbenchEnrichmentUI`. | 18 | 1 sprint |
+| 4.5 | `JavaFxPlanetMeshConverter` (1,644) → split mesh-build vs. material-build vs. JavaFX-binding. | 18 | 1 sprint |
+| 4.6 | `SolPlanetsInitializer` (1,410) — unify Sol with procedural pipeline via `ISolarSystemFactory`. Sol becomes a seeded dataset, not a special case. | 18 | 1-2 sprints |
+| 4.7 | `PlanetarySkyRenderer` (1,204), `SolarSystemService` (793), `MainSplitPaneManager` (670) — apply the same recipe. | 9 (followup), 18 | 2 sprints |
+
+## Phase 5 — Package Consolidation
+
+| # | Action | Issue | Rough effort |
+|---|---|---|---|
+| 5.1 | Rename: `solarsysmodelling` → `solarsystem.modelling`; `planetarymodelling` → `planetary.modelling`. `solarsystem/sol/` collapses into `solarsystem/`. Introduce `model/` package for neutral specs (PlanetSpec, StarSpec) shared by modelling + rendering. Single big refactor commit; coordinate with all in-flight feature branches. | 17 | 1 sprint |
+
+## Phase 6 — Medium Bugs & UX
+
+| # | Action | Issue(s) | Rough effort |
+|---|---|---|---|
+| 6.1 | Stop entities escaping into dialogs. Introduce DTOs for edit flows (`StarEditViewModel` first). Load with `JOIN FETCH` in services. | 23 | 1-2 sprints |
+| 6.2 | Add `Pageable` overloads to every unbounded `List`-returning repo method. Deprecate the unbounded variants. Migrate callers. | 24 | 1 sprint |
+| 6.3 | Add `@EntityGraph` variants for ExoPlanet ↔ hostStar joins; remove N+1s in the planet rendering path. | 25 | 0.5 day |
+| 6.4 | Cache `PhongMaterial` by color in `OrbitVisualizer`; verify GPU memory drop with the worst-case (many-moon) system. | 26 | 0.5 day |
+| 6.5 | Sweep for per-axis non-linear scaling; add a unit test that fails on regression. | 30 | 0.5 day |
+| 6.6 | Remove unused `miscN` / `customDataN` columns; if extensibility is wanted, replace with a single JSON column + schema validator. | 31, 54 | 1 sprint |
+| 6.7 | Externalize remaining hardcoded strings in `spaceshipmodeller/ui/*` to the existing `.properties` bundle. Add a CI scan rejecting hardcoded strings under that package. | 32 | 1-2 days |
+| 6.8 | Pair every color cue with a glyph or text token. Audit WCAG contrast. | 33 | 1 day |
+| 6.9 | Replace modal `Alert`-for-validation with inline validation (red border + helper text). Reserve `Alert` for blocking errors. | 29 | 2-3 days |
+| 6.10 | Enable Hibernate second-level cache with JCache; choose read-mostly entities; benchmark. | 53 | 1-2 days |
+| 6.11 | Responsive layouts (HGrow/VGrow), `promptText`, tooltips on every input. | 34, 35 | 1 sprint |
+| 6.12 | Add mnemonics to menus; standardize button labels (OK/Cancel/Apply). | 36 | 1 day |
+
+## Phase 7 — Code Quality Sweep (parallelizable cleanups)
+
+| # | Action | Issue(s) | Rough effort |
+|---|---|---|---|
+| 7.1 | Narrow `catch (Exception)` in CSV import + MainSplitPaneManager event handlers. | 38, 48 | 1 day |
+| 7.2 | Replace `return null` on error paths with `Optional` (start with `SolarSystemService`, `OptionalValue` bridge, `Planet.findPrimaryJovian`). | 39 | 2 days |
+| 7.3 | try-with-resources sweep across `file/`, `scripting/`, `controller/`, `solarsysmodelling/accrete/Utils`. | 40, 42 | 1 day |
+| 7.4 | Run the SLF4J parameterization sweep (~113 sites identified in Phase 0.3 via `scripts/check-logging.sh`). Once the count reaches zero, wire `maven-checkstyle-plugin` to fail builds on regressions. | 41 | 2-3 days |
+| 7.5 | Resolve or document accrete physics TODOs against Dole 1970. Replace inline numeric constants with named ones referencing the source. | 43 | 2-3 days |
+| 7.6 | Document `Coordinates.java` transformation matrices; add round-trip tests. | 44 | 0.5 day |
+| 7.7 | Make entity UUID `@Id` fields `final`; add `@PrePersist` assertion. | 45 | 0.5 day |
+| 7.8 | Add `@Basic(fetch = LAZY)` and length caps on `@Lob` columns; benchmark catalog-wide find performance. | 46 | 1 day |
+| 7.9 | Add characterization + happy-path tests to `service/importservices/` (top priority). Then TestFX on the most-used dialogs. Then a smoke test for `SolarSystemSpacePane.setSystemToDisplay`. | 47 | 1-2 sprints |
+| 7.10 | Build a global `theme.css` with CSS variables. Remove inline `-fx-style` strings. | 50 | 1 sprint |
+| 7.11 | Accessibility pass: `accessibleText` / `accessibleHelp` on top-used dialogs and controls. | 49 | 1 sprint |
+| 7.12 | Document `AsteroidFieldWindow` thread invariant; add a runtime assertion. | 51 | 0.25 day |
+| 7.13 | Build `SearchPanelBase` (FXML or Java composite); migrate the 13 search-pane FXMLs. | 55 | 2-3 days |
+| 7.14 | Extract event-handler business logic in `MainSplitPaneManager` into a coordinator service. | 57 | 2 days |
+
+---
+
+## Tracking & Sequencing
+
+- **Phases 0-2** should land before any new feature work. They're the "stop the silent bugs" set.
+- **Phase 3** before **Phase 4**: god-class decomposition is much safer once `TripsContext` is thread-safe and the event graph is mapped.
+- **Phase 4** ships incrementally; pause feature work in the target file for the duration of each decomposition.
+- **Phase 5** (package rename) is a single atomic commit. Coordinate with any open feature branches before doing it.
+- **Phases 6 and 7** are mostly parallelizable. Hand them out to whatever capacity is free.
+- Items inside Phase 7 are independent; pick them up between bigger pieces of work.
+
+## Verification at end of each phase
+
+Run, in order:
+1. `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` — must pass.
+2. `./mvnw-java25.sh -q -pl tripsapplication test` — must pass with at most the existing Testcontainers-Docker-unavailable failures.
+3. Hand-launch the app, exercise: import a small CSV; jump into a solar system; build a route; design a spaceship; create a transfer plan. Verify no UI freezes.
+4. For Phase 1 specifically: full 2M-star HYG import as a memory benchmark (target: peak heap ≤ 1.5 GB).
 
 ---
 
 **Review artifacts**:
-- This file: `/tmp/trips-full-codebase-review-2026.md`
-- Source tree analyzed: 917 main + 158 test Java files
-- Key files read: MainPane, StarLabelManager, LargeGraphSearch*Task*, StarObject/SolarSystem/ExoPlanet, Trips*Application*, BulkLoad paths, new spaceshipmodeller entities/mappers/services, application.yml, poms.
+- This file: `/Users/larrymitchell/tripsnew/trips/trips-full-codebase-review-2026.md`
+- First pass: ~917 main + 158 test files (Grok 4.3)
+- Second pass: ~1,135 main + 158 test files (Claude Opus 4.7, 2026-05-26)
+- Key files re-read in the second pass: SolarSystemSpacePane, SolarSystemService, StarObject, ExoPlanet, DataSetDescriptor, BulkLoadService, RegularStarCatalogCsvReader, application.yml, TripsContext, OrbitVisualizer, LargeGraphSearchTask, SparseTransitComputor, TransferPreviewDialog, TransferPlannerPanel, StarEditDialog, MainSplitPaneManager, PythonScriptEngine, AsteroidFieldWindow, Utils (accrete), Coordinates, plus a survey of repository methods and event publishers/listeners.
 
-**Methodology**: Tool-assisted static analysis (list_dir, read_file, grep for patterns, terminal git/mvn queries) + architectural cross-referencing against Claude.md/AGENTS.md guidelines. No execution of the full app was performed in this pass.
+**Methodology**:
+- First pass: tool-assisted static analysis + architectural cross-reference against CLAUDE.md/AGENTS.md.
+- Second pass: six concurrent `Explore` sub-agents (architecture; data/JPA; concurrency; UI/UX; performance/memory; code hygiene) briefed to avoid duplicating first-pass findings; synthesis and remediation plan by the main agent. No execution of the full app in either pass.

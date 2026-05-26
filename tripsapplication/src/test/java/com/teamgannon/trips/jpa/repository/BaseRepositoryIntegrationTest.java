@@ -45,6 +45,9 @@ public abstract class BaseRepositoryIntegrationTest {
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        // Disable Flyway in the integration test base: the V1 baseline is H2-flavoured
+        // (enum-column syntax) and ddl-auto=create-drop already owns the test schema.
+        registry.add("spring.flyway.enabled", () -> "false");
     }
 
     @Autowired

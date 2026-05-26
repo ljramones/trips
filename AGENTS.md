@@ -16,6 +16,27 @@
 - Use lower-case package names (for example `com.teamgannon.trips.routing`), UpperCamelCase for classes, and `lowerCamelCase` for methods/fields.
 - Lombok is available; follow existing patterns (for example `@Slf4j`) rather than introducing new logging styles.
 
+## Logging
+
+Always use SLF4J parameter substitution. Never use `+` for string concatenation inside `log.*` calls.
+
+```java
+// GOOD — message is built only if the level is enabled
+log.info("loaded {} stars from {}", count, datasetName);
+log.error("failed to load {}", datasetName, ex);   // last arg can be a Throwable
+
+// BAD — string is built every call, defeats lazy evaluation, allocates garbage
+log.info("loaded " + count + " stars from " + datasetName);
+```
+
+Other rules:
+- Use `@Slf4j` (Lombok) to get the `log` field. Do not declare your own logger.
+- Replace `e.printStackTrace()` with `log.error("context message", e)`.
+- Do not use `System.out` / `System.err` from production code — route everything through SLF4J. (See `tripsapplication/src/main/java/com/teamgannon/trips` for examples; bootstrap paths are an exception only because the logger isn't yet initialized.)
+- Pick the right level: `trace` (fine-grained dev tracing), `debug` (occasional diagnostics, off by default), `info` (lifecycle events, dataset switches), `warn` (recoverable issue), `error` (action failed; user-visible).
+
+Run `scripts/check-logging.sh` from the repo root to surface any string-concat sites you may have introduced. A Phase 7.4 sweep of the existing 113 sites is planned in `trips-full-codebase-review-2026.md`; once that lands, the rule will be wired into `maven-checkstyle-plugin` as an enforcing build step.
+
 ## Testing Guidelines
 - Testing uses JUnit 5 (`spring-boot-starter-test` and `junit-jupiter-api`).
 - Place new tests under `src/test/java` and mirror the production package structure.

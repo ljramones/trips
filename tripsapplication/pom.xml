@@ -169,6 +169,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+        <!-- Flyway: tracks schema migrations. Baseline lives in
+             src/main/resources/db/migration/V1__baseline.sql. See README in
+             that directory and trips-full-codebase-review-2026.md (Phase 0.2).
+
+             Note: Spring Boot 4 moved FlywayAutoConfiguration out of
+             spring-boot-autoconfigure into a dedicated spring-boot-flyway
+             module — pull that in (it transitively brings flyway-core). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

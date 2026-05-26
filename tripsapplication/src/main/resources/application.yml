@@ -22,6 +22,9 @@ spring:
     databasePlatform: org.hibernate.dialect.H2Dialect
     show-sql: false
     hibernate:
+      # 'update' is the dev default while Phase 0.2 is in transition.
+      # The 'prod' profile (application-prod.yml) overrides this to 'validate'.
+      # Plan: flip the default to 'validate' once Phase 1.4 (orphan-column cleanup) lands.
       ddl-auto: update
     properties:
       hibernate:
@@ -36,6 +39,16 @@ spring:
   sql:
     init:
       continue-on-error: true
+
+  # Flyway schema migrations. See src/main/resources/db/migration/README.md.
+  # Migrations dir starts empty; V1__baseline.sql is generated via
+  # SchemaBaselineExporterTest as part of Phase 0.2 completion.
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+    table: flyway_schema_history
 
 app:
   title: Terran Republic Interstellar Plotting System (TRIPS)

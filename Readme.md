@@ -66,6 +66,21 @@ Logs are written to `~/Library/Logs/TRIPS/terranrepublicviewer.log`.
 
 To reset the application to a clean state, delete the `~/Library/Application Support/TRIPS/` directory.
 
+## Sample Datasets
+
+Bulk catalogs and sample datasets are **not** tracked in git (they inflate the repo and rotate often). Download them yourself and drop them in either the repo root or `files/`:
+
+| File | Source | Notes |
+|------|--------|-------|
+| `HYG-MERGED-2M-TRIPS-*.csv` | [astronexus HYG database](https://github.com/astronexus/HYG-Database) (HYG v3 merged with TRIPS fields, ~2M stars, ~830 MB) | Optional. Used for large-catalog imports via Data Workbench. |
+| `exoplanet.eu_catalog_*.csv` | [exoplanet.eu](http://exoplanet.eu/catalog/) (download "All Planets, csv") | Used by the Data Workbench Exoplanets tab. |
+| `30ly.trips.csv` | TRIPS sample dataset (the local-30-light-year set used for first-time-launch demos). Ask a maintainer for the latest copy if you don't already have it. | Optional; the app will still start without it. |
+| `files/exoplanets/exoplanets.csv` | NASA Exoplanet Archive or the exoplanet.eu export above. | Optional; replaced at import time. |
+
+The small reference CSVs the app actually needs at runtime (constellation tables, comet parameters, planetary sims under `tripsapplication/src/main/resources/planetsim/`, etc.) **are** tracked in git via positive exceptions in `.gitignore`.
+
+If you accidentally `git add` a large catalog, `git rm --cached <file>` will untrack it without deleting your local copy.
+
 ## Quick Start
 
 - [Installation](docs/INSTALLATION.md)

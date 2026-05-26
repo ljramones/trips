@@ -1,0 +1,15 @@
+# Production-style profile.
+# Activate with: -Dspring.profiles.active=prod (combine with 'release' as needed).
+#
+# Notable differences vs. the default profile:
+#   - Hibernate ddl-auto=validate (won't silently modify the schema).
+#     Flyway is the only schema-mutating mechanism. If validate fails on
+#     startup, write a new V*__*.sql migration to bring schema in line.
+#
+# Phase 0.2 introduced this profile alongside Flyway adoption. See
+# trips-full-codebase-review-2026.md for context.
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
