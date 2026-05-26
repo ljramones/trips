@@ -188,13 +188,13 @@ public class DataWorkbenchController {
     private final ObservableList<String> sourceFields = FXCollections.observableArrayList();
     private final ObservableList<String> targetFields = FXCollections.observableArrayList(WorkbenchCsvSchema.CSV_HEADER_COLUMNS);
     private final ObservableList<MappingRow> mappings = FXCollections.observableArrayList();
-    private final ObservableList<Map<String, String>> previewRows = FXCollections.observableArrayList();
     private Path cacheDir;
-    private Path previewSourcePath;
-    private Map<String, Integer> previewHeaderIndex = new HashMap<>();
-    private Map<String, String> previewTargetToSource = new HashMap<>();
-    private int previewTotalRows = 0;
-    private final int previewPageSize = 100;
+    /**
+     * Owns the preview table, pagination, source-CSV path, header index, and
+     * the currently-rendered rows. Phase 4.4 extracted the preview loading +
+     * pagination + table-rebuild logic here.
+     */
+    private WorkbenchPreviewManager previewManager;
     private WorkbenchSourceActions sourceActions;
 
     // Exoplanet import state
@@ -286,20 +286,14 @@ public class DataWorkbenchController {
             targetColumn.setPrefWidth(220);
             mappingTable.getColumns().setAll(sourceColumn, targetColumn);
         }
-        if (previewTable != null) {
-            previewTable.setPlaceholder(new Label("No data loaded yet."));
-        }
         if (validationLog != null) {
             validationLog.setEditable(false);
         }
-        if (previewPagination != null) {
-            previewPagination.setPageCount(1);
-            previewPagination.currentPageIndexProperty().addListener((obs, oldVal, newVal) -> {
-                if (previewSourcePath != null) {
-                    loadPreviewPage(newVal.intValue());
-                }
-            });
-        }
+        // Phase 4.4: preview table + pagination + page loading live in WorkbenchPreviewManager.
+        previewManager = new WorkbenchPreviewManager(
+                previewTable, previewPagination, mappings, csvService,
+                this::showError, this::updateStatus, this::appendValidationMessage);
+        previewManager.install();
         initializeCacheDir();
         loadLastMappingIfAvailable();
         initializeExoplanetTab();
@@ -369,13 +363,13 @@ public class DataWorkbenchController {
     @FXML
     private void onValidate() {
         validationLog.clear();
-        if (previewRows.isEmpty()) {
+        if (!previewManager.hasRows()) {
             appendValidationMessage("No preview data loaded.");
             return;
         }
         int rowIndex = 1;
         int errorCount = 0;
-        for (Map<String, String> row : previewRows) {
+        for (Map<String, String> row : previewManager.getPreviewRows()) {
             List<String> messages = csvService.validateRow(row, rowIndex);
             for (String message : messages) {
                 appendValidationMessage(message);
@@ -991,7 +985,7 @@ public class DataWorkbenchController {
             return;
         }
         try {
-            writeMappingToPath(file.toPath());
+            WorkbenchMappingPersistence.save(file.toPath(), mappings, csvService);
             mappingStatusLabel.setText("Mapping saved: " + file.getName());
             saveLastMapping();
         } catch (IOException e) {
@@ -1012,7 +1006,7 @@ public class DataWorkbenchController {
             return;
         }
         try {
-            loadMappingFromPath(file.toPath());
+            mappings.setAll(WorkbenchMappingPersistence.load(file.toPath(), csvService));
             mappingStatusLabel.setText("Mappings: " + mappings.size());
             saveLastMapping();
         } catch (IOException e) {
@@ -1031,7 +1025,7 @@ public class DataWorkbenchController {
         for (String field : sourceFields) {
             String trimmed = field.trim();
             sourceByLower.putIfAbsent(trimmed.toLowerCase(), trimmed);
-            sourceByNormalized.putIfAbsent(normalizeFieldName(trimmed), trimmed);
+            sourceByNormalized.putIfAbsent(WorkbenchMappingPersistence.normalizeFieldName(trimmed), trimmed);
         }
         Set<String> mappedTargets = mappings.stream()
                 .map(MappingRow::getTargetField)
@@ -1042,7 +1036,7 @@ public class DataWorkbenchController {
                 continue;
             }
             String lowerMatch = sourceByLower.get(target.toLowerCase());
-            String normalizedMatch = sourceByNormalized.get(normalizeFieldName(target));
+            String normalizedMatch = sourceByNormalized.get(WorkbenchMappingPersistence.normalizeFieldName(target));
             String match = lowerMatch != null ? lowerMatch : normalizedMatch;
             if (match != null) {
                 mappings.add(new MappingRow(match, target));
@@ -1117,10 +1111,10 @@ public class DataWorkbenchController {
             return;
         }
         if (selected.getType() == WorkbenchSourceType.LOCAL_CSV) {
-            loadPreviewFromPath(Path.of(selected.getLocation()));
+            previewManager.loadPreviewFromPath(Path.of(selected.getLocation()));
             return;
         }
-        sourceActions.ensureLocalCsvSource(selected, this::loadPreviewFromPath);
+        sourceActions.ensureLocalCsvSource(selected, previewManager::loadPreviewFromPath);
     }
 
     private String buildHygDatasetName() {
@@ -1146,26 +1140,9 @@ public class DataWorkbenchController {
         alert.showAndWait();
     }
 
-    private void rebuildPreviewTable() {
-        if (previewTable == null) {
-            return;
-        }
-        previewTable.getColumns().clear();
-        List<String> previewColumns = new ArrayList<>();
-        for (MappingRow mapping : mappings) {
-            if (!previewColumns.contains(mapping.getTargetField())) {
-                previewColumns.add(mapping.getTargetField());
-            }
-        }
-        for (String columnName : previewColumns) {
-            TableColumn<Map<String, String>, String> column = new TableColumn<>(columnName);
-            column.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
-                    cellData.getValue().getOrDefault(columnName, "")));
-            column.setPrefWidth(140);
-            previewTable.getColumns().add(column);
-        }
-        previewTable.setItems(previewRows);
-    }
+    // rebuildPreviewTable moved to WorkbenchPreviewManager in Phase 4.4.
+    // Callers that need to rebuild after a mapping change should call
+    // previewManager.rebuildPreviewTable() directly.
 
     private void updateStatus(String message) {
         Runnable updateUi = () -> {
@@ -1240,27 +1217,7 @@ public class DataWorkbenchController {
         }
     }
 
-    private void loadPreviewFromPath(Path path) {
-        previewSourcePath = path;
-        try (BufferedReader reader = Files.newBufferedReader(previewSourcePath, StandardCharsets.UTF_8)) {
-            String header = reader.readLine();
-            if (header == null) {
-                showError("Preview", "Source file is empty.");
-                return;
-            }
-            previewHeaderIndex = csvService.buildHeaderIndex(header);
-            previewTargetToSource = csvService.buildTargetToSourceMap(mappings);
-            previewTotalRows = countRows(previewSourcePath);
-            previewRows.clear();
-            updatePagination();
-            loadPreviewPage(0);
-            rebuildPreviewTable();
-            appendValidationMessage("Loaded " + previewRows.size() + " preview rows.");
-            updateStatus("Preview page 1 / " + previewPagination.getPageCount());
-        } catch (IOException e) {
-            showError("Preview", "Unable to read source CSV: " + e.getMessage());
-        }
-    }
+    // loadPreviewFromPath moved to WorkbenchPreviewManager.loadPreviewFromPath in Phase 4.4.
 
     private void exportMappedCsvFromSource(Path sourcePath, Path outputPath, String outputName) {
         try {
@@ -1311,68 +1268,18 @@ public class DataWorkbenchController {
         }
     }
 
-    private int countRows(Path path) throws IOException {
-        int count = 0;
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            while (reader.readLine() != null) {
-                count++;
-            }
-        }
-        return Math.max(0, count - 1);
-    }
-
-    private void updatePagination() {
-        if (previewPagination == null) {
-            return;
-        }
-        int pageCount = Math.max(1, (int) Math.ceil((double) previewTotalRows / previewPageSize));
-        previewPagination.setPageCount(pageCount);
-        previewPagination.setCurrentPageIndex(0);
-    }
-
-    private void loadPreviewPage(int pageIndex) {
-        if (previewSourcePath == null) {
-            return;
-        }
-        previewRows.clear();
-        int startIndex = pageIndex * previewPageSize;
-        int endIndex = startIndex + previewPageSize;
-        try (BufferedReader reader = Files.newBufferedReader(previewSourcePath, StandardCharsets.UTF_8)) {
-            String header = reader.readLine();
-            if (header == null) {
-                return;
-            }
-            String line;
-            int rowIndex = 0;
-            while ((line = reader.readLine()) != null) {
-                if (rowIndex >= startIndex && rowIndex < endIndex) {
-                    String[] values = csvService.splitCsvLine(line);
-                    previewRows.add(csvService.mapRow(values, previewHeaderIndex, previewTargetToSource));
-                }
-                rowIndex++;
-                if (rowIndex >= endIndex) {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            showError("Preview", "Unable to load preview page: " + e.getMessage());
-        }
-        rebuildPreviewTable();
-        if (previewPagination != null) {
-            updateStatus("Preview page " + (pageIndex + 1) + " / " + previewPagination.getPageCount());
-        }
-    }
+    // countRows, updatePagination, loadPreviewPage moved to WorkbenchPreviewManager in Phase 4.4.
 
     private void loadLastMappingIfAvailable() {
         if (cacheDir == null) {
             return;
         }
-        Path mappingPath = cacheDir.resolve("last-mapping.map.csv");
+        Path mappingPath = cacheDir.resolve(WorkbenchMappingPersistence.LAST_MAPPING_FILENAME);
         if (!Files.exists(mappingPath)) {
             return;
         }
         try {
-            loadMappingFromPath(mappingPath);
+            mappings.setAll(WorkbenchMappingPersistence.load(mappingPath, csvService));
             mappingStatusLabel.setText("Mappings: " + mappings.size() + " (last used)");
         } catch (IOException e) {
             showError("Load Mapping", "Unable to load cached mapping: " + e.getMessage());
@@ -1383,7 +1290,7 @@ public class DataWorkbenchController {
         if (cacheDir == null) {
             return;
         }
-        Path mappingPath = cacheDir.resolve("last-mapping.map.csv");
+        Path mappingPath = cacheDir.resolve(WorkbenchMappingPersistence.LAST_MAPPING_FILENAME);
         if (mappings.isEmpty()) {
             try {
                 Files.deleteIfExists(mappingPath);
@@ -1393,47 +1300,15 @@ public class DataWorkbenchController {
             return;
         }
         try {
-            writeMappingToPath(mappingPath);
+            WorkbenchMappingPersistence.save(mappingPath, mappings, csvService);
         } catch (IOException e) {
             showError("Save Mapping", "Unable to save cached mapping: " + e.getMessage());
         }
     }
 
-    private void loadMappingFromPath(Path path) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            String header = reader.readLine();
-            if (header == null) {
-                throw new IOException("Mapping file is empty.");
-            }
-            mappings.clear();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] values = csvService.splitCsvLine(line);
-                if (values.length >= 2) {
-                    mappings.add(new MappingRow(csvService.unquote(values[0]), csvService.unquote(values[1])));
-                }
-            }
-        }
-    }
+    // loadMappingFromPath, writeMappingToPath moved to WorkbenchMappingPersistence in Phase 4.4.
 
-    private void writeMappingToPath(Path path) throws IOException {
-        StringBuilder output = new StringBuilder();
-        output.append("sourceField,targetField").append(System.lineSeparator());
-        for (MappingRow mapping : mappings) {
-            output.append(csvService.escapeCsv(mapping.getSourceField()))
-                    .append(",")
-                    .append(csvService.escapeCsv(mapping.getTargetField()))
-                    .append(System.lineSeparator());
-        }
-        Files.writeString(path, output.toString(), StandardCharsets.UTF_8);
-    }
-
-    private String normalizeFieldName(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.toLowerCase().replaceAll("[^a-z0-9]", "");
-    }
+    // normalizeFieldName moved to WorkbenchMappingPersistence.normalizeFieldName in Phase 4.4.
 
     // ==================== Exoplanet Tab Handlers ====================
 
