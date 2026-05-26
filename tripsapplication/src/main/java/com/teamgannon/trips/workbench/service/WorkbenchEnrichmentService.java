@@ -261,8 +261,9 @@ public class WorkbenchEnrichmentService {
         long estimated = 0;
         long skipped = 0;
         long iteration = 0;
-        debugSkipCount = 0;  // Reset debug counter
-        distanceRejectCount = 0;  // Reset distance rejection counter
+        // Phase 4.3: debugSkipCount / distanceRejectCount removed alongside the
+        // estimator extraction — the rate-limited info logs they gated are now
+        // debug-level inside StellarEstimators.
 
         // Count how many are eligible for photometric estimation
         long eligibleCount = starService.countMissingDistanceWithPhotometry(dataSetName);
@@ -297,10 +298,10 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                Double estimatedDistance = estimatePhotometricDistance(star);
+                Double estimatedDistance = StellarEstimators.estimatePhotometricDistance(star);
                 if (estimatedDistance != null && estimatedDistance > 0) {
                     star.setDistance(estimatedDistance);
-                    double[] coords = calculateCoordinatesFromRaDec(star.getRa(), star.getDeclination(), estimatedDistance);
+                    double[] coords = StellarEstimators.calculateCoordinatesFromRaDec(star.getRa(), star.getDeclination(),estimatedDistance);
                     star.setX(coords[0]);
                     star.setY(coords[1]);
                     star.setZ(coords[2]);
@@ -662,13 +663,13 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                Double mass = estimatePhotometricMass(star);
+                Double mass = StellarEstimators.estimatePhotometricMass(star);
                 if (mass != null && mass > 0) {
                     star.setMass(mass);
 
                     // Also estimate radius if missing (from mass-radius relation)
                     if (star.getRadius() <= 0) {
-                        double radius = estimateRadiusFromMass(mass);
+                        double radius = StellarEstimators.estimateRadiusFromMass(mass);
                         if (radius > 0) {
                             star.setRadius(radius);
                         }
@@ -676,7 +677,7 @@ public class WorkbenchEnrichmentService {
 
                     // Set luminosity if we calculated it
                     if (star.getLuminosity() == null || star.getLuminosity().isBlank()) {
-                        Double luminosity = calculateLuminosityFromMagnitude(star);
+                        Double luminosity = StellarEstimators.calculateLuminosityFromMagnitude(star);
                         if (luminosity != null && luminosity > 0) {
                             star.setLuminosity(String.valueOf(luminosity));
                         }
@@ -709,127 +710,8 @@ public class WorkbenchEnrichmentService {
                 " estimated, " + finalMissing + " still missing mass");
     }
 
-    /**
-     * Estimates stellar mass from luminosity using the mass-luminosity relation.
-     * L/L☉ ∝ (M/M☉)^α where α varies by mass range.
-     */
-    private Double estimatePhotometricMass(StarObject star) {
-        Double luminosity = calculateLuminosityFromMagnitude(star);
-        if (luminosity == null || luminosity <= 0) {
-            return null;
-        }
 
-        // Mass-luminosity relation for main-sequence stars
-        // L/L☉ = (M/M☉)^α
-        // Solving for M: M/M☉ = (L/L☉)^(1/α)
-        double mass;
-        if (luminosity > 0.033) {
-            // For M > 0.43 M☉: L ∝ M^4 (approximately)
-            // More refined: L ∝ M^3.5 for 0.43 < M < 2
-            //               L ∝ M^4 for 2 < M < 20
-            if (luminosity < 2) {
-                // Low-mass main sequence: α ≈ 4
-                mass = Math.pow(luminosity, 1.0 / 4.0);
-            } else if (luminosity < 16) {
-                // Solar-mass range: α ≈ 3.5
-                mass = Math.pow(luminosity, 1.0 / 3.5);
-            } else {
-                // High-mass stars: α ≈ 3
-                mass = Math.pow(luminosity, 1.0 / 3.0);
-            }
-        } else {
-            // For M < 0.43 M☉: L ∝ 0.23 * M^2.3
-            // Solving: M = (L / 0.23)^(1/2.3)
-            mass = Math.pow(luminosity / 0.23, 1.0 / 2.3);
-        }
 
-        // Sanity check: stellar masses range from ~0.08 to ~150 M☉
-        // Allow lower values since V-band luminosity underestimates red dwarf masses
-        if (mass < 0.01 || mass > 200) {
-            return null;
-        }
-
-        return mass;
-    }
-
-    /**
-     * Calculates luminosity in solar units from apparent magnitude and distance.
-     * L/L☉ = 10^((M_V(Sun) - M_V) / 2.5) where M_V is absolute magnitude
-     */
-    private Double calculateLuminosityFromMagnitude(StarObject star) {
-        double magV = star.getMagv();
-        double distance = star.getDistance();
-
-        // Check for valid data
-        if (distance <= 0) {
-            return null;
-        }
-
-        // Determine if distance is in parsecs or light years
-        // HYG data stores distance in parsecs, TRIPS convention is light years
-        // Heuristic: if distance < 100 and star has x,y,z coordinates that suggest parsecs, use parsecs
-        // For nearby stars like Proxima (1.3 pc = 4.24 ly), the distance field contains parsecs
-        double distanceParsecs;
-        double x = star.getX();
-        double y = star.getY();
-        double z = star.getZ();
-        double xyzDistance = Math.sqrt(x * x + y * y + z * z);
-
-        // If xyz distance is close to distance value, assume both are in same unit (likely parsecs from HYG)
-        // If xyz distance is ~3.26x the distance value, xyz is in ly and distance is in pc
-        if (xyzDistance > 0 && Math.abs(xyzDistance - distance) / distance < 0.1) {
-            // xyz and distance are in same unit - assume parsecs (HYG data)
-            distanceParsecs = distance;
-        } else if (xyzDistance > 0 && Math.abs(xyzDistance / 3.26156 - distance) / distance < 0.1) {
-            // xyz is in light years, distance is in parsecs
-            distanceParsecs = distance;
-        } else if (distance > 100) {
-            // Larger distances - assume light years (TRIPS convention)
-            distanceParsecs = distance / 3.26156;
-        } else {
-            // Default: assume parsecs for HYG data
-            distanceParsecs = distance;
-        }
-
-        // Calculate absolute magnitude: M = m - 5*log10(d/10)
-        double absoluteMag = magV - 5 * Math.log10(distanceParsecs / 10);
-
-        // Calculate luminosity: L/L☉ = 10^((M_V(Sun) - M_V) / 2.5)
-        // Sun's absolute V magnitude is 4.83
-        double luminosity = Math.pow(10, (4.83 - absoluteMag) / 2.5);
-
-        // Sanity check: luminosities range from ~0.00001 to ~10 million L☉
-        // Red dwarfs can have L ~ 0.0001 L☉
-        if (luminosity < 0.000001 || luminosity > 10000000) {
-            log.debug("Luminosity out of range for star {}: L={}, magV={}, dist={} pc",
-                    star.getDisplayName(), luminosity, magV, distanceParsecs);
-            return null;
-        }
-
-        return luminosity;
-    }
-
-    /**
-     * Estimates stellar radius from mass using the mass-radius relation.
-     * For main-sequence stars: R/R☉ ≈ (M/M☉)^α
-     */
-    private double estimateRadiusFromMass(double mass) {
-        double radius;
-        if (mass < 1.0) {
-            // Low-mass stars: R ∝ M^0.8
-            radius = Math.pow(mass, 0.8);
-        } else {
-            // Higher-mass stars: R ∝ M^0.57
-            radius = Math.pow(mass, 0.57);
-        }
-
-        // Sanity check
-        if (radius < 0.01 || radius > 2000) {
-            return 0;
-        }
-
-        return radius;
-    }
 
     /**
      * Parses a string to Double, returning null if empty or unparseable.
@@ -846,153 +728,10 @@ public class WorkbenchEnrichmentService {
         }
     }
 
-    /**
-     * Estimates distance using photometric methods.
-     * Tries B-V color index first, then Gaia BP-RP as fallback.
-     *
-     * @return estimated distance in light-years, or null if cannot estimate
-     */
-    private Double estimatePhotometricDistance(StarObject star) {
-        // Try Johnson B-V photometry first
-        double magV = star.getMagv();
-        double magB = star.getMagb();
 
-        // Note: magnitudes can be negative for bright stars (e.g., Sirius = -1.46)
-        // so we check for non-zero, not positive values
-        boolean hasMagV = (magV != 0);
-        boolean hasMagB = (magB != 0);
 
-        if (hasMagV && hasMagB) {
-            double bMinusV = magB - magV;
-            Double absoluteMag = estimateAbsoluteMagnitudeFromBV(bMinusV);
-            if (absoluteMag != null) {
-                double dist = calculateDistanceFromMagnitudes(magV, absoluteMag);
-                if (dist > 0) {
-                    return dist;
-                }
-                log.debug("B-V path rejected: star={}, magV={}, magB={}, B-V={}, absMag={}, dist={}",
-                        star.getDisplayName(), magV, magB, bMinusV, absoluteMag, dist);
-            }
-        }
 
-        // Fallback to Gaia photometry (using BP-RP as color proxy)
-        // Gaia G magnitude can be approximated from magV or we use apparent magnitude string
-        double bprp = star.getBprp();
-        if (bprp != 0 && hasMagV) {
-            // BP-RP roughly correlates with B-V but with different scale
-            // Approximate conversion: B-V ≈ 0.98 * (BP-RP) - 0.02 for main-sequence
-            double approxBV = 0.98 * bprp - 0.02;
-            Double absoluteMag = estimateAbsoluteMagnitudeFromBV(approxBV);
-            if (absoluteMag != null) {
-                double dist = calculateDistanceFromMagnitudes(magV, absoluteMag);
-                if (dist > 0) {
-                    return dist;
-                }
-                log.debug("BP-RP path rejected: star={}, magV={}, bprp={}, approxBV={}, absMag={}, dist={}",
-                        star.getDisplayName(), magV, bprp, approxBV, absoluteMag, dist);
-            }
-        }
 
-        // Log first few skipped stars to understand why
-        if (debugSkipCount < 10) {
-            log.info("Photometric skip: star={}, magV={}, magB={}, bprp={}",
-                    star.getDisplayName(), magV, magB, bprp);
-            debugSkipCount++;
-        }
-
-        return null;
-    }
-
-    // Debug counter for logging skipped stars
-    private int debugSkipCount = 0;
-
-    /**
-     * Estimates absolute V magnitude from B-V color index.
-     * Uses polynomial fit for main-sequence stars.
-     *
-     * Valid range: -0.3 < B-V < 2.0 (O through M stars)
-     *
-     * @param bMinusV the B-V color index
-     * @return absolute magnitude M_V, or null if outside valid range
-     */
-    private Double estimateAbsoluteMagnitudeFromBV(double bMinusV) {
-        // Extended range to handle hot blue stars (O, B types have B-V down to -0.35 or so)
-        // and very red M dwarfs (B-V up to ~2.0)
-        // We extrapolate cautiously for extreme values
-        if (bMinusV < -2.0 || bMinusV > 3.0) {
-            return null;  // Truly invalid - likely bad data
-        }
-
-        double bv = bMinusV;
-        double bv2 = bv * bv;
-
-        // Piecewise function for better accuracy across spectral range
-        double absoluteMag;
-        if (bv < -0.3) {
-            // Very hot stars (O type): M_V ~ -4 to -6
-            // Linear extrapolation for extreme blue
-            absoluteMag = -4.0 + 2.0 * (bv + 0.3);
-        } else if (bv < 0.0) {
-            // Hot stars (B, early A): roughly linear
-            absoluteMag = -0.5 + 3.5 * bv;
-        } else if (bv < 0.4) {
-            // A, F stars
-            absoluteMag = -0.5 + 5.0 * bv - 2.0 * bv2;
-        } else if (bv < 0.8) {
-            // G stars (Sun-like)
-            absoluteMag = 1.2 + 4.5 * bv - 1.5 * bv2;
-        } else if (bv < 1.4) {
-            // K stars
-            absoluteMag = 2.0 + 4.0 * bv - 0.5 * bv2;
-        } else if (bv < 2.0) {
-            // M stars (red dwarfs)
-            absoluteMag = 3.5 + 4.5 * bv;
-        } else {
-            // Very red stars (late M, brown dwarfs): extrapolate
-            absoluteMag = 12.5 + 2.0 * (bv - 2.0);
-        }
-
-        // Sanity check: main-sequence stars range from about -8 to +20
-        if (absoluteMag < -10 || absoluteMag > 22) {
-            return null;
-        }
-
-        return absoluteMag;
-    }
-
-    /**
-     * Calculates distance from apparent and absolute magnitudes.
-     * Uses the distance modulus formula: d = 10^((m - M + 5) / 5)
-     *
-     * @param apparentMag apparent magnitude (m)
-     * @param absoluteMag absolute magnitude (M)
-     * @return distance in light-years
-     */
-    private double calculateDistanceFromMagnitudes(double apparentMag, double absoluteMag) {
-        // Distance modulus: m - M = 5 * log10(d) - 5
-        // Solving for d: d = 10^((m - M + 5) / 5) parsecs
-        double distanceModulus = apparentMag - absoluteMag;
-        double distanceParsecs = Math.pow(10, (distanceModulus + 5) / 5);
-
-        // Convert parsecs to light-years (1 pc = 3.26156 ly)
-        double distanceLy = distanceParsecs * 3.26156;
-
-        // Sanity check: reject obviously wrong distances
-        // 500,000 ly allows for distant halo stars; Milky Way diameter is ~100,000 ly
-        if (distanceLy < 0.1 || distanceLy > 500000) {
-            if (distanceRejectCount < 10) {
-                log.info("Distance rejected: {} ly (apparentMag={}, absoluteMag={}, modulus={})",
-                        "%.1f".formatted(distanceLy), apparentMag, absoluteMag, distanceModulus);
-                distanceRejectCount++;
-            }
-            return 0;
-        }
-
-        return distanceLy;
-    }
-
-    // Debug counter for distance rejections
-    private int distanceRejectCount = 0;
 
     private Map<String, Double> fetchGaiaParallax(List<String> gaiaIds) throws IOException, InterruptedException {
         if (gaiaIds.isEmpty()) {
@@ -1178,13 +917,13 @@ public class WorkbenchEnrichmentService {
         if (parallaxMas <= 0 || star.getDistance() > 0) {
             return false;
         }
-        double distance = calculateDistanceFromParallax(parallaxMas);
+        double distance = StellarEstimators.calculateDistanceFromParallax(parallaxMas);
         if (distance <= 0) {
             return false;
         }
         star.setParallax(parallaxMas);
         star.setDistance(distance);
-        double[] coords = calculateCoordinatesFromRaDec(star.getRa(), star.getDeclination(), distance);
+        double[] coords = StellarEstimators.calculateCoordinatesFromRaDec(star.getRa(), star.getDeclination(),distance);
         star.setX(coords[0]);
         star.setY(coords[1]);
         star.setZ(coords[2]);
@@ -1322,22 +1061,7 @@ public class WorkbenchEnrichmentService {
         return "";
     }
 
-    private double calculateDistanceFromParallax(double parallaxMas) {
-        if (parallaxMas <= 0) {
-            return 0.0;
-        }
-        double parsec = 1000.0 / parallaxMas;
-        return parsec * 3.26156;
-    }
 
-    private double[] calculateCoordinatesFromRaDec(double raDeg, double decDeg, double distance) {
-        double raRad = Math.toRadians(raDeg * 15.0);
-        double decRad = Math.toRadians(decDeg);
-        double x = distance * Math.cos(decRad) * Math.cos(raRad);
-        double y = distance * Math.cos(decRad) * Math.sin(raRad);
-        double z = distance * Math.sin(decRad);
-        return new double[]{x, y, z};
-    }
 
     private String appendToken(String current, String token, String separator) {
         if (token == null || token.isBlank()) {
@@ -1416,7 +1140,7 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                Double temp = estimateTemperatureFromBprp(star.getBprp());
+                Double temp = StellarEstimators.estimateTemperatureFromBprp(star.getBprp());
                 if (temp != null && temp > 0) {
                     star.setTemperature(temp);
                     star.setSource(appendToken(star.getSource(), "temp from BP-RP", "|"));
@@ -1476,7 +1200,7 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                String spectral = estimateSpectralClassFromBprp(star.getBprp());
+                String spectral = StellarEstimators.estimateSpectralClassFromBprp(star.getBprp());
                 if (spectral != null && !spectral.isBlank()) {
                     star.setSpectralClass(spectral);
                     star.setSource(appendToken(star.getSource(), "spectral from BP-RP", "|"));
@@ -1502,113 +1226,7 @@ public class WorkbenchEnrichmentService {
         updateStatus(statusConsumer, "Spectral classification complete: " + estimated + " estimated");
     }
 
-    /**
-     * Estimates effective temperature from Gaia BP-RP color.
-     * Based on polynomial fits from Gaia DR2/DR3 documentation and Pecaut & Mamajek (2013).
-     * Valid for main-sequence stars with BP-RP roughly between -0.5 and 5.0
-     *
-     * @param bprp Gaia BP-RP color index
-     * @return estimated temperature in Kelvin, or null if out of range
-     */
-    private Double estimateTemperatureFromBprp(double bprp) {
-        // Sanity check - BP-RP typically ranges from -0.5 (hot O/B) to 5+ (cool M/L)
-        if (bprp < -0.6 || bprp > 6.0) {
-            return null;
-        }
 
-        double temp;
-
-        if (bprp < 0.0) {
-            // Hot stars (O, B): T ~ 10000-40000K
-            // Linear approximation for very blue stars
-            temp = 10000 - bprp * 30000;
-        } else if (bprp < 0.5) {
-            // A stars: BP-RP 0.0-0.5 → T ~ 7500-10000K
-            temp = 10000 - bprp * 5000;
-        } else if (bprp < 0.8) {
-            // F stars: BP-RP 0.5-0.8 → T ~ 6000-7500K
-            temp = 8333 - bprp * 3333;
-        } else if (bprp < 1.0) {
-            // G stars: BP-RP 0.8-1.0 → T ~ 5300-6000K
-            temp = 7800 - bprp * 2500;
-        } else if (bprp < 1.5) {
-            // K stars: BP-RP 1.0-1.5 → T ~ 4000-5300K
-            temp = 7700 - bprp * 2400;
-        } else if (bprp < 3.0) {
-            // M stars (early-mid): BP-RP 1.5-3.0 → T ~ 2800-4000K
-            temp = 5200 - bprp * 800;
-        } else {
-            // Late M / L dwarfs: BP-RP 3.0-6.0 → T ~ 1500-2800K
-            temp = 3700 - bprp * 400;
-        }
-
-        // Sanity check
-        if (temp < 1000 || temp > 50000) {
-            return null;
-        }
-
-        return temp;
-    }
-
-    /**
-     * Estimates spectral class from Gaia BP-RP color.
-     * Returns MK spectral classification (e.g., "G2V", "K5V", "M3V").
-     *
-     * @param bprp Gaia BP-RP color index
-     * @return estimated spectral class, or null if out of range
-     */
-    private String estimateSpectralClassFromBprp(double bprp) {
-        // Sanity check
-        if (bprp < -0.6 || bprp > 6.0) {
-            return null;
-        }
-
-        // Map BP-RP ranges to spectral types (main sequence assumed - luminosity class V)
-        // Based on Pecaut & Mamajek (2013) and Gaia documentation
-        if (bprp < -0.35) {
-            return "O";  // Very hot
-        } else if (bprp < -0.15) {
-            return "B0V";
-        } else if (bprp < 0.0) {
-            return "B5V";
-        } else if (bprp < 0.15) {
-            return "A0V";
-        } else if (bprp < 0.30) {
-            return "A5V";
-        } else if (bprp < 0.45) {
-            return "F0V";
-        } else if (bprp < 0.60) {
-            return "F5V";
-        } else if (bprp < 0.75) {
-            return "G0V";
-        } else if (bprp < 0.90) {
-            return "G5V";
-        } else if (bprp < 1.05) {
-            return "K0V";
-        } else if (bprp < 1.25) {
-            return "K3V";
-        } else if (bprp < 1.50) {
-            return "K5V";
-        } else if (bprp < 1.85) {
-            return "M0V";
-        } else if (bprp < 2.20) {
-            return "M1V";
-        } else if (bprp < 2.55) {
-            return "M2V";
-        } else if (bprp < 2.90) {
-            return "M3V";
-        } else if (bprp < 3.30) {
-            return "M4V";
-        } else if (bprp < 3.90) {
-            return "M5V";
-        } else if (bprp < 4.50) {
-            return "M6V";
-        } else if (bprp < 5.20) {
-            return "M7V";
-        } else {
-            return "M8V";  // Very cool
-        }
-    }
 
     // ==================== Cross-fill Temperature <-> Spectral ====================
 
@@ -1646,7 +1264,7 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                Double temp = estimateTemperatureFromSpectral(star.getSpectralClass());
+                Double temp = StellarEstimators.estimateTemperatureFromSpectral(star.getSpectralClass());
                 if (temp != null && temp > 0) {
                     star.setTemperature(temp);
                     star.setSource(appendToken(star.getSource(), "temp from spectral", "|"));
@@ -1706,7 +1324,7 @@ public class WorkbenchEnrichmentService {
                     continue;
                 }
 
-                String spectral = estimateSpectralFromTemperature(star.getTemperature());
+                String spectral = StellarEstimators.estimateSpectralFromTemperature(star.getTemperature());
                 if (spectral != null && !spectral.isBlank()) {
                     star.setSpectralClass(spectral);
                     star.setSource(appendToken(star.getSource(), "spectral from temp", "|"));
@@ -1732,101 +1350,12 @@ public class WorkbenchEnrichmentService {
         updateStatus(statusConsumer, "Cross-fill spectral from temp complete: " + estimated + " estimated");
     }
 
-    /**
-     * Estimates temperature from spectral class.
-     * Based on standard MK spectral classification temperature scales.
-     */
-    private Double estimateTemperatureFromSpectral(String spectralClass) {
-        if (spectralClass == null || spectralClass.isBlank()) {
-            return null;
-        }
 
-        String spec = spectralClass.trim().toUpperCase();
-        char type = spec.charAt(0);
-
-        // Try to extract subtype number (e.g., "G2V" -> 2)
-        int subtype = 5; // default to middle of range
-        if (spec.length() > 1 && Character.isDigit(spec.charAt(1))) {
-            subtype = spec.charAt(1) - '0';
-        }
-
-        // Temperature ranges for each spectral type (main sequence)
-        // Based on Pecaut & Mamajek (2013) and Gray & Corbally
-        switch (type) {
-            case 'O':
-                // O0-O9: 50000K - 30000K
-                return 50000.0 - subtype * 2000.0;
-            case 'B':
-                // B0-B9: 30000K - 10000K
-                return 30000.0 - subtype * 2000.0;
-            case 'A':
-                // A0-A9: 10000K - 7500K
-                return 10000.0 - subtype * 250.0;
-            case 'F':
-                // F0-F9: 7500K - 6000K
-                return 7500.0 - subtype * 150.0;
-            case 'G':
-                // G0-G9: 6000K - 5200K
-                return 6000.0 - subtype * 80.0;
-            case 'K':
-                // K0-K9: 5200K - 3700K
-                return 5200.0 - subtype * 150.0;
-            case 'M':
-                // M0-M9: 3700K - 2400K
-                return 3700.0 - subtype * 130.0;
-            case 'L':
-                // L0-L9: 2400K - 1300K
-                return 2400.0 - subtype * 110.0;
-            case 'T':
-                // T0-T9: 1300K - 600K
-                return 1300.0 - subtype * 70.0;
-            case 'Y':
-                // Y dwarfs: < 600K
-                return 500.0;
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Estimates spectral class from temperature.
-     * Returns MK classification assuming main sequence.
-     */
-    private String estimateSpectralFromTemperature(double temp) {
-        if (temp <= 0 || temp > 60000) {
-            return null;
-        }
-
-        // Map temperature ranges to spectral types
-        if (temp >= 30000) {
-            int subtype = Math.min(9, (int) ((50000 - temp) / 2000));
-            return "O" + subtype + "V";
-        } else if (temp >= 10000) {
-            int subtype = Math.min(9, (int) ((30000 - temp) / 2000));
-            return "B" + subtype + "V";
-        } else if (temp >= 7500) {
-            int subtype = Math.min(9, (int) ((10000 - temp) / 250));
-            return "A" + subtype + "V";
-        } else if (temp >= 6000) {
-            int subtype = Math.min(9, (int) ((7500 - temp) / 150));
-            return "F" + subtype + "V";
-        } else if (temp >= 5200) {
-            int subtype = Math.min(9, (int) ((6000 - temp) / 80));
-            return "G" + subtype + "V";
-        } else if (temp >= 3700) {
-            int subtype = Math.min(9, (int) ((5200 - temp) / 150));
-            return "K" + subtype + "V";
-        } else if (temp >= 2400) {
-            int subtype = Math.min(9, (int) ((3700 - temp) / 130));
-            return "M" + subtype + "V";
-        } else if (temp >= 1300) {
-            int subtype = Math.min(9, (int) ((2400 - temp) / 110));
-            return "L" + subtype;
-        } else if (temp >= 600) {
-            int subtype = Math.min(9, (int) ((1300 - temp) / 70));
-            return "T" + subtype;
-        } else {
-            return "Y0";
-        }
-    }
+    // Photometric/spectral estimators moved to StellarEstimators in Phase 4.3:
+    //   estimatePhotometricMass, calculateLuminosityFromMagnitude, estimateRadiusFromMass,
+    //   estimatePhotometricDistance, estimateAbsoluteMagnitudeFromBV,
+    //   calculateDistanceFromMagnitudes, calculateDistanceFromParallax,
+    //   calculateCoordinatesFromRaDec, estimateTemperatureFromBprp,
+    //   estimateSpectralClassFromBprp, estimateTemperatureFromSpectral,
+    //   estimateSpectralFromTemperature.
 }
