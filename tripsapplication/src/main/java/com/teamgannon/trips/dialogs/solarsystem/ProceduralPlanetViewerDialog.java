@@ -32,17 +32,11 @@ import javafx.scene.transform.Rotate;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.WritableImage;
-import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
 import javafx.scene.input.KeyCode;
 
-import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,12 +70,12 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private final Rotate axialTiltRotate = new Rotate(0, Rotate.X_AXIS);
     private final Rotate spinRotate = new Rotate(0, Rotate.Y_AXIS);
 
-    // Mouse drag state
-    private double mouseX, mouseY;
-    private double mouseOldX, mouseOldY;
-
-    // Keyboard input tracking
-    private final Set<KeyCode> pressedKeys = new HashSet<>();
+    /**
+     * Mouse / scroll / keyboard / auto-spin controller — owns the input and
+     * idle-rotation Timeline. Extracted in Phase 4.2 alongside the rest of the
+     * procedural-planet-viewer decomposition.
+     */
+    private final PlanetCameraController cameraController;
 
     // Rendering options
     private boolean showWireframe = false;
@@ -89,19 +83,17 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private boolean useColorByHeight = true;
     private boolean showRainfallHeatmap = false;
     private boolean useSmoothTerrain = false;
-    private boolean showAtmosphere = true;
+    // Atmosphere visibility moved into PlanetAtmosphereRenderer (Phase 4.2).
     private boolean showPlateBoundaries = false;
     private boolean showClimateZones = false;
-    private boolean autoRotate = false;
     private boolean showLakes = true;
     private boolean useFlowAccumulationRivers = true;
-    private boolean showPoleMarker = true;
+    // Pole-marker visibility moved into PlanetPoleMarker (Phase 4.2).
 
-    // Animation
-    private Timeline rotationAnimation;
-
-    // Atmosphere visualization
-    private Sphere atmosphereSphere;
+    /**
+     * Renders + toggles the atmosphere shell. Extracted in Phase 4.2.
+     */
+    private final PlanetAtmosphereRenderer atmosphereRenderer;
 
     // Generated planet data (mutable - changes on regeneration)
     private GeneratedPlanet generatedPlanet;
@@ -180,7 +172,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private CheckBox climateZonesCheckBox;
     private CheckBox poleMarkerCheckBox;
 
-    private Group poleMarkerGroup;
+    /** Renders + toggles the pole-marker spheres. Extracted in Phase 4.2. */
+    private PlanetPoleMarker poleMarker;
 
     /**
      * Create a new procedural planet viewer dialog.
@@ -251,19 +244,19 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Render the planet mesh
         renderPlanet();
 
-        // Apply axial tilt and pole markers
+        // Apply axial tilt and pole markers (Phase 4.2: PlanetPoleMarker)
         updateAxialTilt();
+        poleMarker = new PlanetPoleMarker(planetGroup, PLANET_SCALE);
         createPoleMarker();
 
-        // Add pole marker
-        // Add atmosphere glow
+        // Phase 4.2: atmosphere shell lives in PlanetAtmosphereRenderer.
+        atmosphereRenderer = new PlanetAtmosphereRenderer(world, PLANET_SCALE);
         createAtmosphere();
 
-        // Set up mouse interaction
-        setupMouseHandlers();
-
-        // Start animation loop for keyboard input processing
-        ensureAnimationRunning();
+        // Phase 4.2: mouse / scroll / keyboard / auto-spin all live in PlanetCameraController.
+        cameraController = new PlanetCameraController(
+                subScene, camera, rotateX, rotateY, spinRotate, INITIAL_CAMERA_DISTANCE);
+        cameraController.install();
 
         // Wrap SubScene in a simple container with fixed size
         StackPane viewPane = new StackPane();
@@ -293,9 +286,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         getDialogPane().setMaxHeight(dialogHeight + 50);  // Allow slight expansion but not full screen
 
         // Stop animation when dialog closes
-        setOnCloseRequest(event -> stopAnimation());
+        setOnCloseRequest(event -> cameraController.stop());
         setResultConverter(button -> {
-            stopAnimation();
+            cameraController.stop();
             return null;
         });
 
@@ -371,85 +364,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Determine terrain type based on multiple physical indicators.
-     * Uses a priority system with multiple fallback checks.
+     * Determine the terrain classification by snapshotting the dialog's current
+     * physical-context fields and delegating to {@link PlanetTerrainClassifier}.
+     * Phase 4.2 extraction.
      */
     private TerrainType determineTerrainType() {
-        // Check for gas giants first - they don't have solid surfaces
-        if (planetType != null) {
-            String typeLower = planetType.toLowerCase();
-            if (typeLower.contains("gas giant") || typeLower.contains("jovian")) {
-                return TerrainType.JOVIAN;
-            }
-            if (typeLower.contains("ice giant")) {
-                return TerrainType.ICE_GIANT;
-            }
-            // Planet type explicitly says "Ice"
-            if (typeLower.contains("ice") && !typeLower.contains("giant")) {
-                return TerrainType.ICE;
-            }
-        }
-
-        // Check if this is an icy world using multiple indicators
-        if (isIcyWorld()) {
-            return TerrainType.ICE;
-        }
-
         double waterFraction = generatedPlanet.config() != null
-            ? generatedPlanet.config().waterFraction() : currentWaterFraction;
-
-        // No water AND no significant ice = dry terrain (browns/tans)
-        if (waterFraction < 0.05 && iceCoverFraction < 0.1) {
-            return TerrainType.DRY;
-        }
-
-        // Has liquid water = wet terrain (ocean blues)
-        return TerrainType.WET;
-    }
-
-    /**
-     * Determine if this is an icy world using multiple physical indicators.
-     * Returns true if any reliable indicator suggests ice-rich composition.
-     */
-    private boolean isIcyWorld() {
-        // 1. Explicit ice cover > 30%
-        if (iceCoverFraction > 0.3) {
-            return true;
-        }
-
-        // 2. Low density (< 2.5 g/cm³) + cold temperature (< 200K)
-        //    Low density indicates ice-rich composition (ice ~0.9, rock ~3-5)
-        if (densityGcm3 != null && densityGcm3 < 2.5 && surfaceTemperatureK < 200.0) {
-            return true;
-        }
-
-        // 3. Very low density (< 2.0 g/cm³) even without temperature data
-        //    Almost certainly ice-dominated (Enceladus: 1.61, Pluto: 1.85)
-        if (densityGcm3 != null && densityGcm3 < 2.0) {
-            return true;
-        }
-
-        // 4. Beyond frost line (> 2.7 AU) + cold (< 200K) + some water/ice
-        double waterFraction = generatedPlanet.config() != null
-            ? generatedPlanet.config().waterFraction() : currentWaterFraction;
-        if (semiMajorAxisAU != null && semiMajorAxisAU > 2.7
-                && surfaceTemperatureK < 200.0
-                && (waterFraction > 0.01 || iceCoverFraction > 0.05)) {
-            return true;
-        }
-
-        // 5. Very cold (< 150K) with any water/ice indication
-        //    At these temperatures, any volatiles are frozen solid
-        if (surfaceTemperatureK < 150.0 && (waterFraction > 0.01 || iceCoverFraction > 0.05)) {
-            return true;
-        }
-
-        // 6. Cold (< 273K) with significant water or ice
-        if (surfaceTemperatureK < 273.0 && (waterFraction > 0.05 || iceCoverFraction > 0.1)) {
-            return true;
-        }
-
-        return false;
+                ? generatedPlanet.config().waterFraction()
+                : currentWaterFraction;
+        return PlanetTerrainClassifier.classify(new PlanetTerrainClassifier.Inputs(
+                planetType,
+                surfaceTemperatureK,
+                waterFraction,
+                iceCoverFraction,
+                densityGcm3,
+                semiMajorAxisAU));
     }
 
     /**
@@ -745,21 +674,21 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
         zoomBox.getChildren().addAll(zoomLabel, zoomSlider);
 
-        // Auto-rotate checkbox
+        // Auto-rotate checkbox (Phase 4.2: delegated to PlanetCameraController)
         CheckBox autoRotateCheckBox = new CheckBox("Auto-spin");
         autoRotateCheckBox.setStyle(LABEL_STYLE);
-        autoRotateCheckBox.setSelected(autoRotate);
+        autoRotateCheckBox.setSelected(cameraController.isAutoRotate());
         autoRotateCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            setAutoRotate(newVal);
+            cameraController.setAutoRotate(newVal);
         });
 
         // Reset view button
         Button resetButton = new Button("Reset View");
         resetButton.setMaxWidth(Double.MAX_VALUE);
         resetButton.setOnAction(e -> {
-            resetView();
+            cameraController.resetView();
             autoRotateCheckBox.setSelected(false);
-            setAutoRotate(false);
+            cameraController.setAutoRotate(false);
         });
 
         content.getChildren().addAll(zoomBox, autoRotateCheckBox, resetButton);
@@ -832,26 +761,23 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             renderPlanet();
         });
 
-        // Pole marker checkbox
+        // Pole marker checkbox (Phase 4.2: delegated to PlanetPoleMarker)
         poleMarkerCheckBox = new CheckBox("Pole Marker");
         poleMarkerCheckBox.setStyle(LABEL_STYLE);
-        poleMarkerCheckBox.setSelected(showPoleMarker);
+        poleMarkerCheckBox.setSelected(poleMarker.isVisible());
         poleMarkerCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showPoleMarker = newVal;
-            if (showPoleMarker) {
+            poleMarker.setVisible(newVal);
+            if (newVal) {
                 createPoleMarker();
-            } else if (poleMarkerGroup != null) {
-                poleMarkerGroup.setVisible(false);
             }
         });
 
-        // Atmosphere checkbox
+        // Atmosphere checkbox (Phase 4.2: delegated to PlanetAtmosphereRenderer)
         CheckBox atmosphereCheckBox = new CheckBox("Atmosphere");
         atmosphereCheckBox.setStyle(LABEL_STYLE);
-        atmosphereCheckBox.setSelected(showAtmosphere);
+        atmosphereCheckBox.setSelected(atmosphereRenderer.isShowAtmosphere());
         atmosphereCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            showAtmosphere = newVal;
-            updateAtmosphere();
+            atmosphereRenderer.setShowAtmosphere(newVal);
         });
 
         content.getChildren().addAll(
@@ -1168,123 +1094,24 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Create an atmosphere glow effect around the planet.
-     * Atmosphere behavior:
-     * - Gas giants: Always have thick atmospheres
-     * - Ice giants: Always have atmospheres
-     * - Very dry rocky planets (< 5% water): No atmosphere
-     * - Frozen airless worlds (< 200K): No atmosphere
-     * - Others: Atmosphere based on conditions
+     * Snapshot the current physical context and ask the atmosphere renderer to
+     * rebuild the shell. Phase 4.2 delegated the actual geometry / colour
+     * decisions to {@link PlanetAtmosphereRenderer}.
      */
     private void createAtmosphere() {
-        // Remove existing atmosphere if any
-        if (atmosphereSphere != null) {
-            world.getChildren().remove(atmosphereSphere);
-        }
-
-        if (!showAtmosphere) {
-            return;
-        }
-
-        TerrainType terrainType = determineTerrainType();
-
-        // Gas giants ALWAYS have massive atmospheres
-        if (terrainType == TerrainType.JOVIAN || terrainType == TerrainType.ICE_GIANT) {
-            double atmosphereRadius = PLANET_SCALE * 1.08;  // Thicker for gas giants
-            atmosphereSphere = new Sphere(atmosphereRadius);
-
-            Color atmosphereColor = (terrainType == TerrainType.JOVIAN)
-                ? Color.rgb(200, 180, 150, 0.15)  // Tan/orange haze for Jupiter-like
-                : Color.rgb(100, 150, 200, 0.18); // Blue haze for Neptune-like
-
-            PhongMaterial material = new PhongMaterial();
-            material.setDiffuseColor(atmosphereColor);
-            material.setSpecularColor(Color.TRANSPARENT);
-            atmosphereSphere.setMaterial(material);
-            atmosphereSphere.setCullFace(CullFace.NONE);
-            world.getChildren().add(atmosphereSphere);
-            return;
-        }
-
-        // Get planet's water fraction
         double waterFraction = generatedPlanet.config() != null
-            ? generatedPlanet.config().waterFraction()
-            : currentWaterFraction;
-
-        // Very dry planets (< 5% water) don't have significant atmospheres
-        // Skip atmosphere for Rock, Mercury-like, Moon-like worlds
-        if (waterFraction < 0.05) {
-            return;
-        }
-
-        // Very cold ice worlds (< 200K) typically lack atmospheres
-        // Skip atmosphere for Europa, Enceladus, Pluto-like worlds
-        if (surfaceTemperatureK < 200.0) {
-            return;
-        }
-
-        // Create atmosphere sphere (5% larger than planet)
-        double atmosphereRadius = PLANET_SCALE * 1.05;
-        atmosphereSphere = new Sphere(atmosphereRadius);
-
-        // Atmosphere color varies based on conditions
-        Color atmosphereColor;
-        if (surfaceTemperatureK < 273.0) {
-            // Cold but with atmosphere (Mars-like, 200-273K)
-            atmosphereColor = Color.rgb(200, 180, 160, 0.04);
-        } else if (waterFraction > 0.5) {
-            // Wet world - blue, Earth-like atmosphere
-            atmosphereColor = Color.rgb(100, 150, 255, 0.12);
-        } else if (waterFraction > 0.2) {
-            // Semi-arid - lighter blue
-            atmosphereColor = Color.rgb(135, 180, 255, 0.08);
-        } else {
-            // Mostly dry - very thin, dusty atmosphere
-            atmosphereColor = Color.rgb(180, 200, 230, 0.05);
-        }
-
-        PhongMaterial atmosphereMaterial = new PhongMaterial();
-        atmosphereMaterial.setDiffuseColor(atmosphereColor);
-        atmosphereMaterial.setSpecularColor(Color.TRANSPARENT);
-        atmosphereSphere.setMaterial(atmosphereMaterial);
-        atmosphereSphere.setCullFace(CullFace.NONE);
-
-        world.getChildren().add(atmosphereSphere);
-    }
-
-    /**
-     * Toggle atmosphere visibility.
-     */
-    private void updateAtmosphere() {
-        if (atmosphereSphere != null) {
-            atmosphereSphere.setVisible(showAtmosphere);
-        }
+                ? generatedPlanet.config().waterFraction()
+                : currentWaterFraction;
+        atmosphereRenderer.render(determineTerrainType(), waterFraction, surfaceTemperatureK);
     }
 
     private void updateAxialTilt() {
         axialTiltRotate.setAngle(currentAxialTilt);
     }
 
+    /** Phase 4.2: delegate to {@link PlanetPoleMarker}. */
     private void createPoleMarker() {
-        if (poleMarkerGroup != null) {
-            planetGroup.getChildren().remove(poleMarkerGroup);
-        }
-
-        poleMarkerGroup = new Group();
-        double markerRadius = 0.02;
-        double markerDistance = PLANET_SCALE * 1.05;
-
-        Sphere north = new Sphere(markerRadius);
-        north.setMaterial(new PhongMaterial(Color.rgb(255, 80, 80)));
-        north.setTranslateY(markerDistance);
-
-        Sphere south = new Sphere(markerRadius);
-        south.setMaterial(new PhongMaterial(Color.rgb(80, 80, 255)));
-        south.setTranslateY(-markerDistance);
-
-        poleMarkerGroup.getChildren().addAll(north, south);
-        poleMarkerGroup.setVisible(showPoleMarker);
-        planetGroup.getChildren().add(poleMarkerGroup);
+        poleMarker.render();
     }
 
     /**
@@ -1672,162 +1499,6 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Set up mouse handlers for rotation and zoom.
-     */
-    private void setupMouseHandlers() {
-        subScene.setOnMousePressed(event -> {
-            mouseX = event.getSceneX();
-            mouseY = event.getSceneY();
-            mouseOldX = event.getSceneX();
-            mouseOldY = event.getSceneY();
-        });
-
-        subScene.setOnMouseDragged(event -> {
-            mouseOldX = mouseX;
-            mouseOldY = mouseY;
-            mouseX = event.getSceneX();
-            mouseY = event.getSceneY();
-
-            double deltaX = mouseX - mouseOldX;
-            double deltaY = mouseY - mouseOldY;
-
-            double modifier = 0.3;
-
-            if (event.isPrimaryButtonDown()) {
-                rotateY.setAngle(rotateY.getAngle() + deltaX * modifier);
-                rotateX.setAngle(rotateX.getAngle() - deltaY * modifier);
-
-                if (rotateX.getAngle() > 85) rotateX.setAngle(85);
-                if (rotateX.getAngle() < -85) rotateX.setAngle(-85);
-            }
-        });
-
-        subScene.setOnScroll(event -> {
-            double deltaY = event.getDeltaY();
-            double newZ = camera.getTranslateZ() + deltaY * 0.01;
-            newZ = Math.max(-8, Math.min(-1.5, newZ));
-            camera.setTranslateZ(newZ);
-        });
-
-        // Keyboard input handlers
-        subScene.setOnKeyPressed(event -> {
-            pressedKeys.add(event.getCode());
-            event.consume();
-        });
-        subScene.setOnKeyReleased(event -> {
-            pressedKeys.remove(event.getCode());
-            event.consume();
-        });
-        subScene.setFocusTraversable(true);
-
-        // Request focus when clicked
-        subScene.setOnMouseClicked(event -> subScene.requestFocus());
-    }
-
-    /**
-     * Reset the view to initial state.
-     */
-    private void resetView() {
-        rotateX.setAngle(25);
-        rotateY.setAngle(25);
-        camera.setTranslateZ(INITIAL_CAMERA_DISTANCE);
-    }
-
-    private void initializeAnimation() {
-        rotationAnimation = new Timeline(
-            new KeyFrame(Duration.millis(30), event -> {
-                if (autoRotate) {
-                    spinRotate.setAngle(spinRotate.getAngle() + 0.3);
-                }
-                processKeyboardInput();
-            })
-        );
-        rotationAnimation.setCycleCount(Animation.INDEFINITE);
-    }
-
-    /**
-     * Process keyboard input for flight simulator style controls.
-     * Called every animation frame (30ms).
-     *
-     * Key bindings:
-     * - W/S: Zoom in/out (camera Z)
-     * - A/D: Rotate left/right (rotateY)
-     * - Q/E: Rotate up/down (rotateX)
-     * - R: Reset view
-     * - SPACE: Toggle auto-spin
-     */
-    private void processKeyboardInput() {
-        double rotateSpeed = 1.0;
-        double zoomSpeed = 0.05;
-
-        // Zoom in/out
-        if (pressedKeys.contains(KeyCode.W)) {
-            camera.setTranslateZ(camera.getTranslateZ() + zoomSpeed);
-        }
-        if (pressedKeys.contains(KeyCode.S)) {
-            camera.setTranslateZ(camera.getTranslateZ() - zoomSpeed);
-        }
-
-        // Rotate left/right
-        if (pressedKeys.contains(KeyCode.A)) {
-            rotateY.setAngle(rotateY.getAngle() - rotateSpeed);
-        }
-        if (pressedKeys.contains(KeyCode.D)) {
-            rotateY.setAngle(rotateY.getAngle() + rotateSpeed);
-        }
-
-        // Rotate up/down
-        if (pressedKeys.contains(KeyCode.Q)) {
-            double newAngle = rotateX.getAngle() + rotateSpeed;
-            rotateX.setAngle(Math.min(85, newAngle));
-        }
-        if (pressedKeys.contains(KeyCode.E)) {
-            double newAngle = rotateX.getAngle() - rotateSpeed;
-            rotateX.setAngle(Math.max(-85, newAngle));
-        }
-
-        // Reset view (single action)
-        if (pressedKeys.contains(KeyCode.R)) {
-            resetView();
-            pressedKeys.remove(KeyCode.R);
-        }
-
-        // Toggle auto-spin (single action)
-        if (pressedKeys.contains(KeyCode.SPACE)) {
-            setAutoRotate(!autoRotate);
-            pressedKeys.remove(KeyCode.SPACE);
-        }
-
-        // Clamp zoom
-        double z = camera.getTranslateZ();
-        camera.setTranslateZ(Math.max(-8, Math.min(-1.5, z)));
-    }
-
-    private void setAutoRotate(boolean enabled) {
-        this.autoRotate = enabled;
-        // Always ensure animation is running for keyboard input processing
-        ensureAnimationRunning();
-    }
-
-    /**
-     * Ensure the animation loop is running for keyboard input processing.
-     */
-    private void ensureAnimationRunning() {
-        if (rotationAnimation == null) {
-            initializeAnimation();
-        }
-        if (rotationAnimation.getStatus() != Animation.Status.RUNNING) {
-            rotationAnimation.play();
-        }
-    }
-
-    private void stopAnimation() {
-        if (rotationAnimation != null) {
-            rotationAnimation.stop();
-        }
-    }
-
-    /**
      * Create the LEGEND section showing color mappings.
      */
     private TitledPane createLegendSection() {
@@ -1903,34 +1574,22 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Save the current view as a PNG screenshot.
+     * Save the current view as a PNG screenshot. Pauses auto-rotation around
+     * the capture so the saved frame is stable.
+     * <p>
+     * The PNG capture itself is delegated to {@link PlanetScreenshotExporter}
+     * (Phase 4.2).
      */
     private void saveScreenshot() {
-        boolean wasRotating = autoRotate;
+        boolean wasRotating = cameraController.isAutoRotate();
         if (wasRotating) {
-            setAutoRotate(false);
+            cameraController.setAutoRotate(false);
         }
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Planet Screenshot");
-        fileChooser.setInitialFileName(planetName.replaceAll("[^a-zA-Z0-9]", "_") + "_terrain.png");
-        fileChooser.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("PNG Image", "*.png")
-        );
-
-        File file = fileChooser.showSaveDialog(getDialogPane().getScene().getWindow());
-        if (file != null) {
-            try {
-                WritableImage image = subScene.snapshot(null, null);
-                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-                log.info("Saved screenshot to: {}", file.getAbsolutePath());
-            } catch (IOException e) {
-                log.error("Failed to save screenshot: {}", e.getMessage());
-            }
-        }
-
+        String suggestedName = planetName.replaceAll("[^a-zA-Z0-9]", "_") + "_terrain.png";
+        PlanetScreenshotExporter.saveSnapshot(subScene, suggestedName,
+                getDialogPane().getScene().getWindow());
         if (wasRotating) {
-            setAutoRotate(true);
+            cameraController.setAutoRotate(true);
         }
     }
 }
