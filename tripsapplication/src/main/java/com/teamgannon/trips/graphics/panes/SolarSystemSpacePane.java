@@ -9,6 +9,7 @@ import com.teamgannon.trips.events.SolarSystemCameraEvent;
 import com.teamgannon.trips.events.SolarSystemDisplayToggleEvent;
 import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
@@ -26,6 +27,7 @@ import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEven
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
 import com.teamgannon.trips.spaceshipmodeller.ui.TransferPreviewDialog;
+import javafx.concurrent.Task;
 import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
@@ -49,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 
 
@@ -87,6 +90,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      * 2D label display group - added to sceneRoot for flat labels that face the camera
      */
     private final Group labelDisplayGroup = new Group();
+    private final Label loadingIndicator = new Label();
 
     /**
      * contains all the entities in the solar system
@@ -121,6 +125,7 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      */
     private SolarSystemDescription currentSystem;
     private Node selectedNode;
+    private Task<SolarSystemDescription> currentLoadTask;
 
     /**
      * Animation controller for orbital dynamics
@@ -180,6 +185,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         this.setBackground(Background.EMPTY);
         this.getChildren().add(sceneRoot);
+        configureLoadingIndicator();
+        this.getChildren().add(loadingIndicator);
         this.setPickOnBounds(false);
 
         subScene.widthProperty().bind(this.widthProperty());
@@ -326,13 +333,50 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      */
     public void setSystemToDisplay(@NotNull StarDisplayRecord starDisplayRecord) {
         String systemName = starDisplayRecord.getStarName();
-        createScaleLegend(systemName);
+        FxThread.runOnFxThread(() -> createScaleLegend(systemName));
+        loadAndRenderSystem(starDisplayRecord, "Loading " + systemName + "...");
+    }
 
-        // get the solar system description
-        SolarSystemDescription solarSystemDescription = solarSystemService.getSolarSystem(starDisplayRecord);
+    private void loadAndRenderSystem(@NotNull StarDisplayRecord starDisplayRecord, @NotNull String loadingMessage) {
+        Task<SolarSystemDescription> previousTask = currentLoadTask;
+        if (previousTask != null && previousTask.isRunning()) {
+            previousTask.cancel();
+        }
 
-        // render the solar system
-        render(solarSystemDescription);
+        Task<SolarSystemDescription> task = new Task<>() {
+            @Override
+            protected SolarSystemDescription call() {
+                return solarSystemService.getSolarSystem(starDisplayRecord);
+            }
+        };
+        currentLoadTask = task;
+
+        task.setOnRunning(event -> showLoading(loadingMessage));
+        task.setOnSucceeded(event -> {
+            if (currentLoadTask != task) {
+                return;
+            }
+            hideLoading();
+            render(task.getValue());
+        });
+        task.setOnCancelled(event -> {
+            if (currentLoadTask == task) {
+                hideLoading();
+            }
+        });
+        task.setOnFailed(event -> {
+            if (currentLoadTask != task) {
+                return;
+            }
+            hideLoading();
+            Throwable failure = task.getException();
+            log.error("Failed to load solar system for {}", starDisplayRecord.getStarName(), failure);
+            showErrorAlert("Solar System", "Failed to load solar system: " + failure.getMessage());
+        });
+
+        Thread thread = new Thread(task, "solar-system-load-" + starDisplayRecord.getStarName());
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
@@ -387,6 +431,31 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Initialize orbital animation
         initializeAnimation(solarSystemDescription);
+    }
+
+    private void configureLoadingIndicator() {
+        loadingIndicator.setManaged(false);
+        loadingIndicator.setVisible(false);
+        loadingIndicator.setTextFill(Color.WHEAT);
+        loadingIndicator.setStyle("-fx-background-color: rgba(0, 0, 0, 0.72);"
+                + "-fx-padding: 8 12 8 12;"
+                + "-fx-background-radius: 4;"
+                + "-fx-border-color: rgba(245, 222, 179, 0.55);"
+                + "-fx-border-radius: 4;");
+        loadingIndicator.setLayoutX(16);
+        loadingIndicator.setLayoutY(16);
+    }
+
+    private void showLoading(String message) {
+        FxThread.runOnFxThread(() -> {
+            loadingIndicator.setText(message);
+            loadingIndicator.setVisible(true);
+            loadingIndicator.toFront();
+        });
+    }
+
+    private void hideLoading() {
+        FxThread.runOnFxThread(() -> loadingIndicator.setVisible(false));
     }
 
     /**
@@ -702,12 +771,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
             return;
         }
 
-        // Re-fetch the solar system data and re-render
         StarDisplayRecord star = currentSystem.getStarDisplayRecord();
-        SolarSystemDescription refreshedSystem = solarSystemService.getSolarSystem(star);
-        render(refreshedSystem);
-
-        log.info("Refreshed solar system display after edit");
+        loadAndRenderSystem(star, "Refreshing " + star.getStarName() + "...");
     }
 
 }

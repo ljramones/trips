@@ -167,7 +167,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/graphics/panes/SolarSystemSpacePane.java:327-332 ; also 699-707 (`refreshCurrentSystem`)
 - **Description**: `setSystemToDisplay()` and `refreshCurrentSystem()` call `solarSystemService.getSolarSystem()` synchronously on the JavaFX Application Thread. That method runs `exoPlanetRepository.findBySolarSystemId()` and `featureRepository.findBySolarSystemId()` (`SolarSystemService.java:85,89`). The UI freezes during "Jump Into…" while DB I/O completes.
 - **Suggestion**: Wrap the load in `javafx.concurrent.Task<SolarSystemDescription>`; show a transient progress indicator; render on the `setOnSucceeded` callback.
-- **Status**: open
+- **Status**: done -- `SolarSystemSpacePane` now loads systems in a daemon `Task`, shows a transient loading indicator, cancels/ignores stale loads, and renders only from the success callback on the FX thread.
 
 ### Issue 12 -- Severity: bug (critical)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java (`starBulkSave`) ; tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:38,94 ; tripsapplication/src/main/resources/application.yml:31
@@ -475,20 +475,24 @@ Phases are ordered by dependency and risk. Each phase is independently shippable
 | 1.1 | Added `StarMassNormalizer`, applied it at import/creation boundaries, added `V2__normalize_star_obj_mass_to_solar.sql`, updated `StarObject.mass` documentation, removed the `TransferCalculator.toSolarMasses(...)` heuristic, and covered normalization with `StarMassNormalizerTest` plus updated transfer-calculator expectations. | 15 | done |
 | 1.2 | Added `BulkLoadService.loadCsvDataset(...)` as the transactional CSV import entry point and moved `CSVLoadTask` to delegate to it, so parser failures and descriptor failures roll back the import as one unit. | 28 | done |
 | 1.3 | Set `hibernate.jdbc.batch_size` to 5,000 to match the parser batch and updated `StarService.starBulkSave(...)` to `flush()` + `clear()` after each batch. | 12 | done |
-| 1.4 | Drop confirmed-orphan columns (e.g., the abandoned `series` column from spaceshipmodeller phase 18) via Flyway. Backfill `availablePropellantTons` for legacy `TransferPlanEntity` rows. | 13 (followup) | deferred to schema-cleanup follow-up |
+| 1.4 | V3 migration `drop_spaceship_design_series` drops the phase-18 orphan column with `DROP COLUMN IF EXISTS` (idempotent — no-op on fresh DBs). V4 migration `backfill_transfer_plan_available_propellant` sets `available_propellant_tons = total_propellant_tons` for legacy rows where availableProp=0 and totalProp>0 (their plans must have been feasible at save time). | 13 (followup) | done |
 
 Verification:
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
-- `./mvnw-java25.sh -q -pl tripsapplication -Dtest='StarMassNormalizerTest,TransferCalculatorTest' test` passed.
+- `./mvnw-java25.sh -pl tripsapplication test -Dtest='StarMassNormalizerTest,TransferCalculatorTest,FlywayBaselineSmokeTest' test` passed — the smoke test exercises V1→V2→V3→V4 against in-memory H2 followed by Hibernate `validate` against the entity model.
+- Full non-integration suite: **2,714 tests pass, 0 failures** (+5 from new `StarMassNormalizerTest`).
 
 ## Phase 2 — Fix FX-thread Freezes (user-visible)
 
-| # | Action | Issue(s) | Rough effort |
+| # | Action | Issue(s) | Status |
 |---|---|---|---|
-| 2.1 | Wrap `SolarSystemSpacePane.setSystemToDisplay()` and `refreshCurrentSystem()` in `javafx.concurrent.Task`. Show a transient progress overlay. Render on `setOnSucceeded`. | 11 | 1 day |
+| 2.1 | Wrapped `SolarSystemSpacePane.setSystemToDisplay()` and `refreshCurrentSystem()` in `javafx.concurrent.Task`; added a transient loading indicator; render now happens on `setOnSucceeded`, and stale loads are cancelled/ignored. | 11 | done |
 | 2.2 | Audit every `@EventListener` that mutates the scene graph: ensure each wraps work in `Platform.runLater` *or* document a publisher-thread invariant. Fix `PythonScriptEngine` event delivery first. | 14, 52 | 2 days |
 | 2.3 | Move graph search and transit computation to a single shared daemon executor. Always `awaitTermination` + `shutdownNow` on cancellation. Clear large in-memory graph structures in `finally`. | 27 | 1-2 days |
 | 2.4 | Add an `@PreDestroy` / dialog-close hook to unregister listeners on disposable dialogs. Audit each dialog controller's event subscriptions. | 37 | 2 days |
+
+Verification for Phase 2.1:
+- `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
 
 ## Phase 3 — Architectural Sanity (before adding more features)
 
