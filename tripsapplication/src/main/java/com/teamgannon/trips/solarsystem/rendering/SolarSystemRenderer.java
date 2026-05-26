@@ -42,38 +42,8 @@ import java.util.Random;
 @Slf4j
 public class SolarSystemRenderer {
 
-    /**
-     * Default orbit colors by index
-     */
-    private static final Color[] ORBIT_COLORS = {
-            Color.rgb(100, 149, 237, 0.7),  // Cornflower blue
-            Color.rgb(144, 238, 144, 0.7),  // Light green
-            Color.rgb(255, 182, 193, 0.7),  // Light pink
-            Color.rgb(255, 218, 185, 0.7),  // Peach
-            Color.rgb(221, 160, 221, 0.7),  // Plum
-            Color.rgb(176, 224, 230, 0.7),  // Powder blue
-            Color.rgb(240, 230, 140, 0.7),  // Khaki
-            Color.rgb(152, 251, 152, 0.7),  // Pale green
-    };
-
-    /**
-     * Planet colors based on type/temperature
-     */
-    private static final Color HOT_PLANET_COLOR = Color.rgb(255, 100, 50);
-    private static final Color TEMPERATE_PLANET_COLOR = Color.rgb(100, 180, 100);
-    private static final Color COLD_PLANET_COLOR = Color.rgb(150, 200, 255);
-    private static final Color GAS_GIANT_COLOR = Color.rgb(230, 180, 120);
-
-    /**
-     * Moon color - silver/gray to distinguish from planets
-     */
-    private static final Color MOON_COLOR = Color.rgb(192, 192, 200);
-
-    /**
-     * Moon orbit color - consistent silver/gray for all moon orbits.
-     * Using a unified color makes moon orbits clearly distinguishable from planet orbits.
-     */
-    private static final Color MOON_ORBIT_COLOR = Color.rgb(180, 180, 200, 0.8);
+    // Color constants and palette logic moved to SolarSystemColors in Phase 4.1.2
+    // (see solarsystem/rendering/SolarSystemColors.java).
 
     @Getter
     private final ScaleManager scaleManager;
@@ -99,9 +69,13 @@ public class SolarSystemRenderer {
     @Getter
     private final Group orbitsGroup;
 
-    /** Overlay for a temporary transfer trajectory arc (added to systemGroup on demand). */
-    @Getter
-    private final Group transferOverlayGroup = new Group();
+    /**
+     * Transfer-trajectory overlay (dashed Hohmann arc).
+     * Phase 4.1.4 extracted the drawing logic; this renderer keeps a
+     * reference so {@link #drawTransferTrajectory} and
+     * {@link #clearTransferOverlay} stay as public delegate methods.
+     */
+    private final TransferTrajectoryOverlay transferOverlay;
 
     /**
      * Group for ecliptic reference plane/grid
@@ -288,6 +262,7 @@ public class SolarSystemRenderer {
         this.scaleManager = new ScaleManager();
         this.orbitSamplingProvider = OrbitSamplingProviders.defaultKepler();
         this.orbitVisualizer = new OrbitVisualizer(scaleManager, orbitSamplingProvider);
+        this.transferOverlay = new TransferTrajectoryOverlay(scaleManager);
 
         // Initialize helper classes
         this.selectionStyleManager = new SelectionStyleManager();
@@ -401,7 +376,7 @@ public class SolarSystemRenderer {
     public void setShowOrbitNodes(boolean show) {
         this.showOrbitNodes = show;
         if (show) {
-            orbitMarkerRenderer.rebuildOrbitNodeMarkers(orbitNodeGroup, planetDescriptions, orbitColors, ORBIT_COLORS[0], show);
+            orbitMarkerRenderer.rebuildOrbitNodeMarkers(orbitNodeGroup, planetDescriptions, orbitColors, SolarSystemColors.ORBIT_COLORS[0], show);
         } else {
             orbitNodeGroup.getChildren().clear();
             orbitNodeGroup.setVisible(false);
@@ -411,7 +386,7 @@ public class SolarSystemRenderer {
     public void setShowApsides(boolean show) {
         this.showApsides = show;
         if (show) {
-            orbitMarkerRenderer.rebuildApsideMarkers(apsidesGroup, planetDescriptions, orbitColors, ORBIT_COLORS[0], show);
+            orbitMarkerRenderer.rebuildApsideMarkers(apsidesGroup, planetDescriptions, orbitColors, SolarSystemColors.ORBIT_COLORS[0], show);
         } else {
             apsidesGroup.getChildren().clear();
             apsidesGroup.setVisible(false);
@@ -517,8 +492,8 @@ public class SolarSystemRenderer {
         }
 
         // Determine scale based on outermost primary planet orbit
-        double maxOrbitAU = calculateMaxOrbitalDistance(description);
-        double minOrbitAU = calculateMinOrbitalDistance(description);
+        double maxOrbitAU = SystemGeometryHelper.maxOrbitalDistance(description);
+        double minOrbitAU = SystemGeometryHelper.minOrbitalDistance(description);
         scaleManager.setMaxOrbitalDistanceAU(Math.max(maxOrbitAU, 1.0));
 
         // Auto-enable log scale if orbit ratio is large (helps spread out tightly-packed inner planets)
@@ -584,7 +559,7 @@ public class SolarSystemRenderer {
             }
         }
         primaryPlanets.sort((a, b) -> Double.compare(a.getSemiMajorAxis(), b.getSemiMajorAxis()));
-        double maxPlanetRadius = findMaxPlanetRadius(primaryPlanets);
+        double maxPlanetRadius = SystemGeometryHelper.maxPlanetRadius(primaryPlanets);
 
         // Calculate minimum moon orbit distance for each planet (for size capping)
         Map<String, Double> minMoonOrbitByParent = new HashMap<>();
@@ -596,14 +571,14 @@ public class SolarSystemRenderer {
         }
 
         // Calculate angular offsets - spread planets evenly, with extra offset for close orbits
-        double[] trueAnomalies = calculatePlanetAngles(primaryPlanets);
+        double[] trueAnomalies = SystemGeometryHelper.planetPhaseAngles(primaryPlanets);
         Map<String, double[]> primaryPositionsAu = new HashMap<>();
         Map<String, Color> primaryOrbitColors = new HashMap<>();
         Map<String, Double> primaryDisplayRadii = new HashMap<>();  // Track display radii for moon sizing
 
         for (int i = 0; i < primaryPlanets.size(); i++) {
             PlanetDescription planet = primaryPlanets.get(i);
-            Color orbitColor = ORBIT_COLORS[i % ORBIT_COLORS.length];
+            Color orbitColor = SolarSystemColors.ORBIT_COLORS[i % SolarSystemColors.ORBIT_COLORS.length];
             primaryOrbitColors.put(planet.getId(), orbitColor);
             double[] positionAu = orbitSamplingProvider.calculatePositionAu(
                     planet.getSemiMajorAxis(),
@@ -635,7 +610,7 @@ public class SolarSystemRenderer {
                 log.warn("Skipping moon {}: parent position not found", moon.getName());
                 continue;
             }
-            Color orbitColor = primaryOrbitColors.getOrDefault(parent.getId(), ORBIT_COLORS[0]);
+            Color orbitColor = primaryOrbitColors.getOrDefault(parent.getId(), SolarSystemColors.ORBIT_COLORS[0]);
             double trueAnomaly = random.nextDouble() * 360.0;
             // Get parent's physical radius and display radius for accurate moon sizing
             double parentPhysicalRadius = parent.getRadius() > 0 ? parent.getRadius() : 1.0;
@@ -774,56 +749,18 @@ public class SolarSystemRenderer {
      * @param color arc colour
      */
     public void drawTransferTrajectory(double r1Au, double r2Au, Color color) {
-        clearTransferOverlay();
-        if (!systemGroup.getChildren().contains(transferOverlayGroup)) {
-            systemGroup.getChildren().add(transferOverlayGroup);
+        // Attach the overlay group lazily to the system group on first use, so a
+        // renderer that never plans a transfer doesn't carry an empty overlay node.
+        Group overlayGroup = transferOverlay.getOverlayGroup();
+        if (!systemGroup.getChildren().contains(overlayGroup)) {
+            systemGroup.getChildren().add(overlayGroup);
         }
-        if (r1Au <= 0 || r2Au <= 0) {
-            return;
-        }
-        double a = (r1Au + r2Au) / 2.0;
-        double e = Math.abs(r2Au - r1Au) / (r1Au + r2Au);
-        int segments = 64;
-        List<double[]> screenPoints = new ArrayList<>();
-        for (int i = 0; i <= segments; i++) {
-            double nu = Math.PI * i / segments; // true anomaly 0..180 degrees
-            double r = a * (1 - e * e) / (1 + e * Math.cos(nu)); // AU
-            screenPoints.add(scaleManager.auVectorToScreen(r * Math.cos(nu), 0, r * Math.sin(nu)));
-        }
-        PhongMaterial material = new PhongMaterial(color);
-        for (int i = 0; i < screenPoints.size() - 1; i++) {
-            if (i % 10 < 6) { // dashed: 6 segments on, 4 off
-                transferOverlayGroup.getChildren().add(
-                        transferSegment(screenPoints.get(i), screenPoints.get(i + 1), 0.6, material));
-            }
-        }
+        transferOverlay.draw(r1Au, r2Au, color);
     }
 
     /** Remove any drawn transfer trajectory. */
     public void clearTransferOverlay() {
-        transferOverlayGroup.getChildren().clear();
-    }
-
-    private Cylinder transferSegment(double[] p0, double[] p1, double radius, PhongMaterial material) {
-        double dx = p1[0] - p0[0];
-        double dy = p1[1] - p0[1];
-        double dz = p1[2] - p0[2];
-        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        Cylinder cylinder = new Cylinder(radius, length);
-        cylinder.setMaterial(material);
-        cylinder.setTranslateX((p0[0] + p1[0]) / 2);
-        cylinder.setTranslateY((p0[1] + p1[1]) / 2);
-        cylinder.setTranslateZ((p0[2] + p1[2]) / 2);
-        if (length > 1e-9) {
-            // rotate the default (Y-axis) cylinder to align with the segment direction
-            Point3D dir = new Point3D(dx, dy, dz).normalize();
-            Point3D axis = new Point3D(0, 1, 0).crossProduct(dir);
-            if (axis.magnitude() > 1e-9) {
-                double angle = Math.toDegrees(Math.acos(new Point3D(0, 1, 0).dotProduct(dir)));
-                cylinder.getTransforms().add(new Rotate(angle, axis));
-            }
-        }
-        return cylinder;
+        transferOverlay.clear();
     }
 
     /**
@@ -898,7 +835,7 @@ public class SolarSystemRenderer {
 
         Color starColor = star.getStarColor();
         if (starColor == null) {
-            starColor = getStarColorFromSpectralClass(star.getSpectralClass());
+            starColor = SolarSystemColors.starColor(star.getSpectralClass());
         }
 
         material.setDiffuseColor(starColor);
@@ -1012,7 +949,7 @@ public class SolarSystemRenderer {
                     inclination,
                     longAscNode,
                     argPeriapsis,
-                    MOON_ORBIT_COLOR
+                    SolarSystemColors.MOON_ORBIT_COLOR
             );
         } else {
             // Planet orbits: dashed lines with varied colors
@@ -1146,7 +1083,7 @@ public class SolarSystemRenderer {
 
         Sphere planetSphere = new Sphere(planetRadius);
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(getPlanetColor(planet));
+        material.setDiffuseColor(SolarSystemColors.planetColor(planet));
         material.setSpecularColor(Color.WHITE);
         planetSphere.setMaterial(material);
 
@@ -1358,122 +1295,13 @@ public class SolarSystemRenderer {
 
     // ==================== Helper Methods ====================
 
-    private double calculateMaxOrbitalDistance(SolarSystemDescription description) {
-        double max = 0;
-        for (PlanetDescription planet : description.getPlanetDescriptionList()) {
-            if (planet.isMoon()) {
-                continue;
-            }
-            if (planet.getSemiMajorAxis() > max) {
-                max = planet.getSemiMajorAxis();
-            }
-        }
-        // Also consider habitable zone outer edge
-        if (description.getHabitableZoneOuterAU() > max) {
-            max = description.getHabitableZoneOuterAU();
-        }
-        return max;
-    }
-
-    private double calculateMinOrbitalDistance(SolarSystemDescription description) {
-        double min = Double.MAX_VALUE;
-        for (PlanetDescription planet : description.getPlanetDescriptionList()) {
-            if (planet.isMoon()) {
-                continue;
-            }
-            double sma = planet.getSemiMajorAxis();
-            if (sma > 0 && sma < min) {
-                min = sma;
-            }
-        }
-        return min == Double.MAX_VALUE ? 0 : min;
-    }
-
-    /**
-     * Calculate angular positions for planets to minimize visual overlap.
-     * Planets with similar orbital distances get opposite positions.
-     *
-     * @param planets list of planets sorted by semi-major axis
-     * @return array of true anomaly angles in degrees
-     */
-    private double[] calculatePlanetAngles(List<PlanetDescription> planets) {
-        int n = planets.size();
-        if (n == 0) return new double[0];
-
-        double[] angles = new double[n];
-
-        // Base angle spread - evenly distribute around the orbit
-        double baseSpread = 360.0 / Math.max(n, 1);
-
-        for (int i = 0; i < n; i++) {
-            double baseAngle = i * baseSpread;
-
-            // Check if this planet's orbit is close to the previous one
-            // If so, offset by 180° to put them on opposite sides
-            if (i > 0) {
-                double prevSma = planets.get(i - 1).getSemiMajorAxis();
-                double currSma = planets.get(i).getSemiMajorAxis();
-
-                // If orbits are within 15% of each other, offset by 180°
-                if (prevSma > 0 && Math.abs(currSma - prevSma) / prevSma < 0.15) {
-                    baseAngle = angles[i - 1] + 180;
-                }
-            }
-
-            angles[i] = baseAngle % 360;
-        }
-
-        return angles;
-    }
-
-    private double findMaxPlanetRadius(List<PlanetDescription> planets) {
-        double max = 0;
-        for (PlanetDescription planet : planets) {
-            if (planet.getRadius() > max) {
-                max = planet.getRadius();
-            }
-        }
-        return max > 0 ? max : 1.0;
-    }
-
-    private Color getStarColorFromSpectralClass(String spectralClass) {
-        if (spectralClass == null || spectralClass.isEmpty()) {
-            return Color.YELLOW;
-        }
-        char type = spectralClass.charAt(0);
-        return switch (type) {
-            case 'O' -> Color.rgb(155, 176, 255);
-            case 'B' -> Color.rgb(170, 191, 255);
-            case 'A' -> Color.rgb(202, 215, 255);
-            case 'F' -> Color.rgb(248, 247, 255);
-            case 'G' -> Color.rgb(255, 244, 234);
-            case 'K' -> Color.rgb(255, 210, 161);
-            case 'M' -> Color.rgb(255, 180, 120);
-            default -> Color.YELLOW;
-        };
-    }
-
-    private Color getPlanetColor(PlanetDescription planet) {
-        // Use distinct color for moons
-        if (planet.isMoon()) {
-            return MOON_COLOR;
-        }
-
-        // Color based on equilibrium temperature if available
-        double temp = planet.getEquilibriumTemperature();
-        if (temp > 0) {
-            if (temp > 500) return HOT_PLANET_COLOR;
-            if (temp > 200) return TEMPERATE_PLANET_COLOR;
-            return COLD_PLANET_COLOR;
-        }
-
-        // Fallback: color based on mass (gas giants are more massive)
-        if (planet.getMass() > 50) { // > 50 Earth masses
-            return GAS_GIANT_COLOR;
-        }
-
-        return TEMPERATE_PLANET_COLOR;
-    }
+    // Geometry helpers (calculateMaxOrbitalDistance, calculateMinOrbitalDistance,
+    // calculatePlanetAngles, findMaxPlanetRadius) moved to SystemGeometryHelper
+    // in Phase 4.1.3.
+    //
+    // Colour helpers (getStarColorFromSpectralClass, getPlanetColor + the
+    // ORBIT_COLORS / *_PLANET_COLOR / MOON_* constants) moved to
+    // SolarSystemColors in Phase 4.1.2.
 
     // ==================== Planetary Ring Methods ====================
 
