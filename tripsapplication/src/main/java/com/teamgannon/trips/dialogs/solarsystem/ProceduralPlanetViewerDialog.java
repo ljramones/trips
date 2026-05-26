@@ -1439,37 +1439,16 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     /**
      * Add climate zone visualization.
      */
+    /**
+     * Phase 4.2: climate-zone latitude rings live in
+     * {@link PlanetClimateZoneOverlay}. The dialog just gates on whether the
+     * generator produced climate data.
+     */
     private void addClimateZones() {
         if (generatedPlanet.climates() == null || generatedPlanet.climates().length == 0) {
             return;
         }
-
-        addLatitudeRing(30.0, Color.rgb(255, 200, 100, 0.4));
-        addLatitudeRing(-30.0, Color.rgb(255, 200, 100, 0.4));
-        addLatitudeRing(60.0, Color.rgb(100, 200, 255, 0.5));
-        addLatitudeRing(-60.0, Color.rgb(100, 200, 255, 0.5));
-    }
-
-    private void addLatitudeRing(double latitudeDegrees, Color color) {
-        double latRad = Math.toRadians(latitudeDegrees);
-        double ringRadius = PLANET_SCALE * Math.cos(latRad) * 1.008;
-        double y = PLANET_SCALE * Math.sin(latRad) * 1.008;
-
-        int segments = 72;
-        for (int i = 0; i < segments; i++) {
-            double angle = 2.0 * Math.PI * i / segments;
-            double x = ringRadius * Math.cos(angle);
-            double z = ringRadius * Math.sin(angle);
-
-            Sphere dot = new Sphere(0.008);
-            PhongMaterial material = new PhongMaterial(color);
-            dot.setMaterial(material);
-            dot.setTranslateX(x);
-            dot.setTranslateY(y);
-            dot.setTranslateZ(z);
-
-            planetGroup.getChildren().add(dot);
-        }
+        PlanetClimateZoneOverlay.render(planetGroup, PLANET_SCALE);
     }
 
     private Point3D toPoint3D(org.hipparchus.geometry.euclidean.threed.Vector3D v) {
