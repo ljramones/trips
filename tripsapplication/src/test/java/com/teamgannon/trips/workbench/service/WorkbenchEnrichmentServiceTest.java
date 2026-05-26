@@ -50,7 +50,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should be a static field to ensure singleton behavior")
     void httpClientShouldBeStatic() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
 
         assertTrue(Modifier.isStatic(field.getModifiers()),
             "HTTP_CLIENT must be static to prevent creating new instances per request");
@@ -59,7 +59,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should be final to prevent reassignment")
     void httpClientShouldBeFinal() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
 
         assertTrue(Modifier.isFinal(field.getModifiers()),
             "HTTP_CLIENT must be final to prevent accidental reassignment");
@@ -68,7 +68,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should be initialized (not null)")
     void httpClientShouldBeInitialized() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
 
         Object httpClient = field.get(null);
@@ -80,7 +80,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should have a connect timeout configured")
     void httpClientShouldHaveConnectTimeout() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
 
         HttpClient httpClient = (HttpClient) field.get(null);
@@ -101,7 +101,7 @@ class WorkbenchEnrichmentServiceTest {
         WorkbenchEnrichmentService service2 = new WorkbenchEnrichmentService(starService);
         WorkbenchEnrichmentService service3 = new WorkbenchEnrichmentService(starService);
 
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
 
         // All should reference the exact same HttpClient instance
@@ -177,7 +177,7 @@ class WorkbenchEnrichmentServiceTest {
         AtomicReference<HttpClient> firstClient = new AtomicReference<>();
         List<HttpClient> allClients = new ArrayList<>();
 
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
 
         for (int i = 0; i < threadCount; i++) {
@@ -265,7 +265,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should use HTTP/2 or HTTP/1.1")
     void httpClientShouldUseValidHttpVersion() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
         HttpClient httpClient = (HttpClient) field.get(null);
 
@@ -279,7 +279,7 @@ class WorkbenchEnrichmentServiceTest {
     @Test
     @DisplayName("HTTP_CLIENT should use default redirect policy (NEVER) for security")
     void httpClientShouldHaveSecureRedirectPolicy() throws Exception {
-        Field field = WorkbenchEnrichmentService.class.getDeclaredField("HTTP_CLIENT");
+        Field field = TapHttpClient.class.getDeclaredField("HTTP_CLIENT");
         field.setAccessible(true);
         HttpClient httpClient = (HttpClient) field.get(null);
 

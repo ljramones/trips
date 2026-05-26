@@ -8,13 +8,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,14 +23,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WorkbenchEnrichmentService {
 
-    private static final String GAIA_TAP_BASE_URL = "https://gea.esac.esa.int/tap-server/tap";
-    private static final String SIMBAD_TAP_BASE_URL = "https://simbad.cds.unistra.fr/simbad/sim-tap";
-    private static final String VIZIER_TAP_BASE_URL = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap";
+    // TAP endpoint URLs and the shared HttpClient moved to TapHttpClient
+    // in Phase 4.3 (see TapHttpClient.GAIA_TAP_BASE_URL etc.).
     private static final Pattern DIGIT_PATTERN = Pattern.compile("(\\d+)");
-
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
 
     private final StarService starService;
 
@@ -491,7 +479,7 @@ public class WorkbenchEnrichmentService {
         String adql = "SELECT source_id, mass_flame, radius_flame, lum_flame, teff_gspphot, mh_gspphot " +
                 "FROM gaiadr3.astrophysical_parameters " +
                 "WHERE source_id IN (" + idList + ")";
-        String csv = submitTapSyncCsv(GAIA_TAP_BASE_URL, adql, "Gaia Stellar Params TAP");
+        String csv = TapHttpClient.submitSyncCsv(TapHttpClient.GAIA_TAP_BASE_URL, adql, "Gaia Stellar Params TAP");
 
         // Debug: log first few IDs and CSV response
         if (gaiaIds.size() > 0) {
@@ -522,18 +510,18 @@ public class WorkbenchEnrichmentService {
         if (lines.length == 0) {
             return map;
         }
-        String[] header = splitCsvLine(lines[0]);
+        String[] header = TapCsvParser.splitCsvLine(lines[0]);
         Map<String, Integer> headerIndex = new HashMap<>();
         for (int i = 0; i < header.length; i++) {
             headerIndex.put(header[i].trim().toLowerCase(), i);
         }
 
-        int idIdx = findHeaderIndex(headerIndex, List.of("source_id"));
-        int massIdx = findHeaderIndex(headerIndex, List.of("mass_flame"));
-        int radiusIdx = findHeaderIndex(headerIndex, List.of("radius_flame"));
-        int lumIdx = findHeaderIndex(headerIndex, List.of("lum_flame"));
-        int tempIdx = findHeaderIndex(headerIndex, List.of("teff_gspphot"));
-        int metalIdx = findHeaderIndex(headerIndex, List.of("mh_gspphot"));
+        int idIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("source_id"));
+        int massIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("mass_flame"));
+        int radiusIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("radius_flame"));
+        int lumIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("lum_flame"));
+        int tempIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("teff_gspphot"));
+        int metalIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("mh_gspphot"));
 
         if (idIdx < 0) {
             log.warn("Gaia stellar params CSV missing source_id column");
@@ -545,7 +533,7 @@ public class WorkbenchEnrichmentService {
             if (line.isBlank()) {
                 continue;
             }
-            String[] values = splitCsvLine(line);
+            String[] values = TapCsvParser.splitCsvLine(line);
             if (idIdx >= values.length) {
                 continue;
             }
@@ -739,7 +727,7 @@ public class WorkbenchEnrichmentService {
         }
         String idList = String.join(",", gaiaIds);
         String adql = "SELECT source_id, parallax FROM gaiadr3.gaia_source WHERE source_id IN (" + idList + ")";
-        String csv = submitTapSyncCsv(GAIA_TAP_BASE_URL, adql, "Gaia TAP");
+        String csv = TapHttpClient.submitSyncCsv(TapHttpClient.GAIA_TAP_BASE_URL, adql, "Gaia TAP");
         return parseParallaxCsv(csv, "source_id", "parallax");
     }
 
@@ -749,7 +737,7 @@ public class WorkbenchEnrichmentService {
         }
         String idList = String.join(",", hipIds);
         String adql = "SELECT HIP, Plx FROM \"I/239/hip_main\" WHERE HIP IN (" + idList + ")";
-        String csv = submitTapSyncCsv(VIZIER_TAP_BASE_URL, adql, "VizieR TAP");
+        String csv = TapHttpClient.submitSyncCsv(TapHttpClient.VIZIER_TAP_BASE_URL, adql, "VizieR TAP");
         return parseParallaxCsv(csv, "HIP", "Plx");
     }
 
@@ -764,7 +752,7 @@ public class WorkbenchEnrichmentService {
         String adql = "SELECT i.id AS id, b.plx_value "
                 + "FROM ident i JOIN basic b ON i.oidref = b.oid "
                 + "WHERE i.id IN (" + idList + ")";
-        String csv = submitTapSyncCsv(SIMBAD_TAP_BASE_URL, adql, "SIMBAD TAP");
+        String csv = TapHttpClient.submitSyncCsv(TapHttpClient.SIMBAD_TAP_BASE_URL, adql, "SIMBAD TAP");
         logSimbadCsvSample(csv);
         return parseParallaxCsvRawId(csv, "id", "plx_value");
     }
@@ -790,51 +778,8 @@ public class WorkbenchEnrichmentService {
         log.info("SIMBAD TAP CSV sample rows: {}", sample);
     }
 
-    private static final int MAX_RETRIES = 3;
-    private static final long RETRY_DELAY_MS = 5000;
-
-    private String submitTapSyncCsv(String baseUrl, String adql, String label) throws IOException, InterruptedException {
-        String body = "REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY="
-                + URLEncoder.encode(adql, StandardCharsets.UTF_8);
-        HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/sync"))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .timeout(Duration.ofSeconds(60))
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        IOException lastException = null;
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-                log.info("{} sync status: {} (attempt {})", label, response.statusCode(), attempt);
-                if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                    return response.body();
-                }
-                if (response.statusCode() == 429 || response.statusCode() >= 500) {
-                    // Rate limited or server error - retry
-                    log.warn("{} got {} on attempt {}, retrying after delay...", label, response.statusCode(), attempt);
-                    Thread.sleep(RETRY_DELAY_MS * attempt);
-                    continue;
-                }
-                // Client error (4xx except 429) - don't retry
-                String bodyPreview = response.body();
-                if (bodyPreview != null && bodyPreview.length() > 400) {
-                    bodyPreview = bodyPreview.substring(0, 400) + "...";
-                }
-                log.error("{} sync error body: {}", label, bodyPreview);
-                throw new IOException(label + " sync failed. HTTP " + response.statusCode());
-            } catch (IOException e) {
-                lastException = e;
-                log.warn("{} connection error on attempt {}: {} - retrying after delay...",
-                        label, attempt, e.getMessage());
-                if (attempt < MAX_RETRIES) {
-                    Thread.sleep(RETRY_DELAY_MS * attempt);
-                }
-            }
-        }
-        log.error("{} failed after {} attempts", label, MAX_RETRIES);
-        throw lastException != null ? lastException : new IOException(label + " failed after retries");
-    }
+    // TAP sync POST + retry-on-transient moved to TapHttpClient.submitSyncCsv
+    // in Phase 4.3 (also takes the GAIA / SIMBAD / VIZIER base URLs).
 
     private Map<String, Double> parseParallaxCsv(String csv, String idHeader, String parallaxHeader) {
         Map<String, Double> map = new HashMap<>();
@@ -845,13 +790,13 @@ public class WorkbenchEnrichmentService {
         if (lines.length == 0) {
             return map;
         }
-        String[] header = splitCsvLine(lines[0]);
+        String[] header = TapCsvParser.splitCsvLine(lines[0]);
         Map<String, Integer> headerIndex = new HashMap<>();
         for (int i = 0; i < header.length; i++) {
             headerIndex.put(header[i].trim(), i);
         }
-        int idIdx = findHeaderIndex(headerIndex, List.of(idHeader));
-        int parallaxIdx = findHeaderIndex(headerIndex, List.of(parallaxHeader));
+        int idIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of(idHeader));
+        int parallaxIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of(parallaxHeader));
         if (idIdx < 0 || parallaxIdx < 0) {
             return map;
         }
@@ -860,12 +805,12 @@ public class WorkbenchEnrichmentService {
             if (line.isBlank()) {
                 continue;
             }
-            String[] values = splitCsvLine(line);
+            String[] values = TapCsvParser.splitCsvLine(line);
             if (idIdx >= values.length || parallaxIdx >= values.length) {
                 continue;
             }
             String id = extractNumericId(values[idIdx]);
-            double parallax = parseDoubleSafe(values[parallaxIdx]);
+            double parallax = TapCsvParser.parseDoubleSafe(values[parallaxIdx]);
             if (!id.isEmpty() && parallax > 0) {
                 map.putIfAbsent(id, parallax);
             }
@@ -882,13 +827,13 @@ public class WorkbenchEnrichmentService {
         if (lines.length == 0) {
             return map;
         }
-        String[] header = splitCsvLine(lines[0]);
+        String[] header = TapCsvParser.splitCsvLine(lines[0]);
         Map<String, Integer> headerIndex = new HashMap<>();
         for (int i = 0; i < header.length; i++) {
-            headerIndex.put(unquote(header[i]).trim(), i);
+            headerIndex.put(TapCsvParser.unquote(header[i]).trim(), i);
         }
-        int idIdx = findHeaderIndex(headerIndex, List.of(idHeader));
-        int parallaxIdx = findHeaderIndex(headerIndex, List.of(parallaxHeader));
+        int idIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of(idHeader));
+        int parallaxIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of(parallaxHeader));
         if (idIdx < 0 || parallaxIdx < 0) {
             return map;
         }
@@ -897,12 +842,12 @@ public class WorkbenchEnrichmentService {
             if (line.isBlank()) {
                 continue;
             }
-            String[] values = splitCsvLine(line);
+            String[] values = TapCsvParser.splitCsvLine(line);
             if (idIdx >= values.length || parallaxIdx >= values.length) {
                 continue;
             }
             String id = normalizeSimbadKey(values[idIdx]);
-            double parallax = parseDoubleSafe(values[parallaxIdx]);
+            double parallax = TapCsvParser.parseDoubleSafe(values[parallaxIdx]);
             if (!id.isEmpty() && parallax > 0) {
                 map.putIfAbsent(id, parallax);
             }
@@ -991,7 +936,7 @@ public class WorkbenchEnrichmentService {
         if (value == null) {
             return "";
         }
-        String trimmed = unquote(value).trim();
+        String trimmed = TapCsvParser.unquote(value).trim();
         if (trimmed.isEmpty()) {
             return "";
         }
@@ -1005,16 +950,7 @@ public class WorkbenchEnrichmentService {
         return value.replace("'", "''");
     }
 
-    private int findHeaderIndex(Map<String, Integer> headerIndex, List<String> candidates) {
-        for (String candidate : candidates) {
-            for (Map.Entry<String, Integer> entry : headerIndex.entrySet()) {
-                if (entry.getKey().equalsIgnoreCase(candidate)) {
-                    return entry.getValue();
-                }
-            }
-        }
-        return -1;
-    }
+    // findHeaderIndex moved to TapCsvParser in Phase 4.3.
 
     private String extractNumericId(String value) {
         if (value == null) {
@@ -1076,32 +1012,7 @@ public class WorkbenchEnrichmentService {
         return current + separator + token;
     }
 
-    private String[] splitCsvLine(String line) {
-        if (line == null) {
-            return new String[0];
-        }
-        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-    }
-
-    private String unquote(String value) {
-        String trimmed = value.trim();
-        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() >= 2) {
-            String inner = trimmed.substring(1, trimmed.length() - 1);
-            return inner.replace("\"\"", "\"");
-        }
-        return trimmed;
-    }
-
-    private double parseDoubleSafe(String value) {
-        if (value == null || value.isBlank()) {
-            return 0.0;
-        }
-        try {
-            return Double.parseDouble(value.trim());
-        } catch (NumberFormatException e) {
-            return 0.0;
-        }
-    }
+    // splitCsvLine, unquote, parseDoubleSafe moved to TapCsvParser in Phase 4.3.
 
     // ==================== Temperature & Spectral Class Enrichment ====================
 
