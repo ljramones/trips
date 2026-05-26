@@ -511,7 +511,7 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 
 | # | Target | Issue | Rough effort |
 |---|---|---|---|
-| 4.1 | `SolarSystemRenderer` (2,004 lines) → `ScaleManager`, `OrbitVisualizer`, `BodyRenderer`, `HabitableZoneRenderer`, `GridRenderer` orchestrated by a thin `SolarSystemRenderer`. | 18 | 1-2 sprints |
+| 4.1 | `SolarSystemRenderer` 2,004 → **1,020 lines** (-49%). Five new collaborators alongside the existing `ScaleManager` / `OrbitVisualizer` / `GridAndZoneRenderer` / `OrbitMarkerRenderer` / `SelectionStyleManager`: `SolarSystemColors` (constants + spectral-class / planet colour helpers), `SystemGeometryHelper` (pure orbital-distance + phase-angle math), `TransferTrajectoryOverlay` (dashed Hohmann arc, owns its own Group), `PlanetaryRingManager` (ring + asteroid + Kuiper-belt subsystem, including the ring-adapter, the seeded `Random`, the three visibility flags, and the public add/remove/animate API), `BodyRenderer` (renderStar + renderPlanet + the orbit-context-menu wiring — the two biggest methods). `SolarSystemRendererCharacterizationTest` (4 tests, FX-toolkit headless) guards the contract. Full non-integration suite 2,718 tests green throughout. | 18 | **done** |
 | 4.2 | `ProceduralPlanetViewerDialog` (1,936) → `PlanetGenerationController` (logic) + `PlanetViewerPane` (UI) + `PlanetExporter` (I/O). | 18 | 1 sprint |
 | 4.3 | `WorkbenchEnrichmentService` (1,832) → `GaiaEnrichmentClient`, `VizierEnrichmentClient`, `SimbadEnrichmentClient`, all behind an `EnrichmentSource` interface. | 18 | 1 sprint |
 | 4.4 | `DataWorkbenchController` (1,706) → `WorkbenchSchemaMapper`, `WorkbenchPreviewManager`, `WorkbenchEnrichmentUI`. | 18 | 1 sprint |

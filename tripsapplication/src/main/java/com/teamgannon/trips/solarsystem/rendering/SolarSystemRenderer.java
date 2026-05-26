@@ -128,6 +128,13 @@ public class SolarSystemRenderer {
     private final PlanetaryRingManager rings;
 
     /**
+     * Renders individual stars and planets (the two largest methods that used
+     * to live here, Phase 4.1.6). The renderer's {@code render()} orchestrates
+     * the system; {@code bodyRenderer} produces each Sphere + orbit + markers.
+     */
+    private final BodyRenderer bodyRenderer;
+
+    /**
      * Group for system-level features (stations, gates, other point features)
      */
     @Getter
@@ -168,13 +175,8 @@ public class SolarSystemRenderer {
      */
     private final Map<String, List<Group>> moonOrbitsByParent;
 
-    /**
-     * Amplification factor for moon orbits to make them visible.
-     * Moon orbits are typically tiny (0.001-0.01 AU) compared to planet orbits.
-     * 15x makes Callisto's orbit (~0.0126 AU) appear at ~0.19 AU - visible but
-     * not overlapping with neighboring planet orbits.
-     */
-    private static final double MOON_ORBIT_AMPLIFICATION = 15.0;
+    // Moon-orbit amplification factor moved to BodyRenderer.MOON_ORBIT_AMPLIFICATION
+    // in Phase 4.1.6 — referenced here for the per-system orbit-stats pre-pass.
 
     /**
      * Map of 3D nodes to their 2D labels (for billboard-style label updates)
@@ -202,11 +204,19 @@ public class SolarSystemRenderer {
     }
 
     /**
-     * Handler for context menu events (optional)
+     * Handler for context menu events (optional). Phase 4.1.6 added a custom
+     * setter so updates also propagate to the {@link BodyRenderer} (the new
+     * owner of star/planet/orbit click wiring).
      */
     @Getter
-    @Setter
     private SolarSystemContextMenuHandler contextMenuHandler;
+
+    public void setContextMenuHandler(SolarSystemContextMenuHandler handler) {
+        this.contextMenuHandler = handler;
+        if (bodyRenderer != null) {
+            bodyRenderer.setContextMenuHandler(handler);
+        }
+    }
 
     /**
      * Reference to the current star being rendered (for context menu)
@@ -258,6 +268,18 @@ public class SolarSystemRenderer {
         // Constructed AFTER planetNodes / planetDescriptions because the manager
         // borrows those maps for planet-position lookups.
         this.rings = new PlanetaryRingManager(scaleManager, planetNodes, planetDescriptions);
+
+        // Phase 4.1.6: renderStar / renderPlanet live in BodyRenderer.
+        // Constructed AFTER the manager + maps + groups it borrows.
+        this.bodyRenderer = new BodyRenderer(
+                scaleManager, orbitVisualizer, orbitSamplingProvider,
+                orbitMarkerRenderer, selectionStyleManager, rings,
+                planetsGroup, orbitsGroup, orbitNodeGroup, apsidesGroup,
+                planetNodes, starNodes, planetDescriptions,
+                orbitGroups, orbitColors, moonOrbitsByParent);
+        bodyRenderer.setShowOrbits(showOrbits);
+        bodyRenderer.setShowOrbitNodes(showOrbitNodes);
+        bodyRenderer.setShowApsides(showApsides);
 
         // Order: scale grid (back), habitable zone, ecliptic, features, orbits, orbit nodes, apsides, rings, planets, labels (front)
         // Belts are rendered early so they appear behind planets
@@ -339,6 +361,7 @@ public class SolarSystemRenderer {
 
     public void setShowOrbitNodes(boolean show) {
         this.showOrbitNodes = show;
+        if (bodyRenderer != null) bodyRenderer.setShowOrbitNodes(show);
         if (show) {
             orbitMarkerRenderer.rebuildOrbitNodeMarkers(orbitNodeGroup, planetDescriptions, orbitColors, SolarSystemColors.ORBIT_COLORS[0], show);
         } else {
@@ -349,6 +372,7 @@ public class SolarSystemRenderer {
 
     public void setShowApsides(boolean show) {
         this.showApsides = show;
+        if (bodyRenderer != null) bodyRenderer.setShowApsides(show);
         if (show) {
             orbitMarkerRenderer.rebuildApsideMarkers(apsidesGroup, planetDescriptions, orbitColors, SolarSystemColors.ORBIT_COLORS[0], show);
         } else {
@@ -359,6 +383,7 @@ public class SolarSystemRenderer {
 
     public void setShowOrbits(boolean show) {
         this.showOrbits = show;
+        if (bodyRenderer != null) bodyRenderer.setShowOrbits(show);
         orbitsGroup.setVisible(show);
     }
 
@@ -446,12 +471,13 @@ public class SolarSystemRenderer {
         // Store current star reference for context menus
         this.currentStar = description.getStarDisplayRecord();
 
+        // Phase 4.1.6: renderStar / renderPlanet delegated to BodyRenderer.
         // Render central star
-        renderStar(description.getStarDisplayRecord(), true);
+        bodyRenderer.renderStar(description.getStarDisplayRecord(), true);
 
         // Render companion stars (for multi-star systems)
         for (StarDisplayRecord companion : description.getCompanionStars()) {
-            renderStar(companion, false);
+            bodyRenderer.renderStar(companion, false);
         }
 
         // Render planets - sort primaries by semi-major axis for better angular distribution
@@ -482,7 +508,7 @@ public class SolarSystemRenderer {
         Map<String, Double> minMoonOrbitByParent = new HashMap<>();
         for (PlanetDescription moon : moons) {
             if (moon.getParentPlanetId() != null && moon.getSemiMajorAxis() > 0) {
-                double amplifiedOrbit = moon.getSemiMajorAxis() * MOON_ORBIT_AMPLIFICATION;
+                double amplifiedOrbit = moon.getSemiMajorAxis() * BodyRenderer.MOON_ORBIT_AMPLIFICATION;
                 minMoonOrbitByParent.merge(moon.getParentPlanetId(), amplifiedOrbit, Math::min);
             }
         }
@@ -508,7 +534,7 @@ public class SolarSystemRenderer {
             primaryPositionsAu.put(planet.getId(), positionAu);
             Double minMoonOrbit = minMoonOrbitByParent.get(planet.getId());
             // Render planet and track its display radius for moon sizing
-            double displayRadius = renderPlanet(planet, orbitColor, maxPlanetRadius, trueAnomalies[i],
+            double displayRadius = bodyRenderer.renderPlanet(planet, orbitColor, maxPlanetRadius, trueAnomalies[i],
                     null, minMoonOrbit, null, null);
             primaryDisplayRadii.put(planet.getId(), displayRadius);
         }
@@ -532,7 +558,7 @@ public class SolarSystemRenderer {
             // Get parent's physical radius and display radius for accurate moon sizing
             double parentPhysicalRadius = parent.getRadius() > 0 ? parent.getRadius() : 1.0;
             Double parentDisplayRadius = primaryDisplayRadii.get(parent.getId());
-            renderPlanet(moon, orbitColor, maxPlanetRadius, trueAnomaly, parentPosAu, null,
+            bodyRenderer.renderPlanet(moon, orbitColor, maxPlanetRadius, trueAnomaly, parentPosAu, null,
                     parentPhysicalRadius, parentDisplayRadius);
         }
 
@@ -548,7 +574,7 @@ public class SolarSystemRenderer {
                         moon.getName(),
                         parentName,
                         String.format("%.6f", moon.getSemiMajorAxis()),
-                        String.format("%.6f", moon.getSemiMajorAxis() * MOON_ORBIT_AMPLIFICATION),
+                        String.format("%.6f", moon.getSemiMajorAxis() * BodyRenderer.MOON_ORBIT_AMPLIFICATION),
                         String.format("%.4f", moon.getRadius()));
             }
         } else {
@@ -732,360 +758,6 @@ public class SolarSystemRenderer {
         rings.clearRings();
     }
 
-    /**
-     * Render the central or companion star
-     */
-    private void renderStar(StarDisplayRecord star, boolean isPrimary) {
-        if (star == null) return;
-
-        double radius = scaleManager.getStarRadius();
-        if (!isPrimary) {
-            radius *= 0.7; // Companion stars slightly smaller visually
-        }
-
-        Sphere starSphere = new Sphere(radius);
-        PhongMaterial material = new PhongMaterial();
-
-        Color starColor = star.getStarColor();
-        if (starColor == null) {
-            starColor = SolarSystemColors.starColor(star.getSpectralClass());
-        }
-
-        material.setDiffuseColor(starColor);
-        material.setSpecularColor(Color.WHITE);
-        // Add some glow effect
-        material.setSelfIlluminationMap(null);
-
-        starSphere.setMaterial(material);
-
-        if (isPrimary) {
-            // Primary star at origin
-            starSphere.setTranslateX(0);
-            starSphere.setTranslateY(0);
-            starSphere.setTranslateZ(0);
-        } else {
-            // Position companion star (simplified - just offset for now)
-            // In reality, binary stars have their own orbital parameters
-            starSphere.setTranslateX(scaleManager.auToScreen(0.5));
-            starSphere.setTranslateY(0);
-            starSphere.setTranslateZ(0);
-        }
-
-        // Add tooltip with star info
-        String tooltipText = "%s\nSpectral: %s\nDistance: %.2f ly".formatted(
-                star.getStarName(),
-                star.getSpectralClass(),
-                star.getDistance());
-        Tooltip.install(starSphere, new Tooltip(tooltipText));
-
-        // Store star reference for context menu
-        starSphere.setUserData(star);
-
-        // Add context menu handler
-        starSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
-                contextMenuHandler.onStarSelected(starSphere, star);
-                e.consume();
-                return;
-            }
-            if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
-                contextMenuHandler.onStarContextMenu(starSphere, star, e.getScreenX(), e.getScreenY());
-                e.consume();
-            }
-        });
-
-        selectionStyleManager.registerSelectableNode(starSphere);
-        starNodes.put(star.getStarName(), starSphere);
-        planetsGroup.getChildren().add(starSphere);
-    }
-
-    /**
-     * Render a planet with its orbit
-     */
-    /**
-     * Render a planet with its orbit.
-     *
-     * @param planet              the planet to render
-     * @param orbitColor          color for the orbit path
-     * @param maxPlanetRadius     max planet radius in the system (for relative sizing)
-     * @param trueAnomaly         initial position on orbit
-     * @param parentOffsetAu      offset for moons (parent planet position), null for primary planets
-     * @param minMoonOrbitAu      minimum moon orbit distance in AU (amplified), for capping planet size
-     * @param parentPhysicalRadius parent planet's physical radius in Earth radii (for moon sizing)
-     * @param parentDisplayRadius  parent planet's display radius in screen units (for moon sizing)
-     * @return the display radius used for this planet (for tracking parent sizes)
-     */
-    private double renderPlanet(PlanetDescription planet,
-                               Color orbitColor,
-                               double maxPlanetRadius,
-                               double trueAnomaly,
-                               double[] parentOffsetAu,
-                               Double minMoonOrbitAu,
-                               Double parentPhysicalRadius,
-                               Double parentDisplayRadius) {
-
-        double semiMajorAxis = planet.getSemiMajorAxis();
-        if (semiMajorAxis <= 0) {
-            log.warn("Planet {} has no semi-major axis, skipping", planet.getName());
-            return 0.0;
-        }
-
-        double eccentricity = Math.max(0, Math.min(0.99, planet.getEccentricity()));
-        double inclination = planet.getInclination();
-        double argPeriapsis = planet.getArgumentOfPeriapsis();
-        double longAscNode = planet.getLongitudeOfAscendingNode();
-
-        // Detect if this is a moon - check both the flag AND parentPlanetId
-        // This is more robust than relying solely on the isMoon flag
-        boolean isMoonBody = planet.isMoon() ||
-                (planet.getParentPlanetId() != null && !planet.getParentPlanetId().isBlank());
-
-        if (isMoonBody) {
-            log.info("Rendering MOON: {} (isMoon={}, parentId={}, sma={} AU)",
-                    planet.getName(), planet.isMoon(), planet.getParentPlanetId(), semiMajorAxis);
-        }
-
-        // For moons, amplify the orbit size so it's visible
-        double orbitSmaForRendering = semiMajorAxis;
-        if (isMoonBody) {
-            orbitSmaForRendering = semiMajorAxis * MOON_ORBIT_AMPLIFICATION;
-            log.info("  Amplified orbit SMA: {} AU -> {} AU", semiMajorAxis, orbitSmaForRendering);
-        }
-
-        // Create orbit path - use solid orbits with unified color for moons
-        Group orbitPath;
-        if (isMoonBody) {
-            // Moon orbits: solid lines, consistent silver color, easier to see
-            orbitPath = orbitVisualizer.createSolidOrbitPath(
-                    orbitSmaForRendering,
-                    eccentricity,
-                    inclination,
-                    longAscNode,
-                    argPeriapsis,
-                    SolarSystemColors.MOON_ORBIT_COLOR
-            );
-        } else {
-            // Planet orbits: dashed lines with varied colors
-            orbitPath = orbitVisualizer.createOrbitPath(
-                    orbitSmaForRendering,
-                    eccentricity,
-                    inclination,
-                    longAscNode,
-                    argPeriapsis,
-                    orbitColor
-            );
-        }
-        if (parentOffsetAu != null) {
-            double[] offset = scaleManager.auVectorToScreen(
-                    parentOffsetAu[0], parentOffsetAu[1], parentOffsetAu[2]);
-            orbitPath.setTranslateX(offset[0]);
-            orbitPath.setTranslateY(offset[1]);
-            orbitPath.setTranslateZ(offset[2]);
-        }
-
-        // Store planet reference in orbit for context menu
-        orbitPath.setUserData(planet);
-        orbitGroups.put(planet.getName(), orbitPath);
-        orbitColors.put(planet.getName(), orbitColor);
-
-        // Track moon orbits by parent for dynamic visibility
-        if (isMoonBody && planet.getParentPlanetId() != null) {
-            moonOrbitsByParent
-                    .computeIfAbsent(planet.getParentPlanetId(), k -> new ArrayList<>())
-                    .add(orbitPath);
-            // Moon orbits are now visible by default (solid silver circles)
-            // They can be hidden via the showOrbits toggle if desired
-            orbitPath.setVisible(showOrbits);
-        }
-
-        // Add context menu handler to orbit
-        addOrbitContextMenuHandler(orbitPath, planet);
-
-        orbitsGroup.getChildren().add(orbitPath);
-        selectionStyleManager.registerOrbitSegments(orbitPath);
-        selectionStyleManager.registerSelectableNode(orbitPath);
-
-        // Calculate position - use amplified SMA for moons so they appear on their visible orbit
-        double positionSma = isMoonBody ? orbitSmaForRendering : semiMajorAxis;
-        if (isMoonBody) {
-            log.info("  Moon {} position using SMA: {} AU (amplified={})",
-                    planet.getName(), positionSma, positionSma == orbitSmaForRendering);
-        }
-        double[] localPosAu = orbitSamplingProvider.calculatePositionAu(
-                positionSma,
-                eccentricity,
-                inclination,
-                longAscNode,
-                argPeriapsis,
-                trueAnomaly
-        );
-
-        // Calculate screen position
-        // IMPORTANT: For moons with log scaling, we must add offsets in SCREEN space, not AU space.
-        // This matches how the orbit path is positioned (translated after creation).
-        // With log scaling: screen(a + b) ≠ screen(a) + screen(b), so we must:
-        // 1. Convert local position to screen space
-        // 2. Convert parent position to screen space
-        // 3. Add them in screen space
-        double[] position;
-        if (parentOffsetAu != null && isMoonBody) {
-            // Moon positioning: add offset in screen space to match orbit positioning
-            double[] localScreen = scaleManager.auVectorToScreen(localPosAu[0], localPosAu[1], localPosAu[2]);
-            double[] parentScreen = scaleManager.auVectorToScreen(parentOffsetAu[0], parentOffsetAu[1], parentOffsetAu[2]);
-            position = new double[] {
-                    localScreen[0] + parentScreen[0],
-                    localScreen[1] + parentScreen[1],
-                    localScreen[2] + parentScreen[2]
-            };
-            log.info("  Moon {} screen position: local=[{},{},{}] + parent=[{},{},{}] = [{},{},{}]",
-                    planet.getName(),
-                    "%.1f".formatted(localScreen[0]), "%.1f".formatted(localScreen[1]), "%.1f".formatted(localScreen[2]),
-                    "%.1f".formatted(parentScreen[0]), "%.1f".formatted(parentScreen[1]), "%.1f".formatted(parentScreen[2]),
-                    "%.1f".formatted(position[0]), "%.1f".formatted(position[1]), "%.1f".formatted(position[2]));
-        } else if (parentOffsetAu != null) {
-            // Non-moon with parent offset (shouldn't happen, but handle gracefully)
-            localPosAu[0] += parentOffsetAu[0];
-            localPosAu[1] += parentOffsetAu[1];
-            localPosAu[2] += parentOffsetAu[2];
-            position = scaleManager.auVectorToScreen(localPosAu[0], localPosAu[1], localPosAu[2]);
-        } else {
-            // Primary planet - no parent offset
-            position = scaleManager.auVectorToScreen(localPosAu[0], localPosAu[1], localPosAu[2]);
-        }
-
-        // Create planet sphere - use different sizing for moons vs primary planets
-        double planetRadius;
-        if (isMoonBody && parentPhysicalRadius != null && parentDisplayRadius != null) {
-            // Moon sizing: use actual physical ratio relative to parent planet
-            // This ensures moons are realistically tiny compared to their parent
-            planetRadius = scaleManager.calculateMoonDisplayRadius(
-                    planet.getRadius() > 0 ? planet.getRadius() : 0.1,
-                    parentPhysicalRadius,
-                    parentDisplayRadius
-            );
-            double moonPhysical = planet.getRadius() > 0 ? planet.getRadius() : 0.1;
-            double ratio = moonPhysical / parentPhysicalRadius;
-            log.info("Moon {} sizing: moonR={} Earth, parentR={} Earth, ratio={} (1/{}), parentDisplay={}, moonDisplay={}",
-                    planet.getName(),
-                    "%.3f".formatted(moonPhysical),
-                    "%.2f".formatted(parentPhysicalRadius),
-                    "%.4f".formatted(ratio),
-                    "%.0f".formatted(1.0 / ratio),
-                    "%.2f".formatted(parentDisplayRadius),
-                    "%.3f".formatted(planetRadius));
-        } else {
-            // Primary planet sizing
-            planetRadius = scaleManager.calculatePlanetDisplayRadius(
-                    planet.getRadius() > 0 ? planet.getRadius() : 1.0,
-                    maxPlanetRadius > 0 ? maxPlanetRadius : 1.0
-            );
-
-            // Cap planet size if it has moons - ensure planet doesn't overlap with closest moon orbit
-            if (minMoonOrbitAu != null && minMoonOrbitAu > 0) {
-                // Convert closest moon orbit (in AU) to screen units
-                double minMoonOrbitScreen = scaleManager.auToScreen(minMoonOrbitAu);
-                // Cap planet radius to 30% of closest moon orbit
-                double maxAllowedRadius = minMoonOrbitScreen * 0.3;
-                if (planetRadius > maxAllowedRadius) {
-                    log.debug("Capping {} radius from {} to {} (moon orbit constraint)",
-                            planet.getName(), planetRadius, maxAllowedRadius);
-                    planetRadius = maxAllowedRadius;
-                }
-            }
-        }
-
-        Sphere planetSphere = new Sphere(planetRadius);
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(SolarSystemColors.planetColor(planet));
-        material.setSpecularColor(Color.WHITE);
-        planetSphere.setMaterial(material);
-
-        // Add subtle glow to moons so they remain visible when tiny
-        // The glow intensity increases for smaller moons to compensate for their size
-        if (isMoonBody && planetRadius < 1.0) {
-            double glowIntensity = Math.min(0.8, 0.3 + (1.0 - planetRadius) * 0.5);
-            planetSphere.setEffect(new Glow(glowIntensity));
-        }
-
-        planetSphere.setTranslateX(position[0]);
-        planetSphere.setTranslateY(position[1]);
-        planetSphere.setTranslateZ(position[2]);
-
-        // Add tooltip
-        String tooltipText = String.format("%s\nSemi-major axis: %.3f AU\nPeriod: %.1f days\nRadius: %.2f Earth",
-                planet.getName(),
-                planet.getSemiMajorAxis(),
-                planet.getOrbitalPeriod(),
-                planet.getRadius());
-        Tooltip.install(planetSphere, new Tooltip(tooltipText));
-
-        // Store planet reference for context menu
-        planetSphere.setUserData(planet);
-
-        // Add context menu handler to planet sphere
-        planetSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
-                contextMenuHandler.onPlanetSelected(planetSphere, planet);
-                e.consume();
-                return;
-            }
-            if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
-                contextMenuHandler.onPlanetContextMenu(planetSphere, planet, e.getScreenX(), e.getScreenY());
-                e.consume();
-            }
-        });
-
-        selectionStyleManager.registerSelectableNode(planetSphere);
-        planetsGroup.getChildren().add(planetSphere);
-
-        // Store references for animation
-        planetNodes.put(planet.getName(), planetSphere);
-        planetDescriptions.put(planet.getName(), planet);
-
-        orbitMarkerRenderer.renderOrbitNodeMarkers(orbitNodeGroup, planet, orbitColor, parentOffsetAu, showOrbitNodes);
-        orbitMarkerRenderer.renderApsideMarkers(apsidesGroup, planet, orbitColor, parentOffsetAu, showApsides);
-
-        // Render ring system if planet has one (Phase 4.1.5: delegated)
-        if (planet.isHasRings() && !isMoonBody) {
-            rings.renderPlanetRing(planet, position, planetRadius);
-        }
-
-        return planetRadius;
-    }
-
-    /**
-     * Add context-menu handler to all segments in an orbit group.
-     */
-    private void addOrbitContextMenuHandler(Group orbitGroup, PlanetDescription planet) {
-        // Add handler to the group itself
-        orbitGroup.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
-                contextMenuHandler.onOrbitSelected(orbitGroup, planet);
-                e.consume();
-                return;
-            }
-            if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
-                contextMenuHandler.onOrbitContextMenu(orbitGroup, planet, e.getScreenX(), e.getScreenY());
-                e.consume();
-            }
-        });
-
-        // Also add to each child for better hit detection
-        for (Node child : orbitGroup.getChildren()) {
-            child.setUserData(planet);
-            child.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-                if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
-                    contextMenuHandler.onOrbitSelected(child, planet);
-                    e.consume();
-                    return;
-                }
-                if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
-                    contextMenuHandler.onOrbitContextMenu(child, planet, e.getScreenX(), e.getScreenY());
-                    e.consume();
-                }
-            });
-        }
-    }
 
     // ==================== Helper Methods ====================
 
