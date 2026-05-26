@@ -77,7 +77,7 @@ No critical runtime bugs or security vulnerabilities found in core paths. Test c
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/javafxsupport/TripsFxApplication.java:42-45 (and similar in MainPane, PrimaryStageInitializer)
 - **Description**: Global `Thread.setDefaultUncaughtExceptionHandler` only prints to stderr. Fatal errors during startup (e.g., in `PrimaryStageInitializer`) call `System.exit(1)` after showing a basic Alert.
 - **Suggestion**: Implement a proper uncaught exception handler that logs to SLF4J + shows user-friendly error dialog with "Report Problem" integration (the app already has a problem report feature). Avoid `System.exit` in favor of graceful `Platform.exit()` + context close where possible.
-- **Status**: done -- uncaught exceptions now log through SLF4J and startup failure exits through JavaFX shutdown instead of direct `System.exit(1)`.
+- **Status**: done -- uncaught exceptions now log through SLF4J, create a local pending problem-report ZIP when possible, and startup failure exits through JavaFX shutdown instead of direct `System.exit(1)`.
 
 ### Issue 6 -- Severity: suggestion
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/ExoPlanet.java:24-70 (Javadoc block)
@@ -128,6 +128,20 @@ Verification:
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
 - Focused Jackson persistence tests passed: `DataSetDescriptorSerializationServiceTest`, `ProceduralPlanetPersistenceHelperTest`, `SpaceshipJsonServiceTest`, `SpaceshipDesignMapperTest`, `TransferPlanMapperTest`.
 - Full `./mvnw-java25.sh -q -pl tripsapplication test` executed 2,711 tests with 0 assertion failures and 4 Testcontainers errors caused by Docker being unavailable in the sandbox.
+
+## Follow-On Remediation: Local Crash Report Bundles
+
+The next remediation slice completed the remaining problem-report integration from Issue 5:
+
+- Added `ProblemReportService.createCrashReport(Throwable)` to create a local pending diagnostic bundle without prompting for registration or attempting upload.
+- Wired `TripsFxApplication` uncaught-exception handling to call the existing problem-report service and include the generated ZIP path in the user-facing error dialog.
+- Made crash report creation tolerant of unavailable registration storage and unavailable OSHI system measurements.
+- Gave `ReportBundleService` a direct default for `problemreport.logTailLines` so manually constructed service tests preserve the production default.
+- Added `ProblemReportServiceTest`, which verifies that a crash creates a pending ZIP containing `report.json`, `system.json`, and `log_tail.txt`.
+
+Verification:
+- `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
+- `./mvnw-java25.sh -q -pl tripsapplication -Dtest='ProblemReportServiceTest' test` passed.
 
 ---
 

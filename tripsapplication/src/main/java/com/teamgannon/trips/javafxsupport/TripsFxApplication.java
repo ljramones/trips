@@ -1,6 +1,7 @@
 package com.teamgannon.trips.javafxsupport;
 
 import com.teamgannon.trips.TripsSpringBootApplication;
+import com.teamgannon.trips.service.problemreport.ProblemReportService;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -14,6 +15,9 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 
 @Slf4j
@@ -62,22 +66,38 @@ public class TripsFxApplication extends Application {
 
     private void handleUncaughtException(Thread thread, Throwable throwable) {
         log.error("Uncaught exception on thread {}", thread.getName(), throwable);
+        Optional<Path> crashReport = createCrashReport(throwable);
         try {
             if (Platform.isFxApplicationThread()) {
-                showUncaughtExceptionAlert(throwable);
+                showUncaughtExceptionAlert(throwable, crashReport);
             } else {
-                Platform.runLater(() -> showUncaughtExceptionAlert(throwable));
+                Platform.runLater(() -> showUncaughtExceptionAlert(throwable, crashReport));
             }
         } catch (IllegalStateException e) {
             log.warn("Unable to show uncaught exception dialog because JavaFX is not available", e);
         }
     }
 
-    private void showUncaughtExceptionAlert(Throwable throwable) {
+    private Optional<Path> createCrashReport(Throwable throwable) {
+        if (context == null) {
+            return Optional.empty();
+        }
+        try {
+            return context.getBean(ProblemReportService.class).createCrashReport(throwable);
+        } catch (RuntimeException e) {
+            log.warn("Unable to create crash report bundle", e);
+            return Optional.empty();
+        }
+    }
+
+    private void showUncaughtExceptionAlert(Throwable throwable, Optional<Path> crashReport) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Unexpected Error");
         alert.setHeaderText("TRIPS encountered an unexpected error");
-        alert.setContentText("The error has been written to the application log.\n\n"
+        String reportMessage = crashReport
+                .map(path -> "A local problem report was created:\n" + path + "\n\n")
+                .orElse("The error has been written to the application log.\n\n");
+        alert.setContentText(reportMessage
                 + "Error: " + throwable.getMessage());
         alert.showAndWait();
     }

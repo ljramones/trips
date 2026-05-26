@@ -11,7 +11,6 @@ import com.teamgannon.trips.service.problemreport.model.ReportMetadata;
 import com.teamgannon.trips.service.problemreport.model.SystemInfoSnapshot;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.image.WritableImage;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +22,11 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +68,44 @@ public class ProblemReportService {
      */
     public boolean isRegistered() {
         return getRegistration().isPresent();
+    }
+
+    /**
+     * Creates a local pending report for an uncaught exception.
+     *
+     * <p>This path deliberately does not prompt for registration or upload anything. It gives the user a
+     * ready-made diagnostic bundle that can be attached later via the normal report flow.</p>
+     *
+     * @param throwable the uncaught exception
+     * @return path to the local report bundle, or empty if report creation is disabled or failed
+     */
+    public Optional<Path> createCrashReport(Throwable throwable) {
+        if (!enabled) {
+            log.debug("Problem report feature is disabled; skipping crash report bundle");
+            return Optional.empty();
+        }
+
+        try {
+            String reportId = bundleService.generateReportId();
+            AppRegistration registration = findRegistrationForCrashReport().orElse(null);
+            SystemInfoSnapshot systemInfo = collectSystemInfo();
+            ReportMetadata metadata = buildCrashReportMetadata(reportId, registration, throwable, systemInfo != null);
+            Path zipPath = bundleService.createReportBundle(reportId, metadata, systemInfo, null, List.of());
+            log.info("Created local crash report bundle: {}", zipPath);
+            return Optional.of(zipPath);
+        } catch (Exception e) {
+            log.warn("Failed to create local crash report bundle", e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<AppRegistration> findRegistrationForCrashReport() {
+        try {
+            return getRegistration();
+        } catch (RuntimeException e) {
+            log.debug("Unable to load registration for crash report metadata", e);
+            return Optional.empty();
+        }
     }
 
     /**
@@ -208,6 +248,49 @@ public class ProblemReportService {
         }
     }
 
+    private ReportMetadata buildCrashReportMetadata(String reportId,
+                                                    AppRegistration registration,
+                                                    Throwable throwable,
+                                                    boolean hasSystemInfo) {
+        return ReportMetadata.builder()
+                .reportId(reportId)
+                .installId(registration != null ? registration.getInstallId() : "unregistered")
+                .email(registration != null ? registration.getEmail() : "")
+                .displayName(registration != null ? registration.getDisplayName() : "")
+                .appVersion(localization.getVersion())
+                .timestamp(Instant.now())
+                .description(formatCrashDescription(throwable))
+                .attachments(ReportMetadata.Attachments.builder()
+                        .hasScreenshot(false)
+                        .hasLogTail(true)
+                        .hasSystemInfo(hasSystemInfo)
+                        .hasCrashFiles(false)
+                        .build())
+                .platform(ReportMetadata.Platform.builder()
+                        .os(System.getProperty("os.name"))
+                        .osVersion(System.getProperty("os.version"))
+                        .javaVersion(System.getProperty("java.version"))
+                        .javafxVersion(System.getProperty("javafx.version"))
+                        .build())
+                .build();
+    }
+
+    private String formatCrashDescription(Throwable throwable) {
+        List<String> lines = new ArrayList<>();
+        lines.add("Uncaught exception captured by TRIPS.");
+        lines.add("Thread: " + Thread.currentThread().getName());
+        lines.add("Error: " + throwable.getClass().getName() + ": " + throwable.getMessage());
+        lines.add("");
+        lines.add(stackTrace(throwable));
+        return String.join("\n", lines);
+    }
+
+    private String stackTrace(Throwable throwable) {
+        StringWriter writer = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(writer));
+        return writer.toString();
+    }
+
     /**
      * Captures a screenshot of the given stage.
      */
@@ -230,6 +313,10 @@ public class ProblemReportService {
      * Collects system information using OSHI.
      */
     private SystemInfoSnapshot collectSystemInfo() {
+        if (oshiMeasure == null) {
+            return minimalSystemInfo();
+        }
+
         try {
             return SystemInfoSnapshot.builder()
                     .osName(System.getProperty("os.name"))
@@ -255,14 +342,17 @@ public class ProblemReportService {
                     .build();
         } catch (Exception e) {
             log.warn("Failed to collect complete system info", e);
-            // Return minimal info
-            return SystemInfoSnapshot.builder()
-                    .osName(System.getProperty("os.name"))
-                    .osVersion(System.getProperty("os.version"))
-                    .javaVersion(System.getProperty("java.version"))
-                    .appVersion(localization.getVersion())
-                    .build();
+            return minimalSystemInfo();
         }
+    }
+
+    private SystemInfoSnapshot minimalSystemInfo() {
+        return SystemInfoSnapshot.builder()
+                .osName(System.getProperty("os.name"))
+                .osVersion(System.getProperty("os.version"))
+                .javaVersion(System.getProperty("java.version"))
+                .appVersion(localization.getVersion())
+                .build();
     }
 
     private void showAlert(String title, String message) {

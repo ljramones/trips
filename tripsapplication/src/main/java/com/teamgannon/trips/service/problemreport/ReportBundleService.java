@@ -33,7 +33,7 @@ public class ReportBundleService {
     private final Gson gson;
 
     @Value("${problemreport.logTailLines:500}")
-    private int logTailLines;
+    private int logTailLines = 500;
 
     public ReportBundleService(Localization localization) {
         this.localization = localization;
