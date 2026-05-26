@@ -1499,78 +1499,12 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     }
 
     /**
-     * Create the LEGEND section showing color mappings.
+     * Create the LEGEND section. Phase 4.2 extracted the builder into
+     * {@link PlanetLegendSection}; this dialog just decides whether to include
+     * the plate-boundary key based on whether plate analysis is available.
      */
     private TitledPane createLegendSection() {
-        VBox content = new VBox(3);
-        content.setPadding(new Insets(5));
-
-        // Elevation legend
-        Label elevTitle = new Label("Elevation");
-        elevTitle.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold; -fx-font-size: 10;");
-        content.getChildren().add(elevTitle);
-
-        String[][] legendItems = {
-            {"Snow Peak", "#FFFFFF"},
-            {"Mountain", "#8B7355"},
-            {"Highland", "#9B8B5B"},
-            {"Lowland", "#6B8E23"},
-            {"Coast", "#90B060"},
-            {"Shallow", "#5090C0"},
-            {"Ocean", "#3070A0"},
-            {"Deep Sea", "#204080"},
-            {"Abyss", "#102050"}
-        };
-
-        for (String[] item : legendItems) {
-            HBox row = new HBox(5);
-            row.setAlignment(Pos.CENTER_LEFT);
-
-            Rectangle colorBox = new Rectangle(14, 10);
-            colorBox.setFill(Color.web(item[1]));
-            colorBox.setStroke(Color.gray(0.5));
-            colorBox.setStrokeWidth(0.5);
-
-            Label label = new Label(item[0]);
-            label.setStyle("-fx-text-fill: #555555; -fx-font-size: 9;");
-
-            row.getChildren().addAll(colorBox, label);
-            content.getChildren().add(row);
-        }
-
-        // Plate boundary legend (if plate data exists)
-        if (plateAssignment != null && boundaryAnalysis != null) {
-            content.getChildren().add(new Separator());
-            Label plateTitle = new Label("Boundaries");
-            plateTitle.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold; -fx-font-size: 10;");
-            content.getChildren().add(plateTitle);
-
-            String[][] plateItems = {
-                {"Convergent", "#DC3C3C"},
-                {"Divergent", "#3CC8B4"},
-                {"Transform", "#DCB43C"},
-                {"Inactive", "#787878"}
-            };
-
-            for (String[] item : plateItems) {
-                HBox row = new HBox(5);
-                row.setAlignment(Pos.CENTER_LEFT);
-
-                Rectangle colorBox = new Rectangle(14, 4);
-                colorBox.setFill(Color.web(item[1]));
-
-                Label label = new Label(item[0]);
-                label.setStyle("-fx-text-fill: #555555; -fx-font-size: 9;");
-
-                row.getChildren().addAll(colorBox, label);
-                content.getChildren().add(row);
-            }
-        }
-
-        TitledPane pane = new TitledPane("Legend", content);
-        pane.setExpanded(false);  // Collapsed by default
-        pane.setCollapsible(true);
-        return pane;
+        return PlanetLegendSection.create(plateAssignment != null && boundaryAnalysis != null);
     }
 
     /**
