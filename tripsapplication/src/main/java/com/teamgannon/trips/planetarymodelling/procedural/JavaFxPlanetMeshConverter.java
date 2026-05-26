@@ -103,73 +103,10 @@ public class JavaFxPlanetMeshConverter {
         ICE_GIANT
     }
 
-    // Height color mapping for WET planets (with liquid water) - same as PlanetRenderer
-    private static final Color[] HEIGHT_COLORS = {
-        Color.rgb(0, 0, 102),     // -4: deep ocean
-        Color.rgb(0, 0, 128),     // -3: ocean
-        Color.rgb(51, 77, 230),   // -2: shallow ocean
-        Color.rgb(102, 153, 255), // -1: coastal
-        Color.rgb(204, 204, 153), //  0: lowlands
-        Color.rgb(166, 204, 102), //  1: plains
-        Color.rgb(166, 153, 102), //  2: hills
-        Color.rgb(102, 51, 0),    //  3: mountains
-        Color.rgb(51, 0, 0)       //  4: high mountains
-    };
-
-    // Height color mapping for DRY planets (no water) - canyons/basins use browns/tans
-    private static final Color[] DRY_TERRAIN_COLORS = {
-        Color.rgb(89, 60, 31),    // -4: deep canyon/basin (dark brown)
-        Color.rgb(120, 85, 50),   // -3: canyon floor (medium brown)
-        Color.rgb(150, 110, 70),  // -2: shallow basin (tan)
-        Color.rgb(180, 145, 100), // -1: low depression (light tan)
-        Color.rgb(204, 180, 140), //  0: lowlands (sandy)
-        Color.rgb(190, 170, 120), //  1: plains (dusty tan)
-        Color.rgb(160, 140, 100), //  2: hills (brown)
-        Color.rgb(110, 80, 50),   //  3: mountains (dark brown)
-        Color.rgb(70, 50, 30)     //  4: high mountains (very dark brown)
-    };
-
-    // Height color mapping for ICE planets (frozen world, no atmosphere)
-    // Think Europa, Enceladus, Pluto - white/blue/gray ice terrain
-    private static final Color[] ICE_TERRAIN_COLORS = {
-        Color.rgb(140, 160, 180), // -4: deep crevasse (dark blue-gray ice)
-        Color.rgb(160, 180, 200), // -3: ice canyon (blue-gray)
-        Color.rgb(180, 200, 220), // -2: ice basin (light blue-gray)
-        Color.rgb(200, 215, 230), // -1: low ice plain (pale blue)
-        Color.rgb(220, 230, 240), //  0: ice flats (very light blue)
-        Color.rgb(235, 240, 250), //  1: ice plains (near white)
-        Color.rgb(245, 248, 255), //  2: ice ridges (white)
-        Color.rgb(255, 255, 255), //  3: ice mountains (pure white)
-        Color.rgb(240, 245, 255)  //  4: high ice peaks (bright white with blue tint)
-    };
-
-    // Cloud band colors for JOVIAN (gas giant like Jupiter/Saturn)
-    // "Heights" represent cloud band layers - no solid surface
-    private static final Color[] JOVIAN_COLORS = {
-        Color.rgb(120, 80, 60),   // -4: deep brown belt
-        Color.rgb(150, 100, 70),  // -3: brown belt
-        Color.rgb(180, 130, 90),  // -2: tan belt
-        Color.rgb(200, 160, 120), // -1: light tan zone
-        Color.rgb(230, 200, 170), //  0: cream zone
-        Color.rgb(245, 230, 200), //  1: pale cream zone
-        Color.rgb(255, 245, 220), //  2: white zone
-        Color.rgb(220, 150, 100), //  3: orange storm band
-        Color.rgb(180, 100, 60)   //  4: deep orange/red storm (Great Red Spot)
-    };
-
-    // Cloud band colors for ICE_GIANT (Neptune/Uranus-like)
-    // Blue/cyan bands with occasional white clouds
-    private static final Color[] ICE_GIANT_COLORS = {
-        Color.rgb(20, 50, 100),   // -4: deep blue
-        Color.rgb(30, 70, 130),   // -3: dark blue
-        Color.rgb(50, 100, 160),  // -2: medium blue
-        Color.rgb(70, 130, 190),  // -1: blue
-        Color.rgb(100, 160, 210), //  0: light blue
-        Color.rgb(130, 190, 220), //  1: pale blue
-        Color.rgb(160, 210, 230), //  2: cyan-white
-        Color.rgb(200, 230, 240), //  3: white cloud
-        Color.rgb(180, 220, 235)  //  4: bright cloud band
-    };
+    // Colour palettes (HEIGHT_COLORS, DRY_TERRAIN_COLORS, ICE_TERRAIN_COLORS,
+    // JOVIAN_COLORS, ICE_GIANT_COLORS) moved to PlanetColorPalette in Phase 4.5.
+    // The public getColorForX methods below remain on this class as thin
+    // delegates for backward compatibility.
 
     /**
      * Convert procedural planet mesh to JavaFX TriangleMesh.
@@ -1182,16 +1119,8 @@ public class JavaFxPlanetMeshConverter {
      * @return JavaFX Color for that height/layer
      */
     public static Color getColorForHeight(int height, TerrainType terrainType) {
-        Color[] palette = switch (terrainType) {
-            case DRY -> DRY_TERRAIN_COLORS;
-            case ICE -> ICE_TERRAIN_COLORS;
-            case JOVIAN -> JOVIAN_COLORS;
-            case ICE_GIANT -> ICE_GIANT_COLORS;
-            default -> HEIGHT_COLORS;
-        };
-        int index = height + 4;
-        index = Math.max(0, Math.min(palette.length - 1, index));
-        return palette[index];
+        // Phase 4.5: palettes + lookup moved to PlanetColorPalette.
+        return PlanetColorPalette.getColorForHeight(height, terrainType);
     }
 
     /**
@@ -1214,29 +1143,8 @@ public class JavaFxPlanetMeshConverter {
      * @return JavaFX Color interpolated for that height
      */
     public static Color getColorForPreciseHeight(double height, TerrainType terrainType) {
-        Color[] palette = switch (terrainType) {
-            case DRY -> DRY_TERRAIN_COLORS;
-            case ICE -> ICE_TERRAIN_COLORS;
-            case JOVIAN -> JOVIAN_COLORS;
-            case ICE_GIANT -> ICE_GIANT_COLORS;
-            default -> HEIGHT_COLORS;
-        };
-
-        // Map height from [-4, 4] to [0, 8]
-        double normalized = height + 4.0;
-        normalized = Math.max(0, Math.min(8, normalized));
-
-        int lowerIndex = (int) Math.floor(normalized);
-        int upperIndex = lowerIndex + 1;
-        double fraction = normalized - lowerIndex;
-
-        lowerIndex = Math.max(0, Math.min(palette.length - 1, lowerIndex));
-        upperIndex = Math.max(0, Math.min(palette.length - 1, upperIndex));
-
-        Color lowerColor = palette[lowerIndex];
-        Color upperColor = palette[upperIndex];
-
-        return lowerColor.interpolate(upperColor, fraction);
+        // Phase 4.5: palettes + interpolation moved to PlanetColorPalette.
+        return PlanetColorPalette.getColorForPreciseHeight(height, terrainType);
     }
 
     /**
@@ -1482,16 +1390,7 @@ public class JavaFxPlanetMeshConverter {
     // ==================== Rainfall Heatmap Support ====================
 
     // Rainfall color gradient: brown (dry) → yellow → green → cyan → blue (wet)
-    private static final Color[] RAINFALL_COLORS = {
-        Color.rgb(139, 90, 43),   // Dry: brown/tan
-        Color.rgb(189, 183, 107), // Low: khaki
-        Color.rgb(154, 205, 50),  // Medium-low: yellow-green
-        Color.rgb(60, 179, 113),  // Medium: sea green
-        Color.rgb(32, 178, 170),  // Medium-high: light sea green
-        Color.rgb(0, 139, 139),   // High: dark cyan
-        Color.rgb(0, 100, 180),   // Very high: blue
-        Color.rgb(0, 0, 139)      // Extreme: dark blue
-    };
+    // RAINFALL_COLORS moved to PlanetColorPalette in Phase 4.5.
 
     /**
      * Creates a map of rainfall levels to TriangleMesh for heatmap visualization.
@@ -1606,39 +1505,19 @@ public class JavaFxPlanetMeshConverter {
      */
     public static PhongMaterial createMaterialForRainfall(int bucket) {
         PhongMaterial material = new PhongMaterial();
-        int index = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, bucket));
-        material.setDiffuseColor(RAINFALL_COLORS[index]);
+        material.setDiffuseColor(PlanetColorPalette.getColorForRainfall(bucket));
         material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.15, 1));
         material.setSpecularPower(8.0);
         return material;
     }
 
-    /**
-     * Returns the color for a rainfall bucket.
-     *
-     * @param bucket Rainfall bucket (0-7)
-     * @return JavaFX Color for the bucket
-     */
+    /** Phase 4.5: rainfall colour lookup moved to {@link PlanetColorPalette}. */
     public static Color getColorForRainfall(int bucket) {
-        int index = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, bucket));
-        return RAINFALL_COLORS[index];
+        return PlanetColorPalette.getColorForRainfall(bucket);
     }
 
-    /**
-     * Interpolates a color for a normalized rainfall value.
-     *
-     * @param normalizedRainfall Rainfall value normalized to 0.0-1.0 range
-     * @return Interpolated color from the rainfall gradient
-     */
+    /** Phase 4.5: normalised-rainfall interpolation moved to {@link PlanetColorPalette}. */
     public static Color getColorForNormalizedRainfall(double normalizedRainfall) {
-        double scaled = normalizedRainfall * (RAINFALL_COLORS.length - 1);
-        int lowerIdx = (int) Math.floor(scaled);
-        int upperIdx = lowerIdx + 1;
-        double fraction = scaled - lowerIdx;
-
-        lowerIdx = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, lowerIdx));
-        upperIdx = Math.max(0, Math.min(RAINFALL_COLORS.length - 1, upperIdx));
-
-        return RAINFALL_COLORS[lowerIdx].interpolate(RAINFALL_COLORS[upperIdx], fraction);
+        return PlanetColorPalette.getColorForNormalizedRainfall(normalizedRainfall);
     }
 }
