@@ -41,6 +41,6 @@ public class SiderealTime {
         ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         double longitude = -74.0060; // New York City
         double lst = calculateLST(dateTime, longitude);
-        System.out.println("Local Sidereal Time (LST) in hours: " + lst);
+        log.info("Local Sidereal Time (LST) in hours: {}", lst);
     }
 }

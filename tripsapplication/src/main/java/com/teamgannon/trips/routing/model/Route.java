@@ -1,13 +1,13 @@
 package com.teamgannon.trips.routing.model;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ public class Route implements Serializable {
             String routeStr = mapper.writeValueAsString(route);
             log.debug("serialized as:" + routeStr);
             return routeStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", route, e.getMessage());
             return "";
         }
@@ -114,7 +114,7 @@ public class Route implements Serializable {
             String routeListStr = mapper.writeValueAsString(routeList);
             log.debug("serialized as:" + routeListStr);
             return routeListStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", routeList, e.getMessage());
             return "";
         }
@@ -124,7 +124,7 @@ public class Route implements Serializable {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

@@ -206,7 +206,7 @@ public class DataSetDescriptorFactory {
 
             return theme;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to create theme from CHView preferences", e);
         }
         return null;
     }

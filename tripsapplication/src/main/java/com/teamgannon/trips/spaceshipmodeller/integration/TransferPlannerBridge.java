@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.integration;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 
 /**
  * Seam between the Spaceship Modeller and TRIPS mission/transfer planning.

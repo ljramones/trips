@@ -33,8 +33,17 @@ public enum ShipClass {
     /** Mid-weight warship. */
     FRIGATE("Frigate", false, false, false, "Escort and independent operations"),
 
+    /** Flagship or fleet-control vessel with enhanced command facilities. */
+    COMMAND_SHIP("Command Ship", false, true, false, "Fleet command and control"),
+
     /** Heavy warship; large enough to carry a few small craft (pinnaces, assault shuttles). */
     CRUISER("Cruiser", false, true, false, "Line combatant"),
+
+    /** Very heavy capital warship built around maximum battle endurance. */
+    DREADNOUGHT("Dreadnought", false, true, false, "Capital ship line combatant"),
+
+    /** Heavy defensive combatant optimized for system or orbital defence. */
+    MONITOR("Monitor", false, false, false, "System defence heavy combatant"),
 
     /** Bulk cargo hauler. */
     FREIGHTER("Freighter", false, false, false, "Bulk cargo transport"),
@@ -46,7 +55,22 @@ public enum ShipClass {
     MOTHERSHIP("Mothership", false, true, false, "Carries shuttles, landers and fighters"),
 
     /** Self-contained colonisation vessel carrying landers and surface equipment. */
-    COLONY_SHIP("Colony Ship", false, true, false, "Interstellar colonisation; carries landers");
+    COLONY_SHIP("Colony Ship", false, true, false, "Interstellar colonisation; carries landers"),
+
+    /** Uncrewed orbital platform or spacecraft bus. */
+    SATELLITE("Satellite", true, false, false, "Uncrewed orbital platform"),
+
+    /** Uncrewed exploration or survey craft. */
+    PROBE("Probe", true, false, false, "Uncrewed exploration and survey"),
+
+    /** Utility vessel for towing, docking and close manoeuvre work. */
+    TUG("Tug", false, false, false, "Towing and orbital utility work"),
+
+    /** Cargo vessel optimized for bulk transport. */
+    HAULER("Hauler", false, false, false, "Bulk transport"),
+
+    /** Fuel or reaction-mass transport vessel. */
+    COLLIER("Collier", false, false, false, "Fuel and reaction-mass transport");
 
     private final String label;
     private final boolean carriable;

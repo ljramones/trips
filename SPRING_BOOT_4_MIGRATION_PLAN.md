@@ -5,10 +5,9 @@
 This document outlines the migration path from Spring Boot 3.5.9 to Spring Boot 4.0.2.
 
 **Current State:**
-- Spring Boot 3.5.9
-- Hibernate 6.6.39
+- Spring Boot 4.0.2
 - Java 25
-- Jakarta EE 10
+- Jackson 3 package migration complete for application code
 
 **Target State:**
 - Spring Boot 4.0.2
@@ -21,7 +20,7 @@ This document outlines the migration path from Spring Boot 3.5.9 to Spring Boot 
 
 | Area | Risk | Impact |
 |------|------|--------|
-| Jackson 3 migration | Medium | 14 files use Jackson - package names change |
+| Jackson 3 migration | Done | Application code now uses `tools.jackson.*`; annotations remain `com.fasterxml.jackson.annotation` |
 | Starter POM changes | Low | Minor dependency updates |
 | FxWeaver compatibility | Medium | Needs verification with Spring 7 |
 | Groovy compatibility | Low | Used for scripting only, not Spock tests |
@@ -71,7 +70,7 @@ com.fasterxml.jackson.* → tools.jackson.*
 ```
 **Exception:** `jackson-annotations` retains `com.fasterxml.jackson`
 
-### 3.2 Files Requiring Updates (14 files)
+### 3.2 Files Requiring Updates (completed)
 1. `DataSetDescriptorSerializationService.java`
 2. `ProceduralPlanetPersistenceHelper.java`
 3. `DataSetDescriptor.java`
@@ -87,9 +86,13 @@ com.fasterxml.jackson.* → tools.jackson.*
 13. `CustomDataValue.java`
 14. `JSONConfiguration.java`
 
+Additional Jackson usage added after the original plan was also migrated, including spaceship modeller persistence/import-export code, transfer-plan JSON export, `com.terranrepublic` annotation-only polymorphic model classes, and affected tests.
+
 ### 3.3 Annotation Changes
 - `@JsonComponent` → `@JacksonComponent`
 - `@JsonMixin` → `@JacksonMixin`
+
+No `@JsonComponent` or `@JsonMixin` usage was present in the migrated code.
 
 ### 3.4 Alternative: Jackson 2 Compatibility Layer
 If immediate migration is not feasible, add:

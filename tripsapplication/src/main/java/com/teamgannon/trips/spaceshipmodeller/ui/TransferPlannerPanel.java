@@ -1,16 +1,16 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
@@ -315,16 +315,15 @@ public class TransferPlannerPanel extends BorderPane {
 
     private static ObjectMapper buildJsonMapper() {
         SimpleModule m = new SimpleModule();
-        m.addSerializer(Instant.class, new JsonSerializer<>() {
+        m.addSerializer(Instant.class, new ValueSerializer<>() {
             @Override
-            public void serialize(Instant value, JsonGenerator gen, SerializerProvider serializers)
-                    throws IOException {
+            public void serialize(Instant value, JsonGenerator gen, SerializationContext context) {
                 gen.writeString(value.toString());
             }
         });
-        m.addDeserializer(Instant.class, new JsonDeserializer<>() {
+        m.addDeserializer(Instant.class, new ValueDeserializer<>() {
             @Override
-            public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            public Instant deserialize(JsonParser p, DeserializationContext context) {
                 return Instant.parse(p.getValueAsString());
             }
         });

@@ -54,8 +54,7 @@ public class DesignMenuController {
      */
     @FXML
     public void initialize() {
-        log.info("=== DesignMenuController initialized ===");
-        System.out.println("=== DesignMenuController initialized ===");
+        log.debug("DesignMenuController initialized");
     }
 
     /**

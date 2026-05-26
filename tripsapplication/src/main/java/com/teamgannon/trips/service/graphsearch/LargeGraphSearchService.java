@@ -57,8 +57,9 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
     }
 
     public boolean cancelSearch() {
-        log.warn("cancelling graph search for" + "graph search name TBD");
-        graphSearchComplete.complete(true, "cancelled");
+        String searchDescription = searchDescription();
+        log.warn("Cancelling graph search for {}", searchDescription);
+        graphSearchComplete.complete(true, "Cancelled graph search for " + searchDescription);
         return this.cancel();
     }
 
@@ -69,27 +70,35 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
 
     @Override
     protected void succeeded() {
-        log.info("graph search found");
-        String message = "new graph search found -> %s".formatted("graph search name TBD");
+        GraphRouteResult result = getValue();
+        String message = result != null && result.getMessage() != null
+                ? result.getMessage()
+                : "Graph search completed for " + searchDescription();
+        log.info("Graph search completed: {}", message);
         eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
-        graphSearchComplete.complete(true, "some message");
+        graphSearchComplete.complete(true, message);
     }
 
     @Override
     protected void failed() {
-        log.error("graph search failed due to: " + getException().getMessage());
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "graph search failed due to: " + getException().getMessage()));
+        Throwable exception = getException();
+        String message = "Graph search failed for %s%s".formatted(
+                searchDescription(),
+                exception == null ? "" : ": " + exception.getMessage());
+        log.error("Graph search failed for {}", searchDescription(), exception);
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
-        graphSearchComplete.complete(false, "some message");
+        graphSearchComplete.complete(false, message);
     }
 
     @Override
     protected void cancelled() {
-        log.warn("graph search cancelled");
-        eventPublisher.publishEvent(new StatusUpdateEvent(this, "graph search was cancelled for " + "graph search name TBD"));
+        String message = "Graph search was cancelled for " + searchDescription();
+        log.warn(message);
+        eventPublisher.publishEvent(new StatusUpdateEvent(this, message));
         unsetProgressControls();
-        graphSearchComplete.complete(false, "cancelled for " + "graph search name TBD");
+        graphSearchComplete.complete(false, message);
     }
 
     private void unsetProgressControls() {
@@ -98,5 +107,15 @@ public class LargeGraphSearchService extends Service<GraphRouteResult> {
         loadProgressBar.setProgress(1);
     }
 
+    private String searchDescription() {
+        if (routeFindingOptions == null
+                || routeFindingOptions.getOriginStar() == null
+                || routeFindingOptions.getDestinationStar() == null) {
+            return "unknown route";
+        }
+        return "%s to %s".formatted(
+                routeFindingOptions.getOriginStar().getDisplayName(),
+                routeFindingOptions.getDestinationStar().getDisplayName());
+    }
 
 }

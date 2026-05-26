@@ -6,7 +6,7 @@ package com.teamgannon.trips.spaceshipmodeller.propulsion;
  * <p>
  * Constraints are descriptive metadata attached to a drive (for example, "exhaust is radioactive" or
  * "requires an external beam"). The rules engine reads them when validating a {@link
- * com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign}. A {@code blocking} constraint represents a
+ * com.terranrepublic.assets.SpaceshipDesign}. A {@code blocking} constraint represents a
  * hard physical limitation (it will typically produce an error if the design is used in a way that
  * violates it); a non-blocking constraint is advisory.
  *

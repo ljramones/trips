@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
+import lombok.extern.slf4j.Slf4j;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.Map;
  * Supports terrain-aware normals using NoiseDerivatives for proper lighting
  * that shows terrain relief instead of smooth spherical shading.
  */
+@Slf4j
 public class JavaFxPlanetMeshConverter {
 
     // Mode for normal computation
@@ -393,10 +395,8 @@ public class JavaFxPlanetMeshConverter {
                 if (polys.size() > 1) totalShared++;
                 if (polys.size() > maxShared) maxShared = polys.size();
             }
-            System.out.println("[VertexData] Polygons: " + polygons.size() +
-                ", Unique vertices: " + uniqueVertices.size() +
-                ", Shared vertices: " + totalShared +
-                ", Max polys/vertex: " + maxShared);
+            log.debug("[VertexData] Polygons: {}, Unique vertices: {}, Shared vertices: {}, Max polys/vertex: {}",
+                    polygons.size(), uniqueVertices.size(), totalShared, maxShared);
         }
 
         return new VertexData(uniqueVertices, polygonVertexIndices, vertexToPolygons);
@@ -448,8 +448,8 @@ public class JavaFxPlanetMeshConverter {
         }
 
         if (DEBUG_LOGGING) {
-            System.out.println("[AveragedHeights] Total vertices: " + averaged.length +
-                ", Smoothed (different neighbors): " + smoothedCount);
+            log.debug("[AveragedHeights] Total vertices: {}, Smoothed (different neighbors): {}",
+                    averaged.length, smoothedCount);
         }
 
         return averaged;
@@ -504,8 +504,8 @@ public class JavaFxPlanetMeshConverter {
         }
 
         if (DEBUG_LOGGING) {
-            System.out.println("[AveragedHeightsPrecise] Total vertices: " + averaged.length +
-                ", Smoothed (different neighbors): " + smoothedCount);
+            log.debug("[AveragedHeightsPrecise] Total vertices: {}, Smoothed (different neighbors): {}",
+                    averaged.length, smoothedCount);
         }
 
         return averaged;

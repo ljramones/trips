@@ -1,5 +1,6 @@
 package com.teamgannon.trips.planetarymodelling.procedural;
 
+import lombok.extern.slf4j.Slf4j;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.Map;
  * Computes and stores neighbor relationships between polygons.
  * Optimized with a spatial grid to reduce neighbor search complexity from O(n^2).
  */
+@Slf4j
 public class AdjacencyGraph {
 
     private static final double NEIGHBOR_DISTANCE_DEFAULT = 2.5;
@@ -125,7 +127,7 @@ public class AdjacencyGraph {
         int n = polygons.size();
         if (n < 2) {
             if (DEBUG_LOGGING) {
-                System.out.println("[AdjacencyGraph] Fallback neighbor distance (too few polygons).");
+                log.debug("[AdjacencyGraph] Fallback neighbor distance (too few polygons).");
             }
             return NEIGHBOR_DISTANCE_DEFAULT;
         }
@@ -152,7 +154,7 @@ public class AdjacencyGraph {
 
         if (nearestDistances.size() < MIN_NEIGHBOR_SAMPLES) {
             if (DEBUG_LOGGING) {
-                System.out.println("[AdjacencyGraph] Fallback neighbor distance (insufficient samples).");
+                log.debug("[AdjacencyGraph] Fallback neighbor distance (insufficient samples).");
             }
             return NEIGHBOR_DISTANCE_DEFAULT;
         }
@@ -163,7 +165,7 @@ public class AdjacencyGraph {
 
         if (percentile <= 0.0 || Double.isNaN(percentile) || Double.isInfinite(percentile)) {
             if (DEBUG_LOGGING) {
-                System.out.println("[AdjacencyGraph] Fallback neighbor distance (invalid percentile).");
+                log.debug("[AdjacencyGraph] Fallback neighbor distance (invalid percentile).");
             }
             return NEIGHBOR_DISTANCE_DEFAULT;
         }

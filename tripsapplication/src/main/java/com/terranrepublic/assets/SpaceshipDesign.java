@@ -1,5 +1,10 @@
-package com.teamgannon.trips.spaceshipmodeller.core;
+package com.terranrepublic.assets;
 
+import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
+import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
+import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
+import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
+import com.teamgannon.trips.spaceshipmodeller.propulsion.Category;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveSpecs;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
@@ -26,6 +31,7 @@ import java.util.List;
  * @param crewComplement  number of crew aboard
  * @param lengthMeters    overall length, in metres
  * @param carriedCraft    embarked smaller craft (empty for non-motherships)
+ * @param armaments       mounted weapons and weapon batteries
  * @param iconPath        path/key of the 2D icon for the generic branch (may be empty)
  * @param description     free-form description
  * @param createdAt       creation timestamp
@@ -41,17 +47,101 @@ public record SpaceshipDesign(
         int crewComplement,
         double lengthMeters,
         List<CarriedCraft> carriedCraft,
+        List<Armament> armaments,
         String iconPath,
         String description,
         SourceType sourceType,
         String sourceUniverse,
         String faction,
+        boolean concealed,
+        OperationalState operationalState,
         String era,
         Instant createdAt
-) {
+) implements SpaceAsset {
 
     /**
-     * Compact constructor: validates required references and makes the carried-craft list immutable.
+     * Backwards-compatible constructor for existing hidden/visible ship call sites.
+     */
+    public SpaceshipDesign(
+            String id,
+            String name,
+            String designation,
+            ShipClass shipClass,
+            DriveType driveType,
+            MassBudget massBudget,
+            int crewComplement,
+            double lengthMeters,
+            List<CarriedCraft> carriedCraft,
+            List<Armament> armaments,
+            String iconPath,
+            String description,
+            SourceType sourceType,
+            String sourceUniverse,
+            String faction,
+            boolean concealed,
+            String era,
+            Instant createdAt
+    ) {
+        this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
+                carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, concealed,
+                OperationalState.OPERATIONAL, era, createdAt);
+    }
+
+    /**
+     * Backwards-compatible constructor for existing armed ship call sites.
+     */
+    public SpaceshipDesign(
+            String id,
+            String name,
+            String designation,
+            ShipClass shipClass,
+            DriveType driveType,
+            MassBudget massBudget,
+            int crewComplement,
+            double lengthMeters,
+            List<CarriedCraft> carriedCraft,
+            List<Armament> armaments,
+            String iconPath,
+            String description,
+            SourceType sourceType,
+            String sourceUniverse,
+            String faction,
+            String era,
+            Instant createdAt
+    ) {
+        this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
+                carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, false,
+                OperationalState.OPERATIONAL, era, createdAt);
+    }
+
+    /**
+     * Backwards-compatible constructor for existing ship-only call sites.
+     */
+    public SpaceshipDesign(
+            String id,
+            String name,
+            String designation,
+            ShipClass shipClass,
+            DriveType driveType,
+            MassBudget massBudget,
+            int crewComplement,
+            double lengthMeters,
+            List<CarriedCraft> carriedCraft,
+            String iconPath,
+            String description,
+            SourceType sourceType,
+            String sourceUniverse,
+            String faction,
+            String era,
+            Instant createdAt
+    ) {
+        this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
+                carriedCraft, List.of(), iconPath, description, sourceType, sourceUniverse, faction, false,
+                OperationalState.OPERATIONAL, era, createdAt);
+    }
+
+    /**
+     * Compact constructor: validates required references and makes list fields immutable.
      */
     public SpaceshipDesign {
         if (name == null || name.isBlank()) {
@@ -70,18 +160,21 @@ public record SpaceshipDesign(
             throw new IllegalArgumentException("crewComplement must not be negative");
         }
         carriedCraft = carriedCraft == null ? List.of() : List.copyOf(carriedCraft);
+        armaments = armaments == null ? List.of() : List.copyOf(armaments);
         designation = designation == null ? "" : designation;
         iconPath = iconPath == null ? "" : iconPath;
         description = description == null ? "" : description;
         sourceType = sourceType == null ? SourceType.UNKNOWN : sourceType;
         sourceUniverse = sourceUniverse == null ? "" : sourceUniverse;
-        faction = faction == null ? "" : faction;
+        faction = faction == null || faction.isBlank() ? "Unknown" : faction;
+        operationalState = operationalState == null ? OperationalState.OPERATIONAL : operationalState;
         era = era == null ? "" : era;
+        createdAt = createdAt == null ? Instant.now() : createdAt;
     }
 
     /**
      * @return a one-line display label for this design's provenance: universe and faction where present
-     * (e.g. "The Expanse — MCRN (~2350)"), otherwise the {@link SourceType} label, with the era appended
+     * (e.g. "The Expanse - MCRN (~2350)"), otherwise the {@link SourceType} label, with the era appended
      * in parentheses when known
      */
     public String sourceLabel() {
@@ -89,9 +182,9 @@ public record SpaceshipDesign(
         if (!sourceUniverse.isBlank()) {
             sb.append(sourceUniverse);
         }
-        if (!faction.isBlank()) {
+        if (!faction.isBlank() && !"Unknown".equals(faction)) {
             if (sb.length() > 0) {
-                sb.append(" — ");
+                sb.append(" - ");
             }
             sb.append(faction);
         }
@@ -102,6 +195,36 @@ public record SpaceshipDesign(
             sb.append(" (").append(era).append(')');
         }
         return sb.toString();
+    }
+
+    @Override
+    public String source() {
+        return sourceLabel();
+    }
+
+    @Override
+    public TechLevel techLevel() {
+        return driveType.category() == Category.EXOTIC ? TechLevel.EXOTIC : TechLevel.UNKNOWN;
+    }
+
+    @Override
+    public String category() {
+        return shipClass.name();
+    }
+
+    @Override
+    public Instant modifiedAt() {
+        return createdAt;
+    }
+
+    @Override
+    public double dryMassTons() {
+        return massBudget.dryMassTons();
+    }
+
+    @Override
+    public AssetKind kind() {
+        return AssetKind.SHIP;
     }
 
     /** @return convenience accessor for the installed drive's performance envelope */

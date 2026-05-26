@@ -4,6 +4,7 @@ import com.teamgannon.trips.TripsSpringBootApplication;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +40,8 @@ public class TripsFxApplication extends Application {
 
     @Override
     public void start(@NotNull Stage primaryStage) throws Exception {
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            System.err.println("Uncaught exception:");
-            throwable.printStackTrace();
-        });
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) ->
+                handleUncaughtException(thread, throwable));
 
 
         context.publishEvent(new StageReadyEvent(primaryStage));
@@ -59,5 +58,27 @@ public class TripsFxApplication extends Application {
         context.registerBean(Application.class, () -> TripsFxApplication.this);
         context.registerBean(Parameters.class, this::getParameters);
         context.registerBean(HostServices.class, this::getHostServices);
+    }
+
+    private void handleUncaughtException(Thread thread, Throwable throwable) {
+        log.error("Uncaught exception on thread {}", thread.getName(), throwable);
+        try {
+            if (Platform.isFxApplicationThread()) {
+                showUncaughtExceptionAlert(throwable);
+            } else {
+                Platform.runLater(() -> showUncaughtExceptionAlert(throwable));
+            }
+        } catch (IllegalStateException e) {
+            log.warn("Unable to show uncaught exception dialog because JavaFX is not available", e);
+        }
+    }
+
+    private void showUncaughtExceptionAlert(Throwable throwable) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Unexpected Error");
+        alert.setHeaderText("TRIPS encountered an unexpected error");
+        alert.setContentText("The error has been written to the application log.\n\n"
+                + "Error: " + throwable.getMessage());
+        alert.showAndWait();
     }
 }

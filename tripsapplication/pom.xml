@@ -720,6 +720,18 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.7.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Maven Surefire Plugin for TestFX headless testing -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -729,6 +741,7 @@
                     <!-- @{argLine} allows JaCoCo to inject its agent -->
                     <argLine>
                         @{argLine}
+                        -javaagent:${org.mockito:mockito-core:jar}
                         -Djava.awt.headless=true
                         -Dtestfx.robot=glass
                         -Dtestfx.headless=true

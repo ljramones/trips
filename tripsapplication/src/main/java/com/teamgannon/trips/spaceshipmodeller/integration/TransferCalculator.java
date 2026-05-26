@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.integration;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.ThrustLevel;
 
 import java.util.ArrayList;
@@ -160,12 +160,6 @@ public final class TransferCalculator {
      */
     public static TransferPlan plan(TransferBody origin, TransferBody destination,
                                     double centralMassSolar, SpaceshipDesign ship, TransferType type) {
-        // TEMP diagnostic: confirms the actual ship/drive/Isp/mass reaching the calculator.
-        System.out.println("Calculating transfer for ship: " + ship.name()
-                + " | Drive: " + ship.driveType()
-                + " | IspAvg(s): " + ship.driveSpecs().ispAverageSeconds()
-                + " | Total Mass (t): " + ship.grossMassTons()
-                + " | Type: " + (type == null ? "HOHMANN" : type));
         TransferType t = type == null ? TransferType.HOHMANN : type;
         BurnSpec spec = buildSpec(origin, destination, centralMassSolar, ship, t);
         return assemble(origin, destination, t, ship,

@@ -17,6 +17,7 @@ import com.teamgannon.trips.events.*;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
+import com.teamgannon.trips.javafxsupport.AwtSystemTrayService;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.*;
 import com.teamgannon.trips.report.ReportManager;
@@ -54,11 +55,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.awt.PopupMenu;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -128,6 +124,7 @@ public class MainPane  {
     double sceneWidth = Universe.boxWidth;
     double sceneHeight = Universe.boxHeight;
     private final SharedUIFunctions sharedUIFunctions;
+    private final AwtSystemTrayService awtSystemTrayService;
 
     /**
      * the query dialog
@@ -175,6 +172,7 @@ public class MainPane  {
      * @param sharedUIState              shared UI state
      * @param interstellarSpacePane      the 3D visualization pane
      * @param mainSplitPaneManager       main split pane manager
+     * @param awtSystemTrayService       adapter for the native AWT system tray
      */
     public MainPane(FxWeaver fxWeaver,
                     TripsContext tripsContext,
@@ -191,7 +189,8 @@ public class MainPane  {
                     SharedUIFunctions sharedUIFunctions,
                     SharedUIState sharedUIState,
                     InterstellarSpacePane interstellarSpacePane,
-                    MainSplitPaneManager mainSplitPaneManager) {
+                    MainSplitPaneManager mainSplitPaneManager,
+                    AwtSystemTrayService awtSystemTrayService) {
 
         this.fxWeaver = fxWeaver;
         this.tripsContext = tripsContext;
@@ -210,6 +209,7 @@ public class MainPane  {
         this.sharedUIState = sharedUIState;
         this.interstellarSpacePane = interstellarSpacePane;
         this.mainSplitPaneManager = mainSplitPaneManager;
+        this.awtSystemTrayService = awtSystemTrayService;
     }
 
 
@@ -272,7 +272,7 @@ public class MainPane  {
             log.error("Caught exception: " + e.getMessage());
         }
 
-        createAWTTray();
+        awtSystemTrayService.installTrayIcon();
     }
 
     public void openDataWorkbench(ActionEvent actionEvent) {
@@ -496,46 +496,6 @@ public class MainPane  {
             }
         }
     }
-
-
-    private void createAWTTray() {
-        TrayIcon trayIcon;
-        if (SystemTray.isSupported()) {
-            try {
-                // get the SystemTray instance
-                SystemTray tray = SystemTray.getSystemTray();
-                // load an image
-                File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
-                java.awt.Image image = Toolkit.getDefaultToolkit().getImage(imageFileIcon.getAbsolutePath());
-                // create an action listener to listen for default action executed on the tray icon
-                ActionListener listener = e -> log.info("action performed");
-                // create a popup menu
-                PopupMenu popup = new PopupMenu();
-                // create menu item for the default action
-                java.awt.MenuItem defaultItem = new java.awt.MenuItem("Menu example");
-                defaultItem.addActionListener(listener);
-                popup.add(defaultItem);
-                /// ... add other items
-                // construct a TrayIcon
-                trayIcon = new TrayIcon(image, "Tray Demo", popup);
-                // set the TrayIcon properties
-                trayIcon.addActionListener(listener);
-
-                // add the tray image
-                tray.add(trayIcon);
-            } catch (Exception e) {
-                log.error("failed to add tray icon:" + e.getMessage());
-            }
-            // ...
-        } else {
-            // disable tray option in your application or
-            // perform other actions
-            log.error("TrayIcon not supported");
-
-        }
-    }
-
-
 
 
     //////////////////////////  DATABASE STUFF  /////////

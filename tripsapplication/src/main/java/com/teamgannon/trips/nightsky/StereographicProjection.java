@@ -19,8 +19,7 @@ public class StereographicProjection {
         double azimuth = 60;   // Sample azimuth in degrees
 
         double[] position = project(altitude, azimuth);
-        System.out.println("Projected x: " + position[0]);
-        System.out.println("Projected y: " + position[1]);
+        log.info("Projected x: {}", position[0]);
+        log.info("Projected y: {}", position[1]);
     }
 }
-

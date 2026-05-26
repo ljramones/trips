@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.templates;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationResult;
 import org.junit.jupiter.api.DisplayName;

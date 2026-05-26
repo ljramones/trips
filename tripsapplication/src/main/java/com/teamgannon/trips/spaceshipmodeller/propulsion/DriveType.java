@@ -177,6 +177,25 @@ public enum DriveType {
             .notes("Uniquely scales to enormous ships; the only near-term drive that pushes megatonne hulls hard.")
             .build()),
 
+    /** Alias entry for Orion-style nuclear-pulse craft in asset catalogs. */
+    ORION(Category.NUCLEAR_PULSE, DriveSpecs.builder()
+            .isp(3000, 100000)
+            .thrustToWeight(2, 4)
+            .typicalThrustMN(10, 1000)
+            .minDryMassPercent(30)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.EXTREME)
+            .radiator(RadiatorLevel.MINIMAL)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Extreme thrust, high Isp")
+            .constraints(
+                    DesignConstraint.blocking("NUCLEAR_FALLOUT", "Detonations produce fallout; cannot be used in or near a biosphere."),
+                    DesignConstraint.advisory("TREATY_BANNED", "Banned by real-world atmospheric/space test treaties."))
+            .sciFiReferences("Project Orion (real)", "Footfall (Niven & Pournelle)", "Deep Impact (Messiah)")
+            .notes("Orion-style shaped-charge pulse drive.")
+            .build()),
+
     /** Continuous fusion torch: a true torchship, high thrust AND high Isp, paid for in radiators. */
     FUSION_TORCH(Category.FUSION, DriveSpecs.builder()
             .isp(10000, 1000000)
@@ -373,6 +392,57 @@ public enum DriveType {
                     + "human fusion, reflecting an arrogant, ancient technological lead.")
             .build()),
 
+    /** Grtul gate transit: a fixed-gate drive mode for cataloguing gate-capable assets. */
+    GRTUL_GATE(Category.EXOTIC, DriveSpecs.builder()
+            .isp(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)
+            .thrustToWeight(0, 0)
+            .typicalThrustMN(0, 0)
+            .minDryMassPercent(100)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.NEGLIGIBLE)
+            .radiator(RadiatorLevel.NONE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Gate transit; no onboard thrust")
+            .constraints(DesignConstraint.blocking("GATE_REQUIRED", "Requires a compatible gate or fixed transit infrastructure."))
+            .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
+            .notes("Catalog discriminator for assets that move via Grtul gate transit rather than onboard propulsion.")
+            .build()),
+
+    /** Posleen normal-space drive used for non-hyper transit in the Posleen setting. */
+    POSLEEN_NORMAL_SPACE(Category.EXOTIC, DriveSpecs.builder()
+            .isp(100000, 1000000)
+            .thrustToWeight(0.05, 1.0)
+            .typicalThrustMN(0.1, 80)
+            .minDryMassPercent(20)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.HIGH)
+            .radiator(RadiatorLevel.MODERATE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("High thrust, exotic Isp")
+            .constraints(DesignConstraint.advisory("EXOTIC_ENGINEERING", "Normal-space drive physics are setting-specific."))
+            .sciFiReferences("Legacy of the Aldenata / Posleen War")
+            .notes("Catalog entry for Posleen normal-space manoeuvre drives.")
+            .build()),
+
+    /** Galactic hyperdrive: strategic FTL transit mode, not a landing or tactical thruster. */
+    GALACTIC_HYPER(Category.EXOTIC, DriveSpecs.builder()
+            .isp(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)
+            .thrustToWeight(0, 0)
+            .typicalThrustMN(0, 0)
+            .minDryMassPercent(100)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.NEGLIGIBLE)
+            .radiator(RadiatorLevel.NONE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("Strategic FTL transit; no tactical thrust")
+            .constraints(DesignConstraint.blocking("FTL_ONLY", "Hyperdrive does not provide local manoeuvre thrust."))
+            .sciFiReferences("Galactic-scale space opera hyperdrive")
+            .notes("Catalog entry for assets whose strategic movement is via hyperdrive.")
+            .build()),
+
     /** Astrophage/Taumoeba spin drive: near-total mass-to-light conversion (Project Hail Mary). */
     SPIN_DRIVE(Category.EXOTIC, DriveSpecs.builder()
             .isp(1000000, 20000000)
@@ -391,6 +461,21 @@ public enum DriveType {
             .sciFiReferences("Project Hail Mary (Astrophage spin drive)")
             .notes("Living-fuel drive emitting Petrova-frequency light at near-total mass conversion; "
                     + "near-c exhaust at usable thrust enables ~1.5g interstellar cruise.")
+            .build()),
+
+    /** No installed drive. Useful for fixed assets where propulsion is structurally absent. */
+    NONE(Category.EXOTIC, DriveSpecs.builder()
+            .isp(0, 0)
+            .thrustToWeight(0, 0)
+            .typicalThrustMN(0, 0)
+            .minDryMassPercent(100)
+            .powerMW(0)
+            .thrustLevel(ThrustLevel.NEGLIGIBLE)
+            .radiator(RadiatorLevel.NONE)
+            .atmosphereCapable(false)
+            .landingCapable(false)
+            .chartRegion("No installed drive")
+            .notes("Structural absence of a drive; use for fixed assets and placeholders.")
             .build());
 
     private final Category category;

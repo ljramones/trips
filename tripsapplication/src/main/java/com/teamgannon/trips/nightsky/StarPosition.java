@@ -60,7 +60,7 @@ public class StarPosition {
         double latitude = 40.7128;  // Sample latitude for New York City
 
         double[] position = computeAltitudeAzimuth(ra, declination, lst, latitude);
-        System.out.println("Altitude: " + position[0] + " degrees");
-        System.out.println("Azimuth: " + position[1] + " degrees");
+        log.info("Altitude: {} degrees", position[0]);
+        log.info("Azimuth: {} degrees", position[1]);
     }
 }

@@ -1,8 +1,8 @@
 package com.teamgannon.trips.spaceshipmodeller.planner;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -64,7 +64,7 @@ public class TransferPlanMapper {
         }
         try {
             return objectMapper.writeValueAsString(nodes);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             log.error("Failed to serialise maneuver nodes: {}", ex.getMessage());
             return null;
         }
@@ -76,7 +76,7 @@ public class TransferPlanMapper {
         }
         try {
             return objectMapper.readValue(json, NODE_LIST);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             log.error("Failed to deserialise maneuver nodes: {}", ex.getMessage());
             return List.of();
         }

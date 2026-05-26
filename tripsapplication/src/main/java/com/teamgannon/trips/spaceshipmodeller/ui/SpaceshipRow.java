@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 
 /**
  * Read-only JavaBean view of a {@link SpaceshipDesign} for use in a JavaFX {@code TableView}.

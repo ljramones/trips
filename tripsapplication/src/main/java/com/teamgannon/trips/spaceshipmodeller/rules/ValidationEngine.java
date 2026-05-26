@@ -2,7 +2,7 @@ package com.teamgannon.trips.spaceshipmodeller.rules;
 
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DesignConstraint;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveSpecs;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.ThrustLevel;

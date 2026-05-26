@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dataset.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.enums.GridLines;
 import com.teamgannon.trips.dataset.enums.GridShape;
 import com.teamgannon.trips.routing.model.RouteDefinition;
@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.*;
 
 
@@ -287,7 +287,7 @@ public class Theme {
             String themeStr = mapper.writeValueAsString(theme);
             log.debug("serialized as:" + themeStr);
             return themeStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", theme, e.getMessage());
             return "";
         }
@@ -296,7 +296,7 @@ public class Theme {
     public @Nullable Theme toTheme(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, Theme.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

@@ -27,9 +27,7 @@ public class SparseTransitComputor {
      * the constructor
      */
     public SparseTransitComputor() {
-        // create a concurrent hash set from the concurrent hashmap with the original size
-        Map<String, Integer> collisionMap = new ConcurrentHashMap<>();
-        collisionSet = ConcurrentHashMap.newKeySet(collisionMap.size());
+        collisionSet = ConcurrentHashMap.newKeySet();
 
         // create a thread pool based on the number of cores on the machine
         executorService = Executors.newFixedThreadPool(getNumCores());
@@ -133,8 +131,12 @@ public class SparseTransitComputor {
 
             // return the summarization
             return sparseTransitList;
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("failed due to:" + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while calculating sparse transits", e);
+            return sparseTransitList;
+        } catch (ExecutionException e) {
+            log.error("Failed to calculate sparse transits", e);
             // return what was done so far if anything
             return sparseTransitList;
         } finally {
@@ -240,7 +242,7 @@ public class SparseTransitComputor {
 
         SparseTransitComputor sparseTransitComputor = new SparseTransitComputor();
         int numCores = sparseTransitComputor.getNumCores();
-        System.out.println("Number of cores = " + numCores);
+        log.info("Number of cores = {}", numCores);
         List<SparseStarRecord> starRecords = sparseTransitComputor.generateStarRecords(count);
 
         // calculate the transits for the simulated stars
@@ -250,7 +252,7 @@ public class SparseTransitComputor {
         log.info("Time required for %d stars with %,d possible connections is %d ms gives %,d valid transits".formatted(
                 count, (long) count * count / 2, end - start, transits.size()));
 
-        log.info("numbers of discovered transits=" + transits.size());
+        log.info("Number of discovered transits = {}", transits.size());
 
         log.info("Success");
 

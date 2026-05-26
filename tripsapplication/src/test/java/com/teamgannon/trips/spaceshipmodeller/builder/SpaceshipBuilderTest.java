@@ -1,7 +1,7 @@
 package com.teamgannon.trips.spaceshipmodeller.builder;
 
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

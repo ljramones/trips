@@ -1,7 +1,7 @@
 package com.teamgannon.trips.jpa.model;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
@@ -17,7 +17,7 @@ import org.hibernate.Hibernate;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -359,7 +359,7 @@ public class DataSetDescriptor implements Serializable {
         try {
             return mapper.readValue(transitPreferencesStr, new TypeReference<>() {
             });
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", transitPreferencesStr, e.getMessage());
             return null;
         }
@@ -377,7 +377,7 @@ public class DataSetDescriptor implements Serializable {
             String transitDefsStr = mapper.writeValueAsString(transitDefinitions);
             log.debug("serialized as:" + transitDefsStr);
             transitPreferencesStr = transitDefsStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", transitDefinitions, e.getMessage());
             transitPreferencesStr = "";
         }

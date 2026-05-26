@@ -3,6 +3,7 @@ package com.teamgannon.trips.service.problemreport;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.teamgannon.trips.config.application.Localization;
+import com.teamgannon.trips.config.application.TripsApplicationPaths;
 import com.teamgannon.trips.service.problemreport.model.ReportMetadata;
 import com.teamgannon.trips.service.problemreport.model.SystemInfoSnapshot;
 import lombok.extern.slf4j.Slf4j;
@@ -46,25 +47,7 @@ public class ReportBundleService {
      * Gets the base reports directory for the current platform.
      */
     public Path getReportsBaseDirectory() {
-        String os = System.getProperty("os.name", "").toLowerCase();
-        Path basePath;
-
-        if (os.contains("mac")) {
-            // macOS: ~/Library/Application Support/TRIPS/reports/
-            basePath = Path.of(System.getProperty("user.home"), "Library", "Application Support", "TRIPS", "reports");
-        } else if (os.contains("win")) {
-            // Windows: %APPDATA%\TRIPS\reports\
-            String appData = System.getenv("APPDATA");
-            if (appData == null) {
-                appData = System.getProperty("user.home");
-            }
-            basePath = Path.of(appData, "TRIPS", "reports");
-        } else {
-            // Linux and others: ~/.trips/reports/
-            basePath = Path.of(System.getProperty("user.home"), ".trips", "reports");
-        }
-
-        return basePath;
+        return TripsApplicationPaths.reportsDirectory();
     }
 
     /**
@@ -174,6 +157,7 @@ public class ReportBundleService {
     private String readLogTail() {
         // Look for common Spring Boot log locations
         Path[] logLocations = {
+                TripsApplicationPaths.logFile(),
                 Path.of("logs", "spring.log"),
                 Path.of("logs", "trips.log"),
                 Path.of("spring.log"),

@@ -2,7 +2,7 @@ package com.teamgannon.trips.spaceshipmodeller.service;
 
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.persistence.SpaceshipDesignMapper;
 import com.teamgannon.trips.spaceshipmodeller.persistence.SpaceshipEntity;
 import com.teamgannon.trips.spaceshipmodeller.persistence.SpaceshipRepository;

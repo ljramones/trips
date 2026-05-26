@@ -29,7 +29,7 @@ import java.util.UUID;
  * JPA persistence form of a spaceship design.
  * <p>
  * This is a deliberately flat, persistence-friendly mirror of the immutable domain
- * {@link com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign} record. Conversion between the two is
+ * {@link com.terranrepublic.assets.SpaceshipDesign} record. Conversion between the two is
  * the job of {@link SpaceshipDesignMapper}; nothing else should touch this class directly.
  * <p>
  * Design choices follow existing TRIPS entity conventions:
@@ -45,7 +45,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"description", "carriedCraftJson"})
+@ToString(exclude = {"description", "carriedCraftJson", "armamentsJson"})
 @DynamicUpdate
 @Entity(name = "SPACESHIP_DESIGN")
 @Table(indexes = {
@@ -89,6 +89,10 @@ public class SpaceshipEntity implements Serializable {
     /** Serialised list of carried craft; see {@link SpaceshipDesignMapper}. */
     @Lob
     private String carriedCraftJson;
+
+    /** Serialised list of armaments; see {@link SpaceshipDesignMapper}. */
+    @Lob
+    private String armamentsJson;
 
     private String iconPath;
 

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.spaceshipmodeller.api;
 
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.Category;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;

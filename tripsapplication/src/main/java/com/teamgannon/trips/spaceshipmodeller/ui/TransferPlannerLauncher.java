@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlan;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.SavedTransferPlan;

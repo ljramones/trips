@@ -1,11 +1,11 @@
 package com.teamgannon.trips.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.io.Serializable;
 
 /**
@@ -49,7 +49,7 @@ public class OortCloud implements Serializable {
             String oortCloudStr = mapper.writeValueAsString(oortCloud);
             log.debug("serialized as:" + oortCloudStr);
             return oortCloudStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", oortCloud, e.getMessage());
             return "";
         }
@@ -58,7 +58,7 @@ public class OortCloud implements Serializable {
     public @Nullable OortCloud toOortCloud(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, OortCloud.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

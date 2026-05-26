@@ -299,8 +299,7 @@ public class AstroCSVStar {
             return astro;
 
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("failed to convert a CSV star object into a astrographic one: {}", e.getMessage());
+            log.error("Failed to convert a CSV star object into an astrographic one", e);
             return null;
         }
 

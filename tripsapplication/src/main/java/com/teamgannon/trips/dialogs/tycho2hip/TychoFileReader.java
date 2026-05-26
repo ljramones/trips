@@ -1,11 +1,14 @@
 package com.teamgannon.trips.dialogs.tycho2hip;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class TychoFileReader {
 
 
@@ -75,14 +78,17 @@ public class TychoFileReader {
 
 
     public static void main(String[] args) {
+        if (args.length == 0) {
+            log.info("Usage: TychoFileReader <csv-file>");
+            return;
+        }
         try {
-            List<Tycho2HipRecord> stars = readCSV("/Users/larrymitchell/tripsnew/trips/files/hyg_db/athyg_v1_0.csv");
-            // Do something with the stars, like print them out
+            List<Tycho2HipRecord> stars = readCSV(args[0]);
             for (Tycho2HipRecord star : stars) {
-                System.out.println(star.id + " " + star.tyc+ " "+star.ra); // ... and so on
+                log.info("{} {} {}", star.id, star.tyc, star.ra);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to read Tycho CSV", e);
         }
     }
 

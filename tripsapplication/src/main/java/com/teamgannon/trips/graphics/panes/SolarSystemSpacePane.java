@@ -18,7 +18,7 @@ import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import com.teamgannon.trips.solarsystem.animation.OrbitalAnimationController;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;

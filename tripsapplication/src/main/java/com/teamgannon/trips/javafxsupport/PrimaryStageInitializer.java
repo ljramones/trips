@@ -1,6 +1,7 @@
 package com.teamgannon.trips.javafxsupport;
 
 import com.teamgannon.trips.controller.MainPane;
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -73,7 +74,7 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
         } catch (Exception e) {
             log.error("Failed to initialize primary stage", e);
             showErrorDialog(e);
-            System.exit(1);
+            Platform.exit();
         }
     }
 

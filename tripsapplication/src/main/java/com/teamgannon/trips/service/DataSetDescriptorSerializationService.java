@@ -1,8 +1,8 @@
 package com.teamgannon.trips.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,7 +49,7 @@ public class DataSetDescriptorSerializationService {
         }
         try {
             return objectMapper.readValue(themeStr, Theme.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize Theme from: {} - {}", themeStr, e.getMessage());
             return null;
         }
@@ -69,7 +69,7 @@ public class DataSetDescriptorSerializationService {
             String json = objectMapper.writeValueAsString(theme);
             log.debug("Serialized Theme: {}", json);
             return json;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize Theme: {} - {}", theme, e.getMessage());
             return "";
         }
@@ -103,7 +103,7 @@ public class DataSetDescriptorSerializationService {
         }
         try {
             return objectMapper.readValue(routesStr, new TypeReference<List<Route>>() {});
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize Routes from: {} - {}", routesStr, e.getMessage());
             return new ArrayList<>();
         }
@@ -123,7 +123,7 @@ public class DataSetDescriptorSerializationService {
             String json = objectMapper.writeValueAsString(routes);
             log.debug("Serialized {} routes", routes.size());
             return json;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize Routes: {} - {}", routes, e.getMessage());
             return "";
         }
@@ -158,7 +158,7 @@ public class DataSetDescriptorSerializationService {
         }
         try {
             return objectMapper.readValue(customDataDefsStr, new TypeReference<List<CustomDataDefinition>>() {});
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize CustomDataDefinitions from: {} - {}", customDataDefsStr, e.getMessage());
             return new ArrayList<>();
         }
@@ -178,7 +178,7 @@ public class DataSetDescriptorSerializationService {
             String json = objectMapper.writeValueAsString(definitions);
             log.debug("Serialized {} custom data definitions", definitions.size());
             return json;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize CustomDataDefinitions: {} - {}", definitions, e.getMessage());
             return "";
         }
@@ -212,7 +212,7 @@ public class DataSetDescriptorSerializationService {
         }
         try {
             return objectMapper.readValue(customDataValuesStr, new TypeReference<List<CustomDataValue>>() {});
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize CustomDataValues from: {} - {}", customDataValuesStr, e.getMessage());
             return new ArrayList<>();
         }
@@ -232,7 +232,7 @@ public class DataSetDescriptorSerializationService {
             String json = objectMapper.writeValueAsString(values);
             log.debug("Serialized {} custom data values", values.size());
             return json;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize CustomDataValues: {} - {}", values, e.getMessage());
             return "";
         }
@@ -267,7 +267,7 @@ public class DataSetDescriptorSerializationService {
         }
         try {
             return objectMapper.readValue(transitPrefsStr, TransitDefinitions.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialize TransitDefinitions from: {} - {}", transitPrefsStr, e.getMessage());
             return createDefaultTransitDefinitions(dataSetName);
         }
@@ -287,7 +287,7 @@ public class DataSetDescriptorSerializationService {
             String json = objectMapper.writeValueAsString(transitDefinitions);
             log.debug("Serialized TransitDefinitions: {}", json);
             return json;
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialize TransitDefinitions: {} - {}", transitDefinitions, e.getMessage());
             return "";
         }

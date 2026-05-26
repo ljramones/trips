@@ -99,9 +99,7 @@ class Utils {
             }
             input.close();
         } catch (Exception e) {
-            log.error(filename);
-            log.error(e.getMessage());
-            e.printStackTrace();
+            log.error("Failed to load stellar data from {}", filename, e);
             System.exit(1);
         }
         return simStars;

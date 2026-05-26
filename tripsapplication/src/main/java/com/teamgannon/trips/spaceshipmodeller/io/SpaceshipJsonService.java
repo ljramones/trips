@@ -1,19 +1,19 @@
 package com.teamgannon.trips.spaceshipmodeller.io;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import com.terranrepublic.assets.SpaceshipDesign;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -56,7 +56,7 @@ public class SpaceshipJsonService {
     public String toJson(SpaceshipDesign design) {
         try {
             return mapper.writeValueAsString(SpaceshipDesignDto.fromDomain(design));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SpaceshipJsonException("Failed to serialise design '" + design.name() + "'", e);
         }
     }
@@ -69,7 +69,7 @@ public class SpaceshipJsonService {
         try {
             List<SpaceshipDesignDto> dtos = designs.stream().map(SpaceshipDesignDto::fromDomain).toList();
             return mapper.writeValueAsString(dtos);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SpaceshipJsonException("Failed to serialise " + designs.size() + " design(s)", e);
         }
     }
@@ -83,7 +83,7 @@ public class SpaceshipJsonService {
     public SpaceshipDesign parseDesign(String json) {
         try {
             return mapper.readValue(json, SpaceshipDesignDto.class).toDomain();
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SpaceshipJsonException("Failed to parse design JSON", e);
         }
     }
@@ -103,7 +103,7 @@ public class SpaceshipJsonService {
                 return dtos.stream().map(SpaceshipDesignDto::toDomain).toList();
             }
             return List.of(mapper.treeToValue(root, SpaceshipDesignDto.class).toDomain());
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SpaceshipJsonException("Failed to parse designs JSON", e);
         }
     }
@@ -153,18 +153,17 @@ public class SpaceshipJsonService {
     }
 
     /** Serialises an {@link Instant} as an ISO-8601 string. */
-    private static final class InstantToIsoSerializer extends JsonSerializer<Instant> {
+    private static final class InstantToIsoSerializer extends ValueSerializer<Instant> {
         @Override
-        public void serialize(Instant value, JsonGenerator gen, SerializerProvider serializers)
-                throws IOException {
+        public void serialize(Instant value, JsonGenerator gen, SerializationContext context) {
             gen.writeString(value.toString());
         }
     }
 
     /** Parses an {@link Instant} from an ISO-8601 string. */
-    private static final class IsoToInstantDeserializer extends JsonDeserializer<Instant> {
+    private static final class IsoToInstantDeserializer extends ValueDeserializer<Instant> {
         @Override
-        public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public Instant deserialize(JsonParser p, DeserializationContext context) {
             return Instant.parse(p.getValueAsString());
         }
     }

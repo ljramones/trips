@@ -4,7 +4,8 @@ import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.Armament;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
 import java.time.Instant;
@@ -29,11 +30,13 @@ import java.util.List;
  * @param crewComplement  crew head count
  * @param lengthMeters    overall length
  * @param carriedCraft    embarked smaller craft
+ * @param armaments       mounted weapons and weapon batteries
  * @param iconPath        icon path/key
  * @param description     free-form description
  * @param sourceType      provenance (real, proposed or science fiction)
  * @param sourceUniverse  source universe / franchise
  * @param faction         in-universe faction / operator
+ * @param concealed       whether the design is hidden in catalog views
  * @param era             era / timeframe
  * @param createdAt       creation timestamp
  */
@@ -47,11 +50,13 @@ public record SpaceshipDesignDto(
         int crewComplement,
         double lengthMeters,
         List<CarriedCraft> carriedCraft,
+        List<Armament> armaments,
         String iconPath,
         String description,
         SourceType sourceType,
         String sourceUniverse,
         String faction,
+        boolean concealed,
         String era,
         Instant createdAt
 ) {
@@ -64,8 +69,8 @@ public record SpaceshipDesignDto(
         return new SpaceshipDesignDto(
                 design.id(), design.name(), design.designation(), design.shipClass(), design.driveType(),
                 design.massBudget(), design.crewComplement(), design.lengthMeters(), design.carriedCraft(),
-                design.iconPath(), design.description(), design.sourceType(), design.sourceUniverse(),
-                design.faction(), design.era(), design.createdAt());
+                design.armaments(), design.iconPath(), design.description(), design.sourceType(), design.sourceUniverse(),
+                design.faction(), design.concealed(), design.era(), design.createdAt());
     }
 
     /**
@@ -74,7 +79,7 @@ public record SpaceshipDesignDto(
     public SpaceshipDesign toDomain() {
         return new SpaceshipDesign(
                 id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
-                carriedCraft, iconPath, description, sourceType, sourceUniverse, faction, era,
+                carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, concealed, era,
                 createdAt != null ? createdAt : Instant.now());
     }
 }

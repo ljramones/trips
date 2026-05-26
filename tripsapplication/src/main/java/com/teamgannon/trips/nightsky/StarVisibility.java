@@ -33,6 +33,6 @@ public class StarVisibility {
         double latitude = 40.7128;  // Sample latitude for New York City
 
         boolean visible = isStarVisible(ra, declination, lst, latitude);
-        System.out.println("Star is visible: " + visible);
+        log.info("Star is visible: {}", visible);
     }
 }

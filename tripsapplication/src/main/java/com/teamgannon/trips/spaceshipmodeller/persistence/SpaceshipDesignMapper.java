@@ -1,11 +1,12 @@
 package com.teamgannon.trips.spaceshipmodeller.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.Armament;
+import com.terranrepublic.assets.SpaceshipDesign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +17,8 @@ import java.util.List;
  * Converts between the immutable domain {@link SpaceshipDesign} record and the mutable JPA
  * {@link SpaceshipEntity}.
  * <p>
- * The carried-craft list is the only non-flat field: it is serialised to JSON for storage and parsed back
- * on read, mirroring how other TRIPS entities persist collections. The mapper owns a private
+ * Collection fields are serialised to JSON for storage and parsed back on read, mirroring how other
+ * TRIPS entities persist collections. The mapper owns a private
  * {@link ObjectMapper} so it does not depend on the application's shared, possibly differently-configured
  * instance.
  */
@@ -26,6 +27,8 @@ import java.util.List;
 public class SpaceshipDesignMapper {
 
     private static final TypeReference<List<CarriedCraft>> CARRIED_CRAFT_LIST = new TypeReference<>() {
+    };
+    private static final TypeReference<List<Armament>> ARMAMENT_LIST = new TypeReference<>() {
     };
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,6 +58,7 @@ public class SpaceshipDesignMapper {
         entity.setCrewComplement(design.crewComplement());
         entity.setLengthMeters(design.lengthMeters());
         entity.setCarriedCraftJson(writeCarriedCraft(design.carriedCraft()));
+        entity.setArmamentsJson(writeArmaments(design.armaments()));
         entity.setIconPath(design.iconPath());
         entity.setDescription(design.description());
         entity.setSourceType(design.sourceType());
@@ -90,6 +94,7 @@ public class SpaceshipDesignMapper {
                 entity.getCrewComplement(),
                 entity.getLengthMeters(),
                 readCarriedCraft(entity.getCarriedCraftJson()),
+                readArmaments(entity.getArmamentsJson()),
                 entity.getIconPath(),
                 entity.getDescription(),
                 entity.getSourceType(),
@@ -105,7 +110,7 @@ public class SpaceshipDesignMapper {
         }
         try {
             return objectMapper.writeValueAsString(carriedCraft);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to serialise carried craft; storing none: {}", e.getMessage());
             return null;
         }
@@ -117,8 +122,32 @@ public class SpaceshipDesignMapper {
         }
         try {
             return objectMapper.readValue(json, CARRIED_CRAFT_LIST);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to deserialise carried craft; returning none: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private String writeArmaments(List<Armament> armaments) {
+        if (armaments == null || armaments.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(armaments);
+        } catch (JacksonException e) {
+            log.error("Failed to serialise armaments; storing none: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private List<Armament> readArmaments(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, ARMAMENT_LIST);
+        } catch (JacksonException e) {
+            log.error("Failed to deserialise armaments; returning none: {}", e.getMessage());
             return List.of();
         }
     }

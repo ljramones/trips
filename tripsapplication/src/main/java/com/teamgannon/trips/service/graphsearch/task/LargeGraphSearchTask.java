@@ -60,8 +60,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
         this.routeFindingOptions = routeFindingOptions;
         this.useKDTree = useKDTree;
 
-        Map<String, Integer> collisionMap = new ConcurrentHashMap<>();
-        collisionSet = ConcurrentHashMap.newKeySet(collisionMap.size());
+        collisionSet = ConcurrentHashMap.newKeySet();
 
         // create a thread pool based on the number of cores on the machine
         executorService = Executors.newFixedThreadPool(getNumCores());
@@ -136,7 +135,6 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
             startTime = System.currentTimeMillis();
             List<String> kShortestPaths = routeGraph.findKShortestPaths(
                     origin.getDisplayName(), destination.getDisplayName(), routeFindingOptions.getNumberPaths() + 1);
-            kShortestPaths.forEach(System.out::println);
             endTime = System.currentTimeMillis();
             log.info("Metrics: in long route search, get shortest paths, time = {}", "%,d".formatted(endTime - startTime));
 
@@ -147,7 +145,7 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
 
             startTime = System.currentTimeMillis();
             possibleRoutes = createRoutesFromPaths(routeGraph, pathToPlot, routeFindingOptions, sparseStarRecordList);
-            log.info("paths are:" + possibleRoutes);
+            log.debug("Paths are: {}", possibleRoutes);
             endTime = System.currentTimeMillis();
             log.info("Metrics: in long route search, create paths form graph, time = {}", "%,d".formatted(endTime - startTime));
 
@@ -308,8 +306,12 @@ public class LargeGraphSearchTask extends Task<GraphRouteResult> {
             updateTaskInfo("link calculation complete");
             // return the summarization
             return sparseTransitList;
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("failed due to:" + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while calculating transits", e);
+            return sparseTransitList;
+        } catch (ExecutionException e) {
+            log.error("Failed to calculate transits", e);
             // return what was done so far if anything
             return sparseTransitList;
         } finally {

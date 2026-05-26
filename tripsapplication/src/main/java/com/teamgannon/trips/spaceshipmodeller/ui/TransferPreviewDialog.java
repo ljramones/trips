@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.ui;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.ManeuverNode;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
 import com.teamgannon.trips.spaceshipmodeller.integration.Feasibility;

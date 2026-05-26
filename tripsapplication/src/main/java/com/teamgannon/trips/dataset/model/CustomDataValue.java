@@ -1,12 +1,12 @@
 package com.teamgannon.trips.dataset.model;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,7 +39,7 @@ public class CustomDataValue {
             String customDataValueStr = mapper.writeValueAsString(customDataValue);
             log.debug("serialized as:" + customDataValueStr);
             return customDataValueStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValue, e.getMessage());
             return "";
         }
@@ -50,7 +50,7 @@ public class CustomDataValue {
             String customDataValueStr = mapper.writeValueAsString(customDataValues);
             log.debug("serialized as:" + customDataValueStr);
             return customDataValueStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValues, e.getMessage());
             return "";
         }
@@ -60,7 +60,7 @@ public class CustomDataValue {
         try {
             return mapper.readValue(parametersStr, new TypeReference<>() {
             });
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

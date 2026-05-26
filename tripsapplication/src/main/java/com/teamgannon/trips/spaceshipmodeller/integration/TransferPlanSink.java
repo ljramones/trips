@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.integration;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 
 /**
  * Callback for "Create Full Transfer Plan": receives the computed {@link TransferPlan} plus the context

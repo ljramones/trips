@@ -1,6 +1,7 @@
 package com.teamgannon.trips.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.teamgannon.trips.dataset.model.CustomDataDefinition;
 import com.teamgannon.trips.dataset.model.CustomDataValue;
 import com.teamgannon.trips.dataset.model.Theme;
@@ -28,7 +29,7 @@ class DataSetDescriptorSerializationServiceTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
+        objectMapper = JsonMapper.builderWithJackson2Defaults().build();
         service = new DataSetDescriptorSerializationService(objectMapper);
     }
 

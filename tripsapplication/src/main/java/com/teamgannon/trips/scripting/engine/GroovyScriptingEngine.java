@@ -1,5 +1,6 @@
 package com.teamgannon.trips.scripting.engine;
 
+import com.teamgannon.trips.config.application.TripsApplicationPaths;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
@@ -26,15 +27,17 @@ public class GroovyScriptingEngine {
     private final GroovyShell shell;
     private final GroovyScriptEngine engine;
     private final ScriptEngine engineFromFactory;
+    private final File scriptDirectory;
 
     public GroovyScriptingEngine(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+        this.scriptDirectory = TripsApplicationPaths.scriptDirectory().toFile();
         loader = new GroovyClassLoader(this.getClass().getClassLoader());
         shell = new GroovyShell(loader, new Binding());
 
         URL url = null;
         try {
-            url = new File("files/scriptfiles/").toURI().toURL();
+            url = scriptDirectory.toURI().toURL();
         } catch (MalformedURLException e) {
             log.error("Exception while creating url", e);
         }
@@ -46,13 +49,14 @@ public class GroovyScriptingEngine {
 
     public String runAScript(String name, String contents, List<String> parameterList) {
         try {
-            Script script = shell.parse(new File("/Users/larrymitchell/tripsnew/trips/files/scriptfiles/", "CalcScript.groovy"));
+            String scriptName = name == null || name.isBlank() ? "CalcScript.groovy" : name;
+            Script script = shell.parse(new File(scriptDirectory, scriptName));
             log.info("Executing {} + {}", 5, 6);
             Integer result = (Integer) script.invokeMethod("calcSum", new Object[]{5, 6});
             log.info("Result of CalcScript.calcSum() method is {}", result);
             return Integer.toString(result);
         } catch (Exception e) {
-            log.error("failed due to: " + e.getMessage());
+            log.error("Failed to run Groovy script", e);
             return "...";
         }
 //

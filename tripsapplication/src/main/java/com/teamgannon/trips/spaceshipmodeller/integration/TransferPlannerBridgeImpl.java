@@ -1,6 +1,6 @@
 package com.teamgannon.trips.spaceshipmodeller.integration;
 
-import com.teamgannon.trips.spaceshipmodeller.core.SpaceshipDesign;
+import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;
 import org.springframework.stereotype.Component;
 

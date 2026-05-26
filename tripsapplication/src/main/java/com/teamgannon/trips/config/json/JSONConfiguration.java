@@ -2,7 +2,8 @@ package com.teamgannon.trips.config.json;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +21,10 @@ public class JSONConfiguration {
     @Primary
     @Bean
     public @NotNull ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        return objectMapper;
+        return JsonMapper.builderWithJackson2Defaults()
+                .changeDefaultVisibility(visibility ->
+                        visibility.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY))
+                .build();
     }
 
 }

@@ -1,9 +1,12 @@
 package com.teamgannon.trips.dialogs.tycho2hip;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
 public class BayerChecker {
 
     private static final Set<String> GREEK_LETTERS;
@@ -176,9 +179,8 @@ public class BayerChecker {
     }
 
     public static void main(String[] args) {
-        System.out.println(isBayerFormat("α Centauri")); // true
-        System.out.println(isBayerFormat("alpha Centauri")); // true
-        System.out.println(isBayerFormat("alpha Centauri")); // true
-        System.out.println(isBayerFormat("β Orionis"));      // Depends on if "β" and "Orionis" are added to the sets
+        log.info("α Centauri Bayer format: {}", isBayerFormat("α Centauri"));
+        log.info("alpha Centauri Bayer format: {}", isBayerFormat("alpha Centauri"));
+        log.info("β Orionis Bayer format: {}", isBayerFormat("β Orionis"));
     }
 }

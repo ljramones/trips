@@ -1,11 +1,11 @@
 package com.teamgannon.trips.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class KuiperBelt implements Serializable {
             String asteroidStr = mapper.writeValueAsString(kuiperBelt);
             log.debug("serialized as:" + asteroidStr);
             return asteroidStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelt, e.getMessage());
             return "";
         }
@@ -62,7 +62,7 @@ public class KuiperBelt implements Serializable {
             String kuiperStr = mapper.writeValueAsString(kuiperBelts);
             log.debug("serialized as:" + kuiperStr);
             return kuiperStr;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelts, e.getMessage());
             return "";
         }
@@ -71,7 +71,7 @@ public class KuiperBelt implements Serializable {
     public @Nullable KuiperBelt toKuiperBelt(String parametersStr) {
         try {
             return mapper.readValue(parametersStr, KuiperBelt.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.error("couldn't deserialize this {} because of {}:", parametersStr, e.getMessage());
             return null;
         }

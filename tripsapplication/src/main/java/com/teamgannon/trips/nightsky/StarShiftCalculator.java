@@ -48,10 +48,10 @@ public class StarShiftCalculator {
         List<StarPositionDescriptor> shiftedStarPositionDescriptors = computeShiftedPositions(remoteStarPositionDescriptor, starPositionDescriptors);
 
         for (int i = 0; i < starPositionDescriptors.size(); i++) {
-            System.out.println("Original Star RA: " + starPositionDescriptors.get(i).getRa() + ", Dec: " + starPositionDescriptors.get(i).getDec());
-            System.out.println("Shifted Star RA: " + shiftedStarPositionDescriptors.get(i).getRa() + ", Dec: " + shiftedStarPositionDescriptors.get(i).getDec());
-            System.out.println("------");
+            log.info("Original Star RA: {}, Dec: {}",
+                    starPositionDescriptors.get(i).getRa(), starPositionDescriptors.get(i).getDec());
+            log.info("Shifted Star RA: {}, Dec: {}",
+                    shiftedStarPositionDescriptors.get(i).getRa(), shiftedStarPositionDescriptors.get(i).getDec());
         }
     }
 }
-
