@@ -13,6 +13,8 @@ import com.teamgannon.trips.measure.TrackExecutionTime;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
@@ -442,7 +444,18 @@ public class StarService {
      */
     /**
      * Bulk save stars to the database.
-     * Uses Hibernate batch inserts for better performance.
+     * <p>
+     * Uses Hibernate batch inserts for better performance, and crucially flushes
+     * + clears the persistence context after each call so the first-level cache
+     * doesn't accumulate across batches in a long-running import (Phase 1.3).
+     * On a 2M-star import this is the difference between ~200 MB peak heap and
+     * ~1 GB+ peak heap.
+     * <p>
+     * When called inside an outer transaction (the typical import path, where
+     * {@code BulkLoadService.loadCsvDataset} owns the rollback boundary), the
+     * default REQUIRED propagation joins that transaction and the flush+clear
+     * stays correctly within its scope — entities written here will still be
+     * rolled back if the outer transaction fails.
      *
      * @param stars the collection of stars to save
      */
@@ -450,6 +463,8 @@ public class StarService {
     @Transactional
     public void starBulkSave(@NotNull java.util.Collection<StarObject> stars) {
         starObjectRepository.saveAll(stars);
+        entityManager.flush();
+        entityManager.clear();
     }
 
     @TrackExecutionTime

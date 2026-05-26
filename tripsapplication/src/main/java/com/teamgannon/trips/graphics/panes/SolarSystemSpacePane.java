@@ -667,9 +667,10 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         TransferBody originBody = origin != null
                 ? new TransferBody(origin.getName(), origin.getSemiMajorAxis())
                 : bodies.get(0);
-        // star mass may be in solar masses or raw kg; normalise to solar masses (Sun = 1.0)
-        double starMass = (currentSystem != null && currentSystem.getStarDisplayRecord() != null)
-                ? TransferCalculator.toSolarMasses(currentSystem.getStarDisplayRecord().getMass())
+        // StarObject.mass is canonically solar masses post-Phase 1.1.
+        double starMass = (currentSystem != null && currentSystem.getStarDisplayRecord() != null
+                && currentSystem.getStarDisplayRecord().getMass() > 0)
+                ? currentSystem.getStarDisplayRecord().getMass()
                 : 1.0;
         String solarSystemId = currentSystem != null ? currentSystem.getSolarSystemId() : null;
         new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass)

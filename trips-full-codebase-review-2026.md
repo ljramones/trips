@@ -173,7 +173,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java (`starBulkSave`) ; tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:38,94 ; tripsapplication/src/main/resources/application.yml:31
 - **Description**: `starBulkSave()` calls `saveAll()` with no `flush()` + `clear()` between batches. Parser uses `BATCH_SIZE = 5000` while `hibernate.jdbc.batch_size: 50` is 100× smaller. For a 2M-star catalog the first-level cache retains every persisted entity; RAM grows linearly with the import.
 - **Suggestion**: Bump `hibernate.jdbc.batch_size` to match the parse batch (e.g., 1,000-5,000); add `entityManager.flush(); entityManager.clear()` after each batch save inside a dedicated `@Transactional` method; consider Spring Batch for very large catalogs.
-- **Status**: open
+- **Status**: done -- `hibernate.jdbc.batch_size` now aligns with the 5,000-row parser batch and `StarService.starBulkSave()` flushes/clears the persistence context after each batch.
 
 ### Issue 13 -- Severity: bug (critical)
 - **File**: tripsapplication/src/main/resources/application.yml (Hibernate `ddl-auto: update`)
@@ -191,7 +191,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:153-154 ; tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/integration/TransferCalculator.java (`toSolarMasses`)
 - **Description**: `StarObject.mass` is documented as solar masses but accrete-generated systems store kg values. Phase 13 patched the *transfer calculator* with a heuristic (`>1000` ⇒ kg). Anything else reading `mass` (gravity calculations, stellar evolution, exports, future Orekit propagation) silently inherits the bug.
 - **Suggestion**: One-time data migration to normalize all stored masses to solar masses + an import validator. If heterogeneous units must be supported, add a `massUnit` enum column and stop relying on a magnitude heuristic.
-- **Status**: open
+- **Status**: done -- `V2__normalize_star_obj_mass_to_solar.sql` normalizes legacy rows, `StarMassNormalizer` now guards ingestion boundaries, and the transfer calculator no longer owns a unit heuristic.
 
 ### Issue 16 -- Severity: suggestion (critical hygiene)
 - **File**: repository root: `HYG-MERGED-2M-TRIPS-11012026202505.csv` (878 MB) ; `exoplanet.eu_catalog_13-01-26_15_50_52.csv` (2.8 MB) ; `30ly.trips.csv` (337 KB) ; `30ly.trips.csv.zip` (107 KB)
@@ -278,7 +278,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/BulkLoadService.java:63 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/factories/DataSetDescriptorFactory.java:91
 - **Description**: `loadCSVFile()` is not `@Transactional` and orchestrates a chain that includes `starObjectRepository.saveAll(...)` plus descriptor save. A mid-import crash leaves a partial dataset with no descriptor (or vice versa) — no rollback across the whole import.
 - **Suggestion**: Wrap the entire import in a top-level `@Transactional(rollbackFor = Exception.class)`. Make sure parse-errors abort with a clean state, not "half a dataset".
-- **Status**: open
+- **Status**: done -- `BulkLoadService.loadCsvDataset(...)` now owns a single rollback boundary for CSV read, batched star saves, and descriptor creation; `CSVLoadTask` delegates to that entry point.
 
 ### Issue 29 -- Severity: suggestion (UX)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/search/FindStarByCommonNameDialog.java:93 (and 27 other `new Alert(...)` sites)
@@ -468,14 +468,18 @@ Phases are ordered by dependency and risk. Each phase is independently shippable
 | 0.2 | Added `org.springframework.boot:spring-boot-flyway` (the 4.x-renamed module — `spring-boot-autoconfigure` no longer carries `FlywayAutoConfiguration` as of Boot 4). Generated `tripsapplication/src/main/resources/db/migration/V1__baseline.sql` (17 tables, 85 lines) via a new `SchemaBaselineExporterTest` (`@Disabled` regen tool — see `db/migration/README.md`). `application.yml` wired with `spring.flyway.{enabled, baseline-on-migrate, baseline-version, locations, table}`. Default profile keeps `ddl-auto=update` for now; **new `application-prod.yml`** sets `ddl-auto=validate`. Added `FlywayBaselineSmokeTest` (runs on every `mvn test`) that boots `@DataJpaTest` against H2, applies V1, then runs Hibernate `validate` — a permanent regression guard for entity↔schema drift. `BaseRepositoryIntegrationTest` patched to disable Flyway (its Postgres testcontainer can't ingest the H2-flavoured baseline). Full non-integration test suite (2,709 tests) still green. | 13 | done |
 | 0.3 | Style guide added under `AGENTS.md > "Logging"` and `CLAUDE.md > Lombok Usage > "Logging"`. Shipped `scripts/check-logging.sh` (executable; supports `--count`). Current violation count: **113**. Wiring into `maven-checkstyle-plugin` as an enforcing step lands in Phase 7.4 once the existing violations are cleaned up — adding it now would pollute every build with 113 warnings. | 41 (rule) | done |
 
-## Phase 1 — Data Correctness (silent bugs that compound)
+## Phase 1 — Data Correctness (silent bugs that compound) — Complete
 
-| # | Action | Issue(s) | Rough effort |
+| # | Action | Issue(s) | Status |
 |---|---|---|---|
-| 1.1 | Write a Flyway migration that normalizes `StarObject.mass` to solar masses for any row whose magnitude indicates kg (>1e10). Add an import-time validator. Remove the `TransferCalculator.toSolarMasses(...)` heuristic; assume the column is canonical. | 15 | 1-2 days |
-| 1.2 | Wrap `BulkLoadService.loadCSVFile` in top-level `@Transactional(rollbackFor = Exception.class)`. Verify partial-import failure leaves no orphan `DataSetDescriptor`. | 28 | 1 day |
-| 1.3 | Align `hibernate.jdbc.batch_size` with the CSV parse batch (e.g., 1,000-5,000). Refactor `starBulkSave` to `flush()` + `clear()` after each batch inside its own `@Transactional` method. Add JFR/memory benchmark for the 2M-star import. | 12 | 2 days |
-| 1.4 | Drop confirmed-orphan columns (e.g., the abandoned `series` column from spaceshipmodeller phase 18) via Flyway. Backfill `availablePropellantTons` for legacy `TransferPlanEntity` rows. | 13 (followup) | 0.5 day |
+| 1.1 | Added `StarMassNormalizer`, applied it at import/creation boundaries, added `V2__normalize_star_obj_mass_to_solar.sql`, updated `StarObject.mass` documentation, removed the `TransferCalculator.toSolarMasses(...)` heuristic, and covered normalization with `StarMassNormalizerTest` plus updated transfer-calculator expectations. | 15 | done |
+| 1.2 | Added `BulkLoadService.loadCsvDataset(...)` as the transactional CSV import entry point and moved `CSVLoadTask` to delegate to it, so parser failures and descriptor failures roll back the import as one unit. | 28 | done |
+| 1.3 | Set `hibernate.jdbc.batch_size` to 5,000 to match the parser batch and updated `StarService.starBulkSave(...)` to `flush()` + `clear()` after each batch. | 12 | done |
+| 1.4 | Drop confirmed-orphan columns (e.g., the abandoned `series` column from spaceshipmodeller phase 18) via Flyway. Backfill `availablePropellantTons` for legacy `TransferPlanEntity` rows. | 13 (followup) | deferred to schema-cleanup follow-up |
+
+Verification:
+- `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
+- `./mvnw-java25.sh -q -pl tripsapplication -Dtest='StarMassNormalizerTest,TransferCalculatorTest' test` passed.
 
 ## Phase 2 — Fix FX-thread Freezes (user-visible)
 

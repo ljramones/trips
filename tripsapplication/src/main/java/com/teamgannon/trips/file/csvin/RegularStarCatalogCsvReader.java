@@ -5,6 +5,7 @@ import com.teamgannon.trips.file.csvin.model.AstroCSVStar;
 import com.teamgannon.trips.file.csvin.model.LoadStats;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.stellarmodelling.StarMassNormalizer;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.importservices.tasks.ProgressUpdater;
@@ -237,7 +238,7 @@ public class RegularStarCatalogCsvReader {
                 .systemName(testForNull(lineRead, 4, ""))
                 .epoch(testForNull(lineRead, 5, ""))
                 .constellationName(testForNull(lineRead, 6, ""))
-                .mass(parseDouble(testForNull(lineRead, 7, "0")))
+                .mass(StarMassNormalizer.toSolarMasses(parseDouble(testForNull(lineRead, 7, "0"))))
                 .notes(testForNull(lineRead, 8, ""))
                 .source(testForNull(lineRead, 9, ""))
                 .catalogIdList(testForNull(lineRead, 10, ""))

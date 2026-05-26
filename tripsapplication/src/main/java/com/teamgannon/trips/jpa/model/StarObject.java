@@ -5,6 +5,7 @@ import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
 import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
+import com.teamgannon.trips.stellarmodelling.StarMassNormalizer;
 import com.teamgannon.trips.stellarmodelling.StarModel;
 import com.teamgannon.trips.stellarmodelling.StarUtils;
 import lombok.Getter;
@@ -150,7 +151,14 @@ public class StarObject implements Serializable {
 
     // ==================== Physical Properties ====================
 
-    /** The collapsed mass value (solar masses) */
+    /**
+     * Stellar mass in <strong>solar masses</strong> (M☉; Sun = 1.0). Made canonical
+     * in Phase 1.1 of the codebase-review remediation — earlier CSV/ChView
+     * imports wrote raw kg into this column. The V2 Flyway migration converts
+     * legacy rows, and every external ingestion path now runs through
+     * {@link StarMassNormalizer#toSolarMasses(double)} so kg can no longer
+     * enter the database.
+     */
     private double mass = 0.0;
 
     /** The radius in solar multiples */
@@ -404,7 +412,8 @@ public class StarObject implements Serializable {
         SimStar simStar = starModel.toSimStar();
 
         if (mass != 0) {
-            simStar.setMass(StarUtils.relativeMass(mass));
+            // mass is already in solar masses (Phase 1.1); SimStar takes solar masses.
+            simStar.setMass(mass);
         }
         if (radius != 0) {
             simStar.setRadius(StarUtils.relativeRadius(radius));
@@ -430,7 +439,8 @@ public class StarObject implements Serializable {
         this.realStar = true;
         this.displayName = chViewRecord.getStarName();
         this.constellationName = chViewRecord.getConstellation() != null ? chViewRecord.getConstellation() : "";
-        this.mass = chViewRecord.getCollapsedMass();
+        // ChView records carry mass in kg; normalise to solar masses (Phase 1.1).
+        this.mass = StarMassNormalizer.toSolarMasses(chViewRecord.getCollapsedMass());
         this.notes = chViewRecord.getComment() != null ? chViewRecord.getComment() : "";
 
         this.setCoordinates(chViewRecord.getOrdinates());

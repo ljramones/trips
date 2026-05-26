@@ -125,7 +125,8 @@ public class TransferPreviewDialog extends Dialog<Void> {
 
         originCombo.getItems().setAll(bodyList);
         destCombo.getItems().setAll(bodyList);
-        starMassField.setText(Double.toString(TransferCalculator.toSolarMasses(centralStarMassSolar)));
+        // centralStarMassSolar is canonically in solar masses (Phase 1.1).
+        starMassField.setText(Double.toString(centralStarMassSolar));
 
         TransferBody originSel = (origin != null && bodyList.contains(origin)) ? origin : bodyList.get(0);
         originCombo.setValue(originSel);

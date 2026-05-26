@@ -8,8 +8,6 @@ import com.teamgannon.trips.events.DataSetLoadEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.service.BulkLoadService;
-import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.importservices.tasks.CSVLoadTask;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -28,8 +26,6 @@ import static javafx.concurrent.Worker.State.RUNNING;
 public class CSVDataImportService extends Service<FileProcessResult> implements ImportTaskControl {
 
 
-    private final DatabaseManagementService databaseManagementService;
-    private final StarService starService;
     private final BulkLoadService bulkLoadService;
     private final ApplicationEventPublisher eventPublisher;
     private Dataset dataset;
@@ -38,12 +34,10 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     private ProgressBar loadProgressBar;
     private Button cancelLoad;
 
-    public CSVDataImportService(DatabaseManagementService databaseManagementService,
-                                StarService starService,
-                                BulkLoadService bulkLoadService,
+    // Phase 1.2: CSV orchestration moved into BulkLoadService.loadCsvDataset; this
+    // service no longer needs DatabaseManagementService or StarService injected.
+    public CSVDataImportService(BulkLoadService bulkLoadService,
                                 ApplicationEventPublisher eventPublisher) {
-        this.databaseManagementService = databaseManagementService;
-        this.starService = starService;
         this.bulkLoadService = bulkLoadService;
         this.eventPublisher = eventPublisher;
     }
@@ -51,7 +45,7 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
     @Override
     protected @NotNull Task<FileProcessResult> createTask() {
         log.info("calling csv import task");
-        return new CSVLoadTask(databaseManagementService, starService, bulkLoadService, dataset);
+        return new CSVLoadTask(bulkLoadService, dataset);
     }
 
     public boolean processDataSet(Dataset dataset,

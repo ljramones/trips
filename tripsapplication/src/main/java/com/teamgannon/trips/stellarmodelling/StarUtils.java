@@ -95,15 +95,10 @@ public class StarUtils {
         return radius / sunRadius;
     }
 
-    /**
-     * find the mass relative to the sun
-     *
-     * @param mass the mass
-     * @return the relative value
-     */
-    public static double relativeMass(double mass) {
-        return mass / sunMass;
-    }
+    // relativeMass(double) removed in Phase 1.1: StarObject.mass is now canonically
+    // in solar masses (M☉), so division by sunMass (a kg constant) produced wrong
+    // results. Use the value directly, or StarMassNormalizer.toSolarMasses for
+    // defensive conversion at external ingestion boundaries.
 
     /**
      * find the luminosity relative to the sun

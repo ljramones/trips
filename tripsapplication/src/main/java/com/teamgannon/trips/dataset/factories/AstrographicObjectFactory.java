@@ -4,6 +4,7 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.stellarmodelling.StarMassNormalizer;
 import javafx.scene.paint.Color;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,8 +43,8 @@ public class AstrographicObjectFactory {
 
 
 
-        // set the collapsed mass
-        starObject.setMass(chViewRecord.getCollapsedMass());
+        // ChView records carry mass in kg; canonical column is solar masses (Phase 1.1).
+        starObject.setMass(StarMassNormalizer.toSolarMasses(chViewRecord.getCollapsedMass()));
 
         // mark that this is the first load of this object
         if (chViewRecord.getComment() != null) {

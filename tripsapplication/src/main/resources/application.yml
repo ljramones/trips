@@ -29,9 +29,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-        # Batch insert optimization - groups INSERT statements
+        # Batch insert optimisation. Aligned with RegularStarCatalogCsvReader.BATCH_SIZE
+        # so each parse batch becomes one JDBC batch round-trip (Phase 1.3). Previously
+        # 50, which created ~100x extra round-trips on the 2M-star HYG import.
         jdbc:
-          batch_size: 50
+          batch_size: 5000
           batch_versioned_data: true
         # Reorder inserts/updates for better batching
         order_inserts: true
