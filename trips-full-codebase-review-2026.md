@@ -493,15 +493,17 @@ Verification:
 
 **Verification**: full non-integration suite 2,714 tests, no regressions. Compile clean. `FlywayBaselineSmokeTest` still asserts entity↔V1+V2+V3+V4 schema match.
 
-## Phase 3 — Architectural Sanity (before adding more features)
+## Phase 3 — Architectural Sanity (before adding more features) — **COMPLETE**
 
-| # | Action | Issue(s) | Rough effort |
+| # | Action | Issue(s) | Status |
 |---|---|---|---|
-| 3.1 | Make `TripsContext` thread-safe. Either AtomicReference snapshots + copy-on-write, or split into typed read services + one mutator service guarded by a lock. Document threading invariants per field. | 14 | 2-3 days |
-| 3.2 | Audit the event graph (Issue 56 deliverable: `events/EVENT_CATALOG.md` + startup validator). Promote synchronous RPC chains to direct service calls. Keep the bus for genuine UI broadcasts. | 19, 56 | 3-5 days |
-| 3.3 | Decouple `spaceshipmodeller` from `SolarSystemSpacePane`. Replace direct ctor injection with events (`TransferTargetRequestedEvent` → `TransferPlanCreatedEvent`). Pane goes back to 5 ctor args. | 20 | 1-2 days |
-| 3.4 | Pick FXML loading convention (FxWeaver everywhere, or `DialogFactory` for both styles). Add an ArchUnit rule. | 21 | 1 day |
-| 3.5 | Externalize the in-tree `org.fxyz3d` copy. Either Maven dep (if unmodified) or move to a sibling module with a CHANGELOG. | 22 | 1-2 days |
+| 3.1 | Pragmatic thread-safety pass on `TripsContext`: defensive `FxThread.runOnFxThread` wrap on the two `@EventListener` methods (matches Phase 2.2 pattern); `constellationMap` switched from `HashMap` to `ConcurrentHashMap` so the startup loader can write while FX-thread dialogs read; class-level Javadoc now documents the threading invariant (mutations happen on the FX thread; the listeners re-dispatch defensively because Spring delivers on the publisher thread). A fuller redesign (AtomicReference snapshots / separated mutator service) is deferred to Phase 7 since the real call sites all run on the FX thread today. | 14 | done |
+| 3.2 | Inventory delivered as `tripsapplication/src/main/java/com/teamgannon/trips/events/EVENT_CATALOG.md` (35 events with publishers + subscribers). Deleted 3 truly-dead event classes: `DataSetContextChangeEvent`, `DataSetLoadEvent`, `NewDataSetEvent` (also removed the orphan `publishEvent` calls for `DataSetLoadEvent` in CHV/CSV import services). Reviewed all 16 "listener-publishes-follow-up-event" cases: every chain terminates in `StatusUpdateEvent` or `BusyStateEvent`, both of which are intentional fan-out broadcasts to UI sinks — NOT RPC abuses. Issue 19's RPC-chain concern turned out not to apply in this codebase; no further refactor needed. Startup-validator-for-dead-events is left as a Phase 7 followup. | 19, 56 | done |
+| 3.3 | Introduced `RequestTransferPlanningEvent` in `spaceshipmodeller/integration/` and `TransferPlanningCoordinator` (@Component) in `spaceshipmodeller/ui/`. `SolarSystemSpacePane.openTransferPlanner` now just assembles the context (bodies, origin, central-star mass) and publishes the event; the coordinator owns the ship-catalog lookup and dialog open. Pane constructor went from **8 args → 5 args** (dropped `SpaceshipService`, `TransferPlannerBridge`, `TransferPlannerLauncher`). spaceshipmodeller is fully isolated again — its only inbound coupling to the pane is via the event. | 20 | done |
+| 3.4 | Documented the convention in `CLAUDE.md > Dialog Creation Pattern`: **two coexisting patterns** — FxWeaver for singleton, service-wired controllers (panels, panes, menubars), raw `FXMLLoader` for transient stateful dialogs (`StarEditDialog`, `StarPropertiesPane`) that callers `new` up with per-edit state. The two "violations" the audit flagged are correct uses of the alternative pattern. No code change needed. ArchUnit rule deferred to Phase 7 (the rule is now expressible in prose; enforcement infra can wait). | 21 | done |
+| 3.5 | The in-tree `org.fxyz3d` source copy is a **heavily-modified fork**, not a pristine vendor — confirmed by the user during this phase. Externalization to a Maven dep was retired (would lose the local modifications); a `README.md` was added at `org/fxyz3d/README.md` declaring the fork status, license, the two `com.teamgannon.trips.*` call sites that depend on it (`AsteroidFieldWindow`, `RingFieldRenderer`), and explicit "don't replace with the Maven artifact" guidance. The optional move-to-sibling-module path is documented as a future possibility but not pursued. Also saved as a project memory so future sessions don't re-propose externalization. | 22 | done |
+
+**Verification**: full non-integration suite 2,714 tests, no regressions. Compile clean. `FlywayBaselineSmokeTest` continues to assert entity↔schema match across V1+V2+V3+V4.
 
 ## Phase 4 — God-class Decomposition (one per sprint; in this order)
 

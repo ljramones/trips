@@ -718,7 +718,9 @@ public class MyController {
 
 ### Dialog Creation Pattern
 
-Dialogs are typically Spring components loaded via FxWeaver:
+The codebase uses **two distinct FXML loading patterns** — pick the right one for the job (Phase 3.4 convention):
+
+**1. FxWeaver — for singleton, service-wired controllers.** Use this for the main shell (toolbars, menubars, side panels, panes), preference dialogs, anything that needs Spring DI of services and lives for the app lifetime:
 
 ```java
 DialogPane pane = fxWeaver.loadView(MyDialog.class);
@@ -726,6 +728,29 @@ Dialog<ButtonType> dialog = new Dialog<>();
 dialog.setDialogPane(pane);
 Optional<ButtonType> result = dialog.showAndWait();
 ```
+
+The controller class is a Spring `@Component`, marked `@FXMLController`, with constructor injection for any service deps.
+
+**2. Raw FXMLLoader — for transient, stateful, service-less dialogs.** Use this for modal input dialogs that the caller constructs with per-edit state (e.g. an entity to edit). The dialog typically extends `javafx.scene.control.Dialog<T>` and is `new`-d up by the caller:
+
+```java
+public class StarEditDialog extends Dialog<ButtonType> {
+    public StarEditDialog(StarObject record) {
+        this.record = record;
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("StarEditDialog.fxml"));
+        loader.setController(this);   // controller is `this`
+        try {
+            getDialogPane().setContent(loader.load());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load StarEditDialog.fxml", ex);
+        }
+    }
+}
+```
+
+These dialogs don't get Spring DI; they carry only the state passed in the constructor and any helper objects created internally. Examples in the tree: `screenobjects/StarEditDialog.java`, `screenobjects/StarPropertiesPane.java`. If a dialog of this shape grows a need for a service, refactor it into the FxWeaver pattern instead of injecting via static lookups.
+
+**Picking between them:** does the dialog need to be constructed differently per-open (with per-edit state), or is it a singleton-style controller with services? If per-edit state → raw FXMLLoader. If services + singleton → FxWeaver.
 
 ## Configuration and Preferences
 

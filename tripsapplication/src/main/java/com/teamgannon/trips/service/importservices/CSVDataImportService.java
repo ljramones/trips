@@ -4,7 +4,6 @@ import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.dataset.model.FileProcessResult;
 import com.teamgannon.trips.dialogs.dataset.model.ImportTaskComplete;
 import com.teamgannon.trips.events.AddDataSetEvent;
-import com.teamgannon.trips.events.DataSetLoadEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.service.BulkLoadService;
@@ -87,7 +86,6 @@ public class CSVDataImportService extends Service<FileProcessResult> implements 
         eventPublisher.publishEvent(new AddDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
         // set context to newly loaded dataset
         eventPublisher.publishEvent(new SetContextDataSetEvent(this, fileProcessResult.getDataSetDescriptor()));
-        eventPublisher.publishEvent(new DataSetLoadEvent(this, fileProcessResult.getDataSetDescriptor()));
     }
 
     @Override

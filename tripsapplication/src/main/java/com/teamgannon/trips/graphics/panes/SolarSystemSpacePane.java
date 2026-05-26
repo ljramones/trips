@@ -19,14 +19,9 @@ import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import com.teamgannon.trips.solarsystem.animation.OrbitalAnimationController;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
-import com.terranrepublic.assets.SpaceshipDesign;
+import com.teamgannon.trips.spaceshipmodeller.integration.RequestTransferPlanningEvent;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferBody;
-import com.teamgannon.trips.spaceshipmodeller.integration.TransferCalculator;
-import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.planner.ShowTransferTrajectoryEvent;
-import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
-import com.teamgannon.trips.spaceshipmodeller.ui.TransferPlannerLauncher;
-import com.teamgannon.trips.spaceshipmodeller.ui.TransferPreviewDialog;
 import javafx.concurrent.Task;
 import javafx.scene.*;
 import javafx.scene.control.Button;
@@ -75,9 +70,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     private final ApplicationEventPublisher eventPublisher;
     private final SolarSystemService solarSystemService;
     private final SolarSystemContextMenuFactory contextMenuFactory;
-    private final SpaceshipService spaceshipService;
-    private final TransferPlannerBridge transferPlannerBridge;
-    private final TransferPlannerLauncher transferPlannerLauncher;
+    // Phase 3.3: spaceship-modeller services were removed from this pane's
+    // dependencies. Transfer planning is now triggered by publishing a
+    // RequestTransferPlanningEvent; TransferPlanningCoordinator listens.
 
     /**
      * graphical groups
@@ -142,18 +137,12 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                                 ApplicationEventPublisher eventPublisher,
                                 DatabaseManagementService databaseManagementService,
                                 SolarSystemService solarSystemService,
-                                SolarSystemContextMenuFactory contextMenuFactory,
-                                SpaceshipService spaceshipService,
-                                TransferPlannerBridge transferPlannerBridge,
-                                TransferPlannerLauncher transferPlannerLauncher) {
+                                SolarSystemContextMenuFactory contextMenuFactory) {
 
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
         this.solarSystemService = solarSystemService;
         this.contextMenuFactory = contextMenuFactory;
-        this.spaceshipService = spaceshipService;
-        this.transferPlannerBridge = transferPlannerBridge;
-        this.transferPlannerLauncher = transferPlannerLauncher;
         ScreenSize screenSize = tripsContext.getScreenSize();
 
         // Initialize the solar system renderer
@@ -737,15 +726,13 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
     /**
      * Open the transfer preview dialog for the current system. If {@code origin} is null, the first body in
      * the system is used as the default origin (e.g. the toolbar "New Transfer Plan..." button).
+     * <p>
+     * Phase 3.3: this pane no longer talks to spaceshipmodeller services directly. It assembles the
+     * solar-system context (bodies, origin preference, central-star mass) and publishes a
+     * {@link RequestTransferPlanningEvent} that the spaceshipmodeller's
+     * {@code TransferPlanningCoordinator} listens for to open the dialog.
      */
     private void openTransferPlanner(PlanetDescription origin) {
-        List<SpaceshipDesign> ships = spaceshipService.findAll();
-        if (ships.isEmpty()) {
-            showInfoMessage("Plan Transfer",
-                    "There are no ships in the library yet. Create one in the Spaceship Modeller "
-                            + "(Design menu) first.");
-            return;
-        }
         List<TransferBody> bodies = new ArrayList<>();
         if (currentSystem != null && currentSystem.getPlanetDescriptionList() != null) {
             for (PlanetDescription p : currentSystem.getPlanetDescriptionList()) {
@@ -765,9 +752,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                 ? currentSystem.getStarDisplayRecord().getMass()
                 : 1.0;
         String solarSystemId = currentSystem != null ? currentSystem.getSolarSystemId() : null;
-        new TransferPreviewDialog(transferPlannerBridge, ships, bodies, originBody, starMass)
-                .onCreate(transferPlannerLauncher::createAndOpen, solarSystemId)
-                .showAndWait();
+        eventPublisher.publishEvent(
+                new RequestTransferPlanningEvent(this, solarSystemId, bodies, originBody, starMass));
     }
 
     /**
