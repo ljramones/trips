@@ -1,5 +1,6 @@
 package com.teamgannon.trips.planetary.modelling.procedural;
 
+import com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.VertexData;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -14,6 +15,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.buildVertexData;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.calculateAverageHeight;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.computeAveragedCenterHeights;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.computeAveragedCenterHeightsPrecise;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.computeAveragedHeights;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.computeAveragedHeightsPrecise;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.toFloatArray;
+import static com.teamgannon.trips.planetary.modelling.procedural.MeshVertexAveraging.toIntArray;
+import static com.teamgannon.trips.planetary.modelling.procedural.TerrainNormals.computeTerrainNormals;
 
 /**
  * Converts procedural planet icosahedral mesh to JavaFX TriangleMesh.
@@ -242,7 +253,7 @@ public class JavaFxPlanetMeshConverter {
             int centerIdx = vertexIndex++;
 
             List<Vector3D> vertices = poly.vertices();
-            int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+            int[] polyVertIndices = vertexData.polygonVertexIndices()[polyIdx];
             int[] edgeIndices = new int[vertices.size()];
 
             for (int i = 0; i < vertices.size(); i++) {
@@ -284,221 +295,9 @@ public class JavaFxPlanetMeshConverter {
         return mesh;
     }
 
-    /**
-     * Build a global vertex list and vertex-to-polygon map.
-     * Uses a spatial hash grid for efficient vertex deduplication.
-     */
-    private static VertexData buildVertexData(List<Polygon> polygons) {
-        List<Vector3D> uniqueVertices = new ArrayList<>();
-        List<List<Integer>> vertexToPolygons = new ArrayList<>();
-        int[][] polygonVertexIndices = new int[polygons.size()][];
-
-        // Use a map with quantized position hash as key for O(1) lookup
-        // More efficient than string concatenation in hot path
-        Map<Long, Integer> positionToIndex = new HashMap<>();
-
-        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
-            Polygon poly = polygons.get(polyIdx);
-            List<Vector3D> verts = poly.vertices();
-            polygonVertexIndices[polyIdx] = new int[verts.size()];
-
-            for (int i = 0; i < verts.size(); i++) {
-                Vector3D v = verts.get(i);
-                long key = quantizePositionHash(v);
-
-                Integer existingIdx = positionToIndex.get(key);
-                if (existingIdx != null) {
-                    // Found existing vertex at this grid cell
-                    polygonVertexIndices[polyIdx][i] = existingIdx;
-                    vertexToPolygons.get(existingIdx).add(polyIdx);
-                } else {
-                    // New unique vertex
-                    int newIdx = uniqueVertices.size();
-                    uniqueVertices.add(v);
-                    positionToIndex.put(key, newIdx);
-                    List<Integer> polyList = new ArrayList<>();
-                    polyList.add(polyIdx);
-                    vertexToPolygons.add(polyList);
-                    polygonVertexIndices[polyIdx][i] = newIdx;
-                }
-            }
-        }
-
-        if (DEBUG_LOGGING) {
-            // Debug: verify vertex sharing statistics
-            int totalShared = 0;
-            int maxShared = 0;
-            for (List<Integer> polys : vertexToPolygons) {
-                if (polys.size() > 1) totalShared++;
-                if (polys.size() > maxShared) maxShared = polys.size();
-            }
-            log.debug("[VertexData] Polygons: {}, Unique vertices: {}, Shared vertices: {}, Max polys/vertex: {}",
-                    polygons.size(), uniqueVertices.size(), totalShared, maxShared);
-        }
-
-        return new VertexData(uniqueVertices, polygonVertexIndices, vertexToPolygons);
-    }
-
-    /**
-     * Quantize vertex position to a hash key for spatial lookup.
-     * Uses bit-packing instead of string concatenation for efficiency.
-     * Grid resolution is 0.0001 on unit sphere (~0.01% of radius).
-     *
-     * @param v Vertex position
-     * @return Hash key combining quantized x, y, z coordinates
-     */
-    private static long quantizePositionHash(Vector3D v) {
-        // Quantize to 4 decimal places (0.0001 resolution)
-        // Each coordinate fits in 21 bits for range [-1048576, 1048575] (±104.8 on unit sphere)
-        int qx = (int) Math.round(v.getX() * 10000);
-        int qy = (int) Math.round(v.getY() * 10000);
-        int qz = (int) Math.round(v.getZ() * 10000);
-        // Pack into 64-bit long: bits 42-62 for x, 21-41 for y, 0-20 for z
-        return ((long) (qx + 1048576) << 42) | ((long) (qy + 1048576) << 21) | (qz + 1048576);
-    }
-
-    /**
-     * Compute averaged heights for all unique vertices.
-     */
-    private static double[] computeAveragedHeights(VertexData vertexData, int[] heights) {
-        double[] averaged = new double[vertexData.uniqueVertices.size()];
-
-        int smoothedCount = 0; // vertices where averaging changed the value
-
-        for (int vIdx = 0; vIdx < averaged.length; vIdx++) {
-            List<Integer> polys = vertexData.vertexToPolygons.get(vIdx);
-            double sum = 0;
-            int minH = Integer.MAX_VALUE;
-            int maxH = Integer.MIN_VALUE;
-            for (int polyIdx : polys) {
-                int h = heights[polyIdx];
-                sum += h;
-                if (h < minH) minH = h;
-                if (h > maxH) maxH = h;
-            }
-            averaged[vIdx] = sum / polys.size();
-
-            // Count vertices where averaging made a difference
-            if (polys.size() > 1 && maxH != minH) {
-                smoothedCount++;
-            }
-        }
-
-        if (DEBUG_LOGGING) {
-            log.debug("[AveragedHeights] Total vertices: {}, Smoothed (different neighbors): {}",
-                    averaged.length, smoothedCount);
-        }
-
-        return averaged;
-    }
-
-    /**
-     * Compute averaged heights for polygon centers based on their neighbors.
-     */
-    private static double[] computeAveragedCenterHeights(
-            List<Polygon> polygons, int[] heights, AdjacencyGraph adjacency) {
-
-        double[] averaged = new double[polygons.size()];
-
-        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
-            int[] neighbors = adjacency.neighbors(polyIdx); // includes self
-            double sum = 0;
-            for (int neighborIdx : neighbors) {
-                sum += heights[neighborIdx];
-            }
-            averaged[polyIdx] = sum / neighbors.length;
-        }
-
-        return averaged;
-    }
-
-    /**
-     * Compute averaged heights for edge vertices using precise (double) heights.
-     * This provides finer gradations than integer heights for smoother terrain.
-     */
-    private static double[] computeAveragedHeightsPrecise(VertexData vertexData, double[] preciseHeights) {
-        double[] averaged = new double[vertexData.uniqueVertices.size()];
-
-        int smoothedCount = 0;
-
-        for (int vIdx = 0; vIdx < averaged.length; vIdx++) {
-            List<Integer> polys = vertexData.vertexToPolygons.get(vIdx);
-            double sum = 0;
-            double minH = Double.MAX_VALUE;
-            double maxH = Double.MIN_VALUE;
-            for (int polyIdx : polys) {
-                double h = preciseHeights[polyIdx];
-                sum += h;
-                if (h < minH) minH = h;
-                if (h > maxH) maxH = h;
-            }
-            averaged[vIdx] = sum / polys.size();
-
-            // Count vertices where averaging made a difference (threshold: 0.1)
-            if (polys.size() > 1 && (maxH - minH) > 0.1) {
-                smoothedCount++;
-            }
-        }
-
-        if (DEBUG_LOGGING) {
-            log.debug("[AveragedHeightsPrecise] Total vertices: {}, Smoothed (different neighbors): {}",
-                    averaged.length, smoothedCount);
-        }
-
-        return averaged;
-    }
-
-    /**
-     * Compute averaged heights for polygon centers using precise (double) heights.
-     */
-    private static double[] computeAveragedCenterHeightsPrecise(
-            List<Polygon> polygons, double[] preciseHeights, AdjacencyGraph adjacency) {
-
-        double[] averaged = new double[polygons.size()];
-
-        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
-            int[] neighbors = adjacency.neighbors(polyIdx); // includes self
-            double sum = 0;
-            for (int neighborIdx : neighbors) {
-                sum += preciseHeights[neighborIdx];
-            }
-            averaged[polyIdx] = sum / neighbors.length;
-        }
-
-        return averaged;
-    }
-
-
-    /**
-     * Container for vertex indexing data.
-     */
-    private record VertexData(
-        List<Vector3D> uniqueVertices,
-        int[][] polygonVertexIndices,  // [polyIdx][localVertIdx] -> globalVertIdx
-        List<List<Integer>> vertexToPolygons  // globalVertIdx -> list of polyIdx
-    ) {}
-
-    /**
-     * Convert List<Float> to float[].
-     */
-    private static float[] toFloatArray(List<Float> list) {
-        float[] array = new float[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            array[i] = list.get(i);
-        }
-        return array;
-    }
-
-    /**
-     * Convert List<Integer> to int[].
-     */
-    private static int[] toIntArray(List<Integer> list) {
-        int[] array = new int[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            array[i] = list.get(i);
-        }
-        return array;
-    }
+    // Phase 4.5: vertex deduplication + height averaging helpers moved to
+    // MeshVertexAveraging. The static imports at the top of this file keep
+    // the call sites short. The VertexData record now lives there too.
 
     /**
      * Convert procedural planet mesh to JavaFX TriangleMesh with smooth heights.
@@ -661,7 +460,7 @@ public class JavaFxPlanetMeshConverter {
         for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
             Polygon poly = polygons.get(polyIdx);
             List<Vector3D> vertices = poly.vertices();
-            int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+            int[] polyVertIndices = vertexData.polygonVertexIndices()[polyIdx];
 
             // Center height averaged from edge vertices
             double centerSum = 0.0;
@@ -1021,7 +820,7 @@ public class JavaFxPlanetMeshConverter {
             for (int polyIdx : polyIndices) {
                 Polygon poly = polygons.get(polyIdx);
                 List<Vector3D> vertices = poly.vertices();
-                int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+                int[] polyVertIndices = vertexData.polygonVertexIndices()[polyIdx];
 
                 // Center height: average from its own edge vertices for uniform displacement
                 // This eliminates center-puffing artifacts by matching center to edge heights
@@ -1172,85 +971,9 @@ public class JavaFxPlanetMeshConverter {
         return material;
     }
 
-    private static int calculateAverageHeight(int[] heights) {
-        if (heights == null || heights.length == 0) {
-            return 0;
-        }
-        long sum = 0;
-        for (int h : heights) {
-            sum += h;
-        }
-        return (int) (sum / heights.length);
-    }
+    // Phase 4.5: calculateAverageHeight moved to MeshVertexAveraging.
 
-    // ==================== Terrain Normal Computation ====================
-
-    /**
-     * Computes terrain-aware normals for polygon vertices.
-     * Instead of using radial normals (which give smooth spherical shading),
-     * this computes normals perpendicular to the local terrain surface.
-     *
-     * <p>For each triangle in the fan (center → edge[i] → edge[i+1]):
-     * <ul>
-     *   <li>Calculates two edge vectors</li>
-     *   <li>Cross product gives face normal</li>
-     *   <li>Accumulated per-vertex for smooth shading</li>
-     * </ul>
-     *
-     * @param center      Center vertex position
-     * @param edgeVerts   Edge vertex positions
-     * @param vertexCount Number of edge vertices (5 for pentagon, 6 for hexagon)
-     * @return Array of normals: [centerNormal, edge0Normal, edge1Normal, ...]
-     */
-    public static Vector3D[] computeTerrainNormals(Vector3D center, List<Vector3D> edgeVerts, int vertexCount) {
-        // Initialize accumulated normals for each vertex
-        Vector3D[] accumulated = new Vector3D[vertexCount + 1]; // +1 for center
-        for (int i = 0; i < accumulated.length; i++) {
-            accumulated[i] = Vector3D.ZERO;
-        }
-
-        // For each triangle in the fan, compute face normal and accumulate
-        for (int i = 0; i < vertexCount; i++) {
-            int nextI = (i + 1) % vertexCount;
-
-            Vector3D v0 = center;
-            Vector3D v1 = edgeVerts.get(i);
-            Vector3D v2 = edgeVerts.get(nextI);
-
-            // Edge vectors
-            Vector3D edge1 = v1.subtract(v0);
-            Vector3D edge2 = v2.subtract(v0);
-
-            // Face normal (cross product, outward-facing)
-            Vector3D faceNormal = edge1.crossProduct(edge2);
-
-            // Check if normal points outward (same direction as radial)
-            // If not, flip it
-            Vector3D radialDir = v0.normalize();
-            if (faceNormal.dotProduct(radialDir) < 0) {
-                faceNormal = faceNormal.negate();
-            }
-
-            // Accumulate to all three vertices of this triangle
-            accumulated[0] = accumulated[0].add(faceNormal);           // center
-            accumulated[i + 1] = accumulated[i + 1].add(faceNormal);   // edge[i]
-            accumulated[nextI + 1] = accumulated[nextI + 1].add(faceNormal); // edge[nextI]
-        }
-
-        // Normalize all accumulated normals
-        Vector3D[] normals = new Vector3D[accumulated.length];
-        for (int i = 0; i < accumulated.length; i++) {
-            double len = accumulated[i].getNorm();
-            if (len > 1e-10) {
-                normals[i] = accumulated[i].scalarMultiply(1.0 / len);
-            } else {
-                // Fallback to radial normal if degenerate
-                normals[i] = (i == 0) ? center.normalize() : edgeVerts.get(i - 1).normalize();
-            }
-        }
-
-        return normals;
-    }
+    // Phase 4.5: computeTerrainNormals moved to TerrainNormals.
 
     /**
      * Creates per-height colored meshes with terrain-aware normals.
@@ -1305,7 +1028,7 @@ public class JavaFxPlanetMeshConverter {
             for (int polyIdx : polyIndices) {
                 Polygon poly = polygons.get(polyIdx);
                 List<Vector3D> vertices = poly.vertices();
-                int[] polyVertIndices = vertexData.polygonVertexIndices[polyIdx];
+                int[] polyVertIndices = vertexData.polygonVertexIndices()[polyIdx];
 
                 // Compute center height from edge average
                 double centerSum = 0.0;
