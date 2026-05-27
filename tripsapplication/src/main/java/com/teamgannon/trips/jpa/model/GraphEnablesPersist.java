@@ -18,6 +18,11 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton-style "enables" row — read on plot setup; written when user
+// toggles grid / labels / etc. L2 cache candidate.
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.GraphEnablesPersist")
 public class GraphEnablesPersist implements Serializable {
 
     @Serial

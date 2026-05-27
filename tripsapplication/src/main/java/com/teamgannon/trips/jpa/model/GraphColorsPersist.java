@@ -21,6 +21,11 @@ import java.util.UUID;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton-style colour-palette row — read on plot setup; written rarely
+// (only when user changes the theme). L2 cache candidate.
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.GraphColorsPersist")
 public class GraphColorsPersist implements Serializable {
 
     @Serial

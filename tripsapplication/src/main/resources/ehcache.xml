@@ -21,12 +21,78 @@
         xsi:schemaLocation="
             http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.10.xsd">
 
-    <!-- Per-entity cache for DataSetDescriptor. -->
+    <!--
+      Per-entity cache regions. Sizing strategy:
+
+      * Singleton preference rows (TripsPrefs, TransitSettings,
+        GraphColorsPersist, GraphEnablesPersist, StarDetailsPersist,
+        CivilizationDisplayPreferences) — 1 row in production, but we
+        give each region 8 entries to absorb the tests' multiple-instance
+        churn without thrashing. TTL stretched to 2 hours because the
+        write trigger is exclusively "user clicks Save in the preferences
+        dialog" — much rarer than a 30-min TTL would suggest.
+
+      * DataSetDescriptor — likely ≤100 in practice (the number of loaded
+        datasets a user has imported). 200-entry buffer + 30-min TTL.
+
+      * SolarSystem — moderate volume; cap at 500 entries (most users will
+        visit far fewer than that) with a 30-min TTL.
+    -->
     <cache alias="com.teamgannon.trips.jpa.model.DataSetDescriptor">
         <expiry>
             <ttl unit="minutes">30</ttl>
         </expiry>
         <heap unit="entries">200</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.SolarSystem">
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <heap unit="entries">500</heap>
+    </cache>
+
+    <!-- Singleton preference rows: identical sizing. -->
+    <cache alias="com.teamgannon.trips.jpa.model.TripsPrefs">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.TransitSettings">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.GraphColorsPersist">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.GraphEnablesPersist">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.StarDetailsPersist">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
+    </cache>
+
+    <cache alias="com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences">
+        <expiry>
+            <ttl unit="hours">2</ttl>
+        </expiry>
+        <heap unit="entries">8</heap>
     </cache>
 
     <!--

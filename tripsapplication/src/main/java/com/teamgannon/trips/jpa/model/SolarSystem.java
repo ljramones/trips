@@ -33,6 +33,14 @@ import java.util.UUID;
         @Index(columnList = "primaryStarId"),
         @Index(columnList = "dataSetName ASC")
 })
+// L2 cache candidate (Phase 7 / Issue 53 follow-up): moderate read/write
+// ratio (~1.2:1) but the "Jump Into… same system again" pattern is
+// common, and the entity is moderate-sized. READ_WRITE keeps strong
+// consistency under the "Save Generated Planets" path that re-saves the
+// system + its planets atomically.
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.SolarSystem")
 public class SolarSystem implements Serializable {
 
     @Serial

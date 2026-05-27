@@ -9,6 +9,8 @@ import org.hibernate.Hibernate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
@@ -18,6 +20,10 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton preferences row — read once at startup, again each time the
+// prefs dialog opens; written rarely. Perfect L2 cache candidate.
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.TripsPrefs")
 public class TripsPrefs implements Serializable {
 
     @Serial

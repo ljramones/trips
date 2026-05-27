@@ -21,6 +21,11 @@ import java.util.UUID;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton-style civilisation-colour preferences (Terran / Dornani /
+// etc. palette); read on every plot, written rarely. L2 cache candidate.
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences")
 public class CivilizationDisplayPreferences implements Serializable {
 
     public static final String TERRAN = "Terran";

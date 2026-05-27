@@ -18,6 +18,11 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton-style star-display preferences (sizes, label thresholds);
+// read on every plot, written rarely. L2 cache candidate.
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.StarDetailsPersist")
 public class StarDetailsPersist implements Serializable {
 
     @Serial

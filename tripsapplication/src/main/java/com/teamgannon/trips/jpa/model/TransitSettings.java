@@ -18,6 +18,11 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @Entity
+// Singleton-style settings row — read at startup + on transit dialog open;
+// written rarely. L2 cache candidate (Phase 7 / Issue 53 follow-up).
+@org.hibernate.annotations.Cache(
+        usage = org.hibernate.annotations.CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.TransitSettings")
 public class TransitSettings implements Serializable {
 
     @Serial
