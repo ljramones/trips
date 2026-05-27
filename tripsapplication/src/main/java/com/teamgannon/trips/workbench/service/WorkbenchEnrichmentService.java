@@ -15,9 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.appendToken;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.escapeAdqlString;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.extractGaiaSourceId;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.extractHipId;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.extractNumericId;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.getPreferredSimbadName;
+import static com.teamgannon.trips.workbench.service.CatalogIdExtractor.normalizeSimbadKey;
 
 @Service
 @Slf4j
@@ -25,7 +31,9 @@ public class WorkbenchEnrichmentService {
 
     // TAP endpoint URLs and the shared HttpClient moved to TapHttpClient
     // in Phase 4.3 (see TapHttpClient.GAIA_TAP_BASE_URL etc.).
-    private static final Pattern DIGIT_PATTERN = Pattern.compile("(\\d+)");
+    // ID-extraction + SIMBAD-name helpers moved to CatalogIdExtractor in the
+    // Phase 4.3 closeout — see static imports above. The Gaia stellar-params
+    // fetch + apply lives in GaiaStellarParamsClient.
 
     private final StarService starService;
 
@@ -396,14 +404,16 @@ public class WorkbenchEnrichmentService {
                         " (ids " + batch.size() + ")");
 
                 try {
-                    Map<String, GaiaStellarParams> paramsById = fetchGaiaStellarParams(batch);
+                    Map<String, GaiaStellarParamsClient.StellarParams> paramsById =
+                            GaiaStellarParamsClient.fetchByGaiaIds(batch);
                     int updatedBefore = updatedStars.size();
 
-                    for (Map.Entry<String, GaiaStellarParams> entry : paramsById.entrySet()) {
+                    for (Map.Entry<String, GaiaStellarParamsClient.StellarParams> entry : paramsById.entrySet()) {
                         List<StarObject> stars = gaiaMap.get(entry.getKey());
                         if (stars != null) {
                             for (StarObject star : stars) {
-                                if (applyStellarParams(star, entry.getValue()) && updatedIds.add(star.getId())) {
+                                if (GaiaStellarParamsClient.applyTo(star, entry.getValue())
+                                        && updatedIds.add(star.getId())) {
                                     updatedStars.add(star);
                                 }
                             }
@@ -457,161 +467,8 @@ public class WorkbenchEnrichmentService {
                 " stars updated, " + finalMissing + " still missing mass");
     }
 
-    /**
-     * Container for Gaia stellar parameters.
-     */
-    private static class GaiaStellarParams {
-        Double mass;        // solar masses
-        Double radius;      // solar radii
-        Double luminosity;  // solar luminosities
-        Double temperature; // Kelvin
-        Double metallicity; // [M/H]
-    }
-
-    /**
-     * Fetches stellar parameters from Gaia DR3 astrophysical_parameters table.
-     */
-    private Map<String, GaiaStellarParams> fetchGaiaStellarParams(List<String> gaiaIds) throws IOException, InterruptedException {
-        if (gaiaIds.isEmpty()) {
-            return Map.of();
-        }
-        String idList = String.join(",", gaiaIds);
-        String adql = "SELECT source_id, mass_flame, radius_flame, lum_flame, teff_gspphot, mh_gspphot " +
-                "FROM gaiadr3.astrophysical_parameters " +
-                "WHERE source_id IN (" + idList + ")";
-        String csv = TapHttpClient.submitSyncCsv(TapHttpClient.GAIA_TAP_BASE_URL, adql, "Gaia Stellar Params TAP");
-
-        // Debug: log first few IDs and CSV response
-        if (gaiaIds.size() > 0) {
-            log.info("Gaia stellar params query: first 5 IDs = {}", gaiaIds.subList(0, Math.min(5, gaiaIds.size())));
-        }
-        if (csv != null) {
-            String[] lines = csv.split("\\r?\\n");
-            log.info("Gaia stellar params response: {} lines, header = {}", lines.length, lines.length > 0 ? lines[0] : "empty");
-            if (lines.length > 1 && lines.length <= 6) {
-                for (int i = 1; i < lines.length; i++) {
-                    log.info("  Row {}: {}", i, lines[i]);
-                }
-            }
-        }
-
-        return parseGaiaStellarParamsCsv(csv);
-    }
-
-    /**
-     * Parses CSV response for stellar parameters.
-     */
-    private Map<String, GaiaStellarParams> parseGaiaStellarParamsCsv(String csv) {
-        Map<String, GaiaStellarParams> map = new HashMap<>();
-        if (csv == null || csv.isBlank()) {
-            return map;
-        }
-        String[] lines = csv.split("\\r?\\n");
-        if (lines.length == 0) {
-            return map;
-        }
-        String[] header = TapCsvParser.splitCsvLine(lines[0]);
-        Map<String, Integer> headerIndex = new HashMap<>();
-        for (int i = 0; i < header.length; i++) {
-            headerIndex.put(header[i].trim().toLowerCase(), i);
-        }
-
-        int idIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("source_id"));
-        int massIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("mass_flame"));
-        int radiusIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("radius_flame"));
-        int lumIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("lum_flame"));
-        int tempIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("teff_gspphot"));
-        int metalIdx = TapCsvParser.findHeaderIndex(headerIndex, List.of("mh_gspphot"));
-
-        if (idIdx < 0) {
-            log.warn("Gaia stellar params CSV missing source_id column");
-            return map;
-        }
-
-        for (int i = 1; i < lines.length; i++) {
-            String line = lines[i];
-            if (line.isBlank()) {
-                continue;
-            }
-            String[] values = TapCsvParser.splitCsvLine(line);
-            if (idIdx >= values.length) {
-                continue;
-            }
-
-            String id = extractNumericId(values[idIdx]);
-            if (id.isEmpty()) {
-                continue;
-            }
-
-            GaiaStellarParams params = new GaiaStellarParams();
-            if (massIdx >= 0 && massIdx < values.length) {
-                params.mass = parseDoubleOrNull(values[massIdx]);
-            }
-            if (radiusIdx >= 0 && radiusIdx < values.length) {
-                params.radius = parseDoubleOrNull(values[radiusIdx]);
-            }
-            if (lumIdx >= 0 && lumIdx < values.length) {
-                params.luminosity = parseDoubleOrNull(values[lumIdx]);
-            }
-            if (tempIdx >= 0 && tempIdx < values.length) {
-                params.temperature = parseDoubleOrNull(values[tempIdx]);
-            }
-            if (metalIdx >= 0 && metalIdx < values.length) {
-                params.metallicity = parseDoubleOrNull(values[metalIdx]);
-            }
-
-            // Only add if we got at least one useful value
-            if (params.mass != null || params.radius != null || params.luminosity != null ||
-                    params.temperature != null || params.metallicity != null) {
-                map.putIfAbsent(id, params);
-            }
-        }
-        return map;
-    }
-
-    /**
-     * Applies Gaia stellar parameters to a star, only filling in missing values.
-     * Returns true if any value was updated.
-     */
-    private boolean applyStellarParams(StarObject star, GaiaStellarParams params) {
-        boolean updated = false;
-        List<String> updatedFields = new ArrayList<>();
-
-        if (params.mass != null && params.mass > 0 && star.getMass() <= 0) {
-            star.setMass(params.mass);
-            updated = true;
-            updatedFields.add("mass");
-        }
-        if (params.radius != null && params.radius > 0 && star.getRadius() <= 0) {
-            star.setRadius(params.radius);
-            updated = true;
-            updatedFields.add("radius");
-        }
-        if (params.luminosity != null && params.luminosity > 0 &&
-                (star.getLuminosity() == null || star.getLuminosity().isBlank())) {
-            star.setLuminosity(String.valueOf(params.luminosity));
-            updated = true;
-            updatedFields.add("luminosity");
-        }
-        if (params.temperature != null && params.temperature > 0 && star.getTemperature() <= 0) {
-            star.setTemperature(params.temperature);
-            updated = true;
-            updatedFields.add("temperature");
-        }
-        if (params.metallicity != null && star.getMetallicity() == 0) {
-            // Metallicity can be negative, so just check if it's the default 0
-            star.setMetallicity(params.metallicity);
-            updated = true;
-            updatedFields.add("metallicity");
-        }
-
-        if (updated) {
-            star.setSource(appendToken(star.getSource(), "Gaia DR3 astrophysical", "|"));
-            star.setNotes(appendToken(star.getNotes(),
-                    "stellar params from Gaia DR3: " + String.join(", ", updatedFields), "; "));
-        }
-        return updated;
-    }
+    // Gaia stellar-params record + fetch + parse + apply moved to
+    // GaiaStellarParamsClient in the Phase 4.3 closeout.
 
     /**
      * Estimates mass photometrically for stars with distance and magnitude data.
@@ -701,20 +558,8 @@ public class WorkbenchEnrichmentService {
 
 
 
-    /**
-     * Parses a string to Double, returning null if empty or unparseable.
-     */
-    private Double parseDoubleOrNull(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            double d = Double.parseDouble(value.trim());
-            return Double.isNaN(d) || Double.isInfinite(d) ? null : d;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
+    // parseDoubleOrNull moved into GaiaStellarParamsClient (its only caller
+    // outside of Phase 4.3's extracted code) in the closeout.
 
 
 
@@ -746,7 +591,7 @@ public class WorkbenchEnrichmentService {
             return Map.of();
         }
         String idList = simbadNames.stream()
-                .map(this::escapeAdqlString)
+                .map(CatalogIdExtractor::escapeAdqlString)
                 .map(name -> "'" + name + "'")
                 .collect(Collectors.joining(","));
         String adql = "SELECT i.id AS id, b.plx_value "
@@ -877,141 +722,13 @@ public class WorkbenchEnrichmentService {
         return true;
     }
 
-    private String getPreferredSimbadName(StarObject star) {
-        String name = star.getCommonName();
-        if (name == null || name.isBlank() || "NA".equalsIgnoreCase(name.trim()) || isNumericToken(name)) {
-            name = star.getDisplayName();
-        }
-        if (name == null || name.isBlank() || isNumericToken(name)) {
-            String catalogId = extractSimbadCatalogId(star.getRawCatalogIdList());
-            if (catalogId != null && !catalogId.isBlank()) {
-                name = catalogId;
-            }
-        }
-        if (name == null) {
-            return "";
-        }
-        return name.trim();
-    }
-
-    private boolean isNumericToken(String value) {
-        if (value == null) {
-            return false;
-        }
-        String trimmed = value.trim();
-        if (trimmed.isEmpty()) {
-            return false;
-        }
-        for (int i = 0; i < trimmed.length(); i++) {
-            if (!Character.isDigit(trimmed.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private String extractSimbadCatalogId(String catalogIdList) {
-        if (catalogIdList == null || catalogIdList.isBlank()) {
-            return "";
-        }
-        String[] tokens = catalogIdList.split("\\|");
-        for (String token : tokens) {
-            String trimmed = token.trim();
-            if (trimmed.startsWith("TYC ")) {
-                return trimmed;
-            }
-        }
-        for (String token : tokens) {
-            String trimmed = token.trim();
-            if (trimmed.startsWith("HD ") || trimmed.startsWith("HIP ") || trimmed.startsWith("HR ")
-                    || trimmed.startsWith("BD ") || trimmed.startsWith("GJ ") || trimmed.startsWith("GL ")
-                    || trimmed.startsWith("LHS ") || trimmed.startsWith("2MASS ")) {
-                return trimmed;
-            }
-        }
-        return "";
-    }
-
-    private String normalizeSimbadKey(String value) {
-        if (value == null) {
-            return "";
-        }
-        String trimmed = TapCsvParser.unquote(value).trim();
-        if (trimmed.isEmpty()) {
-            return "";
-        }
-        return trimmed.replaceAll("\\s+", " ");
-    }
-
-    private String escapeAdqlString(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("'", "''");
-    }
+    // getPreferredSimbadName, isNumericToken, extractSimbadCatalogId,
+    // normalizeSimbadKey, escapeAdqlString, extractNumericId, extractGaiaSourceId,
+    // extractHipId, appendToken — all moved to CatalogIdExtractor in the Phase
+    // 4.3 closeout. The static imports at the top of this file keep call
+    // sites unchanged.
 
     // findHeaderIndex moved to TapCsvParser in Phase 4.3.
-
-    private String extractNumericId(String value) {
-        if (value == null) {
-            return "";
-        }
-        Matcher matcher = DIGIT_PATTERN.matcher(value);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return "";
-    }
-
-    /**
-     * Extracts Gaia source_id from strings like "Gaia DR3 531415758077608192".
-     * Returns the longest numeric sequence (the actual source_id), not "3" from "DR3".
-     */
-    private String extractGaiaSourceId(String value) {
-        if (value == null || value.isBlank()) {
-            return "";
-        }
-        // Find all digit sequences and return the longest one (the source_id)
-        Matcher matcher = DIGIT_PATTERN.matcher(value);
-        String longest = "";
-        while (matcher.find()) {
-            String match = matcher.group(1);
-            if (match.length() > longest.length()) {
-                longest = match;
-            }
-        }
-        return longest;
-    }
-
-    private String extractHipId(String catalogIdList) {
-        if (catalogIdList == null || catalogIdList.isBlank()) {
-            return "";
-        }
-        String[] tokens = catalogIdList.split("\\|");
-        for (String token : tokens) {
-            String trimmed = token.trim();
-            if (trimmed.startsWith("HIP ")) {
-                return extractNumericId(trimmed);
-            }
-        }
-        return "";
-    }
-
-
-
-    private String appendToken(String current, String token, String separator) {
-        if (token == null || token.isBlank()) {
-            return current == null ? "" : current;
-        }
-        if (current == null || current.isBlank()) {
-            return token;
-        }
-        if (current.contains(token)) {
-            return current;
-        }
-        return current + separator + token;
-    }
-
     // splitCsvLine, unquote, parseDoubleSafe moved to TapCsvParser in Phase 4.3.
 
     // ==================== Temperature & Spectral Class Enrichment ====================
