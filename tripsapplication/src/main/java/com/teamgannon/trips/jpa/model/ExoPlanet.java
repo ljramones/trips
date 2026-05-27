@@ -9,10 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.DynamicUpdate;
 
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
@@ -712,22 +710,20 @@ public class ExoPlanet implements Serializable {
     /**
      * JSON snapshot of Accrete-derived inputs used for generation.
      * <p>
-     * Marked LAZY per Issue 46 — only touched by the procedural-planet
-     * editor, not by the planet-list rendering path. Advisory until
-     * Hibernate bytecode enhancement is enabled (see DataSetDescriptor
-     * for the rationale).
+     * Phase 7.8 marked this LAZY but the close-out reverted: with
+     * bytecode enhancement on, reads from {@code ProceduralPlanetPersistenceHelper}
+     * (called from the procedural-planet UI without an open session)
+     * throw LazyInitializationException. Stays eager.
      */
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     private String proceduralAccreteSnapshot;
 
     /**
      * JSON of non-default procedural config overrides.
      * <p>
-     * Marked LAZY per Issue 46 — same rationale as above.
+     * Same LAZY revert rationale as {@link #proceduralAccreteSnapshot}.
      */
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     private String proceduralOverrides;
 
     /**
@@ -738,12 +734,14 @@ public class ExoPlanet implements Serializable {
     /**
      * Cached preview image (PNG or JPEG) for the generated planet.
      * <p>
-     * Marked LAZY per Issue 46 — this is the heaviest field on the entity
-     * (raw byte[] image data) and is only consumed by the procedural-planet
-     * preview UI. Pulling it on every list query is pure waste.
+     * Phase 7.8 marked this LAZY (the byte[] image is the heaviest field
+     * on the entity); the close-out reverted to eager because bytecode
+     * enhancement is no longer wired in. If you re-enable enhancement,
+     * audit every read site for transactional context first — this field
+     * is touched by the procedural-planet preview UI, which currently
+     * runs outside a session.
      */
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     private byte[] proceduralPreview;
 
     // ==================== Constructors ====================
