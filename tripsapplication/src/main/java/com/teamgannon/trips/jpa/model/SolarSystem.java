@@ -245,4 +245,19 @@ public class SolarSystem implements Serializable {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    /**
+     * Fail fast if {@link #id} is null at persist/update time. The id-based
+     * {@link #equals} relies on a non-null id; a null id would silently corrupt
+     * hash-based collections holding this entity (Issue 45).
+     */
+    @PrePersist
+    @PreUpdate
+    private void assertIdAssigned() {
+        if (id == null) {
+            throw new IllegalStateException(
+                    "SolarSystem.id must be set before persist/update — "
+                            + "the id-based equals contract requires a non-null id");
+        }
+    }
 }

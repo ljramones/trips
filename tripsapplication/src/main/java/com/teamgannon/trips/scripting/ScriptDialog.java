@@ -220,28 +220,18 @@ public class ScriptDialog extends Dialog<Boolean> {
     }
 
     private String loadScriptFile(File file) {
-        BufferedReader br;
-        try {
-            br = new BufferedReader(new FileReader(file));
-            try {
-                StringBuilder sb = new StringBuilder();
-                String line = br.readLine();
-
-                while (line != null) {
-                    sb.append(line);
-                    sb.append(System.lineSeparator());
-                    line = br.readLine();
-                }
-                return sb.toString();
-            } catch (IOException e) {
-                log.error("Failed to load file:" + e.getMessage());
-            } finally {
-                br.close();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
             }
+            return sb.toString();
         } catch (IOException e) {
-            log.error("failed to load the file: " + e.getMessage());
+            log.error("Failed to load script file: {}", file, e);
+            return null;
         }
-        return null;
     }
 
     private void installScript(ActionEvent actionEvent) {

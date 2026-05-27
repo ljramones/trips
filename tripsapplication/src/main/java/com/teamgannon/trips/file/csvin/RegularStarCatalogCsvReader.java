@@ -210,8 +210,16 @@ public class RegularStarCatalogCsvReader {
                 }
 
                 loadStats.getCsvFile().incTotal();
-            } catch (Exception e) {
-                log.error("Failed to parse line {}: {}", loadStats.getTotalCount() + i, e.getMessage());
+            } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException
+                     | NullPointerException e) {
+                // IllegalArgumentException covers NumberFormatException (parse
+                // failures) plus invalid enum/value conversions.
+                // Per-row recoverable failures: malformed number, missing
+                // column, or invalid enum value. Skip the row and keep going
+                // — anything else (OOM, IO, etc.) propagates so the global
+                // uncaught handler sees it. (Issue 38)
+                log.error("Failed to parse line {}: {}",
+                        loadStats.getTotalCount() + i, e.getMessage());
                 loadStats.getCsvFile().incRejects();
                 loadStats.getCsvFile().incTotal();
             }

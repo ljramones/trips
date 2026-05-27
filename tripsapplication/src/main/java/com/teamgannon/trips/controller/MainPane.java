@@ -57,6 +57,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -259,17 +260,12 @@ public class MainPane  {
         queryDialog = new QueryDialog(searchContext, eventPublisher);
         queryDialog.initModality(Modality.NONE);
 
-        try {
-            File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
-            FileInputStream fis = new FileInputStream(imageFileIcon);
+        File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+        try (FileInputStream fis = new FileInputStream(imageFileIcon)) {
             Image applicationIcon = new Image(fis);
-            if (applicationIcon != null) {
-                primaryStage.getIcons().add(applicationIcon);
-            } else {
-                log.error("Application Icon was not found!");
-            }
-        } catch (Exception e) {
-            log.error("Caught exception: " + e.getMessage());
+            primaryStage.getIcons().add(applicationIcon);
+        } catch (IOException e) {
+            log.error("Failed to load application icon from {}", imageFileIcon, e);
         }
 
         awtSystemTrayService.installTrayIcon();

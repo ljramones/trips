@@ -372,7 +372,9 @@ public class MainSplitPaneManager {
             searchContextCoordinator.recenter(starId, query.getUpperDistanceLimit());
             log.info("New Center Range: {}", query.getCenterRangingCube());
             FxThread.runOnFxThread(() -> showNewStellarData(query, true, false));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            // Narrow per Issue 48: don't swallow Error (OOM, StackOverflow)
+            // — those should reach the global uncaught-exception handler.
             log.error("Error handling recenter star event", e);
             FxThread.runOnFxThread(() -> {
                 showErrorAlert("Recenter Error", "Failed to recenter on star: " + e.getMessage());
@@ -505,7 +507,8 @@ public class MainSplitPaneManager {
                 } else {
                     showNewStellarData(event.isShowPlot(), event.isShowTable());
                 }
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // Narrow per Issue 48 — let Error propagate to the global handler.
                 log.error("Error handling show stellar data event", e);
                 showErrorAlert("Display Error", "Failed to display stellar data: " + e.getMessage());
                 eventPublisher.publishEvent(new StatusUpdateEvent(this, "Display failed"));
@@ -518,7 +521,8 @@ public class MainSplitPaneManager {
         FxThread.runOnFxThread(() -> {
             try {
                 doExport(event.getSearchQuery());
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // Narrow per Issue 48 — let Error propagate to the global handler.
                 log.error("Error handling export query event", e);
                 showErrorAlert("Export Error", "Failed to export data: " + e.getMessage());
                 eventPublisher.publishEvent(new StatusUpdateEvent(this, "Export failed"));
@@ -582,7 +586,8 @@ public class MainSplitPaneManager {
 
                 log.info("Plotted {} stars from PlotStarsEvent", starObjects.size());
 
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // Narrow per Issue 48 — let Error propagate to the global handler.
                 log.error("Error handling plot stars event", e);
                 showErrorAlert("Plot Stars Error", "Failed to plot stars: " + e.getMessage());
                 eventPublisher.publishEvent(new StatusUpdateEvent(this, "Plot failed"));

@@ -14,6 +14,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.io.Serial;
 import java.io.Serializable;
@@ -741,10 +743,14 @@ public class ExoPlanet implements Serializable {
     }
 
     /**
-     * Ensure ID is generated before persist if not already set
+     * Ensure ID is generated before persist if not already set, and assert
+     * (on update too) that the id is non-null — the id-based {@link #equals}
+     * contract would silently corrupt hash-based collections without a stable
+     * non-null id (Issue 45).
      */
-    @jakarta.persistence.PrePersist
-    private void ensureId() {
+    @PrePersist
+    @PreUpdate
+    private void ensureIdAssigned() {
         if (this.id == null) {
             this.id = UUID.randomUUID().toString();
         }
@@ -762,4 +768,5 @@ public class ExoPlanet implements Serializable {
     public int hashCode() {
         return getClass().hashCode();
     }
+
 }

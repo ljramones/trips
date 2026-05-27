@@ -328,6 +328,14 @@ public class StarObject implements Serializable {
     @PrePersist
     @PreUpdate
     private void ensureCoordinates() {
+        // Issue 45: equals/hashCode is id-based, so a null id at persist-time
+        // would silently corrupt any hash-based collection holding this entity.
+        // Fail fast instead.
+        if (id == null) {
+            throw new IllegalStateException(
+                    "StarObject.id must be set before persist/update — "
+                            + "the id-based equals/hashCode contract requires a non-null id");
+        }
         if (x == 0.0 && y == 0.0 && z == 0.0 && distance > 0) {
             double[] computed = com.teamgannon.trips.astrogation.Coordinates
                     .calculateEquatorialCoordinates(ra, declination, distance);

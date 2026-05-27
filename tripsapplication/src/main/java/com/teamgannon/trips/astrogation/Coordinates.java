@@ -7,24 +7,54 @@ import lombok.extern.slf4j.Slf4j;
 public class Coordinates {
 
 
-    // Constants for the North Galactic Pole and the Galactic Center in degrees
+    // === Galactic coordinate-system reference points (J2000.0, degrees) ===
+    //
+    // Source: IAU 1958 galactic-coordinate definition, as standardised in the
+    // J2000.0 epoch (see e.g. Reid & Brunthaler 2004, ApJ 616, 872).
+    //
+    //   ALPHA_NGP   Right ascension of the North Galactic Pole
+    //   DELTA_NGP   Declination of the North Galactic Pole
+    //   ALPHA_GC    Right ascension of the Galactic Centre (Sgr A*)
+    //   THETA       Galactic longitude of the North Celestial Pole
+
+    /** Right ascension of the North Galactic Pole (J2000.0, degrees). */
     private static final double ALPHA_NGP = 192.85948;
+    /** Declination of the North Galactic Pole (J2000.0, degrees). */
     private static final double DELTA_NGP = 27.12825;
+    /** Right ascension of the Galactic Centre (Sgr A*, J2000.0, degrees). */
     private static final double ALPHA_GC = 266.40510;
+    /** Galactic longitude of the North Celestial Pole (degrees). */
     private static final double THETA = 122.93192;
 
-
-    private static final double[][] TRANSFORMATION_MATRIX = {
+    /**
+     * Equatorial (J2000.0) → Galactic rotation matrix.
+     * <p>
+     * Standard published values; rows correspond to the galactic X (toward
+     * Galactic Centre), Y (toward l = 90°), Z (toward NGP) axes expressed in
+     * the equatorial Cartesian frame. Reference: Liu et al. 2011, A&A 526,
+     * A16, eqn. 1 (which itself reproduces the IAU 1958 definition rotated
+     * to J2000.0).
+     */
+    static final double[][] EQUATORIAL_TO_GALACTIC_J2000 = {
             {-0.0548755604, -0.8734370902, -0.4838350155},
             {0.4941094279, -0.4448296298, 0.7469822445},
             {-0.8676661490, -0.1980763734, 0.4559837762}
     };
 
-    private static final double[][] INVERSE_TRANSFORMATION_MATRIX = {
+    /**
+     * Galactic → Equatorial (J2000.0) rotation matrix — the transpose of
+     * {@link #EQUATORIAL_TO_GALACTIC_J2000} (rotation matrices are orthonormal
+     * so the inverse equals the transpose).
+     */
+    static final double[][] GALACTIC_TO_EQUATORIAL_J2000 = {
             {-0.0548755604, 0.4941094279, -0.8676661490},
             {-0.8734370902, -0.4448296298, -0.1980763734},
             {-0.4838350155, 0.7469822445, 0.4559837762}
     };
+
+    // Legacy names kept for the body methods below until they're migrated.
+    private static final double[][] TRANSFORMATION_MATRIX = EQUATORIAL_TO_GALACTIC_J2000;
+    private static final double[][] INVERSE_TRANSFORMATION_MATRIX = GALACTIC_TO_EQUATORIAL_J2000;
 
     /**
      * convert to equatorial coordinates

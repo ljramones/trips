@@ -2,8 +2,10 @@ package com.teamgannon.trips.solarsystem.modelling.accrete;
 
 import lombok.extern.slf4j.Slf4j;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,9 +82,9 @@ class Utils {
         String line;
         String[] split;
 
-        try {
-            BufferedReader input = loadFile(filename);
-            while ((line = Objects.requireNonNull(input).readLine()) != null) {
+        try (BufferedReader input = Objects.requireNonNull(loadFile(filename),
+                "Star catalogue resource missing: " + filename)) {
+            while ((line = input.readLine()) != null) {
                 split = line.split(",");
                 s = new SimStar(
                         Double.parseDouble(split[1]),
@@ -97,10 +99,11 @@ class Utils {
                 s.blue = Integer.parseInt(split[11]);
                 simStars.add(s);
             }
-            input.close();
-        } catch (Exception e) {
-            log.error("Failed to load stellar data from {}", filename, e);
-            System.exit(1);
+        } catch (IOException e) {
+            // Issue 40: was `System.exit(1)` from a library helper. Promote to
+            // an unchecked exception so the caller can decide how to handle a
+            // missing or unreadable data file.
+            throw new UncheckedIOException("Failed to load stellar data from " + filename, e);
         }
         return simStars;
     }

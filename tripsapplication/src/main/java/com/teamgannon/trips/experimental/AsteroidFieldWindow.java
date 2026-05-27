@@ -1,5 +1,6 @@
 package com.teamgannon.trips.experimental;
 
+import com.teamgannon.trips.javafxsupport.FxThread;
 import javafx.animation.AnimationTimer;
 import javafx.scene.AmbientLight;
 import javafx.scene.Group;
@@ -108,10 +109,24 @@ public class AsteroidFieldWindow {
 
     // Immutable orbital parameters for each asteroid
     private final List<AsteroidData> asteroids = new ArrayList<>();
-    // Mutable current angle for each asteroid (updated every frame)
+    /**
+     * Mutable current angle for each asteroid (updated every frame).
+     * <p>
+     * <b>Thread invariant:</b> mutated on the JavaFX Application Thread only,
+     * via {@link javafx.animation.AnimationTimer#handle(long)} (whose contract
+     * guarantees FX-thread delivery). No synchronisation. A future
+     * "parallelise the ODE step" change must add explicit synchronisation or
+     * snapshot semantics — see Issue 51.
+     */
     private final double[] angles = new double[NUM_ASTEROIDS];
 
-    /** Cached Point3D list with per-particle scale for efficient updates */
+    /**
+     * Cached Point3D list with per-particle scale for efficient updates.
+     * <p>
+     * <b>Thread invariant:</b> mutated on the JavaFX Application Thread only,
+     * via {@link javafx.animation.AnimationTimer#handle(long)}. Same caveat
+     * as {@link #angles}.
+     */
     private final List<Point3D> displayPoints = new ArrayList<>();
 
     private int[] shuffleMapping;
@@ -292,6 +307,10 @@ public class AsteroidFieldWindow {
         animationTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                // Per AnimationTimer contract this is always the FX thread; the
+                // assertion documents + enforces the invariant that `angles[]`
+                // and `displayPoints` are mutated FX-thread-only (Issue 51).
+                FxThread.assertFxThread();
                 if (!animating) {
                     lastFrameNanos = now;
                     return;
