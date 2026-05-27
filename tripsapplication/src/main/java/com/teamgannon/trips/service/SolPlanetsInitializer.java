@@ -313,67 +313,11 @@ public class SolPlanetsInitializer {
     /**
      * Creates natural features for the Sol system: asteroid belt and Kuiper belt.
      */
+    /**
+     * Phase 4.6: belt definitions moved to {@link SolFeaturesFactory}.
+     */
     private void createSolFeatures(SolarSystem solarSystem) {
-        log.info("Creating Sol's asteroid belts...");
-
-        // Check if features already exist
-        java.util.List<SolarSystemFeature> existing = featureRepository.findBySolarSystemId(solarSystem.getId());
-        if (existing != null && !existing.isEmpty()) {
-            log.info("Sol system already has {} features", existing.size());
-            return;
-        }
-
-        // Main Asteroid Belt: 2.1 to 3.3 AU
-        SolarSystemFeature asteroidBelt = new SolarSystemFeature(
-                "Main Asteroid Belt",
-                SolarSystemFeature.FeatureType.ASTEROID_BELT,
-                SolarSystemFeature.FeatureCategory.NATURAL
-        );
-        asteroidBelt.setSolarSystemId(solarSystem.getId());
-        asteroidBelt.setInnerRadiusAU(2.1);
-        asteroidBelt.setOuterRadiusAU(3.3);
-        asteroidBelt.setThickness(0.15);  // Thick vertical distribution
-        asteroidBelt.setInclinationDeg(10.0);  // Typical asteroid inclination
-        asteroidBelt.setEccentricity(0.08);
-        asteroidBelt.setParticleCount(5000);
-        asteroidBelt.setMinParticleSize(0.5);
-        asteroidBelt.setMaxParticleSize(2.0);
-        asteroidBelt.setPrimaryColor("#8C8278");  // Rocky gray
-        asteroidBelt.setSecondaryColor("#645A50");  // Brown-gray
-        asteroidBelt.setOpacity(0.8);
-        asteroidBelt.setAnimated(true);
-        asteroidBelt.setAnimationSpeed(1.0);
-        asteroidBelt.setNavigationHazard(false);  // Not really hazardous despite sci-fi depictions
-        asteroidBelt.setNotes("The asteroid belt between Mars and Jupiter, containing millions of rocky bodies. " +
-                "Despite popular depictions, asteroids are widely spaced (average ~1 million km apart).");
-        featureRepository.save(asteroidBelt);
-        log.info("Created Main Asteroid Belt: 2.1-3.3 AU");
-
-        // Kuiper Belt: 30 to 50 AU
-        SolarSystemFeature kuiperBelt = new SolarSystemFeature(
-                "Kuiper Belt",
-                SolarSystemFeature.FeatureType.KUIPER_BELT,
-                SolarSystemFeature.FeatureCategory.NATURAL
-        );
-        kuiperBelt.setSolarSystemId(solarSystem.getId());
-        kuiperBelt.setInnerRadiusAU(30.0);
-        kuiperBelt.setOuterRadiusAU(50.0);
-        kuiperBelt.setThickness(0.2);  // Thicker than asteroid belt
-        kuiperBelt.setInclinationDeg(15.0);
-        kuiperBelt.setEccentricity(0.1);
-        kuiperBelt.setParticleCount(3000);
-        kuiperBelt.setMinParticleSize(0.8);
-        kuiperBelt.setMaxParticleSize(3.0);
-        kuiperBelt.setPrimaryColor("#B4BEC8");  // Icy blue-gray
-        kuiperBelt.setSecondaryColor("#8C8C96");
-        kuiperBelt.setOpacity(0.6);
-        kuiperBelt.setAnimated(true);
-        kuiperBelt.setAnimationSpeed(0.5);  // Slower due to greater distance
-        kuiperBelt.setNavigationHazard(false);
-        kuiperBelt.setNotes("A region of icy bodies beyond Neptune, including dwarf planets like Pluto, Eris, and Makemake. " +
-                "Contains an estimated 100,000+ objects larger than 100 km.");
-        featureRepository.save(kuiperBelt);
-        log.info("Created Kuiper Belt: 30-50 AU");
+        SolFeaturesFactory.createAll(solarSystem, featureRepository);
     }
 
     // ==================== Individual Planet Creation Methods ====================
