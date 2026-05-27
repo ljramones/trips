@@ -35,7 +35,7 @@ Other rules:
 - Do not use `System.out` / `System.err` from production code — route everything through SLF4J. (See `tripsapplication/src/main/java/com/teamgannon/trips` for examples; bootstrap paths are an exception only because the logger isn't yet initialized.)
 - Pick the right level: `trace` (fine-grained dev tracing), `debug` (occasional diagnostics, off by default), `info` (lifecycle events, dataset switches), `warn` (recoverable issue), `error` (action failed; user-visible).
 
-Run `scripts/check-logging.sh` from the repo root to surface any string-concat sites you may have introduced. A Phase 7.4 sweep of the existing 113 sites is planned in `trips-full-codebase-review-2026.md`; once that lands, the rule will be wired into `maven-checkstyle-plugin` as an enforcing build step.
+The rule is enforced by `maven-checkstyle-plugin` (config at `tripsapplication/config/checkstyle/checkstyle.xml`), bound to the `validate` phase — any string-concat in a `log.*` call fails the build before compilation. `scripts/check-logging.sh` runs the same pattern out-of-band when you want a faster read without invoking Maven.
 
 ## Testing Guidelines
 - Testing uses JUnit 5 (`spring-boot-starter-test` and `junit-jupiter-api`).
