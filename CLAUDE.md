@@ -586,6 +586,13 @@ clone:
 Drop the downloaded files at the repo root (or wherever your TRIPS
 workspace expects them); `.gitignore` will keep them out of commits.
 
+`scripts/verify-data-bundles.sh` lists the expected file names (`--list`),
+verifies them against `scripts/data-bundles.sha256` (default `--check`),
+or refreshes the manifest from the current working tree after an audited
+download (`--update`). Re-run `--update` whenever you legitimately bump a
+bundle and commit the new manifest so collaborators inherit the new
+expected checksums.
+
 ### Supported Formats
 
 **Import**:
