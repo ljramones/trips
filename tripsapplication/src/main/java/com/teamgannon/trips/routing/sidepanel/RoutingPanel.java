@@ -63,6 +63,9 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         routingTableView.setEditable(true);
         routingTableView.setPrefHeight(RoutingConstants.ROUTING_TABLE_PREFERRED_HEIGHT);
         routingTableView.setPrefWidth(MainPane.SIDE_PANEL_SIZE);
+        // Phase 7.11 (Issue 49): screen-reader label.
+        routingTableView.setAccessibleText(
+                "Configured routes in the current dataset; each row toggles visibility, status display, and colour");
 
         TableColumn<RouteTree, Boolean> showRouteCol = createCheckBoxColumn();
         showRouteCol.setPrefWidth(RoutingConstants.STATUS_COL_WIDTH);

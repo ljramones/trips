@@ -296,7 +296,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:273-284 (`miscText1..5`, `miscNum1..5`, `customData1..10`) ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/SolarSystem.java:149-170
 - **Description**: 15+ unused extensibility columns per entity. Always fetched. No schema, no validation. Anti-pattern — looks like extensibility but is actually noise.
 - **Suggestion**: Remove unused fields. If extensibility is genuinely needed, use one JSON column with a JSON Schema validator, or a side `EntityExtension` table keyed by entity id.
-- **Status**: open
+- **Status**: **awaiting signoff** — investigated `StarObject.misc1..5`, `miscNum1..5`, `customData1..10` plus the equivalent `SolarSystem` columns: zero production read/write callers in `src/main/java` for the misc/customData fields. Safe to drop with a Flyway `V5__drop_unused_misc_columns.sql` migration. But the existing DB has these columns populated for some user installs (per project history) — dropping them is irreversible without backup, and any user-side import scripts that wrote to them would break silently. Path forward: (a) you confirm no external tooling writes to these columns, (b) we add `V5` to drop them + the field declarations + the StarEditDialog "User Special Info" tab (Issue 54) in one atomic change. If extensibility is genuinely wanted later, replace with one JSON column + JSON Schema validator. Not actioned here pending your confirmation.
 
 ### Issue 32 -- Severity: suggestion (UX / i18n)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/ui/TransferPlannerPanel.java:179,299-302
@@ -314,13 +314,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: dialog FXMLs under `src/main/resources/com/teamgannon/trips/` (multiple)
 - **Description**: Fixed pixel sizes (e.g., `TransferPlannerPanel` nameCol 150px, nodeTable 160px; `SpaceshipDesignerPanel.validationMessages.prefHeight = 120`) prevent responsive resizing. Users frequently resize the main stage.
 - **Suggestion**: Switch to `HGrow.ALWAYS` / `VGrow.ALWAYS` and percentage column constraints. Test at 1024×768 and 4K.
-- **Status**: open
+- **Status**: partial — `TransferPlannerPanel.configureNodeTable` migrated as the worked example: column widths are now percentage bindings (`prefWidthProperty().bind(table.widthProperty().multiply(...))`), VBox grows the table via `Priority.ALWAYS`. Pattern is established; per-FXML migration across the rest of `SpaceshipDesignerPanel`, dialog tables, etc. remains the sprint follow-up. Testing at 1024×768 and 4K likewise deferred.
 
 ### Issue 35 -- Severity: suggestion (UX)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/search/FindStarByCommonNameDialog.java:26 (and other text-input dialogs)
 - **Description**: Search/filter `TextField`s lack `promptText` and tooltips. Users have to guess input format.
 - **Suggestion**: Add `setPromptText("e.g., Sol, Alpha C")` and tooltips for non-obvious fields. Document accepted formats inline.
-- **Status**: open
+- **Status**: partial — `FindStarByCommonNameDialog` + `FindStarByCatalogIdDialog` gain `setPromptText` ("e.g. Sol, Alpha C, Vega"; "e.g. HIP 71683, Gliese 581, HD 209458") and `setTooltip` explaining match behaviour + case-sensitivity. The pattern is now established for the broader text-input dialog sweep — each subsequent dialog is a ~3-line addition.
 
 ### Issue 36 -- Severity: suggestion (UX)
 - **File**: `controller/menubar/*.fxml` ; main MainPane.fxml
@@ -386,7 +386,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:255-260 (notes, source) ; ExoPlanet.java:711-729 (procedural snapshots) ; DataSetDescriptor.java:114-144 (JSON LOBs)
 - **Description**: `@Lob` columns lack explicit `@Column(length = ...)` and aren't `@Basic(fetch = LAZY)`. Every find loads them — a non-trivial cost when the catalog has 2M rows.
 - **Suggestion**: Add length caps and `@Basic(fetch = LAZY)`; or split into a side `*_Lob` table joined only when the field is requested.
-- **Status**: partial (Phase 7.8) — `@Basic(fetch = LAZY)` annotations added to the 6 DataSetDescriptor LOBs, the 3 ExoPlanet procedural LOBs (including the heavy `byte[] proceduralPreview` image), and StarCatalogIds.catalogIdList. `StarObject.notes` + `StarObject.source` intentionally kept eager with a comment: WorkbenchEnrichmentService + edit/properties dialogs read them too broadly to mark LAZY without a caller-by-caller audit. Caveat: these annotations are *advisory* until `hibernate-enhance-maven-plugin` is wired into the build — without bytecode enhancement, Hibernate silently ignores `@Basic LAZY` on plain fields. Annotating now documents intent and auto-corrects when the enhancement is enabled.
+- **Status**: partial (Phase 7.8 + close-out) — `@Basic(fetch = LAZY)` annotations added to the 6 DataSetDescriptor LOBs, the 3 ExoPlanet procedural LOBs (including the heavy `byte[] proceduralPreview` image), and StarCatalogIds.catalogIdList. `StarObject.notes` + `StarObject.source` intentionally kept eager. Attempted to wire `hibernate-enhance-maven-plugin` in Phase 7 close-out but the artifact doesn't publish under `org.hibernate.orm.tooling:hibernate-enhance-maven-plugin:7.2.1.Final` — needs sourcing under the correct Hibernate-7 plugin coordinates (possibly `org.hibernate.tools` or a newer plugin name). Backed the attempt out; annotations stay advisory until the right coord is identified. The benchmark harness on a 2M-row dataset is the other remaining piece.
 
 ### Issue 47 -- Severity: suggestion (test coverage)
 - **File**: tripsapplication/src/test/java/...
@@ -404,13 +404,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: ~60 dialogs across the codebase
 - **Description**: No `accessibleText`, `accessibleHelp`, or `AccessibleRole` annotations anywhere. Screen readers see opaque widgets.
 - **Suggestion**: Systematic pass on high-traffic dialogs first (search, route planning, transfer preview). Add `accessibleText` to every button and labelled input.
-- **Status**: partial (Phase 7.11) — worked example added to `TransferPreviewDialog`: every interactive control (4 ComboBoxes, 1 TextField, the primary Create Plan button) carries `setAccessibleText` with a verbose role + intent label; the read-only feasibility verdict + explanation labels carry `setAccessibleHelp`. The pattern is now established for the broader systematic sweep across ~60 dialogs. That sweep remains a 1-sprint effort and is still open.
+- **Status**: partial (Phase 7.11 + close-out) — accessibility annotations applied to `TransferPreviewDialog` (original worked example: 4 ComboBoxes + 1 TextField + Create Plan button + 2 status labels), plus three follow-ups: `FindStarByCommonNameDialog` (5 calls), `FindStarByCatalogIdDialog` (4 calls), `RoutingPanel` (the routing TableView). Pattern is consistent and the helper is in place; remaining ~55 dialogs are each a 5-line edit but still a sprint of work to do exhaustively.
 
 ### Issue 50 -- Severity: suggestion (UI consistency)
 - **File**: only 3 CSS files exist (SearchPane.css, viewer.css, tree-table-view.css). Inline `-fx-...` strings scattered across many dialogs (e.g., `TransferPreviewDialog.java:204`).
 - **Description**: No central stylesheet; per-dialog inline styles make theme changes fragile. Color palette is hardcoded in Java string literals.
 - **Suggestion**: Create `theme.css` with CSS variables (font, spacing, severity colors). Reference from FXML via `stylesheets` attribute. Remove inline `-fx-style` strings.
-- **Status**: partial (Phase 7.10) — `tripsapplication/src/main/resources/com/teamgannon/trips/theme.css` seeded with CSS variables for the recurring patterns mined from the ~75 inline `-fx-…` callsites: severity palette (info/success/warn/danger), panel backgrounds (light/mid/dark), border tokens (radius-sm/md/lg), typography (xs/sm/md/lg), spacing tokens (pad-sm/xs). Includes ready-to-use classes for status badges + severity-typed labels. The per-dialog migration (replacing inline `setStyle("-fx-…")` with `getStyleClass().add(...)`) is documented as a 6-step migration plan in the file footer; it remains a sprint of work because each callsite needs visual diffing and intent confirmation.
+- **Status**: partial (Phase 7.10 + close-out) — `theme.css` seeded with CSS variables (severity / panel / borders / typography / spacing) AND now loaded onto the primary `Scene` in `PrimaryStageInitializer` so the variables + `:error` pseudo-classes are available app-wide. Phase 7 close-out added `.text-field:error`, `.combo-box-base:error`, `.trips-inline-error` rules used by `InlineFieldValidation` (Issue 29). Worked-example status badges already used by `TransferPreviewDialog` (Issue 33). Per-dialog migration of the remaining ~70 inline `setStyle("-fx-…")` callsites stays the sprint-scale follow-up.
 
 ### Issue 51 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/experimental/AsteroidFieldWindow.java:287-314

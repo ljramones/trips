@@ -56,6 +56,20 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
             }
 
             Scene scene = new Scene(root, windowWidth, windowHeight + controlPaneHeight);
+            // Phase 7.10: load the global theme.css onto the root scene so
+            // CSS variables + :error pseudo-classes are available app-wide.
+            // Dialogs that re-use the root scene's stylesheets get the
+            // theming for free; standalone Dialog<T> instances that build
+            // their own scene need to load theme.css themselves (or rely on
+            // the inline-style fallback in InlineFieldValidation).
+            String themeCss = getClass().getResource("/com/teamgannon/trips/theme.css") == null
+                    ? null
+                    : getClass().getResource("/com/teamgannon/trips/theme.css").toExternalForm();
+            if (themeCss != null) {
+                scene.getStylesheets().add(themeCss);
+            } else {
+                log.warn("theme.css not found on classpath at /com/teamgannon/trips/theme.css");
+            }
             primaryStage.setScene(scene);
             mainPane.setStage(primaryStage, windowWidth, windowHeight, controlPaneHeight);
             primaryStage.initStyle(StageStyle.DECORATED);

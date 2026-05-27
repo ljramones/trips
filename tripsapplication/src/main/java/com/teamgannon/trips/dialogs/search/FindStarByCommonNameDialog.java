@@ -31,6 +31,12 @@ public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
         this.setHeight(500);
         this.setWidth(500);
 
+        // Phase 7 (Issue 35): promptText + tooltip to document accepted input.
+        starName.setPromptText("e.g. Sol, Alpha C, Vega");
+        starName.setTooltip(new Tooltip(
+                "Partial common-name match (case-insensitive). Results limited to the selected dataset."));
+        datasets.setTooltip(new Tooltip("Dataset to search. Switch via the toolbar dataset selector."));
+
         datasets.getItems().addAll(datasetNames);
         datasets.getSelectionModel().select(dataSetDescriptor.getDataSetName());
 
@@ -66,6 +72,13 @@ public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
+
+        // Phase 7.11 (Issue 49): screen-reader labels.
+        starName.setAccessibleText("Star common-name to search for");
+        datasets.setAccessibleText("Dataset to search within");
+        gotToStarButton.setAccessibleText("Run the star search");
+        cancelDataSetButton.setAccessibleText("Cancel the star search and close the dialog");
+        starNameError.setAccessibleHelp("Inline validation message for the star-name input");
 
         this.getDialogPane().setContent(vBox);
 

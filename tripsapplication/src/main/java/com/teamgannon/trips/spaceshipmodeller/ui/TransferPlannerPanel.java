@@ -179,19 +179,26 @@ public class TransferPlannerPanel extends BorderPane {
         nodeTable.setPlaceholder(new Label(get("planner.nodeTable.placeholder", "No maneuvers")));
         TableColumn<ManeuverNode, String> nameCol = new TableColumn<>(get("planner.nodeTable.col.name", "Maneuver"));
         nameCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().name()));
-        nameCol.setPrefWidth(150);
+        // Phase 7 (Issue 34): width via percentage; takes the largest share so
+        // long maneuver names don't clip at narrow window widths.
+        nameCol.prefWidthProperty().bind(nodeTable.widthProperty().multiply(0.30));
         TableColumn<ManeuverNode, String> dvCol = new TableColumn<>(get("planner.nodeTable.col.deltaV", "Δv"));
         dvCol.setCellValueFactory(c -> new SimpleStringProperty("%.2f km/s".formatted(c.getValue().deltaVKmps())));
+        dvCol.prefWidthProperty().bind(nodeTable.widthProperty().multiply(0.17));
         TableColumn<ManeuverNode, String> timeCol = new TableColumn<>("T+ (days)");
         timeCol.setCellValueFactory(c -> new SimpleStringProperty("%.0f".formatted(c.getValue().timeFromStartDays())));
+        timeCol.prefWidthProperty().bind(nodeTable.widthProperty().multiply(0.17));
         TableColumn<ManeuverNode, String> propCol = new TableColumn<>("Propellant");
         propCol.setCellValueFactory(c -> new SimpleStringProperty(
                 Double.isNaN(c.getValue().propellantTons()) ? "n/a" : "%.0f t".formatted(c.getValue().propellantTons())));
+        propCol.prefWidthProperty().bind(nodeTable.widthProperty().multiply(0.18));
         TableColumn<ManeuverNode, String> massCol = new TableColumn<>("Mass after");
         massCol.setCellValueFactory(c -> new SimpleStringProperty(
                 Double.isNaN(c.getValue().massAfterTons()) ? "n/a" : "%.0f t".formatted(c.getValue().massAfterTons())));
+        massCol.prefWidthProperty().bind(nodeTable.widthProperty().multiply(0.18));
         nodeTable.getColumns().setAll(List.of(nameCol, dvCol, timeCol, propCol, massCol));
         nodeTable.setPrefHeight(160);
+        javafx.scene.layout.VBox.setVgrow(nodeTable, javafx.scene.layout.Priority.ALWAYS);
     }
 
     // -------------------------------------------------------------- actions

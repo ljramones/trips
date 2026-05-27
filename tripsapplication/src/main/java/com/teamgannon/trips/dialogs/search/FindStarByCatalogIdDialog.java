@@ -31,6 +31,11 @@ public class FindStarByCatalogIdDialog extends Dialog<StarSearchResults> {
         this.setHeight(500);
         this.setWidth(500);
 
+        // Phase 7 (Issue 35): promptText + tooltip to document accepted input.
+        starName.setPromptText("e.g. HIP 71683, Gliese 581, HD 209458");
+        starName.setTooltip(new javafx.scene.control.Tooltip(
+                "Partial catalog-ID match across HIP, HD, Gliese, Tycho2, Gaia DR2/DR3, 2MASS. Case-sensitive."));
+
         datasets.getItems().addAll(datasetNames);
         datasets.getSelectionModel().select(dataSetDescriptor.getDataSetName());
 
@@ -59,6 +64,12 @@ public class FindStarByCatalogIdDialog extends Dialog<StarSearchResults> {
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
+
+        // Phase 7.11 (Issue 49): screen-reader labels.
+        starName.setAccessibleText("Catalog identifier to search for");
+        datasets.setAccessibleText("Dataset to search within");
+        gotToStarButton.setAccessibleText("Run the catalog-ID search");
+        cancelDataSetButton.setAccessibleText("Cancel the search and close the dialog");
 
         this.getDialogPane().setContent(vBox);
 
