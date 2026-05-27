@@ -9,9 +9,12 @@ import com.teamgannon.trips.jpa.repository.ExoPlanetRepository;
 import com.teamgannon.trips.jpa.repository.SolarSystemFeatureRepository;
 import com.teamgannon.trips.jpa.repository.SolarSystemRepository;
 import com.teamgannon.trips.jpa.repository.StarObjectRepository;
+import com.teamgannon.trips.service.factories.SolarSystemFactory;
+import com.teamgannon.trips.service.factories.SolarSystemFactoryResult;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +26,22 @@ import java.util.UUID;
  * Initializes Sol's solar system with the 8 planets (plus Pluto) at application startup
  * and whenever a new dataset is activated.
  * This ensures that when a user "Enters System" on Sol, they see our familiar planets.
+ * <p>
+ * As of Issue 18 (codebase-review remediation), this class also implements
+ * {@link SolarSystemFactory}. Sol is no longer a magical special case
+ * invoked only via the {@code @PostConstruct} hook — it's just the
+ * {@code @Order(0)} factory whose {@link #appliesTo} returns {@code true}
+ * for the Sol star. Both the bootstrap hook and the dataset-context
+ * listener route through {@link #generate} so the lifecycle matches what
+ * any future "well-known system" factory would follow.
  */
 @Slf4j
 @Service
-public class SolPlanetsInitializer {
+@Order(0)
+public class SolPlanetsInitializer implements SolarSystemFactory {
+
+    /** Name reported by {@link #name()} and recorded in the factory result. */
+    public static final String FACTORY_NAME = "hand-curated-sol";
 
     private final StarObjectRepository starObjectRepository;
     private final SolarSystemRepository solarSystemRepository;
@@ -54,48 +69,15 @@ public class SolPlanetsInitializer {
     public void initializeSolPlanets() {
         log.info("Checking if Sol's planets need to be initialized...");
 
-        // Find Sol - it's at coordinates (0, 0, 0) or named "Sol"
         StarObject sol = findSol();
         if (sol == null) {
             log.info("Sol not found in any dataset - planets will be created when Sol is loaded");
             return;
         }
-
-        // Check if Sol already has planets
-        List<ExoPlanet> existingPlanets = exoPlanetRepository.findByStarName("Sol");
-        if (existingPlanets == null || existingPlanets.isEmpty()) {
-            existingPlanets = exoPlanetRepository.findByHostStarId(sol.getId());
-        }
-
-        if (existingPlanets != null && !existingPlanets.isEmpty()) {
-            boolean hasMoons = existingPlanets.stream()
-                .anyMatch(planet -> Boolean.TRUE.equals(planet.getIsMoon()));
-            if (hasMoons) {
-                log.info("Sol already has {} planets/moons initialized", existingPlanets.size());
-                return;
-            }
-
-            SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
-            java.util.Map<String, ExoPlanet> planetsByName = new java.util.HashMap<>();
-            for (ExoPlanet planet : existingPlanets) {
-                if (!Boolean.TRUE.equals(planet.getIsMoon())) {
-                    planetsByName.put(planet.getName(), planet);
-                }
-            }
-            if (!planetsByName.isEmpty()) {
-                createSolMoons(sol, solarSystem, planetsByName);
-                log.info("Sol planets existed but moons were missing; moons created");
-            }
-            return;
-        }
-
-        // Get or create Sol's solar system
-        SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
-
-        // Create the planets
-        createSolPlanets(sol, solarSystem);
-
-        log.info("Sol's planets have been initialized successfully");
+        SolarSystemFactoryResult result = generate(sol);
+        log.info("Sol bootstrap: factory={} planets={} moons={} features={} alreadyExisted={}",
+                result.factoryName(), result.planetsCreated(), result.moonsCreated(),
+                result.featuresCreated(), result.alreadyExisted());
     }
 
     /**
@@ -110,22 +92,44 @@ public class SolPlanetsInitializer {
         if (event.getDescriptor() != null) {
             log.info("Dataset context changed to '{}', checking Sol initialization...",
                     event.getDescriptor().getDataSetName());
-            initializeSolPlanetsInternal();
+            StarObject sol = findSol();
+            if (sol == null) {
+                log.debug("Sol not found in current dataset - no planets to initialize");
+                return;
+            }
+            generate(sol);
         }
     }
 
+    // ==================== SolarSystemFactory ====================
+
+    @Override
+    public String name() {
+        return FACTORY_NAME;
+    }
+
     /**
-     * Internal initialization logic, called by both @PostConstruct and event listener.
+     * Sol is identified by its display name. The dataset may carry it as
+     * "Sol" or with case variants; coordinate-at-origin is a secondary
+     * disambiguator handled inside {@link #findSol()} but for the factory's
+     * appliesTo we keep the check name-based so it's deterministic without
+     * a repository round-trip.
      */
-    private void initializeSolPlanetsInternal() {
-        // Find Sol - it's at coordinates (0, 0, 0) or named "Sol"
-        StarObject sol = findSol();
+    @Override
+    public boolean appliesTo(StarObject star) {
+        if (star == null) return false;
+        String name = star.getDisplayName();
+        return name != null && "Sol".equalsIgnoreCase(name.trim());
+    }
+
+    @Override
+    @Transactional
+    public SolarSystemFactoryResult generate(StarObject sol) {
         if (sol == null) {
-            log.debug("Sol not found in current dataset - no planets to initialize");
-            return;
+            return SolarSystemFactoryResult.alreadyExisted(FACTORY_NAME, null);
         }
 
-        // Check if Sol already has planets
+        // Idempotency: if planets + moons are already in the DB for Sol, skip.
         List<ExoPlanet> existingPlanets = exoPlanetRepository.findByStarName("Sol");
         if (existingPlanets == null || existingPlanets.isEmpty()) {
             existingPlanets = exoPlanetRepository.findByHostStarId(sol.getId());
@@ -133,12 +137,13 @@ public class SolPlanetsInitializer {
 
         if (existingPlanets != null && !existingPlanets.isEmpty()) {
             boolean hasMoons = existingPlanets.stream()
-                .anyMatch(planet -> Boolean.TRUE.equals(planet.getIsMoon()));
+                    .anyMatch(planet -> Boolean.TRUE.equals(planet.getIsMoon()));
             if (hasMoons) {
                 log.debug("Sol already has {} planets/moons initialized", existingPlanets.size());
-                return;
+                return SolarSystemFactoryResult.alreadyExisted(FACTORY_NAME, sol);
             }
 
+            // Planets exist but moons are missing — fill them in.
             SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
             java.util.Map<String, ExoPlanet> planetsByName = new java.util.HashMap<>();
             for (ExoPlanet planet : existingPlanets) {
@@ -146,20 +151,43 @@ public class SolPlanetsInitializer {
                     planetsByName.put(planet.getName(), planet);
                 }
             }
+            int before = countMoonsInSystem(solarSystem.getId());
             if (!planetsByName.isEmpty()) {
                 createSolMoons(sol, solarSystem, planetsByName);
-                log.info("Sol planets existed but moons were missing; moons created");
             }
-            return;
+            int moonsAdded = countMoonsInSystem(solarSystem.getId()) - before;
+            log.info("Sol planets existed but moons were missing; {} moon(s) created", moonsAdded);
+            return new SolarSystemFactoryResult(
+                    FACTORY_NAME, sol, 0, moonsAdded, 0, false);
         }
 
-        // Get or create Sol's solar system
+        // Full bootstrap: create system, planets, moons, features.
         SolarSystem solarSystem = getOrCreateSolSolarSystem(sol);
-
-        // Create the planets
         createSolPlanets(sol, solarSystem);
+        int planets = countPlanetsInSystem(solarSystem.getId());
+        int moons = countMoonsInSystem(solarSystem.getId());
+        int features = countFeaturesInSystem(solarSystem.getId());
 
-        log.info("Sol's planets have been initialized for current dataset");
+        log.info("Sol's planets have been initialized: {} planets, {} moons, {} features",
+                planets, moons, features);
+        return new SolarSystemFactoryResult(FACTORY_NAME, sol, planets, moons, features, false);
+    }
+
+    private int countPlanetsInSystem(String solarSystemId) {
+        return (int) exoPlanetRepository.findBySolarSystemId(solarSystemId).stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsMoon()))
+                .count();
+    }
+
+    private int countMoonsInSystem(String solarSystemId) {
+        return (int) exoPlanetRepository.findBySolarSystemId(solarSystemId).stream()
+                .filter(p -> Boolean.TRUE.equals(p.getIsMoon()))
+                .count();
+    }
+
+    private int countFeaturesInSystem(String solarSystemId) {
+        List<SolarSystemFeature> features = featureRepository.findBySolarSystemId(solarSystemId);
+        return features == null ? 0 : features.size();
     }
 
     /**
