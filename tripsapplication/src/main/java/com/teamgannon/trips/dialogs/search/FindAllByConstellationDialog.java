@@ -59,6 +59,11 @@ public class FindAllByConstellationDialog extends Dialog<ConstellationSelected> 
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        constellationChoice.setAccessibleText("Constellation to search");
+        gotToStarButton.setAccessibleText("Find stars in the selected constellation");
+        cancelDataSetButton.setAccessibleText("Dismiss the constellation search dialog");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

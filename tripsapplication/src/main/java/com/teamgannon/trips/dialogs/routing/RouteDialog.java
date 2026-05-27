@@ -114,6 +114,14 @@ public class RouteDialog extends Dialog<RouteSelector> {
         cancelButton.setOnAction(this::cancelClicked);
         hBox.getChildren().add(cancelButton);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        routeName.setAccessibleText("Route name");
+        colorButton.setAccessibleText("Pick the route color");
+        lineWidthTextField.setAccessibleText("Route line width");
+        notes.setAccessibleText("Route notes");
+        okButton.setAccessibleText("Create the new route");
+        cancelButton.setAccessibleText("Cancel route creation");
+
     }
 
 

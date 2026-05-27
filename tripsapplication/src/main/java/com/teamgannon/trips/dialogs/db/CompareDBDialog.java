@@ -96,6 +96,14 @@ public class CompareDBDialog extends Dialog<DBComparison> {
         hBox.getChildren().add(dismissButton);
         vBox.getChildren().add(hBox);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        sourceDBComboBox.setAccessibleText("Source dataset for comparison");
+        targetDBComboBox.setAccessibleText("Target dataset for comparison");
+        FindDifferences.setAccessibleText("Compare the selected datasets");
+        cancelButton.setAccessibleText("Cancel the comparison dialog");
+        dismissButton.setAccessibleText("Dismiss the comparison dialog");
+        nameDiffsTextArea.setAccessibleHelp("List of names that differ between the two datasets");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

@@ -58,6 +58,9 @@ public class DataSetDescribeDialog extends Dialog<DataSetDescriptor> {
         hBox.getChildren().add(cancelDataSetButton);
         planGrid.add(hBox, 0, 7, 2, 1);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        cancelDataSetButton.setAccessibleText("Close the dataset description dialog");
+
         this.getDialogPane().setContent(planGrid);
 
         // set the dialog as a utility

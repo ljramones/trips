@@ -117,6 +117,10 @@ public class ViewPreferencesDialog extends Dialog<ApplicationPreferences> {
         cancelButton.setOnAction(this::close);
         hBox.getChildren().add(cancelButton);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        resetButton.setAccessibleText("Reset all view preferences to defaults");
+        cancelButton.setAccessibleText("Close the preferences dialog");
+
         vBox.getChildren().add(hBox);
     }
 

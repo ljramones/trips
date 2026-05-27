@@ -86,6 +86,11 @@ public class FindStarInViewDialog extends Dialog<FindResults> {
         cancelDataSetButton.setOnAction(this::close);
         hBox1.getChildren().add(cancelDataSetButton);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        cmb.setAccessibleText("Type or pick the star name to find in view");
+        gotToStarButton.setAccessibleText("Jump to the chosen star");
+        cancelDataSetButton.setAccessibleText("Cancel the find-in-view dialog");
+
         this.getDialogPane().setContent(vBox);
 
     }

@@ -92,6 +92,12 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
         dismissButton.setOnAction(this::close);
         hBox2.getChildren().add(dismissButton);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        nameToFindField.setAccessibleText("Star name to look up in SESAME");
+        runQueryButton.setAccessibleText("Run the SESAME name resolver query");
+        dismissButton.setAccessibleText("Close the SESAME resolver dialog");
+        aliasBox.setAccessibleHelp("Aliases returned by the most recent SESAME lookup");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

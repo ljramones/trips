@@ -79,6 +79,13 @@ public class ExportDialog extends Dialog<ExportOptions> {
         hBox.getChildren().add(cancelButton);
         vBox.getChildren().add(hBox);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        exportChoice.setAccessibleText("Export file type");
+        fileNameTextField.setAccessibleText("Destination file path");
+        fileDialogButton.setAccessibleText("Open file chooser to pick export location");
+        doExportButton.setAccessibleText("Export the dataset");
+        cancelButton.setAccessibleText("Cancel the export dialog");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

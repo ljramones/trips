@@ -249,6 +249,16 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
+
+        // Bucket-A (Issue 49): screen-reader labels.
+        nextButton.setAccessibleText("Advance to the next 10pc record");
+        loadStarButton.setAccessibleText("Update the existing star in the database");
+        addStarButton.setAccessibleText("Add this star to the database");
+        cancelDataSetButton.setAccessibleText("Dismiss the 10 parsec loader dialog");
+        descriptorComboBox.setAccessibleText("Dataset to apply updates against");
+        starSelector.setAccessibleText("Matching star to update");
+        currentCounterLabel.setAccessibleHelp("Current record number being processed");
+        totalCounterLabel.setAccessibleHelp("Total record count in the 10 parsec file");
     }
 
     private void setupUIStatus() {

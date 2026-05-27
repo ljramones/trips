@@ -74,6 +74,17 @@ public class UpdateStarObjectWithRecordDialog extends Dialog<Boolean> {
         dismissButton.setOnAction(this::dismissClicked);
 
         hBox1.getChildren().addAll(nextButton, dismissButton);
+
+        // Bucket-A (Issue 49): screen-reader labels.
+        nextButton.setAccessibleText("Save changes to the star record");
+        dismissButton.setAccessibleText("Cancel and close without saving");
+        nameTransferField.setAccessibleText("Star display name to save");
+        sysTransferField.setAccessibleText("System name to save");
+        raTransferField.setAccessibleText("Right ascension to save");
+        decTransferField.setAccessibleText("Declination to save");
+        distanceTransferField.setAccessibleText("Distance to save");
+        spectralTypeTransferField.setAccessibleText("Spectral class to save");
+        notesTransferField.setAccessibleText("Notes to save");
     }
 
     private void initializeDialog() {

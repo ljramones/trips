@@ -117,6 +117,15 @@ public class ExportQueryDialog extends Dialog<Boolean> implements ExportTaskComp
         hBox.getChildren().add(cancelButton);
         vBox.getChildren().add(hBox);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        exportChoice.setAccessibleText("Export file type");
+        fileNameTextField.setAccessibleText("Destination file path");
+        fileDialogButton.setAccessibleText("Open file chooser to pick export location");
+        doExportButton.setAccessibleText("Start the export");
+        cancelButton.setAccessibleText("Close the dialog without exporting");
+        cancelExport.setAccessibleText("Cancel the running export");
+        exportProgressText.setAccessibleHelp("Current export progress message");
+
         createExportProgress(vBox);
 
         this.getDialogPane().setContent(vBox);

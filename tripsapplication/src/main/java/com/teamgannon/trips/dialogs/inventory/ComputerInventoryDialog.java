@@ -48,6 +48,11 @@ public class ComputerInventoryDialog extends Dialog<InventoryReport> {
         cancelBtn.setOnAction(this::cancel);
         hBox.getChildren().add(cancelBtn);
 
+        // Bucket-A (Issue 49): screen-reader labels.
+        reportArea.setAccessibleHelp("Computer hardware inventory report");
+        changeButton.setAccessibleText("Save the computer inventory report");
+        cancelBtn.setAccessibleText("Cancel and close the inventory dialog");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

@@ -129,6 +129,10 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
             plotSelectedButton.setTooltip(new Tooltip("Plot only the selected star"));
             buttonBox.getChildren().add(plotSelectedButton);
 
+            // Bucket-A (Issue 49): screen-reader labels.
+            plotAllButton.setAccessibleText("Plot every matched star in the 3D view");
+            plotSelectedButton.setAccessibleText("Plot only the highlighted star in the 3D view");
+
             // Add separator
             Separator separator = new Separator();
             separator.setOrientation(javafx.geometry.Orientation.VERTICAL);
@@ -142,6 +146,11 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         buttonBox.getChildren().add(cancelDataSetButton);
+
+        // Bucket-A (Issue 49): screen-reader labels.
+        selectButton.setAccessibleText("Select the highlighted star and close");
+        cancelDataSetButton.setAccessibleText("Dismiss the matches dialog");
+        tableView.setAccessibleText("Star matches table");
 
         vBox.getChildren().add(buttonBox);
         this.getDialogPane().setContent(vBox);
