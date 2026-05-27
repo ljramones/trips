@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.awt.AWTException;
+import java.awt.EventQueue;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.MenuItem;
@@ -59,12 +60,30 @@ public class AwtSystemTrayService {
         if (trayIcon == null || GraphicsEnvironment.isHeadless() || !SystemTray.isSupported()) {
             return;
         }
+        // SystemTray.remove(...) internally does:
+        //   TrayIcon.removeNotify() → Window.dispose() → EventQueue.invokeAndWait(...)
+        // which blocks the calling thread on the AWT EDT. When Spring's
+        // destroy chain runs on the JavaFX Application Thread — which on
+        // macOS IS the JVM main thread — and the AWT dispose has to hop
+        // back to that same main thread, the result is a self-deadlock
+        // that even Ctrl-C can't unstick. (See the symptom in commit history:
+        // "Disposal was interrupted ... CTrayIcon.dispose ... invokeAndWait".)
+        //
+        // Fix: schedule the remove on the EDT and don't wait. Spring's
+        // destroy chain continues, JVM exits, and the OS reaps the tray
+        // icon at process termination either way.
+        final TrayIcon toRemove = trayIcon;
+        trayIcon = null;
         try {
-            SystemTray.getSystemTray().remove(trayIcon);
+            EventQueue.invokeLater(() -> {
+                try {
+                    SystemTray.getSystemTray().remove(toRemove);
+                } catch (RuntimeException e) {
+                    log.debug("Failed to remove system tray icon", e);
+                }
+            });
         } catch (RuntimeException e) {
-            log.debug("Failed to remove system tray icon", e);
-        } finally {
-            trayIcon = null;
+            log.debug("Failed to schedule tray icon removal", e);
         }
     }
 }

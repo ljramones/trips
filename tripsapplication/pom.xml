@@ -238,7 +238,18 @@
             <groupId>eu.mihosoft.vrl.jcsg</groupId>
             <artifactId>jcsg</artifactId>
             <version>0.5.7</version>
-            <!-- Equivalent to api with transitive=false: scope compile, exclude all transitives if needed, but in Maven, use exclusions for specifics -->
+            <exclusions>
+                <!--
+                  jcsg pulls in slf4j-simple, which competes with Logback for
+                  the SLF4J binding and produces the noisy "Class path contains
+                  multiple SLF4J providers" warning at startup. We use Logback
+                  everywhere; exclude the alternative.
+                -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.mihosoft.vvecmath</groupId>
