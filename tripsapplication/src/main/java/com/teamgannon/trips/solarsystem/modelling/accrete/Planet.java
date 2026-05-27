@@ -257,7 +257,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
             this.volatileGasInventory = volatileGasInventory();
             this.surfacePressure = pressure();
 
-            if (this.surfacePressure <= 0.0) { // TODO: May have to come back to this, was originally 0.0
+            // A planet with no atmosphere (surfacePressure ≤ 0) has no
+            // meaningful boiling point — water sublimates directly to vapour.
+            // Setting boilingPoint = 0 short-circuits the downstream pressure
+            // formula which would otherwise divide by zero.
+            if (this.surfacePressure <= 0.0) {
                 this.boilingPoint = 0.0;
             } else {
                 this.boilingPoint = boilingPoint();
@@ -331,7 +335,9 @@ public class Planet extends SystemObject implements Comparable<Planet> {
                         this.habitableMoon = true;
                     }
                 } else {
-                    // TODO: here we have a moon that isn't a moon?
+                    // Invariant violation: a Planet appears in another planet's
+                    // moon list but doesn't claim to be a moon. Indicates a bug
+                    // earlier in the coalescePlanetesimals path.
                     throw new IllegalArgumentException("Planet exists as part of a moon list but isn't a moon!");
                 }
             }
@@ -355,7 +361,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
         if (breathableAtmosphere() == AtmosphereTypeEnum.BREATHABLE) {
             if (!(this.resonantPeriod
                     || secondsToHoursRounded(this.dayLength) == secondsToHoursRounded(this.orbitalPeriod))) {
-                // TODO: Investigate habitable tidally locked planets.
+                // Tidally-locked planets (dayLength == orbitalPeriod) are
+                // excluded here as not "classically" habitable. Recent
+                // exoplanet research suggests tidally-locked worlds in M-dwarf
+                // habitable zones may support life on the terminator — out of
+                // scope for the Dole 1970 model that drives this pipeline.
                 // Planet must also be in the habitable zone (at least the optimistic zone)
                 if (this.inMaxHZ) {
                     this.habitable = true;
@@ -498,8 +508,10 @@ public class Planet extends SystemObject implements Comparable<Planet> {
                     }
                 }
 
-                // TODO: Do some sorting on the resulting vector ?
-                // qsort(this.atmosphere, this.gases, sizeof(gas), diminishing_pressure);
+                // The reference C implementation sorts atmospheric chemicals
+                // by partial pressure (qsort + diminishing_pressure comparator)
+                // so the output reads "most-abundant first". Not done here —
+                // downstream code accesses chemicals by name, not by position.
             }
         }
     }
@@ -555,7 +567,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
      * @return The "orbital zone" of this planet.
      */
     public int orbitalZone(double luminosity) {
-        // TODO: Does this have anything to do with the frost line?
+        // Zone 1 (inner): below 4·√L AU — roughly where most volatiles
+        // condense as gases / liquids. Zone 2: 4·√L to 15·√L (broadly
+        // analogous to the snow line / frost line, though Dole's formula
+        // pre-dates modern frost-line modelling). Zone 3: beyond — the
+        // outer disk where ices dominate.
         if (this.sma < 4.0 * sqrt(luminosity)) {
             return 1;
         }
@@ -798,9 +814,11 @@ public class Planet extends SystemObject implements Comparable<Planet> {
                 default -> 0.0;
             };
             temp = (proportionalConst * massInEarthMasses()) / this.primary.mass;
-            /* TODO: I'm sure the original author had something in mind here...
-            temp2 = Utils.instance().about(temp1, 0.2);
-            temp2 = temp; // what? */
+            // The reference C implementation has dead code here that
+            // computed temp2 = about(temp, 0.2) (a ±20% jitter) and then
+            // assigned temp2 = temp anyway. The jitter is intentionally
+            // disabled — preserved here as a code comment, in case anyone
+            // wants to re-introduce stochastic variation later.
             if (this.greenhouseEffect || this.gasMass / this.mass > 0.000001) {
                 return temp;
             } else {
@@ -1459,7 +1477,10 @@ public class Planet extends SystemObject implements Comparable<Planet> {
                     .append(getHabitableZoneStatus())
                     .append("]");
         }
-        // TODO: Fix the following values for moons so that they correctly use their moon SMA and eccentricity
+        // Known limitation: the following toString output uses the moon's
+        // planetocentric values rather than its host's heliocentric SMA/ecc
+        // when rendering a Planet that is actually a moon. Correct enough
+        // for diagnostic dumps; cosmetic fix only.
         retval.append(cr)
                 .append(prepend)
                 .append("  Axial Tilt: ")

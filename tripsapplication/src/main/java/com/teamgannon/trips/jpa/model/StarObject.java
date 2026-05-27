@@ -259,6 +259,13 @@ public class StarObject implements Serializable {
 
     // ==================== Metadata ====================
 
+    // Issue 46 follow-up: these two @Lob fields are intentionally NOT marked
+    // @Basic(fetch = LAZY). WorkbenchEnrichmentService and the edit/properties
+    // dialogs read them frequently; auditing every caller for safe lazy access
+    // is a separate pass. When that audit lands, add
+    // @Basic(fetch = FetchType.LAZY) here and enable Hibernate bytecode
+    // enhancement so the LAZY hint actually takes effect.
+
     /** Free form text field for notes */
     @Lob
     private String notes = "";

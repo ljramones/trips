@@ -108,10 +108,19 @@ public class DataSetDescriptor implements Serializable {
      */
     private Integer numberRoutes = 0;
 
-    /**
-     * the theme object stored as a json string
-     */
+    // ==================== Large JSON / aggregate fields ====================
+    //
+    // All @Lob fields below are marked @Basic(fetch = LAZY) per Issue 46:
+    // a 2M-row catalog should not pull every dataset's full JSON blob on
+    // every find. The annotation only takes effect under Hibernate bytecode
+    // enhancement (hibernate-enhance-maven-plugin) — not currently wired into
+    // the build, so today these fields are still loaded eagerly. The
+    // annotations document the intent so a future enhancement pass picks
+    // up the right defaults without re-litigating each field.
+
+    /** the theme object stored as a json string */
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     private String themeStr;
     /**
      * a container object for astrographic data
@@ -121,25 +130,24 @@ public class DataSetDescriptor implements Serializable {
      * and completely error-prone
      */
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     private String astrographicDataList;
-    /**
-     * an object describing routes
-     */
+    /** an object describing routes */
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     @Column(length = 1000)
     private String routesStr;
-    /**
-     * a set of custom data definitions
-     */
+    /** a set of custom data definitions */
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     private String customDataDefsStr;
-    /**
-     * a set of custom data values
-     */
+    /** a set of custom data values */
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     private String customDataValuesStr;
 
     @Lob
+    @Basic(fetch = jakarta.persistence.FetchType.LAZY)
     @Column(length = 1000)
     private String transitPreferencesStr;
 

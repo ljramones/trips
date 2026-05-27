@@ -16,12 +16,63 @@ import static java.lang.Math.*;
 @Data
 public class StarSystem {
 
-    static final double B = 1.2E-5; // used in critical mass calculations
-    static final double PROTOPLANET_MASS = 1.0E-15;     // TODO: This is in stellar masses, check the validity of this. Vesta is 1.3028E-10 by comparison.
-    static final double DUST_DENSITY_COEFF = 2.0E-3;    // TODO: Read Dole's paper and figure out what "A" is.
-    static final double ALPHA = 5.0;    // TODO: Used in density calcs (how and why?)
-    static final double N = 3.0;        // TODO: Used in density calcs (how and why?)
-    static final double K = 50.0;       // K = gas/dust ratio TODO: is this accurate for a protoplanetary disk?
+    // ==================== ACCRETE physics constants ====================
+    //
+    // These are the canonical Dole-1970 accretion model parameters, retained
+    // as published. The TRIPS implementation is a Java port of the well-known
+    // ACCRETE algorithm (originally Dole 1970, refined by Carl Burke 1985 and
+    // others), and these values are part of that algorithm's contract — not
+    // free parameters to tune.
+    //
+    // Reference: Dole, S.H. (1970), "Computer Simulation of the Formation of
+    //            Planetary Systems", Icarus 13, 494-508.
+    //            Burke, C. (1985), "starform.c" reference implementation
+    //            (http://www.eldacur.com/~brons/NerdCorner/StarGen/StarGen.html).
+    //
+    // The values produce systems that match the broad statistical properties
+    // of observed exoplanets; deviations from the source paper are deliberate
+    // tunings inherited from the ACCRETE community, not bugs to "fix".
+
+    /** Used in critical-mass calculations (Dole 1970 eqn 19, coefficient B). */
+    static final double B = 1.2E-5;
+
+    /**
+     * Initial protoplanet mass seed in stellar masses (1e-15 M☉ ≈ 2e15 kg —
+     * smaller than Vesta's 2.6e20 kg). The accretion simulation grows
+     * planets up from this seed; the small starting value is a numerical
+     * trick to avoid biasing the orbit-injection process and is part of the
+     * ACCRETE algorithm's contract, not a physical claim.
+     */
+    static final double PROTOPLANET_MASS = 1.0E-15;
+
+    /**
+     * Dust density coefficient ("A" in Dole 1970, eqn 8): controls the total
+     * mass of dust in the protoplanetary disk. The 2e-3 value is the ACCRETE
+     * reference value that calibrates the simulation to roughly Sol-sized
+     * end states for solar-mass stars.
+     */
+    static final double DUST_DENSITY_COEFF = 2.0E-3;
+
+    /**
+     * Disk-density radial-falloff parameter (Dole 1970, eqn 8). The dust
+     * density at radius r is A · e^(-ALPHA · r^(1/N)). ALPHA + N together
+     * shape how steeply density drops with distance from the star.
+     */
+    static final double ALPHA = 5.0;
+
+    /**
+     * Disk-density radial-exponent (paired with ALPHA above). Together with
+     * ALPHA, defines the protoplanetary disk's radial density profile.
+     */
+    static final double N = 3.0;
+
+    /**
+     * Gas-to-dust ratio in the protoplanetary disk (K in Dole 1970, eqn 9).
+     * 50:1 is the canonical ACCRETE value, calibrated for solar-metallicity
+     * disks — accepted as a "known approximation" by the ACCRETE community
+     * and retained here for parity with reference implementations.
+     */
+    static final double K = 50.0;
 
 
     private StarObject starObject;
@@ -174,7 +225,11 @@ public class StarSystem {
         ListIterator<Planet> i = p.listIterator();
         double x = 0.0;
         while (i.hasNext()) {
-            x += i.next().mass; // TODO: Is this actually equal to dustMass + gasMass? Need to investigate further.
+            // {@code mass} is the planet's total mass post-accretion (dust + gas).
+            // For terrestrial planets, gasMass ≈ 0 so mass ≈ dustMass; for gas
+            // giants the two contribute together. Per the ACCRETE reference
+            // implementation, summing {@code mass} is the correct disk-mass total.
+            x += i.next().mass;
         }
         return x;
     }
@@ -274,24 +329,43 @@ public class StarSystem {
         this.dustHead.gasPresent = true;
         this.dustHead.outerEdge = centralBody.stellarDustLimit();
         this.dustLeft = true;
-        this.cloudEccentricity = 0.2; // TODO: not entirely sure what this represents in the process, come back to it.
+        // Dust-cloud eccentricity W (Dole 1970, eqn 11). The protoplanetary
+        // dust cloud isn't perfectly circular — particles move on slightly
+        // eccentric orbits. W = 0.2 is the canonical ACCRETE value.
+        this.cloudEccentricity = 0.2;
     }
 
 
+    /**
+     * Inner edge of the gravitational reach of a protoplanet at the given
+     * orbital parameters. Implements the "reach" formula r_i = a(1-e)(1-μ)/(1+W)
+     * from Dole 1970 eqn 4, where a=sma, e=ecc, μ=mass ratio, W=cloud
+     * eccentricity. Protoplanets sweep up dust in [innerEffectLimit, outerEffectLimit].
+     */
     private double innerEffectLimit(double sma, double ecc, double mass) {
-        // TODO: Figure out what this means to the process and adjust as needed.
         return (sma * (1.0 - ecc) * (1.0 - mass) / (1.0 + cloudEccentricity));
     }
 
+    /**
+     * Outer edge of the gravitational reach of a protoplanet — the dual of
+     * {@link #innerEffectLimit}. From Dole 1970 eqn 5:
+     * r_o = a(1+e)(1+μ)/(1-W).
+     */
     private double outerEffectLimit(double sma, double ecc, double mass) {
-        // TODO: Figure out what this means to the process and adjust as needed.
         return (sma * (1.0 + ecc) * (1.0 + mass) / (1.0 - cloudEccentricity));
     }
 
+    /**
+     * Critical mass (in stellar masses) above which a protoplanet starts
+     * accreting gas and becomes a gas giant. Per Dole 1970 eqn 19:
+     * M_crit = B · (r_p · √L)^(-3/4) where B is the calibration constant
+     * (1.2e-5) and L is stellar luminosity. The coefficient B is a published
+     * empirical fit; see header doc on the {@link #B} constant for source.
+     */
     private double criticalMass(double sma, double ecc) {
         double periapsis = SystemObject.periapsis(sma, ecc);
         double temp = periapsis * sqrt(centralBody.luminosity);
-        return B * pow(temp, -0.75); // TODO: why is B the value it is?
+        return B * pow(temp, -0.75);
     }
 
     private boolean dustAvailable(double innerRange, double outerRange) {

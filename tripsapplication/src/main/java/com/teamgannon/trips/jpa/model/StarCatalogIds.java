@@ -91,8 +91,13 @@ public class StarCatalogIds implements Serializable {
     /**
      * Comma-separated list of all catalog IDs.
      * One object has names in many catalogs.
+     * <p>
+     * Marked LAZY per Issue 46 — only read when the star-detail dialog
+     * inflates a multi-catalog list. Advisory until Hibernate bytecode
+     * enhancement is enabled.
      */
     @Lob
+    @jakarta.persistence.Basic(fetch = jakarta.persistence.FetchType.LAZY)
     private String catalogIdList = "";
 
     /**

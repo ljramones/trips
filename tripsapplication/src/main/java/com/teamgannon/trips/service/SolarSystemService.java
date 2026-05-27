@@ -238,16 +238,21 @@ public class SolarSystemService {
     }
 
     /**
-     * Create a solar system from a StarDisplayRecord.
+     * Create a solar system from a {@link StarDisplayRecord}.
+     * <p>
+     * Returns {@code Optional.empty()} if no {@link StarObject} can be loaded
+     * for the record's id (Issue 39 — previously returned null, leaving
+     * callers to either crash on NPE or add defensive null-checks that
+     * obscured intent).
      */
     @Transactional
-    public SolarSystem createSolarSystem(StarDisplayRecord starRecord) {
+    public Optional<SolarSystem> createSolarSystem(StarDisplayRecord starRecord) {
         Optional<StarObject> star = starObjectRepository.findById(starRecord.getRecordId());
         if (star.isEmpty()) {
             log.error("Cannot create solar system - star not found: {}", starRecord.getRecordId());
-            return null;
+            return Optional.empty();
         }
-        return createSolarSystem(star.get());
+        return Optional.of(createSolarSystem(star.get()));
     }
 
     /**
@@ -422,18 +427,19 @@ public class SolarSystemService {
      * Find a planet named "Jupiter" or similar in the given solar system.
      *
      * @param solarSystemId the solar system ID
-     * @return the Jupiter planet, or null if not found
+     * @return the Jupiter-equivalent planet, or {@link Optional#empty()} if
+     *         no jovian-mass body is found (Issue 39 — was {@code null}).
      */
-    public ExoPlanet findJupiterInSystem(String solarSystemId) {
+    public Optional<ExoPlanet> findJupiterInSystem(String solarSystemId) {
         List<ExoPlanet> planets = exoPlanetRepository.findBySolarSystemId(solarSystemId);
         for (ExoPlanet planet : planets) {
             String name = planet.getName();
             if (name != null && (name.toLowerCase().contains("jupiter") ||
                     (name.toLowerCase().endsWith(" e") && planet.getMass() != null && planet.getMass() > 100))) {
-                return planet;
+                return Optional.of(planet);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     // ==================== Generated Planet Persistence ====================
