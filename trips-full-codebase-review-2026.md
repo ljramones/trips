@@ -179,7 +179,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/resources/application.yml (Hibernate `ddl-auto: update`)
 - **Description**: No migration tool (Flyway/Liquibase). Per project memory, phase 18 abandoned the `series` column on the spaceship entity and phase 12 added `availablePropellantTons` with no backfill — `ddl-auto: update` adds columns but never drops or backfills. Schema drift accumulates silently; old rows lie about their feasibility status.
 - **Suggestion**: Adopt Flyway. Baseline the current schema. Add migrations for every entity addition going forward. Switch `ddl-auto` to `validate` in non-dev profiles. Write a one-time cleanup migration to drop confirmed-orphan columns.
-- **Status**: open
+- **Status**: done (Phase 0) — Flyway adopted; `V1__baseline.sql` captures the 17-table baseline; `V2__normalize_star_obj_mass_to_solar.sql`, `V3__drop_spaceship_design_series.sql`, `V4__backfill_transfer_plan_available_propellant.sql` clean up the historical drift; `application-prod.yml` switches `ddl-auto` to `validate`; `FlywayBaselineSmokeTest` permanent regression guard.
 
 ### Issue 14 -- Severity: bug (high)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/config/application/TripsContext.java:74,118-127 (and ~113 injection sites)
@@ -218,7 +218,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
   - `controller/MainSplitPaneManager.java` — 670 lines (no dedicated test)
 - **Description**: Each does too much; testing & refactor become high-risk. `SolPlanetsInitializer` is the worst architecturally: it treats Sol as a magical special case bypassing the procedural pipeline.
 - **Suggestion**: Decompose one per sprint (see Remediation Plan §4). For Sol specifically, unify with procedural generation via an `ISolarSystemFactory` so it follows the same lifecycle as everything else.
-- **Status**: open
+- **Status**: partial (Phase 4) — substantial decomposition of 9 of 9 god classes shipped. Current line counts: `SolarSystemRenderer` 1,020 (was 2,004, -49%), `ProceduralPlanetViewerDialog` 1,508 (was 1,936, -22%), `WorkbenchEnrichmentService` 1,272 (was 1,832, -31%), `DataWorkbenchController` 1,581 (was 1,706, -7%), `JavaFxPlanetMeshConverter` 1,523 (was 1,644, -7%), `SolPlanetsInitializer` 1,354 (was 1,410, -4%), `PlanetarySkyRenderer` 889 (was 1,204, -26%), `SolarSystemService` 675 (was 793, -15%), `MainSplitPaneManager` 598 (was 670, -11%; coordinator extraction in Phase 7.14). The Sol-specific "unify with procedural via `ISolarSystemFactory`" suggestion is a deeper data-model refactor and remains open — the Sol initializer file still embeds hand-curated astronomical data that hasn't been routed through the procedural pipeline.
 
 ### Issue 19 -- Severity: suggestion (architecture)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/splitting/RouteEventHandler.java:80-108 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/* ; tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java (event listeners)
@@ -230,7 +230,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/graphics/panes/SolarSystemSpacePane.java (constructor — 8 args per phase 8 memory)
 - **Description**: The spaceshipmodeller module's intended boundary is slipping. `SolarSystemSpacePane` now directly injects `SpaceshipService`, `TransferPlannerBridge`, and `TransferPlannerLauncher`. The module is no longer self-contained — the core view code depends on a feature module.
 - **Suggestion**: Invert: have spaceshipmodeller listen for a `TransferTargetRequestedEvent` published by `SolarSystemSpacePane`, and publish `TransferPlanCreatedEvent` / `ShowTransferTrajectoryEvent` back. Remove the direct service refs from the pane constructor.
-- **Status**: open
+- **Status**: done (Phase 3.4) — `SolarSystemSpacePane` ctor reduced from 8 args to 5 (only `TripsContext`, `ApplicationEventPublisher`, `DatabaseManagementService`, `SolarSystemService`, `SolarSystemContextMenuFactory`). `RequestTransferPlanningEvent` + `TransferPlanningCoordinator` decouple the pane from `SpaceshipService` / `TransferPlannerBridge` / `TransferPlannerLauncher`.
 
 ### Issue 21 -- Severity: suggestion (architecture)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java ; tripsapplication/src/main/java/com/teamgannon/trips/nebula/dialogs/NebulaEditorDialog.java ; vs FxWeaver-loaded controllers elsewhere
@@ -272,7 +272,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:319 ; tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/SparseTransitComputor.java:33,144
 - **Description**: `LargeGraphSearchTask` calls `shutdown()` in `finally` but never `awaitTermination()` — worker threads can outlive the Task. `SparseTransitComputor` creates a fresh `Executors.newFixedThreadPool(getNumCores())` per instance; multiple concurrent searches stack non-daemon pools that block JVM exit.
 - **Suggestion**: Use one shared, daemon-threaded executor for graph search. Always `shutdown()` + `awaitTermination(timeout)` + `shutdownNow()` fallback. Clear `sparseTransitList` and `collisionSet` in `finally` to release ~5 M-edge graph memory.
-- **Status**: open
+- **Status**: done (Phase 2.2/2.3) — both `LargeGraphSearchTask` and `SparseTransitComputor` now use `Executors.newFixedThreadPool` with a daemon thread factory and call `shutdown()` + `awaitTermination(SHUTDOWN_AWAIT_SECONDS)` + `shutdownNow()` fallback on completion. Worker threads no longer block JVM exit.
 
 ### Issue 28 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/BulkLoadService.java:63 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/factories/DataSetDescriptorFactory.java:91
