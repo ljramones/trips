@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -31,6 +32,15 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
     private final TextField decTextField = new TextField();
     private final TextField distanceTextField = new TextField();
 
+    {
+        raTextField.setPromptText("decimal degrees, 0 to 360, e.g. 180.5");
+        raTextField.setTooltip(new Tooltip("Right ascension in decimal degrees"));
+        decTextField.setPromptText("decimal degrees, -90 to 90, e.g. -30.2");
+        decTextField.setTooltip(new Tooltip("Declination in decimal degrees"));
+        distanceTextField.setPromptText("light-years, e.g. 10.5");
+        distanceTextField.setTooltip(new Tooltip("Distance from Sol in light-years"));
+    }
+
     private final Label xLabel = new Label("0.0");
     private final Label yLabel = new Label("0.0");
     private final Label zLabel = new Label("0.0");
@@ -43,6 +53,12 @@ public class RADecToXYZDialog extends Dialog<RADecXYZObject> {
         this.setTitle("Calculate the Coordinates from RA, Declination, Distance");
         this.setHeight(600);
         this.setWidth(500);
+        getDialogPane().setAccessibleText("RA Dec to XYZ converter");
+        getDialogPane().setAccessibleHelp("Convert equatorial coordinates (right ascension, declination, distance) into Cartesian X/Y/Z");
+
+        raTextField.setAccessibleText("Right ascension input, decimal degrees");
+        decTextField.setAccessibleText("Declination input, decimal degrees");
+        distanceTextField.setAccessibleText("Distance input, light-years");
 
         Insets insets1 = new Insets(6.0, 6.0, 6.0, 6.0);
 

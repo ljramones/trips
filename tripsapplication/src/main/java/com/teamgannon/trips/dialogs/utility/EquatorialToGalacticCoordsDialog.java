@@ -26,6 +26,21 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
     private final TextField galY = new TextField();
     private final TextField galZ = new TextField();
 
+    {
+        equX.setPromptText("light-years, e.g. 4.37");
+        equX.setTooltip(new Tooltip("Equatorial Cartesian X coordinate, light-years"));
+        equY.setPromptText("light-years");
+        equY.setTooltip(new Tooltip("Equatorial Cartesian Y coordinate, light-years"));
+        equZ.setPromptText("light-years");
+        equZ.setTooltip(new Tooltip("Equatorial Cartesian Z coordinate, light-years"));
+        galX.setPromptText("light-years (galactic frame)");
+        galX.setTooltip(new Tooltip("Galactic Cartesian X coordinate, light-years"));
+        galY.setPromptText("light-years (galactic frame)");
+        galY.setTooltip(new Tooltip("Galactic Cartesian Y coordinate, light-years"));
+        galZ.setPromptText("light-years (galactic frame)");
+        galZ.setTooltip(new Tooltip("Galactic Cartesian Z coordinate, light-years"));
+    }
+
     private final RadioButton radioButton1 = new RadioButton("J1950");
     private final RadioButton radioButton2 = new RadioButton("J2000");
     private final ToggleGroup radioGroup = new ToggleGroup();
@@ -37,6 +52,17 @@ public class EquatorialToGalacticCoordsDialog extends Dialog<Boolean> {
         this.setTitle("Calculate between Equatorial and Galactic Coordinates");
         this.setHeight(600);
         this.setWidth(800);
+        getDialogPane().setAccessibleText("Equatorial to galactic converter");
+        getDialogPane().setAccessibleHelp("Convert Cartesian coordinates between equatorial and galactic frames at J1950 or J2000 epochs");
+
+        equX.setAccessibleText("Equatorial X, light-years");
+        equY.setAccessibleText("Equatorial Y, light-years");
+        equZ.setAccessibleText("Equatorial Z, light-years");
+        galX.setAccessibleText("Galactic X, light-years");
+        galY.setAccessibleText("Galactic Y, light-years");
+        galZ.setAccessibleText("Galactic Z, light-years");
+        radioButton1.setAccessibleHelp("Use the J1950 epoch for the conversion");
+        radioButton2.setAccessibleHelp("Use the J2000 epoch for the conversion");
 
         Insets insets1 = new Insets(6.0, 6.0, 6.0, 6.0);
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);

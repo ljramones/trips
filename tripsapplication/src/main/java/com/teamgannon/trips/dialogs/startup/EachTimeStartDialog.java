@@ -15,6 +15,10 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
 
     public EachTimeStartDialog() {
 
+        setTitle("Welcome to TRIPS");
+        getDialogPane().setAccessibleText("TRIPS startup tip");
+        getDialogPane().setAccessibleHelp("Quick start guide shown on startup");
+
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 15);
 
         VBox vBox = new VBox();
@@ -33,6 +37,7 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
                         """
         ));
         vBox.getChildren().add(new Separator());
+        onStartup.setAccessibleHelp("If checked, this startup tip will not appear next time");
         vBox.getChildren().add(onStartup);
 
         HBox hBox = new HBox();
@@ -40,6 +45,7 @@ public class EachTimeStartDialog extends Dialog<Boolean> {
         vBox.getChildren().add(hBox);
 
         Button dismissButton = new Button("Dismiss");
+        dismissButton.setAccessibleHelp("Close this startup tip");
         dismissButton.setOnAction(this::dismiss);
         hBox.getChildren().add(dismissButton);
 

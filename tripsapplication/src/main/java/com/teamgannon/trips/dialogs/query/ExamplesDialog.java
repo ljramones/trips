@@ -20,6 +20,8 @@ public class ExamplesDialog extends Dialog<Boolean> {
 
     public ExamplesDialog(List<String> examples) {
         setTitle("SQL Examples");
+        getDialogPane().setAccessibleText("SQL examples");
+        getDialogPane().setAccessibleHelp("Sample SQL queries you can copy as starting points");
 
         String text = examples.stream().map(item -> item + "\n").collect(Collectors.joining());
         Font font = Font.font("Verdana", FontWeight.BOLD, FontPosture.REGULAR, 13);
@@ -28,6 +30,8 @@ public class ExamplesDialog extends Dialog<Boolean> {
         this.getDialogPane().setContent(vBox);
 
         TextArea examplesTextArea = new TextArea();
+        examplesTextArea.setAccessibleText("Example SQL queries, read-only");
+        examplesTextArea.setEditable(false);
         vBox.getChildren().add(examplesTextArea);
         examplesTextArea.setText(text);
 
@@ -35,6 +39,7 @@ public class ExamplesDialog extends Dialog<Boolean> {
         hBox.setAlignment(Pos.CENTER);
         vBox.getChildren().add(hBox);
         Button dismissBtn = new Button("Dismiss");
+        dismissBtn.setAccessibleHelp("Close the examples dialog");
         dismissBtn.setOnAction(this::close);
         hBox.getChildren().add(dismissBtn);
 

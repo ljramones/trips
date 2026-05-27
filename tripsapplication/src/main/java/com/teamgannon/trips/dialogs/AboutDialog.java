@@ -23,6 +23,10 @@ public class AboutDialog extends Dialog<String> {
 
     public AboutDialog(@NotNull Localization localization) {
 
+        setTitle("About TRIPS");
+        getDialogPane().setAccessibleText("About TRIPS");
+        getDialogPane().setAccessibleHelp("Application metadata: name, contributors, version, and data directory");
+
         VBox vBox = new VBox();
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
@@ -66,6 +70,7 @@ public class AboutDialog extends Dialog<String> {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         Button resetBtn = new Button("Close");
+        resetBtn.setAccessibleHelp("Close the About dialog");
         resetBtn.setOnAction(this::cancel);
         hBox.getChildren().add(resetBtn);
         vBox.getChildren().add(hBox);

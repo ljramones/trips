@@ -69,6 +69,8 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
         setTitle("Manage Nebulae - " + datasetName);
         setWidth(750);
         setHeight(450);
+        getDialogPane().setAccessibleText("Manage nebulae for " + datasetName);
+        getDialogPane().setAccessibleHelp("Add, edit, duplicate, or delete nebulae in the current dataset");
 
         VBox vBox = new VBox(10);
         vBox.setPadding(new Insets(10));
@@ -98,6 +100,7 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
             typeFilter.getItems().add(type.getDisplayName());
         }
         typeFilter.setValue("All Types");
+        typeFilter.setAccessibleText("Filter nebulae by type");
         typeFilter.setOnAction(e -> filterByType(typeFilter.getValue()));
 
         Label filterLabel = new Label("Filter:");
@@ -168,6 +171,8 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
 
         // Set placeholder
         tableView.setPlaceholder(new Label("No nebulae in this dataset"));
+        tableView.setAccessibleText("Nebulae in this dataset");
+        tableView.setAccessibleHelp("Select a nebula to enable Edit, Duplicate, and Delete");
 
         // Selection model
         TableView.TableViewSelectionModel<Nebula> selectionModel = tableView.getSelectionModel();
@@ -195,17 +200,21 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
         buttonBox.setAlignment(Pos.CENTER);
 
         Button addButton = new Button("Add New...");
+        addButton.setAccessibleHelp("Open the editor to create a new nebula");
         addButton.setOnAction(this::addNebula);
         buttonBox.getChildren().add(addButton);
 
+        editButton.setAccessibleHelp("Edit the selected nebula");
         editButton.setOnAction(this::editNebula);
         editButton.setDisable(true);
         buttonBox.getChildren().add(editButton);
 
+        duplicateButton.setAccessibleHelp("Make a copy of the selected nebula");
         duplicateButton.setOnAction(this::duplicateNebula);
         duplicateButton.setDisable(true);
         buttonBox.getChildren().add(duplicateButton);
 
+        deleteButton.setAccessibleHelp("Delete the selected nebula after confirmation");
         deleteButton.setOnAction(this::deleteNebula);
         deleteButton.setDisable(true);
         buttonBox.getChildren().add(deleteButton);
@@ -214,6 +223,7 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
         buttonBox.getChildren().add(new Separator());
 
         Button closeButton = new Button("Close");
+        closeButton.setAccessibleHelp("Close the nebula manager");
         closeButton.setOnAction(this::handleCloseButton);
         buttonBox.getChildren().add(closeButton);
 

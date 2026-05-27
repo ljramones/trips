@@ -75,6 +75,8 @@ public class ScriptDialog extends Dialog<Boolean> {
         this.setTitle("Script Editor");
         this.setWidth(500);
         this.setHeight(700);
+        getDialogPane().setAccessibleText("Script editor");
+        getDialogPane().setAccessibleHelp("Edit and run Groovy or Python scripts against the loaded dataset");
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
 
@@ -281,10 +283,16 @@ public class ScriptDialog extends Dialog<Boolean> {
     private Pane createScriptPane() {
         GridPane scriptBox = new GridPane();
         programTextArea.setWrapText(true);
+        programTextArea.setPromptText("Enter Groovy or Python script — pick the engine below before running");
+        programTextArea.setTooltip(new Tooltip("Editable script source. Use the engine toggles to switch between Groovy and Python."));
+        programTextArea.setAccessibleText("Script source code editor");
         scriptBox.add(new Label("Program code"), 0, 0);
         scriptBox.add(programTextArea, 0, 1);
         outputTextArea.setWrapText(true);
         outputTextArea.setDisable(true);
+        outputTextArea.setPromptText("Script output and errors appear here after Run");
+        outputTextArea.setTooltip(new Tooltip("Read-only log of the last script execution"));
+        outputTextArea.setAccessibleText("Script execution output, read-only");
         scriptBox.add(new Label("Log Output"), 1, 0);
 
         scriptBox.add(outputTextArea, 1, 1);

@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -17,9 +18,16 @@ public class StarNotesDialog extends Dialog<String> {
     private final TextArea notesArea = new TextArea();
 
     public StarNotesDialog(String notesData) {
+        setTitle("Star notes");
+        getDialogPane().setAccessibleText("Edit star notes");
+        getDialogPane().setAccessibleHelp("Free-form annotations attached to this star");
+
         VBox vBox = new VBox();
 
+        notesArea.setAccessibleText("Notes editor");
         notesArea.setText(notesData);
+        notesArea.setPromptText("Free-form notes about this star (binary, variable, recent observation, etc.)");
+        notesArea.setTooltip(new Tooltip("Notes are saved with the star and survive dataset exports"));
 
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(10, 10, 10, 10));
@@ -34,10 +42,12 @@ public class StarNotesDialog extends Dialog<String> {
         hBox.setAlignment(Pos.CENTER);
 
         Button resetBtn = new Button("Cancel");
+        resetBtn.setAccessibleHelp("Discard note changes");
         resetBtn.setOnAction(this::cancelClicked);
         hBox.getChildren().add(resetBtn);
 
         Button addBtn = new Button("Save");
+        addBtn.setAccessibleHelp("Save notes back to the star");
         addBtn.setOnAction(this::saveClicked);
         hBox.getChildren().add(addBtn);
 

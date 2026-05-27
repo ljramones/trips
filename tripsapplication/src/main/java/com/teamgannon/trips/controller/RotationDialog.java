@@ -5,6 +5,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -31,6 +32,21 @@ public class RotationDialog extends Dialog<Boolean> {
     private final Button negY = new Button("-");
     private final Button negZ = new Button("-");
 
+    {
+        xAngleTextField.setAccessibleText("X rotation angle in degrees");
+        yAngleTextField.setAccessibleText("Y rotation angle in degrees");
+        zAngleTextField.setAccessibleText("Z rotation angle in degrees");
+        plusX.setAccessibleText("Increase X angle by 5 degrees");
+        negX.setAccessibleText("Decrease X angle by 5 degrees");
+        plusY.setAccessibleText("Increase Y angle by 5 degrees");
+        negY.setAccessibleText("Decrease Y angle by 5 degrees");
+        plusZ.setAccessibleText("Increase Z angle by 5 degrees");
+        negZ.setAccessibleText("Decrease Z angle by 5 degrees");
+        setAnglesButton.setAccessibleHelp("Apply the entered angles to the 3D view");
+        resetButton.setAccessibleHelp("Reset to the default viewing angles");
+        dismissButton.setAccessibleHelp("Close this dialog");
+    }
+
     private double angleX = 0;
     private double angleY = 0;
     private double angleZ = 0;
@@ -40,6 +56,10 @@ public class RotationDialog extends Dialog<Boolean> {
 
         this.rotationController = rotationController;
 
+        setTitle("Rotate View");
+        getDialogPane().setAccessibleText("Rotate view");
+        getDialogPane().setAccessibleHelp("Adjust the X, Y, and Z viewing angles in degrees");
+
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
 
@@ -47,6 +67,8 @@ public class RotationDialog extends Dialog<Boolean> {
         vBox.getChildren().add(gridPane);
 
         xAngleTextField.setText(Double.toString(angleX));
+        xAngleTextField.setPromptText("degrees, e.g. 90");
+        xAngleTextField.setTooltip(new Tooltip("Rotation around the X axis, in degrees"));
         gridPane.add(new Label("X Angle"), 0, 0);
         gridPane.add(xAngleTextField, 1, 0);
         gridPane.add(negX, 2, 0);
@@ -56,6 +78,8 @@ public class RotationDialog extends Dialog<Boolean> {
         plusX.setOnAction(this::plusXaction);
 
         yAngleTextField.setText(Double.toString(angleY));
+        yAngleTextField.setPromptText("degrees, e.g. 0");
+        yAngleTextField.setTooltip(new Tooltip("Rotation around the Y axis, in degrees"));
         gridPane.add(new Label("Y Angle"), 0, 1);
         gridPane.add(yAngleTextField, 1, 1);
         gridPane.add(negY, 2, 1);
@@ -65,6 +89,8 @@ public class RotationDialog extends Dialog<Boolean> {
         plusY.setOnAction(this::plusYaction);
 
         zAngleTextField.setText(Double.toString(angleZ));
+        zAngleTextField.setPromptText("degrees, e.g. 30");
+        zAngleTextField.setTooltip(new Tooltip("Rotation around the Z axis, in degrees"));
         gridPane.add(new Label("Z Angle"), 0, 2);
         gridPane.add(zAngleTextField, 1, 2);
         gridPane.add(negZ, 2, 2);
