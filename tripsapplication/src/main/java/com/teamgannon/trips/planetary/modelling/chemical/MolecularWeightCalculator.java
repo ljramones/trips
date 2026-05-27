@@ -57,14 +57,20 @@ public class MolecularWeightCalculator {
      */
     @PostConstruct
     public void loadElements() {
-        try {
-            elementCountPattern = Pattern.compile(elementCount);
-            elementPattern = Pattern.compile(element);
+        elementCountPattern = Pattern.compile(elementCount);
+        elementPattern = Pattern.compile(element);
 
-            // Path.of(...).resolve(...) inserts a separator even when programdata
-            // has no trailing slash — bare String concat produced bogus paths
-            // like ".../programdatamolecularWeight.csv".
-            File file = Path.of(localization.getProgramdata()).resolve("molecularWeight.csv").toFile();
+        // Path.of(...).resolve(...) inserts a separator even when programdata
+        // has no trailing slash.
+        File file = Path.of(localization.getProgramdata()).resolve("molecularWeight.csv").toFile();
+        if (!file.exists()) {
+            // Optional data file — molecular weight lookups just won't work.
+            // Don't log a stack trace for the first-run case.
+            log.warn("Molecular weight data file not found at {} — atmospheric chemistry calculations will be unavailable. "
+                    + "Install the optional data bundle to enable this feature.", file);
+            return;
+        }
+        try {
             List<AtomicElement> beans = new CsvToBeanBuilder(new FileReader(file))
                     .withType(AtomicElement.class)
                     .build()
@@ -73,9 +79,11 @@ public class MolecularWeightCalculator {
                 elementMap.put(element.getSymbol(), element);
             }
             MolecularSpecies molecularSpecies = getMolecularWeight("C12H26");
-            log.info("\n\n\nC12H26 = {}", molecularSpecies);
+            log.info("Atomic-element table loaded; C12H26 = {}", molecularSpecies);
         } catch (FileNotFoundException e) {
-            log.error("file not found", e);
+            // File existed when we checked but disappeared between exists() and
+            // open — that's a real I/O race worth a full stack trace.
+            log.error("Failed to read molecular weight data from {}", file, e);
         }
     }
 

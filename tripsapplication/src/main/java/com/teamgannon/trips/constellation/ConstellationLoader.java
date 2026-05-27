@@ -32,6 +32,15 @@ public class ConstellationLoader {
     @PostConstruct
     public void initialize() {
         Path file = Paths.get(localization.getProgramdata(), "constellation.csv");
+        if (!Files.exists(file)) {
+            // Optional data file — constellation names just won't be available
+            // in tooltips. Don't flood the log with a stack trace for the
+            // expected first-run case where the user hasn't installed the
+            // optional data bundle.
+            log.warn("Constellation data file not found at {} — constellation names will be unavailable. "
+                    + "Install the optional data bundle to enable this feature.", file);
+            return;
+        }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             List<Constellation> constellationList = new CsvToBeanBuilder(reader)
                     .withType(Constellation.class)
@@ -42,6 +51,8 @@ public class ConstellationLoader {
             }
             log.info("Constellation map loaded from {}", file);
         } catch (IOException e) {
+            // File existed at the exists() check but failed to read — that's
+            // a real I/O problem worth a full stack trace.
             log.error("Failed to read constellation data from {}: {}", file, e.getMessage(), e);
         } catch (RuntimeException e) {
             log.error("Failed to parse constellation data from {}: {}", file, e.getMessage(), e);

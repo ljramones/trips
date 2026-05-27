@@ -58,8 +58,16 @@ public class SolSolarSystem {
     }
 
     private void loadComets() {
+        // NB: method-vs-CSV naming has been swapped here since forever — this
+        // method loads "solarSystemPlanets.csv" into planetMap. Names of the
+        // two methods are preserved to keep call-site behaviour stable.
+        File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("solarSystemPlanets.csv").toFile();
+        if (!file.exists()) {
+            log.warn("Sol planet data file not found at {} — Sol-system planet details will be unavailable. "
+                    + "Install the optional data bundle to enable this feature.", file);
+            return;
+        }
         try {
-            File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("solarSystemPlanets.csv").toFile();
             List<SolSolarSystemPlanetModel> planets = new CsvToBeanBuilder(new FileReader(file))
                     .withType(SolSolarSystemPlanetModel.class)
                     .build()
@@ -67,15 +75,20 @@ public class SolSolarSystem {
             for (SolSolarSystemPlanetModel planet : planets) {
                 planetMap.put(planet.getName(), planet);
             }
-            log.info("\n\nsolar system loaded\n\n");
+            log.info("Sol planet map loaded ({} entries)", planetMap.size());
         } catch (FileNotFoundException e) {
-            log.error("file not found", e);
+            log.error("Failed to read Sol planet data from {}", file, e);
         }
     }
 
     private void loadPlanets() {
+        File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("cometParameters.csv").toFile();
+        if (!file.exists()) {
+            log.warn("Sol comet data file not found at {} — Sol-system comet details will be unavailable. "
+                    + "Install the optional data bundle to enable this feature.", file);
+            return;
+        }
         try {
-            File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("cometParameters.csv").toFile();
             List<SolSolarSystemCometModel> comets = new CsvToBeanBuilder(new FileReader(file))
                     .withType(SolSolarSystemCometModel.class)
                     .build()
@@ -83,9 +96,9 @@ public class SolSolarSystem {
             for (SolSolarSystemCometModel cometModel : comets) {
                 cometMap.put(cometModel.getName(), cometModel);
             }
-            log.info("\n\nComet list loaded\n\n");
+            log.info("Sol comet map loaded ({} entries)", cometMap.size());
         } catch (FileNotFoundException e) {
-            log.error("file not found", e);
+            log.error("Failed to read Sol comet data from {}", file, e);
         }
     }
 

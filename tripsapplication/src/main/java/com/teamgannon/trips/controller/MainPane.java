@@ -263,11 +263,20 @@ public class MainPane  {
         // Path.of(...).resolve(...) handles the trailing-slash situation safely;
         // raw string concat had been producing ".../programdatatripsicon.png".
         File imageFileIcon = java.nio.file.Path.of(localization.getProgramdata()).resolve("tripsicon.png").toFile();
-        try (FileInputStream fis = new FileInputStream(imageFileIcon)) {
-            Image applicationIcon = new Image(fis);
-            primaryStage.getIcons().add(applicationIcon);
-        } catch (IOException e) {
-            log.error("Failed to load application icon from {}", imageFileIcon, e);
+        if (imageFileIcon.exists()) {
+            try (FileInputStream fis = new FileInputStream(imageFileIcon)) {
+                Image applicationIcon = new Image(fis);
+                primaryStage.getIcons().add(applicationIcon);
+            } catch (IOException e) {
+                // File existed when we checked but failed to open — real I/O
+                // problem worth a stack trace.
+                log.error("Failed to load application icon from {}", imageFileIcon, e);
+            }
+        } else {
+            // First-run / data-bundle-not-installed case. The window just
+            // gets the default JavaFX icon; not worth a stack trace.
+            log.warn("Application icon not found at {} — using JavaFX default. "
+                    + "Install the optional data bundle to enable the TRIPS icon.", imageFileIcon);
         }
 
         awtSystemTrayService.installTrayIcon();
