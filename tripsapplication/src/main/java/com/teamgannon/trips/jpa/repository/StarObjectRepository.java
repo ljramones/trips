@@ -54,8 +54,19 @@ public interface StarObjectRepository
 
     /**
      * Find all stars in a dataset ordered by display name.
+     * <p>
+     * Bulk variant — fine for transit/route computation across the whole
+     * dataset; unsafe for UI tables on a 2M-row catalog. Prefer
+     * {@link #findByDataSetNameOrderByDisplayName(String, Pageable)} for
+     * bounded callers.
      */
     List<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName);
+
+    /**
+     * Paginated variant of {@link #findByDataSetNameOrderByDisplayName(String)}
+     * — preferred for UI tables and search dialogs (Issue 24).
+     */
+    Page<StarObject> findByDataSetNameOrderByDisplayName(String dataSetName, Pageable page);
 
     /**
      * Delete all stars in a dataset.
@@ -226,11 +237,25 @@ public interface StarObjectRepository
             @Param("dataSetName") String dataSetName,
             @Param("nameMatch") String nameMatch);
 
+    /** Paginated variant (Issue 24) — preferred for search-dialog tables. */
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND LOWER(s.displayName) LIKE LOWER(CONCAT('%', :nameMatch, '%'))\
+           """)
+    Page<StarObject> findByDisplayNameContaining(
+            @Param("dataSetName") String dataSetName,
+            @Param("nameMatch") String nameMatch,
+            Pageable page);
+
     /**
      * Find stars by partial common name match.
      */
     @Query("SELECT s FROM STAR_OBJ s WHERE LOWER(s.commonName) LIKE LOWER(CONCAT('%', :commonName, '%'))")
     List<StarObject> findByCommonNameContaining(@Param("commonName") String commonName);
+
+    /** Paginated variant (Issue 24). */
+    @Query("SELECT s FROM STAR_OBJ s WHERE LOWER(s.commonName) LIKE LOWER(CONCAT('%', :commonName, '%'))")
+    Page<StarObject> findByCommonNameContaining(@Param("commonName") String commonName, Pageable page);
 
     /**
      * Find stars by partial common name match in a dataset.
@@ -242,6 +267,16 @@ public interface StarObjectRepository
     List<StarObject> findByCommonNameContaining(
             @Param("dataSetName") String dataSetName,
             @Param("commonName") String commonName);
+
+    /** Paginated variant (Issue 24). */
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND LOWER(s.commonName) LIKE LOWER(CONCAT('%', :commonName, '%'))\
+           """)
+    Page<StarObject> findByCommonNameContaining(
+            @Param("dataSetName") String dataSetName,
+            @Param("commonName") String commonName,
+            Pageable page);
 
     /**
      * Find star by display name (case insensitive, returns first match).
@@ -255,6 +290,9 @@ public interface StarObjectRepository
      */
     List<StarObject> findByConstellationName(String constellationName);
 
+    /** Paginated variant (Issue 24). */
+    Page<StarObject> findByConstellationName(String constellationName, Pageable page);
+
     /**
      * Find stars by constellation name in a dataset.
      */
@@ -266,6 +304,16 @@ public interface StarObjectRepository
             @Param("dataSetName") String dataSetName,
             @Param("constellationName") String constellationName);
 
+    /** Paginated variant (Issue 24). */
+    @Query("""
+           SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName \
+           AND s.constellationName = :constellationName\
+           """)
+    Page<StarObject> findByConstellation(
+            @Param("dataSetName") String dataSetName,
+            @Param("constellationName") String constellationName,
+            Pageable page);
+
     // ========== Catalog ID queries ==========
 
     /**
@@ -274,6 +322,10 @@ public interface StarObjectRepository
      */
     @Query("SELECT s FROM STAR_OBJ s WHERE s.catalogIds.catalogIdList LIKE CONCAT('%', :catalogId, '%')")
     List<StarObject> findByCatalogId(@Param("catalogId") String catalogId);
+
+    /** Paginated variant (Issue 24). */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.catalogIds.catalogIdList LIKE CONCAT('%', :catalogId, '%')")
+    Page<StarObject> findByCatalogId(@Param("catalogId") String catalogId, Pageable page);
 
     /**
      * Find stars by catalog ID list containing a value in a dataset.
@@ -284,6 +336,14 @@ public interface StarObjectRepository
     List<StarObject> findByCatalogId(
             @Param("dataSetName") String dataSetName,
             @Param("catalogId") String catalogId);
+
+    /** Paginated variant (Issue 24). */
+    @Query("SELECT s FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName " +
+           "AND s.catalogIds.catalogIdList LIKE CONCAT('%', :catalogId, '%')")
+    Page<StarObject> findByCatalogId(
+            @Param("dataSetName") String dataSetName,
+            @Param("catalogId") String catalogId,
+            Pageable page);
 
     /**
      * Find star by Bayer catalog ID in a dataset.
@@ -412,6 +472,9 @@ public interface StarObjectRepository
      * Find all stars in a solar system.
      */
     List<StarObject> findBySolarSystemId(String solarSystemId);
+
+    /** Paginated variant (Issue 24). */
+    Page<StarObject> findBySolarSystemId(String solarSystemId, Pageable page);
 
     /**
      * Count stars in a solar system.

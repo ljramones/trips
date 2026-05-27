@@ -185,7 +185,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/config/application/TripsContext.java:74,118-127 (and ~113 injection sites)
 - **Description**: Singleton holding mutable state — `searchContext`, `currentPlot`, `appViewPreferences`, `constellationMap` (HashMap). Mutated from `@EventListener` methods that Spring delivers on the publisher's thread (which can be a background `Task`). No `volatile`, no `synchronized`. Races on dataset-context switches are possible.
 - **Suggestion**: Either (a) wrap mutable fields in `AtomicReference` snapshots / copy-on-write, or (b) split into typed read-only services + a single mutator service guarded by a lock. Document threading invariants on each field.
-- **Status**: open
+- **Status**: substantially done — Phase 3.1 documented the FX-thread-only invariant on the class Javadoc, switched `constellationMap` to `ConcurrentHashMap`, and wrapped both `@EventListener` methods on the class in defensive `FxThread.runOnFxThread`. Phase 7 hardening: high-risk mutators (`setDataSetContext`, `addDataSet`, `removeDataSet`) now call `assertFxThreadOrWarn(...)` which logs a warning naming the caller + offending thread if invoked off the FX thread, so future regressions are surfaced rather than corrupting state silently. The deeper "AtomicReference snapshots / typed mutator service" redesign is deferred — the current setup catches violations and the single-threaded FX-thread convention is enforced by code rather than just by convention.
 
 ### Issue 15 -- Severity: bug (high)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:153-154 ; tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/integration/TransferCalculator.java (`toSolarMasses`)
@@ -197,7 +197,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: repository root: `HYG-MERGED-2M-TRIPS-11012026202505.csv` (878 MB) ; `exoplanet.eu_catalog_13-01-26_15_50_52.csv` (2.8 MB) ; `30ly.trips.csv` (337 KB) ; `30ly.trips.csv.zip` (107 KB)
 - **Description**: Massive CSVs checked into git. Inflates clones, bloats history forever, and risks accidental wholesale loads.
 - **Suggestion**: Add to `.gitignore`; move sample dataset to a download script with checksum; consider `git filter-repo` to scrub the 878 MB file from history. Document in CLAUDE.md where catalogs live.
-- **Status**: open
+- **Status**: substantially done — audited the repo: `.gitignore` already excludes `*.csv` + `*.csv.zip` (with whitelist exceptions for the small `files/programdata/*.csv` data bundle and `tripsapplication/src/main/resources/**/*.csv`). The 878 MB `HYG-MERGED-2M-TRIPS-11012026202505.csv` is **not in git history** — it exists only in the working tree and was caught by `.gitignore` before any commit. `.git/` is 310 MB. Smaller files (`30ly.trips.csv`, `exoplanet.eu_catalog*.csv` — all <3 MB each) ARE in history but their footprint is acceptable; a `git filter-repo` scrub would be high-risk (rewrites every commit, breaks forks/PRs) for a marginal size win. **Remaining open**: download-script-with-checksum for the HYG bundle, and a CLAUDE.md note pointing future maintainers to it.
 
 ### Issue 17 -- Severity: suggestion (architecture)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/{solarsystem,solarsysmodelling,planetary,planetarymodelling} (also `solarsystem/sol/`)
@@ -224,7 +224,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/splitting/RouteEventHandler.java:80-108 ; tripsapplication/src/main/java/com/teamgannon/trips/dataset/* ; tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java (event listeners)
 - **Description**: 64 components inject `ApplicationEventPublisher`. Event listeners frequently publish follow-up events (e.g., `NewRouteEvent` → `StatusUpdateEvent` → `BusyStateEvent`) creating synchronous RPC chains routed through the bus. Ordering and failure semantics become opaque. Grep suggests some events have no live listeners (e.g., `ShowStellarDataEvent` after refactors).
 - **Suggestion**: Audit the event graph. For chains that are really "do A then B", promote to direct service calls. Keep the bus for genuinely-broadcast UI updates (status, palette, dataset switch). Optionally add a startup validator that fails fast on events with zero listeners.
-- **Status**: open
+- **Status**: done (Phase 3.2) — full event-graph audit in `events/EVENT_CATALOG.md` (611 lines): 35 event classes catalogued with publishers + subscribers, 3 truly-dead events deleted (`DataSetContextChangeEvent`, `DataSetLoadEvent`, `NewDataSetEvent`), and the 16 cases of "listener publishes follow-up event" reviewed individually — all terminate in `StatusUpdateEvent` (status bar fan-out) or `BusyStateEvent` (busy indicator fan-out), which are correct broadcast patterns, not synchronous-RPC-on-the-bus abuses. The proposed startup zero-listener validator is unnecessary at the moment (count is already zero); revisit if events accumulate again.
 
 ### Issue 20 -- Severity: suggestion (architecture)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/graphics/panes/SolarSystemSpacePane.java (constructor — 8 args per phase 8 memory)
@@ -236,13 +236,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java ; tripsapplication/src/main/java/com/teamgannon/trips/nebula/dialogs/NebulaEditorDialog.java ; vs FxWeaver-loaded controllers elsewhere
 - **Description**: Most controllers load via FxWeaver. A handful of dialogs still call `new FXMLLoader()` directly. Some controllers are Spring-managed, some aren't — inconsistent injection surface.
 - **Suggestion**: Pick one convention. Either route every FXML through FxWeaver, or define a `DialogFactory` that wraps both styles. Add a checkstyle/ArchUnit rule to enforce.
-- **Status**: open
+- **Status**: done (Phase 3.4 + 7.13) — the dual convention is now deliberate and documented in `CLAUDE.md` § "Dialog Creation Pattern": FxWeaver for singleton service-wired controllers (main shell, preferences, anything Spring-managed); raw `FXMLLoader` for transient stateful dialogs that the caller constructs with per-edit state. Phase 7.13's `BasePane.loadFxml(String)` provides the reusable helper for the per-instance raw-loader pattern. The 24 remaining raw `new FXMLLoader(...)` sites all fit the "transient state per construction" category. An ArchUnit/checkstyle rule to enforce the split is a nice-to-have but deferred — the documented convention + Phase 7.13's collapse of the 14 repeated boilerplate cases is the substantive fix.
 
 ### Issue 22 -- Severity: suggestion (architecture)
 - **File**: tripsapplication/src/main/java/org/fxyz3d/ (117 files)
 - **Description**: A copy of the `org.fxyz3d` library lives inside the source tree. No README or fork-point notes — unclear whether it's modified or verbatim. License + maintenance risk.
 - **Suggestion**: If unmodified, delete and add the upstream Maven coordinate. If forked, move to a separate module (`tripsapplication-fxyz3d-fork/`) with a CHANGELOG describing the diff from upstream.
-- **Status**: open
+- **Status**: done (Phase 3) — `org/fxyz3d/README.md` declares the directory as a heavily-modified fork, names the two production callers (`AsteroidFieldWindow`, `RingFieldRenderer`), and explains why swapping for the upstream Maven artifact would regress behaviour. Splitting into a separate Maven module is feasible but not done; the README captures the fork status authoritatively so future maintainers don't accidentally replace it.
 
 ### Issue 23 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java:85,90-91 ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:106-108 (`aliasList @ElementCollection(fetch = LAZY)`)
@@ -254,7 +254,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/StarObjectRepository.java:58,216,225,232,256,414,429 (and similar in other repos)
 - **Description**: `findByDataSetNameOrderByDisplayName`, `findByDisplayNameContaining`, `findByConstellationName`, `findBySolarSystemId`, etc., return `List` without `Pageable`. On a 2M-star dataset, an accidental "list all by dataset" call OOMs the JVM.
 - **Suggestion**: Add paginated overloads. Mark the unbounded variants `@Deprecated` with a migration note; remove once callers migrated.
-- **Status**: open
+- **Status**: partial — `Page<...>` overloads added to the highest-risk finders called out in the issue: `StarObjectRepository` gains paginated variants of `findByDataSetNameOrderByDisplayName`, `findByDisplayNameContaining` (both dataset-scoped and global), `findByCommonNameContaining` (both variants), `findByConstellationName`, `findByConstellation`, `findByCatalogId` (both variants), `findBySolarSystemId`; `ExoPlanetRepository` gains paginated variants of `findByStarName` + `findBySolarSystemId`. Unbounded variants are intentionally **not** `@Deprecated` — bulk operations (transit calculation, route finding across the dataset, exports) legitimately need the full list. The typed paginated surface is now available; per-caller migration is its own sweep.
 
 ### Issue 25 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/ExoPlanetRepository.java (`findByHostStarId`) + callers
@@ -284,7 +284,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/search/FindStarByCommonNameDialog.java:93 (and 27 other `new Alert(...)` sites)
 - **Description**: Modal `Alert` is used for inline validation messages like "you must enter a partial id". Blocks the whole app for a non-critical UX nudge.
 - **Suggestion**: Use inline validation (red border + small error label below the field). Reserve modal `Alert` for genuinely-blocking errors (DB failure, unreadable file).
-- **Status**: open
+- **Status**: partial — `InlineFieldValidation` helper in `javafxsupport/` provides the `attachError` / `clearError` / `validate` API + CSS pseudo-class wiring; `theme.css` gains `.text-field:error` / `.combo-box-base:error` rules + the `.trips-inline-error` label class. The helper inlines the danger-colour styling so it works even in dialogs that haven't loaded `theme.css` (will become redundant once theme.css is universally loaded — Phase 7.10 follow-up). `FindStarByCommonNameDialog` migrated as the worked example — the "you must enter a partial id" Alert is gone, replaced by a `Please enter a partial name to search.` label that appears below the field on submit. Migrating the remaining ~27 Alert-for-validation sites stays as the broader sweep; the helper makes each migration a ~5-line change.
 
 ### Issue 30 -- Severity: suggestion (correctness audit)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/utils/* (and any other 3D coordinate transforms)
@@ -332,7 +332,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: ~50 `@EventListener` Spring beans, especially dialog controllers
 - **Description**: When a dialog closes, its `@EventListener` bean stays in the Spring context and may hold references to disposed JavaFX nodes. Over a long session this compounds into a real leak.
 - **Suggestion**: Either (a) use `@Scope("prototype")` + an explicit unregister hook on dialog close, or (b) move event handling out of dialogs into a coordinator that outlives them. Audit the dialog → listener wiring.
-- **Status**: open
+- **Status**: investigated, no actual leak risk in this codebase. Audited all 55 `@EventListener` sites in `tripsapplication/src/main/java`: every one lives in a singleton `@Component` that exists for the app lifetime (controllers, panes, coordinators, services) — none of them are in transient `Dialog<T>` subclasses that pop open and close. The dialog instances themselves are caller-constructed `Dialog<T>` objects (raw `FXMLLoader` per Phase 7.13 / Issue 21), not Spring beans, so there's nothing for Spring to hold a reference to after they close. Issue 37's concern was theoretical for this code base; verified empirically and closing.
 
 ### Issue 38 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:212
@@ -422,7 +422,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/scripting/engine/PythonScriptEngine.java:30
 - **Description**: `publishEvent(new StatusUpdateEvent(...))` is called synchronously from `runAScript()`. If callers run scripts on a background thread, Spring delivers the event on that thread — listeners that mutate the scene graph without wrapping in `Platform.runLater` will corrupt the UI.
 - **Suggestion**: Document the threading contract on every event class ("delivered on publisher's thread; listeners must wrap scene-graph mutations in `Platform.runLater`"). Or publish via a dedicated `FxEventBus` that always re-dispatches on the FX thread.
-- **Status**: open
+- **Status**: done (Phase 2.2) — `PythonScriptEngine` now wraps the `publishEvent` call in `FxThread.runOnFxThread(...)` so listeners with scene-graph mutations don't have to repeat the wrap. The CLAUDE.md "Threading invariant" section + AGENTS.md document the global pattern: publishers that may run off the FX thread (script engines, async services, import services) publish via `FxThread.runOnFxThread(() -> eventPublisher.publishEvent(...))`, and listeners that mutate the scene graph belt-and-suspenders wrap their bodies too.
 
 ### Issue 53 -- Severity: suggestion (performance)
 - **File**: tripsapplication/src/main/resources/application.yml (Hibernate caching)
@@ -446,7 +446,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: every `ApplicationEvent` class in `events/`
 - **Description**: 64 publishers + ~50 listeners with no map of the event graph. Grep finds events with apparently zero listeners (e.g., `ShowStellarDataEvent` after some refactor).
 - **Suggestion**: Add an `EventCatalog` doc (or a startup `@PostConstruct` validator) listing every event with its publishers and subscribers. Fail-fast if an event has zero subscribers.
-- **Status**: open
+- **Status**: done (Phase 3.2) — `events/EVENT_CATALOG.md` covers all 35 event classes with publishers + subscribers per event. See Issue 19 for the full audit narrative.
 
 ### Issue 57 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainSplitPaneManager.java:499-514 (and several event-handler lambdas)

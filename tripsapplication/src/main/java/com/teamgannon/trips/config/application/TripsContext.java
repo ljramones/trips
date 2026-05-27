@@ -103,6 +103,12 @@ public class TripsContext {
     }
 
     public void setDataSetContext(DataSetContext dataSetContext) {
+        // Phase 7 follow-up to Issue 14: enforce the documented FX-thread
+        // invariant on the most racey mutator. A background caller (e.g.
+        // a misplaced Task or @Async-method) now fails loud at the entry
+        // point instead of corrupting searchContext / appViewPreferences
+        // mid-render.
+        assertFxThreadOrWarn("setDataSetContext");
         if (dataSetContext == null || dataSetContext.getDescriptor() == null) {
             log.warn("setDataSetContext called with null dataset descriptor.");
             return;
@@ -110,6 +116,21 @@ public class TripsContext {
         getSearchContext().setCurrentDataSet(dataSetContext.getDescriptor().getDataSetName());
         searchContext.getAstroSearchQuery().setDataSetContext(dataSetContext);
         systemPreferencesService.updateDataSet(dataSetContext.getDescriptor());
+    }
+
+    /**
+     * Soft FX-thread check used on the high-risk mutators. Logs a warning
+     * with the caller name + invoking thread instead of throwing — we want
+     * to surface invariant violations without crashing the app for users
+     * whose installs may have legacy off-thread callers we haven't found yet.
+     * Once the warnings stop firing in real-world use, this can be hardened
+     * to {@link FxThread#assertFxThread()}.
+     */
+    private static void assertFxThreadOrWarn(String mutatorName) {
+        if (!javafx.application.Platform.isFxApplicationThread()) {
+            log.warn("TripsContext.{} called from non-FX thread '{}' — see Issue 14 (Phase 7 hardening).",
+                    mutatorName, Thread.currentThread().getName());
+        }
     }
 
     /**
@@ -137,6 +158,7 @@ public class TripsContext {
     }
 
     public void removeDataSet(DataSetDescriptor dataSetDescriptor) {
+        assertFxThreadOrWarn("removeDataSet");
         searchContext.removeDataSet(dataSetDescriptor);
         if (tripsPrefs.getDatasetName() != null) {
             if (tripsPrefs.getDatasetName().equals(dataSetDescriptor.getDataSetName())) {
@@ -148,6 +170,7 @@ public class TripsContext {
     }
 
     public void addDataSet(DataSetDescriptor dataSetDescriptor) {
+        assertFxThreadOrWarn("addDataSet");
         searchContext.addDataSet(dataSetDescriptor);
     }
 

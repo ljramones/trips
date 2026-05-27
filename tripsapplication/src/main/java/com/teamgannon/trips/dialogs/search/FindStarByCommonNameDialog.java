@@ -1,6 +1,7 @@
 package com.teamgannon.trips.dialogs.search;
 
 import com.teamgannon.trips.dialogs.search.model.StarSearchResults;
+import com.teamgannon.trips.javafxsupport.InlineFieldValidation;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
@@ -18,12 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
-
 @Slf4j
 public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
 
     private final TextField starName = new TextField();
+    private final Label starNameError = new Label();
     private final ChoiceBox<String> datasets = new ChoiceBox<>();
 
     public FindStarByCommonNameDialog(@NotNull List<String> datasetNames, DataSetDescriptor dataSetDescriptor) {
@@ -43,10 +43,17 @@ public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
         gridPane.add(starSearchLabel, 0, 1);
         gridPane.add(starName, 1, 1);
 
+        // Inline validation error label (Issue 29 / Phase 7) — replaces the
+        // modal Alert that used to fire on empty input.
+        starNameError.getStyleClass().add("trips-inline-error");
+        starNameError.setVisible(false);
+        starNameError.setManaged(false);
+        gridPane.add(starNameError, 1, 2);
+
         Label datasetLabel = new Label("Please enter dataset name: ");
         datasetLabel.setFont(font);
-        gridPane.add(datasetLabel, 0, 2);
-        gridPane.add(datasets, 1, 2);
+        gridPane.add(datasetLabel, 0, 3);
+        gridPane.add(datasets, 1, 3);
 
         HBox hBox2 = new HBox();
         hBox2.setAlignment(Pos.CENTER);
@@ -79,19 +86,21 @@ public class FindStarByCommonNameDialog extends Dialog<StarSearchResults> {
     }
 
     private void searchStarClicked(ActionEvent actionEvent) {
+        if (!InlineFieldValidation.validate(
+                starName, starNameError,
+                text -> !text.isBlank(),
+                "Please enter a partial name to search.")) {
+            return;
+        }
         String nameToSearch = starName.getText();
         String dataSetName = datasets.getValue();
-        if (!nameToSearch.isEmpty()) {
-            StarSearchResults findResults = StarSearchResults
-                    .builder()
-                    .starsFound(true)
-                    .nameToSearch(nameToSearch)
-                    .dataSetName(dataSetName)
-                    .build();
-            setResult(findResults);
-        } else {
-            showErrorAlert("find star", "You must enter a partial id");
-        }
+        StarSearchResults findResults = StarSearchResults
+                .builder()
+                .starsFound(true)
+                .nameToSearch(nameToSearch)
+                .dataSetName(dataSetName)
+                .build();
+        setResult(findResults);
     }
 
 }

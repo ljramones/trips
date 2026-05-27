@@ -570,6 +570,22 @@ For large datasets:
 
 ## Data Import/Export
 
+### Where catalog data lives
+
+Large catalog files (the HYG-MERGED 837 MB master CSV, exoplanet.eu dumps,
+and the various derived `.trips.csv` exports) are **not tracked in git** —
+`.gitignore` excludes `*.csv` repo-wide with narrow whitelist exceptions
+for the small `files/programdata/*.csv` data bundle and the
+`tripsapplication/src/main/resources/**/*.csv` resources used at runtime.
+
+Source URLs for the big bundles, when you need to rehydrate a fresh
+clone:
+- HYG database: https://www.astronexus.com/hyg
+- Exoplanet.eu catalog: https://exoplanet.eu/catalog/csv/
+
+Drop the downloaded files at the repo root (or wherever your TRIPS
+workspace expects them); `.gitignore` will keep them out of commits.
+
 ### Supported Formats
 
 **Import**:

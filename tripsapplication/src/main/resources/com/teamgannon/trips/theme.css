@@ -80,6 +80,22 @@
     -fx-background-radius: -trips-border-radius-md;
 }
 
+/* ===== Inline validation (Issue 29 / Phase 7) ===== */
+
+.text-field:error,
+.text-area:error,
+.combo-box-base:error {
+    -fx-border-color: -trips-color-danger;
+    -fx-border-width: 1.5;
+    -fx-border-radius: -trips-border-radius-sm;
+}
+
+.trips-inline-error {
+    -fx-text-fill: -trips-color-danger;
+    -fx-font-size: -trips-font-size-sm;
+    -fx-padding: 2 0 0 4;
+}
+
 /*
  * ===== Migration Plan (7.10 follow-up sprint) =====
  *

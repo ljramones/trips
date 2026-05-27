@@ -1,6 +1,8 @@
 package com.teamgannon.trips.jpa.repository;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,9 @@ public interface ExoPlanetRepository extends JpaRepository<ExoPlanet, String> {
     ExoPlanet findByName(String name);
 
     List<ExoPlanet> findByStarName(String starName);
+
+    /** Paginated variant (Issue 24) — preferred for search-dialog tables. */
+    Page<ExoPlanet> findByStarName(String starName, Pageable page);
 
     boolean existsByName(String name);
 
@@ -25,6 +30,9 @@ public interface ExoPlanetRepository extends JpaRepository<ExoPlanet, String> {
      * @return list of exoplanets
      */
     List<ExoPlanet> findBySolarSystemId(String solarSystemId);
+
+    /** Paginated variant (Issue 24). */
+    Page<ExoPlanet> findBySolarSystemId(String solarSystemId, Pageable page);
 
     /**
      * Find all exoplanets orbiting a specific star.
