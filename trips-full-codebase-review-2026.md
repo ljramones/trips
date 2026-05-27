@@ -338,7 +338,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/file/csvin/RegularStarCatalogCsvReader.java:212
 - **Description**: Broad `catch (Exception)` inside the parse loop swallows per-row failures, increments a reject counter, and continues with no context for the bad row.
 - **Suggestion**: Catch `NumberFormatException` / `ArrayIndexOutOfBoundsException` / `DateTimeParseException` specifically. Capture the row number and offending field; emit a summary at end with first N bad rows for the user to inspect.
-- **Status**: open
+- **Status**: partial (Phase 7.1) — catch narrowed to `IllegalArgumentException | ArrayIndexOutOfBoundsException | NullPointerException` (covers `NumberFormatException` via its IAE superclass). The row number is already in the log message; the "summary of first N bad rows" UX deferred (would need a per-import collector hooked into the existing reject counter).
 
 ### Issue 39 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/SolarSystemService.java:239-240 (and other `return null` on error sites)
@@ -350,19 +350,19 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/accrete/Utils.java:84-103
 - **Description**: `loadFile()` opens a `BufferedReader` and `close()`s manually in a `try/finally`; on exception during read, the close path is fragile. Worse, the catch path calls `System.exit(1)` from a library helper.
 - **Suggestion**: Convert to try-with-resources. Replace `System.exit` with a thrown `IOException` so the caller decides how to handle a missing data file.
-- **Status**: open
+- **Status**: done (Phase 7.3) — `Utils.loadStarType` now uses try-with-resources on the BufferedReader; `System.exit(1)` replaced with an `UncheckedIOException` so the caller decides how to handle missing/unreadable data files.
 
 ### Issue 41 -- Severity: nit
 - **File**: ~67 `log.*` call sites across the codebase
 - **Description**: String-concatenation log messages (`log.info("Discarded " + count + " systems")`) instead of SLF4J parameter substitution. Defeats lazy evaluation; adds GC pressure in hot paths.
 - **Suggestion**: Convert to `log.info("Discarded {} systems", count)`. Add a checkstyle rule to fail builds on `+` inside `log.*` arguments.
-- **Status**: open
+- **Status**: done (Phase 7.4) — `scripts/check-logging.sh` reports 0 violations across the whole source tree (was 107). 50 files updated. Throwables now passed directly to SLF4J as last arg where applicable, so full stack traces print. Latent bug fixed at `ChviewReader.java:899` where `index + i` was being string-concatenated instead of summed. The checkstyle wiring is the obvious follow-up — left for a separate commit so this sweep stays a clean mechanical change.
 
 ### Issue 42 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java:264 ; tripsapplication/src/main/java/com/teamgannon/trips/scripting/ScriptDialog.java:225-239
 - **Description**: Manual `FileInputStream` / `BufferedReader` without try-with-resources. On exception, streams may leak.
 - **Suggestion**: Use try-with-resources everywhere. Add a pass over `file/`, `scripting/`, and `service/importservices/` to confirm.
-- **Status**: open
+- **Status**: partial (Phase 7.3) — both call-out sites fixed: `MainPane` app-icon load (try-with-resources on FileInputStream, narrowed catch, removed redundant null-check on a constructor that can't return null); `ScriptDialog.loadScriptFile` (nested try/finally collapsed to a single try-with-resources). A full pass over `service/importservices/` is deferred — those services may already use the right pattern, but a systematic grep wasn't done.
 
 ### Issue 43 -- Severity: nit (correctness debt)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/accrete/StarSystem.java (18+ TODOs) ; `Planet.java` (similar)
@@ -374,13 +374,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/astrogation/Coordinates.java:11-27
 - **Description**: 3×3 transformation matrices hardcoded as numeric literals with no source citation. Future maintainers can't tell whether they're equatorial-to-galactic, what epoch (J2000?), or where they came from.
 - **Suggestion**: Extract to named constants (`EQUATORIAL_TO_GALACTIC_J2000`); add Javadoc linking to the IAU definition; add a round-trip unit test.
-- **Status**: open
+- **Status**: done (Phase 7.6) — `Coordinates` now has named `EQUATORIAL_TO_GALACTIC_J2000` + `GALACTIC_TO_EQUATORIAL_J2000` constants (each with citations: IAU 1958 + Liu et al. 2011 A&A 526 A16 + Reid & Brunthaler 2004 ApJ 616 872), and `CoordinatesRoundTripTest` (6 tests) pins round-trip identity to 1e-9 relative, matrix orthonormality, and inverse-equals-transpose.
 
 ### Issue 45 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:301 ; SolarSystem.java:237-242 ; ExoPlanet.java:754-764
 - **Description**: ID-only `equals/hashCode` is correct, but `id` itself is not `final`. If any code path mutates `id` after construction, hash-based collections corrupt silently.
 - **Suggestion**: Make UUID `@Id` fields `final` (assign in constructor); add a static factory helper if needed. Add an `@PrePersist` assertion that `id` is non-null and untouched.
-- **Status**: open
+- **Status**: partial (Phase 7.7) — `@PrePersist`/`@PreUpdate` id-non-null assertions added on all three entities (StarObject reuses the existing `ensureCoordinates` hook; SolarSystem gains a new `assertIdAssigned`; ExoPlanet's existing auto-id hook promoted to handle update too, with the assertion baked in). `@Id` kept non-final: Hibernate hydrates entities via reflection, so making the field final would require unsafe-reflection workarounds that aren't worth it. The persist-time assertion catches the actual bug class — silent hash-collection corruption.
 
 ### Issue 46 -- Severity: nit
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:255-260 (notes, source) ; ExoPlanet.java:711-729 (procedural snapshots) ; DataSetDescriptor.java:114-144 (JSON LOBs)
@@ -398,7 +398,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainSplitPaneManager.java:375-376,508-509,521-522,585
 - **Description**: Four event-handler methods do `catch (Exception)` + log + show `Alert`, mixing recoverable failures (parse error) with unrecoverable ones (OOM). Hides bugs.
 - **Suggestion**: Narrow each catch to the specific exception expected. Let unexpected throwables propagate to the global uncaught-exception handler so they're reported via the existing problem-report flow.
-- **Status**: open
+- **Status**: done (Phase 7.1) — all 4 event-handler catches in `MainSplitPaneManager` (recenter star, show stellar data, export query, plot stars) narrowed from `catch (Exception)` to `catch (RuntimeException)`. `Error` (OOM, StackOverflow) now reaches the global uncaught-exception handler. Narrower-still per-exception catches would require enumerating every checked exception the downstream `@Transactional` services can throw — RuntimeException is the right boundary in practice.
 
 ### Issue 49 -- Severity: suggestion (accessibility)
 - **File**: ~60 dialogs across the codebase
@@ -416,7 +416,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/experimental/AsteroidFieldWindow.java:287-314
 - **Description**: `AnimationTimer.handle()` mutates `displayPoints` and `angles[]` without synchronization. Safe today because `AnimationTimer.handle` runs on the FX thread, but the thread invariant isn't documented; future "let's parallelize the ODE step" changes will silently break it.
 - **Suggestion**: Add a comment on the field declaration that says "mutated on FX thread only via `AnimationTimer`". Optionally add a runtime assertion in the handle method.
-- **Status**: open
+- **Status**: done (Phase 7.12) — `angles[]` + `displayPoints` field-level javadoc spells out the FX-thread invariant. New `FxThread.assertFxThread()` static helper (general-purpose) called at the top of `AnimationTimer.handle` enforces the invariant — a future "parallelise the ODE step" change will fail fast at runtime instead of silently corrupting state.
 
 ### Issue 52 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/scripting/engine/PythonScriptEngine.java:30
@@ -546,20 +546,20 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 
 | # | Action | Issue(s) | Rough effort |
 |---|---|---|---|
-| 7.1 | Narrow `catch (Exception)` in CSV import + MainSplitPaneManager event handlers. | 38, 48 | 1 day |
-| 7.2 | Replace `return null` on error paths with `Optional` (start with `SolarSystemService`, `OptionalValue` bridge, `Planet.findPrimaryJovian`). | 39 | 2 days |
-| 7.3 | try-with-resources sweep across `file/`, `scripting/`, `controller/`, `solarsystem/modelling/accrete/Utils`. | 40, 42 | 1 day |
-| 7.4 | Run the SLF4J parameterization sweep (~113 sites identified in Phase 0.3 via `scripts/check-logging.sh`). Once the count reaches zero, wire `maven-checkstyle-plugin` to fail builds on regressions. | 41 | 2-3 days |
-| 7.5 | Resolve or document accrete physics TODOs against Dole 1970. Replace inline numeric constants with named ones referencing the source. | 43 | 2-3 days |
-| 7.6 | Document `Coordinates.java` transformation matrices; add round-trip tests. | 44 | 0.5 day |
-| 7.7 | Make entity UUID `@Id` fields `final`; add `@PrePersist` assertion. | 45 | 0.5 day |
-| 7.8 | Add `@Basic(fetch = LAZY)` and length caps on `@Lob` columns; benchmark catalog-wide find performance. | 46 | 1 day |
-| 7.9 | Add characterization + happy-path tests to `service/importservices/` (top priority). Then TestFX on the most-used dialogs. Then a smoke test for `SolarSystemSpacePane.setSystemToDisplay`. | 47 | 1-2 sprints |
-| 7.10 | Build a global `theme.css` with CSS variables. Remove inline `-fx-style` strings. | 50 | 1 sprint |
-| 7.11 | Accessibility pass: `accessibleText` / `accessibleHelp` on top-used dialogs and controls. | 49 | 1 sprint |
-| 7.12 | Document `AsteroidFieldWindow` thread invariant; add a runtime assertion. | 51 | 0.25 day |
-| 7.13 | Build `SearchPanelBase` (FXML or Java composite); migrate the 13 search-pane FXMLs. | 55 | 2-3 days |
-| 7.14 | Extract event-handler business logic in `MainSplitPaneManager` into a coordinator service. | 57 | 2 days |
+| 7.1 | Narrow `catch (Exception)` in CSV import + MainSplitPaneManager event handlers. | 38, 48 | **done** — `RegularStarCatalogCsvReader` per-row catch narrowed to `IllegalArgumentException | ArrayIndexOutOfBoundsException | NullPointerException`; all 4 `MainSplitPaneManager` event-handler catches narrowed from `catch (Exception)` to `catch (RuntimeException)` so `Error` (OOM, StackOverflow) reaches the global handler. |
+| 7.2 | Replace `return null` on error paths with `Optional` (start with `SolarSystemService`, `OptionalValue` bridge, `Planet.findPrimaryJovian`). | 39 | 2 days — **deferred** (API change; touches every caller of the affected methods, needs a sweep across the codebase) |
+| 7.3 | try-with-resources sweep across `file/`, `scripting/`, `controller/`, `solarsystem/modelling/accrete/Utils`. | 40, 42 | **partial** — the 3 call-out sites fixed: `Utils.loadStarType` (try-with-resources + `UncheckedIOException` replacing `System.exit`), `MainPane` icon load (twr + narrowed catch + removed impossible null check), `ScriptDialog.loadScriptFile` (nested try/finally collapsed). Full sweep of `service/importservices/` deferred. |
+| 7.4 | Run the SLF4J parameterization sweep (~113 sites identified in Phase 0.3 via `scripts/check-logging.sh`). Once the count reaches zero, wire `maven-checkstyle-plugin` to fail builds on regressions. | 41 | **done** — `check-logging.sh` reports 0 violations (was 107); 50 files updated; throwables promoted to last-arg where applicable for full stack traces; latent string-concat-instead-of-int-sum bug at `ChviewReader.java:899` fixed in passing. Checkstyle wiring is the obvious follow-up, kept as a separate change. |
+| 7.5 | Resolve or document accrete physics TODOs against Dole 1970. Replace inline numeric constants with named ones referencing the source. | 43 | 2-3 days — **deferred** (research-heavy: requires reading the Dole 1970 paper and cross-referencing 18+ TODOs to specific paper sections) |
+| 7.6 | Document `Coordinates.java` transformation matrices; add round-trip tests. | 44 | **done** — named `EQUATORIAL_TO_GALACTIC_J2000` + `GALACTIC_TO_EQUATORIAL_J2000` constants with citations (IAU 1958, Liu et al. 2011, Reid & Brunthaler 2004); new `CoordinatesRoundTripTest` (6 tests) pins round-trip identity + matrix orthonormality + transpose-equals-inverse. |
+| 7.7 | Make entity UUID `@Id` fields `final`; add `@PrePersist` assertion. | 45 | **partial** — `@PrePersist`/`@PreUpdate` id-non-null assertions added on all three entities (StarObject, SolarSystem, ExoPlanet); ExoPlanet's existing auto-id `@PrePersist` consolidated with the assertion to avoid undefined-ordering of multiple hooks. `@Id` kept non-final: Hibernate hydrates via reflection, so `final` would require unsafe-reflection workarounds — the persist-time assertion catches the actual bug class (silent hash-collection corruption). |
+| 7.8 | Add `@Basic(fetch = LAZY)` and length caps on `@Lob` columns; benchmark catalog-wide find performance. | 46 | 1 day — **deferred** (touches data model + needs a real benchmark harness on a 2M-row dataset to verify the win) |
+| 7.9 | Add characterization + happy-path tests to `service/importservices/` (top priority). Then TestFX on the most-used dialogs. Then a smoke test for `SolarSystemSpacePane.setSystemToDisplay`. | 47 | 1-2 sprints — **deferred** (sprint-scale; needs a coverage audit + test-style decision per area) |
+| 7.10 | Build a global `theme.css` with CSS variables. Remove inline `-fx-style` strings. | 50 | 1 sprint — **deferred** (UI design pass; needs the full palette/spacing decision first) |
+| 7.11 | Accessibility pass: `accessibleText` / `accessibleHelp` on top-used dialogs and controls. | 49 | 1 sprint — **deferred** (sprint-scale across ~60 dialogs) |
+| 7.12 | Document `AsteroidFieldWindow` thread invariant; add a runtime assertion. | 51 | **done** — `angles[]` + `displayPoints` field javadoc spells out FX-thread-only invariant; new `FxThread.assertFxThread()` static helper enforces it at the top of `AnimationTimer.handle`. |
+| 7.13 | Build `SearchPanelBase` (FXML or Java composite); migrate the 13 search-pane FXMLs. | 55 | 2-3 days — **deferred** (UI refactor; needs a "composite-or-include" design pass first) |
+| 7.14 | Extract event-handler business logic in `MainSplitPaneManager` into a coordinator service. | 57 | 2 days — **deferred** (boundary decision: which handlers stay, which migrate; benefits from a coverage pass first) |
 
 ---
 
