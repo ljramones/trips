@@ -1224,215 +1224,22 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     /**
      * Add river visualization as gradient-colored lines.
      */
+    /**
+     * Phase 4.2: river-network rendering lives in {@link RiverNetworkRenderer}.
+     * The dialog still owns the toggle (useFlowAccumulationRivers) — the
+     * renderer is a one-shot scene-graph builder.
+     */
     private void addRivers() {
-        List<List<Integer>> rivers = generatedPlanet.rivers();
-        List<Polygon> polygons = generatedPlanet.polygons();
-        boolean[] frozenTerminus = generatedPlanet.frozenRiverTerminus();
-        int[] heights = generatedPlanet.heights();
-        double[] flowAccumulation = useFlowAccumulationRivers ? generatedPlanet.flowAccumulation() : null;
-
-        for (int riverIdx = 0; riverIdx < rivers.size(); riverIdx++) {
-            List<Integer> river = rivers.get(riverIdx);
-            if (river.size() < 2) continue;
-
-            boolean isFrozen = frozenTerminus != null && riverIdx < frozenTerminus.length && frozenTerminus[riverIdx];
-
-            double[] flowValues = calculateFlowValues(river, flowAccumulation);
-            double maxFlow = 0.0;
-            for (double flowValue : flowValues) {
-                if (flowValue > maxFlow) maxFlow = flowValue;
-            }
-            if (maxFlow <= 0) maxFlow = 1.0;
-
-            for (int i = 0; i < river.size() - 1; i++) {
-                int polyIdx1 = river.get(i);
-                int polyIdx2 = river.get(i + 1);
-
-                if (polyIdx1 < 0 || polyIdx1 >= polygons.size() ||
-                    polyIdx2 < 0 || polyIdx2 >= polygons.size()) {
-                    continue;
-                }
-
-                double flowRatio = flowValues[i + 1] / maxFlow;
-
-                int height1 = heights[polyIdx1];
-                int height2 = heights[polyIdx2];
-                double avgHeight = (height1 + height2) / 2.0;
-                double displacement = 1.0 + avgHeight * 0.025;
-
-                Point3D p1 = toPoint3D(polygons.get(polyIdx1).center().normalize()
-                    .scalarMultiply(PLANET_SCALE * displacement * 1.003));
-                Point3D p2 = toPoint3D(polygons.get(polyIdx2).center().normalize()
-                    .scalarMultiply(PLANET_SCALE * displacement * 1.003));
-
-                javafx.scene.shape.Cylinder riverSegment = createFlowBasedRiverSegment(
-                    p1, p2, flowRatio, isFrozen);
-                planetGroup.getChildren().add(riverSegment);
-            }
-        }
-    }
-
-    private double[] calculateFlowValues(List<Integer> river, double[] flowAccumulation) {
-        double[] flow = new double[river.size()];
-
-        if (flowAccumulation != null && flowAccumulation.length > 0) {
-            for (int i = 0; i < river.size(); i++) {
-                int polyIdx = river.get(i);
-                flow[i] = polyIdx >= 0 && polyIdx < flowAccumulation.length
-                    ? flowAccumulation[polyIdx]
-                    : 0.0;
-            }
-            return flow;
-        }
-
-        double cumulative = 0.0;
-        double baseFlowPerSegment = 0.5;
-        for (int i = 0; i < river.size(); i++) {
-            int polyIdx = river.get(i);
-            double contribution = baseFlowPerSegment;
-            if (rainfall != null && polyIdx >= 0 && polyIdx < rainfall.length) {
-                contribution += rainfall[polyIdx] * 0.5;
-            }
-            cumulative += contribution;
-            flow[i] = cumulative;
-        }
-
-        return flow;
-    }
-
-    private javafx.scene.shape.Cylinder createFlowBasedRiverSegment(
-            Point3D start, Point3D end, double flowRatio, boolean frozen) {
-
-        Point3D midpoint = start.midpoint(end);
-        double length = start.distance(end);
-
-        double minRadius = 0.002;
-        double maxRadius = 0.008;
-        double radius = minRadius + Math.sqrt(flowRatio) * (maxRadius - minRadius);
-
-        javafx.scene.shape.Cylinder cylinder = new javafx.scene.shape.Cylinder(radius, length);
-
-        PhongMaterial material = new PhongMaterial();
-        Color riverColor;
-
-        if (frozen) {
-            Color sourceColor = Color.rgb(135, 206, 250);
-            Color terminusColor = Color.rgb(224, 255, 255);
-            riverColor = sourceColor.interpolate(terminusColor, flowRatio);
-        } else {
-            Color sourceColor = Color.rgb(100, 180, 255);
-            Color mouthColor = Color.rgb(0, 80, 160);
-            riverColor = sourceColor.interpolate(mouthColor, flowRatio);
-        }
-
-        material.setDiffuseColor(riverColor);
-        material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.5, 1));
-        material.setSpecularPower(25.0);
-        cylinder.setMaterial(material);
-
-        cylinder.setTranslateX(midpoint.getX());
-        cylinder.setTranslateY(midpoint.getY());
-        cylinder.setTranslateZ(midpoint.getZ());
-
-        Point3D direction = end.subtract(start).normalize();
-        Point3D yAxis = new Point3D(0, 1, 0);
-        Point3D rotationAxis = yAxis.crossProduct(direction);
-        double rotationAngle = Math.acos(Math.max(-1, Math.min(1, yAxis.dotProduct(direction))));
-
-        if (rotationAxis.magnitude() > 0.0001) {
-            Rotate rotate = new Rotate(Math.toDegrees(rotationAngle), rotationAxis);
-            cylinder.getTransforms().add(rotate);
-        }
-
-        return cylinder;
+        new RiverNetworkRenderer(generatedPlanet, planetGroup, PLANET_SCALE,
+                useFlowAccumulationRivers).render();
     }
 
     /**
-     * Add plate boundary visualization.
+     * Phase 4.2: plate-boundary rendering lives in {@link PlateBoundaryRenderer}.
      */
     private void addPlateBoundaries() {
-        if (plateAssignment == null || boundaryAnalysis == null || adjacency == null) {
-            return;
-        }
-
-        List<Polygon> polygons = generatedPlanet.polygons();
-        int[] plateIndex = plateAssignment.plateIndex();
-        int[] heights = generatedPlanet.heights();
-
-        java.util.Set<String> drawnEdges = new java.util.HashSet<>();
-
-        for (int polyIdx = 0; polyIdx < polygons.size(); polyIdx++) {
-            int plate1 = plateIndex[polyIdx];
-            int[] neighbors = adjacency.neighborsOnly(polyIdx);
-
-            for (int neighborIdx : neighbors) {
-                int plate2 = plateIndex[neighborIdx];
-
-                if (plate1 == plate2) continue;
-
-                String edgeKey = Math.min(polyIdx, neighborIdx) + "-" + Math.max(polyIdx, neighborIdx);
-                if (drawnEdges.contains(edgeKey)) continue;
-                drawnEdges.add(edgeKey);
-
-                BoundaryDetector.PlatePair pair = new BoundaryDetector.PlatePair(plate1, plate2);
-                BoundaryType boundaryType = boundaryAnalysis.boundaries().get(pair);
-                if (boundaryType == null) {
-                    boundaryType = BoundaryType.INACTIVE;
-                }
-
-                Polygon poly1 = polygons.get(polyIdx);
-                Polygon poly2 = polygons.get(neighborIdx);
-
-                double height1 = heights[polyIdx];
-                double height2 = heights[neighborIdx];
-                double avgHeight = (height1 + height2) / 2.0;
-                double displacement = 1.0 + avgHeight * 0.025;
-
-                Point3D p1 = toPoint3D(poly1.center().normalize()
-                    .scalarMultiply(PLANET_SCALE * displacement * 1.004));
-                Point3D p2 = toPoint3D(poly2.center().normalize()
-                    .scalarMultiply(PLANET_SCALE * displacement * 1.004));
-
-                javafx.scene.shape.Cylinder boundarySegment = createBoundarySegment(p1, p2, boundaryType);
-                planetGroup.getChildren().add(boundarySegment);
-            }
-        }
-    }
-
-    private javafx.scene.shape.Cylinder createBoundarySegment(Point3D start, Point3D end, BoundaryType type) {
-        Point3D midpoint = start.midpoint(end);
-        double length = start.distance(end);
-
-        double radius = (type == BoundaryType.CONVERGENT || type == BoundaryType.DIVERGENT) ? 0.004 : 0.003;
-        javafx.scene.shape.Cylinder cylinder = new javafx.scene.shape.Cylinder(radius, length);
-
-        PhongMaterial material = new PhongMaterial();
-        Color boundaryColor = switch (type) {
-            case CONVERGENT -> Color.rgb(220, 60, 60);
-            case DIVERGENT -> Color.rgb(60, 200, 180);
-            case TRANSFORM -> Color.rgb(220, 180, 60);
-            case INACTIVE -> Color.rgb(120, 120, 120);
-        };
-
-        material.setDiffuseColor(boundaryColor);
-        material.setSpecularColor(Color.WHITE.deriveColor(0, 1, 0.3, 1));
-        cylinder.setMaterial(material);
-
-        cylinder.setTranslateX(midpoint.getX());
-        cylinder.setTranslateY(midpoint.getY());
-        cylinder.setTranslateZ(midpoint.getZ());
-
-        Point3D direction = end.subtract(start).normalize();
-        Point3D yAxis = new Point3D(0, 1, 0);
-        Point3D rotationAxis = yAxis.crossProduct(direction);
-        double rotationAngle = Math.acos(Math.max(-1, Math.min(1, yAxis.dotProduct(direction))));
-
-        if (rotationAxis.magnitude() > 0.0001) {
-            Rotate rotate = new Rotate(Math.toDegrees(rotationAngle), rotationAxis);
-            cylinder.getTransforms().add(rotate);
-        }
-
-        return cylinder;
+        new PlateBoundaryRenderer(generatedPlanet, adjacency, plateAssignment,
+                boundaryAnalysis, planetGroup, PLANET_SCALE).render();
     }
 
     /**
