@@ -218,9 +218,12 @@ public class RegularStarCatalogCsvReader {
                 // column, or invalid enum value. Skip the row and keep going
                 // — anything else (OOM, IO, etc.) propagates so the global
                 // uncaught handler sees it. (Issue 38)
-                log.error("Failed to parse line {}: {}",
-                        loadStats.getTotalCount() + i, e.getMessage());
-                loadStats.getCsvFile().incRejects();
+                long rowNum = loadStats.getTotalCount() + i;
+                log.error("Failed to parse line {}: {}", rowNum, e.getMessage());
+                String snippet = String.format("row %d: %s: %s",
+                        rowNum, e.getClass().getSimpleName(),
+                        e.getMessage() == null ? "(no message)" : e.getMessage());
+                loadStats.getCsvFile().recordBadRow(snippet);
                 loadStats.getCsvFile().incTotal();
             }
         }

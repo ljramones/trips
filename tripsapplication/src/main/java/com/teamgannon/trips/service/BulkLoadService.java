@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -62,13 +63,13 @@ public class BulkLoadService {
      *
      * @param progressUpdater UI progress sink (typically the calling JavaFX Task)
      * @param dataset         dataset metadata, including the selected file path
-     * @return the persisted descriptor
+     * @return the persisted descriptor plus per-import reject stats (Issue 38)
      * @throws Exception on any read or persistence failure (transaction rolls back)
      */
     @TrackExecutionTime
     @Transactional(rollbackFor = Exception.class)
-    public @NotNull DataSetDescriptor loadCsvDataset(@NotNull ProgressUpdater progressUpdater,
-                                                     @NotNull Dataset dataset) throws Exception {
+    public @NotNull LoadOutcome loadCsvDataset(@NotNull ProgressUpdater progressUpdater,
+                                               @NotNull Dataset dataset) throws Exception {
         File file = new File(dataset.getFileSelected());
         RegularStarCatalogCsvReader reader =
                 new RegularStarCatalogCsvReader(databaseManagementService, starService);
@@ -78,7 +79,20 @@ public class BulkLoadService {
             // wiping any per-batch stars that may have been flushed before the failure.
             throw new RuntimeException("CSV load failed: " + regCSVFile.getProcessMessage());
         }
-        return loadCSVFile(regCSVFile);
+        DataSetDescriptor descriptor = loadCSVFile(regCSVFile);
+        return new LoadOutcome(descriptor,
+                regCSVFile.getNumbRejects(),
+                regCSVFile.getBadRowSamples());
+    }
+
+    /**
+     * Result of {@link #loadCsvDataset}: the persisted descriptor plus
+     * per-import reject statistics (count + sample of the first
+     * {@link RegCSVFile#MAX_BAD_ROW_SAMPLES} bad rows).
+     */
+    public record LoadOutcome(DataSetDescriptor descriptor,
+                              long rejectCount,
+                              List<String> sampleBadRows) {
     }
 
 

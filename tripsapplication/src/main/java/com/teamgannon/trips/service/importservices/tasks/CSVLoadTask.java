@@ -41,16 +41,22 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
             // rolls the entire import back — no orphan descriptor, no stars
             // without a descriptor.
             updateMessage(" Loading dataset, please wait...");
-            DataSetDescriptor dataSetDescriptor = bulkLoadService.loadCsvDataset(this, dataset);
-            String data = String.format(" %s records loaded from dataset %s, Use plot to see data.",
+            BulkLoadService.LoadOutcome outcome = bulkLoadService.loadCsvDataset(this, dataset);
+            DataSetDescriptor dataSetDescriptor = outcome.descriptor();
+            String baseMessage = String.format(" %s records loaded from dataset %s",
                     dataSetDescriptor.getNumberStars(),
                     dataSetDescriptor.getDataSetName());
-            processResult.setMessage(data);
+            String message = appendRejectSummary(baseMessage, outcome) + ", Use plot to see data.";
+            processResult.setMessage(message);
             processResult.setSuccess(true);
             processResult.setDataSetDescriptor(dataSetDescriptor);
-            updateTaskInfo(String.format(" %s records loaded from dataset %s",
-                    dataSetDescriptor.getNumberStars(),
-                    dataSetDescriptor.getDataSetName()));
+            processResult.setRejectCount(outcome.rejectCount());
+            processResult.setSampleBadRows(outcome.sampleBadRows());
+            if (outcome.rejectCount() > 0) {
+                log.warn("{} row(s) rejected during import of {}; first samples: {}",
+                        outcome.rejectCount(), dataset.getName(), outcome.sampleBadRows());
+            }
+            updateTaskInfo(appendRejectSummary(baseMessage, outcome));
         } catch (Exception e) {
             log.error("Failed to load dataset {}", dataset.getName(), e);
             processResult.setSuccess(false);
@@ -58,6 +64,17 @@ public class CSVLoadTask extends Task<FileProcessResult> implements ProgressUpda
         }
 
         return processResult;
+    }
+
+    private static String appendRejectSummary(String base, BulkLoadService.LoadOutcome outcome) {
+        if (outcome.rejectCount() <= 0) {
+            return base;
+        }
+        String sample = outcome.sampleBadRows().isEmpty()
+                ? ""
+                : "; first samples: " + String.join(" | ", outcome.sampleBadRows());
+        return String.format("%s (%d row(s) rejected as malformed%s)",
+                base, outcome.rejectCount(), sample);
     }
 
     @Override
