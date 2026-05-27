@@ -112,7 +112,7 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
 
         // Star type and properties
         Label starTypeLabel = new Label("Star: " + star.toString().split(" HZ:")[0]);
-        starTypeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        starTypeLabel.getStyleClass().add("trips-text-bold-md-12");
         gridPane.add(starTypeLabel, 0, 0, 3, 1);
 
         // Habitable Zone boundaries with clarification

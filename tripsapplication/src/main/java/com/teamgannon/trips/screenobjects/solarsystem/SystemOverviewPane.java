@@ -45,13 +45,13 @@ public class SystemOverviewPane extends VBox {
 
         // Star section
         Label starHeader = new Label("Host Star");
-        starHeader.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        starHeader.getStyleClass().add("trips-text-bold-md-12");
 
         GridPane starGrid = createStarGrid();
 
         // System section
         Label systemHeader = new Label("System");
-        systemHeader.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        systemHeader.getStyleClass().add("trips-text-bold-md-12");
 
         GridPane systemGrid = createSystemGrid();
 

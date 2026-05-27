@@ -121,6 +121,40 @@
     -fx-background-color: -trips-bg-panel-mid;
 }
 
+/* Bucket-A second-pass additions: classes for the next layer of inline
+   setStyle patterns. Mined by agent recon (Issue 50 follow-on). */
+
+/* bold + 12px — section/header labels above tables and detail panes */
+.trips-text-bold-md-12 {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* bold + 14px — larger section titles */
+.trips-text-bold-lg {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* bold + 10px (sm) — compact emphasised labels */
+.trips-text-bold-sm {
+    -fx-font-weight: bold;
+    -fx-font-size: -trips-font-size-sm;
+}
+
+/* italic + grey + sm — annotations, hints, "(optional)" tags */
+.trips-text-italic-muted-sm {
+    -fx-text-fill: #666;
+    -fx-font-style: italic;
+    -fx-font-size: -trips-font-size-sm;
+}
+
+/* italic + warn-orange — "marginal / advisory" callouts */
+.trips-text-italic-warn {
+    -fx-text-fill: -trips-color-warn;
+    -fx-font-style: italic;
+}
+
 /* ===== Inline validation (Issue 29 / Phase 7) ===== */
 
 .text-field:error,

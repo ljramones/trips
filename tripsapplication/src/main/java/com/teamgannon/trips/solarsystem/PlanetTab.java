@@ -268,8 +268,10 @@ public class PlanetTab extends Tab {
         }
         // Indicate if tidally locked (day = orbital period)
         if (planet.isResonantPeriod()) {
-            dayLengthLabel.setStyle("-fx-text-fill: #FF9800; -fx-font-style: italic;");
+            // Issue 50 / Bucket A second pass
+            dayLengthLabel.getStyleClass().add("trips-text-italic-warn");
         } else {
+            dayLengthLabel.getStyleClass().remove("trips-text-italic-warn");
             dayLengthLabel.setStyle("");
         }
         gridPane.add(dayLengthLabel, 1, row++);
