@@ -2,7 +2,7 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
 
 import java.util.UUID;
 

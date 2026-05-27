@@ -3,7 +3,7 @@ package com.teamgannon.trips.screenobjects.solarsystem;
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.events.SolarSystemObjectSelectedEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;

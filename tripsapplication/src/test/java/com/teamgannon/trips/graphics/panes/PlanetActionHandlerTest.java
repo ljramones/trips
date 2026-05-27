@@ -3,7 +3,7 @@ package com.teamgannon.trips.graphics.panes;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import com.teamgannon.trips.service.SolarSystemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

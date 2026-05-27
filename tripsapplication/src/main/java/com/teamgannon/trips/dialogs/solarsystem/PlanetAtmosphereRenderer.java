@@ -1,6 +1,6 @@
 package com.teamgannon.trips.dialogs.solarsystem;
 
-import com.teamgannon.trips.planetarymodelling.procedural.JavaFxPlanetMeshConverter.TerrainType;
+import com.teamgannon.trips.planetary.modelling.procedural.JavaFxPlanetMeshConverter.TerrainType;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;

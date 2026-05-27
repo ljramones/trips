@@ -1,7 +1,7 @@
 package com.teamgannon.trips.dialogs.solarsystem;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;

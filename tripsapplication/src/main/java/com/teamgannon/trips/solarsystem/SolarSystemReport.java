@@ -1,7 +1,7 @@
 package com.teamgannon.trips.solarsystem;
 
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
+import com.teamgannon.trips.solarsystem.modelling.accrete.StarSystem;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

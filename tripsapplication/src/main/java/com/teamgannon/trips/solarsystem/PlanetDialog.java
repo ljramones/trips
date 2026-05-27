@@ -1,8 +1,8 @@
 package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
-import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
-import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
+import com.teamgannon.trips.solarsystem.modelling.accrete.SimStar;
+import com.teamgannon.trips.solarsystem.modelling.accrete.StarSystem;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

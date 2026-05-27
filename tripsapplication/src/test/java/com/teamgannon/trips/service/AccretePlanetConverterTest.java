@@ -2,11 +2,11 @@ package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.solarsysmodelling.accrete.AtmosphericChemical;
-import com.teamgannon.trips.solarsysmodelling.accrete.Chemical;
-import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
-import com.teamgannon.trips.solarsysmodelling.accrete.PlanetTypeEnum;
-import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
+import com.teamgannon.trips.solarsystem.modelling.accrete.AtmosphericChemical;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Chemical;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
+import com.teamgannon.trips.solarsystem.modelling.accrete.PlanetTypeEnum;
+import com.teamgannon.trips.solarsystem.modelling.accrete.SimStar;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

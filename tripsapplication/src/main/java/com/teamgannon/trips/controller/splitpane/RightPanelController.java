@@ -7,7 +7,7 @@ import com.teamgannon.trips.dataset.model.DataSetDescriptorCellFactory;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.planetary.PlanetaryContext;
 import com.teamgannon.trips.planetary.rendering.PlanetarySkyRenderer;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import com.teamgannon.trips.routing.sidepanel.RoutingPanel;
 import com.teamgannon.trips.screenobjects.ObjectViewPane;
 import com.teamgannon.trips.screenobjects.planetary.PlanetarySystemsPane;

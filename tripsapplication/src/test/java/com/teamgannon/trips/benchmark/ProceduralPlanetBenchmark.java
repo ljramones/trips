@@ -1,6 +1,6 @@
 package com.teamgannon.trips.benchmark;
 
-import com.teamgannon.trips.planetarymodelling.procedural.*;
+import com.teamgannon.trips.planetary.modelling.procedural.*;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.List;

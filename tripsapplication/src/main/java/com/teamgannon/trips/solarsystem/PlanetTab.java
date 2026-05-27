@@ -1,6 +1,6 @@
 package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;

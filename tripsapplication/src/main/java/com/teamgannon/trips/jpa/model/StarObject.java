@@ -3,7 +3,7 @@ package com.teamgannon.trips.jpa.model;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
 import com.teamgannon.trips.routing.model.SparseStarRecord;
-import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
+import com.teamgannon.trips.solarsystem.modelling.accrete.SimStar;
 import com.teamgannon.trips.stellarmodelling.StarCreator;
 import com.teamgannon.trips.stellarmodelling.StarMassNormalizer;
 import com.teamgannon.trips.stellarmodelling.StarModel;

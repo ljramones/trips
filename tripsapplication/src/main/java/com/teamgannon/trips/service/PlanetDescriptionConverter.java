@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.jpa.model.ExoPlanet;
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
 
 import java.util.ArrayList;
 import java.util.List;

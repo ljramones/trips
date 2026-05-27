@@ -4,7 +4,7 @@ import com.teamgannon.trips.particlefields.RingConfiguration;
 import com.teamgannon.trips.particlefields.RingFieldRenderer;
 import com.teamgannon.trips.particlefields.RingType;
 import com.teamgannon.trips.particlefields.SolarSystemRingAdapter;
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Sphere;

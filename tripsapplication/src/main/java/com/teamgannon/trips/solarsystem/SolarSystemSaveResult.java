@@ -1,8 +1,8 @@
 package com.teamgannon.trips.solarsystem;
 
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
-import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
+import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
+import com.teamgannon.trips.solarsystem.modelling.accrete.StarSystem;
 import lombok.Builder;
 import lombok.Data;
 

@@ -3,7 +3,7 @@ package com.teamgannon.trips.controller.splitpane;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.planetary.PlanetaryContext;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.SolarSystemService;
 import lombok.extern.slf4j.Slf4j;

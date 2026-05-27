@@ -203,7 +203,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/{solarsystem,solarsysmodelling,planetary,planetarymodelling} (also `solarsystem/sol/`)
 - **Description**: Four parallel packages whose responsibilities overlap and whose names are easily confused. Cross-imports include `SolarSystemRenderer` ← `planetarymodelling.PlanetDescription` and `PlanetarySkyRenderer` ← `solarsysmodelling.accrete.PlanetTypeEnum` — bidirectional coupling. New developers can't infer which package owns business logic vs presentation.
 - **Suggestion**: Pick a convention (`*modelling` = algorithms; `*` = rendering/UI) and consolidate. Introduce a neutral `model/` package containing shared specs (PlanetSpec, StarSpec) that UI and modelling both depend on.
-- **Status**: open
+- **Status**: partial (Phase 5.1) — three of the four renames applied: `solarsysmodelling` → `solarsystem.modelling`, `planetarymodelling` → `planetary.modelling`, `solarsystem/sol/` collapsed into `solarsystem/`. The neutral `model/` package is still open — those shared specs (PlanetSpec, StarSpec) don't exist yet; introducing them is a separate design pass.
 
 ### Issue 18 -- Severity: suggestion (architecture)
 - **File**: multiple — top offenders by line count:
@@ -211,7 +211,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
   - `dialogs/solarsystem/ProceduralPlanetViewerDialog.java` — 1,936 lines (mixes generation logic + UI + I/O)
   - `workbench/service/WorkbenchEnrichmentService.java` — 1,832 lines
   - `workbench/DataWorkbenchController.java` — 1,706 lines
-  - `planetarymodelling/procedural/JavaFxPlanetMeshConverter.java` — 1,644 lines
+  - `planetary/modelling/procedural/JavaFxPlanetMeshConverter.java` — 1,644 lines
   - `service/SolPlanetsInitializer.java` — 1,410 lines
   - `planetary/rendering/PlanetarySkyRenderer.java` — 1,204 lines
   - `service/SolarSystemService.java` — 793 lines (generate, save, export, import all in one)
@@ -287,7 +287,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **Status**: open
 
 ### Issue 30 -- Severity: suggestion (correctness audit)
-- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/utils/* (and any other 3D coordinate transforms)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/utils/* (and any other 3D coordinate transforms)
 - **Description**: CLAUDE.md documents that non-linear scaling MUST be radial, not per-axis. `OrbitVisualizer.toScreen()` is correct. Other 3D paths haven't been audited — if any do `auToScreen(x), auToScreen(y), auToScreen(z)` independently with log scaling, geometry gets squashed.
 - **Suggestion**: Grep for `auToScreen(` and `Math.log` uses on coordinates; verify every site uses the shared radial helper. Add a unit test that fails if anyone reintroduces per-axis scaling.
 - **Status**: open
@@ -347,7 +347,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **Status**: open
 
 ### Issue 40 -- Severity: nit
-- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/accrete/Utils.java:84-103
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/accrete/Utils.java:84-103
 - **Description**: `loadFile()` opens a `BufferedReader` and `close()`s manually in a `try/finally`; on exception during read, the close path is fragile. Worse, the catch path calls `System.exit(1)` from a library helper.
 - **Suggestion**: Convert to try-with-resources. Replace `System.exit` with a thrown `IOException` so the caller decides how to handle a missing data file.
 - **Status**: open
@@ -365,7 +365,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **Status**: open
 
 ### Issue 43 -- Severity: nit (correctness debt)
-- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsysmodelling/accrete/StarSystem.java (18+ TODOs) ; `Planet.java` (similar)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/accrete/StarSystem.java (18+ TODOs) ; `Planet.java` (similar)
 - **Description**: Constants like `PROTOPLANET_MASS`, `DUST_DENSITY_COEFF` carry open `TODO` comments questioning their values. The accrete algorithm correctness is therefore unverified.
 - **Suggestion**: Audit against Dole 1970 (the canonical accretion paper) or document the values as "known approximations" with the reference paper. Convert unresolved TODOs into tracked issues.
 - **Status**: open
@@ -523,7 +523,7 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 
 | # | Action | Issue | Rough effort |
 |---|---|---|---|
-| 5.1 | Rename: `solarsysmodelling` → `solarsystem.modelling`; `planetarymodelling` → `planetary.modelling`. `solarsystem/sol/` collapses into `solarsystem/`. Introduce `model/` package for neutral specs (PlanetSpec, StarSpec) shared by modelling + rendering. Single big refactor commit; coordinate with all in-flight feature branches. | 17 | 1 sprint |
+| 5.1 | Three of the four renames applied in a single commit: `solarsysmodelling` → `solarsystem.modelling` (23 files), `planetarymodelling` → `planetary.modelling` (32 files), `solarsystem/sol/` collapsed into `solarsystem/` (3 files). 58 files moved, 134 import-site rewrites, package decls updated in every moved file, test tree mirrored. Full non-integration suite 2,718 tests green. The neutral `model/` package (PlanetSpec, StarSpec) is deferred — those shared specs don't exist yet; identifying what's neutral enough to extract is a separate design pass and benefits from the new package layout being settled first. | 17 | **partial** |
 
 ## Phase 6 — Medium Bugs & UX
 
@@ -548,7 +548,7 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 |---|---|---|---|
 | 7.1 | Narrow `catch (Exception)` in CSV import + MainSplitPaneManager event handlers. | 38, 48 | 1 day |
 | 7.2 | Replace `return null` on error paths with `Optional` (start with `SolarSystemService`, `OptionalValue` bridge, `Planet.findPrimaryJovian`). | 39 | 2 days |
-| 7.3 | try-with-resources sweep across `file/`, `scripting/`, `controller/`, `solarsysmodelling/accrete/Utils`. | 40, 42 | 1 day |
+| 7.3 | try-with-resources sweep across `file/`, `scripting/`, `controller/`, `solarsystem/modelling/accrete/Utils`. | 40, 42 | 1 day |
 | 7.4 | Run the SLF4J parameterization sweep (~113 sites identified in Phase 0.3 via `scripts/check-logging.sh`). Once the count reaches zero, wire `maven-checkstyle-plugin` to fail builds on regressions. | 41 | 2-3 days |
 | 7.5 | Resolve or document accrete physics TODOs against Dole 1970. Replace inline numeric constants with named ones referencing the source. | 43 | 2-3 days |
 | 7.6 | Document `Coordinates.java` transformation matrices; add round-trip tests. | 44 | 0.5 day |

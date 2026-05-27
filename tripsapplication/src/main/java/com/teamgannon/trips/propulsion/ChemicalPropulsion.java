@@ -1,6 +1,6 @@
 package com.teamgannon.trips.propulsion;
 
-import com.teamgannon.trips.planetarymodelling.chemical.MolecularWeightCalculator;
+import com.teamgannon.trips.planetary.modelling.chemical.MolecularWeightCalculator;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;

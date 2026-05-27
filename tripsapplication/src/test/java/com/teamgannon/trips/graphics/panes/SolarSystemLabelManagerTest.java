@@ -1,7 +1,7 @@
 package com.teamgannon.trips.graphics.panes;
 
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;

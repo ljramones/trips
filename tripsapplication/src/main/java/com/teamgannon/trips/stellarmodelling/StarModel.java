@@ -1,6 +1,6 @@
 package com.teamgannon.trips.stellarmodelling;
 
-import com.teamgannon.trips.solarsysmodelling.accrete.SimStar;
+import com.teamgannon.trips.solarsystem.modelling.accrete.SimStar;
 import javafx.scene.paint.Color;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

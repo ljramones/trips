@@ -1,7 +1,7 @@
 package com.teamgannon.trips.solarsystem.rendering;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
 import javafx.scene.Group;

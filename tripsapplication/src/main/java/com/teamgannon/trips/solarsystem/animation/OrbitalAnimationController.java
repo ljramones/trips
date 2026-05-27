@@ -1,6 +1,6 @@
 package com.teamgannon.trips.solarsystem.animation;
 
-import com.teamgannon.trips.planetarymodelling.PlanetDescription;
+import com.teamgannon.trips.planetary.modelling.PlanetDescription;
 import com.teamgannon.trips.solarsystem.orbits.KeplerOrbitSamplingProvider;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;

@@ -2,7 +2,7 @@ package com.teamgannon.trips.planetary;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
-import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
+import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
 import lombok.Builder;
 import lombok.Data;
 

@@ -1,7 +1,7 @@
 package com.teamgannon.trips.service;
 
 import com.teamgannon.trips.jpa.model.SolarSystemFeature;
-import com.teamgannon.trips.planetarymodelling.FeatureDescription;
+import com.teamgannon.trips.planetary.modelling.FeatureDescription;
 
 import java.util.ArrayList;
 import java.util.List;
