@@ -107,6 +107,23 @@ public class TransferPreviewDialog extends Dialog<Void> {
         setTitle(get("transfer.title", "Plan Mission Transfer"));
         getDialogPane().getButtonTypes().setAll(ButtonType.CLOSE);
 
+        // Phase 7.11 / Issue 49: accessibility labels for screen readers.
+        // Pattern (worked example for the broader accessibility sweep): set
+        // accessibleText on every interactive control with a verbose label
+        // that names the control + its current selection contract, and
+        // accessibleHelp on the read-only feasibility/status label so a
+        // screen reader can read the verdict on demand.
+        shipCombo.setAccessibleText("Spaceship to plan the transfer for");
+        originCombo.setAccessibleText("Origin body");
+        destCombo.setAccessibleText("Destination body");
+        typeCombo.setAccessibleText("Transfer type — Hohmann, brachistochrone, etc.");
+        starMassField.setAccessibleText("Central star mass in solar masses");
+        createPlanButton.setAccessibleText("Create full transfer plan from the current selections");
+        feasibleValue.setAccessibleHelp(
+                "Feasibility verdict for the chosen ship + route + transfer-type combination");
+        feasibilityMessage.setAccessibleHelp(
+                "Explanation of the feasibility verdict, including delta-v and propellant margins");
+
         shipCombo.getItems().setAll(ships);
         shipCombo.setConverter(new StringConverter<>() {
             @Override

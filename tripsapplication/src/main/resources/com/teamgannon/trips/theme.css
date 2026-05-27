@@ -1,0 +1,108 @@
+/*
+ * Global theme stylesheet for TRIPS — Phase 7.10 / Issue 50.
+ *
+ * Seeded with the recurring patterns mined from the ~75 inline `-fx-…`
+ * strings scattered through controllers and dialogs (font sizes, severity
+ * colours, panel backgrounds, padding, border radii). Used as a reference
+ * point by callers; the per-dialog migration is incremental — see the
+ * `Migration Plan` comment block at the bottom of this file.
+ *
+ * Convention: CSS variables (looked-up colours and -fx-properties) live
+ * under `.root`. Per-component classes apply them.
+ */
+
+.root {
+
+    /* ===== Severity / status palette =====
+       Mined from TransferPreviewDialog + half a dozen status badges. */
+    -trips-color-info:        #1976D2;   /* blue   — info */
+    -trips-color-success:     #4CAF50;   /* green  — feasible / OK */
+    -trips-color-warn:        #FF9800;   /* orange — marginal */
+    -trips-color-danger:      #F44336;   /* red    — insufficient / error */
+    -trips-color-feasible:    #1e8449;   /* deeper green from TransferPreview */
+    -trips-color-marginal:    #d68910;
+    -trips-color-insufficient: #c0392b;
+
+    /* ===== Panel backgrounds ===== */
+    -trips-bg-panel-light:    #f5f5f5;
+    -trips-bg-panel-mid:      #e8e8e8;
+    -trips-bg-panel-dark:     #2a4d6e;
+    -trips-bg-overlay-72:     rgba(0, 0, 0, 0.72);
+    -trips-bg-overlay-35:     rgba(0, 0, 0, 0.35);
+
+    /* ===== Borders ===== */
+    -trips-border-grey:       #cccccc;
+    -trips-border-radius-sm:  3;
+    -trips-border-radius-md:  4;
+    -trips-border-radius-lg:  5;
+
+    /* ===== Typography ===== */
+    -trips-font-size-xs:      9;
+    -trips-font-size-sm:      10;
+    -trips-font-size-md:      11;
+    -trips-font-size-lg:      13;
+
+    /* ===== Spacing tokens ===== */
+    -trips-pad-sm:            3 8;       /* small button / badge padding */
+    -trips-pad-xs:            2 6;       /* status-pill padding */
+}
+
+/* ===== Status badges (mined from TransferPreviewDialog) ===== */
+
+.trips-status-badge {
+    -fx-padding: -trips-pad-xs;
+    -fx-background-radius: -trips-border-radius-sm;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.trips-status-badge.info     { -fx-background-color: -trips-color-info;    }
+.trips-status-badge.success  { -fx-background-color: -trips-color-success; }
+.trips-status-badge.warn     { -fx-background-color: -trips-color-warn;    }
+.trips-status-badge.danger   { -fx-background-color: -trips-color-danger;  }
+
+/* Severity-typed labels — colour without the badge background. */
+
+.trips-text-feasible     { -fx-text-fill: -trips-color-feasible;     }
+.trips-text-marginal     { -fx-text-fill: -trips-color-marginal;     }
+.trips-text-insufficient { -fx-text-fill: -trips-color-insufficient; }
+
+/* ===== Standard panels ===== */
+
+.trips-panel-light {
+    -fx-background-color: -trips-bg-panel-light;
+    -fx-border-color: -trips-border-grey;
+    -fx-border-radius: -trips-border-radius-lg;
+}
+
+.trips-panel-dark {
+    -fx-background-color: -trips-bg-panel-dark;
+    -fx-background-radius: -trips-border-radius-md;
+}
+
+/*
+ * ===== Migration Plan (7.10 follow-up sprint) =====
+ *
+ * Inline `setStyle("-fx-…")` and `style="-fx-…"` callsites are scattered
+ * across ~35 Java classes + a similar number of FXMLs. The conversion is
+ * deliberately *not* done in bulk in this commit — each callsite needs a
+ * visual diff to confirm no regression, and CSS-class names need to match
+ * the actual intent (a "red text" might be danger or marginal depending on
+ * what the dialog is signalling).
+ *
+ * Recommended sweep order:
+ *   1. spaceshipmodeller/ui/TransferPreviewDialog          — already uses these colours
+ *   2. spaceshipmodeller/ui/SpaceshipDesignerPanel         — heavy validation messaging
+ *   3. controller/SliderControlManager + StatusBarController
+ *   4. routing/sidepanel/RoutingPanel                      — status pills
+ *   5. starplotting/ + graphics/panes/                     — labels
+ *   6. screenobjects/ + nebula/                            — edit dialogs
+ *
+ * For each: load this stylesheet via `scene.getStylesheets().add(...)` and
+ * replace inline -fx-strings with `.getStyleClass().add("trips-status-badge", "danger")`
+ * or equivalent.
+ *
+ * When the sweep is done, drop the per-feature CSS files
+ * (SearchPane.css, viewer.css, tree-table-view.css) into this stylesheet
+ * if they overlap, or document why they stay separate.
+ */
