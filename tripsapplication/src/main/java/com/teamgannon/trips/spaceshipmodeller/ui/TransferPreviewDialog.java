@@ -228,7 +228,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
                     setStyle("");
                     return;
                 }
-                setText("[" + type.category().label() + "] " + type.label());
+                setText(costGlyph(type.cost()) + "[" + type.category().label() + "] " + type.label());
                 setTextFill(costColor(type.cost()));
                 SpaceshipDesign ship = shipCombo.getValue();
                 boolean ok = ship == null || TransferSuitability.suitable(type, ship);
@@ -243,6 +243,31 @@ public class TransferPreviewDialog extends Dialog<Void> {
             case EFFICIENT -> Color.web("#1e8449");
             case EXPENSIVE_FAST -> Color.web("#d68910");
             case EXOTIC -> Color.web("#8e44ad");
+        };
+    }
+
+    /**
+     * Single-char glyph prefix for a {@link TransferCost} so that the cost cue
+     * is conveyed even when colour is removed (greyscale rendering, R/G colour
+     * blindness, accessibility audit per Issue 33).
+     */
+    private static String costGlyph(TransferCost cost) {
+        return switch (cost) {
+            case EFFICIENT -> "✓ ";
+            case EXPENSIVE_FAST -> "⚠ ";
+            case EXOTIC -> "✦ ";
+        };
+    }
+
+    /**
+     * Glyph + text-token prefix for a {@link Feasibility} verdict. Used to
+     * pair the colour cue with a non-colour channel — see Issue 33.
+     */
+    private static String feasibilityGlyph(Feasibility f) {
+        return switch (f) {
+            case FEASIBLE -> "✓ [FEASIBLE] ";
+            case MARGINAL -> "⚠ [MARGINAL] ";
+            case INSUFFICIENT -> "✗ [INSUFFICIENT] ";
         };
     }
 
@@ -277,7 +302,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
         burnValue.setText(formatDuration(totalBurnSeconds(plan)));
 
         if (!suitable) {
-            feasibleValue.setText("Unavailable for this drive");
+            feasibleValue.setText("✗ [UNAVAILABLE] Unavailable for this drive");
             feasibleValue.setTextFill(Color.web("#c0392b"));
             feasibilityMessage.setText("A " + type.label() + " (" + type.category().label()
                     + ") requires technology far beyond this ship's " + ship.driveType().name()
@@ -288,7 +313,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
         }
         Feasibility f = plan.feasibility();
         Color color = feasibilityColor(f);
-        feasibleValue.setText(f.label());
+        feasibleValue.setText(feasibilityGlyph(f) + f.label());
         feasibleValue.setTextFill(color);
         feasibilityMessage.setText(feasibilityText(plan));
         feasibilityMessage.setTextFill(color);

@@ -71,8 +71,7 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
         Button nextButton = new Button("Save");
         nextButton.setOnAction(this::saveStarClicked);
 
-        Button dismissButton = new Button("Dismiss");
-        dismissButton.setOnAction(this::dismissClicked);
+        Button dismissButton = new Button("Cancel");
         dismissButton.setOnAction(this::dismissClicked);
 
         hBox1.getChildren().addAll(nextButton, dismissButton);

@@ -147,7 +147,7 @@ public class ScriptDialog extends Dialog<Boolean> {
         saveButton.setOnAction(this::installScript);
         buttonBox.getChildren().add(saveButton);
 
-        Button cancelButton = new Button("Dismiss");
+        Button cancelButton = new Button("Cancel");
         cancelButton.setFont(font);
         cancelButton.setOnAction(this::close);
         buttonBox.getChildren().add(cancelButton);

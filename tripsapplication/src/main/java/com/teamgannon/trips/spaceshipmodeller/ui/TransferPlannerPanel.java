@@ -176,11 +176,11 @@ public class TransferPlannerPanel extends BorderPane {
     }
 
     private void configureNodeTable() {
-        nodeTable.setPlaceholder(new Label("No maneuvers"));
-        TableColumn<ManeuverNode, String> nameCol = new TableColumn<>("Maneuver");
+        nodeTable.setPlaceholder(new Label(get("planner.nodeTable.placeholder", "No maneuvers")));
+        TableColumn<ManeuverNode, String> nameCol = new TableColumn<>(get("planner.nodeTable.col.name", "Maneuver"));
         nameCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().name()));
         nameCol.setPrefWidth(150);
-        TableColumn<ManeuverNode, String> dvCol = new TableColumn<>("Δv");
+        TableColumn<ManeuverNode, String> dvCol = new TableColumn<>(get("planner.nodeTable.col.deltaV", "Δv"));
         dvCol.setCellValueFactory(c -> new SimpleStringProperty("%.2f km/s".formatted(c.getValue().deltaVKmps())));
         TableColumn<ManeuverNode, String> timeCol = new TableColumn<>("T+ (days)");
         timeCol.setCellValueFactory(c -> new SimpleStringProperty("%.0f".formatted(c.getValue().timeFromStartDays())));
@@ -296,15 +296,17 @@ public class TransferPlannerPanel extends BorderPane {
             nodeTable.setItems(FXCollections.observableArrayList());
             return;
         }
-        detailShip.setText("Ship: " + plan.shipName());
-        detailRoute.setText("Route: " + plan.route());
-        detailType.setText("Type: " + plan.transferType().label());
-        detailDeltaV.setText("Total Δv: %.2f km/s".formatted(plan.totalDeltaVKmps()));
-        detailPropellant.setText("Total propellant: " + (Double.isNaN(plan.totalPropellantTons())
-                ? "n/a" : "%.0f t".formatted(plan.totalPropellantTons())));
-        detailDuration.setText("Mission duration: %.0f days".formatted(plan.transferTimeDays()));
+        detailShip.setText(get("planner.detail.ship", "Ship: %s").formatted(plan.shipName()));
+        detailRoute.setText(get("planner.detail.route", "Route: %s").formatted(plan.route()));
+        detailType.setText(get("planner.detail.type", "Type: %s").formatted(plan.transferType().label()));
+        detailDeltaV.setText(get("planner.detail.deltaV", "Total Δv: %.2f km/s").formatted(plan.totalDeltaVKmps()));
+        String propellantValue = Double.isNaN(plan.totalPropellantTons())
+                ? get("planner.detail.propellant.na", "n/a")
+                : get("planner.detail.propellant.tons", "%.0f t").formatted(plan.totalPropellantTons());
+        detailPropellant.setText(get("planner.detail.propellant", "Total propellant: %s").formatted(propellantValue));
+        detailDuration.setText(get("planner.detail.duration", "Mission duration: %.0f days").formatted(plan.transferTimeDays()));
         Feasibility f = plan.feasibility();
-        detailStatus.setText("Status: " + f.label());
+        detailStatus.setText(get("planner.detail.status", "Status: %s").formatted(f.label()));
         detailStatus.setTextFill(switch (f) {
             case FEASIBLE -> javafx.scene.paint.Color.web("#1e8449");
             case MARGINAL -> javafx.scene.paint.Color.web("#d68910");

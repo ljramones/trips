@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="Utilities" mnemonicParsing="false"
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Utilities" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.UtilitiesMenuController">
     <MenuItem mnemonicParsing="false"
               onAction="#findDistance"

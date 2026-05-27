@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="Tools" mnemonicParsing="false"
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Tools" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.ToolsMenuController">
     <Menu mnemonicParsing="false"
           text="Route">

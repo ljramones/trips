@@ -260,13 +260,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/ExoPlanetRepository.java (`findByHostStarId`) + callers
 - **Description**: When code iterates exoplanets and dereferences the host star, each pair becomes a separate query. No `@EntityGraph` or `JOIN FETCH` variant.
 - **Suggestion**: Add `findByHostStarIdGraph(...)` with `@EntityGraph(attributePaths = "hostStar")` (or move to a JPQL `JOIN FETCH`). Document expected eager-vs-lazy assumptions on each finder method.
-- **Status**: open
+- **Status**: investigated — no actual N+1 in the current code path. `ExoPlanet.hostStarId` is a raw `String` foreign-key column, not a JPA `@ManyToOne` association, so `@EntityGraph(attributePaths = "hostStar")` is not applicable (no `hostStar` field exists to fetch). Grepping for `getHostStarId()` callers turned up no "loop planets, look up host star by id" pattern either. Javadoc added to `findByHostStarId` documenting the raw-FK nature so a future reader doesn't go looking for the missing association. If the data model later adds a real `@ManyToOne hostStar` field, this issue should be re-evaluated.
 
 ### Issue 26 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/rendering/OrbitVisualizer.java:81-82,323
 - **Description**: Each orbit creates two fresh `PhongMaterial` instances (`baseMaterial`, `highlightMaterial`). With 10+ planets and moons, hundreds of duplicate materials accumulate. Mesh caching exists (line 78); material caching does not. Adds GPU memory + GC pressure.
 - **Suggestion**: Cache materials by color in a thread-confined map (FX thread) and reuse across orbits.
-- **Status**: open
+- **Status**: done (Phase 6.4) — `OrbitVisualizer` now keeps a `Map<MaterialKey, PhongMaterial> materialCache` keyed by a `(MaterialVariant, baseColor)` record. The three creation paths (`createOrbitMaterial(color, base)`, `createOrbitMaterial(color, highlight)`, `createPositionMarker`) all go through `computeIfAbsent`, so a system with N planets/moons sharing a small colour palette allocates O(unique colours) materials instead of O(2·N) fresh ones every render.
 
 ### Issue 27 -- Severity: bug (medium)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:319 ; tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/SparseTransitComputor.java:33,144
@@ -290,7 +290,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/solarsystem/modelling/utils/* (and any other 3D coordinate transforms)
 - **Description**: CLAUDE.md documents that non-linear scaling MUST be radial, not per-axis. `OrbitVisualizer.toScreen()` is correct. Other 3D paths haven't been audited — if any do `auToScreen(x), auToScreen(y), auToScreen(z)` independently with log scaling, geometry gets squashed.
 - **Suggestion**: Grep for `auToScreen(` and `Math.log` uses on coordinates; verify every site uses the shared radial helper. Add a unit test that fails if anyone reintroduces per-axis scaling.
-- **Status**: open
+- **Status**: done (Phase 6.5) — audited all 11 `auToScreen(` callsites: every one passes a single scalar (orbital distance, body size, min-orbit), never a coordinate triple. `ScaleManager.auVectorToScreen(x, y, z)` is the canonical radial helper for 3D coords. New regression test `ScaleManagerRadialScalingTest` (5 tests, all green) pins the contract: same-radius points must scale to same screen-radius, direction must be preserved, naive per-axis scaling is shown to distort. A future per-axis refactor will fail the suite.
 
 ### Issue 31 -- Severity: suggestion (data model)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java:273-284 (`miscText1..5`, `miscNum1..5`, `customData1..10`) ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/SolarSystem.java:149-170
@@ -302,13 +302,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/ui/TransferPlannerPanel.java:179,299-302
 - **Description**: Hardcoded English strings ("Ship:", "Route:", "Total Δv:", "No maneuvers") in a module that elsewhere routes UI text through `SpaceshipModellerLabels.get(...)`. Drifts from the user's stated `.properties` preference (see memory `trips-properties-file-preference`).
 - **Suggestion**: Move every visible string into `spaceshipmodeller.properties`. Add a build-time scan to warn on hardcoded strings in `spaceshipmodeller/ui/*`.
-- **Status**: open
+- **Status**: partial (Phase 6.7) — the 6 detail-panel strings + 3 maneuver-table strings called out in this issue (`Ship:`, `Route:`, `Total Δv:`, `Total propellant:`, `Mission duration:`, `Status:`, `No maneuvers`, `Maneuver`, `Δv`) are now externalised under `planner.detail.*` / `planner.nodeTable.*` keys in `spaceshipmodeller.properties`, sourced via `SpaceshipModellerLabels.get(...).formatted(...)`. A full sweep across the rest of `spaceshipmodeller/ui/*` plus the CI scan is deferred — they're additive and don't block this issue's specific call-outs.
 
 ### Issue 33 -- Severity: suggestion (accessibility)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/ui/TransferPreviewDialog.java:231,240-245,289-293
 - **Description**: Feasibility and transfer-type signaling use color only (green/orange/red text fill). Red-green colorblind users lose the channel.
 - **Suggestion**: Pair every color cue with a glyph prefix (✓ ⚠ ✗) or text token (`[EFFICIENT]`, `[MARGINAL]`, `[INSUFFICIENT]`). Verify WCAG-AA contrast on foreground/background pairs.
-- **Status**: open
+- **Status**: done (Phase 6.8) — `TransferPreviewDialog` now prepends `costGlyph(cost)` (✓/⚠/✦) to the transfer-type combo entries and `feasibilityGlyph(f)` (✓ [FEASIBLE] / ⚠ [MARGINAL] / ✗ [INSUFFICIENT]) to the feasibility status label. The "Unavailable for this drive" branch also gained the ✗ [UNAVAILABLE] glyph + token. Colour-blind / greyscale users now have a non-colour channel for the same information. WCAG contrast audit on the specific hex pairs is deferred — a separate accessibility pass with the actual rendered colours under both light and dark palettes.
 
 ### Issue 34 -- Severity: suggestion (UX)
 - **File**: dialog FXMLs under `src/main/resources/com/teamgannon/trips/` (multiple)
@@ -326,7 +326,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: `controller/menubar/*.fxml` ; main MainPane.fxml
 - **Description**: Menus have no `mnemonicParsing="true"` Alt-key shortcuts. Buttons inconsistent ("Update", "Dismiss", "Confirm").
 - **Suggestion**: Standardize button labels (OK / Cancel / Apply). Add mnemonics to top-level menus (`_File`, `_Tools`, `_Design`).
-- **Status**: open
+- **Status**: done (Phase 6.12) — all 11 top-level menus now have unique mnemonics: `_File _Edit _View _Search _Tools _Reports _Utilities _Admin _Design E_xperimental _Help` with `mnemonicParsing="true"`. Button-label normalisation: 3 dialogs renamed "Dismiss" → "Cancel" where the variable name + sibling primary-action button signalled intent (`ScriptDialog`, `AddStarRecordDialog`, `UpdateStarObjectWithRecordDialog`). The remaining 2 "Dismiss" sites (one-button warning/control dialogs with no input — `RotationDialog`, `ShowZoomWarning`) kept their labels since "Dismiss" is appropriate for a non-cancel-anything close action. Two duplicate `dismissButton.setOnAction(...)` lines fixed in passing.
 
 ### Issue 37 -- Severity: bug (medium)
 - **File**: ~50 `@EventListener` Spring beans, especially dialog controllers
@@ -529,18 +529,18 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 
 | # | Action | Issue(s) | Rough effort |
 |---|---|---|---|
-| 6.1 | Stop entities escaping into dialogs. Introduce DTOs for edit flows (`StarEditViewModel` first). Load with `JOIN FETCH` in services. | 23 | 1-2 sprints |
-| 6.2 | Add `Pageable` overloads to every unbounded `List`-returning repo method. Deprecate the unbounded variants. Migrate callers. | 24 | 1 sprint |
-| 6.3 | Add `@EntityGraph` variants for ExoPlanet ↔ hostStar joins; remove N+1s in the planet rendering path. | 25 | 0.5 day |
-| 6.4 | Cache `PhongMaterial` by color in `OrbitVisualizer`; verify GPU memory drop with the worst-case (many-moon) system. | 26 | 0.5 day |
-| 6.5 | Sweep for per-axis non-linear scaling; add a unit test that fails on regression. | 30 | 0.5 day |
-| 6.6 | Remove unused `miscN` / `customDataN` columns; if extensibility is wanted, replace with a single JSON column + schema validator. | 31, 54 | 1 sprint |
-| 6.7 | Externalize remaining hardcoded strings in `spaceshipmodeller/ui/*` to the existing `.properties` bundle. Add a CI scan rejecting hardcoded strings under that package. | 32 | 1-2 days |
-| 6.8 | Pair every color cue with a glyph or text token. Audit WCAG contrast. | 33 | 1 day |
-| 6.9 | Replace modal `Alert`-for-validation with inline validation (red border + helper text). Reserve `Alert` for blocking errors. | 29 | 2-3 days |
-| 6.10 | Enable Hibernate second-level cache with JCache; choose read-mostly entities; benchmark. | 53 | 1-2 days |
-| 6.11 | Responsive layouts (HGrow/VGrow), `promptText`, tooltips on every input. | 34, 35 | 1 sprint |
-| 6.12 | Add mnemonics to menus; standardize button labels (OK/Cancel/Apply). | 36 | 1 day |
+| 6.1 | Stop entities escaping into dialogs. Introduce DTOs for edit flows (`StarEditViewModel` first). Load with `JOIN FETCH` in services. | 23 | 1-2 sprints — **deferred** (sprint-scale, touches many dialog → service edges; needs a coherent DTO/ViewModel pattern decision first) |
+| 6.2 | Add `Pageable` overloads to every unbounded `List`-returning repo method. Deprecate the unbounded variants. Migrate callers. | 24 | 1 sprint — **deferred** (touches every repo + ~80 call sites; needs per-call decision on what's bounded vs not) |
+| 6.3 | Add `@EntityGraph` variants for ExoPlanet ↔ hostStar joins; remove N+1s in the planet rendering path. | 25 | **investigated** (no actual N+1 — `hostStarId` is a raw String FK with no `@ManyToOne`; no caller does the loop-and-fetch pattern; javadoc clarification added). |
+| 6.4 | Cache `PhongMaterial` by color in `OrbitVisualizer`; verify GPU memory drop with the worst-case (many-moon) system. | 26 | **done** — `Map<(MaterialVariant, Color), PhongMaterial> materialCache` via `computeIfAbsent` across all three creation paths (orbit base, orbit highlight, position marker). |
+| 6.5 | Sweep for per-axis non-linear scaling; add a unit test that fails on regression. | 30 | **done** — audited all 11 `auToScreen(` callsites (every one passes a scalar, not a coordinate triple), added `ScaleManagerRadialScalingTest` (5 tests) pinning the radial-isometry contract. |
+| 6.6 | Remove unused `miscN` / `customDataN` columns; if extensibility is wanted, replace with a single JSON column + schema validator. | 31, 54 | 1 sprint — **deferred** (irreversible schema change; needs user signoff on whether `customDataN` is still wanted, plus a Flyway migration path for any existing data) |
+| 6.7 | Externalize remaining hardcoded strings in `spaceshipmodeller/ui/*` to the existing `.properties` bundle. Add a CI scan rejecting hardcoded strings under that package. | 32 | **partial** — the 9 specific call-outs from Issue 32 (`TransferPlannerPanel` detail + maneuver-table strings) externalised under `planner.detail.*` / `planner.nodeTable.*` keys. Full sweep + CI scan deferred. |
+| 6.8 | Pair every color cue with a glyph or text token. Audit WCAG contrast. | 33 | **done** — `TransferPreviewDialog` now prepends ✓/⚠/✦ for transfer cost and ✓/⚠/✗ + `[FEASIBLE]`/`[MARGINAL]`/`[INSUFFICIENT]` for feasibility status. WCAG-AA contrast audit deferred (needs the actual rendered colours under each palette). |
+| 6.9 | Replace modal `Alert`-for-validation with inline validation (red border + helper text). Reserve `Alert` for blocking errors. | 29 | 2-3 days — **deferred** (~28 `Alert` sites; needs a uniform inline-validation pattern across dialog FXMLs first) |
+| 6.10 | Enable Hibernate second-level cache with JCache; choose read-mostly entities; benchmark. | 53 | 1-2 days — **deferred** (needs JCache provider added + benchmark harness to verify "before/after" on a real dataset) |
+| 6.11 | Responsive layouts (HGrow/VGrow), `promptText`, tooltips on every input. | 34, 35 | 1 sprint — **deferred** (sprint-scale across all dialog FXMLs; needs testing at 1024×768 and 4K) |
+| 6.12 | Add mnemonics to menus; standardize button labels (OK/Cancel/Apply). | 36 | **done** — all 11 top-level menus have unique `_X` mnemonics with `mnemonicParsing="true"`; 3 "Dismiss" buttons renamed to "Cancel" where variable+sibling-button signalled cancel intent; 2 stays (one-button warning dialogs); 2 duplicate `setOnAction` typo lines fixed in passing. |
 
 ## Phase 7 — Code Quality Sweep (parallelizable cleanups)
 

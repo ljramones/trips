@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="Experimental" mnemonicParsing="false"
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="E_xperimental" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.ExperimentalMenuController">
     <MenuItem fx:id="asteroidFieldMenuItem"
               text="Asteroid Field (Legacy)"

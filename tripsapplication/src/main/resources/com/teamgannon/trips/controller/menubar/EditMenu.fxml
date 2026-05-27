@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="Edit" mnemonicParsing="false"
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Edit" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.EditMenuController">
     <MenuItem mnemonicParsing="false"
               onAction="#runQuery"

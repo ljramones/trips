@@ -46,6 +46,13 @@ public class OrbitVisualizer {
     private final OrbitSamplingProvider orbitSamplingProvider;
     private final Map<OrbitKey, OrbitLodState> lodStates = new HashMap<>();
     private final Map<OrbitMeshKey, OrbitMeshPair> meshCache = new HashMap<>();
+    /**
+     * PhongMaterial cache: {@link MaterialVariant} + base {@link Color} → shared
+     * material instance. Reused across all orbits + markers so that a system
+     * with N planets (and their moons) creates O(unique-colors) materials
+     * instead of O(2·N) fresh allocations every render. FX-thread confined.
+     */
+    private final Map<MaterialKey, PhongMaterial> materialCache = new HashMap<>();
 
     public OrbitVisualizer(ScaleManager scaleManager, OrbitSamplingProvider orbitSamplingProvider) {
         this.scaleManager = scaleManager;
@@ -321,15 +328,18 @@ public class OrbitVisualizer {
     }
 
     private PhongMaterial createOrbitMaterial(Color baseColor, boolean highlight) {
-        PhongMaterial material = new PhongMaterial();
-        if (highlight) {
-            material.setDiffuseColor(baseColor.brighter().brighter());
-            material.setSpecularColor(baseColor.brighter());
-        } else {
-            material.setDiffuseColor(baseColor);
-            material.setSpecularColor(baseColor.brighter());
-        }
-        return material;
+        MaterialVariant variant = highlight ? MaterialVariant.ORBIT_HIGHLIGHT : MaterialVariant.ORBIT_BASE;
+        return materialCache.computeIfAbsent(new MaterialKey(variant, baseColor), key -> {
+            PhongMaterial material = new PhongMaterial();
+            if (highlight) {
+                material.setDiffuseColor(baseColor.brighter().brighter());
+                material.setSpecularColor(baseColor.brighter());
+            } else {
+                material.setDiffuseColor(baseColor);
+                material.setSpecularColor(baseColor.brighter());
+            }
+            return material;
+        });
     }
 
     private void addPoint(List<Float> points, double x, double y, double z) {
@@ -377,8 +387,13 @@ public class OrbitVisualizer {
      */
     public Sphere createPositionMarker(double[] screenPosition, double radius, Color color) {
         Sphere marker = new Sphere(radius);
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(color);
+        PhongMaterial material = materialCache.computeIfAbsent(
+                new MaterialKey(MaterialVariant.DIFFUSE_ONLY, color),
+                key -> {
+                    PhongMaterial m = new PhongMaterial();
+                    m.setDiffuseColor(color);
+                    return m;
+                });
         marker.setMaterial(material);
         marker.setTranslateX(screenPosition[0]);
         marker.setTranslateY(screenPosition[1]);
@@ -387,6 +402,17 @@ public class OrbitVisualizer {
     }
 
     private record OrbitMeshPair(TriangleMesh baseMesh, TriangleMesh highlightMesh) {
+    }
+
+    /** Distinguishes the three material-shape recipes the visualizer hands out. */
+    private enum MaterialVariant {
+        ORBIT_BASE,
+        ORBIT_HIGHLIGHT,
+        DIFFUSE_ONLY
+    }
+
+    /** Cache key: a (variant, base-color) pair uniquely identifies a shared PhongMaterial. */
+    private record MaterialKey(MaterialVariant variant, Color baseColor) {
     }
 
     private static class OrbitLodState {

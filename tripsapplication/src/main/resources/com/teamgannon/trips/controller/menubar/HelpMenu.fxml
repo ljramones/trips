@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="Help" mnemonicParsing="false"
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Help" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.HelpMenuController">
     <MenuItem mnemonicParsing="false"
               onAction="#aboutTrips"

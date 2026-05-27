@@ -27,7 +27,13 @@ public interface ExoPlanetRepository extends JpaRepository<ExoPlanet, String> {
     List<ExoPlanet> findBySolarSystemId(String solarSystemId);
 
     /**
-     * Find all exoplanets orbiting a specific star
+     * Find all exoplanets orbiting a specific star.
+     * <p>
+     * Note: {@link ExoPlanet#getHostStarId()} is a raw {@code String} foreign key,
+     * not a JPA {@code @ManyToOne} association — there is no lazy-loaded
+     * {@code hostStar} field to {@code @EntityGraph} fetch. If a caller needs
+     * the host {@code StarObject}, they must look it up explicitly via
+     * {@code StarObjectRepository.findById(hostStarId)}.
      *
      * @param hostStarId the host star's ID
      * @return list of exoplanets
