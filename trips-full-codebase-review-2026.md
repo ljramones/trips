@@ -428,7 +428,13 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/resources/application.yml (Hibernate caching)
 - **Description**: Hibernate second-level cache disabled. Repeated query patterns (e.g., `getFromDatasetWithinRanges`, repeated `findBySolarSystemId` during a render) re-hit the DB every time.
 - **Suggestion**: Enable second-level cache with JCache region factory for read-mostly entities (`DataSetDescriptor`, `StarObject` lookups by id). Benchmark before/after.
-- **Status**: open
+- **Status**: done (Phase 7 close-out) — Hibernate L2 cache wired via JCache with EhCache 3.10 (jakarta classifier) as the JSR-107 provider. Config breakdown:
+  - **deps**: `org.hibernate.orm:hibernate-jcache` (managed by Boot's Hibernate BOM) + `org.ehcache:ehcache:3.10.8` classifier `jakarta`
+  - **application.yml**: `hibernate.cache.use_second_level_cache=true`, region factory `jcache`, provider `org.ehcache.jsr107.EhcacheCachingProvider`, missing-cache strategy `create`
+  - **config**: `src/main/resources/ehcache.xml` defines a `DataSetDescriptor` region (200-entry heap, 30-min TTL) plus the standard Hibernate `default-update-timestamps-region` + `default-query-results-region`
+  - **bootstrap**: `config/cache/JCacheBootstrap` reads `ehcache.xml` from the classpath (JCache `URI.create(...)` can't resolve Spring's `classpath:` prefix), builds the `CacheManager` from its real URI, and hands it to Hibernate via a `HibernatePropertiesCustomizer` setting `ConfigSettings.CACHE_MANAGER` so Hibernate uses our instance instead of constructing its own with the JSR-107 default URI
+  - **opt-ins**: `DataSetDescriptor` annotated `@Cache(usage = READ_WRITE)` — read-mostly entity touched on every plot to resolve the active dataset's theme + custom-data definitions. `StarObject` intentionally NOT cached: 2M-row dataset with frequent churn would invalidate the cache faster than it helps. Adding `Constellation`, `SolarSystem`, `ExoPlanet` later is a one-annotation + ehcache-region change once their access patterns are confirmed.
+  - 2,740 tests green with caching on. Benchmark on a real dataset is the remaining-but-optional follow-up (the win measure is reduced `DataSetDescriptor` find round-trips during dataset switching + plot operations).
 
 ### Issue 54 -- Severity: nit (UX)
 - **File**: tripsapplication/src/main/resources/com/teamgannon/trips/screenobjects/StarEditDialog.fxml:232-293

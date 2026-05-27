@@ -17,6 +17,8 @@ import org.hibernate.Hibernate;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import tools.jackson.core.JacksonException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -42,6 +44,18 @@ import java.util.stream.Collectors;
 @ToString(exclude = {"themeStr", "astrographicDataList", "routesStr", "customDataDefsStr", "customDataValuesStr", "transitPreferencesStr"})
 @RequiredArgsConstructor
 @Entity
+//
+// Phase 7 / Issue 53: opt this entity into Hibernate's L2 cache.
+// DataSetDescriptor is read-mostly during a session — every plot reads it
+// to resolve the active dataset's theme + custom-data definitions — so
+// caching it eliminates the repeated DB round-trip. READ_WRITE keeps the
+// cache consistent across writes (theme changes, import, etc.) at the
+// cost of a slightly heavier write path, which is the right trade-off
+// for an entity that's written rarely. EhCache config lives in
+// `src/main/resources/ehcache.xml` (200-entry heap, 30-minute TTL).
+//
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE,
+        region = "com.teamgannon.trips.jpa.model.DataSetDescriptor")
 public class DataSetDescriptor implements Serializable {
 
     @Serial

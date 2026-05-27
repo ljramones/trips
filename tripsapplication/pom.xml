@@ -170,6 +170,30 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <!--
+          Hibernate L2 cache (Phase 7 / Issue 53): hibernate-jcache bridges
+          Hibernate's RegionFactory SPI to the JSR-107 JCache API, and EhCache
+          3.10.x is the JSR-107 provider. EhCache 3.10 ships under a `jakarta`
+          classifier for Jakarta EE 10 — that's the variant we need because
+          the codebase uses `jakarta.persistence.*` (not `javax.persistence.*`).
+
+          The cache is configured in application.yml + ehcache.xml. Caching
+          today is opted-in per entity via @org.hibernate.annotations.Cache;
+          only DataSetDescriptor uses it so the blast radius is small.
+          See Issue 53 in trips-full-codebase-review-2026.md for the
+          benchmarking guidance.
+        -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-jcache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <version>3.10.8</version>
+            <classifier>jakarta</classifier>
+        </dependency>
+
         <!-- Flyway: tracks schema migrations. Baseline lives in
              src/main/resources/db/migration/V1__baseline.sql. See README in
              that directory and trips-full-codebase-review-2026.md (Phase 0.2).

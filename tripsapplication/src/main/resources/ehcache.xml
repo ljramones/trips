@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EhCache 3.10 configuration for Hibernate L2 cache (Phase 7 / Issue 53).
+
+  Caching is opt-in per entity via @org.hibernate.annotations.Cache. Right
+  now only DataSetDescriptor opts in; add caches here as additional entities
+  are flagged read-mostly.
+
+  Sizing rules of thumb (heap entries):
+   * DataSetDescriptor    — likely ≤100 in practice (number of loaded datasets)
+   * Query cache regions  — kept small; only specific @Query results that
+                             return small bounded lists should be cached.
+
+  Time-to-live (TTL) is 30 minutes by default — long enough to absorb
+  re-renders / dataset toggles in a typical session, short enough that a
+  user editing a dataset descriptor sees their change without restart.
+-->
+<config
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="
+            http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.10.xsd">
+
+    <!-- Per-entity cache for DataSetDescriptor. -->
+    <cache alias="com.teamgannon.trips.jpa.model.DataSetDescriptor">
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <heap unit="entries">200</heap>
+    </cache>
+
+    <!--
+      Hibernate's built-in default-update-timestamps + default-query-results
+      regions. JCache requires explicit declaration; without these,
+      Hibernate logs a warning and falls back to a no-op cache for query
+      results. Both stay small; tune up if we start caching query results.
+    -->
+    <cache alias="default-update-timestamps-region">
+        <expiry>
+            <none/>
+        </expiry>
+        <heap unit="entries">5000</heap>
+    </cache>
+
+    <cache alias="default-query-results-region">
+        <expiry>
+            <ttl unit="minutes">15</ttl>
+        </expiry>
+        <heap unit="entries">1000</heap>
+    </cache>
+</config>

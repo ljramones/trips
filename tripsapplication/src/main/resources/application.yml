@@ -38,6 +38,29 @@ spring:
         # Reorder inserts/updates for better batching
         order_inserts: true
         order_updates: true
+        # ===== Hibernate L2 cache (Phase 7 / Issue 53) =====
+        # Caching is opt-in per entity via @org.hibernate.annotations.Cache.
+        # Today only DataSetDescriptor uses it — keeps blast radius small
+        # while the pattern beds in. EhCache 3.10 (Jakarta classifier) is
+        # the JCache provider; regions are defined in ehcache.xml.
+        cache:
+          use_second_level_cache: true
+          use_query_cache: false
+          region:
+            factory_class: jcache
+        # Hibernate uses jakarta.cache.CacheManager via the JCache 1.0
+        # JSR-107 SPI; the `hibernate.javax.cache.*` namespace is the
+        # spec-defined property keys (the "javax" prefix predates the
+        # Jakarta rename and is kept on the Hibernate side for
+        # backwards-compat). The CacheManager itself is built by
+        # JCacheBootstrap.jakartaCacheManager() (config/cache/) because
+        # JCache's URI.create(...) can't resolve Spring's `classpath:`
+        # prefix; the bootstrap reads ehcache.xml off the classpath and
+        # passes a real file URI to EhCache.
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+            missing_cache_strategy: create
   sql:
     init:
       continue-on-error: true
