@@ -1,4 +1,4 @@
-package com.teamgannon.trips.planetary.modelling;
+package com.teamgannon.trips.model;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.SolarSystem;

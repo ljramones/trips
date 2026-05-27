@@ -1,5 +1,6 @@
 package com.teamgannon.trips.solarsystem.modelling.accrete;
 
+import com.teamgannon.trips.model.PlanetTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

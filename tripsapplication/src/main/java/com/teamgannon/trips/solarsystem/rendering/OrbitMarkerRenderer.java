@@ -1,6 +1,6 @@
 package com.teamgannon.trips.solarsystem.rendering;
 
-import com.teamgannon.trips.planetary.modelling.PlanetDescription;
+import com.teamgannon.trips.model.PlanetDescription;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;

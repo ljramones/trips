@@ -2,7 +2,7 @@ package com.teamgannon.trips.screenobjects.solarsystem;
 
 import com.teamgannon.trips.controller.MainPane;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
+import com.teamgannon.trips.model.SolarSystemDescription;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;

@@ -1,6 +1,6 @@
 package com.teamgannon.trips.solarsystem;
 
-import com.teamgannon.trips.planetary.modelling.PlanetDescription;
+import com.teamgannon.trips.model.PlanetDescription;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.ContextMenu;

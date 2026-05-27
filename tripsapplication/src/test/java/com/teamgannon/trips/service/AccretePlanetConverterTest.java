@@ -5,7 +5,7 @@ import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.solarsystem.modelling.accrete.AtmosphericChemical;
 import com.teamgannon.trips.solarsystem.modelling.accrete.Chemical;
 import com.teamgannon.trips.solarsystem.modelling.accrete.Planet;
-import com.teamgannon.trips.solarsystem.modelling.accrete.PlanetTypeEnum;
+import com.teamgannon.trips.model.PlanetTypeEnum;
 import com.teamgannon.trips.solarsystem.modelling.accrete.SimStar;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

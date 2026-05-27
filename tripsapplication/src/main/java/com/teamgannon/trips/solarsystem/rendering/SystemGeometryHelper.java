@@ -1,7 +1,7 @@
 package com.teamgannon.trips.solarsystem.rendering;
 
-import com.teamgannon.trips.planetary.modelling.PlanetDescription;
-import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
+import com.teamgannon.trips.model.PlanetDescription;
+import com.teamgannon.trips.model.SolarSystemDescription;
 
 import java.util.List;
 

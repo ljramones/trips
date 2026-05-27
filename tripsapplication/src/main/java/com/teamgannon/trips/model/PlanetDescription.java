@@ -1,6 +1,5 @@
-package com.teamgannon.trips.planetary.modelling;
+package com.teamgannon.trips.model;
 
-import com.teamgannon.trips.solarsystem.modelling.accrete.PlanetTypeEnum;
 import lombok.Data;
 
 @Data

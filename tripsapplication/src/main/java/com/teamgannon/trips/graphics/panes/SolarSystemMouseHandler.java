@@ -1,6 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
-import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
+import com.teamgannon.trips.model.SolarSystemDescription;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuFactory;
 import com.teamgannon.trips.solarsystem.rendering.SolarSystemRenderer;
 import com.teamgannon.trips.jpa.model.ExoPlanet;

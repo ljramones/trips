@@ -1,7 +1,7 @@
 package com.teamgannon.trips.planetary.rendering;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
-import com.teamgannon.trips.planetary.modelling.PlanetDescription;
+import com.teamgannon.trips.model.PlanetDescription;
 import javafx.scene.paint.Color;
 
 /**

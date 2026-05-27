@@ -7,7 +7,7 @@ import com.teamgannon.trips.events.ContextSelectorEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
 import com.teamgannon.trips.planetary.PlanetaryContext;
-import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
+import com.teamgannon.trips.model.SolarSystemDescription;
 import com.teamgannon.trips.planetary.modelling.procedural.PlanetConfig;
 import com.teamgannon.trips.planetary.modelling.procedural.PlanetGenerator;
 import com.teamgannon.trips.planetary.modelling.procedural.ProceduralPlanetPersistenceHelper;

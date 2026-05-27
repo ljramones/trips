@@ -1,7 +1,7 @@
 package com.teamgannon.trips.screenobjects.solarsystem;
 
 import com.teamgannon.trips.controller.MainPane;
-import com.teamgannon.trips.planetary.modelling.SolarSystemDescription;
+import com.teamgannon.trips.model.SolarSystemDescription;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;

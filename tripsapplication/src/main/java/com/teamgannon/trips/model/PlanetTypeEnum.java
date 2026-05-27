@@ -1,4 +1,4 @@
-package com.teamgannon.trips.solarsystem.modelling.accrete;
+package com.teamgannon.trips.model;
 
 public enum PlanetTypeEnum {
     tUnknown,
