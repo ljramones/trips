@@ -89,7 +89,7 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
 
         Button saveButton = new Button("Save to Database");
         saveButton.setOnAction(this::saveToDatabase);
-        saveButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        saveButton.getStyleClass().add("trips-button-action-success");
         hBox.getChildren().add(saveButton);
 
         Button reportButton = new Button("Report");
@@ -108,7 +108,7 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
         gridPane.setHgap(15);
         gridPane.setVgap(5);
         gridPane.setPadding(new Insets(8, 12, 8, 12));
-        gridPane.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #cccccc; -fx-border-radius: 5;");
+        gridPane.getStyleClass().add("trips-panel-light");
 
         // Star type and properties
         Label starTypeLabel = new Label("Star: " + star.toString().split(" HZ:")[0]);
@@ -117,19 +117,19 @@ public class PlanetDialog extends Dialog<SolarSystemSaveResult> {
 
         // Habitable Zone boundaries with clarification
         Label hzHeaderLabel = new Label("Habitable Zone (liquid water possible):");
-        hzHeaderLabel.setStyle("-fx-font-style: italic; -fx-text-fill: #666666; -fx-font-size: 10px;");
+        hzHeaderLabel.getStyleClass().add("trips-text-italic-muted-sm");
         gridPane.add(hzHeaderLabel, 0, 1, 3, 1);
 
         gridPane.add(new Label("Conservative:"), 0, 2);
         Label optimalHZLabel = new Label("%.2f - %.2f AU".formatted(
                 star.getHzInnerOptimal(), star.getHzOuterOptimal()));
-        optimalHZLabel.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;");
+        optimalHZLabel.getStyleClass().add("trips-text-hz-optimal");
         gridPane.add(optimalHZLabel, 1, 2);
 
         gridPane.add(new Label("Optimistic:"), 0, 3);
         Label maxHZLabel = new Label("%.2f - %.2f AU".formatted(
                 star.getHzInnerMax(), star.getHzOuterMax()));
-        maxHZLabel.setStyle("-fx-text-fill: #66BB6A;");
+        maxHZLabel.getStyleClass().add("trips-text-hz-max");
         gridPane.add(maxHZLabel, 1, 3);
 
         return gridPane;

@@ -430,10 +430,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         return sidePanel;
     }
 
-    // Standard style for labels in side panel
-    private static final String LABEL_STYLE = "-fx-text-fill: #333333; -fx-font-size: 11;";
-    private static final String SMALL_LABEL_STYLE = "-fx-text-fill: #333333; -fx-font-size: 10;";
-    private static final String INFO_LABEL_STYLE = "-fx-text-fill: #555555; -fx-font-size: 10;";
+    // Label styling moved to theme.css: see .trips-text-form-label
+    // (#333 + 11), .trips-text-form-info (#555 + 10), and
+    // .trips-text-muted-sm (#666 + 10). Applied via getStyleClass().add(...).
 
     /**
      * Create the GENERATION section with parameter controls.
@@ -446,7 +445,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox seedRow = new HBox(5);
         seedRow.setAlignment(Pos.CENTER_LEFT);
         Label seedLabel = new Label("Seed:");
-        seedLabel.setStyle(LABEL_STYLE);
+        seedLabel.getStyleClass().add("trips-text-form-label");
         seedField = new TextField(String.valueOf(currentSeed));
         seedField.setPrefWidth(100);
         seedField.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
@@ -462,7 +461,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox sizeRow = new HBox(5);
         sizeRow.setAlignment(Pos.CENTER_LEFT);
         Label sizeLabel = new Label("Size:");
-        sizeLabel.setStyle(LABEL_STYLE);
+        sizeLabel.getStyleClass().add("trips-text-form-label");
         sizeCombo = new ComboBox<>();
         sizeCombo.getItems().addAll(PlanetConfig.Size.values());
         sizeCombo.setValue(currentSize);
@@ -474,7 +473,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox plateRow = new HBox(5);
         plateRow.setAlignment(Pos.CENTER_LEFT);
         Label platesLabel = new Label("Plates:");
-        platesLabel.setStyle(LABEL_STYLE);
+        platesLabel.getStyleClass().add("trips-text-form-label");
         plateSpinner = new Spinner<>(7, 21, currentPlateCount);
         plateSpinner.setPrefWidth(70);
         plateSpinner.setEditable(true);
@@ -486,7 +485,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox waterHeader = new HBox(5);
         waterHeader.setAlignment(Pos.CENTER_LEFT);
         waterLabel = new Label("Water: %.0f%%".formatted(currentWaterFraction * 100));
-        waterLabel.setStyle(LABEL_STYLE);
+        waterLabel.getStyleClass().add("trips-text-form-label");
         waterHeader.getChildren().add(waterLabel);
         waterSlider = new Slider(0, 1, currentWaterFraction);
         waterSlider.setShowTickMarks(true);
@@ -501,7 +500,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox erosionRow = new HBox(5);
         erosionRow.setAlignment(Pos.CENTER_LEFT);
         Label erosionLabel = new Label("Erosion:");
-        erosionLabel.setStyle(LABEL_STYLE);
+        erosionLabel.getStyleClass().add("trips-text-form-label");
         erosionSpinner = new Spinner<>(0, 10, currentErosionIterations);
         erosionSpinner.setPrefWidth(70);
         erosionSpinner.setEditable(true);
@@ -513,7 +512,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox riverHeader = new HBox(5);
         riverHeader.setAlignment(Pos.CENTER_LEFT);
         riverLabel = new Label("River Thresh: %.2f".formatted(currentRiverThreshold));
-        riverLabel.setStyle(LABEL_STYLE);
+        riverLabel.getStyleClass().add("trips-text-form-label");
         riverHeader.getChildren().add(riverLabel);
         riverSlider = new Slider(0.1, 1.0, currentRiverThreshold);
         riverSlider.setShowTickMarks(true);
@@ -529,7 +528,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox heightHeader = new HBox(5);
         heightHeader.setAlignment(Pos.CENTER_LEFT);
         heightLabel = new Label("Height Scale: %.1f".formatted(currentHeightScale));
-        heightLabel.setStyle(LABEL_STYLE);
+        heightLabel.getStyleClass().add("trips-text-form-label");
         heightHeader.getChildren().add(heightLabel);
         heightSlider = new Slider(0.5, 3.0, currentHeightScale);
         heightSlider.setShowTickMarks(true);
@@ -545,7 +544,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox tiltHeader = new HBox(5);
         tiltHeader.setAlignment(Pos.CENTER_LEFT);
         axialTiltLabel = new Label("Axial Tilt: %.1f°".formatted(currentAxialTilt));
-        axialTiltLabel.setStyle(LABEL_STYLE);
+        axialTiltLabel.getStyleClass().add("trips-text-form-label");
         tiltHeader.getChildren().add(axialTiltLabel);
         axialTiltSlider = new Slider(0, 60, currentAxialTilt);
         axialTiltSlider.setShowTickMarks(true);
@@ -562,7 +561,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox seasonHeader = new HBox(5);
         seasonHeader.setAlignment(Pos.CENTER_LEFT);
         seasonalOffsetLabel = new Label("Season Offset: %.0f°".formatted(currentSeasonalOffset));
-        seasonalOffsetLabel.setStyle(LABEL_STYLE);
+        seasonalOffsetLabel.getStyleClass().add("trips-text-form-label");
         seasonHeader.getChildren().add(seasonalOffsetLabel);
         seasonalOffsetSlider = new Slider(0, 360, currentSeasonalOffset);
         seasonalOffsetSlider.setShowTickMarks(true);
@@ -581,7 +580,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox reliefRow = new HBox(5);
         reliefRow.setAlignment(Pos.CENTER_LEFT);
         Label reliefLabel = new Label("Relief:");
-        reliefLabel.setStyle(LABEL_STYLE);
+        reliefLabel.getStyleClass().add("trips-text-form-label");
         reliefMinSpinner = new Spinner<>(
             new SpinnerValueFactory.DoubleSpinnerValueFactory(-6.0, 0.0, currentReliefMin, 0.1));
         reliefMinSpinner.setPrefWidth(70);
@@ -607,7 +606,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         HBox climateRow = new HBox(5);
         climateRow.setAlignment(Pos.CENTER_LEFT);
         Label climateLabel = new Label("Climate:");
-        climateLabel.setStyle(LABEL_STYLE);
+        climateLabel.getStyleClass().add("trips-text-form-label");
         climateCombo = new ComboBox<>();
         climateCombo.getItems().addAll(ClimateCalculator.ClimateModel.values());
         climateCombo.setValue(currentClimateModel);
@@ -628,7 +627,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         progressBar.setManaged(false);
 
         progressLabel = new Label("");
-        progressLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #666666;");
+        progressLabel.getStyleClass().add("trips-text-muted-sm");
         progressLabel.setVisible(false);
         progressLabel.setManaged(false);
 
@@ -665,7 +664,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Zoom slider
         VBox zoomBox = new VBox(2);
         Label zoomLabel = new Label("Zoom:");
-        zoomLabel.setStyle(LABEL_STYLE);
+        zoomLabel.getStyleClass().add("trips-text-form-label");
         Slider zoomSlider = new Slider(-8, -1.5, INITIAL_CAMERA_DISTANCE);
         zoomSlider.setShowTickMarks(true);
         zoomSlider.setMajorTickUnit(2);
@@ -676,7 +675,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         // Auto-rotate checkbox (Phase 4.2: delegated to PlanetCameraController)
         CheckBox autoRotateCheckBox = new CheckBox("Auto-spin");
-        autoRotateCheckBox.setStyle(LABEL_STYLE);
+        autoRotateCheckBox.getStyleClass().add("trips-text-form-label");
         autoRotateCheckBox.setSelected(cameraController.isAutoRotate());
         autoRotateCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             cameraController.setAutoRotate(newVal);
@@ -709,7 +708,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Rivers checkbox
         int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
         riversCheckBox = new CheckBox("Rivers (" + riverCount + ")");
-        riversCheckBox.setStyle(LABEL_STYLE);
+        riversCheckBox.getStyleClass().add("trips-text-form-label");
         riversCheckBox.setSelected(showRivers);
         riversCheckBox.setDisable(riverCount == 0);
         riversCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -720,7 +719,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Lakes checkbox
         boolean hasLakes = hasLakes();
         lakesCheckBox = new CheckBox("Lakes");
-        lakesCheckBox.setStyle(LABEL_STYLE);
+        lakesCheckBox.getStyleClass().add("trips-text-form-label");
         lakesCheckBox.setSelected(showLakes);
         lakesCheckBox.setDisable(!hasLakes);
         lakesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -731,7 +730,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Flow-scaled rivers checkbox
         boolean hasFlow = hasFlowAccumulation();
         flowRiversCheckBox = new CheckBox("Flow-Scaled Rivers");
-        flowRiversCheckBox.setStyle(LABEL_STYLE);
+        flowRiversCheckBox.getStyleClass().add("trips-text-form-label");
         flowRiversCheckBox.setSelected(useFlowAccumulationRivers);
         flowRiversCheckBox.setDisable(!hasFlow);
         flowRiversCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -742,7 +741,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Plate boundaries checkbox
         boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
         plateBoundariesCheckBox = new CheckBox("Plate Boundaries");
-        plateBoundariesCheckBox.setStyle(LABEL_STYLE);
+        plateBoundariesCheckBox.getStyleClass().add("trips-text-form-label");
         plateBoundariesCheckBox.setSelected(showPlateBoundaries);
         plateBoundariesCheckBox.setDisable(!hasPlateData);
         plateBoundariesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -753,7 +752,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Climate zones checkbox
         boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
         climateZonesCheckBox = new CheckBox("Climate Zones");
-        climateZonesCheckBox.setStyle(LABEL_STYLE);
+        climateZonesCheckBox.getStyleClass().add("trips-text-form-label");
         climateZonesCheckBox.setSelected(showClimateZones);
         climateZonesCheckBox.setDisable(!hasClimateData);
         climateZonesCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -763,7 +762,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         // Pole marker checkbox (Phase 4.2: delegated to PlanetPoleMarker)
         poleMarkerCheckBox = new CheckBox("Pole Marker");
-        poleMarkerCheckBox.setStyle(LABEL_STYLE);
+        poleMarkerCheckBox.getStyleClass().add("trips-text-form-label");
         poleMarkerCheckBox.setSelected(poleMarker.isVisible());
         poleMarkerCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             poleMarker.setVisible(newVal);
@@ -774,7 +773,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         // Atmosphere checkbox (Phase 4.2: delegated to PlanetAtmosphereRenderer)
         CheckBox atmosphereCheckBox = new CheckBox("Atmosphere");
-        atmosphereCheckBox.setStyle(LABEL_STYLE);
+        atmosphereCheckBox.getStyleClass().add("trips-text-form-label");
         atmosphereCheckBox.setSelected(atmosphereRenderer.isShowAtmosphere());
         atmosphereCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             atmosphereRenderer.setShowAtmosphere(newVal);
@@ -801,13 +800,13 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         ToggleGroup renderGroup = new ToggleGroup();
 
         RadioButton terrainRadio = new RadioButton("Terrain Colors");
-        terrainRadio.setStyle(LABEL_STYLE);
+        terrainRadio.getStyleClass().add("trips-text-form-label");
         terrainRadio.setToggleGroup(renderGroup);
         terrainRadio.setSelected(useColorByHeight);
 
         boolean hasRainfall = rainfall != null && rainfall.length > 0;
         RadioButton rainfallRadio = new RadioButton("Rainfall Heatmap");
-        rainfallRadio.setStyle(LABEL_STYLE);
+        rainfallRadio.getStyleClass().add("trips-text-form-label");
         rainfallRadio.setToggleGroup(renderGroup);
         rainfallRadio.setSelected(showRainfallHeatmap);
         rainfallRadio.setDisable(!hasRainfall);
@@ -826,7 +825,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         // Smooth terrain checkbox
         boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
         smoothCheckBox = new CheckBox("Smooth Terrain");
-        smoothCheckBox.setStyle(LABEL_STYLE);
+        smoothCheckBox.getStyleClass().add("trips-text-form-label");
         smoothCheckBox.setSelected(useSmoothTerrain);
         smoothCheckBox.setDisable(!hasPreciseHeights);
         smoothCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -836,7 +835,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
 
         // Wireframe checkbox
         CheckBox wireframeCheckBox = new CheckBox("Wireframe");
-        wireframeCheckBox.setStyle(LABEL_STYLE);
+        wireframeCheckBox.getStyleClass().add("trips-text-form-label");
         wireframeCheckBox.setSelected(showWireframe);
         wireframeCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             showWireframe = newVal;
@@ -864,13 +863,13 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         int plateCount = plateAssignment != null ? plateAssignment.plates().size() : 0;
 
         infoPolygonsLabel = new Label("Polygons: " + polyCount);
-        infoPolygonsLabel.setStyle(INFO_LABEL_STYLE);
+        infoPolygonsLabel.getStyleClass().add("trips-text-form-info");
 
         infoRiversLabel = new Label("Rivers: " + riverCount);
-        infoRiversLabel.setStyle(INFO_LABEL_STYLE);
+        infoRiversLabel.getStyleClass().add("trips-text-form-info");
 
         infoPlatesLabel = new Label("Plates: " + plateCount);
-        infoPlatesLabel.setStyle(INFO_LABEL_STYLE);
+        infoPlatesLabel.getStyleClass().add("trips-text-form-info");
 
         // Save screenshot button
         Button saveButton = new Button("Save Screenshot");

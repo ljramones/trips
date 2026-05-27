@@ -12,12 +12,9 @@ import javafx.scene.layout.VBox;
 
 public class PlanetTab extends Tab {
 
-    // Status indicator styles
-    private static final String STYLE_TRUE = "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 2 6; -fx-background-radius: 3;";
-    private static final String STYLE_FALSE = "-fx-background-color: #e0e0e0; -fx-text-fill: #888888; -fx-padding: 2 6; -fx-background-radius: 3;";
-    private static final String STYLE_HZ_OPTIMAL = "-fx-background-color: #2E7D32; -fx-text-fill: white; -fx-padding: 2 6; -fx-background-radius: 3; -fx-font-weight: bold;";
-    private static final String STYLE_HZ_EXTENDED = "-fx-background-color: #66BB6A; -fx-text-fill: white; -fx-padding: 2 6; -fx-background-radius: 3;";
-    private static final String STYLE_HZ_OUTSIDE = "-fx-background-color: #f5f5f5; -fx-text-fill: #666666; -fx-padding: 2 6; -fx-background-radius: 3;";
+    // Badge styling moved to theme.css (Issue 50): see .trips-badge-true,
+    // .trips-badge-false, .trips-badge-hz-optimal, .trips-badge-hz-extended,
+    // .trips-badge-hz-outside. Applied via getStyleClass().add(...).
 
     private final Label planetTypeLabel = new Label();
     private final Label hzStatusLabel = new Label();
@@ -113,17 +110,17 @@ public class PlanetTab extends Tab {
 
         // Planet category (type) as primary indicator - blue badge
         Label typeLabel = new Label(planet.planetType());
-        typeLabel.setStyle("-fx-background-color: #1976D2; -fx-text-fill: white; -fx-padding: 3 8; -fx-background-radius: 3; -fx-font-weight: bold;");
+        typeLabel.getStyleClass().addAll("trips-status-badge", "info");
         flowPane.getChildren().add(typeLabel);
 
         // HZ Status indicator - green shades
         Label hzLabel = new Label(planet.getHabitableZoneStatus());
         if (planet.isInOptimalHZ()) {
-            hzLabel.setStyle(STYLE_HZ_OPTIMAL);
+            hzLabel.getStyleClass().add("trips-badge-hz-optimal");
         } else if (planet.isInMaxHZ()) {
-            hzLabel.setStyle(STYLE_HZ_EXTENDED);
+            hzLabel.getStyleClass().add("trips-badge-hz-extended");
         } else {
-            hzLabel.setStyle(STYLE_HZ_OUTSIDE);
+            hzLabel.getStyleClass().add("trips-badge-hz-outside");
         }
         flowPane.getChildren().add(hzLabel);
 
@@ -147,13 +144,13 @@ public class PlanetTab extends Tab {
         }
         if (planet.isResonantPeriod()) {
             Label tidalLabel = new Label("Tidally Locked");
-            tidalLabel.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-padding: 2 6; -fx-background-radius: 3;");
+            tidalLabel.getStyleClass().addAll("trips-status-badge", "warn");
             flowPane.getChildren().add(tidalLabel);
         }
         // Greenhouse effect requires actual atmosphere (pressure > 0)
         if (planet.isGreenhouseEffect() && planet.getSurfacePressure() > 0.001) {
             Label ghLabel = new Label("Greenhouse");
-            ghLabel.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-padding: 2 6; -fx-background-radius: 3;");
+            ghLabel.getStyleClass().addAll("trips-status-badge", "danger");
             flowPane.getChildren().add(ghLabel);
         }
 
@@ -165,7 +162,7 @@ public class PlanetTab extends Tab {
      */
     private Label createStatusLabel(String text, boolean active) {
         Label label = new Label(text);
-        label.setStyle(active ? STYLE_TRUE : STYLE_FALSE);
+        label.getStyleClass().add(active ? "trips-badge-true" : "trips-badge-false");
         return label;
     }
 
@@ -272,7 +269,6 @@ public class PlanetTab extends Tab {
             dayLengthLabel.getStyleClass().add("trips-text-italic-warn");
         } else {
             dayLengthLabel.getStyleClass().remove("trips-text-italic-warn");
-            dayLengthLabel.setStyle("");
         }
         gridPane.add(dayLengthLabel, 1, row++);
 
@@ -324,14 +320,15 @@ public class PlanetTab extends Tab {
 
             if (hasAtmosphere) {
                 // Show greenhouse warming or albedo cooling depending on which dominates
+                greenHouseRiseLabel.getStyleClass().removeAll("trips-text-cooling", "trips-text-warming");
                 if (planet.hasNetCooling()) {
                     gridPane.add(new Label("Albedo cooling:"), 0, row);
                     greenHouseRiseLabel.setText(checkValue(planet.getAlbedoCooling()) + " K");
-                    greenHouseRiseLabel.setStyle("-fx-text-fill: #2196F3;");  // Blue for cooling
+                    greenHouseRiseLabel.getStyleClass().add("trips-text-cooling");
                 } else {
                     gridPane.add(new Label("Greenhouse rise:"), 0, row);
                     greenHouseRiseLabel.setText("+" + checkValue(planet.getGreenhouseRise()) + " K");
-                    greenHouseRiseLabel.setStyle("-fx-text-fill: #FF5722;");  // Orange for warming
+                    greenHouseRiseLabel.getStyleClass().add("trips-text-warming");
                 }
                 gridPane.add(greenHouseRiseLabel, 1, row++);
 
@@ -346,7 +343,7 @@ public class PlanetTab extends Tab {
 
             // Add note for gas giants
             Label noteLabel = new Label("(No solid surface)");
-            noteLabel.setStyle("-fx-text-fill: #888888; -fx-font-style: italic; -fx-font-size: 10px;");
+            noteLabel.getStyleClass().add("trips-text-italic-muted-sm");
             gridPane.add(noteLabel, 0, row++, 2, 1);
         }
 
@@ -382,10 +379,10 @@ public class PlanetTab extends Tab {
         gridPane.add(new Label("Surface pressure:"), 0, row);
         if (isGasGiant) {
             surfacePressureLabel.setText("N/A (gas giant)");
-            surfacePressureLabel.setStyle("-fx-text-fill: #888888;");
+            surfacePressureLabel.getStyleClass().add("trips-text-muted");
         } else {
             surfacePressureLabel.setText(formatPressure(planet.getSurfacePressure()));
-            surfacePressureLabel.setStyle("");
+            surfacePressureLabel.getStyleClass().remove("trips-text-muted");
         }
         gridPane.add(surfacePressureLabel, 1, row++);
 
