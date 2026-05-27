@@ -59,7 +59,7 @@ public class SolSolarSystem {
 
     private void loadComets() {
         try {
-            File file = new File(localization.getProgramdata() + "solarSystemPlanets.csv");
+            File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("solarSystemPlanets.csv").toFile();
             List<SolSolarSystemPlanetModel> planets = new CsvToBeanBuilder(new FileReader(file))
                     .withType(SolSolarSystemPlanetModel.class)
                     .build()
@@ -75,7 +75,7 @@ public class SolSolarSystem {
 
     private void loadPlanets() {
         try {
-            File file = new File(localization.getProgramdata() + "cometParameters.csv");
+            File file = java.nio.file.Path.of(localization.getProgramdata()).resolve("cometParameters.csv").toFile();
             List<SolSolarSystemCometModel> comets = new CsvToBeanBuilder(new FileReader(file))
                     .withType(SolSolarSystemCometModel.class)
                     .build()

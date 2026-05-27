@@ -260,7 +260,9 @@ public class MainPane  {
         queryDialog = new QueryDialog(searchContext, eventPublisher);
         queryDialog.initModality(Modality.NONE);
 
-        File imageFileIcon = new File(localization.getProgramdata() + "tripsicon.png");
+        // Path.of(...).resolve(...) handles the trailing-slash situation safely;
+        // raw string concat had been producing ".../programdatatripsicon.png".
+        File imageFileIcon = java.nio.file.Path.of(localization.getProgramdata()).resolve("tripsicon.png").toFile();
         try (FileInputStream fis = new FileInputStream(imageFileIcon)) {
             Image applicationIcon = new Image(fis);
             primaryStage.getIcons().add(applicationIcon);

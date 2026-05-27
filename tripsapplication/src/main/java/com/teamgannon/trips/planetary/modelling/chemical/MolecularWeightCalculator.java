@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,10 @@ public class MolecularWeightCalculator {
             elementCountPattern = Pattern.compile(elementCount);
             elementPattern = Pattern.compile(element);
 
-            File file = new File(localization.getProgramdata()+"molecularWeight.csv");
+            // Path.of(...).resolve(...) inserts a separator even when programdata
+            // has no trailing slash — bare String concat produced bogus paths
+            // like ".../programdatamolecularWeight.csv".
+            File file = Path.of(localization.getProgramdata()).resolve("molecularWeight.csv").toFile();
             List<AtomicElement> beans = new CsvToBeanBuilder(new FileReader(file))
                     .withType(AtomicElement.class)
                     .build()
