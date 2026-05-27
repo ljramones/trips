@@ -145,31 +145,6 @@ public class SolarSystem implements Serializable {
     private Integer colonizationYear;
 
     /**
-     * Custom data field 1 for extensibility
-     */
-    private String customData1;
-
-    /**
-     * Custom data field 2 for extensibility
-     */
-    private String customData2;
-
-    /**
-     * Custom data field 3 for extensibility
-     */
-    private String customData3;
-
-    /**
-     * Custom data field 4 for extensibility
-     */
-    private String customData4;
-
-    /**
-     * Custom data field 5 for extensibility
-     */
-    private String customData5;
-
-    /**
      * Default constructor
      */
     public SolarSystem() {

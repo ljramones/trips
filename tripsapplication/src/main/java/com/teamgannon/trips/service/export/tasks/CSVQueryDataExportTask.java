@@ -219,16 +219,10 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
         appendField(csvBuilder, starObject.getMilPlanType());             // 42: milPlanType
         csvBuilder.append(starObject.getAge()).append(", ");              // 43: age
         csvBuilder.append(starObject.getMetallicity()).append(", ");      // 44: metallicity
-        appendField(csvBuilder, starObject.getMiscText1());               // 45: miscText1
-        appendField(csvBuilder, starObject.getMiscText2());               // 46: miscText2
-        appendField(csvBuilder, starObject.getMiscText3());               // 47: miscText3
-        appendField(csvBuilder, starObject.getMiscText4());               // 48: miscText4
-        appendField(csvBuilder, starObject.getMiscText5());               // 49: miscText5
-        csvBuilder.append(starObject.getMiscNum1()).append(", ");         // 50: miscNum1
-        csvBuilder.append(starObject.getMiscNum2()).append(", ");         // 51: miscNum2
-        csvBuilder.append(starObject.getMiscNum3()).append(", ");         // 52: miscNum3
-        csvBuilder.append(starObject.getMiscNum4()).append(", ");         // 53: miscNum4
-        csvBuilder.append(starObject.getMiscNum5()).append(", ");         // 54: miscNum5
+        // 45-49: miscText1..5 dropped in V5 (Issue 31/54) — empty placeholders
+        csvBuilder.append(", , , , , ");
+        // 50-54: miscNum1..5 dropped in V5 (Issue 31/54) — zero placeholders
+        csvBuilder.append("0, 0, 0, 0, 0, ");
         csvBuilder.append(starObject.getNumExoplanets()).append(", ");    // 55: numExoplanets
         appendField(csvBuilder, starObject.getAbsoluteMagnitude());       // 56: absoluteMagnitude
         appendField(csvBuilder, starObject.getGaiaDR3CatId());            // 57: gaiaDR3

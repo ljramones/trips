@@ -286,16 +286,8 @@ public class RegularStarCatalogCsvReader {
                 .milPlanType(testForNull(lineRead, 42, "NA"))
                 .age(parseDouble(testForNull(lineRead, 43, "0")))
                 .metallicity(parseDouble(testForNull(lineRead, 44, "0")))
-                .miscText1(testForNull(lineRead, 45, ""))
-                .miscText2(testForNull(lineRead, 46, ""))
-                .miscText3(testForNull(lineRead, 47, ""))
-                .miscText4(testForNull(lineRead, 48, ""))
-                .miscText5(testForNull(lineRead, 49, ""))
-                .miscNum1(parseDouble(testForNull(lineRead, 50, "0")))
-                .miscNum2(parseDouble(testForNull(lineRead, 51, "0")))
-                .miscNum3(parseDouble(testForNull(lineRead, 52, "0")))
-                .miscNum4(parseDouble(testForNull(lineRead, 53, "0")))
-                .miscNum5(parseDouble(testForNull(lineRead, 54, "0")))
+                // Columns 45-54 (misc_text/num 1-5) dropped in V5 (Issue 31/54);
+                // CSV data in those columns is silently ignored.
                 .numExoplanets(parseInt(testForNull(lineRead, 55, "0")))
                 .gaiaDR3CatId(gaiaDr3Value)
                 .x(parseDouble(xValue))

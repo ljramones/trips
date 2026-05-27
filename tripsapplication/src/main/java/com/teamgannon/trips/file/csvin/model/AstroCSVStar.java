@@ -128,56 +128,6 @@ public class AstroCSVStar {
     private String milPlanType;
 
     /**
-     * for user custom use in future versions
-     */
-    private String miscText1;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText2;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText3;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText4;
-
-    /**
-     * for user custom use in future versions
-     */
-    private String miscText5;
-
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum1;
-
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum2;
-
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum3;
-
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum4;
-
-    /**
-     * for user custom use in future versions
-     */
-    private double miscNum5;
-
-    /**
      * number of exoplanets
      */
     private int numExoplanets;
@@ -276,23 +226,10 @@ public class AstroCSVStar {
             astro.setMetallicity(metallicity);
 
 
-            astro.setMiscText1(miscText1);
-            astro.setMiscText2(miscText2);
-            astro.setMiscText3(miscText3);
-            astro.setMiscText4(miscText4);
-            astro.setMiscText5(miscText5);
-
-            astro.setMiscNum1(miscNum1);
-            astro.setMiscNum2(miscNum2);
-            astro.setMiscNum3(miscNum3);
-            astro.setMiscNum4(miscNum4);
-            astro.setMiscNum5(miscNum5);
-
-            astro.setMiscNum1(miscNum1);
-            astro.setMiscNum2(miscNum2);
-            astro.setMiscNum3(miscNum3);
-            astro.setMiscNum4(miscNum4);
-            astro.setMiscNum5(miscNum5);
+            // misc_text1..5 + misc_num1..5 columns were dropped in V5
+            // (Issue 31 / 54). Any incoming CSV values for those columns are
+            // silently ignored at the OpenCSV @CsvBindByName layer — they no
+            // longer exist as fields on AstroCSVStar.
 
             astro.setNumExoplanets(numExoplanets);
 

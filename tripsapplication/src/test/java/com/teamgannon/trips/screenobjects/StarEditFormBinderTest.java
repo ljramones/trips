@@ -280,34 +280,6 @@ class StarEditFormBinderTest {
     class InitializeUserTabTests {
 
         @Test
-        @DisplayName("should populate misc text fields")
-        void shouldPopulateMiscTextFields() throws Exception {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
-
-            AtomicReference<String> misc1Text = new AtomicReference<>();
-
-            runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setMiscText1("Custom note");
-
-                StarEditFormBinder binder = new StarEditFormBinder(record);
-
-                TextField misc1 = new TextField();
-                CheckBox force = new CheckBox();
-
-                binder.setUserFields(misc1, new TextField(), new TextField(),
-                        new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), force);
-                binder.initializeUserTab();
-
-                misc1Text.set(misc1.getText());
-            });
-
-            assertEquals("Custom note", misc1Text.get());
-        }
-
-        @Test
         @DisplayName("should set force label checkbox state")
         void shouldSetForceLabelCheckboxState() throws Exception {
             Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
@@ -321,10 +293,7 @@ class StarEditFormBinderTest {
                 StarEditFormBinder binder = new StarEditFormBinder(record);
 
                 CheckBox force = new CheckBox();
-                binder.setUserFields(new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), force);
+                binder.setUserFields(force);
                 binder.initializeUserTab();
 
                 forceSelected.set(force.isSelected());
@@ -400,10 +369,7 @@ class StarEditFormBinderTest {
                         new TextField(), new TextField(), new TextField(),
                         new TextField(), new TextField(), new TextField());
 
-                binder.setUserFields(new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(),
-                        new TextField("0"), new TextField("0"), new TextField("0"),
-                        new TextField("0"), new TextField("0"), new CheckBox());
+                binder.setUserFields(new CheckBox());
 
                 try {
                     binder.collectAllData();
@@ -471,11 +437,6 @@ class StarEditFormBinderTest {
         record.setMagv(0.0);
         record.setMagr(0.0);
         record.setMagi(0.0);
-        record.setMiscNum1(0.0);
-        record.setMiscNum2(0.0);
-        record.setMiscNum3(0.0);
-        record.setMiscNum4(0.0);
-        record.setMiscNum5(0.0);
         return record;
     }
 
@@ -537,20 +498,8 @@ class StarEditFormBinderTest {
                 new TextField("C")
         );
 
-        // User fields
-        binder.setUserFields(
-                new TextField(""),
-                new TextField(""),
-                new TextField(""),
-                new TextField(""),
-                new TextField(""),
-                new TextField("0.0"),
-                new TextField("0.0"),
-                new TextField("0.0"),
-                new TextField("0.0"),
-                new TextField("0.0"),
-                new CheckBox()
-        );
+        // User fields (just the forceLabel checkbox after V5 schema cleanup)
+        binder.setUserFields(new CheckBox());
 
         return binder;
     }

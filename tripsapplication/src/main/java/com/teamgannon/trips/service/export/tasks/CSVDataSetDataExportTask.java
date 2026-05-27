@@ -219,16 +219,11 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
         csvBuilder.append(starObject.getMilPlanType()).append(", ");
         csvBuilder.append(starObject.getAge()).append(", ");
         csvBuilder.append(starObject.getMetallicity()).append(", ");
-        appendField(csvBuilder, starObject.getMiscText1());
-        appendField(csvBuilder, starObject.getMiscText2());
-        appendField(csvBuilder, starObject.getMiscText3());
-        appendField(csvBuilder, starObject.getMiscText4());
-        appendField(csvBuilder, starObject.getMiscText5());
-        csvBuilder.append(starObject.getMiscNum1()).append(", ");
-        csvBuilder.append(starObject.getMiscNum2()).append(", ");
-        csvBuilder.append(starObject.getMiscNum3()).append(", ");
-        csvBuilder.append(starObject.getMiscNum4()).append(", ");
-        csvBuilder.append(starObject.getMiscNum5()).append(", ");
+        // misc_text1..5 + misc_num1..5 columns dropped in V5 (Issue 31/54).
+        // Empty placeholders kept so column positions stay stable for any
+        // downstream consumer that parses by index.
+        csvBuilder.append(", , , , , ");
+        csvBuilder.append("0, 0, 0, 0, 0, ");
         csvBuilder.append(starObject.getNumExoplanets()).append(", ");
         appendField(csvBuilder, starObject.getAbsoluteMagnitude());
         appendField(csvBuilder, starObject.getGaiaDR3CatId());

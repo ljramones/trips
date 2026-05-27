@@ -284,20 +284,6 @@ public class StarObject implements Serializable {
     /** Number of exoplanets */
     private int numExoplanets = 0;
 
-    // ==================== Custom/Misc Fields ====================
-
-    private String miscText1 = "";
-    private String miscText2 = "";
-    private String miscText3 = "";
-    private String miscText4 = "";
-    private String miscText5 = "";
-
-    private double miscNum1 = 0.0;
-    private double miscNum2 = 0.0;
-    private double miscNum3 = 0.0;
-    private double miscNum4 = 0.0;
-    private double miscNum5 = 0.0;
-
     // ==================== Display Properties ====================
 
     /** Force the label to always be shown */

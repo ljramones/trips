@@ -68,16 +68,7 @@ public class StarEditFormBinder {
     private TextField milplanTextField;
 
     // User fields
-    private TextField misc1TextField;
-    private TextField misc2TextField;
-    private TextField misc3TextField;
-    private TextField misc4TextField;
-    private TextField misc5TextField;
-    private TextField miscNum1TextField;
-    private TextField miscNum2TextField;
-    private TextField miscNum3TextField;
-    private TextField miscNum4TextField;
-    private TextField miscNum5TextField;
+    // misc text/num text fields removed with V5 schema cleanup (Issue 31/54).
 
     // Checkboxes
     private CheckBox forceLabel;
@@ -161,20 +152,7 @@ public class StarEditFormBinder {
     /**
      * Set the user custom fields.
      */
-    public void setUserFields(TextField misc1, TextField misc2, TextField misc3,
-                              TextField misc4, TextField misc5,
-                              TextField miscNum1, TextField miscNum2, TextField miscNum3,
-                              TextField miscNum4, TextField miscNum5, CheckBox force) {
-        this.misc1TextField = misc1;
-        this.misc2TextField = misc2;
-        this.misc3TextField = misc3;
-        this.misc4TextField = misc4;
-        this.misc5TextField = misc5;
-        this.miscNum1TextField = miscNum1;
-        this.miscNum2TextField = miscNum2;
-        this.miscNum3TextField = miscNum3;
-        this.miscNum4TextField = miscNum4;
-        this.miscNum5TextField = miscNum5;
+    public void setUserFields(CheckBox force) {
         this.forceLabel = force;
     }
 
@@ -308,30 +286,10 @@ public class StarEditFormBinder {
     }
 
     /**
-     * Initialize user custom fields tab.
+     * Initialize the user-tab CheckBox (the only surviving control after
+     * V5 dropped the misc text/num scratch fields).
      */
     public void initializeUserTab() {
-        misc1TextField.setText(record.getMiscText1());
-        misc2TextField.setText(record.getMiscText2());
-        misc3TextField.setText(record.getMiscText3());
-        misc4TextField.setText(record.getMiscText4());
-        misc5TextField.setText(record.getMiscText5());
-
-        setupDoubleField(miscNum1TextField, record.getMiscNum1(),
-                null, () -> parseDouble(miscNum1TextField, record::setMiscNum1));
-
-        setupDoubleField(miscNum2TextField, record.getMiscNum2(),
-                null, () -> parseDouble(miscNum2TextField, record::setMiscNum2));
-
-        setupDoubleField(miscNum3TextField, record.getMiscNum3(),
-                null, () -> parseDouble(miscNum3TextField, record::setMiscNum3));
-
-        setupDoubleField(miscNum4TextField, record.getMiscNum4(),
-                null, () -> parseDouble(miscNum4TextField, record::setMiscNum4));
-
-        setupDoubleField(miscNum5TextField, record.getMiscNum5(),
-                null, () -> parseDouble(miscNum5TextField, record::setMiscNum5));
-
         forceLabel.setSelected(record.isForceLabelToBeShown());
     }
 
@@ -392,19 +350,6 @@ public class StarEditFormBinder {
         record.setMagi(parseDoubleOrThrow(magiTextField));
 
         record.setGaiaDR2CatId(gaiaIdTextField.getText());
-
-        // User fields
-        record.setMiscText1(misc1TextField.getText());
-        record.setMiscText2(misc2TextField.getText());
-        record.setMiscText3(misc3TextField.getText());
-        record.setMiscText4(misc4TextField.getText());
-        record.setMiscText5(misc5TextField.getText());
-
-        record.setMiscNum1(parseDoubleOrThrow(miscNum1TextField));
-        record.setMiscNum2(parseDoubleOrThrow(miscNum2TextField));
-        record.setMiscNum3(parseDoubleOrThrow(miscNum3TextField));
-        record.setMiscNum4(parseDoubleOrThrow(miscNum4TextField));
-        record.setMiscNum5(parseDoubleOrThrow(miscNum5TextField));
 
         record.setForceLabelToBeShown(forceLabel.isSelected());
     }

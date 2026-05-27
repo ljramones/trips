@@ -258,26 +258,10 @@ public class StarTableExportService extends Service<Long> {
                 lineBuilder.append(", ");
                 appendCsvCell(lineBuilder, star.getMetallicity());
                 lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscText1());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscText2());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscText3());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscText4());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscText5());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscNum1());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscNum2());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscNum3());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscNum4());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMiscNum5());
-                lineBuilder.append(", ");
+                // misc_text1..5 + misc_num1..5 dropped in V5 (Issue 31/54).
+                // Empty/zero placeholders preserve column positions for any
+                // downstream consumer that parses by index.
+                lineBuilder.append(", , , , , 0, 0, 0, 0, 0, ");
                 appendCsvCell(lineBuilder, star.getNumExoplanets());
                 lineBuilder.append(", ");
                 appendCsvCell(lineBuilder, star.getAbsoluteMagnitude());

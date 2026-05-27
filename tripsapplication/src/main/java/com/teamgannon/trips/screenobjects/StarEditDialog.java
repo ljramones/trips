@@ -92,18 +92,6 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     @FXML private ComboBox<String> milSpaceComboBox;
     @FXML private ComboBox<String> milPlanComboBox;
 
-    // User fields
-    @FXML private TextField misc1TextField;
-    @FXML private TextField misc2TextField;
-    @FXML private TextField misc3TextField;
-    @FXML private TextField misc4TextField;
-    @FXML private TextField misc5TextField;
-    @FXML private TextField miscNum1TextField;
-    @FXML private TextField miscNum2TextField;
-    @FXML private TextField miscNum3TextField;
-    @FXML private TextField miscNum4TextField;
-    @FXML private TextField miscNum5TextField;
-
     @FXML private CheckBox forceLabel;
     @FXML private Button updateAliasBtn;
     @FXML private Button resetBtn;
@@ -145,10 +133,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 techTypeTextField, portTypeTextField, popTypeTextField,
                 prodField, milspaceTextField, milplanTextField);
 
-        formBinder.setUserFields(misc1TextField, misc2TextField, misc3TextField,
-                misc4TextField, misc5TextField,
-                miscNum1TextField, miscNum2TextField, miscNum3TextField,
-                miscNum4TextField, miscNum5TextField, forceLabel);
+        formBinder.setUserFields(forceLabel);
 
         // Initialize tabs
         formBinder.initializeOverviewTab(recordIdLabel, dataSetLabel);

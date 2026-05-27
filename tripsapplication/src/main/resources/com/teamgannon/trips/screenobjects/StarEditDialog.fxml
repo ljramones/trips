@@ -229,64 +229,14 @@
                         </GridPane>
                     </content>
                 </Tab>
-                <Tab text="User Special Info">
+                <Tab text="Display">
                     <content>
                         <GridPane hgap="5" vgap="5">
                             <padding>
                                 <Insets top="10" right="10" bottom="10" left="10" />
                             </padding>
-                            <columnConstraints>
-                                <ColumnConstraints hgrow="ALWAYS" />
-                                <ColumnConstraints hgrow="ALWAYS" />
-                            </columnConstraints>
                             <children>
-                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                    <columnConstraints>
-                                        <ColumnConstraints minWidth="120" prefWidth="140" />
-                                        <ColumnConstraints hgrow="ALWAYS" />
-                                    </columnConstraints>
-                                    <children>
-                                        <Label text="misc1" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <TextField fx:id="misc1TextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                        <Label text="misc2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                        <TextField fx:id="misc2TextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                        <Label text="misc3" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                        <TextField fx:id="misc3TextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                        <Label text="misc4" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                                        <TextField fx:id="misc4TextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-
-                                        <Label text="misc5" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                                        <TextField fx:id="misc5TextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-
-                                        <CheckBox fx:id="forceLabel" text="Force Label to be seen" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="2" />
-                                    </children>
-                                </GridPane>
-
-                                <GridPane hgap="5" vgap="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                    <columnConstraints>
-                                        <ColumnConstraints minWidth="120" prefWidth="140" />
-                                        <ColumnConstraints hgrow="ALWAYS" />
-                                    </columnConstraints>
-                                    <children>
-                                        <Label text="miscNum1" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <TextField fx:id="miscNum1TextField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                        <Label text="miscNum2" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                        <TextField fx:id="miscNum2TextField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                        <Label text="miscNum3" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                        <TextField fx:id="miscNum3TextField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-
-                                        <Label text="miscNum4" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                                        <TextField fx:id="miscNum4TextField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-
-                                        <Label text="miscNum5" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                                        <TextField fx:id="miscNum5TextField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                                    </children>
-                                </GridPane>
+                                <CheckBox fx:id="forceLabel" text="Force Label to be seen" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                             </children>
                         </GridPane>
                     </content>
