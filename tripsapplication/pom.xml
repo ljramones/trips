@@ -647,6 +647,45 @@
     <build>
         <plugins>
             <!--
+              Hibernate bytecode enhancement (Phase 7.8 / Issue 46):
+              enables the @Basic(fetch = LAZY) annotations on @Lob fields
+              annotated in Phase 7.8 (DataSetDescriptor, ExoPlanet
+              procedural fields, StarCatalogIds) to actually take effect.
+              Without this plugin, Hibernate silently ignores LAZY on plain
+              fields and falls back to EAGER fetching.
+
+              Plugin coords for Hibernate ORM 7: the old
+              `org.hibernate.orm.tooling:hibernate-enhance-maven-plugin`
+              was renamed during the 7.x ASL2 relicense to
+              `org.hibernate.orm:hibernate-maven-plugin` with the
+              `enhance` goal. (See:
+              https://discourse.hibernate.org/t/version-7-0-cannot-find-the-hibernate-enhance-maven-plugin-in-maven/11547)
+
+              Only `enableLazyInitialization` is enabled today —
+              `enableDirtyTracking` and `enableAssociationManagement` change
+              observable entity behaviour and would need a coordinated test
+              pass before turning on. Lazy init is the conservative win
+              that activates Phase 7.8's annotations.
+            -->
+            <plugin>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-maven-plugin</artifactId>
+                <version>7.2.1.Final</version>
+                <executions>
+                    <execution>
+                        <id>enhance</id>
+                        <goals>
+                            <goal>enhance</goal>
+                        </goals>
+                        <configuration>
+                            <enableLazyInitialization>true</enableLazyInitialization>
+                            <enableDirtyTracking>false</enableDirtyTracking>
+                            <enableAssociationManagement>false</enableAssociationManagement>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
               Checkstyle: enforces the SLF4J parameterised-logging rule. Runs
               in the validate phase so violations stop the build before
               compilation. Config: config/checkstyle/checkstyle.xml (single
