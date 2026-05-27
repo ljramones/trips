@@ -14,7 +14,6 @@ import com.teamgannon.trips.planetarymodelling.PlanetDescription;
 import com.teamgannon.trips.planetarymodelling.SolarSystemDescription;
 import com.teamgannon.trips.planetarymodelling.procedural.PlanetGenerator;
 import com.teamgannon.trips.solarsysmodelling.accrete.Planet;
-import com.teamgannon.trips.solarsysmodelling.accrete.PostAccretionGenerator;
 import com.teamgannon.trips.solarsysmodelling.accrete.StarSystem;
 import com.teamgannon.trips.solarsysmodelling.habitable.HabitableZoneCalculator;
 import lombok.extern.slf4j.Slf4j;
@@ -38,17 +37,26 @@ public class SolarSystemService {
     private final StarObjectRepository starObjectRepository;
     private final SolarSystemFeatureRepository featureRepository;
     private final ExoPlanetCrudService exoPlanetCrudService;
+    /**
+     * Phase 4.7: persistence for ACCRETE-generated planets / moons / belts
+     * lives in its own component so this service can stay focused on lookup +
+     * lifecycle. The {@code save*} methods below remain on this service as
+     * thin delegates for backward compatibility with existing callers.
+     */
+    private final GeneratedSystemPersister generatedSystemPersister;
 
     public SolarSystemService(SolarSystemRepository solarSystemRepository,
                               ExoPlanetRepository exoPlanetRepository,
                               StarObjectRepository starObjectRepository,
                               SolarSystemFeatureRepository featureRepository,
-                              ExoPlanetCrudService exoPlanetCrudService) {
+                              ExoPlanetCrudService exoPlanetCrudService,
+                              GeneratedSystemPersister generatedSystemPersister) {
         this.solarSystemRepository = solarSystemRepository;
         this.exoPlanetRepository = exoPlanetRepository;
         this.starObjectRepository = starObjectRepository;
         this.featureRepository = featureRepository;
         this.exoPlanetCrudService = exoPlanetCrudService;
+        this.generatedSystemPersister = generatedSystemPersister;
     }
 
     // ==================== Solar System Retrieval ====================
@@ -439,61 +447,7 @@ public class SolarSystemService {
      */
     @Transactional
     public int saveGeneratedPlanets(StarObject sourceStar, List<Planet> planets) {
-        if (sourceStar == null || planets == null || planets.isEmpty()) {
-            log.warn("Cannot save generated planets: source star or planets list is null/empty");
-            return 0;
-        }
-
-        SolarSystem solarSystem = findOrCreateSolarSystem(sourceStar);
-
-        // Delete any existing simulated planets for this system
-        List<ExoPlanet> existingPlanets = exoPlanetRepository.findBySolarSystemId(solarSystem.getId());
-        for (ExoPlanet existing : existingPlanets) {
-            if ("Simulated".equals(existing.getDetectionType())) {
-                exoPlanetRepository.delete(existing);
-            }
-        }
-
-        // Convert and save each generated planet and its moons
-        int savedCount = 0;
-        int moonCount = 0;
-        int planetIndex = 1;
-
-        for (Planet planet : planets) {
-            ExoPlanet exoPlanet = AccretePlanetConverter.convert(
-                    planet, sourceStar, solarSystem.getId(), planetIndex++, null, false);
-            exoPlanetRepository.save(exoPlanet);
-            savedCount++;
-
-            log.debug("Saved generated planet: {} (SMA={} AU, Mass={} Earth masses)",
-                    exoPlanet.getName(), exoPlanet.getSemiMajorAxis(), exoPlanet.getMass());
-
-            // Save moons for this planet
-            List<Planet> moons = planet.getMoons();
-            if (moons != null && !moons.isEmpty()) {
-                int moonIndex = 1;
-                for (Planet moon : moons) {
-                    ExoPlanet exoMoon = AccretePlanetConverter.convert(
-                            moon, sourceStar, solarSystem.getId(), moonIndex++, exoPlanet.getId(), true);
-                    exoMoon.setName(exoPlanet.getName() + " " + AccretePlanetConverter.toRomanNumeral(moonIndex - 1));
-                    exoPlanetRepository.save(exoMoon);
-                    moonCount++;
-
-                    log.debug("Saved generated moon: {} (parent: {}, SMA={} AU)",
-                            exoMoon.getName(), exoPlanet.getName(), exoMoon.getSemiMajorAxis());
-                }
-            }
-        }
-
-        // Update solar system metadata
-        solarSystem.setPlanetCount(savedCount);
-        exoPlanetCrudService.updateHabitableZonePlanetStatus(solarSystem);
-        solarSystemRepository.save(solarSystem);
-
-        log.info("Saved {} generated planets and {} moons for star '{}' (system ID: {})",
-                savedCount, moonCount, sourceStar.getDisplayName(), solarSystem.getId());
-
-        return savedCount + moonCount;
+        return generatedSystemPersister.savePlanets(sourceStar, planets, this::findOrCreateSolarSystem);
     }
 
     /**
@@ -506,18 +460,7 @@ public class SolarSystemService {
      */
     @Transactional
     public int saveGeneratedSystem(StarObject sourceStar, StarSystem starSystem) {
-        if (starSystem == null) {
-            log.warn("Cannot save: starSystem is null");
-            return 0;
-        }
-
-        // First save the planets
-        int savedCount = saveGeneratedPlanets(sourceStar, starSystem.getPlanets());
-
-        // Then save the belt structures
-        saveGeneratedBelts(sourceStar, starSystem);
-
-        return savedCount;
+        return generatedSystemPersister.saveSystem(sourceStar, starSystem, this::findOrCreateSolarSystem);
     }
 
     /**
@@ -528,74 +471,7 @@ public class SolarSystemService {
      */
     @Transactional
     public void saveGeneratedBelts(StarObject sourceStar, StarSystem starSystem) {
-        SolarSystem solarSystem = findOrCreateSolarSystem(sourceStar);
-        String solarSystemId = solarSystem.getId();
-
-        // Delete any existing simulated belt features
-        List<SolarSystemFeature> existingFeatures = featureRepository.findBySolarSystemId(solarSystemId);
-        for (SolarSystemFeature feature : existingFeatures) {
-            if (feature.getNotes() != null && feature.getNotes().contains("Generated by ACCRETE")) {
-                featureRepository.delete(feature);
-            }
-        }
-
-        // Save asteroid belt if present
-        PostAccretionGenerator.AsteroidBeltData asteroidBelt = starSystem.getAsteroidBelt();
-        if (asteroidBelt != null) {
-            SolarSystemFeature beltFeature = new SolarSystemFeature(
-                    asteroidBelt.getName(),
-                    SolarSystemFeature.FeatureType.ASTEROID_BELT,
-                    SolarSystemFeature.FeatureCategory.NATURAL
-            );
-            beltFeature.setSolarSystemId(solarSystemId);
-            beltFeature.setInnerRadiusAU(asteroidBelt.getInnerRadiusAU());
-            beltFeature.setOuterRadiusAU(asteroidBelt.getOuterRadiusAU());
-            beltFeature.setInclinationDeg(asteroidBelt.getInclinationDeg());
-            beltFeature.setEccentricity(asteroidBelt.getEccentricity());
-            beltFeature.setThickness(0.15);
-            beltFeature.setParticleCount(5000);
-            beltFeature.setMinParticleSize(0.5);
-            beltFeature.setMaxParticleSize(2.0);
-            beltFeature.setPrimaryColor("#8C8278");
-            beltFeature.setSecondaryColor("#645A50");
-            beltFeature.setOpacity(0.8);
-            beltFeature.setAnimated(true);
-            beltFeature.setAnimationSpeed(1.0);
-            beltFeature.setNotes(String.format("Generated by ACCRETE. Estimated mass: %.4f Earth masses",
-                    asteroidBelt.getMassEarthMasses()));
-            featureRepository.save(beltFeature);
-            log.info("Saved generated asteroid belt: {:.2f} - {:.2f} AU",
-                    asteroidBelt.getInnerRadiusAU(), asteroidBelt.getOuterRadiusAU());
-        }
-
-        // Save Kuiper belt if present
-        PostAccretionGenerator.KuiperBeltData kuiperBelt = starSystem.getKuiperBelt();
-        if (kuiperBelt != null) {
-            SolarSystemFeature beltFeature = new SolarSystemFeature(
-                    kuiperBelt.getName(),
-                    SolarSystemFeature.FeatureType.KUIPER_BELT,
-                    SolarSystemFeature.FeatureCategory.NATURAL
-            );
-            beltFeature.setSolarSystemId(solarSystemId);
-            beltFeature.setInnerRadiusAU(kuiperBelt.getInnerRadiusAU());
-            beltFeature.setOuterRadiusAU(kuiperBelt.getOuterRadiusAU());
-            beltFeature.setInclinationDeg(kuiperBelt.getInclinationDeg());
-            beltFeature.setEccentricity(kuiperBelt.getEccentricity());
-            beltFeature.setThickness(0.2);
-            beltFeature.setParticleCount(3000);
-            beltFeature.setMinParticleSize(0.8);
-            beltFeature.setMaxParticleSize(3.0);
-            beltFeature.setPrimaryColor("#B4BEC8");
-            beltFeature.setSecondaryColor("#8C8C96");
-            beltFeature.setOpacity(0.6);
-            beltFeature.setAnimated(true);
-            beltFeature.setAnimationSpeed(0.5);
-            beltFeature.setNotes(String.format("Generated by ACCRETE. Estimated mass: %.4f Earth masses",
-                    kuiperBelt.getMassEarthMasses()));
-            featureRepository.save(beltFeature);
-            log.info("Saved generated Kuiper belt: {:.2f} - {:.2f} AU",
-                    kuiperBelt.getInnerRadiusAU(), kuiperBelt.getOuterRadiusAU());
-        }
+        generatedSystemPersister.saveBelts(sourceStar, starSystem, this::findOrCreateSolarSystem);
     }
 
     // ==================== Feature CRUD ====================
