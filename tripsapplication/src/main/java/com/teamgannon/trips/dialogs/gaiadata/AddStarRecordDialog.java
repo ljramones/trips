@@ -75,6 +75,10 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
         dismissButton.setOnAction(this::dismissClicked);
 
         hBox1.getChildren().addAll(nextButton, dismissButton);
+
+        // Bucket-A (Issue 49): accessibility verbose noun-phrases for save / cancel buttons.
+        nextButton.setAccessibleText("Save the new star record to the database");
+        dismissButton.setAccessibleText("Cancel adding the star record and close the dialog");
     }
 
     private void initializeDialog() {
@@ -110,29 +114,46 @@ public class AddStarRecordDialog extends Dialog<Boolean> {
         leftPane.add(nameLabel, 0, 0);
         leftPane.add(nameField, 1, 0);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints for new-star primary fields.
+        nameField.setPromptText("e.g. HD 209458");
+        nameField.setTooltip(new Tooltip("Primary display name for the new star"));
+        nameField.setAccessibleText("Primary display name for the new star");
+
         Label raLabel = new Label("RA");
         leftPane.add(raLabel, 0, 1);
         TextField raField = new TextField();
         raField.setText(starRecord.getRAdeg() + "");
         leftPane.add(raField, 1, 1);
+        raField.setPromptText("degrees");
+        raField.setTooltip(new Tooltip("Right ascension in decimal degrees (0 to 360)"));
+        raField.setAccessibleText("Right ascension in decimal degrees");
 
         Label decLabel = new Label("Dec");
         leftPane.add(decLabel, 0, 2);
         TextField decField = new TextField();
         decField.setText(starRecord.getDEdeg() + "");
         leftPane.add(decField, 1, 2);
+        decField.setPromptText("degrees");
+        decField.setTooltip(new Tooltip("Declination in decimal degrees (-90 to +90)"));
+        decField.setAccessibleText("Declination in decimal degrees");
 
         Label distanceLabel = new Label("Distance");
         leftPane.add(distanceLabel, 0, 3);
         TextField distanceField = new TextField();
         distanceField.setText(starRecord.getDistance() + "");
         leftPane.add(distanceField, 1, 3);
+        distanceField.setPromptText("light years");
+        distanceField.setTooltip(new Tooltip("Distance from Sol in light years"));
+        distanceField.setAccessibleText("Distance from Sol in light years");
 
         Label spectralTypeLabel = new Label("Spectral Type");
         leftPane.add(spectralTypeLabel, 0, 4);
         TextField spectralTypeField = new TextField();
         spectralTypeField.setText(starRecord.getSpType());
         leftPane.add(spectralTypeField, 1, 4);
+        spectralTypeField.setPromptText("e.g. G2V, M3.5V");
+        spectralTypeField.setTooltip(new Tooltip("Spectral classification (O, B, A, F, G, K, M plus optional sub-class and luminosity class)"));
+        spectralTypeField.setAccessibleText("Spectral classification of the star");
 
         Label xLabel = new Label("X");
         leftPane.add(xLabel, 0, 5);

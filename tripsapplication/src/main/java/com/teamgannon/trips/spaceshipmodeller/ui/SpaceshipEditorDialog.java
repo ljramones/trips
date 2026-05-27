@@ -228,7 +228,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         roleCol.setPrefWidth(150);
         carriedTable.getColumns().setAll(java.util.List.of(nameCol, classCol, countCol, roleCol));
         carriedTable.setPrefHeight(120);
-        carriedTable.setPlaceholder(new Label("No carried craft"));
+        carriedTable.setPlaceholder(new Label(get("editor.carriedTable.placeholder", "No carried craft")));
 
         craftNameField.setPromptText(get("column.name"));
         craftRoleField.setPromptText("Role");
@@ -260,7 +260,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         statusLabel.setStyle("-fx-font-weight: bold;");
         deltaVBadge.setStyle("-fx-text-fill: #333;");
         messagesList.setPrefHeight(120);
-        messagesList.setPlaceholder(new Label("No issues"));
+        messagesList.setPlaceholder(new Label(get("editor.messages.empty", "No issues")));
 
         planButton.setOnAction(e -> {
             if (transferPlannerBridge != null) {

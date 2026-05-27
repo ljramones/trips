@@ -107,6 +107,15 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         createImportProgress(vBox);
         createExportProgress(vBox);
 
+        // Bucket-A (Issue 49): accessibility verbose noun-phrases for dataset manager controls.
+        tableView.setAccessibleText("Table of loaded datasets; select a row to enable Delete and Export");
+        deleteButton.setAccessibleText("Delete the selected dataset from the database");
+        exportButton.setAccessibleText("Export the selected dataset to a CSV or Excel file");
+        cancelImport.setAccessibleText("Cancel the in-progress dataset import");
+        cancelExport.setAccessibleText("Cancel the in-progress dataset export");
+        importProgressText.setAccessibleHelp("Status text for the in-progress dataset import");
+        exportProgressText.setAccessibleHelp("Status text for the in-progress dataset export");
+
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
     }

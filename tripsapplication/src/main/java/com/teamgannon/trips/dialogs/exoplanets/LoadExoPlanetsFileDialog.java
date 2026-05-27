@@ -159,6 +159,23 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
         gridPane.add(starLoadedDec, 4, 2);
         starLoadedDistance = new TextField();
         gridPane.add(starLoadedDistance, 5, 2);
+
+        // Bucket-A (Issue 49 + 35): accessibility + input hints for the loaded-record review fields.
+        planetNameLoaded.setPromptText("e.g. Kepler-22 b");
+        planetNameLoaded.setTooltip(new Tooltip("Planet name as parsed from the exoplanets.csv row currently under review"));
+        planetNameLoaded.setAccessibleText("Planet name from the exoplanets.csv row");
+        starNameLoaded.setPromptText("e.g. Kepler-22");
+        starNameLoaded.setTooltip(new Tooltip("Host-star name as parsed from the exoplanets.csv row currently under review"));
+        starNameLoaded.setAccessibleText("Host-star name from the exoplanets.csv row");
+        starLoadedRa.setPromptText("RA in degrees");
+        starLoadedRa.setTooltip(new Tooltip("Right ascension of the host star, in decimal degrees"));
+        starLoadedRa.setAccessibleText("Host-star right ascension from the exoplanets.csv row");
+        starLoadedDec.setPromptText("Dec in degrees");
+        starLoadedDec.setTooltip(new Tooltip("Declination of the host star, in decimal degrees"));
+        starLoadedDec.setAccessibleText("Host-star declination from the exoplanets.csv row");
+        starLoadedDistance.setPromptText("light years");
+        starLoadedDistance.setTooltip(new Tooltip("Distance to the host star, in light years"));
+        starLoadedDistance.setAccessibleText("Host-star distance from the exoplanets.csv row");
     }
 
     private void setupUIStatus() {
@@ -187,6 +204,10 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
         descriptorComboBox.getItems().addAll(datasetService.getDescriptors());
         descriptorComboBox.getSelectionModel().selectFirst();
         gridPane.add(descriptorComboBox, 1, 0);
+
+        // Bucket-A (Issue 49 + 35): accessibility + tooltip for dataset picker.
+        descriptorComboBox.setTooltip(new Tooltip("Choose which loaded dataset to associate the imported exoplanets with"));
+        descriptorComboBox.setAccessibleText("Target dataset for the imported exoplanets");
 
         descriptorComboBox.setCellFactory(new ComboBoxDatasetCellFactory());
 
@@ -229,6 +250,13 @@ public class LoadExoPlanetsFileDialog extends Dialog<Boolean> {
         Button cancelDataSetButton = new Button("Dismiss");
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
+
+        // Bucket-A (Issue 49): accessibility verbose noun-phrases for control buttons + counters.
+        nextButton.setAccessibleText("Begin import or advance to the next exoplanet record");
+        loadPlanetButton.setAccessibleText("Add the current planet record to the database");
+        cancelDataSetButton.setAccessibleText("Dismiss the exoplanet import dialog");
+        currentCounterLabel.setAccessibleHelp("Index of the exoplanet record currently being reviewed");
+        totalCounterLabel.setAccessibleHelp("Total number of exoplanet records in the loaded file");
     }
 
     private void loadPlanetButton(ActionEvent actionEvent) {

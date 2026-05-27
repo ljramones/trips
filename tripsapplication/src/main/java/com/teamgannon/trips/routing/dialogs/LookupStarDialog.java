@@ -65,6 +65,11 @@ public class LookupStarDialog extends Dialog<StarSearchResults> {
         dismissButton.setOnAction(event -> dismiss());
         buttonBox.getChildren().add(dismissButton);
 
+        // Bucket-A (Issue 49): accessibility verbose noun-phrases for lookup-star controls.
+        tableView.setAccessibleText("Table of stars matching the lookup string; select a row then click Select");
+        selectButton.setAccessibleText("Accept the highlighted star as the lookup result");
+        dismissButton.setAccessibleText("Dismiss the lookup dialog without choosing a star");
+
         getDialogPane().setContent(vBox);
 
         // setup the table structure

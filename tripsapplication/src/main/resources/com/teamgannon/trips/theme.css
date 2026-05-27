@@ -80,6 +80,43 @@
     -fx-background-radius: -trips-border-radius-md;
 }
 
+/* ===== Typography utility classes =====
+   Mined from the top inline `setStyle("-fx-font-…")` callsites. Use these
+   instead of `setStyle("-fx-font-weight: bold;")` etc. — see Issue 50 /
+   Bucket A. */
+
+.trips-bold {
+    -fx-font-weight: bold;
+}
+
+.trips-text-sm {
+    -fx-font-size: -trips-font-size-sm;  /* 10 */
+}
+
+.trips-text-md {
+    -fx-font-size: -trips-font-size-md;  /* 11 */
+}
+
+.trips-text-bold-md {
+    -fx-font-weight: bold;
+    -fx-font-size: -trips-font-size-md;
+}
+
+.trips-text-muted-sm {
+    -fx-text-fill: #666;
+    -fx-font-size: -trips-font-size-sm;
+}
+
+.trips-text-muted {
+    -fx-text-fill: #666;
+}
+
+.trips-text-section-header {
+    -fx-text-fill: darkblue;
+    -fx-font-size: -trips-font-size-lg;  /* 13 */
+    -fx-font-weight: bold;
+}
+
 /* ===== Inline validation (Issue 29 / Phase 7) ===== */
 
 .text-field:error,

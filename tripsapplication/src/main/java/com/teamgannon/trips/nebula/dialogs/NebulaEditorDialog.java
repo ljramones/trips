@@ -170,7 +170,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         datasetField = createTextField(200);
         datasetField.setText(datasetName);
         datasetField.setEditable(false);
-        datasetField.setStyle("-fx-background-color: #e8e8e8;");
+        datasetField.getStyleClass().add("trips-panel-mid");  // Issue 50 / Bucket A
         grid.add(datasetField, 1, 1);
 
         grid.add(createBoldLabel("Catalog ID:"), 0, 2);
@@ -335,7 +335,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.add(radialBox, 1, 0, 3, 1);
 
         Label radialHint = new Label("Low = dense core, High = shell-like");
-        radialHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        radialHint.getStyleClass().add("trips-text-muted-sm");  // Issue 50 / Bucket A
         grid.add(radialHint, 1, 1, 3, 1);
 
         // Noise strength (filament intensity)
@@ -351,7 +351,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.add(noiseBox, 1, 2, 3, 1);
 
         Label noiseHint = new Label("Controls filamentary structure intensity");
-        noiseHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        noiseHint.getStyleClass().add("trips-text-muted-sm");  // Issue 50 / Bucket A
         grid.add(noiseHint, 1, 3, 3, 1);
 
         // Noise octaves (detail level)
@@ -362,7 +362,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.add(noiseOctavesSpinner, 1, 4);
 
         Label octavesHint = new Label("Detail level (1-6)");
-        octavesHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        octavesHint.getStyleClass().add("trips-text-muted-sm");  // Issue 50 / Bucket A
         grid.add(octavesHint, 2, 4, 2, 1);
 
         // Seed
@@ -389,7 +389,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.add(particleDensityField, 1, 0);
 
         Label densityHint = new Label("Particles per cubic light-year");
-        densityHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        densityHint.getStyleClass().add("trips-text-muted-sm");  // Issue 50 / Bucket A
         grid.add(densityHint, 2, 0, 2, 1);
 
         grid.add(createBoldLabel("Particle Override:"), 0, 1);
@@ -398,7 +398,7 @@ public class NebulaEditorDialog extends Dialog<Nebula> {
         grid.add(numElementsOverrideField, 1, 1);
 
         Label overrideHint = new Label("Explicit count (overrides density)");
-        overrideHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
+        overrideHint.getStyleClass().add("trips-text-muted-sm");  // Issue 50 / Bucket A
         grid.add(overrideHint, 2, 1, 2, 1);
 
         TitledPane pane = new TitledPane("Particle Count", grid);

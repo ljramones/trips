@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.Localization;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.dialogs.support.DataFileFormat;
 import com.teamgannon.trips.dialogs.support.DataFormatEnum;
+import com.teamgannon.trips.javafxsupport.InlineFieldValidation;
 import com.teamgannon.trips.service.DatabaseManagementService;
 import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.utility.DialogUtils;
@@ -28,14 +29,19 @@ import java.util.Map;
 public class AddDataSetDialog extends Dialog<Dataset> {
 
     private final TextField dataSetName = new TextField();
-
     private final ChoiceBox<String> dataSetType = new ChoiceBox<>();
-
     private final TextField dataSetAuthor = new TextField();
-
     private final TextArea notes = new TextArea();
-
     private final TextField fileSelected = new TextField();
+
+    /**
+     * Shared inline-validation error label (Issue 29 / Bucket A) — replaces
+     * the 6 modal Alert popups that fired one-per-required-field. The label
+     * sits below the grid; each validation block calls
+     * {@link InlineFieldValidation#attachError} to point the user at the
+     * offending field with a red border and put the message in this label.
+     */
+    private final Label validationError = new Label();
     private final Dataset dataSet = new Dataset();
     private final Map<DataFormatEnum, DataFileFormat> dataFileFormats = new HashMap<>();
     private final Localization localization;
@@ -116,6 +122,12 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         notes.setPromptText("add descriptive information for this entry");
         gridPane.add(notes, 1, 4);
 
+        // Inline validation status (Issue 29 / Bucket A). Hidden by default;
+        // shown by InlineFieldValidation.attachError when a required field
+        // fails validation on submit.
+        validationError.setVisible(false);
+        validationError.setManaged(false);
+        vBox.getChildren().add(validationError);
 
         HBox hBox5 = new HBox();
         hBox5.setAlignment(Pos.CENTER);
@@ -169,31 +181,37 @@ public class AddDataSetDialog extends Dialog<Dataset> {
         // pull the data from the controls
         getData();
 
-        // do a validity check for each iem
+        // Inline validation (Issue 29 / Bucket A): each branch points the
+        // user at the offending field with a red border + an inline message
+        // instead of stacking modal Alert popups.
+        InlineFieldValidation.clearError(dataSetName, validationError);
+        InlineFieldValidation.clearError(dataSetType, validationError);
+        InlineFieldValidation.clearError(dataSetAuthor, validationError);
+        InlineFieldValidation.clearError(fileSelected, validationError);
+
         if (dataSet.getName().isEmpty()) {
-            showErrorAlert("Add Dataset", "Dataset name cannot be empty!");
+            InlineFieldValidation.attachError(dataSetName, validationError, "Dataset name is required.");
             return;
         }
         if (datasetService.hasDataSet(dataSet.getName())) {
-            showErrorAlert("Add Dataset", "A dataset with this name already exists!");
+            InlineFieldValidation.attachError(dataSetName, validationError, "A dataset with this name already exists.");
             return;
         }
         if (dataSet.getDataType() == null) {
-            showErrorAlert("Add Dataset", "Dataset type cannot be empty!");
+            InlineFieldValidation.attachError(dataSetType, validationError, "Dataset type is required.");
             return;
         }
         if (dataSet.getAuthor().isEmpty()) {
-            showErrorAlert("Add Dataset", "Dataset author cannot be empty!");
+            InlineFieldValidation.attachError(dataSetAuthor, validationError, "Dataset author is required.");
             return;
         }
         if (dataSet.getFileSelected().isEmpty()) {
-            showErrorAlert("Add Dataset", "Dataset file cannot be empty!");
+            InlineFieldValidation.attachError(fileSelected, validationError, "Dataset file is required.");
             return;
-        } else {
-            if (checkFileDNExists(dataSet.getFileSelected())) {
-                showErrorAlert("Add Dataset", "file selected does not exist!");
-                return;
-            }
+        }
+        if (checkFileDNExists(dataSet.getFileSelected())) {
+            InlineFieldValidation.attachError(fileSelected, validationError, "Selected file does not exist on disk.");
+            return;
         }
 
         // the result for return
@@ -203,7 +221,10 @@ public class AddDataSetDialog extends Dialog<Dataset> {
     private void loadDataSetClicked(ActionEvent actionEvent) {
         String selectFileType = dataSetType.getValue();
         if (selectFileType == null) {
-            showErrorAlert("Add Dataset", "select the type first!");
+            // Inline (Issue 29 / Bucket A): point the user at the dataSetType
+            // ChoiceBox rather than firing a modal Alert.
+            InlineFieldValidation.attachError(dataSetType, validationError,
+                    "Pick a dataset type before selecting a file.");
             return;
         }
         String fileName = fileSelected.getText();

@@ -91,6 +91,16 @@ public class QueryDialog extends Dialog<AstroSearchQuery> {
 
         this.getDialogPane().setContent(vBox);
 
+        // Bucket-A (Issue 49): accessibility verbose noun-phrases for query dialog controls.
+        plotDisplayCheckbox.setTooltip(new Tooltip("Display matching stars in the 3D plot"));
+        plotDisplayCheckbox.setAccessibleText("Toggle 3D star-plot output for this query");
+        tableDisplayCheckbox.setTooltip(new Tooltip("Display matching stars in a tabular results window"));
+        tableDisplayCheckbox.setAccessibleText("Toggle tabular results output for this query");
+        exportCheckbox.setTooltip(new Tooltip("Export the matching star selection to an Excel spreadsheet"));
+        exportCheckbox.setAccessibleText("Toggle Excel export of the query results");
+        runQueryButton.setAccessibleText("Run the configured query against the active dataset");
+        dismissButton.setAccessibleText("Dismiss the query dialog without running a query");
+
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
     }

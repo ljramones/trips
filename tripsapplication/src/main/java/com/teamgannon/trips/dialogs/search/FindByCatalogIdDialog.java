@@ -88,6 +88,17 @@ public class FindByCatalogIdDialog extends Dialog<StarSearchResults> {
 
         this.getDialogPane().setContent(vBox);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints.
+        starName.setPromptText("e.g. HIP 71683, HD 209458, Gliese 581");
+        starName.setTooltip(new Tooltip("Exact catalog identifier; format depends on the chosen Catalog Id type"));
+        starName.setAccessibleText("Catalog identifier to search for");
+        datasets.setTooltip(new Tooltip("Choose which loaded dataset to search within"));
+        datasets.setAccessibleText("Dataset to search within");
+        catalogIdSelection.setTooltip(new Tooltip("Catalog identifier scheme to query (HIP, HD, Gliese, Gaia DR2/DR3, Tycho2, etc.)"));
+        catalogIdSelection.setAccessibleText("Catalog identifier type for the lookup");
+        gotToStarButton.setAccessibleText("Run the catalog-id star lookup");
+        cancelDataSetButton.setAccessibleText("Cancel the lookup and close the dialog");
+
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
     }

@@ -58,6 +58,15 @@ public class FindStarsWithNameMatchDialog extends Dialog<StarSearchResults> {
         cancelDataSetButton.setOnAction(this::close);
         hBox2.getChildren().add(cancelDataSetButton);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints.
+        starName.setPromptText("e.g. Sol, Alpha C, Vega");
+        starName.setTooltip(new Tooltip("Partial common-name match, case-insensitive; matches any star whose name contains this substring"));
+        starName.setAccessibleText("Star common-name fragment to search for");
+        datasets.setTooltip(new Tooltip("Choose which loaded dataset to search within"));
+        datasets.setAccessibleText("Dataset to search within");
+        gotToStarButton.setAccessibleText("Run the partial-name star search");
+        cancelDataSetButton.setAccessibleText("Cancel the search and close the dialog");
+
         this.getDialogPane().setContent(vBox);
 
         // set the dialog as a utility

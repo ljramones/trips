@@ -53,6 +53,9 @@ public class SelectActiveDatasetDialog extends Dialog<Boolean> {
 
         createSelectedDatasetContext(vBox);
 
+        // Bucket-A (Issue 49): accessibility verbose noun-phrase for the dataset picker.
+        descriptorListView.setAccessibleText("List of available datasets; click one to make it the active dataset");
+
         updateTable();
 
         // Add Cancel button so user can close dialog without selecting a dataset

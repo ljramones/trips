@@ -194,6 +194,24 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         gridPane.add(numPathsToFindTextField, 1, 7);
         numPathsToFindTextField.setText(RoutingConstants.DEFAULT_NUM_PATHS_TEXT);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints for primary route-finder tab.
+        originDisplayCmb.setTooltip(new Tooltip("Type a star name from the current view; auto-complete suggests matches"));
+        originDisplayCmb.setAccessibleText("Origin star for the route, chosen from stars currently in view");
+        destinationDisplayCmb.setTooltip(new Tooltip("Type a star name from the current view; auto-complete suggests matches"));
+        destinationDisplayCmb.setAccessibleText("Destination star for the route, chosen from stars currently in view");
+        upperLengthLengthTextField.setPromptText("light years");
+        upperLengthLengthTextField.setTooltip(new Tooltip("Maximum allowed length, in light years, for any single transit segment"));
+        upperLengthLengthTextField.setAccessibleText("Upper bound for transit length, in light years");
+        lowerLengthLengthTextField.setPromptText("light years");
+        lowerLengthLengthTextField.setTooltip(new Tooltip("Minimum allowed length, in light years, for any single transit segment"));
+        lowerLengthLengthTextField.setAccessibleText("Lower bound for transit length, in light years");
+        lineWidthTextField.setPromptText("e.g. 0.5");
+        lineWidthTextField.setTooltip(new Tooltip("Line width used to render route segments in the 3D plot"));
+        lineWidthTextField.setAccessibleText("Route line width for 3D rendering");
+        numPathsToFindTextField.setPromptText("e.g. 3");
+        numPathsToFindTextField.setTooltip(new Tooltip("Number of alternate shortest paths to find (Yen's K-shortest paths algorithm)"));
+        numPathsToFindTextField.setAccessibleText("Number of alternate routes to find");
+        colorButton.setAccessibleText("Choose the colour used to render the route");
     }
 
     private void pickColor(ActionEvent actionEvent) {

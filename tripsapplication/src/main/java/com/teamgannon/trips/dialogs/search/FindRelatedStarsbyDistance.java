@@ -87,6 +87,18 @@ public class FindRelatedStarsbyDistance extends Dialog<MultipleStarSearchResults
 
         this.getDialogPane().setContent(vBox);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints.
+        starName.setPromptText("e.g. Sol, Alpha C, Vega");
+        starName.setTooltip(new Tooltip("Partial common-name match for the centre star; you will pick the exact star from a match list"));
+        starName.setAccessibleText("Centre star common-name fragment");
+        distance.setPromptText("light years (> 3)");
+        distance.setTooltip(new Tooltip("Search radius in light years from the chosen centre star; must be greater than 3"));
+        distance.setAccessibleText("Search radius from the centre star, in light years");
+        datasets.setTooltip(new Tooltip("Choose which loaded dataset to search within"));
+        datasets.setAccessibleText("Dataset to search within");
+        gotToStarButton.setAccessibleText("Run the proximity search for related stars");
+        cancelDataSetButton.setAccessibleText("Cancel the search and close the dialog");
+
         // set the dialog as a utility
         DialogUtils.bindCloseHandler(this, this::close);
 

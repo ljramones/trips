@@ -9,6 +9,7 @@ import javafx.geometry.HPos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -185,6 +186,10 @@ public class TransitFilterPane extends VBox {
         });
         gridPane.add(showTransit, 0, row);
 
+        // Bucket-A (Issue 49): accessibility verbose noun-phrase for the show-transit toggle.
+        showTransit.setTooltip(new Tooltip("Toggle visibility of the " + transitRangeDef.getBandName() + " transit band"));
+        showTransit.setAccessibleText("Toggle visibility of the " + transitRangeDef.getBandName() + " transit band");
+
         // Show labels checkbox
         CheckBox showLabels = new CheckBox();
         showLabels.setSelected(true);
@@ -194,6 +199,10 @@ public class TransitFilterPane extends VBox {
             }
         });
         gridPane.add(showLabels, 1, row);
+
+        // Bucket-A (Issue 49): accessibility verbose noun-phrase for the show-labels toggle.
+        showLabels.setTooltip(new Tooltip("Toggle distance labels on the " + transitRangeDef.getBandName() + " transit segments"));
+        showLabels.setAccessibleText("Toggle distance labels on the " + transitRangeDef.getBandName() + " transit segments");
 
         // Band name
         Label nameLabel = new Label(transitRangeDef.getBandName());

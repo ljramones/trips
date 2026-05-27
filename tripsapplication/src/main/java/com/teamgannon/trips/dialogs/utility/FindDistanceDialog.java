@@ -128,6 +128,23 @@ public class FindDistanceDialog extends Dialog<DistanceCalculationObject> {
 
         gridPane.add(hBox, 0, 7, 2, 1);
 
+        // Bucket-A (Issue 49 + 35): accessibility + input hints.
+        fromStarName.setPromptText("e.g. Sol, Alpha C");
+        fromStarName.setTooltip(new Tooltip("Partial common-name match for the 'from' star; pick the exact star from the match list"));
+        fromStarName.setAccessibleText("From-star common-name fragment");
+        toStarName.setPromptText("e.g. Vega, Sirius");
+        toStarName.setTooltip(new Tooltip("Partial common-name match for the 'to' star; pick the exact star from the match list"));
+        toStarName.setAccessibleText("To-star common-name fragment");
+        datasets.setTooltip(new Tooltip("Choose which loaded dataset to search within"));
+        datasets.setAccessibleText("Dataset to search within");
+        fromStarButton.setAccessibleText("Pick the from-star from match list");
+        toStarButton.setAccessibleText("Pick the to-star from match list");
+        calculateCoordinatesButton.setAccessibleText("Calculate distance between the chosen from-star and to-star");
+        acceptButton.setAccessibleText("Accept the calculated distance and close the dialog");
+        cancelDataSetButton.setAccessibleText("Cancel and close the dialog without recording a distance");
+        fromStarNameLabel.setAccessibleHelp("Currently selected from-star, or 'Not Selected Yet' if none chosen");
+        toStarNameLabel.setAccessibleHelp("Currently selected to-star, or 'Not Selected Yet' if none chosen");
+        distanceLabel.setAccessibleHelp("Computed distance between the two selected stars, in light years");
     }
 
     private void toButtonClicked(ActionEvent actionEvent) {

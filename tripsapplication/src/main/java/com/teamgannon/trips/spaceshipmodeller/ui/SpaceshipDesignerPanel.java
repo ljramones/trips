@@ -212,7 +212,9 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     @SuppressWarnings("unchecked")
     private void configureTable() {
-        table.setPlaceholder(new Label("No spaceship designs yet — click \"" + get("button.new") + "\""));
+        table.setPlaceholder(new Label(
+                get("designer.table.placeholder", "No spaceship designs yet — click \"{0}\"")
+                        .replace("{0}", get("button.new"))));
         table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
         TableColumn<SpaceshipRow, String> nameCol = col(get("column.name"), "name", 150);
@@ -312,7 +314,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         actions.setPadding(new Insets(6, 0, 6, 0));
 
         validationMessages.setPrefHeight(120);
-        validationMessages.setPlaceholder(new Label("No issues"));
+        validationMessages.setPlaceholder(new Label(get("designer.validation.empty", "No issues")));
         TitledPane validationPane = new TitledPane(get("details.validationMessages"), validationMessages);
         validationPane.setExpanded(false);
 
