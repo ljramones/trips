@@ -293,7 +293,7 @@ public class EditMenuController {
                         try (FileWriter writer = new FileWriter(selectedFile)) {
                             writer.write(report);
                         } catch (IOException ex) {
-                            log.error("An error occurred while saving the file: " + ex.getMessage());
+                            log.error("An error occurred while saving the file", ex);
                         }
                     }
                 }

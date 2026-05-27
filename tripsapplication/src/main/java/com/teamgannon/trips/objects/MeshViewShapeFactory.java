@@ -16,7 +16,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to load the star:" + e.getMessage());
+            log.error("failed to load the star", e);
             return null;
         }
     }
@@ -28,7 +28,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to load the star:" + e.getMessage());
+            log.error("failed to load the star", e);
             return null;
         }
     }
@@ -40,7 +40,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to load the star:" + e.getMessage());
+            log.error("failed to load the star", e);
             return null;
         }
     }
@@ -52,7 +52,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("failed to load the star:" + e.getMessage());
+            log.error("failed to load the star", e);
             return null;
         }
     }
@@ -64,7 +64,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -76,7 +76,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -88,7 +88,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -100,7 +100,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -112,7 +112,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -125,7 +125,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -137,7 +137,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -149,7 +149,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -161,7 +161,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -173,7 +173,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -185,7 +185,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -197,7 +197,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -209,7 +209,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -221,7 +221,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }
@@ -233,7 +233,7 @@ public class MeshViewShapeFactory {
             return fxmlLoader.load();
         } catch (IOException e) {
             // exception handling
-            log.error("fail:" + e.getMessage());
+            log.error("fail", e);
             return null;
         }
     }

@@ -186,7 +186,7 @@ public class AstroSearchQuery {
             StellarType stellarType = StellarType.valueOf(stellarTypeName);
             stellarTypes.add(stellarType);
         } catch (Exception e) {
-            log.error("there is no enum for " + stellarTypeName);
+            log.error("there is no enum for {}", stellarTypeName);
         }
     }
 

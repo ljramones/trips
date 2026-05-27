@@ -135,7 +135,7 @@ public class TechSelectionPanel extends BasePane {
         EventHandler<ActionEvent> eh = event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
-                log.debug("Action performed on checkbox " + chk.getText());
+                log.debug("Action performed on checkbox {}", chk.getText());
                 if ("Yes?".equals(chk.getText())) {
                     if (isSelected()) {
                         yesTech.setSelected(true);

@@ -115,7 +115,7 @@ public class CurrentManualRoute {
                            @NotNull StarDisplayRecord firstPlottedStar) {
         setup(dataSetDescriptor, routeDescriptor);
 
-        log.info("Start charting the route:" + routeDescriptor);
+        log.info("Start charting the route:{}", routeDescriptor);
         Point3D startStar = firstPlottedStar.getCoordinates();
         if (routeDescriptor != null) {
             addLink(firstPlottedStar, startStar, 0, null, null);

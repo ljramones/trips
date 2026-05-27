@@ -114,7 +114,7 @@ public class ProductsSelectionPanel extends BasePane {
         EventHandler eh = (EventHandler<ActionEvent>) event -> {
             if (event.getSource() instanceof CheckBox) {
                 CheckBox chk = (CheckBox) event.getSource();
-                log.debug("Action performed on checkbox " + chk.getText());
+                log.debug("Action performed on checkbox {}", chk.getText());
                 if ("Yes?".equals(chk.getText())) {
                     if (isSelected()) {
                         yesNoProducts.setSelected(true);

@@ -375,7 +375,7 @@ public class DataSetDescriptor implements Serializable {
     public void setTransitDefinitions(TransitDefinitions transitDefinitions) {
         try {
             String transitDefsStr = mapper.writeValueAsString(transitDefinitions);
-            log.debug("serialized as:" + transitDefsStr);
+            log.debug("serialized as:{}", transitDefsStr);
             transitPreferencesStr = transitDefsStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", transitDefinitions, e.getMessage());

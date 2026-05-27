@@ -285,7 +285,7 @@ public class Theme {
     public String convertToJson(Theme theme) {
         try {
             String themeStr = mapper.writeValueAsString(theme);
-            log.debug("serialized as:" + themeStr);
+            log.debug("serialized as:{}", themeStr);
             return themeStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", theme, e.getMessage());

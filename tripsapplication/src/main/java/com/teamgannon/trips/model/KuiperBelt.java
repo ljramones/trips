@@ -48,7 +48,7 @@ public class KuiperBelt implements Serializable {
     private String convertToString(KuiperBelt kuiperBelt) {
         try {
             String asteroidStr = mapper.writeValueAsString(kuiperBelt);
-            log.debug("serialized as:" + asteroidStr);
+            log.debug("serialized as:{}", asteroidStr);
             return asteroidStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelt, e.getMessage());
@@ -60,7 +60,7 @@ public class KuiperBelt implements Serializable {
     public String convertToJson(List<KuiperBelt> kuiperBelts) {
         try {
             String kuiperStr = mapper.writeValueAsString(kuiperBelts);
-            log.debug("serialized as:" + kuiperStr);
+            log.debug("serialized as:{}", kuiperStr);
             return kuiperStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", kuiperBelts, e.getMessage());

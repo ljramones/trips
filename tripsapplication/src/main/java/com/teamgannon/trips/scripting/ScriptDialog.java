@@ -247,7 +247,7 @@ public class ScriptDialog extends Dialog<Boolean> {
                 String output = groovyScriptEngine.runAScript(activeScriptfile.getName(), activeScriptfile.getContents(), new ArrayList<>());
                 log.info(output);
             } else {
-                log.error("No Engine define for: " + activeScriptfile.getName());
+                log.error("No Engine define for: {}", activeScriptfile.getName());
             }
         });
         scriptingMenu.getItems().add(menuItem);

@@ -60,7 +60,7 @@ public class ObjectViewPane extends VBox {
 
     public void add(StarDisplayRecord starDisplayRecord) {
         Platform.runLater(() -> {
-//            log.debug("Add star display record: " + starDisplayRecord.getStarName());
+//            log.debug("Add star display record: {}", starDisplayRecord.getStarName());
             stellarObjectsListView.getItems().add(starDisplayRecord);
             stellarObjectsListView.getItems().sort(Comparator.comparing(StarDisplayRecord::getStarName));
         });

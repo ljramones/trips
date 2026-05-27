@@ -168,7 +168,7 @@ public class ShowStarMatchesBasicDialog extends Dialog<StarSelectionObject> {
         ObservableList<StarObject> selectedItems = selectionModel.getSelectedItems();
 
         selectedItems.addListener((ListChangeListener<StarObject>) change ->
-                log.info("Selection changed: " + change.getList()));
+                log.info("Selection changed: {}", change.getList()));
     }
 
     /**

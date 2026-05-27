@@ -214,7 +214,7 @@ public class PlotManager {
         // find the min/max values to plot
         astrographicTransformer.findMinMaxValues(starObjects, centerCoordinates);
         ScalingParameters scalingParameters = astrographicTransformer.getScalingParameters();
-        log.info("New Plot Scaling parameters:" + scalingParameters);
+        log.info("New Plot Scaling parameters:{}", scalingParameters);
 
         // rebuild the grid based on parameters
         interstellarSpacePane.rebuildGrid(centerCoordinates, astrographicTransformer, currentPlot);

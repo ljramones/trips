@@ -102,7 +102,7 @@ public class OrbitalParameters implements Serializable {
     public String convertToJson(OrbitalParameters parameters) {
         try {
             String parameterStr = mapper.writeValueAsString(parameters);
-            log.debug("serialized as:" + parameterStr);
+            log.debug("serialized as:{}", parameterStr);
             return parameterStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", parameters, e.getMessage());
@@ -113,7 +113,7 @@ public class OrbitalParameters implements Serializable {
     public String convertToJson(List<OrbitalParameters> parameters) {
         try {
             String parameterStr = mapper.writeValueAsString(parameters);
-            log.debug("serialized as:" + parameterStr);
+            log.debug("serialized as:{}", parameterStr);
             return parameterStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", parameters, e.getMessage());

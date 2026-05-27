@@ -194,7 +194,7 @@ public class StellarClassSelectionPanel extends BasePane {
     private void initEventHandler() {
         EventHandler<ActionEvent> eh = event -> {
             if (event.getSource() instanceof CheckBox chk) {
-                log.debug("Action performed on checkbox " + chk.getText());
+                log.debug("Action performed on checkbox {}", chk.getText());
                 if ("Yes?".equals(chk.getText())) {
                     if (isSelected()) {
                         yesClassStar.setSelected(true);

@@ -69,7 +69,7 @@ public class SolSolarSystem {
             }
             log.info("\n\nsolar system loaded\n\n");
         } catch (FileNotFoundException e) {
-            log.error("file not found due to:" + e.getMessage());
+            log.error("file not found", e);
         }
     }
 
@@ -85,7 +85,7 @@ public class SolSolarSystem {
             }
             log.info("\n\nComet list loaded\n\n");
         } catch (FileNotFoundException e) {
-            log.error("file not found due to:" + e.getMessage());
+            log.error("file not found", e);
         }
     }
 

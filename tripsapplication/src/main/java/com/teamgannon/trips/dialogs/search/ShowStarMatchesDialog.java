@@ -332,7 +332,7 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
         selectionModel.setSelectionMode(SelectionMode.SINGLE);
         ObservableList<StarObject> selectedItems = selectionModel.getSelectedItems();
 
-        selectedItems.addListener((ListChangeListener<StarObject>) change -> log.info("Selection changed: " + change.getList()));
+        selectedItems.addListener((ListChangeListener<StarObject>) change -> log.info("Selection changed: {}", change.getList()));
     }
 
     private void close(ActionEvent actionEvent) {

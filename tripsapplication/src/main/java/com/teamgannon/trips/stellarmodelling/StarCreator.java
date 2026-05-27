@@ -58,14 +58,14 @@ public class StarCreator {
         if (preMatcher.find()) {
             String prefix = preMatcher.group();
             spectralClassification = spectralClassification.substring(prefix.length());
-//            log.info("prefix is " + prefix);
+//            log.info("prefix is {}", prefix);
         }
         Matcher spectralClassMatcher = classPattern.matcher(spectralClassification);
         if (spectralClassMatcher.find()) {
             String spectralClass = spectralClassMatcher.group();
             starModel.setStarClass(spectralClass);
             spectralClassification = spectralClassification.substring(spectralClass.length()).trim();
-//            log.info("star is " + spectralClass);
+//            log.info("star is {}", spectralClass);
         }
         Matcher curlyBracketsMatcher = curlyBracketsPattern.matcher(spectralClassification);
         if (curlyBracketsMatcher.find()) {
@@ -86,14 +86,14 @@ public class StarCreator {
             String yerkesClass = yerkes.group();
             starModel.setLuminosityClass(yerkesClass);
             spectralClassification = spectralClassification.substring(yerkesClass.length());
-//            log.info("luminosity is " + yerkesClass);
+//            log.info("luminosity is {}", yerkesClass);
         }
         Matcher pecular = pecularitiesPattern.matcher(spectralClassification);
         if (pecular.find()) {
             String percularitiesString = pecular.group();
             starModel.setSpectralPecularities(percularitiesString);
 //            spectralClassification = spectralClassification.substring(percularitiesString.length());
-//            log.info("peculiarities is " + peculiaritiesString);
+//            log.info("peculiarities is {}", peculiaritiesString);
         }
 
         return starModel;

@@ -49,7 +49,7 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
         if (result.isSuccess()) {
             log.info("Dataset {} exported", export.getFileName());
         } else {
-            log.error("Export failed: " + result.getMessage());
+            log.error("Export failed: {}", result.getMessage());
         }
 
         return result;

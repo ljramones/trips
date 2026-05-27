@@ -47,7 +47,7 @@ public class OortCloud implements Serializable {
     private String convertToJson(OortCloud oortCloud) {
         try {
             String oortCloudStr = mapper.writeValueAsString(oortCloud);
-            log.debug("serialized as:" + oortCloudStr);
+            log.debug("serialized as:{}", oortCloudStr);
             return oortCloudStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", oortCloud, e.getMessage());

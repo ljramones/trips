@@ -81,7 +81,7 @@ public class CSVDataSetDataExportService extends Service<ExportResults> implemen
 
     @Override
     protected void failed() {
-        log.error("dataset export failed due to: " + getException().getMessage());
+        log.error("dataset export failed", getException());
         eventPublisher.publishEvent(new StatusUpdateEvent(this, "dataset export failed due to: " + getException().getMessage()));
         unsetProgressControls();
         ExportResults fileProcessResult = this.getValue();

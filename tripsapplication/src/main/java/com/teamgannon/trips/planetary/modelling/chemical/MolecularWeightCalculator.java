@@ -71,7 +71,7 @@ public class MolecularWeightCalculator {
             MolecularSpecies molecularSpecies = getMolecularWeight("C12H26");
             log.info("\n\n\nC12H26 = {}", molecularSpecies);
         } catch (FileNotFoundException e) {
-            log.error("file not found due to:" + e.getMessage());
+            log.error("file not found", e);
         }
     }
 

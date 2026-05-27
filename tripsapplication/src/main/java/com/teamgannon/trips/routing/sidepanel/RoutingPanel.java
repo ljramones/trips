@@ -192,7 +192,7 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         selectionModel.setSelectionMode(SelectionMode.SINGLE);
         ObservableList<RouteTree> selectedItems = selectionModel.getSelectedItems();
         selectedItems.addListener((ListChangeListener<RouteTree>) change ->
-                log.info("Selection changed: " + change.getList()));
+                log.info("Selection changed: {}", change.getList()));
     }
 
     @NotNull

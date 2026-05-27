@@ -382,7 +382,7 @@ public class MainPane  {
         } else {
             height -= 10;
         }
-        log.trace("Height: " + height + " Width: " + width);
+        log.trace("Height: {} Width: {}", height, width);
 
         interstellarSpacePane.resize(width, height);
 

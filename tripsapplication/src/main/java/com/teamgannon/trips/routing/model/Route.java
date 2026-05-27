@@ -101,7 +101,7 @@ public class Route implements Serializable {
     public String convertToJson(Route route) {
         try {
             String routeStr = mapper.writeValueAsString(route);
-            log.debug("serialized as:" + routeStr);
+            log.debug("serialized as:{}", routeStr);
             return routeStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", route, e.getMessage());
@@ -112,7 +112,7 @@ public class Route implements Serializable {
     public String convertToJson(List<Route> routeList) {
         try {
             String routeListStr = mapper.writeValueAsString(routeList);
-            log.debug("serialized as:" + routeListStr);
+            log.debug("serialized as:{}", routeListStr);
             return routeListStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", routeList, e.getMessage());

@@ -68,7 +68,7 @@ public class CustomDataDefinition {
     public String convertToJson(CustomDataDefinition customDataDefinition) {
         try {
             String customDataDefinitionStr = mapper.writeValueAsString(customDataDefinition);
-            log.debug("serialized as:" + customDataDefinitionStr);
+            log.debug("serialized as:{}", customDataDefinitionStr);
             return customDataDefinitionStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataDefinition, e.getMessage());
@@ -79,7 +79,7 @@ public class CustomDataDefinition {
     public String convertToJson(List<CustomDataDefinition> customDataDefinitionList) {
         try {
             String customDataDefinitionStr = mapper.writeValueAsString(customDataDefinitionList);
-            log.debug("serialized as:" + customDataDefinitionStr);
+            log.debug("serialized as:{}", customDataDefinitionStr);
             return customDataDefinitionStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataDefinitionList, e.getMessage());

@@ -78,7 +78,7 @@ public class ChviewReader {
             fileContent = Files.readAllBytes(inputFile.toPath());
             return parsefile(progressUpdater, inputFile.getAbsolutePath());
         } catch (IOException e) {
-            log.error("load failed for file because of:" + e);
+            log.error("load failed for file", e);
             return null;
         }
     }
@@ -667,7 +667,7 @@ public class ChviewReader {
 
 
         } catch (Exception e) {
-            log.error("format corruption in file:" + e.getMessage());
+            log.error("format corruption in file", e);
             progressUpdater.updateTaskInfo("Loading CHV file:Encountered a corruption in file and was not about to continue");
             return null;
         }
@@ -896,7 +896,7 @@ public class ChviewReader {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < length; ++i) {
             if (buffer[index + i] < 0) {
-                log.error("Bad ASCII character at index=" + index + i);
+                log.error("Bad ASCII character at index={}", index + i);
                 // I threw this error as a help to parsing, so I would know why the parser failed
                 throw new IllegalArgumentException();
             }

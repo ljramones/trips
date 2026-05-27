@@ -46,7 +46,7 @@ public class CSVQueryDataExportTask extends Task<ExportResults> implements Progr
         if (result.isSuccess()) {
             log.info("Query export {} completed", export.getFileName());
         } else {
-            log.error("Export failed: " + result.getMessage());
+            log.error("Export failed: {}", result.getMessage());
         }
 
         return result;

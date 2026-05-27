@@ -44,7 +44,7 @@ public class SystemObject implements Serializable {
     public String convertToJson(SystemObject systemObject) {
         try {
             String systemObjectStr = mapper.writeValueAsString(systemObject);
-            log.debug("serialized as:" + systemObjectStr);
+            log.debug("serialized as:{}", systemObjectStr);
             return systemObjectStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", systemObject, e.getMessage());
@@ -55,7 +55,7 @@ public class SystemObject implements Serializable {
     public String convertToJson(List<SystemObject> systemObjects) {
         try {
             String systemObjectStr = mapper.writeValueAsString(systemObjects);
-            log.debug("serialized as:" + systemObjectStr);
+            log.debug("serialized as:{}", systemObjectStr);
             return systemObjectStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", systemObjects, e.getMessage());

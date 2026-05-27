@@ -73,7 +73,7 @@ public class SesameResolver {
                             if (name.equals("alias")) {
                                 String alias = (String) element.getValue();
                                 aliasList.add(alias);
-                                log.info("alias is:" + alias);
+                                log.info("alias is:{}", alias);
                             }
                         }
                     }
@@ -82,11 +82,11 @@ public class SesameResolver {
                 // sort list
                 Collections.sort(aliasList);
             } else {
-                log.warn("Failed to find the star named: " + starToFind);
+                log.warn("Failed to find the star named: {}", starToFind);
 
             }
         } catch (Exception e) {
-            log.error("Failed to parse the incoming xml response:" + e.getMessage());
+            log.error("Failed to parse the incoming xml response", e);
         }
 
         return aliasList;

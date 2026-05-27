@@ -249,7 +249,7 @@ public class GridPlotManager {
         // clear old grid
         gridGroup.getChildren().clear();
 
-        log.info("rebuilding grid scale increment: " + parameters.getScaleIncrement());
+        log.info("rebuilding grid scale increment: {}", parameters.getScaleIncrement());
 
         // rebuild grid
         createGrid(centerCoordinates, transformer, currentPlot);

@@ -97,7 +97,7 @@ public class TripsContext {
         try {
             return searchContext.getAstroSearchQuery().getDataSetContext().getDescriptor();
         } catch (Exception e) {
-            log.error("No dataset descriptor available:" + e.getMessage());
+            log.error("No dataset descriptor available", e);
             return null;
         }
     }

@@ -293,7 +293,7 @@ public class StarObjectRepositoryImpl implements StarObjectRepositoryCustom {
             // setup predicates for actual matches
             Predicate setPredicate = null;
             if (polityList.size() > 0) {
-                log.info("polities:" + polityList);
+                log.info("polities:{}", polityList);
                 setPredicate = exp.in(polityList);
                 predicates.add(setPredicate);
             }

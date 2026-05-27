@@ -357,7 +357,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
 
         // Update the current file record
         currentStarRecord = record;
-        log.info("Current Star Record, at next ==" + currentStarRecord.getObjName());
+        log.info("Current Star Record, at next =={}", currentStarRecord.getObjName());
 
 
         // Update the UI fields with the star details from the loaded record
@@ -475,7 +475,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
             log.error("No star record selected");
             return;
         } else {
-            log.info("Current Star Record, before add ==" + currentStarRecord.getObjName());
+            log.info("Current Star Record, before add =={}", currentStarRecord.getObjName());
         }
         Dialog<Boolean> dialog = new AddStarRecordDialog(databaseManagementService, starService, descriptorComboBox.getSelectionModel().getSelectedItem(), currentStarRecord);
         Optional<Boolean> result = dialog.showAndWait();
@@ -483,7 +483,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void handleAddStarResult(Boolean aBoolean) {
-        log.info("Add star result: " + aBoolean);
+        log.info("Add star result: {}", aBoolean);
         addStarButton.setDisable(true);
     }
 
@@ -495,7 +495,7 @@ public class Load10ParsecStarsDialog extends Dialog<Load10ParsecStarsResults> {
     }
 
     private void handleUpdateStarResult(Boolean aBoolean) {
-        log.info("Update star result: " + aBoolean);
+        log.info("Update star result: {}", aBoolean);
         loadStarButton.setDisable(true);
     }
 

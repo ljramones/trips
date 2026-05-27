@@ -161,7 +161,7 @@ public class RouteGraph {
                     log.error("edge is null!?");
                 }
             } catch (Exception e) {
-                log.error("caught error on creating graph: " + e.getMessage());
+                log.error("caught error on creating graph", e);
                 return false;
             }
         }

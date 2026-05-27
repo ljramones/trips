@@ -56,11 +56,11 @@ public class SharedUIFunctions {
         SplitPane.setResizableWithParent(mainSplitPane.getItems().get(1), false);
 
         mainSplitPane.getDividers().get(0).positionProperty().addListener((obs, oldVal, newVal) -> {
-            log.trace("Divider position changed from " + oldVal + " to " + newVal);
+            log.trace("Divider position changed from {} to {}", oldVal, newVal);
         });
 
         mainSplitPane.widthProperty().addListener((obs, oldVal, newVal) -> {
-            log.trace("SplitPane width changed from " + oldVal + " to " + newVal);
+            log.trace("SplitPane width changed from {} to {}", oldVal, newVal);
         });
 
         setSplitPaneParentLayout(mainSplitPane);
@@ -170,7 +170,7 @@ public class SharedUIFunctions {
     }
 
     public void applySidePaneState(boolean sidePanelOn) {
-        log.info("Applying side pane state: " + sidePanelOn);
+        log.info("Applying side pane state: {}", sidePanelOn);
 
         FxThread.runOnFxThread(() -> {
             if (mainSplitPane == null) {
@@ -178,9 +178,9 @@ public class SharedUIFunctions {
                 return;
             }
 
-            log.info("SplitPane width inside runLater: " + mainSplitPane.getWidth());
+            log.info("SplitPane width inside runLater: {}", mainSplitPane.getWidth());
             double newPosition = sidePanelOn ? 0.7 : 1.0;
-            log.info("Attempting to set divider position to: " + newPosition);
+            log.info("Attempting to set divider position to: {}", newPosition);
 
             sliderControlManager.removeSliderChangeListener();
             mainSplitPane.setDividerPosition(0, newPosition);
@@ -211,23 +211,23 @@ public class SharedUIFunctions {
         if (rightPane instanceof Region rightRegion) {
             rightRegion.setMinWidth(sidePanelOn ? 100 : 0);
             rightRegion.setMaxWidth(sidePanelOn ? Region.USE_COMPUTED_SIZE : 0);
-            log.info("Right pane min width: " + rightRegion.getMinWidth());
-            log.info("Right pane max width: " + rightRegion.getMaxWidth());
+            log.info("Right pane min width: {}", rightRegion.getMinWidth());
+            log.info("Right pane max width: {}", rightRegion.getMaxWidth());
         }
 
         mainSplitPane.layout();
         mainSplitPane.requestLayout();  // Request layout update
 
-        log.info("Actual divider position after setting: " + mainSplitPane.getDividerPositions()[0]);
-        log.info("SplitPane width after layout: " + mainSplitPane.getWidth());
-        log.info("Left pane width: " + leftPane.getBoundsInParent().getWidth());
-        log.info("Right pane width: " + rightPane.getBoundsInParent().getWidth());
+        log.info("Actual divider position after setting: {}", mainSplitPane.getDividerPositions()[0]);
+        log.info("SplitPane width after layout: {}", mainSplitPane.getWidth());
+        log.info("Left pane width: {}", leftPane.getBoundsInParent().getWidth());
+        log.info("Right pane width: {}", rightPane.getBoundsInParent().getWidth());
     }
 
     private void checkAndCorrectDividerPosition(boolean sidePanelOn, double newPosition) {
         double actualPosition = mainSplitPane.getDividerPositions()[0];
         if (sidePanelOn && actualPosition != newPosition) {
-            log.info("Correcting divider position to " + newPosition);
+            log.info("Correcting divider position to {}", newPosition);
             mainSplitPane.setDividerPosition(0, newPosition);
         } else if (!sidePanelOn && actualPosition != 1.0) {
             log.info("Correcting divider position to 1.0");
@@ -237,7 +237,7 @@ public class SharedUIFunctions {
         mainSplitPane.layout();
         mainSplitPane.requestLayout();  // Request layout update
 
-        log.info("Final divider position: " + mainSplitPane.getDividerPositions()[0]);
+        log.info("Final divider position: {}", mainSplitPane.getDividerPositions()[0]);
     }
 
     public void zoomOut() {
@@ -281,7 +281,7 @@ public class SharedUIFunctions {
     public void updateSidePaneOnResize() {
         boolean sidePanelOn = sharedUIState.isSidePaneOn();
         double newPosition = sidePanelOn ? 0.7 : 1.0;
-        log.info("Updating side pane on resize, sidePanelOn: " + sidePanelOn);
+        log.info("Updating side pane on resize, sidePanelOn: {}", sidePanelOn);
 
         FxThread.runOnFxThread(() -> {
             if (mainSplitPane == null) {

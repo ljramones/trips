@@ -54,7 +54,7 @@ public class AsteroidBelt implements Serializable {
     public String convertToJson(AsteroidBelt asteroidBelt) {
         try {
             String asteroidStr = mapper.writeValueAsString(asteroidBelt);
-            log.debug("serialized as:" + asteroidStr);
+            log.debug("serialized as:{}", asteroidStr);
             return asteroidStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", asteroidBelt, e.getMessage());
@@ -65,7 +65,7 @@ public class AsteroidBelt implements Serializable {
     public String convertToJson(List<AsteroidBelt> asteroidBelts) {
         try {
             String asteroidStr = mapper.writeValueAsString(asteroidBelts);
-            log.debug("serialized as:" + asteroidStr);
+            log.debug("serialized as:{}", asteroidStr);
             return asteroidStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", asteroidBelts, e.getMessage());

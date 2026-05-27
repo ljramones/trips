@@ -37,7 +37,7 @@ public class CustomDataValue {
     public String convertToJson(CustomDataValue customDataValue) {
         try {
             String customDataValueStr = mapper.writeValueAsString(customDataValue);
-            log.debug("serialized as:" + customDataValueStr);
+            log.debug("serialized as:{}", customDataValueStr);
             return customDataValueStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValue, e.getMessage());
@@ -48,7 +48,7 @@ public class CustomDataValue {
     public String convertToJson(List<CustomDataValue> customDataValues) {
         try {
             String customDataValueStr = mapper.writeValueAsString(customDataValues);
-            log.debug("serialized as:" + customDataValueStr);
+            log.debug("serialized as:{}", customDataValueStr);
             return customDataValueStr;
         } catch (JacksonException e) {
             log.error("couldn't serialize this {} because of {}:", customDataValues, e.getMessage());

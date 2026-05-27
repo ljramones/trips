@@ -18,7 +18,7 @@ public class AccreteJ {
             s = new StarSystem(true, false, false);
             if (s.isHabitable()) {
                 habitable = true;
-                log.info("Discarded " + count + " systems finding this one.");
+                log.info("Discarded {} systems finding this one.", count);
                 log.info(s.toString());
             } else {
                 count++;

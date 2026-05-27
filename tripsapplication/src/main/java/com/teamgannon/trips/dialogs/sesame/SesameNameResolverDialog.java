@@ -157,7 +157,7 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
                             if (name.equals("alias")) {
                                 String alias = (String) element.getValue();
                                 aliasList.add(alias);
-                                log.info("alias is:" + alias);
+                                log.info("alias is:{}", alias);
                             }
                         }
                     }
@@ -165,15 +165,15 @@ public class SesameNameResolverDialog extends Dialog<List<String>> {
 
                 // sort list
                 Collections.sort(aliasList);
-                log.info("done scanning, alias list=" + aliasList);
+                log.info("done scanning, alias list={}", aliasList);
                 aliasBox.setText(String.join(",\n", aliasList));
 
             } catch (JAXBException e) {
                 showErrorAlert("Sesame lookup", "Failed to parse the incoming xml response");
-                log.error("Failed to parse the incoming xml response:" + e.getMessage());
+                log.error("Failed to parse the incoming xml response", e);
             }
         } else {
-            log.warn("Failed to find the star named: " + nameToFindField.getText());
+            log.warn("Failed to find the star named: {}", nameToFindField.getText());
             showErrorAlert("Sesame lookup", "Wasn't able to find that star name:" + nameToFindField.getText());
         }
 
