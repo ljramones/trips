@@ -175,7 +175,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     private VBox section(String title, Node body) {
         Label header = new Label(title);
         header.setFont(Font.font(header.getFont().getFamily(), 14));
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         VBox box = new VBox(6, header, body);
         box.setPadding(new Insets(4, 0, 4, 0));
         return box;
@@ -257,7 +257,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     }
 
     private VBox validationSection() {
-        statusLabel.setStyle("-fx-font-weight: bold;");
+        statusLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         deltaVBadge.setStyle("-fx-text-fill: #333;");
         messagesList.setPrefHeight(120);
         messagesList.setPlaceholder(new Label(get("editor.messages.empty", "No issues")));

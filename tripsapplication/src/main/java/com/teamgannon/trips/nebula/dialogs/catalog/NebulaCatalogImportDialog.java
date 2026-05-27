@@ -253,7 +253,7 @@ public class NebulaCatalogImportDialog extends Dialog<NebulaCatalogImportDialog.
             updateSelectionCount();
         });
 
-        selectionCountLabel.setStyle("-fx-font-weight: bold;");
+        selectionCountLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         selectionBar.getChildren().addAll(selectAllBtn, selectNoneBtn, invertBtn, selectionCountLabel);
         mainBox.getChildren().add(selectionBar);

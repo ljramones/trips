@@ -52,7 +52,7 @@ public class BrightestStarsPane extends VBox {
         selectedStarBox.getChildren().addAll(selectedHeader, selectedStarLabel, selectedStarDetails);
 
         headerLabel = new Label("Top 20 Brightest Stars");
-        headerLabel.setStyle("-fx-font-weight: bold;");
+        headerLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         starList = FXCollections.observableArrayList();
         starListView = new ListView<>(starList);

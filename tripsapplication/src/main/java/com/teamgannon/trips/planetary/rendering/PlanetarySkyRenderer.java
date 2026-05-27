@@ -492,7 +492,7 @@ public class PlanetarySkyRenderer {
             if (starName != null && !starName.isEmpty()) {
                 Label label = new Label(starName);
                 label.setTextFill(starColor.brighter());
-                label.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+                label.getStyleClass().add("trips-text-bold-md"); // Issue 50 / Bucket A
                 shapeToLabel.put(companionSphere, label);
             }
 
@@ -705,7 +705,7 @@ public class PlanetarySkyRenderer {
 
         // Style based on magnitude - brighter stars get larger, bolder labels
         if (magnitude <= 0.0) {
-            label.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+            label.getStyleClass().add("trips-text-bold-md"); // Issue 50 / Bucket A
         } else if (magnitude <= 1.5) {
             label.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
         } else {

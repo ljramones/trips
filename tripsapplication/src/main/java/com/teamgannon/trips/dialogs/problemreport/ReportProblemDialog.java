@@ -42,7 +42,7 @@ public class ReportProblemDialog extends Dialog<ReportProblemResult> {
                         : "User",
                 registration.getEmail()
         ));
-        userLabel.setStyle("-fx-text-fill: #666;");
+        userLabel.getStyleClass().add("trips-text-muted"); // Issue 50 / Bucket A
         content.getChildren().add(userLabel);
 
         // Description section

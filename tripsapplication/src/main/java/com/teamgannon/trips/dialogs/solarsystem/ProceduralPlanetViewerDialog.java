@@ -449,7 +449,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         seedLabel.setStyle(LABEL_STYLE);
         seedField = new TextField(String.valueOf(currentSeed));
         seedField.setPrefWidth(100);
-        seedField.setStyle("-fx-font-size: 10;");
+        seedField.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         Button randomizeButton = new Button("🎲");
         randomizeButton.setTooltip(new Tooltip("Generate random seed"));
         randomizeButton.setOnAction(e -> {
@@ -467,7 +467,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         sizeCombo.getItems().addAll(PlanetConfig.Size.values());
         sizeCombo.setValue(currentSize);
         sizeCombo.setPrefWidth(120);
-        sizeCombo.setStyle("-fx-font-size: 10;");
+        sizeCombo.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         sizeRow.getChildren().addAll(sizeLabel, sizeCombo);
 
         // Plate count
@@ -478,7 +478,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         plateSpinner = new Spinner<>(7, 21, currentPlateCount);
         plateSpinner.setPrefWidth(70);
         plateSpinner.setEditable(true);
-        plateSpinner.setStyle("-fx-font-size: 10;");
+        plateSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         plateRow.getChildren().addAll(platesLabel, plateSpinner);
 
         // Water fraction
@@ -505,7 +505,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         erosionSpinner = new Spinner<>(0, 10, currentErosionIterations);
         erosionSpinner.setPrefWidth(70);
         erosionSpinner.setEditable(true);
-        erosionSpinner.setStyle("-fx-font-size: 10;");
+        erosionSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         erosionRow.getChildren().addAll(erosionLabel, erosionSpinner);
 
         // River threshold
@@ -586,12 +586,12 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             new SpinnerValueFactory.DoubleSpinnerValueFactory(-6.0, 0.0, currentReliefMin, 0.1));
         reliefMinSpinner.setPrefWidth(70);
         reliefMinSpinner.setEditable(true);
-        reliefMinSpinner.setStyle("-fx-font-size: 10;");
+        reliefMinSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         reliefMaxSpinner = new Spinner<>(
             new SpinnerValueFactory.DoubleSpinnerValueFactory(0.0, 6.0, currentReliefMax, 0.1));
         reliefMaxSpinner.setPrefWidth(70);
         reliefMaxSpinner.setEditable(true);
-        reliefMaxSpinner.setStyle("-fx-font-size: 10;");
+        reliefMaxSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         reliefRow.getChildren().addAll(reliefLabel, reliefMinSpinner, reliefMaxSpinner);
 
         continuousHeightsCheckBox.selectedProperty().addListener((obs, old, val) -> {
@@ -612,13 +612,13 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         climateCombo.getItems().addAll(ClimateCalculator.ClimateModel.values());
         climateCombo.setValue(currentClimateModel);
         climateCombo.setPrefWidth(120);
-        climateCombo.setStyle("-fx-font-size: 10;");
+        climateCombo.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         climateRow.getChildren().addAll(climateLabel, climateCombo);
 
         // Regenerate button
         regenerateButton = new Button("Regenerate");
         regenerateButton.setMaxWidth(Double.MAX_VALUE);
-        regenerateButton.setStyle("-fx-font-weight: bold;");
+        regenerateButton.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         regenerateButton.setOnAction(e -> regeneratePlanet());
 
         // Progress bar (initially hidden)

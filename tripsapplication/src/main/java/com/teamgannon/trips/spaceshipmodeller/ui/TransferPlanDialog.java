@@ -37,7 +37,7 @@ public class TransferPlanDialog extends Dialog<Void> {
         Label header = new Label(plan.type().label() + ":  "
                 + plan.origin().name() + " → " + plan.destination().name());
         header.setFont(Font.font(header.getFont().getFamily(), 15));
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         TableView<ManeuverNode> table = new TableView<>(FXCollections.observableArrayList(plan.nodes()));
         table.setPrefHeight(140);
@@ -62,7 +62,7 @@ public class TransferPlanDialog extends Dialog<Void> {
 
         Feasibility f = plan.feasibility();
         Label verdict = new Label(verdictText(plan, f));
-        verdict.setStyle("-fx-font-weight: bold;");
+        verdict.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         verdict.setWrapText(true);
         verdict.setTextFill(switch (f) {
             case FEASIBLE -> Color.web("#1e8449");

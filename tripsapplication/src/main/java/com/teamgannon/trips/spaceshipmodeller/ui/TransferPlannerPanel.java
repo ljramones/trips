@@ -101,7 +101,7 @@ public class TransferPlannerPanel extends BorderPane {
     private VBox buildHeader() {
         Label title = new Label(get("planner.title", "Transfer Planner"));
         title.setFont(Font.font(title.getFont().getFamily(), 18));
-        title.setStyle("-fx-font-weight: bold;");
+        title.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         Button newButton = new Button(get("planner.new", "New Transfer Plan..."));
         newButton.setOnAction(e -> onNew());
@@ -121,8 +121,8 @@ public class TransferPlannerPanel extends BorderPane {
         configureNodeTable();
 
         Label detailsHeader = new Label(get("planner.details", "Plan Details"));
-        detailsHeader.setStyle("-fx-font-weight: bold;");
-        detailStatus.setStyle("-fx-font-weight: bold;");
+        detailsHeader.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
+        detailStatus.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         VBox details = new VBox(6, detailsHeader, detailShip, detailRoute, detailType,
                 detailDeltaV, detailPropellant, detailDuration, detailStatus, new Separator(), nodeTable);

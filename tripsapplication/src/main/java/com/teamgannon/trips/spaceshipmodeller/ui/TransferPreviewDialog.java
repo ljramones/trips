@@ -206,7 +206,7 @@ public class TransferPreviewDialog extends Dialog<Void> {
         addResult(results, q++, get("transfer.time", "Transfer time"), timeValue);
         addResult(results, q++, get("transfer.propellant", "Propellant (req / avail)"), propellantValue);
         addResult(results, q++, get("transfer.burn", "Approx. burn time"), burnValue);
-        feasibleValue.setStyle("-fx-font-weight: bold;");
+        feasibleValue.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         addResult(results, q++, get("transfer.feasible", "Feasibility"), feasibleValue);
 
         feasibilityMessage.setWrapText(true);

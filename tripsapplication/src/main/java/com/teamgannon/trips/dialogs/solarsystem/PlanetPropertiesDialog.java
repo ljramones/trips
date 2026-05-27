@@ -280,19 +280,19 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         grid.add(createBoldLabel("Host Star:"), 0, 3);
         starNameField = createTextField(200);
         starNameField.setEditable(false);
-        starNameField.setStyle("-fx-background-color: #e8e8e8;");
+        starNameField.getStyleClass().add("trips-panel-mid"); // Issue 50 / Bucket A
         grid.add(starNameField, 1, 3);
 
         grid.add(createBoldLabel("Parent Planet:"), 2, 3);
         parentPlanetField = createTextField(150);
         parentPlanetField.setEditable(false);
-        parentPlanetField.setStyle("-fx-background-color: #e8e8e8;");
+        parentPlanetField.getStyleClass().add("trips-panel-mid"); // Issue 50 / Bucket A
         grid.add(parentPlanetField, 3, 3);
 
         grid.add(createBoldLabel("Star Spectral Type:"), 0, 4);
         starSpTypeField = createTextField(200);
         starSpTypeField.setEditable(false);
-        starSpTypeField.setStyle("-fx-background-color: #e8e8e8;");
+        starSpTypeField.getStyleClass().add("trips-panel-mid"); // Issue 50 / Bucket A
         grid.add(starSpTypeField, 1, 4);
 
         TitledPane pane = new TitledPane("Identity", grid);

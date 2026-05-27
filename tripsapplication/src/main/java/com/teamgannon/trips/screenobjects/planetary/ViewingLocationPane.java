@@ -37,7 +37,7 @@ public class ViewingLocationPane extends VBox {
 
         // Planet name
         grid.add(new Label("Planet:"), 0, row);
-        planetNameLabel.setStyle("-fx-font-weight: bold;");
+        planetNameLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         grid.add(planetNameLabel, 1, row++);
 
         // Planet type

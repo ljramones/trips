@@ -69,7 +69,7 @@ public class SolarSystemObjectPropertiesPane extends VBox {
 
         // Physical properties section
         Label physicalHeader = new Label("Physical Properties");
-        physicalHeader.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;");
+        physicalHeader.getStyleClass().add("trips-text-bold-md"); // Issue 50 / Bucket A
 
         GridPane physicalGrid = new GridPane();
         physicalGrid.setHgap(10);
@@ -86,7 +86,7 @@ public class SolarSystemObjectPropertiesPane extends VBox {
 
         // Orbital properties section
         Label orbitalHeader = new Label("Orbital Properties");
-        orbitalHeader.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;");
+        orbitalHeader.getStyleClass().add("trips-text-bold-md"); // Issue 50 / Bucket A
 
         GridPane orbitalGrid = new GridPane();
         orbitalGrid.setHgap(10);
@@ -113,7 +113,7 @@ public class SolarSystemObjectPropertiesPane extends VBox {
     private void addRow(GridPane grid, int row, String labelText, Label valueLabel) {
         Label label = new Label(labelText);
         label.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
-        valueLabel.setStyle("-fx-font-size: 10px;");
+        valueLabel.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
 
         grid.add(label, 0, row);
         grid.add(valueLabel, 1, row);

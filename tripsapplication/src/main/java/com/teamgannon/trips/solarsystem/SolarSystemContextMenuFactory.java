@@ -121,7 +121,7 @@ public class SolarSystemContextMenuFactory {
 
         // Title item (disabled, just for display)
         MenuItem titleItem = new MenuItem(planet.getName());
-        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size: 14; -fx-font-weight: bold;");
+        titleItem.getStyleClass().add("trips-text-section-header"); // Issue 50 / Bucket A
         titleItem.setDisable(true);
         menu.getItems().add(titleItem);
         menu.getItems().add(new SeparatorMenuItem());
@@ -232,7 +232,7 @@ public class SolarSystemContextMenuFactory {
 
         // Title item
         MenuItem titleItem = new MenuItem(star.getStarName());
-        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size: 14; -fx-font-weight: bold;");
+        titleItem.getStyleClass().add("trips-text-section-header"); // Issue 50 / Bucket A
         titleItem.setDisable(true);
         menu.getItems().add(titleItem);
         menu.getItems().add(new SeparatorMenuItem());
@@ -378,7 +378,7 @@ public class SolarSystemContextMenuFactory {
 
         // Title
         MenuItem titleItem = new MenuItem(systemName);
-        titleItem.setStyle("-fx-text-fill: darkblue; -fx-font-size: 14; -fx-font-weight: bold;");
+        titleItem.getStyleClass().add("trips-text-section-header"); // Issue 50 / Bucket A
         titleItem.setDisable(true);
         menu.getItems().add(titleItem);
         menu.getItems().add(new SeparatorMenuItem());

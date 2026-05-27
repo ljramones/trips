@@ -203,7 +203,7 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
             TextField parentField = createTextField(150);
             parentField.setText(parentPlanet.getName());
             parentField.setEditable(false);
-            parentField.setStyle("-fx-background-color: #e8e8e8;");
+            parentField.getStyleClass().add("trips-panel-mid"); // Issue 50 / Bucket A
             grid.add(parentField, 3, 1);
         }
 

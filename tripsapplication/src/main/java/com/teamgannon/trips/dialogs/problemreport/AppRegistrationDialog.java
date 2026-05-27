@@ -40,7 +40,7 @@ public class AppRegistrationDialog extends Dialog<AppRegistration> {
                         "It is stored locally and sent only with your reports."
         );
         infoLabel.setWrapText(true);
-        infoLabel.setStyle("-fx-text-fill: #666;");
+        infoLabel.getStyleClass().add("trips-text-muted"); // Issue 50 / Bucket A
         content.getChildren().add(infoLabel);
 
         // Form fields

@@ -35,7 +35,7 @@ public class ReferenceCueControlPane extends VBox {
         setSpacing(10);
 
         Label header = new Label("Reference Cues");
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         showEclipticPlaneCheckbox.setSelected(false);
         showOrbitNodesCheckbox.setSelected(false);

@@ -151,7 +151,7 @@ public class RouteFinderInView {
 
         Label titleLabel = new Label(String.format("Finding routes: %s → %s",
                 options.getOriginStarName(), options.getDestinationStarName()));
-        titleLabel.setStyle("-fx-font-weight: bold;");
+        titleLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setPrefSize(50, 50);

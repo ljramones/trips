@@ -136,7 +136,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private VBox buildHeader() {
         Label title = new Label(get("panel.title"));
         title.setFont(Font.font(title.getFont().getFamily(), 18));
-        title.setStyle("-fx-font-weight: bold;");
+        title.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
         Label subtitle = new Label(get("panel.subtitle"));
         subtitle.setStyle("-fx-text-fill: gray;");
 
@@ -279,7 +279,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private VBox buildDetails() {
         Label header = new Label(get("details.title"));
         header.setFont(Font.font(header.getFont().getFamily(), 14));
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -300,7 +300,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         addDetail(grid, r++, get("column.crew"), detailCrew);
         addDetail(grid, r++, get("details.carried"), detailCarried);
 
-        detailStatus.setStyle("-fx-font-weight: bold;");
+        detailStatus.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         planButton.setTooltip(new Tooltip(get("tooltip.planTransfer")));
         planButton.setOnAction(e -> onPlanTransfer());

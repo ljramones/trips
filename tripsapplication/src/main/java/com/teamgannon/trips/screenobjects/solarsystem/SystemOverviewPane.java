@@ -99,7 +99,7 @@ public class SystemOverviewPane extends VBox {
     private void addRow(GridPane grid, int row, String labelText, Label valueLabel) {
         Label label = new Label(labelText);
         label.setStyle("-fx-text-fill: #666666;");
-        valueLabel.setStyle("-fx-font-weight: bold;");
+        valueLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         grid.add(label, 0, row);
         grid.add(valueLabel, 1, row);

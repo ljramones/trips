@@ -95,7 +95,7 @@ public class SimulationControlPane extends VBox {
 
     private VBox createAnimationSection() {
         Label header = new Label("Animation");
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_LEFT);
@@ -126,7 +126,7 @@ public class SimulationControlPane extends VBox {
 
     private VBox createScaleSection() {
         Label header = new Label("Scale & Zoom");
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         // Scale mode
         Label modeLabel = new Label("Scale Mode:");
@@ -156,7 +156,7 @@ public class SimulationControlPane extends VBox {
 
     private VBox createDisplaySection() {
         Label header = new Label("Display Options");
-        header.setStyle("-fx-font-weight: bold;");
+        header.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
 
         // Set default states
         showOrbitsCheckbox.setSelected(true);
