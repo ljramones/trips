@@ -7,7 +7,6 @@ import com.teamgannon.trips.search.SearchContext;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.io.IOException;
 import java.util.Map;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -49,14 +47,7 @@ public class DataSetPanel extends BasePane {
         this.searchContext = searchContext;
         this.datasets = searchContext.getDatasetMap();
         this.eventPublisher = eventPublisher;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("DataSetPanel.fxml"));
-        loader.setRoot(this);
-        loader.setController(this);
-        try {
-            loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load DataSetPanel.fxml", ex);
-        }
+        loadFxml("DataSetPanel.fxml");
     }
 
     @FXML

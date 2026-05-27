@@ -1,11 +1,8 @@
 package com.teamgannon.trips.search.components;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-
-import java.io.IOException;
 
 /**
  * Miscellaneous selection panel
@@ -24,14 +21,7 @@ public class MiscellaneousSelectionPanel extends BasePane {
     private CheckBox otherPresent;
 
     public MiscellaneousSelectionPanel() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("MiscellaneousSelectionPanel.fxml"));
-        loader.setRoot(this);
-        loader.setController(this);
-        try {
-            loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load MiscellaneousSelectionPanel.fxml", ex);
-        }
+        loadFxml("MiscellaneousSelectionPanel.fxml");
     }
 
     @FXML

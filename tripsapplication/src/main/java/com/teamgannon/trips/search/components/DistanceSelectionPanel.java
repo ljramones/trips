@@ -2,7 +2,6 @@ package com.teamgannon.trips.search.components;
 
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.controlsfx.control.RangeSlider;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 /**
  * Created by larrymitchell on 2017-06-25.
  */
@@ -34,14 +32,7 @@ public class DistanceSelectionPanel extends BasePane {
 
         this.searchDistance = searchDistance;
         this.distanceRange = distanceRange;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("DistanceSelectionPanel.fxml"));
-        loader.setRoot(this);
-        loader.setController(this);
-        try {
-            loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load DistanceSelectionPanel.fxml", ex);
-        }
+        loadFxml("DistanceSelectionPanel.fxml");
     }
 
     @FXML

@@ -1,11 +1,8 @@
 package com.teamgannon.trips.search.components;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-
-import java.io.IOException;
 
 /**
  * Selection of
@@ -22,14 +19,7 @@ public class CategorySelectionPanel extends BasePane {
     private CheckBox fictionalStars;
 
     public CategorySelectionPanel() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("CategorySelectionPanel.fxml"));
-        loader.setRoot(this);
-        loader.setController(this);
-        try {
-            loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load CategorySelectionPanel.fxml", ex);
-        }
+        loadFxml("CategorySelectionPanel.fxml");
     }
 
     @FXML

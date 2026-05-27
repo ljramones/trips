@@ -3,13 +3,11 @@ package com.teamgannon.trips.search.components;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,15 +33,7 @@ public class WorldSelectionPanel extends BasePane {
 
 
     public WorldSelectionPanel() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("WorldSelectionPanel.fxml"));
-        loader.setRoot(this);
-        loader.setController(this);
-        try {
-            loader.load();
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load WorldSelectionPanel.fxml", ex);
-        }
-
+        loadFxml("WorldSelectionPanel.fxml");
     }
 
     @FXML
