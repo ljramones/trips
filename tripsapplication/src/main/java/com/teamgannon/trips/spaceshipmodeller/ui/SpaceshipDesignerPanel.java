@@ -232,6 +232,8 @@ public class SpaceshipDesignerPanel extends BorderPane {
         table.getColumns().setAll(
                 nameCol, desigCol, classCol, driveCol, catCol, universeCol, factionCol,
                 massCol, crewCol, deltaVCol, motherCol);
+        // Issue 34: last column (mothership) flexes to fill leftover space.
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.getSelectionModel().selectedItemProperty().addListener(
                 (o, a, b) -> showDetails(b == null ? null : b.getDesign()));
 

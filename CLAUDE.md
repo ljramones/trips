@@ -954,6 +954,44 @@ The direction vector is preserved; only the magnitude changes. This maintains th
 
 **Lesson Learned**: When orbit paths didn't align with planet positions, the root cause was per-axis scaling distorting the orbit ellipse differently than the position calculation. Using a shared `toScreen()` method with radial scaling fixed both issues at once.
 
+### Responsive Table & Layout Defaults (Issue 34)
+
+Tables and layouts built programmatically in Java should reflow when the user resizes the window, not stay pinned to their first-render dimensions. The repo carries three idioms — pick whichever matches the table:
+
+**1. Last column flexes (most common).** Use when columns have sensible default widths and you just want leftover space to go to the rightmost column (typically the "Notes" / "Description" / "Comment" column):
+
+```java
+table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+```
+
+**2. All columns flex proportionally.** Use for many-column data tables (the 18-column star table, the workbench preview) where every column carries real content:
+
+```java
+table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+```
+
+Note: the legacy `TableView.CONSTRAINED_RESIZE_POLICY` constant (singular) is deprecated. Use the explicit `_ALL_COLUMNS` / `_FLEX_LAST_COLUMN` / `_FLEX_NEXT_COLUMN` variants.
+
+**3. Explicit percentage bindings.** Use when you need precise control — e.g. a particular column should always take 30% no matter how the table is resized. The repo ships a helper for this in `com.teamgannon.trips.javafxsupport.ResponsiveLayouts`:
+
+```java
+ResponsiveLayouts.bindColumnPercentages(table,
+        nameCol,    0.30,
+        massCol,    0.20,
+        radiusCol,  0.20,
+        catalogCol, 0.15,
+        sourceCol,  0.15);
+```
+
+The same helper provides `fillVerticalSpace(node)` / `fillHorizontalSpace(node)` as readable wrappers for `VBox.setVgrow(node, Priority.ALWAYS)` / `HBox.setHgrow(node, Priority.ALWAYS)` — apply to the bottom element of a VBox (or rightmost of an HBox) that should absorb extra space.
+
+**Worked examples to follow:**
+- `TransferPlannerPanel.configureNodeTable` — percentage bindings + Vgrow
+- `NebulaListDialog.createTable` — `FLEX_LAST_COLUMN` + Vgrow
+- `StarTableColumnFactory.addColumnsToTable` — `ALL_COLUMNS` for the many-column data table
+
+**What to check by eye:** these resize policies don't visually validate themselves. After applying one, briefly resize the window at 1024×768 and 4K to confirm no column truncates or stretches awkwardly.
+
 ### JavaFX Thread Safety
 
 All UI updates must occur on the JavaFX Application Thread. The project ships a tiny helper, `com.teamgannon.trips.javafxsupport.FxThread`, that handles the "already on FX thread? run inline; else `Platform.runLater`" check:

@@ -164,7 +164,10 @@ public class DisplayAutoRoutesDialog {
     private void createTable(@NotNull VBox vBox) {
         // Make table resize with dialog
         routingChoicesTable.setPrefWidth(RoutingConstants.ROUTE_TABLE_WIDTH);
-        routingChoicesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        // Issue 34: upgrade from the deprecated CONSTRAINED_RESIZE_POLICY to
+        // its named replacement; behaviour is the same (proportional redistribute
+        // across all columns).
+        routingChoicesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         VBox.setVgrow(routingChoicesTable, Priority.ALWAYS);
 
         // Enable row height to accommodate multiline text

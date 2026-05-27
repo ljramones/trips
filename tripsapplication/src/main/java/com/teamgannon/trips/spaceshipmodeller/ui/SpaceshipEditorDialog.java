@@ -229,6 +229,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         carriedTable.getColumns().setAll(java.util.List.of(nameCol, classCol, countCol, roleCol));
         carriedTable.setPrefHeight(120);
         carriedTable.setPlaceholder(new Label(get("editor.carriedTable.placeholder", "No carried craft")));
+        // Issue 34: last column (Role) flexes to fill leftover space on resize.
+        carriedTable.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         craftNameField.setPromptText(get("column.name"));
         craftRoleField.setPromptText("Role");

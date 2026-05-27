@@ -113,6 +113,9 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
     private void createTable(VBox vBox) {
         tableView.setPrefWidth(700);
         tableView.setPrefHeight(280);
+        // Issue 34: keep per-column defaults as a baseline, let the last
+        // column flex to fill leftover space when the dialog is resized.
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Name column
         TableColumn<Nebula, String> nameColumn = new TableColumn<>("Name");
@@ -193,6 +196,8 @@ public class NebulaListDialog extends Dialog<NebulaListDialog.Result> {
         });
 
         vBox.getChildren().add(tableView);
+        // Issue 34: table grows to absorb extra vertical space.
+        com.teamgannon.trips.javafxsupport.ResponsiveLayouts.fillVerticalSpace(tableView);
     }
 
     private void createButtonPanel(VBox vBox) {

@@ -205,6 +205,8 @@ public class DataSetManagerDialog extends Dialog<Integer> implements ImportTaskC
         vBox.getChildren().add(new Separator());
 
         tableView.setPrefWidth(650);
+        // Issue 34: last column (Notes) flexes to fill leftover horizontal space.
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         TableColumn<DataSetDescriptor, String> nameColumn = new TableColumn<>("Dataset Name");
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("dataSetName"));

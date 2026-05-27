@@ -159,6 +159,8 @@ public class NebulaCatalogImportDialog extends Dialog<NebulaCatalogImportDialog.
     private void createTable(VBox mainBox) {
         tableView.setPrefHeight(320);
         tableView.setEditable(true);
+        // Issue 34: last column (Source) flexes to fill leftover space on resize.
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Selection checkbox column
         TableColumn<SelectableEntry, Boolean> selectCol = new TableColumn<>("");

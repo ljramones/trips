@@ -54,6 +54,8 @@ public class TransferPlanDialog extends Dialog<Void> {
         TableColumn<ManeuverNode, String> burnCol = new TableColumn<>("Burn");
         burnCol.setCellValueFactory(c -> new SimpleStringProperty(duration(c.getValue().burnTimeSeconds())));
         table.getColumns().setAll(java.util.List.of(nameCol, dvCol, timeCol, propCol, burnCol));
+        // Issue 34: last column (Burn) flexes to fill leftover space.
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         Label totals = new Label(
                 "Total Δv: %.2f km/s   |   Ship Δv: %s   |   Transfer time: %.0f days   |   Propellant: %s"

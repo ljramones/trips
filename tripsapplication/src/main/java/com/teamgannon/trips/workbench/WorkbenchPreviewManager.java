@@ -160,6 +160,10 @@ public final class WorkbenchPreviewManager {
             column.setPrefWidth(140);
             previewTable.getColumns().add(column);
         }
+        // Issue 34: workbench preview table reflows columns proportionally when
+        // the workbench panel is resized; otherwise long columns clip on small
+        // displays and waste space on wide ones.
+        previewTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         previewTable.setItems(previewRows);
     }
 

@@ -176,6 +176,10 @@ public class StarTableColumnFactory {
                 // Hidden by default
                 commonNameCol, constellationNameCol, polityCol, temperatureCol
         );
+        // Issue 34: proportional column resize so the table reflows when the
+        // user resizes the parent window — works better than fixed pref widths
+        // for the 18-column star table where users vary widely in viewport size.
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
     /**

@@ -84,6 +84,11 @@ public class RoutingPanel extends Pane implements RoutingCallback {
         routingTableView.getColumns().add(colorCol);
         routingTableView.getColumns().add(routeCol);
 
+        // Issue 34: route-name column flexes to fill leftover space when
+        // the side panel is resized; checkbox / status / colour stay at
+        // their preferred widths.
+        routingTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
         setSelectionModel();
 
         setTableContextMenu();
