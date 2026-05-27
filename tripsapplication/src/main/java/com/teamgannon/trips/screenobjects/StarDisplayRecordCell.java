@@ -60,17 +60,14 @@ public class StarDisplayRecordCell extends ListCell<StarDisplayRecord> {
         editMenuItem.setOnAction((event) -> {
             log.info("editing {}", starDisplayRecord.getStarName());
             StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
-            StarEditDialog starEditDialog = new StarEditDialog(starObject);
+            // Issue 23: VM-detached edit flow.
+            StarEditViewModel vm = StarEditMapper.toViewModel(starObject);
+            StarEditDialog starEditDialog = new StarEditDialog(vm);
             Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
-            if (optionalStarDisplayRecord.isPresent()) {
-                StarEditStatus status = optionalStarDisplayRecord.get();
-                if (status.isChanged()) {
-                    StarObject record = status.getRecord();
-                    starService.updateStar(record);
-                    log.info("Changed value: {}", record);
-                } else {
-                    log.error("no return");
-                }
+            if (optionalStarDisplayRecord.isPresent() && optionalStarDisplayRecord.get().isChanged()) {
+                StarEditMapper.applyToEntity(optionalStarDisplayRecord.get().getViewModel(), starObject);
+                starService.updateStar(starObject);
+                log.info("Changed value: {}", starObject);
             }
         });
 

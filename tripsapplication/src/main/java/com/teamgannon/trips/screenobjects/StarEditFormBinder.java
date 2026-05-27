@@ -1,22 +1,28 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import static com.teamgannon.trips.screenobjects.StarFieldValidator.*;
 
 /**
- * Handles binding form fields to/from a StarObject record.
- * Separates the data transfer logic from the dialog UI wiring.
+ * Handles binding form fields to/from a {@link StarEditViewModel} (Issue 23 /
+ * Phase 7-follow-on).
+ * <p>
+ * Previously this class mutated a live JPA {@link com.teamgannon.trips.jpa.model.StarObject}
+ * which caused {@code LazyInitializationException} when the dialog accessed
+ * lazy collections (notably {@code aliasList}) outside a transaction. The
+ * binder now works against a plain detached POJO. The dialog's caller is
+ * responsible for converting between the entity and the view-model via
+ * {@link StarEditMapper}, which makes the alias initialise safely inside
+ * a transactional service before the view-model crosses to the FX thread.
  */
 public class StarEditFormBinder {
 
-    private final StarObject record;
+    private final StarEditViewModel vm;
 
     // Overview fields
     private TextField starNameTextField;
@@ -73,8 +79,8 @@ public class StarEditFormBinder {
     // Checkboxes
     private CheckBox forceLabel;
 
-    public StarEditFormBinder(@NotNull StarObject record) {
-        this.record = record;
+    public StarEditFormBinder(@NotNull StarEditViewModel vm) {
+        this.vm = vm;
     }
 
     /**
@@ -157,131 +163,131 @@ public class StarEditFormBinder {
     }
 
     /**
-     * Initialize overview tab with data from record.
+     * Initialize overview tab with data from the view-model.
      */
     public void initializeOverviewTab(Label recordIdLabel, Label dataSetLabel) {
-        recordIdLabel.setText(record.getId().toString());
-        dataSetLabel.setText(record.getDataSetName());
+        recordIdLabel.setText(vm.getId());
+        dataSetLabel.setText(vm.getDataSetName());
 
-        starNameTextField.setText(record.getDisplayName());
-        commonNameTextField.setText(record.getCommonName());
-        constellationNameTextField.setText(record.getConstellationName());
+        starNameTextField.setText(vm.getDisplayName());
+        commonNameTextField.setText(vm.getCommonName());
+        constellationNameTextField.setText(vm.getConstellationName());
 
-        setupTextField(spectralClassTextField, record.getSpectralClass(), "the spectral class as in O, A, etc.");
+        setupTextField(spectralClassTextField, vm.getSpectralClass(), "the spectral class as in O, A, etc.");
 
-        setupDoubleField(distanceNameTextField, record.getDistance(),
-                "the distance from Sol in ly, press enter", () -> parseDouble(distanceNameTextField, record::setDistance));
+        setupDoubleField(distanceNameTextField, vm.getDistance(),
+                "the distance from Sol in ly, press enter", () -> parseDouble(distanceNameTextField, vm::setDistance));
 
-        setupDoubleField(metallicityTextfield, record.getMetallicity(),
-                "the metallicity, press enter", () -> parseDouble(metallicityTextfield, record::setMetallicity));
+        setupDoubleField(metallicityTextfield, vm.getMetallicity(),
+                "the metallicity, press enter", () -> parseDouble(metallicityTextfield, vm::setMetallicity));
 
-        setupDoubleField(ageTextfield, record.getAge(),
-                "the age, press enter", () -> parseDouble(ageTextfield, record::setAge));
+        setupDoubleField(ageTextfield, vm.getAge(),
+                "the age, press enter", () -> parseDouble(ageTextfield, vm::setAge));
 
-        setupDoubleField(xTextField, record.getX(),
-                "X coordinate, press enter", () -> parseDouble(xTextField, record::setX));
+        setupDoubleField(xTextField, vm.getX(),
+                "X coordinate, press enter", () -> parseDouble(xTextField, vm::setX));
 
-        setupDoubleField(yTextField, record.getY(),
-                "Y coordinate, press enter", () -> parseDouble(yTextField, record::setY));
+        setupDoubleField(yTextField, vm.getY(),
+                "Y coordinate, press enter", () -> parseDouble(yTextField, vm::setY));
 
-        setupDoubleField(zTextField, record.getZ(),
-                "Z coordinate, press enter", () -> parseDouble(zTextField, record::setZ));
+        setupDoubleField(zTextField, vm.getZ(),
+                "Z coordinate, press enter", () -> parseDouble(zTextField, vm::setZ));
 
-        notesArea.setText(record.getNotes());
+        notesArea.setText(vm.getNotes());
         notesArea.setPromptText("Enter a description or general notes on this star");
     }
 
     /**
-     * Initialize fictional tab with data from record.
+     * Initialize fictional tab with data from the view-model.
      */
     public void initializeFictionalTab() {
-        polityTextField.setText(record.getPolity());
-        worldTypeTextField.setText(record.getWorldType());
-        fuelTypeTextField.setText(record.getFuelType());
-        techTypeTextField.setText(record.getTechType());
-        portTypeTextField.setText(record.getPortType());
-        popTypeTextField.setText(record.getPopulationType());
-        prodField.setText(record.getProductType());
-        milspaceTextField.setText(record.getMilSpaceType());
-        milplanTextField.setText(record.getMilPlanType());
+        polityTextField.setText(vm.getPolity());
+        worldTypeTextField.setText(vm.getWorldType());
+        fuelTypeTextField.setText(vm.getFuelType());
+        techTypeTextField.setText(vm.getTechType());
+        portTypeTextField.setText(vm.getPortType());
+        popTypeTextField.setText(vm.getPopulationType());
+        prodField.setText(vm.getProductType());
+        milspaceTextField.setText(vm.getMilSpaceType());
+        milplanTextField.setText(vm.getMilPlanType());
     }
 
     /**
-     * Initialize secondary (scientific) tab with data from record.
+     * Initialize secondary (scientific) tab with data from the view-model.
      */
     public void initializeSecondaryTab() {
-        setupTextField(simbadIdTextField, record.getSimbadId(), "the Simbad Id");
+        setupTextField(simbadIdTextField, vm.getSimbadId(), "the Simbad Id");
 
-        setupDoubleField(galacticCoorLatTextField, record.getGalacticLat(),
-                "the galactic latitude", () -> parseDouble(galacticCoorLatTextField, record::setGalacticLat));
+        setupDoubleField(galacticCoorLatTextField, vm.getGalacticLat(),
+                "the galactic latitude", () -> parseDouble(galacticCoorLatTextField, vm::setGalacticLat));
 
-        setupDoubleField(galacticCoorLongTextField, record.getGalacticLong(),
-                "the galactic longitude", () -> parseDouble(galacticCoorLongTextField, record::setGalacticLong));
+        setupDoubleField(galacticCoorLongTextField, vm.getGalacticLong(),
+                "the galactic longitude", () -> parseDouble(galacticCoorLongTextField, vm::setGalacticLong));
 
-        setupDoubleField(radiusTextField, record.getRadius(),
-                "the radius in Sol units", () -> parseDouble(radiusTextField, record::setRadius));
+        setupDoubleField(radiusTextField, vm.getRadius(),
+                "the radius in Sol units", () -> parseDouble(radiusTextField, vm::setRadius));
 
-        setupDoubleField(massTextField, record.getMass(),
-                "the mass in Sol units", () -> parseDouble(massTextField, record::setMass));
+        setupDoubleField(massTextField, vm.getMass(),
+                "the mass in Sol units", () -> parseDouble(massTextField, vm::setMass));
 
-        luminosityTextField.setText(record.getLuminosity() != null ? record.getLuminosity() : "");
+        luminosityTextField.setText(vm.getLuminosity() != null ? vm.getLuminosity() : "");
         luminosityTextField.setPromptText("luminosity value or class (e.g., 1.0 or V)");
         luminosityTextField.setOnKeyPressed(ke -> {
             if (ke.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                record.setLuminosity(luminosityTextField.getText());
+                vm.setLuminosity(luminosityTextField.getText());
             }
         });
 
-        setupDoubleField(tempTextField, record.getTemperature(),
-                "the surface temperature of the star", () -> parseDouble(tempTextField, record::setTemperature));
+        setupDoubleField(tempTextField, vm.getTemperature(),
+                "the surface temperature of the star", () -> parseDouble(tempTextField, vm::setTemperature));
 
-        setupDoubleField(raLabel, record.getRa(),
-                "right ascension, press enter", () -> parseDouble(raLabel, record::setRa));
+        setupDoubleField(raLabel, vm.getRa(),
+                "right ascension, press enter", () -> parseDouble(raLabel, vm::setRa));
 
-        setupDoubleField(decLabel, record.getDeclination(),
-                "declination, press enter", () -> parseDouble(decLabel, record::setDeclination));
+        setupDoubleField(decLabel, vm.getDeclination(),
+                "declination, press enter", () -> parseDouble(decLabel, vm::setDeclination));
 
-        setupDoubleField(pmraLabel, record.getPmra(),
-                "PMRA, press enter", () -> parseDouble(pmraLabel, record::setPmra));
+        setupDoubleField(pmraLabel, vm.getPmra(),
+                "PMRA, press enter", () -> parseDouble(pmraLabel, vm::setPmra));
 
-        setupDoubleField(pmdecLabel, record.getPmdec(),
-                "PMDEC, press enter", () -> parseDouble(pmdecLabel, record::setPmdec));
+        setupDoubleField(pmdecLabel, vm.getPmdec(),
+                "PMDEC, press enter", () -> parseDouble(pmdecLabel, vm::setPmdec));
 
-        setupDoubleField(parallaxLabel, record.getParallax(),
-                "parallax, press enter", () -> parseDouble(parallaxLabel, record::setParallax));
+        setupDoubleField(parallaxLabel, vm.getParallax(),
+                "parallax, press enter", () -> parseDouble(parallaxLabel, vm::setParallax));
 
-        setupDoubleField(radialVelocityLabel, record.getRadialVelocity(),
-                "radial velocity, press enter", () -> parseDouble(radialVelocityLabel, record::setRadialVelocity));
+        setupDoubleField(radialVelocityLabel, vm.getRadialVelocity(),
+                "radial velocity, press enter", () -> parseDouble(radialVelocityLabel, vm::setRadialVelocity));
 
-        setupDoubleField(bprpLabel, record.getBprp(),
-                "bprp, press enter", () -> parseDouble(bprpLabel, record::setBprp));
+        setupDoubleField(bprpLabel, vm.getBprp(),
+                "bprp, press enter", () -> parseDouble(bprpLabel, vm::setBprp));
 
-        setupDoubleField(bpgLabel, record.getBpg(),
-                "bpg, press enter", () -> parseDouble(bpgLabel, record::setBpg));
+        setupDoubleField(bpgLabel, vm.getBpg(),
+                "bpg, press enter", () -> parseDouble(bpgLabel, vm::setBpg));
 
-        setupDoubleField(grpLabel, record.getGrp(),
-                "grp, press enter", () -> parseDouble(grpLabel, record::setGrp));
+        setupDoubleField(grpLabel, vm.getGrp(),
+                "grp, press enter", () -> parseDouble(grpLabel, vm::setGrp));
 
-        setupDoubleField(maguTextField, record.getMagu(),
-                "magu, press enter", () -> parseDouble(maguTextField, record::setMagu));
+        setupDoubleField(maguTextField, vm.getMagu(),
+                "magu, press enter", () -> parseDouble(maguTextField, vm::setMagu));
 
-        setupDoubleField(magbTextField, record.getMagb(),
-                "magb, press enter", () -> parseDouble(magbTextField, record::setMagb));
+        setupDoubleField(magbTextField, vm.getMagb(),
+                "magb, press enter", () -> parseDouble(magbTextField, vm::setMagb));
 
-        setupDoubleField(magvTextField, record.getMagv(),
-                "magv, press enter", () -> parseDouble(magvTextField, record::setMagv));
+        setupDoubleField(magvTextField, vm.getMagv(),
+                "magv, press enter", () -> parseDouble(magvTextField, vm::setMagv));
 
-        setupDoubleField(magrTextField, record.getMagr(),
-                "magr, press enter", () -> parseDouble(magrTextField, record::setMagr));
+        setupDoubleField(magrTextField, vm.getMagr(),
+                "magr, press enter", () -> parseDouble(magrTextField, vm::setMagr));
 
-        setupDoubleField(magiTextField, record.getMagi(),
-                "magi, press enter", () -> parseDouble(magiTextField, record::setMagi));
+        setupDoubleField(magiTextField, vm.getMagi(),
+                "magi, press enter", () -> parseDouble(magiTextField, vm::setMagi));
 
-        gaiaIdTextField.setText(record.getGaiaDR2CatId());
+        gaiaIdTextField.setText(vm.getGaiaDR2CatId());
 
-        // Safely access aliasList - it may be lazy loaded and not initialized
-        if (Hibernate.isInitialized(record.getAliasList()) && !record.getAliasList().isEmpty()) {
-            aliasTextArea.setText(String.join(", ", record.getAliasList()));
+        // Aliases are eagerly materialised on the VM — no LIE risk.
+        if (!vm.getAliases().isEmpty()) {
+            aliasTextArea.setText(String.join(", ", vm.getAliases()));
         }
     }
 
@@ -290,74 +296,74 @@ public class StarEditFormBinder {
      * V5 dropped the misc text/num scratch fields).
      */
     public void initializeUserTab() {
-        forceLabel.setSelected(record.isForceLabelToBeShown());
+        forceLabel.setSelected(vm.isForceLabelToBeShown());
     }
 
     /**
-     * Collect all data from form fields and update the record.
+     * Collect all data from form fields and update the view-model.
      * Should be called before saving.
      *
      * @throws NumberFormatException if any numeric field has invalid data
      */
     public void collectAllData() {
         // Overview
-        record.setDisplayName(starNameTextField.getText());
-        record.setConstellationName(constellationNameTextField.getText());
-        record.setSpectralClass(spectralClassTextField.getText());
-        record.setNotes(notesArea.getText());
-        record.setCommonName(commonNameTextField.getText());
+        vm.setDisplayName(starNameTextField.getText());
+        vm.setConstellationName(constellationNameTextField.getText());
+        vm.setSpectralClass(spectralClassTextField.getText());
+        vm.setNotes(notesArea.getText());
+        vm.setCommonName(commonNameTextField.getText());
 
-        record.setRadius(parseDoubleOrThrow(radiusTextField));
-        record.setMass(parseDoubleOrThrow(massTextField));
-        record.setLuminosity(luminosityTextField.getText());
-        record.setDistance(parseDoubleOrThrow(distanceNameTextField));
-        record.setTemperature(parseDoubleOrThrow(tempTextField));
-        record.setX(parseDoubleOrThrow(xTextField));
-        record.setY(parseDoubleOrThrow(yTextField));
-        record.setZ(parseDoubleOrThrow(zTextField));
-        record.setMetallicity(parseDoubleOrThrow(metallicityTextfield));
-        record.setAge(parseDoubleOrThrow(ageTextfield));
+        vm.setRadius(parseDoubleOrThrow(radiusTextField));
+        vm.setMass(parseDoubleOrThrow(massTextField));
+        vm.setLuminosity(luminosityTextField.getText());
+        vm.setDistance(parseDoubleOrThrow(distanceNameTextField));
+        vm.setTemperature(parseDoubleOrThrow(tempTextField));
+        vm.setX(parseDoubleOrThrow(xTextField));
+        vm.setY(parseDoubleOrThrow(yTextField));
+        vm.setZ(parseDoubleOrThrow(zTextField));
+        vm.setMetallicity(parseDoubleOrThrow(metallicityTextfield));
+        vm.setAge(parseDoubleOrThrow(ageTextfield));
 
         // Fictional
-        record.setPolity(polityTextField.getText());
-        record.setWorldType(worldTypeTextField.getText());
-        record.setFuelType(fuelTypeTextField.getText());
-        record.setTechType(techTypeTextField.getText());
-        record.setPortType(portTypeTextField.getText());
-        record.setPopulationType(popTypeTextField.getText());
-        record.setProductType(prodField.getText());
-        record.setMilSpaceType(milspaceTextField.getText());
-        record.setMilPlanType(milplanTextField.getText());
+        vm.setPolity(polityTextField.getText());
+        vm.setWorldType(worldTypeTextField.getText());
+        vm.setFuelType(fuelTypeTextField.getText());
+        vm.setTechType(techTypeTextField.getText());
+        vm.setPortType(portTypeTextField.getText());
+        vm.setPopulationType(popTypeTextField.getText());
+        vm.setProductType(prodField.getText());
+        vm.setMilSpaceType(milspaceTextField.getText());
+        vm.setMilPlanType(milplanTextField.getText());
 
         // Secondary/Scientific
-        record.setRa(parseDoubleOrThrow(raLabel));
-        record.setPmra(parseDoubleOrThrow(pmraLabel));
-        record.setDeclination(parseDoubleOrThrow(decLabel));
-        record.setPmdec(parseDoubleOrThrow(pmdecLabel));
-        record.setParallax(parseDoubleOrThrow(parallaxLabel));
-        record.setRadialVelocity(parseDoubleOrThrow(radialVelocityLabel));
-        record.setBprp(parseDoubleOrThrow(bprpLabel));
-        record.setBpg(parseDoubleOrThrow(bpgLabel));
-        record.setGrp(parseDoubleOrThrow(grpLabel));
-        record.setSimbadId(simbadIdTextField.getText());
-        record.setGalacticLat(parseDoubleOrThrow(galacticCoorLatTextField));
-        record.setGalacticLong(parseDoubleOrThrow(galacticCoorLongTextField));
+        vm.setRa(parseDoubleOrThrow(raLabel));
+        vm.setPmra(parseDoubleOrThrow(pmraLabel));
+        vm.setDeclination(parseDoubleOrThrow(decLabel));
+        vm.setPmdec(parseDoubleOrThrow(pmdecLabel));
+        vm.setParallax(parseDoubleOrThrow(parallaxLabel));
+        vm.setRadialVelocity(parseDoubleOrThrow(radialVelocityLabel));
+        vm.setBprp(parseDoubleOrThrow(bprpLabel));
+        vm.setBpg(parseDoubleOrThrow(bpgLabel));
+        vm.setGrp(parseDoubleOrThrow(grpLabel));
+        vm.setSimbadId(simbadIdTextField.getText());
+        vm.setGalacticLat(parseDoubleOrThrow(galacticCoorLatTextField));
+        vm.setGalacticLong(parseDoubleOrThrow(galacticCoorLongTextField));
 
-        record.setMagu(parseDoubleOrThrow(maguTextField));
-        record.setMagb(parseDoubleOrThrow(magbTextField));
-        record.setMagv(parseDoubleOrThrow(magvTextField));
-        record.setMagr(parseDoubleOrThrow(magrTextField));
-        record.setMagi(parseDoubleOrThrow(magiTextField));
+        vm.setMagu(parseDoubleOrThrow(maguTextField));
+        vm.setMagb(parseDoubleOrThrow(magbTextField));
+        vm.setMagv(parseDoubleOrThrow(magvTextField));
+        vm.setMagr(parseDoubleOrThrow(magrTextField));
+        vm.setMagi(parseDoubleOrThrow(magiTextField));
 
-        record.setGaiaDR2CatId(gaiaIdTextField.getText());
+        vm.setGaiaDR2CatId(gaiaIdTextField.getText());
 
-        record.setForceLabelToBeShown(forceLabel.isSelected());
+        vm.setForceLabelToBeShown(forceLabel.isSelected());
     }
 
     /**
-     * Get the star record being edited.
+     * Get the view-model being edited.
      */
-    public StarObject getRecord() {
-        return record;
+    public StarEditViewModel getViewModel() {
+        return vm;
     }
 }

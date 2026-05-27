@@ -364,15 +364,16 @@ public class EditMenuController {
                         showErrorAlert("Edit Star", "Selected star could not be loaded.");
                         return;
                     }
-                    StarEditDialog starEditDialog = new StarEditDialog(starObject);
+                    // Issue 23: VM-detached edit flow.
+                    com.teamgannon.trips.screenobjects.StarEditViewModel vm =
+                            com.teamgannon.trips.screenobjects.StarEditMapper.toViewModel(starObject);
+                    StarEditDialog starEditDialog = new StarEditDialog(vm);
 
                     Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
-                    if (statusOptional.isPresent()) {
-                        StarEditStatus starEditStatus = statusOptional.get();
-                        if (starEditStatus.isChanged()) {
-                            // update the database
-                            starService.updateStar(starEditStatus.getRecord());
-                        }
+                    if (statusOptional.isPresent() && statusOptional.get().isChanged()) {
+                        com.teamgannon.trips.screenobjects.StarEditMapper.applyToEntity(
+                                statusOptional.get().getViewModel(), starObject);
+                        starService.updateStar(starObject);
                     }
                 } else {
                     log.info("cancel request to edit star");

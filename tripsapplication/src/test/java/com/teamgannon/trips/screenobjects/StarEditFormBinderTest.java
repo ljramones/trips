@@ -1,6 +1,5 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.application.Platform;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -40,12 +39,12 @@ class StarEditFormBinderTest {
     class ConstructorTests {
 
         @Test
-        @DisplayName("should store the record")
-        void shouldStoreTheRecord() {
-            StarObject record = createTestRecord();
-            StarEditFormBinder binder = new StarEditFormBinder(record);
+        @DisplayName("should store the view model")
+        void shouldStoreTheViewModel() {
+            StarEditViewModel vm = createTestViewModel();
+            StarEditFormBinder binder = new StarEditFormBinder(vm);
 
-            assertSame(record, binder.getRecord());
+            assertSame(vm, binder.getViewModel());
         }
     }
 
@@ -61,10 +60,10 @@ class StarEditFormBinderTest {
             AtomicReference<String> labelText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setId("test-id-123");
+                StarEditViewModel vm = createTestViewModel();
+                vm.setId("test-id-123");
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
                 Label recordIdLabel = new Label();
                 Label dataSetLabel = new Label();
 
@@ -99,10 +98,10 @@ class StarEditFormBinderTest {
             AtomicReference<String> fieldText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setDisplayName("Alpha Centauri");
+                StarEditViewModel vm = createTestViewModel();
+                vm.setDisplayName("Alpha Centauri");
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField starName = new TextField();
                 binder.setOverviewFields(starName, new TextField(), new TextField(),
@@ -126,12 +125,12 @@ class StarEditFormBinderTest {
             AtomicReference<String> zText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setX(1.5);
-                record.setY(2.5);
-                record.setZ(3.5);
+                StarEditViewModel vm = createTestViewModel();
+                vm.setX(1.5);
+                vm.setY(2.5);
+                vm.setZ(3.5);
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField x = new TextField();
                 TextField y = new TextField();
@@ -165,10 +164,10 @@ class StarEditFormBinderTest {
             AtomicReference<String> fieldText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setPolity("Terran");
+                StarEditViewModel vm = createTestViewModel();
+                vm.setPolity("Terran");
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField polity = new TextField();
                 binder.setFictionalFields(polity, new TextField(), new TextField(),
@@ -191,11 +190,11 @@ class StarEditFormBinderTest {
             AtomicReference<String> fuelText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setWorldType("Green");
-                record.setFuelType("H2");
+                StarEditViewModel vm = createTestViewModel();
+                vm.setWorldType("Green");
+                vm.setFuelType("H2");
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField world = new TextField();
                 TextField fuel = new TextField();
@@ -226,10 +225,10 @@ class StarEditFormBinderTest {
             AtomicReference<String> raText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setRa(180.5);
+                StarEditViewModel vm = createTestViewModel();
+                vm.setRa(180.5);
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField ra = new TextField();
                 binder.setSecondaryFields(new TextField(), new TextField(), new TextField(),
@@ -254,10 +253,10 @@ class StarEditFormBinderTest {
             AtomicReference<String> lumText = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setLuminosity("1.5");
+                StarEditViewModel vm = createTestViewModel();
+                vm.setLuminosity("1.5");
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 TextField luminosity = new TextField();
                 binder.setSecondaryFields(new TextField(), new TextField(), new TextField(),
@@ -287,10 +286,10 @@ class StarEditFormBinderTest {
             AtomicReference<Boolean> forceSelected = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                record.setForceLabelToBeShown(true);
+                StarEditViewModel vm = createTestViewModel();
+                vm.setForceLabelToBeShown(true);
 
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 CheckBox force = new CheckBox();
                 binder.setUserFields(force);
@@ -315,24 +314,24 @@ class StarEditFormBinderTest {
             AtomicReference<String> collectedName = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                StarEditFormBinder binder = createFullyConfiguredBinder(record);
+                StarEditViewModel vm = createTestViewModel();
+                StarEditFormBinder binder = createFullyConfiguredBinder(vm);
 
                 // Modify the star name field
-                binder.getRecord().setDisplayName(""); // Clear it
+                binder.getViewModel().setDisplayName(""); // Clear it
                 // The binder should have set up fields, now modify via the form
                 // For this test, we'll just verify collectAllData runs without error
                 // and check a simple field update
 
                 try {
                     binder.collectAllData();
-                    collectedName.set(record.getDisplayName());
+                    collectedName.set(vm.getDisplayName());
                 } catch (Exception e) {
                     // Expected as we need to set up all numeric fields properly
                 }
             });
 
-            // The test verifies the method runs and record is accessible
+            // The test verifies the method runs and view model is accessible
             assertNotNull(collectedName.get());
         }
 
@@ -344,8 +343,8 @@ class StarEditFormBinderTest {
             AtomicReference<Boolean> threwException = new AtomicReference<>(false);
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                StarEditFormBinder binder = new StarEditFormBinder(record);
+                StarEditViewModel vm = createTestViewModel();
+                StarEditFormBinder binder = new StarEditFormBinder(vm);
 
                 // Create fields with some invalid numeric values
                 TextField starName = new TextField("Test Star");
@@ -389,12 +388,12 @@ class StarEditFormBinderTest {
             AtomicReference<String> collectedPolity = new AtomicReference<>();
 
             runOnFxThread(() -> {
-                StarObject record = createTestRecord();
-                StarEditFormBinder binder = createFullyConfiguredBinder(record);
+                StarEditViewModel vm = createTestViewModel();
+                StarEditFormBinder binder = createFullyConfiguredBinder(vm);
 
                 try {
                     binder.collectAllData();
-                    collectedPolity.set(record.getPolity());
+                    collectedPolity.set(vm.getPolity());
                 } catch (Exception e) {
                     // Handle if fields aren't fully configured
                 }
@@ -406,42 +405,42 @@ class StarEditFormBinderTest {
 
     // Helper methods
 
-    private StarObject createTestRecord() {
-        StarObject record = new StarObject();
-        record.setId("test-123");
-        record.setDataSetName("Test Dataset");
-        record.setDisplayName("Test Star");
-        record.setDistance(10.0);
-        record.setX(0.0);
-        record.setY(0.0);
-        record.setZ(0.0);
-        record.setRadius(1.0);
-        record.setMass(1.0);
-        record.setTemperature(5778.0);
-        record.setLuminosity("1.0");
-        record.setRa(0.0);
-        record.setDeclination(0.0);
-        record.setParallax(100.0);
-        record.setMetallicity(0.0);
-        record.setAge(4.6);
-        record.setGalacticLat(0.0);
-        record.setGalacticLong(0.0);
-        record.setPmra(0.0);
-        record.setPmdec(0.0);
-        record.setRadialVelocity(0.0);
-        record.setBprp(0.0);
-        record.setBpg(0.0);
-        record.setGrp(0.0);
-        record.setMagu(0.0);
-        record.setMagb(0.0);
-        record.setMagv(0.0);
-        record.setMagr(0.0);
-        record.setMagi(0.0);
-        return record;
+    private StarEditViewModel createTestViewModel() {
+        StarEditViewModel vm = new StarEditViewModel();
+        vm.setId("test-123");
+        vm.setDataSetName("Test Dataset");
+        vm.setDisplayName("Test Star");
+        vm.setDistance(10.0);
+        vm.setX(0.0);
+        vm.setY(0.0);
+        vm.setZ(0.0);
+        vm.setRadius(1.0);
+        vm.setMass(1.0);
+        vm.setTemperature(5778.0);
+        vm.setLuminosity("1.0");
+        vm.setRa(0.0);
+        vm.setDeclination(0.0);
+        vm.setParallax(100.0);
+        vm.setMetallicity(0.0);
+        vm.setAge(4.6);
+        vm.setGalacticLat(0.0);
+        vm.setGalacticLong(0.0);
+        vm.setPmra(0.0);
+        vm.setPmdec(0.0);
+        vm.setRadialVelocity(0.0);
+        vm.setBprp(0.0);
+        vm.setBpg(0.0);
+        vm.setGrp(0.0);
+        vm.setMagu(0.0);
+        vm.setMagb(0.0);
+        vm.setMagv(0.0);
+        vm.setMagr(0.0);
+        vm.setMagi(0.0);
+        return vm;
     }
 
-    private StarEditFormBinder createFullyConfiguredBinder(StarObject record) {
-        StarEditFormBinder binder = new StarEditFormBinder(record);
+    private StarEditFormBinder createFullyConfiguredBinder(StarEditViewModel vm) {
+        StarEditFormBinder binder = new StarEditFormBinder(vm);
 
         // Overview fields - all with valid numeric strings
         binder.setOverviewFields(

@@ -1,6 +1,5 @@
 package com.teamgannon.trips.screenobjects;
 
-import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.utility.SesameResolver;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
@@ -8,11 +7,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
@@ -20,12 +17,18 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
 
 /**
  * Dialog for editing star attributes.
- * Uses StarEditFormBinder for data binding and StarEditComboConfig for combo box configuration.
+ * <p>
+ * As of Issue 23 / Phase 7-follow-on the dialog takes a
+ * {@link StarEditViewModel} rather than a live {@link com.teamgannon.trips.jpa.model.StarObject}
+ * entity. The caller is responsible for loading the entity, converting
+ * via {@link StarEditMapper#toViewModel} inside a transactional service,
+ * showing the dialog, and on save converting back via
+ * {@link StarEditMapper#applyToEntity} + persisting.
  */
 @Slf4j
 public class StarEditDialog extends Dialog<StarEditStatus> {
 
-    private final @NotNull StarObject record;
+    private final @NotNull StarEditViewModel vm;
     private final StarEditFormBinder formBinder;
 
     // Overview Info
@@ -97,9 +100,9 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     @FXML private Button resetBtn;
     @FXML private Button addBtn;
 
-    public StarEditDialog(@NotNull StarObject record) {
-        this.record = record;
-        this.formBinder = new StarEditFormBinder(record);
+    public StarEditDialog(@NotNull StarEditViewModel vm) {
+        this.vm = vm;
+        this.formBinder = new StarEditFormBinder(vm);
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("StarEditDialog.fxml"));
         loader.setController(this);
@@ -111,7 +114,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         }
         getDialogPane().setContent(content);
         getDialogPane().getButtonTypes().clear();
-        this.setTitle("Change attributes for " + record.getDisplayName());
+        this.setTitle("Change attributes for " + vm.getDisplayName());
         setOnCloseRequest(this::close);
     }
 
@@ -147,8 +150,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         addBtn.setOnAction(this::changeClicked);
 
         // Set up checkbox handlers
-        anomalyCheckbox.setOnAction(event -> record.setAnomaly(anomalyCheckbox.isSelected()));
-        otherCheckbox.setOnAction(event -> record.setOther(otherCheckbox.isSelected()));
+        anomalyCheckbox.setOnAction(event -> vm.setAnomaly(anomalyCheckbox.isSelected()));
+        otherCheckbox.setOnAction(event -> vm.setOther(otherCheckbox.isSelected()));
     }
 
     private void close(DialogEvent event) {
@@ -158,38 +161,36 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     }
 
     private void initializeFictionalTab() {
-        // Initialize text fields from record
+        // Initialize text fields from the view-model
         formBinder.initializeFictionalTab();
 
         // Set up checkboxes
-        anomalyCheckbox.setSelected(record.isAnomaly());
-        otherCheckbox.setSelected(record.isOther());
+        anomalyCheckbox.setSelected(vm.isAnomaly());
+        otherCheckbox.setSelected(vm.isOther());
 
         // Configure all combo boxes
         StarEditComboConfig.setupAllCombos(
-                politiesComboBox, polityTextField, record.getPolity(),
-                worldComboBox, worldTypeTextField, record.getWorldType(),
-                fuelComboBox, fuelTypeTextField, record.getFuelType(),
-                techComboBox, techTypeTextField, record.getTechType(),
-                portComboBox, portTypeTextField, record.getPortType(),
-                populationComboBox, popTypeTextField, record.getPopulationType(),
-                productComboBox, prodField, record.getProductType(),
-                milSpaceComboBox, milspaceTextField, record.getMilSpaceType(),
-                milPlanComboBox, milplanTextField, record.getMilPlanType()
+                politiesComboBox, polityTextField, vm.getPolity(),
+                worldComboBox, worldTypeTextField, vm.getWorldType(),
+                fuelComboBox, fuelTypeTextField, vm.getFuelType(),
+                techComboBox, techTypeTextField, vm.getTechType(),
+                portComboBox, portTypeTextField, vm.getPortType(),
+                populationComboBox, popTypeTextField, vm.getPopulationType(),
+                productComboBox, prodField, vm.getProductType(),
+                milSpaceComboBox, milspaceTextField, vm.getMilSpaceType(),
+                milPlanComboBox, milplanTextField, vm.getMilPlanType()
         );
     }
 
     private void updateAliasList(ActionEvent actionEvent) {
         SesameResolver resolver = new SesameResolver();
-        List<String> aliasList = resolver.findAliases(record.getDisplayName());
+        List<String> aliasList = resolver.findAliases(vm.getDisplayName());
         aliasTextArea.setText(String.join(", ", aliasList));
 
-        // Safely access aliasList - it may be lazy loaded and not initialized
-        if (!Hibernate.isInitialized(record.getAliasList())) {
-            record.setAliasList(new HashSet<>());
-        }
-        record.getAliasList().addAll(aliasList);
-        log.info("record updated");
+        // The view-model's aliases are a plain ArrayList already materialised
+        // by StarEditMapper.toViewModel — no LIE risk, just mutate it.
+        vm.getAliases().addAll(aliasList);
+        log.info("view-model updated with {} new alias(es)", aliasList.size());
     }
 
     private void changeClicked(ActionEvent actionEvent) {
@@ -203,7 +204,7 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             }
 
             StarEditStatus starEditStatus = new StarEditStatus();
-            starEditStatus.setRecord(record);
+            starEditStatus.setViewModel(vm);
             starEditStatus.setChanged(true);
             setResult(starEditStatus);
         } catch (Exception e) {
@@ -218,18 +219,18 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     private String validateStellarParameters() {
         StringBuilder issues = new StringBuilder();
 
-        if (record.getMass() <= 0) {
+        if (vm.getMass() <= 0) {
             issues.append("• Mass is missing or zero\n");
         }
-        if (record.getRadius() <= 0) {
+        if (vm.getRadius() <= 0) {
             issues.append("• Radius is missing or zero\n");
         }
-        if (record.getTemperature() <= 0) {
+        if (vm.getTemperature() <= 0) {
             issues.append("• Temperature is missing or zero\n");
         }
 
         // Check luminosity - it's a String that should parse to a positive number
-        String lumStr = record.getLuminosity();
+        String lumStr = vm.getLuminosity();
         if (lumStr == null || lumStr.isBlank()) {
             issues.append("• Luminosity is missing\n");
         } else {

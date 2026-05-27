@@ -245,10 +245,14 @@ public class StarTablePane extends BorderPane {
             return;
         }
 
-        StarEditDialog dialog = new StarEditDialog(starObject);
+        // Issue 23: VM-detached edit flow.
+        com.teamgannon.trips.screenobjects.StarEditViewModel vm =
+                com.teamgannon.trips.screenobjects.StarEditMapper.toViewModel(starObject);
+        StarEditDialog dialog = new StarEditDialog(vm);
         Optional<StarEditStatus> result = dialog.showAndWait();
         if (result.isPresent() && result.get().isChanged()) {
-            starService.updateStar(result.get().getRecord());
+            com.teamgannon.trips.screenobjects.StarEditMapper.applyToEntity(result.get().getViewModel(), starObject);
+            starService.updateStar(starObject);
             loadPage(pagination.getCurrentPageIndex());
         }
     }
@@ -281,10 +285,14 @@ public class StarTablePane extends BorderPane {
         starObject.setId(UUID.randomUUID().toString());
         starObject.setDataSetName(dataSetName);
 
-        StarEditDialog dialog = new StarEditDialog(starObject);
+        // Issue 23: edit a fresh-stub VM (no alias collection to materialise).
+        com.teamgannon.trips.screenobjects.StarEditViewModel vm =
+                com.teamgannon.trips.screenobjects.StarEditMapper.toViewModel(starObject);
+        StarEditDialog dialog = new StarEditDialog(vm);
         Optional<StarEditStatus> result = dialog.showAndWait();
         if (result.isPresent() && result.get().isChanged()) {
-            starService.addStar(result.get().getRecord());
+            com.teamgannon.trips.screenobjects.StarEditMapper.applyToEntity(result.get().getViewModel(), starObject);
+            starService.addStar(starObject);
             loadTotalCount();
         }
     }

@@ -163,20 +163,24 @@ public class StarContextMenuHandler {
      */
     public @Nullable StarDisplayRecord editProperties(@NotNull StarDisplayRecord starDisplayRecord) {
         StarObject starObject = starService.getStar(starDisplayRecord.getRecordId());
-        StarEditDialog starEditDialog = new StarEditDialog(starObject);
+        // Issue 23: detach via VM before showing the dialog.
+        com.teamgannon.trips.screenobjects.StarEditViewModel vm =
+                com.teamgannon.trips.screenobjects.StarEditMapper.toViewModel(starObject);
+        StarEditDialog starEditDialog = new StarEditDialog(vm);
         Optional<StarEditStatus> optionalStarDisplayRecord = starEditDialog.showAndWait();
 
         if (optionalStarDisplayRecord.isPresent()) {
             StarEditStatus status = optionalStarDisplayRecord.get();
             if (status.isChanged()) {
-                StarObject record = status.getRecord();
-                StarDisplayRecord record1 = StarDisplayRecord.fromStarObject(record, starDisplayPreferences);
+                // Apply the edited VM back to the entity then persist.
+                com.teamgannon.trips.screenobjects.StarEditMapper.applyToEntity(status.getViewModel(), starObject);
+                StarDisplayRecord record1 = StarDisplayRecord.fromStarObject(starObject, starDisplayPreferences);
                 if (record1 != null) {
                     record1.setCoordinates(starDisplayRecord.getCoordinates());
-                    log.info("Changed value: {}", record);
-                    starService.updateStar(record);
+                    log.info("Changed value: {}", starObject);
+                    starService.updateStar(starObject);
                 } else {
-                    log.error("Conversion of {} to star display record returned null", record);
+                    log.error("Conversion of {} to star display record returned null", starObject);
                 }
                 return record1;
             } else {

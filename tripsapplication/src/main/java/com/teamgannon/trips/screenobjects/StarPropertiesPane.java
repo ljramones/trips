@@ -158,16 +158,17 @@ public class StarPropertiesPane extends VBox {
     private void editStar(ActionEvent actionEvent) {
         if (record.getId() != null) {
             log.info("edit star");
-            StarEditDialog starEditDialog = new StarEditDialog(record);
+            // Issue 23: build the detached VM from the entity (aliases
+            // materialised) before handing to the dialog.
+            StarEditViewModel vm = StarEditMapper.toViewModel(record);
+            StarEditDialog starEditDialog = new StarEditDialog(vm);
             Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
-            if (statusOptional.isPresent()) {
-                StarEditStatus starEditStatus = statusOptional.get();
-                if (starEditStatus.isChanged()) {
-                    // update the database
-                    starService.updateStar(starEditStatus.getRecord());
-                    setStar(starEditStatus.getRecord());
-                    this.getScene().getWindow().setWidth(this.getScene().getWindow().getWidth() + 0.001);
-                }
+            if (statusOptional.isPresent() && statusOptional.get().isChanged()) {
+                // Apply the edited VM back to the live entity, persist, and refresh the pane.
+                StarEditMapper.applyToEntity(statusOptional.get().getViewModel(), record);
+                starService.updateStar(record);
+                setStar(record);
+                this.getScene().getWindow().setWidth(this.getScene().getWindow().getWidth() + 0.001);
             }
         }
     }

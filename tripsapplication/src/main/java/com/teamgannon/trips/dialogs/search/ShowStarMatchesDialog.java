@@ -290,17 +290,18 @@ public class ShowStarMatchesDialog extends Dialog<SingleStarSelection> {
             final StarObject starObject = tableView.getSelectionModel().getSelectedItem();
             Optional<StarObject> starObjectOptional = starService.findId(starObject.getId());
             if (starObjectOptional.isPresent()) {
-                StarEditDialog starEditDialog = new StarEditDialog(starObjectOptional.get());
+                // Issue 23: VM-detached edit flow.
+                StarObject entity = starObjectOptional.get();
+                com.teamgannon.trips.screenobjects.StarEditViewModel vm =
+                        com.teamgannon.trips.screenobjects.StarEditMapper.toViewModel(entity);
+                StarEditDialog starEditDialog = new StarEditDialog(vm);
 
                 Optional<StarEditStatus> statusOptional = starEditDialog.showAndWait();
-                if (statusOptional.isPresent()) {
-                    StarEditStatus starEditStatus = statusOptional.get();
-                    if (starEditStatus.isChanged()) {
-                        // update the database
-                        starService.updateStar(starEditStatus.getRecord());
-                        // load database on were we are
-                        loadData();
-                    }
+                if (statusOptional.isPresent() && statusOptional.get().isChanged()) {
+                    com.teamgannon.trips.screenobjects.StarEditMapper.applyToEntity(
+                            statusOptional.get().getViewModel(), entity);
+                    starService.updateStar(entity);
+                    loadData();
                 }
 
             } else {
