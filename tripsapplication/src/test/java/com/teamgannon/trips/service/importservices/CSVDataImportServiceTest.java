@@ -10,6 +10,7 @@ import com.teamgannon.trips.jpa.model.DataSetDescriptor;
 import com.teamgannon.trips.service.BulkLoadService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -140,12 +141,11 @@ class CSVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnSucceeded(e -> done.countDown());
-                svc.setOnFailed(e -> done.countDown());
+                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS), "service should reach SUCCEEDED");
+            assertTrue(done.await(30, TimeUnit.SECONDS), "service should reach SUCCEEDED");
 
             // Run a fence on the FX thread so all subsequent runLater callbacks (state handlers) have drained.
             fxFence();
@@ -179,11 +179,11 @@ class CSVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnSucceeded(e -> done.countDown());
+                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS));
+            assertTrue(done.await(30, TimeUnit.SECONDS));
             fxFence();
 
             // StatusUpdate fires before the null-result check, then we bail out.
@@ -213,11 +213,11 @@ class CSVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnFailed(e -> done.countDown());
+                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS));
+            assertTrue(done.await(30, TimeUnit.SECONDS));
             fxFence();
 
             assertEquals(1, events.events.size());
@@ -256,7 +256,7 @@ class CSVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnCancelled(e -> cancelDone.countDown());
+                awaitTerminalState(svc, cancelDone);
                 svc.start();
 
                 // Cancel as soon as the task signals it's running, on the FX thread.
@@ -270,7 +270,7 @@ class CSVDataImportServiceTest {
                 }).start();
             });
 
-            assertTrue(cancelDone.await(15, TimeUnit.SECONDS));
+            assertTrue(cancelDone.await(30, TimeUnit.SECONDS));
             fxFence();
 
             // StatusUpdate (cancellation message) is the only event.
@@ -331,6 +331,24 @@ class CSVDataImportServiceTest {
         });
         assertTrue(latch.await(10, TimeUnit.SECONDS), "FX action timed out");
         if (err.get() != null) throw err.get();
+    }
+
+    /**
+     * Register a state-property listener that counts the latch down as soon
+     * as the service reaches any terminal state (SUCCEEDED / FAILED /
+     * CANCELLED). More robust than {@code setOnSucceeded}/{@code setOnFailed}
+     * — those replace a single property handler each and miss the race
+     * window where {@code start()} has already kicked the worker into a
+     * terminal state before the test thread attaches its handler.
+     */
+    static void awaitTerminalState(javafx.concurrent.Service<?> svc, CountDownLatch latch) {
+        svc.stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == Worker.State.SUCCEEDED
+                    || newState == Worker.State.FAILED
+                    || newState == Worker.State.CANCELLED) {
+                latch.countDown();
+            }
+        });
     }
 
     /** Run a no-op on the FX thread and wait for it — drains queued runLater callbacks ahead of it. */

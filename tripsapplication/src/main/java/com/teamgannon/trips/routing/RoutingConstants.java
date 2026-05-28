@@ -42,6 +42,19 @@ public final class RoutingConstants {
     public static final int KDTREE_THRESHOLD = 100;
 
     /**
+     * Maximum estimated undirected edges allowed before building a route graph.
+     * Dense graphs are expensive twice: edge storage plus Yen's K-shortest-paths
+     * search over those edges.
+     */
+    public static final long MAX_ROUTE_GRAPH_ESTIMATED_EDGES = 1_500_000L;
+
+    /**
+     * Number of stars sampled when estimating graph density before KD-tree
+     * graph construction. The sample is deterministic and evenly spaced.
+     */
+    public static final int ROUTE_GRAPH_DENSITY_SAMPLE_SIZE = 512;
+
+    /**
      * Default number of alternative paths to find using Yen's K-shortest path algorithm.
      */
     public static final int DEFAULT_NUMBER_PATHS = 3;

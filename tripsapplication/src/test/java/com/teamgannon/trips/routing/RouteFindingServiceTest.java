@@ -249,6 +249,29 @@ class RouteFindingServiceTest {
         }
 
         @Test
+        @DisplayName("findRoutes rejects dense KD-tree graph settings before graph construction")
+        void findRoutesRejectsDenseGraphBeforeGraphConstruction() {
+            List<StarDisplayRecord> stars = new ArrayList<>();
+            for (int i = 0; i < 2_000; i++) {
+                stars.add(createStar("Star-" + i, i * 0.001, 0, 0, "G2V", "Terran"));
+            }
+
+            RouteFindingOptions options = defaultOptionsBuilder()
+                    .originStarName("Star-0")
+                    .destinationStarName("Star-1999")
+                    .lowerBound(0.0)
+                    .upperBound(10.0)
+                    .build();
+
+            RouteFindingResult result = routeFindingService.findRoutes(options, stars, dataSet);
+
+            assertFalse(result.isSuccess());
+            assertTrue(result.getErrorMessage().contains("estimated"));
+            assertTrue(result.getErrorMessage().contains("graph edges"));
+            verifyNoInteractions(starMeasurementService);
+        }
+
+        @Test
         @DisplayName("findRoutes fails when stars not connected")
         void findRoutesFailsWhenStarsNotConnected() {
             StarDisplayRecord origin = createStar("Sol", 0, 0, 0, "G2V", "Terran");

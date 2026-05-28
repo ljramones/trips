@@ -336,11 +336,11 @@ class StarEditFormBinderTest {
         }
 
         @Test
-        @DisplayName("should throw NumberFormatException for invalid numeric input")
-        void shouldThrowNumberFormatExceptionForInvalidInput() throws Exception {
+        @DisplayName("should throw field validation exception for invalid numeric input")
+        void shouldThrowFieldValidationExceptionForInvalidInput() throws Exception {
             Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
 
-            AtomicReference<Boolean> threwException = new AtomicReference<>(false);
+            AtomicReference<StarFieldValidationException> thrownException = new AtomicReference<>();
 
             runOnFxThread(() -> {
                 StarEditViewModel vm = createTestViewModel();
@@ -372,12 +372,15 @@ class StarEditFormBinderTest {
 
                 try {
                     binder.collectAllData();
-                } catch (NumberFormatException e) {
-                    threwException.set(true);
+                } catch (StarFieldValidationException e) {
+                    thrownException.set(e);
                 }
             });
 
-            assertTrue(threwException.get());
+            StarFieldValidationException error = thrownException.get();
+            assertNotNull(error);
+            assertEquals("Distance", error.getFieldLabel());
+            assertEquals("not a number", error.getFieldValue());
         }
 
         @Test

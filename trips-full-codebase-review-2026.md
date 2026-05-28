@@ -633,7 +633,7 @@ These are not blocker fixes. They are bounded refactors that should make the nex
 | 9.4 | Complete migration of UI-generated solar-system creation flows through the `SolarSystemFactoryRegistry` / service boundary. | The factory abstraction exists; remaining direct save/generation callers should converge on one creation path for Sol/procedural/generated systems. | done — `SolarSystemFactoryRegistry` now exposes a tested `generate` boundary, and UI preview/save flows go through `SolarSystemGenerationService` instead of calling generated-planet persistence directly from `StarContextMenuHandler`. The existing preview/edit dialog remains intact while persistence is centralized behind the generated-system service boundary. |
 | 9.5 | Refactor `StarEditDialog` numeric parsing into per-field validation/binders. | Enables precise inline validation for the remaining true field-validation case instead of catch-all `NumberFormatException` handling. | done — save-time numeric parsing now uses named field validation through `StarFieldValidator`, raises `StarFieldValidationException` with the field label and invalid value, and `StarEditDialog` reports the precise failed field instead of a catch-all floating-point error. |
 | 9.6 | Turn documented conventions into lightweight checks: FxWeaver vs raw `FXMLLoader`, selected hardcoded UI-string scans, and optional event-catalog drift detection. | Prevents regression after the cleanup work without adding runtime complexity. | done — added `CodebaseConventionTest` to keep raw `FXMLLoader` usage on an explicit allowlist, catch drift between `EVENT_CATALOG.md` and current `*Event.java` classes, and pin the current placeholder/TBD user-string baseline. Also removed stale deleted-event entries from `EVENT_CATALOG.md`. |
-| 9.7 | Add route graph density guardrails before KD-tree graph construction. | The memory fix is in; this prevents users from requesting route settings that imply impractically dense graphs. | planned |
+| 9.7 | Add route graph density guardrails before KD-tree graph construction. | The memory fix is in; this prevents users from requesting route settings that imply impractically dense graphs. | done — `RouteGraphDensityGuard` now samples KD-tree-sized route inputs before graph construction, estimates average degree and total undirected edge count for the requested bounds, and fails early when the graph would exceed the configured edge guardrail. `RouteFindingService` runs this after pruning/origin/destination validation and before allocating the route graph. |
 
 ---
 
@@ -670,6 +670,8 @@ Phase 9 verification:
 - 9.6: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='CodebaseConventionTest' test` passed.
 - 9.6: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='CodebaseConventionTest,StarFieldValidatorTest,SolarSystemFactoryRegistryTest,SolarSystemGenerationServiceTest,AdvancedQueryServiceTest,ToolsMenuControllerTest,WorkbenchEnrichmentTabTest' test` passed.
 - 9.6: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after adding convention drift checks.
+- 9.7: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='RouteGraphDensityGuardTest,RouteFindingServiceTest' test` passed.
+- 9.7: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after adding route graph density guardrails.
 
 ---
 

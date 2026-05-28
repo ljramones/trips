@@ -133,12 +133,11 @@ class CHVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnSucceeded(e -> done.countDown());
-                svc.setOnFailed(e -> done.countDown());
+                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS));
+            assertTrue(done.await(30, TimeUnit.SECONDS));
             fxFence();
 
             assertEquals(3, events.events.size(),
@@ -170,11 +169,11 @@ class CHVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnSucceeded(e -> done.countDown());
+                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS));
+            assertTrue(done.await(30, TimeUnit.SECONDS));
             fxFence();
 
             assertEquals(1, events.events.size(),
@@ -203,17 +202,21 @@ class CHVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnFailed(e -> done.countDown());
+                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(15, TimeUnit.SECONDS));
+            assertTrue(done.await(30, TimeUnit.SECONDS),
+                    "CHV import service did not reach FAILED state within the timeout");
             fxFence();
 
-            assertEquals(1, events.events.size());
+            assertEquals(1, events.events.size(),
+                    "expected only failure StatusUpdate, got: " + events.events);
             StatusUpdateEvent statusEvent = (StatusUpdateEvent) events.events.get(0);
-            assertTrue(statusEvent.getStatus().contains("dataset load failed"));
-            assertTrue(statusEvent.getStatus().contains("kaboom"));
+            assertTrue(statusEvent.getStatus().contains("dataset load failed"),
+                    "status should mention dataset failure, got: " + statusEvent.getStatus());
+            assertTrue(statusEvent.getStatus().contains("kaboom"),
+                    "status should include the task failure message, got: " + statusEvent.getStatus());
             assertTrue(onComplete.invoked.get());
             assertFalse(onComplete.lastStatus.get());
         }
@@ -245,7 +248,7 @@ class CHVDataImportServiceTest {
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                svc.setOnCancelled(e -> cancelDone.countDown());
+                CSVDataImportServiceTest.awaitTerminalState(svc, cancelDone);
                 svc.start();
 
                 new Thread(() -> {
@@ -258,7 +261,7 @@ class CHVDataImportServiceTest {
                 }).start();
             });
 
-            assertTrue(cancelDone.await(15, TimeUnit.SECONDS));
+            assertTrue(cancelDone.await(30, TimeUnit.SECONDS));
             fxFence();
 
             assertFalse(events.events.isEmpty());

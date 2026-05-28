@@ -26,7 +26,7 @@ import java.util.*;
  * </pre>
  */
 @DataJpaTest
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Tag("integration")
 public abstract class BaseRepositoryIntegrationTest {

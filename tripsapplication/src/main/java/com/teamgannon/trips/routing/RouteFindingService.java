@@ -132,6 +132,11 @@ public class RouteFindingService {
                         "Destination star '%s' is not in the available stars (may have been excluded).".formatted(destination));
             }
 
+            Optional<String> graphDensityError = RouteGraphDensityGuard.validate(prunedStars, options);
+            if (graphDensityError.isPresent()) {
+                return RouteFindingResult.failure(graphDensityError.get());
+            }
+
             // Build route graph using appropriate algorithm
             RouteGraph routeGraph = buildRouteGraph(prunedStars, options);
 
