@@ -23,6 +23,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -73,6 +75,11 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     private static final String ALL = "All";
 
+    /** Sentinel userData value carried by the "Real / Proposed" tab. */
+    private static final String UNIVERSE_REAL = "__real__";
+    /** Sentinel userData value carried by the "Other" tab. */
+    private static final String UNIVERSE_OTHER = "__other__";
+
     private final SpaceshipService spaceshipService;
     private final SpaceshipJsonService jsonService;
     private final SpaceshipTemplateLibrary templateLibrary;
@@ -84,8 +91,11 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final ComboBox<String> driveFilter = new ComboBox<>();
     private final ComboBox<String> categoryFilter = new ComboBox<>();
     private final ComboBox<String> sourceFilter = new ComboBox<>();
-    private final ComboBox<String> universeFilter = new ComboBox<>();
     private final TextField searchField = new TextField();
+    private final TabPane universeTabs = new TabPane();
+
+    /** Currently-selected tab key — one of {@link #UNIVERSE_REAL}, {@link #UNIVERSE_OTHER}, or a universe name. */
+    private String selectedUniverse = UNIVERSE_REAL;
 
     private List<SpaceshipDesign> allDesigns = List.of();
 
@@ -148,17 +158,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
         Arrays.stream(Category.values()).map(Enum::name).forEach(categoryFilter.getItems()::add);
         sourceFilter.getItems().add(ALL);
         Arrays.stream(SourceType.values()).map(Enum::name).forEach(sourceFilter.getItems()::add);
-        universeFilter.getItems().setAll(ALL);
         classFilter.setValue(ALL);
         driveFilter.setValue(ALL);
         categoryFilter.setValue(ALL);
         sourceFilter.setValue(ALL);
-        universeFilter.setValue(ALL);
         classFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         driveFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         categoryFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         sourceFilter.valueProperty().addListener((o, a, b) -> applyFilters());
-        universeFilter.valueProperty().addListener((o, a, b) -> applyFilters());
 
         searchField.setPromptText(get("filter.search.prompt"));
         searchField.textProperty().addListener((o, a, b) -> applyFilters());
@@ -175,24 +182,29 @@ public class SpaceshipDesignerPanel extends BorderPane {
         Button refreshButton = new Button(get("button.refresh"));
         refreshButton.setOnAction(e -> reload());
 
-        HBox filters = new HBox(8,
+        // Row 1: filters + search. Drops the Universe combo since the tab strip
+        // below the table now drives the universe filter.
+        HBox filterRow = new HBox(8,
                 new Label(get("filter.shipClass")), classFilter,
                 new Label(get("filter.driveType")), driveFilter,
                 new Label(get("filter.category")), categoryFilter,
                 new Label(get("filter.type")), sourceFilter,
-                new Label(get("filter.universe")), universeFilter,
-                searchField,
-                new Separator(),
-                newButton, importButton, templatesButton, refreshButton);
-        filters.setAlignment(Pos.CENTER_LEFT);
-        filters.setPadding(new Insets(8, 0, 8, 0));
+                searchField);
+        filterRow.setAlignment(Pos.CENTER_LEFT);
+        filterRow.setPadding(new Insets(8, 0, 4, 0));
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        return new VBox(2, title, subtitle, filters);
+        // Row 2: action buttons. Aligned left so they sit under the filters.
+        HBox actionRow = new HBox(8, newButton, importButton, templatesButton, refreshButton);
+        actionRow.setAlignment(Pos.CENTER_LEFT);
+        actionRow.setPadding(new Insets(0, 0, 8, 0));
+
+        return new VBox(2, title, subtitle, filterRow, actionRow);
     }
 
     private SplitPane buildCenter() {
         configureTable();
+        configureUniverseTabs();
 
         Button editLocal = editButton;
         editLocal.setTooltip(new Tooltip(get("tooltip.edit")));
@@ -202,12 +214,28 @@ public class SpaceshipDesignerPanel extends BorderPane {
         HBox tableButtons = new HBox(8, editButton, deleteButton);
         tableButtons.setPadding(new Insets(8, 0, 0, 0));
 
-        VBox left = new VBox(0, table, tableButtons);
+        // The TabPane sits visually above the table: each tab's content is a
+        // no-op marker, the tab strip alone drives the universe filter on the
+        // shared table below.
+        VBox left = new VBox(0, universeTabs, table, tableButtons);
         VBox.setVgrow(table, Priority.ALWAYS);
 
         SplitPane split = new SplitPane(left, buildDetails());
         split.setDividerPositions(0.58);
         return split;
+    }
+
+    private void configureUniverseTabs() {
+        universeTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        // Tabs are filter selectors only; their content is null, the table
+        // below the TabPane shows the filtered rows.
+        universeTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab == null || newTab.getUserData() == null) {
+                return;
+            }
+            selectedUniverse = (String) newTab.getUserData();
+            applyFilters();
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -344,7 +372,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private void reload() {
         try {
             allDesigns = spaceshipService.findAll();
-            refreshUniverseFilter();
+            rebuildUniverseTabs();
             applyFilters();
         } catch (Exception e) {
             log.error("Failed to load spaceship designs", e);
@@ -352,18 +380,76 @@ public class SpaceshipDesignerPanel extends BorderPane {
         }
     }
 
-    /** Repopulates the universe filter from the distinct universes present in the loaded designs. */
-    private void refreshUniverseFilter() {
-        String current = universeFilter.getValue();
-        List<String> items = new java.util.ArrayList<>();
-        items.add(ALL);
-        allDesigns.stream()
+    /**
+     * Rebuild the tab strip from the distinct universes in {@link #allDesigns}.
+     * Always shows the "Real / Proposed" tab; adds one tab per distinct
+     * sci-fi universe (sorted alphabetically); adds an "Other" tab only if
+     * there's at least one design that doesn't fit either bucket.
+     * <p>
+     * Preserves the previously-selected tab key when possible — switching
+     * tabs to a removed universe falls back to "Real / Proposed".
+     */
+    private void rebuildUniverseTabs() {
+        String previous = selectedUniverse;
+
+        List<String> sciFiUniverses = allDesigns.stream()
+                .filter(d -> d.sourceType() == SourceType.SCIENCE_FICTION)
                 .map(SpaceshipDesign::sourceUniverse)
                 .filter(u -> u != null && !u.isBlank())
-                .distinct().sorted()
-                .forEach(items::add);
-        universeFilter.getItems().setAll(items);
-        universeFilter.setValue(items.contains(current) ? current : ALL);
+                .distinct()
+                .sorted()
+                .toList();
+
+        boolean hasOther = allDesigns.stream().anyMatch(this::isOtherTabDesign);
+
+        java.util.List<Tab> tabs = new java.util.ArrayList<>();
+        tabs.add(makeTab(get("tab.real"), UNIVERSE_REAL));
+        for (String universe : sciFiUniverses) {
+            tabs.add(makeTab(universe, universe));
+        }
+        if (hasOther) {
+            tabs.add(makeTab(get("tab.other"), UNIVERSE_OTHER));
+        }
+        universeTabs.getTabs().setAll(tabs);
+
+        // Re-select the previous tab if it still exists, else fall back to Real.
+        Tab toSelect = tabs.stream()
+                .filter(t -> previous.equals(t.getUserData()))
+                .findFirst()
+                .orElse(tabs.get(0));
+        universeTabs.getSelectionModel().select(toSelect);
+        selectedUniverse = (String) toSelect.getUserData();
+    }
+
+    private static Tab makeTab(String label, String userData) {
+        Tab tab = new Tab(label);
+        tab.setUserData(userData);
+        tab.setClosable(false);
+        return tab;
+    }
+
+    private boolean isOtherTabDesign(SpaceshipDesign d) {
+        SourceType type = d.sourceType();
+        if (type == SourceType.REAL || type == SourceType.PROPOSED) {
+            return false;
+        }
+        if (type == SourceType.SCIENCE_FICTION) {
+            // Sci-fi designs go in the per-universe tab — unless their universe is blank.
+            return d.sourceUniverse() == null || d.sourceUniverse().isBlank();
+        }
+        // UNKNOWN: Other.
+        return true;
+    }
+
+    private boolean matchesUniverseTab(SpaceshipDesign d) {
+        if (UNIVERSE_REAL.equals(selectedUniverse)) {
+            return d.sourceType() == SourceType.REAL || d.sourceType() == SourceType.PROPOSED;
+        }
+        if (UNIVERSE_OTHER.equals(selectedUniverse)) {
+            return isOtherTabDesign(d);
+        }
+        // Otherwise the tab key is a specific universe name.
+        return selectedUniverse.equals(d.sourceUniverse());
     }
 
     private void applyFilters() {
@@ -371,15 +457,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
         String drv = driveFilter.getValue();
         String cat = categoryFilter.getValue();
         String src = sourceFilter.getValue();
-        String uni = universeFilter.getValue();
         String q = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
 
         List<SpaceshipRow> rows = allDesigns.stream()
+                .filter(this::matchesUniverseTab)
                 .filter(d -> cls == null || ALL.equals(cls) || d.shipClass().name().equals(cls))
                 .filter(d -> drv == null || ALL.equals(drv) || d.driveType().name().equals(drv))
                 .filter(d -> cat == null || ALL.equals(cat) || d.driveType().category().name().equals(cat))
                 .filter(d -> src == null || ALL.equals(src) || d.sourceType().name().equals(src))
-                .filter(d -> uni == null || ALL.equals(uni) || uni.equals(d.sourceUniverse()))
                 .filter(d -> q.isEmpty()
                         || d.name().toLowerCase().contains(q)
                         || d.designation().toLowerCase().contains(q)
