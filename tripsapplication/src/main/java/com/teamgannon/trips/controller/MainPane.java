@@ -559,7 +559,12 @@ public class MainPane  {
     public void plotStars(ActionEvent actionEvent) {
 
         if (tripsContext.getSearchContext().getDataSetDescriptor() != null) {
-            plotManager.showPlot(searchContext);
+            eventPublisher.publishEvent(new ShowStellarDataEvent(
+                    this,
+                    searchContext.getAstroSearchQuery(),
+                    true,
+                    false
+            ));
         } else {
             showErrorAlert("Plot stars", "there isn't a dataset selected to plot. Please select one.");
         }

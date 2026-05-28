@@ -352,6 +352,8 @@ public class StarPlotManager {
     // =========================================================================
 
     public void clearStars() {
+        clickHandler.clearSelections();
+
         // Return star spheres to the pool
         lodManager.releaseNodes(stellarDisplayGroup.getChildren());
 

@@ -21,6 +21,7 @@ import net.sf.jsqlparser.util.validation.Validation;
 import net.sf.jsqlparser.util.validation.ValidationError;
 import net.sf.jsqlparser.util.validation.feature.DatabaseType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,8 @@ import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 
 @Slf4j
 public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
+
+    private static final int INTERACTIVE_RESULT_LIMIT = 2_000;
 
     private final TextArea wherePart = new TextArea();
 
@@ -174,7 +177,13 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
             } else {
                 if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
                     try {
-                        List<StarObject> starObjectList = starService.runNativeQuery(queryToRun);
+                        List<StarObject> starObjectList = starService.runNativeQuery(queryToRun, INTERACTIVE_RESULT_LIMIT + 1);
+                        if (starObjectList.size() > INTERACTIVE_RESULT_LIMIT) {
+                            showWarningMessage("Run Advanced Query",
+                                    "Advanced Query returned more than %,d rows. Showing the first %,d rows; use export for larger result sets."
+                                            .formatted(INTERACTIVE_RESULT_LIMIT, INTERACTIVE_RESULT_LIMIT));
+                            starObjectList = new ArrayList<>(starObjectList.subList(0, INTERACTIVE_RESULT_LIMIT));
+                        }
                         AdvResultsSet advResultsSet = AdvResultsSet
                                 .builder()
                                 .queryValid(true)

@@ -9,10 +9,13 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Builds JGraphT weighted graphs using KD-Tree spatial indexing for efficient edge discovery.
@@ -45,6 +48,7 @@ public class KDTreeGraphBuilder {
      * Below this threshold, sequential processing is faster due to overhead.
      */
     private static final int PARALLEL_THRESHOLD = 500;
+    private static final int PARALLEL_EDGE_BATCH_SIZE = 256;
 
     private final boolean enableParallel;
 
@@ -195,7 +199,7 @@ public class KDTreeGraphBuilder {
             double upperBound) {
 
         Graph<String, DefaultEdge> graph = new SimpleWeightedGraph<>(DefaultEdge.class);
-        Set<String> seen = StarPairKey.createTrackingSet();
+        Map<T, Integer> indexByStar = buildIdentityIndex(stars);
 
         // Add all vertices first
         for (T star : stars) {
@@ -203,27 +207,10 @@ public class KDTreeGraphBuilder {
         }
 
         // Find and add edges
-        for (T star : stars) {
-            String sourceName = nameExtractor.apply(star);
-            double[] sourceCoords = coordsExtractor.apply(star);
-
-            List<KDPoint<T>> neighbors = tree.rangeSearch(sourceCoords, upperBound);
-
-            for (KDPoint<T> neighbor : neighbors) {
-                T target = neighbor.data();
-                if (star == target) continue;
-
-                String targetName = nameExtractor.apply(target);
-
-                // Skip if already processed this pair
-                if (!StarPairKey.addIfAbsent(seen, sourceName, targetName)) {
-                    continue;
-                }
-
-                double distance = neighbor.distanceTo(sourceCoords);
-                if (distance > lowerBound) {
-                    addEdge(graph, sourceName, targetName, distance);
-                }
+        for (int sourceIndex = 0; sourceIndex < stars.size(); sourceIndex++) {
+            for (EdgeData edge : findEdgesForSource(
+                    tree, stars, sourceIndex, indexByStar, nameExtractor, coordsExtractor, lowerBound, upperBound)) {
+                addEdge(graph, edge.source, edge.target, edge.distance);
             }
         }
 
@@ -239,45 +226,70 @@ public class KDTreeGraphBuilder {
             double upperBound) {
 
         Graph<String, DefaultEdge> graph = new SimpleWeightedGraph<>(DefaultEdge.class);
-        Set<String> seen = StarPairKey.createTrackingSet();
+        Map<T, Integer> indexByStar = buildIdentityIndex(stars);
 
         // Add all vertices first (sequential - graph not thread-safe for vertex addition)
         for (T star : stars) {
             graph.addVertex(nameExtractor.apply(star));
         }
 
-        // Collect edges in parallel
-        List<EdgeData> edges = stars.parallelStream()
-                .flatMap(star -> {
-                    String sourceName = nameExtractor.apply(star);
-                    double[] sourceCoords = coordsExtractor.apply(star);
+        // Discover edges in bounded parallel batches, then flush sequentially because graph mutation is not thread-safe.
+        for (int start = 0; start < stars.size(); start += PARALLEL_EDGE_BATCH_SIZE) {
+            int batchStart = start;
+            int batchEnd = Math.min(batchStart + PARALLEL_EDGE_BATCH_SIZE, stars.size());
+            List<EdgeData> batchEdges = IntStream.range(batchStart, batchEnd)
+                    .parallel()
+                    .mapToObj(sourceIndex -> findEdgesForSource(
+                            tree, stars, sourceIndex, indexByStar, nameExtractor, coordsExtractor, lowerBound, upperBound))
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
 
-                    List<KDPoint<T>> neighbors = tree.rangeSearch(sourceCoords, upperBound);
-
-                    return neighbors.stream()
-                            .filter(neighbor -> neighbor.data() != star)
-                            .filter(neighbor -> {
-                                String targetName = nameExtractor.apply(neighbor.data());
-                                return StarPairKey.addIfAbsent(seen, sourceName, targetName);
-                            })
-                            .map(neighbor -> {
-                                String targetName = nameExtractor.apply(neighbor.data());
-                                double distance = neighbor.distanceTo(sourceCoords);
-                                if (distance > lowerBound) {
-                                    return new EdgeData(sourceName, targetName, distance);
-                                }
-                                return null;
-                            })
-                            .filter(edge -> edge != null);
-                })
-                .collect(Collectors.toList());
-
-        // Add edges sequentially (graph not thread-safe for edge addition)
-        for (EdgeData edge : edges) {
-            addEdge(graph, edge.source, edge.target, edge.distance);
+            for (EdgeData edge : batchEdges) {
+                addEdge(graph, edge.source, edge.target, edge.distance);
+            }
         }
 
         return graph;
+    }
+
+    private <T> @NotNull Map<T, Integer> buildIdentityIndex(@NotNull List<T> stars) {
+        Map<T, Integer> indexByStar = new IdentityHashMap<>(stars.size());
+        for (int i = 0; i < stars.size(); i++) {
+            indexByStar.put(stars.get(i), i);
+        }
+        return indexByStar;
+    }
+
+    private <T> @NotNull List<EdgeData> findEdgesForSource(
+            @NotNull KDTree3D<T> tree,
+            @NotNull List<T> stars,
+            int sourceIndex,
+            @NotNull Map<T, Integer> indexByStar,
+            @NotNull Function<T, String> nameExtractor,
+            @NotNull Function<T, double[]> coordsExtractor,
+            double lowerBound,
+            double upperBound) {
+
+        T source = stars.get(sourceIndex);
+        String sourceName = nameExtractor.apply(source);
+        double[] sourceCoords = coordsExtractor.apply(source);
+        List<KDPoint<T>> neighbors = tree.rangeSearch(sourceCoords, upperBound);
+        List<EdgeData> edges = new ArrayList<>();
+
+        for (KDPoint<T> neighbor : neighbors) {
+            T target = neighbor.data();
+            Integer targetIndex = indexByStar.get(target);
+            if (targetIndex == null || targetIndex <= sourceIndex) {
+                continue;
+            }
+
+            double distance = neighbor.distanceTo(sourceCoords);
+            if (distance > lowerBound) {
+                edges.add(new EdgeData(sourceName, nameExtractor.apply(target), distance));
+            }
+        }
+
+        return edges;
     }
 
     private void addEdge(@NotNull Graph<String, DefaultEdge> graph,

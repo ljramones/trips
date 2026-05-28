@@ -136,7 +136,8 @@ public class BulkLoadService {
      */
     @Transactional
     public void removeDataSet(@NotNull DataSetDescriptor descriptor) {
-        starObjectRepository.deleteByDataSetName(descriptor.getDataSetName());
+        int deletedStars = starObjectRepository.deleteByDataSetName(descriptor.getDataSetName());
+        log.info("Deleted {} stars for dataset {}", deletedStars, descriptor.getDataSetName());
         dataSetDescriptorRepository.delete(descriptor);
     }
 

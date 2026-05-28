@@ -460,6 +460,44 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **Suggestion**: Extract dispatch into a coordinator service; have the `@EventListener` delegate. Test the coordinator, not the controller.
 - **Status**: done (Phase 7.14 + Bucket-A re-audit). `PlotStarsCoordinator` extracted the inline logic from `onPlotStarsEvent` (~50 lines + 2 geometry helpers); 12-test `PlotStarsCoordinatorTest` covers the pure pieces. The other 3 `@EventListener` methods (recenter, show stellar data, export query) were re-audited in the Bucket-A round: each listener body is already ~5 lines (try/catch + FxThread wrap + delegate call to a public method like `showNewStellarData` or `doExport`). Extracting those public methods into a coordinator would create a dependency surface of `plotManager + routingPanel + tripsContext + searchContextCoordinator + dataExportService + eventPublisher + BackgroundTaskRunner + showTable internals` — too big a move for too modest a payoff, and the side-effect-heavy orchestration would be hard to unit-test even when extracted. The listeners-as-thin-dispatchers pattern is already where it should be.
 
+## Performance Deep-Dive Follow-up Issues (2026-05-27)
+
+### Issue 58 -- Severity: bug (high, performance/UI freeze)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/controller/MainPane.java:559-563 ; tripsapplication/src/main/java/com/teamgannon/trips/graphics/PlotManager.java:83-147 ; tripsapplication/src/main/java/com/teamgannon/trips/controller/MainSplitPaneManager.java:440-478
+- **Description**: The main `ShowStellarDataEvent` path correctly loads stars through `BackgroundTaskRunner`, but the direct toolbar/action path still calls `plotManager.showPlot(searchContext)` from the JavaFX action handler. That reaches `starService.getAstrographicObjectsOnQuery(...)` synchronously and can freeze the UI on large catalogs.
+- **Suggestion**: Route all plot entry points through the same cancellable background-load pipeline used by `MainSplitPaneManager.showNewStellarData(...)`. Keep only scene-graph mutation on the FX thread. Add a regression test or characterization seam proving the action handler delegates to the async path rather than querying directly.
+- **Status**: done (Phase 8.1) — `MainPane.plotStars(...)` and `SharedUIFunctions.plotStars()` now publish `ShowStellarDataEvent` instead of calling `PlotManager.showPlot(...)` directly. Current plot entry points therefore enter the existing cancellable `MainSplitPaneManager.showNewStellarData(...)` / `BackgroundTaskRunner` pipeline before querying stars; `rg` confirms no direct `plotManager.showPlot(...)` callers remain outside `PlotManager` itself.
+
+### Issue 59 -- Severity: bug (high, performance/memory)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java:88-110,166-231 ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/impl/StarObjectRepositoryImpl.java:56-60 ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/StarObjectRepository.java:122-150
+- **Description**: Plot/search loads the full matching result set, filters by sphere in Java, then full-sorts to trim to `MAX_PLOT_STARS=2000`. On a 2M-star dataset this can allocate and sort far more data than the plot can display.
+- **Suggestion**: Replace the unbounded plot path with a bounded/streaming strategy: DB-side bounding box or range predicate, streaming result consumption, and a top-k nearest-star selector rather than a full list sort. Keep the paged table path separate from the bounded plot path.
+- **Status**: done (Phase 8.2) — plot queries now stream repository results inside read-only transactions and feed a bounded top-k nearest-star selector instead of materializing and sorting every match. Recentered searches still use the DB-side bounding-box stream; non-recentered plot searches use the repository stream and retain only the nearest 2,000 eligible stars. `StarServiceTest` covers the streaming path and verifies the unbounded `findBySearchQuery(...)` plot path is not used.
+
+### Issue 60 -- Severity: bug (high, performance/memory/behavior)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/starplotting/StarPlotManager.java:354-364 ; tripsapplication/src/main/java/com/teamgannon/trips/starplotting/StarNodePool.java:175-184 ; tripsapplication/src/main/java/com/teamgannon/trips/starplotting/StarClickHandler.java:96-113 ; tripsapplication/src/main/java/com/teamgannon/trips/starplotting/StarRenderer.java:218-269
+- **Description**: Star nodes are returned to `StarNodePool`, but release only clears material/user data. Reused nodes receive new mouse handlers through `addEventHandler(...)` and new hover handlers/properties each render. Repeated plot/clear cycles can accumulate stale handlers, retain old records, and make one click execute multiple callbacks.
+- **Suggestion**: Reset pooled nodes fully before reuse or release: clear event handlers, `onMouse*` properties, effects, tooltip marker properties, style/scale state, and any selection/highlight state. Prefer `setOnMouseClicked(...)` over accumulating `addEventHandler(...)` where only one handler should exist. Add a pool reuse test that renders/clears/renders and asserts one click invokes one handler.
+- **Status**: done (Phase 8.3) — `StarClickHandler` now uses single-assignment `setOnMouseClicked(...)` instead of accumulating anonymous `addEventHandler(...)` handlers. `StarNodePool.release(...)` resets pooled `Sphere` state before reuse: material/userData/id/style/effect/cursor/properties plus mouse/context handlers are cleared, and stored lazy tooltips are uninstalled. `StarPlotManager.clearStars()` also clears selection state before releasing nodes. `StarNodePoolTest` now covers interactive-state cleanup.
+
+### Issue 61 -- Severity: bug (medium, performance/memory)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/query/AdvancedQueryDialog.java:153-187 ; tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java:62-77
+- **Description**: Advanced Query builds a native SQL string and calls `getResultList()` with no row cap or paging. An empty where clause warns that it will get all stars, then still allows plotting/viewing the full result set.
+- **Suggestion**: Add an explicit maximum row limit for interactive plot/view, expose paged results for table display, and reserve unbounded execution for export-only flows with a streaming writer. Consider moving query construction out of the dialog and into a service that can enforce dataset scoping, limits, and cancellation consistently.
+- **Status**: done (Phase 8.4 first guardrail) — `StarService.runNativeQuery(query, maxResults)` now supports an explicit row cap. `AdvancedQueryDialog` asks for `INTERACTIVE_RESULT_LIMIT + 1` rows, warns when the cap is exceeded, and trims interactive plot/view results to 2,000 rows. A future export-specific streaming path can still use the unbounded overload intentionally.
+
+### Issue 62 -- Severity: suggestion (medium, performance/memory)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/transits/kdtree/KDTreeGraphBuilder.java:249-278 ; tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:206-213
+- **Description**: KD-tree graph building is a major improvement over the old O(n^2) route search, but the parallel path collects every discovered edge into an intermediate `List<EdgeData>` before inserting into JGraphT. Dense ranges can hold all edges twice: once in the intermediate list and once in the graph.
+- **Suggestion**: Add a streaming/chunked edge insertion mode or per-worker edge buffers with bounded flushes. Track estimated edge count and reject or warn on route settings that would generate an impractically dense graph. Add a stress benchmark around representative dense-range settings.
+- **Status**: done (Phase 8.5 first memory fix) — `KDTreeGraphBuilder` no longer collects all parallel-discovered edges for the whole graph. It deduplicates by source/target index, discovers edges in bounded parallel batches, and flushes each batch sequentially into JGraphT because graph mutation is not thread-safe. `KDTreeGraphBuilderTest` compares forced-parallel output with the sequential builder and pins single-edge-per-pair behavior. Dense-range warnings/benchmarks remain a future tuning enhancement.
+
+### Issue 63 -- Severity: bug (medium, performance/delete path)
+- **File**: tripsapplication/src/main/java/com/teamgannon/trips/service/BulkLoadService.java:137-140 ; tripsapplication/src/main/java/com/teamgannon/trips/jpa/repository/StarObjectRepository.java:71-74
+- **Description**: `removeDataSet(...)` calls the derived Spring Data method `deleteByDataSetName(...)`. Derived delete methods can load matching entities and delete them individually, which is risky for deleting a 2M-row dataset.
+- **Suggestion**: Replace with an explicit bulk `@Modifying @Query("delete from STAR_OBJ s where s.dataSetName = :dataSetName")` repository method, clear the persistence context after execution, and add an integration/characterization test that validates descriptor deletion and star deletion stay atomic.
+- **Status**: done (Phase 8.6) — `StarObjectRepository.deleteByDataSetName(...)` is now an explicit bulk JPQL delete with `@Modifying(clearAutomatically = true, flushAutomatically = true)` and returns the deleted row count. `BulkLoadService.removeDataSet(...)` logs the deleted-star count before deleting the descriptor. `BulkLoadServiceTest` verifies the star bulk delete happens before descriptor deletion.
+
 ---
 
 # Comprehensive Remediation Plan
@@ -568,6 +606,21 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 | 7.13 | Build `SearchPanelBase` (FXML or Java composite); migrate the 13 search-pane FXMLs. | 55 | **done** — `BasePane` now exposes `loadFxml(String)`; all 14 panels (13 search-pane panels + DataSetPanel) collapsed their 11-line FXML-load constructor blocks + 2 unused imports each into a single `loadFxml("PanelName.fxml")` call. Net 92 lines removed. FXML files stay separate (already minimal, fx:include would add more boilerplate than it removes). |
 | 7.14 | Extract event-handler business logic in `MainSplitPaneManager` into a coordinator service. | 57 | **done** — `PlotStarsCoordinator` (~160-line `@Component`) owns the `onPlotStarsEvent` logic + the two private geometry helpers; `@EventListener` delegates inside the existing FxThread wrap. 12-test unit-test suite proves the pattern works without TestFX. Bucket-A re-audit of the other 3 listeners (recenter, show stellar data, export query) confirmed each listener body is already ~5 lines of try/catch + FxThread wrap + delegate; extracting them would create a large dependency surface for modest payoff, and the listeners-as-thin-dispatchers shape is already correct. |
 
+## Phase 8 — Performance Deep Dive — Code Fixes Complete
+
+| # | Action | Issue(s) | Status |
+|---|---|---|---|
+| 8.1 | Unify every plot trigger behind the cancellable background-load pipeline; direct JavaFX action handlers must not perform database queries. | 58 | done |
+| 8.2 | Replace unbounded plot materialization with bounded/streaming star selection and a top-k nearest-star limiter. | 59 | done |
+| 8.3 | Make pooled JavaFX star nodes fully reusable: clear handlers/properties/effects/state on release or before acquire; add a reuse regression test. | 60 | done |
+| 8.4 | Cap and/or page Advanced Query interactive results; reserve unbounded native execution for streaming export workflows. | 61 | done (interactive cap); export streaming remains future enhancement |
+| 8.5 | Reduce KD-tree graph-builder peak memory for dense route ranges; add stress benchmarks and route-setting guardrails. | 62 | done (bounded edge batches); stress benchmarks/guardrails remain future enhancement |
+| 8.6 | Replace derived dataset star deletion with an explicit bulk delete and atomic descriptor cleanup test. | 63 | done |
+
+Verification for Phase 8 fixes:
+- `./mvnw-java25.sh -q -pl tripsapplication -Dtest='KDTreeGraphBuilderTest,StarServiceTest,StarNodePoolTest,BulkLoadServiceTest' test` passed.
+- `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
+
 ---
 
 ## Tracking & Sequencing
@@ -578,6 +631,7 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 - **Phase 5** (package rename) is a single atomic commit. Coordinate with any open feature branches before doing it.
 - **Phases 6 and 7** are mostly parallelizable. Hand them out to whatever capacity is free.
 - Items inside Phase 7 are independent; pick them up between bigger pieces of work.
+- **Phase 8** code fixes are complete for the identified performance issues. Remaining work is operational validation: large-dataset heap/JFR checks, dense-route benchmarks, and optional export-specific streaming polish for Advanced Query.
 
 ## Verification at end of each phase
 
@@ -586,6 +640,7 @@ Run, in order:
 2. `./mvnw-java25.sh -q -pl tripsapplication test` — must pass with at most the existing Testcontainers-Docker-unavailable failures.
 3. Hand-launch the app, exercise: import a small CSV; jump into a solar system; build a route; design a spaceship; create a transfer plan. Verify no UI freezes.
 4. For Phase 1 specifically: full 2M-star HYG import as a memory benchmark (target: peak heap ≤ 1.5 GB).
+5. For Phase 8 specifically: run repeated plot/clear cycles against a large dataset, capture heap before/after, and verify no FX-thread database work appears in Java Flight Recorder or thread dumps.
 
 ---
 
@@ -593,8 +648,10 @@ Run, in order:
 - This file: `/Users/larrymitchell/tripsnew/trips/trips-full-codebase-review-2026.md`
 - First pass: ~917 main + 158 test files (Grok 4.3)
 - Second pass: ~1,135 main + 158 test files (Claude Opus 4.7, 2026-05-26)
+- Performance deep dive: targeted re-read of plot/query/render/routing hot paths (Codex, 2026-05-27)
 - Key files re-read in the second pass: SolarSystemSpacePane, SolarSystemService, StarObject, ExoPlanet, DataSetDescriptor, BulkLoadService, RegularStarCatalogCsvReader, application.yml, TripsContext, OrbitVisualizer, LargeGraphSearchTask, SparseTransitComputor, TransferPreviewDialog, TransferPlannerPanel, StarEditDialog, MainSplitPaneManager, PythonScriptEngine, AsteroidFieldWindow, Utils (accrete), Coordinates, plus a survey of repository methods and event publishers/listeners.
 
 **Methodology**:
 - First pass: tool-assisted static analysis + architectural cross-reference against CLAUDE.md/AGENTS.md.
 - Second pass: six concurrent `Explore` sub-agents (architecture; data/JPA; concurrency; UI/UX; performance/memory; code hygiene) briefed to avoid duplicating first-pass findings; synthesis and remediation plan by the main agent. No execution of the full app in either pass.
+- Performance deep dive: static hot-path review plus `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile`; no full app/JFR profiling yet.

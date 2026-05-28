@@ -15,6 +15,7 @@ import com.teamgannon.trips.search.AstroSearchQuery;
 import com.teamgannon.trips.search.SearchContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
@@ -23,9 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.concurrent.CancellationException;
@@ -60,7 +58,22 @@ public class StarService {
      */
     @TrackExecutionTime
     public List<StarObject> runNativeQuery(String queryToRun) {
+        return runNativeQuery(queryToRun, 0);
+    }
+
+    /**
+     * Run an advanced native query with an optional row cap.
+     *
+     * @param queryToRun the query to run
+     * @param maxResults maximum rows to return; values <= 0 mean unbounded
+     * @return the list of stars returned by the query
+     */
+    @TrackExecutionTime
+    public List<StarObject> runNativeQuery(String queryToRun, int maxResults) {
         Query query = entityManager.createNativeQuery(queryToRun, StarObject.class);
+        if (maxResults > 0) {
+            query.setMaxResults(maxResults);
+        }
         List<StarObject> starObjects = query.getResultList();
         int sampleSize = Math.min(50, starObjects.size());
         for (int i = 0; i < sampleSize; i++) {
@@ -85,37 +98,43 @@ public class StarService {
      * @return the list of objects
      */
     @TrackExecutionTime
+    @Transactional(readOnly = true)
     public List<StarObject> getAstrographicObjectsOnQuery(@NotNull SearchContext searchContext) {
         AstroSearchQuery searchQuery = searchContext.getAstroSearchQuery();
-        List<StarObject> starObjects;
-        if (searchQuery.isRecenter()) {
-            starObjects = starObjectRepository.findInBoundingBox(
-                    searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
-                    searchQuery.getXMinus(),
-                    searchQuery.getXPlus(),
-                    searchQuery.getYMinus(),
-                    searchQuery.getYPlus(),
-                    searchQuery.getZMinus(),
-                    searchQuery.getZPlus()
+        try (Stream<StarObject> starObjectStream = streamForPlot(searchQuery)) {
+            PlotStarSelection selection = selectPlotStars(
+                    starObjectStream,
+                    searchQuery.getCenterCoordinates(),
+                    searchQuery.getUpperDistanceLimit()
             );
-
-        } else {
-            starObjects = starObjectRepository.findBySearchQuery(searchQuery);
+            if (selection.trimmed()) {
+                log.warn("Plot limit reached: trimmed {} stars down to {}", selection.matchedCount(), MAX_PLOT_STARS);
+            }
+            log.info("Filtered by distance Query returns {} stars", selection.stars().size());
+            return selection.stars();
         }
-        checkInterrupted();
-        log.info("New DB Query returns {} stars", starObjects.size());
-        starObjects = filterByDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
-        starObjects = limitStarObjectsByDistance(starObjects, searchQuery.getCenterCoordinates());
-        log.info("Filtered by distance Query returns {} stars", starObjects.size());
-        return starObjects;
     }
 
     @TrackExecutionTime
+    @Transactional(readOnly = true)
     public List<StarDistances> getAstrographicObjectsOnQuery(@NotNull AstroSearchQuery searchQuery) {
-        List<StarDistances> starDistances;
-        List<StarObject> starObjects;
+        try (Stream<StarObject> starObjectStream = streamForPlot(searchQuery)) {
+            PlotStarDistanceSelection selection = selectPlotStarDistances(
+                    starObjectStream,
+                    searchQuery.getCenterCoordinates(),
+                    searchQuery.getUpperDistanceLimit()
+            );
+            if (selection.trimmed()) {
+                log.warn("Plot limit reached: trimmed {} stars down to {}", selection.matchedCount(), MAX_PLOT_STARS);
+            }
+            log.info("Filtered by distance Query returns {} stars", selection.starDistances().size());
+            return selection.starDistances();
+        }
+    }
+
+    private @NotNull Stream<StarObject> streamForPlot(@NotNull AstroSearchQuery searchQuery) {
         if (searchQuery.isRecenter()) {
-            starObjects = starObjectRepository.findInBoundingBox(
+            return starObjectRepository.streamInBoundingBox(
                     searchQuery.getDataSetContext().getDescriptor().getDataSetName(),
                     searchQuery.getXMinus(),
                     searchQuery.getXPlus(),
@@ -124,16 +143,8 @@ public class StarService {
                     searchQuery.getZMinus(),
                     searchQuery.getZPlus()
             );
-
-        } else {
-            starObjects = starObjectRepository.findBySearchQuery(searchQuery);
         }
-        checkInterrupted();
-        log.info("New DB Query returns {} stars", starObjects.size());
-        starDistances = filterByDistanceIncludeDistance(starObjects, searchQuery.getCenterCoordinates(), searchQuery.getUpperDistanceLimit());
-        starDistances = limitStarDistances(starDistances);
-        log.info("Filtered by distance Query returns {} stars", starObjects.size());
-        return starDistances;
+        return starObjectRepository.findBySearchQueryStream(searchQuery);
     }
 
     @TrackExecutionTime
@@ -155,93 +166,78 @@ public class StarService {
     }
 
 
-    /**
-     * filter the list to distance by selected distance
-     *
-     * @param starObjects            the astrogrpic objects to display
-     * @param centerCoordinates      the plot center coordinates
-     * @param distanceFromCenterStar the distance frm the centre star to display
-     * @return the fitlered list
-     */
-    @TrackExecutionTime
-    private @NotNull
-    List<StarObject> filterByDistance(
-            @NotNull List<StarObject> starObjects,
-            double[] centerCoordinates,
-            double distanceFromCenterStar) {
-        List<StarObject> filterList = new ArrayList<>();
-        starObjects.forEach(object -> {
-            checkInterrupted();
-            try {
-                double[] starPosition = object.getCoordinates();
-                if (StarMath.inSphere(centerCoordinates, starPosition, distanceFromCenterStar)) {
-                    filterList.add(object);
-                }
-            } catch (Exception e) {
-                log.error("error in finding distance:", e);
-            }
-        });
-        return filterList;
-    }
-
-    private @NotNull
-    List<StarDistances> filterByDistanceIncludeDistance(
-            @NotNull List<StarObject> starObjects,
-            double[] centerCoordinates,
-            double distanceFromCenterStar) {
-        List<StarDistances> filterList = new ArrayList<>();
-        starObjects.forEach(object -> {
-            checkInterrupted();
-            try {
-                double[] starPosition = object.getCoordinates();
-                double distance = StarMath.getDistance(centerCoordinates, starPosition);
-                if (!(distance >= distanceFromCenterStar)) {
-                    StarDistances starDistance = new StarDistances(object, distance);
-                    filterList.add(starDistance);
-                }
-            } catch (Exception e) {
-                log.error("error in finding distance:", e);
-            }
-        });
-        return filterList;
-    }
-
     private void checkInterrupted() {
         if (Thread.currentThread().isInterrupted()) {
             throw new CancellationException("Task cancelled.");
         }
     }
 
-    private @NotNull List<StarObject> limitStarObjectsByDistance(@NotNull List<StarObject> starObjects,
-                                                                 double[] centerCoordinates) {
-        if (starObjects.size() <= MAX_PLOT_STARS) {
-            return starObjects;
-        }
-        List<StarDistances> distances = new ArrayList<>(starObjects.size());
-        for (StarObject object : starObjects) {
-            double[] starPosition = new double[]{object.getX(), object.getY(), object.getZ()};
-            distances.add(new StarDistances(object, StarMath.getDistance(centerCoordinates, starPosition)));
-        }
-        distances.sort(Comparator.comparingDouble(StarDistances::getDistance));
-        List<StarObject> limited = new ArrayList<>(MAX_PLOT_STARS);
-        for (int i = 0; i < MAX_PLOT_STARS; i++) {
-            limited.add(distances.get(i).getStarObject());
-        }
-        log.warn("Plot limit reached: trimmed {} stars down to {}", starObjects.size(), MAX_PLOT_STARS);
-        return limited;
+    private @NotNull PlotStarSelection selectPlotStars(@NotNull Stream<StarObject> starObjectStream,
+                                                       double[] centerCoordinates,
+                                                       double distanceFromCenterStar) {
+        PlotStarDistanceSelection selection = selectPlotStarDistances(
+                starObjectStream,
+                centerCoordinates,
+                distanceFromCenterStar
+        );
+        List<StarObject> stars = selection.starDistances().stream()
+                .map(StarDistances::getStarObject)
+                .collect(Collectors.toCollection(() -> new ArrayList<>(selection.starDistances().size())));
+        return new PlotStarSelection(stars, selection.matchedCount(), selection.trimmed());
     }
 
-    private @NotNull List<StarDistances> limitStarDistances(@NotNull List<StarDistances> starDistances) {
-        if (starDistances.size() <= MAX_PLOT_STARS) {
-            return starDistances;
+    private @NotNull PlotStarDistanceSelection selectPlotStarDistances(@NotNull Stream<StarObject> starObjectStream,
+                                                                       double[] centerCoordinates,
+                                                                       double distanceFromCenterStar) {
+        List<StarDistances> firstMatches = new ArrayList<>(MAX_PLOT_STARS);
+        PriorityQueue<StarDistances> nearestStars = null;
+        long matchedCount = 0;
+
+        Iterator<StarObject> iterator = starObjectStream.iterator();
+        while (iterator.hasNext()) {
+            checkInterrupted();
+            StarObject object = iterator.next();
+            double[] starPosition = new double[]{object.getX(), object.getY(), object.getZ()};
+            double distance = StarMath.getDistance(centerCoordinates, starPosition);
+            if (distance >= distanceFromCenterStar) {
+                continue;
+            }
+
+            matchedCount++;
+            StarDistances candidate = new StarDistances(object, distance);
+            if (nearestStars == null) {
+                if (firstMatches.size() < MAX_PLOT_STARS) {
+                    firstMatches.add(candidate);
+                    continue;
+                }
+
+                nearestStars = new PriorityQueue<>(MAX_PLOT_STARS,
+                        Comparator.comparingDouble(StarDistances::getDistance).reversed());
+                nearestStars.addAll(firstMatches);
+                firstMatches.clear();
+            }
+
+            if (nearestStars.size() < MAX_PLOT_STARS) {
+                nearestStars.add(candidate);
+            } else if (candidate.getDistance() < nearestStars.peek().getDistance()) {
+                nearestStars.poll();
+                nearestStars.add(candidate);
+            }
         }
-        starDistances.sort(Comparator.comparingDouble(StarDistances::getDistance));
-        List<StarDistances> limited = new ArrayList<>(MAX_PLOT_STARS);
-        for (int i = 0; i < MAX_PLOT_STARS; i++) {
-            limited.add(starDistances.get(i));
+
+        if (nearestStars == null) {
+            return new PlotStarDistanceSelection(firstMatches, matchedCount, false);
         }
-        log.warn("Plot limit reached: trimmed {} stars down to {}", starDistances.size(), MAX_PLOT_STARS);
-        return limited;
+
+        List<StarDistances> limited = new ArrayList<>(nearestStars);
+        limited.sort(Comparator.comparingDouble(StarDistances::getDistance));
+        return new PlotStarDistanceSelection(limited, matchedCount, true);
+    }
+
+    private record PlotStarSelection(List<StarObject> stars, long matchedCount, boolean trimmed) {
+    }
+
+    private record PlotStarDistanceSelection(List<StarDistances> starDistances, long matchedCount, boolean trimmed) {
     }
 
 

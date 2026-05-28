@@ -30,6 +30,9 @@ import java.util.function.BiConsumer;
 @Slf4j
 public class StarRenderer {
 
+    static final String TOOLTIP_INSTALLED_PROPERTY = "trips.star.tooltipInstalled";
+    static final String TOOLTIP_PROPERTY = "trips.star.tooltip";
+
     /**
      * Glow intensity for hover effect (0.0 to 1.0).
      */
@@ -228,14 +231,15 @@ public class StarRenderer {
 
         node.setOnMouseEntered(event -> {
             // Install tooltip lazily on first hover
-            if (node.getProperties().get("tooltipInstalled") == null) {
+            if (node.getProperties().get(TOOLTIP_INSTALLED_PROPERTY) == null) {
                 String polity = record.getPolity();
                 if (polity.equals("NA")) {
                     polity = "Non-Aligned";
                 }
                 Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
                 Tooltip.install(node, tooltip);
-                node.getProperties().put("tooltipInstalled", Boolean.TRUE);
+                node.getProperties().put(TOOLTIP_PROPERTY, tooltip);
+                node.getProperties().put(TOOLTIP_INSTALLED_PROPERTY, Boolean.TRUE);
                 log.trace("Installed tooltip for star: {}", record.getStarName());
             }
 

@@ -3,8 +3,9 @@ package com.teamgannon.trips.jpa.repository;
 import com.teamgannon.trips.jpa.model.StarObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,7 +72,9 @@ public interface StarObjectRepository
     /**
      * Delete all stars in a dataset.
      */
-    void deleteByDataSetName(String dataSetName);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM STAR_OBJ s WHERE s.dataSetName = :dataSetName")
+    int deleteByDataSetName(@Param("dataSetName") String dataSetName);
 
     /**
      * Count stars in a dataset.

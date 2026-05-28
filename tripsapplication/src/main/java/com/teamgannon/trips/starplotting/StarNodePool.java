@@ -1,5 +1,6 @@
 package com.teamgannon.trips.starplotting;
 
+import javafx.scene.control.Tooltip;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import lombok.extern.slf4j.Slf4j;
@@ -174,17 +175,41 @@ public class StarNodePool {
      */
     public void release(@NotNull Sphere sphere, @NotNull StarLODManager.LODLevel level) {
         Deque<Sphere> pool = pools.get(level);
+        resetForReuse(sphere);
 
         // Don't grow pool beyond max size
         if (pool.size() < MAX_POOL_SIZE) {
-            // Clear references to help GC
-            sphere.setMaterial(null);
-            sphere.setUserData(null);
-
             pool.push(sphere);
             totalReleased++;
         }
         // If pool is full, let the sphere be garbage collected
+    }
+
+    private void resetForReuse(@NotNull Sphere sphere) {
+        Object tooltip = sphere.getProperties().remove(StarRenderer.TOOLTIP_PROPERTY);
+        if (tooltip instanceof Tooltip installedTooltip) {
+            Tooltip.uninstall(sphere, installedTooltip);
+        }
+        sphere.getProperties().clear();
+
+        sphere.setMaterial(null);
+        sphere.setUserData(null);
+        sphere.setId(null);
+        sphere.setStyle("");
+        sphere.setEffect(null);
+        sphere.setCursor(null);
+        sphere.setDisable(false);
+        sphere.setOpacity(1.0);
+        sphere.setVisible(true);
+
+        sphere.setOnMouseClicked(null);
+        sphere.setOnMousePressed(null);
+        sphere.setOnMouseReleased(null);
+        sphere.setOnMouseEntered(null);
+        sphere.setOnMouseExited(null);
+        sphere.setOnMouseMoved(null);
+        sphere.setOnMouseDragged(null);
+        sphere.setOnContextMenuRequested(null);
     }
 
     /**

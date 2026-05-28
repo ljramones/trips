@@ -71,11 +71,9 @@ public class StarClickHandler {
      */
     public void setupContextMenu(@NotNull StarDisplayRecord record, Node star) {
         star.setUserData(record);
-        String polity = formatPolity(record.getPolity());
         ContextMenu starContextMenu = contextMenuCreator.apply(record, star);
 
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED,
-                e -> handleStarClick(star, starContextMenu, e));
+        star.setOnMouseClicked(e -> handleStarClick(star, starContextMenu, e));
 
         star.setOnMousePressed(event -> {
             Node node = (Node) event.getSource();
@@ -96,7 +94,7 @@ public class StarClickHandler {
     public void setupLazyContextMenu(@NotNull StarDisplayRecord record, Node star) {
         star.setUserData(record);
 
-        star.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+        star.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 handlePrimaryClick(record, star, e);
             } else if (e.getButton() == MouseButton.MIDDLE) {
@@ -260,10 +258,4 @@ public class StarClickHandler {
         return selectionModel.size();
     }
 
-    /**
-     * Formats polity string for display.
-     */
-    private String formatPolity(String polity) {
-        return polity.equals("NA") ? "Non-aligned" : polity;
-    }
 }

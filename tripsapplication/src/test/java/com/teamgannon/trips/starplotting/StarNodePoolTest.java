@@ -1,6 +1,9 @@
 package com.teamgannon.trips.starplotting;
 
 import javafx.application.Platform;
+import javafx.scene.Cursor;
+import javafx.scene.control.Tooltip;
+import javafx.scene.effect.Glow;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
@@ -288,6 +291,58 @@ class StarNodePoolTest {
             });
 
             assertNull(sphereRef.get().getUserData(), "User data should be cleared on release");
+        }
+
+        @Test
+        @DisplayName("Release clears interactive state before pooling")
+        void releaseClearsInteractiveStateBeforePooling() throws Exception {
+            assumeJavaFxAvailable();
+
+            runOnFxThread(() -> {
+                PhongMaterial material = new PhongMaterial(Color.ORANGE);
+                Sphere sphere = pool.acquire(StarLODManager.LODLevel.MEDIUM, 5.0, material);
+                Tooltip tooltip = new Tooltip("old tooltip");
+                Tooltip.install(sphere, tooltip);
+
+                sphere.setUserData("test data");
+                sphere.setId("regularStar");
+                sphere.setStyle("-fx-opacity: 0.5;");
+                sphere.setEffect(new Glow(0.5));
+                sphere.setCursor(Cursor.HAND);
+                sphere.getProperties().put(StarRenderer.TOOLTIP_PROPERTY, tooltip);
+                sphere.getProperties().put(StarRenderer.TOOLTIP_INSTALLED_PROPERTY, Boolean.TRUE);
+                sphere.getProperties().put("custom-state", "old");
+
+                sphere.setOnMouseClicked(event -> { });
+                sphere.setOnMousePressed(event -> { });
+                sphere.setOnMouseReleased(event -> { });
+                sphere.setOnMouseEntered(event -> { });
+                sphere.setOnMouseExited(event -> { });
+                sphere.setOnMouseMoved(event -> { });
+                sphere.setOnMouseDragged(event -> { });
+                sphere.setOnContextMenuRequested(event -> { });
+
+                pool.release(sphere, StarLODManager.LODLevel.MEDIUM);
+
+                assertNull(sphere.getMaterial(), "Material should be cleared");
+                assertNull(sphere.getUserData(), "User data should be cleared");
+                assertNull(sphere.getId(), "CSS id should be cleared");
+                assertEquals("", sphere.getStyle(), "Inline style should be cleared");
+                assertNull(sphere.getEffect(), "Effect should be cleared");
+                assertNull(sphere.getCursor(), "Cursor should be cleared");
+                assertTrue(sphere.getProperties().isEmpty(), "Properties should be cleared");
+
+                assertNull(sphere.getOnMouseClicked(), "Click handler should be cleared");
+                assertNull(sphere.getOnMousePressed(), "Pressed handler should be cleared");
+                assertNull(sphere.getOnMouseReleased(), "Released handler should be cleared");
+                assertNull(sphere.getOnMouseEntered(), "Entered handler should be cleared");
+                assertNull(sphere.getOnMouseExited(), "Exited handler should be cleared");
+                assertNull(sphere.getOnMouseMoved(), "Moved handler should be cleared");
+                assertNull(sphere.getOnMouseDragged(), "Dragged handler should be cleared");
+                assertNull(sphere.getOnContextMenuRequested(), "Context menu handler should be cleared");
+
+                return null;
+            });
         }
 
         @Test

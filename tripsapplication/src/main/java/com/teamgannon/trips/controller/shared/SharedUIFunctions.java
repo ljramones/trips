@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controller.ShowZoomWarning;
 import com.teamgannon.trips.controller.SliderControlManager;
 import com.teamgannon.trips.controller.UIElement;
+import com.teamgannon.trips.events.ShowStellarDataEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
 import com.teamgannon.trips.graphics.PlotManager;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
@@ -84,7 +85,12 @@ public class SharedUIFunctions {
 
     public void plotStars() {
         if (tripsContext.getSearchContext().getDataSetDescriptor() != null) {
-            plotManager.showPlot(tripsContext.getSearchContext());
+            eventPublisher.publishEvent(new ShowStellarDataEvent(
+                    this,
+                    tripsContext.getSearchContext().getAstroSearchQuery(),
+                    true,
+                    false
+            ));
         } else {
             showErrorAlert("Plot stars", "There isn't a dataset selected to plot. Please select one.");
         }
