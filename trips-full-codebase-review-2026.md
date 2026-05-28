@@ -622,6 +622,7 @@ Verification for Phase 8 fixes:
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
 - Optional closeout: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='AdvancedQueryServiceTest,StarCsvFormatterTest,HibernateCacheBenchmarkServiceTest,ToolsMenuControllerTest' test` passed.
 - Optional closeout: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after Advanced Query streaming export and cache benchmark hook.
+- JFR prep: `scripts/run-jfr-java25.sh` launches the app under Temurin JDK 25 with `-XX:StartFlightRecording` and writes recordings/logs under `tripsapplication/target/jfr/`; `docs/RUNNING.md` documents the release-prep workflow, live `JFR.dump`, and `Thread.print` capture commands.
 
 ## Phase 9 — Targeted Refactoring Follow-ups — Complete
 
@@ -657,7 +658,7 @@ Run, in order:
 2. `./mvnw-java25.sh -q -pl tripsapplication test` — must pass with at most the existing Testcontainers-Docker-unavailable failures.
 3. Hand-launch the app, exercise: import a small CSV; jump into a solar system; build a route; design a spaceship; create a transfer plan. Verify no UI freezes.
 4. For Phase 1 specifically: full 2M-star HYG import as a memory benchmark (target: peak heap ≤ 1.5 GB).
-5. For Phase 8 specifically: run repeated plot/clear cycles against a large dataset, capture heap before/after, and verify no FX-thread database work appears in Java Flight Recorder or thread dumps.
+5. For Phase 8 specifically: run repeated plot/clear cycles against a large dataset, capture heap before/after, and verify no FX-thread database work appears in Java Flight Recorder or thread dumps. Use `./scripts/run-jfr-java25.sh` for the JDK 25 JFR launch path.
 6. For Phase 9 specifically: add characterization tests around each extracted coordinator/tab/service before moving behavior, then run the focused tests plus compile under `./mvnw-java25.sh`.
 
 Phase 9 verification:
