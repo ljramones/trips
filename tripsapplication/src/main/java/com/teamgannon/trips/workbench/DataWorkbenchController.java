@@ -197,11 +197,13 @@ public class DataWorkbenchController {
     private WorkbenchPreviewManager previewManager;
     private WorkbenchSourceActions sourceActions;
 
-    // Exoplanet import state
-    private final ObservableList<ExoplanetPreviewRow> exoplanetPreviewRows = FXCollections.observableArrayList();
-    private final ObservableList<ExoplanetMatchRow> exoplanetMatchRows = FXCollections.observableArrayList();
-    private List<ExoplanetCsvRow> parsedExoplanets = new ArrayList<>();
-    private ExoplanetMatchResult exoplanetMatchResult;
+    /**
+     * Phase 4.4 closeout: the Exoplanets tab's state + behaviour lives in
+     * {@link WorkbenchExoplanetTab}. The controller keeps the @FXML refs
+     * (FXML reflection requires that), hands them to the tab via
+     * {@link WorkbenchExoplanetTab#bind}, and delegates each on-action.
+     */
+    private WorkbenchExoplanetTab exoplanetTab;
     public DataWorkbenchController(ApplicationEventPublisher eventPublisher,
                                    StarService starService,
                                    DatasetService datasetService,
@@ -299,65 +301,29 @@ public class DataWorkbenchController {
         initializeExoplanetTab();
     }
 
+    /**
+     * Phase 4.4 closeout: construct and bind the {@link WorkbenchExoplanetTab}
+     * helper with the dialog's @FXML controls. Cell-value-factory wiring
+     * and observable-list installation happen inside {@code tab.bind(...)}.
+     */
     private void initializeExoplanetTab() {
-        // Setup preview table columns
-        if (exoNameCol != null) {
-            exoNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        }
-        if (exoStarNameCol != null) {
-            exoStarNameCol.setCellValueFactory(new PropertyValueFactory<>("starName"));
-        }
-        if (exoSmaCol != null) {
-            exoSmaCol.setCellValueFactory(new PropertyValueFactory<>("semiMajorAxis"));
-        }
-        if (exoMassCol != null) {
-            exoMassCol.setCellValueFactory(new PropertyValueFactory<>("mass"));
-        }
-        if (exoRadiusCol != null) {
-            exoRadiusCol.setCellValueFactory(new PropertyValueFactory<>("radius"));
-        }
-        if (exoPeriodCol != null) {
-            exoPeriodCol.setCellValueFactory(new PropertyValueFactory<>("orbitalPeriod"));
-        }
-        if (exoStatusCol != null) {
-            exoStatusCol.setCellValueFactory(new PropertyValueFactory<>("planetStatus"));
-        }
-
-        if (exoplanetPreviewTable != null) {
-            exoplanetPreviewTable.setItems(exoplanetPreviewRows);
-            exoplanetPreviewTable.setPlaceholder(new Label("Load an exoplanet.eu CSV file to see data here."));
-        }
-
-        // Setup match table columns
-        if (matchSelectCol != null) {
-            matchSelectCol.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
-            matchSelectCol.setCellFactory(CheckBoxTableCell.forTableColumn(matchSelectCol));
-        }
-        if (matchExoNameCol != null) {
-            matchExoNameCol.setCellValueFactory(new PropertyValueFactory<>("exoplanetName"));
-        }
-        if (matchCsvStarCol != null) {
-            matchCsvStarCol.setCellValueFactory(new PropertyValueFactory<>("csvStarName"));
-        }
-        if (matchMatchedStarCol != null) {
-            matchMatchedStarCol.setCellValueFactory(new PropertyValueFactory<>("matchedStarName"));
-        }
-        if (matchTypeCol != null) {
-            matchTypeCol.setCellValueFactory(new PropertyValueFactory<>("matchType"));
-        }
-        if (matchConfidenceCol != null) {
-            matchConfidenceCol.setCellValueFactory(new PropertyValueFactory<>("confidence"));
-        }
-
-        if (exoplanetMatchTable != null) {
-            exoplanetMatchTable.setItems(exoplanetMatchRows);
-            exoplanetMatchTable.setEditable(true);
-            exoplanetMatchTable.setPlaceholder(new Label("Run 'Match to Stars' to see matching results."));
-        }
-
-        if (exoplanetLogArea != null) {
-            exoplanetLogArea.setEditable(false);
-        }
+        exoplanetTab = new WorkbenchExoplanetTab(
+                exoplanetImportService,
+                datasetService,
+                sourceActions,
+                this::showError,
+                () -> workbenchTabs != null && workbenchTabs.getScene() != null
+                        ? workbenchTabs.getScene().getWindow() : null);
+        exoplanetTab.bind(new WorkbenchExoplanetTab.Bindings(
+                exoplanetPreviewTable,
+                exoplanetMatchTable,
+                exoplanetFileStatusLabel,
+                exoplanetMatchStatsLabel,
+                skipDuplicatesCheckbox,
+                exoplanetProgressBar,
+                exoplanetLogArea,
+                exoNameCol, exoStarNameCol, exoSmaCol, exoMassCol, exoRadiusCol, exoPeriodCol, exoStatusCol,
+                matchSelectCol, matchExoNameCol, matchCsvStarCol, matchMatchedStarCol, matchTypeCol, matchConfidenceCol));
     }
 
     @FXML
@@ -1311,271 +1277,27 @@ public class DataWorkbenchController {
     // normalizeFieldName moved to WorkbenchMappingPersistence.normalizeFieldName in Phase 4.4.
 
     // ==================== Exoplanet Tab Handlers ====================
+    // Phase 4.4 closeout: state, status helpers, and Task plumbing live in
+    // WorkbenchExoplanetTab. These @FXML methods stay so FXML on-action
+    // bindings keep resolving, and forward to the tab.
 
     @FXML
     private void onLoadExoplanetCsv() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select Exoplanet Catalog CSV");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
-        sourceActions.applyInitialDirectory(fileChooser);
-
-        File file = fileChooser.showOpenDialog(workbenchTabs.getScene() != null
-                ? workbenchTabs.getScene().getWindow()
-                : null);
-
-        if (file == null) {
-            return;
-        }
-
-        updateExoplanetStatus("Loading " + file.getName() + "...");
-        if (exoplanetProgressBar != null) {
-            exoplanetProgressBar.setVisible(true);
-        }
-
-        Task<List<ExoplanetCsvRow>> task = new Task<>() {
-            @Override
-            protected List<ExoplanetCsvRow> call() throws Exception {
-                return exoplanetImportService.parseCsvFile(file.toPath(),
-                        DataWorkbenchController.this::updateExoplanetStatus);
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            parsedExoplanets = task.getValue();
-            exoplanetPreviewRows.setAll(exoplanetImportService.toPreviewRows(parsedExoplanets));
-            updateExoplanetFileStatus("Loaded " + parsedExoplanets.size() + " exoplanets from " + file.getName());
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-            appendExoplanetLog("Loaded " + parsedExoplanets.size() + " exoplanets from " + file.getName());
-
-            // Clear previous match results
-            exoplanetMatchRows.clear();
-            exoplanetMatchResult = null;
-            updateExoplanetMatchStats("");
-        });
-
-        task.setOnFailed(event -> {
-            showError("Load Exoplanets", String.valueOf(task.getException().getMessage()));
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        exoplanetTab.onLoadCsv();
     }
 
     @FXML
     private void onMatchExoplanets() {
-        if (parsedExoplanets == null || parsedExoplanets.isEmpty()) {
-            showError("Match Exoplanets", "Load an exoplanet CSV file first.");
-            return;
-        }
-
-        // Get available datasets and let user choose
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-
-        if (datasetNames.isEmpty()) {
-            showError("Match Exoplanets", "No datasets available. Load a star dataset first.");
-            return;
-        }
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Match Exoplanets to Stars");
-        dialog.setHeaderText("Select the dataset to match against");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateExoplanetStatus("Matching exoplanets to stars in " + dataSetName + "...");
-        if (exoplanetProgressBar != null) {
-            exoplanetProgressBar.setVisible(true);
-        }
-
-        Task<ExoplanetMatchResult> task = new Task<>() {
-            @Override
-            protected ExoplanetMatchResult call() throws Exception {
-                return exoplanetImportService.matchExoplanetsToStars(
-                        parsedExoplanets,
-                        dataSetName,
-                        DataWorkbenchController.this::updateExoplanetStatus);
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            exoplanetMatchResult = task.getValue();
-            exoplanetMatchRows.setAll(exoplanetImportService.toMatchRows(exoplanetMatchResult));
-
-            String stats = String.format("Matched: %d exact, %d fuzzy, %d RA/Dec, %d unmatched",
-                    exoplanetMatchResult.getExactMatches(),
-                    exoplanetMatchResult.getFuzzyMatches(),
-                    exoplanetMatchResult.getRaDecMatches(),
-                    exoplanetMatchResult.getUnmatched());
-            updateExoplanetMatchStats(stats);
-            appendExoplanetLog("Matching complete: " + stats);
-
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-        });
-
-        task.setOnFailed(event -> {
-            showError("Match Exoplanets", String.valueOf(task.getException().getMessage()));
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        exoplanetTab.onMatch();
     }
 
     @FXML
     private void onImportExoplanets() {
-        if (exoplanetMatchResult == null || exoplanetMatchResult.getMatches().isEmpty()) {
-            showError("Import Exoplanets", "Run 'Match to Stars' first.");
-            return;
-        }
-
-        // Filter to only selected rows that have matches
-        List<ExoplanetMatch> selectedMatches = new ArrayList<>();
-        for (int i = 0; i < exoplanetMatchRows.size(); i++) {
-            ExoplanetMatchRow row = exoplanetMatchRows.get(i);
-            if (row.isSelected() && row.hasMatch()) {
-                selectedMatches.add(exoplanetMatchResult.getMatches().get(i));
-            }
-        }
-
-        if (selectedMatches.isEmpty()) {
-            showError("Import Exoplanets", "No matched exoplanets selected for import.");
-            return;
-        }
-
-        boolean skipDuplicates = skipDuplicatesCheckbox != null && skipDuplicatesCheckbox.isSelected();
-
-        updateExoplanetStatus("Importing " + selectedMatches.size() + " exoplanets...");
-        if (exoplanetProgressBar != null) {
-            exoplanetProgressBar.setVisible(true);
-        }
-
-        Task<ExoplanetImportResult> task = new Task<>() {
-            @Override
-            protected ExoplanetImportResult call() throws Exception {
-                return exoplanetImportService.importMatchedExoplanets(
-                        selectedMatches,
-                        skipDuplicates,
-                        DataWorkbenchController.this::updateExoplanetStatus);
-            }
-        };
-
-        task.setOnSucceeded(event -> {
-            ExoplanetImportResult result = task.getValue();
-            String summary = String.format("Import complete: %d imported, %d skipped, %d solar systems created",
-                    result.getImported(), result.getSkipped(), result.getSolarSystemsCreated());
-            updateExoplanetStatus(summary);
-            appendExoplanetLog(summary);
-
-            if (!result.getErrors().isEmpty()) {
-                appendExoplanetLog("Errors (" + result.getErrors().size() + "):");
-                for (String error : result.getErrors().subList(0, Math.min(10, result.getErrors().size()))) {
-                    appendExoplanetLog("  " + error);
-                }
-                if (result.getErrors().size() > 10) {
-                    appendExoplanetLog("  ... and " + (result.getErrors().size() - 10) + " more errors");
-                }
-            }
-
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-        });
-
-        task.setOnFailed(event -> {
-            showError("Import Exoplanets", String.valueOf(task.getException().getMessage()));
-            if (exoplanetProgressBar != null) {
-                exoplanetProgressBar.setVisible(false);
-            }
-        });
-
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        exoplanetTab.onImport();
     }
 
     @FXML
     private void onClearExoplanetData() {
-        parsedExoplanets.clear();
-        exoplanetPreviewRows.clear();
-        exoplanetMatchRows.clear();
-        exoplanetMatchResult = null;
-        updateExoplanetFileStatus("No file loaded");
-        updateExoplanetMatchStats("");
-        if (exoplanetLogArea != null) {
-            exoplanetLogArea.clear();
-        }
-        updateExoplanetStatus("Cleared exoplanet data");
-    }
-
-    private void updateExoplanetStatus(String message) {
-        Runnable updateUi = () -> {
-            if (exoplanetFileStatusLabel != null) {
-                // Don't update file status label with general status
-            }
-            appendExoplanetLog(message);
-        };
-        if (Platform.isFxApplicationThread()) {
-            updateUi.run();
-        } else {
-            Platform.runLater(updateUi);
-        }
-    }
-
-    private void updateExoplanetFileStatus(String message) {
-        Runnable updateUi = () -> {
-            if (exoplanetFileStatusLabel != null) {
-                exoplanetFileStatusLabel.setText(message);
-            }
-        };
-        if (Platform.isFxApplicationThread()) {
-            updateUi.run();
-        } else {
-            Platform.runLater(updateUi);
-        }
-    }
-
-    private void updateExoplanetMatchStats(String message) {
-        Runnable updateUi = () -> {
-            if (exoplanetMatchStatsLabel != null) {
-                exoplanetMatchStatsLabel.setText(message);
-            }
-        };
-        if (Platform.isFxApplicationThread()) {
-            updateUi.run();
-        } else {
-            Platform.runLater(updateUi);
-        }
-    }
-
-    private void appendExoplanetLog(String message) {
-        Runnable updateUi = () -> {
-            if (exoplanetLogArea != null) {
-                exoplanetLogArea.appendText(message + System.lineSeparator());
-            }
-        };
-        if (Platform.isFxApplicationThread()) {
-            updateUi.run();
-        } else {
-            Platform.runLater(updateUi);
-        }
+        exoplanetTab.onClear();
     }
 }
