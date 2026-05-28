@@ -4,6 +4,7 @@ import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controller.MainSplitPaneManager;
 import com.teamgannon.trips.dialogs.query.AdvResultsSet;
 import com.teamgannon.trips.dialogs.query.AdvancedQueryDialog;
+import com.teamgannon.trips.dialogs.query.AdvancedQueryService;
 import com.teamgannon.trips.dialogs.query.QueryDialog;
 import com.teamgannon.trips.events.PlotStarsEvent;
 import com.teamgannon.trips.events.UIStateChangeEvent;
@@ -54,6 +55,7 @@ public class ToolsMenuController {
     private final DatabaseManagementService databaseManagementService;
     private final DatasetService datasetService;
     private final StarService starService;
+    private final AdvancedQueryService advancedQueryService;
     private final StarMeasurementService starMeasurementService;
     private final TransitCalculationService transitCalculationService;
     private final ApplicationEventPublisher eventPublisher;
@@ -73,6 +75,7 @@ public class ToolsMenuController {
                                DatabaseManagementService databaseManagementService,
                                DatasetService datasetService,
                                StarService starService,
+                               AdvancedQueryService advancedQueryService,
                                StarMeasurementService starMeasurementService,
                                TransitCalculationService transitCalculationService,
                                ApplicationEventPublisher eventPublisher,
@@ -86,6 +89,7 @@ public class ToolsMenuController {
         this.databaseManagementService = databaseManagementService;
         this.datasetService = datasetService;
         this.starService = starService;
+        this.advancedQueryService = advancedQueryService;
         this.starMeasurementService = starMeasurementService;
         this.transitCalculationService = transitCalculationService;
         this.eventPublisher = eventPublisher;
@@ -292,7 +296,7 @@ public class ToolsMenuController {
                 log.error("There are no datasets in this database to search on");
                 showErrorAlert("Query Stars", "There aren't any datasets to search on.\nPlease import one first");
             } else {
-                AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(databaseManagementService, starService, tripsContext);
+                AdvancedQueryDialog advancedQueryDialog = new AdvancedQueryDialog(advancedQueryService, tripsContext);
                 Optional<AdvResultsSet> optional = advancedQueryDialog.showAndWait();
                 if (optional.isPresent()) {
                     AdvResultsSet advResultsSet = optional.get();

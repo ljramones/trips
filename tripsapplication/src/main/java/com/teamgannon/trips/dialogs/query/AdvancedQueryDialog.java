@@ -2,8 +2,6 @@ package com.teamgannon.trips.dialogs.query;
 
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.jpa.model.StarObject;
-import com.teamgannon.trips.service.DatabaseManagementService;
-import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -17,12 +15,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.util.validation.Validation;
-import net.sf.jsqlparser.util.validation.ValidationError;
-import net.sf.jsqlparser.util.validation.feature.DatabaseType;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,8 +24,6 @@ import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 
 @Slf4j
 public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
-
-    private static final int INTERACTIVE_RESULT_LIMIT = 2_000;
 
     private final TextArea wherePart = new TextArea();
 
@@ -43,16 +34,13 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
     private final ChoiceBox<String> datasetChoices = new ChoiceBox<>();
     QueryFields queryFields = new QueryFields();
-    private final DatabaseManagementService service;
-    private final StarService starService;
+    private final AdvancedQueryService advancedQueryService;
     private final TripsContext tripsContext;
 
-    public AdvancedQueryDialog(DatabaseManagementService service,
-                               StarService starService,
+    public AdvancedQueryDialog(AdvancedQueryService advancedQueryService,
                                TripsContext tripsContext) {
 
-        this.service = service;
-        this.starService = starService;
+        this.advancedQueryService = advancedQueryService;
         this.tripsContext = tripsContext;
         VBox vBox = new VBox();
         this.getDialogPane().setContent(vBox);
@@ -158,32 +146,26 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
 
         String datasetName = datasetChoices.getValue();
         if (datasetName != null && !datasetName.isEmpty()) {
-            String queryPrefix = "SELECT * FROM STAR_OBJ WHERE ";
-            String datasetQuery = "DATA_SET_NAME='" + datasetName + "' ";
-            String queryToRun = queryPrefix + datasetQuery;
-
-            if (queryWherePart.isEmpty()) {
+            AdvancedQueryService.QueryPlan queryPlan = advancedQueryService.buildPlan(datasetName, queryWherePart);
+            if (queryPlan.unfiltered()) {
                 showWarningMessage("Run Advanced Query", "this will get all stars");
-            } else {
-                queryToRun += " AND " + queryWherePart;
             }
 
-            log.info("query is ::  {}", queryToRun);
-            Validation validation = new Validation(Collections.singletonList(DatabaseType.H2), queryToRun);
-            List<ValidationError> errors = validation.validate();
-            if (errors.size() > 0) {
-                String stringBuilder = errors.stream().map(error -> error.toString() + "\n").collect(Collectors.joining());
+            log.info("query is ::  {}", queryPlan.queryToRun());
+            List<String> errors = advancedQueryService.validate(queryPlan.queryToRun());
+            if (!errors.isEmpty()) {
+                String stringBuilder = errors.stream().map(error -> error + "\n").collect(Collectors.joining());
                 queryErrors.setText(stringBuilder);
             } else {
                 if (plotCheckBox.isSelected() || viewCheckBox.isSelected()) {
                     try {
-                        List<StarObject> starObjectList = starService.runNativeQuery(queryToRun, INTERACTIVE_RESULT_LIMIT + 1);
-                        if (starObjectList.size() > INTERACTIVE_RESULT_LIMIT) {
+                        AdvancedQueryService.InteractiveResult result = advancedQueryService.runInteractive(queryPlan.queryToRun());
+                        if (result.truncated()) {
                             showWarningMessage("Run Advanced Query",
                                     "Advanced Query returned more than %,d rows. Showing the first %,d rows; use export for larger result sets."
-                                            .formatted(INTERACTIVE_RESULT_LIMIT, INTERACTIVE_RESULT_LIMIT));
-                            starObjectList = new ArrayList<>(starObjectList.subList(0, INTERACTIVE_RESULT_LIMIT));
+                                            .formatted(AdvancedQueryService.INTERACTIVE_RESULT_LIMIT, AdvancedQueryService.INTERACTIVE_RESULT_LIMIT));
                         }
+                        List<StarObject> starObjectList = result.stars();
                         AdvResultsSet advResultsSet = AdvResultsSet
                                 .builder()
                                 .queryValid(true)

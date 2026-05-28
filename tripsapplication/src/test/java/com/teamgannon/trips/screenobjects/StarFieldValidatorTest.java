@@ -164,6 +164,30 @@ class StarFieldValidatorTest {
     }
 
     @Nested
+    @DisplayName("parseDoubleValue tests")
+    class ParseDoubleValueTests {
+
+        @Test
+        @DisplayName("should parse valid value")
+        void shouldParseValidValue() {
+            assertEquals(12.5, StarFieldValidator.parseDoubleValue("Mass", "12.5"));
+        }
+
+        @Test
+        @DisplayName("should carry field label and invalid value")
+        void shouldCarryFieldContext() {
+            StarFieldValidationException error = assertThrows(
+                    StarFieldValidationException.class,
+                    () -> StarFieldValidator.parseDoubleValue("Mass", "heavy"));
+
+            assertEquals("Mass", error.getFieldLabel());
+            assertEquals("heavy", error.getFieldValue());
+            assertTrue(error.getMessage().contains("Mass"));
+            assertTrue(error.getMessage().contains("heavy"));
+        }
+    }
+
+    @Nested
     @DisplayName("parseDoubleOrDefault tests")
     class ParseDoubleOrDefaultTests {
 

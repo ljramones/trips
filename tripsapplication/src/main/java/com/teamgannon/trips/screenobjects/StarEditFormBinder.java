@@ -303,7 +303,7 @@ public class StarEditFormBinder {
      * Collect all data from form fields and update the view-model.
      * Should be called before saving.
      *
-     * @throws NumberFormatException if any numeric field has invalid data
+     * @throws StarFieldValidationException if any numeric field has invalid data
      */
     public void collectAllData() {
         // Overview
@@ -313,16 +313,16 @@ public class StarEditFormBinder {
         vm.setNotes(notesArea.getText());
         vm.setCommonName(commonNameTextField.getText());
 
-        vm.setRadius(parseDoubleOrThrow(radiusTextField));
-        vm.setMass(parseDoubleOrThrow(massTextField));
+        vm.setRadius(readDouble(radiusTextField, "Radius"));
+        vm.setMass(readDouble(massTextField, "Mass"));
         vm.setLuminosity(luminosityTextField.getText());
-        vm.setDistance(parseDoubleOrThrow(distanceNameTextField));
-        vm.setTemperature(parseDoubleOrThrow(tempTextField));
-        vm.setX(parseDoubleOrThrow(xTextField));
-        vm.setY(parseDoubleOrThrow(yTextField));
-        vm.setZ(parseDoubleOrThrow(zTextField));
-        vm.setMetallicity(parseDoubleOrThrow(metallicityTextfield));
-        vm.setAge(parseDoubleOrThrow(ageTextfield));
+        vm.setDistance(readDouble(distanceNameTextField, "Distance"));
+        vm.setTemperature(readDouble(tempTextField, "Temperature"));
+        vm.setX(readDouble(xTextField, "X coordinate"));
+        vm.setY(readDouble(yTextField, "Y coordinate"));
+        vm.setZ(readDouble(zTextField, "Z coordinate"));
+        vm.setMetallicity(readDouble(metallicityTextfield, "Metallicity"));
+        vm.setAge(readDouble(ageTextfield, "Age"));
 
         // Fictional
         vm.setPolity(polityTextField.getText());
@@ -336,24 +336,24 @@ public class StarEditFormBinder {
         vm.setMilPlanType(milplanTextField.getText());
 
         // Secondary/Scientific
-        vm.setRa(parseDoubleOrThrow(raLabel));
-        vm.setPmra(parseDoubleOrThrow(pmraLabel));
-        vm.setDeclination(parseDoubleOrThrow(decLabel));
-        vm.setPmdec(parseDoubleOrThrow(pmdecLabel));
-        vm.setParallax(parseDoubleOrThrow(parallaxLabel));
-        vm.setRadialVelocity(parseDoubleOrThrow(radialVelocityLabel));
-        vm.setBprp(parseDoubleOrThrow(bprpLabel));
-        vm.setBpg(parseDoubleOrThrow(bpgLabel));
-        vm.setGrp(parseDoubleOrThrow(grpLabel));
+        vm.setRa(readDouble(raLabel, "Right ascension"));
+        vm.setPmra(readDouble(pmraLabel, "PMRA"));
+        vm.setDeclination(readDouble(decLabel, "Declination"));
+        vm.setPmdec(readDouble(pmdecLabel, "PMDEC"));
+        vm.setParallax(readDouble(parallaxLabel, "Parallax"));
+        vm.setRadialVelocity(readDouble(radialVelocityLabel, "Radial velocity"));
+        vm.setBprp(readDouble(bprpLabel, "BP-RP"));
+        vm.setBpg(readDouble(bpgLabel, "BP-G"));
+        vm.setGrp(readDouble(grpLabel, "G-RP"));
         vm.setSimbadId(simbadIdTextField.getText());
-        vm.setGalacticLat(parseDoubleOrThrow(galacticCoorLatTextField));
-        vm.setGalacticLong(parseDoubleOrThrow(galacticCoorLongTextField));
+        vm.setGalacticLat(readDouble(galacticCoorLatTextField, "Galactic latitude"));
+        vm.setGalacticLong(readDouble(galacticCoorLongTextField, "Galactic longitude"));
 
-        vm.setMagu(parseDoubleOrThrow(maguTextField));
-        vm.setMagb(parseDoubleOrThrow(magbTextField));
-        vm.setMagv(parseDoubleOrThrow(magvTextField));
-        vm.setMagr(parseDoubleOrThrow(magrTextField));
-        vm.setMagi(parseDoubleOrThrow(magiTextField));
+        vm.setMagu(readDouble(maguTextField, "U magnitude"));
+        vm.setMagb(readDouble(magbTextField, "B magnitude"));
+        vm.setMagv(readDouble(magvTextField, "V magnitude"));
+        vm.setMagr(readDouble(magrTextField, "R magnitude"));
+        vm.setMagi(readDouble(magiTextField, "I magnitude"));
 
         vm.setGaiaDR2CatId(gaiaIdTextField.getText());
 
@@ -365,5 +365,9 @@ public class StarEditFormBinder {
      */
     public StarEditViewModel getViewModel() {
         return vm;
+    }
+
+    private static double readDouble(TextField textField, String fieldLabel) {
+        return parseDoubleOrThrow(textField, fieldLabel);
     }
 }

@@ -207,8 +207,8 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
             starEditStatus.setViewModel(vm);
             starEditStatus.setChanged(true);
             setResult(starEditStatus);
-        } catch (Exception e) {
-            showErrorAlert("enter star data", "invalid floating point number entered");
+        } catch (StarFieldValidationException e) {
+            showErrorAlert("enter star data", e.getMessage());
         }
     }
 

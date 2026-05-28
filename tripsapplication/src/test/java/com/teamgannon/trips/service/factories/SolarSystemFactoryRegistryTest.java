@@ -66,6 +66,38 @@ class SolarSystemFactoryRegistryTest {
     }
 
     @Nested
+    @DisplayName("generate")
+    class Generate {
+
+        @Test
+        @DisplayName("delegates to the selected factory")
+        void delegatesToSelectedFactory() {
+            StarObject star = star("Vega");
+            SolarSystemFactory neverApplies = stub("never", candidate -> false);
+            SolarSystemFactory selected = stub("selected", candidate -> true);
+            SolarSystemFactoryRegistry registry = new SolarSystemFactoryRegistry(List.of(neverApplies, selected));
+
+            SolarSystemFactoryResult result = registry.generate(star);
+
+            assertEquals("selected", result.factoryName());
+            assertSame(star, result.sourceStar());
+        }
+
+        @Test
+        @DisplayName("throws when no factory applies")
+        void throwsWhenNoFactoryApplies() {
+            SolarSystemFactoryRegistry registry = new SolarSystemFactoryRegistry(List.of(
+                    stub("nope", star -> false)));
+
+            IllegalStateException error = assertThrows(
+                    IllegalStateException.class,
+                    () -> registry.generate(star("Vega")));
+
+            assertTrue(error.getMessage().contains("Vega"));
+        }
+    }
+
+    @Nested
     @DisplayName("factoryNames")
     class FactoryNames {
 

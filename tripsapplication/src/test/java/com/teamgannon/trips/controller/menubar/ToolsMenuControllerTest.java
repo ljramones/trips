@@ -3,6 +3,7 @@ package com.teamgannon.trips.controller.menubar;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.controller.MainSplitPaneManager;
 import com.teamgannon.trips.controller.TransitFilterPane;
+import com.teamgannon.trips.dialogs.query.AdvancedQueryService;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.graphics.panes.InterstellarSpacePane;
 import com.teamgannon.trips.jpa.model.DataSetDescriptor;
@@ -57,6 +58,9 @@ class ToolsMenuControllerTest {
     private StarService starService;
 
     @Mock
+    private AdvancedQueryService advancedQueryService;
+
+    @Mock
     private StarMeasurementService starMeasurementService;
 
     @Mock
@@ -108,6 +112,7 @@ class ToolsMenuControllerTest {
                 databaseManagementService,
                 datasetService,
                 starService,
+                advancedQueryService,
                 starMeasurementService,
                 transitCalculationService,
                 eventPublisher,

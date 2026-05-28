@@ -13,7 +13,7 @@ import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.routing.model.RoutingType;
 import com.teamgannon.trips.screenobjects.StarEditDialog;
 import com.teamgannon.trips.screenobjects.StarEditStatus;
-import com.teamgannon.trips.service.SolarSystemService;
+import com.teamgannon.trips.service.SolarSystemGenerationService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.solarsystem.PlanetDialog;
 import com.teamgannon.trips.solarsystem.SolarSystemGenOptions;
@@ -59,7 +59,7 @@ public class StarContextMenuHandler {
 
     private final TripsContext tripsContext;
     private final StarService starService;
-    private final SolarSystemService solarSystemService;
+    private final SolarSystemGenerationService solarSystemGenerationService;
     private final ApplicationEventPublisher eventPublisher;
     private final RouteManager routeManager;
     private final RouteFindingService routeFindingService;
@@ -84,13 +84,13 @@ public class StarContextMenuHandler {
 
     public StarContextMenuHandler(TripsContext tripsContext,
                                    StarService starService,
-                                   SolarSystemService solarSystemService,
+                                   SolarSystemGenerationService solarSystemGenerationService,
                                    ApplicationEventPublisher eventPublisher,
                                    RouteManager routeManager,
                                    RouteFindingService routeFindingService) {
         this.tripsContext = tripsContext;
         this.starService = starService;
-        this.solarSystemService = solarSystemService;
+        this.solarSystemGenerationService = solarSystemGenerationService;
         this.eventPublisher = eventPublisher;
         this.routeManager = routeManager;
         this.routeFindingService = routeFindingService;
@@ -304,7 +304,7 @@ public class StarContextMenuHandler {
             if (resultOptional.isPresent()) {
                 SolarSystemSaveResult saveResult = resultOptional.get();
                 if (saveResult.isSaveRequested()) {
-                    int savedCount = solarSystemService.saveGeneratedPlanets(
+                    int savedCount = solarSystemGenerationService.savePreviewedPlanets(
                             saveResult.getSourceStar(),
                             saveResult.getPlanets()
                     );

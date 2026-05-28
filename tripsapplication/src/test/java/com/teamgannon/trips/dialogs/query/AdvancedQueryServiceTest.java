@@ -1,0 +1,53 @@
+package com.teamgannon.trips.dialogs.query;
+
+import com.teamgannon.trips.jpa.model.StarObject;
+import com.teamgannon.trips.service.StarService;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class AdvancedQueryServiceTest {
+
+    @Test
+    void buildPlanScopesQueryToDatasetAndMarksEmptyWhereAsUnfiltered() {
+        AdvancedQueryService service = new AdvancedQueryService(mock(StarService.class));
+
+        AdvancedQueryService.QueryPlan plan = service.buildPlan("O'Brien", " ");
+
+        assertThat(plan.queryToRun()).isEqualTo("SELECT * FROM STAR_OBJ WHERE DATA_SET_NAME='O''Brien'");
+        assertThat(plan.unfiltered()).isTrue();
+    }
+
+    @Test
+    void buildPlanAppendsWhereClauseWhenProvided() {
+        AdvancedQueryService service = new AdvancedQueryService(mock(StarService.class));
+
+        AdvancedQueryService.QueryPlan plan = service.buildPlan("nearby", "DISTANCE < 10");
+
+        assertThat(plan.queryToRun()).isEqualTo("SELECT * FROM STAR_OBJ WHERE DATA_SET_NAME='nearby' AND DISTANCE < 10");
+        assertThat(plan.unfiltered()).isFalse();
+    }
+
+    @Test
+    void runInteractiveRequestsSentinelRowAndTrimsToInteractiveLimit() {
+        StarService starService = mock(StarService.class);
+        AdvancedQueryService service = new AdvancedQueryService(starService);
+        String query = "SELECT * FROM STAR_OBJ WHERE DATA_SET_NAME='nearby'";
+        List<StarObject> rows = IntStream.rangeClosed(1, AdvancedQueryService.INTERACTIVE_RESULT_LIMIT + 1)
+                .mapToObj(index -> new StarObject())
+                .toList();
+        when(starService.runNativeQuery(query, AdvancedQueryService.INTERACTIVE_RESULT_LIMIT + 1)).thenReturn(rows);
+
+        AdvancedQueryService.InteractiveResult result = service.runInteractive(query);
+
+        assertThat(result.truncated()).isTrue();
+        assertThat(result.stars()).hasSize(AdvancedQueryService.INTERACTIVE_RESULT_LIMIT);
+        verify(starService).runNativeQuery(query, AdvancedQueryService.INTERACTIVE_RESULT_LIMIT + 1);
+    }
+}

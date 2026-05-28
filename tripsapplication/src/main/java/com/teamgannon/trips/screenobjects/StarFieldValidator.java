@@ -50,6 +50,23 @@ public class StarFieldValidator {
     }
 
     /**
+     * Parse a double value from a named field without showing an error.
+     * The field label is carried in the exception so callers can present
+     * precise save-time validation feedback instead of a generic parse error.
+     */
+    public static double parseDoubleOrThrow(TextField textField, String fieldLabel) {
+        return parseDoubleValue(fieldLabel, textField.getText());
+    }
+
+    public static double parseDoubleValue(String fieldLabel, String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException | NullPointerException ex) {
+            throw new StarFieldValidationException(fieldLabel, value, ex);
+        }
+    }
+
+    /**
      * Parse a double value from a text field, returning a default if invalid.
      *
      * @param textField    the text field to read from

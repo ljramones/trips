@@ -6,7 +6,6 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -19,23 +18,17 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ProgressBar;
 import javafx.application.Platform;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import com.teamgannon.trips.events.StatusUpdateEvent;
 import com.teamgannon.trips.service.DatasetService;
-import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.workbench.model.ExoplanetMatchRow;
 import com.teamgannon.trips.workbench.model.ExoplanetPreviewRow;
 import com.teamgannon.trips.workbench.model.WorkbenchCsvSchema;
 import com.teamgannon.trips.workbench.service.WorkbenchCsvService;
 import com.teamgannon.trips.workbench.service.WorkbenchEnrichmentService;
 import com.teamgannon.trips.workbench.service.WorkbenchExoplanetImportService;
-import com.teamgannon.trips.workbench.service.WorkbenchExoplanetImportService.ExoplanetCsvRow;
-import com.teamgannon.trips.workbench.service.WorkbenchExoplanetImportService.ExoplanetMatch;
-import com.teamgannon.trips.workbench.service.WorkbenchExoplanetImportService.ExoplanetMatchResult;
-import com.teamgannon.trips.workbench.service.WorkbenchExoplanetImportService.ExoplanetImportResult;
 import com.teamgannon.trips.workbench.service.WorkbenchMappingDefaults;
 import com.teamgannon.trips.workbench.service.WorkbenchTapService;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Component
@@ -177,7 +169,6 @@ public class DataWorkbenchController {
     private TableColumn<ExoplanetMatchRow, String> matchConfidenceCol;
 
     private final ApplicationEventPublisher eventPublisher;
-    private final StarService starService;
     private final DatasetService datasetService;
     private final WorkbenchEnrichmentService enrichmentService;
     private final WorkbenchCsvService csvService;
@@ -204,15 +195,15 @@ public class DataWorkbenchController {
      * {@link WorkbenchExoplanetTab#bind}, and delegates each on-action.
      */
     private WorkbenchExoplanetTab exoplanetTab;
+    private WorkbenchEnrichmentTab enrichmentTab;
+
     public DataWorkbenchController(ApplicationEventPublisher eventPublisher,
-                                   StarService starService,
                                    DatasetService datasetService,
                                    WorkbenchEnrichmentService enrichmentService,
                                    WorkbenchCsvService csvService,
                                    WorkbenchTapService tapService,
                                    WorkbenchExoplanetImportService exoplanetImportService) {
         this.eventPublisher = eventPublisher;
-        this.starService = starService;
         this.datasetService = datasetService;
         this.enrichmentService = enrichmentService;
         this.csvService = csvService;
@@ -223,10 +214,6 @@ public class DataWorkbenchController {
     @FXML
     public void initialize() {
         log.info("Data Workbench: initialize");
-        // Hide progress bar initially
-        if (enrichmentProgressBar != null) {
-            enrichmentProgressBar.setVisible(false);
-        }
         updateStatus("Data Workbench ready");
         sourceActions = new WorkbenchSourceActions(
                 sources,
@@ -238,12 +225,7 @@ public class DataWorkbenchController {
                 tapService,
                 this::updateStatus,
                 this::showError);
-        if (liveTapBatchField != null) {
-            liveTapBatchField.setText("50");
-        }
-        if (liveTapBackoffField != null) {
-            liveTapBackoffField.setText("1000");
-        }
+        initializeEnrichmentTab();
         if (sourceListView != null) {
             sourceListView.setItems(sources);
             sourceListView.setCellFactory(listView -> new ListCell<>() {
@@ -299,6 +281,23 @@ public class DataWorkbenchController {
         initializeCacheDir();
         loadLastMappingIfAvailable();
         initializeExoplanetTab();
+    }
+
+    private void initializeEnrichmentTab() {
+        enrichmentTab = new WorkbenchEnrichmentTab(
+                datasetService,
+                enrichmentService,
+                csvService,
+                tapService,
+                sourceActions,
+                this::updateStatus,
+                this::showError,
+                () -> workbenchTabs != null && workbenchTabs.getScene() != null
+                        ? workbenchTabs.getScene().getWindow() : null);
+        enrichmentTab.bind(new WorkbenchEnrichmentTab.Bindings(
+                liveTapBatchField,
+                liveTapBackoffField,
+                enrichmentProgressBar));
     }
 
     /**
@@ -478,423 +477,47 @@ public class DataWorkbenchController {
 
     @FXML
     private void onEnrichDistances() {
-        FileChooser baseChooser = new FileChooser();
-        baseChooser.setTitle("Select TRIPS CSV to enrich");
-        baseChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
-        sourceActions.applyInitialDirectory(baseChooser);
-        File baseFile = baseChooser.showOpenDialog(workbenchTabs.getScene() != null
-                ? workbenchTabs.getScene().getWindow()
-                : null);
-        if (baseFile == null) {
-            return;
-        }
-
-        FileChooser gaiaChooser = new FileChooser();
-        gaiaChooser.setTitle("Select Gaia DR3 CSV (optional)");
-        gaiaChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
-        sourceActions.applyInitialDirectory(gaiaChooser);
-        File gaiaFile = gaiaChooser.showOpenDialog(workbenchTabs.getScene() != null
-                ? workbenchTabs.getScene().getWindow()
-                : null);
-
-        FileChooser hipChooser = new FileChooser();
-        hipChooser.setTitle("Select Hipparcos CSV (optional)");
-        hipChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
-        sourceActions.applyInitialDirectory(hipChooser);
-        File hipFile = hipChooser.showOpenDialog(workbenchTabs.getScene() != null
-                ? workbenchTabs.getScene().getWindow()
-                : null);
-
-        if (gaiaFile == null && hipFile == null) {
-            showError("Enrich Distances", "Select at least a Gaia or Hipparcos CSV file.");
-            return;
-        }
-
-        FileChooser outputChooser = new FileChooser();
-        outputChooser.setTitle("Save enriched TRIPS CSV");
-        outputChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
-        sourceActions.applyInitialDirectory(outputChooser);
-        outputChooser.setInitialFileName(baseFile.getName().replace(".csv", "") + "-enriched.csv");
-        File outputFile = outputChooser.showSaveDialog(workbenchTabs.getScene() != null
-                ? workbenchTabs.getScene().getWindow()
-                : null);
-        if (outputFile == null) {
-            return;
-        }
-
-        updateStatus("Enriching distances...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                csvService.enrichDistances(baseFile.toPath(),
-                        gaiaFile != null ? gaiaFile.toPath() : null,
-                        hipFile != null ? hipFile.toPath() : null,
-                        outputFile.toPath(),
-                        count -> updateStatus("Enriching: " + count + " rows processed"));
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Enriched CSV saved: " + outputFile.getName());
-            sourceActions.addLocalSourceIfMissing(outputFile.toPath());
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Enrich Distances", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEnrichDistances();
     }
 
     @FXML
     private void onEnrichMissingDistancesLive() {
-        int batchSize = 50;
-        int backoffMs = 1000;
-        if (liveTapBatchField != null && !liveTapBatchField.getText().isBlank()) {
-            Integer parsed = parseIntStrict(liveTapBatchField.getText(), "Live TAP batch size");
-            if (parsed == null || parsed <= 0) {
-                showError("Enrich Distances", "Live TAP batch size must be a positive integer.");
-                return;
-            }
-            batchSize = parsed;
-        }
-        if (liveTapBackoffField != null && !liveTapBackoffField.getText().isBlank()) {
-            Integer parsed = parseIntStrict(liveTapBackoffField.getText(), "Live TAP backoff");
-            if (parsed == null || parsed < 0) {
-                showError("Enrich Distances", "Live TAP backoff must be 0 or greater.");
-                return;
-            }
-            backoffMs = parsed;
-        }
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Enrich Distances", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Enrich Missing Distances");
-        dialog.setHeaderText("Select dataset to enrich");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        int finalBatchSize = batchSize;
-        int finalBackoffMs = backoffMs;
-        updateStatus("Enriching missing distances (live TAP)...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                enrichmentService.enrichMissingDistancesLive(dataSetName, finalBatchSize, finalBackoffMs, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Live TAP enrichment complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Enrich Distances", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEnrichMissingDistancesLive();
     }
 
     @FXML
     private void onPhotometricEstimation() {
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Photometric Estimation", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Photometric Distance Estimation");
-        dialog.setHeaderText("Estimate distances for orphan stars using magnitude/color.\nThis runs AFTER TAP enrichment for stars that couldn't be matched.");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateStatus("Estimating distances photometrically...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                enrichmentService.enrichOrphanDistancesPhotometric(dataSetName, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Photometric estimation complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Photometric Estimation", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onPhotometricEstimation();
     }
 
     @FXML
     private void onEnrichMasses() {
-        int batchSize = 50;
-        int backoffMs = 1000;
-        if (liveTapBatchField != null && !liveTapBatchField.getText().isBlank()) {
-            Integer parsed = parseIntStrict(liveTapBatchField.getText(), "Live TAP batch size");
-            if (parsed == null || parsed <= 0) {
-                showError("Mass Enrichment", "Batch size must be a positive integer.");
-                return;
-            }
-            batchSize = parsed;
-        }
-        if (liveTapBackoffField != null && !liveTapBackoffField.getText().isBlank()) {
-            Integer parsed = parseIntStrict(liveTapBackoffField.getText(), "Live TAP backoff");
-            if (parsed == null || parsed < 0) {
-                showError("Mass Enrichment", "Backoff must be 0 or greater.");
-                return;
-            }
-            backoffMs = parsed;
-        }
-
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Mass Enrichment", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Enrich Stellar Parameters from Gaia DR3");
-        dialog.setHeaderText("Look up stellar parameters from Gaia DR3 astrophysical_parameters.\nFetches: mass, radius, luminosity, temperature, metallicity\nOnly fills in values that are currently missing.");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        int finalBatchSize = batchSize;
-        int finalBackoffMs = backoffMs;
-        updateStatus("Enriching stellar parameters from Gaia DR3...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                enrichmentService.enrichMissingMassesFromGaia(dataSetName, finalBatchSize, finalBackoffMs,
-                        DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Stellar parameters enrichment complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Stellar Parameters Enrichment", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEnrichMasses();
     }
 
     @FXML
     private void onEstimateMassPhotometric() {
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Mass Estimation", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Estimate Mass (Photometric)");
-        dialog.setHeaderText("Estimate stellar mass from luminosity using the mass-luminosity relation.\nRequires distance and apparent magnitude data.\nAlso estimates radius and luminosity.");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateStatus("Estimating masses photometrically...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                enrichmentService.enrichMassPhotometric(dataSetName, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Photometric mass estimation complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Mass Estimation", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEstimateMassPhotometric();
     }
 
     @FXML
     private void onCancelTap() {
-        tapService.cancelCurrentJob(this::updateStatus, message -> showError("Cancel TAP", message));
+        enrichmentTab.onCancelTap();
     }
 
     @FXML
     private void onEstimateTemperature() {
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Temperature Estimation", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Estimate Temperature from BP-RP");
-        dialog.setHeaderText("Estimate stellar temperature from Gaia BP-RP color.\nRequires BP-RP color data.");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateStatus("Estimating temperatures from BP-RP...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                enrichmentService.enrichTemperatureFromBprp(dataSetName, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Temperature estimation complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Temperature Estimation", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEstimateTemperature();
     }
 
     @FXML
     private void onEstimateSpectral() {
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Spectral Estimation", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Estimate Spectral Class from BP-RP");
-        dialog.setHeaderText("Estimate spectral classification from Gaia BP-RP color.\nAssumes main-sequence (luminosity class V).");
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateStatus("Estimating spectral classes from BP-RP...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                enrichmentService.enrichSpectralFromBprp(dataSetName, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Spectral classification complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Spectral Estimation", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onEstimateSpectral();
     }
 
     @FXML
     private void onCrossFillTempSpectral() {
-        List<String> datasetNames = datasetService.getDescriptors().stream()
-                .map(descriptor -> descriptor.getDataSetName())
-                .sorted()
-                .collect(Collectors.toList());
-        if (datasetNames.isEmpty()) {
-            showError("Cross-Fill", "No datasets available.");
-            return;
-        }
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(datasetNames.get(0), datasetNames);
-        dialog.setTitle("Cross-Fill Temperature & Spectral");
-        dialog.setHeaderText("""
-                Cross-fill missing data:
-                - Estimate temperature from spectral class
-                - Estimate spectral class from temperature\
-                """);
-        dialog.setContentText("Dataset:");
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String dataSetName = selection.get();
-        updateStatus("Cross-filling temperature and spectral...");
-        showProgress();
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                // First: fill temperature from spectral
-                enrichmentService.crossFillTemperatureFromSpectral(dataSetName, DataWorkbenchController.this::updateStatus);
-                // Then: fill spectral from temperature
-                enrichmentService.crossFillSpectralFromTemperature(dataSetName, DataWorkbenchController.this::updateStatus);
-                return null;
-            }
-        };
-        task.setOnSucceeded(event -> {
-            hideProgress();
-            updateStatus("Cross-fill complete.");
-        });
-        task.setOnFailed(event -> {
-            hideProgress();
-            showError("Cross-Fill", String.valueOf(task.getException().getMessage()));
-        });
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
+        enrichmentTab.onCrossFillTempSpectral();
     }
 
     @FXML
@@ -1087,13 +710,6 @@ public class DataWorkbenchController {
         return "HYG-MERGED-2M-TRIPS-" + LocalDateTime.now().format(HYG_TIMESTAMP_FORMAT);
     }
 
-    private void convertHygCsvToTripsCsv(Path inputPath,
-                                         Path outputPath,
-                                         String datasetName,
-                                         Consumer<Long> progressConsumer) throws IOException {
-        csvService.convertHygCsvToTripsCsv(inputPath, outputPath, datasetName, progressConsumer);
-    }
-
     private void appendValidationMessage(String message) {
         if (validationLog != null) {
             validationLog.appendText(message + System.lineSeparator());
@@ -1168,18 +784,6 @@ public class DataWorkbenchController {
             mappingStatusLabel.setText("Loaded " + sourceFields.size() + " source fields.");
         } catch (IOException e) {
             showError("Load Fields", "Unable to read source header: " + e.getMessage());
-        }
-    }
-
-    private Integer parseIntStrict(String value, String label) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            showError("Enrich Distances", label + " must be a valid integer.");
-            return null;
         }
     }
 

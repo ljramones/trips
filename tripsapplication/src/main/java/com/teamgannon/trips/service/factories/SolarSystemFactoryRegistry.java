@@ -44,8 +44,26 @@ public class SolarSystemFactoryRegistry {
                 .findFirst();
     }
 
+    /**
+     * Generate a system through the selected factory.
+     */
+    public SolarSystemFactoryResult generate(StarObject star) {
+        return select(star)
+                .orElseThrow(() -> new IllegalStateException(
+                        "No solar-system factory applies to star: " + starName(star)))
+                .generate(star);
+    }
+
     /** Test/inspection accessor: list of factory names in priority order. */
     public List<String> factoryNames() {
         return factories.stream().map(SolarSystemFactory::name).toList();
+    }
+
+    private static String starName(StarObject star) {
+        if (star == null) {
+            return "<null>";
+        }
+        String displayName = star.getDisplayName();
+        return displayName == null || displayName.isBlank() ? star.getId() : displayName;
     }
 }
