@@ -78,7 +78,6 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
      * graphical groups
      */
     private final Group world = new Group();
-    private final Group root = new Group();
     private final Group starNameGroup = new Group();
 
     /**
@@ -180,8 +179,6 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         subScene.widthProperty().bind(this.widthProperty());
         subScene.heightProperty().bind(this.heightProperty());
-
-        root.getChildren().add(this);
 
         // Initialize helper classes
         this.labelManager = new SolarSystemLabelManager(labelDisplayGroup, subScene, camera, solarSystemRenderer);
