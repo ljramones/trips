@@ -167,6 +167,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
         categoryFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         sourceFilter.valueProperty().addListener((o, a, b) -> applyFilters());
 
+        // Give the combos enough room that their longest enum value (DriveType
+        // entries like "EPSTEIN_DRIVE", "ANTIMATTER_ROCKET") and the labels
+        // beside them stop truncating on narrow window widths.
+        classFilter.setPrefWidth(110);
+        driveFilter.setPrefWidth(150);
+        categoryFilter.setPrefWidth(130);
+        sourceFilter.setPrefWidth(140);
+
         searchField.setPromptText(get("filter.search.prompt"));
         searchField.textProperty().addListener((o, a, b) -> applyFilters());
 
@@ -382,20 +390,28 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     /**
      * Rebuild the tab strip from the distinct universes in {@link #allDesigns}.
-     * Always shows the "Real / Proposed" tab; adds one tab per distinct
-     * sci-fi universe (sorted alphabetically); adds an "Other" tab only if
-     * there's at least one design that doesn't fit either bucket.
      * <p>
+     * Bucketing rules (universe-first; {@code sourceType} only matters for
+     * Real-vs-everything-else, since a design tagged {@code UNKNOWN} can still
+     * carry a meaningful universe string in the data):
+     * <ol>
+     *   <li>Real / Proposed — {@code sourceType ∈ {REAL, PROPOSED}}</li>
+     *   <li>One tab per distinct non-blank, non-"Unknown" {@code sourceUniverse}
+     *       across all remaining designs, sorted alphabetically</li>
+     *   <li>"Other" — designs that aren't Real/Proposed and don't have a
+     *       useful universe string. Tab only appears if at least one such
+     *       design exists.</li>
+     * </ol>
      * Preserves the previously-selected tab key when possible — switching
-     * tabs to a removed universe falls back to "Real / Proposed".
+     * back to a removed universe falls through to "Real / Proposed".
      */
     private void rebuildUniverseTabs() {
         String previous = selectedUniverse;
 
-        List<String> sciFiUniverses = allDesigns.stream()
-                .filter(d -> d.sourceType() == SourceType.SCIENCE_FICTION)
+        List<String> universes = allDesigns.stream()
+                .filter(d -> !isRealOrProposed(d))
                 .map(SpaceshipDesign::sourceUniverse)
-                .filter(u -> u != null && !u.isBlank())
+                .filter(SpaceshipDesignerPanel::isMeaningfulUniverse)
                 .distinct()
                 .sorted()
                 .toList();
@@ -404,7 +420,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
         java.util.List<Tab> tabs = new java.util.ArrayList<>();
         tabs.add(makeTab(get("tab.real"), UNIVERSE_REAL));
-        for (String universe : sciFiUniverses) {
+        for (String universe : universes) {
             tabs.add(makeTab(universe, universe));
         }
         if (hasOther) {
@@ -428,27 +444,34 @@ public class SpaceshipDesignerPanel extends BorderPane {
         return tab;
     }
 
+    private static boolean isRealOrProposed(SpaceshipDesign d) {
+        SourceType t = d.sourceType();
+        return t == SourceType.REAL || t == SourceType.PROPOSED;
+    }
+
+    /** True if the universe string carries real classifying information. */
+    private static boolean isMeaningfulUniverse(String u) {
+        return u != null && !u.isBlank() && !"Unknown".equalsIgnoreCase(u.trim());
+    }
+
     private boolean isOtherTabDesign(SpaceshipDesign d) {
-        SourceType type = d.sourceType();
-        if (type == SourceType.REAL || type == SourceType.PROPOSED) {
+        if (isRealOrProposed(d)) {
             return false;
         }
-        if (type == SourceType.SCIENCE_FICTION) {
-            // Sci-fi designs go in the per-universe tab — unless their universe is blank.
-            return d.sourceUniverse() == null || d.sourceUniverse().isBlank();
-        }
-        // UNKNOWN: Other.
-        return true;
+        // Non-Real and either has no universe set, or the universe string is
+        // "Unknown" / blank — falls to the catch-all tab.
+        return !isMeaningfulUniverse(d.sourceUniverse());
     }
 
     private boolean matchesUniverseTab(SpaceshipDesign d) {
         if (UNIVERSE_REAL.equals(selectedUniverse)) {
-            return d.sourceType() == SourceType.REAL || d.sourceType() == SourceType.PROPOSED;
+            return isRealOrProposed(d);
         }
         if (UNIVERSE_OTHER.equals(selectedUniverse)) {
             return isOtherTabDesign(d);
         }
-        // Otherwise the tab key is a specific universe name.
+        // Otherwise the tab key is a specific universe name; match against the
+        // design's universe regardless of sourceType.
         return selectedUniverse.equals(d.sourceUniverse());
     }
 
@@ -540,6 +563,31 @@ public class SpaceshipDesignerPanel extends BorderPane {
         try {
             if (spaceshipService.count() == 0) {
                 spaceshipService.seedTemplates(templateLibrary.getAllTemplates());
+                return;
+            }
+            // Self-heal: if any template-named design in the DB is missing a
+            // meaningful universe but the template carries one, re-seed the
+            // templates (which overwrites by name match and brings the
+            // metadata over). Custom designs not in the template library are
+            // untouched.
+            List<SpaceshipDesign> existing = spaceshipService.findAll();
+            java.util.Set<String> staleNames = new java.util.HashSet<>();
+            for (SpaceshipDesign d : existing) {
+                if (!isMeaningfulUniverse(d.sourceUniverse())) {
+                    staleNames.add(d.name());
+                }
+            }
+            if (staleNames.isEmpty()) {
+                return;
+            }
+            List<SpaceshipDesign> refresh = templateLibrary.getAllTemplates().stream()
+                    .filter(t -> staleNames.contains(t.name())
+                            && isMeaningfulUniverse(t.sourceUniverse()))
+                    .toList();
+            if (!refresh.isEmpty()) {
+                log.info("Refreshing universe metadata on {} template-named design(s) with stale 'Unknown' universe",
+                        refresh.size());
+                spaceshipService.seedTemplates(refresh);
             }
         } catch (Exception e) {
             log.error("Failed to seed templates on first launch", e);
