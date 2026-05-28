@@ -23,16 +23,17 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -79,6 +80,8 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private static final String UNIVERSE_REAL = "__real__";
     /** Sentinel userData value carried by the "Other" tab. */
     private static final String UNIVERSE_OTHER = "__other__";
+    /** Universe pinned in the second tab position right after "Real / Proposed". */
+    private static final String UNIVERSE_PINNED_SECOND = "Caine Riordan";
 
     private final SpaceshipService spaceshipService;
     private final SpaceshipJsonService jsonService;
@@ -90,9 +93,15 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final ComboBox<String> classFilter = new ComboBox<>();
     private final ComboBox<String> driveFilter = new ComboBox<>();
     private final ComboBox<String> categoryFilter = new ComboBox<>();
-    private final ComboBox<String> sourceFilter = new ComboBox<>();
     private final TextField searchField = new TextField();
-    private final TabPane universeTabs = new TabPane();
+
+    /**
+     * Multi-row tab strip: each universe is a {@link ToggleButton} in a
+     * single {@link ToggleGroup}, wrapped in a {@link FlowPane} so the row
+     * wraps to additional rows when the universes don't fit horizontally.
+     */
+    private final FlowPane universeTabBar = new FlowPane(4, 4);
+    private final ToggleGroup universeToggleGroup = new ToggleGroup();
 
     /** Currently-selected tab key — one of {@link #UNIVERSE_REAL}, {@link #UNIVERSE_OTHER}, or a universe name. */
     private String selectedUniverse = UNIVERSE_REAL;
@@ -156,16 +165,12 @@ public class SpaceshipDesignerPanel extends BorderPane {
         Arrays.stream(DriveType.values()).map(Enum::name).forEach(driveFilter.getItems()::add);
         categoryFilter.getItems().add(ALL);
         Arrays.stream(Category.values()).map(Enum::name).forEach(categoryFilter.getItems()::add);
-        sourceFilter.getItems().add(ALL);
-        Arrays.stream(SourceType.values()).map(Enum::name).forEach(sourceFilter.getItems()::add);
         classFilter.setValue(ALL);
         driveFilter.setValue(ALL);
         categoryFilter.setValue(ALL);
-        sourceFilter.setValue(ALL);
         classFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         driveFilter.valueProperty().addListener((o, a, b) -> applyFilters());
         categoryFilter.valueProperty().addListener((o, a, b) -> applyFilters());
-        sourceFilter.valueProperty().addListener((o, a, b) -> applyFilters());
 
         // Give the combos enough room that their longest enum value (DriveType
         // entries like "EPSTEIN_DRIVE", "ANTIMATTER_ROCKET") and the labels
@@ -173,7 +178,6 @@ public class SpaceshipDesignerPanel extends BorderPane {
         classFilter.setPrefWidth(110);
         driveFilter.setPrefWidth(150);
         categoryFilter.setPrefWidth(130);
-        sourceFilter.setPrefWidth(140);
 
         searchField.setPromptText(get("filter.search.prompt"));
         searchField.textProperty().addListener((o, a, b) -> applyFilters());
@@ -190,13 +194,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
         Button refreshButton = new Button(get("button.refresh"));
         refreshButton.setOnAction(e -> reload());
 
-        // Row 1: filters + search. Drops the Universe combo since the tab strip
-        // below the table now drives the universe filter.
+        // Row 1: filters + search. The Universe combo is gone (tab strip below
+        // drives it); the Type combo went away once the tab strip made it
+        // redundant — the Real / Proposed tab covers SourceType ∈ {REAL,
+        // PROPOSED} and the per-universe tabs cover the rest.
         HBox filterRow = new HBox(8,
                 new Label(get("filter.shipClass")), classFilter,
                 new Label(get("filter.driveType")), driveFilter,
                 new Label(get("filter.category")), categoryFilter,
-                new Label(get("filter.type")), sourceFilter,
                 searchField);
         filterRow.setAlignment(Pos.CENTER_LEFT);
         filterRow.setPadding(new Insets(8, 0, 4, 0));
@@ -212,7 +217,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     private SplitPane buildCenter() {
         configureTable();
-        configureUniverseTabs();
+        configureUniverseTabBar();
 
         Button editLocal = editButton;
         editLocal.setTooltip(new Tooltip(get("tooltip.edit")));
@@ -222,10 +227,7 @@ public class SpaceshipDesignerPanel extends BorderPane {
         HBox tableButtons = new HBox(8, editButton, deleteButton);
         tableButtons.setPadding(new Insets(8, 0, 0, 0));
 
-        // The TabPane sits visually above the table: each tab's content is a
-        // no-op marker, the tab strip alone drives the universe filter on the
-        // shared table below.
-        VBox left = new VBox(0, universeTabs, table, tableButtons);
+        VBox left = new VBox(4, universeTabBar, table, tableButtons);
         VBox.setVgrow(table, Priority.ALWAYS);
 
         SplitPane split = new SplitPane(left, buildDetails());
@@ -233,16 +235,21 @@ public class SpaceshipDesignerPanel extends BorderPane {
         return split;
     }
 
-    private void configureUniverseTabs() {
-        universeTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        // Tabs are filter selectors only; their content is null, the table
-        // below the TabPane shows the filtered rows.
-        universeTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            if (newTab == null || newTab.getUserData() == null) {
+    private void configureUniverseTabBar() {
+        universeTabBar.setPadding(new Insets(2, 0, 2, 0));
+        // Sticky single-select: deselecting the active toggle is forbidden so
+        // there's always exactly one universe filter in effect.
+        universeToggleGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
+            if (newT == null && oldT != null) {
+                // User clicked the active toggle — re-select it instead of
+                // letting the filter go empty.
+                javafx.application.Platform.runLater(() -> universeToggleGroup.selectToggle(oldT));
                 return;
             }
-            selectedUniverse = (String) newTab.getUserData();
-            applyFilters();
+            if (newT != null && newT.getUserData() != null) {
+                selectedUniverse = (String) newT.getUserData();
+                applyFilters();
+            }
         });
     }
 
@@ -391,19 +398,15 @@ public class SpaceshipDesignerPanel extends BorderPane {
     /**
      * Rebuild the tab strip from the distinct universes in {@link #allDesigns}.
      * <p>
-     * Bucketing rules (universe-first; {@code sourceType} only matters for
-     * Real-vs-everything-else, since a design tagged {@code UNKNOWN} can still
-     * carry a meaningful universe string in the data):
-     * <ol>
-     *   <li>Real / Proposed — {@code sourceType ∈ {REAL, PROPOSED}}</li>
-     *   <li>One tab per distinct non-blank, non-"Unknown" {@code sourceUniverse}
-     *       across all remaining designs, sorted alphabetically</li>
-     *   <li>"Other" — designs that aren't Real/Proposed and don't have a
-     *       useful universe string. Tab only appears if at least one such
-     *       design exists.</li>
-     * </ol>
-     * Preserves the previously-selected tab key when possible — switching
-     * back to a removed universe falls through to "Real / Proposed".
+     * Order: Real / Proposed → Caine Riordan (pinned, when present) →
+     * everything else alphabetical → Other (only if there's any design
+     * that doesn't fit).
+     * <p>
+     * Bucketing is universe-first; {@code sourceType} only matters for
+     * Real-vs-everything-else, since a design tagged {@code UNKNOWN} can
+     * still carry a meaningful universe string in the data. Preserves the
+     * previously-selected toggle when possible — if its universe is gone,
+     * falls through to "Real / Proposed".
      */
     private void rebuildUniverseTabs() {
         String previous = selectedUniverse;
@@ -418,30 +421,39 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
         boolean hasOther = allDesigns.stream().anyMatch(this::isOtherTabDesign);
 
-        java.util.List<Tab> tabs = new java.util.ArrayList<>();
-        tabs.add(makeTab(get("tab.real"), UNIVERSE_REAL));
+        java.util.List<ToggleButton> toggles = new java.util.ArrayList<>();
+        toggles.add(makeUniverseToggle(get("tab.real"), UNIVERSE_REAL));
+        if (universes.contains(UNIVERSE_PINNED_SECOND)) {
+            toggles.add(makeUniverseToggle(UNIVERSE_PINNED_SECOND, UNIVERSE_PINNED_SECOND));
+        }
         for (String universe : universes) {
-            tabs.add(makeTab(universe, universe));
+            if (UNIVERSE_PINNED_SECOND.equals(universe)) {
+                continue; // already placed
+            }
+            toggles.add(makeUniverseToggle(universe, universe));
         }
         if (hasOther) {
-            tabs.add(makeTab(get("tab.other"), UNIVERSE_OTHER));
+            toggles.add(makeUniverseToggle(get("tab.other"), UNIVERSE_OTHER));
         }
-        universeTabs.getTabs().setAll(tabs);
 
-        // Re-select the previous tab if it still exists, else fall back to Real.
-        Tab toSelect = tabs.stream()
+        universeTabBar.getChildren().setAll(toggles);
+
+        // Re-select the previously-selected universe if it still exists,
+        // else fall back to Real.
+        ToggleButton toSelect = toggles.stream()
                 .filter(t -> previous.equals(t.getUserData()))
                 .findFirst()
-                .orElse(tabs.get(0));
-        universeTabs.getSelectionModel().select(toSelect);
+                .orElse(toggles.get(0));
+        toSelect.setSelected(true);
         selectedUniverse = (String) toSelect.getUserData();
     }
 
-    private static Tab makeTab(String label, String userData) {
-        Tab tab = new Tab(label);
-        tab.setUserData(userData);
-        tab.setClosable(false);
-        return tab;
+    private ToggleButton makeUniverseToggle(String label, String universeKey) {
+        ToggleButton tb = new ToggleButton(label);
+        tb.setUserData(universeKey);
+        tb.setToggleGroup(universeToggleGroup);
+        tb.setFocusTraversable(false);
+        return tb;
     }
 
     private static boolean isRealOrProposed(SpaceshipDesign d) {
@@ -479,7 +491,6 @@ public class SpaceshipDesignerPanel extends BorderPane {
         String cls = classFilter.getValue();
         String drv = driveFilter.getValue();
         String cat = categoryFilter.getValue();
-        String src = sourceFilter.getValue();
         String q = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
 
         List<SpaceshipRow> rows = allDesigns.stream()
@@ -487,7 +498,6 @@ public class SpaceshipDesignerPanel extends BorderPane {
                 .filter(d -> cls == null || ALL.equals(cls) || d.shipClass().name().equals(cls))
                 .filter(d -> drv == null || ALL.equals(drv) || d.driveType().name().equals(drv))
                 .filter(d -> cat == null || ALL.equals(cat) || d.driveType().category().name().equals(cat))
-                .filter(d -> src == null || ALL.equals(src) || d.sourceType().name().equals(src))
                 .filter(d -> q.isEmpty()
                         || d.name().toLowerCase().contains(q)
                         || d.designation().toLowerCase().contains(q)
