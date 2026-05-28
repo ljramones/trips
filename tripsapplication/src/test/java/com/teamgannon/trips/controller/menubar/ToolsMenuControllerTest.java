@@ -15,6 +15,7 @@ import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
+import com.teamgannon.trips.service.performance.HibernateCacheBenchmarkService;
 import com.teamgannon.trips.transits.TransitCalculationService;
 import javafx.event.ActionEvent;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -79,6 +80,9 @@ class ToolsMenuControllerTest {
     private FxWeaver fxWeaver;
 
     @Mock
+    private HibernateCacheBenchmarkService hibernateCacheBenchmarkService;
+
+    @Mock
     private SearchContext searchContext;
 
     @Mock
@@ -118,7 +122,8 @@ class ToolsMenuControllerTest {
                 eventPublisher,
                 routingPanel,
                 mainSplitPaneManager,
-                fxWeaver
+                fxWeaver,
+                hibernateCacheBenchmarkService
         );
     }
 

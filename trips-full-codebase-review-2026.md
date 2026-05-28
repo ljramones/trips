@@ -434,7 +434,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
   - **config**: `src/main/resources/ehcache.xml` defines a `DataSetDescriptor` region (200-entry heap, 30-min TTL) plus the standard Hibernate `default-update-timestamps-region` + `default-query-results-region`
   - **bootstrap**: `config/cache/JCacheBootstrap` reads `ehcache.xml` from the classpath (JCache `URI.create(...)` can't resolve Spring's `classpath:` prefix), builds the `CacheManager` from its real URI, and hands it to Hibernate via a `HibernatePropertiesCustomizer` setting `ConfigSettings.CACHE_MANAGER` so Hibernate uses our instance instead of constructing its own with the JSR-107 default URI
   - **opt-ins**: 8 entities, all `@Cache(usage = READ_WRITE)` — `DataSetDescriptor` (read on every plot), `SolarSystem` (moderate read-write ratio, "Jump Into… same system" pattern benefits), plus the 6 singleton preference rows (`TripsPrefs`, `TransitSettings`, `GraphColorsPersist`, `GraphEnablesPersist`, `StarDetailsPersist`, `CivilizationDisplayPreferences` — each one row in prod, read on every plot setup / dialog open, written only when user changes prefs). Sizing per region: 200 for DataSetDescriptor, 500 for SolarSystem, 8 for each singleton; TTLs are 30 minutes for the moderate entities and 2 hours for the singletons (write trigger is exclusively user-action). `StarObject` + `ExoPlanet` + `SolarSystemFeature` intentionally NOT cached: read/write ratios near 1:1 plus high write churn invalidate faster than they help.
-  - 2,740 tests green with caching on. Benchmark on a real dataset is the remaining-but-optional follow-up (the win measure is reduced `DataSetDescriptor` find round-trips during dataset switching + plot operations).
+  - 2,740 tests green with caching on. Optional benchmark hook added: `HibernateCacheBenchmarkService` evicts a target entity, times one cold read, then times warm reads through fresh `EntityManager`s while reporting Hibernate L2 hit/miss/put counts. The Tools menu exposes "Log Hibernate cache benchmark" for the currently selected `DataSetDescriptor`; the service also supports `SolarSystem` by id for targeted release-prep probes.
 
 ### Issue 54 -- Severity: nit (UX)
 - **File**: tripsapplication/src/main/resources/com/teamgannon/trips/screenobjects/StarEditDialog.fxml:232-293
@@ -484,7 +484,7 @@ None are blocker-grade. Several are silent correctness bugs that will keep bitin
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/dialogs/query/AdvancedQueryDialog.java:153-187 ; tripsapplication/src/main/java/com/teamgannon/trips/service/StarService.java:62-77
 - **Description**: Advanced Query builds a native SQL string and calls `getResultList()` with no row cap or paging. An empty where clause warns that it will get all stars, then still allows plotting/viewing the full result set.
 - **Suggestion**: Add an explicit maximum row limit for interactive plot/view, expose paged results for table display, and reserve unbounded execution for export-only flows with a streaming writer. Consider moving query construction out of the dialog and into a service that can enforce dataset scoping, limits, and cancellation consistently.
-- **Status**: done (Phase 8.4 first guardrail) — `StarService.runNativeQuery(query, maxResults)` now supports an explicit row cap. `AdvancedQueryDialog` asks for `INTERACTIVE_RESULT_LIMIT + 1` rows, warns when the cap is exceeded, and trims interactive plot/view results to 2,000 rows. A future export-specific streaming path can still use the unbounded overload intentionally.
+- **Status**: done (Phase 8.4 + optional closeout) — `StarService.runNativeQuery(query, maxResults)` supports an explicit row cap for interactive use. `AdvancedQueryDialog` asks for `INTERACTIVE_RESULT_LIMIT + 1` rows, warns when the cap is exceeded, and trims interactive plot/view results to 2,000 rows. Advanced Query CSV export now uses `StarService.processNativeQueryStream(...)` so unbounded native-query export streams rows directly to disk instead of materializing the full result set.
 
 ### Issue 62 -- Severity: suggestion (medium, performance/memory)
 - **File**: tripsapplication/src/main/java/com/teamgannon/trips/transits/kdtree/KDTreeGraphBuilder.java:249-278 ; tripsapplication/src/main/java/com/teamgannon/trips/service/graphsearch/task/LargeGraphSearchTask.java:206-213
@@ -613,13 +613,15 @@ Each step: extract focused collaborators, leave the original class as a thin coo
 | 8.1 | Unify every plot trigger behind the cancellable background-load pipeline; direct JavaFX action handlers must not perform database queries. | 58 | done |
 | 8.2 | Replace unbounded plot materialization with bounded/streaming star selection and a top-k nearest-star limiter. | 59 | done |
 | 8.3 | Make pooled JavaFX star nodes fully reusable: clear handlers/properties/effects/state on release or before acquire; add a reuse regression test. | 60 | done |
-| 8.4 | Cap and/or page Advanced Query interactive results; reserve unbounded native execution for streaming export workflows. | 61 | done (interactive cap); export streaming remains future enhancement |
+| 8.4 | Cap and/or page Advanced Query interactive results; reserve unbounded native execution for streaming export workflows. | 61 | done — interactive queries keep the 2,000-row cap; Advanced Query now has a CSV export action backed by `StarService.processNativeQueryStream(...)`, so native SQL export streams rows without materializing the full result. The existing search-context CSV exporter and the new native exporter share `StarCsvFormatter` to keep column order/import compatibility consistent. |
 | 8.5 | Reduce KD-tree graph-builder peak memory for dense route ranges; add stress benchmarks and route-setting guardrails. | 62 | done (bounded edge batches); stress benchmarks/guardrails remain future enhancement |
 | 8.6 | Replace derived dataset star deletion with an explicit bulk delete and atomic descriptor cleanup test. | 63 | done |
 
 Verification for Phase 8 fixes:
 - `./mvnw-java25.sh -q -pl tripsapplication -Dtest='KDTreeGraphBuilderTest,StarServiceTest,StarNodePoolTest,BulkLoadServiceTest' test` passed.
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
+- Optional closeout: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='AdvancedQueryServiceTest,StarCsvFormatterTest,HibernateCacheBenchmarkServiceTest,ToolsMenuControllerTest' test` passed.
+- Optional closeout: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after Advanced Query streaming export and cache benchmark hook.
 
 ## Phase 9 — Targeted Refactoring Follow-ups — Complete
 
@@ -645,7 +647,7 @@ These are not blocker fixes. They are bounded refactors that should make the nex
 - **Phase 5** (package rename) is a single atomic commit. Coordinate with any open feature branches before doing it.
 - **Phases 6 and 7** are mostly parallelizable. Hand them out to whatever capacity is free.
 - Items inside Phase 7 are independent; pick them up between bigger pieces of work.
-- **Phase 8** code fixes are complete for the identified performance issues. Remaining work is operational validation: large-dataset heap/JFR checks, dense-route benchmarks, and optional export-specific streaming polish for Advanced Query.
+- **Phase 8** code fixes are complete for the identified performance issues, including the optional Advanced Query streaming export and cache benchmark hook. Remaining work is operational validation: large-dataset heap/JFR checks and dense-route benchmarks.
 - **Phase 9** targeted refactoring is complete. Remaining review-plan work is operational validation from Phase 8, not additional structural refactoring.
 
 ## Verification at end of each phase

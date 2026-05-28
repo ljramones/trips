@@ -3,6 +3,7 @@ package com.teamgannon.trips.dialogs.query;
 import com.teamgannon.trips.config.application.TripsContext;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.utility.DialogUtils;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,13 +14,18 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
+import static com.teamgannon.trips.support.AlertFactory.showInfoMessage;
 import static com.teamgannon.trips.support.AlertFactory.showWarningMessage;
 
 @Slf4j
@@ -102,6 +108,9 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
         Button doQueryButton = new Button("Run Query");
         doQueryButton.setOnAction(this::runQuery);
         hBox.getChildren().add(doQueryButton);
+        Button exportCsvButton = new Button("Export CSV");
+        exportCsvButton.setOnAction(this::exportCsv);
+        hBox.getChildren().add(exportCsvButton);
         Button cancelButton = new Button("Ok");
         cancelButton.setOnAction(this::cancelReq);
         hBox.getChildren().add(cancelButton);
@@ -187,6 +196,47 @@ public class AdvancedQueryDialog extends Dialog<AdvResultsSet> {
             showErrorAlert("Run Advanced Query", "You must enter a query");
         }
 
+    }
+
+    private void exportCsv(ActionEvent actionEvent) {
+        String datasetName = datasetChoices.getValue();
+        if (datasetName == null || datasetName.isEmpty()) {
+            showErrorAlert("Export Advanced Query", "You must select a dataset");
+            return;
+        }
+
+        AdvancedQueryService.QueryPlan queryPlan = advancedQueryService.buildPlan(datasetName, wherePart.getText());
+        List<String> errors = advancedQueryService.validate(queryPlan.queryToRun());
+        if (!errors.isEmpty()) {
+            queryErrors.setText(errors.stream().map(error -> error + "\n").collect(Collectors.joining()));
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Advanced Query Results");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("TRIPS CSV", "*.trips.csv"));
+        fileChooser.setInitialFileName(datasetName.replaceAll("[^a-zA-Z0-9._-]", "_") + "-advanced-query.trips.csv");
+        File selectedFile = fileChooser.showSaveDialog(getDialogPane().getScene().getWindow());
+        if (selectedFile == null) {
+            return;
+        }
+
+        Path target = selectedFile.toPath();
+        queryErrors.setText("Exporting Advanced Query results to " + target + "\n");
+
+        CompletableFuture
+                .supplyAsync(() -> advancedQueryService.exportCsv(
+                        queryPlan.queryToRun(),
+                        target,
+                        rows -> Platform.runLater(() -> queryErrors.setText("Exported %,d rows so far".formatted(rows)))))
+                .thenAccept(result -> Platform.runLater(() -> {
+                    queryErrors.setText("Exported %,d rows to %s".formatted(result.rowsExported(), result.file()));
+                    showInfoMessage("Export Advanced Query", "Exported %,d rows".formatted(result.rowsExported()));
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> showErrorAlert("Export Advanced Query", "failed: " + ex.getMessage()));
+                    return null;
+                });
     }
 
 }

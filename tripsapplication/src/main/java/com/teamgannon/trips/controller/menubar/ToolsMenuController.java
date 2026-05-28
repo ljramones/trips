@@ -23,6 +23,7 @@ import com.teamgannon.trips.service.DatasetService;
 import com.teamgannon.trips.service.StarService;
 import com.teamgannon.trips.service.graphsearch.LargeGraphSearchService;
 import com.teamgannon.trips.service.measure.StarMeasurementService;
+import com.teamgannon.trips.service.performance.HibernateCacheBenchmarkService;
 import com.teamgannon.trips.starplotting.StarPlotManager;
 import com.teamgannon.trips.transits.*;
 import javafx.event.ActionEvent;
@@ -62,6 +63,7 @@ public class ToolsMenuController {
     private final RoutingPanel routingPanel;
     private final MainSplitPaneManager mainSplitPaneManager;
     private final FxWeaver fxWeaver;
+    private final HibernateCacheBenchmarkService hibernateCacheBenchmarkService;
 
     /**
      * The query dialog instance - created lazily and reused.
@@ -81,7 +83,8 @@ public class ToolsMenuController {
                                ApplicationEventPublisher eventPublisher,
                                RoutingPanel routingPanel,
                                MainSplitPaneManager mainSplitPaneManager,
-                               FxWeaver fxWeaver) {
+                               FxWeaver fxWeaver,
+                               HibernateCacheBenchmarkService hibernateCacheBenchmarkService) {
         this.tripsContext = tripsContext;
         this.interstellarSpacePane = interstellarSpacePane;
         this.routeFinderInView = routeFinderInView;
@@ -96,6 +99,7 @@ public class ToolsMenuController {
         this.routingPanel = routingPanel;
         this.mainSplitPaneManager = mainSplitPaneManager;
         this.fxWeaver = fxWeaver;
+        this.hibernateCacheBenchmarkService = hibernateCacheBenchmarkService;
     }
 
     /**
@@ -338,6 +342,24 @@ public class ToolsMenuController {
         } catch (Exception e) {
             log.error("Error opening Data Workbench", e);
             showErrorAlert("Data Workbench", "Failed to open workbench: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Manual release-prep probe for the current dataset descriptor's L2 cache behavior.
+     */
+    public void benchmarkHibernateCache(ActionEvent actionEvent) {
+        try {
+            if (tripsContext.getDataSetDescriptor() == null) {
+                showErrorAlert("Cache Benchmark", "Select a dataset before running the cache benchmark.");
+                return;
+            }
+            var result = hibernateCacheBenchmarkService.benchmarkDataSetDescriptor(
+                    tripsContext.getDataSetDescriptor().getDataSetName());
+            showInfoMessage("Cache Benchmark", result.summary());
+        } catch (Exception e) {
+            log.error("Cache benchmark failed", e);
+            showErrorAlert("Cache Benchmark", "Failed to benchmark cache: " + e.getMessage());
         }
     }
 }

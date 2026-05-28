@@ -44,4 +44,7 @@
     <MenuItem mnemonicParsing="false"
               onAction="#openDataWorkbench"
               text="Data Workbench..."/>
+    <MenuItem mnemonicParsing="false"
+              onAction="#benchmarkHibernateCache"
+              text="Log Hibernate cache benchmark"/>
 </Menu>

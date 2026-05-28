@@ -2,9 +2,8 @@
 <!--
   EhCache 3.10 configuration for Hibernate L2 cache (Phase 7 / Issue 53).
 
-  Caching is opt-in per entity via @org.hibernate.annotations.Cache. Right
-  now only DataSetDescriptor opts in; add caches here as additional entities
-  are flagged read-mostly.
+  Caching is opt-in per entity via @org.hibernate.annotations.Cache. Keep
+  regions limited to read-mostly entities and singleton preference rows.
 
   Sizing rules of thumb (heap entries):
    * DataSetDescriptor    — likely ≤100 in practice (number of loaded datasets)

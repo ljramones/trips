@@ -90,6 +90,32 @@ public class StarService {
         return starObjects;
     }
 
+    /**
+     * Process an advanced native query as a stream. Intended for export paths
+     * where materializing the full result set would be unsafe on large
+     * catalogs.
+     *
+     * @param queryToRun native SQL query returning STAR_OBJ rows
+     * @param processor consumer to process each star
+     * @return count of stars processed
+     */
+    @TrackExecutionTime
+    @Transactional(readOnly = true)
+    public long processNativeQueryStream(@NotNull String queryToRun,
+                                         @NotNull java.util.function.Consumer<StarObject> processor) {
+        Query query = entityManager.createNativeQuery(queryToRun, StarObject.class);
+        long count = 0;
+        try (Stream<StarObject> stream = query.getResultStream()) {
+            Iterator<StarObject> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                checkInterrupted();
+                processor.accept(iterator.next());
+                count++;
+            }
+        }
+        return count;
+    }
+
 
     /**
      * get a set of astrographic objects based on a query
