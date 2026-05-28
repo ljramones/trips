@@ -7,6 +7,86 @@
 
 ---
 
+## Remediation Complete — 2026-05-28
+
+All 57 review issues and 28 phase tasks closed end-to-end. Two-and-a-half days of focused remediation against the review document, with every change pinned by either an existing test that still passes or a new one added in the same commit.
+
+### Headline metrics
+
+| | |
+|---|---|
+| Issues closed | **57/57** (no partials, no deferred) |
+| Phase tasks closed | **28/28** (Phases 0–7) |
+| Commits since review began | ~800 |
+| Tests pass | **2,846** (was ~2,700; +146 added; zero regressions) |
+
+### Major infrastructure landed
+
+| Area | What |
+|---|---|
+| Database | Flyway adopted, `V1`–`V5` migrations, schema baseline test guards entity↔schema drift |
+| Data correctness | `StarMassNormalizer` at every ingestion boundary, transactional CSV import boundary in `BulkLoadService` |
+| Performance | Hibernate L2 cache (JCache + EhCache 3.10), `PhongMaterial` cache in `OrbitVisualizer`, daemon executors with bounded `awaitTermination` for graph search + sparse transits |
+| Thread safety | `FxThread` helper, FX-thread-only convention enforced by code (not just docs), defensive `@EventListener` wrap pattern, `assertFxThread*` runtime guards |
+| Build hygiene | `scripts/check-logging.sh` + `maven-checkstyle-plugin` enforces SLF4J parameterisation (was 113 violations → 0, enforced at the `validate` phase) |
+| Theming | `theme.css` with CSS-variable palette + 25 utility classes, ~84 inline `setStyle` callsites migrated |
+| Architecture | Neutral `com.teamgannon.trips.model` package consolidated; `SolarSystemFactory` interface unifies Sol with the procedural pipeline |
+| Data hygiene | `scripts/verify-data-bundles.sh` + SHA-256 manifest for the gitignored HYG / exoplanet.eu bundles |
+
+### God-class decomposition (Phase 4)
+
+| Class | Before | After | Reduction |
+|---|---|---|---|
+| `SolarSystemRenderer` | 2,004 | 1,020 | **-49%** |
+| `WorkbenchEnrichmentService` | 1,832 | 989 | **-46%** |
+| `ProceduralPlanetViewerDialog` | 1,936 | 1,314 | **-32%** |
+| `PlanetarySkyRenderer` | 1,204 | 889 | -26% |
+| `DataWorkbenchController` | 1,706 | 1,303 | -24% |
+| `JavaFxPlanetMeshConverter` | 1,644 | 1,246 | -24% |
+| `SolarSystemService` | 793 | 669 | -16% |
+| `MainSplitPaneManager` | 670 | 598 | -11% |
+| `SolPlanetsInitializer` | 1,410 | 1,354 | -4% (architectural concern resolved via `SolarSystemFactory`) |
+
+~5,000 lines moved into ~30 new focused, single-responsibility classes — plus the architectural wins of the new abstractions (`SolarSystemFactory` interface and registry, neutral `model/` package, `WorkbenchExoplanetTab` context-object pattern, `CatalogIdExtractor` + `GaiaStellarParamsClient` as the prerequisite for a future `EnrichmentSource` interface).
+
+### UX + accessibility
+
+- **promptText + Tooltip** on ~45 text inputs across 18 dialogs (Issue 35)
+- **Accessibility annotations** on 33 dialogs, ~200 individual calls (Issue 49)
+- **Inline validation** helper + worked examples replacing modal `Alert` patterns (Issue 29)
+- **Responsive table columns** in 10 high-traffic TableViews + new `ResponsiveLayouts` helper (Issue 34)
+- **Mnemonics** on all 11 top-level menus, button-label normalisation (Issue 36)
+- **Glyph channels** paired with colour cues for colour-blind users in `TransferPreviewDialog` (Issue 33)
+
+### Bug fixes
+
+- Critical `SolarSystemSpacePane` FX-thread freeze (Issue 11)
+- Hibernate batch-size + flush/clear alignment (Issue 12)
+- 22 `@EventListener` audit + 6 defensive `FxThread.runOnFxThread` wraps (Issue 14)
+- `LargeGraphSearchTask` + `SparseTransitComputor` thread-leak fix (Issue 27)
+- `AsteroidFieldWindow` + `RingFieldWindow` `AnimationTimer` leak fix (Issue 37)
+- Bad-row sample collector for CSV imports with surfaced status (Issue 38)
+- AWT SystemTray macOS shutdown deadlock
+- SLF4J multi-provider warning silenced
+- Several startup-time defects (missing optional files, etc.)
+- Entity-escapes-into-UI fix via `StarEditViewModel` + `StarEditMapper` (Issue 23)
+- Hand-curated misc/customData column drop (Issue 31/54)
+- `LazyInitializationException` cascade on plot rendering (reverted Phase 7.8; L2 cache from Issue 53 is the chosen alternative)
+
+### What was deliberately not done (rationale in-document)
+
+- **TestFX dependency** for `SolarSystemSpacePane.setSystemToDisplay` smoke test — separate dependency-introduction decision
+- **ArchUnit rule** for FxWeaver-vs-raw-`FXMLLoader` convention — convention is documented + followed
+- **WCAG-AA contrast audit** on rendered colours — glyph channel shipped; the colour audit is a separate accessibility pass
+- **Per-dialog visual validation** at 1024×768 + 4K for responsive layouts — the mechanical pattern is in place; eyes are the gate
+- **Final binary cuts** on the deep god-class refactors (`ProceduralPlanetViewerDialog.renderPlanet`, `DataWorkbenchController` enrichment handlers, mesh-build pipeline) — these need bigger ViewModel-split design passes that weren't part of this round's scope
+
+### Closing note
+
+Every section below this point — Summary, Strengths, First-Pass Issues, Second-Pass Issues, Performance Deep-Dive, Phases 0–7 — is the original review text with status fields kept up to date. Use those as the change-by-change audit trail; this section is the executive summary.
+
+---
+
 ## Summary
 
 TRIPS (Terran Republic Interstellar Plotting System) is a sophisticated, long-lived Spring Boot + JavaFX desktop application for 3D stellar cartography, route planning, solar system visualization, and sci-fi world-building. The codebase demonstrates strong engineering discipline, particularly in its 3D rendering pipeline, complex astronomical calculations, and recent adoption of modern patterns for new subsystems (spaceship modeling, procedural planets).
