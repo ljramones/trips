@@ -1,6 +1,31 @@
 # Constructs Feature — Design Plan
 
-**Status**: design, not yet implemented
+> **⚠️ SUPERSEDING REQUIRED — DO NOT IMPLEMENT FROM THIS DOCUMENT AS-IS.**
+>
+> This v1 plan was authored without first surveying two existing sealed
+> hierarchies that cover most of the same concept space:
+> `com.terranrepublic.assets.SpaceAsset` (with `Cataloged`, `SpaceshipDesign`,
+> `StationDesign`, `WeaponInstallation`, plus an `Armament` model and a
+> populated `Catalog`) and
+> `com.terranrepublic.infrastructure.SpaceInfrastructure` (with
+> `TransportNode` whose `NodeType` enum already includes `RING_GATE` /
+> `JUMP_POINT` / `WORMHOLE_MOUTH` / `PORTAL` — i.e. jump gates are already
+> modelled, and the only thing missing is a UI for them).
+>
+> Implementing this plan as written would create a parallel hierarchy in
+> a session where the agent didn't know an equivalent one already existed
+> — exactly the fragmentation failure mode the 2026 codebase-review work
+> was meant to be prophylaxis against.
+>
+> **Before any code lands, read
+> [`constructs-feature-reconciliation-prompt.md`](./constructs-feature-reconciliation-prompt.md)**
+> and produce a `constructs-feature-plan-v2.md` that reconciles this design
+> against the existing types. This document is retained for history; do
+> not act on it directly.
+
+---
+
+**Status**: design, not yet implemented; **supersession pending — see banner above**
 **Owner**: Larry Mitchell (intent), implementing-agent (build)
 **Date**: 2026-05-28
 
