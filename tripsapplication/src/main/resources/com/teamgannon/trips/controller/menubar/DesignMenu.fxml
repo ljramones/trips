@@ -7,7 +7,10 @@
     <MenuItem fx:id="spaceshipModellerMenuItem"
               text="Spaceship Modeller..."
               onAction="#openSpaceshipModeller"/>
-    <MenuItem fx:id="transferPlannerMenuItem"
-              text="Transfer Planner..."
-              onAction="#openTransferPlanner"/>
+    <!-- Transfer Planner is launched in-context from the Solar System view
+         (right-click a body → "Plan Transfer from Here..."); the global
+         menu entry was misleading because the planner needs a system
+         context to be useful. Keep the openTransferPlanner handler in
+         DesignMenuController for direct calls but don't surface it here. -->
+
 </Menu>
