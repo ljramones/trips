@@ -621,14 +621,14 @@ Verification for Phase 8 fixes:
 - `./mvnw-java25.sh -q -pl tripsapplication -Dtest='KDTreeGraphBuilderTest,StarServiceTest,StarNodePoolTest,BulkLoadServiceTest' test` passed.
 - `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed.
 
-## Phase 9 — Targeted Refactoring Follow-ups — Planned
+## Phase 9 — Targeted Refactoring Follow-ups — Complete
 
 These are not blocker fixes. They are bounded refactors that should make the next feature and maintenance work safer without reopening the broad codebase review.
 
 | # | Action | Rationale | Status |
 |---|---|---|---|
 | 9.1 | Extract the remaining `DataWorkbenchController` enrichment handlers into a `WorkbenchEnrichmentTab` with a bindings record, following the `WorkbenchExoplanetTab` pattern. | Best ROI refactor left: the enrichment workflows still share task/status/table wiring and are a likely future change area. | done — `WorkbenchEnrichmentTab` now owns offline CSV distance enrichment, live TAP enrichment, photometric estimates, Gaia stellar-parameter enrichment, temperature/spectral fills, cross-fill, TAP cancellation, progress visibility, TAP setting parsing, and dataset-selection dialogs. `DataWorkbenchController` keeps FXML fields and delegates the enrichment button handlers. |
-| 9.2 | Split `ProceduralPlanetViewerDialog` around a `PlanetViewerViewModel` or `PlanetGenerationSession` before extracting more rendering/regeneration code. | The easy helper extractions are done; the remaining bulk is field/state orchestration and needs a state boundary, not more method shuffling. | planned |
+| 9.2 | Split `ProceduralPlanetViewerDialog` around a `PlanetViewerViewModel` or `PlanetGenerationSession` before extracting more rendering/regeneration code. | The easy helper extractions are done; the remaining bulk is field/state orchestration and needs a state boundary, not more method shuffling. | done — `PlanetGenerationSession` now owns the generated planet snapshot, derived rainfall/height/plate data references, generation-control parameters, physical terrain-classification context, `PlanetConfig` rebuilding, and availability helpers for overlays/render modes. `ProceduralPlanetViewerDialog` keeps UI controls, scene graph rendering, and callbacks while delegating state orchestration through the session. Added focused `PlanetGenerationSessionTest` coverage for config initialization, control capture/buildConfig, terrain classification, and planet replacement. |
 | 9.3 | Move Advanced Query construction/execution policy out of `AdvancedQueryDialog` into a service. | Centralizes dataset scoping, interactive caps, export streaming, and cancellation policy behind one tested boundary. | done — `AdvancedQueryService` now owns dataset-scoped SQL assembly, parser validation, SQL literal escaping for dataset names, interactive row caps, and truncation reporting. `AdvancedQueryDialog` handles UI warnings/results only, and `ToolsMenuController` receives the service via Spring. |
 | 9.4 | Complete migration of UI-generated solar-system creation flows through the `SolarSystemFactoryRegistry` / service boundary. | The factory abstraction exists; remaining direct save/generation callers should converge on one creation path for Sol/procedural/generated systems. | done — `SolarSystemFactoryRegistry` now exposes a tested `generate` boundary, and UI preview/save flows go through `SolarSystemGenerationService` instead of calling generated-planet persistence directly from `StarContextMenuHandler`. The existing preview/edit dialog remains intact while persistence is centralized behind the generated-system service boundary. |
 | 9.5 | Refactor `StarEditDialog` numeric parsing into per-field validation/binders. | Enables precise inline validation for the remaining true field-validation case instead of catch-all `NumberFormatException` handling. | done — save-time numeric parsing now uses named field validation through `StarFieldValidator`, raises `StarFieldValidationException` with the field label and invalid value, and `StarEditDialog` reports the precise failed field instead of a catch-all floating-point error. |
@@ -646,7 +646,7 @@ These are not blocker fixes. They are bounded refactors that should make the nex
 - **Phases 6 and 7** are mostly parallelizable. Hand them out to whatever capacity is free.
 - Items inside Phase 7 are independent; pick them up between bigger pieces of work.
 - **Phase 8** code fixes are complete for the identified performance issues. Remaining work is operational validation: large-dataset heap/JFR checks, dense-route benchmarks, and optional export-specific streaming polish for Advanced Query.
-- **Phase 9** is targeted refactoring only. Start with 9.1, then 9.3 or 9.7 if performance/query work continues; defer 9.2 until the procedural-planet UI is actively being changed.
+- **Phase 9** targeted refactoring is complete. Remaining review-plan work is operational validation from Phase 8, not additional structural refactoring.
 
 ## Verification at end of each phase
 
@@ -672,6 +672,8 @@ Phase 9 verification:
 - 9.6: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after adding convention drift checks.
 - 9.7: `./mvnw-java25.sh -q -pl tripsapplication -Dtest='RouteGraphDensityGuardTest,RouteFindingServiceTest' test` passed.
 - 9.7: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after adding route graph density guardrails.
+- 9.2: `./mvnw-java25.sh -q -pl tripsapplication -Dtest=PlanetGenerationSessionTest test` passed.
+- 9.2: `./mvnw-java25.sh -q -pl tripsapplication -DskipTests compile` passed after the `PlanetGenerationSession` extraction.
 
 ---
 

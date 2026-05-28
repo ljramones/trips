@@ -1,47 +1,32 @@
 package com.teamgannon.trips.dialogs.solarsystem;
 
-import com.teamgannon.trips.planetary.modelling.procedural.AdjacencyGraph;
-import com.teamgannon.trips.planetary.modelling.procedural.BoundaryDetector;
-import com.teamgannon.trips.planetary.modelling.procedural.BoundaryDetector.BoundaryType;
 import com.teamgannon.trips.planetary.modelling.procedural.ClimateCalculator;
 import com.teamgannon.trips.planetary.modelling.procedural.ElevationCalculator;
 import com.teamgannon.trips.planetary.modelling.procedural.GenerationProgressListener;
 import com.teamgannon.trips.planetary.modelling.procedural.JavaFxPlanetMeshConverter;
 import com.teamgannon.trips.planetary.modelling.procedural.JavaFxPlanetMeshConverter.TerrainType;
-import com.teamgannon.trips.planetary.modelling.procedural.PlateAssigner;
 import com.teamgannon.trips.planetary.modelling.procedural.PlanetConfig;
 import com.teamgannon.trips.planetary.modelling.procedural.PlanetGenerator;
 import com.teamgannon.trips.planetary.modelling.procedural.PlanetGenerator.GeneratedPlanet;
 import com.teamgannon.trips.planetary.modelling.procedural.Polygon;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 
-import javafx.scene.input.KeyCode;
-
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -95,48 +80,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      */
     private final PlanetAtmosphereRenderer atmosphereRenderer;
 
-    // Generated planet data (mutable - changes on regeneration)
-    private GeneratedPlanet generatedPlanet;
     private final String planetName;
-    private double[] rainfall;
-    private double[] preciseHeights;
-    private AdjacencyGraph adjacency;
-    private PlateAssigner.PlateAssignment plateAssignment;
-    private BoundaryDetector.BoundaryAnalysis boundaryAnalysis;
-
-    // Surface temperature in Kelvin (for terrain type determination)
-    // Default 288K (~15°C) is Earth-like. Set via setSurfaceTemperature() before showing.
-    private double surfaceTemperatureK = 288.0;
-
-    // Planet type string (e.g., "Gas Giant", "Ice Giant", "Rock", "Terrestrial")
-    // Used to determine if this is a Jovian world. Set via setPlanetType() before showing.
-    private String planetType = null;
-
-    // Ice cover fraction (0.0-1.0) for determining ICE terrain type
-    // Set via setIceCover() before showing. High ice cover = ICE terrain even if no liquid water.
-    private double iceCoverFraction = 0.0;
-
-    // Density in g/cm³ for ice/rock determination
-    // Low density (< 2.5) suggests ice-rich composition
-    private Double densityGcm3 = null;
-
-    // Semi-major axis in AU for frost line determination
-    private Double semiMajorAxisAU = null;
-
-    // Generation parameters (editable)
-    private long currentSeed;
-    private int currentPlateCount;
-    private double currentWaterFraction;
-    private int currentErosionIterations;
-    private double currentRiverThreshold;
-    private double currentHeightScale;
-    private boolean currentUseContinuousHeights;
-    private double currentReliefMin;
-    private double currentReliefMax;
-    private double currentAxialTilt;
-    private double currentSeasonalOffset;
-    private PlanetConfig.Size currentSize;
-    private ClimateCalculator.ClimateModel currentClimateModel;
+    private final PlanetGenerationSession session;
 
     // UI controls that need updating after regeneration
     private TextField seedField;
@@ -195,25 +140,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     public ProceduralPlanetViewerDialog(String planetName, GeneratedPlanet planet,
             BiConsumer<GeneratedPlanet, PlanetConfig> onRegenerated) {
         this.planetName = planetName;
-        this.generatedPlanet = planet;
+        this.session = PlanetGenerationSession.from(planet);
         this.onRegenerated = onRegenerated;
-        updatePlanetData(planet);
-
-        // Initialize generation parameters from current planet config
-        PlanetConfig config = planet.config();
-        this.currentSeed = config != null ? config.seed() : System.nanoTime();
-        this.currentPlateCount = config != null ? config.plateCount() : 12;
-        this.currentWaterFraction = config != null ? config.waterFraction() : 0.66;
-        this.currentErosionIterations = config != null ? config.erosionIterations() : 5;
-        this.currentRiverThreshold = config != null ? config.riverSourceThreshold() : 0.7;
-        this.currentHeightScale = config != null ? config.heightScaleMultiplier() : 1.0;
-        this.currentUseContinuousHeights = config != null && config.useContinuousHeights();
-        this.currentReliefMin = config != null ? config.continuousReliefMin() : -4.0;
-        this.currentReliefMax = config != null ? config.continuousReliefMax() : 4.0;
-        this.currentAxialTilt = config != null ? config.axialTiltDegrees() : 23.5;
-        this.currentSeasonalOffset = config != null ? config.seasonalOffsetDegrees() : 0.0;
-        this.currentSize = config != null ? deriveSizeFromN(config.n()) : PlanetConfig.Size.STANDARD;
-        this.currentClimateModel = config != null ? config.climateModel() : ClimateCalculator.ClimateModel.SIMPLE_LATITUDE;
 
         setTitle("Terrain: " + planetName);
         setResizable(false);  // Fixed size dialog
@@ -305,9 +233,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param temperatureK Surface temperature in Kelvin
      */
     public void setSurfaceTemperature(double temperatureK) {
-        this.surfaceTemperatureK = temperatureK;
+        session.setSurfaceTemperature(temperatureK);
         // Re-render if already displayed
-        if (generatedPlanet != null) {
+        if (session.planet() != null) {
             renderPlanet();
             createAtmosphere();
         }
@@ -320,9 +248,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param type Planet type string from ExoPlanet.getPlanetType()
      */
     public void setPlanetType(String type) {
-        this.planetType = type;
+        session.setPlanetType(type);
         // Re-render if already displayed
-        if (generatedPlanet != null) {
+        if (session.planet() != null) {
             renderPlanet();
             createAtmosphere();
         }
@@ -335,9 +263,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param iceCover Ice cover fraction from ExoPlanet.getIceCover()
      */
     public void setIceCover(double iceCover) {
-        this.iceCoverFraction = iceCover;
+        session.setIceCover(iceCover);
         // Re-render if already displayed
-        if (generatedPlanet != null) {
+        if (session.planet() != null) {
             renderPlanet();
             createAtmosphere();
         }
@@ -350,7 +278,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param density Density from ExoPlanet.getDensity()
      */
     public void setDensity(double density) {
-        this.densityGcm3 = density;
+        session.setDensity(density);
     }
 
     /**
@@ -360,7 +288,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * @param semiMajorAxis Semi-major axis from ExoPlanet.getSemiMajorAxis()
      */
     public void setSemiMajorAxis(double semiMajorAxis) {
-        this.semiMajorAxisAU = semiMajorAxis;
+        session.setSemiMajorAxis(semiMajorAxis);
     }
 
     /**
@@ -369,28 +297,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * Phase 4.2 extraction.
      */
     private TerrainType determineTerrainType() {
-        double waterFraction = generatedPlanet.config() != null
-                ? generatedPlanet.config().waterFraction()
-                : currentWaterFraction;
-        return PlanetTerrainClassifier.classify(new PlanetTerrainClassifier.Inputs(
-                planetType,
-                surfaceTemperatureK,
-                waterFraction,
-                iceCoverFraction,
-                densityGcm3,
-                semiMajorAxisAU));
-    }
-
-    /**
-     * Update local references when planet data changes.
-     */
-    private void updatePlanetData(GeneratedPlanet planet) {
-        this.generatedPlanet = planet;
-        this.rainfall = planet.rainfall();
-        this.preciseHeights = planet.preciseHeights();
-        this.adjacency = planet.adjacency();
-        this.plateAssignment = planet.plateAssignment();
-        this.boundaryAnalysis = planet.boundaryAnalysis();
+        return session.determineTerrainType();
     }
 
     /**
@@ -446,14 +353,14 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         seedRow.setAlignment(Pos.CENTER_LEFT);
         Label seedLabel = new Label("Seed:");
         seedLabel.getStyleClass().add("trips-text-form-label");
-        seedField = new TextField(String.valueOf(currentSeed));
+        seedField = new TextField(String.valueOf(session.seed()));
         seedField.setPrefWidth(100);
         seedField.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         Button randomizeButton = new Button("🎲");
         randomizeButton.setTooltip(new Tooltip("Generate random seed"));
         randomizeButton.setOnAction(e -> {
-            currentSeed = new Random().nextLong();
-            seedField.setText(String.valueOf(currentSeed));
+            session.setSeed(new Random().nextLong());
+            seedField.setText(String.valueOf(session.seed()));
         });
         seedRow.getChildren().addAll(seedLabel, seedField, randomizeButton);
 
@@ -464,7 +371,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         sizeLabel.getStyleClass().add("trips-text-form-label");
         sizeCombo = new ComboBox<>();
         sizeCombo.getItems().addAll(PlanetConfig.Size.values());
-        sizeCombo.setValue(currentSize);
+        sizeCombo.setValue(session.size());
         sizeCombo.setPrefWidth(120);
         sizeCombo.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         sizeRow.getChildren().addAll(sizeLabel, sizeCombo);
@@ -474,7 +381,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         plateRow.setAlignment(Pos.CENTER_LEFT);
         Label platesLabel = new Label("Plates:");
         platesLabel.getStyleClass().add("trips-text-form-label");
-        plateSpinner = new Spinner<>(7, 21, currentPlateCount);
+        plateSpinner = new Spinner<>(7, 21, session.plateCount());
         plateSpinner.setPrefWidth(70);
         plateSpinner.setEditable(true);
         plateSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
@@ -484,15 +391,15 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox waterBox = new VBox(2);
         HBox waterHeader = new HBox(5);
         waterHeader.setAlignment(Pos.CENTER_LEFT);
-        waterLabel = new Label("Water: %.0f%%".formatted(currentWaterFraction * 100));
+        waterLabel = new Label("Water: %.0f%%".formatted(session.waterFraction() * 100));
         waterLabel.getStyleClass().add("trips-text-form-label");
         waterHeader.getChildren().add(waterLabel);
-        waterSlider = new Slider(0, 1, currentWaterFraction);
+        waterSlider = new Slider(0, 1, session.waterFraction());
         waterSlider.setShowTickMarks(true);
         waterSlider.setMajorTickUnit(0.25);
         waterSlider.valueProperty().addListener((obs, old, val) -> {
-            currentWaterFraction = val.doubleValue();
-            waterLabel.setText("Water: %.0f%%".formatted(currentWaterFraction * 100));
+            session.setWaterFraction(val.doubleValue());
+            waterLabel.setText("Water: %.0f%%".formatted(session.waterFraction() * 100));
         });
         waterBox.getChildren().addAll(waterHeader, waterSlider);
 
@@ -501,7 +408,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         erosionRow.setAlignment(Pos.CENTER_LEFT);
         Label erosionLabel = new Label("Erosion:");
         erosionLabel.getStyleClass().add("trips-text-form-label");
-        erosionSpinner = new Spinner<>(0, 10, currentErosionIterations);
+        erosionSpinner = new Spinner<>(0, 10, session.erosionIterations());
         erosionSpinner.setPrefWidth(70);
         erosionSpinner.setEditable(true);
         erosionSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
@@ -511,15 +418,15 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox riverBox = new VBox(2);
         HBox riverHeader = new HBox(5);
         riverHeader.setAlignment(Pos.CENTER_LEFT);
-        riverLabel = new Label("River Thresh: %.2f".formatted(currentRiverThreshold));
+        riverLabel = new Label("River Thresh: %.2f".formatted(session.riverThreshold()));
         riverLabel.getStyleClass().add("trips-text-form-label");
         riverHeader.getChildren().add(riverLabel);
-        riverSlider = new Slider(0.1, 1.0, currentRiverThreshold);
+        riverSlider = new Slider(0.1, 1.0, session.riverThreshold());
         riverSlider.setShowTickMarks(true);
         riverSlider.setMajorTickUnit(0.2);
         riverSlider.valueProperty().addListener((obs, old, val) -> {
-            currentRiverThreshold = val.doubleValue();
-            riverLabel.setText("River Thresh: %.2f".formatted(currentRiverThreshold));
+            session.setRiverThreshold(val.doubleValue());
+            riverLabel.setText("River Thresh: %.2f".formatted(session.riverThreshold()));
         });
         riverBox.getChildren().addAll(riverHeader, riverSlider);
 
@@ -527,15 +434,15 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox heightBox = new VBox(2);
         HBox heightHeader = new HBox(5);
         heightHeader.setAlignment(Pos.CENTER_LEFT);
-        heightLabel = new Label("Height Scale: %.1f".formatted(currentHeightScale));
+        heightLabel = new Label("Height Scale: %.1f".formatted(session.heightScale()));
         heightLabel.getStyleClass().add("trips-text-form-label");
         heightHeader.getChildren().add(heightLabel);
-        heightSlider = new Slider(0.5, 3.0, currentHeightScale);
+        heightSlider = new Slider(0.5, 3.0, session.heightScale());
         heightSlider.setShowTickMarks(true);
         heightSlider.setMajorTickUnit(0.5);
         heightSlider.valueProperty().addListener((obs, old, val) -> {
-            currentHeightScale = val.doubleValue();
-            heightLabel.setText("Height Scale: %.1f".formatted(currentHeightScale));
+            session.setHeightScale(val.doubleValue());
+            heightLabel.setText("Height Scale: %.1f".formatted(session.heightScale()));
         });
         heightBox.getChildren().addAll(heightHeader, heightSlider);
 
@@ -543,15 +450,15 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox tiltBox = new VBox(2);
         HBox tiltHeader = new HBox(5);
         tiltHeader.setAlignment(Pos.CENTER_LEFT);
-        axialTiltLabel = new Label("Axial Tilt: %.1f°".formatted(currentAxialTilt));
+        axialTiltLabel = new Label("Axial Tilt: %.1f°".formatted(session.axialTilt()));
         axialTiltLabel.getStyleClass().add("trips-text-form-label");
         tiltHeader.getChildren().add(axialTiltLabel);
-        axialTiltSlider = new Slider(0, 60, currentAxialTilt);
+        axialTiltSlider = new Slider(0, 60, session.axialTilt());
         axialTiltSlider.setShowTickMarks(true);
         axialTiltSlider.setMajorTickUnit(10);
         axialTiltSlider.valueProperty().addListener((obs, old, val) -> {
-            currentAxialTilt = val.doubleValue();
-            axialTiltLabel.setText("Axial Tilt: %.1f°".formatted(currentAxialTilt));
+            session.setAxialTilt(val.doubleValue());
+            axialTiltLabel.setText("Axial Tilt: %.1f°".formatted(session.axialTilt()));
             updateAxialTilt();
         });
         tiltBox.getChildren().addAll(tiltHeader, axialTiltSlider);
@@ -560,34 +467,34 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         VBox seasonBox = new VBox(2);
         HBox seasonHeader = new HBox(5);
         seasonHeader.setAlignment(Pos.CENTER_LEFT);
-        seasonalOffsetLabel = new Label("Season Offset: %.0f°".formatted(currentSeasonalOffset));
+        seasonalOffsetLabel = new Label("Season Offset: %.0f°".formatted(session.seasonalOffset()));
         seasonalOffsetLabel.getStyleClass().add("trips-text-form-label");
         seasonHeader.getChildren().add(seasonalOffsetLabel);
-        seasonalOffsetSlider = new Slider(0, 360, currentSeasonalOffset);
+        seasonalOffsetSlider = new Slider(0, 360, session.seasonalOffset());
         seasonalOffsetSlider.setShowTickMarks(true);
         seasonalOffsetSlider.setMajorTickUnit(90);
         seasonalOffsetSlider.valueProperty().addListener((obs, old, val) -> {
-            currentSeasonalOffset = val.doubleValue();
-            seasonalOffsetLabel.setText("Season Offset: %.0f°".formatted(currentSeasonalOffset));
+            session.setSeasonalOffset(val.doubleValue());
+            seasonalOffsetLabel.setText("Season Offset: %.0f°".formatted(session.seasonalOffset()));
         });
         seasonBox.getChildren().addAll(seasonHeader, seasonalOffsetSlider);
 
         // Continuous heights
         VBox continuousBox = new VBox(4);
         continuousHeightsCheckBox = new CheckBox("Continuous Heights");
-        continuousHeightsCheckBox.setSelected(currentUseContinuousHeights);
+        continuousHeightsCheckBox.setSelected(session.useContinuousHeights());
 
         HBox reliefRow = new HBox(5);
         reliefRow.setAlignment(Pos.CENTER_LEFT);
         Label reliefLabel = new Label("Relief:");
         reliefLabel.getStyleClass().add("trips-text-form-label");
         reliefMinSpinner = new Spinner<>(
-            new SpinnerValueFactory.DoubleSpinnerValueFactory(-6.0, 0.0, currentReliefMin, 0.1));
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(-6.0, 0.0, session.reliefMin(), 0.1));
         reliefMinSpinner.setPrefWidth(70);
         reliefMinSpinner.setEditable(true);
         reliefMinSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         reliefMaxSpinner = new Spinner<>(
-            new SpinnerValueFactory.DoubleSpinnerValueFactory(0.0, 6.0, currentReliefMax, 0.1));
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(0.0, 6.0, session.reliefMax(), 0.1));
         reliefMaxSpinner.setPrefWidth(70);
         reliefMaxSpinner.setEditable(true);
         reliefMaxSpinner.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
@@ -597,8 +504,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             reliefMinSpinner.setDisable(!val);
             reliefMaxSpinner.setDisable(!val);
         });
-        reliefMinSpinner.setDisable(!currentUseContinuousHeights);
-        reliefMaxSpinner.setDisable(!currentUseContinuousHeights);
+        reliefMinSpinner.setDisable(!session.useContinuousHeights());
+        reliefMaxSpinner.setDisable(!session.useContinuousHeights());
 
         continuousBox.getChildren().addAll(continuousHeightsCheckBox, reliefRow);
 
@@ -609,7 +516,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         climateLabel.getStyleClass().add("trips-text-form-label");
         climateCombo = new ComboBox<>();
         climateCombo.getItems().addAll(ClimateCalculator.ClimateModel.values());
-        climateCombo.setValue(currentClimateModel);
+        climateCombo.setValue(session.climateModel());
         climateCombo.setPrefWidth(120);
         climateCombo.getStyleClass().add("trips-text-sm"); // Issue 50 / Bucket A
         climateRow.getChildren().addAll(climateLabel, climateCombo);
@@ -706,7 +613,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         content.setPadding(new Insets(5));
 
         // Rivers checkbox
-        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        int riverCount = session.riverCount();
         riversCheckBox = new CheckBox("Rivers (" + riverCount + ")");
         riversCheckBox.getStyleClass().add("trips-text-form-label");
         riversCheckBox.setSelected(showRivers);
@@ -717,7 +624,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         // Lakes checkbox
-        boolean hasLakes = hasLakes();
+        boolean hasLakes = session.hasLakes();
         lakesCheckBox = new CheckBox("Lakes");
         lakesCheckBox.getStyleClass().add("trips-text-form-label");
         lakesCheckBox.setSelected(showLakes);
@@ -728,7 +635,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         // Flow-scaled rivers checkbox
-        boolean hasFlow = hasFlowAccumulation();
+        boolean hasFlow = session.hasFlowAccumulation();
         flowRiversCheckBox = new CheckBox("Flow-Scaled Rivers");
         flowRiversCheckBox.getStyleClass().add("trips-text-form-label");
         flowRiversCheckBox.setSelected(useFlowAccumulationRivers);
@@ -739,7 +646,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         // Plate boundaries checkbox
-        boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
+        boolean hasPlateData = session.hasPlateData();
         plateBoundariesCheckBox = new CheckBox("Plate Boundaries");
         plateBoundariesCheckBox.getStyleClass().add("trips-text-form-label");
         plateBoundariesCheckBox.setSelected(showPlateBoundaries);
@@ -750,7 +657,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         // Climate zones checkbox
-        boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
+        boolean hasClimateData = session.hasClimateData();
         climateZonesCheckBox = new CheckBox("Climate Zones");
         climateZonesCheckBox.getStyleClass().add("trips-text-form-label");
         climateZonesCheckBox.setSelected(showClimateZones);
@@ -804,7 +711,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         terrainRadio.setToggleGroup(renderGroup);
         terrainRadio.setSelected(useColorByHeight);
 
-        boolean hasRainfall = rainfall != null && rainfall.length > 0;
+        boolean hasRainfall = session.hasRainfall();
         RadioButton rainfallRadio = new RadioButton("Rainfall Heatmap");
         rainfallRadio.getStyleClass().add("trips-text-form-label");
         rainfallRadio.setToggleGroup(renderGroup);
@@ -823,7 +730,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         });
 
         // Smooth terrain checkbox
-        boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
+        boolean hasPreciseHeights = session.hasPreciseHeights();
         smoothCheckBox = new CheckBox("Smooth Terrain");
         smoothCheckBox.getStyleClass().add("trips-text-form-label");
         smoothCheckBox.setSelected(useSmoothTerrain);
@@ -858,9 +765,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         content.setPadding(new Insets(5));
 
         // Stats
-        int polyCount = generatedPlanet.polygons().size();
-        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
-        int plateCount = plateAssignment != null ? plateAssignment.plates().size() : 0;
+        int polyCount = session.polygonCount();
+        int riverCount = session.riverCount();
+        int plateCount = session.plateCountForDisplay();
 
         infoPolygonsLabel = new Label("Polygons: " + polyCount);
         infoPolygonsLabel.getStyleClass().add("trips-text-form-info");
@@ -890,25 +797,28 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      */
     private void regeneratePlanet() {
         // Read current values from UI
+        long seed;
         try {
-            currentSeed = Long.parseLong(seedField.getText().trim());
+            seed = Long.parseLong(seedField.getText().trim());
         } catch (NumberFormatException e) {
-            currentSeed = System.nanoTime();
-            seedField.setText(String.valueOf(currentSeed));
+            seed = System.nanoTime();
+            seedField.setText(String.valueOf(seed));
         }
 
-        currentPlateCount = plateSpinner.getValue();
-        currentWaterFraction = waterSlider.getValue();
-        currentErosionIterations = erosionSpinner.getValue();
-        currentRiverThreshold = riverSlider.getValue();
-        currentHeightScale = heightSlider.getValue();
-        currentUseContinuousHeights = continuousHeightsCheckBox.isSelected();
-        currentReliefMin = reliefMinSpinner.getValue();
-        currentReliefMax = reliefMaxSpinner.getValue();
-        currentAxialTilt = axialTiltSlider.getValue();
-        currentSeasonalOffset = seasonalOffsetSlider.getValue();
-        currentSize = sizeCombo.getValue();
-        currentClimateModel = climateCombo.getValue();
+        session.captureGenerationControls(
+                seed,
+                plateSpinner.getValue(),
+                waterSlider.getValue(),
+                erosionSpinner.getValue(),
+                riverSlider.getValue(),
+                heightSlider.getValue(),
+                continuousHeightsCheckBox.isSelected(),
+                reliefMinSpinner.getValue(),
+                reliefMaxSpinner.getValue(),
+                axialTiltSlider.getValue(),
+                seasonalOffsetSlider.getValue(),
+                sizeCombo.getValue(),
+                climateCombo.getValue());
 
         // Show progress UI
         regenerateButton.setDisable(true);
@@ -920,21 +830,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         progressLabel.setManaged(true);
 
         // Build config
-        PlanetConfig config = PlanetConfig.builder()
-            .seed(currentSeed)
-            .size(currentSize)
-            .plateCount(currentPlateCount)
-            .waterFraction(currentWaterFraction)
-            .erosionIterations(currentErosionIterations)
-            .riverSourceThreshold(currentRiverThreshold)
-            .heightScaleMultiplier(currentHeightScale)
-            .useContinuousHeights(currentUseContinuousHeights)
-            .continuousReliefMin(currentReliefMin)
-            .continuousReliefMax(currentReliefMax)
-            .climateModel(currentClimateModel)
-            .axialTiltDegrees(currentAxialTilt)
-            .seasonalOffsetDegrees(currentSeasonalOffset)
-            .build();
+        PlanetConfig config = session.buildConfig();
 
         // Create progress listener
         GenerationProgressListener listener = new GenerationProgressListener() {
@@ -975,7 +871,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         CompletableFuture.supplyAsync(() -> PlanetGenerator.generate(config, listener))
             .thenAccept(newPlanet -> Platform.runLater(() -> {
                 // Update planet data
-                updatePlanetData(newPlanet);
+                session.applyPlanet(newPlanet);
 
                 // Re-render
                 updateAxialTilt();
@@ -1005,7 +901,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
                 progressLabel.setManaged(false);
 
                 log.info("Regenerated planet with seed={}, size={}, plates={}, water={:.0f}%",
-                    currentSeed, currentSize, currentPlateCount, currentWaterFraction * 100);
+                    session.seed(), session.size(), session.plateCount(), session.waterFraction() * 100);
             }))
             .exceptionally(ex -> {
                 Platform.runLater(() -> {
@@ -1021,9 +917,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * Update info labels after regeneration.
      */
     private void updateInfoLabels() {
-        int polyCount = generatedPlanet.polygons().size();
-        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
-        int plateCount = plateAssignment != null ? plateAssignment.plates().size() : 0;
+        int polyCount = session.polygonCount();
+        int riverCount = session.riverCount();
+        int plateCount = session.plateCountForDisplay();
 
         infoPolygonsLabel.setText("Polygons: " + polyCount);
         infoRiversLabel.setText("Rivers: " + riverCount);
@@ -1034,39 +930,20 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * Update control states based on new planet data availability.
      */
     private void updateControlStates() {
-        int riverCount = generatedPlanet.rivers() != null ? generatedPlanet.rivers().size() : 0;
+        int riverCount = session.riverCount();
         riversCheckBox.setText("Rivers (" + riverCount + ")");
         riversCheckBox.setDisable(riverCount == 0);
 
-        lakesCheckBox.setDisable(!hasLakes());
-        flowRiversCheckBox.setDisable(!hasFlowAccumulation());
+        lakesCheckBox.setDisable(!session.hasLakes());
+        flowRiversCheckBox.setDisable(!session.hasFlowAccumulation());
 
-        boolean hasPlateData = plateAssignment != null && boundaryAnalysis != null;
+        boolean hasPlateData = session.hasPlateData();
         plateBoundariesCheckBox.setDisable(!hasPlateData);
 
-        boolean hasClimateData = generatedPlanet.climates() != null && generatedPlanet.climates().length > 0;
+        boolean hasClimateData = session.hasClimateData();
         climateZonesCheckBox.setDisable(!hasClimateData);
 
-        boolean hasPreciseHeights = preciseHeights != null && preciseHeights.length > 0;
-        smoothCheckBox.setDisable(!hasPreciseHeights);
-    }
-
-    private boolean hasLakes() {
-        boolean[] lakeMask = generatedPlanet.lakeMask();
-        if (lakeMask == null) {
-            return false;
-        }
-        for (boolean isLake : lakeMask) {
-            if (isLake) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasFlowAccumulation() {
-        double[] accumulation = generatedPlanet.flowAccumulation();
-        return accumulation != null && accumulation.length > 0;
+        smoothCheckBox.setDisable(!session.hasPreciseHeights());
     }
 
     /**
@@ -1098,14 +975,13 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * decisions to {@link PlanetAtmosphereRenderer}.
      */
     private void createAtmosphere() {
-        double waterFraction = generatedPlanet.config() != null
-                ? generatedPlanet.config().waterFraction()
-                : currentWaterFraction;
-        atmosphereRenderer.render(determineTerrainType(), waterFraction, surfaceTemperatureK);
+        atmosphereRenderer.render(determineTerrainType(),
+                session.waterFractionForRendering(),
+                session.surfaceTemperatureK());
     }
 
     private void updateAxialTilt() {
-        axialTiltRotate.setAngle(currentAxialTilt);
+        axialTiltRotate.setAngle(session.axialTilt());
     }
 
     /** Phase 4.2: delegate to {@link PlanetPoleMarker}. */
@@ -1119,10 +995,12 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
     private void renderPlanet() {
         planetGroup.getChildren().clear();
 
-        List<Polygon> polygons = generatedPlanet.polygons();
-        int[] heights = generatedPlanet.heights();
-        boolean[] lakeMask = generatedPlanet.lakeMask();
+        GeneratedPlanet planet = session.planet();
+        List<Polygon> polygons = planet.polygons();
+        int[] heights = planet.heights();
+        boolean[] lakeMask = planet.lakeMask();
         int[] renderHeights = heights;
+        double[] preciseHeights = session.preciseHeights();
         double[] renderPreciseHeights = preciseHeights;
 
         if (showLakes && lakeMask != null && lakeMask.length == heights.length) {
@@ -1142,6 +1020,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             }
         }
 
+        double[] rainfall = session.rainfall();
         if (showRainfallHeatmap && rainfall != null && rainfall.length > 0) {
             Map<Integer, TriangleMesh> meshByRainfall = JavaFxPlanetMeshConverter.convertByRainfall(
                 polygons, renderHeights, rainfall, PLANET_SCALE);
@@ -1159,9 +1038,9 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
             }
 
         } else if (useColorByHeight) {
-            Map<Integer, TriangleMesh> meshByHeight = adjacency != null
+            Map<Integer, TriangleMesh> meshByHeight = session.adjacency() != null
                 ? JavaFxPlanetMeshConverter.convertByHeightWithAveraging(
-                    polygons, renderHeights, adjacency, PLANET_SCALE, renderPreciseHeights)
+                    polygons, renderHeights, session.adjacency(), PLANET_SCALE, renderPreciseHeights)
                 : JavaFxPlanetMeshConverter.convertByHeight(polygons, renderHeights, PLANET_SCALE);
 
             // Determine terrain type based on water fraction and temperature
@@ -1203,7 +1082,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
         }
 
         // Add rivers if enabled
-        if (showRivers && generatedPlanet.rivers() != null && !generatedPlanet.rivers().isEmpty()) {
+        if (showRivers && planet.rivers() != null && !planet.rivers().isEmpty()) {
             addRivers();
         }
 
@@ -1230,7 +1109,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * renderer is a one-shot scene-graph builder.
      */
     private void addRivers() {
-        new RiverNetworkRenderer(generatedPlanet, planetGroup, PLANET_SCALE,
+        new RiverNetworkRenderer(session.planet(), planetGroup, PLANET_SCALE,
                 useFlowAccumulationRivers).render();
     }
 
@@ -1238,8 +1117,8 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * Phase 4.2: plate-boundary rendering lives in {@link PlateBoundaryRenderer}.
      */
     private void addPlateBoundaries() {
-        new PlateBoundaryRenderer(generatedPlanet, adjacency, plateAssignment,
-                boundaryAnalysis, planetGroup, PLANET_SCALE).render();
+        new PlateBoundaryRenderer(session.planet(), session.adjacency(), session.plateAssignment(),
+                session.boundaryAnalysis(), planetGroup, PLANET_SCALE).render();
     }
 
     /**
@@ -1251,36 +1130,10 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * generator produced climate data.
      */
     private void addClimateZones() {
-        if (generatedPlanet.climates() == null || generatedPlanet.climates().length == 0) {
+        if (!session.hasClimateData()) {
             return;
         }
         PlanetClimateZoneOverlay.render(planetGroup, PLANET_SCALE);
-    }
-
-    private Point3D toPoint3D(org.hipparchus.geometry.euclidean.threed.Vector3D v) {
-        return new Point3D(v.getX(), v.getY(), v.getZ());
-    }
-
-    /**
-     * Derive the Size enum value from the n subdivision level.
-     */
-    private static PlanetConfig.Size deriveSizeFromN(int n) {
-        for (PlanetConfig.Size size : PlanetConfig.Size.values()) {
-            if (size.n == n) {
-                return size;
-            }
-        }
-        // If no exact match, find closest
-        PlanetConfig.Size closest = PlanetConfig.Size.STANDARD;
-        int minDiff = Integer.MAX_VALUE;
-        for (PlanetConfig.Size size : PlanetConfig.Size.values()) {
-            int diff = Math.abs(size.n - n);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closest = size;
-            }
-        }
-        return closest;
     }
 
     /**
@@ -1289,7 +1142,7 @@ public class ProceduralPlanetViewerDialog extends Dialog<Void> {
      * the plate-boundary key based on whether plate analysis is available.
      */
     private TitledPane createLegendSection() {
-        return PlanetLegendSection.create(plateAssignment != null && boundaryAnalysis != null);
+        return PlanetLegendSection.create(session.hasPlateData());
     }
 
     /**
