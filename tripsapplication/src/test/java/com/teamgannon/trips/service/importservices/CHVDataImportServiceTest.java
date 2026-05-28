@@ -121,7 +121,7 @@ class CHVDataImportServiceTest {
 
             CSVDataImportServiceTest.RecordingEventPublisher events = new CSVDataImportServiceTest.RecordingEventPublisher();
             CSVDataImportServiceTest.RecordingComplete onComplete = new CSVDataImportServiceTest.RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CHVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CHVDataImportService svc = new CHVDataImportService(events, mock(BulkLoadService.class)) {
@@ -130,15 +130,14 @@ class CHVDataImportServiceTest {
                         return taskReturning(result);
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS));
-            fxFence();
+            CSVDataImportServiceTest.awaitTerminalState(svcRef.get(), 30_000);
 
             assertEquals(3, events.events.size(),
                     "expected StatusUpdate + AddDataSet + SetContextDataSet, got: " + events.events);
@@ -157,7 +156,7 @@ class CHVDataImportServiceTest {
 
             CSVDataImportServiceTest.RecordingEventPublisher events = new CSVDataImportServiceTest.RecordingEventPublisher();
             CSVDataImportServiceTest.RecordingComplete onComplete = new CSVDataImportServiceTest.RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CHVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CHVDataImportService svc = new CHVDataImportService(events, mock(BulkLoadService.class)) {
@@ -166,15 +165,14 @@ class CHVDataImportServiceTest {
                         return taskReturning(null);
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS));
-            fxFence();
+            CSVDataImportServiceTest.awaitTerminalState(svcRef.get(), 30_000);
 
             assertEquals(1, events.events.size(),
                     "expected only StatusUpdate, got: " + events.events);
@@ -190,7 +188,7 @@ class CHVDataImportServiceTest {
 
             CSVDataImportServiceTest.RecordingEventPublisher events = new CSVDataImportServiceTest.RecordingEventPublisher();
             CSVDataImportServiceTest.RecordingComplete onComplete = new CSVDataImportServiceTest.RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CHVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CHVDataImportService svc = new CHVDataImportService(events, mock(BulkLoadService.class)) {
@@ -199,16 +197,14 @@ class CHVDataImportServiceTest {
                         return taskThrowing(new RuntimeException("kaboom"));
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                CSVDataImportServiceTest.awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS),
-                    "CHV import service did not reach FAILED state within the timeout");
-            fxFence();
+            CSVDataImportServiceTest.awaitTerminalState(svcRef.get(), 30_000);
 
             assertEquals(1, events.events.size(),
                     "expected only failure StatusUpdate, got: " + events.events);
@@ -228,8 +224,8 @@ class CHVDataImportServiceTest {
 
             CSVDataImportServiceTest.RecordingEventPublisher events = new CSVDataImportServiceTest.RecordingEventPublisher();
             CSVDataImportServiceTest.RecordingComplete onComplete = new CSVDataImportServiceTest.RecordingComplete();
-            CountDownLatch cancelDone = new CountDownLatch(1);
             CountDownLatch runningLatch = new CountDownLatch(1);
+            AtomicReference<CHVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CHVDataImportService svc = new CHVDataImportService(events, mock(BulkLoadService.class)) {
@@ -245,10 +241,10 @@ class CHVDataImportServiceTest {
                         };
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                CSVDataImportServiceTest.awaitTerminalState(svc, cancelDone);
                 svc.start();
 
                 new Thread(() -> {
@@ -261,8 +257,7 @@ class CHVDataImportServiceTest {
                 }).start();
             });
 
-            assertTrue(cancelDone.await(30, TimeUnit.SECONDS));
-            fxFence();
+            CSVDataImportServiceTest.awaitTerminalState(svcRef.get(), 30_000);
 
             assertFalse(events.events.isEmpty());
             assertTrue(events.events.get(0) instanceof StatusUpdateEvent);

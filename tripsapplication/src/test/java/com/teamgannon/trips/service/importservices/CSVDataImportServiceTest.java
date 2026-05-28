@@ -129,7 +129,7 @@ class CSVDataImportServiceTest {
 
             RecordingEventPublisher events = new RecordingEventPublisher();
             RecordingComplete onComplete = new RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CSVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CSVDataImportService svc = new CSVDataImportService(mock(BulkLoadService.class), events) {
@@ -138,17 +138,14 @@ class CSVDataImportServiceTest {
                         return taskReturning(result);
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS), "service should reach SUCCEEDED");
-
-            // Run a fence on the FX thread so all subsequent runLater callbacks (state handlers) have drained.
-            fxFence();
+            awaitTerminalState(svcRef.get(), 30_000);
 
             assertEquals(3, events.events.size(),
                     "expected StatusUpdate + AddDataSet + SetContextDataSet, got: " + events.events);
@@ -167,7 +164,7 @@ class CSVDataImportServiceTest {
 
             RecordingEventPublisher events = new RecordingEventPublisher();
             RecordingComplete onComplete = new RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CSVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CSVDataImportService svc = new CSVDataImportService(mock(BulkLoadService.class), events) {
@@ -176,17 +173,15 @@ class CSVDataImportServiceTest {
                         return taskReturning(null);
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS));
-            fxFence();
+            awaitTerminalState(svcRef.get(), 30_000);
 
-            // StatusUpdate fires before the null-result check, then we bail out.
             assertEquals(1, events.events.size(),
                     "expected only StatusUpdate, got: " + events.events);
             assertTrue(events.events.get(0) instanceof StatusUpdateEvent);
@@ -201,7 +196,7 @@ class CSVDataImportServiceTest {
 
             RecordingEventPublisher events = new RecordingEventPublisher();
             RecordingComplete onComplete = new RecordingComplete();
-            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<CSVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CSVDataImportService svc = new CSVDataImportService(mock(BulkLoadService.class), events) {
@@ -210,15 +205,14 @@ class CSVDataImportServiceTest {
                         return taskThrowing(new RuntimeException("boom"));
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                awaitTerminalState(svc, done);
                 svc.start();
             });
 
-            assertTrue(done.await(30, TimeUnit.SECONDS));
-            fxFence();
+            awaitTerminalState(svcRef.get(), 30_000);
 
             assertEquals(1, events.events.size());
             StatusUpdateEvent statusEvent = (StatusUpdateEvent) events.events.get(0);
@@ -236,8 +230,8 @@ class CSVDataImportServiceTest {
 
             RecordingEventPublisher events = new RecordingEventPublisher();
             RecordingComplete onComplete = new RecordingComplete();
-            CountDownLatch cancelDone = new CountDownLatch(1);
             CountDownLatch runningLatch = new CountDownLatch(1);
+            AtomicReference<CSVDataImportService> svcRef = new AtomicReference<>();
 
             runOnFx(() -> {
                 CSVDataImportService svc = new CSVDataImportService(mock(BulkLoadService.class), events) {
@@ -253,10 +247,10 @@ class CSVDataImportServiceTest {
                         };
                     }
                 };
+                svcRef.set(svc);
                 Dataset ds = new Dataset();
                 ds.setName("Foo");
                 svc.processDataSet(ds, onComplete, new Label(), new ProgressBar(), new Button());
-                awaitTerminalState(svc, cancelDone);
                 svc.start();
 
                 // Cancel as soon as the task signals it's running, on the FX thread.
@@ -270,10 +264,8 @@ class CSVDataImportServiceTest {
                 }).start();
             });
 
-            assertTrue(cancelDone.await(30, TimeUnit.SECONDS));
-            fxFence();
+            awaitTerminalState(svcRef.get(), 30_000);
 
-            // StatusUpdate (cancellation message) is the only event.
             assertFalse(events.events.isEmpty(), "expected at least one event");
             assertTrue(events.events.get(0) instanceof StatusUpdateEvent);
             String msg = ((StatusUpdateEvent) events.events.get(0)).getStatus();
@@ -335,20 +327,58 @@ class CSVDataImportServiceTest {
 
     /**
      * Register a state-property listener that counts the latch down as soon
-     * as the service reaches any terminal state (SUCCEEDED / FAILED /
-     * CANCELLED). More robust than {@code setOnSucceeded}/{@code setOnFailed}
-     * — those replace a single property handler each and miss the race
-     * window where {@code start()} has already kicked the worker into a
-     * terminal state before the test thread attaches its handler.
+     * as the service reaches any terminal state. Kept for callers who still
+     * use the latch idiom, but prefer {@link #awaitTerminalState(javafx.concurrent.Service, long)}
+     * for new tests — polling is immune to listener-attach races.
      */
     static void awaitTerminalState(javafx.concurrent.Service<?> svc, CountDownLatch latch) {
         svc.stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == Worker.State.SUCCEEDED
-                    || newState == Worker.State.FAILED
-                    || newState == Worker.State.CANCELLED) {
+            if (isTerminal(newState)) {
                 latch.countDown();
             }
         });
+        if (isTerminal(svc.getState())) {
+            latch.countDown();
+        }
+    }
+
+    /**
+     * Poll {@code svc.getState()} (on the FX thread; JavaFX rejects access from
+     * any other thread) until terminal (or timeout) and then drain the FX
+     * thread once more so the Service's protected {@code succeeded()/failed()
+     * /cancelled()} callbacks have completed. Strictly more reliable than the
+     * listener-based latch pattern — each FX-thread fence reads the current
+     * state and can't miss a transition that happened before a listener was
+     * attached.
+     * <p>
+     * Used by the lifecycle-event tests below to avoid a race that surfaces
+     * under heavy CI load.
+     */
+    static void awaitTerminalState(javafx.concurrent.Service<?> svc, long timeoutMs) throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            AtomicReference<Worker.State> stateRef = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            Platform.runLater(() -> {
+                stateRef.set(svc.getState());
+                latch.countDown();
+            });
+            if (!latch.await(2, TimeUnit.SECONDS)) {
+                continue; // FX queue is backed up — try again
+            }
+            if (isTerminal(stateRef.get())) {
+                fxFence(); // make sure succeeded()/failed()/cancelled() handlers drained
+                return;
+            }
+            Thread.sleep(25);
+        }
+        fail("service did not reach terminal state within " + timeoutMs + "ms");
+    }
+
+    private static boolean isTerminal(Worker.State state) {
+        return state == Worker.State.SUCCEEDED
+                || state == Worker.State.FAILED
+                || state == Worker.State.CANCELLED;
     }
 
     /** Run a no-op on the FX thread and wait for it — drains queued runLater callbacks ahead of it. */
