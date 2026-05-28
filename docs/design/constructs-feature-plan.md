@@ -1,31 +1,27 @@
 # Constructs Feature — Design Plan
 
-> **⚠️ SUPERSEDING REQUIRED — DO NOT IMPLEMENT FROM THIS DOCUMENT AS-IS.**
+> **⛔ SUPERSEDED**: see [`constructs-feature-plan-v2.md`](./constructs-feature-plan-v2.md).
 >
-> This v1 plan was authored without first surveying two existing sealed
-> hierarchies that cover most of the same concept space:
-> `com.terranrepublic.assets.SpaceAsset` (with `Cataloged`, `SpaceshipDesign`,
-> `StationDesign`, `WeaponInstallation`, plus an `Armament` model and a
-> populated `Catalog`) and
-> `com.terranrepublic.infrastructure.SpaceInfrastructure` (with
-> `TransportNode` whose `NodeType` enum already includes `RING_GATE` /
-> `JUMP_POINT` / `WORMHOLE_MOUTH` / `PORTAL` — i.e. jump gates are already
-> modelled, and the only thing missing is a UI for them).
+> This document did not account for `com.terranrepublic.assets.SpaceAsset`
+> (`Cataloged`, `SpaceshipDesign`, `StationDesign`, `WeaponInstallation`,
+> `Armament`, populated `Catalog`) or
+> `com.terranrepublic.infrastructure.SpaceInfrastructure`
+> (`TransportNode` whose `NodeType` enum already enumerates `RING_GATE` /
+> `JUMP_POINT` / `WORMHOLE_MOUTH` / `PORTAL` — jump gates are already
+> modelled). It proposed a parallel sealed `Construct` hierarchy that
+> v2 has determined to be unnecessary.
 >
-> Implementing this plan as written would create a parallel hierarchy in
-> a session where the agent didn't know an equivalent one already existed
-> — exactly the fragmentation failure mode the 2026 codebase-review work
-> was meant to be prophylaxis against.
->
-> **Before any code lands, read
-> [`constructs-feature-reconciliation-prompt.md`](./constructs-feature-reconciliation-prompt.md)**
-> and produce a `constructs-feature-plan-v2.md` that reconciles this design
-> against the existing types. This document is retained for history; do
-> not act on it directly.
+> The reconciliation pre-work is in
+> [`constructs-feature-reconciliation-prompt.md`](./constructs-feature-reconciliation-prompt.md);
+> the survey artefact is
+> [`constructs-existing-hierarchies.md`](./constructs-existing-hierarchies.md);
+> the revised plan is
+> [`constructs-feature-plan-v2.md`](./constructs-feature-plan-v2.md).
+> Read those, not this. **Retained for history.**
 
 ---
 
-**Status**: design, not yet implemented; **supersession pending — see banner above**
+**Status**: **SUPERSEDED** — do not implement from this document
 **Owner**: Larry Mitchell (intent), implementing-agent (build)
 **Date**: 2026-05-28
 
