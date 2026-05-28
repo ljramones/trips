@@ -6,12 +6,11 @@ import com.teamgannon.trips.utility.DialogUtils;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.WindowEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -146,10 +145,12 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
         this.getDialogPane().setPrefWidth(580);
         this.getDialogPane().setPrefHeight(500);
 
+        DialogUtils.applyTheme(this);
         DialogUtils.bindCloseHandler(this, this::handleClose);
 
         // Set defaults
         setDefaults();
+        configureAccessibility(tabPane);
     }
 
     // ==================== GENERAL TAB ====================
@@ -204,6 +205,7 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
             parentField.setText(parentPlanet.getName());
             parentField.setEditable(false);
             parentField.getStyleClass().add("trips-panel-mid"); // Issue 50 / Bucket A
+            annotate(parentField, "Parent planet", "Read-only parent planet for the new moon.");
             grid.add(parentField, 3, 1);
         }
 
@@ -538,10 +540,12 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
 
         Button cancelBtn = new Button("Cancel");
         cancelBtn.setOnAction(this::handleCancel);
+        annotate(cancelBtn, "Cancel", "Close this dialog without creating a planet or moon.");
 
         Button createBtn = new Button(isMoon ? "Create Moon" : "Create Planet");
         createBtn.setDefaultButton(true);
         createBtn.setOnAction(this::handleCreate);
+        annotate(createBtn, createBtn.getText(), "Create the new body using the current field values.");
 
         hbox.getChildren().addAll(cancelBtn, createBtn);
         return hbox;
@@ -564,8 +568,76 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
 
     private Label createBoldLabel(String text) {
         Label label = new Label(text);
-        label.setFont(Font.font("System", FontWeight.BOLD, 12));
+        label.getStyleClass().add("trips-text-bold-md-12");
         return label;
+    }
+
+    private void configureAccessibility(TabPane tabPane) {
+        getDialogPane().setAccessibleText(isMoon ? "Add moon dialog" : "Add planet dialog");
+        getDialogPane().setAccessibleHelp("Enter orbital, physical, climate, atmosphere, and world-building properties.");
+        annotate(tabPane, "Planet property sections", "Switch between general, dynamics, climate, atmosphere, and science-fiction fields.");
+
+        annotate(nameField, "Name", "Required name for the planet or moon.");
+        annotate(planetTypeCombo, "Planet type", "Select the broad classification for this body.");
+        annotate(orbitalZoneField, "Orbital zone", "Optional numeric orbital-zone classification.");
+
+        annotate(habitableCheck, "Habitable", "Mark this body as habitable.");
+        annotate(earthlikeCheck, "Earthlike", "Mark this body as Earthlike.");
+        annotate(gasGiantCheck, "Gas giant", "Mark this body as a gas giant.");
+        annotate(tidallyLockedCheck, "Tidally locked", "Mark this body as tidally locked.");
+        annotate(habitableJovianCheck, "Habitable Jovian", "Mark this gas giant as supporting habitable environments.");
+        annotate(habitableMoonCheck, "Habitable moon", "Mark this body as a habitable moon.");
+        annotate(greenhouseCheck, "Greenhouse effect", "Mark this body as having a greenhouse effect.");
+
+        annotate(semiMajorAxisField, "Semi-major axis in astronomical units", "Required orbital semi-major axis. Use astronomical units.");
+        annotate(eccentricityField, "Eccentricity", "Orbital eccentricity, typically between 0 and 0.99.");
+        annotate(inclinationField, "Inclination in degrees", "Orbital inclination in degrees.");
+        annotate(omegaField, "Argument of periapsis in degrees", "Argument of periapsis in degrees.");
+        annotate(lonAscNodeField, "Longitude of ascending node in degrees", "Longitude of ascending node in degrees.");
+        annotate(orbitalPeriodField, "Orbital period in days", "Orbital period in days.");
+
+        annotate(radiusField, "Radius in Earth radii", "Body radius measured in Earth radii.");
+        annotate(massField, "Mass in Earth masses", "Body mass measured in Earth masses.");
+        annotate(densityField, "Density", "Body density in grams per cubic centimeter.");
+        annotate(coreRadiusField, "Core radius", "Optional core radius value.");
+        annotate(axialTiltField, "Axial tilt in degrees", "Axial tilt in degrees.");
+        annotate(dayLengthField, "Day length in hours", "Rotation period in hours.");
+        annotate(surfaceGravityField, "Surface gravity", "Surface gravity in Earth gravities.");
+        annotate(surfaceAccelField, "Surface acceleration", "Surface acceleration in meters per second squared.");
+        annotate(escapeVelocityField, "Escape velocity", "Escape velocity in kilometers per second.");
+
+        annotate(hydrosphereField, "Hydrosphere percentage", "Surface hydrosphere coverage percentage.");
+        annotate(cloudCoverField, "Cloud cover percentage", "Cloud cover percentage.");
+        annotate(iceCoverField, "Ice cover percentage", "Ice cover percentage.");
+        annotate(albedoField, "Albedo", "Reflectivity value.");
+        annotate(surfacePressureField, "Surface pressure", "Surface pressure in atmospheres.");
+        annotate(volatileGasField, "Volatile gas inventory", "Volatile gas inventory value.");
+        annotate(minMolWeightField, "Minimum molecular weight", "Minimum molecular weight retained by the atmosphere.");
+
+        annotate(surfaceTempField, "Surface temperature", "Surface temperature in kelvin.");
+        annotate(highTempField, "High temperature", "High temperature in kelvin.");
+        annotate(lowTempField, "Low temperature", "Low temperature in kelvin.");
+        annotate(maxTempField, "Maximum temperature", "Maximum temperature in kelvin.");
+        annotate(minTempField, "Minimum temperature", "Minimum temperature in kelvin.");
+        annotate(exosphericTempField, "Exospheric temperature", "Exospheric temperature in kelvin.");
+        annotate(boilingPointField, "Boiling point", "Boiling point in kelvin.");
+        annotate(greenhouseRiseField, "Greenhouse rise", "Greenhouse temperature rise in kelvin.");
+        annotate(atmosphereTypeField, "Atmosphere type", "Short atmosphere classification.");
+        annotate(atmosphereCompField, "Atmosphere composition", "Atmosphere composition using gas names and proportions.");
+
+        annotate(populationField, "Population", "Optional population count.");
+        annotate(colonizedCheck, "Colonized", "Mark this body as colonized.");
+        annotate(techLevelField, "Tech level", "Optional technology level.");
+        annotate(colonizationYearField, "Colonization year", "Optional year colonization began.");
+        annotate(polityField, "Polity", "Owning or dominant polity.");
+        annotate(strategicImportanceField, "Strategic importance", "Strategic importance rating.");
+        annotate(primaryResourceField, "Primary resource", "Primary resource or economic reason for interest.");
+        annotate(notesField, "Notes", "Free-form notes for this planet or moon.");
+    }
+
+    private static void annotate(Node node, String text, String help) {
+        node.setAccessibleText(text);
+        node.setAccessibleHelp(help);
     }
 
     private void setDefaults() {

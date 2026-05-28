@@ -4,12 +4,13 @@ import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
-import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationMessage;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationResult;
+import com.teamgannon.trips.utility.DialogUtils;
+import com.terranrepublic.assets.SpaceshipDesign;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -141,6 +142,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         });
 
         buildContent();
+        DialogUtils.applyTheme(this);
+        configureAccessibility();
         if (existing != null) {
             populateFrom(existing);
         } else {
@@ -239,6 +242,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
 
         Button addBtn = new Button(get("editor.carried.add"));
         addBtn.setOnAction(e -> addCarried());
+        annotate(addBtn, get("editor.carried.add"), "Add the carried craft row to this design.");
         Button removeBtn = new Button(get("editor.carried.remove"));
         removeBtn.setOnAction(e -> {
             CarriedCraft sel = carriedTable.getSelectionModel().getSelectedItem();
@@ -247,6 +251,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
                 revalidate();
             }
         });
+        annotate(removeBtn, get("editor.carried.remove"), "Remove the selected carried craft row.");
 
         HBox addForm = new HBox(6,
                 craftNameField, craftClassCombo,
@@ -260,7 +265,7 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
 
     private VBox validationSection() {
         statusLabel.getStyleClass().add("trips-bold"); // Issue 50 / Bucket A
-        deltaVBadge.setStyle("-fx-text-fill: #333;");
+        deltaVBadge.getStyleClass().add("trips-text-form-label");
         messagesList.setPrefHeight(120);
         messagesList.setPlaceholder(new Label(get("editor.messages.empty", "No issues")));
 
@@ -300,6 +305,56 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
             }
         });
         return new HBox(8, new Label(get("editor.template.label")), templateCombo);
+    }
+
+    private void configureAccessibility() {
+        getDialogPane().setAccessibleText(existing == null ? "New spaceship design dialog" : "Edit spaceship design dialog");
+        getDialogPane().setAccessibleHelp("Edit identity, drive, mass budget, carried craft, and validation details for a spaceship design.");
+
+        annotate(okButton, "OK", "Save this spaceship design when all validation errors are resolved.");
+        Button cancelButton = (Button) getDialogPane().lookupButton(ButtonType.CANCEL);
+        annotate(cancelButton, "Cancel", "Close this dialog without saving changes.");
+        annotate(templateCombo, get("editor.template.label"), "Choose a template to prefill a new spaceship design.");
+
+        annotate(nameField, get("editor.field.name"), "Required spaceship name.");
+        annotate(designationField, get("editor.field.designation"), "Optional hull or fleet designation.");
+        annotate(classCombo, get("editor.field.class"), "Select the ship class.");
+        annotate(crewField, get("editor.field.crew"), "Crew complement count.");
+        annotate(lengthField, get("editor.field.length"), "Ship length in meters.");
+        annotate(iconField, get("editor.field.icon"), "Optional icon path.");
+        annotate(sourceTypeCombo, get("editor.field.sourceType"), "Select whether the design is real, proposed, fictional, or unknown.");
+        annotate(universeField, get("editor.field.sourceUniverse"), "Source universe or setting for this design.");
+        annotate(factionField, get("editor.field.faction"), "Faction, polity, or operator for this design.");
+        annotate(eraField, get("editor.field.era"), "Era, year, or period for this design.");
+        annotate(descriptionArea, get("editor.field.description"), "Free-form design notes.");
+
+        annotate(driveCombo, get("editor.field.drive"), "Select the primary drive type.");
+        annotate(structureField, get("editor.mass.structure"), "Structure mass in tons.");
+        annotate(engineField, get("editor.mass.engine"), "Engine mass in tons.");
+        annotate(propellantField, get("editor.mass.propellant"), "Propellant mass in tons.");
+        annotate(payloadField, get("editor.mass.payload"), "Payload mass in tons.");
+        annotate(crewMassField, get("editor.mass.crew"), "Crew and life-support mass in tons.");
+        annotate(radiatorField, get("editor.mass.radiator"), "Radiator mass in tons.");
+
+        annotate(carriedTable, "Carried craft table", "Carried craft already assigned to this design.");
+        annotate(craftNameField, get("column.name"), "Name of the carried craft to add.");
+        annotate(craftClassCombo, get("column.class"), "Class of the carried craft to add.");
+        annotate(craftCountField, "Carried craft count", "Number of carried craft of this type.");
+        annotate(craftMassField, "Carried craft mass", "Mass of one carried craft in tons.");
+        annotate(craftRoleField, "Carried craft role", "Role or mission for the carried craft.");
+
+        annotate(statusLabel, "Validation status", "Current validation result for this design.");
+        annotate(deltaVBadge, "Delta V summary", "Estimated delta V and special capability summary.");
+        annotate(planButton, get("button.planTransfer"), "Open transfer planning for the current design when available.");
+        annotate(messagesList, "Validation messages", "Warnings and blocking validation messages for this design.");
+    }
+
+    private static void annotate(Node node, String text, String help) {
+        if (node == null) {
+            return;
+        }
+        node.setAccessibleText(text);
+        node.setAccessibleHelp(help);
     }
 
     private void addCarried() {

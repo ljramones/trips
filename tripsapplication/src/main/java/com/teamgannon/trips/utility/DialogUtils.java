@@ -4,6 +4,8 @@ import javafx.scene.control.Dialog;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 
+import java.net.URL;
+
 
 public final class DialogUtils {
 
@@ -26,5 +28,16 @@ public final class DialogUtils {
                 });
             }
         });
+    }
+
+    public static void applyTheme(Dialog<?> dialog) {
+        URL themeCss = DialogUtils.class.getResource("/com/teamgannon/trips/theme.css");
+        if (themeCss == null) {
+            return;
+        }
+        String stylesheet = themeCss.toExternalForm();
+        if (!dialog.getDialogPane().getStylesheets().contains(stylesheet)) {
+            dialog.getDialogPane().getStylesheets().add(stylesheet);
+        }
     }
 }
