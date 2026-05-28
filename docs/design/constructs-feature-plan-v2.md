@@ -138,12 +138,13 @@ The flat-entity pattern is more boilerplate but correctly applies the existing s
 
 Inventory §1.9: `StationDesign`s and `WeaponInstallation`s are only in `Catalog.all()` today. The migration is one-shot: on app startup, if the new tables are empty, seed them from the catalog constants (mirrors the existing `seedTemplatesIfEmpty()` pattern in `SpaceshipDesignerPanel`).
 
-Flyway migrations:
-- **V6** — create `STATION_DESIGN` table (matches `StationEntity` fields)
-- **V7** — create `WEAPON_INSTALLATION` table
-- **V8** — create `TRANSPORT_NODE` table
+Flyway migrations (post Phase A0):
+- ~~**V6**~~ — **taken by Phase A0**. `V6__spaceship_entity_concealed_and_operational_state.sql` adds the two columns that close the round-trip-loss bug documented in Inventory §4.4. v2 Phase A's new entity migrations therefore shift one slot down.
+- **V7** — create `STATION_DESIGN` table (matches `StationEntity` fields)
+- **V8** — create `WEAPON_INSTALLATION` table
+- **V9** — create `TRANSPORT_NODE` table
 
-Each migration is additive. No data drops. No changes to `SPACESHIP_DESIGN` or any other existing table.
+Each migration is additive. No data drops. No changes to `SPACESHIP_DESIGN` after V6.
 
 ---
 
@@ -151,26 +152,35 @@ Each migration is additive. No data drops. No changes to `SPACESHIP_DESIGN` or a
 
 Each phase is a self-contained commit set with a full regression run.
 
-### Phase A — `ConstructRegistry` + station persistence
-1. Define `ConstructRegistry` interface + `DefaultConstructRegistry` `@Component`.
-2. Implement `StationEntity` + `StationDesignMapper` + `StationRepository` + `StationDesignerService`.
-3. Flyway V6 migration. Seed-on-empty from `Catalog.TROY` at startup.
-4. Smoke test: `StationDesignerService.findAll()` returns Troy after first launch.
+### Phase A — `ConstructRegistry` wire-up + station persistence ✅ DONE (2026-05-28)
+1. ~~Define `ConstructRegistry` interface + `DefaultConstructRegistry` `@Component`.~~ **Landed in Phase A0** as a ships-only skeleton.
+2. ✅ Implemented `StationEntity` + `StationDesignMapper` + `StationRepository` + `StationDesignerService` (mirrors the SpaceshipEntity pattern; collection LOBs, not whole-entity payload_json).
+3. ✅ Flyway **V7** `V7__station_design_table.sql`. Idempotent `CREATE TABLE IF NOT EXISTS` + index `IF NOT EXISTS` lines. Seed-on-empty wired via `StationCatalogSeeder` listening for `ApplicationReadyEvent`.
+4. ✅ Comprehensive mapper round-trip: 33 cases including every `StationType`, every `Mobility`, every `OperationalState`, every `TechLevel`, plus the non-default cases (concealed, allegiance ≠ faction, `auxiliaryDrive` on non-fixed stations). Phase A0 lesson honoured: no field is silently dropped.
+5. ✅ `DefaultConstructRegistry.assetsByKind(STATION)` flipped from empty to a read through `StationDesignerService`; `allById()` now spans ships + stations. WEAPON_INSTALLATION and every `infrastructureByKind` bucket stays empty until Phase B.
 
-### Phase B — weapon installation + transport node persistence
-1. `WeaponInstallationEntity` / mapper / repository / service. Flyway V7. Seed `SAPL` + `SHEVA_GUN`.
-2. `TransportNodeEntity` / mapper / repository / service. Flyway V8. No seed (no canonical gates yet).
+### Phase B — weapon installation + transport node persistence ✅ DONE (2026-05-28)
+1. ✅ `WeaponInstallationEntity` / mapper / repository / service / seeder. Flyway **V8** (`weapon_installation` table, idempotent `CREATE TABLE IF NOT EXISTS` + indexes). `SAPL` + `SHEVA_GUN` seed on `ApplicationReadyEvent` via `WeaponInstallationCatalogSeeder`. `DefaultConstructRegistry.assetsByKind(WEAPON_INSTALLATION)` reads through the service.
+2. ✅ `TransportNodeEntity` / mapper / repository / service (no seeder by design — `TransportNodeService.seedFromCatalogIfEmpty()` exists for pattern symmetry but no Spring component triggers it; `Catalog` has no transport-node entries today). Flyway **V9** (`transport_node` table, JSON LOB for `connectedNodeIds`; no FK to `transport_node.id` — in-memory `GraphRegistry` keeps dangling-id validation). `DefaultConstructRegistry.infrastructureByKind(TRANSPORT_NODE)` reads through the service. `CONDUIT` bucket stays empty per §6.1 Q3 deferral.
 
-### Phase C — Installations Designer panel (read-only first)
-1. New `InstallationDesignerPanel` showing all non-SHIP `Cataloged` via `ConstructRegistry`.
-2. Add `Design → Installations Designer…` menu entry (after product-owner naming confirmation).
-3. No edit functionality yet; just list + detail pane.
-4. Reuse the tabbed layout from `SpaceshipDesignerPanel` (universe tabs, two-row filter/action layout, multi-row FlowPane of universe ToggleButtons).
+### Phase C — Installations Designer panel (read-only) ✅ DONE (2026-05-28)
+1. ✅ `InstallationDesignerPanel` (`com.teamgannon.trips.construct.ui`) — BorderPane with filter strip, table, details split. Reads through `ConstructRegistry` for stations + weapon installations + transport nodes (ships handled by Spaceship Modeller; conduits deferred per §6.1 Q3). All registry reads run on background `Task`; results applied via `applyConstructs` on the FX thread (Issue 11 discipline; `FxThread.assertFxThread()` guards on every FX-thread method).
+2. ✅ `Design → _Installations Designer…` menu item with mnemonic `I` (Issue 36 convention). Reuses the lazy single-Stage pattern of `openSpaceshipModeller`. `panel.loadAsync()` fires after the Stage is shown so a slow registry read can't delay the window appearing.
+3. ✅ Per-subtype details templates via Java pattern matching: `StationDesign` shows mobility / allegiance / dimensions / crew / carrier-capable / armaments+carried-craft counts; `WeaponInstallation` shows installation type / emplacement / mobile / mass / footprint / crew / armament count; `TransportNode` shows node type / position / throughput / instantaneous-or-traversal / connected-node count. All field labels live in `construct.properties` (scoped per-feature bundle).
+4. ✅ Filters: Kind → Subtype (subtype combo repopulates by Kind), Faction, Category, plus case-insensitive name search. All filter changes operate on the in-memory list — no extra registry reads. Tooltips on every focusable control (Issue 35); a11y annotations on every focusable control (Issue 49). `trips-*` CSS classes only, no inline `setStyle` (Issue 50). Last-column flex resize policy (Issue 34).
 
-### Phase D — Edit dialogs for the three non-spacecraft subtypes
-1. `StationEditorDialog`, `WeaponInstallationEditorDialog`, `TransportNodeEditorDialog`.
-2. Wire "New…" subtype picker in the Installations Designer.
-3. Edit + delete actions wired to the services.
+### Phase D — Edit dialogs for the three non-spacecraft subtypes ✅ DONE (2026-05-28)
+1. ✅ `StationEditorDialog`, `WeaponInstallationEditorDialog`, `TransportNodeEditorDialog` — three independent classes (no shared base; v2 §5 Phase F's extraction stays deferred per the prompt). Each mirrors `SpaceshipEditorDialog`'s structure: programmatic sections, inline validation list, OK disabled while invalid, canonical-record-constructor `buildDraft()`, tooltips on every field, accessibility annotations on every focusable control, `trips-*` CSS classes only.
+2. ✅ `New…` → `ChoiceDialog<String>` subtype picker (Station / Weapon Installation / Transport Node) → routes to the matching editor dialog.
+3. ✅ Edit + Delete actions enabled iff a row is selected; Delete confirms via `Alert.AlertType.CONFIRMATION`. Saves run on a background `Task` (the panel calls `service.save(…)` off the FX thread); `setOnSucceeded` refreshes the panel via the existing `loadAsync()` — same FX-thread discipline as Phase C.
+4. ✅ UI invariants enforced at the dialog level: `Mobility.FIXED` disables + clears the station auxiliary-drive combo; `instantaneousTransit=true` disables + zeros the transport traversal-time field. Both mirror the domain compact-constructor invariants.
+5. ✅ Panel constructor now takes the three subtype services in addition to the registry; `DesignMenuController` wires them in. Registry remains read-only (no interface change).
+
+### Phase D.5 — Universe tab strip + real space stations seed ✅ DONE (2026-05-28)
+A small additive phase wedged between D and E so the panel has a multi-universe demo surface.
+1. ✅ `InstallationDesignerPanel` grew a universe tab strip (FlowPane of ToggleButtons, sticky single-select) above the existing filter row. Tabs are data-driven from the distinct `source` values across loaded constructs; order is "All" → "Real / Proposed" (pinned second when present) → remaining sources alphabetical. Tab selection composes with the existing Kind/Subtype/Faction/Category/search filters.
+2. ✅ Eight real / proposed Earth space stations added to `Catalog` under `source = "Real / Proposed"`: ISS, Tiangong, Mir, Skylab, Salyut 1, Salyut 7, Lunar Gateway, Axiom Station. All `Mobility.STATIONKEEPING`, `techLevel = CONTEMPORARY`, `category = "Crewed orbital station"`. Numeric facts web-verified at population (NASA / Wikipedia / NSSDC / SpaceNews / SpacePolicyOnline) and cited in each constant's javadoc; INFERRED values flagged in the description string per the TROY convention. `OperationalState`: OPERATIONAL for ISS + Tiangong; SALVAGED for Mir, Skylab, Salyut 1, Salyut 7; UNDER_CONSTRUCTION for Lunar Gateway (with the March 2026 program-suspension caveat in the description) and Axiom Station. `Catalog.all()` extended; `StationDesignerService.seedFromCatalogIfEmpty()` and `DefaultConstructRegistry.assetsByKind(STATION)` adapt without code change because they iterate `Catalog.all()` dynamically.
+3. ✅ Tests: 3 new panel tests for tab strip ordering / selection / Kind-filter composition; parameterised `StationDesignMapperTest.realStationRoundTrips` covers the 8 new entries (data-driven from `Catalog.all()`).
 
 ### Phase E — Route-finder integration (jump-gate fast paths)
 1. `JumpGateNetworkService` reads `TransportNode`s where `NodeType ∈ {RING_GATE, JUMP_POINT, WORMHOLE_MOUTH, PORTAL}` and `connectedNodeIds` is non-empty.
@@ -184,17 +194,33 @@ Each phase is a self-contained commit set with a full regression run.
 
 ---
 
-## 6. Open questions for the product owner
+## 6. Decisions pinned in Phase A0
 
-Validated against the inventory; questions whose answers are already in the codebase are dropped.
+Two questions from earlier drafts have been resolved before v2 Phase A begins. They are recorded here rather than in §6.1's open list so the implementing agent does not re-decide them.
+
+### Q4 (resolved): `Catalog` remains as canonical seed data
+
+The `com.terranrepublic.assets.Catalog` class — which today holds in-memory constants for `TROY`, `SAPL`, `SHEVA_GUN`, `POSLEEN_COMMAND_DODECAHEDRON`, and `POSLEEN_BATTLE_DODECAHEDRON` — stays in place. v2 Phase A's seed-on-empty startup step for the new `StationDesign` and `WeaponInstallation` tables reads from `Catalog.all()`. The constants are not deleted; the class is not relocated.
+
+Rationale: `Catalog` has a documented dual role (Inventory §1.9 cross-references it as the asset hierarchy's canonical seed *and* as the test fixture for asset / economy / sim tests). Deleting the constants would force a fixture-builder rewrite across three test layers with no functional gain. The reconciliation explicitly chose data-duplication-via-known-source-of-truth over data-drift-via-two-independent-seeds.
+
+The class-level javadoc on `Catalog.java` records this decision so future maintainers don't accidentally migrate it.
+
+### Q5 (resolved + implemented): `SpaceshipDesignMapper` round-trip-loss bug
+
+Fixed in Phase A0 commit (see V6 migration). `concealed` and `operationalState` now round-trip correctly through `SpaceshipDesignMapper` and persist as two new columns on the `SPACESHIP_DESIGN` table. v2 Phase A's new entities (StationEntity, WeaponInstallationEntity, TransportNodeEntity) inherit the cleaned-up pattern, not the bug.
+
+---
+
+## 6.1 Open questions for the product owner
+
+Three remaining. Validated against the inventory; questions whose answers are already in the codebase are dropped from the list.
 
 | # | Question | Default if no answer |
 |---|---|---|
 | Q1 | Add `MINING_STATION` to the existing `StationType` enum, or model asteroid mining via the existing `OUTPOST` / `DEPOT` values? | Add `MINING_STATION` — it's a recognisable distinct concept and the enum has room. |
 | Q2 | Name confirmation: "Installations Designer" for the non-spacecraft panel? Alternatives: "Stations & Megastructures," "Megaconstructs Designer." | Go with "Installations Designer." |
 | Q3 | Do we need a `ConduitEntity` in Phase B, or is conduit editing deferable to Phase E or later? | Defer. Nothing in Phase A–D depends on conduits being editable. |
-| Q4 | Should the `Catalog`'s `POSLEEN_*` spaceships be migrated into the persisted `SpaceshipEntity` table on startup (like the spaceship modeller's template library) or remain in-memory constants? | Migrate. Single canonical source. |
-| Q5 | The mapper drops `concealed` and `operationalState` on round-trip for `SpaceshipDesign` (Inventory §4.4). Fix during Phase A as part of the cleanup, or leave for a separate ticket? | Fix during Phase A — small, isolated, and the new entities should not inherit the same bug. |
 
 **Not in the question list (decided by existing types):**
 

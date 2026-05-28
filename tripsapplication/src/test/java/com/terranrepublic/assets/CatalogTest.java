@@ -12,6 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CatalogTest {
 
@@ -105,7 +106,10 @@ class CatalogTest {
     void catalogContainsSeedAssetsAndCanBePrinted() {
         List<SpaceAsset> assets = Catalog.all();
 
-        assertEquals(5, assets.size());
+        // Original seed: TROY + SAPL + SHEVA_GUN + 2 Posleen dodecahedra = 5.
+        // Phase D.5 (2026-05-28) added 8 real Earth space stations under
+        // source = "Real / Proposed", taking the floor to 13.
+        assertTrue(assets.size() >= 13, "Catalog should carry at least the original 5 + 8 real stations");
         assertFalse(assets.isEmpty());
         for (SpaceAsset asset : assets) {
             assertNotNull(asset.armaments());

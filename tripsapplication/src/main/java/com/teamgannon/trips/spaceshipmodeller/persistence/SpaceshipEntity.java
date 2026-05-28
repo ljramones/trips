@@ -3,6 +3,7 @@ package com.teamgannon.trips.spaceshipmodeller.persistence;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
+import com.terranrepublic.assets.OperationalState;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -112,6 +113,28 @@ public class SpaceshipEntity implements Serializable {
     /** Era / timeframe (e.g. "2045", "Post-Contact"); free text. */
     private String era;
 
+    /**
+     * Whether this design is concealed from the catalog listing — mirrors
+     * the {@code SpaceshipDesign.concealed()} accessor. Added in Phase A0
+     * (Constructs feature) to close the round-trip-loss bug documented in
+     * {@code constructs-existing-hierarchies.md §4.4}. NOT NULL with a
+     * default of {@code false} so legacy rows materialised before V6
+     * surface as visible designs.
+     */
+    @Column(nullable = false)
+    private boolean concealed;
+
+    /**
+     * Current lifecycle state. Mirrors the {@code SpaceshipDesign
+     * .operationalState()} accessor; persisted as the enum constant name
+     * via {@code EnumType.STRING}. NOT NULL with a default of
+     * {@code OPERATIONAL} so legacy rows materialised before V6 reflect
+     * the same value the mapper used to silently reconstitute.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OperationalState operationalState;
+
     private Instant createdAt;
 
     /**
@@ -122,12 +145,19 @@ public class SpaceshipEntity implements Serializable {
     public SpaceshipEntity(String name) {
         this.id = UUID.randomUUID().toString();
         this.name = name;
+        this.concealed = false;
+        this.operationalState = OperationalState.OPERATIONAL;
     }
 
     @PrePersist
     private void ensureId() {
         if (this.id == null) {
             this.id = UUID.randomUUID().toString();
+        }
+        // Phase A0: belt-and-braces default — the NOT NULL constraint on
+        // operationalState fires before V6 has run on stale dev DBs.
+        if (this.operationalState == null) {
+            this.operationalState = OperationalState.OPERATIONAL;
         }
     }
 

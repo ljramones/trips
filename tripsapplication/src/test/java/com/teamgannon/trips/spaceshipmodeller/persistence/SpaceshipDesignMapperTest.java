@@ -1,14 +1,23 @@
 package com.teamgannon.trips.spaceshipmodeller.persistence;
 
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
+import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
+import com.terranrepublic.assets.OperationalState;
 import com.terranrepublic.assets.SpaceshipDesign;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,5 +64,75 @@ class SpaceshipDesignMapperTest {
                 .structureTons(10).engineTons(5).propellantTons(5).build();
         SpaceshipDesign back = mapper.toDomain(mapper.toEntity(noCraft));
         assertTrue(back.carriedCraft().isEmpty());
+    }
+
+    // ------------------------------------------------------------------
+    // Phase A0 (Constructs feature): round-trip-loss bug coverage
+    //
+    // Before V6 + this commit, concealed and operationalState were silently
+    // dropped on persist. The bug was invisible because the existing
+    // round-trip test happened to use the default values (concealed=false,
+    // operationalState=OPERATIONAL) that the SpaceshipDesign compact
+    // constructor reconstituted on read. These cases use non-default values
+    // so the bug would have been visible.
+    // ------------------------------------------------------------------
+
+    /** Direct constructor — sidesteps the builder, which doesn't expose either field. */
+    private static SpaceshipDesign withFlags(boolean concealed, OperationalState state) {
+        return new SpaceshipDesign(
+                UUID.randomUUID().toString(),
+                "Test-" + (concealed ? "C" : "V") + "-" + state.name(),
+                "TD-1",
+                ShipClass.CORVETTE,
+                DriveType.ION_GRIDDED,
+                new MassBudget(10, 5, 5, 0, 0, 0),
+                3,
+                30.0,
+                List.of(),
+                List.of(),
+                "icon.png",
+                "round-trip fixture",
+                SourceType.UNKNOWN,
+                "",
+                "Unknown",
+                concealed,
+                state,
+                "",
+                Instant.now());
+    }
+
+    @Test
+    @DisplayName("concealed=true + DERELICT round-trips both fields (was silently lost pre-V6)")
+    void concealedDerelictRoundTrips() {
+        SpaceshipDesign back = mapper.toDomain(
+                mapper.toEntity(withFlags(true, OperationalState.DERELICT)));
+        assertTrue(back.concealed());
+        assertEquals(OperationalState.DERELICT, back.operationalState());
+    }
+
+    @Test
+    @DisplayName("concealed=false + OPERATIONAL round-trips (the default-collision case)")
+    void notConcealedOperationalRoundTrips() {
+        SpaceshipDesign back = mapper.toDomain(
+                mapper.toEntity(withFlags(false, OperationalState.OPERATIONAL)));
+        assertFalse(back.concealed());
+        assertEquals(OperationalState.OPERATIONAL, back.operationalState());
+    }
+
+    @Test
+    @DisplayName("concealed=true + UNDER_CONSTRUCTION round-trips both fields")
+    void concealedUnderConstructionRoundTrips() {
+        SpaceshipDesign back = mapper.toDomain(
+                mapper.toEntity(withFlags(true, OperationalState.UNDER_CONSTRUCTION)));
+        assertTrue(back.concealed());
+        assertEquals(OperationalState.UNDER_CONSTRUCTION, back.operationalState());
+    }
+
+    @ParameterizedTest
+    @EnumSource(OperationalState.class)
+    @DisplayName("every OperationalState constant round-trips through the mapper")
+    void everyOperationalStateRoundTrips(OperationalState state) {
+        SpaceshipDesign back = mapper.toDomain(mapper.toEntity(withFlags(false, state)));
+        assertEquals(state, back.operationalState());
     }
 }

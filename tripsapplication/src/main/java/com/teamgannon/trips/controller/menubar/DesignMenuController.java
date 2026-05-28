@@ -1,8 +1,14 @@
 package com.teamgannon.trips.controller.menubar;
 
+import com.teamgannon.trips.construct.ConstructRegistry;
+import com.teamgannon.trips.construct.ui.ConstructLabels;
+import com.teamgannon.trips.construct.ui.InstallationDesignerPanel;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.io.SpaceshipJsonService;
 import com.teamgannon.trips.spaceshipmodeller.service.SpaceshipService;
+import com.teamgannon.trips.spaceshipmodeller.service.StationDesignerService;
+import com.teamgannon.trips.spaceshipmodeller.service.TransportNodeService;
+import com.teamgannon.trips.spaceshipmodeller.service.WeaponInstallationDesignerService;
 import com.teamgannon.trips.spaceshipmodeller.templates.SpaceshipTemplateLibrary;
 import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipDesignerPanel;
 import com.teamgannon.trips.spaceshipmodeller.ui.SpaceshipModellerLabels;
@@ -33,20 +39,35 @@ public class DesignMenuController {
     private final SpaceshipTemplateLibrary templateLibrary;
     private final TransferPlannerBridge transferPlannerBridge;
     private final TransferPlannerLauncher transferPlannerLauncher;
+    private final ConstructRegistry constructRegistry;
+    private final StationDesignerService stationDesignerService;
+    private final WeaponInstallationDesignerService weaponInstallationDesignerService;
+    private final TransportNodeService transportNodeService;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
+
+    /** Reused Installations Designer window instance; recreated after it is closed. */
+    private Stage installationStage;
 
     public DesignMenuController(SpaceshipService spaceshipService,
                                SpaceshipJsonService jsonService,
                                SpaceshipTemplateLibrary templateLibrary,
                                TransferPlannerBridge transferPlannerBridge,
-                               TransferPlannerLauncher transferPlannerLauncher) {
+                               TransferPlannerLauncher transferPlannerLauncher,
+                               ConstructRegistry constructRegistry,
+                               StationDesignerService stationDesignerService,
+                               WeaponInstallationDesignerService weaponInstallationDesignerService,
+                               TransportNodeService transportNodeService) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
         this.transferPlannerBridge = transferPlannerBridge;
         this.transferPlannerLauncher = transferPlannerLauncher;
+        this.constructRegistry = constructRegistry;
+        this.stationDesignerService = stationDesignerService;
+        this.weaponInstallationDesignerService = weaponInstallationDesignerService;
+        this.transportNodeService = transportNodeService;
     }
 
     /**
@@ -80,6 +101,38 @@ public class DesignMenuController {
         } catch (Exception e) {
             log.error("Error opening Spaceship Modeller", e);
             showErrorAlert("Spaceship Modeller", "Failed to open modeller: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Opens (or re-focuses) the Installations Designer window — Phase C read-only browser over
+     * the non-spaceship Constructs (stations, weapon installations, transport nodes).
+     *
+     * @param actionEvent the menu action
+     */
+    public void openInstallationDesigner(ActionEvent actionEvent) {
+        try {
+            if (installationStage == null || !installationStage.isShowing()) {
+                InstallationDesignerPanel panel = new InstallationDesignerPanel(
+                        constructRegistry,
+                        stationDesignerService,
+                        weaponInstallationDesignerService,
+                        transportNodeService);
+                installationStage = new Stage();
+                installationStage.setTitle(ConstructLabels.get("window.title"));
+                installationStage.initModality(Modality.NONE);
+                installationStage.setScene(new Scene(panel, 1100, 700));
+                installationStage.setOnCloseRequest(e -> installationStage = null);
+                installationStage.show();
+                // Fire the background load after the stage is showing so a slow registry read
+                // can't delay the window appearing on the user's screen.
+                panel.loadAsync();
+            } else {
+                installationStage.toFront();
+            }
+        } catch (Exception e) {
+            log.error("Error opening Installations Designer", e);
+            showErrorAlert("Installations Designer", "Failed to open designer: " + e.getMessage());
         }
     }
 

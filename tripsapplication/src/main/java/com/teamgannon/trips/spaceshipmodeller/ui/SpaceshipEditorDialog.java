@@ -10,6 +10,7 @@ import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationMessage;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationResult;
 import com.teamgannon.trips.utility.DialogUtils;
+import com.terranrepublic.assets.OperationalState;
 import com.terranrepublic.assets.SpaceshipDesign;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -21,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -30,6 +32,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -76,6 +79,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
     private final TextField universeField = new TextField();
     private final TextField factionField = new TextField();
     private final TextField eraField = new TextField();
+    private final CheckBox concealedCheck = new CheckBox();
+    private final ComboBox<OperationalState> operationalStateCombo = new ComboBox<>();
 
     // mass budget
     private final TextField structureField = new TextField();
@@ -141,6 +146,21 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
             }
         });
 
+        operationalStateCombo.getItems().setAll(OperationalState.values());
+        operationalStateCombo.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(OperationalState s) {
+                return s == null ? "" : operationalStateLabel(s);
+            }
+
+            @Override
+            public OperationalState fromString(String s) {
+                return null;
+            }
+        });
+        concealedCheck.setTooltip(new Tooltip(get("editor.tooltip.concealed")));
+        operationalStateCombo.setTooltip(new Tooltip(get("editor.tooltip.operationalState")));
+
         buildContent();
         DialogUtils.applyTheme(this);
         configureAccessibility();
@@ -197,7 +217,9 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         addRow(g, 7, get("editor.field.sourceUniverse"), universeField);
         addRow(g, 8, get("editor.field.faction"), factionField);
         addRow(g, 9, get("editor.field.era"), eraField);
-        addRow(g, 10, get("editor.field.description"), descriptionArea);
+        addRow(g, 10, get("editor.field.concealed"), concealedCheck);
+        addRow(g, 11, get("editor.field.operationalState"), operationalStateCombo);
+        addRow(g, 12, get("editor.field.description"), descriptionArea);
         return g;
     }
 
@@ -326,6 +348,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         annotate(universeField, get("editor.field.sourceUniverse"), "Source universe or setting for this design.");
         annotate(factionField, get("editor.field.faction"), "Faction, polity, or operator for this design.");
         annotate(eraField, get("editor.field.era"), "Era, year, or period for this design.");
+        annotate(concealedCheck, get("editor.field.concealed"), get("editor.tooltip.concealed"));
+        annotate(operationalStateCombo, get("editor.field.operationalState"), get("editor.tooltip.operationalState"));
         annotate(descriptionArea, get("editor.field.description"), "Free-form design notes.");
 
         annotate(driveCombo, get("editor.field.drive"), "Select the primary drive type.");
@@ -455,16 +479,38 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         }
         SpaceshipDesign built = builder.build();
 
-        if (existing != null) {
-            // preserve identity and creation time when editing
-            return new SpaceshipDesign(
-                    existing.id(), built.name(), built.designation(), built.shipClass(),
-                    built.driveType(), built.massBudget(), built.crewComplement(),
-                    built.lengthMeters(), built.carriedCraft(), built.iconPath(),
-                    built.description(), built.sourceType(), built.sourceUniverse(), built.faction(),
-                    built.era(), existing.createdAt());
-        }
-        return built;
+        // The SpaceshipBuilder does not (yet) carry concealed / operationalState — see
+        // commit-message gap note — so we apply both via the canonical 19-arg
+        // SpaceshipDesign constructor here. The edit path also uses the canonical
+        // constructor so it preserves both fields (and the existing id + createdAt).
+        boolean concealed = concealedCheck.isSelected();
+        OperationalState operationalState = operationalStateCombo.getValue() == null
+                ? OperationalState.OPERATIONAL
+                : operationalStateCombo.getValue();
+
+        String id = existing != null ? existing.id() : built.id();
+        java.time.Instant createdAt = existing != null ? existing.createdAt() : built.createdAt();
+
+        return new SpaceshipDesign(
+                id,
+                built.name(),
+                built.designation(),
+                built.shipClass(),
+                built.driveType(),
+                built.massBudget(),
+                built.crewComplement(),
+                built.lengthMeters(),
+                built.carriedCraft(),
+                built.armaments(),
+                built.iconPath(),
+                built.description(),
+                built.sourceType(),
+                built.sourceUniverse(),
+                built.faction(),
+                concealed,
+                operationalState,
+                built.era(),
+                createdAt);
     }
 
     private void populateFrom(SpaceshipDesign d) {
@@ -479,6 +525,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         universeField.setText(d.sourceUniverse());
         factionField.setText(d.faction());
         eraField.setText(d.era());
+        concealedCheck.setSelected(d.concealed());
+        operationalStateCombo.setValue(d.operationalState() == null ? OperationalState.OPERATIONAL : d.operationalState());
         descriptionArea.setText(d.description());
         structureField.setText(Double.toString(d.massBudget().structureMassTons()));
         engineField.setText(Double.toString(d.massBudget().engineMassTons()));
@@ -497,6 +545,8 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
         universeField.setPromptText(get("editor.universe.prompt", "e.g. The Expanse, Caine Riordan"));
         factionField.setPromptText(get("editor.faction.prompt", "e.g. Terran Republic, NASA / JPL"));
         eraField.setPromptText(get("editor.era.prompt", "e.g. 2045, Post-Contact"));
+        concealedCheck.setSelected(false);
+        operationalStateCombo.setValue(OperationalState.OPERATIONAL);
         crewField.setText(Integer.toString(getInt("default.crew", 1)));
         lengthField.setText(Double.toString(getDouble("default.length", 50)));
         structureField.setText(Double.toString(getDouble("default.mass.structure", 100)));
@@ -516,6 +566,10 @@ public class SpaceshipEditorDialog extends Dialog<SpaceshipDesign> {
             case SCIENCE_FICTION -> get("source.scienceFiction", t.label());
             case UNKNOWN -> get("source.unknown", t.label());
         };
+    }
+
+    private static String operationalStateLabel(OperationalState s) {
+        return get("operationalState." + s.name(), s.name());
     }
 
     private static String badgeText(SpaceshipDesign d) {

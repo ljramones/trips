@@ -6,6 +6,7 @@ import tools.jackson.databind.ObjectMapper;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.terranrepublic.assets.Armament;
+import com.terranrepublic.assets.OperationalState;
 import com.terranrepublic.assets.SpaceshipDesign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -65,6 +66,12 @@ public class SpaceshipDesignMapper {
         entity.setSourceUniverse(design.sourceUniverse());
         entity.setFaction(design.faction());
         entity.setEra(design.era());
+        // Phase A0 (Constructs): close the round-trip-loss bug documented in
+        // constructs-existing-hierarchies.md §4.4. Before V6 these two fields
+        // were silently dropped on persist and the compact constructor
+        // reconstituted operationalState as OPERATIONAL on read.
+        entity.setConcealed(design.concealed());
+        entity.setOperationalState(design.operationalState());
         entity.setCreatedAt(design.createdAt());
         return entity;
     }
@@ -84,6 +91,13 @@ public class SpaceshipDesignMapper {
                 entity.getCrewMassTons(),
                 entity.getRadiatorMassTons());
 
+        OperationalState state = entity.getOperationalState();
+        if (state == null) {
+            // Defensive: rows materialised before V6 ran could surface null.
+            // The compact constructor would also default to OPERATIONAL but
+            // we prefer to be explicit at the persistence boundary.
+            state = OperationalState.OPERATIONAL;
+        }
         return new SpaceshipDesign(
                 entity.getId(),
                 entity.getName(),
@@ -100,6 +114,8 @@ public class SpaceshipDesignMapper {
                 entity.getSourceType(),
                 entity.getSourceUniverse(),
                 entity.getFaction(),
+                entity.isConcealed(),
+                state,
                 entity.getEra(),
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now());
     }
