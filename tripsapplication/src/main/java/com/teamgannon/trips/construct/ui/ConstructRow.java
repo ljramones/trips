@@ -1,6 +1,7 @@
 package com.teamgannon.trips.construct.ui;
 
 import com.terranrepublic.assets.Cataloged;
+import com.terranrepublic.assets.Megastructure;
 import com.terranrepublic.assets.SpaceAsset;
 import com.terranrepublic.assets.StationDesign;
 import com.terranrepublic.assets.WeaponInstallation;
@@ -35,6 +36,7 @@ public final class ConstructRow {
         return switch (construct) {
             case StationDesign s -> s.designation();
             case WeaponInstallation w -> w.designation();
+            case Megastructure m -> m.designation();
             case TransportNode ignored -> "";
             default -> "";
         };
@@ -49,6 +51,7 @@ public final class ConstructRow {
         return switch (construct) {
             case StationDesign ignored -> "STATION";
             case WeaponInstallation ignored -> "WEAPON_INSTALLATION";
+            case Megastructure ignored -> "MEGASTRUCTURE";
             case TransportNode ignored -> "TRANSPORT_NODE";
             default -> "UNKNOWN";
         };
@@ -59,6 +62,7 @@ public final class ConstructRow {
         return switch (construct) {
             case StationDesign s -> s.stationType().name();
             case WeaponInstallation w -> w.installationType().name();
+            case Megastructure m -> m.archetype().name();
             case TransportNode t -> t.type().name();
             default -> "";
         };
@@ -84,6 +88,7 @@ public final class ConstructRow {
         return switch (construct) {
             case StationDesign s -> s.operationalState().name();
             case WeaponInstallation w -> w.operationalState().name();
+            case Megastructure m -> m.operationalState().name();
             case TransportNode ignored -> "—";
             default -> "";
         };
@@ -98,6 +103,7 @@ public final class ConstructRow {
         return switch (construct) {
             case StationDesign s -> s.category();
             case WeaponInstallation w -> w.category();
+            case Megastructure m -> m.category();
             case TransportNode ignored -> "";
             default -> "";
         };

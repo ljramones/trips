@@ -6,12 +6,16 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Triggers a one-shot seed of the {@code WEAPON_INSTALLATION} table from
+ * Triggers a one-shot sync of the {@code WEAPON_INSTALLATION} table from
  * {@link com.terranrepublic.assets.Catalog Catalog} once the Spring context is fully started.
  * <p>
  * Same architecture as {@link StationCatalogSeeder}: a separate {@code @Component} listener that
- * delegates to the service's idempotent {@code seedFromCatalogIfEmpty()}, swallowing service-side
- * exceptions so a seed failure cannot block the {@link ApplicationReadyEvent} broadcast.
+ * delegates to the service's {@code syncCatalogEntries()}, swallowing service-side exceptions so
+ * a sync failure cannot block the {@link ApplicationReadyEvent} broadcast.
+ * <p>
+ * v2 Phase D.8 §3.1 — the sync is insert-only and idempotent at the row level: each Catalog
+ * entry is inserted only when {@code existsById} returns false. Re-runs after the first launch
+ * insert zero rows.
  */
 @Slf4j
 @Component
@@ -24,15 +28,15 @@ public class WeaponInstallationCatalogSeeder {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void seedOnApplicationReady() {
+    public void syncOnApplicationReady() {
         try {
-            int seeded = service.seedFromCatalogIfEmpty();
-            if (seeded > 0) {
-                log.info("Phase B seed: {} weapon installation(s) inserted from Catalog into an empty "
-                        + "WEAPON_INSTALLATION table", seeded);
+            int inserted = service.syncCatalogEntries();
+            if (inserted > 0) {
+                log.info("Phase D.8 sync: {} new weapon installation(s) inserted from Catalog into the "
+                        + "WEAPON_INSTALLATION table", inserted);
             }
         } catch (Exception e) {
-            log.error("Phase B weapon-installation seed failed; table will be empty until the next launch", e);
+            log.error("Weapon-installation catalog sync failed; table may be incomplete until the next launch", e);
         }
     }
 }

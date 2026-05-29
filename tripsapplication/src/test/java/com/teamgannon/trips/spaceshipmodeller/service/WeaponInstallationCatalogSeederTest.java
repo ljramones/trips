@@ -25,18 +25,18 @@ class WeaponInstallationCatalogSeederTest {
     }
 
     @Test
-    @DisplayName("ApplicationReadyEvent triggers exactly one delegation to the service")
+    @DisplayName("ApplicationReadyEvent triggers exactly one delegation to syncCatalogEntries")
     void readyEventDelegatesOnce() {
-        when(service.seedFromCatalogIfEmpty()).thenReturn(2);
-        seeder.seedOnApplicationReady();
-        verify(service, times(1)).seedFromCatalogIfEmpty();
+        when(service.syncCatalogEntries()).thenReturn(2);
+        seeder.syncOnApplicationReady();
+        verify(service, times(1)).syncCatalogEntries();
     }
 
     @Test
     @DisplayName("Service-side exception is caught so startup is not crashed")
     void serviceExceptionIsSwallowed() {
-        when(service.seedFromCatalogIfEmpty()).thenThrow(new RuntimeException("DB unreachable"));
-        seeder.seedOnApplicationReady();
-        verify(service, times(1)).seedFromCatalogIfEmpty();
+        when(service.syncCatalogEntries()).thenThrow(new RuntimeException("DB unreachable"));
+        seeder.syncOnApplicationReady();
+        verify(service, times(1)).syncCatalogEntries();
     }
 }

@@ -98,20 +98,21 @@ class TransportNodeServiceTest {
     }
 
     @Test
-    @DisplayName("seedFromCatalogIfEmpty returns zero (no canonical transport nodes in Catalog today)")
-    void seedReturnsZeroBecauseNoCatalogEntries() {
-        when(repository.count()).thenReturn(0L);
-        int seeded = service.seedFromCatalogIfEmpty();
-        assertEquals(0, seeded, "Catalog has no TransportNode entries; pattern is preserved but inactive");
+    @DisplayName("syncCatalogEntries returns zero (no canonical transport nodes in Catalog today)")
+    void syncReturnsZeroBecauseNoCatalogEntries() {
+        int inserted = service.syncCatalogEntries();
+        assertEquals(0, inserted,
+                "Catalog has no TransportNode entries; D.8 sync-by-id pattern is in place but vacuous");
         verify(repository, never()).save(any(TransportNodeEntity.class));
     }
 
     @Test
-    @DisplayName("seedFromCatalogIfEmpty stays a no-op when the table is non-empty")
-    void seedNonEmptyIsNoop() {
-        when(repository.count()).thenReturn(1L);
-        int seeded = service.seedFromCatalogIfEmpty();
-        assertEquals(0, seeded);
+    @DisplayName("syncCatalogEntries is idempotent — second run after first still returns zero")
+    void syncIsIdempotent() {
+        int first = service.syncCatalogEntries();
+        int second = service.syncCatalogEntries();
+        assertEquals(0, first);
+        assertEquals(0, second);
         verify(repository, never()).save(any(TransportNodeEntity.class));
     }
 

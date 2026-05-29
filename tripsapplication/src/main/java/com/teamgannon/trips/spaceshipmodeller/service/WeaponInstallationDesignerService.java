@@ -84,29 +84,34 @@ public class WeaponInstallationDesignerService {
     }
 
     /**
-     * Seeds the weapon-installation table from {@link Catalog#all()}, filtered to
-     * {@link WeaponInstallation} instances, if and only if the table is empty.
+     * v2 Phase D.8 §3.1 — sync-by-id seed.
      * <p>
-     * Same idempotency contract as {@link StationDesignerService#seedFromCatalogIfEmpty()}: a
-     * non-empty table is left alone.
+     * For each {@link WeaponInstallation} in {@link Catalog#all()}, insert into JPA if and only if
+     * no row with that id exists. Does NOT update existing rows (preserves user edits). Does NOT
+     * delete orphan rows (preserves user-created entries).
+     * <p>
+     * Same contract as {@link StationDesignerService#syncCatalogEntries()}.
      *
-     * @return the number of weapon installations seeded (zero if the table was already populated)
+     * @return the number of new weapon installations inserted (zero on idempotent re-runs)
      */
     @Transactional
-    public int seedFromCatalogIfEmpty() {
-        if (count() > 0) {
-            return 0;
-        }
-        List<WeaponInstallation> installations = Catalog.all().stream()
+    public int syncCatalogEntries() {
+        List<WeaponInstallation> catalogInstallations = Catalog.all().stream()
                 .filter(WeaponInstallation.class::isInstance)
                 .map(WeaponInstallation.class::cast)
                 .toList();
-        for (WeaponInstallation design : installations) {
-            repository.save(mapper.toEntity(design));
+        int inserted = 0;
+        for (WeaponInstallation design : catalogInstallations) {
+            if (!repository.existsById(design.id())) {
+                repository.save(mapper.toEntity(design));
+                inserted++;
+            }
         }
-        log.info("Seeded {} weapon installation(s) from Catalog into an empty WEAPON_INSTALLATION table",
-                installations.size());
-        return installations.size();
+        if (inserted > 0) {
+            log.info("Synced {} new weapon installation(s) from Catalog into the WEAPON_INSTALLATION table",
+                    inserted);
+        }
+        return inserted;
     }
 
     /** @return {@link #findAll()} typed as {@link SpaceAsset} for the construct registry */

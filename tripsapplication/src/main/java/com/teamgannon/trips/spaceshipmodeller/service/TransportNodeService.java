@@ -16,14 +16,12 @@ import java.util.Optional;
 /**
  * Application service for managing persisted {@link TransportNode}s.
  * <p>
- * Mirrors {@link StationDesignerService} / {@link WeaponInstallationDesignerService} except for
- * one deliberate omission: there is <strong>no {@code TransportNodeCatalogSeeder}</strong>
- * companion {@code @Component}. v2 §5 Phase B explicitly notes that there are no canonical
- * transport nodes in the catalogue to seed, so first-launch starts the table empty and the
- * user populates it. The {@link #seedFromCatalogIfEmpty()} method here is kept for pattern
- * symmetry — it filters {@code Catalog.all()} for transport nodes (currently none, hence
- * always zero) so a future catalogue addition would auto-seed without code change, but no
- * Spring component triggers it at startup today.
+ * Mirrors {@link StationDesignerService} / {@link WeaponInstallationDesignerService}. v2 Phase D.8
+ * Step 5 adds {@link TransportNodeCatalogSeeder} so all four {@code *DesignerService} classes
+ * (Station / WeaponInstallation / TransportNode / Megastructure) have parity at the seeder layer.
+ * The {@link #syncCatalogEntries()} method filters {@code Catalog.all()} for transport nodes
+ * (currently none, so the sync returns zero), so a future catalogue addition auto-seeds without
+ * code change.
  * <p>
  * The class is named {@code TransportNodeService} (not {@code TransportNodeDesignerService})
  * because infrastructure entries are not "designs" in the same sense ships and stations are.
@@ -85,21 +83,36 @@ public class TransportNodeService {
     }
 
     /**
-     * Symmetry-preserving idempotent seeder. Currently a no-op because {@code Catalog.all()}
-     * carries no transport-node entries; kept here so the pattern is identical to the
-     * SpaceAsset-side services. No Spring component triggers this method today — v2 §5 Phase B
-     * explicitly chose not to ship a {@code TransportNodeCatalogSeeder}.
+     * v2 Phase D.8 §3.1 — sync-by-id seed.
+     * <p>
+     * For each {@link TransportNode} in {@link com.terranrepublic.assets.Catalog#all()}, insert
+     * into JPA if and only if no row with that id exists. Does NOT update existing rows
+     * (preserves user edits). Does NOT delete orphan rows (preserves user-created entries).
+     * <p>
+     * {@code Catalog.all()} carries no canonical transport-node entries today, so the loop is
+     * vacuous and the method returns zero. When a future Catalog adds transport-node constants,
+     * sync activates without further code change. Same contract as
+     * {@link StationDesignerService#syncCatalogEntries()}.
      *
-     * @return the number of transport nodes seeded (always zero until the catalogue gains some)
+     * @return the number of new transport nodes inserted (zero today; zero on idempotent re-runs)
      */
     @Transactional
-    public int seedFromCatalogIfEmpty() {
-        if (count() > 0) {
-            return 0;
+    public int syncCatalogEntries() {
+        List<TransportNode> catalogNodes = com.terranrepublic.assets.Catalog.all().stream()
+                .filter(TransportNode.class::isInstance)
+                .map(TransportNode.class::cast)
+                .toList();
+        int inserted = 0;
+        for (TransportNode design : catalogNodes) {
+            if (!repository.existsById(design.id())) {
+                repository.save(mapper.toEntity(design));
+                inserted++;
+            }
         }
-        // No transport-node constants in com.terranrepublic.assets.Catalog today. When some are
-        // added, filter Catalog.all() to TransportNode here and the seed will activate.
-        return 0;
+        if (inserted > 0) {
+            log.info("Synced {} new transport node(s) from Catalog into the TRANSPORT_NODE table", inserted);
+        }
+        return inserted;
     }
 
     /** @return {@link #findAll()} typed as {@link SpaceInfrastructure} for the construct registry */

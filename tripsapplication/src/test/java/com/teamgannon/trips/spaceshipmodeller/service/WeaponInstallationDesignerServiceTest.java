@@ -79,22 +79,22 @@ class WeaponInstallationDesignerServiceTest {
     }
 
     @Test
-    @DisplayName("seedFromCatalogIfEmpty seeds Catalog weapon installations when empty")
-    void seedWhenEmpty() {
-        when(repository.count()).thenReturn(0L);
-        int seeded = service.seedFromCatalogIfEmpty();
+    @DisplayName("syncCatalogEntries inserts every Catalog weapon installation when the table is empty")
+    void syncFromEmptyInsertsAllCatalogEntries() {
+        when(repository.existsById(any())).thenReturn(false);
+        int inserted = service.syncCatalogEntries();
 
         long count = Catalog.all().stream().filter(WeaponInstallation.class::isInstance).count();
-        assertEquals(count, seeded, "seed count must match Catalog.all() weapon-installation entries");
+        assertEquals(count, inserted, "sync must insert every Catalog weapon-installation entry");
         verify(repository, times((int) count)).save(any(WeaponInstallationEntity.class));
     }
 
     @Test
-    @DisplayName("seedFromCatalogIfEmpty does not seed when non-empty (idempotent)")
-    void seedWhenNonEmptyIsNoop() {
-        when(repository.count()).thenReturn(2L);
-        int seeded = service.seedFromCatalogIfEmpty();
-        assertEquals(0, seeded);
+    @DisplayName("syncCatalogEntries inserts zero rows when every Catalog id already present (idempotent)")
+    void syncIsIdempotentWhenAllCatalogEntriesPresent() {
+        when(repository.existsById(any())).thenReturn(true);
+        int inserted = service.syncCatalogEntries();
+        assertEquals(0, inserted, "idempotent re-runs must insert zero rows");
         verify(repository, never()).save(any(WeaponInstallationEntity.class));
     }
 

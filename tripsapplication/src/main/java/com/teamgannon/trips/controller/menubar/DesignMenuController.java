@@ -43,6 +43,7 @@ public class DesignMenuController {
     private final StationDesignerService stationDesignerService;
     private final WeaponInstallationDesignerService weaponInstallationDesignerService;
     private final TransportNodeService transportNodeService;
+    private final com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
@@ -58,7 +59,8 @@ public class DesignMenuController {
                                ConstructRegistry constructRegistry,
                                StationDesignerService stationDesignerService,
                                WeaponInstallationDesignerService weaponInstallationDesignerService,
-                               TransportNodeService transportNodeService) {
+                               TransportNodeService transportNodeService,
+                               com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
@@ -68,6 +70,7 @@ public class DesignMenuController {
         this.stationDesignerService = stationDesignerService;
         this.weaponInstallationDesignerService = weaponInstallationDesignerService;
         this.transportNodeService = transportNodeService;
+        this.megastructureDesignerService = megastructureDesignerService;
     }
 
     /**
@@ -117,7 +120,8 @@ public class DesignMenuController {
                         constructRegistry,
                         stationDesignerService,
                         weaponInstallationDesignerService,
-                        transportNodeService);
+                        transportNodeService,
+                        megastructureDesignerService);
                 installationStage = new Stage();
                 installationStage.setTitle(ConstructLabels.get("window.title"));
                 installationStage.initModality(Modality.NONE);

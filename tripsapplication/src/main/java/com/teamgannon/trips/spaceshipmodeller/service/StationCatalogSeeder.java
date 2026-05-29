@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
  * so the seed has to fire at application-ready time. {@link ApplicationReadyEvent} guarantees
  * Flyway has already run by the time this listener is invoked.
  * <p>
- * The seed is idempotent: re-runs after the first launch are no-ops because
- * {@link StationDesignerService#seedFromCatalogIfEmpty()} checks the row count before inserting.
- * v2 §6 decision Q4 pinned this behaviour.
+ * The sync is idempotent at the row level (v2 Phase D.8 §3.1): each Catalog entry is inserted
+ * only when {@code existsById} returns false. Re-runs after the first launch insert zero rows
+ * because every catalog id is already present. Replaces the pre-D.8 seed-on-empty contract,
+ * which silently swallowed every Catalog change after first launch.
  */
 @Slf4j
 @Component
@@ -29,15 +30,15 @@ public class StationCatalogSeeder {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void seedOnApplicationReady() {
+    public void syncOnApplicationReady() {
         try {
-            int seeded = stationDesignerService.seedFromCatalogIfEmpty();
-            if (seeded > 0) {
-                log.info("Phase A seed: {} station(s) inserted from Catalog into an empty STATION_DESIGN table",
-                        seeded);
+            int inserted = stationDesignerService.syncCatalogEntries();
+            if (inserted > 0) {
+                log.info("Phase D.8 sync: {} new station(s) inserted from Catalog into the STATION_DESIGN table",
+                        inserted);
             }
         } catch (Exception e) {
-            log.error("Phase A seed failed; stations will be empty until the next launch", e);
+            log.error("Station catalog sync failed; stations may be incomplete until the next launch", e);
         }
     }
 }
