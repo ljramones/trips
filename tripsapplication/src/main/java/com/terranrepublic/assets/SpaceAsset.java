@@ -17,9 +17,10 @@ import java.util.List;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SpaceshipDesign.class, name = "SHIP"),
         @JsonSubTypes.Type(value = StationDesign.class, name = "STATION"),
-        @JsonSubTypes.Type(value = WeaponInstallation.class, name = "WEAPON_INSTALLATION")
+        @JsonSubTypes.Type(value = WeaponInstallation.class, name = "WEAPON_INSTALLATION"),
+        @JsonSubTypes.Type(value = Megastructure.class, name = "MEGASTRUCTURE")
 })
-public sealed interface SpaceAsset extends Cataloged permits SpaceshipDesign, StationDesign, WeaponInstallation {
+public sealed interface SpaceAsset extends Cataloged permits SpaceshipDesign, StationDesign, WeaponInstallation, Megastructure {
 
     String designation();
 

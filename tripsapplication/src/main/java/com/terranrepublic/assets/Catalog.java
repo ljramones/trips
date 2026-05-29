@@ -8,7 +8,6 @@ import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Seed catalog entries for non-ship assets and ship-adjacent assets that need the shared asset view.
@@ -46,71 +45,100 @@ public final class Catalog {
 
     private static final Instant CREATED_AT = Instant.now();
 
-    public static final StationDesign TROY = new StationDesign(
-            UUID.randomUUID().toString(),
+    /**
+     * Canon armaments for Troy. Defined once here and shared with the {@link Megastructure}
+     * constructor below. CANON values (where known) + INFERRED quantities per the Troy Rising
+     * source flagging convention.
+     */
+    private static final List<Armament> TROY_ARMAMENTS = List.of(
+            new Armament(
+                    "SAPL feed apertures",
+                    WeaponType.SOLAR_PUMPED_LASER,
+                    0,
+                    0,
+                    0,
+                    "Primary",
+                    "Fed by external SAPL; aperture count, power, and range unknown"),
+            new Armament(
+                    "Heavy Laser Emitters",
+                    WeaponType.LASER,
+                    500,
+                    0,
+                    0,
+                    "Anti-ship",
+                    "Quantity INFERRED; power and range unknown"),
+            new Armament(
+                    "Missile Ports",
+                    WeaponType.MISSILE,
+                    1_000,
+                    0,
+                    0,
+                    "Anti-ship",
+                    "Quantity INFERRED; missile type and range unknown"));
+
+    /**
+     * v2 Phase D.7 Step 6 — Troy migrated from {@link StationDesign} to {@link Megastructure}.
+     * Rationale: Troy is a hollowed 23km asteroid with a self-contained interior setting
+     * (thousands of crew, SAPL control infrastructure, internal fabrication, primary shipyard).
+     * Modeling it as a {@code StationType.GATE_FORT} {@code StationDesign} captured its role but
+     * not its nature; the {@code CONVERTED_ASTEROID} archetype is the honest classification.
+     *
+     * <p>Worked-example values from D.7 design §7 (adjusted per Divergence D resolution):
+     * <ul>
+     *   <li>{@code Mobility.MOBILE_LIMITED} + {@code DriveType.ORION} preserve the canon
+     *       maneuverability under ORION pulses (D.7 Divergence D);</li>
+     *   <li>{@code dryMassMegatons = 2.0e6} preserves the CANON two trillion tons figure from
+     *       the prior {@code StationDesign} (2.0e12 tons / 10^6 = 2×10^6 MT);</li>
+     *   <li>{@code internalVolumeKm3 = 150.0} mirrors the pre-migration {@code pressurizedVolumeM3
+     *       = 1.5e11} (= 150 km³);</li>
+     *   <li>{@code interiorPopulation = 50000L} per D.7 §7 (the prior {@code crewComplement
+     *       = 120000} on the {@code StationDesign} captured the maximum war-footing crew
+     *       envelope; 50k is the steady-state population per the design's worked example).</li>
+     * </ul>
+     */
+    public static final Megastructure TROY = new Megastructure(
+            "catalog-troy",
             "Troy",
             "BS-1",
-            StationType.GATE_FORT,
-            // faction / concealed / allegiance pinned to the pre-Phase-D.6 23-arg-compat-shim
-            // defaults: the Step 6 directive only updates the function + provenance axes for
-            // TROY. Touching the faction/allegiance semantics is out of scope.
-            "Unknown",
-            false,
-            null,
-            "Hollowed nickel-iron asteroid gate-fort. CANON dry mass is two trillion tons; CANON interior "
-                    + "cavity is about 7 km; CANON armor is approximate, described as walls kilometres thick. "
-                    + "CANON AI is named Paris. INFERRED values: 9000 m overall span, 150000 crew capacity, "
-                    + "120000 crew complement, 1.5e11 m3 pressurized volume, 5.0e7 m3 hangar volume.",
-            9_000,
-            7_000,
-            2.0e12,
-            2_000,
-            150_000,
-            120_000,
-            1.5e11,
-            Mobility.MANEUVERABLE,
+            "Hollowed nickel-iron asteroid (originally Hektor), reshaped by the Saturn Photon "
+                    + "Project into Earth's primary defensive fortress. 23km diameter. Houses the SAPL "
+                    + "control infrastructure, thousands of crew, internal fabrication, and Earth's primary "
+                    + "shipyard. The defining military installation of the post-first-Posleen-war Solar "
+                    + "System. CANON AI is named Paris.",
+            "Solar System defense fortress",
+            "INFERRED: precise armament counts not given in source; steady-state interior population "
+                    + "approximate (CANON crew envelope under war footing was higher). CANON dry mass is "
+                    + "two trillion tons (= 2×10^6 MT). CANON interior cavity is about 7 km; "
+                    + "internalVolumeKm3 = 150 mirrors the prior StationDesign's 1.5×10^11 m³ "
+                    + "pressurized-volume figure.",
+            MegastructureArchetype.CONVERTED_ASTEROID,
+            23.0,
+            2.0e6,
+            150.0,
+            Mobility.MOBILE_LIMITED,
             DriveType.ORION,
-            List.of(),
-            List.of(
-                    new Armament(
-                            "SAPL feed apertures",
-                            WeaponType.SOLAR_PUMPED_LASER,
-                            0,
-                            0,
-                            0,
-                            "Primary",
-                            "Fed by external SAPL; aperture count, power, and range unknown"),
-                    new Armament(
-                            "Heavy Laser Emitters",
-                            WeaponType.LASER,
-                            500,
-                            0,
-                            0,
-                            "Anti-ship",
-                            "Quantity INFERRED; power and range unknown"),
-                    new Armament(
-                            "Missile Ports",
-                            WeaponType.MISSILE,
-                            1_000,
-                            0,
-                            0,
-                            "Anti-ship",
-                            "Quantity INFERRED; missile type and range unknown")),
-            5.0e7,
-            true,
-            TechLevel.ADVANCED,
-            "gate fortification",
-            OperationalState.OPERATIONAL,
-            CREATED_AT,
-            CREATED_AT,
-            // v2 Phase D.6 function + provenance axes (worked-example values).
+            MegastructureOriginType.BUILT_BY_KNOWN,
+            "Solar Confederation / Saturn Photon Project",
+            null,
+            2014,
             StationFunction.DEFENSIVE,
-            Set.of(StationFunction.MILITARY_COMMAND),
+            Set.of(StationFunction.MILITARY_COMMAND, StationFunction.SHIPBUILDING),
+            true,
+            50_000L,
+            InteriorGravityType.NATURAL_MASS,
+            OperationalState.OPERATIONAL,
+            false,
+            TROY_ARMAMENTS,
             new CatalogProvenance(SourceType.SCIENCE_FICTION, "Troy Rising", "Troy Rising",
-                    CatalogOperationalStatus.FICTIONAL));
+                    CatalogOperationalStatus.FICTIONAL),
+            "Solar Confederation",
+            "Solar Confederation",
+            TechLevel.ADVANCED,
+            CREATED_AT,
+            CREATED_AT);
 
     public static final WeaponInstallation SAPL = new WeaponInstallation(
-            UUID.randomUUID().toString(),
+            "catalog-sapl",
             "SAPL",
             "Solar Array Pumped Laser",
             InstallationType.BEAM_ARRAY,
@@ -137,7 +165,7 @@ public final class Catalog {
             CREATED_AT);
 
     public static final WeaponInstallation SHEVA_GUN = new WeaponInstallation(
-            UUID.randomUUID().toString(),
+            "catalog-sheva-gun",
             "SheVa Gun",
             "SheVa-9",
             InstallationType.SUPER_CANNON,
@@ -164,7 +192,7 @@ public final class Catalog {
             CREATED_AT);
 
     public static final SpaceshipDesign POSLEEN_COMMAND_DODECAHEDRON = new SpaceshipDesign(
-            UUID.randomUUID().toString(),
+            "catalog-posleen-command-dodecahedron",
             "Posleen Command Dodecahedron",
             "C-Dec",
             ShipClass.COMMAND_SHIP,
@@ -200,7 +228,7 @@ public final class Catalog {
             CREATED_AT);
 
     public static final SpaceshipDesign POSLEEN_BATTLE_DODECAHEDRON = new SpaceshipDesign(
-            UUID.randomUUID().toString(),
+            "catalog-posleen-battle-dodecahedron",
             "Posleen Battle Dodecahedron",
             "B-Dec",
             ShipClass.DREADNOUGHT,
@@ -247,7 +275,7 @@ public final class Catalog {
      * Sources: NASA ISS overview (nasa.gov); Wikipedia "International Space Station".
      */
     public static final StationDesign ISS = new StationDesign(
-            "real-station-iss",
+            "catalog-iss",
             "International Space Station",
             "ISS",
             StationType.ORBITAL_CITADEL,
@@ -288,7 +316,7 @@ public final class Catalog {
      * Sources: CNSA; Wikipedia "Tiangong space station".
      */
     public static final StationDesign TIANGONG = new StationDesign(
-            "real-station-tiangong",
+            "catalog-tiangong",
             "Tiangong",
             "TSS",
             StationType.ORBITAL_CITADEL,
@@ -331,7 +359,7 @@ public final class Catalog {
      * Pacific (planned end-of-life, distinct from a {@code WRECK} after-failure outcome).
      */
     public static final StationDesign MIR = new StationDesign(
-            "real-station-mir",
+            "catalog-mir",
             "Mir",
             "Mir",
             StationType.ORBITAL_CITADEL,
@@ -374,7 +402,7 @@ public final class Catalog {
      * uncontrolled but pre-planned end-of-life).
      */
     public static final StationDesign SKYLAB = new StationDesign(
-            "real-station-skylab",
+            "catalog-skylab",
             "Skylab",
             "Skylab",
             StationType.HABITAT,
@@ -414,7 +442,7 @@ public final class Catalog {
      * Sources: NASA NSSDC Salyut 1; Wikipedia "Salyut 1".
      */
     public static final StationDesign SALYUT_1 = new StationDesign(
-            "real-station-salyut-1",
+            "catalog-salyut-1",
             "Salyut 1",
             "DOS-1",
             StationType.HABITAT,
@@ -456,7 +484,7 @@ public final class Catalog {
      * re-entry over Capitán Bermúdez, Argentina was uncontrolled — see description.
      */
     public static final StationDesign SALYUT_7 = new StationDesign(
-            "real-station-salyut-7",
+            "catalog-salyut-7",
             "Salyut 7",
             "DOS-6",
             StationType.HABITAT,
@@ -503,7 +531,7 @@ public final class Catalog {
      * carries the program-status caveat.
      */
     public static final StationDesign LUNAR_GATEWAY = new StationDesign(
-            "real-station-lunar-gateway",
+            "catalog-lunar-gateway",
             "Lunar Gateway",
             "Gateway",
             StationType.OUTPOST,
@@ -556,7 +584,7 @@ public final class Catalog {
      * comanifested early-module configuration.
      */
     public static final StationDesign AXIOM_STATION = new StationDesign(
-            "real-station-axiom",
+            "catalog-axiom",
             "Axiom Station",
             "Axiom",
             StationType.HABITAT,

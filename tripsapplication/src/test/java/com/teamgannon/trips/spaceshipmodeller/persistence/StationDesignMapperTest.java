@@ -143,13 +143,9 @@ class StationDesignMapperTest {
         assertEquals(OperationalState.OPERATIONAL, back.operationalState());
     }
 
-    @Test
-    @DisplayName("Catalog.TROY (canonical station seed) round-trips intact")
-    void troyRoundTrips() {
-        StationDesign troy = (StationDesign) Catalog.TROY;
-        StationDesign back = mapper.toDomain(mapper.toEntity(troy));
-        assertEquals(troy, back, "TROY is the seed source for V7; round-trip-loss here would corrupt seed data");
-    }
+    // v2 Phase D.7 Step 6 — the prior `troyRoundTrips()` test is gone: Troy is no longer a
+    // StationDesign. Real-station round-trip coverage continues via `realStationRoundTrips`
+    // below; Troy's round-trip is now covered by MegastructureDesignMapperTest.
 
     @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
     @org.junit.jupiter.params.provider.MethodSource("realStations")

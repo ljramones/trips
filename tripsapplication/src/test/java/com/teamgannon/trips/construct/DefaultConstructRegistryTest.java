@@ -11,6 +11,7 @@ import com.teamgannon.trips.spaceshipmodeller.service.WeaponInstallationDesigner
 import com.terranrepublic.assets.AssetKind;
 import com.terranrepublic.assets.Catalog;
 import com.terranrepublic.assets.Cataloged;
+import com.terranrepublic.assets.Megastructure;
 import com.terranrepublic.assets.SpaceAsset;
 import com.terranrepublic.assets.SpaceshipDesign;
 import com.terranrepublic.assets.StationDesign;
@@ -62,6 +63,9 @@ class DefaultConstructRegistryTest {
     @Mock
     private TransportNodeService transportNodeService;
 
+    @Mock
+    private com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService;
+
     private final SpaceshipDesignMapper mapper = new SpaceshipDesignMapper();
     private DefaultConstructRegistry registry;
 
@@ -69,7 +73,8 @@ class DefaultConstructRegistryTest {
     void setUp() {
         registry = new DefaultConstructRegistry(
                 spaceshipRepository, mapper, stationDesignerService,
-                weaponInstallationDesignerService, transportNodeService);
+                weaponInstallationDesignerService, transportNodeService,
+                megastructureDesignerService);
     }
 
     private SpaceshipDesign ship(String name) {
@@ -100,6 +105,13 @@ class DefaultConstructRegistryTest {
                 .toList();
     }
 
+    private List<SpaceAsset> catalogMegastructures() {
+        return Catalog.all().stream()
+                .filter(Megastructure.class::isInstance)
+                .map(a -> (SpaceAsset) a)
+                .toList();
+    }
+
     private TransportNode ringGate(String name) {
         Instant now = Instant.parse("2025-06-01T09:00:00Z");
         return new TransportNode(
@@ -120,7 +132,7 @@ class DefaultConstructRegistryTest {
     }
 
     @Test
-    @DisplayName("allById spans ships + stations + weapon installations + transport nodes")
+    @DisplayName("allById spans ships + stations + weapon installations + megastructures + transport nodes")
     void allByIdSpansAllPersistedKinds() {
         SpaceshipDesign alpha = ship("Alpha");
         SpaceshipDesign beta = ship("Beta");
@@ -129,19 +141,26 @@ class DefaultConstructRegistryTest {
                 .thenReturn(List.of(mapper.toEntity(alpha), mapper.toEntity(beta)));
         when(stationDesignerService.findAllAsAssets()).thenReturn(catalogStations());
         when(weaponInstallationDesignerService.findAllAsAssets()).thenReturn(catalogWeaponInstallations());
+        when(megastructureDesignerService.findAllAsAssets()).thenReturn(catalogMegastructures());
         when(transportNodeService.findAllAsInfrastructure())
                 .thenReturn(List.of((SpaceInfrastructure) gate));
 
         List<Cataloged> all = registry.allById();
 
-        int expectedSize = 2 + catalogStations().size() + catalogWeaponInstallations().size() + 1;
+        // v2 Phase D.8 Step 6 — allById spans all four asset buckets + transport node infrastructure.
+        // Megastructure now reads through megastructureDesignerService.findAllAsAssets() (mocked
+        // above) instead of the D.7 Step 7 Catalog-direct filter.
+        int expectedSize = 2 + catalogStations().size() + catalogWeaponInstallations().size()
+                + catalogMegastructures().size() + 1;
         assertEquals(expectedSize, all.size(),
-                "allById count = ship + station + weapon-installation + transport-node counts");
+                "allById count = ship + station + weapon-installation + megastructure + transport-node counts");
         assertEquals(2, all.stream().filter(SpaceshipDesign.class::isInstance).count());
         assertEquals(catalogStations().size(),
                 all.stream().filter(StationDesign.class::isInstance).count());
         assertEquals(catalogWeaponInstallations().size(),
                 all.stream().filter(WeaponInstallation.class::isInstance).count());
+        assertEquals(catalogMegastructures().size(),
+                all.stream().filter(Megastructure.class::isInstance).count());
         assertEquals(1, all.stream().filter(TransportNode.class::isInstance).count());
     }
 
@@ -172,6 +191,28 @@ class DefaultConstructRegistryTest {
         assertEquals(expectedNames, actualNames,
                 "STATION bucket must contain exactly the stations defined in Catalog.all()");
         assertTrue(stations.stream().allMatch(s -> s.kind() == AssetKind.STATION));
+    }
+
+    @Test
+    @DisplayName("assetsByKind(MEGASTRUCTURE) returns exactly what the service exposes — v2 Phase D.8 Step 6")
+    void assetsByKindMegastructureReturnsServiceResult() {
+        // v2 Phase D.8 Step 6 — Megastructure now reads through the JPA-backed
+        // megastructureDesignerService.findAllAsAssets(), matching SHIP / STATION / WEAPON_INSTALLATION
+        // pattern. The D.7 Step 7 Catalog-direct implementation was swapped out.
+        when(megastructureDesignerService.findAllAsAssets()).thenReturn(catalogMegastructures());
+
+        List<SpaceAsset> megas = registry.assetsByKind(AssetKind.MEGASTRUCTURE);
+
+        Set<String> expectedNames = catalogMegastructures().stream()
+                .map(SpaceAsset::name)
+                .collect(Collectors.toSet());
+        Set<String> actualNames = megas.stream().map(SpaceAsset::name).collect(Collectors.toSet());
+        assertEquals(expectedNames, actualNames,
+                "MEGASTRUCTURE bucket must contain exactly the megastructures the service exposes");
+        assertEquals(1, megas.size(),
+                "Catalog currently ships Troy as the sole Megastructure (Phase D.7 Step 6)");
+        assertEquals("Troy", megas.get(0).name());
+        assertTrue(megas.stream().allMatch(m -> m.kind() == AssetKind.MEGASTRUCTURE));
     }
 
     @Test

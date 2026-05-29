@@ -127,6 +127,7 @@ class CatalogTest {
             case SpaceshipDesign ignored -> "ship";
             case StationDesign ignored -> "station";
             case WeaponInstallation ignored -> "weapon";
+            case Megastructure ignored -> "megastructure";
         };
     }
 }

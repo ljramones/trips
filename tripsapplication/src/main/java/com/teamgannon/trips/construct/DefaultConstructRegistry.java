@@ -2,6 +2,7 @@ package com.teamgannon.trips.construct;
 
 import com.teamgannon.trips.spaceshipmodeller.persistence.SpaceshipDesignMapper;
 import com.teamgannon.trips.spaceshipmodeller.persistence.SpaceshipRepository;
+import com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService;
 import com.teamgannon.trips.spaceshipmodeller.service.StationDesignerService;
 import com.teamgannon.trips.spaceshipmodeller.service.TransportNodeService;
 import com.teamgannon.trips.spaceshipmodeller.service.WeaponInstallationDesignerService;
@@ -37,18 +38,21 @@ public class DefaultConstructRegistry implements ConstructRegistry {
     private final StationDesignerService stationDesignerService;
     private final WeaponInstallationDesignerService weaponInstallationDesignerService;
     private final TransportNodeService transportNodeService;
+    private final MegastructureDesignerService megastructureDesignerService;
 
     @Autowired
     public DefaultConstructRegistry(SpaceshipRepository spaceshipRepository,
                                     SpaceshipDesignMapper spaceshipDesignMapper,
                                     StationDesignerService stationDesignerService,
                                     WeaponInstallationDesignerService weaponInstallationDesignerService,
-                                    TransportNodeService transportNodeService) {
+                                    TransportNodeService transportNodeService,
+                                    MegastructureDesignerService megastructureDesignerService) {
         this.spaceshipRepository = spaceshipRepository;
         this.spaceshipDesignMapper = spaceshipDesignMapper;
         this.stationDesignerService = stationDesignerService;
         this.weaponInstallationDesignerService = weaponInstallationDesignerService;
         this.transportNodeService = transportNodeService;
+        this.megastructureDesignerService = megastructureDesignerService;
     }
 
     @Override
@@ -58,6 +62,7 @@ public class DefaultConstructRegistry implements ConstructRegistry {
         all.addAll(loadShips());
         all.addAll(loadStations());
         all.addAll(loadWeaponInstallations());
+        all.addAll(loadMegastructures());
         all.addAll(loadTransportNodes());
         return List.copyOf(all);
     }
@@ -70,6 +75,7 @@ public class DefaultConstructRegistry implements ConstructRegistry {
             case SHIP -> List.copyOf(loadShips());
             case STATION -> List.copyOf(loadStations());
             case WEAPON_INSTALLATION -> List.copyOf(loadWeaponInstallations());
+            case MEGASTRUCTURE -> List.copyOf(loadMegastructures());
         };
     }
 
@@ -98,6 +104,17 @@ public class DefaultConstructRegistry implements ConstructRegistry {
 
     private List<SpaceAsset> loadWeaponInstallations() {
         return weaponInstallationDesignerService.findAllAsAssets();
+    }
+
+    /**
+     * v2 Phase D.8 Step 6 — Megastructure bucket now reads through {@link MegastructureDesignerService}'s
+     * JPA-backed {@code findAllAsAssets()}, matching the SHIP / STATION / WEAPON_INSTALLATION
+     * pattern. The earlier D.7 Step 7 implementation read directly from {@code Catalog.all()}
+     * because the service + repository + seeder triple did not yet exist; D.8 Step 3 added them
+     * and D.8 Step 6 swaps this read in lockstep.
+     */
+    private List<SpaceAsset> loadMegastructures() {
+        return megastructureDesignerService.findAllAsAssets();
     }
 
     private List<SpaceInfrastructure> loadTransportNodes() {

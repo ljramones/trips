@@ -1,7 +1,7 @@
 package com.teamgannon.trips.construct.ui;
 
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
-import com.terranrepublic.assets.Catalog;
+import com.terranrepublic.assets.Armament;
 import com.terranrepublic.assets.CatalogOperationalStatus;
 import com.terranrepublic.assets.CatalogProvenance;
 import com.terranrepublic.assets.Mobility;
@@ -10,6 +10,12 @@ import com.terranrepublic.assets.SourceType;
 import com.terranrepublic.assets.StationDesign;
 import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
+import com.terranrepublic.assets.TechLevel;
+import com.terranrepublic.assets.WeaponType;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
 import org.junit.jupiter.api.Assumptions;
@@ -72,8 +78,55 @@ class StationEditorDialogTest {
         }
     }
 
+    /**
+     * v2 Phase D.7 Step 6 — Troy migrated to {@link com.terranrepublic.assets.Megastructure}.
+     * The dialog tests need a non-trivial StationDesign fixture; this is a hand-built Troy-shaped
+     * value preserving the original {@code MANEUVERABLE} + {@code ORION} mobility shape that
+     * the {@code editDialogReadsExisting} assertions rely on.
+     * <p>
+     * Cached in a static field so successive calls return the SAME instance — tests like
+     * {@code editDialogReadsExisting} compare {@code troy().id()} across calls.
+     */
+    private static final StationDesign TROY_FIXTURE = buildTroyFixture();
+
     private static StationDesign troy() {
-        return (StationDesign) Catalog.TROY;
+        return TROY_FIXTURE;
+    }
+
+    private static StationDesign buildTroyFixture() {
+        Instant now = Instant.parse("2024-01-01T00:00:00Z");
+        return new StationDesign(
+                UUID.randomUUID().toString(),
+                "Troy",
+                "TR-T",
+                StationType.GATE_FORT,
+                "Test Faction",
+                false,
+                "Test Faction",
+                "Synthetic Troy-shaped test fixture (Phase D.7 Step 6).",
+                9_000,
+                7_000,
+                2.0e12,
+                2_000,
+                150_000,
+                120_000,
+                1.5e11,
+                Mobility.MANEUVERABLE,
+                DriveType.ORION,
+                List.of(),
+                List.of(new Armament("SAPL primary", WeaponType.SOLAR_PUMPED_LASER,
+                        1, 1.0e6, 1.0e7, "main", null)),
+                5.0e7,
+                true,
+                TechLevel.ADVANCED,
+                "gate fortification",
+                OperationalState.OPERATIONAL,
+                now,
+                now,
+                StationFunction.DEFENSIVE,
+                java.util.Set.of(StationFunction.MILITARY_COMMAND),
+                new CatalogProvenance(SourceType.SCIENCE_FICTION, "Troy Rising", null,
+                        CatalogOperationalStatus.FICTIONAL));
     }
 
     @Test

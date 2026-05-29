@@ -128,13 +128,13 @@ class CatalogAuditTest {
     @Test
     @DisplayName("audit 7 — TROY.provenance.sourceUniverse == \"Troy Rising\"")
     void troyProvenanceSourceUniverse() {
-        assertEquals("Troy Rising", ((StationDesign) Catalog.TROY).provenance().sourceUniverse());
+        assertEquals("Troy Rising", ((Megastructure) Catalog.TROY).provenance().sourceUniverse());
     }
 
     @Test
     @DisplayName("audit 8 — TROY.provenance.sourceWork == \"Troy Rising\" (not null — the work-name pin)")
     void troyProvenanceSourceWork() {
-        StationDesign troy = (StationDesign) Catalog.TROY;
+        Megastructure troy = (Megastructure) Catalog.TROY;
         assertNotNull(troy.provenance().sourceWork(),
                 "TROY must carry an explicit sourceWork value; null would mean Step 6 didn't apply");
         assertEquals("Troy Rising", troy.provenance().sourceWork());
@@ -144,21 +144,23 @@ class CatalogAuditTest {
     @DisplayName("audit 9 — TROY.provenance.sourceType == SCIENCE_FICTION")
     void troyProvenanceSourceType() {
         assertEquals(SourceType.SCIENCE_FICTION,
-                ((StationDesign) Catalog.TROY).provenance().sourceType());
+                ((Megastructure) Catalog.TROY).provenance().sourceType());
     }
 
     @Test
     @DisplayName("audit 10 — TROY.primaryFunction == DEFENSIVE")
     void troyPrimaryFunction() {
-        assertEquals(StationFunction.DEFENSIVE, ((StationDesign) Catalog.TROY).primaryFunction());
+        assertEquals(StationFunction.DEFENSIVE, ((Megastructure) Catalog.TROY).primaryFunction());
     }
 
     @Test
-    @DisplayName("audit 11 — TROY.secondaryFunctions contains MILITARY_COMMAND")
-    void troySecondaryFunctionsContainsMilitaryCommand() {
-        assertTrue(((StationDesign) Catalog.TROY).secondaryFunctions()
-                        .contains(StationFunction.MILITARY_COMMAND),
-                "Troy must carry MILITARY_COMMAND as a secondary function per v2 §5 worked examples");
+    @DisplayName("audit 11 — TROY.secondaryFunctions contains MILITARY_COMMAND and SHIPBUILDING (D.7 §7)")
+    void troySecondaryFunctionsContainsMilitaryCommandAndShipbuilding() {
+        Megastructure troy = (Megastructure) Catalog.TROY;
+        assertTrue(troy.secondaryFunctions().containsAll(
+                        Set.of(StationFunction.MILITARY_COMMAND, StationFunction.SHIPBUILDING)),
+                "Troy must carry MILITARY_COMMAND and SHIPBUILDING as secondary functions "
+                        + "per v2 Phase D.7 §7 worked example; actual: " + troy.secondaryFunctions());
     }
 
     @Test
@@ -208,5 +210,210 @@ class CatalogAuditTest {
             fail("provenance.sourceUniverse contains forbidden default substring(s) in:\n  - "
                     + String.join("\n  - ", offenders));
         }
+    }
+
+    // ==================================================================
+    // v2 Phase D.7 Step 8 — Megastructure-side global invariants
+    // ==================================================================
+
+    private static List<Megastructure> megastructures() {
+        return Catalog.all().stream()
+                .filter(Megastructure.class::isInstance)
+                .map(Megastructure.class::cast)
+                .toList();
+    }
+
+    /**
+     * Megastructure-flavoured {@link #enforce} — same multi-offender pattern, scoped to the
+     * megastructure bucket. Failure messages name each offender + context.
+     */
+    private static void enforceMega(String invariantName,
+                                    java.util.function.Predicate<Megastructure> violates,
+                                    java.util.function.Function<Megastructure, String> contextFor) {
+        List<String> offenders = new ArrayList<>();
+        for (Megastructure m : megastructures()) {
+            if (violates.test(m)) {
+                offenders.add(m.name() + " — " + contextFor.apply(m));
+            }
+        }
+        if (!offenders.isEmpty()) {
+            fail(invariantName + " violated by " + offenders.size() + " megastructure(s):\n  - "
+                    + String.join("\n  - ", offenders));
+        }
+    }
+
+    @Test
+    @DisplayName("audit 16 — every Megastructure has primaryFunction != UNKNOWN")
+    void everyMegastructureHasNonUnknownPrimaryFunction() {
+        enforceMega("Megastructure primaryFunction must not be UNKNOWN",
+                m -> m.primaryFunction() == StationFunction.UNKNOWN,
+                m -> "primaryFunction=" + m.primaryFunction());
+    }
+
+    @Test
+    @DisplayName("audit 17 — no Megastructure has secondaryFunctions containing its primaryFunction")
+    void noMegaSecondarySetContainsPrimary() {
+        enforceMega("Megastructure secondaryFunctions must not contain primaryFunction",
+                m -> m.secondaryFunctions().contains(m.primaryFunction()),
+                m -> "primary=" + m.primaryFunction() + ", secondaries=" + m.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("audit 18 — every Megastructure has a non-blank provenance.sourceUniverse")
+    void everyMegaHasNonBlankSourceUniverse() {
+        enforceMega("Megastructure provenance.sourceUniverse must be non-blank",
+                m -> m.provenance().sourceUniverse() == null
+                        || m.provenance().sourceUniverse().isBlank(),
+                m -> "sourceUniverse=\"" + m.provenance().sourceUniverse() + "\"");
+    }
+
+    @Test
+    @DisplayName("audit 19 — REAL-sourced Megastructures have a real-line status (HISTORIC / ACTIVE / PLANNED / CANCELLED)")
+    void megaRealProvenanceHasRealLineStatus() {
+        Set<CatalogOperationalStatus> realLine = Set.of(
+                CatalogOperationalStatus.HISTORIC,
+                CatalogOperationalStatus.ACTIVE,
+                CatalogOperationalStatus.PLANNED,
+                CatalogOperationalStatus.CANCELLED);
+        enforceMega("REAL-sourced Megastructure must carry a real-line status",
+                m -> m.provenance().sourceType() == SourceType.REAL
+                        && !realLine.contains(m.provenance().status()),
+                m -> "sourceType=REAL, status=" + m.provenance().status());
+    }
+
+    @Test
+    @DisplayName("audit 20 — SCIENCE_FICTION-sourced Megastructures have status == FICTIONAL")
+    void megaScienceFictionProvenanceHasFictionalStatus() {
+        enforceMega("SCIENCE_FICTION-sourced Megastructure must carry FICTIONAL status",
+                m -> m.provenance().sourceType() == SourceType.SCIENCE_FICTION
+                        && m.provenance().status() != CatalogOperationalStatus.FICTIONAL,
+                m -> "sourceType=SCIENCE_FICTION, status=" + m.provenance().status());
+    }
+
+    @Test
+    @DisplayName("audit 21 — MULTI_ROLE primary on a Megastructure requires a description of ≥20 chars")
+    void megaMultiRolePrimaryRequiresDescription() {
+        enforceMega("MULTI_ROLE primary on a Megastructure must carry a description of ≥20 chars",
+                m -> m.primaryFunction() == StationFunction.MULTI_ROLE
+                        && (m.description() == null || m.description().strip().length() < 20),
+                m -> "description=\""
+                        + (m.description() == null ? "" : m.description().strip()) + "\"");
+    }
+
+    @Test
+    @DisplayName("audit 22 — no Megastructure's sourceUniverse contains forbidden default substrings")
+    void noForbiddenDefaultInMegaSourceUniverse() {
+        List<String> forbidden = List.of("dynamis", "test", "todo", "fixme", "placeholder", "xxx");
+        List<String> offenders = megastructures().stream()
+                .filter(m -> {
+                    String u = m.provenance().sourceUniverse();
+                    if (u == null) {
+                        return false;
+                    }
+                    String lower = u.toLowerCase(Locale.ROOT);
+                    return forbidden.stream().anyMatch(lower::contains);
+                })
+                .map(m -> m.name() + " (sourceUniverse=\"" + m.provenance().sourceUniverse() + "\")")
+                .collect(Collectors.toList());
+        if (!offenders.isEmpty()) {
+            fail("Megastructure provenance.sourceUniverse contains forbidden default substring(s) in:\n  - "
+                    + String.join("\n  - ", offenders));
+        }
+    }
+
+    @Test
+    @DisplayName("audit 23 — every Megastructure has archetype != UNKNOWN (UNKNOWN reserved for genuine mystery)")
+    void everyMegaHasKnownArchetype() {
+        enforceMega("Megastructure archetype must not be UNKNOWN (it is the primary categorization key)",
+                m -> m.archetype() == MegastructureArchetype.UNKNOWN,
+                m -> "archetype=UNKNOWN");
+    }
+
+    @Test
+    @DisplayName("audit 24 — BUILT_BY_KNOWN-origin Megastructures have a non-blank builderPolity")
+    void megaBuiltByKnownHasBuilderPolity() {
+        enforceMega("BUILT_BY_KNOWN Megastructure must carry a non-blank builderPolity",
+                m -> m.originType() == MegastructureOriginType.BUILT_BY_KNOWN
+                        && (m.builderPolity() == null || m.builderPolity().isBlank()),
+                m -> "originType=BUILT_BY_KNOWN, builderPolity=\""
+                        + (m.builderPolity() == null ? "null" : m.builderPolity()) + "\"");
+    }
+
+    @Test
+    @DisplayName("audit 25 — FOUND_INTACT / FOUND_DAMAGED Megastructures have a non-null discoveryYear")
+    void megaFoundHasDiscoveryYear() {
+        Set<MegastructureOriginType> foundFamily = Set.of(
+                MegastructureOriginType.FOUND_INTACT,
+                MegastructureOriginType.FOUND_DAMAGED);
+        enforceMega("FOUND_* Megastructure must carry a non-null discoveryYear",
+                m -> foundFamily.contains(m.originType()) && m.discoveryYear() == null,
+                m -> "originType=" + m.originType() + ", discoveryYear=null");
+    }
+
+    // ==================================================================
+    // v2 Phase D.7 Step 8 — Troy pinned-fact assertions (Megastructure-specific)
+    // ==================================================================
+
+    @Test
+    @DisplayName("audit 26 — TROY.archetype == CONVERTED_ASTEROID")
+    void troyArchetypeIsConvertedAsteroid() {
+        assertEquals(MegastructureArchetype.CONVERTED_ASTEROID,
+                ((Megastructure) Catalog.TROY).archetype());
+    }
+
+    @Test
+    @DisplayName("audit 27 — TROY.originType == BUILT_BY_KNOWN")
+    void troyOriginTypeIsBuiltByKnown() {
+        assertEquals(MegastructureOriginType.BUILT_BY_KNOWN,
+                ((Megastructure) Catalog.TROY).originType());
+    }
+
+    @Test
+    @DisplayName("audit 28 — TROY.builderPolity is non-null and non-blank")
+    void troyBuilderPolityIsPopulated() {
+        Megastructure troy = (Megastructure) Catalog.TROY;
+        assertNotNull(troy.builderPolity(), "Troy is BUILT_BY_KNOWN so builderPolity must be set");
+        assertTrue(!troy.builderPolity().isBlank(),
+                "Troy builderPolity must be non-blank; was: \"" + troy.builderPolity() + "\"");
+    }
+
+    @Test
+    @DisplayName("audit 29 — TROY.hasInteriorSetting == true")
+    void troyHasInteriorSetting() {
+        assertTrue(((Megastructure) Catalog.TROY).hasInteriorSetting(),
+                "Troy is a self-contained setting (thousands of crew, internal fabrication); "
+                        + "hasInteriorSetting must be true");
+    }
+
+    @Test
+    @DisplayName("audit 30 — TROY.dimensionsKm > 0")
+    void troyDimensionsKmPositive() {
+        assertTrue(((Megastructure) Catalog.TROY).dimensionsKm() > 0,
+                "Troy dimensionsKm must be positive; was: "
+                        + ((Megastructure) Catalog.TROY).dimensionsKm());
+    }
+
+    @Test
+    @DisplayName("audit 31 — TROY.mobility == MOBILE_LIMITED (D.7 Divergence D)")
+    void troyMobilityIsMobileLimited() {
+        assertEquals(Mobility.MOBILE_LIMITED, ((Megastructure) Catalog.TROY).mobility(),
+                "Troy moves under ORION pulses but stationkeeps most of the time; "
+                        + "D.7 Divergence D resolved this to MOBILE_LIMITED");
+    }
+
+    @Test
+    @DisplayName("audit 32 — TROY.auxiliaryDrive == DriveType.ORION (D.7 Divergence D — preserves the canon)")
+    void troyAuxiliaryDriveIsOrion() {
+        assertEquals(com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType.ORION,
+                ((Megastructure) Catalog.TROY).auxiliaryDrive(),
+                "Troy's ORION drive characterization from the prior StationDesign is preserved "
+                        + "in the Megastructure migration per D.7 Divergence D");
+    }
+
+    @Test
+    @DisplayName("audit 33 — TROY.interiorGravity == NATURAL_MASS (hollowed nickel-iron asteroid retains gravity)")
+    void troyInteriorGravityIsNaturalMass() {
+        assertEquals(InteriorGravityType.NATURAL_MASS,
+                ((Megastructure) Catalog.TROY).interiorGravity());
     }
 }

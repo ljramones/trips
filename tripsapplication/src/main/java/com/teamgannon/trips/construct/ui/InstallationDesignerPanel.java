@@ -2,12 +2,15 @@ package com.teamgannon.trips.construct.ui;
 
 import com.teamgannon.trips.construct.ConstructRegistry;
 import com.teamgannon.trips.javafxsupport.FxThread;
+import com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService;
 import com.teamgannon.trips.spaceshipmodeller.service.StationDesignerService;
 import com.teamgannon.trips.spaceshipmodeller.service.TransportNodeService;
 import com.teamgannon.trips.spaceshipmodeller.service.WeaponInstallationDesignerService;
 import com.terranrepublic.assets.AssetKind;
 import com.terranrepublic.assets.Cataloged;
 import com.terranrepublic.assets.InstallationType;
+import com.terranrepublic.assets.Megastructure;
+import com.terranrepublic.assets.MegastructureArchetype;
 import com.terranrepublic.assets.SpaceAsset;
 import com.terranrepublic.assets.StationDesign;
 import com.terranrepublic.assets.StationFunction;
@@ -96,6 +99,7 @@ public class InstallationDesignerPanel extends BorderPane {
     private static final String KIND_STATION = "STATION";
     private static final String KIND_WEAPON = "WEAPON_INSTALLATION";
     private static final String KIND_TRANSPORT = "TRANSPORT_NODE";
+    private static final String KIND_MEGASTRUCTURE = "MEGASTRUCTURE";
 
     /** Tab-strip sentinel for the "All" toggle. */
     private static final String UNIVERSE_ALL = "__all__";
@@ -106,6 +110,7 @@ public class InstallationDesignerPanel extends BorderPane {
     private final StationDesignerService stationService;
     private final WeaponInstallationDesignerService weaponService;
     private final TransportNodeService transportService;
+    private final MegastructureDesignerService megastructureService;
 
     // Master list — populated by loadAsync / applyConstructs, never mutated after.
     private List<ConstructRow> allRows = List.of();
@@ -139,11 +144,13 @@ public class InstallationDesignerPanel extends BorderPane {
     public InstallationDesignerPanel(ConstructRegistry registry,
                                      StationDesignerService stationService,
                                      WeaponInstallationDesignerService weaponService,
-                                     TransportNodeService transportService) {
+                                     TransportNodeService transportService,
+                                     MegastructureDesignerService megastructureService) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.stationService = Objects.requireNonNull(stationService, "stationService");
         this.weaponService = Objects.requireNonNull(weaponService, "weaponService");
         this.transportService = Objects.requireNonNull(transportService, "transportService");
+        this.megastructureService = Objects.requireNonNull(megastructureService, "megastructureService");
         setPadding(new Insets(10));
         setTop(buildHeader());
         setCenter(buildCenter());
@@ -162,7 +169,11 @@ public class InstallationDesignerPanel extends BorderPane {
         subtitle.getStyleClass().add("trips-text-muted");
 
         // Kind filter — drives which subtype values are valid.
-        kindFilter.getItems().setAll(ALL, kindLabel(KIND_STATION), kindLabel(KIND_WEAPON), kindLabel(KIND_TRANSPORT));
+        kindFilter.getItems().setAll(ALL,
+                kindLabel(KIND_STATION),
+                kindLabel(KIND_WEAPON),
+                kindLabel(KIND_TRANSPORT),
+                kindLabel(KIND_MEGASTRUCTURE));
         kindFilter.setValue(ALL);
         kindFilter.setTooltip(new Tooltip(get("filter.kind.tooltip")));
         kindFilter.setAccessibleText(get("filter.kind"));
@@ -372,6 +383,9 @@ public class InstallationDesignerPanel extends BorderPane {
         if (label.equals(kindLabel(KIND_TRANSPORT))) {
             return KIND_TRANSPORT;
         }
+        if (label.equals(kindLabel(KIND_MEGASTRUCTURE))) {
+            return KIND_MEGASTRUCTURE;
+        }
         return ALL;
     }
 
@@ -390,6 +404,11 @@ public class InstallationDesignerPanel extends BorderPane {
             }
             case KIND_TRANSPORT -> {
                 Arrays.stream(NodeType.values()).map(Enum::name).forEach(subtypeFilter.getItems()::add);
+                subtypeFilter.setDisable(false);
+            }
+            case KIND_MEGASTRUCTURE -> {
+                Arrays.stream(MegastructureArchetype.values()).map(Enum::name)
+                        .forEach(subtypeFilter.getItems()::add);
                 subtypeFilter.setDisable(false);
             }
             default -> subtypeFilter.setDisable(true);
@@ -446,6 +465,7 @@ public class InstallationDesignerPanel extends BorderPane {
     private static final String NEW_STATION = "STATION";
     private static final String NEW_WEAPON = "WEAPON_INSTALLATION";
     private static final String NEW_TRANSPORT = "TRANSPORT_NODE";
+    private static final String NEW_MEGASTRUCTURE = "MEGASTRUCTURE";
 
     private void onNew() {
         FxThread.assertFxThread();
@@ -454,8 +474,9 @@ public class InstallationDesignerPanel extends BorderPane {
         String stationLabel = get("kind." + NEW_STATION, "Station");
         String weaponLabel = get("kind." + NEW_WEAPON, "Weapon Installation");
         String transportLabel = get("kind." + NEW_TRANSPORT, "Transport Node");
+        String megastructureLabel = get("kind." + NEW_MEGASTRUCTURE, "Megastructure");
         ChoiceDialog<String> picker = new ChoiceDialog<>(stationLabel,
-                List.of(stationLabel, weaponLabel, transportLabel));
+                List.of(stationLabel, weaponLabel, transportLabel, megastructureLabel));
         picker.setTitle(get("new.picker.title"));
         picker.setHeaderText(get("new.picker.header"));
         picker.setContentText(get("new.picker.content"));
@@ -467,6 +488,8 @@ public class InstallationDesignerPanel extends BorderPane {
                 openWeaponEditor(null);
             } else if (label.equals(transportLabel)) {
                 openTransportEditor(null);
+            } else if (label.equals(megastructureLabel)) {
+                openMegastructureEditor(null);
             }
         });
     }
@@ -482,6 +505,7 @@ public class InstallationDesignerPanel extends BorderPane {
             case StationDesign s -> openStationEditor(s);
             case WeaponInstallation w -> openWeaponEditor(w);
             case TransportNode t -> openTransportEditor(t);
+            case Megastructure m -> openMegastructureEditor(m);
             default -> {
                 // ships + conduits aren't surfaced here, so the default branch is defensive only.
             }
@@ -508,6 +532,7 @@ public class InstallationDesignerPanel extends BorderPane {
                 case StationDesign s -> stationService.deleteById(s.id());
                 case WeaponInstallation w -> weaponService.deleteById(w.id());
                 case TransportNode t -> transportService.deleteById(t.id());
+                case Megastructure m -> megastructureService.deleteById(m.id());
                 default -> { /* defensive */ }
             }
             statusLabel.setText(get("status.deleted"));
@@ -539,6 +564,13 @@ public class InstallationDesignerPanel extends BorderPane {
         dialog.showAndWait().ifPresent(saved -> persistTransport(saved));
     }
 
+    private void openMegastructureEditor(Megastructure existing) {
+        MegastructureEditorDialog dialog = existing == null
+                ? new MegastructureEditorDialog()
+                : new MegastructureEditorDialog(existing);
+        dialog.showAndWait().ifPresent(saved -> persistMegastructure(saved));
+    }
+
     private void persistStation(StationDesign draft) {
         persist(() -> stationService.save(draft));
     }
@@ -549,6 +581,10 @@ public class InstallationDesignerPanel extends BorderPane {
 
     private void persistTransport(TransportNode draft) {
         persist(() -> transportService.save(draft));
+    }
+
+    private void persistMegastructure(Megastructure draft) {
+        persist(() -> megastructureService.save(draft));
     }
 
     /**
@@ -619,8 +655,11 @@ public class InstallationDesignerPanel extends BorderPane {
 
     /**
      * The off-FX-thread read that the load Task delegates to. The Installations Designer surfaces
-     * three kinds — Station, WeaponInstallation, TransportNode — explicitly excluding ships
-     * (covered by {@code SpaceshipDesignerPanel}) and conduits (deferred per v2 §6.1 Q3).
+     * four kinds — Station, WeaponInstallation, Megastructure, TransportNode — explicitly
+     * excluding ships (covered by {@code SpaceshipDesignerPanel}) and conduits (deferred per
+     * v2 §6.1 Q3). The MEGASTRUCTURE bucket was added in v2 Phase D.8 Step 6 (it existed in
+     * Catalog from D.7 Step 6 but the panel didn't read it — that asymmetry was the visible
+     * "Loaded 3 construct(s)" symptom on the user's running app at D.7 close-out).
      */
     private List<Cataloged> loadFromRegistry() {
         if (Platform.isFxApplicationThread()) {
@@ -630,6 +669,7 @@ public class InstallationDesignerPanel extends BorderPane {
         List<Cataloged> all = new ArrayList<>();
         all.addAll(registry.assetsByKind(AssetKind.STATION));
         all.addAll(registry.assetsByKind(AssetKind.WEAPON_INSTALLATION));
+        all.addAll(registry.assetsByKind(AssetKind.MEGASTRUCTURE));
         all.addAll(registry.infrastructureByKind(InfrastructureKind.TRANSPORT_NODE));
         return all;
     }
@@ -701,17 +741,24 @@ public class InstallationDesignerPanel extends BorderPane {
             if (!ALL.equals(kind) && !kind.equals(row.getKind())) {
                 continue;
             }
-            // v2 Phase D.6 Step 7 — Function filter. When a specific StationFunction is selected
-            // (i.e. not "All"), non-StationDesign rows drop out unconditionally — Weapon
-            // Installations / Spaceships / TransportNodes have no function axis, so "matches the
-            // function" can't be true for them. Station rows match if the selected function is
-            // either their primary or one of their secondaries.
+            // v2 Phase D.6 Step 7 — Function filter. When a specific StationFunction is selected,
+            // rows without a function axis (WeaponInstallation, Spaceship, TransportNode) drop
+            // out unconditionally. v2 Phase D.7 Step 6 extended the function axis to
+            // Megastructure: both StationDesign and Megastructure carry primaryFunction +
+            // secondaryFunctions, so both participate in the function filter.
             if (selectedFunction != null) {
-                if (!(row.getConstruct() instanceof StationDesign s)) {
+                StationFunction primary;
+                java.util.Set<StationFunction> secondaries;
+                if (row.getConstruct() instanceof StationDesign s) {
+                    primary = s.primaryFunction();
+                    secondaries = s.secondaryFunctions();
+                } else if (row.getConstruct() instanceof Megastructure m) {
+                    primary = m.primaryFunction();
+                    secondaries = m.secondaryFunctions();
+                } else {
                     continue;
                 }
-                if (s.primaryFunction() != selectedFunction
-                        && !s.secondaryFunctions().contains(selectedFunction)) {
+                if (primary != selectedFunction && !secondaries.contains(selectedFunction)) {
                     continue;
                 }
             }
@@ -753,6 +800,7 @@ public class InstallationDesignerPanel extends BorderPane {
             case StationDesign s -> stationSection(s);
             case WeaponInstallation w -> weaponSection(w);
             case TransportNode t -> transportSection(t);
+            case Megastructure m -> megastructureSection(m);
             default -> new Label(""); // ships + conduits aren't surfaced here
         };
         detailsContent.getChildren().add(subtypeSection);
@@ -768,6 +816,9 @@ public class InstallationDesignerPanel extends BorderPane {
         } else if (c instanceof WeaponInstallation wi) {
             addRow(g, r++, get("details.field.designation"), wi.designation());
         }
+        if (c instanceof Megastructure mg) {
+            addRow(g, r++, get("details.field.designation"), mg.designation());
+        }
         addRow(g, r++, get("details.field.source"), c.source());
         addRow(g, r++, get("details.field.faction"), c.faction());
         addRow(g, r++, get("details.field.concealed"), Boolean.toString(c.concealed()));
@@ -776,6 +827,59 @@ public class InstallationDesignerPanel extends BorderPane {
         }
         addRow(g, r++, get("details.field.description"), c.description());
         return g;
+    }
+
+    private GridPane megastructureSection(Megastructure m) {
+        GridPane g = grid();
+        int r = 0;
+        addRow(g, r++, get("details.megastructure.archetype"), m.archetype().name());
+        addRow(g, r++, get("details.megastructure.originType"), m.originType().name());
+        if (m.builderPolity() != null && !m.builderPolity().isBlank()) {
+            addRow(g, r++, get("details.megastructure.builderPolity"), m.builderPolity());
+        }
+        if (m.constructionYear() != null) {
+            addRow(g, r++, get("details.megastructure.constructionYear"), Integer.toString(m.constructionYear()));
+        }
+        if (m.discoveryYear() != null) {
+            addRow(g, r++, get("details.megastructure.discoveryYear"), Integer.toString(m.discoveryYear()));
+        }
+        addRow(g, r++, get("details.megastructure.dimensionsKm"), formatDouble(m.dimensionsKm()));
+        addRow(g, r++, get("details.megastructure.dryMassMegatons"), formatDouble(m.dryMassMegatons()));
+        addRow(g, r++, get("details.megastructure.internalVolumeKm3"), formatDouble(m.internalVolumeKm3()));
+        addRow(g, r++, get("details.megastructure.mobility"), m.mobility().name());
+        if (m.auxiliaryDrive() != null) {
+            addRow(g, r++, get("details.megastructure.auxiliaryDrive"), m.auxiliaryDrive().name());
+        }
+        if (m.allegiance() != null && !m.allegiance().isBlank()) {
+            addRow(g, r++, get("details.megastructure.allegiance"), m.allegiance());
+        }
+        addRow(g, r++, get("details.megastructure.primaryFunction"), m.primaryFunction().name());
+        addRow(g, r++, get("details.megastructure.secondaryFunctions"), formatSecondaryFunctions(m.secondaryFunctions()));
+        addRow(g, r++, get("details.megastructure.hasInteriorSetting"), Boolean.toString(m.hasInteriorSetting()));
+        addRow(g, r++, get("details.megastructure.interiorPopulation"), Long.toString(m.interiorPopulation()));
+        addRow(g, r++, get("details.megastructure.interiorGravity"), m.interiorGravity().name());
+        addRow(g, r++, get("details.megastructure.armaments"), Integer.toString(m.armaments().size()));
+        addRow(g, r++, get("details.megastructure.sourceUniverse"), m.provenance().sourceUniverse());
+        if (m.provenance().sourceWork() != null && !m.provenance().sourceWork().isBlank()) {
+            addRow(g, r++, get("details.megastructure.sourceWork"), m.provenance().sourceWork());
+        }
+        addRow(g, r++, get("details.megastructure.catalogStatus"), m.provenance().status().name());
+        return g;
+    }
+
+    /**
+     * Render the secondary-functions set as a comma-joined enum-name list, or an em dash when
+     * empty. Order is by enum declaration so the display is deterministic across calls. Reused
+     * by both the station and megastructure templates.
+     */
+    private static String formatSecondaryFunctions(java.util.Set<com.terranrepublic.assets.StationFunction> set) {
+        if (set.isEmpty()) {
+            return "—";
+        }
+        return java.util.Arrays.stream(com.terranrepublic.assets.StationFunction.values())
+                .filter(set::contains)
+                .map(Enum::name)
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
     private GridPane stationSection(StationDesign s) {
@@ -798,7 +902,7 @@ public class InstallationDesignerPanel extends BorderPane {
         addRow(g, r++, get("details.station.carriedCraft"), Integer.toString(s.carriedCraft().size()));
         // v2 Phase D.6 — function + provenance axes
         addRow(g, r++, get("details.station.primaryFunction"), s.primaryFunction().name());
-        addRow(g, r++, get("details.station.secondaryFunctions"), formatSecondaryFunctions(s));
+        addRow(g, r++, get("details.station.secondaryFunctions"), formatSecondaryFunctions(s.secondaryFunctions()));
         addRow(g, r++, get("details.station.sourceUniverse"), s.provenance().sourceUniverse());
         if (s.provenance().sourceWork() != null && !s.provenance().sourceWork().isBlank()) {
             addRow(g, r++, get("details.station.sourceWork"), s.provenance().sourceWork());
@@ -807,19 +911,6 @@ public class InstallationDesignerPanel extends BorderPane {
         return g;
     }
 
-    /**
-     * Render the secondary-functions set as a comma-joined enum-name list, or an em dash when
-     * empty. Order is by enum declaration so the display is deterministic across calls.
-     */
-    private static String formatSecondaryFunctions(StationDesign s) {
-        if (s.secondaryFunctions().isEmpty()) {
-            return "—";
-        }
-        return java.util.Arrays.stream(com.terranrepublic.assets.StationFunction.values())
-                .filter(s.secondaryFunctions()::contains)
-                .map(Enum::name)
-                .collect(java.util.stream.Collectors.joining(", "));
-    }
 
     private GridPane weaponSection(WeaponInstallation w) {
         GridPane g = grid();
