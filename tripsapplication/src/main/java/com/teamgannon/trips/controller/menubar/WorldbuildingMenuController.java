@@ -32,7 +32,7 @@ import static com.teamgannon.trips.support.AlertFactory.showErrorAlert;
  */
 @Slf4j
 @Component
-public class DesignMenuController {
+public class WorldbuildingMenuController {
 
     private final SpaceshipService spaceshipService;
     private final SpaceshipJsonService jsonService;
@@ -51,7 +51,7 @@ public class DesignMenuController {
     /** Reused Installations Designer window instance; recreated after it is closed. */
     private Stage installationStage;
 
-    public DesignMenuController(SpaceshipService spaceshipService,
+    public WorldbuildingMenuController(SpaceshipService spaceshipService,
                                SpaceshipJsonService jsonService,
                                SpaceshipTemplateLibrary templateLibrary,
                                TransferPlannerBridge transferPlannerBridge,
@@ -74,11 +74,11 @@ public class DesignMenuController {
     }
 
     /**
-     * Confirms the Design menu's controller was instantiated and wired when the menu bar loaded.
+     * Confirms the Worldbuilding menu's controller was instantiated and wired when the menu bar loaded.
      */
     @FXML
     public void initialize() {
-        log.debug("DesignMenuController initialized");
+        log.debug("WorldbuildingMenuController initialized");
     }
 
     /**

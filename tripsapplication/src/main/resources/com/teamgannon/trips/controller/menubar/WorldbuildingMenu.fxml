@@ -2,8 +2,8 @@
 
 <?import javafx.scene.control.*?>
 
-<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Design" mnemonicParsing="true"
-      fx:controller="com.teamgannon.trips.controller.menubar.DesignMenuController">
+<Menu xmlns:fx="http://javafx.com/fxml/1" text="_Worldbuilding" mnemonicParsing="true"
+      fx:controller="com.teamgannon.trips.controller.menubar.WorldbuildingMenuController">
     <MenuItem fx:id="spaceshipModellerMenuItem"
               text="Spaceship Modeller..."
               onAction="#openSpaceshipModeller"/>
@@ -15,6 +15,6 @@
          (right-click a body → "Plan Transfer from Here..."); the global
          menu entry was misleading because the planner needs a system
          context to be useful. Keep the openTransferPlanner handler in
-         DesignMenuController for direct calls but don't surface it here. -->
+         WorldbuildingMenuController for direct calls but don't surface it here. -->
 
 </Menu>

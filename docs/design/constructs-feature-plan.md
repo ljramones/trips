@@ -366,7 +366,7 @@ Each phase is a self-contained commit set. Run the full test suite after each.
 - `tripsapplication/src/main/java/com/teamgannon/trips/spaceshipmodeller/` — existing Spaceship modeller; entire structure including UI, service, repo, templates
 - `tripsapplication/src/main/java/com/terranrepublic/assets/SpaceshipDesign.java` — the existing record that becomes `Spaceship`
 - `tripsapplication/src/main/java/com/teamgannon/trips/routing/` — route finders that will be extended in Phase D
-- `tripsapplication/src/main/resources/com/teamgannon/trips/controller/menubar/DesignMenu.fxml` — menu wiring
+- `tripsapplication/src/main/resources/com/teamgannon/trips/controller/menubar/WorldbuildingMenu.fxml` — menu wiring (renamed from DesignMenu.fxml)
 - `tripsapplication/src/main/resources/db/migration/` — Flyway migration directory; next migration is V6
 - The existing `SolarSystemFactory` + `SolarSystemFactoryRegistry` (under `service/factories/`) — same polymorphic-via-interface pattern that worked well for Sol-vs-procedural. Reuse the shape if it fits naturally.
 
