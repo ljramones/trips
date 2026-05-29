@@ -9,6 +9,7 @@ import com.terranrepublic.assets.Catalog;
 import com.terranrepublic.assets.Cataloged;
 import com.terranrepublic.assets.SpaceAsset;
 import com.terranrepublic.assets.StationDesign;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.WeaponInstallation;
 import com.terranrepublic.infrastructure.InfrastructureKind;
 import com.terranrepublic.infrastructure.NodeType;
@@ -472,5 +473,170 @@ class InstallationDesignerPanelTest {
         } else if (node instanceof javafx.scene.Parent p) {
             p.getChildrenUnmodifiable().forEach(child -> collectLabels(child, out));
         }
+    }
+
+    // ==================================================================
+    // v2 Phase D.6 Step 7 — Function filter
+    // ==================================================================
+
+    @Test
+    @DisplayName("Step 7 — RESEARCH selection narrows to the 8 real stations (Troy is DEFENSIVE)")
+    void functionFilterResearchShowsRealStationsOnly() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> ref.get().functionFilterForTesting().setValue(StationFunction.RESEARCH.name()));
+
+        long expectedResearchCount = Catalog.all().stream()
+                .filter(StationDesign.class::isInstance)
+                .map(StationDesign.class::cast)
+                .filter(s -> s.primaryFunction() == StationFunction.RESEARCH
+                        || s.secondaryFunctions().contains(StationFunction.RESEARCH))
+                .count();
+        assertEquals(expectedResearchCount, ref.get().tableForTesting().getItems().size(),
+                "RESEARCH selection should match exactly the catalog's RESEARCH-primary stations");
+        // None of the visible rows should be the Troy entry — Troy is DEFENSIVE.
+        assertFalse(ref.get().tableForTesting().getItems().stream()
+                        .anyMatch(r -> r.getName().equals("Troy")),
+                "Troy is DEFENSIVE, not RESEARCH; must be filtered out");
+    }
+
+    @Test
+    @DisplayName("Step 7 — DEFENSIVE selection narrows to exactly Troy")
+    void functionFilterDefensiveShowsTroyOnly() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> ref.get().functionFilterForTesting().setValue(StationFunction.DEFENSIVE.name()));
+
+        assertEquals(1, ref.get().tableForTesting().getItems().size());
+        assertEquals("Troy", ref.get().tableForTesting().getItems().get(0).getName());
+    }
+
+    @Test
+    @DisplayName("Step 7 — MILITARY_COMMAND selection matches Troy (via its secondary)")
+    void functionFilterMatchesSecondaryFunctions() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> ref.get().functionFilterForTesting().setValue(StationFunction.MILITARY_COMMAND.name()));
+
+        assertEquals(1, ref.get().tableForTesting().getItems().size(),
+                "Troy carries MILITARY_COMMAND in its secondaryFunctions set");
+        assertEquals("Troy", ref.get().tableForTesting().getItems().get(0).getName());
+    }
+
+    @Test
+    @DisplayName("Step 7 — Real / Proposed universe tab + RESEARCH function = the 8 real stations")
+    void functionFilterComposesWithUniverseTab() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        long expectedRealCount = Catalog.all().stream()
+                .filter(StationDesign.class::isInstance)
+                .map(StationDesign.class::cast)
+                .filter(s -> "Real / Proposed".equals(s.source()))
+                .count();
+
+        onFx(() -> {
+            selectUniverseTab(ref.get(), "Real / Proposed");
+            ref.get().functionFilterForTesting().setValue(StationFunction.RESEARCH.name());
+        });
+
+        assertEquals(expectedRealCount, ref.get().tableForTesting().getItems().size(),
+                "Real / Proposed tab + RESEARCH function = the 8 real stations");
+    }
+
+    @Test
+    @DisplayName("Step 7 — Troy Rising tab + RESEARCH function = empty (Troy is DEFENSIVE, SAPL is non-station)")
+    void functionFilterDropsNonStationSubtypesEvenWithinUniverse() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> {
+            selectUniverseTab(ref.get(), "Troy Rising");
+            ref.get().functionFilterForTesting().setValue(StationFunction.RESEARCH.name());
+        });
+
+        assertEquals(0, ref.get().tableForTesting().getItems().size(),
+                "Troy is DEFENSIVE so RESEARCH doesn't match; SAPL is WeaponInstallation so it "
+                        + "drops out per the non-station rule");
+    }
+
+    @Test
+    @DisplayName("Step 7 — Troy Rising tab + DEFENSIVE function = Troy")
+    void functionFilterTroyRisingTabComposesCorrectlyWithDefensive() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> {
+            selectUniverseTab(ref.get(), "Troy Rising");
+            ref.get().functionFilterForTesting().setValue(StationFunction.DEFENSIVE.name());
+        });
+
+        assertEquals(1, ref.get().tableForTesting().getItems().size());
+        assertEquals("Troy", ref.get().tableForTesting().getItems().get(0).getName());
+    }
+
+    @Test
+    @DisplayName("Step 7 — All selection is a no-op (everything visible)")
+    void functionFilterAllIsNoOp() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        long allCount = catalogConstructsForApply().size();
+
+        // Set to RESEARCH then back to All to confirm the toggle.
+        onFx(() -> ref.get().functionFilterForTesting().setValue(StationFunction.RESEARCH.name()));
+        onFx(() -> ref.get().functionFilterForTesting().setValue(ConstructLabels.get("filter.all")));
+
+        assertEquals(allCount, ref.get().tableForTesting().getItems().size(),
+                "All function selection should not filter anything");
+    }
+
+    @Test
+    @DisplayName("Step 7 — any specific function selection drops non-station subtypes")
+    void functionFilterDropsAllNonStationSubtypesUnconditionally() throws InterruptedException {
+        AtomicReference<InstallationDesignerPanel> ref = new AtomicReference<>();
+        onFx(() -> {
+            InstallationDesignerPanel panel = newPanel(registryWithCatalogSeed());
+            panel.applyConstructs(catalogConstructsForApply());
+            ref.set(panel);
+        });
+
+        onFx(() -> ref.get().functionFilterForTesting().setValue(StationFunction.RESEARCH.name()));
+
+        // Visible rows must all be StationDesign instances.
+        assertTrue(ref.get().tableForTesting().getItems().stream()
+                        .allMatch(r -> r.getConstruct() instanceof StationDesign),
+                "with a specific function selected, no non-station rows should remain visible");
     }
 }

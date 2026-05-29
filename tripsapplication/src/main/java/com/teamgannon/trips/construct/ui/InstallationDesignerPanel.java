@@ -10,6 +10,7 @@ import com.terranrepublic.assets.Cataloged;
 import com.terranrepublic.assets.InstallationType;
 import com.terranrepublic.assets.SpaceAsset;
 import com.terranrepublic.assets.StationDesign;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
 import com.terranrepublic.assets.WeaponInstallation;
 import com.terranrepublic.infrastructure.InfrastructureKind;
@@ -112,6 +113,7 @@ public class InstallationDesignerPanel extends BorderPane {
 
     // Filter controls
     private final ComboBox<String> kindFilter = new ComboBox<>();
+    private final ComboBox<String> functionFilter = new ComboBox<>();
     private final ComboBox<String> subtypeFilter = new ComboBox<>();
     private final ComboBox<String> factionFilter = new ComboBox<>();
     private final ComboBox<String> categoryFilter = new ComboBox<>();
@@ -170,6 +172,18 @@ public class InstallationDesignerPanel extends BorderPane {
             applyFilters();
         });
 
+        // v2 Phase D.6 Step 7 — Function filter sits between Kind and Subtype on the strip.
+        // Items are "All" + every StationFunction enum constant in declaration order.
+        functionFilter.getItems().setAll(ALL);
+        for (StationFunction f : StationFunction.values()) {
+            functionFilter.getItems().add(f.name());
+        }
+        functionFilter.setValue(ALL);
+        functionFilter.setTooltip(new Tooltip(get("filter.function.tooltip")));
+        functionFilter.setAccessibleText(get("filter.function"));
+        functionFilter.setAccessibleHelp(get("filter.function.tooltip"));
+        functionFilter.valueProperty().addListener((o, a, b) -> applyFilters());
+
         subtypeFilter.getItems().setAll(ALL);
         subtypeFilter.setValue(ALL);
         subtypeFilter.setDisable(true);
@@ -205,6 +219,7 @@ public class InstallationDesignerPanel extends BorderPane {
 
         HBox filterRow = new HBox(8,
                 new Label(get("filter.kind")), kindFilter,
+                new Label(get("filter.function")), functionFilter,
                 new Label(get("filter.subtype")), subtypeFilter,
                 new Label(get("filter.faction")), factionFilter,
                 new Label(get("filter.category")), categoryFilter,
@@ -669,6 +684,10 @@ public class InstallationDesignerPanel extends BorderPane {
     private void applyFilters() {
         FxThread.assertFxThread();
         String kind = selectedKind();
+        String functionLabel = functionFilter.getValue();
+        StationFunction selectedFunction = ALL.equals(functionLabel) || functionLabel == null
+                ? null
+                : StationFunction.valueOf(functionLabel);
         String subtype = subtypeFilter.getValue();
         String faction = factionFilter.getValue();
         String category = categoryFilter.getValue();
@@ -681,6 +700,20 @@ public class InstallationDesignerPanel extends BorderPane {
             }
             if (!ALL.equals(kind) && !kind.equals(row.getKind())) {
                 continue;
+            }
+            // v2 Phase D.6 Step 7 — Function filter. When a specific StationFunction is selected
+            // (i.e. not "All"), non-StationDesign rows drop out unconditionally — Weapon
+            // Installations / Spaceships / TransportNodes have no function axis, so "matches the
+            // function" can't be true for them. Station rows match if the selected function is
+            // either their primary or one of their secondaries.
+            if (selectedFunction != null) {
+                if (!(row.getConstruct() instanceof StationDesign s)) {
+                    continue;
+                }
+                if (s.primaryFunction() != selectedFunction
+                        && !s.secondaryFunctions().contains(selectedFunction)) {
+                    continue;
+                }
             }
             if (!ALL.equals(subtype) && !subtype.equals(row.getSubtype())) {
                 continue;
@@ -872,6 +905,10 @@ public class InstallationDesignerPanel extends BorderPane {
 
     ComboBox<String> factionFilterForTesting() {
         return factionFilter;
+    }
+
+    ComboBox<String> functionFilterForTesting() {
+        return functionFilter;
     }
 
     TextField searchFieldForTesting() {
