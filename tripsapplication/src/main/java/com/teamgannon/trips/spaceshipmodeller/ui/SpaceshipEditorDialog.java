@@ -3,7 +3,7 @@ package com.teamgannon.trips.spaceshipmodeller.ui;
 import com.teamgannon.trips.spaceshipmodeller.builder.SpaceshipBuilder;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
-import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
+import com.terranrepublic.assets.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.integration.TransferPlannerBridge;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.teamgannon.trips.spaceshipmodeller.rules.ValidationEngine;

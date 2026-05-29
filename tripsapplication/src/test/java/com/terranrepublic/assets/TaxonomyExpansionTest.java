@@ -4,7 +4,6 @@ import com.terranrepublic.infrastructure.NodeType;
 import com.terranrepublic.infrastructure.TransportNode;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
-import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import org.junit.jupiter.api.Test;
 

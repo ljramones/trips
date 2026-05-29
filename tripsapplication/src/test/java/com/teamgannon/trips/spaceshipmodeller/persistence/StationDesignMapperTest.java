@@ -5,9 +5,13 @@ import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.terranrepublic.assets.Armament;
 import com.terranrepublic.assets.Catalog;
+import com.terranrepublic.assets.CatalogOperationalStatus;
+import com.terranrepublic.assets.CatalogProvenance;
 import com.terranrepublic.assets.Mobility;
 import com.terranrepublic.assets.OperationalState;
+import com.terranrepublic.assets.SourceType;
 import com.terranrepublic.assets.StationDesign;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
 import com.terranrepublic.assets.TechLevel;
 import com.terranrepublic.assets.WeaponType;
@@ -18,6 +22,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -298,5 +303,193 @@ class StationDesignMapperTest {
                 now, now);
         StationDesign back = mapper.toDomain(mapper.toEntity(d));
         assertEquals(techLevel, back.techLevel());
+    }
+
+    // ------------------------------------------------------------------
+    // v2 Phase D.6 — function + provenance round-trip coverage
+    // ------------------------------------------------------------------
+
+    /**
+     * Build a station via the canonical-29 constructor with the supplied function + provenance
+     * triple. Everything else is a neutral fixture; only the three new fields matter to these
+     * tests.
+     */
+    private static StationDesign withFunctionAndProvenance(StationFunction primary,
+                                                           Set<StationFunction> secondaries,
+                                                           CatalogProvenance provenance) {
+        Instant now = Instant.parse("2025-09-01T08:00:00Z");
+        return new StationDesign(
+                UUID.randomUUID().toString(),
+                "Phase D.6 Coverage",
+                "PDC-1",
+                StationType.OUTPOST,
+                "Coverage Faction",
+                false,
+                "Coverage Allegiance",
+                "Phase D.6 mapper round-trip fixture.",
+                100, 80, 1.0e6, 5, 100, 50, 1.0e5,
+                Mobility.FIXED, null,
+                List.of(), List.of(),
+                0, false,
+                TechLevel.NEAR_FUTURE,
+                "coverage",
+                OperationalState.OPERATIONAL,
+                now, now,
+                primary, secondaries, provenance);
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: primaryFunction + secondaryFunctions + provenance all round-trip together")
+    void allThreeNewFieldsRoundTrip() {
+        StationDesign d = withFunctionAndProvenance(
+                StationFunction.RESEARCH,
+                Set.of(StationFunction.LOGISTICS_DEPOT, StationFunction.COMMERCIAL),
+                new CatalogProvenance(SourceType.SCIENCE_FICTION, "Phase D.6 Coverage",
+                        "Coverage Work", CatalogOperationalStatus.FICTIONAL));
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(d, back);
+        assertEquals(StationFunction.RESEARCH, back.primaryFunction());
+        assertEquals(Set.of(StationFunction.LOGISTICS_DEPOT, StationFunction.COMMERCIAL),
+                back.secondaryFunctions());
+        assertEquals(SourceType.SCIENCE_FICTION, back.provenance().sourceType());
+        assertEquals("Phase D.6 Coverage", back.provenance().sourceUniverse());
+        assertEquals("Coverage Work", back.provenance().sourceWork());
+        assertEquals(CatalogOperationalStatus.FICTIONAL, back.provenance().status());
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: empty secondaryFunctions round-trips to empty set (null-safe LOB read)")
+    void emptySecondaryFunctionsRoundTrips() {
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(),
+                CatalogProvenance.unknown());
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(Set.of(), back.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: single-value secondary set round-trips")
+    void singleSecondaryFunctionRoundTrips() {
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH,
+                Set.of(StationFunction.LOGISTICS_DEPOT), CatalogProvenance.unknown());
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(Set.of(StationFunction.LOGISTICS_DEPOT), back.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: three-value secondary set (Tycho-shaped) round-trips")
+    void threeSecondaryFunctionsRoundTrip() {
+        Set<StationFunction> expected = Set.of(
+                StationFunction.INDUSTRIAL, StationFunction.COMMERCIAL, StationFunction.RESIDENTIAL);
+        StationDesign d = withFunctionAndProvenance(StationFunction.SHIPBUILDING, expected,
+                CatalogProvenance.unknown());
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(expected, back.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: four-value secondary set (Citadel-shaped) round-trips")
+    void fourSecondaryFunctionsRoundTrip() {
+        Set<StationFunction> expected = Set.of(
+                StationFunction.DIPLOMATIC, StationFunction.MILITARY_COMMAND,
+                StationFunction.COMMERCIAL, StationFunction.RESIDENTIAL);
+        StationDesign d = withFunctionAndProvenance(StationFunction.GOVERNMENT_ADMINISTRATION,
+                expected, CatalogProvenance.unknown());
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(expected, back.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("v2 Phase D.6: null sourceWork preserved as null on round-trip")
+    void nullSourceWorkPreserved() {
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(),
+                new CatalogProvenance(SourceType.REAL, "Real / Proposed", null,
+                        CatalogOperationalStatus.ACTIVE));
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertNull(back.provenance().sourceWork(),
+                "null sourceWork is documented as the \"no specific work\" value and must round-trip as null");
+    }
+
+    @ParameterizedTest
+    @EnumSource(StationFunction.class)
+    @DisplayName("v2 Phase D.6: every StationFunction round-trips as primaryFunction")
+    void everyPrimaryFunctionRoundTrips(StationFunction f) {
+        StationDesign d = withFunctionAndProvenance(f, Set.of(), CatalogProvenance.unknown());
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(f, back.primaryFunction());
+    }
+
+    @ParameterizedTest
+    @EnumSource(CatalogOperationalStatus.class)
+    @DisplayName("v2 Phase D.6: every CatalogOperationalStatus round-trips through provenance")
+    void everyCatalogStatusRoundTrips(CatalogOperationalStatus status) {
+        // SCIENCE_FICTION + FICTIONAL is the only "real" combination; for status coverage we just
+        // hold sourceType constant at REAL where status is in the {HISTORIC/ACTIVE/PLANNED/CANCELLED}
+        // set, and SCIENCE_FICTION where FICTIONAL — but for the mapper round-trip, the cross-product
+        // doesn't matter: every status must round-trip regardless of sourceType.
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(),
+                new CatalogProvenance(SourceType.UNKNOWN, "Coverage", null, status));
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(status, back.provenance().status());
+    }
+
+    @ParameterizedTest
+    @EnumSource(SourceType.class)
+    @DisplayName("v2 Phase D.6: every SourceType round-trips through provenance")
+    void everySourceTypeRoundTrips(SourceType type) {
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(),
+                new CatalogProvenance(type, "Coverage", null, CatalogOperationalStatus.UNKNOWN));
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(type, back.provenance().sourceType());
+    }
+
+    // ------------------------------------------------------------------
+    // Worked-example provenance shapes (the targets Step 6 will populate)
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("worked example: Troy (SCIENCE_FICTION / Troy Rising / Troy Rising / FICTIONAL) round-trips")
+    void workedExampleTroy() {
+        CatalogProvenance troyProvenance = new CatalogProvenance(SourceType.SCIENCE_FICTION,
+                "Troy Rising", "Troy Rising", CatalogOperationalStatus.FICTIONAL);
+        StationDesign d = withFunctionAndProvenance(StationFunction.DEFENSIVE,
+                Set.of(StationFunction.MILITARY_COMMAND), troyProvenance);
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(troyProvenance, back.provenance());
+        assertEquals(StationFunction.DEFENSIVE, back.primaryFunction());
+        assertEquals(Set.of(StationFunction.MILITARY_COMMAND), back.secondaryFunctions());
+    }
+
+    @Test
+    @DisplayName("worked example: ISS (REAL / Real / Proposed / null / ACTIVE) round-trips")
+    void workedExampleISS() {
+        CatalogProvenance issProvenance = new CatalogProvenance(SourceType.REAL,
+                "Real / Proposed", null, CatalogOperationalStatus.ACTIVE);
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(), issProvenance);
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(issProvenance, back.provenance());
+        assertNull(back.provenance().sourceWork());
+    }
+
+    @Test
+    @DisplayName("worked example: Mir (REAL / Real / Proposed / null / HISTORIC) round-trips")
+    void workedExampleMir() {
+        CatalogProvenance mirProvenance = new CatalogProvenance(SourceType.REAL,
+                "Real / Proposed", null, CatalogOperationalStatus.HISTORIC);
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH, Set.of(), mirProvenance);
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(mirProvenance, back.provenance());
+        assertEquals(CatalogOperationalStatus.HISTORIC, back.provenance().status());
+    }
+
+    @Test
+    @DisplayName("worked example: Lunar Gateway (REAL / Real / Proposed / null / PLANNED) round-trips")
+    void workedExampleLunarGateway() {
+        CatalogProvenance lunarGatewayProvenance = new CatalogProvenance(SourceType.REAL,
+                "Real / Proposed", null, CatalogOperationalStatus.PLANNED);
+        StationDesign d = withFunctionAndProvenance(StationFunction.RESEARCH,
+                Set.of(StationFunction.LOGISTICS_DEPOT), lunarGatewayProvenance);
+        StationDesign back = mapper.toDomain(mapper.toEntity(d));
+        assertEquals(lunarGatewayProvenance, back.provenance());
+        assertEquals(Set.of(StationFunction.LOGISTICS_DEPOT), back.secondaryFunctions());
     }
 }

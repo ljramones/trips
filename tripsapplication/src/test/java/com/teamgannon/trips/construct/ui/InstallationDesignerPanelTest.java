@@ -254,6 +254,17 @@ class InstallationDesignerPanelTest {
                 "station section header present");
         assertTrue(labels.contains(ConstructLabels.get("details.station.allegiance")),
                 "station-specific 'allegiance' field present");
+        // v2 Phase D.6 — the station details template now also shows the function + provenance
+        // axes. Source-work is conditional (only shown when provenance.sourceWork() != null) so
+        // for Troy (whose pre-Step-6 sourceWork is null) it is intentionally absent.
+        assertTrue(labels.contains(ConstructLabels.get("details.station.primaryFunction")),
+                "Phase D.6 'primary function' detail row present");
+        assertTrue(labels.contains(ConstructLabels.get("details.station.secondaryFunctions")),
+                "Phase D.6 'secondary functions' detail row present");
+        assertTrue(labels.contains(ConstructLabels.get("details.station.sourceUniverse")),
+                "Phase D.6 'source universe' detail row present");
+        assertTrue(labels.contains(ConstructLabels.get("details.station.catalogStatus")),
+                "Phase D.6 'catalog status' detail row present");
     }
 
     @Test

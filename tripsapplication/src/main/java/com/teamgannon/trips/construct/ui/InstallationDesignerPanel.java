@@ -763,7 +763,29 @@ public class InstallationDesignerPanel extends BorderPane {
         addRow(g, r++, get("details.station.carrierCapable"), Boolean.toString(s.carrierCapable()));
         addRow(g, r++, get("details.station.armaments"), Integer.toString(s.armaments().size()));
         addRow(g, r++, get("details.station.carriedCraft"), Integer.toString(s.carriedCraft().size()));
+        // v2 Phase D.6 — function + provenance axes
+        addRow(g, r++, get("details.station.primaryFunction"), s.primaryFunction().name());
+        addRow(g, r++, get("details.station.secondaryFunctions"), formatSecondaryFunctions(s));
+        addRow(g, r++, get("details.station.sourceUniverse"), s.provenance().sourceUniverse());
+        if (s.provenance().sourceWork() != null && !s.provenance().sourceWork().isBlank()) {
+            addRow(g, r++, get("details.station.sourceWork"), s.provenance().sourceWork());
+        }
+        addRow(g, r++, get("details.station.catalogStatus"), s.provenance().status().name());
         return g;
+    }
+
+    /**
+     * Render the secondary-functions set as a comma-joined enum-name list, or an em dash when
+     * empty. Order is by enum declaration so the display is deterministic across calls.
+     */
+    private static String formatSecondaryFunctions(StationDesign s) {
+        if (s.secondaryFunctions().isEmpty()) {
+            return "—";
+        }
+        return java.util.Arrays.stream(com.terranrepublic.assets.StationFunction.values())
+                .filter(s.secondaryFunctions()::contains)
+                .map(Enum::name)
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
     private GridPane weaponSection(WeaponInstallation w) {

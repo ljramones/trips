@@ -3,11 +3,11 @@ package com.terranrepublic.assets;
 import com.teamgannon.trips.spaceshipmodeller.core.CarriedCraft;
 import com.teamgannon.trips.spaceshipmodeller.core.MassBudget;
 import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
-import com.teamgannon.trips.spaceshipmodeller.core.SourceType;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,7 +51,12 @@ public final class Catalog {
             "Troy",
             "BS-1",
             StationType.GATE_FORT,
-            "Troy Rising",
+            // faction / concealed / allegiance pinned to the pre-Phase-D.6 23-arg-compat-shim
+            // defaults: the Step 6 directive only updates the function + provenance axes for
+            // TROY. Touching the faction/allegiance semantics is out of scope.
+            "Unknown",
+            false,
+            null,
             "Hollowed nickel-iron asteroid gate-fort. CANON dry mass is two trillion tons; CANON interior "
                     + "cavity is about 7 km; CANON armor is approximate, described as walls kilometres thick. "
                     + "CANON AI is named Paris. INFERRED values: 9000 m overall span, 150000 crew capacity, "
@@ -95,8 +100,14 @@ public final class Catalog {
             true,
             TechLevel.ADVANCED,
             "gate fortification",
+            OperationalState.OPERATIONAL,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            // v2 Phase D.6 function + provenance axes (worked-example values).
+            StationFunction.DEFENSIVE,
+            Set.of(StationFunction.MILITARY_COMMAND),
+            new CatalogProvenance(SourceType.SCIENCE_FICTION, "Troy Rising", "Troy Rising",
+                    CatalogOperationalStatus.FICTIONAL));
 
     public static final WeaponInstallation SAPL = new WeaponInstallation(
             UUID.randomUUID().toString(),
@@ -240,7 +251,6 @@ public final class Catalog {
             "International Space Station",
             "ISS",
             StationType.ORBITAL_CITADEL,
-            SOURCE_REAL,
             "International (NASA / Roscosmos / ESA / JAXA / CSA)",
             false,
             "International (NASA / Roscosmos / ESA / JAXA / CSA)",
@@ -268,7 +278,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.OPERATIONAL,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.ACTIVE));
 
     /**
      * Tiangong (Chinese: "Heavenly Palace"). Operational since 2021.
@@ -279,7 +292,6 @@ public final class Catalog {
             "Tiangong",
             "TSS",
             StationType.ORBITAL_CITADEL,
-            SOURCE_REAL,
             "China (CNSA / CMSA)",
             false,
             "China (CNSA / CMSA)",
@@ -307,7 +319,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.OPERATIONAL,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.ACTIVE));
 
     /**
      * Mir. First modular long-duration station; operated 1986-2001.
@@ -320,7 +335,6 @@ public final class Catalog {
             "Mir",
             "Mir",
             StationType.ORBITAL_CITADEL,
-            SOURCE_REAL,
             "Soviet Union / Russia",
             false,
             "Soviet Union / Russia",
@@ -348,7 +362,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.SALVAGED,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.HISTORIC));
 
     /**
      * Skylab. First US space station; three crewed visits 1973-1974.
@@ -361,7 +378,6 @@ public final class Catalog {
             "Skylab",
             "Skylab",
             StationType.HABITAT,
-            SOURCE_REAL,
             "United States (NASA)",
             false,
             "United States (NASA)",
@@ -388,7 +404,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.SALVAGED,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.HISTORIC));
 
     /**
      * Salyut 1 (DOS-1). World's first space station. Operated April-October 1971.
@@ -399,7 +418,6 @@ public final class Catalog {
             "Salyut 1",
             "DOS-1",
             StationType.HABITAT,
-            SOURCE_REAL,
             "Soviet Union",
             false,
             "Soviet Union",
@@ -426,7 +444,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.SALVAGED,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.HISTORIC));
 
     /**
      * Salyut 7 (DOS-6). Final Salyut; operated 1982-1991.
@@ -439,7 +460,6 @@ public final class Catalog {
             "Salyut 7",
             "DOS-6",
             StationType.HABITAT,
-            SOURCE_REAL,
             "Soviet Union",
             false,
             "Soviet Union",
@@ -466,7 +486,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.SALVAGED,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.HISTORIC));
 
     /**
      * Lunar Gateway. Planned crewed station in lunar Near-Rectilinear Halo Orbit.
@@ -484,7 +507,6 @@ public final class Catalog {
             "Lunar Gateway",
             "Gateway",
             StationType.OUTPOST,
-            SOURCE_REAL,
             "International (NASA / ESA / JAXA / CSA)",
             false,
             "International (NASA / ESA / JAXA / CSA)",
@@ -516,7 +538,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.UNDER_CONSTRUCTION,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(StationFunction.LOGISTICS_DEPOT),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.PLANNED));
 
     /**
      * Axiom Station (early modules). First commercial space station.
@@ -535,7 +560,6 @@ public final class Catalog {
             "Axiom Station",
             "Axiom",
             StationType.HABITAT,
-            SOURCE_REAL,
             "Axiom Space (United States, commercial)",
             false,
             "Axiom Space (United States, commercial)",
@@ -563,7 +587,10 @@ public final class Catalog {
             CATEGORY_CREWED,
             OperationalState.UNDER_CONSTRUCTION,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            StationFunction.RESEARCH,
+            Set.of(StationFunction.COMMERCIAL),
+            new CatalogProvenance(SourceType.REAL, SOURCE_REAL, null, CatalogOperationalStatus.PLANNED));
 
     private static final List<SpaceAsset> ALL = List.of(
             TROY,

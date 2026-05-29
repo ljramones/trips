@@ -2,9 +2,13 @@ package com.teamgannon.trips.construct.ui;
 
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.terranrepublic.assets.Catalog;
+import com.terranrepublic.assets.CatalogOperationalStatus;
+import com.terranrepublic.assets.CatalogProvenance;
 import com.terranrepublic.assets.Mobility;
 import com.terranrepublic.assets.OperationalState;
+import com.terranrepublic.assets.SourceType;
 import com.terranrepublic.assets.StationDesign;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
 import javafx.application.Platform;
 import javafx.scene.control.ButtonType;
@@ -15,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -108,6 +113,13 @@ class StationEditorDialogTest {
         assertEquals(troy().operationalState(), result.operationalState());
         assertEquals(troy().carriedCraft(), result.carriedCraft());
         assertEquals(troy().armaments(), result.armaments());
+        // v2 Phase D.6 — three new fields persist through the dialog. Pre-Step-6, Troy carries
+        // the 27-compat default values: UNKNOWN primary, empty secondary set, and a provenance
+        // composite with the universe label wrapped under UNKNOWN/null/UNKNOWN. Step 6 will
+        // replace these with the worked-example values.
+        assertEquals(troy().primaryFunction(), result.primaryFunction());
+        assertEquals(troy().secondaryFunctions(), result.secondaryFunctions());
+        assertEquals(troy().provenance(), result.provenance());
     }
 
     @Test
@@ -249,5 +261,146 @@ class StationEditorDialogTest {
             }
         }
         return null;
+    }
+
+    // ==================================================================
+    // v2 Phase D.6 — Function + Catalog section tests (Step 5)
+    // ==================================================================
+
+    @Test
+    @DisplayName("applyDefaults: primaryFunction=UNKNOWN, secondaryFunctions empty, provenance=CatalogProvenance.unknown()")
+    void applyDefaultsProducesDocumentedDefaults() throws InterruptedException {
+        AtomicReference<StationDesign> draft = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            javafx.scene.control.TextField name = lookupTextFieldByAccessibleText(dialog,
+                    ConstructLabels.get("editor.field.name"));
+            name.setText("Defaults Test");
+            draft.set(dialog.getResultConverter().call(ButtonType.OK));
+        });
+        StationDesign d = draft.get();
+        assertNotNull(d);
+        assertEquals(StationFunction.UNKNOWN, d.primaryFunction(),
+                "applyDefaults sets primaryFunction to UNKNOWN");
+        assertEquals(Set.of(), d.secondaryFunctions(),
+                "applyDefaults leaves secondaryFunctions empty");
+        assertEquals(CatalogProvenance.unknown(), d.provenance(),
+                "applyDefaults sets provenance to CatalogProvenance.unknown()");
+    }
+
+    @Test
+    @DisplayName("changing primaryFunction silently removes that value from the secondary selection")
+    void primaryChangeRemovesFromSecondary() throws InterruptedException {
+        AtomicReference<StationEditorDialog> ref = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            // Pre-select RESEARCH and COMMERCIAL in the secondary list.
+            int rIdx = dialog.secondaryFunctionsListForTesting().getItems().indexOf(StationFunction.RESEARCH);
+            int cIdx = dialog.secondaryFunctionsListForTesting().getItems().indexOf(StationFunction.COMMERCIAL);
+            dialog.secondaryFunctionsListForTesting().getSelectionModel().selectIndices(rIdx, cIdx);
+            // Now set primary to RESEARCH — the invariant must remove it from secondaries.
+            dialog.primaryFunctionComboForTesting().setValue(StationFunction.RESEARCH);
+            ref.set(dialog);
+        });
+
+        StationEditorDialog dialog = ref.get();
+        assertFalse(dialog.secondaryFunctionsListForTesting().getSelectionModel().getSelectedItems()
+                        .contains(StationFunction.RESEARCH),
+                "primary RESEARCH must be removed from the secondary selection");
+        assertTrue(dialog.secondaryFunctionsListForTesting().getSelectionModel().getSelectedItems()
+                        .contains(StationFunction.COMMERCIAL),
+                "non-collision secondary COMMERCIAL must remain selected");
+    }
+
+    @Test
+    @DisplayName("soft 3-cap hint label is visible when secondary set has 4+ values, hidden otherwise")
+    void softThreeCapHintAppearsWhenSecondarySetExceedsThree() throws InterruptedException {
+        AtomicReference<StationEditorDialog> ref = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            // Empty start → hint must be hidden.
+            assertFalse(dialog.secondaryHintLabelForTesting().isVisible(),
+                    "empty secondary set: hint hidden");
+
+            // Select 3 values → still hidden.
+            javafx.scene.control.ListView<StationFunction> list = dialog.secondaryFunctionsListForTesting();
+            list.getSelectionModel().selectIndices(
+                    list.getItems().indexOf(StationFunction.RESEARCH),
+                    list.getItems().indexOf(StationFunction.COMMERCIAL),
+                    list.getItems().indexOf(StationFunction.RESIDENTIAL));
+            assertFalse(dialog.secondaryHintLabelForTesting().isVisible(),
+                    "3-value secondary set: hint hidden (3 is the cap, > 3 triggers)");
+
+            // Select 4th → hint visible.
+            list.getSelectionModel().select(list.getItems().indexOf(StationFunction.DIPLOMATIC));
+            ref.set(dialog);
+        });
+
+        assertTrue(ref.get().secondaryHintLabelForTesting().isVisible(),
+                "4-value secondary set: soft 3-cap hint must appear");
+        assertTrue(ref.get().secondaryHintLabelForTesting().isManaged(),
+                "hint Label must be managed when visible so it claims layout space");
+    }
+
+    @Test
+    @DisplayName("Catalog section: source type / universe / source work / status round-trip through provenance composite")
+    void catalogSectionRoundTrip() throws InterruptedException {
+        AtomicReference<StationDesign> draft = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            lookupTextFieldByAccessibleText(dialog, ConstructLabels.get("editor.field.name"))
+                    .setText("Catalog Round-Trip Test");
+
+            dialog.sourceTypeComboForTesting().setValue(SourceType.SCIENCE_FICTION);
+            dialog.sourceUniverseFieldForTesting().setText("Babylon 5");
+            dialog.sourceWorkFieldForTesting().setText("Babylon 5");
+            dialog.catalogStatusComboForTesting().setValue(CatalogOperationalStatus.FICTIONAL);
+
+            draft.set(dialog.getResultConverter().call(ButtonType.OK));
+        });
+
+        StationDesign d = draft.get();
+        assertNotNull(d);
+        assertEquals(SourceType.SCIENCE_FICTION, d.provenance().sourceType());
+        assertEquals("Babylon 5", d.provenance().sourceUniverse());
+        assertEquals("Babylon 5", d.provenance().sourceWork());
+        assertEquals(CatalogOperationalStatus.FICTIONAL, d.provenance().status());
+    }
+
+    @Test
+    @DisplayName("empty source-work field surfaces as null on the provenance composite (genuine optionality)")
+    void emptySourceWorkFieldYieldsNullOnProvenance() throws InterruptedException {
+        AtomicReference<StationDesign> draft = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            lookupTextFieldByAccessibleText(dialog, ConstructLabels.get("editor.field.name"))
+                    .setText("Null Source Work Test");
+
+            dialog.sourceTypeComboForTesting().setValue(SourceType.REAL);
+            dialog.sourceUniverseFieldForTesting().setText("Real / Proposed");
+            dialog.sourceWorkFieldForTesting().setText("   ");  // blank — should null out
+            dialog.catalogStatusComboForTesting().setValue(CatalogOperationalStatus.ACTIVE);
+
+            draft.set(dialog.getResultConverter().call(ButtonType.OK));
+        });
+
+        assertNull(draft.get().provenance().sourceWork(),
+                "blank source-work field must surface as null on the provenance, not empty string");
+    }
+
+    @ParameterizedTest
+    @EnumSource(StationFunction.class)
+    @DisplayName("every StationFunction round-trips through the dialog as primaryFunction")
+    void everyStationFunctionAsPrimary(StationFunction f) throws InterruptedException {
+        AtomicReference<StationDesign> draft = new AtomicReference<>();
+        onFx(() -> {
+            StationEditorDialog dialog = new StationEditorDialog();
+            lookupTextFieldByAccessibleText(dialog, ConstructLabels.get("editor.field.name"))
+                    .setText("Function-" + f.name());
+            dialog.primaryFunctionComboForTesting().setValue(f);
+            draft.set(dialog.getResultConverter().call(ButtonType.OK));
+        });
+        assertNotNull(draft.get());
+        assertEquals(f, draft.get().primaryFunction());
     }
 }

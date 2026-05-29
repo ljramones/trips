@@ -1,8 +1,11 @@
 package com.teamgannon.trips.spaceshipmodeller.persistence;
 
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
+import com.terranrepublic.assets.CatalogOperationalStatus;
 import com.terranrepublic.assets.Mobility;
 import com.terranrepublic.assets.OperationalState;
+import com.terranrepublic.assets.SourceType;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
 import com.terranrepublic.assets.TechLevel;
 import jakarta.persistence.Column;
@@ -49,7 +52,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"description", "carriedCraftJson", "armamentsJson"})
+@ToString(exclude = {"description", "carriedCraftJson", "armamentsJson", "secondaryFunctionsJson"})
 @DynamicUpdate
 @Entity(name = "STATION_DESIGN")
 @Table(indexes = {
@@ -141,6 +144,41 @@ public class StationEntity implements Serializable {
 
     private Instant modifiedAt;
 
+    // ----------------------------------------- v2 Phase D.6 function + provenance axes
+
+    /**
+     * Primary functional role of the station. {@link com.terranrepublic.assets.StationFunction}'s
+     * 30 values cover the documented SF taxonomy; defaults to {@code UNKNOWN}.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 64)
+    private StationFunction primaryFunction;
+
+    /**
+     * JSON-serialised set of secondary functions; see {@link StationDesignMapper}. Empty set may
+     * persist as null or {@code "[]"}; the mapper's null-safe read returns {@code Set.of()} for
+     * either.
+     */
+    @Lob
+    private String secondaryFunctionsJson;
+
+    /** Real / Proposed / Science Fiction / Unknown (the catalog-provenance axis). */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private SourceType provenanceSourceType;
+
+    /** Universe label (e.g. "Real / Proposed", "Troy Rising", "The Expanse"); never null, may be empty string. */
+    @Column(nullable = false)
+    private String provenanceSourceUniverse;
+
+    /** Optional title of the specific work; may be null. */
+    private String provenanceSourceWork;
+
+    /** Catalog lifecycle status — HISTORIC / ACTIVE / PLANNED / CANCELLED / FICTIONAL / UNKNOWN. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private CatalogOperationalStatus provenanceStatus;
+
     /**
      * Creates an entity with a freshly generated id and the not-null defaults that match the
      * {@link com.terranrepublic.assets.StationDesign} compact constructor.
@@ -155,6 +193,11 @@ public class StationEntity implements Serializable {
         this.carrierCapable = false;
         this.techLevel = TechLevel.UNKNOWN;
         this.operationalState = OperationalState.OPERATIONAL;
+        // v2 Phase D.6 defaults — match the NOT NULL DEFAULT clauses in V10.
+        this.primaryFunction = StationFunction.UNKNOWN;
+        this.provenanceSourceType = SourceType.UNKNOWN;
+        this.provenanceSourceUniverse = "";
+        this.provenanceStatus = CatalogOperationalStatus.UNKNOWN;
     }
 
     @PrePersist
@@ -170,6 +213,21 @@ public class StationEntity implements Serializable {
         }
         if (this.operationalState == null) {
             this.operationalState = OperationalState.OPERATIONAL;
+        }
+        // v2 Phase D.6: belt-and-braces defaults for the NOT NULL columns introduced in V10.
+        // Mirrors the Phase A0 pattern for operationalState — the column-level constraint
+        // fires before V10 has run on stale dev DBs, so the entity layer defaults too.
+        if (this.primaryFunction == null) {
+            this.primaryFunction = StationFunction.UNKNOWN;
+        }
+        if (this.provenanceSourceType == null) {
+            this.provenanceSourceType = SourceType.UNKNOWN;
+        }
+        if (this.provenanceSourceUniverse == null) {
+            this.provenanceSourceUniverse = "";
+        }
+        if (this.provenanceStatus == null) {
+            this.provenanceStatus = CatalogOperationalStatus.UNKNOWN;
         }
     }
 

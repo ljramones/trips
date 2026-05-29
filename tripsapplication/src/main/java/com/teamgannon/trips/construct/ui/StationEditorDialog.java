@@ -5,9 +5,13 @@ import com.teamgannon.trips.spaceshipmodeller.core.ShipClass;
 import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 import com.teamgannon.trips.utility.DialogUtils;
 import com.terranrepublic.assets.Armament;
+import com.terranrepublic.assets.CatalogOperationalStatus;
+import com.terranrepublic.assets.CatalogProvenance;
 import com.terranrepublic.assets.Mobility;
 import com.terranrepublic.assets.OperationalState;
+import com.terranrepublic.assets.SourceType;
 import com.terranrepublic.assets.StationDesign;
+import com.terranrepublic.assets.StationFunction;
 import com.terranrepublic.assets.StationType;
 import com.terranrepublic.assets.TechLevel;
 import com.terranrepublic.assets.WeaponType;
@@ -27,6 +31,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -41,7 +46,9 @@ import javafx.util.StringConverter;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.teamgannon.trips.construct.ui.ConstructLabels.get;
@@ -64,12 +71,23 @@ public class StationEditorDialog extends Dialog<StationDesign> {
     private final TextField nameField = new TextField();
     private final TextField designationField = new TextField();
     private final ComboBox<StationType> stationTypeCombo = new ComboBox<>();
-    private final TextField sourceField = new TextField();
     private final TextField factionField = new TextField();
     private final TextField allegianceField = new TextField();
     private final CheckBox concealedCheck = new CheckBox();
     private final ComboBox<OperationalState> operationalStateCombo = new ComboBox<>();
     private final TextArea descriptionArea = new TextArea();
+
+    // catalog (v2 Phase D.6) — single authoritative input for universe label
+    private final ComboBox<SourceType> sourceTypeCombo = new ComboBox<>();
+    private final TextField sourceUniverseField = new TextField();
+    private final TextField sourceWorkField = new TextField();
+    private final ComboBox<CatalogOperationalStatus> catalogStatusCombo = new ComboBox<>();
+
+    // function (v2 Phase D.6)
+    private final ComboBox<StationFunction> primaryFunctionCombo = new ComboBox<>();
+    private final ListView<StationFunction> secondaryFunctionsList = new ListView<>(
+            FXCollections.observableArrayList(StationFunction.values()));
+    private final Label secondaryHintLabel = new Label();
 
     // physical
     private final TextField overallSpanField = new TextField();
@@ -136,10 +154,18 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         craftClassCombo.getItems().setAll(ShipClass.values());
         armTypeCombo.getItems().setAll(WeaponType.values());
 
+        sourceTypeCombo.getItems().setAll(SourceType.values());
+        sourceTypeCombo.setConverter(sourceTypeConverter());
+        catalogStatusCombo.getItems().setAll(CatalogOperationalStatus.values());
+        primaryFunctionCombo.getItems().setAll(StationFunction.values());
+        secondaryFunctionsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        secondaryFunctionsList.setPrefHeight(140);
+
         buildContent();
         DialogUtils.applyTheme(this);
         configureAccessibility();
         wireMobilityInvariant();
+        wirePrimarySecondaryInvariant();
         wireValidation();
 
         if (existing != null) {
@@ -166,14 +192,30 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         };
     }
 
+    private static StringConverter<SourceType> sourceTypeConverter() {
+        return new StringConverter<>() {
+            @Override
+            public String toString(SourceType t) {
+                return t == null ? "" : t.label();
+            }
+
+            @Override
+            public SourceType fromString(String s) {
+                return null;
+            }
+        };
+    }
+
     private void buildContent() {
         VBox root = new VBox(12);
         root.setPadding(new Insets(14));
         root.getChildren().addAll(
                 section(get("editor.station.section.basic"), basicGrid()),
+                section(get("editor.station.section.catalog"), catalogGrid()),
                 section(get("editor.station.section.physical"), physicalGrid()),
                 section(get("editor.station.section.crew"), crewGrid()),
                 section(get("editor.station.section.mobility"), mobilityGrid()),
+                section(get("editor.station.section.function"), functionSection()),
                 section(get("editor.station.section.carried"), carriedSection()),
                 section(get("editor.station.section.armaments"), armamentSection()),
                 section(get("editor.station.section.tech"), techGrid()),
@@ -202,13 +244,39 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         addRow(g, r++, get("editor.field.name"), nameField);
         addRow(g, r++, get("editor.field.designation"), designationField);
         addRow(g, r++, get("editor.station.field.stationType"), stationTypeCombo);
-        addRow(g, r++, get("editor.field.source"), sourceField);
+        // v2 Phase D.6: the Source field is gone from Basic Information; the universe label
+        // now lives in the Catalog section below. See Concern C in the Phase D.6 plan.
         addRow(g, r++, get("editor.field.faction"), factionField);
         addRow(g, r++, get("editor.field.allegiance"), allegianceField);
         addRow(g, r++, get("editor.field.concealed"), concealedCheck);
         addRow(g, r++, get("editor.field.operationalState"), operationalStateCombo);
         addRow(g, r++, get("editor.field.description"), descriptionArea);
         return g;
+    }
+
+    private GridPane catalogGrid() {
+        GridPane g = grid();
+        int r = 0;
+        addRow(g, r++, get("editor.station.field.sourceType"), sourceTypeCombo);
+        addRow(g, r++, get("editor.station.field.universe"), sourceUniverseField);
+        addRow(g, r++, get("editor.station.field.sourceWork"), sourceWorkField);
+        addRow(g, r++, get("editor.station.field.catalogStatus"), catalogStatusCombo);
+        return g;
+    }
+
+    private VBox functionSection() {
+        GridPane g = grid();
+        int r = 0;
+        addRow(g, r++, get("editor.station.field.primaryFunction"), primaryFunctionCombo);
+        addRow(g, r++, get("editor.station.field.secondaryFunctions"), secondaryFunctionsList);
+
+        secondaryHintLabel.setText(get("editor.station.hint.secondaryCap"));
+        secondaryHintLabel.getStyleClass().add("trips-text-italic-warn");
+        secondaryHintLabel.setWrapText(true);
+        secondaryHintLabel.setVisible(false);
+        secondaryHintLabel.setManaged(false);
+
+        return new VBox(6, g, secondaryHintLabel);
     }
 
     private GridPane physicalGrid() {
@@ -352,7 +420,6 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         annotate(stationTypeCombo, get("editor.station.field.stationType"),
                 get("editor.station.tooltip.stationType"));
         stationTypeCombo.setTooltip(new Tooltip(get("editor.station.tooltip.stationType")));
-        annotate(sourceField, get("editor.field.source"), "Free text source or universe label.");
         annotate(factionField, get("editor.field.faction"), "Owning faction or polity.");
         annotate(allegianceField, get("editor.field.allegiance"), get("editor.tooltip.allegiance"));
         allegianceField.setTooltip(new Tooltip(get("editor.tooltip.allegiance")));
@@ -384,6 +451,59 @@ public class StationEditorDialog extends Dialog<StationDesign> {
 
         annotate(techLevelCombo, get("editor.station.field.techLevel"), "Coarse technology band.");
         annotate(categoryField, get("editor.station.field.category"), "Free-form designer category label.");
+
+        // ----- v2 Phase D.6 — Catalog + Function sections -----
+        annotate(sourceTypeCombo, get("editor.station.field.sourceType"),
+                get("editor.station.tooltip.sourceType"));
+        sourceTypeCombo.setTooltip(new Tooltip(get("editor.station.tooltip.sourceType")));
+        annotate(sourceUniverseField, get("editor.station.field.universe"),
+                get("editor.station.tooltip.universe"));
+        sourceUniverseField.setTooltip(new Tooltip(get("editor.station.tooltip.universe")));
+        annotate(sourceWorkField, get("editor.station.field.sourceWork"),
+                get("editor.station.tooltip.sourceWork"));
+        sourceWorkField.setTooltip(new Tooltip(get("editor.station.tooltip.sourceWork")));
+        annotate(catalogStatusCombo, get("editor.station.field.catalogStatus"),
+                get("editor.station.tooltip.catalogStatus"));
+        catalogStatusCombo.setTooltip(new Tooltip(get("editor.station.tooltip.catalogStatus")));
+
+        annotate(primaryFunctionCombo, get("editor.station.field.primaryFunction"),
+                get("editor.station.tooltip.primaryFunction"));
+        primaryFunctionCombo.setTooltip(new Tooltip(get("editor.station.tooltip.primaryFunction")));
+        annotate(secondaryFunctionsList, get("editor.station.field.secondaryFunctions"),
+                get("editor.station.tooltip.secondaryFunctions"));
+        secondaryFunctionsList.setTooltip(new Tooltip(get("editor.station.tooltip.secondaryFunctions")));
+    }
+
+    /**
+     * UI invariant: when {@code primaryFunctionCombo} changes to a value that is currently
+     * selected in {@code secondaryFunctionsList}, silently remove it from the selection. The
+     * record's compact constructor would otherwise throw {@code IllegalArgumentException} on save.
+     */
+    private void wirePrimarySecondaryInvariant() {
+        primaryFunctionCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                int idx = secondaryFunctionsList.getItems().indexOf(newVal);
+                if (idx >= 0 && secondaryFunctionsList.getSelectionModel().isSelected(idx)) {
+                    secondaryFunctionsList.getSelectionModel().clearSelection(idx);
+                }
+            }
+            updateSecondaryHint();
+            revalidate();
+        });
+        secondaryFunctionsList.getSelectionModel().getSelectedItems().addListener(
+                (javafx.collections.ListChangeListener<StationFunction>) c -> {
+                    updateSecondaryHint();
+                    revalidate();
+                });
+        updateSecondaryHint();
+    }
+
+    /** Show the soft hint label when more than three secondary functions are selected. */
+    private void updateSecondaryHint() {
+        int size = secondaryFunctionsList.getSelectionModel().getSelectedItems().size();
+        boolean show = size > 3;
+        secondaryHintLabel.setVisible(show);
+        secondaryHintLabel.setManaged(show);
     }
 
     private void wireMobilityInvariant() {
@@ -454,13 +574,19 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         nameField.setText(d.name());
         designationField.setText(d.designation());
         stationTypeCombo.setValue(d.stationType());
-        sourceField.setText(d.source());
         factionField.setText(d.faction());
         allegianceField.setText(d.allegiance());
         concealedCheck.setSelected(d.concealed());
         operationalStateCombo.setValue(d.operationalState() == null
                 ? OperationalState.OPERATIONAL : d.operationalState());
         descriptionArea.setText(d.description());
+
+        // v2 Phase D.6 — Catalog section
+        CatalogProvenance provenance = d.provenance();
+        sourceTypeCombo.setValue(provenance.sourceType());
+        sourceUniverseField.setText(provenance.sourceUniverse());
+        sourceWorkField.setText(provenance.sourceWork() == null ? "" : provenance.sourceWork());
+        catalogStatusCombo.setValue(provenance.status());
 
         overallSpanField.setText(Double.toString(d.overallSpanMeters()));
         interiorSpanField.setText(Double.toString(d.interiorSpanMeters()));
@@ -476,6 +602,18 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         mobilityCombo.setValue(d.mobility());
         auxiliaryDriveCombo.setValue(d.auxiliaryDrive());
         applyMobilityInvariant();
+
+        // v2 Phase D.6 — Function section (set primary first to satisfy the wired invariant
+        // that removes primary from secondary selection).
+        primaryFunctionCombo.setValue(d.primaryFunction());
+        secondaryFunctionsList.getSelectionModel().clearSelection();
+        for (StationFunction f : d.secondaryFunctions()) {
+            int idx = secondaryFunctionsList.getItems().indexOf(f);
+            if (idx >= 0) {
+                secondaryFunctionsList.getSelectionModel().select(idx);
+            }
+        }
+        updateSecondaryHint();
 
         carried.setAll(d.carriedCraft());
         armaments.setAll(d.armaments());
@@ -498,19 +636,49 @@ public class StationEditorDialog extends Dialog<StationDesign> {
         hangarVolumeField.setText("0");
         crewCapacityField.setText("0");
         crewComplementField.setText("0");
+        // v2 Phase D.6 — Catalog + Function defaults match CatalogProvenance.unknown() + UNKNOWN.
+        sourceTypeCombo.setValue(SourceType.UNKNOWN);
+        sourceUniverseField.setText("");
+        sourceWorkField.setText("");
+        catalogStatusCombo.setValue(CatalogOperationalStatus.UNKNOWN);
+        primaryFunctionCombo.setValue(StationFunction.UNKNOWN);
+        secondaryFunctionsList.getSelectionModel().clearSelection();
         applyMobilityInvariant();
+        updateSecondaryHint();
     }
 
     private StationDesign buildDraft() {
         String id = existing != null ? existing.id() : UUID.randomUUID().toString();
         Instant createdAt = existing != null ? existing.createdAt() : Instant.now();
         Instant now = Instant.now();
+
+        // v2 Phase D.6 — assemble the CatalogProvenance composite from the Catalog section.
+        // Empty sourceWork field surfaces as null on the composite to honour the design's
+        // "null is the no-specific-work value" semantic.
+        String rawWork = sourceWorkField.getText();
+        String sourceWork = rawWork == null ? "" : rawWork.trim();
+        if (sourceWork.isEmpty()) {
+            sourceWork = null;
+        }
+        CatalogProvenance provenance = new CatalogProvenance(
+                sourceTypeCombo.getValue() == null ? SourceType.UNKNOWN : sourceTypeCombo.getValue(),
+                trim(sourceUniverseField.getText()),
+                sourceWork,
+                catalogStatusCombo.getValue() == null
+                        ? CatalogOperationalStatus.UNKNOWN
+                        : catalogStatusCombo.getValue());
+
+        StationFunction primaryFunction = primaryFunctionCombo.getValue() == null
+                ? StationFunction.UNKNOWN
+                : primaryFunctionCombo.getValue();
+        Set<StationFunction> secondaryFunctions = Set.copyOf(
+                new HashSet<>(secondaryFunctionsList.getSelectionModel().getSelectedItems()));
+
         return new StationDesign(
                 id,
                 trim(nameField.getText()),
                 trim(designationField.getText()),
                 stationTypeCombo.getValue(),
-                trim(sourceField.getText()),
                 trim(factionField.getText()),
                 concealedCheck.isSelected(),
                 trim(allegianceField.getText()),
@@ -533,7 +701,10 @@ public class StationEditorDialog extends Dialog<StationDesign> {
                 operationalStateCombo.getValue() == null
                         ? OperationalState.OPERATIONAL : operationalStateCombo.getValue(),
                 createdAt,
-                now);
+                now,
+                primaryFunction,
+                secondaryFunctions,
+                provenance);
     }
 
     // -------------------------------------------------------------------------------- carried craft + armament adders
@@ -627,5 +798,35 @@ public class StationEditorDialog extends Dialog<StationDesign> {
 
     Button okButtonForTesting() {
         return okButton;
+    }
+
+    // ---------------- v2 Phase D.6 test seams ----------------
+
+    ComboBox<StationFunction> primaryFunctionComboForTesting() {
+        return primaryFunctionCombo;
+    }
+
+    ListView<StationFunction> secondaryFunctionsListForTesting() {
+        return secondaryFunctionsList;
+    }
+
+    Label secondaryHintLabelForTesting() {
+        return secondaryHintLabel;
+    }
+
+    ComboBox<SourceType> sourceTypeComboForTesting() {
+        return sourceTypeCombo;
+    }
+
+    TextField sourceUniverseFieldForTesting() {
+        return sourceUniverseField;
+    }
+
+    TextField sourceWorkFieldForTesting() {
+        return sourceWorkField;
+    }
+
+    ComboBox<CatalogOperationalStatus> catalogStatusComboForTesting() {
+        return catalogStatusCombo;
     }
 }
