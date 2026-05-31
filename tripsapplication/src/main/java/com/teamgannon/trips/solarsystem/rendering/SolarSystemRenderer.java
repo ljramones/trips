@@ -899,8 +899,11 @@ public class SolarSystemRenderer {
         featureSphere.setTranslateY(screen[1]);
         featureSphere.setTranslateZ(screen[2]);
 
-        // Add glow for artificial structures
-        if (feature.isArtificial()) {
+        // Add glow for artificial structures and for JUMP_POINT features (v2 Phase E.1 §8).
+        // JUMP_POINT is a natural-category feature but represents a localized gravitational
+        // anomaly with energy signature in the worldbuilding — the glow visually distinguishes
+        // it from background scenery despite the NATURAL classification.
+        if (feature.isArtificial() || "JUMP_POINT".equals(feature.getFeatureType())) {
             featureSphere.setEffect(new Glow(0.4));
         }
 
@@ -920,15 +923,23 @@ public class SolarSystemRenderer {
     private double getFeatureSize(FeatureDescription feature) {
         // Base size for features (relative to scale)
         double baseSize = scaleManager.auToScreen(0.02);  // About 0.02 AU in size
+        return featureSizeMultiplier(feature.getFeatureType()) * baseSize;
+    }
 
-        return switch (feature.getFeatureType()) {
-            case "JUMP_GATE" -> baseSize * 2.0;       // Large and prominent
-            case "ORBITAL_HABITAT" -> baseSize * 1.5;
-            case "SHIPYARD" -> baseSize * 1.8;
-            case "RESEARCH_STATION" -> baseSize * 1.0;
-            case "MINING_OPERATION" -> baseSize * 1.2;
-            case "TROJAN_CLUSTER" -> baseSize * 2.5;  // Represents cluster of objects
-            default -> baseSize;
+    /**
+     * v2 Phase E.1 §8 — size dispatch extracted as a pure function for testability.
+     * Multiplier applied to the scale-dependent {@code baseSize}.
+     */
+    static double featureSizeMultiplier(String featureType) {
+        return switch (featureType) {
+            case "JUMP_GATE" -> 2.0;       // Large and prominent (constructed infrastructure)
+            case "JUMP_POINT" -> 1.5;      // v2 Phase E.1 — visually substantial natural focal point
+            case "ORBITAL_HABITAT" -> 1.5;
+            case "SHIPYARD" -> 1.8;
+            case "RESEARCH_STATION" -> 1.0;
+            case "MINING_OPERATION" -> 1.2;
+            case "TROJAN_CLUSTER" -> 2.5;  // Represents cluster of objects
+            default -> 1.0;
         };
     }
 
@@ -941,10 +952,18 @@ public class SolarSystemRenderer {
                 // Fall through to default
             }
         }
+        return defaultFeatureColor(feature.getFeatureType());
+    }
 
-        // Default colors based on feature type
-        return switch (feature.getFeatureType()) {
+    /**
+     * v2 Phase E.1 §8 — default color dispatch extracted as a pure function for testability.
+     * Callers that want to respect a feature's custom {@code primaryColor} should call
+     * {@link #getFeatureColor(FeatureDescription)} instead.
+     */
+    static Color defaultFeatureColor(String featureType) {
+        return switch (featureType) {
             case "JUMP_GATE" -> Color.CYAN;
+            case "JUMP_POINT" -> Color.MEDIUMPURPLE;  // v2 Phase E.1 — distinctive vs all other feature colors
             case "ORBITAL_HABITAT" -> Color.LIGHTGREEN;
             case "SHIPYARD" -> Color.ORANGE;
             case "RESEARCH_STATION" -> Color.LIGHTYELLOW;

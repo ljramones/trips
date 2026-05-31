@@ -393,6 +393,21 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         // Store current system for reference
         this.currentSystem = solarSystemDescription;
 
+        // v2 Phase E.1 §7.2 — publish the activation event so downstream listeners
+        // (e.g. JumpPointActivationListener) can perform per-activation work like
+        // computing + persisting jump-point features. Wrapped in try/catch for graceful
+        // failure if a listener throws — matches the existing event-publish patterns
+        // in this class.
+        if (solarSystemDescription != null) {
+            try {
+                eventPublisher.publishEvent(new com.teamgannon.trips.solarsystem.SolarSystemActivatedEvent(
+                        solarSystemDescription));
+            } catch (Exception e) {
+                log.error("Failed to publish SolarSystemActivatedEvent for system {}",
+                        solarSystemDescription.getSolarSystemId(), e);
+            }
+        }
+
         // Update handlers with current system
         mouseHandler.setCurrentSystem(solarSystemDescription);
         planetActionHandler.setCurrentSystem(solarSystemDescription);

@@ -81,6 +81,7 @@ public class FeatureDescription {
         return featureType != null && (
                 featureType.equals("ORBITAL_HABITAT") ||
                 featureType.equals("JUMP_GATE") ||
+                featureType.equals("JUMP_POINT") ||
                 featureType.equals("SHIPYARD") ||
                 featureType.equals("RESEARCH_STATION") ||
                 featureType.equals("MINING_OPERATION") ||
