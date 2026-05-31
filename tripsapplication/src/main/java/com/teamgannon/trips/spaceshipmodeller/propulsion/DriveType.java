@@ -1,6 +1,9 @@
 package com.teamgannon.trips.spaceshipmodeller.propulsion;
 
+import com.terranrepublic.assets.TransitMode;
+
 import java.util.List;
+import java.util.Set;
 
 /**
  * Catalogue of propulsion systems available to the Spaceship Modeller, spanning mature chemistry through
@@ -29,7 +32,7 @@ public enum DriveType {
             .chartRegion("High thrust, low Isp")
             .sciFiReferences("Apollo / Saturn V", "The Martian (MAV)", "SpaceX Merlin/Raptor")
             .notes("Mature, throttleable, restartable; the only family routinely used for crewed launch and landing.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Solid chemical motor. Even more thrust than bipropellant, but cannot be throttled or restarted. */
     SOLID_ROCKET(Category.CHEMICAL, DriveSpecs.builder()
@@ -46,7 +49,7 @@ public enum DriveType {
             .constraints(DesignConstraint.advisory("NON_RESTARTABLE", "Once ignited the motor burns to depletion; no throttle or shutdown."))
             .sciFiReferences("Space Shuttle SRB", "Ariane boosters")
             .notes("Excellent for boost stages; useless for the fine control a landing demands.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Gridded electrostatic ion engine. Sips xenon, accelerates it to enormous exhaust velocity. */
     ION_GRIDDED(Category.ELECTRIC, DriveSpecs.builder()
@@ -65,7 +68,7 @@ public enum DriveType {
                     DesignConstraint.advisory("REQUIRES_POWER", "Needs a sustained electrical supply (solar or reactor)."))
             .sciFiReferences("NASA Dawn", "Deep Space 1")
             .notes("Months-long burns build large delta-V from a tiny propellant load.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Hall-effect thruster. More thrust than gridded ion at slightly lower efficiency. */
     HALL_EFFECT(Category.ELECTRIC, DriveSpecs.builder()
@@ -82,7 +85,7 @@ public enum DriveType {
             .constraints(DesignConstraint.blocking("VACUUM_ONLY", "Operates only in hard vacuum."))
             .sciFiReferences("SpaceX Starlink", "modern station-keeping satellites")
             .notes("The most flight-proven electric propulsion for orbital manoeuvring.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Variable Specific Impulse Magnetoplasma Rocket. Trades thrust against Isp in flight. */
     VASIMR(Category.ELECTRIC, DriveSpecs.builder()
@@ -101,7 +104,7 @@ public enum DriveType {
                     DesignConstraint.advisory("HIGH_POWER", "Useful thrust demands tens to hundreds of megawatts."))
             .sciFiReferences("Ad Astra Rocket Company (real prototype)")
             .notes("Can tune from high-thrust spiral-out to high-Isp cruise; gated by power supply.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Solid-core nuclear thermal rocket. A reactor superheats hydrogen propellant. */
     NUCLEAR_THERMAL(Category.NUCLEAR_THERMAL, DriveSpecs.builder()
@@ -118,7 +121,7 @@ public enum DriveType {
             .constraints(DesignConstraint.advisory("RADIOACTIVE_EXHAUST", "Exhaust is radioactive; unsuitable for use near inhabited surfaces."))
             .sciFiReferences("Project Rover / NERVA (real)", "2010: Odyssey Two (Leonov)")
             .notes("Roughly double chemical Isp at still-usable thrust; a strong interplanetary workhorse.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Nuclear-electric: a reactor powers an electric thruster. High Isp, big radiators. */
     NUCLEAR_ELECTRIC(Category.NUCLEAR_ELECTRIC, DriveSpecs.builder()
@@ -137,7 +140,7 @@ public enum DriveType {
                     DesignConstraint.blocking("LARGE_RADIATORS", "Reactor waste heat demands extensive radiators."))
             .sciFiReferences("Project Prometheus / JIMO (real concept)")
             .notes("Decouples power source from thruster; ideal for long unmanned cargo runs.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Open-cycle gas-core nuclear rocket. Fissioning plasma pushes Isp far above solid-core. */
     GAS_CORE_NUCLEAR(Category.NUCLEAR_THERMAL, DriveSpecs.builder()
@@ -156,7 +159,7 @@ public enum DriveType {
                     DesignConstraint.advisory("EXOTIC_ENGINEERING", "Containing a fissioning gas core is unproven engineering."))
             .sciFiReferences("Open-cycle gas-core concept (real studies)")
             .notes("Rare combination of high thrust and high Isp, at the cost of a radioactive plume.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Orion-style nuclear-pulse drive: shaped charges detonate against a pusher plate. */
     ORION_PULSE(Category.NUCLEAR_PULSE, DriveSpecs.builder()
@@ -175,7 +178,7 @@ public enum DriveType {
                     DesignConstraint.advisory("TREATY_BANNED", "Banned by real-world atmospheric/space test treaties."))
             .sciFiReferences("Project Orion (real)", "Footfall (Niven & Pournelle)", "Deep Impact (Messiah)")
             .notes("Uniquely scales to enormous ships; the only near-term drive that pushes megatonne hulls hard.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Alias entry for Orion-style nuclear-pulse craft in asset catalogs. */
     ORION(Category.NUCLEAR_PULSE, DriveSpecs.builder()
@@ -194,7 +197,7 @@ public enum DriveType {
                     DesignConstraint.advisory("TREATY_BANNED", "Banned by real-world atmospheric/space test treaties."))
             .sciFiReferences("Project Orion (real)", "Footfall (Niven & Pournelle)", "Deep Impact (Messiah)")
             .notes("Orion-style shaped-charge pulse drive.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Continuous fusion torch: a true torchship, high thrust AND high Isp, paid for in radiators. */
     FUSION_TORCH(Category.FUSION, DriveSpecs.builder()
@@ -213,7 +216,7 @@ public enum DriveType {
                     DesignConstraint.advisory("EXOTIC_ENGINEERING", "Sustained net-positive fusion thrust is unproven."))
             .sciFiReferences("The Expanse (Epstein Drive)", "Larry Niven 'Known Space' fusion drives")
             .notes("The classic hard-SF torchship; reduces interplanetary trips to days.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Inertial-confinement fusion pulse drive (Daedalus-class). Modest thrust, extreme Isp. */
     FUSION_PULSE(Category.FUSION, DriveSpecs.builder()
@@ -232,7 +235,7 @@ public enum DriveType {
                     DesignConstraint.advisory("HE3_FUEL", "Baseline designs burn deuterium/helium-3, a scarce fuel."))
             .sciFiReferences("Project Daedalus (real)", "Project Icarus")
             .notes("Pellet detonations at kilohertz rates; a credible first interstellar flyby drive.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Epstein drive: a high-efficiency magnetic-bottle fusion torch (The Expanse). */
     EPSTEIN_DRIVE(Category.FUSION, DriveSpecs.builder()
@@ -252,7 +255,7 @@ public enum DriveType {
             .sciFiReferences("The Expanse (Epstein Drive)")
             .notes("High-efficiency fusion torch enabling sustained multi-g burns across the system; "
                     + "the drive that opened the Solar System in The Expanse.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Terran Republic standard fusion thrust drive: capable mid-tier torch (Caine Riordan universe). */
     TERRAN_FUSION_DRIVE(Category.FUSION, DriveSpecs.builder()
@@ -272,7 +275,7 @@ public enum DriveType {
             .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
             .notes("United Earth / Terran Republic workhorse fusion thrust drive: reliable and capable, but a "
                     + "step behind the Ktoran Dominion's engines.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Hkh'Rkh warrior-race fusion drive: brute thrust, modest efficiency (Caine Riordan universe). */
     HKHRKH_THRUST(Category.FUSION, DriveSpecs.builder()
@@ -292,7 +295,7 @@ public enum DriveType {
             .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
             .notes("Hkh'Rkh drive philosophy: a warrior race that prizes closing speed and durability, "
                     + "trading efficiency for raw acceleration.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Antimatter beam-core drive: pion exhaust from proton-antiproton annihilation. */
     ANTIMATTER_BEAM_CORE(Category.ANTIMATTER, DriveSpecs.builder()
@@ -312,7 +315,7 @@ public enum DriveType {
                     DesignConstraint.blocking("MASSIVE_RADIATORS", "A large fraction of annihilation energy becomes waste heat."))
             .sciFiReferences("Avatar (ISV Venture Star)", "Robert Forward antimatter rocket studies")
             .notes("The highest energy density known; gated entirely by antimatter production and storage.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Beam-pushed laser sail. Carries no reaction mass; thrust comes from an external laser. */
     LASER_SAIL(Category.BEAMED, DriveSpecs.builder()
@@ -331,7 +334,7 @@ public enum DriveType {
                     DesignConstraint.advisory("NO_DECELERATION", "Cannot easily decelerate without a beam at the destination."))
             .sciFiReferences("Breakthrough Starshot (real)", "The Mote in God's Eye (Niven & Pournelle)")
             .notes("Reaction-mass-free: nearly all mass is structure and payload, accelerated by photons.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Solar sail. Thrust from reflected sunlight; weakest of all, but free and inexhaustible inbound. */
     SOLAR_SAIL(Category.BEAMED, DriveSpecs.builder()
@@ -350,7 +353,7 @@ public enum DriveType {
                     DesignConstraint.advisory("INNER_SYSTEM_ONLY", "Practical thrust is confined to the inner system."))
             .sciFiReferences("IKAROS (real)", "Sunjammer", "Arthur C. Clarke 'The Wind from the Sun'")
             .notes("No propellant and no power draw; pays for it with the lowest thrust of any drive.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Bussard interstellar ramjet. Scoops interstellar hydrogen as fusion fuel at relativistic speed. */
     BUSSARD_RAMJET(Category.INTERSTELLAR, DriveSpecs.builder()
@@ -370,7 +373,7 @@ public enum DriveType {
                     DesignConstraint.advisory("EXOTIC_ENGINEERING", "Net thrust may be defeated by scoop drag in sparse media."))
             .sciFiReferences("Tau Zero (Poul Anderson)", "A World Out of Time (Niven)", "Star Trek (Bussard collectors)")
             .notes("Needs no stored fuel once up to speed, the dream of fuel-free interstellar cruise.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Ktoran Dominion advanced drive: high thrust AND high Isp, generations beyond human fusion. */
     KTORAN_ADVANCED(Category.EXOTIC, DriveSpecs.builder()
@@ -390,7 +393,7 @@ public enum DriveType {
             .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
             .notes("The Ktoran Dominion's signature drive: both faster-accelerating and far more efficient than "
                     + "human fusion, reflecting an arrogant, ancient technological lead.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Grtul gate transit: a fixed-gate drive mode for cataloguing gate-capable assets. */
     GRTUL_GATE(Category.EXOTIC, DriveSpecs.builder()
@@ -407,7 +410,7 @@ public enum DriveType {
             .constraints(DesignConstraint.blocking("GATE_REQUIRED", "Requires a compatible gate or fixed transit infrastructure."))
             .sciFiReferences("Caine Riordan / Terran Republic (Charles E. Gannon)")
             .notes("Catalog discriminator for assets that move via Grtul gate transit rather than onboard propulsion.")
-            .build()),
+            .build(), Set.of(TransitMode.JUMP_GATE)),
 
     /** Posleen normal-space drive used for non-hyper transit in the Posleen setting. */
     POSLEEN_NORMAL_SPACE(Category.EXOTIC, DriveSpecs.builder()
@@ -424,7 +427,7 @@ public enum DriveType {
             .constraints(DesignConstraint.advisory("EXOTIC_ENGINEERING", "Normal-space drive physics are setting-specific."))
             .sciFiReferences("Legacy of the Aldenata / Posleen War")
             .notes("Catalog entry for Posleen normal-space manoeuvre drives.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** Galactic hyperdrive: strategic FTL transit mode, not a landing or tactical thruster. */
     GALACTIC_HYPER(Category.EXOTIC, DriveSpecs.builder()
@@ -441,7 +444,7 @@ public enum DriveType {
             .constraints(DesignConstraint.blocking("FTL_ONLY", "Hyperdrive does not provide local manoeuvre thrust."))
             .sciFiReferences("Galactic-scale space opera hyperdrive")
             .notes("Catalog entry for assets whose strategic movement is via hyperdrive.")
-            .build()),
+            .build(), Set.of(TransitMode.WARP)),
 
     /** Astrophage/Taumoeba spin drive: near-total mass-to-light conversion (Project Hail Mary). */
     SPIN_DRIVE(Category.EXOTIC, DriveSpecs.builder()
@@ -461,7 +464,7 @@ public enum DriveType {
             .sciFiReferences("Project Hail Mary (Astrophage spin drive)")
             .notes("Living-fuel drive emitting Petrova-frequency light at near-total mass conversion; "
                     + "near-c exhaust at usable thrust enables ~1.5g interstellar cruise.")
-            .build()),
+            .build(), Set.of(TransitMode.SUBLIGHT)),
 
     /** No installed drive. Useful for fixed assets where propulsion is structurally absent. */
     NONE(Category.EXOTIC, DriveSpecs.builder()
@@ -476,14 +479,16 @@ public enum DriveType {
             .landingCapable(false)
             .chartRegion("No installed drive")
             .notes("Structural absence of a drive; use for fixed assets and placeholders.")
-            .build());
+            .build(), Set.of());
 
     private final Category category;
     private final DriveSpecs specs;
+    private final Set<TransitMode> transitModes;
 
-    DriveType(Category category, DriveSpecs specs) {
+    DriveType(Category category, DriveSpecs specs, Set<TransitMode> transitModes) {
         this.category = category;
         this.specs = specs;
+        this.transitModes = Set.copyOf(transitModes);
     }
 
     /** @return the family this drive belongs to */
@@ -494,6 +499,16 @@ public enum DriveType {
     /** @return the full performance envelope for this drive */
     public DriveSpecs specs() {
         return specs;
+    }
+
+    /**
+     * @return the set of transit kinds this drive supports — v2 Phase E.1 §4 (the route-finding
+     * substrate uses this to decide which star-pair edges this drive can traverse). Empty for
+     * {@link #NONE}; single-mode for most drives; multi-mode reserved for future multi-mode drives
+     * landed in Phase E.2 alongside their catalog ship designs.
+     */
+    public Set<TransitMode> transitModes() {
+        return transitModes;
     }
 
     /** @return the average specific impulse, in seconds */
