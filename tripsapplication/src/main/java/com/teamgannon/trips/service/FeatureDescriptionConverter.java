@@ -75,6 +75,9 @@ public class FeatureDescriptionConverter {
         }
         desc.setAssociatedPlanetId(feature.getAssociatedPlanetId());
         desc.setLagrangePoint(feature.getLagrangePoint());
+        // v2 Phase E.1 Step 9 — parent body id surfaces through to the render-time DTO so the
+        // properties dialog can resolve the parent star's display name without a DB round-trip.
+        desc.setParentBodyId(feature.getParentBodyId());
 
         // Visual properties
         if (feature.getParticleCount() != null) {

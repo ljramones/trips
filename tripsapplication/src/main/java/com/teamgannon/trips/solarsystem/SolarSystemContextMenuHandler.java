@@ -1,6 +1,7 @@
 package com.teamgannon.trips.solarsystem;
 
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
+import com.teamgannon.trips.model.FeatureDescription;
 import com.teamgannon.trips.model.PlanetDescription;
 import javafx.scene.Node;
 
@@ -66,6 +67,31 @@ public interface SolarSystemContextMenuHandler {
      * @param planet the planet whose orbit was clicked
      */
     default void onOrbitSelected(Node source, PlanetDescription planet) {
+        // no-op by default
+    }
+
+    /**
+     * Called when user left-clicks a system feature visual (e.g. a JUMP_POINT sphere)
+     * to select it. v2 Phase E.1 Step 9 — features become interactive on par with
+     * planets and stars.
+     *
+     * @param source  the 3D node that was clicked
+     * @param feature the feature description backing the node
+     */
+    default void onFeatureSelected(Node source, FeatureDescription feature) {
+        // no-op by default
+    }
+
+    /**
+     * Called when user right-clicks a system feature visual (e.g. a JUMP_POINT sphere).
+     * v2 Phase E.1 Step 9.
+     *
+     * @param source  the 3D node that was clicked
+     * @param feature the feature description backing the node
+     * @param screenX screen X coordinate for menu placement
+     * @param screenY screen Y coordinate for menu placement
+     */
+    default void onFeatureContextMenu(Node source, FeatureDescription feature, double screenX, double screenY) {
         // no-op by default
     }
 }

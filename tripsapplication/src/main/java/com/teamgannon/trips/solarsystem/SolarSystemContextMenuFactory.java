@@ -1,10 +1,12 @@
 package com.teamgannon.trips.solarsystem;
 
 import com.teamgannon.trips.dialogs.solarsystem.AddPlanetDialog;
+import com.teamgannon.trips.dialogs.solarsystem.JumpPointPropertiesDialog;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetEditResult;
 import com.teamgannon.trips.dialogs.solarsystem.PlanetPropertiesDialog;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
+import com.teamgannon.trips.model.FeatureDescription;
 import com.teamgannon.trips.model.PlanetDescription;
 import com.teamgannon.trips.model.SolarSystemDescription;
 import javafx.scene.control.Alert;
@@ -252,6 +254,40 @@ public class SolarSystemContextMenuFactory {
             }
         });
         menu.getItems().add(jumpItem);
+
+        return menu;
+    }
+
+    /**
+     * Create a context menu for a system feature (v2 Phase E.1 Step 9).
+     *
+     * <p>Currently only JUMP_POINT has a dedicated properties dialog — other feature types
+     * surface only the type-and-name title item. As each feature type grows its dialog
+     * (per-type, not a generic FeaturePropertiesDialog — see Q3 design discussion),
+     * additional dispatch arms land here.
+     *
+     * @param feature        the feature description backing the clicked node
+     * @param parentStarName resolved display name of the parent star (may be null/blank for
+     *                       single-star systems or when {@code feature.parentBodyId} can't be resolved)
+     * @return the context menu
+     */
+    public ContextMenu createFeatureContextMenu(FeatureDescription feature, String parentStarName) {
+        ContextMenu menu = new ContextMenu();
+
+        MenuItem titleItem = new MenuItem(feature.getName() != null ? feature.getName() : feature.getFeatureType());
+        titleItem.getStyleClass().add("trips-text-section-header");
+        titleItem.setDisable(true);
+        menu.getItems().add(titleItem);
+        menu.getItems().add(new SeparatorMenuItem());
+
+        if ("JUMP_POINT".equals(feature.getFeatureType())) {
+            MenuItem propertiesItem = new MenuItem("Properties...");
+            propertiesItem.setOnAction(e -> {
+                JumpPointPropertiesDialog dialog = new JumpPointPropertiesDialog(feature, parentStarName);
+                dialog.showAndWait();
+            });
+            menu.getItems().add(propertiesItem);
+        }
 
         return menu;
     }

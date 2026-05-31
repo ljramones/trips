@@ -146,8 +146,11 @@ public class SolarSystemRenderer {
     private final Map<String, RingFieldRenderer> featureRenderers;
 
     /**
-     * Map of feature ID to its 3D node (for point-type features)
+     * Map of feature ID to its 3D node (for point-type features).
+     * Exposed via {@link #getFeatureNodes()} so {@link com.teamgannon.trips.graphics.panes.SolarSystemLabelManager}
+     * can register billboard labels against feature nodes (v2 Phase E.1 Step 9).
      */
+    @Getter
     private final Map<String, Node> featureNodes;
 
     /**
@@ -914,16 +917,42 @@ public class SolarSystemRenderer {
         // Store reference
         featureSphere.setUserData(feature);
         featureNodes.put(feature.getId(), featureSphere);
+
+        // v2 Phase E.1 Step 9 — wire mouse interaction on par with planets/stars.
+        // Mirrors BodyRenderer.renderPlanet's PRIMARY/SECONDARY dispatch.
+        featureSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && contextMenuHandler != null) {
+                contextMenuHandler.onFeatureSelected(featureSphere, feature);
+                e.consume();
+                return;
+            }
+            if (e.getButton() == MouseButton.SECONDARY && contextMenuHandler != null) {
+                contextMenuHandler.onFeatureContextMenu(featureSphere, feature, e.getScreenX(), e.getScreenY());
+                e.consume();
+            }
+        });
+
         featuresGroup.getChildren().add(featureSphere);
 
         log.info("Rendered point feature '{}' ({}) at {} AU",
                 feature.getName(), feature.getFeatureType(), orbitalRadius);
     }
 
+    /**
+     * Fixed screen-unit base for feature spheres. v2 Phase E.1 Step 9 — replaces the
+     * earlier {@code scaleManager.auToScreen(0.02)} computation which was conceptually
+     * misusing a visual-size constant as an AU distance and getting log-scale-amplified
+     * up to ~28 screen units in log mode (vs ~0.23 in linear mode). The fixed base puts
+     * features in the same visual range as the planet sizing pipeline
+     * ({@link ScaleManager#minPlanetRadius} = 2.0 to
+     * {@link ScaleManager#maxPlanetRadius} = 10.0), so the per-type multiplier
+     * (1.5× for JUMP_POINT, 2.0× for JUMP_GATE, etc.) expresses relative size between
+     * feature types rather than amplifying scale-mode artefacts.
+     */
+    static final double FEATURE_BASE_SCREEN_UNITS = 3.0;
+
     private double getFeatureSize(FeatureDescription feature) {
-        // Base size for features (relative to scale)
-        double baseSize = scaleManager.auToScreen(0.02);  // About 0.02 AU in size
-        return featureSizeMultiplier(feature.getFeatureType()) * baseSize;
+        return featureSizeMultiplier(feature.getFeatureType()) * FEATURE_BASE_SCREEN_UNITS;
     }
 
     /**

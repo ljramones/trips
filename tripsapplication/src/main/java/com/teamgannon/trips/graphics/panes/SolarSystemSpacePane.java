@@ -11,6 +11,7 @@ import com.teamgannon.trips.events.SolarSystemScaleEvent;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.ExoPlanet;
+import com.teamgannon.trips.model.FeatureDescription;
 import com.teamgannon.trips.model.PlanetDescription;
 import com.teamgannon.trips.model.SolarSystemDescription;
 import com.teamgannon.trips.service.DatabaseManagementService;
@@ -709,6 +710,47 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
         selectedNode = planetNode != null ? planetNode : source;
         solarSystemRenderer.selectPlanet(planet);
         updateLabels();
+    }
+
+    @Override
+    public void onFeatureSelected(Node source, FeatureDescription feature) {
+        // v2 Phase E.1 Step 9 — minimal selection: track the node for camera focus.
+        // Features don't have an orbit to dim or a selection style yet; future phases can
+        // extend SelectionStyleManager to highlight selected feature nodes.
+        selectedNode = source;
+        updateLabels();
+    }
+
+    @Override
+    public void onFeatureContextMenu(Node source, FeatureDescription feature, double screenX, double screenY) {
+        log.info("Feature context menu requested for: {} ({})", feature.getName(), feature.getFeatureType());
+
+        String parentStarName = resolveParentStarName(feature);
+        ContextMenu menu = contextMenuFactory.createFeatureContextMenu(feature, parentStarName);
+        menu.show(source, screenX, screenY);
+    }
+
+    /**
+     * Resolve the display name of the star referenced by {@code feature.parentBodyId} from the
+     * current system's primary + companion stars. Returns null if no match.
+     */
+    private String resolveParentStarName(FeatureDescription feature) {
+        if (feature == null || feature.getParentBodyId() == null || currentSystem == null) {
+            return null;
+        }
+        String parentId = feature.getParentBodyId();
+        StarDisplayRecord primary = currentSystem.getStarDisplayRecord();
+        if (primary != null && parentId.equals(primary.getRecordId())) {
+            return primary.getStarName();
+        }
+        if (currentSystem.getCompanionStars() != null) {
+            for (StarDisplayRecord companion : currentSystem.getCompanionStars()) {
+                if (companion != null && parentId.equals(companion.getRecordId())) {
+                    return companion.getStarName();
+                }
+            }
+        }
+        return null;
     }
 
     @EventListener

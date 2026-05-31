@@ -30,6 +30,13 @@ public class FeatureDescription {
     private String associatedPlanetId;
     private String lagrangePoint;
 
+    /**
+     * Per-body parent reference (v2 Phase E.1 Step 4 column on SolarSystemFeature).
+     * For per-star features like JUMP_POINT this is the parent star's id; used by the
+     * properties dialog (Step 9) to resolve the parent star's display name.
+     */
+    private String parentBodyId;
+
     // Visual properties
     private int particleCount;
     private double minParticleSize;

@@ -1,5 +1,6 @@
 package com.teamgannon.trips.graphics.panes;
 
+import com.teamgannon.trips.model.FeatureDescription;
 import com.teamgannon.trips.model.PlanetDescription;
 import com.teamgannon.trips.model.SolarSystemDescription;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
@@ -295,6 +296,31 @@ public class SolarSystemLabelManager {
                     renderer.registerLabel(node, label);
                     break; // Only label the primary star for now
                 }
+            }
+        }
+
+        // Create labels for system features (v2 Phase E.1 Step 9). JUMP_POINT in particular
+        // needs a label so users can identify the gravitational anomaly without hovering for
+        // the tooltip. Skip features with no meaningful name — defensive, since the listener
+        // always sets a name but a hand-edited row in the DB might not.
+        if (solarSystemDescription.hasFeatures()) {
+            Map<String, Node> featureNodes = renderer.getFeatureNodes();
+            for (FeatureDescription feature : solarSystemDescription.getFeatures()) {
+                if (feature == null) {
+                    continue;
+                }
+                String name = feature.getName();
+                if (name == null || name.isBlank()) {
+                    continue;
+                }
+                Node featureNode = featureNodes.get(feature.getId());
+                if (featureNode == null) {
+                    continue;
+                }
+                Label label = renderer.createLabel(name);
+                label.setLabelFor(featureNode);
+                labelDisplayGroup.getChildren().add(label);
+                renderer.registerLabel(featureNode, label);
             }
         }
 

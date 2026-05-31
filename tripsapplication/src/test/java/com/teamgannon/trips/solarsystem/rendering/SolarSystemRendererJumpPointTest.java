@@ -134,4 +134,45 @@ class SolarSystemRendererJumpPointTest {
         assertFalse(jp.isBeltType(),
                 "JUMP_POINT must not classify as a belt-type feature");
     }
+
+    // ============================================================
+    // Sizing fix (v2 Phase E.1 Step 9) — scale-mode-independent base
+    // ============================================================
+
+    @Test
+    @DisplayName("FEATURE_BASE_SCREEN_UNITS is a fixed scene-graph constant, not derived from auToScreen")
+    void featureBaseScreenUnitsIsFixed() {
+        // The Phase E.1 Step 9 sizing fix replaces scaleManager.auToScreen(0.02) with a fixed
+        // constant in the planet-visual-size range (planets are 2.0-10.0 screen units).
+        // Picking a specific positive value in that range is the user-calibrated default; pin
+        // the constant so a future drive-by edit to 0.0 or 100.0 surfaces in CI.
+        assertTrue(SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS > 0,
+                "FEATURE_BASE_SCREEN_UNITS must be positive");
+        assertTrue(SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS >= 2.0
+                        && SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS <= 10.0,
+                "FEATURE_BASE_SCREEN_UNITS should sit in the planet visual-size range "
+                        + "(ScaleManager.minPlanetRadius=2.0 to maxPlanetRadius=10.0) so features "
+                        + "are visually proportional to planets, not 10x bigger or invisible: actual="
+                        + SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS);
+    }
+
+    @Test
+    @DisplayName("JUMP_POINT effective size = 1.5 × FEATURE_BASE_SCREEN_UNITS (independent of scale mode)")
+    void jumpPointEffectiveSizeMatchesFixedBase() {
+        double expected = 1.5 * SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS;
+        double actual = SolarSystemRenderer.featureSizeMultiplier("JUMP_POINT")
+                * SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS;
+        assertEquals(expected, actual, 1e-9);
+    }
+
+    @Test
+    @DisplayName("JUMP_GATE effective size = 2.0 × FEATURE_BASE_SCREEN_UNITS (larger than JUMP_POINT)")
+    void jumpGateEffectiveSizeLargerThanJumpPoint() {
+        double jpSize = SolarSystemRenderer.featureSizeMultiplier("JUMP_POINT")
+                * SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS;
+        double gateSize = SolarSystemRenderer.featureSizeMultiplier("JUMP_GATE")
+                * SolarSystemRenderer.FEATURE_BASE_SCREEN_UNITS;
+        assertTrue(gateSize > jpSize,
+                "constructed gates should render visibly larger than natural jump points");
+    }
 }
