@@ -25,6 +25,13 @@ public interface SolarSystemFeatureRepository extends JpaRepository<SolarSystemF
     List<SolarSystemFeature> findBySolarSystemIdAndFeatureType(String solarSystemId, String featureType);
 
     /**
+     * v2 Phase E.1 §7.3 — per-body feature lookup for the activation hook. The
+     * JumpPointActivationListener queries this to detect whether a given star already has its
+     * JUMP_POINT feature persisted (avoiding duplicate computation on repeat activations).
+     */
+    List<SolarSystemFeature> findByParentBodyIdAndFeatureType(String parentBodyId, String featureType);
+
+    /**
      * Find all features of a specific category (NATURAL or ARTIFICIAL) in a solar system.
      */
     List<SolarSystemFeature> findBySolarSystemIdAndFeatureCategory(String solarSystemId, String featureCategory);

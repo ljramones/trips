@@ -46,7 +46,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"description", "carriedCraftJson", "armamentsJson"})
+@ToString(exclude = {"description", "carriedCraftJson", "armamentsJson", "defaultAccessibleNetworkIdsJson"})
 @DynamicUpdate
 @Entity(name = "SPACESHIP_DESIGN")
 @Table(indexes = {
@@ -94,6 +94,15 @@ public class SpaceshipEntity implements Serializable {
     /** Serialised list of armaments; see {@link SpaceshipDesignMapper}. */
     @Lob
     private String armamentsJson;
+
+    /**
+     * v2 Phase E.1 §5.4 — JSON-serialised {@code Set<String>} of {@code GateNetwork} ids that
+     * ships of this design have transponder access to by default. Nullable; empty set on the
+     * domain side persists as {@code null} here. The {@link SpaceshipDesignMapper} handles
+     * round-trip via Jackson.
+     */
+    @Lob
+    private String defaultAccessibleNetworkIdsJson;
 
     private String iconPath;
 

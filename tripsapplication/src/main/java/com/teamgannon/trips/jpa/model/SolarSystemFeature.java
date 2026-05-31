@@ -114,6 +114,40 @@ public class SolarSystemFeature implements Serializable {
     @Column(nullable = true)
     private Double eccentricity;
 
+    // ==================== Catalog Reference + Networking (v2 Phase E.1) ====================
+
+    /**
+     * v2 Phase E.1 §3.4 — per-body parent reference. For per-star features (e.g. JUMP_POINT),
+     * this is the star's id. Distinct from {@link #associatedPlanetId}, which references a
+     * planet specifically. Null when the feature isn't body-parented.
+     */
+    @Column(nullable = true)
+    private String parentBodyId;
+
+    /**
+     * v2 Phase E.1 §6.1 — catalog entry id (typically a {@code "catalog-<slug>"} stable id)
+     * this feature represents. Null for features without a catalog reference (natural features
+     * like asteroid belts and JUMP_POINTs).
+     */
+    @Column(nullable = true)
+    private String catalogReferenceId;
+
+    /**
+     * v2 Phase E.1 §6.2 — {@link com.terranrepublic.assets.CatalogedKind} discriminator for
+     * {@link #catalogReferenceId}. Tells the polymorphic-dispatch resolver which catalog table
+     * to look up. Null when {@code catalogReferenceId} is null (both nullable together).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true, length = 32)
+    private com.terranrepublic.assets.CatalogedKind catalogReferenceKind;
+
+    /**
+     * v2 Phase E.1 §6.1 — for JUMP_GATE features only, the {@code GateNetwork} id this gate
+     * belongs to. Null for all other featureTypes.
+     */
+    @Column(nullable = true)
+    private String networkId;
+
     // ==================== Spatial Properties (Point Features) ====================
 
     /**
@@ -314,6 +348,7 @@ public class SolarSystemFeature implements Serializable {
         return featureType != null && (
                 featureType.equals(FeatureType.ORBITAL_HABITAT) ||
                 featureType.equals(FeatureType.JUMP_GATE) ||
+                featureType.equals(FeatureType.JUMP_POINT) ||
                 featureType.equals(FeatureType.SHIPYARD) ||
                 featureType.equals(FeatureType.RESEARCH_STATION) ||
                 featureType.equals(FeatureType.MINING_OPERATION) ||
@@ -372,6 +407,9 @@ public class SolarSystemFeature implements Serializable {
         public static final String SHIPYARD = "SHIPYARD";
         public static final String SENSOR_NETWORK = "SENSOR_NETWORK";
         public static final String RESEARCH_STATION = "RESEARCH_STATION";
+
+        // v2 Phase E.1 — per-star deterministic jump-point feature
+        public static final String JUMP_POINT = "JUMP_POINT";
 
         private FeatureType() {}
     }

@@ -9,6 +9,7 @@ import com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The aggregate root describing a complete spaceship design.
@@ -55,11 +56,46 @@ public record SpaceshipDesign(
         boolean concealed,
         OperationalState operationalState,
         String era,
-        Instant createdAt
+        Instant createdAt,
+        Set<String> defaultAccessibleNetworkIds
 ) implements SpaceAsset {
 
     /**
-     * Backwards-compatible constructor for existing hidden/visible ship call sites.
+     * Backwards-compatible constructor matching the pre-E.1 19-arg canonical signature.
+     * Delegates to the new 20-arg canonical with {@code defaultAccessibleNetworkIds = Set.of()}.
+     * v2 Phase E.1 §5.4 added the field; this shim lets every pre-E.1 caller continue compiling.
+     */
+    public SpaceshipDesign(
+            String id,
+            String name,
+            String designation,
+            ShipClass shipClass,
+            DriveType driveType,
+            MassBudget massBudget,
+            int crewComplement,
+            double lengthMeters,
+            List<CarriedCraft> carriedCraft,
+            List<Armament> armaments,
+            String iconPath,
+            String description,
+            SourceType sourceType,
+            String sourceUniverse,
+            String faction,
+            boolean concealed,
+            OperationalState operationalState,
+            String era,
+            Instant createdAt
+    ) {
+        this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
+                carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, concealed,
+                operationalState, era, createdAt, Set.of());
+    }
+
+    /**
+     * Backwards-compatible constructor for existing hidden/visible ship call sites (18-arg shim
+     * predating the operationalState introduction). Delegates through the 19-arg compat
+     * constructor above, which in turn delegates to the 20-arg canonical with
+     * {@code defaultAccessibleNetworkIds = Set.of()}.
      */
     public SpaceshipDesign(
             String id,
@@ -169,6 +205,10 @@ public record SpaceshipDesign(
         operationalState = operationalState == null ? OperationalState.OPERATIONAL : operationalState;
         era = era == null ? "" : era;
         createdAt = createdAt == null ? Instant.now() : createdAt;
+        // v2 Phase E.1 §5.4 — defensive immutable copy; null defaults to empty set.
+        defaultAccessibleNetworkIds = defaultAccessibleNetworkIds == null
+                ? Set.of()
+                : Set.copyOf(defaultAccessibleNetworkIds);
     }
 
     /**

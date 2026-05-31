@@ -58,4 +58,54 @@ class SpaceshipDesignTest {
         assertNotNull(d.id());
         assertNotNull(d.createdAt());
     }
+
+    // ==================================================================
+    // v2 Phase E.1 §5.4 — defaultAccessibleNetworkIds field
+    // ==================================================================
+
+    @Test
+    @DisplayName("defaultAccessibleNetworkIds defaults to empty set when 19-arg compat constructor used")
+    void defaultAccessibleNetworkIdsDefaultsEmpty() {
+        SpaceshipDesign d = frigate();
+        assertNotNull(d.defaultAccessibleNetworkIds(),
+                "defaultAccessibleNetworkIds must never be null");
+        org.junit.jupiter.api.Assertions.assertTrue(d.defaultAccessibleNetworkIds().isEmpty(),
+                "compat-constructor path must produce an empty set");
+    }
+
+    @Test
+    @DisplayName("defaultAccessibleNetworkIds is immutable (defensive Set.copyOf in compact ctor)")
+    void defaultAccessibleNetworkIdsImmutable() {
+        SpaceshipDesign d = frigate();
+        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
+                () -> d.defaultAccessibleNetworkIds().add("catalog-network-test"));
+    }
+
+    @Test
+    @DisplayName("defaultAccessibleNetworkIds is defensively copied — mutating input after construction doesn't mutate the record")
+    void defaultAccessibleNetworkIdsDefensivelyCopied() {
+        java.util.Set<String> input = new java.util.HashSet<>();
+        input.add("catalog-network-aldenata-civilian");
+        SpaceshipDesign d = new SpaceshipDesign(
+                "id", "Test Ship", "TS-1",
+                com.teamgannon.trips.spaceshipmodeller.core.ShipClass.FRIGATE,
+                com.teamgannon.trips.spaceshipmodeller.propulsion.DriveType.FUSION_TORCH,
+                new com.teamgannon.trips.spaceshipmodeller.core.MassBudget(100, 40, 150, 20, 10, 30),
+                4, 80,
+                java.util.List.of(), java.util.List.of(),
+                "", "Test",
+                com.terranrepublic.assets.SourceType.SCIENCE_FICTION, "Test", "Faction",
+                false,
+                com.terranrepublic.assets.OperationalState.OPERATIONAL,
+                "2200", java.time.Instant.now(),
+                input);
+        // Mutate input after construction
+        input.add("catalog-network-posleen");
+        // Record's view unchanged
+        org.junit.jupiter.api.Assertions.assertEquals(1, d.defaultAccessibleNetworkIds().size());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                d.defaultAccessibleNetworkIds().contains("catalog-network-aldenata-civilian"));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                d.defaultAccessibleNetworkIds().contains("catalog-network-posleen"));
+    }
 }

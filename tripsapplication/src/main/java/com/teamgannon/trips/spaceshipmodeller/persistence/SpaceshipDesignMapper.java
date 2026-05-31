@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Converts between the immutable domain {@link SpaceshipDesign} record and the mutable JPA
@@ -30,6 +31,8 @@ public class SpaceshipDesignMapper {
     private static final TypeReference<List<CarriedCraft>> CARRIED_CRAFT_LIST = new TypeReference<>() {
     };
     private static final TypeReference<List<Armament>> ARMAMENT_LIST = new TypeReference<>() {
+    };
+    private static final TypeReference<Set<String>> NETWORK_ID_SET = new TypeReference<>() {
     };
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -73,6 +76,8 @@ public class SpaceshipDesignMapper {
         entity.setConcealed(design.concealed());
         entity.setOperationalState(design.operationalState());
         entity.setCreatedAt(design.createdAt());
+        // v2 Phase E.1 §5.4 — round-trip the GateNetwork transponder access set.
+        entity.setDefaultAccessibleNetworkIdsJson(writeNetworkIds(design.defaultAccessibleNetworkIds()));
         return entity;
     }
 
@@ -117,7 +122,8 @@ public class SpaceshipDesignMapper {
                 entity.isConcealed(),
                 state,
                 entity.getEra(),
-                entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now());
+                entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
+                readNetworkIds(entity.getDefaultAccessibleNetworkIdsJson()));
     }
 
     private String writeCarriedCraft(List<CarriedCraft> carriedCraft) {
@@ -165,6 +171,32 @@ public class SpaceshipDesignMapper {
         } catch (JacksonException e) {
             log.error("Failed to deserialise armaments; returning none: {}", e.getMessage());
             return List.of();
+        }
+    }
+
+    /** v2 Phase E.1 §5.4 — serialise the network-id set; empty/null persists as null. */
+    private String writeNetworkIds(Set<String> networkIds) {
+        if (networkIds == null || networkIds.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(networkIds);
+        } catch (JacksonException e) {
+            log.error("Failed to serialise default-accessible network ids; storing none: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** v2 Phase E.1 §5.4 — deserialise the network-id set; null/blank reads back as empty set. */
+    private Set<String> readNetworkIds(String json) {
+        if (json == null || json.isBlank()) {
+            return Set.of();
+        }
+        try {
+            return objectMapper.readValue(json, NETWORK_ID_SET);
+        } catch (JacksonException e) {
+            log.error("Failed to deserialise default-accessible network ids; returning none: {}", e.getMessage());
+            return Set.of();
         }
     }
 }

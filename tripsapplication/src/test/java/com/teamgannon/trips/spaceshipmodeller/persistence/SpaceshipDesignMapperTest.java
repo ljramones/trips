@@ -135,4 +135,65 @@ class SpaceshipDesignMapperTest {
         SpaceshipDesign back = mapper.toDomain(mapper.toEntity(withFlags(false, state)));
         assertEquals(state, back.operationalState());
     }
+
+    // ==================================================================
+    // v2 Phase E.1 §5.4 — defaultAccessibleNetworkIds round-trip
+    // ==================================================================
+
+    /** Direct constructor exposing the 20-arg canonical so the new field gets explicit values. */
+    private static SpaceshipDesign withNetworks(java.util.Set<String> networkIds) {
+        return new SpaceshipDesign(
+                UUID.randomUUID().toString(),
+                "Test-Network-Ship",
+                "TN-1",
+                ShipClass.CORVETTE,
+                DriveType.ION_GRIDDED,
+                new MassBudget(10, 5, 5, 0, 0, 0),
+                3, 30.0,
+                List.of(), List.of(),
+                "icon.png", "round-trip fixture",
+                SourceType.UNKNOWN, "", "Unknown",
+                false,
+                OperationalState.OPERATIONAL,
+                "", Instant.now(),
+                networkIds);
+    }
+
+    @Test
+    @DisplayName("empty defaultAccessibleNetworkIds round-trips to empty set")
+    void emptyNetworkIdsRoundTripsToEmpty() {
+        SpaceshipDesign back = mapper.toDomain(mapper.toEntity(withNetworks(java.util.Set.of())));
+        assertTrue(back.defaultAccessibleNetworkIds().isEmpty());
+    }
+
+    @Test
+    @DisplayName("single-element defaultAccessibleNetworkIds round-trips")
+    void singleNetworkIdRoundTrips() {
+        java.util.Set<String> ids = java.util.Set.of("catalog-network-aldenata-civilian");
+        SpaceshipDesign back = mapper.toDomain(mapper.toEntity(withNetworks(ids)));
+        assertEquals(ids, back.defaultAccessibleNetworkIds());
+    }
+
+    @Test
+    @DisplayName("multi-element defaultAccessibleNetworkIds round-trips")
+    void multipleNetworkIdsRoundTrip() {
+        java.util.Set<String> ids = java.util.Set.of(
+                "catalog-network-aldenata-civilian",
+                "catalog-network-aldenata-military",
+                "catalog-network-posleen");
+        SpaceshipDesign back = mapper.toDomain(mapper.toEntity(withNetworks(ids)));
+        assertEquals(ids, back.defaultAccessibleNetworkIds());
+        assertEquals(3, back.defaultAccessibleNetworkIds().size());
+    }
+
+    @Test
+    @DisplayName("null defaultAccessibleNetworkIdsJson column reads back as empty set (legacy-row safety)")
+    void nullColumnReadsBackAsEmpty() {
+        // Build a normal entity, then null the column to simulate a row inserted before V14 ran.
+        SpaceshipEntity entity = mapper.toEntity(withNetworks(java.util.Set.of()));
+        entity.setDefaultAccessibleNetworkIdsJson(null);
+        SpaceshipDesign back = mapper.toDomain(entity);
+        assertNotNull(back.defaultAccessibleNetworkIds());
+        assertTrue(back.defaultAccessibleNetworkIds().isEmpty());
+    }
 }
