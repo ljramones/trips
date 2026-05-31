@@ -18,7 +18,7 @@ F.1 introduces the **Universe** entity as a first-class persisted scope and thre
 The four concrete deliverables (per Larry's ratification):
 
 1. **Universe entity** in the `com.terranrepublic.assets` package, mirroring the GateNetwork pipeline pattern (record + JPA entity + mapper + repository + lifecycle enum + designer service + seeder).
-2. **`universe_id` nullable FK column** on the six catalog tables: `station_design`, `weapon_installation`, `megastructure`, `spaceship_design`, `transport_node` (when added — see §4.3), `gate_network`. NULL = canonical/real; non-NULL = scoped to the referenced universe.
+2. **`universe_id` nullable FK column** on the six catalog tables: `station_design`, `weapon_installation`, `megastructure`, `spaceship_design`, `transport_node`, `gate_network`. NULL = canonical/real; non-NULL = scoped to the referenced universe.
 3. **Activation mechanism**: per-universe `active` boolean + `UniverseActivationChangedEvent` + `UniverseFilteringService` that catalog designer panels and renderers consult before showing universe-scoped content.
 4. **Worldbuilding menu integration**: a "Universes" submenu listing available universes with activation toggles. Status bar indicator showing "Real only" or "Real + N universe(s) active".
 
@@ -86,6 +86,8 @@ Option (b) cleanly separates concerns:
 - Entries whose `sourceUniverse` String is a faction or era (e.g., "Hkh'Rkh") get `universe_id` pointing at the parent universe (Caine Riordan) while the String stays "Hkh'Rkh" — and F.3 later extracts the faction structure as a proper Faction entity.
 
 This is forward-compatible: when F.3 ships, the `CatalogProvenance.sourceUniverse` String can be parsed/migrated into `Faction` references where appropriate; until then it stays as the existing free-text descriptor.
+
+**Pre-emptive scope estimate for F.3** (surfaced by the Step 1 audit): the `CatalogProvenance.sourceUniverse` String has wider write/read reach than this design doc originally captured — ~10 files (writers in `SpaceshipEditorDialog`, `SpaceshipDesignDto`, 4 mappers; readers in `SpaceshipRow`, `SpaceshipEntity`, plus the 5 originally-listed paths). Deprecating the String (Option a, rejected here) would touch all ~10 files; this is load-bearing context for F.3's Faction-extraction work when it eventually wants to deprecate or refactor the String field.
 
 ### §1.2 — Q2: Example universe naming
 
@@ -194,7 +196,7 @@ The catalog audit produced 59 distinct strings. Categorisation (best-effort; som
 
 **Real-world entities (~4)**: "NASA", "Near future", "United States", "Earth" — map to NULL `universe_id` (these are real entries).
 
-**Other** — "Independent" (generic; map to NULL), "Source universe or setting for this design." (this is documentation accidentally captured; map to NULL).
+**Other** — "Independent" (generic; map to NULL), "Source universe or setting for this design." (this is documentation accidentally captured; map to NULL), "Galactic Government" (Hitchhiker's Guide universe-specific governance term; map to The Hitchhiker's Guide to the Galaxy).
 
 ### §3.3 — The 6 catalog tables
 
@@ -207,7 +209,7 @@ The catalog audit produced 59 distinct strings. Categorisation (best-effort; som
 | `megastructure` | D.7 | Active | Troy (Legacy of Aldenata) + Real (Dyson, etc.) |
 | `spaceship_design` | Pre-Constructs v2 | Active | Multi-universe |
 | `gate_network` | E.1 / V13 | Active | Currently empty; F.2 may populate |
-| `transport_node` | Pre-F.1 | **Not present in current schema as a separate table** — `SolarSystemFeature` with `featureType=JUMP_GATE` currently fills this role. Decide in §4.3 below. |
+| `transport_node` | V9 (Constructs v2 Phase B) | Active | Currently empty per V9 header — no canonical transport nodes shipped yet; `universe_id` column added anyway for schema uniformity |
 
 ### §3.4 — SolarSystemFeature is NOT a catalog table
 
@@ -275,7 +277,7 @@ Mirrors `GateNetworkEntity` exactly:
 
 ### §4.3 — universe_id FK columns
 
-Added to five existing tables via V15:
+Added to six existing tables via V15:
 
 | Table | Column | Constraint |
 |---|---|---|
@@ -284,8 +286,9 @@ Added to five existing tables via V15:
 | `megastructure` | `universe_id VARCHAR(64) NULL` | same |
 | `spaceship_design` | `universe_id VARCHAR(64) NULL` | same |
 | `gate_network` | `universe_id VARCHAR(64) NULL` | same |
+| `transport_node` | `universe_id VARCHAR(64) NULL` | same |
 
-**`transport_node` is not in scope for F.1** because there is no `transport_node` table yet. F.1 leaves the per-system transport node concept on `SolarSystemFeature` (per §3.4). When a dedicated `transport_node` table lands (likely F.2 if Aliases need transport-node interlock, otherwise later), it'll add `universe_id` consistently with the others. Updating this design doc when that happens is the obligation of whichever F.x ships it.
+`transport_node` was added in V9 (Constructs v2 Phase B) and exists as a separate table with its own JPA pipeline (entity, mapper, repository, service, seeder). It's currently empty in production (no canonical content seeded yet per V9 header) but the `universe_id` column belongs here for schema uniformity — when canonical transport nodes eventually ship, they'll need universe scoping consistent with the other catalog tables. The Step 1 verification audit surfaced this; the original design draft incorrectly claimed `transport_node` didn't exist as a separate table. SpaceAsset and SpaceInfrastructure both contribute persisted Cataloged subtypes in F.1; future F.x phases inherit this cross-hierarchy treatment as the default.
 
 `ON DELETE SET NULL`: if a Universe row is deleted (e.g., user removes "Children of the Pattern"), the entries pointing at it revert to canonical/real status rather than cascading-deleting (R2.10 says "deleting a universe loses its content" but in F.1 the safer interpretation is "deleting a universe orphans its content as canonical; the user can then re-tag or delete entries explicitly"). F.6 may revisit when cascade-delete semantics get richer.
 
@@ -299,7 +302,7 @@ default Optional<String> universeId() {
 }
 ```
 
-Each subtype (SpaceshipDesign, StationDesign, WeaponInstallation, Megastructure, GateNetwork) overrides if it has the field. The new Universe record itself does NOT override (universes are not scoped to other universes).
+Each subtype (SpaceshipDesign, StationDesign, WeaponInstallation, Megastructure, GateNetwork, TransportNode) overrides if it has the field. The new Universe record itself does NOT override (universes are not scoped to other universes). Conduit (the second SpaceInfrastructure permits, record-only with no JPA backing) inherits the default `Optional.empty()` automatically.
 
 This becomes the universal visibility-filter input for UniverseFilteringService.
 
@@ -313,7 +316,7 @@ Structure:
 3. `CREATE INDEX universe_lifecycle_idx ON universe (lifecycle);`
 4. `CREATE INDEX universe_active_idx ON universe (active);`
 5. `ALTER TABLE station_design ADD COLUMN universe_id VARCHAR(64) NULL;`
-6. (Same for the other 4 tables.)
+6. (Same for the other 5 tables: weapon_installation, megastructure, spaceship_design, gate_network, transport_node.)
 7. Add FK constraints (idempotent via `IF NOT EXISTS` per repo Flyway convention).
 8. `INSERT INTO universe (...)` rows — 15 universe rows. Two get curated description/sourceAuthor:
    ```sql
@@ -328,7 +331,7 @@ Structure:
    ```
    The other 13 universes get a generic description: `'Auto-seeded from existing catalog entries. Expand metadata via Universe editor (Phase F.x).'`
 9. `UPDATE station_design SET universe_id = ... WHERE provenance_source_universe IN (...)` — one UPDATE per universe, scoped by the §3.2 mapping table.
-10. (Same UPDATEs for the other 4 tables, scoped to their existing fiction-canon entries.)
+10. (Same UPDATEs for `weapon_installation`, `megastructure`, `spaceship_design`, `gate_network`. The `transport_node` table is currently empty, so no UPDATE statements needed for it — just the column addition. Additionally, `transport_node`'s provenance column naming differs: V9 uses a bare `faction` String column rather than the `provenance_source_*` prefix the other tables use. When canonical transport nodes are eventually seeded with universe scoping, the seeder writes `universe_id` directly rather than going through a sourceUniverse-string lookup.)
 11. Belt-and-braces verification queries (commented; not executed): "After this migration, every fiction-canon entry should have a non-NULL universe_id matching the §3.2 audit."
 
 The UPDATE statements are the most error-prone part. Two safety measures:
@@ -530,7 +533,7 @@ F.1 ships in **9 steps**, parallel to E.1's structure. Each step ends with a tes
 | 8 | Status bar indicator + visibility-filtering verification | ~12 |
 | 9 | Plan doc rollup + retroactive design doc | 0 |
 
-Total est. ~105 new tests.
+Total est. ~108 new tests (Step 1 audit added TransportNode to the universeId() override set, +3 tests for the per-subtype extension; final count may run higher if parameterized tests over UniverseLifecycle and audit invariants expand).
 
 Step boundaries match where the user-visible behaviour changes incrementally:
 - After Step 2, the entity exists but nothing references it.
