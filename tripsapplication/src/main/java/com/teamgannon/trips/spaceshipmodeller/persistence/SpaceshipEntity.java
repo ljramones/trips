@@ -144,6 +144,12 @@ public class SpaceshipEntity implements Serializable {
     @Column(nullable = false)
     private OperationalState operationalState;
 
+    /**
+     * v2 Phase F.1 §4.4 — worldbuilding universe affiliation. {@code null} means canonical/real;
+     * non-null references {@code universe.id}. V16 migration adds the column.
+     */
+    private String universeId;
+
     private Instant createdAt;
 
     /**

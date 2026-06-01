@@ -63,10 +63,55 @@ public record StationDesign(
         Instant modifiedAt,
         StationFunction primaryFunction,
         Set<StationFunction> secondaryFunctions,
-        CatalogProvenance provenance
+        CatalogProvenance provenance,
+        String universeId
 ) implements SpaceAsset {
 
     // ------------------------------------------------------------------ chain
+
+    /**
+     * Backwards-compatible 29-arg constructor preserving the pre-F.1 canonical signature.
+     * Delegates to the 30-arg canonical with {@code universeId = null} (canonical/real-data
+     * scope). v2 Phase F.1 §4.4 added the field.
+     */
+    public StationDesign(
+            String id,
+            String name,
+            String designation,
+            StationType stationType,
+            String faction,
+            boolean concealed,
+            String allegiance,
+            String description,
+            double overallSpanMeters,
+            double interiorSpanMeters,
+            double dryMassTons,
+            double armourThicknessMeters,
+            int crewCapacity,
+            int crewComplement,
+            double pressurizedVolumeM3,
+            Mobility mobility,
+            DriveType auxiliaryDrive,
+            List<CarriedCraft> carriedCraft,
+            List<Armament> armaments,
+            double hangarVolumeM3,
+            boolean carrierCapable,
+            TechLevel techLevel,
+            String category,
+            OperationalState operationalState,
+            Instant createdAt,
+            Instant modifiedAt,
+            StationFunction primaryFunction,
+            Set<StationFunction> secondaryFunctions,
+            CatalogProvenance provenance
+    ) {
+        this(id, name, designation, stationType, faction, concealed, allegiance, description,
+                overallSpanMeters, interiorSpanMeters, dryMassTons, armourThicknessMeters,
+                crewCapacity, crewComplement, pressurizedVolumeM3, mobility, auxiliaryDrive,
+                carriedCraft, armaments, hangarVolumeM3, carrierCapable, techLevel, category,
+                operationalState, createdAt, modifiedAt,
+                primaryFunction, secondaryFunctions, provenance, null);
+    }
 
     /**
      * Backwards-compatible constructor matching the pre-v2-Phase-D.6 23-arg signature. Delegates

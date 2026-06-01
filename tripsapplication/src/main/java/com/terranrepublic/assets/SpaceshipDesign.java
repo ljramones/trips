@@ -57,13 +57,47 @@ public record SpaceshipDesign(
         OperationalState operationalState,
         String era,
         Instant createdAt,
-        Set<String> defaultAccessibleNetworkIds
+        Set<String> defaultAccessibleNetworkIds,
+        String universeId
 ) implements SpaceAsset {
 
     /**
+     * Backwards-compatible 20-arg constructor matching the pre-F.1 canonical signature.
+     * Delegates to the 21-arg canonical with {@code universeId = null} (canonical/real-data
+     * scope). v2 Phase F.1 §4.4 added the field.
+     */
+    public SpaceshipDesign(
+            String id,
+            String name,
+            String designation,
+            ShipClass shipClass,
+            DriveType driveType,
+            MassBudget massBudget,
+            int crewComplement,
+            double lengthMeters,
+            List<CarriedCraft> carriedCraft,
+            List<Armament> armaments,
+            String iconPath,
+            String description,
+            SourceType sourceType,
+            String sourceUniverse,
+            String faction,
+            boolean concealed,
+            OperationalState operationalState,
+            String era,
+            Instant createdAt,
+            Set<String> defaultAccessibleNetworkIds
+    ) {
+        this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
+                carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, concealed,
+                operationalState, era, createdAt, defaultAccessibleNetworkIds, null);
+    }
+
+    /**
      * Backwards-compatible constructor matching the pre-E.1 19-arg canonical signature.
-     * Delegates to the new 20-arg canonical with {@code defaultAccessibleNetworkIds = Set.of()}.
-     * v2 Phase E.1 §5.4 added the field; this shim lets every pre-E.1 caller continue compiling.
+     * Delegates to the new 21-arg canonical with {@code defaultAccessibleNetworkIds = Set.of()}
+     * and {@code universeId = null}.
+     * v2 Phase E.1 §5.4 added defaultAccessibleNetworkIds; v2 Phase F.1 §4.4 added universeId.
      */
     public SpaceshipDesign(
             String id,
@@ -88,7 +122,7 @@ public record SpaceshipDesign(
     ) {
         this(id, name, designation, shipClass, driveType, massBudget, crewComplement, lengthMeters,
                 carriedCraft, armaments, iconPath, description, sourceType, sourceUniverse, faction, concealed,
-                operationalState, era, createdAt, Set.of());
+                operationalState, era, createdAt, Set.of(), null);
     }
 
     /**

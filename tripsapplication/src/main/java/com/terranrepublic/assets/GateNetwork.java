@@ -47,8 +47,31 @@ public record GateNetwork(
         String category,
         CatalogProvenance provenance,
         Instant createdAt,
-        Instant modifiedAt
+        Instant modifiedAt,
+        String universeId
 ) implements Cataloged {
+
+    /**
+     * Backwards-compatible 11-arg constructor preserving every pre-F.1 call site. Delegates to
+     * the 12-arg canonical with {@code universeId = null} (canonical/real-data scope). v2 Phase
+     * F.1 §4.4 added the field.
+     */
+    public GateNetwork(
+            String id,
+            String name,
+            String builderPolity,
+            GateNetworkLifecycle lifecycle,
+            String transponderName,
+            String description,
+            String notes,
+            String category,
+            CatalogProvenance provenance,
+            Instant createdAt,
+            Instant modifiedAt
+    ) {
+        this(id, name, builderPolity, lifecycle, transponderName, description, notes, category,
+                provenance, createdAt, modifiedAt, null);
+    }
 
     public GateNetwork {
         lifecycle = lifecycle == null ? GateNetworkLifecycle.ACTIVE : lifecycle;

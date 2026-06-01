@@ -48,6 +48,8 @@ public class TransportNodeMapper {
         entity.setTraversalTimeTicks(node.traversalTimeTicks());
         entity.setCreatedAt(node.createdAt());
         entity.setModifiedAt(node.modifiedAt());
+        // v2 Phase F.1 §4.4 — universe scope.
+        entity.setUniverseId(node.universeId());
         return entity;
     }
 
@@ -69,7 +71,8 @@ public class TransportNodeMapper {
                 entity.isInstantaneousTransit(),
                 entity.getTraversalTimeTicks(),
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
-                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt());
+                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt(),
+                entity.getUniverseId());
     }
 
     private String writeIds(List<String> ids) {

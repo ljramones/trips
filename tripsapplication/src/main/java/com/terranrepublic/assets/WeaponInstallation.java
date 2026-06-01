@@ -25,8 +25,40 @@ public record WeaponInstallation(
         String category,
         OperationalState operationalState,
         Instant createdAt,
-        Instant modifiedAt
+        Instant modifiedAt,
+        String universeId
 ) implements SpaceAsset {
+
+    /**
+     * Backwards-compatible 19-arg constructor preserving the pre-F.1 canonical signature.
+     * Delegates to the 20-arg canonical with {@code universeId = null} (canonical/real-data
+     * scope). v2 Phase F.1 §4.4 added the field.
+     */
+    public WeaponInstallation(
+            String id,
+            String name,
+            String designation,
+            InstallationType installationType,
+            Emplacement emplacement,
+            String source,
+            String faction,
+            boolean concealed,
+            String description,
+            double dryMassTons,
+            double footprintSpanMeters,
+            boolean mobile,
+            int crewComplement,
+            List<Armament> armaments,
+            TechLevel techLevel,
+            String category,
+            OperationalState operationalState,
+            Instant createdAt,
+            Instant modifiedAt
+    ) {
+        this(id, name, designation, installationType, emplacement, source, faction, concealed, description,
+                dryMassTons, footprintSpanMeters, mobile, crewComplement, armaments, techLevel, category,
+                operationalState, createdAt, modifiedAt, null);
+    }
 
     /**
      * Backwards-compatible constructor for existing weapon-installation call sites with faction/concealment.

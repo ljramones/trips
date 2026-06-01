@@ -207,6 +207,14 @@ public class MegastructureEntity implements Serializable {
     @Column(nullable = false, length = 64)
     private TechLevel techLevel;
 
+    // ------------------------------------------------------------ universe scope (F.1 §4.4)
+
+    /**
+     * v2 Phase F.1 §4.4 — worldbuilding universe affiliation. {@code null} means canonical/real;
+     * non-null references {@code universe.id}. V16 migration adds the column.
+     */
+    private String universeId;
+
     // ------------------------------------------------------------ timestamps
 
     private Instant createdAt;

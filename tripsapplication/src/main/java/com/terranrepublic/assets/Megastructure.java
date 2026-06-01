@@ -67,8 +67,54 @@ public record Megastructure(
         String allegiance,
         TechLevel techLevel,
         Instant createdAt,
-        Instant modifiedAt
+        Instant modifiedAt,
+        String universeId
 ) implements SpaceAsset {
+
+    /**
+     * Backwards-compatible 30-arg constructor preserving the pre-F.1 canonical signature.
+     * Delegates to the 31-arg canonical with {@code universeId = null} (canonical/real-data
+     * scope). v2 Phase F.1 §4.4 added the field.
+     */
+    public Megastructure(
+            String id,
+            String name,
+            String designation,
+            String description,
+            String category,
+            String notes,
+            MegastructureArchetype archetype,
+            double dimensionsKm,
+            double dryMassMegatons,
+            double internalVolumeKm3,
+            Mobility mobility,
+            DriveType auxiliaryDrive,
+            MegastructureOriginType originType,
+            String builderPolity,
+            Integer discoveryYear,
+            Integer constructionYear,
+            StationFunction primaryFunction,
+            Set<StationFunction> secondaryFunctions,
+            boolean hasInteriorSetting,
+            long interiorPopulation,
+            InteriorGravityType interiorGravity,
+            OperationalState operationalState,
+            boolean concealed,
+            List<Armament> armaments,
+            CatalogProvenance provenance,
+            String faction,
+            String allegiance,
+            TechLevel techLevel,
+            Instant createdAt,
+            Instant modifiedAt
+    ) {
+        this(id, name, designation, description, category, notes, archetype,
+                dimensionsKm, dryMassMegatons, internalVolumeKm3, mobility, auxiliaryDrive,
+                originType, builderPolity, discoveryYear, constructionYear,
+                primaryFunction, secondaryFunctions, hasInteriorSetting, interiorPopulation,
+                interiorGravity, operationalState, concealed, armaments, provenance,
+                faction, allegiance, techLevel, createdAt, modifiedAt, null);
+    }
 
     // ------------------------------------------------------------ compact ctor
 

@@ -22,8 +22,38 @@ public record TransportNode(
         boolean instantaneousTransit,
         double traversalTimeTicks,
         Instant createdAt,
-        Instant modifiedAt
+        Instant modifiedAt,
+        String universeId
 ) implements SpaceInfrastructure {
+
+    /**
+     * Backwards-compatible 16-arg constructor preserving every pre-F.1 call site. Delegates to
+     * the 17-arg canonical with {@code universeId = null} (canonical/real-data scope). v2 Phase
+     * F.1 §4.4 added the field.
+     */
+    public TransportNode(
+            String id,
+            String name,
+            String source,
+            String faction,
+            boolean concealed,
+            String description,
+            NodeType type,
+            double positionX,
+            double positionY,
+            double positionZ,
+            List<String> connectedNodeIds,
+            double throughputTonsPerTick,
+            boolean instantaneousTransit,
+            double traversalTimeTicks,
+            Instant createdAt,
+            Instant modifiedAt
+    ) {
+        this(id, name, source, faction, concealed, description, type,
+                positionX, positionY, positionZ, connectedNodeIds,
+                throughputTonsPerTick, instantaneousTransit, traversalTimeTicks,
+                createdAt, modifiedAt, null);
+    }
 
     public TransportNode {
         if (id == null || id.isBlank()) {

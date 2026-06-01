@@ -140,6 +140,13 @@ public class StationEntity implements Serializable {
     @Column(nullable = false)
     private OperationalState operationalState;
 
+    /**
+     * v2 Phase F.1 §4.4 — worldbuilding universe affiliation. {@code null} means canonical/real;
+     * non-null references {@code universe.id}. Visibility controlled by UniverseFilteringService
+     * (Step 6). V16 migration adds the column.
+     */
+    private String universeId;
+
     private Instant createdAt;
 
     private Instant modifiedAt;

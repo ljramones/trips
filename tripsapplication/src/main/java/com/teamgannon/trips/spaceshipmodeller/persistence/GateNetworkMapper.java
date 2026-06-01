@@ -45,6 +45,8 @@ public class GateNetworkMapper {
 
         entity.setCreatedAt(network.createdAt());
         entity.setModifiedAt(network.modifiedAt());
+        // v2 Phase F.1 §4.4 — universe scope.
+        entity.setUniverseId(network.universeId());
         return entity;
     }
 
@@ -74,6 +76,7 @@ public class GateNetworkMapper {
                 entity.getCategory(),
                 provenance,
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
-                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt());
+                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt(),
+                entity.getUniverseId());
     }
 }

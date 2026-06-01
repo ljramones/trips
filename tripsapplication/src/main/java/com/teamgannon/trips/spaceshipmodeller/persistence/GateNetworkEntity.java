@@ -88,6 +88,12 @@ public class GateNetworkEntity implements Serializable {
     @Column(nullable = false, length = 32)
     private CatalogOperationalStatus provenanceStatus;
 
+    /**
+     * v2 Phase F.1 §4.4 — worldbuilding universe affiliation. {@code null} means canonical/real;
+     * non-null references {@code universe.id}. V16 migration adds the column.
+     */
+    private String universeId;
+
     // ----------------------------------------------- timestamps
 
     @Column(nullable = false)

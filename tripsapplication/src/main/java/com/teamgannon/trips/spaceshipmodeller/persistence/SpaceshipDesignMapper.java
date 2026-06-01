@@ -78,6 +78,8 @@ public class SpaceshipDesignMapper {
         entity.setCreatedAt(design.createdAt());
         // v2 Phase E.1 §5.4 — round-trip the GateNetwork transponder access set.
         entity.setDefaultAccessibleNetworkIdsJson(writeNetworkIds(design.defaultAccessibleNetworkIds()));
+        // v2 Phase F.1 §4.4 — universe scope.
+        entity.setUniverseId(design.universeId());
         return entity;
     }
 
@@ -123,7 +125,8 @@ public class SpaceshipDesignMapper {
                 state,
                 entity.getEra(),
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
-                readNetworkIds(entity.getDefaultAccessibleNetworkIdsJson()));
+                readNetworkIds(entity.getDefaultAccessibleNetworkIdsJson()),
+                entity.getUniverseId());
     }
 
     private String writeCarriedCraft(List<CarriedCraft> carriedCraft) {

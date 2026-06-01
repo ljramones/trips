@@ -52,6 +52,8 @@ public class WeaponInstallationMapper {
         entity.setOperationalState(design.operationalState());
         entity.setCreatedAt(design.createdAt());
         entity.setModifiedAt(design.modifiedAt());
+        // v2 Phase F.1 §4.4 — universe scope.
+        entity.setUniverseId(design.universeId());
         return entity;
     }
 
@@ -79,7 +81,8 @@ public class WeaponInstallationMapper {
                 entity.getCategory(),
                 operationalState,
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
-                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt());
+                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt(),
+                entity.getUniverseId());
     }
 
     private String writeArmaments(List<Armament> armaments) {

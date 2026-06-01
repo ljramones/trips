@@ -99,6 +99,8 @@ public class MegastructureDesignMapper {
 
         entity.setCreatedAt(design.createdAt());
         entity.setModifiedAt(design.modifiedAt());
+        // v2 Phase F.1 §4.4 — universe scope.
+        entity.setUniverseId(design.universeId());
         return entity;
     }
 
@@ -162,7 +164,8 @@ public class MegastructureDesignMapper {
                 entity.getAllegiance(),
                 techLevel,
                 entity.getCreatedAt() != null ? entity.getCreatedAt() : Instant.now(),
-                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt());
+                entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt(),
+                entity.getUniverseId());
     }
 
     private String writeSecondaryFunctions(Set<StationFunction> functions) {

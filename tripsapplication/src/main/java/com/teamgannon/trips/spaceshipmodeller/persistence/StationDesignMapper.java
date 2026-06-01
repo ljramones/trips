@@ -92,6 +92,8 @@ public class StationDesignMapper {
         entity.setProvenanceSourceUniverse(provenance.sourceUniverse());
         entity.setProvenanceSourceWork(provenance.sourceWork());
         entity.setProvenanceStatus(provenance.status());
+        // v2 Phase F.1 §4.4 — universe scope round-trips alongside provenance.
+        entity.setUniverseId(design.universeId());
         return entity;
     }
 
@@ -146,7 +148,8 @@ public class StationDesignMapper {
                 entity.getModifiedAt() != null ? entity.getModifiedAt() : entity.getCreatedAt(),
                 primaryFunction,
                 secondaryFunctions,
-                provenance);
+                provenance,
+                entity.getUniverseId());
     }
 
     private String writeSecondaryFunctions(Set<StationFunction> functions) {
