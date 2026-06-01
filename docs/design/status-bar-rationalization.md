@@ -261,4 +261,89 @@ These are testable observations. The implementation conversation lands them in 4
 
 ---
 
-*End of design doc. (γ) pullback revision ratified by Larry post-Step-1 (2026-06-01). Awaiting Step 2 ratification before implementation begins.*
+*End of design doc body. (γ) pullback revision ratified by Larry post-Step-1 (2026-06-01). Implementation ratified through Steps 2/4 and closed out in §11 below.*
+
+---
+
+## §11 — Close-out (Step 5 retroactive)
+
+Implementation shipped 2026-06-01. Four commits on `master` between the design doc landing and this close-out:
+
+| Commit | Subject |
+|---|---|
+| `56661e6d` | Design doc initial (pre-Step-1) |
+| `c9b6f324` | Design doc revision — (γ) pullback per Step 1 audit findings |
+| `68259ad2` | Step 2/3 combined — controller refactor + FXML rewrite + Dataset indicator + D2 cleanup |
+| `77282a3e` | Step 4 — uniform `@EventListener(ApplicationReadyEvent.class)` initial state |
+
+### §11.1 — (γ)-revised design held
+
+The (γ) pullback decision (no new `ActionMessageEvent` class; `StatusUpdateEvent` stays canonical for the action slot) held through implementation without further substantive divergences. The Step 1 audit caught the architectural error (70 publishers across 19 classes, not ~11) before it cost any implementation cycles; revising the design pre-Step-2 was the right discipline. Same pattern as F.1's pre-Step-2 transport_node revision.
+
+### §11.2 — Step 2/3 combination decision
+
+The design doc's §10 listed Step 2 (controller refactor) and Step 3 (FXML rewrite) as separate steps. Per ratification preference, they were combined into a single commit (`68259ad2`):
+- Cleaner single-step deliverable — the user-visible 4-slot layout lands all at once
+- Screenshot verification at end of Step 2 exercises the full layout end-to-end (rather than Step 2 alone showing old FXML + new controller, then Step 3 alone showing new FXML + already-verified controller)
+- Diff is larger but cognitively coherent (FXML change + controller change are co-dependent; readers wanting to understand the layout change look at both together)
+
+### §11.3 — Defensive null-traversal pattern (canonical for FxWeaver controllers)
+
+The Dataset indicator's `refreshDatasetStatusFromContext()` walks two nullable steps (`tripsContext.getDataSetContext().getDescriptor()`) defensively, with any null along the chain resolving to "(none selected)" via the existing `refreshDatasetStatus(null)` path. This is the canonical pattern for FxWeaver-instantiated controllers that field-inject Spring services with `@Autowired(required = false)`:
+
+1. The injected service itself may be null in test-harness scenarios (no Spring context).
+2. The service's return value may be null (no current context / context not yet initialized).
+3. The nested chain may have intermediate nulls (DataSetContext may exist but its descriptor is null).
+
+Each step gets an explicit guard. The fallback (null → "(none selected)" via the existing `refreshDatasetStatus` method) is the same code path the SetContextDataSetEvent listener takes when handed a null descriptor — no duplication.
+
+**Pin this pattern for future FxWeaver-instantiated controllers**: field injection with `required = false` + defensive null traversal at every step + delegate to the same code path the event-listener uses. F.1 Step 8 introduced it for `UniverseDesignerService`; Step 4 here applies it to `TripsContext`. Future status-bar / panel work follows the same shape.
+
+### §11.4 — Minor finding: int-to-Long test fix
+
+While writing `StatusBarApplicationReadyTest`, the compile errored on `descriptor.setNumberStars(12_847)` — `DataSetDescriptor.setNumberStars` takes a boxed `Long`, not an int. Java's autoboxing doesn't widen `int` to `Long` (only to `Integer`); the call needed an `L` suffix (`12_847L`). One-character fix; mentioned here because it's the kind of test-fixture friction that's worth pinning so the next test against `DataSetDescriptor` doesn't re-hit it.
+
+### §11.5 — Test count summary
+
+Net status bar tests:
+
+| Step | Tests | File(s) |
+|---|---|---|
+| 1 | 0 | Read-only verification (no test artifact) |
+| 2 | 25 | StatusBarActionSlotTest (6) + StatusBarFadeTimerTest (7) + StatusBarDatasetIndicatorTest (7) + StatusBarRoutingIndicatorTest (5) |
+| 4 | 7 | StatusBarApplicationReadyTest (7) |
+| 5 | 0 | Doc-only |
+| **Total** | **32** | |
+
+Suite went from 3,948 (F.1 close) → 3,980 (Step 4 close). +32 tests = +0.81% to the suite for the four user-visible improvements (Dataset indicator added, action slot reserved width, action slot 5-min fade, blank at startup, uniform boot-time state restoration across three indicators).
+
+### §11.6 — Architecture pins (status-bar-specific)
+
+After this rationalization, the status bar's architectural shape is:
+
+- **Four-slot layout**: action message + Dataset + Routing + Worldbuilding
+- **Reserved-width action slot** (280 px) prevents persistent indicators from shifting
+- **5-min `PauseTransition` fade** on the action slot; cancel-and-restart on each new `StatusUpdateEvent`
+- **Three persistent indicators populate from `@EventListener(ApplicationReadyEvent.class)` at boot** (the F.1 Step 8 pattern, now uniform)
+- **Event-driven updates** for all four slots:
+  - Action slot ← `StatusUpdateEvent` (70 existing publishers; unchanged)
+  - Dataset ← `SetContextDataSetEvent` + boot-time read of `TripsContext.getDataSetContext().getDescriptor()`
+  - Routing ← `RoutingStatusEvent` (D2 cleanup — listener now on controller directly, not bridged via RouteEventHandler) + direct `routingStatus(boolean)` API preserved for synchronous callbacks
+  - Worldbuilding ← `UniverseActivationChangedEvent` + boot-time read of `UniverseDesignerService.findAllActive()` (F.1 Step 8 unchanged)
+- **FxThread.runOnFxThread wrap** on every listener — defensive even when Step 5 events are FX-thread-synchronous today
+
+### §11.7 — Out of scope (still)
+
+Per the design doc §8, deferred to future tasks:
+
+- Semantic differentiation of progress vs action vs error messages in the action slot (severity-aware styling)
+- Animated transitions for slot replacement or fade
+- Click-to-dismiss on the action slot
+- Persistent action message history (dropdown of recent messages)
+- Editing the Dataset indicator inline
+
+None of these block this rationalization's shipped value.
+
+---
+
+*End of close-out. Status bar rationalization ships. Local commits `56661e6d`, `c9b6f324`, `68259ad2`, `77282a3e` pending push to origin/master.*
