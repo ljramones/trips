@@ -86,6 +86,20 @@ public class UniverseFilteringService {
     }
 
     /**
+     * Returns the set of currently-active universe ids. Single bulk-fetch from the
+     * UniverseDesignerService. Phase F.2 §4.5 — exposed as a public method so dependent
+     * services (e.g. AliasDesignerService) can apply universe-visibility filtering to their own
+     * queries without each one re-deriving the active set.
+     *
+     * @return the set of universe ids whose {@code active} flag is currently {@code true}
+     */
+    public Set<String> getActiveUniverseIds() {
+        return universeService.findAllActive().stream()
+                .map(Universe::id)
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Bulk-filters a collection by universe visibility. O(N) after a single bulk-fetch of the
      * active-universe id set; preserves source order.
      *
@@ -94,9 +108,7 @@ public class UniverseFilteringService {
      * @return a new list containing only the visible entries, in source order
      */
     public <T extends Cataloged> List<T> filter(List<T> entries) {
-        Set<String> activeIds = universeService.findAllActive().stream()
-                .map(Universe::id)
-                .collect(Collectors.toSet());
+        Set<String> activeIds = getActiveUniverseIds();
         return entries.stream()
                 .filter(e -> {
                     String universeId = e.universeId();
