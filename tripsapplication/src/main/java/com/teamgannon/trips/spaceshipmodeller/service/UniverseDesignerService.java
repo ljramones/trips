@@ -3,11 +3,13 @@ package com.teamgannon.trips.spaceshipmodeller.service;
 import com.teamgannon.trips.spaceshipmodeller.persistence.UniverseEntity;
 import com.teamgannon.trips.spaceshipmodeller.persistence.UniverseMapper;
 import com.teamgannon.trips.spaceshipmodeller.persistence.UniverseRepository;
+import com.teamgannon.trips.worldbuilding.UniverseActivationChangedEvent;
 import com.terranrepublic.assets.Catalog;
 import com.terranrepublic.assets.Cataloged;
 import com.terranrepublic.assets.Universe;
 import com.terranrepublic.assets.UniverseLifecycle;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,10 +36,14 @@ public class UniverseDesignerService {
 
     private final UniverseRepository repository;
     private final UniverseMapper mapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UniverseDesignerService(UniverseRepository repository, UniverseMapper mapper) {
+    public UniverseDesignerService(UniverseRepository repository,
+                                   UniverseMapper mapper,
+                                   ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
         this.mapper = mapper;
+        this.eventPublisher = eventPublisher;
     }
 
     // ---------------------------------------------------------------- reads
@@ -119,6 +125,68 @@ public class UniverseDesignerService {
             repository.delete(entity);
             log.info("Deleted universe '{}'", entity.getName());
         });
+    }
+
+    // ---------------------------------------------------------------- activation
+
+    /**
+     * Activates the universe with the given id. v2 Phase F.1 §5.2 — sets {@code active=true},
+     * persists, publishes a {@link UniverseActivationChangedEvent}, and returns the updated
+     * domain record.
+     *
+     * <p>Always-publish semantics: an event fires even if the universe was already active. This
+     * preserves the "service publishes when called" contract and lets listeners decide whether
+     * to deduplicate (see {@link UniverseActivationChangedEvent} javadoc).
+     *
+     * <p>Throws {@link IllegalArgumentException} if no Universe with the given id exists.
+     * Consistent with the exception-throwing style of {@link Universe}'s own compact-constructor
+     * invariants; the alternative {@code Optional<Universe>} return would let callers silently
+     * miss typos.
+     *
+     * @param id universe id
+     * @return the universe in its post-activation state ({@code active = true})
+     * @throws IllegalArgumentException if no universe with this id exists
+     */
+    @Transactional
+    public Universe activate(String id) {
+        return setActiveState(id, true);
+    }
+
+    /**
+     * Deactivates the universe with the given id. Mirror of {@link #activate(String)}: sets
+     * {@code active=false}, persists, publishes, returns. Same always-publish semantics and
+     * same throw-on-missing-id contract.
+     *
+     * @param id universe id
+     * @return the universe in its post-deactivation state ({@code active = false})
+     * @throws IllegalArgumentException if no universe with this id exists
+     */
+    @Transactional
+    public Universe deactivate(String id) {
+        return setActiveState(id, false);
+    }
+
+    /**
+     * Shared implementation for {@link #activate} and {@link #deactivate}: load, toggle, persist,
+     * publish. Extracted to keep the two public methods to single-line delegations and to ensure
+     * the order of operations (and the always-publish semantics) is identical in both directions.
+     */
+    private Universe setActiveState(String id, boolean newActive) {
+        UniverseEntity entity = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Universe with id '" + id + "' does not exist"));
+        boolean previouslyActive = entity.isActive();
+        entity.setActive(newActive);
+        UniverseEntity saved = repository.save(entity);
+        Universe updated = mapper.toDomain(saved);
+        eventPublisher.publishEvent(new UniverseActivationChangedEvent(updated, newActive));
+        if (previouslyActive == newActive) {
+            log.debug("Universe '{}' was already active={}; published redundant event for "
+                    + "always-publish semantics", updated.name(), newActive);
+        } else {
+            log.info("Universe '{}' active state: {} -> {}", updated.name(), previouslyActive, newActive);
+        }
+        return updated;
     }
 
     /**

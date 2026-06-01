@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,12 +43,18 @@ class UniverseDesignerServiceTest {
     @Mock
     private UniverseRepository repository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private final UniverseMapper mapper = new UniverseMapper();
     private UniverseDesignerService service;
 
     @BeforeEach
     void setUp() {
-        service = new UniverseDesignerService(repository, mapper);
+        // eventPublisher only fires for activate()/deactivate() calls (Step 5); the
+        // find/save/delete/sync surface this test covers doesn't publish events. Injected
+        // anyway so the constructor signature matches the F.1 Step 5 service contract.
+        service = new UniverseDesignerService(repository, mapper, eventPublisher);
     }
 
     private static Universe sample() {
