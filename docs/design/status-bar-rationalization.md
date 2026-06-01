@@ -344,6 +344,24 @@ Per the design doc §8, deferred to future tasks:
 
 None of these block this rationalization's shipped value.
 
+### §11.8 — Dataset indicator's persistence model (clarification)
+
+The design doc's §5.1 framed the Dataset indicator's value as `<name>` if active, otherwise `"(none selected)"`. The "otherwise" framing understated the significance of the persistent-default case.
+
+**"(none selected)" is the rare state, not the typical one.** Once a user has selected a dataset, that selection persists across application restarts via `TripsContext.getDataSetContext().getDescriptor()`. Step 4's `@EventListener(ApplicationReadyEvent.class)` reads this persisted state at app launch.
+
+The typical user experience:
+
+- **First-ever app launch** (no dataset selected yet): indicator shows `Dataset: (none selected)`.
+- **Every subsequent launch**: indicator immediately shows `Dataset: <whichever dataset was last in context>`.
+- **"(none selected)" recurrence** is rare — invalidated persisted state (file deleted, schema migration issue, manually cleared context), not a normal session.
+
+The non-`(none selected)` case is the steady-state expectation; the user opens the app and sees their actual current dataset in the status bar without doing anything.
+
+**Parallel to F.1's Worldbuilding indicator**: once universes are activated via Worldbuilding → Universes, that activation state persists via `universe.active` JPA column. The user sees `Worldbuilding: Real + N universe(s) active` at app launch reflecting their last-known state, not the default `Real only` view. Step 4's uniformity work made this parallel explicit — all three persistent indicators (Dataset, Routing, Worldbuilding) read their state on `ApplicationReadyEvent`, and two of them (Dataset, Worldbuilding) have meaningful persisted state to surface; Routing has no persisted state today and defaults to Inactive, but the read pattern is uniform across all three.
+
+**Architectural intent named**: "persistent indicator" in the rationalization's vocabulary means more than "doesn't fade" — it means "reflects user-meaningful state that survives restarts." The Step 4 work delivers this; the design doc's "(none selected) otherwise" wording didn't fully convey it.
+
 ---
 
-*End of close-out. Status bar rationalization ships. Local commits `56661e6d`, `c9b6f324`, `68259ad2`, `77282a3e` pending push to origin/master.*
+*End of close-out. Status bar rationalization ships. Local commits `56661e6d`, `c9b6f324`, `68259ad2`, `77282a3e` pushed to origin/master at `3c049b70`.*
