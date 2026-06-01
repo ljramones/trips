@@ -1,9 +1,11 @@
 # Status Bar Rationalization
 
-**Status**: design, pre-implementation
-**Date**: 2026-06-01
+**Status**: design, pre-implementation (revised post-Step-1 audit)
+**Date**: 2026-06-01 (initial); 2026-06-01 (revised after Step 1 verification)
 **Predecessor**: F.1 Step 8 (added `universeStatus` to `StatusBarController`)
-**Successor**: implementation conversation (single conversation; estimated 4–6 steps)
+**Successor**: implementation conversation (single conversation; 4 implementation steps after Step 1)
+
+**Revision note (post-Step-1)**: Step 1 verification revealed `StatusUpdateEvent` has 70 publish sites across 19 unique classes (not ~11 as initially estimated), spanning three semantic categories (~30% past-tense actions, ~50% in-progress text, ~20% error feedback). The original design's introduction of a new `ActionMessageEvent` was solving a problem that doesn't actually exist — the slot's problems are presentation (truncation, no fade, mixed semantics in one label) and a missing Dataset indicator, neither of which require a new event class. The doc has been revised to drop the ActionMessageEvent introduction; StatusUpdateEvent stays as the canonical event for the action slot. §6.4 is preserved as a "considered + rejected" historical record. See §6.4 + §6.5 for the rationale.
 
 ---
 
@@ -22,21 +24,31 @@ The user's mental model becomes consistent: the left slot is ephemeral; the righ
 
 ## §2 — Current state
 
-Step 1 audit:
+Step 1 audit (post-verification):
 
 | Indicator | Today's backing | Today's update path |
 |---|---|---|
-| Plot Status | `databaseStatus` Label | `@EventListener StatusUpdateEvent` — 11+ publishers (PythonScriptEngine, MainSplitPaneManager dataset/recenter/display/export ops) push ad-hoc text |
-| Routing State | `routingStatus` Label | Direct `routingStatus(boolean)` call from `RouteEventHandler`; `RoutingStatusEvent` exists but is not consumed by StatusBarController |
-| Worldbuilding | `universeStatus` Label | `@EventListener UniverseActivationChangedEvent` + `@EventListener ApplicationReadyEvent` (F.1 Step 8) |
+| Plot Status | `databaseStatus` Label | `@EventListener StatusUpdateEvent` — **70 publish sites across 19 unique source classes**, spanning three semantic categories: ~30% past-tense actions ("Dataset loaded"), ~50% in-progress text ("Running script: foo.py"), ~20% error feedback ("Recenter failed") |
+| Routing State | `routingStatus` Label | `@EventListener RoutingStatusEvent` in `RouteEventHandler` → bridges to `statusBarController.routingStatus(boolean)`. The event class exists + drives the indicator; the indirection through RouteEventHandler is the only smell. |
+| Worldbuilding | `universeStatus` Label | `@EventListener UniverseActivationChangedEvent` + `@EventListener ApplicationReadyEvent` (F.1 Step 8) — direct on StatusBarController |
 
-Two observations:
+Three observations:
 
-1. **The Plot Status label is already serving as the action message slot.** Publishers use `StatusUpdateEvent` to surface ephemeral messages ("Dataset loaded is: HYG-30ly", "Recenter failed", "Running script: foo.py"). The label *name* suggests persistent state, but the *usage* is transient.
+1. **The Plot Status label serves three semantic categories, not one.** The original design treated the slot as an action message channel; the audit reveals it actually carries past-tense actions, in-progress text, AND error feedback in the same label. The rationalization makes the slot work better as a *mixed-semantic* channel (reserved width, 5-min fade, blank at boot) rather than narrowing it to actions only.
 
-2. **There's no Dataset indicator today.** The user has no persistent display of "which dataset is currently selected" — only the most-recent StatusUpdateEvent text, which gets overwritten by the next event.
+2. **There's no Dataset indicator today.** The user has no persistent display of "which dataset is currently selected" — only the most-recent StatusUpdateEvent text, which gets overwritten by the next event. Adding a proper Dataset indicator is the largest user-visible improvement.
 
-The rationalization splits these concerns cleanly: Plot Status (today's label) becomes the action message slot; a new Dataset indicator joins the persistent group.
+3. **Routing's event-driven path already works.** The doc initially assumed routing updated via direct method call from disparate sources; Step 1 confirmed `RoutingStatusEvent` exists and `RouteEventHandler` bridges it to the controller method. The cleanup is moving the listener from RouteEventHandler into StatusBarController directly (architectural consistency with how `UniverseActivationChangedEvent` is wired), not introducing event-driven semantics from scratch.
+
+The rationalization, post-Step-1, is purely listener-side UI work:
+- Reserved-width action slot (no shifting on message arrival)
+- 5-minute fade (stale messages clear)
+- Blank at startup (splash page owns boot messaging)
+- New Dataset indicator (state surface completed)
+- Routing listener moved to controller-direct (D2 cleanup)
+- All three persistent indicators populate from `ApplicationReadyEvent` (uniform F.1 pattern)
+
+No new event class. No publisher-site migration. The 70 StatusUpdateEvent publishers stay where they are; their messages continue to land in the action slot, now with proper presentation discipline.
 
 ---
 
@@ -101,70 +113,61 @@ Each persistent indicator:
 
 ---
 
-## §6 — Action message specifications
+## §6 — Action slot specifications
 
-### §6.1 — Triggers
+### §6.1 — What appears in the slot (descriptive, not prescriptive)
 
-User-initiated state changes that are worth surfacing as a fleeting "you just did this" confirmation:
+The slot displays whatever `StatusUpdateEvent` carries. Step 1's audit characterized the 70 publish-site usage as falling into three semantic categories:
 
-| Trigger | Example message |
-|---|---|
-| Dataset switch | "Loaded 30 ly dataset (12,847 stars)" |
-| Dataset unload | "Unloaded HYG-30ly" |
-| Universe activated | "Activated Legacy of the Aldenata" |
-| Universe deactivated | "Deactivated Caine Riordan" |
-| Routing toggled on | "Routing activated" |
-| Routing toggled off | "Routing deactivated" |
-| Major data operation | "Imported 142 stars from CSV" |
-| Operation failed | "Recenter failed — see log" |
+| Category | Examples | Approx. share |
+|---|---|---|
+| Past-tense actions | "Dataset loaded is: HYG-30ly", "Activated Legacy of the Aldenata" (when published) | ~30% |
+| In-progress text | "Running script: foo.py", "Saving new route…", "Computing transits…" | ~50% |
+| Error feedback | "Recenter failed", "Display failed", "View switch failed" | ~20% |
 
-**Not** triggers (no action message):
+The rationalization does not enforce a particular category. Publishers continue to write whatever message text best describes the moment. The slot's job is to display the most recent message with reasonable lifecycle (replaced or fades after 5 min).
 
-- View changes (rotate, pan, zoom)
-- Selection changes (click a star, click a planet)
-- Catalog editing (rename a station, edit a ship's mass)
-- Application configuration (preferences edits, theme changes)
-- Background work that isn't user-initiated
+**Future polish**: a follow-up task could add severity-aware styling (color the slot red for error feedback, blue for in-progress, green for completed actions). That requires either parsing the message text heuristically or adding category tagging to StatusUpdateEvent. Both are out of scope here; the slot stays semantically mixed.
 
 ### §6.2 — Format
 
-- **Past-tense verb leading the message.** "Activated …", "Loaded …", "Imported …", "Failed …".
-- **Compact**: target ~35 characters; the action slot reserves room for slightly more with ellipsis on overflow. Tooltip shows the full text on hover when truncated.
-- **No timestamps in the message itself.** The slot is "what just happened?" — timestamp is implicit (now-ish).
+- **Publisher-determined.** Each publisher writes the text it wants displayed. The original design's "past-tense verb leading" expectation only applies to the ~30% of publishers that are publishing actions; the other 70% follow their own conventions (in-progress text is typically gerund or present-tense; errors are typically `<thing> failed`).
+- **Compact**: text longer than the slot width gets truncated with ellipsis; tooltip on the slot shows the full text on hover.
+- **No timestamps in the message itself.** Implicit (now-ish).
 
 ### §6.3 — Persistence
 
-- **Display duration**: until replaced by a new action OR 5 minutes elapse, whichever comes first.
-- **Replacement is immediate**: a new ActionMessageEvent overwrites the current message without animation. Rapid actions (toggle universe twice quickly) produce two message replacements; each is briefly visible.
-- **Fade**: after 5 minutes with no new action, the slot reverts to blank (no fade animation; instantaneous clear is fine).
+- **Display duration**: until replaced by a new message OR 5 minutes elapse, whichever comes first.
+- **Replacement is immediate**: a new StatusUpdateEvent overwrites the current message without animation. Rapid events produce rapid replacements; each briefly visible.
+- **Fade**: after 5 minutes with no new message, the slot reverts to blank (no fade animation; instantaneous clear).
+- **Boot state**: blank at startup. The splash page handles boot-time progress messaging; the status bar's action slot is for in-session events.
 
-### §6.4 — Event class
+### §6.4 — Event class (considered + rejected)
 
-**`ActionMessageEvent`** in a new package or `com.teamgannon.trips.events`:
+The original design draft proposed introducing a new `ActionMessageEvent` record (single `String message` field, narrow payload) to give publishers a typed way to surface "user-initiated action just completed" messages. **Step 1 audit caused this to be rejected.** The reasoning, preserved here as a historical record for future readers:
 
-```java
-public record ActionMessageEvent(Object source, String message) {
-    public ActionMessageEvent {
-        if (message == null || message.isBlank()) {
-            throw new IllegalArgumentException("ActionMessageEvent message must not be blank");
-        }
-    }
-}
-```
+The original hypothesis was that ~11 publishers were pushing past-tense actions through `StatusUpdateEvent` and a new typed event would let the slot become a dedicated "action channel" with the legacy event channel handling other concerns.
 
-Single field: the formatted message text. No category, no severity, no icon. Future enrichment lands as a new event subtype when an actual need surfaces (F.1's narrow-payload-ages-better lesson).
+Step 1 falsified the hypothesis. The actual publisher count is 70 across 19 source classes, spanning three semantic categories. Introducing `ActionMessageEvent` would have:
 
-**Source parameter** follows Spring's `ApplicationEvent` convention even though the record-based event doesn't extend `ApplicationEvent`. Useful for log tracing.
+- Required deciding which of the 70 sites to migrate (the ~30% that are genuinely "actions") and which to leave on legacy
+- Left the legacy `StatusUpdateEvent` carrying the other 70% indefinitely (no realistic migration path for in-progress + error categories)
+- Created two coexisting event channels both writing to the same slot
+- Solved no concrete user-visible problem (the slot's actual problems are width, fade, and the missing Dataset indicator)
+
+The (γ) pullback recognises that the slot's semantic mixing is a real but separable concern from the rationalization's user-visible improvements. Adding a new event class doesn't fix width, doesn't fix the missing Dataset indicator, doesn't fix the absent fade behavior. The right intervention is listener-side UI work, not a new event class.
+
+Future severity-aware styling (if pursued) would either (a) parse message text heuristically or (b) add a category enum to StatusUpdateEvent's record. Either approach is more compatible with the 70-publisher reality than introducing a new event class that handles a minority of cases.
 
 ### §6.5 — Relationship to existing `StatusUpdateEvent`
 
-Step 1 audit: `StatusUpdateEvent` is published by ~11 sites today, all pushing transient text into the Plot Status label. The semantics already match action-message semantics: ephemeral, replaced-on-next, ad-hoc text. **Two options:**
+`StatusUpdateEvent` IS the action slot's canonical event. No new event class is introduced. No publishers migrate. The slot's `@EventListener StatusUpdateEvent` continues to write into `databaseStatus` (renamed to the new action slot label during the StatusBarController refactor).
 
-(i) **Rename `StatusUpdateEvent` → `ActionMessageEvent`.** Touches 11 publish sites + the listener. Clean but invasive; existing tests + log messages reference the old name.
-
-(ii) **Introduce `ActionMessageEvent` as the new canonical; keep `StatusUpdateEvent` as a deprecated alias.** StatusBarController's listener handles both; new publishers use ActionMessageEvent. Existing publishers can migrate opportunistically.
-
-**Recommendation: (ii).** Migration is bounded; the new event has clean record-based shape; deprecation is the established pattern for non-urgent renames. The implementation conversation can decide whether to migrate the 11 sites in one pass or leave them for later.
+The improvements over today are all listener-side:
+- Reserved-width slot prevents persistent indicators shifting on message arrival
+- 5-minute `PauseTransition` fade clears stale messages
+- Blank-at-startup avoids splash-page conflict
+- Tooltip on overflow handles truncation discovery
 
 ---
 
@@ -184,26 +187,27 @@ Step 1 audit: `StatusUpdateEvent` is published by ~11 sites today, all pushing t
 
 ### §7.2 — Publish-site migration
 
-Action messages must be added at each trigger site:
+**None.** Under the (γ) pullback, no publishers migrate. All 70 `StatusUpdateEvent` publish sites stay where they are, publishing what they publish today. The action slot listens to `StatusUpdateEvent` directly.
 
-- `UniverseDesignerService.activate(id)` + `.deactivate(id)` — publish `ActionMessageEvent("Activated <name>")` / `("Deactivated <name>")` alongside the existing `UniverseActivationChangedEvent`.
-- `MainSplitPaneManager` dataset operations — replace `StatusUpdateEvent` with `ActionMessageEvent` (or keep StatusUpdateEvent and let the controller bridge).
-- `RouteEventHandler` — publish `ActionMessageEvent("Routing activated/deactivated")` alongside the routing state change.
-- `PythonScriptEngine` script-start / script-complete — likely keep on StatusUpdateEvent path (deprecated alias path) since they're not in F.1's scope.
+The original design draft contemplated 4 publisher migrations (UniverseDesignerService, MainSplitPaneManager, RouteEventHandler, PythonScriptEngine). All four sites continue using their current event channel:
+
+- `UniverseDesignerService.activate()/.deactivate()` — publishes only `UniverseActivationChangedEvent` (drives the Worldbuilding indicator). The action slot reflects universe toggles via the indirect path: the dialog or other UI publishes a StatusUpdateEvent if it wants the toggle surfaced as an action message. F.1's UniversesDialog can opt into this in a small follow-up if desired, but is not required for this rationalization.
+- `MainSplitPaneManager` — continues publishing StatusUpdateEvent for dataset/recenter/display/export ops.
+- `RouteEventHandler` — continues publishing RoutingStatusEvent (drives the Routing indicator). The action slot doesn't get a "Routing activated" message unless someone publishes a StatusUpdateEvent for it; not required.
+- `PythonScriptEngine` — continues publishing StatusUpdateEvent for script lifecycle.
 
 ### §7.3 — Test list
 
 | Test | What it pins |
 |---|---|
-| `ActionMessageEventTest` | Record-shape: non-null/non-blank invariant, source preserved, equality |
-| `StatusBarActionMessageTest` | Listener wires ActionMessageEvent to `actionMessage` label; replacement on subsequent events; FX-thread safety |
-| `StatusBarFadeTimerTest` | 5-min fade clears the slot; new event cancels-and-restarts; multiple rapid events extend the timer correctly |
-| `StatusBarDatasetIndicatorTest` | ApplicationReadyEvent populates initial state; context-change event refreshes value + tooltip |
-| `StatusBarRoutingIndicatorTest` | RoutingStatusEvent listener updates label + color; ApplicationReadyEvent picks up persisted routing state |
-| `StatusBarUniverseIndicatorTest` | Existing F.1 Step 8 tests preserved unchanged |
-| `StatusBarLayoutTest` | All four slots present + ordered correctly + action slot reserved width is preserved when empty |
+| `StatusBarActionSlotTest` | Listener wires `StatusUpdateEvent` to the action slot label; replacement on subsequent events; FX-thread safety; truncation triggers tooltip |
+| `StatusBarFadeTimerTest` | 5-min `PauseTransition` clears the slot; new event cancels-and-restarts the timer; multiple rapid events behave correctly |
+| `StatusBarDatasetIndicatorTest` | `ApplicationReadyEvent` populates initial state from `TripsContext.getDataSetContext().getDescriptor()`; `SetContextDataSetEvent` refreshes value + tooltip on context change |
+| `StatusBarRoutingIndicatorTest` | Direct `@EventListener RoutingStatusEvent` (post-D2 cleanup) updates label + color; `ApplicationReadyEvent` picks up persisted routing state from the route service |
+| `StatusBarUniverseIndicatorTest` | Existing F.1 Step 8 tests preserved unchanged (verifies the new layout doesn't regress the F.1 universe indicator) |
+| `StatusBarLayoutTest` | All four slots present + ordered correctly + action slot reserved width is preserved when blank (no shifting) |
 
-Estimated ~25-30 net new tests.
+Estimated ~25 net new tests (down from the original 25–30 estimate because `ActionMessageEventTest` + publisher-side migration tests are no longer needed).
 
 ### §7.4 — FXML changes
 
@@ -213,12 +217,14 @@ Whole replacement of `StatusBar.fxml`'s GridPane is cleaner than incremental edi
 
 ## §8 — Out of scope
 
-- **Renaming all 11 existing StatusUpdateEvent publishers** — migration is opt-in; deprecation marker is enough for now.
-- **Animated transitions** for action message replacement or fade — instantaneous is fine; animation is later polish.
-- **Severity coloring** (info / warning / error) on the action slot — future ActionMessageEvent subtype if needed; current scope is text only.
-- **Click-to-dismiss** on the action message — could be added later; not required for F.1 alignment.
+- **Migrating any of the 70 `StatusUpdateEvent` publishers** — they stay where they are. No new event class is introduced.
+- **Semantic differentiation of progress vs action vs error messages in the slot.** The slot continues to serve mixed semantics from existing StatusUpdateEvent publishers. Future UX work may add severity-aware styling (color-coding by category, separate slots, prioritization), but is not in scope here. That work needs its own design conversation.
+- **Animated transitions** for slot replacement or fade — instantaneous is fine; animation is later polish.
+- **Severity coloring** (info / warning / error) on the action slot — see §6.4 + §6.1; either heuristic text parsing or category enum on StatusUpdateEvent; out of scope for this rationalization.
+- **Click-to-dismiss** on the action slot — not required.
 - **Persistent action message history** (a dropdown of recent messages) — out of scope; current slot shows only the most recent.
 - **Editing the Dataset indicator** — read-only display; switching datasets happens elsewhere in the app.
+- **Modifying the splash page's boot messaging** — splash page is the boot-progress surface; this task only touches the in-session status bar.
 
 ---
 
@@ -237,8 +243,22 @@ The rationalization is "complete" when:
 9. Each persistent indicator's tooltip displays a longer-form explanation.
 10. F.1's `UniverseFilteringInvariantsTest` and other existing status-bar-touching tests stay green throughout.
 
-These are testable observations. The implementation conversation lands them in 4–6 steps.
+These are testable observations. The implementation conversation lands them in 4 implementation steps after Step 1's verification audit (which has already landed; see commit `56661e6d`).
 
 ---
 
-*End of design doc. Awaiting Larry's ratification before the implementation conversation begins.*
+## §10 — Step structure (post-Step-1 revision)
+
+| Step | Subject | Est. tests |
+|---|---|---|
+| 1 | Read-only verification audit (DONE — see Step 1 findings report) | 0 |
+| 2 | `StatusBarController` refactor: action slot replaces Plot Status label; reserved width; 5-min `PauseTransition` fade timer; new Dataset indicator; Routing listener moved from RouteEventHandler bridge to controller-direct `@EventListener RoutingStatusEvent` (D2 cleanup) | ~12 |
+| 3 | `StatusBar.fxml` whole-file rewrite for 4-slot layout (action + Dataset + Routing + Worldbuilding); column structure updated; existing widths/fonts preserved where unchanged | ~3 |
+| 4 | Uniform `@EventListener(ApplicationReadyEvent.class)` initial-state for all three persistent indicators (Dataset, Routing, Worldbuilding); ensures persisted state surfaces on app boot rather than only on the next user-driven event | ~8 |
+| 5 | Close-out: retroactive design doc note (this section is part of it; Step 5 also captures any divergences surfaced during Steps 2-4) | 0 |
+
+**Step count revision**: 4 implementation steps under the (γ) pullback, down from the design's original 4–6 estimate. Smaller scope because no new event class + no publisher-site migration.
+
+---
+
+*End of design doc. (γ) pullback revision ratified by Larry post-Step-1 (2026-06-01). Awaiting Step 2 ratification before implementation begins.*
