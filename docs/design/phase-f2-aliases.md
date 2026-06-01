@@ -1,10 +1,12 @@
 # Phase F.2 — Aliases
 
-**Status**: design, pre-implementation
-**Date**: 2026-06-01
+**Status**: design, pre-implementation (revised post-Step-1 audit)
+**Date**: 2026-06-01 (initial); 2026-06-01 (revised after Step 1 verification)
 **Parent**: [worldbuilding-platform-requirements.md](worldbuilding-platform-requirements.md) — R7.2
 **Predecessors**: Phase F.1 (Universe entity + activation + filtering chokepoint)
 **Successors**: F.3 (Factions full structure), F.4 (Eras), F.5–F.10
+
+**Revision note (post-Step-1)**: Step 1 verification resolved all three KEY UNKNOWNS as existence findings (renderer tooltip mechanism exists; star search machinery exists; F.1 broker pattern available). One substantive divergence found: no ExoPlanet info panel exists (only the modal `PlanetPropertiesDialog` edit-focused). D1.a chosen: exoplanet aliases surface via tooltip only; no new exoplanet info panel built. F1.b chosen for tooltip implementation: dynamic per-hover rebuild rather than cache-with-invalidation. Tooltip format α pinned (parenthetical universe attribution without explicit Alias: prefix). §4.5 API simplified to consult `UniverseFilteringService` internally. Steps 2 and 3 combined per F.1's `ddl-auto=validate` discipline (entity must ship with its migration; F.2 has only one migration so a separate V18 step would either fail validate or be empty). See §3.6 for the Step 1 findings summary, and §10 for the revised 6-step structure.
 
 ---
 
@@ -159,6 +161,36 @@ The current renderer (3D star plot) shows labels for stars but the tooltip-on-ho
 
 If a tooltip mechanism exists, F.2 extends it. If not, F.2 introduces one for the universe-aliased case.
 
+### §3.6 — Step 1 audit findings summary (resolved unknowns)
+
+Step 1 verification (commit `6bd6bf24` + immediate follow-up) resolved all three KEY UNKNOWNS and surfaced one substantive divergence:
+
+**KEY UNKNOWN A: Renderer tooltip mechanism — RESOLVED (exists)**
+- `StarRenderer.java` lines 232-247 lazy-installs tooltips on first hover via `setOnMouseEntered`
+- Current format: `record.getStarName() + "::" + polity` (single-line; replaced with multi-line per §6.1 in F.2)
+- Cached via `TOOLTIP_INSTALLED_PROPERTY` node marker
+- F.2 path **F1.b** chosen: replace lazy install with dynamic per-hover rebuild. No cache invalidation; one indexed JPA query per hover via `UniverseFilteringService`-aware lookup. Bounded performance; simpler logic.
+
+**KEY UNKNOWN B (originally §3 "A. Star search machinery"): EXISTS**
+- `FindStarInViewDialog.java` is the precedent dialog — uses ControlsFX `TextFields` + ComboBox + `Map<String, StarDisplayRecord> starLookup`
+- `SearchService.java` Spring-managed
+- `StarObjectRepository` + `StarObjectRepositoryCustom` for ad-hoc finder queries
+- Step 6's target picker follows `FindStarInViewDialog`'s pattern. No need to build 2.5M-star autocomplete from scratch.
+
+**KEY UNKNOWN C (originally §3 "B. ExoPlanet info display"): SUBSTANTIVE DIVERGENCE**
+- No ExoPlanet info panel exists as a side-panel tab.
+- `PlanetPropertiesDialog.java` exists but is a **modal EDIT dialog** invoked from right-click context menu in the solar system view (E.1 Step 9 work). Not a display surface for read-only worldbuilding overlay.
+- `PlanetarySidePane.java` exists but is the **planetary night-sky renderer** (unrelated; for "stand on a planet's surface and look at the sky" feature).
+- F.2 path **D1.a** chosen: Step 5 (now §10's Step 4) adds the Aliases section to the star Fictional Info tab only. Exoplanet aliases surface via the renderer tooltip (Step 4, now §10's Step 3) only. PlanetPropertiesDialog stays untouched — adding read-only display of other universes' aliases to an edit modal would be a UX mismatch. Future F.x phases can build a dedicated exoplanet info panel if needed.
+
+**KEY UNKNOWN D (originally §3 "C. F.1 broker integration"): RESOLVED**
+- `UniverseFilteringService.subscribeToFilterChanges(Runnable) → Runnable` is the established F.1 Step 6 API.
+- F.2's `AliasesDialog` + `StarPropertiesPane` (post-extension) subscribe via the same broker for live refresh on universe activation changes.
+
+**Supporting findings:**
+- `StarPropertiesPane.fxml` lines 59-110: the Fictional Info tab is a row-based GridPane with 13 existing rows. Append-friendly at row 0 (new Aliases section) without restructure.
+- Existing tooltip format `Sol::Non-Aligned` (single-line, `::` separator) becomes multi-line per F.2 §6.1 format α.
+
 ---
 
 ## §4 — Data model
@@ -283,18 +315,18 @@ Standard pipeline mirroring UniverseDesignerService from F.1:
   - `List<AliasEntity> findByUniverseId(String universeId)`
   - `List<AliasEntity> findByTargetKindAndTargetId(AliasTargetKind kind, String targetId)`
   - `List<AliasEntity> findByUniverseIdAndTargetKindAndTargetId(String universeId, AliasTargetKind kind, String targetId)`
-  - `Optional<AliasEntity> findByUniverseIdAndTargetKindAndTargetIdAndAliasText(...)` (uniqueness check on create)
 - `AliasDesignerService` — find/save/delete + bulk lookup by target (for tooltip/panel display)
 
-The key lookup method for display:
+**API simplification (post-Step-1 revision)**: the original draft proposed an explicit `Set<String> activeUniverseIds` parameter on the lookup method. Step 1 revision: the service consults `UniverseFilteringService` internally, matching F.1's chokepoint pattern. Callers don't manage active-set state:
 
 ```java
-public List<Alias> findAliasesForTarget(AliasTargetKind kind, String targetId, Set<String> activeUniverseIds) {
-    // Returns aliases for the target whose universeId is in activeUniverseIds
+public List<Alias> findActiveAliasesForTarget(AliasTargetKind kind, String targetId) {
+    // Internally: pulls active universe ids from UniverseFilteringService,
+    // then queries the repository for matching aliases.
 }
 ```
 
-This is the call the renderer and Fictional Info tab make to populate their display.
+This is the call the renderer and Fictional Info tab make to populate their display. The active-universe set is the filtering service's responsibility; the alias service is just a "give me visible aliases for this target" surface.
 
 ---
 
@@ -322,16 +354,29 @@ When UniverseActivationChangedEvent fires (F.1 Step 5), the renderer and Fiction
 When the user hovers over a star in the 3D plot, a tooltip appears showing:
 
 1. The star's display name (already shown today)
-2. (NEW) If the star has aliases from currently-active universes, the aliases are listed below, one per line, with universe attribution
+2. The polity (already shown today, reformatted from `::` separator to a labeled line)
+3. (NEW) If the star has aliases from currently-active universes, the aliases are listed below with parenthetical universe attribution
 
-Example tooltip:
+**Format α (pinned post-Step-1)**:
+
 ```
 40 Eridani A
+  Polity: Federation
   Vulcan (Star Trek)
   Forty Eri Prime (Children of the Pattern)
 ```
 
-Implementation: Step 1 verifies the existing tooltip mechanism. If tooltips are constructed at render time, F.2 needs to either (a) reconstruct on universe activation change, or (b) build dynamic tooltips that query at hover time. (b) is simpler if the renderer supports it.
+The parenthetical universe attribution is the type signal — there's no explicit `Alias:` prefix because the parenthetical attribution is sufficient differentiator from the `Polity:` line. Compact and readable. If a star has zero aliases from active universes, the tooltip shows only star name + Polity line (existing behavior preserved without aliases).
+
+**Implementation (F1.b — pinned post-Step-1)**: the existing lazy-install + cache pattern in `StarRenderer.java` is replaced with **dynamic per-hover rebuild**. Each hover event:
+
+1. Reads the star's display name (from `StarDisplayRecord`)
+2. Reads the polity (from `StarDisplayRecord`)
+3. Queries `AliasDesignerService.findActiveAliasesForTarget(STAR, targetId)` (which internally consults `UniverseFilteringService` for active ids and does an indexed lookup)
+4. Constructs the multi-line tooltip text
+5. Installs (or updates) the tooltip on the node
+
+No cache invalidation needed; no `UniverseActivationChangedEvent` subscription on every star node. The query is bounded (indexed lookup, typically 0-3 rows per target). The `TOOLTIP_INSTALLED_PROPERTY` cache flag becomes unnecessary and can be removed.
 
 ### §6.2 — Renderer tooltip on exoplanets
 
@@ -459,28 +504,27 @@ Attempt to create two aliases for the same (universe, target) pair. Verify the s
 
 ---
 
-## §10 — Step breakdown
+## §10 — Step breakdown (post-Step-1 revision)
 
-F.2 ships in **7 steps**, mirroring F.1's structure. Each step ends with a test pass and ratification gate.
+F.2 ships in **6 steps** (was 7; Steps 2 and 3 combined per F.1's `ddl-auto=validate` discipline — `AliasEntity` requires V18 in the same commit, and F.2 has only one migration so a separate V18 step would either fail FlywayBaselineSmokeTest or be empty). Each step ends with a test pass and ratification gate.
 
 | Step | Subject | Net new tests (est.) |
 |---|---|---|
-| 1 | Verification + audit (renderer tooltip mechanism, star search machinery, Fictional Info tab FXML, ExoPlanet info panel if exists) | 0 |
-| 2 | Alias record + AliasTargetKind enum + Cataloged implementation + entity + mapper + repository + service | ~30 |
-| 3 | V18 migration | ~5 |
-| 4 | Renderer tooltip integration for stars + exoplanets | ~15 |
-| 5 | Fictional Info tab Aliases section + UniverseActivationChangedEvent refresh | ~15 |
-| 6 | Worldbuilding → Aliases dialog + Create Alias sub-dialog + target picker | ~25 |
-| 7 | Close-out: §9 invariant tests + plan doc rollup + retroactive design doc | ~10 |
+| 1 | Verification + audit (DONE — see §3.6 for findings) | 0 |
+| 2 | Alias record + AliasTargetKind enum + Cataloged implementation + entity + mapper + repository + service + V18 migration | ~30 |
+| 3 | Renderer tooltip integration for stars + exoplanets (F1.b dynamic per-hover; format α) | ~15 |
+| 4 | Fictional Info tab Aliases section (star-only per D1.a) + broker refresh | ~10 |
+| 5 | Worldbuilding → Aliases dialog + Create Alias sub-dialog + target picker (reuses FindStarInViewDialog pattern) | ~25 |
+| 6 | Close-out: §9 invariant tests + plan doc rollup + retroactive design doc | ~10 |
 
-Total est. ~100 net new tests across 7 steps.
+**Total revised: ~90 net new tests** (was ~100; D1.a reduced Step 4 from ~15 to ~10, no exoplanet info panel built).
 
 Step boundaries match where user-visible behavior changes:
-- After Step 2-3: the entity + table exist; nothing visible yet
-- After Step 4: tooltips show aliases (when seeded via test fixture)
-- After Step 5: Fictional Info tab shows aliases
-- After Step 6: users can create aliases through the UI
-- After Step 7: §9 invariants verified; F.2 ships
+- After Step 2: the entity + table exist; nothing visible yet
+- After Step 3: tooltips show aliases (when seeded via test fixture)
+- After Step 4: Fictional Info tab shows aliases (star side only)
+- After Step 5: users can create aliases through the UI
+- After Step 6: §9 invariants verified; F.2 ships
 
 ---
 
