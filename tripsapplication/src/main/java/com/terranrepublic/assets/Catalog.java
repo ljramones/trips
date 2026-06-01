@@ -135,7 +135,12 @@ public final class Catalog {
             "Solar Confederation",
             TechLevel.ADVANCED,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            // v2 Phase F.1 Step 4 — universe scope set at the Catalog source-of-truth tier so
+            // seeded rows arrive pre-tagged. V17's UPDATE handles upgrade-path scenarios where
+            // the row pre-existed; this constant handles fresh-install scenarios where the
+            // seeder writes the row post-Flyway.
+            "catalog-universe-legacy-of-the-aldenata");
 
     public static final WeaponInstallation SAPL = new WeaponInstallation(
             "catalog-sapl",
@@ -144,6 +149,8 @@ public final class Catalog {
             InstallationType.BEAM_ARRAY,
             Emplacement.SOLAR_ORBIT,
             "Troy Rising",
+            "Unknown",
+            false,
             "Distributed mirror array focusing sunlight into an industrial/military beam; CANON concept bores "
                     + "asteroids, cracks warships, and scales by adding mirrors. INFERRED values: 1.0e6 ton "
                     + "dry mass, 1.0e8 m footprint span, 5000 crew complement.",
@@ -161,8 +168,13 @@ public final class Catalog {
                     "Petawatt-class effective output, scalable - INFERRED magnitude; range unknown")),
             TechLevel.ADVANCED,
             "solar beam array",
+            OperationalState.OPERATIONAL,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            // v2 Phase F.1 Step 4 — universe scope set directly so fresh-install seeded rows
+            // are tagged. Switched from 16-arg compat to 20-arg canonical to thread the
+            // universeId through without growing another compat layer. See Catalog.TROY.
+            "catalog-universe-legacy-of-the-aldenata");
 
     public static final WeaponInstallation SHEVA_GUN = new WeaponInstallation(
             "catalog-sheva-gun",
@@ -171,6 +183,8 @@ public final class Catalog {
             InstallationType.SUPER_CANNON,
             Emplacement.GROUND_MOBILE,
             "Aldenata",
+            "Unknown",
+            false,
             "Continent-mobile anti-lander super-cannon; CANON concept fires sub-caliber DU and later "
                     + "nuclear-tipped rounds at Posleen command ships. INFERRED values: 14000 ton dry mass, "
                     + "90 m footprint span, 20 crew complement.",
@@ -188,8 +202,11 @@ public final class Catalog {
                     "Anti-C-Dec, nuclear-tipped rounds; effective range 300 km INFERRED; yield unknown")),
             TechLevel.NEAR_FUTURE,
             "ground mobile super-cannon",
+            OperationalState.OPERATIONAL,
             CREATED_AT,
-            CREATED_AT);
+            CREATED_AT,
+            // v2 Phase F.1 Step 4 — universe scope. See SAPL.
+            "catalog-universe-legacy-of-the-aldenata");
 
     public static final SpaceshipDesign POSLEEN_COMMAND_DODECAHEDRON = new SpaceshipDesign(
             "catalog-posleen-command-dodecahedron",
@@ -224,8 +241,15 @@ public final class Catalog {
             SourceType.SCIENCE_FICTION,
             "Aldenata",
             "",
+            false,
+            OperationalState.OPERATIONAL,
             "",
-            CREATED_AT);
+            CREATED_AT,
+            Set.of(),
+            // v2 Phase F.1 Step 4 — universe scope set at the Catalog source-of-truth tier.
+            // Switched from 17-arg compat to 21-arg canonical to thread the universeId through
+            // without growing another compat layer on SpaceshipDesign. See Catalog.TROY.
+            "catalog-universe-legacy-of-the-aldenata");
 
     public static final SpaceshipDesign POSLEEN_BATTLE_DODECAHEDRON = new SpaceshipDesign(
             "catalog-posleen-battle-dodecahedron",
@@ -253,8 +277,13 @@ public final class Catalog {
             SourceType.SCIENCE_FICTION,
             "Aldenata",
             "",
+            false,
+            OperationalState.OPERATIONAL,
             "",
-            CREATED_AT);
+            CREATED_AT,
+            Set.of(),
+            // v2 Phase F.1 Step 4 — universe scope. See POSLEEN_COMMAND_DODECAHEDRON.
+            "catalog-universe-legacy-of-the-aldenata");
 
     // =====================================================================
     // Real / Proposed Earth space stations (Phase D.5)
