@@ -1,6 +1,8 @@
 package com.teamgannon.trips.controller.statusbar;
 
 import com.teamgannon.trips.algorithms.Universe;
+import com.teamgannon.trips.config.application.TripsContext;
+import com.teamgannon.trips.config.application.model.DataSetContext;
 import com.teamgannon.trips.events.RoutingStatusEvent;
 import com.teamgannon.trips.events.SetContextDataSetEvent;
 import com.teamgannon.trips.events.StatusUpdateEvent;
@@ -99,6 +101,15 @@ public class StatusBarController {
      */
     @Autowired(required = false)
     private UniverseDesignerService universeDesignerService;
+
+    /**
+     * Injected for the Dataset indicator's boot-time initial state (Step 4). Same field-
+     * injection rationale as {@link #universeDesignerService}. Provides access to
+     * {@link DataSetContext#getDescriptor()} for the persisted "which dataset is loaded"
+     * answer on app startup.
+     */
+    @Autowired(required = false)
+    private TripsContext tripsContext;
 
     /**
      * Action slot fade timer. Created lazily on the first {@link StatusUpdateEvent} so headless
@@ -234,6 +245,21 @@ public class StatusBarController {
         FxThread.runOnFxThread(() -> refreshDatasetStatus(event.getDescriptor()));
     }
 
+    /**
+     * Step 4 — read the boot-time Dataset state from TripsContext. Defensive null-traversal of
+     * the two-step path ({@code TripsContext.getDataSetContext().getDescriptor()}); any null
+     * along the chain resolves to "(none selected)" via {@link #refreshDatasetStatus(DataSetDescriptor)}.
+     */
+    void refreshDatasetStatusFromContext() {
+        if (tripsContext == null) {
+            refreshDatasetStatus(null);
+            return;
+        }
+        DataSetContext ctx = tripsContext.getDataSetContext();
+        DataSetDescriptor descriptor = ctx == null ? null : ctx.getDescriptor();
+        refreshDatasetStatus(descriptor);
+    }
+
     // ============================================================
     // Routing indicator (Step 2 D2 cleanup — listener moved here from
     // RouteEventHandler.onRoutingStatusEvent bridge)
@@ -267,13 +293,39 @@ public class StatusBarController {
         FxThread.runOnFxThread(() -> routingStatus(event.isStatusFlag()));
     }
 
+    /**
+     * Step 4 — boot-time Routing state. Routing has no persisted state today (transient
+     * session toggle managed by {@code CurrentManualRoute}); on app start the default is
+     * always inactive. This helper exists for uniformity with the Dataset + Worldbuilding
+     * indicators' boot-time read pattern; if routing-state-persistence is added later, this
+     * is the place to read it.
+     */
+    void refreshRoutingStatusFromContext() {
+        routingStatus(false);
+    }
+
     // ============================================================
     // Worldbuilding indicator (F.1 Step 8 — preserved unchanged)
     // ============================================================
 
+    /**
+     * v2 status bar rationalization Step 4 — uniform boot-time initial-state refresh for all
+     * three persistent indicators. F.1 Step 8 wired this for the Worldbuilding indicator only;
+     * Step 4 extends it to Dataset + Routing so persisted state (and defaults) surface
+     * uniformly at app launch rather than waiting for the first user-driven event.
+     *
+     * <p>Order of refresh is the on-screen order (Dataset → Routing → Worldbuilding) so any
+     * exception in one indicator's refresh still leaves earlier-rendered indicators in their
+     * correct state. Exceptions are NOT swallowed here — Spring's @EventListener will log them
+     * and continue; partial-failure is preferable to silent skip.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady(ApplicationReadyEvent event) {
-        FxThread.runOnFxThread(this::refreshUniverseStatus);
+        FxThread.runOnFxThread(() -> {
+            refreshDatasetStatusFromContext();
+            refreshRoutingStatusFromContext();
+            refreshUniverseStatus();
+        });
     }
 
     @EventListener
