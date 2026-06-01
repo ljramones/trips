@@ -88,6 +88,14 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final SpaceshipTemplateLibrary templateLibrary;
     private final TransferPlannerBridge transferPlannerBridge;
     private final TransferPlannerLauncher transferPlannerLauncher;
+    /**
+     * v2 Phase F.1 §5.3 — the §5-invariants enforcement point. Every catalog read flows through
+     * {@code filteringService.filter()} so universe-scoped entries from inactive universes don't
+     * leak into the UI. Nullable for backward-compat with test fixtures that don't construct one.
+     */
+    private final com.teamgannon.trips.worldbuilding.UniverseFilteringService filteringService;
+    /** Unsubscribe handle from {@link com.teamgannon.trips.worldbuilding.UniverseFilteringService#subscribeToFilterChanges}; call on dispose. */
+    private Runnable filterChangeUnsubscribe;
 
     private final TableView<SpaceshipRow> table = new TableView<>();
     private final ComboBox<String> classFilter = new ComboBox<>();
@@ -133,21 +141,65 @@ public class SpaceshipDesignerPanel extends BorderPane {
     private final Button useInSolarSystemButton = new Button(get("button.useInSolarSystem"));
     private final ListView<String> validationMessages = new ListView<>();
 
+    /**
+     * Backwards-compatible 5-arg constructor (no filtering service). Existing call sites + tests
+     * keep compiling; this panel renders the raw catalog without universe-scope filtering, which
+     * is OK for non-production fixtures but lets fiction-canon content from inactive universes
+     * leak into the UI in production. The {@link #SpaceshipDesignerPanel(SpaceshipService,
+     * SpaceshipJsonService, SpaceshipTemplateLibrary, TransferPlannerBridge,
+     * TransferPlannerLauncher, com.teamgannon.trips.worldbuilding.UniverseFilteringService)}
+     * 6-arg constructor is the canonical F.1 form.
+     */
     public SpaceshipDesignerPanel(SpaceshipService spaceshipService,
                                   SpaceshipJsonService jsonService,
                                   SpaceshipTemplateLibrary templateLibrary,
                                   TransferPlannerBridge transferPlannerBridge,
                                   TransferPlannerLauncher transferPlannerLauncher) {
+        this(spaceshipService, jsonService, templateLibrary, transferPlannerBridge,
+                transferPlannerLauncher, null);
+    }
+
+    /**
+     * v2 Phase F.1 §5.3 canonical constructor. The {@code filteringService} is the §5-invariants
+     * enforcement point: every catalog read flows through {@link com.teamgannon.trips.worldbuilding.UniverseFilteringService#filter(java.util.List)}
+     * so entries from inactive universes don't appear in the table. The panel also subscribes to
+     * {@code UniverseActivationChangedEvent} via the filter broker to live-refresh when the user
+     * toggles a universe in the Worldbuilding > Universes submenu (Step 7).
+     *
+     * @param filteringService nullable for backward-compat; F.1 production wiring always provides
+     */
+    public SpaceshipDesignerPanel(SpaceshipService spaceshipService,
+                                  SpaceshipJsonService jsonService,
+                                  SpaceshipTemplateLibrary templateLibrary,
+                                  TransferPlannerBridge transferPlannerBridge,
+                                  TransferPlannerLauncher transferPlannerLauncher,
+                                  com.teamgannon.trips.worldbuilding.UniverseFilteringService filteringService) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
         this.transferPlannerBridge = transferPlannerBridge;
         this.transferPlannerLauncher = transferPlannerLauncher;
+        this.filteringService = filteringService;
         setPadding(new Insets(10));
         setTop(buildHeader());
         setCenter(buildCenter());
         seedTemplatesIfEmpty();
         reload();
+        if (filteringService != null) {
+            this.filterChangeUnsubscribe = filteringService.subscribeToFilterChanges(this::reload);
+        }
+    }
+
+    /**
+     * Dispose hook for the universe-activation subscription. Called by the menu controller's
+     * {@code stage.setOnCloseRequest} handler when the user closes the Spaceship Modeller window.
+     * Forgetting to call this leaks the panel through the filter broker's subscriber list.
+     */
+    public void dispose() {
+        if (filterChangeUnsubscribe != null) {
+            filterChangeUnsubscribe.run();
+            filterChangeUnsubscribe = null;
+        }
     }
 
     // ------------------------------------------------------------- building
@@ -386,7 +438,12 @@ public class SpaceshipDesignerPanel extends BorderPane {
 
     private void reload() {
         try {
-            allDesigns = spaceshipService.findAll();
+            List<SpaceshipDesign> raw = spaceshipService.findAll();
+            // v2 Phase F.1 §5.3 — apply the §5-invariants chokepoint before the tab strip and
+            // table see the data. Entries with universe_id pointing at an inactive universe drop
+            // out here; entries with universe_id=null (canonical/real, R5.6) always pass through.
+            // The fallback to unfiltered raw is the backward-compat path for the 5-arg constructor.
+            allDesigns = (filteringService != null) ? filteringService.filter(raw) : raw;
             rebuildUniverseTabs();
             applyFilters();
         } catch (Exception e) {

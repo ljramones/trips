@@ -44,6 +44,8 @@ public class WorldbuildingMenuController {
     private final WeaponInstallationDesignerService weaponInstallationDesignerService;
     private final TransportNodeService transportNodeService;
     private final com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService;
+    /** v2 Phase F.1 §5.3 — passed into both designer panels so they filter by active-universe set. */
+    private final com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
@@ -60,7 +62,8 @@ public class WorldbuildingMenuController {
                                StationDesignerService stationDesignerService,
                                WeaponInstallationDesignerService weaponInstallationDesignerService,
                                TransportNodeService transportNodeService,
-                               com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService) {
+                               com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService,
+                               com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
@@ -71,6 +74,7 @@ public class WorldbuildingMenuController {
         this.weaponInstallationDesignerService = weaponInstallationDesignerService;
         this.transportNodeService = transportNodeService;
         this.megastructureDesignerService = megastructureDesignerService;
+        this.universeFilteringService = universeFilteringService;
     }
 
     /**
@@ -91,12 +95,17 @@ public class WorldbuildingMenuController {
             if (spaceshipStage == null || !spaceshipStage.isShowing()) {
                 SpaceshipDesignerPanel panel = new SpaceshipDesignerPanel(
                         spaceshipService, jsonService, templateLibrary, transferPlannerBridge,
-                        transferPlannerLauncher);
+                        transferPlannerLauncher, universeFilteringService);
                 spaceshipStage = new Stage();
                 spaceshipStage.setTitle(SpaceshipModellerLabels.get("window.title"));
                 spaceshipStage.initModality(Modality.NONE);
                 spaceshipStage.setScene(new Scene(panel, 1000, 700));
-                spaceshipStage.setOnCloseRequest(e -> spaceshipStage = null);
+                // v2 Phase F.1 §5.3 — panel.dispose() unsubscribes from the UniverseFilteringService
+                // broker so a closed panel doesn't keep receiving activation events (leak).
+                spaceshipStage.setOnCloseRequest(e -> {
+                    panel.dispose();
+                    spaceshipStage = null;
+                });
                 spaceshipStage.show();
             } else {
                 spaceshipStage.toFront();
@@ -121,12 +130,17 @@ public class WorldbuildingMenuController {
                         stationDesignerService,
                         weaponInstallationDesignerService,
                         transportNodeService,
-                        megastructureDesignerService);
+                        megastructureDesignerService,
+                        universeFilteringService);
                 installationStage = new Stage();
                 installationStage.setTitle(ConstructLabels.get("window.title"));
                 installationStage.initModality(Modality.NONE);
                 installationStage.setScene(new Scene(panel, 1100, 700));
-                installationStage.setOnCloseRequest(e -> installationStage = null);
+                // v2 Phase F.1 §5.3 — dispose unsubscribes from the broker; see openSpaceshipModeller.
+                installationStage.setOnCloseRequest(e -> {
+                    panel.dispose();
+                    installationStage = null;
+                });
                 installationStage.show();
                 // Fire the background load after the stage is showing so a slow registry read
                 // can't delay the window appearing on the user's screen.

@@ -111,6 +111,14 @@ public class InstallationDesignerPanel extends BorderPane {
     private final WeaponInstallationDesignerService weaponService;
     private final TransportNodeService transportService;
     private final MegastructureDesignerService megastructureService;
+    /**
+     * v2 Phase F.1 §5.3 — the §5-invariants chokepoint. Applied to {@link #loadFromRegistry()}'s
+     * output before {@link #applyConstructs(java.util.List)} sees the data. Nullable for
+     * backward-compat with the 5-arg pre-F.1 constructor.
+     */
+    private final com.teamgannon.trips.worldbuilding.UniverseFilteringService filteringService;
+    /** Unsubscribe handle returned by the filter broker; called on dispose. */
+    private Runnable filterChangeUnsubscribe;
 
     // Master list — populated by loadAsync / applyConstructs, never mutated after.
     private List<ConstructRow> allRows = List.of();
@@ -141,22 +149,57 @@ public class InstallationDesignerPanel extends BorderPane {
     private final VBox detailsContent = new VBox(6);
     private final Label statusLabel = new Label();
 
+    /**
+     * Backwards-compatible 5-arg constructor (no filtering service). Existing call sites + tests
+     * keep compiling; this panel renders the raw catalog without universe-scope filtering. The
+     * 6-arg constructor below is the canonical F.1 form.
+     */
     public InstallationDesignerPanel(ConstructRegistry registry,
                                      StationDesignerService stationService,
                                      WeaponInstallationDesignerService weaponService,
                                      TransportNodeService transportService,
                                      MegastructureDesignerService megastructureService) {
+        this(registry, stationService, weaponService, transportService, megastructureService, null);
+    }
+
+    /**
+     * v2 Phase F.1 §5.3 canonical constructor. The {@code filteringService} enforces the §5
+     * invariants on every catalog read + drives live refresh on universe activation changes.
+     *
+     * @param filteringService nullable for backward-compat; F.1 production wiring always provides
+     */
+    public InstallationDesignerPanel(ConstructRegistry registry,
+                                     StationDesignerService stationService,
+                                     WeaponInstallationDesignerService weaponService,
+                                     TransportNodeService transportService,
+                                     MegastructureDesignerService megastructureService,
+                                     com.teamgannon.trips.worldbuilding.UniverseFilteringService filteringService) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.stationService = Objects.requireNonNull(stationService, "stationService");
         this.weaponService = Objects.requireNonNull(weaponService, "weaponService");
         this.transportService = Objects.requireNonNull(transportService, "transportService");
         this.megastructureService = Objects.requireNonNull(megastructureService, "megastructureService");
+        this.filteringService = filteringService;
         setPadding(new Insets(10));
         setTop(buildHeader());
         setCenter(buildCenter());
         setBottom(buildStatusBar());
         // Empty initial details panel.
         renderDetailsForSelection(null);
+        if (filteringService != null) {
+            this.filterChangeUnsubscribe = filteringService.subscribeToFilterChanges(this::loadAsync);
+        }
+    }
+
+    /**
+     * Dispose hook for the universe-activation subscription. Called by the menu controller's
+     * {@code stage.setOnCloseRequest} handler when the user closes the Installations Designer.
+     */
+    public void dispose() {
+        if (filterChangeUnsubscribe != null) {
+            filterChangeUnsubscribe.run();
+            filterChangeUnsubscribe = null;
+        }
     }
 
     // ----------------------------------------------------------------- header
@@ -671,7 +714,11 @@ public class InstallationDesignerPanel extends BorderPane {
         all.addAll(registry.assetsByKind(AssetKind.WEAPON_INSTALLATION));
         all.addAll(registry.assetsByKind(AssetKind.MEGASTRUCTURE));
         all.addAll(registry.infrastructureByKind(InfrastructureKind.TRANSPORT_NODE));
-        return all;
+        // v2 Phase F.1 §5.3 — chokepoint enforcement. Entries from inactive universes drop out
+        // here; entries with universe_id=null (canonical/real, R5.6) always pass through. Runs
+        // off the FX thread (per the assertion above) so the bulk-fetch of active universe ids
+        // is non-blocking from the user's perspective.
+        return (filteringService != null) ? filteringService.filter(all) : all;
     }
 
     /**
