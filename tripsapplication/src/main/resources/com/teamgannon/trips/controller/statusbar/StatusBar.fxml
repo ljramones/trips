@@ -36,5 +36,18 @@
                 <Font name="Verdana" size="13"/>
             </font>
         </Label>
+        <!-- v2 Phase F.1 Step 8 — universe activation indicator. Default "Real only" per R1.8;
+             updates via UniverseActivationChangedEvent. Tooltip lists active universe names. -->
+        <Label text="⥮◄►⥮" GridPane.columnIndex="5" GridPane.rowIndex="0"/>
+        <Label fx:id="universeStatusLabel" text=" Worldbuilding: " GridPane.columnIndex="6" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana Bold" size="13"/>
+            </font>
+        </Label>
+        <Label fx:id="universeStatus" text="Real only" GridPane.columnIndex="7" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana" size="13"/>
+            </font>
+        </Label>
     </GridPane>
 </HBox>
