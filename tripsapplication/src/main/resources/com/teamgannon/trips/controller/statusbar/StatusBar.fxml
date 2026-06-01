@@ -6,6 +6,24 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Font?>
 
+<!--
+  Status Bar — rationalized 4-slot layout.
+  See docs/design/status-bar-rationalization.md.
+
+  Layout (left to right):
+    [0] Action slot: reserved ~280px, transient text from StatusUpdateEvent.
+                     Blank at startup; 5-min PauseTransition fade.
+    [1] Separator
+    [2] Dataset label (bold) + [3] Dataset value: persistent, populates from
+                     SetContextDataSetEvent (Step 4 adds ApplicationReadyEvent).
+    [4] Separator
+    [5] Routing label (bold) + [6] Routing value: persistent, populates from
+                     RoutingStatusEvent via direct controller @EventListener.
+    [7] Separator
+    [8] Worldbuilding label (bold) + [9] Worldbuilding value: persistent,
+                     populates from UniverseActivationChangedEvent + ApplicationReadyEvent
+                     (unchanged from F.1 Step 8).
+-->
 <HBox fx:id="statusBar"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.teamgannon.trips.controller.statusbar.StatusBarController"
@@ -15,36 +33,55 @@
         <Insets top="3" right="3" bottom="3" left="3"/>
     </padding>
     <GridPane>
-        <Label fx:id="databaseCommentLabel" text="Plot Status: " GridPane.columnIndex="0" GridPane.rowIndex="0">
-            <font>
-                <Font name="Verdana Bold" size="13"/>
-            </font>
-        </Label>
-        <Label fx:id="databaseStatus" text="Waiting for a dataset to be selected" GridPane.columnIndex="1" GridPane.rowIndex="0" minWidth="500">
+        <!-- Action slot — column 0. Reserved width via prefWidth + minWidth;
+             ellipsis on overflow. Blank text on boot (no placeholder). -->
+        <Label fx:id="actionSlot" text="" GridPane.columnIndex="0" GridPane.rowIndex="0"
+               prefWidth="280" minWidth="280" maxWidth="280">
             <font>
                 <Font name="Verdana" size="13"/>
             </font>
         </Label>
-        <Label text="⥮◄►⥮" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-        <Label fx:id="routingStatusLabel" text=" Routing State: " GridPane.columnIndex="3" GridPane.rowIndex="0">
+
+        <!-- Separator — column 1 -->
+        <Label text="⥮◄►⥮" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+        <!-- Dataset indicator — columns 2 (label) + 3 (value) -->
+        <Label fx:id="datasetStatusLabel" text=" Dataset: " GridPane.columnIndex="2" GridPane.rowIndex="0">
             <font>
                 <Font name="Verdana Bold" size="13"/>
             </font>
         </Label>
-        <Label fx:id="routingStatus" text="Inactive" GridPane.columnIndex="4" GridPane.rowIndex="0">
+        <Label fx:id="datasetStatus" text="(none selected)" GridPane.columnIndex="3" GridPane.rowIndex="0">
             <font>
                 <Font name="Verdana" size="13"/>
             </font>
         </Label>
-        <!-- v2 Phase F.1 Step 8 — universe activation indicator. Default "Real only" per R1.8;
-             updates via UniverseActivationChangedEvent. Tooltip lists active universe names. -->
-        <Label text="⥮◄►⥮" GridPane.columnIndex="5" GridPane.rowIndex="0"/>
-        <Label fx:id="universeStatusLabel" text=" Worldbuilding: " GridPane.columnIndex="6" GridPane.rowIndex="0">
+
+        <!-- Separator — column 4 -->
+        <Label text="⥮◄►⥮" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+
+        <!-- Routing indicator — columns 5 (label) + 6 (value) -->
+        <Label fx:id="routingStatusLabel" text=" Routing: " GridPane.columnIndex="5" GridPane.rowIndex="0">
             <font>
                 <Font name="Verdana Bold" size="13"/>
             </font>
         </Label>
-        <Label fx:id="universeStatus" text="Real only" GridPane.columnIndex="7" GridPane.rowIndex="0">
+        <Label fx:id="routingStatus" text="Inactive" GridPane.columnIndex="6" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana" size="13"/>
+            </font>
+        </Label>
+
+        <!-- Separator — column 7 -->
+        <Label text="⥮◄►⥮" GridPane.columnIndex="7" GridPane.rowIndex="0"/>
+
+        <!-- Worldbuilding indicator — columns 8 (label) + 9 (value). F.1 Step 8 wiring preserved. -->
+        <Label fx:id="universeStatusLabel" text=" Worldbuilding: " GridPane.columnIndex="8" GridPane.rowIndex="0">
+            <font>
+                <Font name="Verdana Bold" size="13"/>
+            </font>
+        </Label>
+        <Label fx:id="universeStatus" text="Real only" GridPane.columnIndex="9" GridPane.rowIndex="0">
             <font>
                 <Font name="Verdana" size="13"/>
             </font>

@@ -65,16 +65,12 @@ public class RouteEventHandler {
         this.plotManager = plotManager;
     }
 
-    @EventListener
-    public void onRoutingStatusEvent(RoutingStatusEvent event) {
-        FxThread.runOnFxThread(() -> {
-            try {
-                statusBarController.routingStatus(event.isStatusFlag());
-            } catch (Exception e) {
-                log.error("Error handling routing status event", e);
-            }
-        });
-    }
+    // v2 status bar rationalization (Step 2 D2 cleanup) — the @EventListener for
+    // RoutingStatusEvent moved to StatusBarController, matching the canonical pattern of
+    // UniverseActivationChangedEvent + StatusUpdateEvent (controller-direct listener). The
+    // direct statusBarController.routingStatus(boolean) method below at line ~95 in
+    // onNewRouteEvent stays as-is — it's a synchronous post-save state-set, not an event
+    // dispatch site.
 
     @EventListener
     public void onNewRouteEvent(NewRouteEvent event) {
