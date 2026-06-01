@@ -614,20 +614,155 @@ The single common dependency: F.1's Universe entity. Every subsequent F.x phase 
 
 ---
 
-## §13 — Lessons (pre-implementation; updated retroactively)
+## §13 — Lessons (retroactively validated post-implementation)
 
-These will be filled in retroactively in Step 9. Predicted lessons based on the design work:
+The pre-implementation predictions held up; F.1 shipped with the architectural pins intact. The lessons below are the retroactively-validated set, with two new entries (numbered 6-7) added based on findings during Steps 2-8 that the original design didn't anticipate.
 
-1. **The Cataloged interface is doing more universe work than originally intended.** F.1 adds `universeId()` to the default-method set. F.3 will add `factionId()` similarly. The Cataloged interface is becoming the universal scope-carrier.
+1. **The Cataloged interface is the universal scope-carrier.** F.1 added `universeId()` to the default-method set. F.3 will add `factionId()` similarly. Every persisted Cataloged subtype gets the new field; non-persisted ones (Conduit, Universe itself) inherit the null default. Step 3 confirmed this scales cleanly across 6 record subtypes.
 
-2. **Catalog audit data is messy.** The 59-value sourceUniverse audit revealed three concepts (universe, faction, era) baked into one String. This is the cost of not having type-system distinctions in Phase D.6's design; F.3/F.4 will pay it back with extracted entity refactors.
+2. **Catalog audit data is messy — and the audit itself has blind spots.** The 59-value sourceUniverse audit revealed three concepts (universe, faction, era) baked into one String, as predicted. The unexpected finding: Step 1's grep missed "Troy Rising" because Catalog.TROY uses positional CatalogProvenance constructor arguments (no `sourceUniverse = "Troy Rising"` literal to grep for). Runtime invariant tests (UniverseFilteringInvariantsTest) close the gap that the grep-based audit can't.
 
-3. **The migration is the design.** V15's UPDATE statements *are* the disambiguation of existing data. Get them right and the whole platform's data is clean; get them wrong and every subsequent phase's data is wrong. Pre-migration audit (Step 1) is the most-important step despite being labeled "verification" rather than "implementation."
+3. **The migration is the design.** V17's UPDATE statements + Catalog source-of-truth tagging *are* the disambiguation of existing data. Step 4's mid-step discovery (Catalog seeders fire after Flyway, so V17's UPDATEs run against an empty DB on fresh installs) drove the dual-tier tagging resolution. Get the data migration right and the whole platform's data is clean; get it wrong silently and every subsequent F.x phase operates on miscategorized data.
 
-4. **Real data needs an absence-marker, not a presence-marker.** `universe_id = NULL` for canonical/real is cleaner than `universe_id = 'catalog-universe-real'` because there's no Universe row to manage activation state on. Real data is intrinsically always-active by virtue of being NULL.
+4. **Real data needs an absence-marker, not a presence-marker.** `universe_id = NULL` for canonical/real is cleaner than `universe_id = 'catalog-universe-real'` because there's no Universe row to manage activation state on. Real data is intrinsically always-active by virtue of being NULL. The Step 8 invariant test (R5.6) verifies this stays true across all activation combinations.
 
-5. **The activation `active` boolean on Universe is the simplest thing that could work.** Resist the temptation to overload Universe with activation history, per-user prefs, or scheduled activation. F.1 ships a boolean; if more is needed, the schema migration is small.
+5. **The activation `active` boolean on Universe is the simplest thing that could work.** Resist the temptation to overload Universe with activation history, per-user prefs, or scheduled activation. F.1 shipped a boolean; if more is needed, the schema migration is small. The `withActive(boolean)` immutability helper threaded the boolean cleanly through the record-domain / mutable-entity seam without breaking record semantics.
+
+6. **The chokepoint is the test seam.** UniverseFilteringService owns both visibility (`isVisible` / `filter`) AND the activation broker (`subscribeToFilterChanges`). Co-locating them in one service means consumers inject one dependency, the invariant tests live where the chokepoint lives, and bypassing the chokepoint requires deliberate effort (the 5-arg backward-compat constructors on the panels do exactly this — explicitly documented as a known-bounded exception). Future F.x phases adding similar visibility+notification surfaces (F.3 factions, F.5 visual rules) should follow this pattern.
+
+7. **Backward-compat constructors scale across record + service boundaries.** The dual-constructor pattern (6-arg canonical with new dep + 5-arg backward-compat) preserved 27+ existing panel tests + the SpaceshipDesignerPanel + InstallationDesignerPanel constructors across the F.1 changes. Combined with E.1's record component compat (19-arg, 20-arg, 21-arg) the discipline now applies at both record-component and service-dependency levels. Each F.x field addition to records + each service-dependency addition becomes a non-breaking change.
 
 ---
 
-*End of Phase F.1 design doc. Awaiting Larry's ratification before Step 1 (audit + verification) begins.*
+## §14 — Divergences resolved during implementation
+
+F.1 hit ten substantive divergences between the original design and the shipped implementation. Each is named here for future readers + future maintainers who reason about why the code looks the way it does.
+
+### §14.1 — V15/V16/V17 three-migration split (was monolithic V15)
+
+**Design doc §4.5**: a single V15 doing table creation + column additions + INSERT statements + UPDATE statements.
+
+**Shipped**: three migrations — V15 (universe table only), V16 (universe_id FK columns on 6 catalog tables), V17 (13 universe INSERTs + UPDATEs retagging existing fiction-canon entries).
+
+**Forced by**: `FlywayBaselineSmokeTest` runs `ddl-auto=validate` after every migration. Shipping `UniverseEntity` without the `UNIVERSE` table fails validate. Each step's entity additions need their corresponding migration in the same commit, OR the validate gate blocks the commit. Same discipline as E.1's V13/V14 split for GateNetwork.
+
+**Future implication**: F.x phases that add JPA entities + their backing tables in separate steps will hit this pattern. Schema-per-step is the rule.
+
+### §14.2 — Dual-tier tagging (Catalog source-of-truth + V17 UPDATE)
+
+**Design doc §4.5**: V17 alone tags fiction-canon entries via UPDATE statements.
+
+**Shipped**: Catalog constants set `universeId` directly on the 5 fiction-canon entries (TROY, SAPL, SHEVA_GUN, 2 Posleen Dodecahedra) at the source-of-truth tier; V17 UPDATE statements handle upgrade-path scenarios where rows pre-existed.
+
+**Discovered mid-Step-4**: Flyway runs at boot against the current DB state. On fresh installs, the DB is empty when V17 runs; the UPDATEs are no-ops. Catalog seeders fire on `ApplicationReadyEvent`, AFTER Flyway, and would otherwise insert rows with `universe_id = null` — silently dropping universe scoping for canonical fiction content. Dual-tier tagging closes the fresh-install path; V17 UPDATE closes the upgrade path.
+
+**Future implication**: any future F.x phase adding a scoping field to existing Catalog content must consider both paths. The pattern: Catalog constants are source-of-truth for the field's value; migration UPDATE handles legacy rows. Same architectural class as D.5's silent regression closed in D.8.
+
+### §14.3 — Nullable String vs Optional<String> for Cataloged.universeId()
+
+**Design doc §4.4**: `default Optional<String> universeId() { return Optional.empty(); }`.
+
+**Shipped**: `default String universeId() { return null; }` (nullable String).
+
+**Reason**: Java record auto-generated accessors must match the component type. A `String universeId` component yields a `String universeId()` accessor, which can't satisfy `Optional<String> universeId()` interface method (return-type conflict). The nullable String is also more consistent with the rest of the Cataloged interface (all 6 existing methods return non-Optional types) and aligns with the JPA column shape directly.
+
+**Caller wrap**: `Optional.ofNullable(cataloged.universeId())` for callers preferring Optional handling.
+
+**Future implication**: interface methods that subtypes will satisfy via record auto-accessors should match the record's component type. Optional-wrapping is a consumer-side concern, not a producer-side contract.
+
+### §14.4 — Troy Rising sourceUniverse audit miss
+
+**Step 1 audit**: 59 distinct sourceUniverse values found via `grep "sourceUniverse" | grep -oE '"..."'`.
+
+**Step 4 discovery**: the audit missed `"Troy Rising"` — the actual sourceUniverse string Catalog.TROY + the Posleen Dodecahedra use. Reason: Catalog.TROY uses positional `CatalogProvenance` constructor arguments (`new CatalogProvenance(SourceType.SCIENCE_FICTION, "Troy Rising", "Troy Rising", ...)`) where `sourceUniverse` is at position 2 without an `=` marker. The pattern-grep missed it.
+
+**Resolution**: V17's Legacy-of-the-Aldenata UPDATE WHERE clause explicitly includes "Troy Rising".
+
+**Future implication**: pattern-grep audits have blind spots. Runtime invariant tests (UniverseFilteringInvariantsTest) close the gap by exercising real DB state, not just code-string patterns. Audit + runtime tests are complementary disciplines.
+
+### §14.5 — Modeless Stage vs modal Dialog for Universes window
+
+**Design doc §6.1**: framed as "dialog" with mock showing Close button.
+
+**Shipped**: modeless `Stage` matching the existing SpaceshipDesignerPanel / InstallationDesignerPanel pattern.
+
+**Reason**: live-refresh (Step 6's UniverseFilteringService broker) requires the user to interact with other windows while the Universes window is open — toggle a universe, watch the designer panel update. A modal `Dialog<T>` would block other windows. Modeless `Stage` enables the desired UX.
+
+**Naming**: the class stays `UniversesDialog` (per the design doc's naming) even though the type is `BorderPane` hosted in a `Stage`. The "dialog" framing in the doc was layout-shape, not lifecycle.
+
+### §14.6 — Entry count summary deferred
+
+**Design doc §6.1**: selected-universe details panel shows "1 megastructure, 4 ships, 2 weapons" entry count summary.
+
+**Shipped**: details panel shows name, version, lifecycle, author, description. No entry count.
+
+**Reason**: would require either (a) injecting 6 catalog services into UniversesDialog or (b) a new count helper on UniverseFilteringService. Both are scope creep for F.1. The current details panel surfaces enough information (curated vs auto-stem description distinguishes first-class from thin universes).
+
+**Future polish**: a future F.x phase can add the entry count once UniverseFilteringService grows a `countEntriesByUniverse()` method or a per-universe usage tracker.
+
+### §14.7 — 6-table scope vs 5-table original
+
+**Design doc §3.3 (original)**: 5 catalog tables (station_design, weapon_installation, megastructure, spaceship_design, gate_network); claimed `transport_node` didn't exist as a separate table.
+
+**Step 1 audit**: `transport_node` DOES exist (V9, Constructs v2 Phase B) with full pipeline (entity, mapper, repository, service, seeder). Currently empty per V9 header, but the table is there.
+
+**Resolution**: design doc updated in pre-Step-2 commit (`fa00803f` — "Update F.1 design doc — 6 catalog tables (was 5)"). V16 adds `universe_id` column to all 6 tables; V17's UPDATE for transport_node is no-op (table empty) but the column is present for when content lands.
+
+**Lesson**: pre-flight verification (Step 1's audit) catches design-doc errors before they cascade into implementation.
+
+### §14.8 — Self-induced toggle suppression in UniversesDialog
+
+**Design doc §6**: didn't anticipate the event-loop issue.
+
+**Shipped**: `ignoreNextBrokerCallback` flag in UniversesDialog. Set just before calling `service.activate()`; the activation publishes an event that the broker fans back to the dialog; the dialog's broker handler short-circuits the redundant reload by checking + clearing the flag.
+
+**Reason**: activate() publishes an event → broker delivers to ALL subscribers → without suppression, the dialog reloads after every checkbox click (one event in, one consumed). Wasteful, and the dialog already shows the new state in the checkbox.
+
+**Pattern note**: future dialogs that both publish events AND subscribe to them should consider this self-induced-callback suppression pattern. The flag approach is simpler than threading event-source identity through every payload.
+
+### §14.9 — Field-injected UniverseDesignerService in StatusBarController
+
+**Design doc §8**: didn't specify wiring approach.
+
+**Shipped**: `@Autowired(required = false) private UniverseDesignerService universeDesignerService;` — field injection with optional flag.
+
+**Reason**: `StatusBarController` is FXML-instantiated by FxWeaver. FXML constructors must be no-arg; constructor injection isn't an option. Field injection with `required = false` lets the controller initialize cleanly in test harness scenarios where the service isn't wired (StatusBarUniverseIndicatorTest exercises this via reflection-set-then-call).
+
+**Future implication**: any future Spring service that needs to inject into an FXML-instantiated controller follows this pattern. Constructor injection is preferred when available; field injection is the FXML escape hatch.
+
+### §14.10 — Step 1 Minor 2: wider sourceUniverse reach (~10 files)
+
+**Design doc §3.1**: listed 5 reader paths for `CatalogProvenance.sourceUniverse`.
+
+**Step 1 audit**: actual reach is wider — writers (`SpaceshipEditorDialog`, `SpaceshipDesignDto`, 4 mappers) + readers (`SpaceshipRow`, `SpaceshipEntity`, plus the 5 originally listed). ~10 files total.
+
+**Resolution**: design doc §1.1 updated to surface this as a forward-looking note for F.3 (Factions). The wider reach strengthens the §1.1 Option (b) decision (keep the String field as documentation, add Universe entity as authoritative scope) — deprecating the String would touch ~10 files, not 5.
+
+**Future implication**: F.3's Faction-extraction work should pre-budget for ~10 files of `sourceUniverse` String touch when it eventually wants to refactor or deprecate the String.
+
+---
+
+## §15 — Step-by-step rollup (commit shape)
+
+F.1 shipped as **10 commits** on top of E.1's HEAD (49f4b881):
+
+| Commit | Step | Subject |
+|---|---|---|
+| 7463a6ff | Design doc | Initial F.1 design doc (pre-Step 1) |
+| fa00803f | Design doc | Update — 6 catalog tables (was 5) per Step 1 audit |
+| 94a8ffa6 | Step 2 | Universe entity pipeline + V15 (table only) |
+| f89e2b7c | Step 3 | universe_id FK + Cataloged.universeId() across 6 catalog subtypes |
+| 9c51fbe2 | Step 4 | V17 data migration + Catalog source-of-truth tagging + audit invariants |
+| c2b4e09d | Step 5 | UniverseActivationChangedEvent + activate/deactivate |
+| ffa14437 | Step 6 | UniverseFilteringService + designer panel integration |
+| 0726593f | Step 7 | Worldbuilding > Universes submenu UI |
+| 44b6ea28 | Step 8 | Status bar indicator + §7 invariant tests |
+| (this commit) | Step 9 | Plan doc rollup + retroactive design doc |
+
+Net new test count across F.1: ~158 tests (3,765 at E.1 close → 3,948 at Step 8 + close-out additions). Counted: 59 (Step 2) + 32 (Step 3) + 22 (Step 4) + 16 (Step 5) + 13 (Step 6) + 9 (Step 7) + 14 (Step 8) = **165 net new tests**.
+
+F.1 ships. The Worldbuilding Platform foundation is in place; F.2 (Aliases) onwards can compose against the Universe entity + activation mechanism + filtering chokepoint without revisiting the data model.
+
+---
+
+*End of Phase F.1 design doc — retroactive close-out (2026-06-01).*

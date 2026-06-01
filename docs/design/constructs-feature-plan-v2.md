@@ -270,6 +270,48 @@ With E.1's structure + E.2's data, routing extends to:
 2. Linked gates show their partner connection as a faint line in the 3D scene.
 3. Optional: shared `ConstructDesignerPanel<C>` base class extracted from the two panels — only if the duplication is visibly hurting.
 
+### Phase F.1 — Worldbuilding Universes Foundation ✅ DONE (2026-06-01)
+
+Establishes the Worldbuilding Platform's foundation: introduces the `Universe` entity as a first-class persisted scope, adds `universe_id` nullable FK columns to the 6 catalog tables, ships the activation API + event signal + filtering service chokepoint, integrates the chokepoint into the 2 designer panels, and ships the Worldbuilding > Universes submenu UI. Real data (universe_id=NULL) is always visible; universe-scoped entries appear only when their universe is active. Full design + retroactive lessons at `docs/design/phase-f1-worldbuilding-universes-foundation.md`. Parent requirements at `docs/design/worldbuilding-platform-requirements.md`.
+
+1. ✅ **Step 1** — Read-only audit + verification. 5 items confirmed; 1 substantive divergence (transport_node EXISTS from V9 as 6th catalog table; design doc incorrectly claimed 5) + 3 minor findings ("Galactic Government" → Hitchhiker's Guide mapping; CatalogProvenance.sourceUniverse wider reach ~10 files vs 5; transport_node uses `faction` column not `provenance_source_universe`). Design doc updated to 6-table scope before Step 2.
+2. ✅ **Step 2** — `Universe` entity pipeline + V15 (universe table). 7 production files: `UniverseLifecycle` enum (2 values: AVAILABLE / DEPRECATED) + `Universe` record (7 fields incl. boolean `active` + `withActive(boolean)` immutability helper) + `UniverseEntity` + `UniverseMapper` + `UniverseRepository` (4 finders) + `UniverseDesignerService` (find/save/delete + D.8 sync) + `UniverseSeeder` (vacuous). V15 migration creates universe table + 3 indexes. Universe sits outside SpaceAsset/SpaceInfrastructure sealed hierarchies; implements `Cataloged` with source()="" / faction()=sourceAuthor / concealed()=false. 59 new tests. Suite at 3,842.
+3. ✅ **Step 3** — `universe_id` FK column + `Cataloged.universeId()` default across 6 catalog subtypes. Cataloged interface gets `default String universeId() { return null; }` (nullable String, not `Optional<String>` — Java records' auto-accessor / interface return-type constraint). 6 records gain `universeId` component + backward-compat constructor (SpaceshipDesign 20→21, StationDesign 29→30, WeaponInstallation 19→20, Megastructure 30→31, GateNetwork 11→12, TransportNode 16→17). 6 entities gain `universeId` field. 6 mappers round-trip. V16 adds `universe_id VARCHAR(64) NULL` column + ON DELETE SET NULL FK + index on each of 6 catalog tables. Zero call-site ripple across 21+ existing callers. 32 new tests. Suite at 3,874.
+4. ✅ **Step 4** — V17 data migration + Catalog source-of-truth tagging + audit invariants. V17 INSERTs 13 Universe rows (2 first-class with curated metadata: Legacy of the Aldenata, Caine Riordan; 11 thin with auto-generated description stem). V17 UPDATEs 5 catalog tables retagging existing fiction-canon entries by §3.2 audit mapping. Mid-step finding: Flyway runs at boot against empty DB; Catalog seeders fire on ApplicationReadyEvent (after); V17 UPDATE alone insufficient for fresh installs. **Resolution: dual-tier tagging** — Catalog constants (TROY, SAPL, SHEVA_GUN, 2 Posleen) set universeId directly + V17 UPDATEs handle upgrade-path scenarios. `CatalogUniverseAuditTest` (9 tests) + `V17MigrationAuditTest` (13 tests) ensure both paths converge. **§3.2 audit addendum**: "Troy Rising" was missed by the grep-based audit (positional CatalogProvenance constructor args); added to V17 explicitly. 22 new tests. Suite at 3,896.
+5. ✅ **Step 5** — `UniverseActivationChangedEvent` + activate/deactivate. New package `com.teamgannon.trips.worldbuilding`. Record `(Universe universe, boolean nowActive)` with compact-constructor invariants (universe non-null; nowActive matches universe.active() post-toggle). UniverseDesignerService gains `@Transactional activate(String)` + `deactivate(String)` + shared private `setActiveState(id, newActive)` helper. ApplicationEventPublisher constructor-injected (3-arg now). **Architectural decisions**: unknown id throws IllegalArgumentException (not Optional); always-publish on redundant calls; publish inside @Transactional (synchronous Universe payload to listeners). 16 new tests. Suite at 3,912.
+6. ✅ **Step 6** — `UniverseFilteringService` chokepoint + 2-panel integration. The §5-invariants enforcement point. Co-locates visibility (`isVisible` / `filter`) + activation broker (`subscribeToFilterChanges` returning unsubscribe handle). `@EventListener onUniverseActivationChanged` fans out to subscribers via `FxThread.runOnFxThread`. SpaceshipDesignerPanel + InstallationDesignerPanel gain new 6-arg canonical constructor + dispose() method; 5-arg backward-compat preserved (known-bounded exception to invariant enforcement). WorldbuildingMenuController wires panel.dispose() into stage.setOnCloseRequest. 13 new tests. Suite at 3,925.
+7. ✅ **Step 7** — Worldbuilding > Universes submenu UI. `UniversesDialog` (BorderPane hosted in modeless Stage — not modal Dialog, since live-refresh requires interactive other windows). Table (active-checkbox + name + version + lifecycle) + selected-universe details (description + author) + Close button. Self-induced toggle suppression via `ignoreNextBrokerCallback` flag. Header copy surfaces R5.6 to the user. Screenshot-verified: menu position correct, 13 universes alphabetical with active-first sort, curated metadata renders for first-class universes. 9 new tests. Suite at 3,934.
+8. ✅ **Step 8** — Status bar indicator + §7 invariant tests. StatusBar.fxml + StatusBarController extension showing "Worldbuilding: Real only" / "Real + N universe(s) active" with tooltip listing active universe names alphabetically. `@EventListener(ApplicationReadyEvent)` initial state + `@EventListener(UniverseActivationChangedEvent)` live refresh. **UniverseFilteringInvariantsTest** is F.1's §7 acceptance gate: @DataJpaTest with Flyway through V17 + Catalog seeders running; sweeps 8 activation combinations verifying R5.5 (no leakage) + R5.6 (real-data count constant) + R5.7 analogous + Bonus (SAPL strictly tracks Legacy activation). All invariants hold. 14 new tests. Suite at 3,948.
+9. ✅ **Step 9** — Plan-doc entry (this section) + retroactive design doc updates with 10 divergences captured + 7 retroactively-validated lessons (the 5 predicted + 2 new: "chokepoint is the test seam" + "backward-compat constructors scale across record + service boundaries"). F.1's design doc §13/§14/§15 carry the architectural close-out for future readers.
+
+Architecture pins now in place (F.1 specific):
+
+- `Universe` as first-class persisted scope outside both SpaceAsset/SpaceInfrastructure sealed hierarchies; second non-sealed-hierarchy persisted catalog entity after GateNetwork
+- `universe_id` nullable FK on 6 catalog tables (station_design, weapon_installation, megastructure, spaceship_design, gate_network, transport_node); ON DELETE SET NULL preserves user data when universe deleted
+- `Cataloged.universeId()` default returns null = canonical/real (R1.9/R5.6); non-null references active Universe row
+- 13 Universe rows shipped via V17 (2 first-class curated + 11 thin auto-seeded from existing catalog)
+- Dual-tier tagging pattern: Catalog source-of-truth + migration UPDATE handles fresh-install vs upgrade-path divergence
+- UniverseFilteringService co-locates visibility + broker; single chokepoint for §5 invariants
+- UniverseActivationChangedEvent fires synchronously inside @Transactional; broker dispatches via FxThread for FX-thread-safe listener consumption
+- Worldbuilding > Universes modeless dialog ships first user-visible activation toggle
+- Status bar indicator ships second user-visible surface for activation state
+
+Net F.1 test delta: +165 tests (3,765 → 3,948 after Step 8 invariants land).
+
+### Phase F.2 onwards — future Worldbuilding Platform phases
+
+With F.1's foundation in place, subsequent F.x phases compose against `Universe` + `UniverseFilteringService` without revisiting the data model:
+
+- **F.2 Aliases**: real-place fictional-name overlays scoped per-universe (R7.2)
+- **F.3 Factions** full structure: Faction entity extraction from `CatalogProvenance.sourceUniverse` String + `faction` String → Faction FK refactor (~10 files touch per Step 1's wider-reach finding) (R7.6.2)
+- **F.4 Eras** per-universe + era visibility filtering (R7.7)
+- **F.5 Visual presentation rules** per-universe color/icon overrides (R7.8)
+- **F.6 Population rules** + SolarSystemFeature universe scoping (R7.10) — revisits the §3.4 transitive-visibility deferral
+- **F.7 Tech constraints** per-universe (R7.11) — DriveType filtering by active universe
+- **F.8 Events + timeline** (R7.12)
+- **F.9 Economics + resources** (R7.13)
+- **F.10 Threats + anomalies** (R7.14)
+
 ---
 
 ## 6. Decisions pinned in Phase A0
