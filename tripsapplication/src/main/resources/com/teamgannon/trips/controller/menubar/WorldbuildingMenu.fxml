@@ -4,6 +4,14 @@
 
 <Menu xmlns:fx="http://javafx.com/fxml/1" text="_Worldbuilding" mnemonicParsing="true"
       fx:controller="com.teamgannon.trips.controller.menubar.WorldbuildingMenuController">
+    <!-- v2 Phase F.1 Step 7 — Universes... is the activation toggle that drives the §5
+         invariants: deactivating a universe hides its scoped catalog content; activating it
+         shows it. Real-data entries (universe_id=NULL) remain visible regardless. -->
+    <MenuItem fx:id="universesMenuItem"
+              text="_Universes..."
+              mnemonicParsing="true"
+              onAction="#openUniversesDialog"/>
+    <SeparatorMenuItem/>
     <MenuItem fx:id="spaceshipModellerMenuItem"
               text="Spaceship Modeller..."
               onAction="#openSpaceshipModeller"/>

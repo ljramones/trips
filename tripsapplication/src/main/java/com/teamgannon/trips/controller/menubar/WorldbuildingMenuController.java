@@ -46,12 +46,17 @@ public class WorldbuildingMenuController {
     private final com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService;
     /** v2 Phase F.1 §5.3 — passed into both designer panels so they filter by active-universe set. */
     private final com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService;
+    /** v2 Phase F.1 Step 7 — backs the Universes dialog's activate/deactivate calls. */
+    private final com.teamgannon.trips.spaceshipmodeller.service.UniverseDesignerService universeDesignerService;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
 
     /** Reused Installations Designer window instance; recreated after it is closed. */
     private Stage installationStage;
+
+    /** Reused Universes dialog window instance; recreated after it is closed (F.1 Step 7). */
+    private Stage universesStage;
 
     public WorldbuildingMenuController(SpaceshipService spaceshipService,
                                SpaceshipJsonService jsonService,
@@ -63,7 +68,8 @@ public class WorldbuildingMenuController {
                                WeaponInstallationDesignerService weaponInstallationDesignerService,
                                TransportNodeService transportNodeService,
                                com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService,
-                               com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService) {
+                               com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService,
+                               com.teamgannon.trips.spaceshipmodeller.service.UniverseDesignerService universeDesignerService) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
@@ -75,6 +81,38 @@ public class WorldbuildingMenuController {
         this.transportNodeService = transportNodeService;
         this.megastructureDesignerService = megastructureDesignerService;
         this.universeFilteringService = universeFilteringService;
+        this.universeDesignerService = universeDesignerService;
+    }
+
+    /**
+     * Opens (or re-focuses) the Universes dialog — v2 Phase F.1 Step 7. Modeless so the user
+     * can have it open alongside the Spaceship Modeller / Installations Designer to see live
+     * filter updates on toggle.
+     */
+    public void openUniversesDialog(ActionEvent actionEvent) {
+        try {
+            if (universesStage == null || !universesStage.isShowing()) {
+                com.teamgannon.trips.worldbuilding.UniversesDialog dialog =
+                        new com.teamgannon.trips.worldbuilding.UniversesDialog(
+                                universeDesignerService, universeFilteringService);
+                universesStage = new Stage();
+                universesStage.setTitle("Worldbuilding — Universes");
+                universesStage.initModality(Modality.NONE);
+                universesStage.setScene(new Scene(dialog, 640, 540));
+                // v2 Phase F.1 §5.3 — dispose unsubscribes from the broker; same lifecycle
+                // pattern as the designer panels.
+                universesStage.setOnCloseRequest(e -> {
+                    dialog.dispose();
+                    universesStage = null;
+                });
+                universesStage.show();
+            } else {
+                universesStage.toFront();
+            }
+        } catch (Exception e) {
+            log.error("Error opening Universes dialog", e);
+            showErrorAlert("Universes", "Failed to open dialog: " + e.getMessage());
+        }
     }
 
     /**
