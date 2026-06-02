@@ -48,6 +48,12 @@ public class WorldbuildingMenuController {
     private final com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService;
     /** v2 Phase F.1 Step 7 — backs the Universes dialog's activate/deactivate calls. */
     private final com.teamgannon.trips.spaceshipmodeller.service.UniverseDesignerService universeDesignerService;
+    /** v2 Phase F.2 Step 5 — backs the Aliases dialog's CRUD calls. */
+    private final com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService aliasDesignerService;
+    /** v2 Phase F.2 §6.3 — used by AliasesDialog + AliasEditorDialog for target name resolution. */
+    private final com.teamgannon.trips.jpa.repository.StarObjectRepository starObjectRepository;
+    /** v2 Phase F.2 §6.3 — used by AliasesDialog + AliasEditorDialog for exoplanet target resolution. */
+    private final com.teamgannon.trips.jpa.repository.ExoPlanetRepository exoPlanetRepository;
 
     /** Reused window instance; recreated after it is closed. */
     private Stage spaceshipStage;
@@ -57,6 +63,9 @@ public class WorldbuildingMenuController {
 
     /** Reused Universes dialog window instance; recreated after it is closed (F.1 Step 7). */
     private Stage universesStage;
+
+    /** Reused Aliases dialog window instance; recreated after it is closed (F.2 Step 5). */
+    private Stage aliasesStage;
 
     public WorldbuildingMenuController(SpaceshipService spaceshipService,
                                SpaceshipJsonService jsonService,
@@ -69,7 +78,10 @@ public class WorldbuildingMenuController {
                                TransportNodeService transportNodeService,
                                com.teamgannon.trips.spaceshipmodeller.service.MegastructureDesignerService megastructureDesignerService,
                                com.teamgannon.trips.worldbuilding.UniverseFilteringService universeFilteringService,
-                               com.teamgannon.trips.spaceshipmodeller.service.UniverseDesignerService universeDesignerService) {
+                               com.teamgannon.trips.spaceshipmodeller.service.UniverseDesignerService universeDesignerService,
+                               com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService aliasDesignerService,
+                               com.teamgannon.trips.jpa.repository.StarObjectRepository starObjectRepository,
+                               com.teamgannon.trips.jpa.repository.ExoPlanetRepository exoPlanetRepository) {
         this.spaceshipService = spaceshipService;
         this.jsonService = jsonService;
         this.templateLibrary = templateLibrary;
@@ -82,6 +94,9 @@ public class WorldbuildingMenuController {
         this.megastructureDesignerService = megastructureDesignerService;
         this.universeFilteringService = universeFilteringService;
         this.universeDesignerService = universeDesignerService;
+        this.aliasDesignerService = aliasDesignerService;
+        this.starObjectRepository = starObjectRepository;
+        this.exoPlanetRepository = exoPlanetRepository;
     }
 
     /**
@@ -112,6 +127,36 @@ public class WorldbuildingMenuController {
         } catch (Exception e) {
             log.error("Error opening Universes dialog", e);
             showErrorAlert("Universes", "Failed to open dialog: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Opens (or re-focuses) the Aliases dialog — v2 Phase F.2 Step 5. Modeless so the user
+     * can have it open alongside the Universes dialog and see live filter updates when they
+     * toggle universe activation.
+     */
+    public void openAliasesDialog(ActionEvent actionEvent) {
+        try {
+            if (aliasesStage == null || !aliasesStage.isShowing()) {
+                com.teamgannon.trips.worldbuilding.AliasesDialog dialog =
+                        new com.teamgannon.trips.worldbuilding.AliasesDialog(
+                                aliasDesignerService, universeDesignerService, universeFilteringService,
+                                starObjectRepository, exoPlanetRepository);
+                aliasesStage = new Stage();
+                aliasesStage.setTitle("Worldbuilding — Aliases");
+                aliasesStage.initModality(Modality.NONE);
+                aliasesStage.setScene(new Scene(dialog, 920, 540));
+                aliasesStage.setOnCloseRequest(e -> {
+                    dialog.dispose();
+                    aliasesStage = null;
+                });
+                aliasesStage.show();
+            } else {
+                aliasesStage.toFront();
+            }
+        } catch (Exception e) {
+            log.error("Error opening Aliases dialog", e);
+            showErrorAlert("Aliases", "Failed to open dialog: " + e.getMessage());
         }
     }
 

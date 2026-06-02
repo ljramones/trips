@@ -11,6 +11,12 @@
               text="_Universes..."
               mnemonicParsing="true"
               onAction="#openUniversesDialog"/>
+    <!-- v2 Phase F.2 §6.3 — Aliases dialog: user-managed fictional names attached to real
+         stars/exoplanets within a universe's scope. -->
+    <MenuItem fx:id="aliasesMenuItem"
+              text="_Aliases..."
+              mnemonicParsing="true"
+              onAction="#openAliasesDialog"/>
     <SeparatorMenuItem/>
     <MenuItem fx:id="spaceshipModellerMenuItem"
               text="Spaceship Modeller..."
