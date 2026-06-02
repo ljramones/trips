@@ -800,4 +800,233 @@ F.3 is the second template-establishing phase (F.2 was the first). F.4 onward co
 
 ---
 
-*End of Phase F.3 design doc. Awaiting Larry's ratification before Step 1 (verification + audit) begins. The four §0.5 ratified decisions + smaller items in §13 are baseline scope.*
+## §16 — Step 1 audit findings (2026-06-02)
+
+Read-only audit producing concrete findings for each of the 11 verification items in §13. Conducted via codebase exploration; no code changes.
+
+### §16.1 — CatalogProvenance reach + sourceUniverse value inventory
+
+`CatalogProvenance` has 4 fields: `sourceType` (enum REAL/PROPOSED/SCIENCE_FICTION/UNKNOWN), `sourceUniverse` (free-text, non-null, defaults ""), `sourceWork` (free-text optional), `status` (enum HISTORIC/ACTIVE/PLANNED/CANCELLED/FICTIONAL/UNKNOWN).
+
+**Production sourceUniverse value inventory** (across the Catalog.java seeder + V17 inserts) — far sparser than F.1 §3.2 implied:
+
+| Value | sourceType | Count | Category | V21 disposition |
+|---|---|---|---|---|
+| `"Real / Proposed"` | REAL | 8 (ISS, TIANGONG, MIR, SKYLAB, SALYUT_1, SALYUT_7, LUNAR_GATEWAY, AXIOM_STATION) | Real-data marker | factionId = null (real entity, no faction) |
+| `"Troy Rising"` | SCIENCE_FICTION | 3 (TROY, SAPL, SHEVA_GUN) | **Universe-named** (book series; already a Universe in V17) | factionId = null (universe, not faction) |
+| `"Legacy of the Aldenata"` | SCIENCE_FICTION | 2 (POSLEEN_COMMAND_DODECAHEDRON, POSLEEN_BATTLE_DODECAHEDRON) | **Universe-named** (already a Universe in V17) | factionId = null (universe, not faction) |
+
+**Significant audit finding (divergence from §1.6):** the CatalogProvenance.sourceUniverse production values are **all universe-named** ("Troy Rising", "Legacy of the Aldenata") or real-data markers ("Real / Proposed"). The faction-named values the design doc expected ("Hkh'Rkh", "Ktoran", "Arakur", "Terran") **don't live in CatalogProvenance** — they live in `StarObject.worldBuilding.polity`, populated by ChView import (per §16.9). The V21 data-migration story is **much smaller** than §1.6 implies.
+
+**Revised V21 scope (proposed for §1.6 update):**
+- Adds `provenance_faction_id` column to each provenance-bearing catalog table (per §16.10 — likely 3 confirmed entities; 3 ambiguous)
+- Leaves the column null on existing rows (no automatic mapping; sourceUniverse values are universes, not factions)
+- Seeds the initial Faction rows from a **curated list** (not from sourceUniverse). The curated list draws from:
+  - `CivilizationDisplayPreferences` enum constants (HKHRKH, KTOR, ARAKUR, TERRAN, etc.) for the Caine Riordan universe
+  - Posleen + other Aldenata factions for the Legacy of the Aldenata universe
+  - Federation, Klingon, Romulan, etc. for Star Trek (likely; confirm with user-known canon)
+- Future Factions are user-created via the Worldbuilding > Factions... dialog (Step 6)
+
+### §16.2 — StarObject.worldBuilding.polity read paths
+
+50+ callsites. Major read paths:
+- **Rendering:** `StarRenderer.createStar()` lines 180-187 — when `politiesOn && hasPolity(record)`, calls `createPolityObject(record.getPolity(), polityPreferences)` via `PolityObjectFactory` (legacy polity coloring pipeline)
+- **UI display:** `StarPropertiesPane.polityLabel.setText(...)`, `StarEditDialog`, `PlanetPropertiesDialog`
+- **Search & filter:** `PolitySelectionPanel`, `RouteFindingService.getPolityExclusions()`
+- **Import/Export:** `AstrographicObjectFactory.create()` (ChView import, lines 71-76 — see §16.9), `AstroCSVStar`, `StarTableExportService`, `CSVDataSetDataExportTask`, `StarCsvFormatter`
+- **Data layer:** `StarDisplayRecord`, `SolarSystem` propagation, `DisplayScoreCalculator`
+
+**Verification:** F.3 leaves the field untouched. All existing read paths continue to function. The §0 "what F.3 does NOT deliver" claim holds.
+
+### §16.3 — "Star Polities" toolbar button + fallback recommendation
+
+**FXML:** `toolbar.fxml` lines 26-34, `ToggleButton fx:id="togglePolityBtn" text="Star Polities"`.
+
+**Handler chain:**
+```
+ToolbarController.togglePolities()  (line 106-108)
+  → SharedUIFunctions.togglePolities()
+    → InterstellarSpacePane.togglePolities(newState)
+    → eventPublisher.publishEvent(UIStateChangeEvent(POLITIES, newState))
+```
+
+**Current legacy polity coloring pipeline:** `StarRenderer.createStar()` lines 180-187, gated on `politiesOn && hasPolity(record)`. Builds a `MeshView` polity object via `PolityObjectFactory`, positioned at star location, added to `pendingPolityNodes` batch. `hasPolity` returns `!record.getPolity().equals("NA") && !record.getPolity().isEmpty()`.
+
+**Fallback recommendation for §1.5's "toolbar ON + no active universes" edge case: option (i) — legacy polity-field coloring.**
+
+Audit confirms the legacy pipeline (StarRenderer → PolityObjectFactory) is intact, well-tested, and remains the natural fallback. Refactoring per decision #3 path α means:
+- Toolbar master switch OFF → spectral coloring (existing default)
+- Toolbar ON + view checkbox ON + active universe with FactionAssignment → faction color
+- Toolbar ON + view checkbox ON + no active universe / no matching FactionAssignment → fall through to legacy polity-field coloring (preserves user's existing data + visual expectations)
+- Toolbar ON + view checkbox OFF → spectral coloring (view opted out)
+
+This preserves the legacy ChView-imported polity coloring for users who haven't yet created FactionAssignments. F.3 introduces additive structure; nothing legacy breaks.
+
+### §16.4 — Side pane FXML structure
+
+**Interstellar view (`RightPanel.fxml`):** `BorderPane → VBox(settingsPane) → Accordion(propertiesAccordion)` with 6 `TitledPane` children: DataSets Available, Objects in View, Planetary Systems, Stellar Object Properties, Link Control, Star Routing.
+
+**F.3 interstellar addition (clean):** append a 7th `TitledPane` (fx:id `factionDisplayPane`) after "Star Routing":
+```xml
+<TitledPane fx:id="factionDisplayPane" text="Display &amp; Controls">
+    <content>
+        <VBox>
+            <CheckBox fx:id="factionColoringCheckbox" text="Color stars by faction"/>
+        </VBox>
+    </content>
+</TitledPane>
+```
+
+**Solar system view side pane:** **AMBIGUOUS** — no standalone FXML located for solar-system side pane. The screenshot shows the sections (System Overview, Planets & Moons, Selected Object, Reference Cues, Display & Controls) but the agent couldn't find the FXML file defining them. Possibilities:
+- (a) Embedded in a larger FXML (e.g., the SolarSystem main pane FXML)
+- (b) Constructed programmatically in Java (sections built in code, not declarative)
+- (c) Reuses a generic right-panel template
+
+**Step 2 must determine** which pattern applies before Step 5 builds the participation checkbox. If (a) or (b), find the source location; if (c), confirm whether the template supports additive controls.
+
+### §16.5 — Star info panel Fictional Info tab — Faction section placement
+
+`StarPropertiesPane.fxml` lines 60-121. Post-F.2, the Fictional Info tab GridPane has:
+- Rows 1-13: legacy fields (Star name, Common name, Polity, World type, etc.)
+- Row 14: Separator (F.2)
+- Row 15: bold header "Aliases (from active universes):" (F.2)
+- Row 16: `aliasesContentLabel` (F.2)
+
+**F.3 placement (append-friendly, no row shifting):**
+- Row 17: Separator (full-width, GridPane.columnSpan="2")
+- Row 18: bold header "Faction Assignment:" (full-width)
+- Row 19: `factionAssignmentContentLabel` (full-width, wrapText="true") — content like "Primary: Federation (Star Trek) — Contested by: Romulan, Klingon" + a "[Edit Assignment...]" button
+
+The "Edit Assignment..." button placement is a Step 5/7 detail; placing it on row 20 or inline in row 19 is fine. Append-friendly.
+
+### §16.6 — Renderer integration points
+
+**StarRenderer (interstellar):** current constructor has two shapes — a 6-arg compat form and a 7-arg F.2 form accepting nullable `AliasDesignerService`. Per-star coloring pipeline: `createStar()` → `createStarGeometry()` (sphere/mesh w/ spectral color) → optional `createPolityObject()` (legacy polity coloring).
+
+**F.3 integration:** add a second nullable field parallel to `aliasService`:
+```java
+@Nullable private final FactionAssignmentDesignerService factionService;
+```
+Extend both constructors (compat 6-arg gets a 3rd extension to 8-arg; full 7-arg gets pushed to 8-arg) to thread `factionService` through. In `createStar()`, replace the polity branch with a tiered check: try faction-color path first; fall through to legacy polity if no active assignment per §16.3's fallback option (i).
+
+**BodyRenderer (solar system):** F.2 added setter `setAliasService(AliasDesignerService)` at lines 142-144 mirroring the existing `setContextMenuHandler` pattern. F.3 follows the same setter pattern:
+```java
+public void setFactionAssignmentService(@Nullable FactionAssignmentDesignerService factionService) {
+    this.factionService = factionService;
+}
+```
+
+Both renderers have clean injection points. No architectural surgery needed.
+
+### §16.7 — Menu mnemonic inventory
+
+Top-level menus + their Alt-mnemonics: File (F), Edit (E), View (V), Worldbuilding (W), Tools (T), Search (S), Reports (R), Admin (A) **— collides with Worldbuilding's Aliases Alt+A at the top-level but JavaFX scoping handles this**, Experimental (X), Utilities (U) **— same Utilities/Universes Alt+U collision; same scoping caveat**, Help (H).
+
+**Worldbuilding submenu** currently uses: Alt+U (Universes), Alt+A (Aliases), Alt+I (Installations Designer). Spaceship Modeller has no mnemonic.
+
+**Recommendation for F.3 items:**
+- **"_Factions..."** → Alt+F (no collision within Worldbuilding submenu)
+- **"Faction Assi_gnments..."** → Alt+G (mnemonic on the G in "Assignments"; preserves the descriptive name; no Worldbuilding-submenu collision)
+
+The G-mnemonic on "Assi**g**nments" reads cleanly in JavaFX rendering (the underscored G is visible mid-word). This keeps the doc's original naming intent ("Faction Assignments...") while resolving the Alt+F collision with the new Factions menu.
+
+### §16.8 — Universe entity lastActivatedAt addition
+
+UniverseEntity field list confirmed: id, name, description, sourceAuthor, version, lifecycle (enum), active, createdAt, modifiedAt. **`lastActivatedAt` does NOT exist.**
+
+**F.3 §4.7 design is clean. V19 migration:**
+```sql
+ALTER TABLE universe
+    ADD COLUMN IF NOT EXISTS last_activated_at TIMESTAMP NULL;
+CREATE INDEX IF NOT EXISTS idx_universe_last_activated_at
+    ON universe (last_activated_at DESC);
+```
+
+The descending index supports the "most recently activated" tiebreaker query directly.
+
+**UniverseDesignerService.activate() integration** (one-line addition at lines 179-180 of `setActiveState`):
+```java
+entity.setActive(newActive);
+if (newActive) {
+    entity.setLastActivatedAt(Instant.now());  // F.3 addition
+}
+```
+
+Deactivation does NOT null `lastActivatedAt` — preserves history; the column represents "most recent activation transition."
+
+**Universe record** gets a new component + backward-compat constructor per §4.7. Mapper round-trips the field.
+
+### §16.9 — ChView import polity-setting code (out-of-scope verification)
+
+`AstrographicObjectFactory.create(Dataset, ChViewRecord)` lines 27-79, polity assignment at lines 71-76:
+```java
+switch (chViewRecord.getGroupNumber()) {
+    case 1 -> starObject.setPolity(CivilizationDisplayPreferences.ARAKUR);
+    case 2 -> starObject.setPolity(CivilizationDisplayPreferences.HKHRKH);
+    case 4 -> starObject.setPolity(CivilizationDisplayPreferences.KTOR);
+    case 8 -> starObject.setPolity(CivilizationDisplayPreferences.TERRAN);
+}
+```
+
+**Verified:** F.3 leaves this code path untouched per §0 "out of scope." `CivilizationDisplayPreferences` is the source of the four faction-name strings (HKHRKH, KTOR, ARAKUR, TERRAN) that should seed Caine Riordan factions in V21 per §16.1's revised scope.
+
+### §16.10 — CatalogProvenance persistence layout per catalog table
+
+**Confirmed provenance-bearing entities (3 of 6):**
+- `station_design`: 4 provenance columns (provenance_source_type ENUM, provenance_source_universe VARCHAR, provenance_source_work VARCHAR, provenance_status ENUM) — D.6 §6.2 lineage
+- `megastructure`: same 4 columns — D.6 §6.3 / D.8 lineage
+- `gate_network`: same 4 columns — E.1 §5 lineage
+
+**AMBIGUOUS (3 of 6):**
+- `weapon_installation`: provenance columns not located via grep — needs Step 2 schema check
+- `spaceship_design`: provenance columns not located via grep — needs Step 2 schema check
+- `transport_node`: provenance columns not located via grep — needs Step 2 schema check
+
+**Step 2 must read** `WeaponInstallationEntity`, `SpaceshipDesign` / `SpaceshipEntity`, `TransportNodeEntity` source + the V7/V8/V9 baseline Flyway migrations to confirm provenance presence. If absent, F.3 has a choice:
+- (a) Add `provenance_faction_id` only to the 3 confirmed entities (V21 narrower)
+- (b) Add `provenance_faction_id` to all 6 entities (some columns would sit fully null without provenance context) — wasted columns
+
+**Tentative recommendation:** (a) — only add to entities that already carry CatalogProvenance, preserving the "faction belongs to provenance" semantic. The 3 missing entities would gain faction support later if they grow CatalogProvenance fields.
+
+**V21 ALTER TABLE shape** (per confirmed entity):
+```sql
+ALTER TABLE station_design
+    ADD COLUMN IF NOT EXISTS provenance_faction_id VARCHAR(64);
+ALTER TABLE station_design
+    ADD CONSTRAINT fk_station_design_faction
+    FOREIGN KEY (provenance_faction_id) REFERENCES faction(id) ON DELETE SET NULL;
+CREATE INDEX idx_station_design_faction_id ON station_design (provenance_faction_id);
+-- Repeat for megastructure, gate_network (+ weapon_installation, spaceship_design, transport_node if (b))
+```
+
+### §16.11 — F.1/F.2 invariants baseline (smoke verification)
+
+- `UniverseFilteringInvariantsTest.java` ✓ exists
+- `AliasFilteringInvariantsTest.java` ✓ exists
+- Per F.2 close-out commit `2fadac5c`: suite at **4,116 tests, 0 failures, 1 skipped**
+
+F.1 + F.2 invariants are baselined and ready to remain green throughout F.3 implementation.
+
+---
+
+## §17 — Step 1 ratification points
+
+Findings worth Larry's confirmation before Step 2 begins:
+
+**R1 — §1.6 / §4.5 V21 scope revision.** CatalogProvenance.sourceUniverse production values are universe-named ("Troy Rising", "Legacy of the Aldenata"), not faction-named. The V21 mapping table from sourceUniverse → factionId is empty. **Proposed revision:** drop the sourceUniverse-mapping framing; V21 instead adds `provenance_faction_id` columns (nullable, no auto-mapping) + seeds initial Factions from a curated list drawing from `CivilizationDisplayPreferences` constants (HKHRKH, KTOR, ARAKUR, TERRAN for Caine Riordan) + canonical lists for other universes Larry has in mind. Future user creates additional factions via the Step 6 dialog.
+
+**R2 — Fallback for "no active universes" edge case (§1.5, §16.3).** Audit confirms option (i) — legacy polity-field coloring — is cleanly feasible. **Proposed: ratify (i) as the fallback.**
+
+**R3 — Solar system side pane construction (§16.4 ambiguous).** Step 2 first task: locate/identify the solar-system side pane construction mechanism (FXML file or programmatic code). The Step 5 (participation checkbox) plan depends on this.
+
+**R4 — Menu mnemonics (§16.7).** Recommendation: "**_F**actions..." (Alt+F) + "Faction Assi**_g**nments..." (Alt+G). **Proposed: ratify or pick alternative letters.**
+
+**R5 — CatalogProvenance presence on 3 ambiguous entities (§16.10).** Tentative recommendation (a): add `provenance_faction_id` only to the 3 confirmed provenance-bearing entities (station_design, megastructure, gate_network); skip weapon_installation, spaceship_design, transport_node until they grow CatalogProvenance. **Proposed: ratify (a) or extend to (b).**
+
+**R6 — Universe.lastActivatedAt deactivation semantics (§16.8).** Tentative: deactivation does NOT null lastActivatedAt (preserves history; column represents "most recent activation transition"). Could alternatively reset to null on deactivation if "currently-active" tiebreaker is preferred over "most-recent-activation" tiebreaker. **Proposed: ratify history-preserving semantics; reactivation overwrites, deactivation leaves untouched.**
+
+Once these 6 ratification points are settled, Step 2 has clean settled scope.
+
+---
+
+*End of Phase F.3 design doc. Step 1 audit complete; 6 ratification points await Larry's confirmation before Step 2 begins.*
