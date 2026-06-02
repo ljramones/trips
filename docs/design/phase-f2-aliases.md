@@ -583,4 +583,141 @@ The Alias entity's `(universeId, targetKind, targetId)` shape is the template su
 
 ---
 
-*End of Phase F.2 design doc. Awaiting Larry's ratification before Step 1 (verification + audit) begins.*
+## §15 — Close-out (retroactive — 2026-06-02)
+
+F.2 shipped clean. Final state pinned for the historical record.
+
+### §15.1 — Step-by-step test delta + commit map
+
+| Step | Tests added | Cumulative |
+|------|-------------|------------|
+| Design doc + Step 1 audit revision | 0 | 3,980 |
+| Step 2 (Alias pipeline + V18 migration) | +55 | 4,035 |
+| Step 3 (Renderer tooltip F1.b + AliasTooltipFormatter) | +39 | 4,074 |
+| Step 4 (Fictional Info tab Aliases section) | +14 | 4,088 |
+| Step 5 (AliasesDialog + AliasEditorDialog + menu) | +17 | 4,105 |
+| Step 6 (§9 invariants + close-out) | +11 | **4,116** |
+
+Total: **+136 tests** across F.2 (vs ~110 estimated in §10).
+
+### §15.2 — Discipline patterns established/reinforced
+
+The F.2 arc surfaced 13 reusable patterns. Pinned for future F.x phases:
+
+**Code architecture:**
+
+1. **Pure formatter extraction.** `AliasTooltipFormatter` is JavaFX-free; 13 + 5 tests run without
+   Toolkit or Spring. Pattern: whenever rendering mixes UI framework concerns with pure text/data
+   transformation, extract the pure layer up front (Step 3 + Step 4 evidence). Reusable across
+   renderer tooltips, panel sections, future export surfaces.
+
+2. **Single dialog for create + edit (null-entity discriminator).** `AliasEditorDialog` (Step 5)
+   handles both modes via the `Alias existing` constructor parameter; `existing==null` ⇒ create,
+   non-null ⇒ edit with 4 fields locked. Field structure identical between modes. Pattern for
+   future CRUD dialogs (Faction editor F.3, Era editor F.4, etc.).
+
+3. **OK-button ActionEvent filter for validation.**
+   ```java
+   getDialogPane().lookupButton(ButtonType.OK).addEventFilter(
+           ActionEvent.ACTION, evt -> { if (!attemptSave()) evt.consume(); });
+   ```
+   Canonical JavaFX idiom for "keep dialog open on validation failure." Pattern for future
+   validating dialogs.
+
+4. **Two-layer uniqueness UX.** V18 schema-level unique constraint as source of truth +
+   service-level pre-check (`AliasDesignerService.save`) for friendly `IllegalStateException`
+   surfaced in dialog error label, dialog stays open for retry. Error message template:
+   *"X already exists for context Y (existing: '...', id=...). Edit or delete the existing one
+   instead of creating a duplicate."* Pattern for future validator-pattern surfaces.
+
+5. **Mixed constructor/setter injection matched to call-site shape.** `StarRenderer` takes
+   `AliasDesignerService` via constructor (Spring DI through StarPlotManager); `BodyRenderer`
+   uses setter `setAliasService` mirroring its existing `setContextMenuHandler` 4.1.6 pattern.
+   Don't force uniformity where the existing code didn't have it.
+
+6. **F1.b dynamic per-hover tooltip pattern.** Single Tooltip instance per node; text rebuilt
+   on every `setOnMouseEntered` via `tooltip.setText(...)`. No cache flag — `TOOLTIP_PROPERTY`'s
+   mere presence indicates installation. Universe activation changes surface immediately on
+   next hover with zero cache-invalidation work.
+
+7. **Three short-circuit paths preserve zero-cost steady state.** (a) service null, (b)
+   targetId null, (c) empty active universe set. Pattern for per-hover or per-row JPA traffic
+   surfaces.
+
+8. **Defensive null paths for FxWeaver / Spring-constructed UI.** Service-injected dialogs and
+   panels must tolerate: null services (test contexts), null entity ids (procedural data),
+   null FXML fields (constructor-time broker fire before FXML load completes). The
+   `aliasesContentLabel == null` short-circuit in `StarPropertiesPane.populateAliasesSection`
+   is the canonical example.
+
+**Migration + persistence:**
+
+9. **Entity ships with its migration when ddl-auto=validate is the gate.** F.1's V15 +
+   UniverseEntity precedent honored at F.2 Step 2 — `AliasEntity` lands in the same commit as
+   V18 because `FlywayBaselineSmokeTest`'s validate-mode contract requires the entity ↔ schema
+   to match at every commit boundary.
+
+10. **ON DELETE CASCADE for required-FK content vs ON DELETE SET NULL for optional-FK content.**
+    F.1's V16 catalog tables use SET NULL because canonical entries can exist without a
+    universe; F.2's V18 Alias uses CASCADE because an alias without a universe is semantically
+    meaningless. Match constraint to invariant.
+
+**Testing patterns:**
+
+11. **Mutable mock-answer pattern for broker tests.**
+    `when(...).thenAnswer(inv -> mutableList)` decouples test state from call count when the
+    broker subscription causes multiple `findAllActive` invocations per reload. Pattern for
+    future broker-subscription tests.
+
+12. **Broker event payload represents post-toggle state.** `UniverseActivationChangedEvent`
+    invariant: `nowActive` must match `universe.active()`. Test fixtures use
+    `cotp.withActive(true)` to construct the post-toggle Universe payload. Pattern for future
+    broker-event tests.
+
+13. **Test count under estimate with honest accounting.** When test counts diverge from
+    estimate, name the reason: "trading low-value coverage of headless-awkward surfaces
+    (Alert dialogs, Spring wiring) for deeper coverage of architectural-significance paths
+    (validation, save delegation, edit locks, duplicate-error UX)." Pattern over recipe.
+
+### §15.3 — Divergences from the original plan
+
+- **Step 2/3 combination.** Original §10 had separate "Step 2: entity pipeline" + "Step 3: V18
+  migration" steps. Caught pre-implementation: would fail `FlywayBaselineSmokeTest`. Doc
+  revised pre-Step-2 to combine into a single Step 2 per F.1's discipline.
+
+- **D1.a — exoplanet aliases via tooltip only.** Step 1 verification found no existing
+  exoplanet info panel (PlanetPropertiesDialog is a right-click edit modal, not a hover panel).
+  Decision: exoplanets surface aliases via the solar-system view's per-hover tooltip (Step 3
+  reuses `BodyRenderer`'s sphere tooltip); no dedicated panel section. Fictional Info tab is
+  star-only.
+
+- **Single AliasEditorDialog for create + edit** instead of separate dialog classes (original
+  §10 contemplated separate "Create Alias sub-dialog" + "Edit Alias sub-dialog"). Saved a whole
+  class; null-existing-Alias discriminator switches modes cleanly.
+
+- **§4.5 — `findActiveAliasesForTarget` consults `UniverseFilteringService` internally.**
+  Original draft had an explicit `Set<String> activeUniverseIds` parameter on the service
+  method. Revised pre-Step-2 to internalize the active-set lookup, matching F.1's chokepoint
+  pattern.
+
+- **`getActiveUniverseNamesById()` added to `UniverseFilteringService`.** Step 3 found that
+  the renderer tooltip needs universe display names (not just ids) to render
+  "{aliasText} ({universeName})". One bulk-fetch via the existing chokepoint > one round trip
+  per alias.
+
+- **`AliasTooltipFormatter` extended in Step 4 rather than panel doing its own formatting.**
+  Picked option (a) — per-alias format `<text> (<universe>)` is identical to tooltip; the
+  divergence is just the bullet prefix + emptyPlaceholder.
+  `formatAliasesAsBulletList(aliases, placeholder)` is the reusable shape.
+
+### §15.4 — Forward links activated
+
+F.2's `(universeId, targetKind, targetId)` template + the two-layer-uniqueness UX template
++ the broker-subscribed designer dialog template + the pure-formatter extraction pattern
+are now ready for F.3 (Factions), F.4 (Eras), F.5 (Visual presentation rules), F.6
+(Population rules), F.7 (Tech constraints). Each subsequent F.x phase composes against this
+scaffolding instead of inventing fresh.
+
+---
+
+*End of Phase F.2 design doc. Shipped 2026-06-02; 4,116 tests passing.*
