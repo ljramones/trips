@@ -540,4 +540,249 @@ After this task ships:
 
 ---
 
-*End of design doc. Awaiting Larry's ratification before Step 1 (verification + audit) begins. The reframe in §1.1 is the load-bearing change vs the original design — every affected feature is wrongly-modeled worldbuilding to be deleted here and reintroduced by F.3.*
+---
+
+## §13 — Step 1 audit findings (2026-06-02)
+
+Read-only audit producing concrete inventories for each affected entity, feature, and test surface. Conducted via codebase exploration; no code changes.
+
+### §13.1 — Field-level audit (entity inventory)
+
+**StarObject** at `tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarObject.java`:
+
+The embedded StarWorldBuilding component is at lines 136-150 via `@Embedded` + `@AttributeOverrides`. The 11 worldbuilding fields are mapped via attribute overrides.
+
+**`customData1-10` status: CONFIRMED NOT PRESENT on StarObject.** No `customData1` through `customData10` fields exist in the current schema. (`SolarSystem` has `custom_data1-5` per V1 baseline, but that's a different entity outside this task's scope.) The §5.3 sub-deliverable is a no-op — V19 doesn't drop customData columns from STAR_OBJ.
+
+Compatibility accessors at lines 526-557: 11 getter/setter pairs delegating to `worldBuilding.*` — all removed by §5.1.
+
+**StarWorldBuilding** at `tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/StarWorldBuilding.java`:
+
+11 fields confirmed at lines 27-77 with "NA" String defaults / `false` Boolean defaults:
+- `polity`, `worldType`, `fuelType`, `portType`, `populationType`, `techType`, `productType`, `milSpaceType`, `milPlanType` (String)
+- `other`, `anomaly` (boolean)
+
+Plus utility methods `hasAnyFieldsSet()` (lines 84-95) and `initDefaults()` (lines 107-119). All deleted with the class.
+
+**ExoPlanet** at `tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/ExoPlanet.java`:
+
+7 sci-fi fields confirmed:
+- `Long population` (line 651, nullable)
+- `Integer techLevel` (line 657, nullable)
+- `Boolean colonized` (line 662)
+- `Integer colonizationYear` (line 668, nullable)
+- `String polity` (line 673)
+- `Integer strategicImportance` (line 679, nullable)
+- `String primaryResource` (line 684)
+
+### §13.2 — Per-feature callsite inventory (the 14 items)
+
+All 14 features located. Reframe check (worldbuilding wrongly modeled) **confirmed for every item** — no surprises where a feature is genuinely astronomical.
+
+**Item 1 (StarWorldBuilding):** 50+ callsites per F.3 §16.2; all read paths delete with the class.
+
+**Item 2 (ExoPlanet sci-fi fields):** Read by `PlanetPropertiesDialog.java` lines 128-134; written by import services + dialog edits.
+
+**Item 3 (customData1-10):** N/A — fields don't exist on StarObject.
+
+**Item 4 (RouteFindingService.getPolityExclusions):**
+- `RouteFindingService.java` line 213: `Set<String> polityExclusions = options.getPolityExclusions();`
+- `RouteCacheKey.java` lines 54, 77: includes in cache key
+- `ContextAutomatedRoutingDialog.java` line 164, 327: builds + extracts
+- `RouteFinderDialogInView.java` line 372, 452: builds + extracts
+- Tests: `RouteFindingServiceTest`, `RouteFindingIntegrationTest`, `RouteCacheKeyTest`, `RouteCacheTest`
+
+**Item 5 (PolitySelectionPanel):** `tripsapplication/src/main/java/com/teamgannon/trips/search/components/PolitySelectionPanel.java`. Line 24 polityLabel + lines 26-48 polity1-11 CheckBox fields. Consumed by route finder dialogs.
+
+**Item 6 (StarContextMenuHandler polity items):** `tripsapplication/src/main/java/com/teamgannon/trips/starplotting/StarContextMenuHandler.java` line 58 + `StarContextMenuBuilder.java`. Reads `record.getPolity()` for conditional menu items.
+
+**Item 7 (DisplayScoreCalculator polity weight):** `tripsapplication/src/main/java/com/teamgannon/trips/jpa/model/DisplayScoreCalculator.java` lines 97-100:
+```java
+String polity = star.getWorldBuilding().getPolity();
+if (polity != null && !polity.trim().isEmpty() && !"NA".equals(polity)) {
+    cumulativeTotal += 3;
+}
+```
++3 contribution to display score multiplier. Deleted.
+
+**Item 8 (CSV polity column):** `StarCsvFormatter.java` line 52 ("polity," column) + lines 53-60 (9 additional worldbuilding columns). `CSVDataSetDataExportTask.java` + `CSVDataSetDataExportService.java` orchestrate.
+
+**Item 9 (StarDisplayRecord.polity):** `StarDisplayRecord.java` line 105 field, lines 431/434-435 accessors, line 333 init. Field deleted; downstream readers updated.
+
+**Item 10 (Tooltip "Polity:" line):** `AliasTooltipFormatter.formatStarTooltip()` line 37 signature + line 40 polity append. Removed; tooltip becomes `starName + aliases`.
+
+**Item 11 (SolarSystem polity propagation):** `SolarSystem.java` line 130 field; `fromStar()` lines 190-199, specifically line 196 `system.setPolity(star.getPolity())`. Field + propagation deleted.
+
+**Item 12 (PolityObjectFactory):** Complete class at `tripsapplication/src/main/java/com/teamgannon/trips/starplotting/PolityObjectFactory.java`. Only caller is `StarRenderer.createPolityObject(...)` which is itself deleted with the toolbar button (Item 14).
+
+**Item 13 (ChView import polity-setting):** `AstrographicObjectFactory.create()` lines 71-76 switch statement (verbatim from F.3 §16.9). Plus identical switch in `StarObject.fromChvRecord()` (per grep). Both removed.
+
+**Item 14 (Star Polities toolbar button):**
+- `toolbar.fxml` lines 26-34: ToggleButton + Tooltip
+- `ToolbarController.java` line 36 field + lines 106-107 handler
+- `SharedUIFunctions.togglePolities()` method
+- `InterstellarSpacePane.togglePolities()` method + POLITIES flag
+- `StarRenderer.java` flag check + polity mesh rendering logic
+- `MenuBarController.java` + `ToggleDisplayMenuController.java` menu items (if present)
+- `UIStateChangeEvent.POLITIES` constant (stays if used elsewhere; polity publication path removed)
+
+### §13.3 — Edit Star dialog location and scope
+
+**Controller:** `tripsapplication/src/main/java/com/teamgannon/trips/screenobjects/StarEditDialog.java`
+**FXML:** `tripsapplication/src/main/resources/com/teamgannon/trips/screenobjects/StarEditDialog.fxml` lines 1-254
+
+**Fictional Info tab** (FXML lines 74-129): all 11 worldbuilding fields have editing widgets (TextField + ComboBox pairs for the 9 String fields; 2 CheckBoxes for `other`/`anomaly`).
+
+**Controller @FXML fields** (StarEditDialog.java lines 74-96): 11 TextField fields + ComboBox fields for each type.
+
+**Supporting infrastructure to clean up:**
+- `StarEditMapper.java` — ViewModel ↔ Entity mapping for the 11 fields
+- `StarEditFormBinder.java` — bidirectional form binding
+- `StarEditViewModel.java` — getters/setters for the 11 fields
+- `StarEditComboConfig.java` — ComboBox option configuration (theme-driven)
+
+Tests affected: `StarEditMapperTest`, `StarEditFormBinderTest`, `StarEditComboConfigTest`.
+
+### §13.4 — PlanetPropertiesDialog scope
+
+**File:** `tripsapplication/src/main/java/com/teamgannon/trips/dialogs/solarsystem/PlanetPropertiesDialog.java`
+
+Sci-Fi tab constructed at lines 193-195 via `createSciFiContent()`. Field declarations at lines 128-134:
+- `populationField`, `techLevelField`, `colonizationYearField`, `polityField`, `primaryResourceField`, `strategicImportanceField`, `colonizedCheck`
+
+All 7 removed. Sci-Fi tab either deleted entirely or kept showing only the (preserved) `notes` field — Step 4 implementation chooses based on whether other content exists.
+
+### §13.5 — V19 column-name verification
+
+**Significant correction to design doc §5.4 V19 SQL:** the original SQL used camelCase column names (`worldType`, `fuelType`, etc.) but the actual SQL columns are **snake_case** per V1 baseline and standard JPA convention. No `@Column(name=...)` overrides exist in the codebase (verified via grep).
+
+**Verified column names** (V1 baseline source-of-truth):
+
+| Java field | SQL column |
+|---|---|
+| polity | polity |
+| worldType | world_type |
+| fuelType | fuel_type |
+| portType | port_type |
+| populationType | population_type |
+| techType | tech_type |
+| productType | product_type |
+| milSpaceType | mil_space_type |
+| milPlanType | mil_plan_type |
+| other | other |
+| anomaly | anomaly |
+| population | population |
+| techLevel | tech_level |
+| colonized | colonized |
+| colonizationYear | colonization_year |
+| primaryResource | primary_resource |
+| strategicImportance | strategic_importance |
+
+**Corrected V19 SQL** (replaces §5.4 placeholder):
+
+```sql
+-- Drop worldbuilding columns from STAR_OBJ
+ALTER TABLE STAR_OBJ DROP COLUMN polity;
+ALTER TABLE STAR_OBJ DROP COLUMN world_type;
+ALTER TABLE STAR_OBJ DROP COLUMN fuel_type;
+ALTER TABLE STAR_OBJ DROP COLUMN port_type;
+ALTER TABLE STAR_OBJ DROP COLUMN population_type;
+ALTER TABLE STAR_OBJ DROP COLUMN tech_type;
+ALTER TABLE STAR_OBJ DROP COLUMN product_type;
+ALTER TABLE STAR_OBJ DROP COLUMN mil_space_type;
+ALTER TABLE STAR_OBJ DROP COLUMN mil_plan_type;
+ALTER TABLE STAR_OBJ DROP COLUMN other;
+ALTER TABLE STAR_OBJ DROP COLUMN anomaly;
+
+-- Drop worldbuilding columns from EXOPLANET
+ALTER TABLE EXOPLANET DROP COLUMN population;
+ALTER TABLE EXOPLANET DROP COLUMN tech_level;
+ALTER TABLE EXOPLANET DROP COLUMN colonized;
+ALTER TABLE EXOPLANET DROP COLUMN colonization_year;
+ALTER TABLE EXOPLANET DROP COLUMN polity;
+ALTER TABLE EXOPLANET DROP COLUMN strategic_importance;
+ALTER TABLE EXOPLANET DROP COLUMN primary_resource;
+```
+
+No customData columns dropped (Item 3 confirmed not present).
+
+### §13.6 — Test impact projection
+
+**Total files referencing polity/Polity (per grep):** 35 test files.
+
+**Category breakdown:**
+
+| Category | Test files | Action |
+|---|---|---|
+| StarWorldBuilding initialization/defaults | StarWorldBuildingTest | DELETE |
+| ChView import sets polity | AstrographicObjectFactoryTest | MODIFY (remove group→polity test branches) |
+| Edit Star dialog worldbuilding editing | StarEditMapperTest, StarEditFormBinderTest, StarEditComboConfigTest | MODIFY or DELETE |
+| Star Polities toolbar button | ToolbarController tests, StarPlotManagerLODTest | DELETE |
+| RouteFindingService.getPolityExclusions | RouteFindingServiceTest, RouteFindingIntegrationTest, RouteCacheKeyTest, RouteCacheTest | MODIFY (remove polity-exclusion branches) |
+| PolitySelectionPanel | Search component tests (if dedicated) | DELETE |
+| Polity context menu items | StarContextMenuBuilderTest | MODIFY |
+| DisplayScoreCalculator polity weight | Display scoring tests | MODIFY |
+| CSV polity column | StarCsvFormatterTest, CSVDataSetDataExportTask tests | MODIFY |
+| SolarSystem polity propagation | SolarSystemIdentityTest, SolarSystemRepositoryIntegrationTest | MODIFY |
+| PolityObjectFactory | PolityObjectFactoryTest | DELETE |
+| ExoPlanet sci-fi fields | ExoPlanetConstructorTest | MODIFY or DELETE |
+| PlanetPropertiesDialog deleted fields | Dialog tests | MODIFY |
+| Tooltip "Polity:" line | AliasTooltipFormatterTest, StarRendererTooltipTest | MODIFY |
+| Misc polity refs | PolityTest, ThemeTest, FontDescriptorTest, BaseRepositoryIntegrationTest, JpaEntitySerializableTest, DataSetDescriptorFactoryTest, StarTableColumnFactoryTest, SpaceshipDesign tests, GateNetwork tests, SystemPreferencesServiceTest, MegastructureEditor tests | REVIEW each (most likely minor) |
+
+**Realistic projection:**
+- Deleted tests: 7-12
+- Modified tests: 15-20
+- Total files affected: 35
+- Estimated net suite delta: **-40 to -80 tests** (suite shrinks; design doc §3.8 projected -50 to -100; confirmed in ballpark)
+- New tests for Worldbuilding tab gray-out (Step 4): ~10-15
+
+### §13.7 — "Fields that stay" confirmation audit
+
+All items from §1.4 confirmed present and used purely for astronomical/workflow/provenance purposes:
+
+| Field | File / line | Status |
+|---|---|---|
+| `StarObject.notes` | StarObject.java | ✓ Present; workflow |
+| `ExoPlanet.notes` | ExoPlanet.java line 690 (4000 chars) | ✓ Present; workflow |
+| `StarObject.source` | StarObject.java | ✓ Present; provenance (`"CHView"` etc.) |
+| `ExoPlanet.publication` | ExoPlanet.java line 249 | ✓ Present; scientific source paper |
+| `ExoPlanet.detectionType` | ExoPlanet.java line 254 | ✓ Present; detection method |
+| `ExoPlanet.massDetectionType` | ExoPlanet.java line 259 | ✓ Present; provenance |
+| `ExoPlanet.radiusDetectionType` | ExoPlanet.java line 264 | ✓ Present; provenance |
+| `StarObject.aliasList` | StarObject.java lines 107-109 (ElementCollection, lazy) | ✓ Present; catalog identifier variants (Simbad/Bayer/HIP) — **distinct from F.2 universe-scoped Alias entity** |
+| `ExoPlanet.alternateNames` | ExoPlanet.java line 269 | ✓ Present; catalog identifiers |
+| ExoPlanet atmospheric/physical | ExoPlanet.java lines 500-644 | ✓ All present; ACRETE-generated or real physical |
+| ExoPlanet orbital/identity | ExoPlanet.java lines 58-190 | ✓ All present; astronomical |
+| `StarObject.realStar` | StarObject.java line 41 (@Index) | ✓ Present; distinguishes real catalog from procedural |
+
+**No surprises; no re-triage needed.** One watch-item: `aliasList` (catalog identifier variants) is intentionally distinct from F.2's universe-scoped `Alias` entity. The legacy `aliasList` stays; the F.2 `Alias` entity is separate. Step 3 feature-deletion sweep must not conflate them.
+
+### §13.8 — Worldbuilding tab gray-out FXML feasibility
+
+StackPane wrapper around the Worldbuilding tab content (with F.2 Aliases section preserved inside the GridPane) + overlay VBox shown via `noUniverseOverlay.visibleProperty().bind(...)` is straightforward. JavaFX StackPane is a standard layout; no FXML complexity concerns.
+
+Imports needed: `<?import javafx.scene.layout.StackPane?>` (likely already covered by wildcard imports; verify in Step 4). VBox already imported. Controller adds one `@FXML VBox noUniverseOverlay` field and one binding line in init.
+
+The existing F.2 broker subscription (UniverseFilteringService.subscribeToFilterChanges) extends to trigger the overlay's visibility refresh on universe activation/deactivation.
+
+### §13.9 — Ratification points for Step 2
+
+All audit items resolved or have settled tentative decisions:
+
+**Settled (no further ratification needed):**
+- customData1-10 not present → §5.3 is no-op
+- V19 SQL column names → snake_case per §13.5 corrected SQL
+- All 14 features confirmed wrongly-modeled-worldbuilding; reframe applies
+- All "stays" fields confirmed safe to preserve
+- Gray-out StackPane implementation feasible
+
+**Implementation-time decisions** (Step 4 picks, no pre-implementation ratification needed):
+- PlanetPropertiesDialog Sci-Fi tab: delete tab entirely vs keep showing only `notes` field
+- Tooltip behavior post-removal: clean removal (becomes `name + aliases`) vs add placeholder line "Polity: (not yet set)"
+
+Step 2 has settled scope. Implementation can proceed.
+
+---
+
+*End of design doc. Step 1 audit complete; all 14 features have concrete callsite inventories; V19 SQL corrected to use snake_case columns; customData1-10 confirmed not present. Awaiting Larry's ratification to proceed to Step 2 implementation.*
